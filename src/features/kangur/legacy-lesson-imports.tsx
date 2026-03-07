@@ -18,21 +18,60 @@ import {
 } from './lesson-documents';
 import { getKangurLessonActivityDefinition } from './lesson-activities';
 import { KANGUR_LESSON_LIBRARY } from './settings';
-import { HUB_SECTIONS as ADDING_HUB_SECTIONS, SLIDES as ADDING_SLIDES } from './ui/components/AddingLesson';
-import { HUB_SECTIONS as CALENDAR_HUB_SECTIONS, SECTION_SLIDES as CALENDAR_SECTION_SLIDES } from './ui/components/CalendarLesson';
+import {
+  HUB_SECTIONS as ADDING_HUB_SECTIONS,
+  SLIDES as ADDING_SLIDES,
+} from './ui/components/AddingLesson';
+import {
+  HUB_SECTIONS as CALENDAR_HUB_SECTIONS,
+  SECTION_SLIDES as CALENDAR_SECTION_SLIDES,
+} from './ui/components/CalendarLesson';
 import { LESSON_SECTIONS as CLOCK_LESSON_SECTIONS } from './ui/components/ClockLesson';
-import { HUB_SECTIONS as DIVISION_HUB_SECTIONS, SLIDES as DIVISION_SLIDES } from './ui/components/DivisionLesson';
-import { HUB_SECTIONS as GEOMETRY_BASICS_HUB_SECTIONS, SLIDES as GEOMETRY_BASICS_SLIDES } from './ui/components/GeometryBasicsLesson';
-import { HUB_SECTIONS as GEOMETRY_PERIMETER_HUB_SECTIONS, SLIDES as GEOMETRY_PERIMETER_SLIDES } from './ui/components/GeometryPerimeterLesson';
-import { HUB_SECTIONS as GEOMETRY_SHAPES_HUB_SECTIONS, SLIDES as GEOMETRY_SHAPES_SLIDES } from './ui/components/GeometryShapesLesson';
-import { HUB_SECTIONS as GEOMETRY_SYMMETRY_HUB_SECTIONS, SLIDES as GEOMETRY_SYMMETRY_SLIDES } from './ui/components/GeometrySymmetryLesson';
-import { HUB_SECTIONS as LOGICAL_ANALOGIES_HUB_SECTIONS, SLIDES as LOGICAL_ANALOGIES_SLIDES } from './ui/components/LogicalAnalogiesLesson';
-import { HUB_SECTIONS as LOGICAL_CLASSIFICATION_HUB_SECTIONS, SLIDES as LOGICAL_CLASSIFICATION_SLIDES } from './ui/components/LogicalClassificationLesson';
-import { HUB_SECTIONS as LOGICAL_PATTERNS_HUB_SECTIONS, SLIDES as LOGICAL_PATTERNS_SLIDES } from './ui/components/LogicalPatternsLesson';
-import { HUB_SECTIONS as LOGICAL_REASONING_HUB_SECTIONS, SLIDES as LOGICAL_REASONING_SLIDES } from './ui/components/LogicalReasoningLesson';
+import {
+  HUB_SECTIONS as DIVISION_HUB_SECTIONS,
+  SLIDES as DIVISION_SLIDES,
+} from './ui/components/DivisionLesson';
+import {
+  HUB_SECTIONS as GEOMETRY_BASICS_HUB_SECTIONS,
+  SLIDES as GEOMETRY_BASICS_SLIDES,
+} from './ui/components/GeometryBasicsLesson';
+import {
+  HUB_SECTIONS as GEOMETRY_PERIMETER_HUB_SECTIONS,
+  SLIDES as GEOMETRY_PERIMETER_SLIDES,
+} from './ui/components/GeometryPerimeterLesson';
+import {
+  HUB_SECTIONS as GEOMETRY_SHAPES_HUB_SECTIONS,
+  SLIDES as GEOMETRY_SHAPES_SLIDES,
+} from './ui/components/GeometryShapesLesson';
+import {
+  HUB_SECTIONS as GEOMETRY_SYMMETRY_HUB_SECTIONS,
+  SLIDES as GEOMETRY_SYMMETRY_SLIDES,
+} from './ui/components/GeometrySymmetryLesson';
+import {
+  HUB_SECTIONS as LOGICAL_ANALOGIES_HUB_SECTIONS,
+  SLIDES as LOGICAL_ANALOGIES_SLIDES,
+} from './ui/components/LogicalAnalogiesLesson';
+import {
+  HUB_SECTIONS as LOGICAL_CLASSIFICATION_HUB_SECTIONS,
+  SLIDES as LOGICAL_CLASSIFICATION_SLIDES,
+} from './ui/components/LogicalClassificationLesson';
+import {
+  HUB_SECTIONS as LOGICAL_PATTERNS_HUB_SECTIONS,
+  SLIDES as LOGICAL_PATTERNS_SLIDES,
+} from './ui/components/LogicalPatternsLesson';
+import {
+  HUB_SECTIONS as LOGICAL_REASONING_HUB_SECTIONS,
+  SLIDES as LOGICAL_REASONING_SLIDES,
+} from './ui/components/LogicalReasoningLesson';
 import { SLIDES as LOGICAL_THINKING_SLIDES } from './ui/components/LogicalThinkingLesson';
-import { HUB_SECTIONS as MULTIPLICATION_HUB_SECTIONS, SLIDES as MULTIPLICATION_SLIDES } from './ui/components/MultiplicationLesson';
-import { HUB_SECTIONS as SUBTRACTING_HUB_SECTIONS, SLIDES as SUBTRACTING_SLIDES } from './ui/components/SubtractingLesson';
+import {
+  HUB_SECTIONS as MULTIPLICATION_HUB_SECTIONS,
+  SLIDES as MULTIPLICATION_SLIDES,
+} from './ui/components/MultiplicationLesson';
+import {
+  HUB_SECTIONS as SUBTRACTING_HUB_SECTIONS,
+  SLIDES as SUBTRACTING_SLIDES,
+} from './ui/components/SubtractingLesson';
 
 type LegacyImportSlide = {
   title: string;
@@ -104,7 +143,8 @@ const createTextBlockFromHtml = (
   align: options?.align ?? 'left',
 });
 
-const renderLegacySlideHtml = (slide: LegacyImportSlide): string => sanitizeHtml(renderToStaticMarkup(slide.content));
+const renderLegacySlideHtml = (slide: LegacyImportSlide): string =>
+  sanitizeHtml(renderToStaticMarkup(slide.content));
 
 const createLessonOverviewHtml = (
   lesson: (typeof KANGUR_LESSON_LIBRARY)[KangurLessonComponentId],
@@ -212,13 +252,9 @@ const LEGACY_IMPORTERS: Record<KangurLessonComponentId, LegacyImportDefinition> 
   }),
   clock: createClockDefinition(),
   geometry_basics: createSectionedDefinition(GEOMETRY_BASICS_HUB_SECTIONS, GEOMETRY_BASICS_SLIDES),
-  geometry_shapes: createSectionedDefinition(
-    GEOMETRY_SHAPES_HUB_SECTIONS,
-    GEOMETRY_SHAPES_SLIDES,
-    {
-      game: 'geometry-drawing',
-    }
-  ),
+  geometry_shapes: createSectionedDefinition(GEOMETRY_SHAPES_HUB_SECTIONS, GEOMETRY_SHAPES_SLIDES, {
+    game: 'geometry-drawing',
+  }),
   geometry_symmetry: createSectionedDefinition(
     GEOMETRY_SYMMETRY_HUB_SECTIONS,
     GEOMETRY_SYMMETRY_SLIDES

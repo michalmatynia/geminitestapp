@@ -112,12 +112,35 @@ describe('KangurAssignmentManager', () => {
 
     expect(screen.getByText('Przydziel nowe zadanie')).toBeInTheDocument();
     expect(screen.getByText('Podpowiedzi z postępu ucznia')).toBeInTheDocument();
+    expect(screen.getByText('Podpowiedzi z postępu ucznia')).toHaveClass(
+      'border-indigo-200',
+      'bg-indigo-100'
+    );
+    expect(screen.getAllByTestId(/assignment-manager-recommended-card-/)[0]).toHaveClass(
+      'soft-card',
+      'border-slate-200/80'
+    );
     expect(screen.getByText('Nauka zegara')).toBeInTheDocument();
     expect(screen.getAllByText('Trening mieszany').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Trening: Ulamki')).toBeInTheDocument();
     expect(screen.getByText('Trening: Potegi')).toBeInTheDocument();
     expect(screen.getByText('Trening: Pierwiastki')).toBeInTheDocument();
+    expect(screen.getByTestId('assignment-manager-catalog-card-practice-clock')).toHaveClass(
+      'soft-card',
+      'border-slate-200/80'
+    );
+    expect(
+      screen.getByPlaceholderText('Szukaj po temacie, typie zadania lub słowie kluczowym...')
+    ).toHaveClass('soft-card', 'focus:border-indigo-300');
     expect(screen.getByText('Monitorowanie zadań')).toBeInTheDocument();
+    expect(screen.getByText('Aktywne').parentElement).toHaveClass(
+      'soft-card',
+      'border-slate-200/80'
+    );
+    expect(screen.getByText('Do rozpoczecia').parentElement).toHaveClass(
+      'soft-card',
+      'border-amber-300'
+    );
     expect(screen.getByText('Aktywne zadania')).toBeInTheDocument();
     expect(screen.getAllByText('Praktyka: Dzielenie').length).toBeGreaterThanOrEqual(1);
 
@@ -243,6 +266,10 @@ describe('KangurAssignmentManager', () => {
     expect(screen.getByText('Monitorowanie zadań')).toBeInTheDocument();
     expect(screen.getByText('Do uwagi')).toBeInTheDocument();
     expect(screen.getByText('Skutecznosc wykonania')).toBeInTheDocument();
+    expect(screen.getByText('Skutecznosc wykonania').parentElement).toHaveClass(
+      'soft-card',
+      'border-slate-200/80'
+    );
     expect(screen.getByText('33%')).toBeInTheDocument();
     expect(
       screen.getByText('Wysoki priorytet, ale uczen jeszcze nie rozpoczal tego zadania.')

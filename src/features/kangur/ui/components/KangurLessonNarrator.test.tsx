@@ -118,7 +118,11 @@ describe('KangurLessonNarrator', () => {
 
     render(<NarratorHarness />);
 
-    await waitFor(() => expect(screen.getByRole('button', { name: /^play$/i })).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /^play$/i })).toBeInTheDocument()
+    );
+
+    expect(screen.getByText('Lesson narrator')).toHaveClass('border-indigo-200', 'bg-indigo-100');
 
     fireEvent.click(screen.getByRole('button', { name: /^play$/i }));
 
@@ -145,7 +149,9 @@ describe('KangurLessonNarrator', () => {
 
     render(<NarratorHarness />);
 
-    await waitFor(() => expect(screen.getByRole('button', { name: /^play$/i })).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /^play$/i })).toBeInTheDocument()
+    );
 
     fireEvent.click(screen.getByRole('button', { name: /^play$/i }));
 
@@ -168,5 +174,24 @@ describe('KangurLessonNarrator', () => {
     expect(speechSynthesisMock.speak).not.toHaveBeenCalled();
     expect(screen.queryByText('Voice')).toBeNull();
     expect(screen.queryByText('Playback speed')).toBeNull();
+  });
+
+  it('renders shared error feedback when narration preparation fails', async () => {
+    apiPostMock.mockRejectedValueOnce(new Error('Narrator network failed.'));
+
+    render(<NarratorHarness />);
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /^play$/i })).toBeInTheDocument()
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /^play$/i }));
+
+    await waitFor(() => expect(screen.getByText('Narrator network failed.')).toBeInTheDocument());
+
+    expect(screen.getByText('Narrator network failed.').parentElement).toHaveClass(
+      'soft-card',
+      'border-rose-300'
+    );
   });
 });

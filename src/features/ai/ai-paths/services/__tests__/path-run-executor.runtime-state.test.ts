@@ -1,10 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { HISTORICAL_RUNTIME_COMPATIBILITY_ALIAS } from '../../../../../../scripts/db/ai-paths-runtime-compatibility-normalization';
 
-import {
-  EMPTY_RUNTIME_STATE,
-  parseRuntimeState,
-} from '../path-run-executor.runtime-state';
+import { EMPTY_RUNTIME_STATE, parseRuntimeState } from '../path-run-executor.runtime-state';
 
 describe('parseRuntimeState', () => {
   it('returns empty runtime state for empty input', () => {

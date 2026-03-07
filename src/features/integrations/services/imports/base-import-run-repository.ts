@@ -5,6 +5,7 @@ import { randomUUID } from 'crypto';
 import { ObjectId } from 'mongodb';
 
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
+import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/settings';
 import type {
   BaseImportItemRecord,
   BaseImportItemStatus,
@@ -29,14 +30,7 @@ const LIST_LIMIT_DEFAULT = 50;
 const RUN_ITEM_HARD_LIMIT = 100_000;
 
 type StorageProvider = 'mongodb' | 'prisma';
-
-type SettingDoc = {
-  _id: string | ObjectId;
-  key?: string;
-  value?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-};
+type SettingDoc = MongoTimestampedStringSettingRecord<string | ObjectId, Date>;
 
 const resolveProvider = async (): Promise<StorageProvider> => {
   const provider = await getProductDataProvider();

@@ -16,6 +16,7 @@ import {
   imageStudioUpscaleSmoothingQualitySchema,
   imageStudioUpscaleStrategySchema,
 } from './image-studio-transform-contracts';
+import { promptValidationIssueSchema } from './prompt-engine';
 import type {
   ImageStudioCenterDetectionMode,
   ImageStudioCenterMode,
@@ -307,6 +308,56 @@ export const studioSlotsResponseSchema = z.object({
 });
 
 export type StudioSlotsResponse = z.infer<typeof studioSlotsResponseSchema>;
+
+export const imageStudioModelsSourceSchema = z.enum(['brain']);
+
+export type ImageStudioModelsSource = z.infer<typeof imageStudioModelsSourceSchema>;
+
+export const imageStudioModelsResponseSchema = z.object({
+  models: z.array(z.string()),
+  source: imageStudioModelsSourceSchema,
+  warning: z.string().optional(),
+});
+
+export type ImageStudioModelsResponse = z.infer<typeof imageStudioModelsResponseSchema>;
+
+export const imageStudioPromptExtractModeSchema = z.enum(['programmatic', 'gpt', 'hybrid']);
+
+export type ImageStudioPromptExtractMode = z.infer<typeof imageStudioPromptExtractModeSchema>;
+
+export const imageStudioPromptExtractSourceSchema = z.enum([
+  'programmatic',
+  'programmatic_autofix',
+  'gpt',
+]);
+
+export type ImageStudioPromptExtractSource = z.infer<typeof imageStudioPromptExtractSourceSchema>;
+
+export const imageStudioPromptExtractValidationSchema = z.object({
+  before: z.array(promptValidationIssueSchema),
+  after: z.array(promptValidationIssueSchema),
+});
+
+export const imageStudioPromptExtractDiagnosticsSchema = z.object({
+  programmaticError: z.string().nullable(),
+  aiError: z.string().nullable(),
+  model: z.string().nullable(),
+  autofixApplied: z.boolean(),
+});
+
+export const imageStudioPromptExtractResponseSchema = z.object({
+  params: z.record(z.string(), z.unknown()),
+  source: imageStudioPromptExtractSourceSchema,
+  modeRequested: imageStudioPromptExtractModeSchema,
+  fallbackUsed: z.boolean(),
+  formattedPrompt: z.string().nullable(),
+  validation: imageStudioPromptExtractValidationSchema,
+  diagnostics: imageStudioPromptExtractDiagnosticsSchema,
+});
+
+export type ImageStudioPromptExtractResponse = z.infer<
+  typeof imageStudioPromptExtractResponseSchema
+>;
 
 export const imageStudioObjectDetectionUsedSchema = z.enum([
   'alpha_bbox',
@@ -675,7 +726,9 @@ export type UploadedImageBinaryDto = {
 };
 export type {
   UploadedImageBinaryDto as UploadedImageBinary,
+  UploadedImageBinaryDto as UploadedClientAnalysisImage,
   UploadedImageBinaryDto as UploadedClientCenterImage,
+  UploadedImageBinaryDto as UploadedClientCropImage,
   UploadedImageBinaryDto as UploadedClientAutoScaleImage,
 };
 

@@ -4,7 +4,12 @@ import { BookOpen, ChevronLeft, ChevronRight, Home, LayoutGrid } from 'lucide-re
 import type { ComponentType } from 'react';
 import dynamic from 'next/dynamic';
 
-import { getKangurPageHref as createPageUrl } from '@/shared/contracts/kangur';
+import {
+  getKangurInternalQueryParamName,
+  getKangurPageHref as createPageUrl,
+  readKangurUrlParam,
+} from '@/features/kangur/config/routing';
+import { KangurDocsTooltipEnhancer, useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
 import {
   hasKangurLessonDocumentContent,
   KANGUR_LESSON_DOCUMENTS_SETTING_KEY,
@@ -15,25 +20,28 @@ import { KangurLessonNarrator } from '@/features/kangur/ui/components/KangurLess
 import { KangurLessonDocumentRenderer } from '@/features/kangur/ui/components/KangurLessonDocumentRenderer';
 import { KangurProfileMenu } from '@/features/kangur/ui/components/KangurProfileMenu';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import {
   KangurButton,
+  KangurEmptyState,
+  KangurOptionCardButton,
   KangurPageContainer,
   KangurPageShell,
   KangurPageTopBar,
-  KangurPanel,
+  KangurStatusChip,
+  KangurSummaryPanel,
   KangurTopNavGroup,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_OPTION_CARD_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { type KangurAccent } from '@/features/kangur/ui/design/tokens';
 import type { KangurLesson, KangurLessonComponentId } from '@/shared/contracts/kangur';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { cn } from '@/shared/utils';
 import Link from 'next/link';
 
 type LessonProps = {
-  onBack: () => void;
+  onBack?: () => void;
 };
 
 const LessonLoadingFallback = (): React.JSX.Element => (
@@ -42,83 +50,62 @@ const LessonLoadingFallback = (): React.JSX.Element => (
   </div>
 );
 
-const ClockLesson = dynamic(() => import('@/features/kangur/ui/components/ClockLesson'), {
-  ssr: false,
-  loading: LessonLoadingFallback,
-});
-const CalendarLesson = dynamic(() => import('@/features/kangur/ui/components/CalendarLesson'), {
-  ssr: false,
-  loading: LessonLoadingFallback,
-});
-const AddingLesson = dynamic(() => import('@/features/kangur/ui/components/AddingLesson'), {
-  ssr: false,
-  loading: LessonLoadingFallback,
-});
-const SubtractingLesson = dynamic(
-  () => import('@/features/kangur/ui/components/SubtractingLesson'),
-  {
-    ssr: false,
-    loading: LessonLoadingFallback,
-  }
+const loadLessonComponent = (
+  loader: () => Promise<unknown>
+): ComponentType<LessonProps> =>
+  dynamic<LessonProps>(
+    async () => {
+      const module = (await loader()) as { default: ComponentType<LessonProps> };
+      return module.default;
+    },
+    {
+      ssr: false,
+      loading: LessonLoadingFallback,
+    }
+  );
+
+const ClockLesson = loadLessonComponent(() => import('@/features/kangur/ui/components/ClockLesson'));
+const CalendarLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/CalendarLesson')
 );
-const MultiplicationLesson = dynamic(
-  () => import('@/features/kangur/ui/components/MultiplicationLesson'),
-  {
-    ssr: false,
-    loading: LessonLoadingFallback,
-  }
+const AddingLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/AddingLesson')
 );
-const DivisionLesson = dynamic(() => import('@/features/kangur/ui/components/DivisionLesson'), {
-  ssr: false,
-  loading: LessonLoadingFallback,
-});
-const GeometryBasicsLesson = dynamic(
-  () => import('@/features/kangur/ui/components/GeometryBasicsLesson'),
-  {
-    ssr: false,
-    loading: LessonLoadingFallback,
-  }
+const SubtractingLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/SubtractingLesson')
 );
-const GeometryShapesLesson = dynamic(
-  () => import('@/features/kangur/ui/components/GeometryShapesLesson'),
-  {
-    ssr: false,
-    loading: LessonLoadingFallback,
-  }
+const MultiplicationLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/MultiplicationLesson')
 );
-const GeometrySymmetryLesson = dynamic(
-  () => import('@/features/kangur/ui/components/GeometrySymmetryLesson'),
-  {
-    ssr: false,
-    loading: LessonLoadingFallback,
-  }
+const DivisionLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/DivisionLesson')
 );
-const GeometryPerimeterLesson = dynamic(
-  () => import('@/features/kangur/ui/components/GeometryPerimeterLesson'),
-  {
-    ssr: false,
-    loading: LessonLoadingFallback,
-  }
+const GeometryBasicsLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/GeometryBasicsLesson')
 );
-const LogicalThinkingLesson = dynamic(
-  () => import('@/features/kangur/ui/components/LogicalThinkingLesson'),
-  { ssr: false, loading: LessonLoadingFallback }
+const GeometryShapesLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/GeometryShapesLesson')
 );
-const LogicalPatternsLesson = dynamic(
-  () => import('@/features/kangur/ui/components/LogicalPatternsLesson'),
-  { ssr: false, loading: LessonLoadingFallback }
+const GeometrySymmetryLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/GeometrySymmetryLesson')
 );
-const LogicalClassificationLesson = dynamic(
-  () => import('@/features/kangur/ui/components/LogicalClassificationLesson'),
-  { ssr: false, loading: LessonLoadingFallback }
+const GeometryPerimeterLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/GeometryPerimeterLesson')
 );
-const LogicalReasoningLesson = dynamic(
-  () => import('@/features/kangur/ui/components/LogicalReasoningLesson'),
-  { ssr: false, loading: LessonLoadingFallback }
+const LogicalThinkingLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/LogicalThinkingLesson')
 );
-const LogicalAnalogiesLesson = dynamic(
-  () => import('@/features/kangur/ui/components/LogicalAnalogiesLesson'),
-  { ssr: false, loading: LessonLoadingFallback }
+const LogicalPatternsLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/LogicalPatternsLesson')
+);
+const LogicalClassificationLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/LogicalClassificationLesson')
+);
+const LogicalReasoningLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/LogicalReasoningLesson')
+);
+const LogicalAnalogiesLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/LogicalAnalogiesLesson')
 );
 
 const LESSON_COMPONENTS: Record<KangurLessonComponentId, ComponentType<LessonProps>> = {
@@ -186,14 +173,14 @@ const getLessonMasteryPresentation = (
 ): {
   statusLabel: string;
   summaryLabel: string;
-  badgeClassName: string;
+  badgeAccent: KangurAccent;
 } => {
   const mastery = progress.lessonMastery[lesson.componentId];
   if (!mastery) {
     return {
       statusLabel: 'Nowa',
       summaryLabel: 'Brak zapisanej praktyki',
-      badgeClassName: 'bg-white/20 text-white/90',
+      badgeAccent: 'slate',
     };
   }
 
@@ -201,7 +188,7 @@ const getLessonMasteryPresentation = (
     return {
       statusLabel: `Opanowane ${mastery.masteryPercent}%`,
       summaryLabel: `Ukończono ${mastery.completions}× · najlepszy wynik ${mastery.bestScorePercent}%`,
-      badgeClassName: 'bg-emerald-400/90 text-emerald-950',
+      badgeAccent: 'emerald',
     };
   }
 
@@ -209,14 +196,14 @@ const getLessonMasteryPresentation = (
     return {
       statusLabel: `W trakcie ${mastery.masteryPercent}%`,
       summaryLabel: `Ukończono ${mastery.completions}× · ostatni wynik ${mastery.lastScorePercent}%`,
-      badgeClassName: 'bg-amber-300/90 text-amber-950',
+      badgeAccent: 'amber',
     };
   }
 
   return {
     statusLabel: `Powtórz ${mastery.masteryPercent}%`,
     summaryLabel: `Ukończono ${mastery.completions}× · ostatni wynik ${mastery.lastScorePercent}%`,
-    badgeClassName: 'bg-rose-300/90 text-rose-950',
+    badgeAccent: 'rose',
   };
 };
 
@@ -226,7 +213,10 @@ const LESSON_ASSIGNMENT_PRIORITY_ORDER = {
   low: 2,
 } as const;
 
-const getLessonAssignmentTimestamp = (primaryValue: string | null, fallbackValue: string): number => {
+const getLessonAssignmentTimestamp = (
+  primaryValue: string | null,
+  fallbackValue: string
+): number => {
   const primaryTimestamp = primaryValue ? Date.parse(primaryValue) : Number.NaN;
   if (!Number.isNaN(primaryTimestamp)) {
     return primaryTimestamp;
@@ -239,6 +229,7 @@ const getLessonAssignmentTimestamp = (primaryValue: string | null, fallbackValue
 export default function Lessons() {
   const { basePath } = useKangurRouting();
   const { user, navigateToLogin, logout } = useKangurAuth();
+  const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('lessons');
   const settingsStore = useSettingsStore();
   const progress = useKangurProgressState();
   const { assignments } = useKangurAssignments({
@@ -259,10 +250,7 @@ export default function Lessons() {
     [rawLessonDocuments]
   );
   const lessonAssignmentsByComponent = useMemo(() => {
-    const nextMap = new Map<
-      KangurLessonComponentId,
-      (typeof assignments)[number]
-    >();
+    const nextMap = new Map<KangurLessonComponentId, (typeof assignments)[number]>();
     assignments
       .filter((assignment) => !assignment.archived)
       .filter((assignment) => assignment.progress.status !== 'completed')
@@ -278,7 +266,10 @@ export default function Lessons() {
           return;
         }
 
-        if (LESSON_ASSIGNMENT_PRIORITY_ORDER[assignment.priority] < LESSON_ASSIGNMENT_PRIORITY_ORDER[existing.priority]) {
+        if (
+          LESSON_ASSIGNMENT_PRIORITY_ORDER[assignment.priority] <
+          LESSON_ASSIGNMENT_PRIORITY_ORDER[existing.priority]
+        ) {
           nextMap.set(componentId, assignment);
         }
       });
@@ -286,10 +277,7 @@ export default function Lessons() {
     return nextMap;
   }, [assignments]);
   const completedLessonAssignmentsByComponent = useMemo(() => {
-    const nextMap = new Map<
-      KangurLessonComponentId,
-      (typeof assignments)[number]
-    >();
+    const nextMap = new Map<KangurLessonComponentId, (typeof assignments)[number]>();
 
     assignments
       .filter((assignment) => !assignment.archived)
@@ -358,7 +346,9 @@ export default function Lessons() {
     }
 
     const currentUrl = new URL(window.location.href);
-    const focusToken = currentUrl.searchParams.get('focus')?.trim().toLowerCase();
+    const focusToken = readKangurUrlParam(currentUrl.searchParams, 'focus', basePath)
+      ?.trim()
+      .toLowerCase();
     if (!focusToken) {
       return;
     }
@@ -369,7 +359,7 @@ export default function Lessons() {
     }
 
     setActiveLessonId(focusedLessonId);
-    currentUrl.searchParams.delete('focus');
+    currentUrl.searchParams.delete(getKangurInternalQueryParamName('focus', basePath));
     const nextHref = `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`;
     window.history.replaceState({}, '', nextHref);
   }, [activeLessonId, lessons]);
@@ -380,16 +370,16 @@ export default function Lessons() {
   const next =
     activeIdx >= 0 && activeIdx < orderedLessons.length - 1 ? orderedLessons[activeIdx + 1] : null;
   const ActiveLessonComponent = activeLesson ? LESSON_COMPONENTS[activeLesson.componentId] : null;
-  const activeLessonDocument = activeLesson ? lessonDocuments[activeLesson.id] ?? null : null;
+  const activeLessonDocument = activeLesson ? (lessonDocuments[activeLesson.id] ?? null) : null;
   const hasActiveLessonDocumentContent = hasKangurLessonDocumentContent(activeLessonDocument);
   const shouldRenderLessonDocument =
     activeLesson?.contentMode === 'document' && hasActiveLessonDocumentContent;
   const activeLessonAssignment = activeLesson
-    ? lessonAssignmentsByComponent.get(activeLesson.componentId) ?? null
+    ? (lessonAssignmentsByComponent.get(activeLesson.componentId) ?? null)
     : null;
   const completedActiveLessonAssignment =
     activeLesson && !activeLessonAssignment
-      ? completedLessonAssignmentsByComponent.get(activeLesson.componentId) ?? null
+      ? (completedLessonAssignmentsByComponent.get(activeLesson.componentId) ?? null)
       : null;
   const activeLessonContentRef = useRef<HTMLDivElement | null>(null);
   const handleGoBack = (): void => {
@@ -403,18 +393,29 @@ export default function Lessons() {
   };
 
   return (
-    <KangurPageShell tone='learn'>
+    <KangurPageShell
+      tone='learn'
+      id='kangur-lessons-page'
+      skipLinkTargetId='kangur-lessons-main'
+    >
+      <KangurDocsTooltipEnhancer enabled={docsTooltipsEnabled} rootId='kangur-lessons-page' />
       <KangurPageTopBar
         contentClassName='justify-center'
         left={
           <KangurTopNavGroup>
-            <KangurButton asChild size='md' variant='navigation'>
+            <KangurButton asChild size='md' variant='navigation' data-doc-id='top_nav_home'>
               <Link href={createPageUrl('Game', basePath)}>
                 <Home className='h-[22px] w-[22px]' strokeWidth={2.1} />
                 <span>Strona glowna</span>
               </Link>
             </KangurButton>
-            <KangurButton asChild size='md' variant='navigationActive'>
+            <KangurButton
+              asChild
+              size='md'
+              variant='navigationActive'
+              aria-current='page'
+              data-doc-id='top_nav_lessons'
+            >
               <Link href={createPageUrl('Lessons', basePath)}>
                 <BookOpen className='h-[22px] w-[22px]' strokeWidth={2.1} />
                 <span>Lekcje</span>
@@ -428,7 +429,12 @@ export default function Lessons() {
               isActive={false}
             />
             {user?.canManageLearners && (
-              <KangurButton asChild size='md' variant='navigation'>
+              <KangurButton
+                asChild
+                size='md'
+                variant='navigation'
+                data-doc-id='top_nav_parent_dashboard'
+              >
                 <Link href={createPageUrl('ParentDashboard', basePath)}>
                   <LayoutGrid className='h-[22px] w-[22px]' strokeWidth={2.1} />
                   <span>Rodzic</span>
@@ -439,7 +445,7 @@ export default function Lessons() {
         }
       />
 
-      <KangurPageContainer className='flex flex-col items-center'>
+      <KangurPageContainer id='kangur-lessons-main' className='flex flex-col items-center'>
         <AnimatePresence mode='wait'>
           {!activeLesson ? (
             <motion.div
@@ -453,103 +459,140 @@ export default function Lessons() {
                 <h1 className='text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600 drop-shadow'>
                   📚 Lekcje
                 </h1>
-                <KangurButton className='mt-4' onClick={handleGoBack} size='md' variant='secondary'>
+                <KangurButton
+                  className='mt-4'
+                  onClick={handleGoBack}
+                  size='md'
+                  variant='secondary'
+                  data-doc-id='lessons_back_button'
+                >
                   Wróć do poprzedniej strony
                 </KangurButton>
               </div>
 
               {orderedLessons.length === 0 ? (
-                <KangurPanel className='w-full text-center' padding='xl' variant='soft'>
-                  <div className='text-lg font-semibold text-indigo-700'>Brak aktywnych lekcji</div>
-                  <div className='mt-1 text-sm text-indigo-500'>
-                    Włącz lekcje w panelu admina, aby pojawiły się tutaj.
-                  </div>
-                </KangurPanel>
+                <KangurEmptyState
+                  accent='indigo'
+                  className='w-full'
+                  description='Włącz lekcje w panelu admina, aby pojawiły się tutaj.'
+                  padding='xl'
+                  title='Brak aktywnych lekcji'
+                />
               ) : (
                 orderedLessons.map((lesson, index) => {
                   const masteryPresentation = getLessonMasteryPresentation(lesson, progress);
-                  const lessonAssignment = lessonAssignmentsByComponent.get(lesson.componentId) ?? null;
-                  const completedLessonAssignment =
-                    !lessonAssignment
-                      ? completedLessonAssignmentsByComponent.get(lesson.componentId) ?? null
-                      : null;
+                  const lessonAssignment =
+                    lessonAssignmentsByComponent.get(lesson.componentId) ?? null;
+                  const completedLessonAssignment = !lessonAssignment
+                    ? (completedLessonAssignmentsByComponent.get(lesson.componentId) ?? null)
+                    : null;
 
                   return (
-                    <motion.button
+                    <motion.div
                       key={lesson.id}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.1 }}
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
-                      onClick={() => setActiveLessonId(lesson.id)}
-                      className={cn(
-                        KANGUR_OPTION_CARD_CLASSNAME,
-                        'w-full rounded-[30px] p-5 text-left',
-                        'border-slate-200/85 hover:border-indigo-200 hover:bg-indigo-50/30'
-                      )}
                     >
-                      <span
-                        className={`flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-[24px] bg-gradient-to-br ${lesson.color} text-5xl shadow-sm`}
+                      <KangurOptionCardButton
+                        accent='indigo'
+                        className='flex w-full items-start gap-4 rounded-[30px] p-5 text-left'
+                        data-doc-id='lessons_library_entry'
+                        emphasis='neutral'
+                        onClick={() => setActiveLessonId(lesson.id)}
+                        type='button'
                       >
-                        {lesson.emoji}
-                      </span>
-                      <div className='flex-1'>
-                        <div className='flex items-start justify-between gap-3'>
-                          <div>
-                            <div className='text-xl font-extrabold text-slate-800'>{lesson.title}</div>
-                            <div className='mt-0.5 text-sm text-slate-500'>{lesson.description}</div>
-                            {lesson.contentMode === 'document' &&
+                        <span
+                          className={`flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-[24px] bg-gradient-to-br ${lesson.color} text-5xl shadow-sm`}
+                        >
+                          {lesson.emoji}
+                        </span>
+                        <div className='flex-1'>
+                          <div className='flex items-start justify-between gap-3'>
+                            <div>
+                              <div className='text-xl font-extrabold text-slate-800'>
+                                {lesson.title}
+                              </div>
+                              <div className='mt-0.5 text-sm text-slate-500'>
+                                {lesson.description}
+                              </div>
+                              {lesson.contentMode === 'document' &&
                             hasKangurLessonDocumentContent(lessonDocuments[lesson.id]) ? (
-                                <div className='mt-2 inline-flex rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-sky-700'>
+                                  <KangurStatusChip
+                                    accent='sky'
+                                    className='mt-2 uppercase tracking-[0.14em]'
+                                    size='sm'
+                                  >
                                 Wlasna zawartosc
-                                </div>
-                              ) : null}
-                            {lessonAssignment ? (
-                              <div className='mt-2 inline-flex rounded-full bg-rose-100 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-rose-700'>
+                                  </KangurStatusChip>
+                                ) : null}
+                              {lessonAssignment ? (
+                                <KangurStatusChip
+                                  accent='rose'
+                                  className='mt-2 uppercase tracking-[0.14em]'
+                                  size='sm'
+                                >
                                 Priorytet rodzica
-                              </div>
-                            ) : completedLessonAssignment ? (
-                              <div className='mt-2 inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-emerald-700'>
+                                </KangurStatusChip>
+                              ) : completedLessonAssignment ? (
+                                <KangurStatusChip
+                                  accent='emerald'
+                                  className='mt-2 uppercase tracking-[0.14em]'
+                                  size='sm'
+                                >
                                 Ukonczone dla rodzica
-                              </div>
-                            ) : null}
-                          </div>
-                          <div className='flex flex-col items-end gap-2'>
-                            <span
-                              className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] ${masteryPresentation.badgeClassName}`}
-                            >
-                              {masteryPresentation.statusLabel}
-                            </span>
-                            {lessonAssignment ? (
-                              <span className='inline-flex whitespace-nowrap rounded-full bg-rose-100 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-rose-700'>
-                                {lessonAssignment.priority === 'high'
-                                  ? 'Priorytet wysoki'
-                                  : lessonAssignment.priority === 'medium'
-                                    ? 'Priorytet sredni'
-                                    : 'Priorytet niski'}
-                              </span>
-                            ) : completedLessonAssignment ? (
-                              <span className='inline-flex whitespace-nowrap rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-emerald-700'>
+                                </KangurStatusChip>
+                              ) : null}
+                            </div>
+                            <div className='flex flex-col items-end gap-2'>
+                              <KangurStatusChip
+                                accent={masteryPresentation.badgeAccent}
+                                className='whitespace-nowrap uppercase tracking-[0.14em]'
+                                size='sm'
+                              >
+                                {masteryPresentation.statusLabel}
+                              </KangurStatusChip>
+                              {lessonAssignment ? (
+                                <KangurStatusChip
+                                  accent='rose'
+                                  className='whitespace-nowrap uppercase tracking-[0.14em]'
+                                  size='sm'
+                                >
+                                  {lessonAssignment.priority === 'high'
+                                    ? 'Priorytet wysoki'
+                                    : lessonAssignment.priority === 'medium'
+                                      ? 'Priorytet sredni'
+                                      : 'Priorytet niski'}
+                                </KangurStatusChip>
+                              ) : completedLessonAssignment ? (
+                                <KangurStatusChip
+                                  accent='emerald'
+                                  className='whitespace-nowrap uppercase tracking-[0.14em]'
+                                  size='sm'
+                                >
                                 Zadanie zamkniete
-                              </span>
-                            ) : null}
+                                </KangurStatusChip>
+                              ) : null}
+                            </div>
                           </div>
+                          <div className='mt-3 text-xs font-medium text-slate-500'>
+                            {masteryPresentation.summaryLabel}
+                          </div>
+                          {lessonAssignment ? (
+                            <div className='mt-2 text-xs font-semibold text-rose-600'>
+                              {lessonAssignment.description}
+                            </div>
+                          ) : completedLessonAssignment ? (
+                            <div className='mt-2 text-xs font-semibold text-emerald-600'>
+                            Zadanie od rodzica zostalo juz wykonane.{' '}
+                              {completedLessonAssignment.progress.summary}
+                            </div>
+                          ) : null}
                         </div>
-                        <div className='mt-3 text-xs font-medium text-slate-500'>
-                          {masteryPresentation.summaryLabel}
-                        </div>
-                        {lessonAssignment ? (
-                          <div className='mt-2 text-xs font-semibold text-rose-600'>
-                            {lessonAssignment.description}
-                          </div>
-                        ) : completedLessonAssignment ? (
-                          <div className='mt-2 text-xs font-semibold text-emerald-600'>
-                            Zadanie od rodzica zostalo juz wykonane. {completedLessonAssignment.progress.summary}
-                          </div>
-                        ) : null}
-                      </div>
-                    </motion.button>
+                      </KangurOptionCardButton>
+                    </motion.div>
                   );
                 })
               )}
@@ -563,21 +606,27 @@ export default function Lessons() {
               className='w-full flex flex-col items-center gap-4'
             >
               {activeLessonAssignment ? (
-                <div className='w-full max-w-2xl rounded-2xl border border-rose-200 bg-rose-50/90 px-4 py-3 text-sm text-rose-700 shadow-sm'>
-                  <div className='font-bold uppercase tracking-[0.14em] text-[11px]'>Priorytet rodzica</div>
-                  <div className='mt-1 font-semibold'>{activeLessonAssignment.title}</div>
-                  <div className='mt-1 text-rose-600'>{activeLessonAssignment.description}</div>
-                </div>
+                <KangurSummaryPanel
+                  accent='rose'
+                  className='w-full max-w-2xl'
+                  description={activeLessonAssignment.description}
+                  label='Priorytet rodzica'
+                  labelAccent='rose'
+                  padding='md'
+                  title={activeLessonAssignment.title}
+                  tone='accent'
+                />
               ) : completedActiveLessonAssignment ? (
-                <div className='w-full max-w-2xl rounded-2xl border border-emerald-200 bg-emerald-50/90 px-4 py-3 text-sm text-emerald-700 shadow-sm'>
-                  <div className='font-bold uppercase tracking-[0.14em] text-[11px]'>
-                    Ukonczone zadanie od rodzica
-                  </div>
-                  <div className='mt-1 font-semibold'>{completedActiveLessonAssignment.title}</div>
-                  <div className='mt-1 text-emerald-600'>
-                    To zadanie zostalo juz wykonane. {completedActiveLessonAssignment.progress.summary}
-                  </div>
-                </div>
+                <KangurSummaryPanel
+                  accent='emerald'
+                  className='w-full max-w-2xl'
+                  description={`To zadanie zostalo juz wykonane. ${completedActiveLessonAssignment.progress.summary}`}
+                  label='Ukonczone zadanie od rodzica'
+                  labelAccent='emerald'
+                  padding='md'
+                  title={completedActiveLessonAssignment.title}
+                  tone='accent'
+                />
               ) : null}
               <KangurLessonNarrator
                 lesson={activeLesson}
@@ -587,52 +636,56 @@ export default function Lessons() {
               <div ref={activeLessonContentRef} className='w-full flex flex-col items-center gap-4'>
                 {shouldRenderLessonDocument && activeLessonDocument ? (
                   <div className='w-full max-w-5xl space-y-4'>
-                    <div className='rounded-[30px] border border-indigo-200/80 bg-white/92 p-5 shadow-lg'>
-                      <div className='flex flex-col gap-4 md:flex-row md:items-start md:justify-between'>
-                        <div>
-                          <div className='inline-flex rounded-full bg-sky-100 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-sky-700'>
-                            Lesson document
-                          </div>
-                          <h1 className='mt-3 text-3xl font-extrabold text-slate-900'>
-                            {activeLesson.title}
-                          </h1>
-                          <p className='mt-2 max-w-3xl text-sm text-slate-600'>
-                            {activeLesson.description}
-                          </p>
-                        </div>
+                    <KangurSummaryPanel
+                      accent='sky'
+                      className='rounded-[30px] shadow-lg'
+                      description={activeLesson.description}
+                      label='Lesson document'
+                      labelAccent='sky'
+                      padding='lg'
+                      title={activeLesson.title}
+                    >
+                      <div className='mt-4 flex justify-start md:justify-end'>
                         <KangurButton
                           type='button'
                           onClick={(): void => setActiveLessonId(null)}
                           size='md'
                           variant='secondary'
+                          data-doc-id='lessons_back_button'
                         >
                           Wroc do listy lekcji
                         </KangurButton>
                       </div>
-                    </div>
+                    </KangurSummaryPanel>
                     <KangurLessonDocumentRenderer document={activeLessonDocument} />
                   </div>
                 ) : activeLesson?.contentMode === 'document' && !hasActiveLessonDocumentContent ? (
-                  <div className='w-full max-w-3xl rounded-[30px] border border-amber-200 bg-white/92 p-6 text-center shadow-lg'>
-                    <div className='inline-flex rounded-full bg-amber-100 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-amber-700'>
-                      Lesson document
-                    </div>
-                    <h1 className='mt-4 text-3xl font-extrabold text-slate-900'>{activeLesson.title}</h1>
-                    <p className='mt-3 text-sm text-slate-600'>
-                      This lesson is set to use custom document content, but no document blocks have been saved yet.
-                    </p>
+                  <KangurSummaryPanel
+                    accent='amber'
+                    align='center'
+                    className='w-full max-w-3xl rounded-[30px] shadow-lg'
+                    description='This lesson is set to use custom document content, but no document blocks have been saved yet.'
+                    label='Lesson document'
+                    labelAccent='amber'
+                    padding='xl'
+                    title={activeLesson.title}
+                    tone='accent'
+                  >
                     <KangurButton
                       type='button'
                       onClick={(): void => setActiveLessonId(null)}
                       className='mt-5'
                       size='md'
                       variant='secondary'
+                      data-doc-id='lessons_back_button'
                     >
                       Wroc do listy lekcji
                     </KangurButton>
-                  </div>
+                  </KangurSummaryPanel>
                 ) : ActiveLessonComponent ? (
-                  <ActiveLessonComponent onBack={() => setActiveLessonId(null)} />
+                  <KangurLessonNavigationProvider onBack={() => setActiveLessonId(null)}>
+                    <ActiveLessonComponent />
+                  </KangurLessonNavigationProvider>
                 ) : null}
               </div>
 
@@ -645,6 +698,7 @@ export default function Lessons() {
                       className='flex-1 justify-start'
                       size='lg'
                       variant='secondary'
+                      data-doc-id='lessons_prev_next'
                     >
                       <ChevronLeft className='w-4 h-4 flex-shrink-0' />
                       <span>
@@ -660,6 +714,7 @@ export default function Lessons() {
                       className='flex-1 justify-end'
                       size='lg'
                       variant='secondary'
+                      data-doc-id='lessons_prev_next'
                     >
                       <span>
                         {next.emoji} {next.title}

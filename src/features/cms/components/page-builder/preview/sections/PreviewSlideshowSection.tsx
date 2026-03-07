@@ -2,10 +2,7 @@
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 
-import {
-  getSectionContainerClass,
-  getSectionStyles,
-} from '@/features/cms/public';
+import { getSectionContainerClass, getSectionStyles } from '@/features/cms/public';
 import { useCmsPageContext } from '@/features/cms/components/frontend/CmsPageContext';
 import { BlockContextProvider } from '@/features/cms/components/page-builder/preview/context/BlockContext';
 import { usePreviewEditorState } from '@/features/cms/components/page-builder/preview/context/PreviewEditorContext';

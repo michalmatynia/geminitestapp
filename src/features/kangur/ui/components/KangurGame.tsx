@@ -19,11 +19,15 @@ import {
   Q16Illustration,
 } from '@/features/kangur/ui/components/KangurIllustrations';
 import { useKangurGameContext } from '@/features/kangur/ui/context/KangurGameContext';
-import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
 import {
-  KANGUR_ACCENT_STYLES,
-  KANGUR_OPTION_CARD_CLASSNAME,
-} from '@/features/kangur/ui/design/tokens';
+  KangurButton,
+  KangurInfoCard,
+  KangurOptionCardButton,
+  KangurPanel,
+  KangurProgressBar,
+  KangurStatusChip,
+} from '@/features/kangur/ui/design/primitives';
+import { KANGUR_ACCENT_STYLES, type KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { getKangurQuestions, isExamMode } from '@/features/kangur/ui/services/kangur-questions';
 import { XP_REWARDS, addXp, loadProgress } from '@/features/kangur/ui/services/progress';
 import type { KangurExamQuestion, KangurQuestionChoice } from '@/features/kangur/ui/types';
@@ -84,12 +88,13 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
   return (
     <div className='flex flex-col gap-4 w-full'>
       <div className='flex items-center gap-2'>
-        <div className='flex-1 h-2 bg-gray-100 rounded-full overflow-hidden'>
-          <div
-            style={{ width: `${(qIndex / total) * 100}%` }}
-            className='h-full bg-gradient-to-r from-orange-400 to-yellow-400 rounded-full transition-all duration-500'
-          />
-        </div>
+        <KangurProgressBar
+          accent='amber'
+          className='flex-1'
+          data-testid='kangur-game-progress-bar'
+          size='sm'
+          value={(qIndex / total) * 100}
+        />
         <span className='text-xs font-bold text-gray-400'>
           {qIndex + 1}/{total}
         </span>
@@ -101,9 +106,9 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
             Pytanie {qIndex + 1}
           </p>
           {q.id.startsWith('2024_') && (
-            <span className='text-xs font-bold bg-green-100 text-green-700 border border-green-300 rounded-full px-2 py-0.5'>
+            <KangurStatusChip accent='emerald' data-testid='kangur-game-point-chip' size='sm'>
               ⭐ 3 pkt (łatwe)
-            </span>
+            </KangurStatusChip>
           )}
         </div>
         <p className='text-gray-800 font-semibold leading-relaxed'>{q.question}</p>
@@ -114,71 +119,85 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
               return null;
             }
             return (
-              <div className='bg-gray-50 rounded-xl p-3 border border-gray-100'>
+              <KangurInfoCard
+                accent='slate'
+                className='rounded-[22px]'
+                data-testid='kangur-game-illustration-shell'
+                padding='sm'
+                tone='muted'
+              >
                 <Illustration />
-              </div>
+              </KangurInfoCard>
             );
           })()}
       </KangurPanel>
 
       <div className='flex flex-col gap-2'>
         {choices.map((choice, index) => {
-          let style = cn('border-slate-200/80 text-slate-700', KANGUR_ACCENT_STYLES.slate.hoverCard);
+          let accent: KangurAccent = 'slate';
+          let emphasis: 'neutral' | 'accent' = 'neutral';
+          let state: 'default' | 'muted' = 'default';
+          let style = 'text-slate-700';
           let badgeClassName = KANGUR_ACCENT_STYLES.slate.badge;
           if (confirmed) {
             if (choice === q.answer) {
-              style = cn(
-                KANGUR_ACCENT_STYLES.emerald.activeCard,
-                KANGUR_ACCENT_STYLES.emerald.activeText
-              );
+              accent = 'emerald';
+              emphasis = 'accent';
+              style = KANGUR_ACCENT_STYLES.emerald.activeText;
               badgeClassName = KANGUR_ACCENT_STYLES.emerald.badge;
             } else if (choice === selected) {
-              style = cn(
-                KANGUR_ACCENT_STYLES.rose.activeCard,
-                KANGUR_ACCENT_STYLES.rose.activeText
-              );
+              accent = 'rose';
+              emphasis = 'accent';
+              style = KANGUR_ACCENT_STYLES.rose.activeText;
               badgeClassName = KANGUR_ACCENT_STYLES.rose.badge;
             } else {
-              style = 'border-slate-200/80 bg-white/92 text-slate-400 opacity-70';
+              state = 'muted';
+              style = '';
               badgeClassName = KANGUR_ACCENT_STYLES.slate.badge;
             }
           } else if (choice === selected) {
-            style = cn(
-              KANGUR_ACCENT_STYLES.amber.activeCard,
-              KANGUR_ACCENT_STYLES.amber.activeText
-            );
+            accent = 'amber';
+            emphasis = 'accent';
+            style = KANGUR_ACCENT_STYLES.amber.activeText;
             badgeClassName = KANGUR_ACCENT_STYLES.amber.badge;
           }
 
           return (
-            <motion.button
+            <motion.div
               key={`${String(choice)}-${index}`}
               whileHover={!confirmed ? { scale: 1.02 } : {}}
               whileTap={!confirmed ? { scale: 0.98 } : {}}
-              onClick={() => handleSelect(choice)}
-              className={cn(
-                KANGUR_OPTION_CARD_CLASSNAME,
-                'w-full rounded-[24px] px-4 py-3 font-semibold transition-all flex items-center gap-3',
-                style
-              )}
-              data-testid={`kangur-game-choice-${index}`}
             >
-              <span
+              <KangurOptionCardButton
+                accent={accent}
                 className={cn(
-                  'flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-sm font-extrabold',
-                  badgeClassName
+                  'w-full rounded-[24px] px-4 py-3 font-semibold transition-all flex items-center gap-3',
+                  style,
+                  confirmed ? 'cursor-default' : 'cursor-pointer'
                 )}
+                data-testid={`kangur-game-choice-${index}`}
+                emphasis={emphasis}
+                onClick={() => handleSelect(choice)}
+                state={state}
+                type='button'
               >
-                {String.fromCharCode(65 + index)}
-              </span>
-              <span>{choice}</span>
-              {confirmed && choice === q.answer && (
-                <CheckCircle className='w-4 h-4 text-green-600 ml-auto flex-shrink-0' />
-              )}
-              {confirmed && choice === selected && choice !== q.answer && (
-                <XCircle className='w-4 h-4 text-red-500 ml-auto flex-shrink-0' />
-              )}
-            </motion.button>
+                <span
+                  className={cn(
+                    'flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-sm font-extrabold',
+                    badgeClassName
+                  )}
+                >
+                  {String.fromCharCode(65 + index)}
+                </span>
+                <span>{choice}</span>
+                {confirmed && choice === q.answer && (
+                  <CheckCircle className='w-4 h-4 text-green-600 ml-auto flex-shrink-0' />
+                )}
+                {confirmed && choice === selected && choice !== q.answer && (
+                  <XCircle className='w-4 h-4 text-red-500 ml-auto flex-shrink-0' />
+                )}
+              </KangurOptionCardButton>
+            </motion.div>
           );
         })}
       </div>
@@ -187,9 +206,16 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className='bg-blue-50 border border-blue-200 rounded-xl p-3 text-sm text-blue-800'
         >
-          💡 {q.explanation}
+          <KangurInfoCard
+            accent='sky'
+            className='rounded-[22px] text-sm'
+            data-testid='kangur-game-explanation'
+            padding='sm'
+            tone='accent'
+          >
+            💡 {q.explanation}
+          </KangurInfoCard>
         </motion.div>
       )}
 
@@ -214,11 +240,7 @@ function ResultView({ score, total, onRestart }: ResultViewProps): React.JSX.Ele
   const emoji = pct === 100 ? '🏆' : pct >= 70 ? '🌟' : pct >= 40 ? '👍' : '💪';
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className='w-full'
-    >
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className='w-full'>
       <KangurPanel
         className='flex flex-col items-center gap-4 text-center'
         padding='xl'
@@ -237,14 +259,13 @@ function ResultView({ score, total, onRestart }: ResultViewProps): React.JSX.Ele
                 ? 'Dobra robota! Ćwicz dalej!'
                 : 'Nie poddawaj się! Spróbuj jeszcze raz!'}
         </p>
-        <div className='w-full bg-gray-100 rounded-full h-4 overflow-hidden'>
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${pct}%` }}
-            transition={{ duration: 0.8 }}
-            className='h-full bg-gradient-to-r from-orange-400 to-yellow-400 rounded-full'
-          />
-        </div>
+        <KangurProgressBar
+          accent='amber'
+          animated
+          data-testid='kangur-game-summary-progress-bar'
+          size='lg'
+          value={pct}
+        />
         <p className='text-sm text-gray-400'>{pct}% poprawnych odpowiedzi</p>
         <div className='flex w-full gap-3'>
           <KangurButton className='flex-1' onClick={onBack} size='lg' variant='secondary'>

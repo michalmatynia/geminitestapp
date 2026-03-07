@@ -4,7 +4,10 @@ import {
   appendKangurUrlParams,
   buildKangurEmbeddedBasePath,
   getKangurPageHref,
+  getKangurInternalQueryParamKeys,
+  getKangurInternalQueryParamName,
   normalizeKangurRequestedPath,
+  readKangurUrlParam,
   resolveKangurPageKeyFromSlug,
 } from '@/features/kangur/config/routing';
 
@@ -29,9 +32,62 @@ describe('kangur routing config', () => {
     const embeddedBasePath = buildKangurEmbeddedBasePath('/home?preview=1');
 
     expect(
-      appendKangurUrlParams(getKangurPageHref('Lessons', embeddedBasePath), {
-        focus: 'division',
-      })
+      appendKangurUrlParams(
+        getKangurPageHref('Lessons', embeddedBasePath),
+        {
+          focus: 'division',
+        },
+        embeddedBasePath
+      )
     ).toBe('/home?preview=1&kangur=lessons&focus=division');
+  });
+
+  it('namespaces embedded cms query params when a block scope key is provided', () => {
+    const embeddedBasePath = buildKangurEmbeddedBasePath('/home?preview=1', 'home-kangur-hero');
+
+    expect(getKangurPageHref('Lessons', embeddedBasePath)).toBe(
+      '/home?preview=1&kangur-home-kangur-hero=lessons'
+    );
+    expect(
+      appendKangurUrlParams(
+        getKangurPageHref('Lessons', embeddedBasePath),
+        { focus: 'division' },
+        embeddedBasePath
+      )
+    ).toBe(
+      '/home?preview=1&kangur-home-kangur-hero=lessons&kangur-home-kangur-hero-focus=division'
+    );
+    expect(normalizeKangurRequestedPath(['parent-dashboard'], embeddedBasePath)).toBe(
+      '/home?preview=1&kangur-home-kangur-hero=parent-dashboard'
+    );
+    expect(getKangurInternalQueryParamName('focus', embeddedBasePath)).toBe(
+      'kangur-home-kangur-hero-focus'
+    );
+    expect(getKangurInternalQueryParamKeys(embeddedBasePath)).toEqual([
+      'kangur-home-kangur-hero',
+      'kangur-home-kangur-hero-focus',
+      'kangur-home-kangur-hero-quickStart',
+      'kangur-home-kangur-hero-operation',
+      'kangur-home-kangur-hero-difficulty',
+      'kangur-home-kangur-hero-categories',
+      'kangur-home-kangur-hero-count',
+    ]);
+    expect(
+      readKangurUrlParam(
+        new URLSearchParams(
+          'kangur-home-kangur-hero=lessons&kangur-home-kangur-hero-focus=division'
+        ),
+        'focus',
+        embeddedBasePath
+      )
+    ).toBe('division');
+  });
+
+  it('falls back to legacy unscoped query params for scoped embedded routes', () => {
+    const embeddedBasePath = buildKangurEmbeddedBasePath('/home?preview=1', 'home-kangur-hero');
+    const legacySearchParams = new URLSearchParams('kangur=lessons&focus=division');
+
+    expect(readKangurUrlParam(legacySearchParams, 'kangur', embeddedBasePath)).toBe('lessons');
+    expect(readKangurUrlParam(legacySearchParams, 'focus', embeddedBasePath)).toBe('division');
   });
 });

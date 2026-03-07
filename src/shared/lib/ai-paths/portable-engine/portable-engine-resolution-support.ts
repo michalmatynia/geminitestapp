@@ -110,7 +110,13 @@ export const validatePayloadObjectSafety = (
       if (UNSAFE_OBJECT_KEYS.has(key)) {
         return `Payload contains unsafe key "${key}" at ${path}.`;
       }
-      const issue = validatePayloadObjectSafety(record[key], limits, depth + 1, `${path}.${key}`, ancestors);
+      const issue = validatePayloadObjectSafety(
+        record[key],
+        limits,
+        depth + 1,
+        `${path}.${key}`,
+        ancestors
+      );
       if (issue) return issue;
     }
     return null;

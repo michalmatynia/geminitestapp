@@ -1,20 +1,13 @@
 import 'server-only';
 
-import {
-  normalizeNodes,
-  sanitizeEdges,
-} from '@/shared/lib/ai-paths';
+import { normalizeNodes, sanitizeEdges } from '@/shared/lib/ai-paths';
 import { resolveAiPathsRuntimeValidationMiddleware } from '@/shared/lib/ai-paths/core/validation-engine';
 import { evaluateGraphWithIteratorAutoContinue } from '@/shared/lib/ai-paths/core/runtime/engine-server';
 import { GraphExecutionCancelled } from '@/shared/lib/ai-paths/core/runtime/engine-core';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
-import {
-  getAiPathsRuntimeFingerprint,
-} from '@/features/ai/ai-paths/services/runtime-fingerprint';
+import { getAiPathsRuntimeFingerprint } from '@/features/ai/ai-paths/services/runtime-fingerprint';
 import { publishRunUpdate } from '@/features/ai/ai-paths/services/run-stream-publisher';
-import {
-  recordRuntimeRunFinished,
-} from '@/features/ai/ai-paths/services/runtime-analytics-service';
+import { recordRuntimeRunFinished } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
   AiPathRunNodeRecord,
@@ -32,7 +25,7 @@ import { fetchEntityByType } from '../path-run-executor.entities';
 import { createCancellationMonitor } from '../path-run-executor.monitoring';
 import {
   buildRuntimeProfileSnapshot,
-  buildSkipSet,
+  buildResumePlan,
   computeDurationMs,
   mergeRuntimePortMaps,
   resolveTriggerNodeId,
@@ -143,7 +136,7 @@ export const executePathRun = async (
   const edges = sanitizeEdges(nodes, run.graph?.edges ?? []);
   const triggerNodeId =
     resolveTriggerNodeId(nodes, edges, run.triggerEvent, run.triggerNodeId) ?? null;
-  const runtimeState = (run.runtimeState as any);
+  const runtimeState = ((run.runtimeState ?? {}) as RuntimeState) || ({} as RuntimeState);
   const runMetaRecord = normalizeAiPathRunRuntimeKernelMetadataForRuntimeRead(run.meta).meta;
 
   const {
@@ -167,7 +160,6 @@ export const executePathRun = async (
     {},
     runtimeState.outputs ?? {}
   );
-
   let resolvedRunStartedAt = runStartedAt;
 
   const stateManager = new PathRunRuntimeStateManager(
@@ -206,7 +198,7 @@ export const executePathRun = async (
     await saveIntermediateState();
   };
 
-  const runMetaWithRuntimeFingerprint = (runMetaRecord as any);
+  const runMetaWithRuntimeFingerprint = runMetaRecord ?? {};
   const baseRuntimeTraceRecord =
     runMetaWithRuntimeFingerprint['runtimeTrace'] &&
     typeof runMetaWithRuntimeFingerprint['runtimeTrace'] === 'object' &&
@@ -217,7 +209,6 @@ export const executePathRun = async (
     ...runMetaWithRuntimeFingerprint,
     runtimeKernel: runtimeKernelExecutionTelemetry,
   };
-
   const { upsertRuntimeTraceSpan, syncRuntimeTraceMeta } = createTracing({
     run,
     traceId,
@@ -228,7 +219,7 @@ export const executePathRun = async (
     baseRuntimeTraceRecord,
   });
 
-  const { reportAiPathsError } = createErrorReporting({
+  const { reportAiPathsError: reportAiPathsErrorAsync } = createErrorReporting({
     run,
     repo,
     traceId,
@@ -236,6 +227,24 @@ export const executePathRun = async (
     runStartedAt,
     runtimeKernelExecutionTelemetry,
   });
+  const reportAiPathsError = (
+    error: unknown,
+    meta: Record<string, unknown>,
+    summary?: string
+  ): void => {
+    reportAiPathsErrorAsync(error, meta, summary).catch(() => {});
+  };
+
+  const nodeRecords = await repo.listRunNodes(run.id);
+  const nodeRecordById = new Map(nodeRecords.map((r) => [r.nodeId, r]));
+  const nodeStatusMap = new Map<string, string>(
+    nodeRecords.map((record: AiPathRunNodeRecord) => [record.nodeId, record.status])
+  );
+  const {
+    skipNodeIds: skipNodes,
+    resumeByNodeId,
+    sourceHistoryByNodeId,
+  } = buildResumePlan(run, edges, nodeStatusMap, runtimeState);
 
   const callbacks = createCallbacks({
     run,
@@ -251,25 +260,25 @@ export const executePathRun = async (
     accInputs,
     accOutputs,
     logNodeStartEvents: LOG_NODE_START_EVENTS,
+    resumeByNodeId,
+    appendRuntimeHistoryEntry: (nodeId, entry) => {
+      stateManager.appendHistoryEntry(nodeId, entry);
+    },
+    setRuntimeNodeStatus: (nodeId, status) => {
+      stateManager.setNodeStatus(nodeId, status);
+    },
   });
 
   syncRuntimeTraceMeta();
-
-  const nodeRecords = await repo.listRunNodes(run.id);
-  const nodeStatusMap = new Map<string, string>(
-    nodeRecords.map((record: AiPathRunNodeRecord) => [record.nodeId, record.status])
-  );
-  const skipNodes = buildSkipSet(run, edges, nodeStatusMap);
   const toast = (): void => {};
 
   try {
-    if (
-      runMetaRecord?.['runtimeFingerprint'] !== runtimeFingerprint
-    ) {
+    if (runMetaRecord?.['runtimeFingerprint'] !== runtimeFingerprint) {
       await updateRunSnapshot({
         meta: runMetaWithRuntimeContext,
       });
     }
+
     if (runtimeKernelMissingCodeObjectResolverIds.length > 0) {
       await repo.createRunEvent({
         runId: run.id,
@@ -296,7 +305,6 @@ export const executePathRun = async (
       runStartedAt,
       traceId,
     });
-
     const {
       validationConfig,
       strictFlowMode,
@@ -311,10 +319,37 @@ export const executePathRun = async (
       nodes,
       edges,
     });
-
     const canceledBeforeExecution = await monitor.start();
     if (canceledBeforeExecution) {
       return;
+    }
+
+    for (const node of nodes) {
+      if (!skipNodes.has(node.id)) continue;
+      const resume = resumeByNodeId.get(node.id);
+      if (!resume) continue;
+      const sourceHistory = sourceHistoryByNodeId.get(node.id) ?? null;
+      const previousAttempt =
+        typeof sourceHistory?.attempt === 'number'
+          ? sourceHistory.attempt
+          : (nodeRecordById.get(node.id)?.attempt ?? 0);
+      const attempt = Math.max(previousAttempt, 0) + 1;
+      await callbacks.recordNodeReuse({
+        node,
+        spanId: `resume-${node.id}-${attempt}-1`,
+        iteration: 1,
+        attempt,
+        nodeInputs:
+          (runtimeState.inputs?.[node.id] as RuntimePortValues | undefined) ??
+          sourceHistory?.inputs ??
+          {},
+        nodeOutputs:
+          (runtimeState.outputs?.[node.id] as RuntimePortValues | undefined) ??
+          sourceHistory?.outputs ??
+          {},
+        resume,
+        sourceHistory,
+      });
     }
 
     let runtimeHaltReason:
@@ -332,25 +367,26 @@ export const executePathRun = async (
       activePathName: run.pathName ?? null,
       runId: run.id,
       runStartedAt,
-      runMeta: run.meta as any,
+      runMeta: run.meta as Record<string, unknown>,
       ...(triggerNodeId ? { triggerNodeId } : {}),
       ...(run.triggerEvent ? { triggerEvent: run.triggerEvent } : {}),
       ...(run.triggerContext ? { triggerContext: run.triggerContext } : {}),
       strictFlowMode,
-      seedOutputs: (runtimeState as any).outputs,
-      seedHashes: (runtimeState as any).hashes,
-      seedHashTimestamps: (runtimeState as any).hashTimestamps,
-      seedHistory: (runtimeState as any).history,
-      seedRunId: (runtimeState as any).currentRun?.id ?? undefined,
-      seedRunStartedAt: (runtimeState as any).currentRun?.startedAt ?? undefined,
+      seedOutputs: runtimeState.outputs,
+      seedHashes: runtimeState.hashes,
+      seedHashTimestamps: runtimeState.hashTimestamps,
+      seedHistory: runtimeState.history,
+      seedRunId: runtimeState.currentRun?.id ?? undefined,
+      seedRunStartedAt: runtimeState.currentRun?.startedAt ?? undefined,
+      resumeByNodeId: Object.fromEntries(resumeByNodeId),
       recordHistory: true,
-      historyLimit: (run.meta as any)?.['historyRetentionPasses'] ?? 20,
+      historyLimit:
+        ((run.meta as Record<string, unknown>)?.['historyRetentionPasses'] as number) ?? 20,
       skipNodeIds: Array.from(skipNodes),
       fetchEntityByType,
-      reportAiPathsError: (error: unknown, meta: Record<string, unknown>, summary?: string) => {
-        void reportAiPathsError(error, meta, summary);
-      },
+      reportAiPathsError,
       toast,
+
       profile: {
         onEvent: (event): void => {
           profiling.captureRuntimeProfileEvent(event);
@@ -394,7 +430,7 @@ export const executePathRun = async (
             },
           });
         } catch (error) {
-          void reportAiPathsError(error, {
+          reportAiPathsError(error, {
             action: 'onRuntimeValidation',
             stage,
             nodeId: node?.id ?? null,
@@ -439,7 +475,7 @@ export const executePathRun = async (
     });
 
     const finishedAt = new Date().toISOString();
-    void recordRuntimeRunFinished({
+    recordRuntimeRunFinished({
       runId: run.id,
       status: finalStatus as 'completed' | 'failed' | 'canceled' | 'dead_lettered',
       durationMs: computeDurationMs(runStartedAt, finishedAt) ?? undefined,
@@ -455,7 +491,7 @@ export const executePathRun = async (
     const errorMessage = error instanceof Error ? error.message : String(error);
 
     await updateRunSnapshot({
-      status: (status as any),
+      status: status as AiPathRunRecord['status'],
       runtimeState: finalRuntimeState,
       errorMessage,
       meta: {
@@ -468,6 +504,7 @@ export const executePathRun = async (
     if (!isCancelled) {
       void ErrorSystem.captureException(error, {
         service: 'ai-paths-executor',
+
         action: 'executePathRun',
         runId: run.id,
       });

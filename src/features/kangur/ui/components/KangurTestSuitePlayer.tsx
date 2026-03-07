@@ -5,7 +5,14 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
 
 import type { KangurTestQuestion, KangurTestSuite } from '@/shared/contracts/kangur-tests';
-import { KangurButton } from '@/features/kangur/ui/design/primitives';
+import {
+  KangurButton,
+  KangurEmptyState,
+  KangurInfoCard,
+  KangurProgressBar,
+  KangurSummaryPanel,
+} from '@/features/kangur/ui/design/primitives';
+import { KangurTestSuiteRuntimeProvider } from '@/features/kangur/ui/context/KangurTestSuiteRuntimeContext';
 import { KangurTestQuestionRenderer } from './KangurTestQuestionRenderer';
 
 type Props = {
@@ -23,38 +30,56 @@ type SummaryProps = {
   onRestart: () => void;
 };
 
-function ExamSummary({ suite, questions, answers, score, maxScore, onRestart }: SummaryProps): React.JSX.Element {
+function ExamSummary({
+  suite,
+  questions,
+  answers,
+  score,
+  maxScore,
+  onRestart,
+}: SummaryProps): React.JSX.Element {
   const pct = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
 
   return (
     <div className='space-y-6'>
-      <div className='rounded-2xl border border-indigo-200 bg-indigo-50 p-6 text-center'>
-        <div className='text-3xl font-extrabold text-indigo-700'>
-          {score} / {maxScore} pts
-        </div>
+      <KangurSummaryPanel
+        accent='indigo'
+        align='center'
+        data-testid='kangur-test-suite-summary'
+        label='Wynik'
+        padding='lg'
+        title={`${score} / ${maxScore} pts`}
+        tone='accent'
+      >
         <div className='mt-1 text-lg font-semibold text-indigo-600'>{pct}%</div>
         <div className='mt-2 text-sm text-indigo-500'>{suite.title}</div>
-      </div>
+      </KangurSummaryPanel>
 
       <div className='space-y-4'>
         {questions.map((q, i) => {
           const selected = answers[q.id] ?? null;
           return (
-            <div key={q.id} className='rounded-xl border border-border/50 p-4'>
+            <KangurInfoCard key={q.id} accent='slate' className='rounded-[24px]' padding='md'>
               <KangurTestQuestionRenderer
                 question={q}
                 selectedLabel={selected}
                 onSelect={(): void => {}}
                 showAnswer={true}
                 questionIndex={i}
-                totalQuestions={questions.length}
               />
-            </div>
+            </KangurInfoCard>
           );
         })}
       </div>
 
-      <KangurButton type='button' onClick={onRestart} fullWidth size='lg' variant='secondary'>
+      <KangurButton
+        type='button'
+        onClick={onRestart}
+        fullWidth
+        size='lg'
+        variant='secondary'
+        data-doc-id='tests_suite_player'
+      >
         <RotateCcw className='size-4' />
         Try again
       </KangurButton>
@@ -107,92 +132,102 @@ export function KangurTestSuitePlayer({ suite, questions, onFinish }: Props): Re
     setShowAnswer(false);
     setFinished(false);
   };
+  const totalQuestions = questions.length;
 
-  if (questions.length === 0) {
+  if (totalQuestions === 0) {
     return (
-      <div className='rounded-xl border border-dashed border-border/60 p-8 text-center text-sm text-muted-foreground'>
-        This test suite has no questions yet.
-      </div>
+      <KangurEmptyState
+        accent='slate'
+        data-testid='kangur-test-suite-empty'
+        padding='xl'
+        title='This test suite has no questions yet.'
+      />
     );
   }
 
   if (finished) {
     return (
-      <ExamSummary
-        suite={suite}
-        questions={questions}
-        answers={answers}
-        score={score}
-        maxScore={maxScore}
-        onRestart={handleRestart}
-      />
+      <KangurTestSuiteRuntimeProvider totalQuestions={totalQuestions}>
+        <ExamSummary
+          suite={suite}
+          questions={questions}
+          answers={answers}
+          score={score}
+          maxScore={maxScore}
+          onRestart={handleRestart}
+        />
+      </KangurTestSuiteRuntimeProvider>
     );
   }
 
   return (
-    <div className='space-y-4'>
-      {/* Progress bar */}
-      <div className='flex items-center gap-3'>
-        <div className='flex-1 rounded-full bg-gray-200 h-1.5'>
-          <div
-            className='h-1.5 rounded-full bg-indigo-500 transition-all'
-            style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
+    <KangurTestSuiteRuntimeProvider totalQuestions={totalQuestions}>
+      <div className='space-y-4'>
+        {/* Progress bar */}
+        <div className='flex items-center gap-3'>
+          <KangurProgressBar
+            accent='indigo'
+            className='flex-1'
+            data-testid='kangur-test-suite-progress-bar'
+            size='sm'
+            value={((currentIndex + 1) / totalQuestions) * 100}
           />
+          <span className='text-xs font-medium text-gray-500'>
+            {currentIndex + 1}/{totalQuestions}
+          </span>
         </div>
-        <span className='text-xs font-medium text-gray-500'>
-          {currentIndex + 1}/{questions.length}
-        </span>
-      </div>
 
-      {/* Question */}
-      <AnimatePresence mode='wait'>
-        <motion.div
-          key={currentIndex}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          transition={{ duration: 0.2 }}
-        >
-          {currentQuestion ? (
-            <KangurTestQuestionRenderer
-              question={currentQuestion}
-              selectedLabel={selectedLabel}
-              onSelect={handleSelect}
-              showAnswer={showAnswer}
-              questionIndex={currentIndex}
-              totalQuestions={questions.length}
-            />
-          ) : null}
-        </motion.div>
-      </AnimatePresence>
+        {/* Question */}
+        <AnimatePresence mode='wait'>
+          <motion.div
+            key={currentIndex}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.2 }}
+          >
+            {currentQuestion ? (
+              <KangurTestQuestionRenderer
+                question={currentQuestion}
+                selectedLabel={selectedLabel}
+                onSelect={handleSelect}
+                showAnswer={showAnswer}
+                questionIndex={currentIndex}
+              />
+            ) : null}
+          </motion.div>
+        </AnimatePresence>
 
-      {/* Navigation */}
-      <div className='flex items-center justify-between pt-2'>
-        <KangurButton
-          type='button'
-          onClick={handlePrev}
-          disabled={currentIndex === 0}
-          size='sm'
-          variant='secondary'
-        >
-          <ChevronLeft className='size-4' />
-          Previous
-        </KangurButton>
-
-        {isAnswered ? (
+        {/* Navigation */}
+        <div className='flex items-center justify-between pt-2'>
           <KangurButton
             type='button'
-            onClick={handleNext}
+            onClick={handlePrev}
+            disabled={currentIndex === 0}
             size='sm'
-            variant='primary'
+            variant='secondary'
+            data-doc-id='tests_suite_player'
           >
-            {currentIndex < questions.length - 1 ? 'Next' : 'Finish'}
-            <ChevronRight className='size-4' />
+            <ChevronLeft className='size-4' />
+            Previous
           </KangurButton>
-        ) : (
-          <div className='text-xs text-gray-400'>Select an answer to continue</div>
-        )}
+
+          {isAnswered ? (
+            <KangurButton
+              type='button'
+              onClick={handleNext}
+              size='sm'
+              variant='primary'
+              data-doc-id='tests_suite_player'
+            >
+              {currentIndex < totalQuestions - 1 ? 'Next' : 'Finish'}
+              <ChevronRight className='size-4' />
+            </KangurButton>
+          ) : (
+            <div className='text-xs text-gray-400'>Select an answer to continue</div>
+          )}
+        </div>
       </div>
-    </div>
+    </KangurTestSuiteRuntimeProvider>
   );
 }

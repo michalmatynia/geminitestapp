@@ -26,15 +26,29 @@ describe('KangurExam', () => {
     useKangurGameContextMock.mockReturnValue({ mode: 'junior' });
     getKangurQuestionsMock.mockReturnValue([
       {
-        id: 'q-1',
+        id: '2024_1',
         question: 'Ile to jest 2 + 2?',
         choices: ['3', '4', '5', '6'],
         answer: '4',
+        explanation: '2 + 2 daje 4.',
       },
     ]);
 
     render(<KangurExam />);
 
+    expect(screen.getByTestId('kangur-exam-question-shell')).toHaveClass(
+      'soft-card',
+      'border-slate-200/80'
+    );
+    expect(screen.getByTestId('kangur-exam-progress-bar')).toHaveAttribute('aria-valuenow', '0');
+    expect(screen.getByTestId('kangur-exam-question-point-chip')).toHaveClass(
+      'border-amber-200',
+      'bg-amber-100'
+    );
+    expect(screen.getByTestId('kangur-exam-question-illustration')).toHaveClass(
+      'soft-card',
+      'border-slate-200/80'
+    );
     expect(screen.getByRole('button', { name: /poprzednie/i })).toHaveClass(
       'kangur-cta-pill',
       'soft-cta'
@@ -51,8 +65,15 @@ describe('KangurExam', () => {
       'kangur-cta-pill',
       'soft-cta'
     );
+    expect(screen.getByTestId('kangur-exam-summary-shell')).toHaveClass('glass-panel');
+    expect(screen.getByTestId('kangur-exam-summary-progress-bar')).toHaveAttribute(
+      'aria-valuenow',
+      '100'
+    );
 
-    const reviewButton = screen.getAllByRole('button').find((button) => button.textContent?.includes('#1'));
+    const reviewButton = screen
+      .getAllByRole('button')
+      .find((button) => button.textContent?.includes('#1'));
     expect(reviewButton).toBeDefined();
 
     await userEvent.click(reviewButton!);
@@ -68,6 +89,22 @@ describe('KangurExam', () => {
     expect(screen.getByRole('button', { name: /nastepne pytanie w podgladzie/i })).toHaveClass(
       'kangur-cta-pill',
       'soft-cta'
+    );
+    expect(screen.getByTestId('kangur-exam-review-shell')).toHaveClass(
+      'soft-card',
+      'border-slate-200/80'
+    );
+    expect(screen.getByTestId('kangur-exam-review-point-chip')).toHaveClass(
+      'border-amber-200',
+      'bg-amber-100'
+    );
+    expect(screen.getByTestId('kangur-exam-review-illustration')).toHaveClass(
+      'soft-card',
+      'border-slate-200/80'
+    );
+    expect(screen.getByTestId('kangur-exam-review-explanation')).toHaveClass(
+      'soft-card',
+      'border-sky-300'
     );
   });
 });

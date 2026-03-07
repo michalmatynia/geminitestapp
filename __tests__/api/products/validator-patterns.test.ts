@@ -13,9 +13,13 @@ const repositoryMock = vi.hoisted(() => ({
   deletePattern: vi.fn(),
 }));
 
-vi.mock('@/features/products/server', () => ({
-  getValidationPatternRepository: vi.fn(async () => repositoryMock),
-}));
+vi.mock('@/features/products/server', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/products/server')>();
+  return {
+    ...actual,
+    getValidationPatternRepository: vi.fn(async () => repositoryMock),
+  };
+});
 
 describe('validator-pattern routes', () => {
   beforeEach(() => {

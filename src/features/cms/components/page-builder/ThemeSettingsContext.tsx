@@ -37,8 +37,10 @@ const ThemeSettingsActionsContext = createContext<ThemeSettingsActionsContextVal
 );
 
 export function ThemeSettingsProvider({
+  storageKey = CMS_THEME_SETTINGS_KEY,
   children,
 }: {
+  storageKey?: string;
   children: React.ReactNode;
 }): React.ReactNode {
   const settingsStore = useSettingsStore();
@@ -46,7 +48,7 @@ export function ThemeSettingsProvider({
   const hasHydratedRef = useRef(false);
   const persistTimerRef = useRef<number | null>(null);
   const settingsReady = !settingsStore.isLoading && !settingsStore.error;
-  const themeSettingsRaw = settingsStore.get(CMS_THEME_SETTINGS_KEY);
+  const themeSettingsRaw = settingsStore.get(storageKey);
 
   const initialTheme = useMemo((): ThemeSettings => {
     if (!settingsReady) return DEFAULT_THEME;
@@ -73,9 +75,9 @@ export function ThemeSettingsProvider({
     if (persistTimerRef.current) window.clearTimeout(persistTimerRef.current);
     persistTimerRef.current = window.setTimeout(() => {
       lastSavedRef.current = nextSerialized;
-      updateSetting.mutate({ key: CMS_THEME_SETTINGS_KEY, value: nextSerialized });
+      updateSetting.mutate({ key: storageKey, value: nextSerialized });
     }, 500);
-  }, [userTheme, updateSetting]);
+  }, [storageKey, userTheme, updateSetting]);
 
   useEffect((): (() => void) => {
     return (): void => {

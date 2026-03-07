@@ -72,10 +72,7 @@ const parsePayload = (raw: string | undefined): KangurLearnerSessionPayload | nu
   }
 };
 
-const buildCookieValue = (input: {
-  value: string;
-  maxAge: number;
-}): string => {
+const buildCookieValue = (input: { value: string; maxAge: number }): string => {
   const parts = [
     `${COOKIE_NAME}=${input.value}`,
     'Path=/',
@@ -91,8 +88,7 @@ const buildCookieValue = (input: {
 
 export const readKangurLearnerSession = (
   request: NextRequest
-): KangurLearnerSessionPayload | null =>
-  parsePayload(request.cookies.get(COOKIE_NAME)?.value);
+): KangurLearnerSessionPayload | null => parsePayload(request.cookies.get(COOKIE_NAME)?.value);
 
 export const setKangurLearnerSession = (
   response: NextResponse,
@@ -107,9 +103,11 @@ export const setKangurLearnerSession = (
     exp: Date.now() + COOKIE_TTL_MS,
   });
   const maxAge = Math.floor(COOKIE_TTL_MS / 1000);
-  const cookies = (response as NextResponse & {
-    cookies?: { set?: (value: Record<string, unknown>) => void };
-  }).cookies;
+  const cookies = (
+    response as NextResponse & {
+      cookies?: { set?: (value: Record<string, unknown>) => void };
+    }
+  ).cookies;
   if (cookies?.set) {
     cookies.set({
       name: COOKIE_NAME,
@@ -133,9 +131,11 @@ export const setKangurLearnerSession = (
 };
 
 export const clearKangurLearnerSession = (response: NextResponse): void => {
-  const cookies = (response as NextResponse & {
-    cookies?: { set?: (value: Record<string, unknown>) => void };
-  }).cookies;
+  const cookies = (
+    response as NextResponse & {
+      cookies?: { set?: (value: Record<string, unknown>) => void };
+    }
+  ).cookies;
   if (cookies?.set) {
     cookies.set({
       name: COOKIE_NAME,

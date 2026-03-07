@@ -137,11 +137,9 @@ type MongoGlobalState = {
 const globalForMongo = globalThis as typeof globalThis & MongoGlobalState;
 
 const getMongoClientCtor = (): { MongoClient: MongoClientCtor } => {
-  // Turbopack currently struggles to bundle the MongoDB driver (Node built-ins like tls, timers/promises).
-  // Use a runtime require with a non-literal specifier to keep it out of the bundler graph.
+  // Keep the driver as a runtime require so server bundles don't try to inline MongoDB internals.
   const requireFn = createRequire(import.meta.url);
-  const pkgName = 'mon' + 'godb';
-  return requireFn(pkgName) as { MongoClient: MongoClientCtor };
+  return requireFn('mongodb') as { MongoClient: MongoClientCtor };
 };
 
 const getMongoUri = (): string => {

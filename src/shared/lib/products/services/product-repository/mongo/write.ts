@@ -1,11 +1,12 @@
- 
- 
- 
-
 import { randomUUID } from 'crypto';
 import { Collection, UpdateFilter, WithId } from 'mongodb';
 import { ProductDocument, toProductResponse } from '../mongo-product-repository-mappers';
-import { ProductCreateInput, ProductUpdateInput, ProductRecord, ProductWithImages } from '@/shared/contracts/products';
+import {
+  ProductCreateInput,
+  ProductUpdateInput,
+  ProductRecord,
+  ProductWithImages,
+} from '@/shared/contracts/products';
 import {
   buildProductIdFilter,
   normalizeProductParameterValues,
@@ -169,7 +170,17 @@ export const mongoProductWriteImpl = {
     const product = await getProductById(id);
     if (!product) return null;
 
-    const { id: _id, createdAt: _c, updatedAt: _u, sku: _s, images: _i, catalogs: _cat, tags: _t, producers: _p, ...rest } = product;
+    const {
+      id: _id,
+      createdAt: _c,
+      updatedAt: _u,
+      sku: _s,
+      images: _i,
+      catalogs: _cat,
+      tags: _t,
+      producers: _p,
+      ...rest
+    } = product;
     return await createProduct({
       ...rest,
       sku: newSku,

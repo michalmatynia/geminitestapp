@@ -2,10 +2,15 @@ import Link from 'next/link';
 
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 import {
-  KangurLessonCallout,
-  KangurLessonChip,
-} from '@/features/kangur/ui/design/lesson-primitives';
-import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
+  KangurButton,
+  KangurDivider,
+  KangurEmptyState,
+  KangurInfoCard,
+  KangurPanel,
+  KangurProgressBar,
+  KangurStatusChip,
+  KangurSummaryPanel,
+} from '@/features/kangur/ui/design/primitives';
 import {
   buildKangurAssignmentHref,
   getKangurAssignmentActionLabel,
@@ -87,19 +92,18 @@ export function KangurAssignmentsList({
             {formatAssignmentCountLabel(assignments.length)}
           </div>
         ) : (
-          <KangurLessonChip accent='slate' className='text-[11px] uppercase tracking-[0.16em]'>
+          <KangurStatusChip accent='slate' className='text-[11px] uppercase tracking-[0.16em]'>
             {assignments.length} zadań
-          </KangurLessonChip>
+          </KangurStatusChip>
         )}
       </div>
       {assignments.length === 0 ? (
-        <KangurLessonCallout
+        <KangurEmptyState
           accent='slate'
-          className='border-dashed text-center text-sm text-slate-500'
+          className='text-sm'
+          description={emptyLabel}
           padding='lg'
-        >
-          {emptyLabel}
-        </KangurLessonCallout>
+        />
       ) : (
         <div className={`grid gap-3 ${compact ? 'grid-cols-1' : 'grid-cols-1 xl:grid-cols-2'}`}>
           {assignments.map((assignment) => {
@@ -111,20 +115,26 @@ export function KangurAssignmentsList({
 
             if (compact) {
               return (
-                <div
+                <KangurInfoCard
+                  data-testid={`kangur-assignments-list-card-${assignment.id}`}
                   key={assignment.id}
-                  className='relative rounded-[26px] border border-white/86 bg-white/95 px-6 py-5 shadow-[0_22px_58px_-42px_rgba(60,52,94,0.22)]'
+                  className='relative'
+                  padding='lg'
                 >
                   <div className='absolute right-5 top-5 flex flex-wrap items-center justify-end gap-2'>
-                    <KangurLessonChip
+                    <KangurStatusChip
                       accent={priorityAccent}
                       className='text-[11px] uppercase tracking-[0.14em]'
                     >
                       {formatPriority(assignment.priority)}
-                    </KangurLessonChip>
-                    <div className='rounded-full bg-[#eaedf7] px-4 py-2 text-base font-extrabold text-[#2f457b]'>
+                    </KangurStatusChip>
+                    <KangurStatusChip
+                      accent={statusAccent}
+                      className='px-4 py-2 text-base font-extrabold'
+                      size='md'
+                    >
                       {assignment.progress.percent}%
-                    </div>
+                    </KangurStatusChip>
                     <div className='text-2xl font-medium text-[#7f8ab0]'>{progressCountLabel}</div>
                   </div>
 
@@ -140,32 +150,39 @@ export function KangurAssignmentsList({
                     </div>
                   </div>
 
-                  <div className='mt-4 border-t border-[#ececf2] pt-4'>
+                  <div className='mt-4 space-y-4'>
+                    <KangurDivider
+                      accent='slate'
+                      className='w-full'
+                      data-testid={`kangur-assignments-list-divider-${assignment.id}`}
+                      size='sm'
+                    />
                     <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
                       <div className='text-sm text-[#7d86a7]'>{assignment.progress.summary}</div>
-                      <Link
-                        href={buildKangurAssignmentHref(basePath, assignment)}
-                        className='text-sm font-bold text-[#34497d] transition hover:text-[#ff8451]'
+                      <KangurButton
+                        asChild
+                        size='sm'
+                        variant={assignment.target.type === 'lesson' ? 'warm' : 'surface'}
                       >
-                        {actionLabel}
-                      </Link>
+                        <Link href={buildKangurAssignmentHref(basePath, assignment)}>{actionLabel}</Link>
+                      </KangurButton>
                     </div>
                     {lastActivity ? (
-                      <div className='mt-3 text-[11px] text-[#97a0bc]'>
+                      <div className='text-[11px] text-[#97a0bc]'>
                         Ostatnia aktywność: {lastActivity}
                       </div>
                     ) : null}
                   </div>
-                </div>
+                </KangurInfoCard>
               );
             }
 
             return (
-              <KangurPanel
+              <KangurInfoCard
+                data-testid={`kangur-assignments-list-card-${assignment.id}`}
                 key={assignment.id}
-                className='h-full border-white/82 bg-white/90'
+                className='h-full'
                 padding='lg'
-                variant='subtle'
               >
                 <div className='flex flex-wrap items-start justify-between gap-3'>
                   <div className='min-w-0'>
@@ -177,41 +194,44 @@ export function KangurAssignmentsList({
                     </div>
                   </div>
                   <div className='flex flex-wrap items-center gap-2'>
-                    <KangurLessonChip
+                    <KangurStatusChip
                       accent={priorityAccent}
                       className='text-[11px] uppercase tracking-[0.14em]'
                     >
                       {formatPriority(assignment.priority)}
-                    </KangurLessonChip>
-                    <KangurLessonChip
+                    </KangurStatusChip>
+                    <KangurStatusChip
                       accent={statusAccent}
                       className='text-[11px] uppercase tracking-[0.14em]'
                     >
                       {formatStatus(assignment.progress.status)}
-                    </KangurLessonChip>
-                    <div className='rounded-full border border-slate-200/80 bg-white px-3 py-1 text-sm font-extrabold text-slate-700 shadow-[0_16px_36px_-30px_rgba(30,41,59,0.24)]'>
+                    </KangurStatusChip>
+                    <KangurStatusChip accent={statusAccent} className='text-sm font-extrabold'>
                       {assignment.progress.percent}%
-                    </div>
+                    </KangurStatusChip>
                   </div>
                 </div>
 
-                <KangurLessonCallout accent='indigo' className='mt-5' padding='md'>
-                  <div className='flex items-center justify-between gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo-800/80'>
-                    <span>{assignment.progress.summary}</span>
-                    <span>Postęp</span>
-                  </div>
-                  <div className='mt-3 h-2.5 overflow-hidden rounded-full bg-white/75'>
-                    <div
-                      className='h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500'
-                      style={{ width: `${assignment.progress.percent}%` }}
-                    />
-                  </div>
+                <KangurSummaryPanel
+                  accent='indigo'
+                  className='mt-5 rounded-[24px]'
+                  description={assignment.progress.summary}
+                  label='Postęp'
+                  padding='md'
+                >
+                  <KangurProgressBar
+                    accent='indigo'
+                    className='mt-3'
+                    data-testid={`kangur-assignments-list-progress-${assignment.id}`}
+                    size='sm'
+                    value={assignment.progress.percent}
+                  />
                   {lastActivity ? (
                     <div className='mt-3 text-[11px] text-slate-500'>
                       Ostatnia aktywność: {lastActivity}
                     </div>
                   ) : null}
-                </KangurLessonCallout>
+                </KangurSummaryPanel>
 
                 <div className='mt-5 flex flex-wrap items-center gap-2'>
                   <KangurButton asChild size='sm' variant={compact ? 'warm' : 'surface'}>
@@ -230,7 +250,7 @@ export function KangurAssignmentsList({
                     </KangurButton>
                   ) : null}
                 </div>
-              </KangurPanel>
+              </KangurInfoCard>
             );
           })}
         </div>

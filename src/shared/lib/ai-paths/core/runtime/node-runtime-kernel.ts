@@ -78,12 +78,12 @@ export type CreateNodeRuntimeKernelArgs = {
 const normalizeNodeType = (nodeType: string): string =>
   typeof nodeType === 'string' ? nodeType.trim() : '';
 
-const buildV3CodeObjectId = (nodeType: string): string => `ai-paths.node-code-object.${nodeType}.v3`;
+const buildV3CodeObjectId = (nodeType: string): string =>
+  `ai-paths.node-code-object.${nodeType}.v3`;
 
 const toPublicRuntimeStrategy = (
   strategy: NodeRuntimeKernelStrategy
-): NodeRuntimeResolutionStrategy =>
-  strategy;
+): NodeRuntimeResolutionStrategy => strategy;
 
 export const isNodeRuntimeKernelCanonicalType = ({
   nodeType,

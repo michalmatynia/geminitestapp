@@ -61,8 +61,69 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
     },
   },
 
-  ...imageStudioProfiles,
-  ...caseResolverProfiles,
+  image_studio: imageStudioProfiles['image_studio']!,
+  case_resolver: caseResolverProfiles['case_resolver']!,
+  case_resolver_case_hierarchy: caseResolverProfiles['case_resolver_case_hierarchy']!,
+  case_resolver_document_relations: caseResolverProfiles['case_resolver_document_relations']!,
+  case_resolver_nodefile_relations: caseResolverProfiles['case_resolver_nodefile_relations']!,
+  case_resolver_scanfile_relations: caseResolverProfiles['case_resolver_scanfile_relations']!,
+
+  product_categories: {
+    version: 2,
+    placeholders: {
+      preset: 'sublime',
+      style: 'ghost',
+      emphasis: 'subtle',
+      rootDropLabel: 'Drop to Root',
+      inlineDropLabel: 'Drop to folder',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'Folder',
+        folderOpen: 'FolderOpen',
+        file: 'FileText',
+        root: 'Folder',
+        dragHandle: 'GripVertical',
+      },
+      byKind: {},
+    },
+    nesting: {
+      defaultAllow: true,
+      blockedTargetKinds: [],
+      rules: [],
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
+  cms_page_builder: {
+    version: 2,
+    placeholders: {
+      preset: 'sublime',
+      style: 'ghost',
+      emphasis: 'subtle',
+      rootDropLabel: 'Drop to Root',
+      inlineDropLabel: 'Drop to folder',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'Folder',
+        folderOpen: 'FolderOpen',
+        file: 'FileText',
+        root: 'Folder',
+        dragHandle: 'GripVertical',
+      },
+      byKind: {},
+    },
+    nesting: {
+      defaultAllow: true,
+      blockedTargetKinds: [],
+      rules: [],
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
 
   validator_list_tree: {
     version: 2,

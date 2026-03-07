@@ -32,12 +32,12 @@ describe('adding-synthesis helpers', () => {
       expect(note.choices).toContain(note.answer);
     }
 
-    expect(notes.filter((note) => note.stageId === 'bridge_ten').every((note) => note.answer > 10)).toBe(
-      true
-    );
-    expect(notes.filter((note) => note.stageId === 'double_digits').every((note) => note.left >= 10)).toBe(
-      true
-    );
+    expect(
+      notes.filter((note) => note.stageId === 'bridge_ten').every((note) => note.answer > 10)
+    ).toBe(true);
+    expect(
+      notes.filter((note) => note.stageId === 'double_digits').every((note) => note.left >= 10)
+    ).toBe(true);
   });
 
   it('grades timing by distance from the hit line', () => {

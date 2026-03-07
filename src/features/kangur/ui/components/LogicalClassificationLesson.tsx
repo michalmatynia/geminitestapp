@@ -4,9 +4,11 @@ import LessonHub from '@/features/kangur/ui/components/LessonHub';
 import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
-import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
+import {
+  KangurLessonCallout,
+  KangurLessonInset,
+} from '@/features/kangur/ui/design/lesson-primitives';
 
-type LogicalClassificationLessonProps = { onBack: () => void };
 type SectionId = 'intro' | 'diagram' | 'intruz' | 'podsumowanie';
 
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
@@ -16,16 +18,27 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       content: (
         <div className='flex flex-col items-center gap-4'>
           <p className='text-gray-700 text-center'>
-            Klasyfikacja to układanie rzeczy w grupy według wspólnej cechy. To podstawa porzadku w mysleniu i w zyciu!
+            Klasyfikacja to układanie rzeczy w grupy według wspólnej cechy. To podstawa porzadku w
+            mysleniu i w zyciu!
           </p>
           <KangurLessonCallout accent='teal' className='w-full text-sm text-gray-600'>
             <p className='font-semibold text-teal-700 mb-2'>Klasyfikujemy według:</p>
             <ul className='space-y-1'>
-              <li>🎨 <b>Koloru</b> — czerwone vs. niebieskie</li>
-              <li>🔷 <b>Kształtu</b> — okrągłe vs. kwadratowe</li>
-              <li>📏 <b>Rozmiaru</b> — duze vs. małe</li>
-              <li>📂 <b>Kategorii</b> — owoce vs. warzywa</li>
-              <li>🔢 <b>Liczby</b> — parzyste vs. nieparzyste</li>
+              <li>
+                🎨 <b>Koloru</b> — czerwone vs. niebieskie
+              </li>
+              <li>
+                🔷 <b>Kształtu</b> — okrągłe vs. kwadratowe
+              </li>
+              <li>
+                📏 <b>Rozmiaru</b> — duze vs. małe
+              </li>
+              <li>
+                📂 <b>Kategorii</b> — owoce vs. warzywa
+              </li>
+              <li>
+                🔢 <b>Liczby</b> — parzyste vs. nieparzyste
+              </li>
             </ul>
           </KangurLessonCallout>
         </div>
@@ -70,7 +83,8 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       content: (
         <div className='flex flex-col items-center gap-4'>
           <p className='text-gray-700 text-center'>
-            Czasem trzeba wziac pod uwage dwie cechy jednoczesnie. To trudniejsze, ale daje precyzyjniejszy podział.
+            Czasem trzeba wziac pod uwage dwie cechy jednoczesnie. To trudniejsze, ale daje
+            precyzyjniejszy podział.
           </p>
           <KangurLessonCallout accent='teal' className='w-full'>
             <p className='text-sm font-semibold text-teal-700 mb-3 text-center'>
@@ -83,18 +97,15 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
                 ['Małe czerwone', '🔴'],
                 ['Małe niebieskie', '🔵'],
               ].map(([label, icon]) => (
-                <KangurLessonCallout
-                  key={label}
-                  accent='slate'
-                  className='rounded-xl border-teal-100/90'
-                  padding='sm'
-                >
+                <KangurLessonInset key={label} accent='teal' padding='sm'>
                   <p className='text-xs text-gray-400'>{label}</p>
                   <p className='text-2xl'>{icon}</p>
-                </KangurLessonCallout>
+                </KangurLessonInset>
               ))}
             </div>
-            <p className='text-xs text-gray-500 mt-2 text-center'>2 cechy × 2 wartosci = 4 rózne grupy</p>
+            <p className='text-xs text-gray-500 mt-2 text-center'>
+              2 cechy × 2 wartosci = 4 rózne grupy
+            </p>
           </KangurLessonCallout>
         </div>
       ),
@@ -104,7 +115,8 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       content: (
         <div className='flex flex-col items-center gap-4'>
           <p className='text-gray-700 text-center'>
-            Diagram Venna pokazuje, co nalezy do jednej grupy, do drugiej, lub do obu jednoczesnie — to czesc wspólna (przeciecie).
+            Diagram Venna pokazuje, co nalezy do jednej grupy, do drugiej, lub do obu jednoczesnie —
+            to czesc wspólna (przeciecie).
           </p>
           <KangurLessonCallout accent='sky' className='w-full'>
             <p className='text-xs text-gray-500 text-center mb-3'>Kocha sport vs. kocha muzyke</p>
@@ -160,8 +172,14 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           <div className='flex flex-col gap-3 w-full'>
             {[
               { items: '3, 6, 9, 12, 16', answer: '16 — nie jest wielokrotnoscia 3' },
-              { items: '🌍 🌙 ☀️ ⭐ 🪐', answer: '🌙 — tylko ksiezyc nie swnieci własnym swiatłem' },
-              { items: 'kwadrat, trójkat, koło, romb', answer: 'Koło — jedyna figura bez katów i prostych boków' },
+              {
+                items: '🌍 🌙 ☀️ ⭐ 🪐',
+                answer: '🌙 — tylko ksiezyc nie swnieci własnym swiatłem',
+              },
+              {
+                items: 'kwadrat, trójkat, koło, romb',
+                answer: 'Koło — jedyna figura bez katów i prostych boków',
+              },
             ].map(({ items, answer }) => (
               <KangurLessonCallout key={items} accent='amber' className='text-center' padding='sm'>
                 <p className='text-lg font-bold text-gray-800 mb-1'>{items}</p>
@@ -180,11 +198,21 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
         <div className='flex flex-col items-center gap-4'>
           <KangurLessonCallout accent='amber' className='w-full'>
             <ul className='text-gray-700 space-y-2 text-sm'>
-              <li>🗂️ <b>Klasyfikacja</b> — grupuj według jednej wspólnej cechy</li>
-              <li>🔀 <b>Wiele cech</b> — precyzyjny podział wymaga kilku kryteriów</li>
-              <li>🔵🟡 <b>Diagram Venna</b> — czesc wspólna to przeciecie dwóch zbiorów</li>
-              <li>🔎 <b>Intruz poz. 1</b> — oczywista cecha łamana przez jeden element</li>
-              <li>🧩 <b>Intruz poz. 2</b> — nieoczywiste cechy ukryte głebiej</li>
+              <li>
+                🗂️ <b>Klasyfikacja</b> — grupuj według jednej wspólnej cechy
+              </li>
+              <li>
+                🔀 <b>Wiele cech</b> — precyzyjny podział wymaga kilku kryteriów
+              </li>
+              <li>
+                🔵🟡 <b>Diagram Venna</b> — czesc wspólna to przeciecie dwóch zbiorów
+              </li>
+              <li>
+                🔎 <b>Intruz poz. 1</b> — oczywista cecha łamana przez jeden element
+              </li>
+              <li>
+                🧩 <b>Intruz poz. 2</b> — nieoczywiste cechy ukryte głebiej
+              </li>
             </ul>
           </KangurLessonCallout>
           <p className='text-teal-600 font-bold text-center'>
@@ -197,13 +225,28 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
 };
 
 export const HUB_SECTIONS = [
-  { id: 'intro', emoji: '📦', title: 'Klasyfikacja — wstep', description: 'Co to klasyfikacja? Grupowanie według cech' },
-  { id: 'diagram', emoji: '🔵🟡', title: 'Wiele cech i diagram Venna', description: 'Wielokryteriowe grupowanie i przeciecia zbiorów' },
-  { id: 'intruz', emoji: '🔎', title: 'Znajdz intruza', description: 'Poziom 1 i poziom 2 — co nie pasuje?' },
+  {
+    id: 'intro',
+    emoji: '📦',
+    title: 'Klasyfikacja — wstep',
+    description: 'Co to klasyfikacja? Grupowanie według cech',
+  },
+  {
+    id: 'diagram',
+    emoji: '🔵🟡',
+    title: 'Wiele cech i diagram Venna',
+    description: 'Wielokryteriowe grupowanie i przeciecia zbiorów',
+  },
+  {
+    id: 'intruz',
+    emoji: '🔎',
+    title: 'Znajdz intruza',
+    description: 'Poziom 1 i poziom 2 — co nie pasuje?',
+  },
   { id: 'podsumowanie', emoji: '📋', title: 'Podsumowanie', description: 'Wszystkie zasady razem' },
 ];
 
-export default function LogicalClassificationLesson({ onBack }: LogicalClassificationLessonProps): React.JSX.Element {
+export default function LogicalClassificationLesson(): React.JSX.Element {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
 
   if (activeSection) {
@@ -225,7 +268,6 @@ export default function LogicalClassificationLesson({ onBack }: LogicalClassific
       gradientClass='from-teal-500 to-cyan-500'
       sections={HUB_SECTIONS}
       onSelect={(id) => setActiveSection(id as SectionId)}
-      onBack={onBack}
     />
   );
 }

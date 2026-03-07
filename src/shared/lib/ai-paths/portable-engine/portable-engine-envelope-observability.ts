@@ -1,6 +1,4 @@
-import {
-  dispatchPortablePathEnvelopeVerificationAuditSinks,
-} from './portable-engine-envelope-audit-sinks';
+import { dispatchPortablePathEnvelopeVerificationAuditSinks } from './portable-engine-envelope-audit-sinks';
 import type { PortablePathEnvelopeSignatureVerificationMode } from './portable-engine-resolution-types';
 
 export type PortablePathEnvelopeVerificationOutcome =
@@ -69,9 +67,8 @@ const createEmptyPortablePathEnvelopeVerificationObservabilityState =
 
 let portablePathEnvelopeVerificationObservabilityState =
   createEmptyPortablePathEnvelopeVerificationObservabilityState();
-const portablePathEnvelopeVerificationObservabilityHooks = new Set<
-  PortablePathEnvelopeVerificationObservabilityHook
->();
+const portablePathEnvelopeVerificationObservabilityHooks =
+  new Set<PortablePathEnvelopeVerificationObservabilityHook>();
 
 const clonePortablePathEnvelopeVerificationObservabilitySnapshot = (
   snapshot: PortablePathEnvelopeVerificationObservabilitySnapshot

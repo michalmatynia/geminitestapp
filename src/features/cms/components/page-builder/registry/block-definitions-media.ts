@@ -5,6 +5,7 @@ import {
   DEFAULT_APP_EMBED_ID,
   KANGUR_APP_EMBED_ENTRY_PAGE_OPTIONS,
 } from '@/features/app-embeds/lib/constants';
+import { KANGUR_WIDGET_OPTIONS } from '@/features/kangur/cms-builder/project';
 
 import { colorSchemeField, paddingFields } from './shared-field-helpers';
 
@@ -718,6 +719,64 @@ export const mediaBlockDefinitions: Record<string, BlockDefinition> = {
         label: 'Minimum height (px)',
         type: 'number',
         defaultValue: DEFAULT_APP_EMBED_HEIGHT,
+      },
+    ],
+  },
+  KangurWidget: {
+    type: 'KangurWidget',
+    label: 'Kangur widget',
+    icon: 'Blocks',
+    defaultSettings: {
+      widgetId: 'game-screen',
+      title: '',
+      emptyLabel: '',
+      limit: 3,
+      displayMode: 'always',
+      gameScreen: 'always',
+    },
+    settingsSchema: [
+      {
+        key: 'widgetId',
+        label: 'Widget',
+        type: 'select',
+        options: [...KANGUR_WIDGET_OPTIONS],
+        defaultValue: 'game-screen',
+      },
+      { key: 'title', label: 'Title override', type: 'text', defaultValue: '' },
+      { key: 'emptyLabel', label: 'Empty state', type: 'text', defaultValue: '' },
+      {
+        key: 'limit',
+        label: 'Item limit',
+        type: 'number',
+        defaultValue: 3,
+      },
+      {
+        key: 'displayMode',
+        label: 'Dashboard panel display',
+        type: 'select',
+        options: [
+          { label: 'Always render', value: 'always' },
+          { label: 'Only active dashboard tab', value: 'active-tab' },
+        ],
+        defaultValue: 'always',
+      },
+      {
+        key: 'gameScreen',
+        label: 'Game screen visibility',
+        type: 'select',
+        options: [
+          { label: 'Always render', value: 'always' },
+          { label: 'Home', value: 'home' },
+          { label: 'Training setup', value: 'training' },
+          { label: 'Kangur setup', value: 'kangur_setup' },
+          { label: 'Kangur session', value: 'kangur' },
+          { label: 'Calendar training', value: 'calendar_quiz' },
+          { label: 'Geometry training', value: 'geometry_quiz' },
+          { label: 'Operation selection', value: 'operation' },
+          { label: 'Question session', value: 'playing' },
+          { label: 'Result', value: 'result' },
+        ],
+        defaultValue: 'always',
       },
     ],
   },

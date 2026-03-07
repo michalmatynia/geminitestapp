@@ -244,9 +244,7 @@ export const normalizeKangurLessonDocument = (value: unknown): KangurLessonDocum
       .slice(0, 24)
     : [];
   const pages =
-    normalizedPages.length > 0
-      ? normalizedPages
-      : [createKangurLessonPage('', legacyBlocks)];
+    normalizedPages.length > 0 ? normalizedPages : [createKangurLessonPage('', legacyBlocks)];
   const blocks = flattenKangurLessonDocumentPages(pages);
 
   const updatedAt =

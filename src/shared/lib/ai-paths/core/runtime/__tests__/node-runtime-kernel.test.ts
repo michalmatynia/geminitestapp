@@ -155,7 +155,13 @@ describe('node-runtime-kernel', () => {
     const databaseHandler = buildHandler('database');
     const runtimeKernel = createNodeRuntimeKernel({
       resolveLegacyHandler: () => null,
-      resolveCodeObjectHandler: ({ nodeType, codeObjectId }: { nodeType: string; codeObjectId: string }) =>
+      resolveCodeObjectHandler: ({
+        nodeType,
+        codeObjectId,
+      }: {
+        nodeType: string;
+        codeObjectId: string;
+      }) =>
         nodeType === 'database' && codeObjectId === 'ai-paths.node-code-object.database.v3'
           ? databaseHandler
           : null,

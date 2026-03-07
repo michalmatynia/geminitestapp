@@ -54,32 +54,38 @@ export function CenterPreviewCanvas(): React.JSX.Element {
   const baseCanvasWidthPx = projectCanvasSize?.width ?? 1024;
   const baseCanvasHeightPx = projectCanvasSize?.height ?? 1024;
   const imageMoveEnabled = imageTransformMode === 'move';
+  const previewCanvasVectorContextValue = React.useMemo(
+    () => ({
+      ...vectorContextValue,
+      shapes: liveMaskShapes,
+      imageSrc: activeCanvasImageSrc,
+    }),
+    [activeCanvasImageSrc, liveMaskShapes, vectorContextValue]
+  );
 
   return (
     <div className='sticky top-0 z-20 relative min-h-0 overflow-hidden bg-card/40'>
-      <VectorDrawingProvider value={vectorContextValue}>
-        {previewMode === '3d' && workingSlot?.asset3dId ? (
-          <Viewer3D
-            modelUrl={`/api/assets3d/${workingSlot.asset3dId}/file`}
-            allowUserControls
-            captureRef={captureRef}
-            className='h-full w-full'
-          />
+      {previewMode === '3d' && workingSlot?.asset3dId ? (
+        <Viewer3D
+          modelUrl={`/api/assets3d/${workingSlot.asset3dId}/file`}
+          allowUserControls
+          captureRef={captureRef}
+          className='h-full w-full'
+        />
+      ) : splitVariantView &&
+        canCompareSelectedVariants &&
+        compareVariantImageA &&
+        compareVariantImageB ? (
+          <SplitVariantPreview />
         ) : splitVariantView &&
-          canCompareSelectedVariants &&
-          compareVariantImageA &&
-          compareVariantImageB ? (
-            <SplitVariantPreview />
-          ) : splitVariantView &&
           canCompareWithSource &&
           sourceSlotImageSrc &&
           workingSlotImageSrc ? (
-              <SplitVariantPreview />
-            ) : (
-              <div className={previewCanvasClassName}>
+            <SplitVariantPreview />
+          ) : (
+            <div className={previewCanvasClassName}>
+              <VectorDrawingProvider value={previewCanvasVectorContextValue}>
                 <VectorDrawingCanvas
-                  shapes={liveMaskShapes}
-                  src={activeCanvasImageSrc}
                   baseCanvasWidthPx={baseCanvasWidthPx}
                   baseCanvasHeightPx={baseCanvasHeightPx}
                   maskPreviewEnabled={maskPreviewEnabled}
@@ -97,48 +103,48 @@ export function CenterPreviewCanvas(): React.JSX.Element {
                   onViewCropRectChange={onPreviewCanvasCropRectChange}
                   onImageContentFrameChange={onPreviewCanvasImageFrameChange}
                 />
-              </div>
-            )}
-
-        <div className='absolute bottom-4 left-4 z-30'>
-          <SplitViewControls />
-        </div>
-
-        <div className='absolute bottom-4 right-4 z-30 flex gap-2'>
-          {canNavigateToSource && (
-            <Button
-              variant='secondary'
-              size='sm'
-              className='h-8 rounded-full bg-slate-900/60 backdrop-blur-md border-white/10'
-              onClick={onGoToSourceSlot}
-            >
-              Go to Source
-            </Button>
+              </VectorDrawingProvider>
+            </div>
           )}
-          {canRevealLoadedCardInTree && (
-            <Button
-              variant='secondary'
-              size='sm'
-              className='h-8 w-8 p-0 rounded-full bg-slate-900/60 backdrop-blur-md border-white/10'
-              onClick={onRevealInTreeFromCanvas}
-              title='Reveal in Tree'
-            >
-              <Locate className='size-4' />
-            </Button>
-          )}
-        </div>
 
-        {isCompositeSlot && compositeLoading && (
-          <div className='absolute inset-0 z-40 flex items-center justify-center bg-black/20 backdrop-blur-[2px]'>
-            <div className='flex flex-col items-center gap-3 rounded-lg bg-slate-900/80 p-6 border border-white/10 shadow-2xl'>
-              <LoadingState size='md' message='' className='p-0' />
-              <div className='text-xs font-medium text-emerald-200 uppercase tracking-widest'>
-                Compositing...
-              </div>
+      <div className='absolute bottom-4 left-4 z-30'>
+        <SplitViewControls />
+      </div>
+
+      <div className='absolute bottom-4 right-4 z-30 flex gap-2'>
+        {canNavigateToSource && (
+          <Button
+            variant='secondary'
+            size='sm'
+            className='h-8 rounded-full bg-slate-900/60 backdrop-blur-md border-white/10'
+            onClick={onGoToSourceSlot}
+          >
+            Go to Source
+          </Button>
+        )}
+        {canRevealLoadedCardInTree && (
+          <Button
+            variant='secondary'
+            size='sm'
+            className='h-8 w-8 p-0 rounded-full bg-slate-900/60 backdrop-blur-md border-white/10'
+            onClick={onRevealInTreeFromCanvas}
+            title='Reveal in Tree'
+          >
+            <Locate className='size-4' />
+          </Button>
+        )}
+      </div>
+
+      {isCompositeSlot && compositeLoading && (
+        <div className='absolute inset-0 z-40 flex items-center justify-center bg-black/20 backdrop-blur-[2px]'>
+          <div className='flex flex-col items-center gap-3 rounded-lg bg-slate-900/80 p-6 border border-white/10 shadow-2xl'>
+            <LoadingState size='md' message='' className='p-0' />
+            <div className='text-xs font-medium text-emerald-200 uppercase tracking-widest'>
+              Compositing...
             </div>
           </div>
-        )}
-      </VectorDrawingProvider>
+        </div>
+      )}
     </div>
   );
 }

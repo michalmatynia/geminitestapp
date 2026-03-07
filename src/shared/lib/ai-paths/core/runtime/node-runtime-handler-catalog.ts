@@ -37,7 +37,8 @@ export const createNodeRuntimeHandlerCatalog = (
     legacyNodeTypes: Object.freeze(Object.keys(legacyHandlers).sort()),
     nativeCodeObjectHandlers,
     nativeCodeObjectHandlerIds: Object.freeze(Object.keys(nativeCodeObjectHandlers).sort()),
-    resolveLegacyHandler: (nodeType: string): NodeHandler | null => legacyHandlers[nodeType] ?? null,
+    resolveLegacyHandler: (nodeType: string): NodeHandler | null =>
+      legacyHandlers[nodeType] ?? null,
     resolveNativeCodeObjectHandler: ({
       codeObjectId,
     }: ResolveCodeObjectHandlerArgs): NodeHandler | null =>

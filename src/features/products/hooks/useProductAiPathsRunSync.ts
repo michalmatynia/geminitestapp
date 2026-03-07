@@ -20,11 +20,11 @@ const AI_PATH_RUN_BADGE_TTL_MS = 30_000;
 const AI_PATH_RUN_STATUS_POLL_INTERVAL_MS = 2_000;
 const TERMINAL_RUN_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
 
-const resolveTrackedProductRun = (
-  value: unknown
-): { runId: string; productId: string } | null => {
-  const payload = parseAiPathRunEnqueuedEventPayload(value);
-  if (payload?.entityType !== 'product' || !payload.entityId) {
+const resolveTrackedProductRun = (detail: unknown): { runId: string; productId: string } | null => {
+  const payload = parseAiPathRunEnqueuedEventPayload(detail);
+  if (!payload) return null;
+  if (payload.entityType !== 'product') return null;
+  if (!payload.entityId) {
     return null;
   }
   return {
@@ -46,10 +46,7 @@ const resolveRunStatusFromResponse = (value: unknown): string | null => {
   return normalizeRunStatus((run as { status?: unknown }).status);
 };
 
-const hasTrackedProductRuns = (
-  trackedRuns: Map<string, string>,
-  productId: string
-): boolean => {
+const hasTrackedProductRuns = (trackedRuns: Map<string, string>, productId: string): boolean => {
   for (const trackedProductId of trackedRuns.values()) {
     if (trackedProductId === productId) {
       return true;
@@ -163,11 +160,11 @@ export function useProductAiPathsRunSync(): void {
       trackRun(trackedRun.runId, trackedRun.productId);
     };
 
-    const handleWindowEvent = (event: Event): void => {
+    const handler = (event: Event): void => {
       handlePayload((event as CustomEvent<unknown>).detail);
     };
 
-    window.addEventListener(AI_PATH_RUN_ENQUEUED_EVENT_NAME, handleWindowEvent);
+    window.addEventListener(AI_PATH_RUN_ENQUEUED_EVENT_NAME, handler);
 
     let channel: BroadcastChannel | null = null;
     if (typeof BroadcastChannel !== 'undefined') {
@@ -186,7 +183,7 @@ export function useProductAiPathsRunSync(): void {
       stopPolling();
       pollingRunIdsRef.current.clear();
       trackedRunsRef.current.clear();
-      window.removeEventListener(AI_PATH_RUN_ENQUEUED_EVENT_NAME, handleWindowEvent);
+      window.removeEventListener(AI_PATH_RUN_ENQUEUED_EVENT_NAME, handler);
       channel?.close();
     };
   }, [queryClient]);

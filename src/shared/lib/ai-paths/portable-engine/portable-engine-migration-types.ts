@@ -1,7 +1,4 @@
-import type {
-  AiPathPortablePackage,
-  PortablePathInputSource,
-} from './portable-engine-contract';
+import type { AiPathPortablePackage, PortablePathInputSource } from './portable-engine-contract';
 
 export type PortablePathMigrationWarningCode =
   | 'path_config_upgraded'

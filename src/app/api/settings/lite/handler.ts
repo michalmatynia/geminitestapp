@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 
+import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { internalError } from '@/shared/errors/app-error';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
@@ -17,7 +18,6 @@ import {
 import prisma from '@/shared/lib/db/prisma';
 
 type SettingRecord = LiteSettingRecord;
-type SettingDocument = { _id?: string; key?: string; value?: string };
 
 const SETTINGS_COLLECTION = 'settings';
 
@@ -78,14 +78,14 @@ const readMongoSettings = async (keys: readonly string[]): Promise<SettingRecord
   if (!process.env['MONGODB_URI']) return [];
   const mongo = await getMongoDb();
   const docs = await mongo
-    .collection<SettingDocument>(SETTINGS_COLLECTION)
+    .collection<MongoStringSettingRecord>(SETTINGS_COLLECTION)
     .find(
       { $or: [{ key: { $in: keys as string[] } }, { _id: { $in: keys as string[] } }] },
       { projection: { _id: 1, key: 1, value: 1 } }
     )
     .toArray();
   return docs
-    .map((doc: SettingDocument) => {
+    .map((doc: MongoStringSettingRecord) => {
       const key = doc.key ?? (typeof doc._id === 'string' ? doc._id : '');
       const value = typeof doc.value === 'string' ? doc.value : null;
       return { key, value };

@@ -1,7 +1,5 @@
 import { AiNode, RuntimePortValues } from '@/shared/contracts/ai-paths';
-import {
-  RuntimeHistoryEntry,
-} from '@/shared/contracts/ai-paths-runtime';
+import { RuntimeHistoryEntry } from '@/shared/contracts/ai-paths-runtime';
 import { cloneValue } from '../utils';
 import { EngineStateManager } from './engine-state-manager';
 import { buildRuntimeTelemetryFields } from './engine-execution-telemetry';

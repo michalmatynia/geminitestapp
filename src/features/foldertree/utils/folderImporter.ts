@@ -1,15 +1,9 @@
-export interface FolderNode {
-  name: string;
-  path: string;
-  children: FolderNode[];
-  notes: NoteImport[];
-}
+import type {
+  NoteFolderImportNodeDto as FolderNode,
+  NoteFolderImportNoteDto as NoteImport,
+} from '@/shared/contracts/notes';
 
-export interface NoteImport {
-  title: string;
-  content: string;
-  path: string;
-}
+export type { FolderNode, NoteImport };
 
 /**
  * Parse multiple dropped folders and build folder tree structures

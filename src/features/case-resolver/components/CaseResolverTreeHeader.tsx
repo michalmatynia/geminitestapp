@@ -18,10 +18,25 @@ import {
 } from '../context/CaseResolverFolderTreeContext';
 
 type CaseResolverTreeHeaderProps = {
-  searchQuery: string;
-  onSearchChange: (q: string) => void;
+  searchQuery?: string | undefined;
+  onSearchChange?: ((q: string) => void) | undefined;
   searchEnabled?: boolean | undefined;
 };
+
+export type CaseResolverTreeHeaderRuntimeValue = {
+  searchQuery: string;
+  onSearchChange: (q: string) => void;
+  searchEnabled: boolean;
+};
+
+const {
+  Context: CaseResolverTreeHeaderRuntimeContext,
+  useOptionalContext: useOptionalCaseResolverTreeHeaderRuntime,
+} = createStrictContext<CaseResolverTreeHeaderRuntimeValue>({
+  hookName: 'useCaseResolverTreeHeaderRuntime',
+  providerName: 'CaseResolverTreeHeaderProvider',
+  displayName: 'CaseResolverTreeHeaderRuntimeContext',
+});
 
 type CaseResolverTreeSearchRuntimeValue = {
   searchQuery: string;
@@ -51,8 +66,19 @@ function CaseResolverTreeSearchBar(): React.JSX.Element {
 export function CaseResolverTreeHeader({
   searchQuery,
   onSearchChange,
-  searchEnabled = true,
+  searchEnabled,
 }: CaseResolverTreeHeaderProps): React.JSX.Element {
+  const runtime = useOptionalCaseResolverTreeHeaderRuntime();
+  const resolvedSearchQuery = searchQuery ?? runtime?.searchQuery;
+  const resolvedOnSearchChange = onSearchChange ?? runtime?.onSearchChange;
+  const resolvedSearchEnabled = searchEnabled ?? runtime?.searchEnabled ?? true;
+
+  if (typeof resolvedSearchQuery !== 'string' || !resolvedOnSearchChange) {
+    throw new Error(
+      'CaseResolverTreeHeader must be used within CaseResolverTreeHeaderProvider or receive explicit props'
+    );
+  }
+
   const router = useRouter();
   const {
     activeCaseId,
@@ -103,8 +129,8 @@ export function CaseResolverTreeHeader({
 
   const disableCreateActions = !canCreateInActiveCase;
   const searchRuntimeValue = useMemo(
-    () => ({ searchQuery, onSearchChange }),
-    [onSearchChange, searchQuery]
+    () => ({ searchQuery: resolvedSearchQuery, onSearchChange: resolvedOnSearchChange }),
+    [resolvedOnSearchChange, resolvedSearchQuery]
   );
 
   const activeCaseIdentifierLabel = React.useMemo((): string | null => {
@@ -190,7 +216,7 @@ export function CaseResolverTreeHeader({
           {createContextTooltip}
         </div>
       ) : null}
-      {searchEnabled ? (
+      {resolvedSearchEnabled ? (
         <CaseResolverTreeSearchRuntimeContext.Provider value={searchRuntimeValue}>
           <CaseResolverTreeSearchBar />
         </CaseResolverTreeSearchRuntimeContext.Provider>
@@ -265,3 +291,5 @@ export function CaseResolverTreeHeader({
     </div>
   );
 }
+
+export { CaseResolverTreeHeaderRuntimeContext };

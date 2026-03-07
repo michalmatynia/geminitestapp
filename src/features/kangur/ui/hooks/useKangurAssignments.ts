@@ -105,13 +105,12 @@ export const useKangurAssignments = (
   );
 
   const updateAssignment = useCallback(
-    async (
-      id: string,
-      input: KangurAssignmentUpdateInput
-    ): Promise<KangurAssignmentSnapshot> => {
+    async (id: string, input: KangurAssignmentUpdateInput): Promise<KangurAssignmentSnapshot> => {
       const updatedAssignment = await kangurPlatform.assignments.update(id, input);
       setAssignments((prev) =>
-        prev.map((assignment) => (assignment.id === updatedAssignment.id ? updatedAssignment : assignment))
+        prev.map((assignment) =>
+          assignment.id === updatedAssignment.id ? updatedAssignment : assignment
+        )
       );
       setError(null);
       return updatedAssignment;

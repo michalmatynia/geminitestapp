@@ -157,11 +157,25 @@ describe('ClockTrainingGame drag interactions', () => {
     const exactSnapButton = screen.getByTestId('clock-snap-mode-1');
     const activeProgress = screen.getByTestId('clock-training-progress-0');
     const pendingProgress = screen.getByTestId('clock-training-progress-1');
+    const taskLabel = screen.getByText('Ustaw zegar na godzinę');
+    const clockDisplay = screen.getByTestId('clock-time-display');
+    const snapModeSwitch = screen.getByTestId('clock-snap-mode-switch');
+    const modeSwitch = screen.getByTestId('clock-mode-switch');
 
     expect(coarseSnapButton).toHaveClass('kangur-cta-pill', 'surface-cta');
     expect(exactSnapButton).toHaveClass('kangur-cta-pill', 'soft-cta');
     expect(activeProgress).toHaveClass('rounded-full', 'bg-indigo-500');
     expect(pendingProgress).toHaveClass('soft-cta');
+    expect(clockDisplay).toHaveClass('border-indigo-200', 'bg-indigo-100');
+    expect(snapModeSwitch).toHaveClass('soft-card', 'border-slate-200/80');
+    expect(modeSwitch).toHaveClass('soft-card', 'border-slate-200/80');
+    expect(screen.getByTestId('clock-hour-legend-dot')).toHaveClass('bg-rose-500');
+    expect(screen.getByTestId('clock-minute-legend-dot')).toHaveClass('bg-emerald-500');
+    expect(taskLabel).toHaveClass('border-amber-200', 'bg-amber-100');
+    expect(screen.getByTestId('clock-task-prompt').parentElement).toHaveClass(
+      'soft-card',
+      'border-amber-300'
+    );
 
     fireEvent.click(exactSnapButton);
 
@@ -179,7 +193,7 @@ describe('ClockTrainingGame drag interactions', () => {
     const { container } = render(<ClockTrainingGame onFinish={vi.fn()} />);
     const hourHand = getHourHand(container);
     const minuteHand = getMinuteHand(container);
-    const taskLabel = screen.getByText('Ustaw zegar na godzinę:');
+    const taskLabel = screen.getByText('Ustaw zegar na godzinę');
     const taskValueText = taskLabel.nextElementSibling?.textContent ?? '12:00';
     const target = parseDisplayedTime(taskValueText);
     const nearMinutes = (target.minutes + 55) % 60;
@@ -193,6 +207,7 @@ describe('ClockTrainingGame drag interactions', () => {
     await waitFor(() => {
       expect(screen.getByTestId('clock-feedback')).toHaveTextContent('Twoja odpowiedź:');
     });
+    expect(screen.getByTestId('clock-feedback')).toHaveClass('soft-card', 'border-rose-300');
     expect(screen.getByTestId('clock-feedback')).toHaveTextContent('Poprawna:');
     expect(screen.getByTestId('clock-feedback')).toHaveTextContent('Różnica:');
   });
@@ -201,7 +216,7 @@ describe('ClockTrainingGame drag interactions', () => {
     const { container } = render(<ClockTrainingGame onFinish={vi.fn()} />);
     const hourHand = getHourHand(container);
     const minuteHand = getMinuteHand(container);
-    const taskLabel = screen.getByText('Ustaw zegar na godzinę:');
+    const taskLabel = screen.getByText('Ustaw zegar na godzinę');
     const taskValueText = taskLabel.nextElementSibling?.textContent ?? '12:00';
     const target = parseDisplayedTime(taskValueText);
     const nearMinutes = (target.minutes + 55) % 60;
@@ -217,6 +232,7 @@ describe('ClockTrainingGame drag interactions', () => {
         'Dodaliśmy krótką powtórkę tego zadania.'
       );
     });
+    expect(screen.getByTestId('clock-retry-count')).toHaveClass('border-indigo-200', 'bg-indigo-100');
   });
 
   it('shows challenge timer and streak HUD after switching mode', async () => {
@@ -228,6 +244,14 @@ describe('ClockTrainingGame drag interactions', () => {
     await waitFor(() => {
       expect(screen.getByTestId('clock-challenge-timer')).toHaveTextContent(/s/);
     });
+    expect(screen.getByTestId('clock-challenge-timer')).toHaveClass(
+      'border-amber-200',
+      'bg-amber-100'
+    );
+    expect(screen.getByTestId('clock-challenge-streak')).toHaveClass(
+      'border-amber-200',
+      'bg-amber-100'
+    );
     expect(screen.getByTestId('clock-challenge-streak')).toHaveTextContent('Seria: 0');
     expect(screen.getByTestId('clock-challenge-ring')).toBeInTheDocument();
     expect(screen.getByTestId('clock-challenge-ring-track')).toBeInTheDocument();
@@ -239,7 +263,7 @@ describe('ClockTrainingGame drag interactions', () => {
 
     const hourHand = getHourHand(container);
     const minuteHand = getMinuteHand(container);
-    const taskLabel = screen.getByText('Ustaw zegar na godzinę:');
+    const taskLabel = screen.getByText('Ustaw zegar na godzinę');
     const taskValueText = taskLabel.nextElementSibling?.textContent ?? '12:00';
     const target = parseDisplayedTime(taskValueText);
     const nearMinutes = (target.minutes + 55) % 60;

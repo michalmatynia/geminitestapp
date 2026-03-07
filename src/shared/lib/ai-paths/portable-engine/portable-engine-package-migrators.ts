@@ -46,9 +46,7 @@ type ApplyPortablePathPackageMigratorResult =
 const PORTABLE_PACKAGE_SPEC_V2 = 'ai-paths.portable-engine.v2' as const;
 
 const formatZodError = (error: z.ZodError): string =>
-  error.issues
-    .map((issue) => `${issue.path.join('.') || 'document'}: ${issue.message}`)
-    .join('; ');
+  error.issues.map((issue) => `${issue.path.join('.') || 'document'}: ${issue.message}`).join('; ');
 
 const normalizeVersionedPortablePackageToV1 = (
   input: AiPathPortablePackageVersioned

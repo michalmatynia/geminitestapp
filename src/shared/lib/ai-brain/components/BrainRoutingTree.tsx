@@ -2,6 +2,7 @@
 
 import React, { useCallback, useMemo } from 'react';
 
+import { internalError } from '@/shared/errors/app-error';
 import {
   FolderTreeViewportV2,
   useMasterFolderTreeShell,
@@ -10,6 +11,10 @@ import {
 
 import { getBrainCapabilityDefinition } from '../settings';
 import type { AiBrainAssignment, AiBrainCapabilityKey, AiBrainSettings } from '../settings';
+import {
+  useOptionalBrainRoutingActionsContext,
+  useOptionalBrainRoutingStateContext,
+} from './BrainRoutingContext';
 import {
   BrainRoutingCapabilityNodeItem,
   BrainRoutingCapabilityNodeItemRuntimeContext,
@@ -24,20 +29,30 @@ import {
 } from './brain-routing-master-tree';
 
 export interface BrainRoutingTreeProps {
-  settings: AiBrainSettings;
-  effectiveCapabilityAssignments: Record<AiBrainCapabilityKey, AiBrainAssignment>;
-  onToggleEnabled: (capability: AiBrainCapabilityKey, enabled: boolean) => void;
-  onEdit: (capability: AiBrainCapabilityKey) => void;
+  settings?: AiBrainSettings;
+  effectiveCapabilityAssignments?: Record<AiBrainCapabilityKey, AiBrainAssignment>;
+  onToggleEnabled?: (capability: AiBrainCapabilityKey, enabled: boolean) => void;
+  onEdit?: (capability: AiBrainCapabilityKey) => void;
   isPending?: boolean;
 }
 
-export function BrainRoutingTree({
-  settings,
-  effectiveCapabilityAssignments,
-  onToggleEnabled,
-  onEdit,
-  isPending = false,
-}: BrainRoutingTreeProps): React.JSX.Element {
+export function BrainRoutingTree(props: BrainRoutingTreeProps): React.JSX.Element {
+  const stateContext = useOptionalBrainRoutingStateContext();
+  const actionsContext = useOptionalBrainRoutingActionsContext();
+
+  const settings = props.settings ?? stateContext?.settings;
+  const effectiveCapabilityAssignments =
+    props.effectiveCapabilityAssignments ?? stateContext?.effectiveCapabilityAssignments;
+  const onToggleEnabled = props.onToggleEnabled ?? actionsContext?.onToggleEnabled;
+  const onEdit = props.onEdit ?? actionsContext?.onEdit;
+  const isPending = props.isPending ?? stateContext?.isPending ?? false;
+
+  if (!settings || !effectiveCapabilityAssignments || !onToggleEnabled || !onEdit) {
+    throw internalError(
+      'BrainRoutingTree must be used within BrainRoutingProvider or receive explicit routing props'
+    );
+  }
+
   const masterNodes = useMemo(() => buildBrainRoutingMasterNodes(), []);
   const featureByNodeId = useMemo(() => createBrainRoutingFeatureNodeMap(), []);
   const capabilityByNodeId = useMemo(() => createBrainRoutingCapabilityNodeMap(), []);

@@ -4,10 +4,7 @@ import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import {
-  getImageStudioSlotById,
-  updateImageStudioSlot,
-} from '@/features/ai/image-studio/server';
+import { getImageStudioSlotById, updateImageStudioSlot } from '@/features/ai/image-studio/server';
 import { getImageFileRepository } from '@/features/files/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';

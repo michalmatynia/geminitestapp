@@ -13,18 +13,16 @@ import {
 } from '../utils';
 import { InlineEditorCard } from './InlineEditorCard';
 
-export function GridItemEditor(
-  props: {
-    item: KangurLessonGridItem;
-    index: number;
-    itemCount: number;
-    columns: number;
-    onChange: (nextValue: KangurLessonGridItem) => void;
-    onDuplicate: () => void;
-    onMove: (fromIndex: number, toIndex: number) => void;
-    onDelete: () => void;
-  }
-): React.JSX.Element {
+export function GridItemEditor(props: {
+  item: KangurLessonGridItem;
+  index: number;
+  itemCount: number;
+  columns: number;
+  onChange: (nextValue: KangurLessonGridItem) => void;
+  onDuplicate: () => void;
+  onMove: (fromIndex: number, toIndex: number) => void;
+  onDelete: () => void;
+}): React.JSX.Element {
   const { item, index, itemCount, columns, onChange, onDuplicate, onMove, onDelete } = props;
 
   return (
@@ -110,7 +108,11 @@ export function GridItemEditor(
             max={columns}
             value={String(item.colSpan)}
             onChange={(event): void => {
-              const nextColSpan = clamp(parseNumberInput(event.target.value, item.colSpan), 1, columns);
+              const nextColSpan = clamp(
+                parseNumberInput(event.target.value, item.colSpan),
+                1,
+                columns
+              );
               onChange({
                 ...item,
                 colSpan: nextColSpan,

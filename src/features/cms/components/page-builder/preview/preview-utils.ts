@@ -75,6 +75,8 @@ export const DEFAULT_BLOCK_MIN_HEIGHT: Record<string, number> = {
   TextAtomLetter: 20,
   Announcement: 32,
   Button: 44,
+  Input: 44,
+  Progress: 28,
   ImageElement: 140,
   Model3D: 200,
   Image: 140,

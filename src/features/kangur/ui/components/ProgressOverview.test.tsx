@@ -43,10 +43,25 @@ describe('ProgressOverview lesson mastery insights', () => {
     render(<ProgressOverview progress={progress} />);
 
     expect(screen.getByText('Opanowanie lekcji')).toBeInTheDocument();
+    expect(screen.getByTestId('progress-overview-level-bar')).toHaveAttribute('aria-valuenow', '92');
+    expect(screen.getByText('Laczne XP').parentElement).toHaveClass('soft-card', 'border-indigo-300');
+    expect(screen.getByText('Zdobyte odznaki').parentElement).toHaveClass('soft-card', 'border-rose-300');
     expect(screen.getByText('Sledzone: 2 · opanowane: 1 · do powtorki: 1')).toBeInTheDocument();
     expect(screen.getByText('Do powtorki')).toBeInTheDocument();
     expect(screen.getByText('Najmocniejsze lekcje')).toBeInTheDocument();
     expect(screen.getAllByText('➗ Dzielenie')).toHaveLength(2);
     expect(screen.getByText('🕐 Nauka zegara')).toBeInTheDocument();
+    expect(screen.getByTestId('progress-overview-operation-addition')).toHaveClass(
+      'border-indigo-200',
+      'bg-indigo-100'
+    );
+    expect(screen.getByTestId('progress-overview-badge-first_game')).toHaveClass(
+      'border-amber-200',
+      'bg-amber-100'
+    );
+    expect(screen.getByTestId('progress-overview-badge-perfect_10')).toHaveClass(
+      'border-slate-200',
+      'bg-slate-100'
+    );
   });
 });

@@ -5,25 +5,20 @@ import React from 'react';
 import { Card, Checkbox, CollapsibleSection, StatusBadge } from '@/shared/ui';
 
 import { useBrain } from '../context/BrainContext';
-import { type AiBrainAssignment, type AiBrainCapabilityKey } from '../settings';
+import { type AiBrainAssignment } from '../settings';
 import { AssignmentEditor } from './AssignmentEditor';
+import { BrainRoutingProvider } from './BrainRoutingContext';
 import { BrainRoutingEditModal } from './BrainRoutingEditModal';
 import { BrainRoutingTree } from './BrainRoutingTree';
 import { ROUTING_GROUPS } from './brain-routing-master-tree';
 
 export function RoutingTab(): React.JSX.Element {
-  const [editingCapability, setEditingCapability] = React.useState<AiBrainCapabilityKey | null>(
-    null
-  );
   const {
     settings,
-    saving,
     overridesEnabled,
     effectiveAssignments,
-    effectiveCapabilityAssignments,
     handleDefaultChange,
     handleOverrideChange,
-    setCapabilityEnabled,
     toggleOverride,
   } = useBrain();
 
@@ -68,23 +63,18 @@ export function RoutingTab(): React.JSX.Element {
       </Card>
 
       <Card variant='subtle' padding='md' className='border-border/60 bg-card/35'>
-        <div className='space-y-2'>
-          <div className='text-xs font-semibold uppercase text-gray-500'>Routing list</div>
-          <div className='text-[11px] text-gray-400'>
-            Toggle route state inline or click edit for full assignment settings.
+        <BrainRoutingProvider>
+          <div className='space-y-2'>
+            <div className='text-xs font-semibold uppercase text-gray-500'>Routing list</div>
+            <div className='text-[11px] text-gray-400'>
+              Toggle route state inline or click edit for full assignment settings.
+            </div>
           </div>
-        </div>
-        <div className='mt-3'>
-          <BrainRoutingTree
-            settings={settings}
-            effectiveCapabilityAssignments={effectiveCapabilityAssignments}
-            onToggleEnabled={setCapabilityEnabled}
-            onEdit={(capability: AiBrainCapabilityKey) => {
-              setEditingCapability(capability);
-            }}
-            isPending={saving}
-          />
-        </div>
+          <div className='mt-3'>
+            <BrainRoutingTree />
+          </div>
+          <BrainRoutingEditModal />
+        </BrainRoutingProvider>
       </Card>
 
       <CollapsibleSection
@@ -159,12 +149,6 @@ export function RoutingTab(): React.JSX.Element {
           </div>
         </div>
       </CollapsibleSection>
-
-      <BrainRoutingEditModal
-        open={editingCapability !== null}
-        capability={editingCapability}
-        onClose={() => setEditingCapability(null)}
-      />
     </div>
   );
 }

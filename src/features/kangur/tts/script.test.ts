@@ -150,9 +150,7 @@ describe('kangur tts script builder', () => {
     expect(script.locale).toBe('pl-PL');
     expect(script.segments[0]?.text).toContain('Figury geometryczne');
     expect(script.segments.map((segment) => segment.text).join(' ')).toContain('Wprowadzenie');
-    expect(script.segments.map((segment) => segment.text).join(' ')).toContain(
-      'Figury podstawowe'
-    );
+    expect(script.segments.map((segment) => segment.text).join(' ')).toContain('Figury podstawowe');
     expect(script.segments.map((segment) => segment.text).join(' ')).toContain(
       'Kwadrat ma cztery równe boki.'
     );
@@ -230,8 +228,8 @@ describe('kangur tts script builder', () => {
   });
 
   it('normalizes whitespace without losing paragraph boundaries', () => {
-    expect(
-      normalizeKangurLessonNarrationText('  Pierwsza linia \n\n\n  Druga   linia  ')
-    ).toBe('Pierwsza linia\n\nDruga linia');
+    expect(normalizeKangurLessonNarrationText('  Pierwsza linia \n\n\n  Druga   linia  ')).toBe(
+      'Pierwsza linia\n\nDruga linia'
+    );
   });
 });

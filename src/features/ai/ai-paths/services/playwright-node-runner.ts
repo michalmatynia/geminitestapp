@@ -35,8 +35,7 @@ const RUN_TTL_MS = 24 * 60 * 60 * 1000;
 
 const getPlaywright = (): typeof import('playwright') => {
   const requireFn = createRequire(import.meta.url);
-  const pkgName = 'play' + 'wright';
-  return requireFn(pkgName) as typeof import('playwright');
+  return requireFn('playwright') as typeof import('playwright');
 };
 
 const safeStringify = (value: unknown): string => {

@@ -1,11 +1,11 @@
- 
- 
- 
-
- 
-
 import { randomUUID } from 'crypto';
-import { ObjectId, type Filter, type Collection, type UpdateFilter, type AnyBulkWriteOperation } from 'mongodb';
+import {
+  ObjectId,
+  type Filter,
+  type Collection,
+  type UpdateFilter,
+  type AnyBulkWriteOperation,
+} from 'mongodb';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import {
   CategoryMapping,
@@ -196,10 +196,14 @@ export const mongoCategoryMappingImpl = {
     if (mappings.length === 0) return [];
 
     const externalCategoryIds = [
-      ...new Set(mappings.map((m) => m.externalCategoryId).filter((id): id is string => Boolean(id))),
+      ...new Set(
+        mappings.map((m) => m.externalCategoryId).filter((id): id is string => Boolean(id))
+      ),
     ];
     const internalCategoryIds = [
-      ...new Set(mappings.map((m) => m.internalCategoryId).filter((id): id is string => Boolean(id))),
+      ...new Set(
+        mappings.map((m) => m.internalCategoryId).filter((id): id is string => Boolean(id))
+      ),
     ];
 
     const [externalCategories, internalCategories] = await Promise.all([
@@ -232,16 +236,18 @@ export const mongoCategoryMappingImpl = {
     ]);
 
     const externalMap = new Map<string, ExternalCategory>(
-      externalCategories.map((c) => [
-        c.externalId || c._id.toString(),
-        mapMongoExternalCategory(c),
-      ] as [string, ExternalCategory])
+      externalCategories.map(
+        (c) =>
+          [c.externalId || c._id.toString(), mapMongoExternalCategory(c)] as [
+            string,
+            ExternalCategory,
+          ]
+      )
     );
     const internalMap = new Map<string, InternalCategory>(
-      internalCategories.map((c) => [
-        c._id.toString(),
-        mapMongoInternalCategory(c),
-      ] as [string, InternalCategory])
+      internalCategories.map(
+        (c) => [c._id.toString(), mapMongoInternalCategory(c)] as [string, InternalCategory]
+      )
     );
 
     return mappings.map((mapping) => ({

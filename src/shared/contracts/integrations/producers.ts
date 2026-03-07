@@ -83,3 +83,17 @@ export interface ProducerMappingUpdateInput {
   externalProducerId?: string;
   isActive?: boolean;
 }
+
+export const bulkProducerMappingItemSchema = z.object({
+  internalProducerId: z.string().trim().min(1),
+  externalProducerId: z.string().trim().min(1).nullable(),
+});
+
+export type BulkProducerMappingItem = z.infer<typeof bulkProducerMappingItemSchema>;
+
+export const bulkProducerMappingRequestSchema = z.object({
+  connectionId: z.string().trim().min(1),
+  mappings: z.array(bulkProducerMappingItemSchema).min(1),
+});
+
+export type BulkProducerMappingRequest = z.infer<typeof bulkProducerMappingRequestSchema>;

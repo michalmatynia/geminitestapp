@@ -29,10 +29,11 @@ describe('KangurGame', () => {
     isExamModeMock.mockReturnValue(false);
     getKangurQuestionsMock.mockReturnValue([
       {
-        id: 'practice-1',
+        id: '2024_1',
         question: 'Ile to jest 2 + 2?',
         choices: ['3', '4', '5', '6'],
         answer: '4',
+        explanation: '2 + 2 daje 4.',
       },
     ]);
   });
@@ -47,6 +48,15 @@ describe('KangurGame', () => {
     const wrongChoice = screen.getByTestId('kangur-game-choice-0');
     const correctChoice = screen.getByTestId('kangur-game-choice-1');
 
+    expect(screen.getByTestId('kangur-game-point-chip')).toHaveClass(
+      'border-emerald-200',
+      'bg-emerald-100'
+    );
+    expect(screen.getByTestId('kangur-game-progress-bar')).toHaveAttribute('aria-valuenow', '0');
+    expect(screen.getByTestId('kangur-game-illustration-shell')).toHaveClass(
+      'soft-card',
+      'border-slate-200/80'
+    );
     expect(wrongChoice).toHaveClass('soft-card');
     expect(correctChoice).toHaveClass('soft-card');
 
@@ -58,5 +68,6 @@ describe('KangurGame', () => {
 
     expect(wrongChoice).toHaveClass('border-rose-300');
     expect(correctChoice).toHaveClass('border-emerald-300');
+    expect(screen.getByTestId('kangur-game-explanation')).toHaveClass('soft-card', 'border-sky-300');
   });
 });

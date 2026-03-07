@@ -23,9 +23,6 @@ vi.mock('@/features/jobs/server', () => ({
 
 vi.mock('@/features/ai/insights/server', () => ({
   listAiInsights: listAiInsightsMock,
-}));
-
-vi.mock('@/features/ai/insights/server', () => ({
   generateRuntimeAnalyticsInsight: generateRuntimeAnalyticsInsightMock,
 }));
 

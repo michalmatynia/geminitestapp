@@ -1,4 +1,3 @@
-
 import {
   AI_PATHS_UI_STATE_KEY,
   PATH_CONFIG_PREFIX,

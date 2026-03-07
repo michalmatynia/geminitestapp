@@ -31,7 +31,10 @@ export function LessonMetadataForm(props: {
             if (value !== 'component' && value !== 'document') return;
             setFormData((current) => ({ ...current, contentMode: value }));
           }}
-          options={LESSON_CONTENT_MODE_OPTIONS.map(opt => ({ value: opt.value, label: opt.label }))}
+          options={LESSON_CONTENT_MODE_OPTIONS.map((opt) => ({
+            value: opt.value,
+            label: opt.label,
+          }))}
           triggerClassName='h-9'
         />
       </FormField>

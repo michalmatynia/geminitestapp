@@ -13,8 +13,6 @@ const TERMINAL_AI_PATH_RUN_STATUS_SET = new Set<TerminalAiPathRunStatus>(
   TERMINAL_AI_PATH_RUN_STATUSES
 );
 
-export const isTerminalAiPathRunStatus = (
-  value: unknown
-): value is TerminalAiPathRunStatus =>
+export const isTerminalAiPathRunStatus = (value: unknown): value is TerminalAiPathRunStatus =>
   typeof value === 'string' &&
   TERMINAL_AI_PATH_RUN_STATUS_SET.has(value as TerminalAiPathRunStatus);

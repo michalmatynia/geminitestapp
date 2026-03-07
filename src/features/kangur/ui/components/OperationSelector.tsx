@@ -4,8 +4,11 @@ import { motion } from 'framer-motion';
 import DifficultySelector from '@/features/kangur/ui/components/DifficultySelector';
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 import {
+  KangurOptionCardButton,
+  KangurStatusChip,
+} from '@/features/kangur/ui/design/primitives';
+import {
   KANGUR_ACCENT_STYLES,
-  KANGUR_OPTION_CARD_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
 import type { KangurDifficulty, KangurOperation } from '@/features/kangur/ui/types';
@@ -41,6 +44,12 @@ const PRIORITY_LABELS = {
   low: 'Priorytet niski',
 } as const;
 
+const PRIORITY_ACCENTS = {
+  high: 'rose',
+  medium: 'amber',
+  low: 'emerald',
+} as const;
+
 const PRIORITY_ORDER = {
   high: 0,
   medium: 1,
@@ -57,15 +66,21 @@ export default function OperationSelector({
       [...OPERATIONS].sort((left, right) => {
         const leftAssignment = priorityAssignmentsByOperation[left.id] ?? null;
         const rightAssignment = priorityAssignmentsByOperation[right.id] ?? null;
-        const leftRank = leftAssignment ? PRIORITY_ORDER[leftAssignment.priority] : Number.POSITIVE_INFINITY;
-        const rightRank = rightAssignment ? PRIORITY_ORDER[rightAssignment.priority] : Number.POSITIVE_INFINITY;
+        const leftRank = leftAssignment
+          ? PRIORITY_ORDER[leftAssignment.priority]
+          : Number.POSITIVE_INFINITY;
+        const rightRank = rightAssignment
+          ? PRIORITY_ORDER[rightAssignment.priority]
+          : Number.POSITIVE_INFINITY;
 
         if (leftRank !== rightRank) {
           return leftRank - rightRank;
         }
 
-        return OPERATIONS.findIndex((operation) => operation.id === left.id) -
-          OPERATIONS.findIndex((operation) => operation.id === right.id);
+        return (
+          OPERATIONS.findIndex((operation) => operation.id === left.id) -
+          OPERATIONS.findIndex((operation) => operation.id === right.id)
+        );
       }),
     [priorityAssignmentsByOperation]
   );
@@ -87,62 +102,62 @@ export default function OperationSelector({
           const accent = KANGUR_ACCENT_STYLES[operation.accent];
 
           return (
-            <motion.button
+            <motion.div
               key={operation.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.08 }}
               whileHover={{ scale: 1.07 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => onSelect(operation.id, difficulty)}
-              data-testid={`operation-card-${operation.id}`}
-              className={cn(
-                KANGUR_OPTION_CARD_CLASSNAME,
-                'relative flex min-h-[180px] flex-col gap-4 rounded-[30px] p-5',
-                accent.hoverCard,
-                priorityAssignment ? accent.activeCard : 'border-slate-200/80'
-              )}
             >
-              {priorityAssignment ? (
-                <span
-                  className={cn(
-                    'absolute right-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.16em]',
-                    'border border-amber-200 bg-amber-50 text-amber-700'
-                  )}
-                >
-                  {PRIORITY_LABELS[priorityAssignment.priority]}
+              <KangurOptionCardButton
+                accent={operation.accent}
+                className='flex min-h-[180px] flex-col gap-4 rounded-[30px] p-5'
+                data-testid={`operation-card-${operation.id}`}
+                emphasis={priorityAssignment ? 'accent' : 'neutral'}
+                onClick={() => onSelect(operation.id, difficulty)}
+              >
+                {priorityAssignment ? (
+                  <KangurStatusChip
+                    accent={PRIORITY_ACCENTS[priorityAssignment.priority]}
+                    className='absolute right-3 top-3 text-[10px] uppercase tracking-[0.16em]'
+                    size='sm'
+                  >
+                    {PRIORITY_LABELS[priorityAssignment.priority]}
+                  </KangurStatusChip>
+                ) : null}
+                <div className='flex items-start justify-between gap-3'>
+                  <span
+                    className={cn(
+                      'inline-flex h-12 w-12 items-center justify-center rounded-2xl text-3xl shadow-sm',
+                      accent.icon
+                    )}
+                  >
+                    {operation.emoji}
+                  </span>
+                  <KangurStatusChip
+                    accent={priorityAssignment ? operation.accent : 'slate'}
+                    className='text-[11px] font-semibold'
+                    size='sm'
+                  >
+                    {priorityAssignment ? 'Zadanie od rodzica' : 'Trening swobodny'}
+                  </KangurStatusChip>
+                </div>
+                <div className='space-y-1 text-left'>
+                  <span className='block text-lg font-extrabold text-slate-800'>
+                    {operation.label}
+                  </span>
+                  <span className='block text-sm text-slate-500'>
+                    {priorityAssignment
+                      ? `${priorityAssignment.progress.percent}% · ${priorityAssignment.title}`
+                      : 'Wejdz do serii pytan i cwicz we wlasnym tempie.'}
+                  </span>
+                </div>
+                <span className={cn('mt-auto text-sm font-semibold', accent.activeText)}>
+                  Zacznij lekcje
                 </span>
-              ) : null}
-              <div className='flex items-start justify-between gap-3'>
-                <span
-                  className={cn(
-                    'inline-flex h-12 w-12 items-center justify-center rounded-2xl text-3xl shadow-sm',
-                    accent.icon
-                  )}
-                >
-                  {operation.emoji}
-                </span>
-                <span
-                  className={cn(
-                    'rounded-full px-2.5 py-1 text-[11px] font-semibold',
-                    priorityAssignment ? accent.badge : 'border border-slate-200 bg-slate-50 text-slate-500'
-                  )}
-                >
-                  {priorityAssignment ? 'Zadanie od rodzica' : 'Trening swobodny'}
-                </span>
-              </div>
-              <div className='space-y-1 text-left'>
-                <span className='block text-lg font-extrabold text-slate-800'>{operation.label}</span>
-                <span className='block text-sm text-slate-500'>
-                  {priorityAssignment
-                    ? `${priorityAssignment.progress.percent}% · ${priorityAssignment.title}`
-                    : 'Wejdz do serii pytan i cwicz we wlasnym tempie.'}
-                </span>
-              </div>
-              <span className={cn('mt-auto text-sm font-semibold', accent.activeText)}>
-                Zacznij lekcje
-              </span>
-            </motion.button>
+              </KangurOptionCardButton>
+            </motion.div>
           );
         })}
       </div>

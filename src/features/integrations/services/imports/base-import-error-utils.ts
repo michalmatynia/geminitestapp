@@ -1,7 +1,7 @@
 import {
   BASE_IMPORT_RETRY_BASE_DELAY_MS,
   BASE_IMPORT_RETRY_MAX_DELAY_MS,
-} from '@/features/integrations/server-shared';
+} from './base-import-service-shared';
 import type {
   BaseImportErrorClass,
   BaseImportErrorCode,

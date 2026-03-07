@@ -11,9 +11,7 @@ import {
   type PortablePathAuditSinkAutoRemediationNotificationDeadLetterSignature,
   type SavePortablePathAuditSinkAutoRemediationDeadLettersOptions,
 } from './sinks-auto-remediation-dead-letters.server';
-import {
-  resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntries,
-} from './sinks-auto-remediation-config.server';
+import { resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntries } from './sinks-auto-remediation-config.server';
 import {
   readSettingsRawByProviderPriority,
   writeSettingsRawByProviderPriority,
@@ -160,7 +158,9 @@ export const loadPortablePathAuditSinkStartupHealthState = async (
   const readRaw =
     options.readRaw ??
     (async (): Promise<string | null> =>
-      readSettingsRawByProviderPriority(PORTABLE_PATH_AUDIT_SINK_STARTUP_HEALTH_STATE_SETTINGS_KEY));
+      readSettingsRawByProviderPriority(
+        PORTABLE_PATH_AUDIT_SINK_STARTUP_HEALTH_STATE_SETTINGS_KEY
+      ));
   const raw = await readRaw();
   return parsePortablePathAuditSinkStartupHealthStateEnvelope(raw);
 };

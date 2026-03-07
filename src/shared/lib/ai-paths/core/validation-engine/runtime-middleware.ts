@@ -182,7 +182,9 @@ const validatePortContractValue = (args: {
     return issues;
   }
 
-  const valuesToValidate = Array.isArray(value) ? value : [value];
+  const valuesToValidate: unknown[] = Array.isArray(value)
+    ? value.map((entry: unknown): unknown => entry)
+    : [value];
   if (contract.kind !== 'unknown') {
     const expectedTypes = getPortDataTypesForValueKind(contract.kind);
     const incompatibleValue = valuesToValidate.find(
@@ -251,13 +253,10 @@ const buildBuiltInContractIssues = (args: {
   const { stage, node } = args;
   if (!node) return [];
   if (stage === 'node_pre_execute') {
-    const ports = collectDeclaredPorts(
-      node.inputs ?? [],
-      {
-        ...(node.inputContracts ?? {}),
-        ...((node.config?.runtime?.inputContracts as Record<string, unknown> | undefined) ?? {}),
-      }
-    );
+    const ports = collectDeclaredPorts(node.inputs ?? [], {
+      ...(node.inputContracts ?? {}),
+      ...((node.config?.runtime?.inputContracts as Record<string, unknown> | undefined) ?? {}),
+    });
     return ports.flatMap((port: string): RuntimeValidationIssue[] =>
       validatePortContractValue({
         node,
@@ -391,8 +390,7 @@ export const createAiPathsRuntimeValidationMiddleware = ({
             toRuntimeValidationIssue(finding, stage, node)
         )
         : []),
-    ]
-      .slice(0, issueLimit);
+    ].slice(0, issueLimit);
 
     return {
       decision,

@@ -1,4 +1,3 @@
-
 import {
   AI_PATHS_HISTORY_RETENTION_KEY,
   AI_PATHS_UI_STATE_KEY,
@@ -10,7 +9,10 @@ import {
   normalizeLoadedPathMetas,
   sanitizeTriggerPathConfig,
 } from '@/shared/lib/ai-paths/core/normalization/trigger-normalization';
-import { fetchAiPathsSettingsCached, fetchAiPathsSettingsByKeysCached } from '@/shared/lib/ai-paths/settings-store-client';
+import {
+  fetchAiPathsSettingsCached,
+  fetchAiPathsSettingsByKeysCached,
+} from '@/shared/lib/ai-paths/settings-store-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
 import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';

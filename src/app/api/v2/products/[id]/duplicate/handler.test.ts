@@ -11,17 +11,14 @@ const { parseJsonBodyMock, duplicateProductMock, invalidateAllMock } = vi.hoiste
 
 vi.mock('@/features/products/server', () => ({
   parseJsonBody: parseJsonBodyMock,
+  CachedProductService: {
+    invalidateAll: invalidateAllMock,
+  },
 }));
 
 vi.mock('@/shared/lib/products/services/productService', () => ({
   productService: {
     duplicateProduct: duplicateProductMock,
-  },
-}));
-
-vi.mock('@/features/products/server', () => ({
-  CachedProductService: {
-    invalidateAll: invalidateAllMock,
   },
 }));
 

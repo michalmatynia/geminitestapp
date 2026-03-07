@@ -3,6 +3,8 @@ import { cva, type VariantProps } from 'class-variance-authority';
 
 import { cn } from '@/shared/utils';
 
+import type { KangurAccent } from './tokens';
+
 const kangurLessonCalloutVariants = cva(
   'w-full rounded-[24px] border shadow-[0_18px_44px_-36px_rgba(15,23,42,0.24)]',
   {
@@ -57,6 +59,35 @@ const kangurLessonChipVariants = cva(
 type KangurLessonChipProps = React.HTMLAttributes<HTMLSpanElement> &
   VariantProps<typeof kangurLessonChipVariants>;
 
+const kangurLessonInsetVariants = cva(
+  'w-full rounded-[18px] border bg-white/94 shadow-[0_16px_32px_-28px_rgba(15,23,42,0.28)]',
+  {
+    variants: {
+      accent: {
+        indigo: 'border-indigo-100/90',
+        violet: 'border-violet-100/90',
+        emerald: 'border-emerald-100/90',
+        sky: 'border-sky-100/90',
+        amber: 'border-amber-100/90',
+        rose: 'border-rose-100/90',
+        teal: 'border-teal-100/90',
+        slate: 'border-slate-200/85',
+      } satisfies Record<KangurAccent, string>,
+      padding: {
+        sm: 'p-3',
+        md: 'p-4',
+      },
+    },
+    defaultVariants: {
+      accent: 'slate',
+      padding: 'sm',
+    },
+  }
+);
+
+type KangurLessonInsetProps = React.HTMLAttributes<HTMLDivElement> &
+  VariantProps<typeof kangurLessonInsetVariants>;
+
 export function KangurLessonCallout({
   accent,
   padding,
@@ -64,10 +95,7 @@ export function KangurLessonCallout({
   ...props
 }: KangurLessonCalloutProps): React.JSX.Element {
   return (
-    <div
-      className={cn(kangurLessonCalloutVariants({ accent, padding }), className)}
-      {...props}
-    />
+    <div className={cn(kangurLessonCalloutVariants({ accent, padding }), className)} {...props} />
   );
 }
 
@@ -77,4 +105,15 @@ export function KangurLessonChip({
   ...props
 }: KangurLessonChipProps): React.JSX.Element {
   return <span className={cn(kangurLessonChipVariants({ accent, className }))} {...props} />;
+}
+
+export function KangurLessonInset({
+  accent,
+  className,
+  padding,
+  ...props
+}: KangurLessonInsetProps): React.JSX.Element {
+  return (
+    <div className={cn(kangurLessonInsetVariants({ accent, padding }), className)} {...props} />
+  );
 }

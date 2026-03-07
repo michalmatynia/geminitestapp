@@ -22,14 +22,11 @@ export const checkTriggerProvenance = (ctx: TriggerProvenanceContext): boolean =
   const finishedSimulationNodes = simulationNodesInScope.filter((n) =>
     state.finishedNodes.has(n.id)
   );
-  const simulationOutputs = finishedSimulationNodes
-    .map((n) => state.outputs[n.id])
-    .filter(Boolean);
+  const simulationOutputs = finishedSimulationNodes.map((n) => state.outputs[n.id]).filter(Boolean);
 
   const hasLiveProvenance = triggerContext && checkContextMatchesSimulation(triggerContext);
   const hasSimNodeProvenance = simulationOutputs.some(
-    (out) =>
-      out && hasValuableSimulationContext((out['context'] as Record<string, unknown>) ?? {})
+    (out) => out && hasValuableSimulationContext((out['context'] as Record<string, unknown>) ?? {})
   );
 
   if (triggerSource?.type === 'simulation' || hasLiveProvenance || hasSimNodeProvenance) {

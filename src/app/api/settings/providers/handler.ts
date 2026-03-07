@@ -127,7 +127,10 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   );
   const envAuthProvider = normalizeAuthProvider(authDbProviderEnv);
   const authConfigured =
-    envAuthProvider ?? authMongoSetting ?? authPrismaSetting ?? (hasMongoUri ? 'mongodb' : 'prisma');
+    envAuthProvider ??
+    authMongoSetting ??
+    authPrismaSetting ??
+    (hasMongoUri ? 'mongodb' : 'prisma');
   const authConfiguredSource: ProviderSource = envAuthProvider
     ? 'env'
     : authMongoSetting

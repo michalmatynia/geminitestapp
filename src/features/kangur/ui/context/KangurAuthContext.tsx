@@ -125,14 +125,7 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
       checkAppState,
       selectLearner,
     }),
-    [
-      user,
-      isAuthenticated,
-      isLoadingAuth,
-      isLoadingPublicSettings,
-      authError,
-      appPublicSettings,
-    ]
+    [user, isAuthenticated, isLoadingAuth, isLoadingPublicSettings, authError, appPublicSettings]
   );
 
   return <KangurAuthContext.Provider value={value}>{children}</KangurAuthContext.Provider>;

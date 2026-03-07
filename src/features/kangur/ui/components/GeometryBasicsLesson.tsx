@@ -15,7 +15,6 @@ import {
   KangurLessonChip,
 } from '@/features/kangur/ui/design/lesson-primitives';
 
-type GeometryBasicsLessonProps = { onBack: () => void };
 type SectionId = 'punkt' | 'bok' | 'kat' | 'podsumowanie';
 
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
@@ -25,7 +24,8 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       content: (
         <div className='flex flex-col gap-4 text-center'>
           <p className='text-gray-700'>
-            <strong>Punkt</strong> to jedno miejsce na kartce. <strong>Odcinek</strong> łączy dwa punkty.
+            <strong>Punkt</strong> to jedno miejsce na kartce. <strong>Odcinek</strong> łączy dwa
+            punkty.
           </p>
           <KangurLessonCallout accent='sky'>
             <div className='mx-auto flex max-w-xs items-center justify-between'>
@@ -46,7 +46,8 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       content: (
         <div className='flex flex-col gap-4 text-center'>
           <p className='text-gray-700'>
-            W figurach wielokatnych mamy <strong>boki</strong> i <strong>wierzchołki</strong> (rogi).
+            W figurach wielokatnych mamy <strong>boki</strong> i <strong>wierzchołki</strong>{' '}
+            (rogi).
           </p>
           <KangurLessonCallout accent='slate' className='border-cyan-200/85'>
             <div className='mx-auto h-28 w-28 rotate-45 rounded-sm border-[6px] border-cyan-500' />
@@ -71,7 +72,9 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             <div className='relative mx-auto h-28 w-28'>
               <div className='absolute left-1/2 top-1/2 h-1 w-20 -translate-y-1/2 rounded bg-cyan-600' />
               <div className='absolute left-1/2 top-1/2 h-20 w-1 -translate-x-1/2 rounded bg-cyan-600' />
-              <div className='absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-cyan-700'>∟</div>
+              <div className='absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-cyan-700'>
+                ∟
+              </div>
             </div>
             <p className='mt-2 text-sm text-cyan-700'>To kat prosty (90°).</p>
           </KangurLessonCallout>
@@ -102,7 +105,9 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               padding='sm'
             >
               <span className='font-bold text-cyan-600 w-5'>{icon}</span>
-              <span><strong>{term}</strong>: {def}</span>
+              <span>
+                <strong>{term}</strong>: {def}
+              </span>
             </KangurLessonCallout>
           ))}
         </div>
@@ -112,13 +117,18 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
 };
 
 export const HUB_SECTIONS = [
-  { id: 'punkt', emoji: '●', title: 'Punkt i odcinek', description: 'Podstawowe elementy geometrii' },
+  {
+    id: 'punkt',
+    emoji: '●',
+    title: 'Punkt i odcinek',
+    description: 'Podstawowe elementy geometrii',
+  },
   { id: 'bok', emoji: '🔷', title: 'Bok i wierzchołek', description: 'Czesci figur wielokatnych' },
   { id: 'kat', emoji: '∟', title: 'Kat', description: 'Ostry, prosty i rozwarty' },
   { id: 'podsumowanie', emoji: '📋', title: 'Podsumowanie', description: 'Wszystko razem' },
 ];
 
-export default function GeometryBasicsLesson({ onBack }: GeometryBasicsLessonProps): React.JSX.Element {
+export default function GeometryBasicsLesson(): React.JSX.Element {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
 
   const handleComplete = (): void => {
@@ -149,7 +159,6 @@ export default function GeometryBasicsLesson({ onBack }: GeometryBasicsLessonPro
       gradientClass='from-cyan-500 to-sky-500'
       sections={HUB_SECTIONS}
       onSelect={(id) => setActiveSection(id as SectionId)}
-      onBack={onBack}
     />
   );
 }

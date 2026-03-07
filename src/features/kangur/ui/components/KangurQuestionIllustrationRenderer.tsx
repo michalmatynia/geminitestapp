@@ -1,4 +1,5 @@
 import React from 'react';
+import { KangurMediaFrame, KangurStatusChip } from '@/features/kangur/ui/design/primitives';
 import { cn, sanitizeSvg } from '@/shared/utils';
 import type { KangurQuestionIllustration } from '@/shared/contracts/kangur-tests';
 
@@ -20,8 +21,11 @@ export function KangurQuestionIllustrationRenderer({
   if (illustration.type === 'single') {
     if (!illustration.svgContent?.trim()) return null;
     return (
-      <div
-        className={cn('w-full max-w-sm mx-auto', className)}
+      <KangurMediaFrame
+        className={cn('mx-auto max-w-sm', className)}
+        data-testid='kangur-illustration-single-frame'
+        mediaType='svg'
+        padding='sm'
         dangerouslySetInnerHTML={{ __html: sanitizeSvg(illustration.svgContent) }}
       />
     );
@@ -42,17 +46,37 @@ export function KangurQuestionIllustrationRenderer({
       {panels.map((panel) => (
         <figure key={panel.id} className='flex flex-col items-center gap-1'>
           {panel.label ? (
-            <figcaption className='text-xs font-bold text-gray-600'>{panel.label}</figcaption>
+            <figcaption>
+              <KangurStatusChip
+                accent='slate'
+                className='min-w-[1.75rem] justify-center px-2'
+                data-testid={`kangur-illustration-panel-label-${panel.id}`}
+                size='sm'
+              >
+                {panel.label}
+              </KangurStatusChip>
+            </figcaption>
           ) : null}
           {panel.svgContent.trim() ? (
-            <div
-              className='w-20 h-20'
+            <KangurMediaFrame
+              className='h-20 w-20'
+              data-testid={`kangur-illustration-panel-frame-${panel.id}`}
+              mediaType='svg'
+              padding='sm'
               title={panel.description}
               aria-label={panel.description || `Panel ${panel.label}`}
               dangerouslySetInnerHTML={{ __html: sanitizeSvg(panel.svgContent) }}
             />
           ) : (
-            <div className='w-20 h-20 rounded border border-dashed border-gray-200 bg-gray-50' />
+            <KangurMediaFrame
+              className='flex h-20 w-20 items-center justify-center text-slate-400'
+              data-testid={`kangur-illustration-panel-placeholder-${panel.id}`}
+              dashed
+              padding='sm'
+              accent='slate'
+            >
+              ?
+            </KangurMediaFrame>
           )}
         </figure>
       ))}

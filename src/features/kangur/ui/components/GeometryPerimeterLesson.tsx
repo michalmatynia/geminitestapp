@@ -12,7 +12,6 @@ import LessonSlideSection, {
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
 
-type GeometryPerimeterLessonProps = { onBack: () => void };
 type SectionId = 'intro' | 'kwadrat' | 'prostokan' | 'podsumowanie';
 
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
@@ -44,10 +43,16 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             <p className='text-gray-700'>Każdy bok ma 3 cm</p>
             <p className='mt-2 text-xl font-bold text-amber-700'>Obwód = 3 + 3 + 3 + 3 = 12 cm</p>
           </KangurLessonCallout>
-          <KangurLessonCallout accent='amber' className='text-center text-sm text-gray-700' padding='sm'>
+          <KangurLessonCallout
+            accent='amber'
+            className='text-center text-sm text-gray-700'
+            padding='sm'
+          >
             <p className='font-bold text-amber-700'>Wzór dla kwadratu:</p>
             <p className='text-lg font-extrabold mt-1'>O = 4 × a</p>
-            <p className='text-gray-500 text-xs mt-1'>gdzie <b>a</b> to długosc boku</p>
+            <p className='text-gray-500 text-xs mt-1'>
+              gdzie <b>a</b> to długosc boku
+            </p>
           </KangurLessonCallout>
           <p className='text-center text-sm text-gray-500'>
             Przykład: a = 5 cm → O = 4 × 5 = 20 cm
@@ -65,10 +70,16 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             <p className='text-gray-700'>Boki: 6 cm, 4 cm, 6 cm, 4 cm</p>
             <p className='mt-2 text-xl font-bold text-amber-700'>Obwód = 6 + 4 + 6 + 4 = 20 cm</p>
           </KangurLessonCallout>
-          <KangurLessonCallout accent='amber' className='text-center text-sm text-gray-700' padding='sm'>
+          <KangurLessonCallout
+            accent='amber'
+            className='text-center text-sm text-gray-700'
+            padding='sm'
+          >
             <p className='font-bold text-amber-700'>Wzór dla prostokata:</p>
             <p className='text-lg font-extrabold mt-1'>O = 2 × (a + b)</p>
-            <p className='text-gray-500 text-xs mt-1'>gdzie <b>a</b> i <b>b</b> to długosci boków</p>
+            <p className='text-gray-500 text-xs mt-1'>
+              gdzie <b>a</b> i <b>b</b> to długosci boków
+            </p>
           </KangurLessonCallout>
           <p className='text-center text-sm text-gray-500'>
             Przykład: a=6, b=4 → O = 2 × (6+4) = 20 cm
@@ -89,7 +100,12 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             'Jednostka obwodu to np. cm lub m.',
             'Zawsze sprawdz, czy dodałes każdy bok tylko raz.',
           ].map((text) => (
-            <KangurLessonCallout key={text} accent='amber' className='text-sm text-gray-700' padding='sm'>
+            <KangurLessonCallout
+              key={text}
+              accent='amber'
+              className='text-sm text-gray-700'
+              padding='sm'
+            >
               ✅ {text}
             </KangurLessonCallout>
           ))}
@@ -106,7 +122,7 @@ export const HUB_SECTIONS = [
   { id: 'podsumowanie', emoji: '📋', title: 'Podsumowanie', description: 'Wszystkie wzory razem' },
 ];
 
-export default function GeometryPerimeterLesson({ onBack }: GeometryPerimeterLessonProps): React.JSX.Element {
+export default function GeometryPerimeterLesson(): React.JSX.Element {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
 
   const handleComplete = (): void => {
@@ -137,7 +153,6 @@ export default function GeometryPerimeterLesson({ onBack }: GeometryPerimeterLes
       gradientClass='from-amber-500 to-orange-500'
       sections={HUB_SECTIONS}
       onSelect={(id) => setActiveSection(id as SectionId)}
-      onBack={onBack}
     />
   );
 }

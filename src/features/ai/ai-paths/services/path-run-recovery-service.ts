@@ -3,7 +3,7 @@ import 'server-only';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type { AiPathRunRepository } from '@/shared/contracts/ai-paths';
 
-import { getPathRunRepository } from './path-run-repository';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 
 const DEFAULT_STALE_RUNNING_MAX_AGE_MS = 30 * 60 * 1000;
 const DEFAULT_STALE_RUNNING_CLEANUP_INTERVAL_MS = 120_000;

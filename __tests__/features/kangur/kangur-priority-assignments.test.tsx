@@ -85,14 +85,9 @@ describe('KangurPriorityAssignments', () => {
       refresh: vi.fn(),
     });
 
-    render(
-      <KangurPriorityAssignments
-        basePath='/kangur'
-        title='Priorytetowe zadania'
-        emptyLabel='Brak zadan.'
-      />
-    );
+    render(<KangurPriorityAssignments basePath='/kangur' />);
 
+    expect(screen.getByText('Priorytetowe zadania')).toBeInTheDocument();
     expect(screen.getByText('Powtorka dzielenia')).toBeInTheDocument();
     expect(screen.queryByText('Ukonczone zadanie')).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Otworz lekcje' })).toHaveAttribute(

@@ -47,7 +47,7 @@ export const createKangurLessonSvgBlock = (): KangurLessonSvgBlock => ({
 export const createKangurLessonImageBlock = (): KangurLessonImageBlock => ({
   id: createKangurLessonBlockId('lesson-image'),
   type: 'image',
-  title: 'Lesson image',
+  title: 'SVG illustration',
   altText: '',
   caption: '',
   ttsDescription: '',

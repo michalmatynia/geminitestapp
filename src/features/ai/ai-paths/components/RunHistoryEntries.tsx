@@ -2,6 +2,11 @@ import type { RuntimeHistoryEntry, RuntimeHistoryLink } from '@/shared/lib/ai-pa
 import { formatDurationMs, formatRuntimeValue } from '@/shared/lib/ai-paths';
 import { StatusBadge, EmptyState, Button, type StatusVariant } from '@/shared/ui';
 
+import {
+  resolveRunHistoryEntryAction,
+  runHistoryEntryActionTitle,
+} from './run-history-entry-actions';
+
 type RunHistoryEntriesProps = {
   entries: RuntimeHistoryEntry[];
   emptyMessage?: string;
@@ -32,6 +37,21 @@ const formatPortData = (value: unknown): string => {
 const formatSkipReason = (value: string): string =>
   value.replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
 
+const buildExecutionMetadataChips = (entry: RuntimeHistoryEntry): string[] =>
+  [
+    entry.cacheDecision ? `cache=${entry.cacheDecision}` : null,
+    entry.sideEffectDecision ? `effect=${entry.sideEffectDecision}` : null,
+    entry.sideEffectPolicy ? `policy=${entry.sideEffectPolicy}` : null,
+    entry.effectSourceSpanId ? `sourceSpan=${entry.effectSourceSpanId}` : null,
+    entry.activationHash ? `activation=${entry.activationHash}` : null,
+    entry.idempotencyKey ? `idempotency=${entry.idempotencyKey}` : null,
+    entry.resumeDecision ? `resume=${entry.resumeDecision}` : null,
+    entry.resumeMode ? `resumeMode=${entry.resumeMode}` : null,
+    entry.resumeReason ? `resumeReason=${entry.resumeReason}` : null,
+    entry.resumeSourceSpanId ? `resumeSource=${entry.resumeSourceSpanId}` : null,
+    entry.resumeSourceStatus ? `resumeStatus=${entry.resumeSourceStatus}` : null,
+  ].filter((value): value is string => Boolean(value));
+
 export function RunHistoryEntries(props: RunHistoryEntriesProps): React.JSX.Element {
   const { entries, emptyMessage, showNodeLabel, onReplayFromEntry } = props;
   const sortedEntries = [...entries].sort(
@@ -54,6 +74,8 @@ export function RunHistoryEntries(props: RunHistoryEntriesProps): React.JSX.Elem
       {sortedEntries.map((entry: RuntimeHistoryEntry, index: number) => {
         const pathLabel = entry.pathName ?? entry.pathId ?? 'Unknown path';
         const nodeLabel = entry.nodeTitle ?? entry.nodeId;
+        const executionMetadata = buildExecutionMetadataChips(entry);
+        const entryAction = resolveRunHistoryEntryAction(entry);
         const variantMap: Record<string, string> = {
           completed: 'success',
           failed: 'error',
@@ -106,20 +128,34 @@ export function RunHistoryEntries(props: RunHistoryEntriesProps): React.JSX.Elem
                   onClick={(): void => {
                     onReplayFromEntry?.(entry);
                   }}
-                  title={
-                    onReplayFromEntry
-                      ? 'Replay this run from the recorded inputs.'
-                      : 'Replay is not available in this context.'
-                  }
+                  title={runHistoryEntryActionTitle(entry, Boolean(onReplayFromEntry))}
                 >
-                  Replay from here
+                  {entryAction.label}
                 </Button>
               </div>
             </div>
+            {onReplayFromEntry ? (
+              <div className='mt-2 text-[10px] text-gray-400'>
+                <span className='font-semibold uppercase tracking-wide text-gray-500'>Action</span>{' '}
+                <span className='text-gray-300'>{entryAction.description}</span>
+              </div>
+            ) : null}
             {entry.traceId || entry.spanId ? (
               <div className='mt-2 flex flex-wrap gap-2 text-[10px] text-gray-500'>
                 {entry.traceId ? <span className='font-mono'>trace={entry.traceId}</span> : null}
                 {entry.spanId ? <span className='font-mono'>span={entry.spanId}</span> : null}
+              </div>
+            ) : null}
+            {executionMetadata.length > 0 ? (
+              <div className='mt-2 flex flex-wrap gap-2 text-[10px] text-gray-400'>
+                {executionMetadata.map((value: string) => (
+                  <span
+                    key={`${entry.timestamp}-${entry.nodeId}-${value}`}
+                    className='rounded-full border border-border/50 bg-black/20 px-2 py-px font-mono text-gray-300'
+                  >
+                    {value}
+                  </span>
+                ))}
               </div>
             ) : null}
             {entry.error && (

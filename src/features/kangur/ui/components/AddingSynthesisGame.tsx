@@ -4,10 +4,14 @@ import { useEffect, useRef, useState } from 'react';
 import { Gauge, Music2, RefreshCw, Sparkles, Target, Zap } from 'lucide-react';
 
 import {
-  KangurLessonCallout,
-  KangurLessonChip,
-} from '@/features/kangur/ui/design/lesson-primitives';
-import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
+  KangurButton,
+  KangurInfoCard,
+  KangurMetricCard,
+  KangurPanel,
+  KangurProgressBar,
+  KangurStatusChip,
+  KangurSummaryPanel,
+} from '@/features/kangur/ui/design/primitives';
 import {
   addXp,
   createLessonPracticeReward,
@@ -156,8 +160,10 @@ export default function AddingSynthesisGame({
   const noteDeadlineRef = useRef<number | null>(null);
   const noteAdvanceRef = useRef<number | null>(null);
 
-  const currentNote = phase === 'playing' ? notes[currentIndex] ?? null : null;
-  const currentStage = currentNote ? getAddingSynthesisStage(currentNote.stageId) : ADDING_SYNTHESIS_STAGES[0];
+  const currentNote = phase === 'playing' ? (notes[currentIndex] ?? null) : null;
+  const currentStage = currentNote
+    ? getAddingSynthesisStage(currentNote.stageId)
+    : ADDING_SYNTHESIS_STAGES[0];
   const accuracy =
     currentIndex > 0 || feedback
       ? Math.round((score / Math.max(1, currentIndex + (feedback ? 1 : 0))) * 100)
@@ -254,7 +260,9 @@ export default function AddingSynthesisGame({
 
     stopCurrentNoteTimers();
 
-    const elapsedMs = noteStartedAtRef.current ? Date.now() - noteStartedAtRef.current : noteElapsedMs;
+    const elapsedMs = noteStartedAtRef.current
+      ? Date.now() - noteStartedAtRef.current
+      : noteElapsedMs;
     const elapsedProgress = Math.min(elapsedMs / ADDING_SYNTHESIS_NOTE_DURATION_MS, 1);
     const correctLaneIndex = currentNote.choices.indexOf(currentNote.answer);
     const chosenLaneIndex = laneIndex;
@@ -314,7 +322,9 @@ export default function AddingSynthesisGame({
         return;
       }
 
-      setNoteElapsedMs(Math.min(Date.now() - noteStartedAtRef.current, ADDING_SYNTHESIS_NOTE_DURATION_MS));
+      setNoteElapsedMs(
+        Math.min(Date.now() - noteStartedAtRef.current, ADDING_SYNTHESIS_NOTE_DURATION_MS)
+      );
     }, 40);
 
     noteDeadlineRef.current = window.setTimeout(() => {
@@ -359,8 +369,8 @@ export default function AddingSynthesisGame({
         >
           <div className='flex flex-col gap-5'>
             <div className='flex flex-wrap items-center gap-2'>
-              <KangurLessonChip accent='amber'>Nowa gra</KangurLessonChip>
-              <KangurLessonChip accent='violet'>Synthesia-style</KangurLessonChip>
+              <KangurStatusChip accent='amber'>Nowa gra</KangurStatusChip>
+              <KangurStatusChip accent='violet'>Synthesia-style</KangurStatusChip>
             </div>
 
             <div className='flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between'>
@@ -374,7 +384,7 @@ export default function AddingSynthesisGame({
                   dwoch cyfrach.
                 </p>
               </div>
-              <div className='rounded-[28px] border border-white/80 bg-white/88 px-5 py-4 shadow-[0_18px_44px_-34px_rgba(79,70,229,0.26)]'>
+              <KangurInfoCard accent='violet' className='rounded-[28px]' padding='md' tone='accent'>
                 <div className='flex items-center gap-3'>
                   <div className='flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-700'>
                     <Music2 className='h-6 w-6' />
@@ -388,16 +398,17 @@ export default function AddingSynthesisGame({
                     </p>
                   </div>
                 </div>
-              </div>
+              </KangurInfoCard>
             </div>
 
             <div className='grid gap-3 lg:grid-cols-3'>
               {ADDING_SYNTHESIS_STAGES.map((stage) => (
-                <KangurLessonCallout
+                <KangurInfoCard
                   key={stage.id}
                   accent={stage.accent}
-                  className='border-white/75 bg-white/84'
+                  className='h-full'
                   padding='lg'
+                  tone='accent'
                 >
                   <div className='flex items-start gap-3'>
                     <div className='text-3xl leading-none'>{stage.icon}</div>
@@ -406,26 +417,36 @@ export default function AddingSynthesisGame({
                       <p className='mt-1 text-sm leading-6 text-slate-600'>{stage.description}</p>
                     </div>
                   </div>
-                </KangurLessonCallout>
+                </KangurInfoCard>
               ))}
             </div>
 
-            <KangurLessonCallout accent='slate' className='border-white/75 bg-white/88' padding='lg'>
+            <KangurSummaryPanel
+              accent='slate'
+              label='Jak grac'
+              padding='lg'
+            >
               <div className='grid gap-3 sm:grid-cols-3'>
                 <div className='flex items-center gap-3'>
                   <Target className='h-5 w-5 text-amber-500' />
-                  <p className='text-sm text-slate-600'>Klikaj odpowiedni tor lub naciskaj 1, 2, 3, 4.</p>
+                  <p className='text-sm text-slate-600'>
+                    Klikaj odpowiedni tor lub naciskaj 1, 2, 3, 4.
+                  </p>
                 </div>
                 <div className='flex items-center gap-3'>
                   <Gauge className='h-5 w-5 text-sky-500' />
-                  <p className='text-sm text-slate-600'>Im blizej linii trafisz, tym lepszy rytm.</p>
+                  <p className='text-sm text-slate-600'>
+                    Im blizej linii trafisz, tym lepszy rytm.
+                  </p>
                 </div>
                 <div className='flex items-center gap-3'>
                   <Zap className='h-5 w-5 text-violet-500' />
-                  <p className='text-sm text-slate-600'>Po kazdym bledzie dostajesz szybka podpowiedz.</p>
+                  <p className='text-sm text-slate-600'>
+                    Po kazdym bledzie dostajesz szybka podpowiedz.
+                  </p>
                 </div>
               </div>
-            </KangurLessonCallout>
+            </KangurSummaryPanel>
 
             <div className='flex flex-col gap-3 sm:flex-row'>
               <KangurButton
@@ -459,8 +480,8 @@ export default function AddingSynthesisGame({
         >
           <div className='flex flex-col gap-5'>
             <div className='flex flex-wrap items-center gap-2'>
-              <KangurLessonChip accent='emerald'>Sesja zakonczona</KangurLessonChip>
-              <KangurLessonChip accent='amber'>+{summary.xpEarned} XP</KangurLessonChip>
+              <KangurStatusChip accent='emerald'>Sesja zakonczona</KangurStatusChip>
+              <KangurStatusChip accent='amber'>+{summary.xpEarned} XP</KangurStatusChip>
             </div>
 
             <div className='flex flex-col gap-2'>
@@ -477,30 +498,14 @@ export default function AddingSynthesisGame({
             </div>
 
             <div className='grid gap-3 sm:grid-cols-4'>
-              <KangurLessonCallout accent='emerald' padding='md'>
-                <p className='text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700/70'>
-                  Skutecznosc
-                </p>
-                <p className='mt-2 text-3xl font-extrabold text-emerald-950'>{summary.accuracy}%</p>
-              </KangurLessonCallout>
-              <KangurLessonCallout accent='violet' padding='md'>
-                <p className='text-xs font-semibold uppercase tracking-[0.18em] text-violet-700/70'>
-                  Idealne trafienia
-                </p>
-                <p className='mt-2 text-3xl font-extrabold text-violet-950'>{summary.perfectHits}</p>
-              </KangurLessonCallout>
-              <KangurLessonCallout accent='amber' padding='md'>
-                <p className='text-xs font-semibold uppercase tracking-[0.18em] text-amber-700/70'>
-                  Najlepsza seria
-                </p>
-                <p className='mt-2 text-3xl font-extrabold text-amber-950'>{summary.bestStreak}</p>
-              </KangurLessonCallout>
-              <KangurLessonCallout accent='sky' padding='md'>
-                <p className='text-xs font-semibold uppercase tracking-[0.18em] text-sky-700/70'>
-                  Runda
-                </p>
-                <p className='mt-2 text-3xl font-extrabold text-sky-950'>{summary.totalNotes}</p>
-              </KangurLessonCallout>
+              <KangurMetricCard accent='emerald' label='Skutecznosc' value={`${summary.accuracy}%`} />
+              <KangurMetricCard
+                accent='violet'
+                label='Idealne trafienia'
+                value={summary.perfectHits}
+              />
+              <KangurMetricCard accent='amber' label='Najlepsza seria' value={summary.bestStreak} />
+              <KangurMetricCard accent='sky' label='Runda' value={summary.totalNotes} />
             </div>
 
             <div className='flex flex-col gap-3 sm:flex-row'>
@@ -523,31 +528,16 @@ export default function AddingSynthesisGame({
       <KangurPanel className='border-white/75 bg-white/88' padding='lg' variant='soft'>
         <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
           <div className='flex flex-wrap items-center gap-2'>
-            <KangurLessonChip accent={currentStage.accent}>{currentStage.title}</KangurLessonChip>
-            <KangurLessonChip accent='slate'>
+            <KangurStatusChip accent={currentStage.accent}>{currentStage.title}</KangurStatusChip>
+            <KangurStatusChip accent='slate'>
               Nuta {currentIndex + 1}/{notes.length}
-            </KangurLessonChip>
+            </KangurStatusChip>
           </div>
 
           <div className='grid grid-cols-3 gap-2 sm:min-w-[320px]'>
-            <div className='rounded-[20px] border border-amber-200/80 bg-amber-50/85 px-3 py-2 text-center'>
-              <p className='text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-600/75'>
-                Seria
-              </p>
-              <p className='mt-1 text-xl font-extrabold text-amber-950'>{streak}</p>
-            </div>
-            <div className='rounded-[20px] border border-violet-200/80 bg-violet-50/85 px-3 py-2 text-center'>
-              <p className='text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-600/75'>
-                Idealne
-              </p>
-              <p className='mt-1 text-xl font-extrabold text-violet-950'>{perfectHits}</p>
-            </div>
-            <div className='rounded-[20px] border border-sky-200/80 bg-sky-50/85 px-3 py-2 text-center'>
-              <p className='text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-600/75'>
-                Trafione
-              </p>
-              <p className='mt-1 text-xl font-extrabold text-sky-950'>{score}</p>
-            </div>
+            <KangurMetricCard accent='amber' align='center' label='Seria' padding='sm' value={streak} valueClassName='text-xl' />
+            <KangurMetricCard accent='violet' align='center' label='Idealne' padding='sm' value={perfectHits} valueClassName='text-xl' />
+            <KangurMetricCard accent='sky' align='center' label='Trafione' padding='sm' value={score} valueClassName='text-xl' />
           </div>
         </div>
       </KangurPanel>
@@ -584,7 +574,12 @@ export default function AddingSynthesisGame({
                     )}
                   >
                     <div className='absolute left-0 right-0 top-3 text-center'>
-                      <span className={cn('text-[11px] font-semibold uppercase tracking-[0.24em]', laneStyle.label)}>
+                      <span
+                        className={cn(
+                          'text-[11px] font-semibold uppercase tracking-[0.24em]',
+                          laneStyle.label
+                        )}
+                      >
                         Tor {laneIndex + 1}
                       </span>
                     </div>
@@ -649,7 +644,11 @@ export default function AddingSynthesisGame({
                         isChosenLane && !feedback && 'scale-[0.985]',
                         showSuccessState && laneStyle.success,
                         showErrorState && laneStyle.error,
-                        feedback && !showSuccessState && !showErrorState && isChosenLane && laneStyle.active
+                        feedback &&
+                          !showSuccessState &&
+                          !showErrorState &&
+                          isChosenLane &&
+                          laneStyle.active
                       )}
                       aria-label={`Tor ${laneIndex + 1}: ${choice}`}
                       data-testid={`adding-synthesis-lane-${laneIndex}`}
@@ -672,58 +671,56 @@ export default function AddingSynthesisGame({
         </KangurPanel>
 
         <div className='flex flex-col gap-4'>
-          <KangurPanel className='border-white/80 bg-white/88' padding='lg' variant='soft'>
+          <KangurSummaryPanel accent={currentStage.accent} padding='lg' title={currentStage.title}>
             <div className='flex flex-wrap items-center gap-2'>
-              <KangurLessonChip accent={currentStage.accent}>{currentStage.title}</KangurLessonChip>
-              <KangurLessonChip accent='slate'>Dokladnosc {accuracy}%</KangurLessonChip>
+              <KangurStatusChip accent='slate'>Dokladnosc {accuracy}%</KangurStatusChip>
             </div>
             <p className='mt-3 text-sm leading-6 text-slate-600'>{currentStage.description}</p>
             <p className='mt-3 text-sm font-medium text-slate-700'>{currentStage.coachingTip}</p>
-          </KangurPanel>
+          </KangurSummaryPanel>
 
-          <KangurLessonCallout
+          <KangurSummaryPanel
             accent={feedback ? getFeedbackAccent(feedback.kind) : currentStage.accent}
-            className='border-white/75 bg-white/88'
             padding='lg'
             role='status'
+            title={feedback ? feedback.title : currentNote ? 'Podpowiedz do tej nuty' : undefined}
+            description={feedback ? feedback.description : currentNote ? currentNote.focus : undefined}
+            tone={feedback ? 'accent' : 'neutral'}
           >
             {feedback ? (
-              <>
-                <p className='text-sm font-extrabold text-slate-900'>{feedback.title}</p>
-                <p className='mt-2 text-sm leading-6 text-slate-700'>{feedback.description}</p>
-                <p className='mt-2 text-xs leading-6 text-slate-500'>{feedback.hint}</p>
-              </>
+              <p className='mt-2 text-xs leading-6 text-slate-500'>{feedback.hint}</p>
             ) : currentNote ? (
-              <>
-                <p className='text-sm font-extrabold text-slate-900'>Podpowiedz do tej nuty</p>
-                <p className='mt-2 text-sm leading-6 text-slate-700'>{currentNote.focus}</p>
-                <p className='mt-2 text-xs leading-6 text-slate-500'>
-                  Jesli wolisz klawiature, nacisnij 1, 2, 3 lub 4.
-                </p>
-              </>
+              <p className='mt-2 text-xs leading-6 text-slate-500'>
+                Jesli wolisz klawiature, nacisnij 1, 2, 3 lub 4.
+              </p>
             ) : null}
-          </KangurLessonCallout>
+          </KangurSummaryPanel>
 
-          <KangurPanel className='border-white/80 bg-white/88' padding='lg' variant='soft'>
+          <KangurSummaryPanel accent='slate' label='Postep sesji' padding='lg'>
             <div className='space-y-3'>
               <div className='flex items-center justify-between'>
-                <span className='text-sm font-semibold text-slate-500'>Postep sesji</span>
                 <span className='text-sm font-bold text-slate-700'>
                   {currentIndex + 1}/{notes.length}
                 </span>
               </div>
-              <div className='h-3 overflow-hidden rounded-full bg-slate-100'>
-                <div
-                  className='h-full rounded-full bg-[linear-gradient(90deg,#f59e0b_0%,#fb7185_45%,#6366f1_100%)] transition-all duration-500'
-                  style={{ width: `${((currentIndex + (feedback ? 1 : 0)) / Math.max(1, notes.length)) * 100}%` }}
-                />
-              </div>
+              <KangurProgressBar
+                accent={currentStage.accent}
+                data-testid='adding-synthesis-session-progress-bar'
+                size='md'
+                value={((currentIndex + (feedback ? 1 : 0)) / Math.max(1, notes.length)) * 100}
+              />
             </div>
 
-            <KangurButton type='button' size='sm' variant='ghost' className='mt-4' onClick={onFinish}>
+            <KangurButton
+              type='button'
+              size='sm'
+              variant='ghost'
+              className='mt-4'
+              onClick={onFinish}
+            >
               Zakoncz probe
             </KangurButton>
-          </KangurPanel>
+          </KangurSummaryPanel>
         </div>
       </div>
     </div>

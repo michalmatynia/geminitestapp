@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
+import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -17,12 +18,6 @@ const AI_SETTINGS_KEYS = new Set([
   'ai_generation_output_enabled',
 ]);
 
-interface MongoSetting {
-  _id: string;
-  key?: string;
-  value: string;
-}
-
 const canUsePrismaSettings = (): boolean =>
   Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
 
@@ -30,7 +25,7 @@ const readMongoSettingValue = async (key: string): Promise<string | null> => {
   if (!process.env['MONGODB_URI']) return null;
   const mongo = await getMongoDb();
   const doc = await mongo
-    .collection<MongoSetting>('settings')
+    .collection<MongoStringSettingRecord>('settings')
     .findOne({ $or: [{ _id: key }, { key }] });
   return typeof doc?.value === 'string' ? doc.value : null;
 };

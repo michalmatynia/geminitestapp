@@ -53,9 +53,19 @@ export const buildAdminNav = (handlers: {
             exact: true,
           },
           {
+            id: 'workspace/kangur/builder',
+            label: 'CMS Builder',
+            href: '/admin/kangur/builder',
+          },
+          {
             id: 'workspace/kangur/lessons-manager',
             label: 'Lessons Manager',
             href: '/admin/kangur/lessons-manager',
+          },
+          {
+            id: 'workspace/kangur/settings',
+            label: 'Settings',
+            href: '/admin/kangur/settings',
           },
         ],
       },

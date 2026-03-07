@@ -11,6 +11,7 @@ import type { KangurProgressState } from '@/features/kangur/ui/types';
 
 const {
   useKangurRoutingMock,
+  useOptionalKangurRoutingMock,
   useKangurAuthMock,
   scoreFilterMock,
   loadProgressMock,
@@ -19,6 +20,7 @@ const {
   logKangurClientErrorMock,
 } = vi.hoisted(() => ({
   useKangurRoutingMock: vi.fn(),
+  useOptionalKangurRoutingMock: vi.fn(),
   useKangurAuthMock: vi.fn(),
   scoreFilterMock: vi.fn(),
   loadProgressMock: vi.fn(),
@@ -29,10 +31,30 @@ const {
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: useKangurRoutingMock,
+  useOptionalKangurRouting: useOptionalKangurRoutingMock,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: useKangurAuthMock,
+}));
+
+vi.mock('@/features/kangur/docs/tooltips', () => ({
+  KangurDocsTooltipEnhancer: () => null,
+  useKangurDocsTooltips: () => ({
+    enabled: false,
+    helpSettings: {
+      version: 1,
+      docsTooltips: {
+        enabled: false,
+        homeEnabled: false,
+        lessonsEnabled: false,
+        testsEnabled: false,
+        profileEnabled: false,
+        parentDashboardEnabled: false,
+        adminEnabled: false,
+      },
+    },
+  }),
 }));
 
 vi.mock('@/features/kangur/services/kangur-platform', () => ({
@@ -120,6 +142,7 @@ describe('LearnerProfile page', () => {
     useKangurRoutingMock.mockReturnValue({
       basePath: '/kangur',
     });
+    useOptionalKangurRoutingMock.mockReturnValue(null);
     loadProgressMock.mockReturnValue(baseProgress);
     useKangurAuthMock.mockReturnValue({
       user: createUser(),
@@ -156,20 +179,48 @@ describe('LearnerProfile page', () => {
     expect(screen.getByRole('heading', { name: 'Profil ucznia' })).toBeInTheDocument();
     expect(screen.getByText('Statystyki ucznia: Jan.')).toBeInTheDocument();
     expect(screen.getByText('Poziom 4 · 620 XP lacznie')).toBeInTheDocument();
+    expect(screen.getByTestId('learner-profile-level-progress-bar')).toHaveAttribute(
+      'aria-valuenow',
+      '30'
+    );
+    expect(screen.getByTestId('learner-profile-weekly-activity-2026-03-06')).toHaveAttribute(
+      'data-active',
+      'true'
+    );
+    expect(screen.getByTestId('learner-profile-weekly-activity-2026-03-07')).toHaveAttribute(
+      'data-active',
+      'false'
+    );
     expect(screen.getByText('Wyniki wg operacji')).toBeInTheDocument();
+    expect(screen.getByTestId('learner-profile-operation-progress-addition')).toHaveAttribute(
+      'aria-valuenow',
+      '80'
+    );
     expect(screen.getByText('Plan na dzis')).toBeInTheDocument();
     expect(screen.getByText('Opanowanie lekcji')).toBeInTheDocument();
     expect(screen.getAllByText('➗ Dzielenie').length).toBeGreaterThan(0);
     expect(screen.getByText('🕐 Nauka zegara')).toBeInTheDocument();
     expect(screen.getByText('Priorytet sredni')).toBeInTheDocument();
+    expect(screen.getByTestId('learner-profile-recommendation-focus_weakest_operation')).toHaveClass(
+      'soft-card',
+      'border-rose-300'
+    );
     expect(
       screen
         .getAllByRole('link', { name: 'Otworz lekcje' })
         .map((link) => link.getAttribute('href'))
     ).toContain('/kangur/lessons?focus=division');
-    expect(screen.getByRole('link', { name: 'Zagraj dzis' })).toHaveAttribute(
+    expect(screen.getAllByRole('link', { name: 'Otworz lekcje' })[0]).toHaveClass(
+      'kangur-cta-pill',
+      'primary-cta'
+    );
+    expect(screen.getByRole('link', { name: /zagraj/i })).toHaveAttribute(
       'href',
       '/kangur/game?quickStart=training'
+    );
+    expect(screen.getByRole('link', { name: /zagraj/i })).toHaveClass(
+      'kangur-cta-pill',
+      'play-cta'
     );
     expect(screen.getByText('➕ Dodawanie')).toBeInTheDocument();
     expect(screen.getByText('✖️ Mnozenie')).toBeInTheDocument();

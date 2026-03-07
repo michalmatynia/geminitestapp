@@ -21,9 +21,6 @@ const {
 
 vi.mock('@/features/products/server', () => ({
   getParameterRepository: (...args: unknown[]) => getParameterRepositoryMock(...args),
-}));
-
-vi.mock('@/features/products/server', () => ({
   CachedProductService: {
     invalidateAll: (...args: unknown[]) => invalidateAllMock(...args),
   },

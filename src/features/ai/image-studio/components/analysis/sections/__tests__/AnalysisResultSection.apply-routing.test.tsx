@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { AnalysisResultSection } from '../AnalysisResultSection';
 import type { ImageStudioAnalysisPlanSnapshot } from '@/features/ai/image-studio/utils/analysis-bridge';
+import { ImageStudioAnalysisRuntimeProvider } from '../ImageStudioAnalysisRuntimeContext';
 
 vi.mock('@/shared/ui', () => ({
   Button: ({
@@ -48,7 +49,97 @@ const createSnapshot = (slotId: string): ImageStudioAnalysisPlanSnapshot => ({
   fallbackApplied: false,
 });
 
+const createRuntimeValue = (overrides?: {
+  currentWorkingSlotId?: string;
+  availableSlots?: Array<{ id: string; label?: string }>;
+  slotSelectionLocked?: boolean;
+  analysisSourceSignatureMissing?: boolean;
+  analysisCurrentSourceMetadataMissing?: boolean;
+  analysisPlanIsStale?: boolean;
+  persistedPlanSnapshot?: ImageStudioAnalysisPlanSnapshot | null;
+}): Parameters<typeof ImageStudioAnalysisRuntimeProvider>[0]['value'] => ({
+  settingsConfig: {
+    mode: 'server_analysis',
+    setMode: vi.fn(),
+    layoutPadding: '8',
+    setLayoutPadding: vi.fn(),
+    layoutPaddingX: '8',
+    setLayoutPaddingX: vi.fn(),
+    layoutPaddingY: '8',
+    setLayoutPaddingY: vi.fn(),
+    layoutSplitAxes: false,
+    setLayoutSplitAxes: vi.fn(),
+    layoutAdvancedEnabled: false,
+    setLayoutAdvancedEnabled: vi.fn(),
+    layoutDetection: 'auto',
+    setLayoutDetection: vi.fn(),
+    layoutWhiteThreshold: '16',
+    setLayoutWhiteThreshold: vi.fn(),
+    layoutChromaThreshold: '10',
+    setLayoutChromaThreshold: vi.fn(),
+    layoutFillMissingCanvasWhite: false,
+    setLayoutFillMissingCanvasWhite: vi.fn(),
+    layoutShadowPolicy: 'auto',
+    setLayoutShadowPolicy: vi.fn(),
+    layoutPresetOptionValue: '__default__',
+    layoutPresetOptions: [{ value: '__default__', label: 'Default' }],
+    layoutPresetDraftName: '',
+    setLayoutPresetDraftName: vi.fn(),
+    onCenterLayoutPresetChange: vi.fn(),
+    onCenterLayoutSavePreset: vi.fn(),
+    onCenterLayoutDeletePreset: vi.fn(),
+    layoutCanSavePreset: false,
+    layoutCanDeletePreset: false,
+    layoutSavePresetLabel: 'Save Preset',
+    projectCanvasSize: null,
+    busy: false,
+    busyLabel: 'Analyze Image',
+    handleAnalyze: vi.fn(),
+    handleCancel: vi.fn(),
+    workingSlotId: 'slot-1',
+    workingSlotImageSrc: 'https://example.test/slot-1.png',
+    sanitizePaddingInput: (value: string): string => value,
+    sanitizeThresholdInput: (value: string): string => value,
+  },
+  resultRuntime: {
+    result: null,
+    resultSourceSlotId: '',
+    persistedPlanSnapshot: overrides?.persistedPlanSnapshot ?? createSnapshot('slot-2'),
+    currentWorkingSlotId: overrides?.currentWorkingSlotId ?? 'slot-1',
+    availableSlots: overrides?.availableSlots ?? [
+      { id: 'slot-1', label: 'Current Slot' },
+      { id: 'slot-2', label: 'Analyzed Slot' },
+    ],
+    slotSelectionLocked: overrides?.slotSelectionLocked ?? false,
+    analysisSourceSignatureMissing: overrides?.analysisSourceSignatureMissing ?? false,
+    analysisCurrentSourceMetadataMissing: overrides?.analysisCurrentSourceMetadataMissing ?? false,
+    analysisPlanIsStale: overrides?.analysisPlanIsStale ?? false,
+    queueAnalysisApplyIntent: vi.fn(),
+  },
+  customTriggerButtonsRuntime: {
+    projectId: 'project-alpha',
+    pathMetas: [],
+    triggerAnalysisForPath: vi.fn(async () => {}),
+    isRunning: false,
+  },
+});
+
 describe('AnalysisResultSection apply routing UX', () => {
+  it('supports the context-backed runtime path when explicit props are omitted', () => {
+    const runtimeValue = createRuntimeValue();
+
+    render(
+      <ImageStudioAnalysisRuntimeProvider value={runtimeValue}>
+        <AnalysisResultSection />
+      </ImageStudioAnalysisRuntimeProvider>
+    );
+
+    expect(
+      screen.getByText('Apply will switch to analyzed slot: Analyzed Slot.')
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Apply To Object Layout' })).toBeEnabled();
+  });
+
   it('shows auto-switch note when analyzed slot differs from current working slot', () => {
     render(
       <AnalysisResultSection

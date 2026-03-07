@@ -894,7 +894,7 @@
           ]
         },
         {
-          "file": "src/features/ai/ai-paths/services/path-run-service.ts",
+          "file": "src/features/ai/ai-paths/services/path-run-enqueue-service.ts",
           "forbiddenSnippets": [
             "reason: 'deprecated_node_identities'"
           ],
@@ -1314,7 +1314,7 @@
       "description": "Path run service requestId lookup must remain canonical provider-safe pathless filter.",
       "targets": [
         {
-          "file": "src/features/ai/ai-paths/services/path-run-service.ts",
+          "file": "src/features/ai/ai-paths/services/path-run-enqueue-service.ts",
           "forbiddenSnippets": [
             "Provider-safe fallback when JSON-path filtering on meta is unavailable.",
             "existingByScan"

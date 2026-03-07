@@ -92,28 +92,29 @@ vi.mock('@/features/ai/image-studio/components/analysis/sections/AnalysisSetting
   AnalysisSettingsSection: (): React.JSX.Element => <div data-testid='analysis-settings' />,
 }));
 
-vi.mock('@/features/ai/image-studio/components/analysis/sections/AnalysisResultSection', () => ({
-  AnalysisResultSection: ({
-    persistedPlanSnapshot,
-    queueAnalysisApplyIntent,
-  }: {
-    persistedPlanSnapshot: ImageStudioAnalysisPlanSnapshot | null;
-    analysisSourceSignatureMissing?: boolean;
-    analysisCurrentSourceMetadataMissing?: boolean;
-    analysisPlanIsStale?: boolean;
-    queueAnalysisApplyIntent: (
-      target: 'object_layout' | 'auto_scaler',
-      options?: { runAfterApply?: boolean }
-    ) => void;
-  }): React.JSX.Element => (
-    <div>
-      <div data-testid='snapshot-slot'>{persistedPlanSnapshot?.slotId ?? ''}</div>
-      <button type='button' onClick={() => queueAnalysisApplyIntent('auto_scaler')}>
-        Apply To Auto Scaler
-      </button>
-    </div>
-  ),
-}));
+vi.mock('@/features/ai/image-studio/components/analysis/sections/AnalysisResultSection', async () => {
+  const React = await import('react');
+  const { useImageStudioAnalysisRuntime } = await import(
+    '@/features/ai/image-studio/components/analysis/sections/ImageStudioAnalysisRuntimeContext'
+  );
+
+  return {
+    AnalysisResultSection: (): React.JSX.Element => {
+      const { resultRuntime } = useImageStudioAnalysisRuntime();
+      return (
+        <div>
+          <div data-testid='snapshot-slot'>{resultRuntime.persistedPlanSnapshot?.slotId ?? ''}</div>
+          <button
+            type='button'
+            onClick={() => resultRuntime.queueAnalysisApplyIntent('auto_scaler')}
+          >
+            Apply To Auto Scaler
+          </button>
+        </div>
+      );
+    },
+  };
+});
 
 const createSnapshot = (
   slotId: string,

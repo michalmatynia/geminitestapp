@@ -1,7 +1,5 @@
 import { AiNode, Edge, RuntimePortValues } from '@/shared/contracts/ai-paths';
-import {
-  RuntimeHistoryEntry,
-} from '@/shared/contracts/ai-paths-runtime';
+import { RuntimeHistoryEntry } from '@/shared/contracts/ai-paths-runtime';
 import { cloneValue } from '../utils';
 import {
   type EvaluateGraphOptions,
@@ -34,12 +32,10 @@ export const normalizeRuntimeValidationIssues = (
 ): RuntimeValidationIssue[] => {
   if (!Array.isArray(issues)) return [];
   return issues
-    .filter(
-      (issue: RuntimeValidationIssue | null | undefined): issue is RuntimeValidationIssue => {
-        if (!issue) return false;
-        return typeof issue.message === 'string' && issue.message.trim().length > 0;
-      }
-    )
+    .filter((issue: RuntimeValidationIssue | null | undefined): issue is RuntimeValidationIssue => {
+      if (!issue) return false;
+      return typeof issue.message === 'string' && issue.message.trim().length > 0;
+    })
     .map(
       (issue: RuntimeValidationIssue): RuntimeValidationIssue => ({
         ...issue,
@@ -64,12 +60,22 @@ export type RunRuntimeValidationArgs = {
   sanitizedEdges: Edge[];
 };
 
-export const runRuntimeValidation = async (args: RunRuntimeValidationArgs): Promise<{
+export const runRuntimeValidation = async (
+  args: RunRuntimeValidationArgs
+): Promise<{
   decision: 'warn' | 'block';
   message: string;
   issues: RuntimeValidationIssue[];
 } | null> => {
-  const { options, stage, node = null, resolvedRunId, resolvedRunStartedAt, nodes, sanitizedEdges } = args;
+  const {
+    options,
+    stage,
+    node = null,
+    resolvedRunId,
+    resolvedRunStartedAt,
+    nodes,
+    sanitizedEdges,
+  } = args;
   if (!options.validationMiddleware) return null;
 
   let validationResult:
@@ -170,7 +176,9 @@ export type ApplyValidationBlockedNodeStateArgs = {
   activationHash?: string | null;
 };
 
-export const applyValidationBlockedNodeState = async (args: ApplyValidationBlockedNodeStateArgs): Promise<void> => {
+export const applyValidationBlockedNodeState = async (
+  args: ApplyValidationBlockedNodeStateArgs
+): Promise<void> => {
   const {
     node,
     nodeInputs,

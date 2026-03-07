@@ -2,12 +2,23 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RefreshCw } from 'lucide-react';
 
-import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
+import {
+  KANGUR_ACCENT_STYLES,
+  type KangurAccent,
+} from '@/features/kangur/ui/design/tokens';
+import {
+  KangurButton,
+  KangurOptionCardButton,
+  KangurPanel,
+  KangurProgressBar,
+  KangurStatusChip,
+} from '@/features/kangur/ui/design/primitives';
 import {
   addXp,
   createLessonPracticeReward,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
+import { cn } from '@/shared/utils';
 
 type MultiplicationArrayGameProps = {
   onFinish: () => void;
@@ -16,14 +27,22 @@ type MultiplicationArrayGameProps = {
 const TOTAL_ROUNDS = 6;
 
 const GROUP_SIZES: Array<[number, number]> = [
-  [2, 3], [3, 4], [2, 5], [4, 3], [3, 6], [5, 2],
-  [4, 4], [3, 5], [2, 6], [4, 5], [3, 3], [5, 3],
+  [2, 3],
+  [3, 4],
+  [2, 5],
+  [4, 3],
+  [3, 6],
+  [5, 2],
+  [4, 4],
+  [3, 5],
+  [2, 6],
+  [4, 5],
+  [3, 3],
+  [5, 3],
 ];
 
 function pickProblem(excludePrev?: [number, number]): [number, number] {
-  const candidates = GROUP_SIZES.filter(
-    ([a, b]) => a !== excludePrev?.[0] || b !== excludePrev[1]
-  );
+  const candidates = GROUP_SIZES.filter(([a, b]) => a !== excludePrev?.[0] || b !== excludePrev[1]);
   const pick = candidates[Math.floor(Math.random() * candidates.length)];
   return pick ?? [3, 4];
 }
@@ -113,18 +132,11 @@ export default function MultiplicationArrayGame({
             Zebrałeś {score}/{TOTAL_ROUNDS} grup!
           </h2>
           {xpEarned > 0 && (
-            <div className='bg-purple-100 text-purple-700 font-bold px-4 py-2 rounded-full text-sm'>
+            <KangurStatusChip accent='violet' className='px-4 py-2 text-sm font-bold'>
               +{xpEarned} XP ✨
-            </div>
+            </KangurStatusChip>
           )}
-          <div className='w-full bg-gray-100 rounded-full h-3'>
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${percent}%` }}
-              transition={{ duration: 0.8 }}
-              className='h-full bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full'
-            />
-          </div>
+          <KangurProgressBar accent='indigo' animated size='md' value={percent} />
           <p className='text-gray-500'>
             {percent === 100
               ? 'Mistrz grupowania! Tabliczka zdobyta!'
@@ -163,12 +175,13 @@ export default function MultiplicationArrayGame({
     <div className='flex flex-col items-center gap-4 w-full max-w-sm'>
       {/* Progress bar */}
       <div className='flex items-center gap-2 w-full'>
-        <div className='flex-1 h-2 bg-gray-100 rounded-full overflow-hidden'>
-          <div
-            style={{ width: `${(roundIndex / TOTAL_ROUNDS) * 100}%` }}
-            className='h-full bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full transition-all duration-500'
-          />
-        </div>
+        <KangurProgressBar
+          accent='indigo'
+          className='flex-1'
+          data-testid='multiplication-array-progress-bar'
+          size='sm'
+          value={(roundIndex / TOTAL_ROUNDS) * 100}
+        />
         <span className='text-xs font-bold text-gray-400'>
           {roundIndex + 1}/{TOTAL_ROUNDS}
         </span>
@@ -223,48 +236,60 @@ export default function MultiplicationArrayGame({
                 const isCollected = collected.has(groupIndex);
                 const color = ROW_COLORS[groupIndex % ROW_COLORS.length];
                 const glow = ROW_GLOW[groupIndex % ROW_GLOW.length];
+                const accent: KangurAccent = 'violet';
                 return (
-                  <motion.button
+                  <motion.div
                     key={groupIndex}
                     whileHover={!isCollected && !celebrating ? { scale: 1.03 } : {}}
                     whileTap={!isCollected && !celebrating ? { scale: 0.97 } : {}}
-                    onClick={() => handleTapGroup(groupIndex)}
-                    className={`flex items-center gap-3 p-3 rounded-2xl border-2 transition-all duration-300 ${
-                      isCollected
-                        ? 'border-transparent bg-gradient-to-r from-purple-100 to-indigo-100 shadow-md'
-                        : 'border-gray-200 bg-white hover:border-purple-300 cursor-pointer'
-                    }`}
                   >
-                    <span className='text-xs font-bold text-gray-400 w-5 text-center'>
-                      {groupIndex + 1}
-                    </span>
-                    <div className='flex gap-1 flex-wrap'>
-                      {Array.from({ length: b }).map((_, dotIndex) => (
-                        <motion.div
-                          key={dotIndex}
-                          initial={false}
-                          animate={
-                            isCollected
-                              ? { scale: 1, opacity: 1 }
-                              : { scale: 0.85, opacity: 0.4 }
-                          }
-                          transition={{ delay: isCollected ? dotIndex * 0.04 : 0, duration: 0.2 }}
-                          className={`w-6 h-6 rounded-full shadow-sm ${
-                            isCollected ? `${glow} shadow-md` : color
-                          } opacity-80`}
-                        />
-                      ))}
-                    </div>
-                    {isCollected && (
-                      <motion.span
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        className='ml-auto text-purple-500 font-extrabold text-sm'
+                    <KangurOptionCardButton
+                      accent={accent}
+                      aria-pressed={isCollected}
+                      className={cn(
+                        'w-full flex items-center gap-3 rounded-[24px] px-4 py-3 transition-all duration-300',
+                        isCollected ? KANGUR_ACCENT_STYLES.violet.activeText : 'text-slate-700',
+                        !isCollected && !celebrating ? 'cursor-pointer' : 'cursor-default'
+                      )}
+                      data-testid={`multiplication-array-group-${groupIndex}`}
+                      emphasis={isCollected ? 'accent' : 'neutral'}
+                      onClick={() => handleTapGroup(groupIndex)}
+                      type='button'
+                    >
+                      <span
+                        className={cn(
+                          'w-5 text-center text-xs font-bold',
+                          isCollected ? KANGUR_ACCENT_STYLES.violet.mutedText : 'text-slate-400'
+                        )}
                       >
-                      +{b} ✓
-                      </motion.span>
-                    )}
-                  </motion.button>
+                        {groupIndex + 1}
+                      </span>
+                      <div className='flex gap-1 flex-wrap'>
+                        {Array.from({ length: b }).map((_, dotIndex) => (
+                          <motion.div
+                            key={dotIndex}
+                            initial={false}
+                            animate={
+                              isCollected ? { scale: 1, opacity: 1 } : { scale: 0.85, opacity: 0.4 }
+                            }
+                            transition={{ delay: isCollected ? dotIndex * 0.04 : 0, duration: 0.2 }}
+                            className={`w-6 h-6 rounded-full shadow-sm ${
+                              isCollected ? `${glow} shadow-md` : color
+                            } opacity-80`}
+                          />
+                        ))}
+                      </div>
+                      {isCollected && (
+                        <motion.span
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className='ml-auto text-sm font-extrabold text-violet-600'
+                        >
+                          +{b} ✓
+                        </motion.span>
+                      )}
+                    </KangurOptionCardButton>
+                  </motion.div>
                 );
               })}
             </div>
@@ -279,7 +304,7 @@ export default function MultiplicationArrayGame({
                   className='text-center'
                 >
                   <p className='text-2xl font-extrabold text-green-600'>
-                  🎉 {a} × {b} = {total}!
+                    🎉 {a} × {b} = {total}!
                   </p>
                   <p className='text-sm text-gray-500 mt-1'>
                     {a} grup po {b} = {total} razem

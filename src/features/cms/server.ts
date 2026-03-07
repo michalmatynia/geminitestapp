@@ -1,3 +1,5 @@
+import 'server-only';
+
 export * from './services/cms-repository';
 export * from './services/cms-domain';
 export * from './services/cms-service';

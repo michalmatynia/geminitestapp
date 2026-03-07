@@ -1,20 +1,21 @@
+'use client';
+
 import React from 'react';
 import { ScanLine, FileText, ExternalLink } from 'lucide-react';
 import { Card, PanelHeader, Hint, Button } from '@/shared/ui';
-import type {
-  CaseResolverFile,
-  CaseResolverSnapshotNodeMeta as CaseResolverNodeFileMeta,
-} from '@/shared/contracts/case-resolver';
 import { resolveContentPreview } from './CaseResolverNodeFileUtils';
+import {
+  useNodeFileWorkspaceActionsContext,
+  useNodeFileWorkspaceStateContext,
+} from './NodeFileWorkspaceContext';
 
-type NodeFilePanelProps = {
-  meta: CaseResolverNodeFileMeta;
-  file: CaseResolverFile | null;
-  onOpen: () => void;
-};
+export function NodeFilePanel(): React.JSX.Element | null {
+  const { selectedNodeFileMeta, selectedFile } = useNodeFileWorkspaceStateContext();
+  const { onSelectFile } = useNodeFileWorkspaceActionsContext();
+  const meta = selectedNodeFileMeta;
+  const file = selectedFile;
 
-export function NodeFilePanel(props: NodeFilePanelProps): React.JSX.Element {
-  const { meta, file, onOpen } = props;
+  if (!meta) return null;
 
   const preview = file ? resolveContentPreview(file) : '';
   const typeLabel = meta.fileType === 'scanfile' ? 'Scan File' : 'Document';
@@ -58,7 +59,13 @@ export function NodeFilePanel(props: NodeFilePanelProps): React.JSX.Element {
 
       {/* Open button */}
       {file ? (
-        <Button type='button' onClick={onOpen} variant='outline' size='sm' className='h-8 w-full'>
+        <Button
+          type='button'
+          onClick={() => onSelectFile(file.id)}
+          variant='outline'
+          size='sm'
+          className='h-8 w-full'
+        >
           <ExternalLink className='mr-1.5 size-3.5' />
           Open &ldquo;{meta.fileName}&rdquo;
         </Button>

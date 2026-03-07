@@ -1,0 +1,218 @@
+'use client';
+
+import { PanelLeftClose, PanelRightClose } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+
+import { useAdminLayoutActions } from '@/features/admin/context/AdminLayoutContext';
+import { PageBuilderPageSkeleton } from '@/features/cms/components/page-builder/PageBuilderPageSkeleton';
+import { ThemeSettingsProvider } from '@/features/cms/components/page-builder/ThemeSettingsContext';
+import { DragStateProvider } from '@/features/cms/hooks/useDragStateContext';
+import { PageBuilderProvider, usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
+import { useUpdateSetting } from '@/shared/hooks/use-settings';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { Button, useToast } from '@/shared/ui';
+import { serializeSetting } from '@/shared/utils/settings-json';
+
+import { CmsBuilderLeftPanel } from '@/features/cms/components/page-builder/CmsBuilderLeftPanel';
+import { KangurCmsBuilderRuntimeProvider } from './KangurCmsBuilderRuntimeContext';
+import { KangurCmsBuilderRightPanel } from './KangurCmsBuilderRightPanel';
+import { KangurCmsPreviewPanel } from './KangurCmsPreviewPanel';
+import {
+  KANGUR_CMS_PROJECT_SETTING_KEY,
+  KANGUR_CMS_THEME_SETTINGS_KEY,
+  buildKangurCmsBuilderState,
+  parseKangurCmsProject,
+  serializeKangurCmsSections,
+  type KangurCmsProject,
+  type KangurCmsScreenKey,
+} from './project';
+
+import type { SectionInstance } from '@/shared/contracts/cms';
+
+const commitScreenSections = (
+  project: KangurCmsProject,
+  screenKey: KangurCmsScreenKey,
+  sections: SectionInstance[]
+): KangurCmsProject => ({
+  ...project,
+  screens: {
+    ...project.screens,
+    [screenKey]: {
+      ...project.screens[screenKey],
+      components: serializeKangurCmsSections(sections),
+    },
+  },
+});
+
+function KangurCmsBuilderInner(): React.JSX.Element {
+  const { state, dispatch } = usePageBuilder();
+  const { setIsProgrammaticallyCollapsed } = useAdminLayoutActions();
+  const isViewing = state.leftPanelCollapsed && state.rightPanelCollapsed;
+  const autoCollapsedRightRef = React.useRef(false);
+  const wasNarrowRef = React.useRef<boolean | null>(null);
+
+  useEffect((): (() => void) => {
+    setIsProgrammaticallyCollapsed(true);
+    return (): void => setIsProgrammaticallyCollapsed(false);
+  }, [setIsProgrammaticallyCollapsed]);
+
+  useEffect((): (() => void) | void => {
+    if (typeof window === 'undefined') return undefined;
+    const breakpoint = 1200;
+    const media = window.matchMedia(`(max-width: ${breakpoint}px)`);
+
+    const applyBreakpoint = (isNarrow: boolean): void => {
+      if (wasNarrowRef.current === isNarrow) return;
+      wasNarrowRef.current = isNarrow;
+
+      if (isNarrow) {
+        if (!state.rightPanelCollapsed) {
+          dispatch({ type: 'TOGGLE_RIGHT_PANEL' });
+          autoCollapsedRightRef.current = true;
+        }
+      } else if (autoCollapsedRightRef.current) {
+        if (state.rightPanelCollapsed) {
+          dispatch({ type: 'TOGGLE_RIGHT_PANEL' });
+        }
+        autoCollapsedRightRef.current = false;
+      }
+    };
+
+    applyBreakpoint(media.matches);
+    const handler = (event: MediaQueryListEvent): void => {
+      applyBreakpoint(event.matches);
+    };
+
+    media.addEventListener('change', handler);
+    return (): void => {
+      media.removeEventListener('change', handler);
+    };
+  }, [dispatch, state.rightPanelCollapsed]);
+
+  return (
+    <div className='flex h-[calc(100vh-64px)] flex-col bg-background text-white'>
+      <div className='relative flex flex-1 overflow-hidden'>
+        {state.leftPanelCollapsed && !isViewing ? (
+          <Button
+            onClick={() => dispatch({ type: 'TOGGLE_LEFT_PANEL' })}
+            size='sm'
+            variant='outline'
+            className='absolute left-1 top-1 z-10 h-8 w-8 border p-0 text-gray-300 hover:bg-muted/50'
+            aria-label='Show left panel'
+          >
+            <PanelLeftClose className='size-4' />
+          </Button>
+        ) : null}
+
+        <CmsBuilderLeftPanel variant='kangur' />
+
+        <KangurCmsPreviewPanel />
+
+        {state.rightPanelCollapsed && !isViewing ? (
+          <Button
+            onClick={() => dispatch({ type: 'TOGGLE_RIGHT_PANEL' })}
+            size='sm'
+            variant='outline'
+            className='absolute right-1 top-1 z-10 h-8 w-8 border p-0 text-gray-300 hover:bg-muted/50'
+            aria-label='Show right panel'
+          >
+            <PanelRightClose className='size-4' />
+          </Button>
+        ) : null}
+
+        <KangurCmsBuilderRightPanel />
+      </div>
+    </div>
+  );
+}
+
+export function KangurCmsBuilderWorkspace(): React.JSX.Element {
+  const settingsStore = useSettingsStore();
+  const updateSetting = useUpdateSetting();
+  const { toast } = useToast();
+  const settingsReady = !settingsStore.isLoading;
+  const rawProject = settingsStore.get(KANGUR_CMS_PROJECT_SETTING_KEY);
+  const persistedProject = useMemo(
+    () => (settingsReady ? parseKangurCmsProject(rawProject, { fallbackToDefault: true }) : null),
+    [rawProject, settingsReady]
+  );
+  const [savedProject, setSavedProject] = useState<KangurCmsProject | null>(null);
+  const [draftProject, setDraftProject] = useState<KangurCmsProject | null>(null);
+  const [activeScreenKey, setActiveScreenKey] = useState<KangurCmsScreenKey>('Game');
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect((): void => {
+    if (!persistedProject) return;
+    if (savedProject || draftProject) return;
+    setSavedProject(persistedProject);
+    setDraftProject(persistedProject);
+  }, [draftProject, persistedProject, savedProject]);
+
+  const handleSwitchScreen = useCallback(
+    (nextScreenKey: KangurCmsScreenKey, sections: SectionInstance[]): void => {
+      if (nextScreenKey === activeScreenKey) {
+        return;
+      }
+
+      setDraftProject((current: KangurCmsProject | null) => {
+        if (!current) return current;
+        return commitScreenSections(current, activeScreenKey, sections);
+      });
+      setActiveScreenKey(nextScreenKey);
+    },
+    [activeScreenKey]
+  );
+
+  const handleSave = useCallback(
+    async (sections: SectionInstance[]): Promise<void> => {
+      if (!draftProject) return;
+
+      const nextDraftProject = commitScreenSections(draftProject, activeScreenKey, sections);
+      setDraftProject(nextDraftProject);
+      setIsSaving(true);
+      try {
+        await updateSetting.mutateAsync({
+          key: KANGUR_CMS_PROJECT_SETTING_KEY,
+          value: serializeSetting(nextDraftProject),
+        });
+        setSavedProject(nextDraftProject);
+        toast('Kangur CMS project saved.', { variant: 'success' });
+      } catch (error) {
+        toast(error instanceof Error ? error.message : 'Failed to save Kangur CMS project.', {
+          variant: 'error',
+        });
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [activeScreenKey, draftProject, toast, updateSetting]
+  );
+
+  const initialState = useMemo(() => {
+    if (!draftProject) return null;
+    return buildKangurCmsBuilderState(draftProject, activeScreenKey);
+  }, [activeScreenKey, draftProject]);
+
+  if (!settingsReady || !draftProject || !savedProject || !initialState) {
+    return <PageBuilderPageSkeleton />;
+  }
+
+  return (
+    <PageBuilderProvider key={activeScreenKey} initialState={initialState}>
+      <DragStateProvider>
+        <ThemeSettingsProvider storageKey={KANGUR_CMS_THEME_SETTINGS_KEY}>
+          <KangurCmsBuilderRuntimeProvider
+            draftProject={draftProject}
+            savedProject={savedProject}
+            activeScreenKey={activeScreenKey}
+            onSwitchScreen={handleSwitchScreen}
+            onSave={handleSave}
+            isSaving={isSaving}
+          >
+            <KangurCmsBuilderInner />
+          </KangurCmsBuilderRuntimeProvider>
+        </ThemeSettingsProvider>
+      </DragStateProvider>
+    </PageBuilderProvider>
+  );
+}

@@ -122,7 +122,7 @@ export const runPortablePathClient = async (
         runtimeValidationConfig ?? resolved.value.pathConfig.aiPathsValidation ?? null,
       nodes: resolved.value.pathConfig.nodes,
       edges: resolved.value.pathConfig.edges,
-    }) ?? (runtimeValidationEnabled === false ? undefined : (() => null));
+    }) ?? (runtimeValidationEnabled === false ? undefined : () => null);
 
   let runtimeState: RuntimeState;
   try {

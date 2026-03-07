@@ -27,7 +27,9 @@ const toRecord = (value: unknown): Record<string, unknown> | null =>
     : null;
 
 export function useLocalExecutionLoop(args: LocalExecutionArgs) {
-  const runtimeKernelConfig = normalizeRuntimeKernelConfigRecord(toRecord(args.runtimeKernelConfig));
+  const runtimeKernelConfig = normalizeRuntimeKernelConfigRecord(
+    toRecord(args.runtimeKernelConfig)
+  );
   const runtimeKernelNodeTypes = parseRuntimeKernelNodeTypes(runtimeKernelConfig?.['nodeTypes']);
   const runtimeKernelCodeObjectResolverIds = parseRuntimeKernelCodeObjectResolverIds(
     runtimeKernelConfig?.['codeObjectResolverIds']
@@ -377,7 +379,12 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
               runtimeCodeObjectId,
             }: {
               node: AiNode;
-              reason: 'missing_inputs' | 'flow_control' | 'validation' | 'error' | 'waiting_callback';
+              reason:
+                | 'missing_inputs'
+                | 'flow_control'
+                | 'validation'
+                | 'error'
+                | 'waiting_callback';
               status?: 'blocked' | 'waiting_callback';
               waitingOnPorts?: string[];
               waitingOnDetails?: Array<Record<string, unknown>>;
@@ -506,9 +513,7 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
             }) => {
               haltRef.reason = payload.reason;
             },
-            ...(runtimeKernelNodeTypes
-              ? { runtimeKernelNodeTypes }
-              : {}),
+            ...(runtimeKernelNodeTypes ? { runtimeKernelNodeTypes } : {}),
             ...(runtimeKernelCodeObjectResolverIds ? { runtimeKernelCodeObjectResolverIds } : {}),
           });
           state = nextState;
@@ -600,11 +605,7 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
       }
       return { status: outcome, error: capturedError, state: args.runtimeStateRef.current };
     },
-    [
-      args,
-      runtimeKernelCodeObjectResolverIds,
-      runtimeKernelNodeTypes,
-    ]
+    [args, runtimeKernelCodeObjectResolverIds, runtimeKernelNodeTypes]
   );
 
   return { runLocalLoop };

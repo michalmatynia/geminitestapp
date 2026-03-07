@@ -84,7 +84,8 @@ export const resolvePortablePathAuditSinkAutoRemediationRateLimitMaxActions = (
     return DEFAULT_PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_RATE_LIMIT_MAX_ACTIONS;
   }
   const normalized = Math.floor(Number(value));
-  if (normalized < 0) return DEFAULT_PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_RATE_LIMIT_MAX_ACTIONS;
+  if (normalized < 0)
+    return DEFAULT_PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_RATE_LIMIT_MAX_ACTIONS;
   return Math.min(normalized, 100);
 };
 
@@ -311,7 +312,9 @@ export const resolvePortablePathAuditSinkAutoRemediationEmailWebhookSecretFromEn
 
 export const resolvePortablePathAuditSinkAutoRemediationEmailWebhookSignatureKeyIdFromEnvironment =
   (
-    value = process.env[PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_EMAIL_WEBHOOK_SIGNATURE_KEY_ID_ENV]
+    value = process.env[
+      PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_EMAIL_WEBHOOK_SIGNATURE_KEY_ID_ENV
+    ]
   ): string | null => parseOptionalSecretFromEnvironment(value);
 
 export const resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironment = (
@@ -322,13 +325,16 @@ export const resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFrom
   return resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntries(numeric);
 };
 
-export const resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayWindowSecondsFromEnvironment = (
-  value = process.env[PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_WINDOW_SECONDS_ENV]
-): number | null => {
-  const numeric = parseNumberFromEnvironment(value);
-  if (numeric === null) return null;
-  return resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayWindowSeconds(numeric);
-};
+export const resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayWindowSecondsFromEnvironment =
+  (
+    value = process.env[
+      PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_WINDOW_SECONDS_ENV
+    ]
+  ): number | null => {
+    const numeric = parseNumberFromEnvironment(value);
+    if (numeric === null) return null;
+    return resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayWindowSeconds(numeric);
+  };
 
 export const resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayEndpointAllowlistFromEnvironment =
   (

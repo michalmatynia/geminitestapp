@@ -166,7 +166,9 @@ export function FileManagerProvider({
 
   const visibleFiles = useMemo(
     (): ExpandedImageFile[] =>
-      filepathFilter ? files.filter((file: ExpandedImageFile) => filepathFilter(file.filepath)) : files,
+      filepathFilter
+        ? files.filter((file: ExpandedImageFile) => filepathFilter(file.filepath))
+        : files,
     [files, filepathFilter]
   );
 

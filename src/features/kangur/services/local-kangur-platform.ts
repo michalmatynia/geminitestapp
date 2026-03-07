@@ -25,7 +25,10 @@ import type {
   KangurScoreRecord,
   KangurUser,
 } from '@/features/kangur/services/ports';
-import { isKangurAuthStatusError, isKangurStatusError } from '@/features/kangur/services/status-errors';
+import {
+  isKangurAuthStatusError,
+  isKangurStatusError,
+} from '@/features/kangur/services/status-errors';
 import { logKangurClientError } from '@/features/kangur/observability/client';
 import {
   clearStoredActiveLearnerId,
@@ -333,7 +336,9 @@ const buildAssignmentsUrl = (query?: KangurAssignmentListQuery): string => {
   }
 
   const serialized = search.toString();
-  return serialized.length > 0 ? `${KANGUR_ASSIGNMENTS_ENDPOINT}?${serialized}` : KANGUR_ASSIGNMENTS_ENDPOINT;
+  return serialized.length > 0
+    ? `${KANGUR_ASSIGNMENTS_ENDPOINT}?${serialized}`
+    : KANGUR_ASSIGNMENTS_ENDPOINT;
 };
 
 const requestAssignmentsFromApi = async (
@@ -502,7 +507,9 @@ const updateProgressViaApi = async (input: KangurProgressRecord): Promise<Kangur
   }
 };
 
-const createLearnerViaApi = async (input: KangurLearnerCreateInput): Promise<KangurLearnerProfile> => {
+const createLearnerViaApi = async (
+  input: KangurLearnerCreateInput
+): Promise<KangurLearnerProfile> => {
   const response = await fetch(KANGUR_LEARNERS_ENDPOINT, {
     method: 'POST',
     headers: createActorAwareHeaders({
@@ -513,7 +520,9 @@ const createLearnerViaApi = async (input: KangurLearnerCreateInput): Promise<Kan
   });
 
   if (!response.ok) {
-    const error = new Error(`Kangur learner create request failed with ${response.status}`) as Error & {
+    const error = new Error(
+      `Kangur learner create request failed with ${response.status}`
+    ) as Error & {
       status: number;
     };
     error.status = response.status;
@@ -544,7 +553,9 @@ const updateLearnerViaApi = async (
   });
 
   if (!response.ok) {
-    const error = new Error(`Kangur learner update request failed with ${response.status}`) as Error & {
+    const error = new Error(
+      `Kangur learner update request failed with ${response.status}`
+    ) as Error & {
       status: number;
     };
     error.status = response.status;
@@ -616,8 +627,7 @@ export const createLocalKangurPlatform = (): KangurPlatform => {
             player_name: criteria.player_name,
             operation: criteria.operation,
             created_by: criteria.created_by ?? undefined,
-            learner_id:
-              typeof criteria.learner_id === 'string' ? criteria.learner_id : undefined,
+            learner_id: typeof criteria.learner_id === 'string' ? criteria.learner_id : undefined,
           })
         ),
     },

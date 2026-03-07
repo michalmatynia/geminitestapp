@@ -280,9 +280,7 @@ describe('portable-engine envelope verification sink factories', () => {
     await sink.write(event, snapshot);
 
     expect(getMongoDbMock).toHaveBeenCalledTimes(1);
-    expect(collectionMock).toHaveBeenCalledWith(
-      'ai_path_portable_envelope_verification_audit'
-    );
+    expect(collectionMock).toHaveBeenCalledWith('ai_path_portable_envelope_verification_audit');
     expect(insertOneMock).toHaveBeenCalledTimes(1);
     expect(insertOneMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -296,30 +294,30 @@ describe('portable-engine envelope verification sink factories', () => {
     expect(
       resolvePortablePathEnvelopeVerificationAuditSinkProfileFromEnvironment('production')
     ).toBe('prod');
-    expect(
-      resolvePortablePathEnvelopeVerificationAuditSinkProfileFromEnvironment('staging')
-    ).toBe('staging');
+    expect(resolvePortablePathEnvelopeVerificationAuditSinkProfileFromEnvironment('staging')).toBe(
+      'staging'
+    );
     expect(
       resolvePortablePathEnvelopeVerificationAuditSinkProfileFromEnvironment('development')
     ).toBe('dev');
   });
 
   it('resolves sink profile and health policy overrides from environment values', () => {
-    expect(resolvePortablePathEnvelopeVerificationAuditSinkProfileOverrideFromEnvironment('prod')).toBe(
-      'prod'
-    );
+    expect(
+      resolvePortablePathEnvelopeVerificationAuditSinkProfileOverrideFromEnvironment('prod')
+    ).toBe('prod');
     expect(
       resolvePortablePathEnvelopeVerificationAuditSinkProfileOverrideFromEnvironment('stage')
     ).toBe('staging');
     expect(resolvePortablePathEnvelopeVerificationAuditSinkProfileOverrideFromEnvironment('')).toBe(
       null
     );
-    expect(resolvePortablePathEnvelopeVerificationAuditSinkHealthPolicyFromEnvironment('error')).toBe(
-      'error'
-    );
-    expect(resolvePortablePathEnvelopeVerificationAuditSinkHealthPolicyFromEnvironment('warning')).toBe(
-      'warn'
-    );
+    expect(
+      resolvePortablePathEnvelopeVerificationAuditSinkHealthPolicyFromEnvironment('error')
+    ).toBe('error');
+    expect(
+      resolvePortablePathEnvelopeVerificationAuditSinkHealthPolicyFromEnvironment('warning')
+    ).toBe('warn');
     expect(resolvePortablePathEnvelopeVerificationAuditSinkHealthPolicyFromEnvironment('')).toBe(
       null
     );
@@ -330,9 +328,7 @@ describe('portable-engine envelope verification sink factories', () => {
       profile: 'dev',
     });
     expect(result.profile).toBe('dev');
-    expect(result.registeredSinkIds).toEqual([
-      'portable-envelope-verification-log-forwarding',
-    ]);
+    expect(result.registeredSinkIds).toEqual(['portable-envelope-verification-log-forwarding']);
     expect(listPortablePathEnvelopeVerificationAuditSinkIds()).toEqual([
       'portable-envelope-verification-log-forwarding',
     ]);
@@ -353,10 +349,7 @@ describe('portable-engine envelope verification sink factories', () => {
       },
     });
     expect(result.profile).toBe('staging');
-    expect(result.registeredSinkIds).toEqual([
-      'custom-prisma-sink',
-      'custom-mongo-sink',
-    ]);
+    expect(result.registeredSinkIds).toEqual(['custom-prisma-sink', 'custom-mongo-sink']);
     expect(listPortablePathEnvelopeVerificationAuditSinkIds()).toEqual([
       'custom-mongo-sink',
       'custom-prisma-sink',
@@ -494,9 +487,7 @@ describe('portable-engine envelope verification sink factories', () => {
   });
 
   it('resolves signing-policy trend reporter env controls', () => {
-    expect(resolvePortablePathSigningPolicyTrendAlertLevelFromEnvironment('warning')).toBe(
-      'warn'
-    );
+    expect(resolvePortablePathSigningPolicyTrendAlertLevelFromEnvironment('warning')).toBe('warn');
     expect(resolvePortablePathSigningPolicyTrendAlertLevelFromEnvironment('strict')).toBe('error');
     expect(resolvePortablePathSigningPolicyTrendAlertLevelFromEnvironment('')).toBeNull();
     expect(resolvePortablePathAuditSinkFailureAlertLevelFromEnvironment('false')).toBe('off');
@@ -518,19 +509,21 @@ describe('portable-engine envelope verification sink factories', () => {
     expect(
       resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironment('unregister-all')
     ).toBe('unregister_all');
+    expect(resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironment('log_only')).toBe(
+      'degrade_to_log_only'
+    );
     expect(
-      resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironment('log_only')
-    ).toBe('degrade_to_log_only');
-    expect(resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironment('invalid')).toBeNull();
+      resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironment('invalid')
+    ).toBeNull();
     expect(resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironment('120')).toBe(
       120
     );
     expect(
       resolvePortablePathAuditSinkAutoRemediationRateLimitWindowSecondsFromEnvironment('900')
     ).toBe(900);
-    expect(
-      resolvePortablePathAuditSinkAutoRemediationRateLimitMaxActionsFromEnvironment('2')
-    ).toBe(2);
+    expect(resolvePortablePathAuditSinkAutoRemediationRateLimitMaxActionsFromEnvironment('2')).toBe(
+      2
+    );
     expect(
       resolvePortablePathAuditSinkAutoRemediationNotificationsEnabledFromEnvironment('false')
     ).toBe(false);
@@ -549,9 +542,9 @@ describe('portable-engine envelope verification sink factories', () => {
         'ops@example.test,dev@example.test'
       )
     ).toEqual(['ops@example.test', 'dev@example.test']);
-    expect(resolvePortablePathAuditSinkAutoRemediationNotificationTimeoutMsFromEnvironment('6500')).toBe(
-      6500
-    );
+    expect(
+      resolvePortablePathAuditSinkAutoRemediationNotificationTimeoutMsFromEnvironment('6500')
+    ).toBe(6500);
     expect(
       resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironment(' signing-secret ')
     ).toBe('signing-secret');
@@ -753,6 +746,4 @@ describe('portable-engine envelope verification sink factories', () => {
     expect(state.persistenceWritesSucceeded).toBe(1);
     expect(state.persistenceWritesFailed).toBe(0);
   });
-
-
 });

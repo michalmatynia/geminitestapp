@@ -21,20 +21,14 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
   requireAiPathsAccess: requireAiPathsAccessMock,
   enforceAiPathsActionRateLimit: enforceAiPathsActionRateLimitMock,
   canAccessGlobalAiPathRuns: canAccessGlobalAiPathRunsMock,
-}));
-
-vi.mock('@/features/ai/ai-paths/services/path-run-repository', () => ({
-  getPathRunRepository: getPathRunRepositoryMock,
-}));
-
-vi.mock('@/features/ai/ai-paths/services/path-run-service', () => ({
   deletePathRunsWithRepository: deletePathRunsWithRepositoryMock,
-}));
-
-vi.mock('@/features/ai/ai-paths/services/path-run-recovery-service', () => ({
   recoverStaleRunningRuns: recoverStaleRunningRunsMock,
   resolveAiPathsStaleRunningCleanupIntervalMs: resolveAiPathsStaleRunningCleanupIntervalMsMock,
   resolveAiPathsStaleRunningMaxAgeMs: resolveAiPathsStaleRunningMaxAgeMsMock,
+}));
+
+vi.mock('@/shared/lib/ai-paths/services/path-run-repository', () => ({
+  getPathRunRepository: getPathRunRepositoryMock,
 }));
 
 import { GET_handler, __testOnly } from '@/app/api/ai-paths/runs/handler';

@@ -52,7 +52,9 @@ const normalizePortablePathAuditSinkAutoRemediationDeadLetterEntry = (
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return null;
 
   const signatureRecord =
-    record['signature'] && typeof record['signature'] === 'object' && !Array.isArray(record['signature'])
+    record['signature'] &&
+    typeof record['signature'] === 'object' &&
+    !Array.isArray(record['signature'])
       ? (record['signature'] as Record<string, unknown>)
       : null;
   const signatureTimestamp =
@@ -66,11 +68,11 @@ const normalizePortablePathAuditSinkAutoRemediationDeadLetterEntry = (
       ? {
         algorithm: PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_SIGNATURE_ALGORITHM,
         keyId:
-          signatureRecord &&
-          typeof signatureRecord['keyId'] === 'string' &&
-          signatureRecord['keyId'].trim().length > 0
-            ? signatureRecord['keyId'].trim()
-            : null,
+            signatureRecord &&
+            typeof signatureRecord['keyId'] === 'string' &&
+            signatureRecord['keyId'].trim().length > 0
+              ? signatureRecord['keyId'].trim()
+              : null,
         timestamp: signatureTimestamp,
       }
       : null;
@@ -119,9 +121,7 @@ const normalizePortablePathAuditSinkAutoRemediationDeadLetterEntries = (
   entries
     .map((entry) => normalizePortablePathAuditSinkAutoRemediationDeadLetterEntry(entry))
     .filter(
-      (
-        entry
-      ): entry is PortablePathAuditSinkAutoRemediationNotificationDeadLetterEntry =>
+      (entry): entry is PortablePathAuditSinkAutoRemediationNotificationDeadLetterEntry =>
         entry !== null
     )
     .slice(-maxEntries);

@@ -36,7 +36,7 @@ const convertQuestion = (
   pointValue: number,
   sortOrder: number
 ): KangurTestQuestion => {
-  const choices = (lq.choices).map((text, i) => ({
+  const choices = lq.choices.map((text, i) => ({
     label: DEFAULT_LABELS[i] ?? String.fromCharCode(65 + i),
     text: String(text),
   }));

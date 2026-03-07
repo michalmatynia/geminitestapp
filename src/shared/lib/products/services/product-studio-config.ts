@@ -2,18 +2,11 @@ import 'server-only';
 
 import { Prisma } from '@prisma/client';
 
+import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/settings';
 import { internalError } from '@/shared/errors/app-error';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-
-type SettingDocument = {
-  _id?: string;
-  key?: string;
-  value?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-};
 
 export type ProductStudioConfig = {
   projectId: string | null;
@@ -164,7 +157,7 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
   if (!process.env['MONGODB_URI']) return null;
   const mongo = await getMongoDb();
   const row = await mongo
-    .collection<SettingDocument>(SETTINGS_COLLECTION)
+    .collection<MongoTimestampedStringSettingRecord<string, Date>>(SETTINGS_COLLECTION)
     .findOne({ $or: [{ key }, { _id: key }] }, { projection: { value: 1 } });
 
   return typeof row?.value === 'string' ? row.value : null;
@@ -202,7 +195,9 @@ const writeMongoSetting = async (key: string, value: string): Promise<void> => {
   if (!process.env['MONGODB_URI']) return;
   const mongo = await getMongoDb();
   const now = new Date();
-  await mongo.collection<SettingDocument>(SETTINGS_COLLECTION).updateOne(
+  await mongo
+    .collection<MongoTimestampedStringSettingRecord<string, Date>>(SETTINGS_COLLECTION)
+    .updateOne(
     { key },
     {
       $set: {
@@ -215,7 +210,7 @@ const writeMongoSetting = async (key: string, value: string): Promise<void> => {
       },
     },
     { upsert: true }
-  );
+    );
 };
 
 const writeSetting = async (key: string, value: string): Promise<void> => {
@@ -272,7 +267,7 @@ const listMongoProductStudioConfigs = async (): Promise<Array<{ key: string; val
   if (!process.env['MONGODB_URI']) return [];
   const mongo = await getMongoDb();
   const rows = await mongo
-    .collection<SettingDocument>(SETTINGS_COLLECTION)
+    .collection<MongoTimestampedStringSettingRecord<string, Date>>(SETTINGS_COLLECTION)
     .find(
       {
         $or: [

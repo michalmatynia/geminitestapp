@@ -28,6 +28,7 @@ const contextValue = (() => {
   const setNodeFileMeta = vi.fn();
   return {
     state: {
+      newNodeType: 'prompt',
       documentSearchScope: 'all_cases',
       documentSearchQuery: '',
       relationTreeNodes: relationTree.nodes,
@@ -37,6 +38,8 @@ const contextValue = (() => {
       canvasHostRef: { current: null },
     },
     actions: {
+      setNewNodeType: vi.fn(),
+      setIsNodeInspectorOpen: vi.fn(),
       setDocumentSearchScope: vi.fn(),
       setDocumentSearchQuery: vi.fn(),
       addNode,
@@ -65,20 +68,22 @@ const expandVisibleNodes = (): void => {
 
 describe('NodeFileDocumentSearchPanel tree mode', () => {
   it('adds selected document from tree action button to canvas', () => {
-    render(
-      <NodeFileDocumentSearchPanel
-        newNodeType='prompt'
-        setNewNodeType={vi.fn()}
-        onExplanatoryClick={vi.fn()}
-        onNodeInspectorClick={vi.fn()}
-      />
+    render(<NodeFileDocumentSearchPanel />);
+
+    fireEvent.click(screen.getByRole('button', { name: /explanatory node/i }));
+
+    expect(contextValue.addNode).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'prompt',
+        title: 'Explanatory Note',
+      })
     );
 
     expandVisibleNodes();
 
     fireEvent.click(screen.getByLabelText('Add Doc 1 to canvas'));
 
-    expect(contextValue.addNode).toHaveBeenCalledTimes(1);
+    expect(contextValue.addNode).toHaveBeenCalledTimes(2);
     expect(contextValue.setNodeFileMeta).toHaveBeenCalledTimes(1);
     expect(contextValue.setNodeFileMeta).toHaveBeenCalledWith(
       expect.any(String),

@@ -29,7 +29,10 @@ import { invalidateDatabaseEnginePolicyCache } from '@/shared/lib/db/database-en
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import prisma from '@/shared/lib/db/prisma';
-import { upsertSettingSchema as settingSchema } from '@/shared/contracts/settings';
+import {
+  type MongoPersistedStringSettingRecord,
+  upsertSettingSchema as settingSchema,
+} from '@/shared/contracts/settings';
 import {
   SettingRecord,
   getCachedSettings,
@@ -72,12 +75,7 @@ const CASE_RESOLVER_DETACHED_WORKSPACE_KEYS = new Set<string>([
   CASE_RESOLVER_WORKSPACE_DOCUMENTS_KEY,
 ]);
 
-type SettingDocument = {
-  key: string;
-  value: string;
-  createdAt: Date;
-  updatedAt: Date;
-};
+type SettingDocument = MongoPersistedStringSettingRecord<string, Date>;
 
 const SETTINGS_COLLECTION = 'settings';
 const DEFAULT_SCOPE: SettingsScope = 'light';

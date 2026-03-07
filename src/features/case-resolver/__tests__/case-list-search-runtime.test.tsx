@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
+import { CaseListPanelControlsContext } from '@/features/case-resolver/components/list/CaseListPanelControlsContext';
 import { CaseListSearchPanel } from '@/features/case-resolver/components/list/search';
 import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 
@@ -50,6 +51,61 @@ const buildWorkspace = (): CaseResolverWorkspace =>
   }) as unknown as CaseResolverWorkspace;
 
 describe('CaseListSearchPanel shared runtime search', () => {
+  it('supports the panel context path when runtime props are omitted', () => {
+    const workspace = buildWorkspace();
+    const onPrefetchCase = vi.fn();
+    const onPrefetchFile = vi.fn();
+    const onOpenCase = vi.fn();
+    const onOpenFile = vi.fn();
+
+    render(
+      <CaseListPanelControlsContext.Provider
+        value={{
+          caseSortBy: 'updated',
+          setCaseSortBy: vi.fn(),
+          caseSortOrder: 'desc',
+          setCaseSortOrder: vi.fn(),
+          onCreateCase: vi.fn(),
+          totalCount: workspace.files.length,
+          filteredCount: 2,
+          page: 1,
+          totalPages: 1,
+          onPageChange: vi.fn(),
+          pageSize: 24,
+          onPageSizeChange: vi.fn(),
+          onSearchChange: vi.fn(),
+          isHierarchyLocked: true,
+          setIsHierarchyLocked: vi.fn(),
+          caseShowNestedContent: false,
+          setCaseShowNestedContent: vi.fn(),
+          handleSaveDefaults: vi.fn(async () => {}),
+          isSavingDefaults: false,
+          heldCaseFile: null,
+          workspace,
+          identifierLabelById: new Map([
+            ['sig-a', 'SIG/A'],
+            ['sig-b', 'SIG/B'],
+          ]),
+          searchQuery: 'invoice',
+          caseOrderById: new Map([
+            ['case-beta', 0],
+            ['case-alpha', 1],
+          ]),
+          onPrefetchCase,
+          onPrefetchFile,
+          onOpenCase,
+          onOpenFile,
+          onClearHeldCase: vi.fn(),
+        }}
+      >
+        <CaseListSearchPanel />
+      </CaseListPanelControlsContext.Provider>
+    );
+
+    expect(screen.getByText('Beta Case')).toBeInTheDocument();
+    expect(screen.getByText('Alpha Case')).toBeInTheDocument();
+  });
+
   it('keeps grouped summary, case ordering, expand/collapse, and callbacks parity', () => {
     const workspace = buildWorkspace();
     const onPrefetchCase = vi.fn();

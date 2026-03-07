@@ -114,9 +114,9 @@ const SERVER_HANDLER_CATALOG = createNodeRuntimeHandlerCatalog({
 const resolveLegacyHandler = (type: string): NodeHandler | null => {
   return SERVER_HANDLER_CATALOG.resolveLegacyHandler(type);
 };
-export const SERVER_NATIVE_CODE_OBJECT_HANDLER_IDS: readonly string[] = Object.freeze(
-  [...SERVER_HANDLER_CATALOG.nativeCodeObjectHandlerIds]
-);
+export const SERVER_NATIVE_CODE_OBJECT_HANDLER_IDS: readonly string[] = Object.freeze([
+  ...SERVER_HANDLER_CATALOG.nativeCodeObjectHandlerIds,
+]);
 
 const defaultResolveCodeObjectHandler = createNodeCodeObjectV3ContractResolver({
   resolveLegacyHandler,

@@ -1,7 +1,11 @@
 import { motion } from 'framer-motion';
 import { Home, RotateCcw } from 'lucide-react';
 
-import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
+import {
+  KangurButton,
+  KangurPanel,
+  KangurProgressBar,
+} from '@/features/kangur/ui/design/primitives';
 import type { KangurOperation } from '@/features/kangur/ui/types';
 
 export type ResultScreenProps = {
@@ -67,14 +71,14 @@ export default function ResultScreen({
           <span className='text-slate-500'>Temat</span>
           <span className='font-bold text-purple-500 capitalize'>{operation ?? 'mixed'}</span>
         </div>
-        <div className='w-full bg-gray-100 rounded-full h-4 mt-2'>
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${percent}%` }}
-            transition={{ duration: 0.8, ease: 'easeOut' }}
-            className='h-4 rounded-full bg-gradient-to-r from-indigo-400 to-purple-500'
-          />
-        </div>
+        <KangurProgressBar
+          accent='indigo'
+          animated
+          className='mt-2'
+          data-testid='result-screen-progress-bar'
+          size='lg'
+          value={percent}
+        />
       </KangurPanel>
 
       <div className='flex gap-4'>

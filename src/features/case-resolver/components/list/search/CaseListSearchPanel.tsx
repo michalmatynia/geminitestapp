@@ -27,6 +27,7 @@ import {
   CASE_RESOLVER_CASES_MASTER_SETTINGS_HREF,
   formatCaseTimestamp,
 } from '../case-list-utils';
+import { useOptionalCaseListPanelControlsContext } from '../CaseListPanelControlsContext';
 import {
   CaseListSearchActionsProvider,
   useCaseListSearchActionsContext,
@@ -254,14 +255,14 @@ const buildCaseListSearchEntries = ({
 };
 
 export type CaseListSearchPanelProps = {
-  workspace: CaseResolverWorkspace;
-  identifierLabelById: Map<string, string>;
-  query: string;
+  workspace?: CaseResolverWorkspace | undefined;
+  identifierLabelById?: Map<string, string> | undefined;
+  query?: string | undefined;
   caseOrderById?: Map<string, number> | undefined;
-  onPrefetchCase: (caseId: string) => void;
-  onPrefetchFile: (file: CaseResolverFile) => void;
-  onOpenCase: (caseId: string) => void;
-  onOpenFile: (file: CaseResolverFile) => void;
+  onPrefetchCase?: ((caseId: string) => void) | undefined;
+  onPrefetchFile?: ((file: CaseResolverFile) => void) | undefined;
+  onOpenCase?: ((caseId: string) => void) | undefined;
+  onOpenFile?: ((file: CaseResolverFile) => void) | undefined;
 };
 
 function resolveFileIcon(fileType: CaseResolverFile['fileType']): React.JSX.Element {
@@ -413,16 +414,38 @@ function CaseAccordionRow(props: {
 }
 
 export function CaseListSearchPanel(props: CaseListSearchPanelProps): React.JSX.Element {
+  const runtime = useOptionalCaseListPanelControlsContext();
   const {
-    workspace,
-    identifierLabelById,
-    query,
-    caseOrderById,
-    onPrefetchCase,
-    onPrefetchFile,
-    onOpenCase,
-    onOpenFile,
+    workspace: propWorkspace,
+    identifierLabelById: propIdentifierLabelById,
+    query: propQuery,
+    caseOrderById: propCaseOrderById,
+    onPrefetchCase: propOnPrefetchCase,
+    onPrefetchFile: propOnPrefetchFile,
+    onOpenCase: propOnOpenCase,
+    onOpenFile: propOnOpenFile,
   } = props;
+  const workspace = propWorkspace ?? runtime?.workspace;
+  const identifierLabelById = propIdentifierLabelById ?? runtime?.identifierLabelById;
+  const query = propQuery ?? runtime?.searchQuery ?? '';
+  const caseOrderById = propCaseOrderById ?? runtime?.caseOrderById;
+  const onPrefetchCase = propOnPrefetchCase ?? runtime?.onPrefetchCase;
+  const onPrefetchFile = propOnPrefetchFile ?? runtime?.onPrefetchFile;
+  const onOpenCase = propOnOpenCase ?? runtime?.onOpenCase;
+  const onOpenFile = propOnOpenFile ?? runtime?.onOpenFile;
+
+  if (
+    !workspace ||
+    !identifierLabelById ||
+    !onPrefetchCase ||
+    !onPrefetchFile ||
+    !onOpenCase ||
+    !onOpenFile
+  ) {
+    throw new Error(
+      'CaseListSearchPanel must be used within CaseListPanelControlsProvider or receive explicit props'
+    );
+  }
 
   const entries = useMemo(
     () =>

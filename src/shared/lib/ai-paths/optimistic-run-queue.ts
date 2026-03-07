@@ -99,7 +99,10 @@ const matchesQueryFilter = (run: AiPathRunRecord, query: string | null): boolean
   return haystack.includes(query);
 };
 
-export const aiPathRunMatchesFilters = (run: AiPathRunRecord, filters?: OptimisticRunFilters): boolean => {
+export const aiPathRunMatchesFilters = (
+  run: AiPathRunRecord,
+  filters?: OptimisticRunFilters
+): boolean => {
   const statusFilter = normalizeString(filters?.status);
   if (statusFilter && statusFilter !== 'all') {
     const runStatus = normalizeString(run.status);
@@ -264,7 +267,9 @@ export const mergeAiPathQueuePayloadWithOptimisticRuns = (
   const offset = typeof options?.offset === 'number' ? options.offset : 0;
   if (offset > 0) return payload;
 
-  const optimisticRuns = listOptimisticAiPathRuns(options).filter((run) => !serverRunIds.has(run.id));
+  const optimisticRuns = listOptimisticAiPathRuns(options).filter(
+    (run) => !serverRunIds.has(run.id)
+  );
   if (optimisticRuns.length === 0) return payload;
 
   const combinedRuns = [...optimisticRuns, ...serverRuns];

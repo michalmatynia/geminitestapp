@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { cn } from '@/shared/utils';
 import { Button, Card, SelectSimple } from '@/shared/ui';
 
@@ -17,21 +18,31 @@ import type { AiPathsObjectAnalysisAutoApplyTarget } from '@/features/ai/image-s
 
 export interface AiPathAnalysisTriggerSectionProps {
   variant: 'full' | 'compact';
-  analysis: UseAiPathsObjectAnalysisReturn;
+  analysis?: UseAiPathsObjectAnalysisReturn;
 }
 
-const AiPathAnalysisTriggerContext = React.createContext<UseAiPathsObjectAnalysisReturn | null>(
-  null
-);
+const {
+  Context: AiPathAnalysisTriggerContext,
+  useStrictContext: useAiPathAnalysisTriggerContext,
+  useOptionalContext: useOptionalAiPathAnalysisTriggerContext,
+} = createStrictContext<UseAiPathsObjectAnalysisReturn>({
+  hookName: 'useAiPathAnalysisTriggerContext',
+  providerName: 'AiPathAnalysisTriggerProvider',
+  displayName: 'AiPathAnalysisTriggerContext',
+});
 
-function useAiPathAnalysisTriggerContext(): UseAiPathsObjectAnalysisReturn {
-  const value = React.useContext(AiPathAnalysisTriggerContext);
-  if (!value) {
-    throw new Error(
-      'useAiPathAnalysisTriggerContext must be used within AiPathAnalysisTriggerContext.Provider'
-    );
-  }
-  return value;
+export function AiPathAnalysisTriggerProvider({
+  value,
+  children,
+}: {
+  value: UseAiPathsObjectAnalysisReturn;
+  children: React.ReactNode;
+}): React.JSX.Element {
+  return (
+    <AiPathAnalysisTriggerContext.Provider value={value}>
+      {children}
+    </AiPathAnalysisTriggerContext.Provider>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -496,20 +507,34 @@ export function AiPathAnalysisTriggerSection({
   variant,
   analysis,
 }: AiPathAnalysisTriggerSectionProps): React.JSX.Element {
-  const contextValue = useMemo(() => analysis, [analysis]);
+  const inheritedAnalysis = useOptionalAiPathAnalysisTriggerContext();
+  const contextValue = useMemo(
+    () => analysis ?? inheritedAnalysis,
+    [analysis, inheritedAnalysis]
+  );
 
-  if (variant === 'compact') {
-    return (
-      <AiPathAnalysisTriggerContext.Provider value={contextValue}>
-        <AiPathAnalysisTriggerCompact />
-      </AiPathAnalysisTriggerContext.Provider>
+  if (!contextValue) {
+    throw new Error(
+      'AiPathAnalysisTriggerSection must be used within AiPathAnalysisTriggerProvider or receive explicit analysis'
     );
   }
-  return (
-    <AiPathAnalysisTriggerContext.Provider value={contextValue}>
+
+  const content =
+    variant === 'compact' ? (
+      <AiPathAnalysisTriggerCompact />
+    ) : (
       <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
         <AiPathAnalysisTriggerFull />
       </Card>
-    </AiPathAnalysisTriggerContext.Provider>
-  );
+    );
+
+  if (analysis) {
+    return (
+      <AiPathAnalysisTriggerProvider value={contextValue}>
+        {content}
+      </AiPathAnalysisTriggerProvider>
+    );
+  }
+
+  return content;
 }

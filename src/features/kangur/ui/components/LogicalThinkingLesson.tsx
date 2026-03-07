@@ -3,16 +3,14 @@ import LessonSlideSection, {
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
 
-type LogicalThinkingLessonProps = { onBack: () => void };
-
 export const SLIDES: LessonSlide[] = [
   {
     title: 'Co to jest myślenie logiczne? 🧠',
     content: (
       <div className='flex flex-col items-center gap-4'>
         <p className='text-gray-700 text-center'>
-          Myślenie logiczne to umiejętność zauważania zasad, porządkowania informacji i
-          wyciągania wniosków krok po kroku.
+          Myślenie logiczne to umiejętność zauważania zasad, porządkowania informacji i wyciągania
+          wniosków krok po kroku.
         </p>
         <KangurLessonCallout accent='violet' className='w-full text-sm text-gray-600'>
           <p className='font-semibold text-violet-700 mb-2'>Logiczne myślenie pomaga:</p>
@@ -31,13 +29,14 @@ export const SLIDES: LessonSlide[] = [
     content: (
       <div className='flex flex-col items-center gap-4'>
         <p className='text-gray-700 text-center'>
-          Wzorzec to powtarzający się układ. Gdy go znajdziesz, możesz przewidzieć, co będzie
-          dalej!
+          Wzorzec to powtarzający się układ. Gdy go znajdziesz, możesz przewidzieć, co będzie dalej!
         </p>
         <KangurLessonCallout accent='sky' className='w-full text-center'>
           <p className='text-gray-500 text-sm mb-2'>Co jest dalej?</p>
           <p className='text-3xl tracking-widest'>🔴 🔵 🔴 🔵 🔴 ❓</p>
-          <p className='mt-2 text-blue-600 font-bold'>Odpowiedź: 🔵 (wzorzec: czerwony – niebieski)</p>
+          <p className='mt-2 text-blue-600 font-bold'>
+            Odpowiedź: 🔵 (wzorzec: czerwony – niebieski)
+          </p>
         </KangurLessonCallout>
         <KangurLessonCallout accent='sky' className='w-full text-center'>
           <p className='text-gray-500 text-sm mb-2'>Ciąg liczbowy – co dalej?</p>
@@ -113,14 +112,14 @@ export const SLIDES: LessonSlide[] = [
           </KangurLessonCallout>
           <KangurLessonCallout accent='indigo' padding='sm'>
             <p className='text-indigo-800 text-sm'>
-              <b>Jeśli</b> wszystkie koty mają cztery łapy, a Mruczek jest kotem, <b>to</b>{' '}
-              Mruczek ma cztery łapy. 🐱
+              <b>Jeśli</b> wszystkie koty mają cztery łapy, a Mruczek jest kotem, <b>to</b> Mruczek
+              ma cztery łapy. 🐱
             </p>
           </KangurLessonCallout>
           <KangurLessonCallout accent='indigo' padding='sm'>
             <p className='text-indigo-800 text-sm'>
-              <b>Jeśli</b> liczba jest parzysta, <b>to</b> dzieli się przez 2. Czy 6 jest
-              parzyste? <b className='text-indigo-600'>Tak! 6 ÷ 2 = 3 ✓</b>
+              <b>Jeśli</b> liczba jest parzysta, <b>to</b> dzieli się przez 2. Czy 6 jest parzyste?{' '}
+              <b className='text-indigo-600'>Tak! 6 ÷ 2 = 3 ✓</b>
             </p>
           </KangurLessonCallout>
         </div>
@@ -162,11 +161,21 @@ export const SLIDES: LessonSlide[] = [
       <div className='flex flex-col items-center gap-4'>
         <KangurLessonCallout accent='amber' className='w-full'>
           <ul className='text-gray-700 space-y-2 text-sm'>
-            <li>🔁 <b>Wzorzec</b> – znajdź regułę i przewiduj, co dalej</li>
-            <li>📦 <b>Klasyfikacja</b> – grupuj według wspólnej cechy</li>
-            <li>🔎 <b>Intruz</b> – jeden element łamie regułę grupy</li>
-            <li>💡 <b>Jeśli... to...</b> – wyciągaj wnioski krok po kroku</li>
-            <li>🔗 <b>Analogia</b> – ta sama relacja, inny przykład</li>
+            <li>
+              🔁 <b>Wzorzec</b> – znajdź regułę i przewiduj, co dalej
+            </li>
+            <li>
+              📦 <b>Klasyfikacja</b> – grupuj według wspólnej cechy
+            </li>
+            <li>
+              🔎 <b>Intruz</b> – jeden element łamie regułę grupy
+            </li>
+            <li>
+              💡 <b>Jeśli... to...</b> – wyciągaj wnioski krok po kroku
+            </li>
+            <li>
+              🔗 <b>Analogia</b> – ta sama relacja, inny przykład
+            </li>
           </ul>
         </KangurLessonCallout>
         <p className='text-violet-600 font-bold text-center'>
@@ -177,11 +186,10 @@ export const SLIDES: LessonSlide[] = [
   },
 ];
 
-export default function LogicalThinkingLesson({ onBack }: LogicalThinkingLessonProps): React.JSX.Element {
+export default function LogicalThinkingLesson(): React.JSX.Element {
   return (
     <LessonSlideSection
       slides={SLIDES}
-      onBack={onBack}
       dotActiveClass='bg-violet-500'
       dotDoneClass='bg-violet-300'
       gradientClass='from-violet-500 to-blue-500'

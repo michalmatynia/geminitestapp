@@ -89,7 +89,8 @@ describe('engine-core runtime-kernel telemetry propagation', () => {
         },
       ] satisfies Edge[],
       {
-        resolveHandler: (type) =>
+        resolveHandler:
+          (type) =>
           async ({ nodeId, nodeInputs }) =>
             type === 'custom' && nodeId === 'node-target'
               ? { result: nodeInputs['value'] }

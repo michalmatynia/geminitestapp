@@ -14,11 +14,52 @@ const MANAGEMENT_FIELDS: SettingsField[] = [
   { key: 'label', label: 'Label', type: 'text', defaultValue: '' },
   { key: 'notes', label: 'Internal notes', type: 'text', defaultValue: '' },
 ];
+const RUNTIME_VISIBILITY_FIELDS: SettingsField[] = [
+  {
+    key: 'runtimeVisibilityMode',
+    label: 'Runtime visibility',
+    type: 'select',
+    defaultValue: 'always',
+    options: [
+      { label: 'Always render', value: 'always' },
+      { label: 'Value equals', value: 'equals' },
+      { label: 'Value does not equal', value: 'not-equals' },
+      { label: 'Value is truthy', value: 'truthy' },
+      { label: 'Value is falsy', value: 'falsy' },
+    ],
+  },
+  {
+    key: 'runtimeVisibilitySource',
+    label: 'Runtime source',
+    type: 'text',
+    defaultValue: '',
+  },
+  {
+    key: 'runtimeVisibilityPath',
+    label: 'Runtime path',
+    type: 'text',
+    defaultValue: '',
+  },
+  {
+    key: 'runtimeVisibilityValue',
+    label: 'Expected value',
+    type: 'text',
+    defaultValue: '',
+  },
+];
 
 function prependManagementFields(schema: SettingsField[]): SettingsField[] {
   const existing = new Set(schema.map((field: SettingsField) => field.key));
   const extra = MANAGEMENT_FIELDS.filter((field: SettingsField) => !existing.has(field.key));
   return extra.length ? [...extra, ...schema] : schema;
+}
+
+function appendRuntimeVisibilityFields(schema: SettingsField[]): SettingsField[] {
+  const existing = new Set(schema.map((field: SettingsField) => field.key));
+  const extra = RUNTIME_VISIBILITY_FIELDS.filter(
+    (field: SettingsField) => !existing.has(field.key)
+  );
+  return extra.length ? [...schema, ...extra] : schema;
 }
 
 interface FieldGroup {
@@ -117,7 +158,9 @@ export {
   PADDING_KEYS,
   MARGIN_KEYS,
   MANAGEMENT_FIELDS,
+  RUNTIME_VISIBILITY_FIELDS,
   prependManagementFields,
+  appendRuntimeVisibilityFields,
   groupSettingsFields,
   renderFieldGroups,
 };

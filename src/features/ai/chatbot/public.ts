@@ -1,4 +1,4 @@
 export * from './hooks';
-export { default as ChatInterface } from './components/ChatInterface';
-export { default as ChatMessageContent } from './components/ChatMessageContent';
-export { default as SessionSidebar } from './components/SessionSidebar';
+export { ChatInterface } from './components/ChatInterface';
+export { ChatMessageContent } from './components/ChatMessageContent';
+export { SessionSidebar } from './components/SessionSidebar';

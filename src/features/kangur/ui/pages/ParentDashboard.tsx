@@ -1,196 +1,72 @@
-import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  ArrowLeft,
-  BarChart2,
-  BookOpen,
-  ClipboardList,
-  Home,
-  LayoutGrid,
-  LogIn,
-  LogOut,
-} from 'lucide-react';
-import { getKangurPageHref as createPageUrl } from '@/shared/contracts/kangur';
-import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
-import KangurAssignmentManager from '@/features/kangur/ui/components/KangurAssignmentManager';
+'use client';
+
+import { AnimatePresence, motion } from 'framer-motion';
+import { BookOpen, Home, LayoutGrid, LogOut } from 'lucide-react';
+import Link from 'next/link';
+
+import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
+import { KangurDocsTooltipEnhancer, useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
+import { KangurParentDashboardAssignmentsWidget } from '@/features/kangur/ui/components/KangurParentDashboardAssignmentsWidget';
+import { KangurParentDashboardHeroWidget } from '@/features/kangur/ui/components/KangurParentDashboardHeroWidget';
+import { KangurParentDashboardLearnerManagementWidget } from '@/features/kangur/ui/components/KangurParentDashboardLearnerManagementWidget';
+import { KangurParentDashboardProgressWidget } from '@/features/kangur/ui/components/KangurParentDashboardProgressWidget';
+import { KangurParentDashboardScoresWidget } from '@/features/kangur/ui/components/KangurParentDashboardScoresWidget';
+import { KangurParentDashboardTabsWidget } from '@/features/kangur/ui/components/KangurParentDashboardTabsWidget';
 import { KangurProfileMenu } from '@/features/kangur/ui/components/KangurProfileMenu';
-import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
-import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
-import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import {
   KangurButton,
   KangurPageContainer,
   KangurPageShell,
   KangurPageTopBar,
-  KangurPanel,
+  KangurStatusChip,
   KangurTopNavGroup,
 } from '@/features/kangur/ui/design/primitives';
 import {
-  KANGUR_ACCENT_STYLES,
-  KANGUR_OPTION_CARD_CLASSNAME,
-} from '@/features/kangur/ui/design/tokens';
-import { cn } from '@/shared/utils';
-import Link from 'next/link';
-import { ProgressOverview, ScoreHistory } from '@/features/kangur/ui/components/dashboard';
+  KangurParentDashboardRuntimeBoundary,
+  useKangurParentDashboardRuntime,
+} from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 
-type ParentDashboardTabId = 'progress' | 'scores' | 'assign';
+function ParentDashboardContent(): React.JSX.Element {
+  const { activeTab, basePath, canAccessDashboard, isAuthenticated, logout, navigateToLogin, viewerRoleLabel } =
+    useKangurParentDashboardRuntime();
+  const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('parentDashboard');
 
-type ParentDashboardTab = {
-  id: ParentDashboardTabId;
-  label: string;
-  icon: typeof BarChart2;
-};
-
-const TABS: ParentDashboardTab[] = [
-  { id: 'progress', label: 'Postęp', icon: BarChart2 },
-  { id: 'scores', label: 'Wyniki gier', icon: ClipboardList },
-  { id: 'assign', label: 'Zadania', icon: BookOpen },
-];
-
-const kangurPlatform = getKangurPlatform();
-const FORM_CONTROL_CLASSNAME =
-  'rounded-xl border border-slate-200 bg-white/95 px-3 py-2 text-sm text-slate-700 shadow-sm outline-none transition focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100';
-
-export default function ParentDashboard() {
-  const { basePath } = useKangurRouting();
-  const { isAuthenticated, user, navigateToLogin, logout, selectLearner, checkAppState } =
-    useKangurAuth();
-  const [activeTab, setActiveTab] = useState<ParentDashboardTabId>('progress');
-  const [createForm, setCreateForm] = useState({
-    displayName: '',
-    loginName: '',
-    password: '',
-  });
-  const [editForm, setEditForm] = useState({
-    displayName: '',
-    loginName: '',
-    password: '',
-    status: 'active',
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [feedback, setFeedback] = useState<string | null>(null);
-
-  const progress = useKangurProgressState();
-  const activeLearner = user?.activeLearner ?? null;
-  const viewerName = user?.email?.trim() || 'Konto';
-  const scoreViewerName = activeLearner?.displayName?.trim() || user?.full_name?.trim() || null;
-  const scoreViewerEmail = user?.email?.trim() || null;
-  const viewerRoleLabel = user?.role === 'admin' ? 'Nauczyciel' : 'Rodzic';
-
-  useEffect(() => {
-    setEditForm({
-      displayName: activeLearner?.displayName ?? '',
-      loginName: activeLearner?.loginName ?? '',
-      password: '',
-      status: activeLearner?.status ?? 'active',
-    });
-  }, [activeLearner?.displayName, activeLearner?.id, activeLearner?.loginName, activeLearner?.status]);
-
-  const handleCreateLearner = async (): Promise<void> => {
-    setIsSubmitting(true);
-    setFeedback(null);
-    try {
-      const created = await kangurPlatform.learners.create(createForm);
-      await selectLearner(created.id);
-      setCreateForm({
-        displayName: '',
-        loginName: '',
-        password: '',
-      });
-      setFeedback(`Dodano profil ucznia: ${created.displayName}.`);
-    } catch (error) {
-      setFeedback(error instanceof Error ? error.message : 'Nie udalo sie dodac ucznia.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleSaveLearner = async (): Promise<void> => {
-    if (!activeLearner) {
-      return;
-    }
-
-    setIsSubmitting(true);
-    setFeedback(null);
-    try {
-      await kangurPlatform.learners.update(activeLearner.id, {
-        displayName: editForm.displayName,
-        loginName: editForm.loginName,
-        ...(editForm.password.trim().length > 0 ? { password: editForm.password } : {}),
-        status: editForm.status === 'disabled' ? 'disabled' : 'active',
-      });
-      await checkAppState();
-      setEditForm((current) => ({ ...current, password: '' }));
-      setFeedback('Zapisano dane ucznia.');
-    } catch (error) {
-      setFeedback(error instanceof Error ? error.message : 'Nie udalo sie zapisac zmian.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  if (!isAuthenticated) {
+  if (!canAccessDashboard) {
     return (
-      <KangurPageShell tone='dashboard' className='justify-center px-4'>
+      <KangurPageShell
+        tone='dashboard'
+        className='justify-center px-4'
+        id='kangur-parent-dashboard-page'
+      >
+        <KangurDocsTooltipEnhancer
+          enabled={docsTooltipsEnabled}
+          rootId='kangur-parent-dashboard-page'
+        />
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          className='w-full max-w-sm'
+          className='w-full max-w-lg'
         >
-          <KangurPanel className='flex flex-col items-center gap-5 text-center' padding='xl' variant='elevated'>
-            <div className='text-6xl'>🪪</div>
-            <h1 className='text-2xl font-extrabold text-gray-800 text-center'>
-              Panel Rodzica / Nauczyciela
-            </h1>
-            <p className='text-gray-500 text-sm text-center'>
-              Ten widok pokazuje prywatne postępy ucznia, więc dostęp wymaga zalogowanego konta.
-            </p>
-
-            <KangurButton className='w-full' onClick={navigateToLogin} size='lg' variant='primary'>
-              <LogIn className='w-5 h-5' />
-              Zaloguj się
-            </KangurButton>
-
-            <KangurButton asChild size='sm' variant='ghost'>
-              <Link href={createPageUrl('Game', basePath)}>
-                <ArrowLeft className='w-4 h-4' /> Wróć do gry
-              </Link>
-            </KangurButton>
-          </KangurPanel>
-        </motion.div>
-      </KangurPageShell>
-    );
-  }
-
-  if (!user?.canManageLearners) {
-    return (
-      <KangurPageShell tone='dashboard' className='justify-center px-4'>
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          className='w-full max-w-sm'
-        >
-          <KangurPanel className='flex flex-col items-center gap-5 text-center' padding='xl' variant='elevated'>
-            <div className='text-6xl'>🔒</div>
-            <h1 className='text-2xl font-extrabold text-gray-800 text-center'>Panel Rodzica</h1>
-            <p className='text-gray-500 text-sm text-center'>
-              Ten widok jest dostepny tylko dla konta rodzica, ktore zarzadza profilami uczniow.
-            </p>
-            <KangurButton asChild size='lg' variant='primary'>
-              <Link href={createPageUrl('LearnerProfile', basePath)}>Wroc do profilu ucznia</Link>
-            </KangurButton>
-          </KangurPanel>
+          <KangurParentDashboardHeroWidget />
         </motion.div>
       </KangurPageShell>
     );
   }
 
   return (
-    <KangurPageShell tone='dashboard'>
+    <KangurPageShell
+      tone='dashboard'
+      id='kangur-parent-dashboard-page'
+      skipLinkTargetId='kangur-parent-dashboard-main'
+    >
+      <KangurDocsTooltipEnhancer
+        enabled={docsTooltipsEnabled}
+        rootId='kangur-parent-dashboard-page'
+      />
       <KangurPageTopBar
         left={
           <KangurTopNavGroup>
-            <KangurButton asChild size='md' variant='navigation'>
+            <KangurButton asChild size='md' variant='navigation' data-doc-id='top_nav_home'>
               <Link href={createPageUrl('Game', basePath)}>
                 <Home className='h-[22px] w-[22px]' strokeWidth={2.1} />
                 <span>Strona glowna</span>
@@ -203,13 +79,19 @@ export default function ParentDashboard() {
               onLogin={navigateToLogin}
               isActive={false}
             />
-            <KangurButton asChild size='md' variant='navigation'>
+            <KangurButton asChild size='md' variant='navigation' data-doc-id='top_nav_lessons'>
               <Link href={createPageUrl('Lessons', basePath)}>
                 <BookOpen className='h-[22px] w-[22px]' strokeWidth={2.1} />
                 <span>Lekcje</span>
               </Link>
             </KangurButton>
-            <KangurButton asChild size='md' variant='navigationActive'>
+            <KangurButton
+              asChild
+              size='md'
+              variant='navigationActive'
+              aria-current='page'
+              data-doc-id='top_nav_parent_dashboard'
+            >
               <Link href={createPageUrl('ParentDashboard', basePath)}>
                 <LayoutGrid className='h-[22px] w-[22px]' strokeWidth={2.1} />
                 <span>Rodzic</span>
@@ -219,218 +101,37 @@ export default function ParentDashboard() {
         }
         right={
           <>
-            <span className='hidden sm:inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-slate-500'>
+            <KangurStatusChip
+              accent='slate'
+              className='hidden uppercase tracking-[0.18em] sm:inline-flex'
+              data-testid='parent-dashboard-role-chip'
+              size='sm'
+            >
               Rola: {viewerRoleLabel}
-            </span>
-            <KangurButton onClick={() => logout(false)} size='sm' variant='ghost'>
-              <LogOut className='w-4 h-4' /> Wyloguj
+            </KangurStatusChip>
+            <KangurButton
+              onClick={() => logout(false)}
+              size='sm'
+              variant='ghost'
+              data-doc-id='profile_logout'
+            >
+              <LogOut className='h-4 w-4' /> Wyloguj
             </KangurButton>
           </>
         }
       />
 
-      <KangurPageContainer className='max-w-2xl flex flex-col gap-6'>
+      <KangurPageContainer
+        id='kangur-parent-dashboard-main'
+        className='max-w-2xl flex flex-col gap-6'
+      >
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-          <h1 className='text-3xl font-extrabold text-gray-800'>📊 Panel Rodzica</h1>
-          <p className='text-gray-500 mt-1'>
-            Konto wlasciciela: <span className='font-semibold text-gray-700'>{viewerName}</span>.
-            Wybrany uczen:{' '}
-            <span className='font-semibold text-gray-700'>
-              {activeLearner?.displayName ?? 'Brak profilu'}
-            </span>
-            .
-          </p>
+          <KangurParentDashboardHeroWidget showActions={false} />
         </motion.div>
 
-        <KangurPanel className='flex flex-col gap-4' padding='lg' variant='soft'>
-          <div className='flex flex-col gap-1'>
-            <div className='text-sm font-bold text-gray-500 uppercase tracking-wide'>
-              Profile uczniow
-            </div>
-            <div className='text-sm text-gray-500'>
-              Rodzic loguje sie emailem, a uczniowie dostaja osobne nazwy logowania i hasla.
-            </div>
-          </div>
+        <KangurParentDashboardLearnerManagementWidget />
+        <KangurParentDashboardTabsWidget />
 
-          <div className='grid gap-3 sm:grid-cols-2'>
-            {user.learners.map((learner) => {
-              const isActiveLearner = learner.id === activeLearner?.id;
-              const initial = learner.displayName.trim().charAt(0).toUpperCase() || '?';
-              return (
-                <button
-                  aria-pressed={isActiveLearner}
-                  data-testid={`parent-dashboard-learner-card-${learner.id}`}
-                  key={learner.id}
-                  type='button'
-                  onClick={() => void selectLearner(learner.id)}
-                  className={cn(
-                    KANGUR_OPTION_CARD_CLASSNAME,
-                    'flex items-start gap-4 rounded-[30px] px-5 py-4 text-left',
-                    isActiveLearner
-                      ? KANGUR_ACCENT_STYLES.indigo.activeCard
-                      : cn('border-slate-200/80', KANGUR_ACCENT_STYLES.slate.hoverCard)
-                  )}
-                >
-                  <span
-                    className={cn(
-                      'flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-lg font-extrabold shadow-sm',
-                      isActiveLearner
-                        ? KANGUR_ACCENT_STYLES.indigo.icon
-                        : KANGUR_ACCENT_STYLES.slate.icon
-                    )}
-                  >
-                    {initial}
-                  </span>
-                  <div className='min-w-0 flex-1'>
-                    <div className='flex items-start justify-between gap-3'>
-                      <div className='min-w-0'>
-                        <div className='font-bold text-slate-800'>{learner.displayName}</div>
-                        <div className='text-xs text-slate-500'>Login: {learner.loginName}</div>
-                      </div>
-                      <span
-                        className={cn(
-                          'rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide',
-                          learner.status === 'active'
-                            ? 'bg-emerald-100 text-emerald-700'
-                            : 'bg-slate-200 text-slate-600'
-                        )}
-                      >
-                        {learner.status === 'active' ? 'Aktywny' : 'Wylaczony'}
-                      </span>
-                    </div>
-                    <div
-                      className={cn(
-                        'mt-2 text-xs font-semibold',
-                        isActiveLearner ? 'text-indigo-600' : 'text-slate-500'
-                      )}
-                    >
-                      {isActiveLearner ? 'Aktualnie wybrany profil' : 'Kliknij, aby przełączyć profil'}
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className='grid gap-3 md:grid-cols-3'>
-            <input
-              value={createForm.displayName}
-              onChange={(event) =>
-                setCreateForm((current) => ({ ...current, displayName: event.target.value }))
-              }
-              placeholder='Imie ucznia'
-              className={FORM_CONTROL_CLASSNAME}
-            />
-            <input
-              value={createForm.loginName}
-              onChange={(event) =>
-                setCreateForm((current) => ({ ...current, loginName: event.target.value }))
-              }
-              placeholder='Login ucznia'
-              className={FORM_CONTROL_CLASSNAME}
-            />
-            <input
-              type='password'
-              value={createForm.password}
-              onChange={(event) =>
-                setCreateForm((current) => ({ ...current, password: event.target.value }))
-              }
-              placeholder='Haslo ucznia'
-              className={FORM_CONTROL_CLASSNAME}
-            />
-          </div>
-
-          <div className='flex flex-wrap items-center gap-3'>
-            <KangurButton
-              disabled={isSubmitting}
-              onClick={() => void handleCreateLearner()}
-              size='md'
-              variant='primary'
-            >
-              Dodaj ucznia
-            </KangurButton>
-            {feedback && <div className='text-sm text-slate-500'>{feedback}</div>}
-          </div>
-        </KangurPanel>
-
-        {activeLearner && (
-          <KangurPanel className='flex flex-col gap-4' padding='lg' variant='soft'>
-            <div className='text-sm font-bold text-gray-500 uppercase tracking-wide'>
-              Ustawienia wybranego ucznia
-            </div>
-            <div className='grid gap-3 md:grid-cols-2'>
-              <input
-                value={editForm.displayName}
-                onChange={(event) =>
-                  setEditForm((current) => ({ ...current, displayName: event.target.value }))
-                }
-                placeholder='Imie ucznia'
-                className={FORM_CONTROL_CLASSNAME}
-              />
-              <input
-                value={editForm.loginName}
-                onChange={(event) =>
-                  setEditForm((current) => ({ ...current, loginName: event.target.value }))
-                }
-                placeholder='Login ucznia'
-                className={FORM_CONTROL_CLASSNAME}
-              />
-              <input
-                type='password'
-                value={editForm.password}
-                onChange={(event) =>
-                  setEditForm((current) => ({ ...current, password: event.target.value }))
-                }
-                placeholder='Nowe haslo (opcjonalnie)'
-                className={FORM_CONTROL_CLASSNAME}
-              />
-              <select
-                value={editForm.status}
-                onChange={(event) =>
-                  setEditForm((current) => ({ ...current, status: event.target.value }))
-                }
-                className={FORM_CONTROL_CLASSNAME}
-              >
-                <option value='active'>Aktywny</option>
-                <option value='disabled'>Wylaczony</option>
-              </select>
-            </div>
-            <div className='flex flex-wrap items-center gap-3'>
-              <KangurButton
-                disabled={isSubmitting}
-                onClick={() => void handleSaveLearner()}
-                size='md'
-                variant='secondary'
-              >
-                Zapisz ucznia
-              </KangurButton>
-              <div className='text-xs text-slate-500'>
-                Login i haslo naleza do ucznia, ale konto pozostaje wlasnoscia rodzica.
-              </div>
-            </div>
-          </KangurPanel>
-        )}
-
-        {/* Tabs */}
-        <KangurPanel className='flex gap-2 p-1.5' padding='md' variant='soft'>
-          {TABS.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <KangurButton
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={cn('flex-1 justify-center', activeTab === tab.id ? 'shadow-sm' : '')}
-                size='md'
-                variant={activeTab === tab.id ? 'primary' : 'secondary'}
-              >
-                <Icon className='w-4 h-4' />
-                <span className='hidden sm:inline'>{tab.label}</span>
-              </KangurButton>
-            );
-          })}
-        </KangurPanel>
-
-        {/* Tab content */}
         <AnimatePresence mode='wait'>
           <motion.div
             key={activeTab}
@@ -438,19 +139,20 @@ export default function ParentDashboard() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
           >
-            {activeTab === 'progress' && <ProgressOverview progress={progress} />}
-            {activeTab === 'scores' && (
-              <ScoreHistory
-                learnerId={activeLearner?.id ?? null}
-                playerName={scoreViewerName}
-                createdBy={scoreViewerEmail}
-                basePath={basePath}
-              />
-            )}
-            {activeTab === 'assign' && <KangurAssignmentManager basePath={basePath} />}
+            <KangurParentDashboardProgressWidget displayMode='active-tab' />
+            <KangurParentDashboardScoresWidget displayMode='active-tab' />
+            <KangurParentDashboardAssignmentsWidget displayMode='active-tab' />
           </motion.div>
         </AnimatePresence>
       </KangurPageContainer>
     </KangurPageShell>
+  );
+}
+
+export default function ParentDashboard(): React.JSX.Element {
+  return (
+    <KangurParentDashboardRuntimeBoundary enabled>
+      <ParentDashboardContent />
+    </KangurParentDashboardRuntimeBoundary>
   );
 }

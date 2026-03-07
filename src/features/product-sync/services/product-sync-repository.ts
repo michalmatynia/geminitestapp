@@ -5,6 +5,7 @@ import { randomUUID } from 'crypto';
 import { ObjectId } from 'mongodb';
 
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
+import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/settings';
 import {
   DEFAULT_PRODUCT_SYNC_FIELD_RULES,
   PRODUCT_SYNC_APP_FIELDS,
@@ -36,14 +37,7 @@ const STALE_RUNNING_DEFAULT_MS = 2 * 60 * 60 * 1000;
 const RUN_HISTORY_KEEP_DEFAULT = 150;
 
 type StorageProvider = 'mongodb' | 'prisma';
-
-type SettingDoc = {
-  _id: string | ObjectId;
-  key?: string;
-  value?: string;
-  updatedAt?: Date;
-  createdAt?: Date;
-};
+type SettingDoc = MongoTimestampedStringSettingRecord<string | ObjectId, Date>;
 
 const toMongoId = (id: string): string | ObjectId => {
   if (ObjectId.isValid(id) && id.length === 24) return new ObjectId(id);

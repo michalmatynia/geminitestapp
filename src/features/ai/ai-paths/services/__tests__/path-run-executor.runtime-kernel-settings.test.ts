@@ -300,15 +300,13 @@ describe('path-run-executor runtime-kernel settings integration', () => {
     const run = buildRunRecord();
     run.meta = {
       runtimeKernelConfig: {
-        [DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD]:
-          DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS,
+        [DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD]: DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS,
         [DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD]: ' template ',
         [DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD]: ' resolver.path ',
         [DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_ALIAS_FIELD]: 'yes',
       },
       runtimeKernel: {
-        [DEPRECATED_RUNTIME_KERNEL_TELEMETRY_MODE_FIELD]:
-          DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS,
+        [DEPRECATED_RUNTIME_KERNEL_TELEMETRY_MODE_FIELD]: DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS,
         [DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_FIELD]: ['template'],
         [DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_SOURCE_FIELD]: 'path',
         runtimeKernelCodeObjectResolverIds: ' resolver.path ',
@@ -339,9 +337,9 @@ describe('path-run-executor runtime-kernel settings integration', () => {
         }),
       })
     );
-    expect(
-      finalUpdatePayload?.['meta'] as Record<string, unknown> | undefined
-    ).not.toHaveProperty('runtimeKernelConfig');
+    expect(finalUpdatePayload?.['meta'] as Record<string, unknown> | undefined).not.toHaveProperty(
+      'runtimeKernelConfig'
+    );
     expect(
       (finalUpdatePayload?.['meta'] as Record<string, unknown> | undefined)?.['runtimeKernel']
     ).not.toHaveProperty(DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_FIELD);
@@ -452,11 +450,21 @@ describe('path-run-executor runtime-kernel settings integration', () => {
           history: {
             [node?.id ?? 'node-1']: [
               {
+                timestamp: '2026-03-05T10:01:00.000Z',
+                pathId: run.pathId,
+                pathName: run.pathName,
+                traceId: run.id,
+                spanId: `${node?.id ?? 'node-1'}:1:1`,
                 runtimeStrategy: 'code_object_v3',
                 runtimeResolutionSource: 'override',
                 runtimeCodeObjectId: 'ai-paths.node-code-object.constant.v3',
               },
               {
+                timestamp: '2026-03-05T10:01:01.000Z',
+                pathId: run.pathId,
+                pathName: run.pathName,
+                traceId: run.id,
+                spanId: `${node?.id ?? 'node-1'}:1:2`,
                 runtimeStrategy: 'compatibility',
                 runtimeResolutionSource: 'registry',
                 runtimeCodeObjectId: null,

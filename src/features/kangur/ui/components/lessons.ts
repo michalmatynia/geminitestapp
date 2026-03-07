@@ -18,7 +18,7 @@ import MultiplicationLessonView from '@/features/kangur/ui/components/Multiplica
 import SubtractingLessonView from '@/features/kangur/ui/components/SubtractingLesson';
 
 type LessonProps = {
-  onBack: () => void;
+  onBack?: () => void;
 };
 
 type CalendarTrainingGameProps = {
@@ -37,7 +37,8 @@ export const GeometrySymmetryLesson = GeometrySymmetryLessonView as ComponentTyp
 export const GeometryPerimeterLesson = GeometryPerimeterLessonView as ComponentType<LessonProps>;
 export const LogicalThinkingLesson = LogicalThinkingLessonView as ComponentType<LessonProps>;
 export const LogicalPatternsLesson = LogicalPatternLessonView as ComponentType<LessonProps>;
-export const LogicalClassificationLesson = LogicalClassificationLessonView as ComponentType<LessonProps>;
+export const LogicalClassificationLesson =
+  LogicalClassificationLessonView as ComponentType<LessonProps>;
 export const LogicalReasoningLesson = LogicalReasoningLessonView as ComponentType<LessonProps>;
 export const LogicalAnalogiesLesson = LogicalAnalogiesLessonView as ComponentType<LessonProps>;
 export const CalendarTrainingGame =

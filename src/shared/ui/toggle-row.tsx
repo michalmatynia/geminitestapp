@@ -168,7 +168,10 @@ export function ToggleRow(props: ToggleRowProps): React.JSX.Element {
             </label>
             {description && (
               <div
-                className={cn('text-[11px] leading-tight text-muted-foreground', descriptionClassName)}
+                className={cn(
+                  'text-[11px] leading-tight text-muted-foreground',
+                  descriptionClassName
+                )}
               >
                 {description}
               </div>

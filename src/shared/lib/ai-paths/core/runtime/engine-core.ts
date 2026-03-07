@@ -1,7 +1,5 @@
 import { AiNode, Edge } from '@/shared/contracts/ai-paths';
-import {
-  RuntimeState,
-} from '@/shared/contracts/ai-paths-runtime';
+import { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
 
 import { nowMs } from './execution-helpers';
 
@@ -11,27 +9,17 @@ import {
   GraphExecutionCancelled,
   type EvaluateGraphOptions,
 } from './engine-modules/engine-types';
-import {
-  collectNodeInputs,
-} from './engine-modules/engine-utils';
+import { collectNodeInputs } from './engine-modules/engine-utils';
 import { EngineStateManager } from './engine-modules/engine-state-manager';
 import { MAX_ITERATIONS } from './engine-modules/engine-constants';
-import {
-  runRuntimeValidation,
-} from './engine-modules/engine-validation-helpers';
-import {
-  prepareGraphForExecution,
-} from './engine-modules/engine-execution-preparation';
+import { runRuntimeValidation } from './engine-modules/engine-validation-helpers';
+import { prepareGraphForExecution } from './engine-modules/engine-execution-preparation';
 import {
   checkTriggerProvenance,
   validateTriggerProvenanceFeasibility,
 } from './engine-modules/engine-execution-provenance';
-import {
-  runExecutionLoop,
-} from './engine-modules/engine-execution-loop';
-import {
-  RuntimeTelemetryResolver,
-} from './engine-modules/engine-execution-telemetry';
+import { runExecutionLoop } from './engine-modules/engine-execution-loop';
+import { RuntimeTelemetryResolver } from './engine-modules/engine-execution-telemetry';
 
 export { GraphExecutionError, GraphExecutionCancelled };
 
@@ -89,7 +77,9 @@ export async function evaluateGraphInternal(
   };
 
   const triggerContext = options.triggerContext ?? null;
-  const triggerSource = options.triggerNodeId ? (nodeById.get(options.triggerNodeId) ?? null) : null;
+  const triggerSource = options.triggerNodeId
+    ? (nodeById.get(options.triggerNodeId) ?? null)
+    : null;
   const resolvedOnHalt = options.onHalt;
   const telemetryResolver = new RuntimeTelemetryResolver(options);
 

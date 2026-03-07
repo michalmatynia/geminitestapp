@@ -78,9 +78,6 @@ vi.mock('@/features/ai/image-studio/server/center-utils', () => ({
 vi.mock('@/features/ai/image-studio/server', () => ({
   getImageStudioSlotLinkBySourceAndRelation: getImageStudioSlotLinkBySourceAndRelationMock,
   upsertImageStudioSlotLink: upsertImageStudioSlotLinkMock,
-}));
-
-vi.mock('@/features/ai/image-studio/server', () => ({
   createImageStudioSlots: createImageStudioSlotsMock,
   getImageStudioSlotById: getImageStudioSlotByIdMock,
 }));

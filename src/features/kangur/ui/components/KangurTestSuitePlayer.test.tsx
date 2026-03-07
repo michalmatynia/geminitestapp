@@ -42,6 +42,11 @@ describe('KangurTestSuitePlayer', () => {
     const onFinish = vi.fn();
     render(<KangurTestSuitePlayer suite={suite} questions={questions} onFinish={onFinish} />);
 
+    expect(screen.getByText('Question 1 / 1')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-test-suite-progress-bar')).toHaveAttribute(
+      'aria-valuenow',
+      '100'
+    );
     expect(screen.getByRole('button', { name: /previous/i })).toHaveClass(
       'kangur-cta-pill',
       'soft-cta'
@@ -56,7 +61,21 @@ describe('KangurTestSuitePlayer', () => {
     await userEvent.click(finishButton);
 
     const restartButton = screen.getByRole('button', { name: /try again/i });
+    expect(screen.getByTestId('kangur-test-suite-summary')).toHaveClass(
+      'soft-card',
+      'border-indigo-300'
+    );
     expect(restartButton).toHaveClass('kangur-cta-pill', 'soft-cta');
     expect(onFinish).toHaveBeenCalledWith(3, 3, { 'question-1': 'A' });
+  });
+
+  it('uses the shared empty-state surface when a suite has no questions', () => {
+    render(<KangurTestSuitePlayer suite={suite} questions={[]} />);
+
+    expect(screen.getByTestId('kangur-test-suite-empty')).toHaveClass(
+      'soft-card',
+      'border-dashed',
+      'border-slate-200/80'
+    );
   });
 });

@@ -12,9 +12,8 @@ describe('path-run repository source filters (canonical)', () => {
       sourceMode: 'include',
     }) as Record<string, unknown>;
 
-    const sourceClauses = (((where['AND'] as unknown[])?.[0] as Record<string, unknown>)?.[
-      'OR'
-    ] ?? []) as Array<Record<string, unknown>>;
+    const sourceClauses = (((where['AND'] as unknown[])?.[0] as Record<string, unknown>)?.['OR'] ??
+      []) as Array<Record<string, unknown>>;
 
     expect(sourceClauses).toHaveLength(AI_PATHS_RUN_SOURCE_VALUES.length);
     expect(

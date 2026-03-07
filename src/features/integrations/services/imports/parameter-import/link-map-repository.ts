@@ -3,6 +3,7 @@ import 'server-only';
 import { ObjectId } from 'mongodb';
 
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
+import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/settings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import {
@@ -15,14 +16,7 @@ import {
 import type { Filter } from 'mongodb';
 
 type Provider = 'mongodb' | 'prisma';
-
-type SettingDoc = {
-  _id: string | ObjectId;
-  key?: string;
-  value?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-};
+type SettingDoc = MongoTimestampedStringSettingRecord<string | ObjectId, Date>;
 
 const SETTINGS_KEY = 'base_import_parameter_link_map';
 

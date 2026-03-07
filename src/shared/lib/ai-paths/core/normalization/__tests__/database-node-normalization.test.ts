@@ -175,11 +175,7 @@ describe('database node normalization', () => {
           operation: 'update',
           updatePayloadMode: 'custom',
           updateTemplate:
-            '{\n' +
-            '  "$set": {\n' +
-            '    "slug": "pl-{{value.slug}}"\n' +
-            '  }\n' +
-            '}',
+            '{\n' + '  "$set": {\n' + '    "slug": "pl-{{value.slug}}"\n' + '  }\n' + '}',
           mappings: [
             {
               targetPath: 'slug',

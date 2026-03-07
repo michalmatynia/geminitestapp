@@ -2,8 +2,16 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Lock } from 'lucide-react';
 
-import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_ACCENT_STYLES, KANGUR_OPTION_CARD_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import {
+  KangurButton,
+  KangurOptionCardButton,
+  KangurPanel,
+  KangurStatusChip,
+  KangurSummaryPanel,
+} from '@/features/kangur/ui/design/primitives';
+import {
+  KANGUR_ACCENT_STYLES,
+} from '@/features/kangur/ui/design/tokens';
 import type { KangurMode } from '@/features/kangur/ui/types';
 import { cn } from '@/shared/utils';
 
@@ -87,7 +95,11 @@ export default function KangurSetup({ onStart, onBack }: KangurSetupProps): Reac
           <ArrowLeft className='w-4 h-4' /> Wroc
         </KangurButton>
 
-        <KangurPanel className='flex flex-col items-center gap-5 text-center' padding='xl' variant='elevated'>
+        <KangurPanel
+          className='flex flex-col items-center gap-5 text-center'
+          padding='xl'
+          variant='elevated'
+        >
           <div className='text-6xl'>🦘</div>
           <h2 className='text-2xl font-extrabold text-slate-800'>Kangur Matematyczny</h2>
           <p className='text-sm leading-relaxed text-slate-500'>
@@ -96,51 +108,59 @@ export default function KangurSetup({ onStart, onBack }: KangurSetupProps): Reac
 
           <div className='flex w-full flex-col gap-3'>
             {EDITIONS.map((edition) => (
-              <motion.button
+              <motion.div
                 key={edition.year}
                 whileHover={edition.available ? { scale: 1.03 } : {}}
                 whileTap={edition.available ? { scale: 0.97 } : {}}
-                onClick={() => {
-                  if (edition.available) {
-                    setSelectedEdition(edition);
-                  }
-                }}
-                disabled={!edition.available}
-                className={cn(
-                  KANGUR_OPTION_CARD_CLASSNAME,
-                  'flex w-full items-center gap-4 rounded-[28px] px-5 py-4 text-left',
-                  edition.available
-                    ? cn(KANGUR_ACCENT_STYLES.amber.activeCard, KANGUR_ACCENT_STYLES.amber.hoverCard)
-                    : 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 opacity-70'
-                )}
               >
-                <span
-                  className={cn(
-                    'flex h-12 w-12 items-center justify-center rounded-2xl text-3xl shadow-sm',
-                    edition.available ? KANGUR_ACCENT_STYLES.amber.icon : 'bg-slate-200 text-slate-500'
-                  )}
+                <KangurOptionCardButton
+                  accent='amber'
+                  className='flex w-full items-center gap-4 rounded-[28px] px-5 py-4'
+                  data-testid={`kangur-setup-edition-${edition.year}`}
+                  disabled={!edition.available}
+                  emphasis={edition.available ? 'accent' : 'neutral'}
+                  onClick={() => {
+                    if (edition.available) {
+                      setSelectedEdition(edition);
+                    }
+                  }}
                 >
-                  {edition.emoji}
-                </span>
-                <div className='flex flex-col'>
-                  <span className='text-lg font-extrabold text-slate-800'>{edition.label}</span>
-                  {!edition.available && (
-                    <span className='mt-0.5 flex items-center gap-1 text-xs text-slate-400'>
-                      <Lock className='w-3 h-3' /> Wkrotce dostepna
+                  <span
+                    className={cn(
+                      'flex h-12 w-12 items-center justify-center rounded-2xl text-3xl shadow-sm',
+                      edition.available
+                        ? KANGUR_ACCENT_STYLES.amber.icon
+                        : 'bg-slate-200 text-slate-500'
+                    )}
+                  >
+                    {edition.emoji}
+                  </span>
+                  <div className='flex flex-1 flex-col'>
+                    <span className='text-lg font-extrabold text-slate-800'>{edition.label}</span>
+                    <span className='mt-1 flex flex-wrap items-center gap-2'>
+                      <KangurStatusChip accent='amber' size='sm'>
+                        {edition.year}
+                      </KangurStatusChip>
+                      {!edition.available ? (
+                        <KangurStatusChip accent='slate' size='sm'>
+                          <Lock className='h-3 w-3' /> Wkrotce dostepna
+                        </KangurStatusChip>
+                      ) : null}
                     </span>
-                  )}
-                </div>
-              </motion.button>
+                  </div>
+                </KangurOptionCardButton>
+              </motion.div>
             ))}
           </div>
 
-          <div className='w-full rounded-2xl border border-amber-200 bg-amber-50/80 p-3 text-left text-xs text-amber-800'>
-            <p className='font-bold mb-1'>ℹ️ O konkursie Kangur:</p>
-            <p>
-              Kangur Matematyczny to ogolnopolski konkurs dla uczniow szkol podstawowych. Zadania
-              sprawdzaja logiczne myslenie i umiejetnosci matematyczne.
-            </p>
-          </div>
+          <KangurSummaryPanel
+            accent='amber'
+            align='left'
+            className='w-full text-left'
+            description='Kangur Matematyczny to ogolnopolski konkurs dla uczniow szkol podstawowych. Zadania sprawdzaja logiczne myslenie i umiejetnosci matematyczne.'
+            label='O konkursie Kangur'
+            padding='md'
+          />
         </KangurPanel>
       </div>
     );
@@ -157,39 +177,61 @@ export default function KangurSetup({ onStart, onBack }: KangurSetupProps): Reac
         <ArrowLeft className='w-4 h-4' /> Edycje
       </KangurButton>
 
-      <KangurPanel className='flex flex-col items-center gap-5 text-center' padding='xl' variant='elevated'>
+      <KangurPanel
+        className='flex flex-col items-center gap-5 text-center'
+        padding='xl'
+        variant='elevated'
+      >
         <div className='text-5xl'>{selectedEdition.emoji}</div>
         <h2 className='text-2xl font-extrabold text-slate-800'>{selectedEdition.label}</h2>
+        <KangurStatusChip accent='amber' size='sm'>
+          {selectedEdition.year}
+        </KangurStatusChip>
         <p className='text-sm text-slate-500'>Wybierz zestaw pytan:</p>
 
         <div className='flex w-full flex-col gap-3'>
           {selectedEdition.sets.map((setItem) => (
-            <motion.button
+            <motion.div
               key={setItem.id}
               whileHover={setItem.available ? { scale: 1.03 } : {}}
               whileTap={setItem.available ? { scale: 0.97 } : {}}
-              onClick={() => {
-                if (setItem.available) {
-                  onStart(setItem.id);
-                }
-              }}
-              disabled={!setItem.available}
-              className={cn(
-                KANGUR_OPTION_CARD_CLASSNAME,
-                'flex w-full flex-col items-start gap-1 rounded-[28px] px-5 py-4 text-left',
-                setItem.available
-                  ? cn(KANGUR_ACCENT_STYLES.amber.activeCard, KANGUR_ACCENT_STYLES.amber.hoverCard)
-                  : 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 opacity-70'
-              )}
             >
-              <span className='flex items-center gap-2 text-base font-extrabold text-slate-800'>
-                {setItem.label}
-                {!setItem.available && <Lock className='w-3.5 h-3.5' />}
-              </span>
-              <span className={`text-xs ${setItem.available ? 'text-slate-500' : 'text-slate-400'}`}>
-                {setItem.desc}
-              </span>
-            </motion.button>
+              <KangurOptionCardButton
+                accent='amber'
+                className='flex w-full flex-col items-start gap-2 rounded-[28px] px-5 py-4'
+                data-testid={`kangur-setup-set-${setItem.id}`}
+                disabled={!setItem.available}
+                emphasis={setItem.available ? 'accent' : 'neutral'}
+                onClick={() => {
+                  if (setItem.available) {
+                    onStart(setItem.id);
+                  }
+                }}
+              >
+                <span className='flex flex-wrap items-center gap-2'>
+                  <KangurStatusChip accent={setItem.isExam ? 'indigo' : 'amber'} size='sm'>
+                    {setItem.isExam ? 'Tryb konkursowy' : 'Trening'}
+                  </KangurStatusChip>
+                  {!setItem.available ? (
+                    <KangurStatusChip accent='slate' size='sm'>
+                      <Lock className='h-3 w-3' /> Wkrotce dostepna
+                    </KangurStatusChip>
+                  ) : null}
+                </span>
+                <span className='flex items-center gap-2 text-base font-extrabold text-slate-800'>
+                  {setItem.label}
+                  {!setItem.available && <Lock className='h-3.5 w-3.5' />}
+                </span>
+                <span
+                  className={cn(
+                    'text-xs',
+                    setItem.available ? 'text-slate-500' : 'text-slate-400'
+                  )}
+                >
+                  {setItem.desc}
+                </span>
+              </KangurOptionCardButton>
+            </motion.div>
           ))}
         </div>
       </KangurPanel>

@@ -51,7 +51,8 @@ const matchesStringArray = (value: unknown, expected: string[]): boolean =>
   Array.isArray(value) &&
   value.length === expected.length &&
   value.every(
-    (entry: unknown, index: number): boolean => typeof entry === 'string' && entry === expected[index]
+    (entry: unknown, index: number): boolean =>
+      typeof entry === 'string' && entry === expected[index]
   );
 
 const appendChangedField = (
@@ -70,10 +71,7 @@ const RUNTIME_KERNEL_CONFIG_CHANGED_FIELD_MAP = {
     AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelConfigCodeObjectResolverIds,
   strictNativeRegistry:
     AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelConfigStrictNativeRegistry,
-} satisfies Record<
-  RuntimeKernelConfigNormalizedField,
-  AiPathRunRuntimeKernelMetadataChangedField
->;
+} satisfies Record<RuntimeKernelConfigNormalizedField, AiPathRunRuntimeKernelMetadataChangedField>;
 
 const normalizeRuntimeKernelConfigRecord = (
   value: Record<string, unknown>,
@@ -128,7 +126,8 @@ const normalizeRuntimeKernelTelemetryRecord = (
 
   const nodeTypes = parseRuntimeKernelNodeTypes(
     options.translateLegacyAliases
-      ? value['runtimeKernelNodeTypes'] ?? value[DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_FIELD]
+      ? (value['runtimeKernelNodeTypes'] ??
+          value[DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_FIELD])
       : value['runtimeKernelNodeTypes']
   );
   if (nodeTypes) {
@@ -156,8 +155,8 @@ const normalizeRuntimeKernelTelemetryRecord = (
 
   const nodeTypesSource = normalizeRuntimeKernelNodeTypesSource(
     options.translateLegacyAliases
-      ? value['runtimeKernelNodeTypesSource'] ??
-          value[DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_SOURCE_FIELD]
+      ? (value['runtimeKernelNodeTypesSource'] ??
+          value[DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_SOURCE_FIELD])
       : value['runtimeKernelNodeTypesSource']
   );
   if (nodeTypesSource !== undefined) {

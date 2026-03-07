@@ -32,16 +32,10 @@ vi.mock('@/features/cms/components/page-builder/MediaLibraryPanel', () => ({
   }) =>
     open ? (
       <>
-        <button
-          type='button'
-          onClick={(): void => onSelect(['/uploads/kangur/mock-image.svg'])}
-        >
+        <button type='button' onClick={(): void => onSelect(['/uploads/kangur/mock-image.svg'])}>
           Pick library SVG
         </button>
-        <button
-          type='button'
-          onClick={(): void => onSelect(['/uploads/kangur/mock-image.png'])}
-        >
+        <button type='button' onClick={(): void => onSelect(['/uploads/kangur/mock-image.png'])}>
           Pick library PNG
         </button>
       </>
@@ -49,7 +43,19 @@ vi.mock('@/features/cms/components/page-builder/MediaLibraryPanel', () => ({
 }));
 
 import { KangurLessonDocumentEditor } from '@/features/kangur/admin/KangurLessonDocumentEditor';
+import { LessonContentEditorProvider } from '@/features/kangur/admin/context/LessonContentEditorContext';
 import type { KangurLessonDocument } from '@/shared/contracts/kangur';
+
+function renderEditor(
+  value: KangurLessonDocument,
+  onChange: (next: KangurLessonDocument) => void
+): ReturnType<typeof render> {
+  return render(
+    <LessonContentEditorProvider lesson={null} document={value} onChange={onChange}>
+      <KangurLessonDocumentEditor />
+    </LessonContentEditorProvider>
+  );
+}
 
 function StatefulEditorHarness({
   value,
@@ -60,14 +66,18 @@ function StatefulEditorHarness({
 }): React.JSX.Element {
   const [document, setDocument] = React.useState(value);
 
+  const handleChange = React.useCallback(
+    (nextValue: KangurLessonDocument): void => {
+      setDocument(nextValue);
+      onChange(nextValue);
+    },
+    [onChange]
+  );
+
   return (
-    <KangurLessonDocumentEditor
-      value={document}
-      onChange={(nextValue): void => {
-        setDocument(nextValue);
-        onChange(nextValue);
-      }}
-    />
+    <LessonContentEditorProvider lesson={null} document={document} onChange={handleChange}>
+      <KangurLessonDocumentEditor />
+    </LessonContentEditorProvider>
   );
 }
 
@@ -75,12 +85,7 @@ describe('KangurLessonDocumentEditor', () => {
   it('adds an activity block to the lesson document', () => {
     const handleChange = vi.fn();
 
-    render(
-      <KangurLessonDocumentEditor
-        value={{ version: 1, blocks: [] }}
-        onChange={handleChange}
-      />
-    );
+    renderEditor({ version: 1, blocks: [] }, handleChange);
 
     fireEvent.click(screen.getByRole('button', { name: /add activity block/i }));
 
@@ -90,17 +95,12 @@ describe('KangurLessonDocumentEditor', () => {
     expect(nextDocument.blocks[0]?.type).toBe('activity');
   });
 
-  it('adds an image block to the lesson document', () => {
+  it('adds an SVG image block to the lesson document', () => {
     const handleChange = vi.fn();
 
-    render(
-      <KangurLessonDocumentEditor
-        value={{ version: 1, blocks: [] }}
-        onChange={handleChange}
-      />
-    );
+    renderEditor({ version: 1, blocks: [] }, handleChange);
 
-    fireEvent.click(screen.getByRole('button', { name: /add image block/i }));
+    fireEvent.click(screen.getByRole('button', { name: /add svg image block/i }));
 
     expect(handleChange).toHaveBeenCalledTimes(1);
     const nextDocument = handleChange.mock.calls[0]?.[0] as { blocks: Array<{ type: string }> };
@@ -111,12 +111,7 @@ describe('KangurLessonDocumentEditor', () => {
   it('adds an SVG block to the lesson document', () => {
     const handleChange = vi.fn();
 
-    render(
-      <KangurLessonDocumentEditor
-        value={{ version: 1, blocks: [] }}
-        onChange={handleChange}
-      />
-    );
+    renderEditor({ version: 1, blocks: [] }, handleChange);
 
     fireEvent.click(screen.getByRole('button', { name: /add svg block/i }));
 
@@ -126,17 +121,12 @@ describe('KangurLessonDocumentEditor', () => {
     expect(nextDocument.blocks[0]?.type).toBe('svg');
   });
 
-  it('adds a new modular page from the image gallery template', () => {
+  it('adds a new modular page from the SVG image gallery template', () => {
     const handleChange = vi.fn();
 
-    render(
-      <KangurLessonDocumentEditor
-        value={{ version: 1, blocks: [] }}
-        onChange={handleChange}
-      />
-    );
+    renderEditor({ version: 1, blocks: [] }, handleChange);
 
-    fireEvent.click(screen.getByRole('button', { name: /add image page/i }));
+    fireEvent.click(screen.getByRole('button', { name: /add svg image page/i }));
 
     const nextDocument = handleChange.mock.calls[0]?.[0] as {
       pages?: Array<{ blocks: Array<{ type: string }> }>;
@@ -223,9 +213,7 @@ describe('KangurLessonDocumentEditor', () => {
     expect(nextDocument.pages).toHaveLength(3);
     expect(nextDocument.pages?.[1]?.sectionKey).toBe('numbers');
     expect(nextDocument.pages?.[1]?.sectionTitle).toBe('Numbers');
-    expect(nextDocument.pages?.[1]?.sectionDescription).toBe(
-      'Count objects before solving tasks.'
-    );
+    expect(nextDocument.pages?.[1]?.sectionDescription).toBe('Count objects before solving tasks.');
     expect(nextDocument.pages?.[1]?.title).toBe('');
     expect(nextDocument.pages?.[1]?.blocks).toHaveLength(0);
     expect(nextDocument.pages?.[2]?.sectionTitle).toBe('Practice');
@@ -268,7 +256,7 @@ describe('KangurLessonDocumentEditor', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /add image page/i }));
+    fireEvent.click(screen.getByRole('button', { name: /add svg image page/i }));
 
     const nextDocument = handleChange.mock.calls.at(-1)?.[0] as {
       pages?: Array<{
@@ -353,12 +341,7 @@ describe('KangurLessonDocumentEditor', () => {
   it('adds a grid block with starter items', () => {
     const handleChange = vi.fn();
 
-    render(
-      <KangurLessonDocumentEditor
-        value={{ version: 1, blocks: [] }}
-        onChange={handleChange}
-      />
-    );
+    renderEditor({ version: 1, blocks: [] }, handleChange);
 
     fireEvent.click(screen.getByRole('button', { name: /add grid block/i }));
 
@@ -373,17 +356,16 @@ describe('KangurLessonDocumentEditor', () => {
   it('adds a hero layout grid preset', () => {
     const handleChange = vi.fn();
 
-    render(
-      <KangurLessonDocumentEditor
-        value={{ version: 1, blocks: [] }}
-        onChange={handleChange}
-      />
-    );
+    renderEditor({ version: 1, blocks: [] }, handleChange);
 
     fireEvent.click(screen.getByRole('button', { name: /add hero layout/i }));
 
     const nextDocument = handleChange.mock.calls[0]?.[0] as {
-      blocks: Array<{ type: string; columns?: number; items?: Array<{ colSpan: number; block: { type: string } }> }>;
+      blocks: Array<{
+        type: string;
+        columns?: number;
+        items?: Array<{ colSpan: number; block: { type: string } }>;
+      }>;
     };
 
     expect(nextDocument.blocks[0]?.type).toBe('grid');
@@ -396,12 +378,7 @@ describe('KangurLessonDocumentEditor', () => {
   it('adds an SVG gallery layout preset', () => {
     const handleChange = vi.fn();
 
-    render(
-      <KangurLessonDocumentEditor
-        value={{ version: 1, blocks: [] }}
-        onChange={handleChange}
-      />
-    );
+    renderEditor({ version: 1, blocks: [] }, handleChange);
 
     fireEvent.click(screen.getByRole('button', { name: /add svg gallery/i }));
 
@@ -422,12 +399,7 @@ describe('KangurLessonDocumentEditor', () => {
   it('adds an SVG mosaic layout preset', () => {
     const handleChange = vi.fn();
 
-    render(
-      <KangurLessonDocumentEditor
-        value={{ version: 1, blocks: [] }}
-        onChange={handleChange}
-      />
-    );
+    renderEditor({ version: 1, blocks: [] }, handleChange);
 
     fireEvent.click(screen.getByRole('button', { name: /add svg mosaic/i }));
 
@@ -461,25 +433,23 @@ describe('KangurLessonDocumentEditor', () => {
   it('duplicates a root SVG block', () => {
     const handleChange = vi.fn();
 
-    render(
-      <KangurLessonDocumentEditor
-        value={{
-          version: 1,
-          blocks: [
-            {
-              id: 'svg-1',
-              type: 'svg',
-              title: 'Shape A',
-              markup: '<svg viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" /></svg>',
-              viewBox: '0 0 10 10',
-              align: 'center',
-              fit: 'contain',
-              maxWidth: 320,
-            },
-          ],
-        }}
-        onChange={handleChange}
-      />
+    renderEditor(
+      {
+        version: 1,
+        blocks: [
+          {
+            id: 'svg-1',
+            type: 'svg',
+            title: 'Shape A',
+            markup: '<svg viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" /></svg>',
+            viewBox: '0 0 10 10',
+            align: 'center',
+            fit: 'contain',
+            maxWidth: 320,
+          },
+        ],
+      },
+      handleChange
     );
 
     fireEvent.click(screen.getByRole('button', { name: /duplicate block 1/i }));
@@ -498,60 +468,59 @@ describe('KangurLessonDocumentEditor', () => {
   it('duplicates a grid item inside an existing grid block', () => {
     const handleChange = vi.fn();
 
-    render(
-      <KangurLessonDocumentEditor
-        value={{
-          version: 1,
-          blocks: [
-            {
-              id: 'grid-1',
-              type: 'grid',
-              columns: 2,
-              gap: 16,
-              rowHeight: 220,
-              denseFill: false,
-              stackOnMobile: true,
-              items: [
-                {
-                  id: 'item-1',
-                  colSpan: 1,
-                  rowSpan: 1,
-                  columnStart: null,
-                  rowStart: null,
-                  block: {
-                    id: 'svg-1',
-                    type: 'svg',
-                    title: 'Shape A',
-                    markup: '<svg viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" /></svg>',
-                    viewBox: '0 0 10 10',
-                    align: 'center',
-                    fit: 'contain',
-                    maxWidth: 320,
-                  },
+    renderEditor(
+      {
+        version: 1,
+        blocks: [
+          {
+            id: 'grid-1',
+            type: 'grid',
+            columns: 2,
+            gap: 16,
+            rowHeight: 220,
+            denseFill: false,
+            stackOnMobile: true,
+            items: [
+              {
+                id: 'item-1',
+                colSpan: 1,
+                rowSpan: 1,
+                columnStart: null,
+                rowStart: null,
+                block: {
+                  id: 'svg-1',
+                  type: 'svg',
+                  title: 'Shape A',
+                  markup: '<svg viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" /></svg>',
+                  viewBox: '0 0 10 10',
+                  align: 'center',
+                  fit: 'contain',
+                  maxWidth: 320,
                 },
-                {
-                  id: 'item-2',
-                  colSpan: 1,
-                  rowSpan: 1,
-                  columnStart: null,
-                  rowStart: null,
-                  block: {
-                    id: 'svg-2',
-                    type: 'svg',
-                    title: 'Shape B',
-                    markup: '<svg viewBox="0 0 10 10"><rect x="1" y="1" width="8" height="8" /></svg>',
-                    viewBox: '0 0 10 10',
-                    align: 'center',
-                    fit: 'contain',
-                    maxWidth: 320,
-                  },
+              },
+              {
+                id: 'item-2',
+                colSpan: 1,
+                rowSpan: 1,
+                columnStart: null,
+                rowStart: null,
+                block: {
+                  id: 'svg-2',
+                  type: 'svg',
+                  title: 'Shape B',
+                  markup:
+                    '<svg viewBox="0 0 10 10"><rect x="1" y="1" width="8" height="8" /></svg>',
+                  viewBox: '0 0 10 10',
+                  align: 'center',
+                  fit: 'contain',
+                  maxWidth: 320,
                 },
-              ],
-            },
-          ],
-        }}
-        onChange={handleChange}
-      />
+              },
+            ],
+          },
+        ],
+      },
+      handleChange
     );
 
     fireEvent.click(screen.getByRole('button', { name: /duplicate grid item 1/i }));
@@ -606,9 +575,7 @@ describe('KangurLessonDocumentEditor', () => {
       ],
     };
 
-    render(
-      <StatefulEditorHarness value={initialValue} onChange={handleChange} />
-    );
+    render(<StatefulEditorHarness value={initialValue} onChange={handleChange} />);
 
     fireEvent.change(screen.getByLabelText(/column start/i), { target: { value: '2' } });
     fireEvent.change(screen.getByLabelText(/row start/i), { target: { value: '3' } });
@@ -680,25 +647,23 @@ describe('KangurLessonDocumentEditor', () => {
   it('replaces the document with a starter page template', () => {
     const handleChange = vi.fn();
 
-    render(
-      <KangurLessonDocumentEditor
-        value={{
-          version: 1,
-          blocks: [
-            {
-              id: 'svg-1',
-              type: 'svg',
-              title: 'Shape A',
-              markup: '<svg viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" /></svg>',
-              viewBox: '0 0 10 10',
-              align: 'center',
-              fit: 'contain',
-              maxWidth: 320,
-            },
-          ],
-        }}
-        onChange={handleChange}
-      />
+    renderEditor(
+      {
+        version: 1,
+        blocks: [
+          {
+            id: 'svg-1',
+            type: 'svg',
+            title: 'Shape A',
+            markup: '<svg viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" /></svg>',
+            viewBox: '0 0 10 10',
+            align: 'center',
+            fit: 'contain',
+            maxWidth: 320,
+          },
+        ],
+      },
+      handleChange
     );
 
     fireEvent.click(screen.getByRole('button', { name: /svg gallery page/i }));
@@ -720,21 +685,19 @@ describe('KangurLessonDocumentEditor', () => {
   it('replaces the document with the SVG mosaic page template', () => {
     const handleChange = vi.fn();
 
-    render(
-      <KangurLessonDocumentEditor
-        value={{
-          version: 1,
-          blocks: [
-            {
-              id: 'text-1',
-              type: 'text',
-              html: '<p>Starter</p>',
-              align: 'left',
-            },
-          ],
-        }}
-        onChange={handleChange}
-      />
+    renderEditor(
+      {
+        version: 1,
+        blocks: [
+          {
+            id: 'text-1',
+            type: 'text',
+            html: '<p>Starter</p>',
+            align: 'left',
+          },
+        ],
+      },
+      handleChange
     );
 
     fireEvent.click(screen.getByRole('button', { name: /svg mosaic page/i }));
@@ -743,7 +706,11 @@ describe('KangurLessonDocumentEditor', () => {
       blocks: Array<{
         type: string;
         denseFill?: boolean;
-        items?: Array<{ columnStart: number | null; rowStart: number | null; block: { type: string } }>;
+        items?: Array<{
+          columnStart: number | null;
+          rowStart: number | null;
+          block: { type: string };
+        }>;
       }>;
     };
 

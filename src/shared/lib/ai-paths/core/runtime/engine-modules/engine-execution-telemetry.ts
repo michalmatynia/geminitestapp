@@ -1,7 +1,4 @@
-import {
-  type EvaluateGraphOptions,
-  type RuntimeNodeResolutionTelemetry,
-} from './engine-types';
+import { type EvaluateGraphOptions, type RuntimeNodeResolutionTelemetry } from './engine-types';
 
 export const buildRuntimeTelemetryFields = (
   telemetry: RuntimeNodeResolutionTelemetry | null

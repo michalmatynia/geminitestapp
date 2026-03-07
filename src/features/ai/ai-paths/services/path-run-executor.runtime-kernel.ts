@@ -35,7 +35,13 @@ export const resolveRuntimeKernelConfigForRun = (input: {
   const resolverIds = envResolverIds ?? pathResolverIds ?? settingsResolverIds;
   const resolverSource =
     normalizeRuntimeKernelValueSource(
-      envResolverIds ? 'env' : pathResolverIds ? 'path' : settingsResolverIds ? 'settings' : 'default'
+      envResolverIds
+        ? 'env'
+        : pathResolverIds
+          ? 'path'
+          : settingsResolverIds
+            ? 'settings'
+            : 'default'
     ) ?? 'default';
 
   return {
@@ -148,9 +154,7 @@ export const matchesRuntimeKernelExecutionTelemetryFromMeta = (
     expected
   );
 
-const normalizeRuntimeStrategy = (
-  value: unknown
-): 'compatibility' | 'code_object_v3' | null => {
+const normalizeRuntimeStrategy = (value: unknown): 'compatibility' | 'code_object_v3' | null => {
   if (value === 'compatibility' || value === 'code_object_v3') {
     return value;
   }

@@ -104,9 +104,18 @@ describe('AssignmentPanel', () => {
 
     expect(screen.getByText('Zadania')).toBeInTheDocument();
     expect(screen.getByText('Ukończono 0/3')).toBeInTheDocument();
+    expect(screen.getByText('Ukończono 0/3')).toHaveClass('border-slate-200', 'bg-slate-100');
     expect(screen.getByText('➗ Powtorka: Dzielenie')).toBeInTheDocument();
     expect(screen.getByText('➕ Powtorka: Dodawanie')).toBeInTheDocument();
     expect(screen.getByText('Trening mieszany')).toBeInTheDocument();
+    expect(screen.getByTestId('assignment-panel-card-lesson-retry-division')).toHaveClass(
+      'soft-card',
+      'border-slate-200/80'
+    );
+    expect(screen.getAllByText('Cel: 1 powtorka')[0]).toHaveClass(
+      'border-indigo-200',
+      'bg-indigo-100'
+    );
     expect(screen.getByRole('link', { name: 'Uruchom trening' })).toHaveAttribute(
       'href',
       '/kangur/game?quickStart=training'
@@ -136,17 +145,24 @@ describe('AssignmentPanel', () => {
       'aria-pressed',
       'true'
     );
+    expect(screen.getByTestId('assignment-panel-card-lesson-retry-division')).toHaveClass(
+      'border-emerald-300',
+      'bg-emerald-50/80'
+    );
     expect(screen.getByText('Ukończono 1/3')).toBeInTheDocument();
   });
 
   it('builds embedded cms links when rendered inside a host page route', () => {
     render(
-      <AssignmentPanel basePath={buildKangurEmbeddedBasePath('/home?preview=1')} progress={progress} />
+      <AssignmentPanel
+        basePath={buildKangurEmbeddedBasePath('/home?preview=1', 'cms-home-kangur')}
+        progress={progress}
+      />
     );
 
     expect(screen.getByRole('link', { name: 'Uruchom trening' })).toHaveAttribute(
       'href',
-      '/home?preview=1&kangur=game&quickStart=training'
+      '/home?preview=1&kangur-cms-home-kangur=game&kangur-cms-home-kangur-quickStart=training'
     );
 
     const lessonLinks = screen
@@ -154,9 +170,26 @@ describe('AssignmentPanel', () => {
       .map((link) => link.getAttribute('href'));
     expect(lessonLinks).toEqual(
       expect.arrayContaining([
-        '/home?preview=1&kangur=lessons&focus=division',
-        '/home?preview=1&kangur=lessons&focus=adding',
+        '/home?preview=1&kangur-cms-home-kangur=lessons&kangur-cms-home-kangur-focus=division',
+        '/home?preview=1&kangur-cms-home-kangur=lessons&kangur-cms-home-kangur-focus=adding',
       ])
+    );
+  });
+
+  it('uses the shared empty-state surface when there are no suggested assignments', () => {
+    buildKangurAssignmentsMock.mockReturnValue([]);
+
+    render(<AssignmentPanel basePath='/kangur' progress={progress} />);
+
+    const emptyState = screen.getByText(
+      'Brak proponowanych zadań. Zbierz najpierw trochę postępu ucznia.'
+    );
+
+    expect(emptyState).toBeInTheDocument();
+    expect(emptyState.parentElement).toHaveClass(
+      'soft-card',
+      'border-dashed',
+      'border-slate-200/80'
     );
   });
 });

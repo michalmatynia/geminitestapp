@@ -56,5 +56,22 @@ describe('PageNotFound', () => {
     const homeButton = await screen.findByRole('button', { name: 'Go Home' });
 
     expect(homeButton).toHaveClass('kangur-cta-pill', 'play-cta');
+    expect(screen.getByTestId('page-not-found-divider')).toHaveClass('h-0.5', 'w-16', 'bg-slate-200');
+  });
+
+  it('uses shared Kangur summary and dot primitives for the admin note', async () => {
+    authMeMock.mockResolvedValue({ role: 'admin' });
+
+    render(<PageNotFound />, { wrapper: createWrapper() });
+
+    expect(await screen.findByTestId('page-not-found-admin-note')).toHaveClass(
+      'soft-card',
+      'border-slate-200/80'
+    );
+    expect(screen.getByTestId('page-not-found-admin-dot')).toHaveClass('bg-amber-400');
+    expect(screen.getByText('Admin Note').parentElement).toHaveClass(
+      'border-amber-200',
+      'bg-amber-100'
+    );
   });
 });

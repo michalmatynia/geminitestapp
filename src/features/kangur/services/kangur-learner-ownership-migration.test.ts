@@ -30,13 +30,12 @@ const buildAssignment = (overrides: Partial<KangurAssignment> = {}): KangurAssig
   description: overrides.description ?? 'Do three addition games',
   priority: overrides.priority ?? 'medium',
   archived: overrides.archived ?? false,
-  target:
-    overrides.target ?? {
-      type: 'practice',
-      operation: 'addition',
-      requiredAttempts: 3,
-      minAccuracyPercent: 80,
-    },
+  target: overrides.target ?? {
+    type: 'practice',
+    operation: 'addition',
+    requiredAttempts: 3,
+    minAccuracyPercent: 80,
+  },
   assignedByName: overrides.assignedByName ?? null,
   assignedByEmail: overrides.assignedByEmail ?? null,
   createdAt: overrides.createdAt ?? '2026-03-01T10:00:00.000Z',

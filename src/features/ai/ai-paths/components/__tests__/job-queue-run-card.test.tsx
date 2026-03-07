@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type {
@@ -14,9 +14,17 @@ const { useJobQueueStateMock, useJobQueueActionsMock } = vi.hoisted(() => ({
   useJobQueueActionsMock: vi.fn(),
 }));
 
+const { useRunHistoryActionsMock } = vi.hoisted(() => ({
+  useRunHistoryActionsMock: vi.fn(),
+}));
+
 vi.mock('@/features/ai/ai-paths/components/JobQueueContext', () => ({
   useJobQueueState: (...args: unknown[]) => useJobQueueStateMock(...args),
   useJobQueueActions: (...args: unknown[]) => useJobQueueActionsMock(...args),
+}));
+
+vi.mock('@/features/ai/ai-paths/context', () => ({
+  useRunHistoryActions: (...args: unknown[]) => useRunHistoryActionsMock(...args),
 }));
 
 import { JobQueueRunCard } from '../job-queue-run-card';
@@ -143,10 +151,16 @@ const toStateValue = (value: JobQueueContextValue): JobQueueStateValue => {
 describe('JobQueueRunCard status pills', () => {
   beforeEach(() => {
     const contextValue = buildContextValue();
+    const runHistoryActions = {
+      resumeRun: vi.fn(),
+      retryRunNode: vi.fn(),
+    };
     useJobQueueStateMock.mockReset();
     useJobQueueActionsMock.mockReset();
+    useRunHistoryActionsMock.mockReset();
     useJobQueueStateMock.mockReturnValue(toStateValue(contextValue));
     useJobQueueActionsMock.mockReturnValue(toActionsValue(contextValue));
+    useRunHistoryActionsMock.mockReturnValue(runHistoryActions);
   });
 
   it('renders only dotted running indicator for running runs', () => {
@@ -161,5 +175,69 @@ describe('JobQueueRunCard status pills', () => {
 
     expect(screen.getByText('queued')).toBeTruthy();
     expect(screen.queryByText('Running')).toBeNull();
+  });
+
+  it('retries failed history entries from the run card history panel', () => {
+    const retryRunNode = vi.fn().mockResolvedValue(undefined);
+    useRunHistoryActionsMock.mockReturnValue({
+      resumeRun: vi.fn(),
+      retryRunNode,
+    });
+
+    const contextValue = buildContextValue();
+    contextValue.expandedRunIds = new Set(['run-1']);
+    contextValue.runDetails = {
+      'run-1': {
+        run: {
+          ...createRun('failed'),
+          runtimeState: {
+            history: {
+              'node-failed': [
+                {
+                  timestamp: '2026-03-07T11:00:00.000Z',
+                  pathId: 'path-1',
+                  pathName: 'Test Path',
+                  traceId: 'run-1',
+                  spanId: 'node-failed:1:1',
+                  nodeId: 'node-failed',
+                  nodeType: 'template',
+                  nodeTitle: 'Recover',
+                  status: 'failed',
+                  iteration: 1,
+                  attempt: 1,
+                  inputs: { value: 'seeded' },
+                  outputs: { status: 'failed', error: 'boom' },
+                  inputHash: 'hash-failed',
+                  error: 'boom',
+                },
+              ],
+            },
+          },
+          graph: {
+            nodes: [
+              {
+                id: 'node-failed',
+                type: 'template',
+                title: 'Recover',
+                position: { x: 0, y: 0 },
+                data: {},
+              },
+            ],
+            edges: [],
+          },
+        },
+        nodes: [],
+        events: [],
+      },
+    };
+    useJobQueueStateMock.mockReturnValue(toStateValue(contextValue));
+    useJobQueueActionsMock.mockReturnValue(toActionsValue(contextValue));
+
+    render(<JobQueueRunCard runId='run-1' run={createRun('failed')} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Run history' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Retry node' }));
+
+    expect(retryRunNode).toHaveBeenCalledWith('run-1', 'node-failed');
   });
 });

@@ -173,7 +173,10 @@ export const recordPortablePathSigningPolicyUsage = (input: {
   profileStats.lastUsedAt = event.at;
   profileStats.lastSurface = input.surface;
   portablePathSigningPolicyUsageState.recentEvents.push(event);
-  if (portablePathSigningPolicyUsageState.recentEvents.length > MAX_PORTABLE_PATH_SIGNING_POLICY_USAGE_EVENTS) {
+  if (
+    portablePathSigningPolicyUsageState.recentEvents.length >
+    MAX_PORTABLE_PATH_SIGNING_POLICY_USAGE_EVENTS
+  ) {
     portablePathSigningPolicyUsageState.recentEvents.shift();
   }
   emitPortablePathSigningPolicyUsageEvent(event);
@@ -188,8 +191,9 @@ export const registerPortablePathSigningPolicyUsageHook = (
   };
 };
 
-export const getPortablePathSigningPolicyUsageSnapshot = (): PortablePathSigningPolicyUsageSnapshot =>
-  clonePortablePathSigningPolicyUsageSnapshot(portablePathSigningPolicyUsageState);
+export const getPortablePathSigningPolicyUsageSnapshot =
+  (): PortablePathSigningPolicyUsageSnapshot =>
+    clonePortablePathSigningPolicyUsageSnapshot(portablePathSigningPolicyUsageState);
 
 export const resetPortablePathSigningPolicyUsageSnapshot = (): void => {
   portablePathSigningPolicyUsageState = createEmptyPortablePathSigningPolicyUsageState();

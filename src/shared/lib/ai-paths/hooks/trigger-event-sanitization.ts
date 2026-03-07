@@ -1,4 +1,3 @@
-
 import { TriggerEventEntityType } from '@/shared/contracts/ai-trigger-buttons';
 import { toRecord } from './trigger-event-utils';
 
@@ -17,7 +16,8 @@ export const TRIGGER_ENTITY_HEAVY_KEY_PATTERNS: RegExp[] = [
 export const shouldOmitTriggerEntityKey = (key: string): boolean =>
   TRIGGER_ENTITY_HEAVY_KEY_PATTERNS.some((pattern) => pattern.test(key));
 
-export const isBase64DataUrl = (value: string): boolean => /^data:[^;]+;base64,/i.test(value.trim());
+export const isBase64DataUrl = (value: string): boolean =>
+  /^data:[^;]+;base64,/i.test(value.trim());
 
 export const sanitizeTriggerEntityValue = (
   value: unknown,

@@ -1,8 +1,7 @@
 import type { PortableNodeCodeObjectHashVerificationMode } from './node-code-objects-v2-manifest';
 
 export type PortablePathFingerprintVerificationMode = 'off' | 'warn' | 'strict';
-export type PortablePathEnvelopeSignatureVerificationMode =
-  PortablePathFingerprintVerificationMode;
+export type PortablePathEnvelopeSignatureVerificationMode = PortablePathFingerprintVerificationMode;
 export type PortablePathNodeCodeObjectHashVerificationMode =
   PortableNodeCodeObjectHashVerificationMode;
 

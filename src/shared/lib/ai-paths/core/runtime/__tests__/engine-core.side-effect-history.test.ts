@@ -112,10 +112,12 @@ describe('engine-core side-effect history', () => {
 
     const historyEntry = second.history?.[node.id]?.[0];
     expect(historyEntry).toMatchObject({
-      spanId: 'node-http:1:1',
+      spanId: 'node-http:2:1',
       sideEffectPolicy: 'per_activation',
       sideEffectDecision: 'skipped_duplicate',
       cacheDecision: 'seed',
+      effectSourceSpanId: first.history?.[node.id]?.[0]?.spanId,
     });
+    expect(historyEntry?.spanId).not.toBe(first.history?.[node.id]?.[0]?.spanId);
   });
 });

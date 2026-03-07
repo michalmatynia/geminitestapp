@@ -15,11 +15,9 @@ const getPlaywright = (): {
   firefox: { launch: (opts: { headless: boolean }) => Promise<Browser> };
   webkit: { launch: (opts: { headless: boolean }) => Promise<Browser> };
 } => {
-  // Turbopack currently struggles to bundle Playwright (node built-ins + non-JS assets from playwright-core).
-  // Keep it out of the bundler graph by requiring it at runtime with a non-literal specifier.
+  // Keep Playwright as a runtime require so server bundles don't try to inline its assets.
   const requireFn = createRequire(import.meta.url);
-  const pkgName = 'play' + 'wright';
-  return requireFn(pkgName) as unknown as {
+  return requireFn('playwright') as unknown as {
     chromium: { launch: (opts: { headless: boolean }) => Promise<Browser> };
     firefox: { launch: (opts: { headless: boolean }) => Promise<Browser> };
     webkit: { launch: (opts: { headless: boolean }) => Promise<Browser> };

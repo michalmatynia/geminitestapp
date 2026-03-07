@@ -6,10 +6,15 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import CalendarLesson from '@/features/kangur/ui/components/CalendarLesson';
+import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 
 describe('CalendarLesson', () => {
   it('renders section slide indicators as Kangur micro pills', () => {
-    render(<CalendarLesson onBack={vi.fn()} />);
+    render(
+      <KangurLessonNavigationProvider onBack={vi.fn()}>
+        <CalendarLesson />
+      </KangurLessonNavigationProvider>
+    );
 
     fireEvent.click(screen.getByRole('button', { name: /miesiace i pory roku/i }));
 

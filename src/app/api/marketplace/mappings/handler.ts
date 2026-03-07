@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getCategoryMappingRepository } from '@/features/integrations/server';
+import {
+  categoryMappingCreateInputSchema,
+} from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
-
-type CreateMappingRequest = {
-  connectionId: string;
-  externalCategoryId: string;
-  internalCategoryId: string;
-  catalogId: string;
-};
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 /**
  * GET /api/marketplace/mappings
@@ -44,8 +41,13 @@ export async function POST_handler(
   request: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {
-  const body = (await request.json()) as CreateMappingRequest;
-  const { connectionId, externalCategoryId, internalCategoryId, catalogId } = body;
+  const parsed = await parseJsonBody(request, categoryMappingCreateInputSchema, {
+    logPrefix: 'marketplace.mappings.create',
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+  const { connectionId, externalCategoryId, internalCategoryId, catalogId } = parsed.data;
 
   if (!connectionId || !externalCategoryId || !internalCategoryId || !catalogId) {
     throw badRequestError(

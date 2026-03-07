@@ -129,7 +129,8 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
       : 'ml-56 xl:ml-64';
   const isEmbeddedKangurRoute =
     pathname === '/admin/kangur' ||
-    (pathname.startsWith('/admin/kangur/') && !pathname.startsWith('/admin/kangur/lessons-manager'));
+    (pathname.startsWith('/admin/kangur/') &&
+      !pathname.startsWith('/admin/kangur/lessons-manager'));
   const mainClassName = `min-h-0 flex-1 min-w-0 max-w-full overflow-x-hidden overflow-y-auto ${
     isEmbeddedKangurRoute ? 'p-0' : 'p-4'
   }`;

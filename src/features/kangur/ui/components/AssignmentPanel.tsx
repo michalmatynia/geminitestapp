@@ -6,13 +6,17 @@ import {
   appendKangurUrlParams,
   getKangurPageHref as createPageUrl,
 } from '@/features/kangur/config/routing';
+import { KANGUR_ACCENT_STYLES } from '@/features/kangur/ui/design/tokens';
 import {
-  KangurLessonCallout,
-  KangurLessonChip,
-} from '@/features/kangur/ui/design/lesson-primitives';
-import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
+  KangurButton,
+  KangurEmptyState,
+  KangurInfoCard,
+  KangurPanel,
+  KangurStatusChip,
+} from '@/features/kangur/ui/design/primitives';
 import { buildKangurAssignments } from '@/features/kangur/ui/services/assignments';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
+import { cn } from '@/shared/utils';
 
 type AssignmentPanelProps = {
   basePath: string;
@@ -27,7 +31,7 @@ const buildAssignmentHref = (
   }
 ): string => {
   const href = createPageUrl(action.page, basePath);
-  return action.query ? appendKangurUrlParams(href, action.query) : href;
+  return action.query ? appendKangurUrlParams(href, action.query, basePath) : href;
 };
 
 export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): React.JSX.Element {
@@ -54,32 +58,33 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
     <KangurPanel className='border-slate-200/70 bg-white/88' padding='lg' variant='soft'>
       <header className='flex items-center justify-between gap-3'>
         <div className='text-sm font-bold uppercase tracking-[0.18em] text-slate-500'>Zadania</div>
-        <KangurLessonChip accent='slate' className='text-[11px] uppercase tracking-[0.14em]'>
+        <KangurStatusChip accent='slate' className='text-[11px] uppercase tracking-[0.14em]'>
           {completionLabel}
-        </KangurLessonChip>
+        </KangurStatusChip>
       </header>
       {assignments.length === 0 ? (
-        <KangurLessonCallout
+        <KangurEmptyState
           accent='slate'
-          className='mt-4 border-dashed text-center text-sm text-slate-500'
+          className='mt-4 text-sm'
+          description='Brak proponowanych zadań. Zbierz najpierw trochę postępu ucznia.'
           padding='lg'
-        >
-          Brak proponowanych zadań. Zbierz najpierw trochę postępu ucznia.
-        </KangurLessonCallout>
+        />
       ) : (
         <div className='mt-4 flex flex-col gap-3'>
           {assignments.map((assignment) => {
             const completed = completedIds.includes(assignment.id);
             return (
-              <KangurPanel
+              <KangurInfoCard
+                accent={completed ? 'emerald' : 'indigo'}
+                data-testid={`assignment-panel-card-${assignment.id}`}
                 key={assignment.id}
-                className={`w-full border transition ${
+                className={cn(
+                  'transition',
                   completed
-                    ? 'border-emerald-200/80 bg-emerald-50/72'
-                    : 'border-slate-200/80 bg-white/95 hover:border-indigo-200 hover:bg-indigo-50/35'
-                }`}
+                    ? KANGUR_ACCENT_STYLES.emerald.activeCard
+                    : KANGUR_ACCENT_STYLES.indigo.hoverCard
+                )}
                 padding='md'
-                variant='subtle'
               >
                 <div className='flex items-start gap-2'>
                   <KangurButton
@@ -105,7 +110,7 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
                   <div className='min-w-0'>
                     <div className='flex flex-wrap items-center gap-2'>
                       <p className='text-sm font-semibold text-slate-900'>{assignment.title}</p>
-                      <KangurLessonChip
+                      <KangurStatusChip
                         accent={
                           assignment.priority === 'high'
                             ? 'rose'
@@ -120,12 +125,18 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
                           : assignment.priority === 'medium'
                             ? 'Priorytet średni'
                             : 'Priorytet niski'}
-                      </KangurLessonChip>
+                      </KangurStatusChip>
                     </div>
-                    <p className='mt-1 text-sm leading-6 text-slate-600'>{assignment.description}</p>
-                    <p className='mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-indigo-600'>
-                      Cel: {assignment.target}
+                    <p className='mt-1 text-sm leading-6 text-slate-600'>
+                      {assignment.description}
                     </p>
+                    <KangurStatusChip
+                      accent='indigo'
+                      className='mt-2 text-[11px] uppercase tracking-[0.14em]'
+                      size='sm'
+                    >
+                      Cel: {assignment.target}
+                    </KangurStatusChip>
                     <KangurButton
                       asChild
                       className='mt-3'
@@ -138,7 +149,7 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
                     </KangurButton>
                   </div>
                 </div>
-              </KangurPanel>
+              </KangurInfoCard>
             );
           })}
         </div>

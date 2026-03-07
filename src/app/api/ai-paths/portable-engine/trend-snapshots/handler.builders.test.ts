@@ -40,8 +40,10 @@ vi.mock('@/shared/lib/ai-paths/portable-engine/portable-engine-observability', (
 vi.mock('@/shared/lib/ai-paths/portable-engine/server', () => ({
   loadPortablePathAuditSinkAutoRemediationDeadLetters:
     builders.loadPortablePathAuditSinkAutoRemediationDeadLettersMock,
-  loadPortablePathSigningPolicyTrendSnapshots: builders.loadPortablePathSigningPolicyTrendSnapshotsMock,
-  loadPortablePathAuditSinkStartupHealthState: builders.loadPortablePathAuditSinkStartupHealthStateMock,
+  loadPortablePathSigningPolicyTrendSnapshots:
+    builders.loadPortablePathSigningPolicyTrendSnapshotsMock,
+  loadPortablePathAuditSinkStartupHealthState:
+    builders.loadPortablePathAuditSinkStartupHealthStateMock,
   resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironment:
     builders.resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironmentMock,
   resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironment:

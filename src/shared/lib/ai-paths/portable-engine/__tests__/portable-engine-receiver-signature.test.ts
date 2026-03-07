@@ -4,9 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { verifyPortablePathWebhookSignature } from '../receiver-signature';
 
 const buildSignatureHeader = (timestamp: string, body: string, secret: string): string => {
-  const digest = createHmac('sha256', secret)
-    .update(`${timestamp}.${body}`)
-    .digest('hex');
+  const digest = createHmac('sha256', secret).update(`${timestamp}.${body}`).digest('hex');
   return `v1=${digest}`;
 };
 

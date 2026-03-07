@@ -6,15 +6,19 @@ import React from 'react';
 import { EventEffectsWrapper } from '@/features/cms/components/shared/EventEffectsWrapper';
 import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
 import { isCmsSectionHidden } from '@/features/cms/utils/page-builder-normalization';
+import { DEFAULT_APP_EMBED_ID, getAppEmbedOption } from '@/features/app-embeds/lib/constants';
 import {
-  DEFAULT_APP_EMBED_ID,
-  getAppEmbedOption,
-} from '@/features/app-embeds/lib/constants';
+  isCmsNodeVisible,
+  resolveCmsConnectedSettings,
+  resolveCmsRuntimeValue,
+  useOptionalCmsRuntime,
+} from '@/features/cms/components/frontend/CmsRuntimeContext';
+import { getKangurWidgetLabel } from '@/features/kangur/cms-builder/project';
 import type { GsapAnimationConfig } from '@/features/gsap';
 import type { CssAnimationConfig } from '@/shared/contracts/cms';
 import type { SectionInstance, BlockInstance, PreviewBlockItemProps } from '@/shared/contracts/cms';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import { Button, Card } from '@/shared/ui';
+import { Button, Card, Input } from '@/shared/ui';
 
 import { SectionRenderer as FrontendSectionRenderer } from '../frontend/CmsPageRenderer';
 import { CssAnimationWrapper } from '../frontend/CssAnimationWrapper';
@@ -85,6 +89,23 @@ const FRONTEND_PREVIEW_SECTION_TYPES = new Set<string>([
   'ButtonElement',
   'TextAtom',
 ]);
+
+const isTruthyRuntimeValue = (value: unknown): boolean => {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+
+  if (typeof value === 'number') {
+    return value !== 0;
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    return normalized.length > 0 && normalized !== 'false' && normalized !== '0';
+  }
+
+  return Boolean(value);
+};
 const CONTAINED_BLOCK_CONTEXT_VALUE = { contained: true };
 
 type PreviewFrontendSectionRendererRuntimeValue = {
@@ -128,6 +149,7 @@ export function PreviewSection(props: PreviewSectionProps): React.ReactNode {
 
   const { colorSchemes, layout } = useCmsPageContext();
   const mediaStyles = useMediaStyles();
+  const runtime = useOptionalCmsRuntime();
   const {
     selectedNodeId,
     isInspecting = false,
@@ -254,7 +276,7 @@ export function PreviewSection(props: PreviewSectionProps): React.ReactNode {
       : '';
   const selectedRing = `${selectedRingBase} ${inspectorZ}`.trim();
 
-  if (isHidden) return null;
+  if (isHidden || !isCmsNodeVisible(section.settings, runtime)) return null;
 
   const sectionContextValue: PreviewSectionContextValue = {
     section,
@@ -391,8 +413,9 @@ export function PreviewSection(props: PreviewSectionProps): React.ReactNode {
 
   // Text element section
   if (section.type === 'TextElement') {
-    const text = (section.settings['textContent'] as string) || '';
-    const typoStyles = getBlockTypographyStyles(section.settings);
+    const resolvedSettings = resolveCmsConnectedSettings(section.type, section.settings, runtime);
+    const text = (resolvedSettings['textContent'] as string) || '';
+    const typoStyles = getBlockTypographyStyles(resolvedSettings);
     if (!text.trim() && !showEditorChrome) return null;
     return wrapInspector(
       <div
@@ -402,7 +425,7 @@ export function PreviewSection(props: PreviewSectionProps): React.ReactNode {
         onKeyDown={(e: React.KeyboardEvent): void => {
           if (e.key === 'Enter' || e.key === ' ') handleSelect();
         }}
-        style={getSectionStyles(section.settings, colorSchemes)}
+        style={getSectionStyles(resolvedSettings, colorSchemes)}
         className={`relative w-full text-left transition cursor-pointer ${selectedRing}`}
       >
         {renderSectionActions()}
@@ -485,6 +508,7 @@ export function PreviewSection(props: PreviewSectionProps): React.ReactNode {
 
 function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
   const { block } = props;
+  const runtime = useOptionalCmsRuntime();
 
   const {
     selectedNodeId,
@@ -496,6 +520,17 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
 
   const blockContext = useBlockContext();
   const { sectionId, columnId, parentBlockId, contained = false, stretch = false } = blockContext;
+  const resolvedSettings = React.useMemo(
+    () => resolveCmsConnectedSettings(block.type, block.settings, runtime),
+    [block.type, block.settings, runtime]
+  );
+  const resolvedBlock = React.useMemo(
+    (): BlockInstance => ({
+      ...block,
+      settings: resolvedSettings,
+    }),
+    [block, resolvedSettings]
+  );
 
   const isSelected = selectedNodeId === block.id;
   const isSectionType = SECTION_BLOCK_TYPES.includes(block.type);
@@ -555,6 +590,10 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
     onSelect?.(block.id);
   };
 
+  if (!isCmsNodeVisible(block.settings, runtime)) {
+    return null;
+  }
+
   if (isSectionType) {
     return wrapBlock(
       <div className='relative group'>
@@ -568,13 +607,13 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
           )}
         >
           <BlockContextProvider value={stretchBlockContextValue}>
-            {block.type === 'ImageWithText' && <PreviewImageWithTextBlock block={block} />}
-            {block.type === 'Hero' && <PreviewHeroBlock block={block} />}
-            {block.type === 'RichText' && <PreviewRichTextBlock block={block} />}
-            {block.type === 'Block' && <PreviewBlockSectionBlock block={block} />}
-            {block.type === 'TextAtom' && <PreviewTextAtomBlock block={block} />}
-            {block.type === 'Carousel' && <PreviewCarouselBlock block={block} />}
-            {block.type === 'Slideshow' && <PreviewSlideshowBlock block={block} />}
+            {block.type === 'ImageWithText' && <PreviewImageWithTextBlock block={resolvedBlock} />}
+            {block.type === 'Hero' && <PreviewHeroBlock block={resolvedBlock} />}
+            {block.type === 'RichText' && <PreviewRichTextBlock block={resolvedBlock} />}
+            {block.type === 'Block' && <PreviewBlockSectionBlock block={resolvedBlock} />}
+            {block.type === 'TextAtom' && <PreviewTextAtomBlock block={resolvedBlock} />}
+            {block.type === 'Carousel' && <PreviewCarouselBlock block={resolvedBlock} />}
+            {block.type === 'Slideshow' && <PreviewSlideshowBlock block={resolvedBlock} />}
           </BlockContextProvider>
         </div>
         {showEditorChrome && onOpenMedia && (
@@ -604,8 +643,8 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
 
   // --- Inline element blocks (Heading, Text, Image, etc) continue to be rendered here or in subsequent extraction ---
   if (block.type === 'Heading') {
-    const text = (block.settings['headingText'] as string) || 'Heading';
-    const typoStyles = getBlockTypographyStyles(block.settings);
+    const text = (resolvedSettings['headingText'] as string) || 'Heading';
+    const typoStyles = getBlockTypographyStyles(resolvedSettings);
     return wrapBlock(
       <div
         role='button'
@@ -627,8 +666,8 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
   }
 
   if (block.type === 'Text') {
-    const text = (block.settings['textContent'] as string) || '';
-    const typoStyles = getBlockTypographyStyles(block.settings);
+    const text = (resolvedSettings['textContent'] as string) || '';
+    const typoStyles = getBlockTypographyStyles(resolvedSettings);
     if (!text.trim() && !showEditorChrome) return null;
     return wrapBlock(
       <div
@@ -651,15 +690,151 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
     );
   }
 
+  if (block.type === 'Button') {
+    const label = (resolvedSettings['buttonLabel'] as string) || 'Button';
+    const style = (resolvedSettings['buttonStyle'] as string) || 'solid';
+    const hasRuntimeDisabledBinding =
+      typeof resolvedSettings['buttonDisabledSource'] === 'string' &&
+      resolvedSettings['buttonDisabledSource'].trim().length > 0 &&
+      typeof resolvedSettings['buttonDisabledPath'] === 'string' &&
+      resolvedSettings['buttonDisabledPath'].trim().length > 0;
+    const runtimeDisabledValue = hasRuntimeDisabledBinding
+      ? resolveCmsRuntimeValue(
+        runtime,
+        resolvedSettings['buttonDisabledSource'],
+        resolvedSettings['buttonDisabledPath']
+      )
+      : undefined;
+    const isDisabled = hasRuntimeDisabledBinding
+      ? resolvedSettings['buttonDisabledWhen'] === 'falsy'
+        ? !isTruthyRuntimeValue(runtimeDisabledValue)
+        : isTruthyRuntimeValue(runtimeDisabledValue)
+      : resolvedSettings['buttonDisabled'] === true || resolvedSettings['buttonDisabled'] === 'true';
+
+    return wrapBlock(
+      <div
+        role='button'
+        tabIndex={0}
+        onClick={handleSelect}
+        className={buildContainerClass(
+          `w-full text-left transition ${contained ? 'max-w-full' : ''}`,
+          `rounded ${isSelected ? 'ring-2 ring-inset ring-blue-500/40 bg-blue-500/15' : 'ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50'}`
+        )}
+      >
+        <button
+          type='button'
+          disabled={isDisabled}
+          className={`pointer-events-none inline-flex rounded-md px-6 py-2.5 text-sm font-semibold transition ${style === 'outline' ? 'border-2 border-white text-white' : 'bg-white text-gray-900'} ${isDisabled ? 'opacity-55' : ''}`}
+        >
+          {label}
+        </button>
+      </div>
+    );
+  }
+
+  if (block.type === 'Input') {
+    const value =
+      typeof resolvedSettings['inputValue'] === 'string' ? resolvedSettings['inputValue'] : '';
+    const placeholder =
+      typeof resolvedSettings['inputPlaceholder'] === 'string'
+        ? resolvedSettings['inputPlaceholder']
+        : '';
+
+    return wrapBlock(
+      <div
+        role='button'
+        tabIndex={0}
+        onClick={handleSelect}
+        className={buildContainerClass(
+          `w-full text-left transition ${contained ? 'max-w-full' : ''}`,
+          `rounded ${isSelected ? 'ring-2 ring-inset ring-blue-500/40 bg-blue-500/15' : 'ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50'}`
+        )}
+      >
+        <Input
+          readOnly
+          value={value}
+          placeholder={placeholder || 'Input'}
+          aria-label={placeholder || 'Input'}
+          className='pointer-events-none w-full'
+        />
+      </div>
+    );
+  }
+
+  if (block.type === 'Progress') {
+    const value =
+      typeof resolvedSettings['progressValue'] === 'number' ? resolvedSettings['progressValue'] : 0;
+    const max =
+      typeof resolvedSettings['progressMax'] === 'number' && resolvedSettings['progressMax'] > 0
+        ? resolvedSettings['progressMax']
+        : 100;
+    const height =
+      typeof resolvedSettings['progressHeight'] === 'number' && resolvedSettings['progressHeight'] > 0
+        ? resolvedSettings['progressHeight']
+        : 12;
+    const borderRadius =
+      typeof resolvedSettings['borderRadius'] === 'number' && resolvedSettings['borderRadius'] >= 0
+        ? resolvedSettings['borderRadius']
+        : 999;
+    const fillColor =
+      typeof resolvedSettings['fillColor'] === 'string' && resolvedSettings['fillColor'].trim().length > 0
+        ? resolvedSettings['fillColor']
+        : '#6366f1';
+    const trackColor =
+      typeof resolvedSettings['trackColor'] === 'string' && resolvedSettings['trackColor'].trim().length > 0
+        ? resolvedSettings['trackColor']
+        : '#e2e8f0';
+    const showPercentage =
+      resolvedSettings['showPercentage'] === true || resolvedSettings['showPercentage'] === 'true';
+    const percent = Math.max(0, Math.min(100, (value / max) * 100));
+
+    return wrapBlock(
+      <div
+        role='button'
+        tabIndex={0}
+        onClick={handleSelect}
+        className={buildContainerClass(
+          `w-full text-left transition ${contained ? 'max-w-full' : ''}`,
+          `rounded ${isSelected ? 'ring-2 ring-inset ring-blue-500/40 bg-blue-500/15' : 'ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50'}`
+        )}
+      >
+        <div className='w-full space-y-2'>
+          <div
+            className='w-full overflow-hidden'
+            style={{
+              backgroundColor: trackColor,
+              borderRadius: `${borderRadius}px`,
+              height: `${height}px`,
+            }}
+          >
+            <div
+              className='h-full transition-[width] duration-300 ease-out'
+              style={{
+                backgroundColor: fillColor,
+                borderRadius: `${borderRadius}px`,
+                width: `${percent}%`,
+              }}
+            />
+          </div>
+          {showPercentage ? (
+            <div className='text-right text-xs font-semibold text-gray-400'>
+              {Math.round(percent)}%
+            </div>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
+
   if (block.type === 'AppEmbed') {
     const appOption = getAppEmbedOption(
-      typeof block.settings['appId'] === 'string'
-        ? (block.settings['appId'])
+      typeof resolvedSettings['appId'] === 'string'
+        ? resolvedSettings['appId']
         : DEFAULT_APP_EMBED_ID
     );
-    const title = ((block.settings['title'] as string) || appOption?.label || 'App embed').trim();
-    const basePath = (block.settings['basePath'] as string) || '';
-    const entryPage = (block.settings['entryPage'] as string) || '';
+    const title = ((resolvedSettings['title'] as string) || appOption?.label || 'App embed').trim();
+    const basePath = (resolvedSettings['basePath'] as string) || '';
+    const entryPage = (resolvedSettings['entryPage'] as string) || '';
     const renderMode = appOption?.renderMode ?? 'iframe';
 
     return wrapBlock(
@@ -684,6 +859,34 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
                 basePath ? ` · host page override: ${basePath}` : ' · host page: current CMS page'
               }`
               : 'Preview uses the published iframe URL at runtime.'}
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  if (block.type === 'KangurWidget') {
+    const widgetId =
+      typeof resolvedSettings['widgetId'] === 'string' ? resolvedSettings['widgetId'] : '';
+    const widgetLabel = getKangurWidgetLabel(widgetId);
+
+    return wrapBlock(
+      <Card
+        variant='subtle'
+        padding='md'
+        role='button'
+        tabIndex={0}
+        onClick={handleSelect}
+        className='w-full border-border/40 bg-card/40 text-left'
+      >
+        <div className='space-y-2'>
+          <div className='text-sm font-semibold text-white'>{widgetLabel}</div>
+          <div className='text-[10px] uppercase tracking-wide text-gray-500'>
+            Kangur runtime widget
+          </div>
+          <div className='rounded-xl border border-dashed border-border/40 bg-card/20 p-3 text-xs text-gray-400'>
+            This block renders dynamic Kangur app content at runtime. The surrounding layout stays
+            editable in the CMS builder.
           </div>
         </div>
       </Card>

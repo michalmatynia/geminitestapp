@@ -46,9 +46,7 @@ const normalizeLegacyUserKey = (value: string | null | undefined): string | null
   return trimmed.length > 0 ? trimmed : null;
 };
 
-const toPublicLearnerProfile = (
-  stored: StoredKangurLearnerProfile
-): KangurLearnerProfile => ({
+const toPublicLearnerProfile = (stored: StoredKangurLearnerProfile): KangurLearnerProfile => ({
   id: stored.id,
   ownerUserId: stored.ownerUserId,
   displayName: stored.displayName,
@@ -118,10 +116,11 @@ const parseLegacyStoredLearners = (raw: string | null): StoredKangurLearnerProfi
 const readLegacyStoredLearners = async (): Promise<StoredKangurLearnerProfile[]> =>
   parseLegacyStoredLearners(await readStoredSettingValue(KANGUR_LEARNERS_SETTINGS_KEY));
 
-const writeLegacyStoredLearners = async (
-  profiles: StoredKangurLearnerProfile[]
-): Promise<void> => {
-  const ok = await upsertStoredSettingValue(KANGUR_LEARNERS_SETTINGS_KEY, serializeSetting(profiles));
+const writeLegacyStoredLearners = async (profiles: StoredKangurLearnerProfile[]): Promise<void> => {
+  const ok = await upsertStoredSettingValue(
+    KANGUR_LEARNERS_SETTINGS_KEY,
+    serializeSetting(profiles)
+  );
   if (!ok) {
     throw new Error('Failed to persist Kangur learners.');
   }
@@ -313,7 +312,9 @@ export const listKangurLearnersByOwner = async (
     readMongoStoredLearnersByOwner(ownerUserId),
     readLegacyStoredLearners(),
   ]);
-  const legacyOwnedProfiles = legacyProfiles.filter((profile) => profile.ownerUserId === ownerUserId);
+  const legacyOwnedProfiles = legacyProfiles.filter(
+    (profile) => profile.ownerUserId === ownerUserId
+  );
   const missingLegacyProfiles = legacyOwnedProfiles.filter(
     (legacyProfile) => !mongoProfiles.some((mongoProfile) => mongoProfile.id === legacyProfile.id)
   );
@@ -360,7 +361,9 @@ export const getKangurStoredLearnerByLoginName = async (
   const normalized = normalizeLoginName(loginName);
 
   if (!(await shouldUseMongoLearnerCollection())) {
-    return (await readLegacyStoredLearners()).find((profile) => profile.loginName === normalized) ?? null;
+    return (
+      (await readLegacyStoredLearners()).find((profile) => profile.loginName === normalized) ?? null
+    );
   }
 
   const mongoProfile = await readMongoStoredLearnerByLoginName(normalized);

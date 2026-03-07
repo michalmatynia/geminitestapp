@@ -587,5 +587,4 @@ describe('buildMongoUpdatePlan', () => {
     expect(reportAiPathsError).not.toHaveBeenCalled();
     expect(toast).not.toHaveBeenCalled();
   });
-
 });

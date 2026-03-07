@@ -268,7 +268,9 @@ describe('AiPathsRuntimeAnalysis', () => {
     expect(screen.getByText('Kernel coverage (24h)')).toBeInTheDocument();
     expect(screen.getByText(/Coverage 2\/2 \(100.0%\)/i)).toBeInTheDocument();
     expect(screen.getByText(/History entries 5/i)).toBeInTheDocument();
-    expect(screen.getByText(/compatibility traces are historical rollout evidence only/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/compatibility traces are historical rollout evidence only/i)
+    ).toBeInTheDocument();
     expect(screen.getByText(/Resolution O\/R\/M\/U: 3\/2\/0\/0/i)).toBeInTheDocument();
     expect(screen.getByText('ai-paths.node-code-object.constant.v3')).toBeInTheDocument();
   });

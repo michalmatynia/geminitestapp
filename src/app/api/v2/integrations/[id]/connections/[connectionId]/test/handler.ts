@@ -9,6 +9,7 @@ import { decryptSecret, encryptSecret } from '@/features/integrations/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { getTraderaUserInfo } from '@/features/integrations/services/tradera-api-client';
 import { createTraderaBrowserTestUtils } from '@/features/integrations/services/tradera-browser-test-utils';
+import type { TestLogEntry } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { internalError } from '@/shared/errors/app-error';
 import { mapStatusToAppError } from '@/shared/errors/error-mapper';
@@ -16,13 +17,6 @@ import { mapStatusToAppError } from '@/shared/errors/error-mapper';
 import type { Browser, BrowserContext, Page, BrowserContextOptions } from 'playwright';
 
 type PersistedStorageState = NonNullable<Exclude<BrowserContextOptions['storageState'], string>>;
-
-type TestLogEntry = {
-  step: string;
-  status: 'pending' | 'ok' | 'failed';
-  timestamp: string;
-  detail: string;
-};
 
 type TraderaConnectionTestRequest = {
   mode?: 'auto' | 'manual';

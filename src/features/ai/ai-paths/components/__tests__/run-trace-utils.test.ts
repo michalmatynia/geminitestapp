@@ -4,6 +4,7 @@ import {
   buildRunTraceComparison,
   buildRuntimeTimelineItems,
   readRuntimeTraceSummary,
+  runTraceComparisonRowHasResumeChange,
 } from '../run-trace-utils';
 
 describe('run-trace-utils', () => {
@@ -28,6 +29,23 @@ describe('run-trace-utils', () => {
             startedAt: '2026-03-06T10:00:00.000Z',
             finishedAt: '2026-03-06T10:00:01.000Z',
             status: 'completed',
+            activationHash: 'activation-hash-1',
+            cache: {
+              decision: 'seed',
+            },
+            effect: {
+              policy: 'per_activation',
+              decision: 'skipped_duplicate',
+              sourceSpanId: 'effect-origin:1:1',
+            },
+            resume: {
+              mode: 'resume',
+              decision: 'reused',
+              reason: 'completed_upstream',
+              sourceTraceId: 'run-previous',
+              sourceSpanId: 'resume-origin:1:1',
+              sourceStatus: 'completed',
+            },
           },
         ],
         profile: {
@@ -51,6 +69,75 @@ describe('run-trace-utils', () => {
     expect(summary?.spans[0]?.nodeId).toBe('node-a');
     expect(summary?.slowestSpan?.spanId).toBe('node-a:1:1');
     expect(summary?.durationMs).toBe(2000);
+    expect(summary?.seededSpanCount).toBe(1);
+    expect(summary?.effectReplayCount).toBe(1);
+    expect(summary?.resumeReuseCount).toBe(1);
+    expect(summary?.resumeReexecutionCount).toBe(0);
+    expect(summary?.spans[0]).toMatchObject({
+      cacheDecision: 'seed',
+      effectPolicy: 'per_activation',
+      effectDecision: 'skipped_duplicate',
+      effectSourceSpanId: 'effect-origin:1:1',
+      activationHash: 'activation-hash-1',
+      resumeMode: 'resume',
+      resumeDecision: 'reused',
+      resumeReason: 'completed_upstream',
+      resumeSourceTraceId: 'run-previous',
+      resumeSourceSpanId: 'resume-origin:1:1',
+      resumeSourceStatus: 'completed',
+    });
+  });
+
+  it('counts re-executed resume spans separately from reused spans', () => {
+    const summary = readRuntimeTraceSummary({
+      runtimeTrace: {
+        version: 'ai-paths.trace.v1',
+        traceId: 'run-3',
+        runId: 'run-3',
+        source: 'server',
+        startedAt: '2026-03-06T10:00:00.000Z',
+        finishedAt: '2026-03-06T10:00:05.000Z',
+        spans: [
+          {
+            spanId: 'node-a:2:1',
+            runId: 'run-3',
+            traceId: 'run-3',
+            nodeId: 'node-a',
+            nodeType: 'fetcher',
+            iteration: 1,
+            attempt: 2,
+            startedAt: '2026-03-06T10:00:00.000Z',
+            finishedAt: '2026-03-06T10:00:01.000Z',
+            status: 'cached',
+            resume: {
+              mode: 'resume',
+              decision: 'reused',
+              reason: 'completed_upstream',
+            },
+          },
+          {
+            spanId: 'node-b:2:1',
+            runId: 'run-3',
+            traceId: 'run-3',
+            nodeId: 'node-b',
+            nodeType: 'parser',
+            iteration: 1,
+            attempt: 2,
+            startedAt: '2026-03-06T10:00:01.000Z',
+            finishedAt: '2026-03-06T10:00:03.000Z',
+            status: 'completed',
+            resume: {
+              mode: 'resume',
+              decision: 'reexecuted',
+              reason: 'failed_node',
+            },
+          },
+        ],
+      },
+    });
+
+    expect(summary?.resumeReuseCount).toBe(1);
+    expect(summary?.resumeReexecutionCount).toBe(1);
   });
 
   it('falls back to legacy profile.nodeSpans when V1 spans are absent', () => {
@@ -135,7 +222,23 @@ describe('run-trace-utils', () => {
                 attempt: 1,
                 startedAt: '2026-03-06T10:00:01.500Z',
                 finishedAt: '2026-03-06T10:00:02.000Z',
-                status: 'completed',
+                status: 'cached',
+                activationHash: 'activation-hash-1',
+                cache: {
+                  decision: 'seed',
+                },
+                effect: {
+                  policy: 'per_activation',
+                  decision: 'skipped_duplicate',
+                  sourceSpanId: 'effect-origin:1:1',
+                },
+                resume: {
+                  mode: 'resume',
+                  decision: 'reused',
+                  reason: 'completed_upstream',
+                  sourceSpanId: 'resume-origin:1:1',
+                  sourceStatus: 'completed',
+                },
               },
             ],
           },
@@ -161,6 +264,23 @@ describe('run-trace-utils', () => {
     const traceNodeItem = items.find((item) => item.id === 'trace-span-finish-node-a:1:1');
     expect(traceNodeItem?.source).toBe('trace');
     expect(traceNodeItem?.description).toContain('Fetcher');
+    expect(traceNodeItem?.description).toContain(
+      'Resume metadata present; reuses recorded upstream outputs.'
+    );
+    expect(traceNodeItem?.details).toEqual(
+      expect.arrayContaining([
+        'cache=seed',
+        'effect=skipped_duplicate',
+        'policy=per_activation',
+        'sourceSpan=effect-origin:1:1',
+        'activation=activation-hash-1',
+        'resume=reused',
+        'resumeMode=resume',
+        'resumeReason=completed_upstream',
+        'resumeSource=resume-origin:1:1',
+        'resumeStatus=completed',
+      ])
+    );
   });
 
   it('builds comparison rows from trace aggregates and highlights regressions', () => {
@@ -457,5 +577,426 @@ describe('run-trace-utils', () => {
       },
     ]);
     expect(comparison?.rows[0]?.outputDiff?.lines.join('\n')).toContain('~ payload:');
+  });
+
+  it('summarizes resume and replay behavior changes between runs', () => {
+    const comparison = buildRunTraceComparison(
+      {
+        id: 'run-left',
+        status: 'completed',
+        pathId: 'path-1',
+        pathName: 'Path 1',
+        createdAt: '2026-03-06T12:00:00.000Z',
+        startedAt: '2026-03-06T12:00:01.000Z',
+        finishedAt: '2026-03-06T12:00:03.000Z',
+        runtimeState: {
+          history: {
+            'node-a': [
+              {
+                timestamp: '2026-03-06T12:00:01.100Z',
+                pathId: 'path-1',
+                pathName: 'Path 1',
+                traceId: 'run-left',
+                spanId: 'node-a:1:1',
+                nodeId: 'node-a',
+                nodeType: 'fetcher',
+                nodeTitle: 'Fetcher',
+                status: 'cached',
+                iteration: 1,
+                attempt: 1,
+                inputs: {},
+                outputs: { value: 'cached' },
+                inputHash: 'hash-a',
+                resumeMode: 'resume',
+                resumeDecision: 'reused',
+              },
+            ],
+            'node-b': [
+              {
+                timestamp: '2026-03-06T12:00:01.300Z',
+                pathId: 'path-1',
+                pathName: 'Path 1',
+                traceId: 'run-left',
+                spanId: 'node-b:1:1',
+                nodeId: 'node-b',
+                nodeType: 'parser',
+                nodeTitle: 'Parser',
+                status: 'completed',
+                iteration: 1,
+                attempt: 1,
+                inputs: {},
+                outputs: { value: 'parsed' },
+                inputHash: 'hash-b',
+              },
+            ],
+          },
+        },
+        meta: {
+          runtimeTrace: {
+            version: 'ai-paths.trace.v1',
+            traceId: 'run-left',
+            runId: 'run-left',
+            source: 'server',
+            startedAt: '2026-03-06T12:00:01.000Z',
+            finishedAt: '2026-03-06T12:00:03.000Z',
+            spans: [
+              {
+                spanId: 'node-a:1:1',
+                runId: 'run-left',
+                traceId: 'run-left',
+                nodeId: 'node-a',
+                nodeType: 'fetcher',
+                nodeTitle: 'Fetcher',
+                iteration: 1,
+                attempt: 1,
+                startedAt: '2026-03-06T12:00:01.000Z',
+                finishedAt: '2026-03-06T12:00:01.100Z',
+                status: 'cached',
+                resume: {
+                  mode: 'resume',
+                  decision: 'reused',
+                  reason: 'completed_upstream',
+                },
+              },
+              {
+                spanId: 'node-b:1:1',
+                runId: 'run-left',
+                traceId: 'run-left',
+                nodeId: 'node-b',
+                nodeType: 'parser',
+                nodeTitle: 'Parser',
+                iteration: 1,
+                attempt: 1,
+                startedAt: '2026-03-06T12:00:01.200Z',
+                finishedAt: '2026-03-06T12:00:01.300Z',
+                status: 'completed',
+              },
+            ],
+          },
+        },
+      } as never,
+      {
+        id: 'run-right',
+        status: 'completed',
+        pathId: 'path-1',
+        pathName: 'Path 1',
+        createdAt: '2026-03-06T12:05:00.000Z',
+        startedAt: '2026-03-06T12:05:01.000Z',
+        finishedAt: '2026-03-06T12:05:04.000Z',
+        runtimeState: {
+          history: {
+            'node-a': [
+              {
+                timestamp: '2026-03-06T12:05:01.100Z',
+                pathId: 'path-1',
+                pathName: 'Path 1',
+                traceId: 'run-right',
+                spanId: 'node-a:2:1',
+                nodeId: 'node-a',
+                nodeType: 'fetcher',
+                nodeTitle: 'Fetcher',
+                status: 'completed',
+                iteration: 1,
+                attempt: 2,
+                inputs: {},
+                outputs: { value: 'fresh' },
+                inputHash: 'hash-a-2',
+                resumeMode: 'resume',
+                resumeDecision: 'reexecuted',
+              },
+            ],
+            'node-b': [
+              {
+                timestamp: '2026-03-06T12:05:01.300Z',
+                pathId: 'path-1',
+                pathName: 'Path 1',
+                traceId: 'run-right',
+                spanId: 'node-b:2:1',
+                nodeId: 'node-b',
+                nodeType: 'parser',
+                nodeTitle: 'Parser',
+                status: 'cached',
+                iteration: 1,
+                attempt: 2,
+                inputs: {},
+                outputs: { value: 'parsed' },
+                inputHash: 'hash-b-2',
+                resumeMode: 'resume',
+                resumeDecision: 'reused',
+              },
+            ],
+          },
+        },
+        meta: {
+          runtimeTrace: {
+            version: 'ai-paths.trace.v1',
+            traceId: 'run-right',
+            runId: 'run-right',
+            source: 'server',
+            startedAt: '2026-03-06T12:05:01.000Z',
+            finishedAt: '2026-03-06T12:05:04.000Z',
+            spans: [
+              {
+                spanId: 'node-a:2:1',
+                runId: 'run-right',
+                traceId: 'run-right',
+                nodeId: 'node-a',
+                nodeType: 'fetcher',
+                nodeTitle: 'Fetcher',
+                iteration: 1,
+                attempt: 2,
+                startedAt: '2026-03-06T12:05:01.000Z',
+                finishedAt: '2026-03-06T12:05:01.100Z',
+                status: 'completed',
+                resume: {
+                  mode: 'resume',
+                  decision: 'reexecuted',
+                  reason: 'failed_node',
+                },
+              },
+              {
+                spanId: 'node-b:2:1',
+                runId: 'run-right',
+                traceId: 'run-right',
+                nodeId: 'node-b',
+                nodeType: 'parser',
+                nodeTitle: 'Parser',
+                iteration: 1,
+                attempt: 2,
+                startedAt: '2026-03-06T12:05:01.200Z',
+                finishedAt: '2026-03-06T12:05:01.300Z',
+                status: 'cached',
+                resume: {
+                  mode: 'resume',
+                  decision: 'reused',
+                  reason: 'completed_upstream',
+                },
+              },
+            ],
+          },
+        },
+      } as never
+    );
+
+    expect(comparison?.resumeModeChangeCount).toBe(1);
+    expect(comparison?.resumeDecisionChangeCount).toBe(2);
+    expect(comparison?.resumedNodeDelta).toBe(1);
+    expect(comparison?.reusedNodeDelta).toBe(0);
+    expect(comparison?.reexecutedNodeDelta).toBe(1);
+    expect(comparison?.rows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          nodeId: 'node-a',
+          leftResumeMode: 'resume',
+          rightResumeMode: 'resume',
+          leftResumeDecision: 'reused',
+          rightResumeDecision: 'reexecuted',
+        }),
+        expect.objectContaining({
+          nodeId: 'node-b',
+          leftResumeMode: null,
+          rightResumeMode: 'resume',
+          leftResumeDecision: null,
+          rightResumeDecision: 'reused',
+        }),
+      ])
+    );
+    expect(comparison?.rows.filter((row) => runTraceComparisonRowHasResumeChange(row))).toHaveLength(
+      2
+    );
+  });
+
+  it('prioritizes resume behavior changes ahead of plain diffs within the same class', () => {
+    const comparison = buildRunTraceComparison(
+      {
+        id: 'run-left-order',
+        status: 'completed',
+        pathId: 'path-1',
+        pathName: 'Path 1',
+        createdAt: '2026-03-06T13:00:00.000Z',
+        startedAt: '2026-03-06T13:00:01.000Z',
+        finishedAt: '2026-03-06T13:00:03.000Z',
+        runtimeState: {
+          history: {
+            'node-a': [
+              {
+                timestamp: '2026-03-06T13:00:01.100Z',
+                pathId: 'path-1',
+                pathName: 'Path 1',
+                traceId: 'run-left-order',
+                spanId: 'node-a:1:1',
+                nodeId: 'node-a',
+                nodeType: 'fetcher',
+                nodeTitle: 'Fetcher',
+                status: 'completed',
+                iteration: 1,
+                attempt: 1,
+                inputs: {},
+                outputs: { value: 'a' },
+                inputHash: 'hash-a',
+              },
+            ],
+            'node-b': [
+              {
+                timestamp: '2026-03-06T13:00:01.300Z',
+                pathId: 'path-1',
+                pathName: 'Path 1',
+                traceId: 'run-left-order',
+                spanId: 'node-b:1:1',
+                nodeId: 'node-b',
+                nodeType: 'parser',
+                nodeTitle: 'Parser',
+                status: 'completed',
+                iteration: 1,
+                attempt: 1,
+                inputs: {},
+                outputs: { value: 'b' },
+                inputHash: 'hash-b',
+              },
+            ],
+          },
+        },
+        meta: {
+          runtimeTrace: {
+            version: 'ai-paths.trace.v1',
+            traceId: 'run-left-order',
+            runId: 'run-left-order',
+            source: 'server',
+            startedAt: '2026-03-06T13:00:01.000Z',
+            finishedAt: '2026-03-06T13:00:03.000Z',
+            spans: [
+              {
+                spanId: 'node-a:1:1',
+                runId: 'run-left-order',
+                traceId: 'run-left-order',
+                nodeId: 'node-a',
+                nodeType: 'fetcher',
+                nodeTitle: 'Fetcher',
+                iteration: 1,
+                attempt: 1,
+                startedAt: '2026-03-06T13:00:01.000Z',
+                finishedAt: '2026-03-06T13:00:01.200Z',
+                status: 'completed',
+              },
+              {
+                spanId: 'node-b:1:1',
+                runId: 'run-left-order',
+                traceId: 'run-left-order',
+                nodeId: 'node-b',
+                nodeType: 'parser',
+                nodeTitle: 'Parser',
+                iteration: 1,
+                attempt: 1,
+                startedAt: '2026-03-06T13:00:01.200Z',
+                finishedAt: '2026-03-06T13:00:01.300Z',
+                status: 'completed',
+                resume: {
+                  mode: 'resume',
+                  decision: 'reused',
+                  reason: 'completed_upstream',
+                },
+              },
+            ],
+          },
+        },
+      } as never,
+      {
+        id: 'run-right-order',
+        status: 'completed',
+        pathId: 'path-1',
+        pathName: 'Path 1',
+        createdAt: '2026-03-06T13:05:00.000Z',
+        startedAt: '2026-03-06T13:05:01.000Z',
+        finishedAt: '2026-03-06T13:05:04.000Z',
+        runtimeState: {
+          history: {
+            'node-a': [
+              {
+                timestamp: '2026-03-06T13:05:01.150Z',
+                pathId: 'path-1',
+                pathName: 'Path 1',
+                traceId: 'run-right-order',
+                spanId: 'node-a:2:1',
+                nodeId: 'node-a',
+                nodeType: 'fetcher',
+                nodeTitle: 'Fetcher',
+                status: 'completed',
+                iteration: 1,
+                attempt: 2,
+                inputs: {},
+                outputs: { value: 'a2' },
+                inputHash: 'hash-a2',
+              },
+            ],
+            'node-b': [
+              {
+                timestamp: '2026-03-06T13:05:01.300Z',
+                pathId: 'path-1',
+                pathName: 'Path 1',
+                traceId: 'run-right-order',
+                spanId: 'node-b:2:1',
+                nodeId: 'node-b',
+                nodeType: 'parser',
+                nodeTitle: 'Parser',
+                status: 'completed',
+                iteration: 1,
+                attempt: 2,
+                inputs: {},
+                outputs: { value: 'b2' },
+                inputHash: 'hash-b2',
+                resumeMode: 'resume',
+                resumeDecision: 'reexecuted',
+              },
+            ],
+          },
+        },
+        meta: {
+          runtimeTrace: {
+            version: 'ai-paths.trace.v1',
+            traceId: 'run-right-order',
+            runId: 'run-right-order',
+            source: 'server',
+            startedAt: '2026-03-06T13:05:01.000Z',
+            finishedAt: '2026-03-06T13:05:04.000Z',
+            spans: [
+              {
+                spanId: 'node-a:2:1',
+                runId: 'run-right-order',
+                traceId: 'run-right-order',
+                nodeId: 'node-a',
+                nodeType: 'fetcher',
+                nodeTitle: 'Fetcher',
+                iteration: 1,
+                attempt: 2,
+                startedAt: '2026-03-06T13:05:01.000Z',
+                finishedAt: '2026-03-06T13:05:01.150Z',
+                status: 'completed',
+              },
+              {
+                spanId: 'node-b:2:1',
+                runId: 'run-right-order',
+                traceId: 'run-right-order',
+                nodeId: 'node-b',
+                nodeType: 'parser',
+                nodeTitle: 'Parser',
+                iteration: 1,
+                attempt: 2,
+                startedAt: '2026-03-06T13:05:01.200Z',
+                finishedAt: '2026-03-06T13:05:01.300Z',
+                status: 'completed',
+                resume: {
+                  mode: 'resume',
+                  decision: 'reexecuted',
+                  reason: 'failed_node',
+                },
+              },
+            ],
+          },
+        },
+      } as never
+    );
+
+    expect(comparison?.rows[0]?.nodeId).toBe('node-b');
+    expect(comparison?.rows[1]?.nodeId).toBe('node-a');
   });
 });

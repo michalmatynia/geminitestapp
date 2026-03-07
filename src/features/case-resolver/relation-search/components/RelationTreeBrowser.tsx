@@ -21,16 +21,17 @@ import { useFolderTreeProfile } from '@/shared/hooks/use-folder-tree-profile';
 
 import { logCaseResolverWorkspaceEvent } from '../../workspace-persistence';
 import { RelationTreeNodeItem } from './RelationTreeNodeItem';
+import { useOptionalRelationTreeBrowserRuntime } from './RelationTreeBrowserRuntimeContext';
 import { RelationTreeNodeRuntimeProvider } from './RelationTreeNodeRuntimeContext';
 import type { RelationBrowserMode, RelationTreeInstance, RelationTreeLookup } from '../types';
 
 const DRAG_FILE_ID_TYPE = 'application/case-resolver-file-id';
 
 type RelationTreeBrowserProps = {
-  instance: RelationTreeInstance;
+  instance?: RelationTreeInstance | undefined;
   mode: RelationBrowserMode;
-  nodes: MasterTreeNode[];
-  lookup: RelationTreeLookup;
+  nodes?: MasterTreeNode[] | undefined;
+  lookup?: RelationTreeLookup | undefined;
   isLocked?: boolean | undefined;
   selectedFileIds?: Set<string> | undefined;
   onToggleFileSelection?: ((fileId: string) => void) | undefined;
@@ -58,7 +59,7 @@ export function RelationTreeBrowser(props: RelationTreeBrowserProps): React.JSX.
     mode,
     nodes,
     lookup,
-    isLocked = false,
+    isLocked,
     selectedFileIds,
     onToggleFileSelection,
     onLinkFile,
@@ -68,15 +69,33 @@ export function RelationTreeBrowser(props: RelationTreeBrowserProps): React.JSX.
     className,
     emptyLabel = 'No files found',
   } = props;
+  const browserRuntimeContext = useOptionalRelationTreeBrowserRuntime();
+  const resolvedInstance = instance ?? browserRuntimeContext?.instance;
+  const resolvedNodes = nodes ?? browserRuntimeContext?.nodes;
+  const resolvedLookup = lookup ?? browserRuntimeContext?.lookup;
+  const resolvedIsLocked = isLocked ?? browserRuntimeContext?.isLocked ?? false;
+  const resolvedSelectedFileIds = selectedFileIds ?? browserRuntimeContext?.selectedFileIds;
+  const resolvedOnToggleFileSelection =
+    onToggleFileSelection ?? browserRuntimeContext?.onToggleFileSelection;
+  const resolvedOnLinkFile = onLinkFile ?? browserRuntimeContext?.onLinkFile;
+  const resolvedOnPreviewFile = onPreviewFile ?? browserRuntimeContext?.onPreviewFile;
+  const resolvedSearchQuery = searchQuery ?? browserRuntimeContext?.searchQuery ?? '';
+  const resolvedOnAddFile = onAddFile ?? browserRuntimeContext?.onAddFile;
 
-  const profile = useFolderTreeProfile(instance);
+  if (!resolvedInstance || !resolvedNodes || !resolvedLookup) {
+    throw new Error(
+      'RelationTreeBrowser must be used within RelationTreeBrowserRuntimeProvider or receive explicit props'
+    );
+  }
+
+  const profile = useFolderTreeProfile(resolvedInstance);
   const searchConfig = useMemo(() => resolveFolderTreeSearchConfig(profile), [profile]);
   const multiSelectConfig = useMemo(() => resolveFolderTreeMultiSelectConfig(profile), [profile]);
   const runtime = useSharedMasterFolderTreeRuntime({ bindWindowKeydown: false });
   const controller = useFolderTreeInstanceV2({
-    initialNodes: nodes,
+    initialNodes: resolvedNodes,
     profile,
-    instanceId: instance,
+    instanceId: resolvedInstance,
     runtime,
   });
 
@@ -109,24 +128,26 @@ export function RelationTreeBrowser(props: RelationTreeBrowserProps): React.JSX.
   }, [clearDragHandleArm]);
 
   useEffect(() => {
-    void controller.replaceNodes(nodes, 'external_sync');
+    void controller.replaceNodes(resolvedNodes, 'external_sync');
     logCaseResolverWorkspaceEvent({
       source: 'relation_tree_browser',
       action: 'relation_tree_built',
-      message: `instance=${instance} mode=${mode} nodes=${nodes.length}`,
+      message: `instance=${resolvedInstance} mode=${mode} nodes=${resolvedNodes.length}`,
     });
-  }, [controller.replaceNodes, instance, mode, nodes]);
+  }, [controller.replaceNodes, resolvedInstance, mode, resolvedNodes]);
 
   useEffect(() => {
-    if (!searchQuery || searchQuery.trim().length === 0) return;
+    if (!resolvedSearchQuery || resolvedSearchQuery.trim().length === 0) return;
     logCaseResolverWorkspaceEvent({
       source: 'relation_tree_browser',
       action: 'relation_tree_search_applied',
-      message: `instance=${instance} mode=${mode} query=${searchQuery.trim().slice(0, 64)}`,
+      message: `instance=${resolvedInstance} mode=${mode} query=${resolvedSearchQuery
+        .trim()
+        .slice(0, 64)}`,
     });
-  }, [instance, mode, searchQuery]);
+  }, [resolvedInstance, mode, resolvedSearchQuery]);
 
-  const searchState = useMasterFolderTreeSearch(nodes, searchQuery ?? '', {
+  const searchState = useMasterFolderTreeSearch(resolvedNodes, resolvedSearchQuery, {
     config: searchConfig,
   });
 
@@ -143,7 +164,7 @@ export function RelationTreeBrowser(props: RelationTreeBrowserProps): React.JSX.
       if (mode !== 'add_to_node_canvas') return false;
       const nodeType = resolveNodeTypeFromMetadata(node);
       if (nodeType !== 'file') return false;
-      const row = lookup.fileRowByNodeId.get(node.id);
+      const row = resolvedLookup.fileRowByNodeId.get(node.id);
       if (!row) return false;
       const isArmed = dragArmedFileIdRef.current === row.file.id;
       if (!isArmed && !dropRejectLoggedRef.current) {
@@ -156,7 +177,7 @@ export function RelationTreeBrowser(props: RelationTreeBrowserProps): React.JSX.
       }
       return isArmed;
     },
-    [lookup.fileRowByNodeId, mode]
+    [resolvedLookup.fileRowByNodeId, mode]
   );
 
   const canDrop = useCallback(
@@ -192,7 +213,7 @@ export function RelationTreeBrowser(props: RelationTreeBrowserProps): React.JSX.
       event: React.DragEvent<HTMLDivElement>;
     }): void => {
       if (mode !== 'add_to_node_canvas') return;
-      const row = lookup.fileRowByNodeId.get(node.id);
+      const row = resolvedLookup.fileRowByNodeId.get(node.id);
       if (!row) return;
       event.dataTransfer.effectAllowed = 'copy';
       event.dataTransfer.setData(DRAG_FILE_ID_TYPE, row.file.id);
@@ -203,7 +224,7 @@ export function RelationTreeBrowser(props: RelationTreeBrowserProps): React.JSX.
       });
       clearDragHandleArm();
     },
-    [clearDragHandleArm, lookup.fileRowByNodeId, mode]
+    [clearDragHandleArm, resolvedLookup.fileRowByNodeId, mode]
   );
 
   const renderNode = useCallback(
@@ -216,10 +237,10 @@ export function RelationTreeBrowser(props: RelationTreeBrowserProps): React.JSX.
   const nodeRuntimeContextValue = useMemo(
     () => ({
       mode,
-      lookup,
-      isLocked,
-      selectedFileIds,
-      onToggleFileSelection,
+      lookup: resolvedLookup,
+      isLocked: resolvedIsLocked,
+      selectedFileIds: resolvedSelectedFileIds,
+      onToggleFileSelection: resolvedOnToggleFileSelection,
       onLinkFile: (nextFileId: string): void => {
         logCaseResolverWorkspaceEvent({
           source: 'relation_tree_browser',
@@ -230,25 +251,25 @@ export function RelationTreeBrowser(props: RelationTreeBrowserProps): React.JSX.
           message: `file_id=${nextFileId}`,
         });
         if (mode === 'link_relations') {
-          onLinkFile?.(nextFileId);
+          resolvedOnLinkFile?.(nextFileId);
           return;
         }
-        onAddFile?.(nextFileId);
+        resolvedOnAddFile?.(nextFileId);
       },
-      onAddFile,
-      onPreviewFile,
+      onAddFile: resolvedOnAddFile,
+      onPreviewFile: resolvedOnPreviewFile,
       onArmDragHandle: handleArmDragHandle,
     }),
     [
       handleArmDragHandle,
-      isLocked,
-      lookup,
+      resolvedIsLocked,
+      resolvedLookup,
       mode,
-      onAddFile,
-      onLinkFile,
-      onPreviewFile,
-      onToggleFileSelection,
-      selectedFileIds,
+      resolvedOnAddFile,
+      resolvedOnLinkFile,
+      resolvedOnPreviewFile,
+      resolvedOnToggleFileSelection,
+      resolvedSelectedFileIds,
     ]
   );
 

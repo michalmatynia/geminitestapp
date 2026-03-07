@@ -104,9 +104,7 @@ describe('recoverEnqueuedRunByRequestId', () => {
   });
 
   it('returns null when all retry attempts fail', async () => {
-    const lookupRuns = vi
-      .fn()
-      .mockResolvedValue({ ok: false, error: 'always fails' });
+    const lookupRuns = vi.fn().mockResolvedValue({ ok: false, error: 'always fails' });
 
     const result = await recoverEnqueuedRunByRequestId({
       pathId: 'path-1',

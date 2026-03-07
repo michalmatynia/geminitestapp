@@ -34,6 +34,9 @@ describe('buildAdminNav', () => {
     );
     expect(kangurLessonsManager?.href).toBe('/admin/kangur/lessons-manager');
 
+    const kangurSettings = flattened.find((item) => item.id === 'workspace/kangur/settings');
+    expect(kangurSettings?.href).toBe('/admin/kangur/settings');
+
     const aiRoot = flattened.find((item) => item.id === 'ai');
     expect(aiRoot?.href).toBe('/admin/ai-paths');
 

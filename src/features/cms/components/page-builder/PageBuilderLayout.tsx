@@ -15,7 +15,7 @@ import { useCmsPage, useCmsPages } from '../../hooks/useCmsQueries';
 import { DragStateProvider } from '../../hooks/useDragStateContext';
 import { PageBuilderProvider, usePageBuilder } from '../../hooks/usePageBuilderContext';
 
-import { PageBuilderLeftPanel } from './PageBuilderLeftPanel';
+import { CmsBuilderLeftPanel } from './CmsBuilderLeftPanel';
 import { PageBuilderRightPanel } from './PageBuilderRightPanel';
 
 import type { PageBuilderState } from '../../types/page-builder';
@@ -97,7 +97,7 @@ function PageBuilderInner(): React.JSX.Element {
           </Button>
         )}
 
-        <PageBuilderLeftPanel />
+        <CmsBuilderLeftPanel />
 
         <PagePreviewPanel />
 

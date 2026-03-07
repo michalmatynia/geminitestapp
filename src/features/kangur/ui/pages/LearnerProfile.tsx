@@ -1,520 +1,99 @@
-import { useEffect, useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
-import {
-  BarChart2,
-  BookOpen,
-  Flame,
-  Home,
-  LayoutGrid,
-  LogIn,
-  Target,
-} from 'lucide-react';
+'use client';
+
+import { BookOpen, Home, LayoutGrid } from 'lucide-react';
 import Link from 'next/link';
 
 import {
-  appendKangurUrlParams,
   getKangurPageHref as createPageUrl,
 } from '@/features/kangur/config/routing';
-import KangurLearnerAssignmentsPanel from '@/features/kangur/ui/components/KangurLearnerAssignmentsPanel';
-import { logKangurClientError } from '@/features/kangur/observability/client';
-import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
-import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
+import { KangurDocsTooltipEnhancer, useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
 import { KangurProfileMenu } from '@/features/kangur/ui/components/KangurProfileMenu';
-import LessonMasteryInsights from '@/features/kangur/ui/components/LessonMasteryInsights';
+import { KangurLearnerProfileAssignmentsWidget } from '@/features/kangur/ui/components/KangurLearnerProfileAssignmentsWidget';
+import { KangurLearnerProfileHeroWidget } from '@/features/kangur/ui/components/KangurLearnerProfileHeroWidget';
+import { KangurLearnerProfileLevelProgressWidget } from '@/features/kangur/ui/components/KangurLearnerProfileLevelProgressWidget';
+import { KangurLearnerProfileMasteryWidget } from '@/features/kangur/ui/components/KangurLearnerProfileMasteryWidget';
+import { KangurLearnerProfileOverviewWidget } from '@/features/kangur/ui/components/KangurLearnerProfileOverviewWidget';
+import { KangurLearnerProfilePerformanceWidget } from '@/features/kangur/ui/components/KangurLearnerProfilePerformanceWidget';
+import { KangurLearnerProfileRecommendationsWidget } from '@/features/kangur/ui/components/KangurLearnerProfileRecommendationsWidget';
+import { KangurLearnerProfileSessionsWidget } from '@/features/kangur/ui/components/KangurLearnerProfileSessionsWidget';
 import {
   KangurButton,
   KangurPageContainer,
   KangurPageShell,
   KangurPageTopBar,
-  KangurPanel,
   KangurTopNavGroup,
 } from '@/features/kangur/ui/design/primitives';
-import type { KangurScoreRecord } from '@/features/kangur/services/ports';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import { KangurLearnerProfileRuntimeBoundary } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
-import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
-import { buildKangurLearnerProfileSnapshot } from '@/features/kangur/ui/services/profile';
-import {
-  LEARNER_PROFILE_SCORE_FETCH_LIMIT,
-  loadLearnerProfileScores,
-} from '@/features/kangur/ui/services/learner-profile-scores';
-import type { KangurDifficulty, KangurOperation } from '@/features/kangur/ui/types';
-import { BADGES } from '@/features/kangur/ui/services/progress';
 
-const DAILY_GOAL_GAMES = 3;
-
-const kangurPlatform = getKangurPlatform();
-
-const formatDateTime = (value: string): string => {
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return 'Brak daty';
-  }
-  return parsed.toLocaleString('pl-PL', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  });
-};
-
-const formatDuration = (seconds: number): string => {
-  const normalized = Math.max(0, Math.round(seconds));
-  const minutes = Math.floor(normalized / 60);
-  const remainingSeconds = normalized % 60;
-  if (minutes === 0) {
-    return `${remainingSeconds}s`;
-  }
-  return `${minutes}m ${`${remainingSeconds}`.padStart(2, '0')}s`;
-};
-
-const RECOMMENDATION_STYLES = {
-  high: 'border-rose-200 bg-rose-50/80 text-rose-800',
-  medium: 'border-amber-200 bg-amber-50/80 text-amber-800',
-  low: 'border-emerald-200 bg-emerald-50/80 text-emerald-800',
-} as const;
-
-const QUICK_START_OPERATIONS = new Set<KangurOperation>([
-  'addition',
-  'subtraction',
-  'multiplication',
-  'division',
-  'decimals',
-  'powers',
-  'roots',
-  'clock',
-  'mixed',
-]);
-
-const resolvePracticeDifficulty = (averageAccuracy: number): KangurDifficulty => {
-  if (averageAccuracy >= 85) {
-    return 'hard';
-  }
-  if (averageAccuracy >= 70) {
-    return 'medium';
-  }
-  return 'easy';
-};
-
-const buildOperationPracticeHref = (
-  basePath: string,
-  operation: string,
-  averageAccuracy: number
-): string => {
-  const params = new URLSearchParams({ quickStart: 'training' });
-
-  if (QUICK_START_OPERATIONS.has(operation as KangurOperation)) {
-    params.set('quickStart', 'operation');
-    params.set('operation', operation);
-    params.set('difficulty', resolvePracticeDifficulty(averageAccuracy));
-  }
-
-  return appendKangurUrlParams(createPageUrl('Game', basePath), Object.fromEntries(params));
-};
-
-const buildRecommendationHref = (
-  basePath: string,
-  action: {
-    page: 'Game' | 'Lessons' | 'ParentDashboard' | 'LearnerProfile';
-    query?: Record<string, string>;
-  }
-): string => {
-  const baseHref = createPageUrl(action.page, basePath);
-  return action.query ? appendKangurUrlParams(baseHref, action.query) : baseHref;
-};
-
-export default function LearnerProfile() {
+export default function LearnerProfile(): React.JSX.Element {
   const { basePath } = useKangurRouting();
   const { user, navigateToLogin, logout } = useKangurAuth();
-  const progress = useKangurProgressState();
-  const [scores, setScores] = useState<KangurScoreRecord[]>([]);
-  const [isLoadingScores, setIsLoadingScores] = useState(true);
-  const [scoresError, setScoresError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let isActive = true;
-
-    const loadScores = async (): Promise<void> => {
-      const learnerId = user?.activeLearner?.id?.trim() ?? '';
-      const userName = user?.full_name?.trim() ?? '';
-      const userEmail = user?.email?.trim() ?? '';
-      if (!learnerId && !userName && !userEmail) {
-        if (isActive) {
-          setScores([]);
-          setIsLoadingScores(false);
-          setScoresError(null);
-        }
-        return;
-      }
-
-      setIsLoadingScores(true);
-      setScoresError(null);
-
-      try {
-        const loadedScores = await loadLearnerProfileScores(kangurPlatform.score, {
-          learnerId,
-          userName,
-          userEmail,
-          limit: LEARNER_PROFILE_SCORE_FETCH_LIMIT,
-        });
-        if (!isActive) {
-          return;
-        }
-        setScores(loadedScores);
-      } catch (error: unknown) {
-        if (!isActive) {
-          return;
-        }
-
-        if (isKangurAuthStatusError(error)) {
-          setScores([]);
-        } else {
-          logKangurClientError(error, {
-            source: 'KangurLearnerProfilePage',
-            action: 'loadScores',
-            hasUser: Boolean(user),
-          });
-          setScoresError('Nie udalo sie pobrac historii wynikow.');
-        }
-      } finally {
-        if (isActive) {
-          setIsLoadingScores(false);
-        }
-      }
-    };
-
-    void loadScores();
-
-    return () => {
-      isActive = false;
-    };
-  }, [user?.activeLearner?.id, user?.email, user?.full_name]);
-
-  const snapshot = useMemo(
-    () =>
-      buildKangurLearnerProfileSnapshot({
-        progress,
-        scores,
-        dailyGoalGames: DAILY_GOAL_GAMES,
-      }),
-    [progress, scores]
-  );
-
-  const maxWeeklyGames = Math.max(1, ...snapshot.weeklyActivity.map((point) => point.games));
-  const xpToNextLevel = snapshot.nextLevel
-    ? Math.max(0, snapshot.nextLevel.minXp - snapshot.totalXp)
-    : 0;
+  const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('profile');
 
   return (
-    <KangurPageShell tone='profile'>
-      <KangurPageTopBar
-        contentClassName='justify-center'
-        left={
-          <KangurTopNavGroup>
-            <KangurButton asChild size='md' variant='navigation'>
-              <Link href={createPageUrl('Game', basePath)}>
-                <Home className='h-[22px] w-[22px]' strokeWidth={2.1} />
-                <span>Strona glowna</span>
-              </Link>
-            </KangurButton>
-            <KangurButton asChild size='md' variant='navigation'>
-              <Link href={createPageUrl('Lessons', basePath)}>
-                <BookOpen className='h-[22px] w-[22px]' strokeWidth={2.1} />
-                <span>Lekcje</span>
-              </Link>
-            </KangurButton>
-            <KangurProfileMenu
-              basePath={basePath}
-              isAuthenticated={Boolean(user)}
-              onLogout={() => logout(false)}
-              onLogin={navigateToLogin}
-              isActive
-            />
-            {user?.canManageLearners && (
-              <KangurButton asChild size='md' variant='navigation'>
-                <Link href={createPageUrl('ParentDashboard', basePath)}>
-                  <LayoutGrid className='h-[22px] w-[22px]' strokeWidth={2.1} />
-                  <span>Rodzic</span>
+    <KangurLearnerProfileRuntimeBoundary enabled>
+      <KangurPageShell
+        tone='profile'
+        id='kangur-learner-profile-page'
+        skipLinkTargetId='kangur-learner-profile-main'
+      >
+        <KangurDocsTooltipEnhancer
+          enabled={docsTooltipsEnabled}
+          rootId='kangur-learner-profile-page'
+        />
+        <KangurPageTopBar
+          contentClassName='justify-center'
+          left={
+            <KangurTopNavGroup>
+              <KangurButton asChild size='md' variant='navigation' data-doc-id='top_nav_home'>
+                <Link href={createPageUrl('Game', basePath)}>
+                  <Home className='h-[22px] w-[22px]' strokeWidth={2.1} />
+                  <span>Strona glowna</span>
                 </Link>
               </KangurButton>
-            )}
-          </KangurTopNavGroup>
-        }
-      />
-
-      <KangurPageContainer className='flex flex-col gap-6'>
-        <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }}>
-          <h1 className='text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600 drop-shadow'>
-            Profil ucznia
-          </h1>
-          <p className='mt-1 text-slate-500'>
-            Statystyki ucznia: {user?.activeLearner?.displayName?.trim() || user?.full_name?.trim() || 'Tryb lokalny'}.
-          </p>
-          {!user && (
-            <KangurButton className='mt-4' onClick={navigateToLogin} size='md' variant='secondary'>
-              <LogIn className='w-4 h-4' /> Zaloguj sie, aby synchronizowac postep
-            </KangurButton>
-          )}
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <KangurPanel className='flex flex-col gap-4' padding='xl' variant='elevated'>
-            <div className='flex flex-col gap-4 md:flex-row md:items-end md:justify-between'>
-              <div>
-                <div className={`text-2xl font-extrabold ${snapshot.level.color}`}>
-                  {snapshot.level.title}
-                </div>
-                <p className='text-sm text-slate-500'>
-                  Poziom {snapshot.level.level} · {snapshot.totalXp} XP lacznie
-                </p>
-              </div>
-              <div className='text-sm text-slate-500'>
-                {snapshot.nextLevel
-                  ? `Do poziomu ${snapshot.nextLevel.level}: ${xpToNextLevel} XP`
-                  : 'Maksymalny poziom osiagniety'}
-              </div>
-            </div>
-
-            <div>
-              <div className='h-3 w-full overflow-hidden rounded-full bg-indigo-100'>
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${snapshot.levelProgressPercent}%` }}
-                  transition={{ duration: 0.7, ease: 'easeOut' }}
-                  className='h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500'
-                />
-              </div>
-              <div className='mt-1 text-right text-xs text-slate-500'>
-                {snapshot.levelProgressPercent}%
-              </div>
-            </div>
-          </KangurPanel>
-        </motion.div>
-
-        <section className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4'>
-          <KangurPanel padding='md' variant='soft'>
-            <div className='inline-flex items-center gap-2 text-indigo-600 text-sm font-semibold'>
-              <BarChart2 className='w-4 h-4' /> Srednia skutecznosc
-            </div>
-            <p className='text-3xl font-extrabold text-indigo-700 mt-2'>
-              {snapshot.averageAccuracy}%
-            </p>
-            <p className='text-xs text-gray-500 mt-1'>Najlepsza sesja: {snapshot.bestAccuracy}%</p>
-          </KangurPanel>
-
-          <KangurPanel padding='md' variant='soft'>
-            <div className='inline-flex items-center gap-2 text-orange-500 text-sm font-semibold'>
-              <Flame className='w-4 h-4' /> Seria dni
-            </div>
-            <p className='text-3xl font-extrabold text-orange-600 mt-2'>
-              {snapshot.currentStreakDays}
-            </p>
-            <p className='text-xs text-gray-500 mt-1'>
-              Najdluzsza: {snapshot.longestStreakDays} dni
-            </p>
-          </KangurPanel>
-
-          <KangurPanel padding='md' variant='soft'>
-            <div className='inline-flex items-center gap-2 text-teal-600 text-sm font-semibold'>
-              <Target className='w-4 h-4' /> Cel dzienny
-            </div>
-            <p className='text-3xl font-extrabold text-teal-600 mt-2'>
-              {snapshot.todayGames}/{snapshot.dailyGoalGames}
-            </p>
-            <p className='text-xs text-gray-500 mt-1'>Wypelnienie: {snapshot.dailyGoalPercent}%</p>
-          </KangurPanel>
-
-          <KangurPanel padding='md' variant='soft'>
-            <div className='inline-flex items-center gap-2 text-amber-600 text-sm font-semibold'>
-              🏅 Odznaki
-            </div>
-            <p className='text-3xl font-extrabold text-amber-600 mt-2'>
-              {snapshot.unlockedBadges}/{snapshot.totalBadges}
-            </p>
-            <p className='text-xs text-gray-500 mt-1'>Odblokowane osiagniecia</p>
-          </KangurPanel>
-        </section>
-
-        <KangurPanel padding='lg' variant='soft'>
-          <div className='text-sm font-bold text-gray-500 uppercase tracking-wide mb-3'>
-            Plan na dzis
-          </div>
-          <div className='grid grid-cols-1 lg:grid-cols-3 gap-3'>
-            {snapshot.recommendations.map((recommendation) => (
-              <div
-                key={recommendation.id}
-                className={`rounded-xl border px-3 py-2 ${RECOMMENDATION_STYLES[recommendation.priority]}`}
-              >
-                <div className='text-xs font-bold uppercase tracking-wide'>
-                  {recommendation.priority === 'high'
-                    ? 'Priorytet wysoki'
-                    : recommendation.priority === 'medium'
-                      ? 'Priorytet sredni'
-                      : 'Priorytet niski'}
-                </div>
-                <div className='mt-1 text-sm font-semibold'>{recommendation.title}</div>
-                <div className='mt-1 text-xs opacity-80'>{recommendation.description}</div>
-                <KangurButton asChild className='mt-2' size='sm' variant='secondary'>
-                  <Link href={buildRecommendationHref(basePath, recommendation.action)}>
-                    {recommendation.action.label}
+              <KangurButton asChild size='md' variant='navigation' data-doc-id='top_nav_lessons'>
+                <Link href={createPageUrl('Lessons', basePath)}>
+                  <BookOpen className='h-[22px] w-[22px]' strokeWidth={2.1} />
+                  <span>Lekcje</span>
+                </Link>
+              </KangurButton>
+              <KangurProfileMenu
+                basePath={basePath}
+                isAuthenticated={Boolean(user)}
+                onLogout={() => logout(false)}
+                onLogin={navigateToLogin}
+                isActive
+              />
+              {user?.canManageLearners ? (
+                <KangurButton
+                  asChild
+                  size='md'
+                  variant='navigation'
+                  data-doc-id='top_nav_parent_dashboard'
+                >
+                  <Link href={createPageUrl('ParentDashboard', basePath)}>
+                    <LayoutGrid className='h-[22px] w-[22px]' strokeWidth={2.1} />
+                    <span>Rodzic</span>
                   </Link>
                 </KangurButton>
-              </div>
-            ))}
-          </div>
-        </KangurPanel>
-
-        <KangurLearnerAssignmentsPanel
-          basePath={basePath}
-          enabled={Boolean(user)}
+              ) : null}
+            </KangurTopNavGroup>
+          }
         />
 
-        <LessonMasteryInsights progress={progress} />
-
-        <section className='grid grid-cols-1 xl:grid-cols-5 gap-4'>
-          <KangurPanel className='xl:col-span-3' padding='lg' variant='soft'>
-            <div className='text-sm font-bold text-gray-500 uppercase tracking-wide mb-3'>
-              Aktywnosc 7 dni
-            </div>
-            <div className='h-32 flex items-end gap-2'>
-              {snapshot.weeklyActivity.map((point) => {
-                const heightPercent =
-                  point.games === 0
-                    ? 6
-                    : Math.max(14, Math.round((point.games / maxWeeklyGames) * 100));
-                return (
-                  <div
-                    key={point.dateKey}
-                    className='flex-1 min-w-[0] flex flex-col items-center gap-1'
-                  >
-                    <div
-                      className={`w-full rounded-lg bg-gradient-to-t ${
-                        point.games > 0
-                          ? 'from-indigo-500 to-purple-400'
-                          : 'from-slate-200 to-slate-100'
-                      }`}
-                      style={{ height: `${heightPercent}%` }}
-                      title={`${point.games} gier, srednia ${point.averageAccuracy}%`}
-                    />
-                    <div className='text-[11px] text-gray-500'>{point.label}</div>
-                  </div>
-                );
-              })}
-            </div>
-          </KangurPanel>
-
-          <KangurPanel className='xl:col-span-2' padding='lg' variant='soft'>
-            <div className='text-sm font-bold text-gray-500 uppercase tracking-wide mb-3'>
-              Wyniki wg operacji
-            </div>
-            <div className='flex flex-col gap-3'>
-              {snapshot.operationPerformance.length === 0 && (
-                <div className='text-sm text-gray-400 py-6 text-center'>
-                  Brak danych o operacjach.
-                </div>
-              )}
-              {snapshot.operationPerformance.map((item) => (
-                <div key={item.operation}>
-                  <div className='flex items-center justify-between gap-2 text-sm text-gray-600 mb-1'>
-                    <span className='font-semibold'>
-                      {item.emoji} {item.label}
-                    </span>
-                    <div className='flex items-center gap-2'>
-                      <span>{item.averageAccuracy}%</span>
-                      <KangurButton asChild size='sm' variant='secondary'>
-                        <Link
-                          href={buildOperationPracticeHref(
-                            basePath,
-                            item.operation,
-                            item.averageAccuracy
-                          )}
-                        >
-                          Trenuj
-                        </Link>
-                      </KangurButton>
-                    </div>
-                  </div>
-                  <div className='w-full h-2 bg-slate-100 rounded-full overflow-hidden'>
-                    <div
-                      className='h-full bg-gradient-to-r from-indigo-400 to-purple-500'
-                      style={{ width: `${item.averageAccuracy}%` }}
-                    />
-                  </div>
-                  <div className='mt-1 text-[11px] text-gray-500'>
-                    Proby: {item.attempts} · Najlepsza skutecznosc: {item.bestScore}%
-                  </div>
-                </div>
-              ))}
-            </div>
-          </KangurPanel>
-        </section>
-
-        <section className='grid grid-cols-1 xl:grid-cols-5 gap-4'>
-          <KangurPanel className='xl:col-span-3' padding='lg' variant='soft'>
-            <div className='text-sm font-bold text-gray-500 uppercase tracking-wide mb-3'>
-              Ostatnie sesje
-            </div>
-            {isLoadingScores ? (
-              <div className='text-sm text-gray-400 py-6 text-center'>Ladowanie historii...</div>
-            ) : scoresError ? (
-              <div className='text-sm text-red-500 py-6 text-center'>{scoresError}</div>
-            ) : snapshot.recentSessions.length === 0 ? (
-              <div className='text-sm text-gray-400 py-6 text-center'>Brak rozegranych sesji.</div>
-            ) : (
-              <div className='flex flex-col gap-2'>
-                {snapshot.recentSessions.map((session) => (
-                  <div
-                    key={session.id}
-                    className='flex items-center gap-3 border border-slate-100 rounded-xl px-3 py-2 bg-white/80'
-                  >
-                    <div className='text-xl'>{session.operationEmoji}</div>
-                    <div className='flex-1'>
-                      <div className='text-sm font-semibold text-gray-700'>
-                        {session.operationLabel}
-                      </div>
-                      <div className='text-xs text-gray-500'>
-                        {formatDateTime(session.createdAt)}
-                      </div>
-                    </div>
-                    <div className='text-right'>
-                      <div className='text-sm font-extrabold text-indigo-600'>
-                        {session.score}/{session.totalQuestions}
-                      </div>
-                      <div className='text-xs text-gray-500'>
-                        {formatDuration(session.timeTakenSeconds)}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </KangurPanel>
-
-          <KangurPanel className='xl:col-span-2' padding='lg' variant='soft'>
-            <div className='text-sm font-bold text-gray-500 uppercase tracking-wide mb-3'>
-              Odznaki
-            </div>
-            <div className='flex flex-wrap gap-2'>
-              {BADGES.map((badge) => {
-                const unlocked = snapshot.unlockedBadgeIds.includes(badge.id);
-                return (
-                  <div
-                    key={badge.id}
-                    title={`${badge.name}: ${badge.desc}`}
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
-                      unlocked ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-400'
-                    }`}
-                  >
-                    <span className={unlocked ? '' : 'grayscale'}>{badge.emoji}</span>
-                    <span>{badge.name}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </KangurPanel>
-        </section>
-      </KangurPageContainer>
-    </KangurPageShell>
+        <KangurPageContainer id='kangur-learner-profile-main' className='flex flex-col gap-6'>
+          <KangurLearnerProfileHeroWidget />
+          <KangurLearnerProfileLevelProgressWidget />
+          <KangurLearnerProfileOverviewWidget />
+          <KangurLearnerProfileRecommendationsWidget />
+          <KangurLearnerProfileAssignmentsWidget />
+          <KangurLearnerProfileMasteryWidget />
+          <KangurLearnerProfilePerformanceWidget />
+          <KangurLearnerProfileSessionsWidget />
+        </KangurPageContainer>
+      </KangurPageShell>
+    </KangurLearnerProfileRuntimeBoundary>
   );
 }

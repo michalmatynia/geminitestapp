@@ -11,10 +11,15 @@ import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssign
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import KangurAssignmentsList from '@/features/kangur/ui/components/KangurAssignmentsList';
 import {
-  KangurLessonCallout,
-  KangurLessonChip,
-} from '@/features/kangur/ui/design/lesson-primitives';
-import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
+  KangurButton,
+  KangurEmptyState,
+  KangurInfoCard,
+  KangurMetricCard,
+  KangurPanel,
+  KangurStatusChip,
+  KangurSummaryPanel,
+  KangurTextField,
+} from '@/features/kangur/ui/design/primitives';
 import {
   buildKangurAssignmentHref,
   buildKangurAssignmentCatalog,
@@ -58,6 +63,16 @@ const PRIORITY_WEIGHT = {
   medium: 1,
   low: 2,
 } as const;
+
+const getPriorityAccentFromLabel = (label: string): 'rose' | 'amber' | 'emerald' => {
+  if (label.toLowerCase().includes('wysoki')) {
+    return 'rose';
+  }
+  if (label.toLowerCase().includes('niski')) {
+    return 'emerald';
+  }
+  return 'amber';
+};
 
 const buildTrackerSummary = (
   assignments: KangurAssignmentSnapshot[]
@@ -141,7 +156,10 @@ export function KangurAssignmentManager({
     return parsed.filter((lesson) => lesson.enabled);
   }, [rawLessons]);
   const catalog = useMemo(() => buildKangurAssignmentCatalog(lessons), [lessons]);
-  const suggestedCatalog = useMemo(() => buildRecommendedKangurAssignmentCatalog(progress), [progress]);
+  const suggestedCatalog = useMemo(
+    () => buildRecommendedKangurAssignmentCatalog(progress),
+    [progress]
+  );
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterOption>('all');
   const [pendingActionId, setPendingActionId] = useState<string | null>(null);
@@ -177,13 +195,18 @@ export function KangurAssignmentManager({
     () =>
       suggestedCatalog.filter((item) => {
         const lessonTarget =
-          item.createInput.target.type === 'lesson' ? item.createInput.target.lessonComponentId : null;
+          item.createInput.target.type === 'lesson'
+            ? item.createInput.target.lessonComponentId
+            : null;
 
         return !activeAssignments.some((assignment) => {
           if (item.createInput.target.type === 'lesson' && assignment.target.type === 'lesson') {
             return assignment.target.lessonComponentId === lessonTarget;
           }
-          if (item.createInput.target.type === 'practice' && assignment.target.type === 'practice') {
+          if (
+            item.createInput.target.type === 'practice' &&
+            assignment.target.type === 'practice'
+          ) {
             return assignment.target.operation === item.createInput.target.operation;
           }
           return false;
@@ -245,9 +268,9 @@ export function KangurAssignmentManager({
       <KangurPanel className='border-slate-200/70 bg-white/88' padding='lg' variant='soft'>
         <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
           <div className='max-w-2xl'>
-            <KangurLessonChip accent='indigo' className='text-[11px] uppercase tracking-[0.18em]'>
+            <KangurStatusChip accent='indigo' className='text-[11px] uppercase tracking-[0.18em]'>
               Przydziel nowe zadanie
-            </KangurLessonChip>
+            </KangurStatusChip>
             <div className='mt-3 text-sm leading-6 text-slate-600'>
               Wyszukaj lekcje i zadania treningowe, a potem przypisz je uczniowi jako priorytet.
             </div>
@@ -259,30 +282,38 @@ export function KangurAssignmentManager({
         </div>
 
         {recommendedCatalog.length > 0 ? (
-          <KangurLessonCallout accent='indigo' className='mt-5' padding='lg'>
-            <div className='text-sm font-bold text-indigo-900'>Podpowiedzi z postępu ucznia</div>
-            <div className='mt-1 text-sm leading-6 text-indigo-700'>
-              Te zadania wynikają z aktualnych słabszych obszarów i rytmu pracy ucznia.
-            </div>
+          <KangurSummaryPanel
+            accent='indigo'
+            className='mt-5'
+            description='Te zadania wynikają z aktualnych słabszych obszarów i rytmu pracy ucznia.'
+            label='Podpowiedzi z postępu ucznia'
+            padding='lg'
+          >
             <div className='mt-3 grid grid-cols-1 gap-3 xl:grid-cols-2'>
               {recommendedCatalog.map((item) => (
-                <KangurPanel
+                <KangurInfoCard
+                  data-testid={`assignment-manager-recommended-card-${item.id}`}
                   key={item.id}
-                  className='border-white/80 bg-white/95'
                   padding='lg'
-                  variant='subtle'
                 >
                   <div className='flex items-start justify-between gap-3'>
                     <div>
                       <div className='text-sm font-bold text-slate-900'>{item.title}</div>
-                      <div className='mt-1 text-sm leading-6 text-slate-600'>{item.description}</div>
+                      <div className='mt-1 text-sm leading-6 text-slate-600'>
+                        {item.description}
+                      </div>
                     </div>
-                    <KangurLessonChip accent='indigo' className='text-[11px] uppercase tracking-[0.14em]'>
+                    <KangurStatusChip
+                      accent={getPriorityAccentFromLabel(item.priorityLabel)}
+                      className='text-[11px] uppercase tracking-[0.14em]'
+                    >
                       {item.priorityLabel}
-                    </KangurLessonChip>
+                    </KangurStatusChip>
                   </div>
                   <div className='mt-3 flex items-center justify-between gap-3'>
-                    <div className='text-[11px] uppercase tracking-[0.14em] text-slate-500'>{item.badge}</div>
+                    <KangurStatusChip accent='slate' className='text-[11px] uppercase tracking-[0.14em]'>
+                      {item.badge}
+                    </KangurStatusChip>
                     <KangurButton
                       type='button'
                       onClick={() => void handleAssign(item.id)}
@@ -293,18 +324,19 @@ export function KangurAssignmentManager({
                       {pendingActionId === item.id ? 'Przypisywanie...' : 'Przypisz sugestię'}
                     </KangurButton>
                   </div>
-                </KangurPanel>
+                </KangurInfoCard>
               ))}
             </div>
-          </KangurLessonCallout>
+          </KangurSummaryPanel>
         ) : null}
 
-        <input
+        <KangurTextField
+          accent='indigo'
           type='search'
           value={searchTerm}
           onChange={(event) => setSearchTerm(event.target.value)}
           placeholder='Szukaj po temacie, typie zadania lub słowie kluczowym...'
-          className='mt-5 w-full rounded-[22px] border border-slate-200/80 bg-white/92 px-4 py-3 text-sm text-slate-700 shadow-[0_18px_44px_-38px_rgba(15,23,42,0.18)] outline-none transition focus:border-indigo-300 focus:ring-2 focus:ring-indigo-200/70'
+          className='mt-5'
         />
 
         <div className='mt-4 flex flex-wrap gap-2'>
@@ -325,47 +357,56 @@ export function KangurAssignmentManager({
         </div>
 
         {feedback ? (
-          <KangurLessonCallout
+          <KangurSummaryPanel
             accent={
               feedback.toLowerCase().includes('nie uda') || feedback.toLowerCase().includes('juz')
                 ? 'rose'
                 : 'indigo'
             }
-            className='mt-4 text-sm'
+            className='mt-4'
+            description={feedback}
             padding='sm'
-          >
-            {feedback}
-          </KangurLessonCallout>
+            tone='accent'
+          />
         ) : null}
 
         {error ? (
-          <KangurLessonCallout accent='rose' className='mt-4 text-sm text-rose-700' padding='sm'>
-            {error}
-          </KangurLessonCallout>
+          <KangurSummaryPanel
+            accent='rose'
+            className='mt-4'
+            description={error}
+            padding='sm'
+            tone='accent'
+          />
         ) : null}
 
         <div className='mt-5 grid grid-cols-1 gap-3 xl:grid-cols-2'>
           {filteredCatalog.map((item) => (
-            <KangurPanel
+            <KangurInfoCard
+              data-testid={`assignment-manager-catalog-card-${item.id}`}
               key={item.id}
-              className='border-slate-200/80 bg-white/95'
               padding='lg'
-              variant='subtle'
             >
               <div className='flex items-start justify-between gap-3'>
                 <div>
                   <div className='text-sm font-bold text-slate-900'>{item.title}</div>
                   <div className='mt-1 text-sm leading-6 text-slate-600'>{item.description}</div>
                 </div>
-                <KangurLessonChip accent='slate' className='text-[11px] uppercase tracking-[0.14em]'>
+                <KangurStatusChip
+                  accent='slate'
+                  className='text-[11px] uppercase tracking-[0.14em]'
+                >
                   {item.badge}
-                </KangurLessonChip>
+                </KangurStatusChip>
               </div>
 
               <div className='mt-3 flex items-center justify-between gap-3'>
-                <div className='text-[11px] uppercase tracking-[0.14em] text-slate-500'>
+                <KangurStatusChip
+                  accent={getPriorityAccentFromLabel(item.priorityLabel)}
+                  className='text-[11px] uppercase tracking-[0.14em]'
+                >
                   {item.priorityLabel}
-                </div>
+                </KangurStatusChip>
                 <KangurButton
                   type='button'
                   onClick={() => void handleAssign(item.id)}
@@ -376,109 +417,106 @@ export function KangurAssignmentManager({
                   {pendingActionId === item.id ? 'Przypisywanie...' : 'Przypisz'}
                 </KangurButton>
               </div>
-            </KangurPanel>
+            </KangurInfoCard>
           ))}
         </div>
 
         {!isLoading && filteredCatalog.length === 0 ? (
-          <KangurLessonCallout
+          <KangurEmptyState
             accent='slate'
-            className='mt-4 border-dashed text-center text-sm text-slate-500'
+            className='mt-4 text-sm'
+            description='Brak wyników dla wybranego filtra.'
             padding='lg'
-          >
-            Brak wyników dla wybranego filtra.
-          </KangurLessonCallout>
+          />
         ) : null}
       </KangurPanel>
 
       <KangurPanel className='border-slate-200/70 bg-white/88' padding='lg' variant='soft'>
         <div className='flex flex-col gap-1'>
-          <KangurLessonChip accent='slate' className='w-fit text-[11px] uppercase tracking-[0.18em]'>
+          <KangurStatusChip
+            accent='slate'
+            className='w-fit text-[11px] uppercase tracking-[0.18em]'
+          >
             Monitorowanie zadań
-          </KangurLessonChip>
+          </KangurStatusChip>
           <div className='mt-2 text-sm leading-6 text-slate-600'>
             Szybki podgląd tego, co uczeń rozpoczął, zakończył albo nadal odkłada.
           </div>
         </div>
 
         <div className='mt-5 grid grid-cols-2 gap-3 xl:grid-cols-4'>
-          <KangurLessonCallout accent='slate' padding='md'>
-            <div className='text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500'>
-              Aktywne
-            </div>
-            <div className='mt-1 text-2xl font-extrabold text-slate-900'>{trackerSummary.activeCount}</div>
-            <div className='mt-1 text-xs text-slate-600'>zadania wymagające dalszej pracy</div>
-          </KangurLessonCallout>
-          <KangurLessonCallout accent='amber' padding='md'>
-            <div className='text-[11px] font-bold uppercase tracking-[0.16em] text-amber-700'>
-              Do rozpoczecia
-            </div>
-            <div className='mt-1 text-2xl font-extrabold text-amber-800'>
-              {trackerSummary.notStartedCount}
-            </div>
-            <div className='mt-1 text-xs text-amber-800'>uczeń jeszcze nie ruszył tych zadań</div>
-          </KangurLessonCallout>
-          <KangurLessonCallout accent='indigo' padding='md'>
-            <div className='text-[11px] font-bold uppercase tracking-[0.16em] text-indigo-700'>
-              W trakcie
-            </div>
-            <div className='mt-1 text-2xl font-extrabold text-indigo-800'>
-              {trackerSummary.inProgressCount}
-            </div>
-            <div className='mt-1 text-xs text-indigo-800'>zadania, nad którymi uczeń już pracuje</div>
-          </KangurLessonCallout>
-          <KangurLessonCallout accent='emerald' padding='md'>
-            <div className='text-[11px] font-bold uppercase tracking-[0.16em] text-emerald-700'>
-              Ukonczone
-            </div>
-            <div className='mt-1 text-2xl font-extrabold text-emerald-800'>
-              {trackerSummary.completedCount}
-            </div>
-            <div className='mt-1 text-xs text-emerald-800'>przydziały zrealizowane przez ucznia</div>
-          </KangurLessonCallout>
+          <KangurMetricCard
+            accent='slate'
+            description='zadania wymagające dalszej pracy'
+            label='Aktywne'
+            value={trackerSummary.activeCount}
+          />
+          <KangurMetricCard
+            accent='amber'
+            description='uczeń jeszcze nie ruszył tych zadań'
+            label='Do rozpoczecia'
+            value={trackerSummary.notStartedCount}
+          />
+          <KangurMetricCard
+            accent='indigo'
+            description='zadania, nad którymi uczeń już pracuje'
+            label='W trakcie'
+            value={trackerSummary.inProgressCount}
+          />
+          <KangurMetricCard
+            accent='emerald'
+            description='przydziały zrealizowane przez ucznia'
+            label='Ukonczone'
+            value={trackerSummary.completedCount}
+          />
         </div>
 
-        <KangurLessonCallout accent='slate' className='mt-4' padding='lg'>
-          <div className='text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500'>
-            Skutecznosc wykonania
-          </div>
-          <div className='mt-1 text-2xl font-extrabold text-slate-900'>{trackerSummary.completionRate}%</div>
-          <div className='mt-1 text-xs text-slate-600'>
-            odsetek wszystkich niearchiwalnych zadań, które uczeń ma już zakończone
-          </div>
-        </KangurLessonCallout>
+        <KangurMetricCard
+          accent='slate'
+          className='mt-4'
+          description='odsetek wszystkich niearchiwalnych zadań, które uczeń ma już zakończone'
+          label='Skutecznosc wykonania'
+          value={`${trackerSummary.completionRate}%`}
+        />
 
-        <KangurLessonCallout accent='amber' className='mt-4' padding='lg'>
-          <div className='text-sm font-bold text-amber-900'>Do uwagi</div>
-          <div className='mt-1 text-sm leading-6 text-amber-800'>
-            Te zadania warto przypomnieć uczniowi albo omówić podczas kolejnej nauki.
-          </div>
-
+        <KangurSummaryPanel
+          accent='amber'
+          className='mt-4'
+          description='Te zadania warto przypomnieć uczniowi albo omówić podczas kolejnej nauki.'
+          label='Do uwagi'
+          padding='lg'
+          tone='accent'
+        >
           {trackerSummary.attentionItems.length === 0 ? (
-            <KangurLessonCallout
+            <KangurEmptyState
               accent='emerald'
-              className='mt-4 border-dashed bg-white/80 text-sm text-emerald-800'
+              align='left'
+              className='mt-4 bg-white/80'
+              description='Brak zadań wymagających dodatkowej reakcji.'
               padding='md'
-            >
-              Brak zadań wymagających dodatkowej reakcji.
-            </KangurLessonCallout>
+            />
           ) : (
             <div className='mt-3 grid grid-cols-1 gap-3 xl:grid-cols-2'>
               {trackerSummary.attentionItems.slice(0, 4).map((item) => (
-                <KangurPanel
+                <KangurInfoCard
+                  accent='amber'
+                  data-testid={`assignment-manager-attention-card-${item.assignment.id}`}
                   key={item.assignment.id}
-                  className='border-white/80 bg-white/95'
                   padding='lg'
-                  variant='subtle'
                 >
                   <div className='flex items-start justify-between gap-3'>
                     <div>
-                      <div className='text-sm font-bold text-slate-900'>{item.assignment.title}</div>
+                      <div className='text-sm font-bold text-slate-900'>
+                        {item.assignment.title}
+                      </div>
                       <div className='mt-1 text-sm leading-6 text-amber-900'>{item.reason}</div>
                     </div>
-                    <KangurLessonChip accent='amber' className='text-[11px] uppercase tracking-[0.14em]'>
+                    <KangurStatusChip
+                      accent='amber'
+                      className='text-[11px] uppercase tracking-[0.14em]'
+                    >
                       {item.assignment.progress.percent}%
-                    </KangurLessonChip>
+                    </KangurStatusChip>
                   </div>
                   <div className='mt-3 flex items-center justify-between gap-3'>
                     <div className='text-[11px] uppercase tracking-[0.14em] text-slate-500'>
@@ -490,11 +528,11 @@ export function KangurAssignmentManager({
                       </Link>
                     </KangurButton>
                   </div>
-                </KangurPanel>
+                </KangurInfoCard>
               ))}
             </div>
           )}
-        </KangurLessonCallout>
+        </KangurSummaryPanel>
       </KangurPanel>
 
       <KangurAssignmentsList

@@ -3,17 +3,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
-const {
-  getKangurScoreRepositoryMock,
-  listScoresMock,
-  createScoreMock,
-  resolveKangurActorMock,
-} = vi.hoisted(() => ({
-  getKangurScoreRepositoryMock: vi.fn(),
-  listScoresMock: vi.fn(),
-  createScoreMock: vi.fn(),
-  resolveKangurActorMock: vi.fn(),
-}));
+const { getKangurScoreRepositoryMock, listScoresMock, createScoreMock, resolveKangurActorMock } =
+  vi.hoisted(() => ({
+    getKangurScoreRepositoryMock: vi.fn(),
+    listScoresMock: vi.fn(),
+    createScoreMock: vi.fn(),
+    resolveKangurActorMock: vi.fn(),
+  }));
 
 vi.mock('@/features/kangur/server', () => ({
   getKangurScoreRepository: getKangurScoreRepositoryMock,

@@ -3,17 +3,13 @@
 import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
-import {
-  AI_PATHS_UI_STATE_KEY,
-} from '@/shared/lib/ai-paths/core/constants';
+import { AI_PATHS_UI_STATE_KEY } from '@/shared/lib/ai-paths/core/constants';
 import {
   enqueueAiPathRun,
   listAiPathRuns,
   resolveAiPathRunFromEnqueueResponseData,
 } from '@/shared/lib/ai-paths/api/client';
-import {
-  resolveHistoryRetentionPasses,
-} from '@/shared/lib/ai-paths/core/normalization/trigger-normalization';
+import { resolveHistoryRetentionPasses } from '@/shared/lib/ai-paths/core/normalization/trigger-normalization';
 import { evaluateRunPreflight } from '@/shared/lib/ai-paths/core/utils/run-preflight';
 import { normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths/core/validation-engine/defaults';
 import {
@@ -28,9 +24,7 @@ import {
   optimisticallyInsertAiPathRunInQueueCache,
 } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import {
-  type FireAiPathTriggerEventArgs,
-} from '@/shared/contracts/ai-trigger-buttons';
+import { type FireAiPathTriggerEventArgs } from '@/shared/contracts/ai-trigger-buttons';
 import { useToast } from '@/shared/ui';
 
 import {
@@ -38,24 +32,16 @@ import {
   isRecoverableTriggerEnqueueError,
   createAiPathTriggerRequestId,
 } from './trigger-event-utils';
-import {
-  recoverEnqueuedRunByRequestId,
-} from './trigger-event-recovery';
+import { recoverEnqueuedRunByRequestId } from './trigger-event-recovery';
 import {
   loadTriggerSettingsData,
   resolveRuntimeStateHint,
   coerceSampleStateMap,
   resolvePreferredPathId,
 } from './trigger-event-settings';
-import {
-  resolveTriggerSelection,
-} from './trigger-event-selection';
-import {
-  buildTriggerContext,
-} from './trigger-event-context';
-import {
-  handleAiPathTriggerInvalidation,
-} from './trigger-event-invalidation';
+import { resolveTriggerSelection } from './trigger-event-selection';
+import { buildTriggerContext } from './trigger-event-context';
+import { handleAiPathTriggerInvalidation } from './trigger-event-invalidation';
 
 const TRIGGER_ENQUEUE_TIMEOUT_MS = 90_000;
 
@@ -336,52 +322,55 @@ export function useAiPathTriggerEvent(): {
           entityType: args.entityType,
           entityId: args.entityId,
         });
-        const runResult = await enqueueAiPathRun({
-          pathId: selectedConfig.id,
-          pathName: selectedConfig.name,
-          triggerEvent: triggerEventId,
-          triggerNodeId: triggerNode.id,
-          triggerContext,
-          entityId: args.entityId,
-          entityType: args.entityType,
-          requestId,
-          meta: {
-            source: 'trigger_button',
+        const runResult = await enqueueAiPathRun(
+          {
+            pathId: selectedConfig.id,
+            pathName: selectedConfig.name,
+            triggerEvent: triggerEventId,
+            triggerNodeId: triggerNode.id,
+            triggerContext,
+            entityId: args.entityId,
+            entityType: args.entityType,
             requestId,
-            historyRetentionPasses,
-            strictFlowMode: selectedConfig.strictFlowMode !== false,
-            aiPathsValidation: normalizeAiPathsValidationConfig(
-              selectedConfig.aiPathsValidation ?? null
-            ),
-            preflightRuntimeHints: {
-              ...(selectedConfig.parserSamples
-                ? { parserSamples: selectedConfig.parserSamples }
-                : {}),
-              ...(selectedConfig.updaterSamples
-                ? { updaterSamples: selectedConfig.updaterSamples }
-                : {}),
-              ...(runtimeStateHint ? { runtimeState: runtimeStateHint } : {}),
-            },
-            clientMetadata: {
-              source: 'useAiPathTriggerEvent',
-              triggerEventId,
+            meta: {
+              source: 'trigger_button',
               requestId,
-              triggerLabel: args.triggerLabel ?? null,
-              entityType: args.entityType,
-              entityId: args.entityId ?? null,
-              preferredPathId: args.preferredPathId ?? null,
-              settingsLoadMode,
-              performance: {
-                totalPrepMs: performance.now() - phaseStartedAt,
-                resolvePreferredPathMs,
-                settingsDurationMs,
-                selectionDurationMs,
-                preflightDurationMs,
-                contextDurationMs,
+              historyRetentionPasses,
+              strictFlowMode: selectedConfig.strictFlowMode !== false,
+              aiPathsValidation: normalizeAiPathsValidationConfig(
+                selectedConfig.aiPathsValidation ?? null
+              ),
+              preflightRuntimeHints: {
+                ...(selectedConfig.parserSamples
+                  ? { parserSamples: selectedConfig.parserSamples }
+                  : {}),
+                ...(selectedConfig.updaterSamples
+                  ? { updaterSamples: selectedConfig.updaterSamples }
+                  : {}),
+                ...(runtimeStateHint ? { runtimeState: runtimeStateHint } : {}),
+              },
+              clientMetadata: {
+                source: 'useAiPathTriggerEvent',
+                triggerEventId,
+                requestId,
+                triggerLabel: args.triggerLabel ?? null,
+                entityType: args.entityType,
+                entityId: args.entityId ?? null,
+                preferredPathId: args.preferredPathId ?? null,
+                settingsLoadMode,
+                performance: {
+                  totalPrepMs: performance.now() - phaseStartedAt,
+                  resolvePreferredPathMs,
+                  settingsDurationMs,
+                  selectionDurationMs,
+                  preflightDurationMs,
+                  contextDurationMs,
+                },
               },
             },
           },
-        }, { timeoutMs: TRIGGER_ENQUEUE_TIMEOUT_MS });
+          { timeoutMs: TRIGGER_ENQUEUE_TIMEOUT_MS }
+        );
         const apiDurationMs = performance.now() - apiStartedAt;
 
         let runId: string | null = null;

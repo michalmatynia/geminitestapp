@@ -17,6 +17,7 @@ import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 import { normalizeRunEvents, normalizeRunNodes } from './job-queue-panel-utils';
 import { collectPlaywrightArtifacts } from './playwright-artifacts';
 import { buildHistoryNodeOptions } from './run-history-utils';
+import { resolveRunHistoryEntryAction } from './run-history-entry-actions';
 import { readRuntimeTraceSummary } from './run-trace-utils';
 import { RunTimeline } from './run-timeline';
 import { RunHistoryEntries } from './RunHistoryEntries';
@@ -38,6 +39,7 @@ export function RunDetailDialog(): React.JSX.Element {
     setRunStreamPaused: onStreamPauseToggle,
     setRunHistoryNodeId: onHistoryNodeSelect,
     resumeRun,
+    retryRunNode,
   } = useRunHistoryActions();
 
   const onClose = () => setRunDetailOpen(false);
@@ -294,6 +296,10 @@ export function RunDetailDialog(): React.JSX.Element {
                 <div>Runtime: {runtimeTraceSummary?.durationMs ?? 0}ms</div>
                 <div>Iterations: {runtimeTraceSummary?.iterationCount ?? 0}</div>
                 <div>Node spans: {runtimeTraceSummary?.nodeSpanCount ?? 0}</div>
+                <div>Seed reuses: {runtimeTraceSummary?.seededSpanCount ?? 0}</div>
+                <div>Effect reuses: {runtimeTraceSummary?.effectReplayCount ?? 0}</div>
+                <div>Resume reuses: {runtimeTraceSummary?.resumeReuseCount ?? 0}</div>
+                <div>Resume re-execs: {runtimeTraceSummary?.resumeReexecutionCount ?? 0}</div>
                 <div>Source: {runtimeTraceSummary?.source ?? 'unknown'}</div>
                 <div>
                   Trace finished:{' '}
@@ -443,10 +449,16 @@ export function RunDetailDialog(): React.JSX.Element {
                 <RunHistoryEntries
                   entries={historyEntries}
                   emptyMessage='No history for this node.'
-                  onReplayFromEntry={(): void => {
+                  onReplayFromEntry={(entry): void => {
                     if (!runDetail?.run?.id) return;
-                    // For now we replay the whole run that produced this history entry.
-                    void resumeRun(runDetail.run.id, 'replay').catch(() => {});
+                    const action = resolveRunHistoryEntryAction(entry);
+                    if (action.kind === 'retry_node') {
+                      void retryRunNode(runDetail.run.id, entry.nodeId).catch(() => {});
+                      return;
+                    }
+                    void resumeRun(runDetail.run.id, action.resumeMode ?? 'replay').catch(
+                      () => {}
+                    );
                   }}
                 />
               </div>

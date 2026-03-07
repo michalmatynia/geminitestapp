@@ -12,7 +12,6 @@ import LessonSlideSection, {
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
 
-type GeometrySymmetryLessonProps = { onBack: () => void };
 type SectionId = 'intro' | 'os' | 'figury' | 'podsumowanie';
 
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
@@ -22,7 +21,8 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       content: (
         <div className='flex flex-col gap-4 text-center'>
           <p className='text-gray-700'>
-            Figura jest <strong>symetryczna</strong>, gdy po złożeniu na pół obie strony pasuja do siebie.
+            Figura jest <strong>symetryczna</strong>, gdy po złożeniu na pół obie strony pasuja do
+            siebie.
           </p>
           <KangurLessonCallout accent='emerald' className='text-5xl text-center'>
             🦋
@@ -41,7 +41,8 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       content: (
         <div className='flex flex-col gap-4 text-center'>
           <p className='text-gray-700'>
-            <strong>Os symetrii</strong> to linia, po której dzielimy figurę na dwie pasujace czesci.
+            <strong>Os symetrii</strong> to linia, po której dzielimy figurę na dwie pasujace
+            czesci.
           </p>
           <KangurLessonCallout accent='slate' className='border-emerald-200/85'>
             <div className='mx-auto flex h-28 w-40 items-center justify-center gap-4'>
@@ -98,7 +99,12 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             'Wiele figur ma więcej niż jedna os symetrii.',
             'Koło ma nieskonczona liczbe osi symetrii.',
           ].map((text) => (
-            <KangurLessonCallout key={text} accent='emerald' className='text-sm text-gray-700' padding='sm'>
+            <KangurLessonCallout
+              key={text}
+              accent='emerald'
+              className='text-sm text-gray-700'
+              padding='sm'
+            >
               ✅ {text}
             </KangurLessonCallout>
           ))}
@@ -111,11 +117,16 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
 export const HUB_SECTIONS = [
   { id: 'intro', emoji: '🦋', title: 'Co to symetria?', description: 'Definicja i przykłady' },
   { id: 'os', emoji: '|', title: 'Os symetrii', description: 'Linia podziału figury' },
-  { id: 'figury', emoji: '🔵', title: 'Figury symetryczne', description: 'Które figury maja symetrię?' },
+  {
+    id: 'figury',
+    emoji: '🔵',
+    title: 'Figury symetryczne',
+    description: 'Które figury maja symetrię?',
+  },
   { id: 'podsumowanie', emoji: '📋', title: 'Podsumowanie', description: 'Wszystko razem' },
 ];
 
-export default function GeometrySymmetryLesson({ onBack }: GeometrySymmetryLessonProps): React.JSX.Element {
+export default function GeometrySymmetryLesson(): React.JSX.Element {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
 
   const handleComplete = (): void => {
@@ -146,7 +157,6 @@ export default function GeometrySymmetryLesson({ onBack }: GeometrySymmetryLesso
       gradientClass='from-emerald-500 to-lime-500'
       sections={HUB_SECTIONS}
       onSelect={(id) => setActiveSection(id as SectionId)}
-      onBack={onBack}
     />
   );
 }

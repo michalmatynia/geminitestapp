@@ -2,18 +2,23 @@
 
 import React from 'react';
 import { FolderTreeSearchBar } from '@/features/foldertree/v2/search';
+import { useFolderTreeProfile } from '@/shared/hooks/use-folder-tree-profile';
+import { resolveFolderTreeSearchConfig } from '@/shared/utils/folder-tree-profiles-v2';
 import {
   useDocumentRelationSearchActionsContext,
   useDocumentRelationSearchStateContext,
 } from '../../context/DocumentRelationSearchContext';
+import { useDocumentRelationSearchRuntime } from '../DocumentRelationSearchRuntimeContext';
 
-type SearchBarProps = {
-  searchEnabled: boolean;
-};
-
-export function SearchBar({ searchEnabled }: SearchBarProps): React.JSX.Element {
+export function SearchBar(): React.JSX.Element {
+  const { relationTreeInstance } = useDocumentRelationSearchRuntime();
   const { documentSearchQuery, currentDocRows } = useDocumentRelationSearchStateContext();
   const { setDocumentSearchQuery } = useDocumentRelationSearchActionsContext();
+  const relationTreeProfile = useFolderTreeProfile(relationTreeInstance);
+  const searchEnabled = React.useMemo(
+    (): boolean => resolveFolderTreeSearchConfig(relationTreeProfile).enabled,
+    [relationTreeProfile]
+  );
 
   return (
     <div className='flex items-center gap-2 border-b border-border/40 bg-card/10 px-3 py-1.5'>

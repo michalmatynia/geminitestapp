@@ -1,9 +1,5 @@
 // Edge flow should represent data that has reached a node, not nodes that are merely eligible.
-const EDGE_FLOWING_RUNTIME_STATUSES = new Set<string>([
-  'running',
-  'polling',
-  'processing',
-]);
+const EDGE_FLOWING_RUNTIME_STATUSES = new Set<string>(['running', 'polling', 'processing']);
 
 const EDGE_TERMINAL_RUNTIME_STATUSES = new Set<string>([
   'completed',

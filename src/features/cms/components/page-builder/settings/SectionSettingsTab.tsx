@@ -10,6 +10,7 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 
 import { SettingsFormProvider } from './SettingsFormContext';
 import {
+  appendRuntimeVisibilityFields,
   prependManagementFields,
   groupSettingsFields,
   renderFieldGroups,
@@ -37,6 +38,8 @@ export function SectionSettingsTab(): React.JSX.Element | null {
 
   const [sectionTemplateName, setSectionTemplateName] = useState<string>('');
   const [sectionTemplateCategory, setSectionTemplateCategory] = useState<string>('');
+  const runtimeVisibilityMode =
+    (selectedSection?.settings?.['runtimeVisibilityMode'] as string) || 'always';
 
   const handleSectionSettingChangeWithGridColumns = useCallback(
     (key: string, value: unknown): void => {
@@ -155,12 +158,33 @@ export function SectionSettingsTab(): React.JSX.Element | null {
         </div>
         {renderFieldGroups(
           groupSettingsFields(
-            selectedSection.type === 'Grid'
-              ? prependManagementFields(sectionDef.settingsSchema)
-              : sectionDef.settingsSchema
+            appendRuntimeVisibilityFields(
+              selectedSection.type === 'Grid'
+                ? prependManagementFields(sectionDef.settingsSchema)
+                : sectionDef.settingsSchema
+            )
           ),
           selectedSection.settings,
-          handleSectionSettingChangeWithGridColumns
+          handleSectionSettingChangeWithGridColumns,
+          (field) => {
+            if (
+              runtimeVisibilityMode === 'always' &&
+              (field.key === 'runtimeVisibilitySource' ||
+                field.key === 'runtimeVisibilityPath' ||
+                field.key === 'runtimeVisibilityValue')
+            ) {
+              return { ...field, disabled: true };
+            }
+
+            if (
+              (runtimeVisibilityMode === 'truthy' || runtimeVisibilityMode === 'falsy') &&
+              field.key === 'runtimeVisibilityValue'
+            ) {
+              return { ...field, disabled: true };
+            }
+
+            return field;
+          }
         )}
         <div className='rounded border border-border/40 bg-gray-900/40 p-3'>
           <div className='flex gap-2'>

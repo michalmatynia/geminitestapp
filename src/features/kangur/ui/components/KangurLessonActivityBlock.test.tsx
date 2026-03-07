@@ -61,10 +61,19 @@ describe('KangurLessonActivityBlock', () => {
     );
 
     expect(screen.getByRole('button', { name: 'ClockTrainingGame' })).toBeInTheDocument();
+    expect(screen.getByText('Activity')).toHaveClass('border-emerald-200', 'bg-emerald-100');
+    expect(screen.getByTestId('lesson-activity-block-shell')).toHaveClass(
+      'glass-panel',
+      'border-emerald-200/80'
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'ClockTrainingGame' }));
 
     expect(screen.getByText(/activity completed/i)).toBeInTheDocument();
+    expect(screen.getByText(/activity completed/i).parentElement).toHaveClass(
+      'soft-card',
+      'border-emerald-300'
+    );
 
     fireEvent.click(screen.getByRole('button', { name: /restart activity/i }));
 
@@ -86,7 +95,16 @@ describe('KangurLessonActivityBlock', () => {
     );
 
     expect(screen.getByText('Ball activity')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-activity-block-editor-shell')).toHaveClass(
+      'glass-panel',
+      'border-emerald-200/80'
+    );
     expect(screen.getByText(/live game widget is hidden in editor preview/i)).toBeInTheDocument();
+    expect(screen.getByText(/live game widget is hidden in editor preview/i).parentElement).toHaveClass(
+      'soft-card',
+      'border-dashed',
+      'border-slate-200/80'
+    );
     expect(screen.queryByRole('button', { name: 'AddingBallGame' })).toBeNull();
   });
 

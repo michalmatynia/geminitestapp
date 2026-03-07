@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getProducerMappingRepository } from '@/features/integrations/server';
+import {
+  producerMappingCreateInputSchema,
+} from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
-
-type CreateProducerMappingRequest = {
-  connectionId: string;
-  externalProducerId: string;
-  internalProducerId: string;
-};
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 /**
  * GET /api/marketplace/producer-mappings
@@ -40,8 +38,13 @@ export async function POST_handler(
   request: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {
-  const body = (await request.json()) as CreateProducerMappingRequest;
-  const { connectionId, externalProducerId, internalProducerId } = body;
+  const parsed = await parseJsonBody(request, producerMappingCreateInputSchema, {
+    logPrefix: 'marketplace.producer-mappings.create',
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+  const { connectionId, externalProducerId, internalProducerId } = parsed.data;
 
   if (!connectionId || !externalProducerId || !internalProducerId) {
     throw badRequestError('connectionId, externalProducerId, and internalProducerId are required');

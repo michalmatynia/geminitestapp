@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { AiNode } from '@/shared/contracts/ai-paths';
 import { normalizeNodes } from '@/shared/lib/ai-paths/core/normalization';
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
-import { buildTriggerContext } from '../trigger-event-context';
+import { buildTriggerContext } from '@/shared/lib/ai-paths/hooks/trigger-event-context';
 import { sanitizeTriggerPathConfig } from '@/shared/lib/ai-paths/core/normalization/trigger-normalization';
 
 const buildTriggerNode = (): AiNode =>
@@ -238,16 +238,17 @@ describe('buildTriggerContext', () => {
         name_en: 'Milk Bar Stool',
         imageBase64s: ['data:image/png;base64,AAAA'],
       },
+      source: { location: 'product_row' },
     });
 
     expect(context).toMatchObject({
       entityId: 'product-123',
       entityType: 'product',
-      productId: 'product-123',
     });
+    expect(context['entity']).toBeNull();
     expect(context['entityJson']).toBeUndefined();
-    expect(context['entity']).toBeUndefined();
     expect(context['product']).toBeUndefined();
+    expect(context['productId']).toBeUndefined();
   });
 
   it('sanitizes embedded draft snapshots before enqueue', () => {
@@ -271,7 +272,7 @@ describe('buildTriggerContext', () => {
       },
     });
 
-    expect(context['entityJson']).toEqual({
+    expect(context['entity']).toEqual({
       name_en: 'Draft Product',
       imageLinks: ['https://cdn.example.test/image.jpg', '[omitted_large_field]'],
       nested: {
@@ -281,7 +282,7 @@ describe('buildTriggerContext', () => {
         },
       },
     });
-    expect(context['entity']).toEqual(context['entityJson']);
-    expect(context['product']).toEqual(context['entityJson']);
+    expect(context['entityJson']).toBeUndefined();
+    expect(context['product']).toBeUndefined();
   });
 });

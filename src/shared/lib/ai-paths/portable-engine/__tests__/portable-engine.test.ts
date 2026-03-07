@@ -73,7 +73,10 @@ const ensureCryptoSubtleDigestForTest = (): (() => void) => {
         .update(createHash('sha256').update(key.key).digest())
         .update(Buffer.from(asBytes(data)))
         .digest();
-      return signature.buffer.slice(signature.byteOffset, signature.byteOffset + signature.byteLength);
+      return signature.buffer.slice(
+        signature.byteOffset,
+        signature.byteOffset + signature.byteLength
+      );
     },
   };
   Object.defineProperty(globalThis, 'crypto', {
@@ -336,13 +339,9 @@ describe('portable AI-path engine scaffold', () => {
     if (!migrated.ok) return;
 
     expect(migrated.value.source).toBe('path_config');
-    expect(migrated.value.portablePackage.specVersion).toBe(
-      AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION
-    );
+    expect(migrated.value.portablePackage.specVersion).toBe(AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION);
     expect(
-      migrated.value.migrationWarnings.some(
-        (warning) => warning.code === 'path_config_upgraded'
-      )
+      migrated.value.migrationWarnings.some((warning) => warning.code === 'path_config_upgraded')
     ).toBe(true);
   });
 
@@ -357,9 +356,7 @@ describe('portable AI-path engine scaffold', () => {
     if (!migrated.ok) return;
 
     expect(migrated.value.source).toBe('portable_package');
-    expect(migrated.value.portablePackage.specVersion).toBe(
-      AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION
-    );
+    expect(migrated.value.portablePackage.specVersion).toBe(AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION);
     expect(
       migrated.value.migrationWarnings.some(
         (warning) => warning.code === 'portable_package_version_upgraded'
@@ -461,9 +458,9 @@ describe('portable AI-path engine scaffold', () => {
       }))
     ).toThrow('Invalid portable package spec version');
 
-    expect(() => unregisterPortablePathPackageMigrator(AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION)).toThrow(
-      'Cannot unregister built-in portable package migrator'
-    );
+    expect(() =>
+      unregisterPortablePathPackageMigrator(AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION)
+    ).toThrow('Cannot unregister built-in portable package migrator');
   });
 
   it('captures migrator observability snapshot across source paths and version failures', () => {
@@ -525,7 +522,9 @@ describe('portable AI-path engine scaffold', () => {
     }
 
     expect(
-      events.some((event) => event.type === 'migrator_registered' && event.specVersion === customVersion)
+      events.some(
+        (event) => event.type === 'migrator_registered' && event.specVersion === customVersion
+      )
     ).toBe(true);
     expect(
       events.some(
@@ -536,7 +535,9 @@ describe('portable AI-path engine scaffold', () => {
       )
     ).toBe(true);
     expect(
-      events.some((event) => event.type === 'migrator_unregistered' && event.specVersion === customVersion)
+      events.some(
+        (event) => event.type === 'migrator_unregistered' && event.specVersion === customVersion
+      )
     ).toBe(true);
   });
 
@@ -913,9 +914,13 @@ describe('portable AI-path engine scaffold', () => {
       expect(sinkSnapshot.totals.unregistrationCount).toBe(1);
       expect(sinkSnapshot.totals.writesAttempted).toBeGreaterThan(0);
       expect(sinkSnapshot.totals.writesSucceeded).toBeGreaterThan(0);
-      expect(sinkSnapshot.bySinkId['test-envelope-sink-success']?.writesSucceeded).toBeGreaterThan(0);
+      expect(sinkSnapshot.bySinkId['test-envelope-sink-success']?.writesSucceeded).toBeGreaterThan(
+        0
+      );
       expect(sinkEvents.some((event) => event.keyId === 'portable-key-sink-1')).toBe(true);
-      expect(sinkEvents.some((event) => event.outcome === 'verified' && event.status === 'verified')).toBe(true);
+      expect(
+        sinkEvents.some((event) => event.outcome === 'verified' && event.status === 'verified')
+      ).toBe(true);
       expect(listPortablePathEnvelopeVerificationAuditSinkIds()).toEqual([]);
     } finally {
       restoreCrypto();
@@ -952,9 +957,12 @@ describe('portable AI-path engine scaffold', () => {
     expect(sinkSnapshot.totals.writesAttempted).toBeGreaterThan(0);
     expect(sinkSnapshot.totals.writesFailed).toBeGreaterThan(0);
     expect(sinkSnapshot.bySinkId['test-envelope-sink-failure']?.writesFailed).toBeGreaterThan(0);
-    expect(sinkSnapshot.bySinkId['test-envelope-sink-failure']?.lastError).toContain('sink exploded');
+    expect(sinkSnapshot.bySinkId['test-envelope-sink-failure']?.lastError).toContain(
+      'sink exploded'
+    );
     expect(sinkSnapshot.recentFailures.length).toBeGreaterThan(0);
-    expect(unregisterPortablePathEnvelopeVerificationAuditSink('test-envelope-sink-failure')).toBe(false);
+    expect(unregisterPortablePathEnvelopeVerificationAuditSink('test-envelope-sink-failure')).toBe(
+      false
+    );
   });
-
 });

@@ -1,4 +1,5 @@
 import type { ObjectId } from 'mongodb';
+import type { MongoTimestampedSettingRecord } from '@/shared/contracts/settings';
 
 export const AUTH_COLLECTIONS: readonly string[] = [
   'users',
@@ -13,13 +14,11 @@ export const AUTH_COLLECTIONS: readonly string[] = [
 export const currencyCodes = new Set(['USD', 'EUR', 'PLN', 'GBP', 'SEK']);
 export const countryCodes = new Set(['PL', 'DE', 'GB', 'US', 'SE']);
 
-export interface MongoSettingDoc {
-  _id?: ObjectId;
-  key?: string;
-  value?: unknown;
-  createdAt?: Date | string;
-  updatedAt?: Date | string;
-}
+export type MongoSettingDoc = MongoTimestampedSettingRecord<
+  ObjectId,
+  unknown,
+  Date | string
+>;
 
 export interface MongoUserDoc {
   _id?: ObjectId;

@@ -139,16 +139,19 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const entriesRaw = await loadPortablePathAuditSinkAutoRemediationDeadLetters({
     maxEntries: Math.max(deadLetterMaxEntries, limit),
   });
-  const entries = Array.isArray(entriesRaw)
-    ? (entriesRaw)
-    : [];
+  const entries = Array.isArray(entriesRaw) ? entriesRaw : [];
   const filtered = entries.filter((entry) => {
     if (channel && entry.channel !== channel) return false;
     if (endpoint && entry.endpoint !== endpoint) return false;
     return true;
   });
   const sliced = filtered.slice(-limit);
-  const latestEntry = sliced.length > 0 ? (sliced[sliced.length - 1] as PortablePathAuditSinkAutoRemediationNotificationDeadLetterEntry) : null;
+  const latestEntry =
+    sliced.length > 0
+      ? (sliced[
+        sliced.length - 1
+      ] as PortablePathAuditSinkAutoRemediationNotificationDeadLetterEntry)
+      : null;
   const latestQueuedAt = latestEntry ? latestEntry.queuedAt : null;
   const byChannel = {
     webhook: sliced.filter((entry) => entry.channel === 'webhook').length,

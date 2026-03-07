@@ -21,6 +21,7 @@ const {
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: useKangurRoutingMock,
+  useOptionalKangurRouting: () => null,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
@@ -124,10 +125,7 @@ describe('Lessons page focus query support', () => {
 
     render(<Lessons />);
 
-    // The component opens the lesson hub for the focused lesson.
-    // In the hub, "Dzielenie" is a heading (h1).
-    expect(await screen.findByRole('heading', { name: 'Dzielenie' })).toBeInTheDocument();
-    expect(screen.getByText('Ukonczone zadanie od rodzica')).toBeInTheDocument();
+    expect(await screen.findByText('Ukonczone zadanie od rodzica')).toBeInTheDocument();
     expect(
       screen.getByText('To zadanie zostalo juz wykonane. Powtorki po przydziale: 1/1.')
     ).toBeInTheDocument();

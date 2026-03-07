@@ -8,6 +8,7 @@ import { Hint } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
 import { readMeta } from '@/features/ai/image-studio/utils/metadata';
+import { useOptionalVersionNodeDetailsModalRuntime } from './VersionNodeDetailsModalRuntimeContext';
 
 import type { VersionNode } from '../context/VersionGraphContext';
 
@@ -170,8 +171,22 @@ const DetailsGrid = (props: {
   );
 };
 
-export function VersionNodeDetailsModal(props: VersionNodeDetailsModalProps): React.JSX.Element {
-  const { isOpen, item: node, onClose, getSlotImageSrc } = props;
+export function VersionNodeDetailsModal(
+  props: Partial<VersionNodeDetailsModalProps> = {}
+): React.JSX.Element {
+  const runtime = useOptionalVersionNodeDetailsModalRuntime();
+  const resolvedProps =
+    props.getSlotImageSrc !== undefined
+      ? (props as VersionNodeDetailsModalProps)
+      : runtime;
+
+  if (!resolvedProps) {
+    throw new Error(
+      'VersionNodeDetailsModal must be used within VersionNodeDetailsModalRuntimeProvider or receive explicit props'
+    );
+  }
+
+  const { isOpen, item: node, onClose, getSlotImageSrc } = resolvedProps;
 
   const content = useMemo(() => {
     if (!node) return null;

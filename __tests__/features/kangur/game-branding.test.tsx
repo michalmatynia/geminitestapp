@@ -11,6 +11,7 @@ const {
   useKangurRoutingMock,
   useKangurProgressStateMock,
   useKangurAssignmentsMock,
+  useKangurAuthMock,
   authMeMock,
   redirectToLoginMock,
   logoutMock,
@@ -18,6 +19,7 @@ const {
   useKangurRoutingMock: vi.fn(),
   useKangurProgressStateMock: vi.fn(),
   useKangurAssignmentsMock: vi.fn(),
+  useKangurAuthMock: vi.fn(),
   authMeMock: vi.fn(),
   redirectToLoginMock: vi.fn(),
   logoutMock: vi.fn(),
@@ -25,6 +27,7 @@ const {
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: useKangurRoutingMock,
+  useOptionalKangurRouting: () => null,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurProgressState', () => ({
@@ -33,6 +36,29 @@ vi.mock('@/features/kangur/ui/hooks/useKangurProgressState', () => ({
 
 vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
   useKangurAssignments: useKangurAssignmentsMock,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
+  useKangurAuth: useKangurAuthMock,
+}));
+
+vi.mock('@/features/kangur/docs/tooltips', () => ({
+  KangurDocsTooltipEnhancer: () => null,
+  useKangurDocsTooltips: () => ({
+    enabled: false,
+    helpSettings: {
+      version: 1,
+      docsTooltips: {
+        enabled: false,
+        homeEnabled: false,
+        lessonsEnabled: false,
+        testsEnabled: false,
+        profileEnabled: false,
+        parentDashboardEnabled: false,
+        adminEnabled: false,
+      },
+    },
+  }),
 }));
 
 vi.mock('@/features/kangur/services/kangur-platform', () => ({
@@ -51,6 +77,11 @@ vi.mock('@/features/kangur/ui/components/game', () => ({
   QuestionCard: () => <div data-testid='question-card' />,
   ResultScreen: () => <div data-testid='result-screen' />,
   TrainingSetup: () => <div data-testid='training-setup' />,
+}));
+
+vi.mock('@/features/kangur/ui/components/Leaderboard', () => ({
+  __esModule: true,
+  default: () => <div data-testid='leaderboard' />,
 }));
 
 vi.mock('@/features/kangur/ui/components/progress', () => ({
@@ -101,6 +132,13 @@ describe('Game branding', () => {
       updateAssignment: vi.fn(),
       refresh: vi.fn(),
     });
+    useKangurAuthMock.mockReturnValue({
+      isAuthenticated: false,
+      isLoadingAuth: false,
+      logout: logoutMock,
+      navigateToLogin: redirectToLoginMock,
+      user: null,
+    });
     authMeMock.mockImplementation(() => new Promise<null>(() => undefined));
     logoutMock.mockResolvedValue(undefined);
   });
@@ -113,22 +151,27 @@ describe('Game branding', () => {
     expect(screen.queryByText('MathBlast!')).not.toBeInTheDocument();
   });
 
-  it('applies the intrinsic highlighted style only to the primary play action', () => {
+  it('renders every home action as a featured glass CTA without pre-hovering any of them', () => {
     render(<Game />);
 
-    const lessonsHomeAction = screen
-      .getAllByText('Lekcje')
-      .map((node) => node.closest('a, button'))
-      .find((node) => node?.classList.contains('home-action-soft'));
+    const actionLabels = [
+      'Lekcje',
+      'Grajmy!',
+      'Trening mieszany',
+      'Kangur Matematyczny',
+    ];
 
-    expect(lessonsHomeAction).toHaveClass('home-action-soft');
-    expect(screen.getByText('Grajmy!').closest('a, button')).toHaveClass('home-action-active');
-    expect(screen.getByText('Trening mieszany').closest('a, button')).toHaveClass(
-      'home-action-soft'
-    );
-    expect(screen.getByText('Trening figur').closest('a, button')).toHaveClass('home-action-soft');
-    expect(screen.getByText('Kangur Matematyczny').closest('a, button')).toHaveClass(
-      'home-action-soft'
-    );
+    expect(screen.queryByText('Trening figur')).not.toBeInTheDocument();
+
+    for (const label of actionLabels) {
+      const action = screen
+        .getAllByText(label)
+        .map((node) => node.closest('a, button'))
+        .find((node) => node?.classList.contains('home-action-featured'));
+
+      expect(action).toHaveClass('home-action-featured');
+      expect(action).not.toHaveClass('home-action-active');
+      expect(action?.parentElement).toHaveClass('home-action-featured-shell');
+    }
   });
 });

@@ -15,6 +15,7 @@ const enqueuePathRunMock = vi.hoisted(() => vi.fn());
 const resumePathRunMock = vi.hoisted(() => vi.fn());
 const retryPathRunNodeMock = vi.hoisted(() => vi.fn());
 const getPathRunRepositoryMock = vi.hoisted(() => vi.fn());
+const getAiPathsSettingMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/features/ai/ai-paths/server', () => ({
   requireAiPathsRunAccess: requireAiPathsRunAccessMock,
@@ -22,6 +23,10 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
   requireAiPathsAccess: requireAiPathsAccessMock,
   enforceAiPathsActionRateLimit: enforceAiPathsActionRateLimitMock,
   assertAiPathRunAccess: assertAiPathRunAccessMock,
+  enqueuePathRun: enqueuePathRunMock,
+  resumePathRun: resumePathRunMock,
+  retryPathRunNode: retryPathRunNodeMock,
+  getAiPathsSetting: getAiPathsSettingMock,
 }));
 
 vi.mock('@/features/jobs/server', () => ({
@@ -33,13 +38,7 @@ vi.mock('@/features/products/server', () => ({
   parseJsonBody: parseJsonBodyMock,
 }));
 
-vi.mock('@/features/ai/ai-paths/services/path-run-service', () => ({
-  enqueuePathRun: enqueuePathRunMock,
-  resumePathRun: resumePathRunMock,
-  retryPathRunNode: retryPathRunNodeMock,
-}));
-
-vi.mock('@/features/ai/ai-paths/services/path-run-repository', () => ({
+vi.mock('@/shared/lib/ai-paths/services/path-run-repository', () => ({
   getPathRunRepository: getPathRunRepositoryMock,
 }));
 

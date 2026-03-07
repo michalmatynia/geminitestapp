@@ -18,9 +18,11 @@ import {
 } from '@/shared/ui';
 
 import { buildHistoryNodeOptions } from './run-history-utils';
+import { resolveRunHistoryEntryAction } from './run-history-entry-actions';
 import {
   buildRunTraceComparison,
   readRuntimeTraceSummary,
+  runTraceComparisonRowHasResumeChange,
   type RunTracePayloadDiff,
 } from './run-trace-utils';
 import { RunHistoryEntries } from './RunHistoryEntries';
@@ -43,6 +45,7 @@ export function RunHistoryPanel(): React.JSX.Element {
     refreshRuns,
     openRunDetail,
     resumeRun,
+    retryRunNode,
     cancelRun,
     requeueDeadLetter,
   } = useRunHistoryActions();
@@ -50,6 +53,7 @@ export function RunHistoryPanel(): React.JSX.Element {
   const [primaryRunId, setPrimaryRunId] = React.useState<string | null>(null);
   const [secondaryRunId, setSecondaryRunId] = React.useState<string | null>(null);
   const [compareInspectorRowKey, setCompareInspectorRowKey] = React.useState<string | null>(null);
+  const [compareResumeChangesOnly, setCompareResumeChangesOnly] = React.useState(false);
   const handleRefresh = (): void => {
     void refreshRuns().catch(() => {});
   };
@@ -58,6 +62,9 @@ export function RunHistoryPanel(): React.JSX.Element {
   };
   const handleResumeRun = (runId: string, mode: 'resume' | 'replay'): void => {
     void resumeRun(runId, mode).catch(() => {});
+  };
+  const handleRetryRunNode = (runId: string, nodeId: string): void => {
+    void retryRunNode(runId, nodeId).catch(() => {});
   };
   const handleCancelRun = (runId: string): void => {
     void cancelRun(runId).catch(() => {});
@@ -112,11 +119,18 @@ export function RunHistoryPanel(): React.JSX.Element {
     () => buildRunTraceComparison(primaryRun, secondaryRun),
     [primaryRun, secondaryRun]
   );
+  const displayedComparisonRows = React.useMemo(
+    () =>
+      compareResumeChangesOnly
+        ? (traceComparison?.rows.filter((row) => runTraceComparisonRowHasResumeChange(row)) ?? [])
+        : (traceComparison?.rows ?? []),
+    [compareResumeChangesOnly, traceComparison]
+  );
   React.useEffect(() => {
     if (!compareMode || !compareInspectorRowKey) return;
-    if (traceComparison?.rows.some((row) => row.key === compareInspectorRowKey)) return;
+    if (displayedComparisonRows.some((row) => row.key === compareInspectorRowKey)) return;
     setCompareInspectorRowKey(null);
-  }, [compareInspectorRowKey, compareMode, traceComparison]);
+  }, [compareInspectorRowKey, compareMode, displayedComparisonRows]);
 
   const getRuntimeSummary = (run: AiPathRunRecord | null) => {
     return readRuntimeTraceSummary(run?.meta ?? null);
@@ -128,6 +142,15 @@ export function RunHistoryPanel(): React.JSX.Element {
     if (typeof raw !== 'string') return null;
     const trimmed = raw.trim();
     return trimmed.length > 0 ? trimmed : null;
+  };
+  const formatResumeComparisonLabel = (
+    mode: string | null,
+    decision: string | null
+  ): string => {
+    const parts: string[] = [];
+    if (mode) parts.push(mode);
+    if (decision) parts.push(decision);
+    return parts.join('/') || 'none';
   };
   const renderPayloadInspectorPane = (
     title: string,
@@ -142,9 +165,7 @@ export function RunHistoryPanel(): React.JSX.Element {
       );
     }
 
-    return (
-      <JsonViewer title={title} data={data} maxHeight='220px' className='bg-card/20' />
-    );
+    return <JsonViewer title={title} data={data} maxHeight='220px' className='bg-card/20' />;
   };
   const renderPayloadDiffInspector = (
     title: string,
@@ -259,6 +280,7 @@ export function RunHistoryPanel(): React.JSX.Element {
               setPrimaryRunId(null);
               setSecondaryRunId(null);
               setCompareInspectorRowKey(null);
+              setCompareResumeChangesOnly(false);
             }}
           >
             {compareMode ? 'Exit compare' : 'Compare runs'}
@@ -491,6 +513,14 @@ export function RunHistoryPanel(): React.JSX.Element {
                         <RunHistoryEntries
                           entries={historyEntries}
                           emptyMessage='No history for this node.'
+                          onReplayFromEntry={(entry): void => {
+                            const action = resolveRunHistoryEntryAction(entry);
+                            if (action.kind === 'retry_node') {
+                              handleRetryRunNode(run.id, entry.nodeId);
+                              return;
+                            }
+                            handleResumeRun(run.id, action.resumeMode ?? 'replay');
+                          }}
                         />
                       </div>
                     ) : (
@@ -560,6 +590,30 @@ export function RunHistoryPanel(): React.JSX.Element {
                         : 'n/a'}
                     </div>
                     <div className='text-[10px] text-gray-400'>
+                      Seed reuses:{' '}
+                      {typeof traceSummary?.seededSpanCount === 'number'
+                        ? traceSummary.seededSpanCount
+                        : 'n/a'}
+                    </div>
+                    <div className='text-[10px] text-gray-400'>
+                      Effect reuses:{' '}
+                      {typeof traceSummary?.effectReplayCount === 'number'
+                        ? traceSummary.effectReplayCount
+                        : 'n/a'}
+                    </div>
+                    <div className='text-[10px] text-gray-400'>
+                      Resume reuses:{' '}
+                      {typeof traceSummary?.resumeReuseCount === 'number'
+                        ? traceSummary.resumeReuseCount
+                        : 'n/a'}
+                    </div>
+                    <div className='text-[10px] text-gray-400'>
+                      Resume re-execs:{' '}
+                      {typeof traceSummary?.resumeReexecutionCount === 'number'
+                        ? traceSummary.resumeReexecutionCount
+                        : 'n/a'}
+                    </div>
+                    <div className='text-[10px] text-gray-400'>
                       Retries:{' '}
                       {typeof run.retryCount === 'number' && typeof run.maxAttempts === 'number'
                         ? `${run.retryCount}/${run.maxAttempts}`
@@ -588,12 +642,32 @@ export function RunHistoryPanel(): React.JSX.Element {
                 <span className='text-[10px] uppercase text-gray-500'>
                   Trace diff ({traceComparison.dataSource})
                 </span>
-                <div className='flex flex-wrap gap-2 text-[10px] text-gray-400'>
+                <div className='flex flex-wrap items-center gap-2 text-[10px] text-gray-400'>
                   <span>Regressions: {traceComparison.regressedCount}</span>
                   <span>Improvements: {traceComparison.improvedCount}</span>
                   <span>Added: {traceComparison.addedCount}</span>
                   <span>Removed: {traceComparison.removedCount}</span>
                   <span>Payload changes: {traceComparison.payloadChangedCount}</span>
+                  <Button
+                    type='button'
+                    size='xs'
+                    variant='outline'
+                    className={`h-6 px-2 text-[10px] ${
+                      compareResumeChangesOnly
+                        ? 'border-sky-500/50 bg-sky-500/10 text-sky-100'
+                        : ''
+                    }`}
+                    disabled={
+                      traceComparison.resumeModeChangeCount === 0 &&
+                      traceComparison.resumeDecisionChangeCount === 0
+                    }
+                    onClick={(): void => {
+                      setCompareResumeChangesOnly((prev) => !prev);
+                      setCompareInspectorRowKey(null);
+                    }}
+                  >
+                    {compareResumeChangesOnly ? 'Show all rows' : 'Resume changes only'}
+                  </Button>
                 </div>
               </div>
               <div className='mt-2 flex flex-wrap gap-2 text-[10px] text-gray-300'>
@@ -607,9 +681,32 @@ export function RunHistoryPanel(): React.JSX.Element {
                   Span delta: {traceComparison.spanDelta ?? 'n/a'}
                 </span>
               </div>
-              {traceComparison.rows.length > 0 ? (
+              <div className='mt-2 flex flex-wrap gap-2 text-[10px] text-gray-300'>
+                <span className='rounded-full border border-sky-500/30 bg-sky-500/10 px-2 py-px text-sky-100'>
+                  Resume mode changes: {traceComparison.resumeModeChangeCount}
+                </span>
+                <span className='rounded-full border border-sky-500/30 bg-sky-500/10 px-2 py-px text-sky-100'>
+                  Resume decision changes: {traceComparison.resumeDecisionChangeCount}
+                </span>
+                <span className='rounded-full border border-sky-500/30 bg-sky-500/10 px-2 py-px text-sky-100'>
+                  Resumed nodes Δ (B-A): {traceComparison.resumedNodeDelta ?? 'n/a'}
+                </span>
+                <span className='rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-px text-emerald-100'>
+                  Reused Δ (B-A): {traceComparison.reusedNodeDelta ?? 'n/a'}
+                </span>
+                <span className='rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-px text-amber-100'>
+                  Re-exec Δ (B-A): {traceComparison.reexecutedNodeDelta ?? 'n/a'}
+                </span>
+              </div>
+              <div className='mt-2 text-[10px] text-gray-500'>
+                Rows with replay or resume behavior changes are listed first within each diff class.
+              </div>
+              <div className='mt-1 text-[10px] text-gray-500'>
+                Showing {displayedComparisonRows.length} of {traceComparison.rows.length} rows.
+              </div>
+              {displayedComparisonRows.length > 0 ? (
                 <div className='mt-3 space-y-2'>
-                  {traceComparison.rows.slice(0, 6).map((row) => {
+                  {displayedComparisonRows.slice(0, 6).map((row) => {
                     const hasPayloadInspectorData = [
                       row.leftInputs,
                       row.rightInputs,
@@ -662,8 +759,25 @@ export function RunHistoryPanel(): React.JSX.Element {
                             <span>B {formatDurationMs(row.rightTotalMs)}</span>
                             <span>Δ {formatDurationMs(row.deltaMs)}</span>
                             <span>
-                              spans {row.leftSpanCount}{'->'}{row.rightSpanCount}
+                              spans {row.leftSpanCount}
+                              {'->'}
+                              {row.rightSpanCount}
                             </span>
+                            {row.leftResumeDecision !== row.rightResumeDecision ||
+                            row.leftResumeMode !== row.rightResumeMode ? (
+                                <span className='rounded-full border border-sky-500/40 bg-sky-500/10 px-2 py-px text-sky-100'>
+                                resume{' '}
+                                  {formatResumeComparisonLabel(
+                                    row.leftResumeMode,
+                                    row.leftResumeDecision
+                                  )}
+                                  {' -> '}
+                                  {formatResumeComparisonLabel(
+                                    row.rightResumeMode,
+                                    row.rightResumeDecision
+                                  )}
+                                </span>
+                              ) : null}
                             {row.inputDiff?.hasChanges ? (
                               <span className='rounded-full border border-sky-500/40 bg-sky-500/10 px-2 py-px text-sky-100'>
                                 inputs{' '}
@@ -711,9 +825,7 @@ export function RunHistoryPanel(): React.JSX.Element {
                             ) : null}
                             {row.outputDiff?.hasChanges ? (
                               <div>
-                                <div className='mb-1 uppercase text-emerald-200'>
-                                  Output diff
-                                </div>
+                                <div className='mb-1 uppercase text-emerald-200'>Output diff</div>
                                 <pre className='overflow-auto rounded border border-emerald-500/30 bg-black/30 p-2 text-[10px] text-emerald-50'>
                                   {row.outputDiff.lines.join('\n')}
                                 </pre>
@@ -775,7 +887,9 @@ export function RunHistoryPanel(): React.JSX.Element {
                 </div>
               ) : (
                 <div className='mt-2 text-[10px] text-gray-500'>
-                  No trace-level node deltas available for these runs yet.
+                  {compareResumeChangesOnly
+                    ? 'No rows with replay or resume behavior changes.'
+                    : 'No trace-level node deltas available for these runs yet.'}
                 </div>
               )}
             </div>

@@ -1,10 +1,5 @@
-
-import {
-  parseAndDeserializeSemanticCanvas
-} from '@/shared/lib/ai-paths/core/semantic-grammar';
-import {
-  verifyPortableNodeCodeObjectManifest
-} from './node-code-objects-v2-manifest';
+import { parseAndDeserializeSemanticCanvas } from '@/shared/lib/ai-paths/core/semantic-grammar';
+import { verifyPortableNodeCodeObjectManifest } from './node-code-objects-v2-manifest';
 
 import {
   decodePortablePayload,
@@ -16,16 +11,10 @@ import {
   verifyPortablePackageFingerprint,
   verifyPortablePackageFingerprintAsync,
 } from './portable-engine-fingerprints';
-import {
-  verifyPortablePathPackageEnvelopeSignatureAsync,
-} from './portable-engine-envelope-verification-async';
-import {
-  verifyPortablePathPackageEnvelopeSignature,
-} from './portable-engine-envelope-verification-sync';
+import { verifyPortablePathPackageEnvelopeSignatureAsync } from './portable-engine-envelope-verification-async';
+import { verifyPortablePathPackageEnvelopeSignature } from './portable-engine-envelope-verification-sync';
 import { finalizeResolvedPath } from './portable-engine-path-canonicalization';
-import {
-  migratePortablePathInput,
-} from './portable-engine-migration';
+import { migratePortablePathInput } from './portable-engine-migration';
 import { resolvePortablePathVerificationModes } from './portable-engine-signing-policy';
 import {
   AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
@@ -33,9 +22,7 @@ import {
   type PortablePathInputSource,
   aiPathPortablePackageEnvelopeVersionedSchema,
 } from './portable-engine-contract';
-import type {
-  PortablePathMigrationWarning,
-} from './portable-engine-migration-types';
+import type { PortablePathMigrationWarning } from './portable-engine-migration-types';
 import type { ResolvePortablePathInputResult } from './portable-engine-runtime-types';
 import type {
   ResolvePortablePathInputInternalOptions,
@@ -118,7 +105,10 @@ export const resolvePortablePathInput = (
       : migrated.value.source;
   if (resolvedSource === 'portable_envelope' && envelopeParsed.success) {
     const signature = envelopeParsed.data.signature;
-    if (signature && (signature.algorithm === 'hmac_sha256' || signature.algorithm === 'stable_hash_v1')) {
+    if (
+      signature &&
+      (signature.algorithm === 'hmac_sha256' || signature.algorithm === 'stable_hash_v1')
+    ) {
       portableEnvelopeForResult = {
         specVersion: AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
         kind: 'path_package_envelope',
@@ -158,7 +148,7 @@ export const resolvePortablePathInput = (
       migrated.value.portablePackage.metadata &&
       typeof migrated.value.portablePackage.metadata === 'object' &&
       !Array.isArray(migrated.value.portablePackage.metadata)
-        ? (migrated.value.portablePackage.metadata)
+        ? migrated.value.portablePackage.metadata
         : undefined,
     nodeTypes: (deserialized.value.nodes ?? []).map((node) => node.type),
     mode: nodeCodeObjectHashVerificationMode,
@@ -220,7 +210,8 @@ export const resolvePortablePathInputAsync = async (
   const fingerprintVerificationMode = verificationModes.fingerprintVerificationMode;
   if (
     fingerprintVerificationMode === 'off' ||
-    (resolved.value.source !== 'portable_package' && resolved.value.source !== 'portable_envelope') ||
+    (resolved.value.source !== 'portable_package' &&
+      resolved.value.source !== 'portable_envelope') ||
     !resolved.value.portablePackage
   ) {
     if (migrationWarnings.length === resolved.value.migrationWarnings.length) {
@@ -242,7 +233,10 @@ export const resolvePortablePathInputAsync = async (
   if (!verification.ok) {
     return { ok: false, error: verification.error };
   }
-  if (verification.warnings.length === 0 && migrationWarnings.length === resolved.value.migrationWarnings.length) {
+  if (
+    verification.warnings.length === 0 &&
+    migrationWarnings.length === resolved.value.migrationWarnings.length
+  ) {
     return resolved;
   }
 

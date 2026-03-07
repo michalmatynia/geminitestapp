@@ -16,6 +16,7 @@ import {
 
 import { SettingsFormProvider } from './SettingsFormContext';
 import {
+  appendRuntimeVisibilityFields,
   prependManagementFields,
   groupSettingsFields,
   renderFieldGroups,
@@ -42,6 +43,8 @@ export function BlockSettingsTab(): React.JSX.Element | null {
   const isRowBlock = selectedBlock?.type === 'Row' && selectedParentSection?.type === 'Grid';
 
   const rowHeightMode = (selectedBlock?.settings?.['heightMode'] as string) || 'inherit';
+  const runtimeVisibilityMode =
+    (selectedBlock?.settings?.['runtimeVisibilityMode'] as string) || 'always';
   const rowSettingsForRender = useMemo(
     () =>
       !isRowBlock || !selectedBlock
@@ -68,6 +71,38 @@ export function BlockSettingsTab(): React.JSX.Element | null {
     }));
     return options.length > 0 ? options : [{ label: 'No app embeds enabled', value: '' }];
   }, [selectedAppId, settingsStore]);
+
+  const appEmbedConfigurationNote = useMemo((): React.JSX.Element | null => {
+    if (selectedBlock?.type !== 'AppEmbed' || !selectedAppOption) {
+      return null;
+    }
+
+    if (selectedAppOption.renderMode === 'internal-app') {
+      return (
+        <div className='rounded-xl border border-border/40 bg-card/20 px-3 py-2 text-xs text-gray-300'>
+          <div className='font-medium text-white'>
+            {selectedAppOption.label} mounts inside this CMS page.
+          </div>
+          <div className='mt-1 text-gray-400'>
+            Leave Host page override blank to keep Kangur on the current page. To make it the first
+            experience on HOME, add this block to the HOME page template zone.
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className='rounded-xl border border-border/40 bg-card/20 px-3 py-2 text-xs text-gray-300'>
+        <div className='font-medium text-white'>
+          {selectedAppOption.label} renders as an iframe.
+        </div>
+        <div className='mt-1 text-gray-400'>
+          Provide the published embed URL for this app. CMS zoning still controls the surrounding
+          header, footer, and layout.
+        </div>
+      </div>
+    );
+  }, [selectedAppOption, selectedBlock?.type]);
 
   const handleRemoveBlock = useCallback((): void => {
     if (!selectedBlock || !selectedParentSection) return;
@@ -136,8 +171,11 @@ export function BlockSettingsTab(): React.JSX.Element | null {
   return (
     <SettingsFormProvider values={blockSettingsForRender} onChange={handleBlockSettingChange}>
       <div className='space-y-4'>
+        {appEmbedConfigurationNote}
         {renderFieldGroups(
-          groupSettingsFields(prependManagementFields(blockDef.settingsSchema)),
+          groupSettingsFields(
+            appendRuntimeVisibilityFields(prependManagementFields(blockDef.settingsSchema))
+          ),
           blockSettingsForRender,
           handleBlockSettingChange,
           (f) => {
@@ -170,6 +208,22 @@ export function BlockSettingsTab(): React.JSX.Element | null {
             }
 
             if (isRowBlock && rowHeightMode === 'inherit' && f.key === 'height') {
+              return { ...f, disabled: true };
+            }
+
+            if (
+              runtimeVisibilityMode === 'always' &&
+              (f.key === 'runtimeVisibilitySource' ||
+                f.key === 'runtimeVisibilityPath' ||
+                f.key === 'runtimeVisibilityValue')
+            ) {
+              return { ...f, disabled: true };
+            }
+
+            if (
+              (runtimeVisibilityMode === 'truthy' || runtimeVisibilityMode === 'falsy') &&
+              f.key === 'runtimeVisibilityValue'
+            ) {
               return { ...f, disabled: true };
             }
 

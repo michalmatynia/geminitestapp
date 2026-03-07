@@ -3,8 +3,11 @@ import { Clock } from 'lucide-react';
 
 import { DIFFICULTY_CONFIG } from '@/features/kangur/ui/services/math-questions';
 import {
+  KangurOptionCardButton,
+  KangurStatusChip,
+} from '@/features/kangur/ui/design/primitives';
+import {
   KANGUR_ACCENT_STYLES,
-  KANGUR_OPTION_CARD_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
 import type { KangurDifficulty } from '@/features/kangur/ui/types';
@@ -42,34 +45,47 @@ export default function DifficultySelector({
           const isSelected = selected === difficulty.id;
           const accent = KANGUR_ACCENT_STYLES[difficulty.accent];
           return (
-            <motion.button
+            <motion.div
               key={difficulty.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.07 }}
               whileHover={{ scale: 1.06 }}
               whileTap={{ scale: 0.96 }}
-              onClick={() => onSelect(difficulty.id)}
-              className={cn(
-                KANGUR_OPTION_CARD_CLASSNAME,
-                'flex flex-col items-center gap-2 rounded-[28px] px-4 py-5 text-center',
-                isSelected ? accent.activeCard : cn('border-slate-200/80', accent.hoverCard)
-              )}
+              className='w-full'
             >
-              <span
-                className={cn(
-                  'inline-flex h-12 w-12 items-center justify-center rounded-2xl text-3xl shadow-sm',
-                  accent.icon
-                )}
+              <KangurOptionCardButton
+                accent={difficulty.accent}
+                className='flex w-full flex-col items-center gap-3 rounded-[28px] px-4 py-5 text-center'
+                data-testid={`difficulty-option-${difficulty.id}`}
+                emphasis={isSelected ? 'accent' : 'neutral'}
+                onClick={() => onSelect(difficulty.id)}
+                type='button'
               >
-                {config.emoji}
-              </span>
-              <span className='text-lg font-extrabold text-slate-800'>{config.label}</span>
-              <span className={cn('flex items-center gap-1 text-xs font-semibold', accent.mutedText)}>
-                <Clock className='w-3 h-3' /> {config.timeLimit}s
-              </span>
-              <span className='text-xs text-slate-500'>Zakres 1-{config.range}</span>
-            </motion.button>
+                <span
+                  className={cn(
+                    'inline-flex h-12 w-12 items-center justify-center rounded-2xl text-3xl shadow-sm',
+                    accent.icon
+                  )}
+                >
+                  {config.emoji}
+                </span>
+                <span
+                  className={cn(
+                    'text-lg font-extrabold',
+                    isSelected ? accent.activeText : 'text-slate-800'
+                  )}
+                >
+                  {config.label}
+                </span>
+                <KangurStatusChip accent={difficulty.accent} className='gap-1' size='sm'>
+                  <Clock className='h-3 w-3' /> {config.timeLimit}s
+                </KangurStatusChip>
+                <span className={cn('text-xs', isSelected ? accent.mutedText : 'text-slate-500')}>
+                  Zakres 1-{config.range}
+                </span>
+              </KangurOptionCardButton>
+            </motion.div>
           );
         })}
       </div>

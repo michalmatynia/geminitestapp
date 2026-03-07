@@ -47,9 +47,9 @@ function KangurLoginPageContent(): React.JSX.Element {
       });
 
       if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as
-          | { error?: { message?: string } }
-          | null;
+        const payload = (await response.json().catch(() => null)) as {
+          error?: { message?: string };
+        } | null;
         setStudentError(
           payload?.error?.message || 'Nie udalo sie zalogowac ucznia. Sprawdz login i haslo.'
         );
@@ -74,7 +74,9 @@ function KangurLoginPageContent(): React.JSX.Element {
             <div className='text-sm font-bold uppercase tracking-[0.2em] text-indigo-500'>
               Rodzic
             </div>
-            <h1 className='mt-2 text-3xl font-extrabold text-slate-800'>Zaloguj konto wlasciciela</h1>
+            <h1 className='mt-2 text-3xl font-extrabold text-slate-800'>
+              Zaloguj konto wlasciciela
+            </h1>
             <p className='mt-2 text-sm text-slate-500'>
               Rodzic loguje sie emailem i po zalogowaniu zarzadza profilami uczniow w panelu.
             </p>
@@ -103,7 +105,10 @@ function KangurLoginPageContent(): React.JSX.Element {
             </p>
           </div>
 
-          <form className='flex flex-col gap-4' onSubmit={(event) => void handleStudentSignIn(event)}>
+          <form
+            className='flex flex-col gap-4'
+            onSubmit={(event) => void handleStudentSignIn(event)}
+          >
             <input
               value={studentLoginName}
               onChange={(event) => setStudentLoginName(event.target.value)}

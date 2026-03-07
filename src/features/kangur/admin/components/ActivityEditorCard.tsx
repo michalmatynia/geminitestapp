@@ -7,12 +7,10 @@ import {
 import type { KangurLessonActivityBlock } from '@/shared/contracts/kangur';
 import { Badge, FormField, Input, SelectSimple, Textarea } from '@/shared/ui';
 
-export function ActivityEditorCard(
-  props: {
-    block: KangurLessonActivityBlock;
-    onChange: (nextValue: KangurLessonActivityBlock) => void;
-  }
-): React.JSX.Element {
+export function ActivityEditorCard(props: {
+  block: KangurLessonActivityBlock;
+  onChange: (nextValue: KangurLessonActivityBlock) => void;
+}): React.JSX.Element {
   const { block, onChange } = props;
   const definition = getKangurLessonActivityDefinition(block.activityId);
 
@@ -31,7 +29,8 @@ export function ActivityEditorCard(
             size='sm'
             value={block.activityId}
             onValueChange={(nextValue: string): void => {
-              if (!KANGUR_LESSON_ACTIVITY_OPTIONS.some((option) => option.value === nextValue)) return;
+              if (!KANGUR_LESSON_ACTIVITY_OPTIONS.some((option) => option.value === nextValue))
+                return;
               onChange(
                 retargetKangurLessonActivityBlock(
                   block,
@@ -83,7 +82,8 @@ export function ActivityEditorCard(
         </FormField>
 
         <div className='rounded-xl border border-emerald-200/80 bg-white/75 px-3 py-3 text-sm text-slate-700'>
-          This block keeps the real Kangur activity inside the modular lesson. The learner renderer will mount the interactive widget; editor preview shows a lightweight placeholder.
+          This block keeps the real Kangur activity inside the modular lesson. The learner renderer
+          will mount the interactive widget; editor preview shows a lightweight placeholder.
         </div>
       </div>
     </div>

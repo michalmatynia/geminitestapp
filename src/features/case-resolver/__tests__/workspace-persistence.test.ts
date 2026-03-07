@@ -43,7 +43,10 @@ describe('workspace-persistence: core lifecycle', () => {
   });
 
   it('falls back to default workspace when record value is empty', () => {
-    const result = readWorkspaceFromSettingRecord({ key: CASE_RESOLVER_WORKSPACE_KEY, value: '' }, '{}');
+    const result = readWorkspaceFromSettingRecord(
+      { key: CASE_RESOLVER_WORKSPACE_KEY, value: '' },
+      '{}'
+    );
     expect(result).toBeDefined();
     expect(Array.isArray(result.files)).toBe(true);
   });
@@ -100,10 +103,10 @@ describe('workspace-persistence: core lifecycle', () => {
   // ── persistCaseResolverWorkspaceSnapshot ───────────────────────────────
 
   it('returns ok:true on a successful 200 persist', async () => {
-    const workspace = stampCaseResolverWorkspaceMutation(
-      createDefaultCaseResolverWorkspace(),
-      { baseRevision: 0, mutationId: 'mut-persist-ok' }
-    );
+    const workspace = stampCaseResolverWorkspaceMutation(createDefaultCaseResolverWorkspace(), {
+      baseRevision: 0,
+      mutationId: 'mut-persist-ok',
+    });
     globalThis.fetch = vi.fn().mockResolvedValue(
       toJsonResponse(200, {
         key: CASE_RESOLVER_WORKSPACE_KEY,
@@ -154,14 +157,14 @@ describe('workspace-persistence: core lifecycle', () => {
   });
 
   it('returns ok:false without conflict flag on network error', async () => {
-    globalThis.fetch = vi.fn().mockRejectedValue(
-      new Error('Network failure')
-    ) as unknown as typeof globalThis.fetch;
+    globalThis.fetch = vi
+      .fn()
+      .mockRejectedValue(new Error('Network failure')) as unknown as typeof globalThis.fetch;
 
-    const workspace = stampCaseResolverWorkspaceMutation(
-      createDefaultCaseResolverWorkspace(),
-      { baseRevision: 0, mutationId: 'mut-net-fail' }
-    );
+    const workspace = stampCaseResolverWorkspaceMutation(createDefaultCaseResolverWorkspace(), {
+      baseRevision: 0,
+      mutationId: 'mut-net-fail',
+    });
 
     const result = await persistCaseResolverWorkspaceSnapshot({
       workspace,
@@ -176,9 +179,21 @@ describe('workspace-persistence: core lifecycle', () => {
   // ── computeCaseResolverConflictRetryDelayMs ────────────────────────────
 
   it('grows delay exponentially across retry attempts', () => {
-    const delay1 = computeCaseResolverConflictRetryDelayMs(1, { baseDelayMs: 100, maxDelayMs: 3200, jitterMs: 0 });
-    const delay2 = computeCaseResolverConflictRetryDelayMs(2, { baseDelayMs: 100, maxDelayMs: 3200, jitterMs: 0 });
-    const delay3 = computeCaseResolverConflictRetryDelayMs(3, { baseDelayMs: 100, maxDelayMs: 3200, jitterMs: 0 });
+    const delay1 = computeCaseResolverConflictRetryDelayMs(1, {
+      baseDelayMs: 100,
+      maxDelayMs: 3200,
+      jitterMs: 0,
+    });
+    const delay2 = computeCaseResolverConflictRetryDelayMs(2, {
+      baseDelayMs: 100,
+      maxDelayMs: 3200,
+      jitterMs: 0,
+    });
+    const delay3 = computeCaseResolverConflictRetryDelayMs(3, {
+      baseDelayMs: 100,
+      maxDelayMs: 3200,
+      jitterMs: 0,
+    });
 
     expect(delay1).toBe(100);
     expect(delay2).toBe(200);
@@ -186,7 +201,11 @@ describe('workspace-persistence: core lifecycle', () => {
   });
 
   it('does not exceed maxDelayMs', () => {
-    const delay = computeCaseResolverConflictRetryDelayMs(20, { baseDelayMs: 100, maxDelayMs: 500, jitterMs: 0 });
+    const delay = computeCaseResolverConflictRetryDelayMs(20, {
+      baseDelayMs: 100,
+      maxDelayMs: 500,
+      jitterMs: 0,
+    });
     expect(delay).toBeLessThanOrEqual(500);
   });
 });

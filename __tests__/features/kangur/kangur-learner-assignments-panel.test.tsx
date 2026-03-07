@@ -90,6 +90,14 @@ describe('KangurLearnerAssignmentsPanel', () => {
     expect(screen.getByText('Przebieg przydzielonych zadan')).toBeInTheDocument();
     expect(screen.getByText('Skutecznosc')).toBeInTheDocument();
     expect(screen.getByText('50%')).toBeInTheDocument();
+    expect(screen.getByTestId('learner-assignments-completion-rate')).toHaveClass(
+      'soft-card',
+      'border-indigo-300'
+    );
+    expect(screen.getByTestId('learner-assignments-high-priority')).toHaveClass(
+      'soft-card',
+      'border-amber-300'
+    );
     expect(screen.getByText('Ostatni sukces')).toBeInTheDocument();
     expect(screen.getAllByText('Powtorka: Zegar').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Aktywne zadania od rodzica')).toBeInTheDocument();

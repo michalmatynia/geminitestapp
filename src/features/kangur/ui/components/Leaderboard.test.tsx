@@ -88,6 +88,7 @@ describe('Leaderboard', () => {
     const allUserFilter = screen.getByTestId('leaderboard-user-filter-all');
     const anonymousUserFilter = screen.getByTestId('leaderboard-user-filter-anonymous');
 
+    expect(screen.getByTestId('leaderboard-shell')).toHaveClass('glass-panel');
     expect(allOperationFilter).toHaveClass('kangur-cta-pill', 'surface-cta');
     expect(divisionOperationFilter).toHaveClass('kangur-cta-pill', 'soft-cta');
     expect(allOperationFilter).toHaveAttribute('aria-pressed', 'true');

@@ -1,11 +1,6 @@
 'use client';
 
-import {
-  Folders,
-  ListOrdered,
-  Plus,
-  Sparkles,
-} from 'lucide-react';
+import { Folders, ListOrdered, Plus, Sparkles } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
@@ -15,10 +10,7 @@ import {
   type FolderTreeViewportRenderNodeInput,
 } from '@/features/foldertree/v2';
 import { FolderTreeSearchBar, useMasterFolderTreeSearch } from '@/features/foldertree/v2/search';
-import type {
-  KangurLesson,
-  KangurLessonComponentId,
-} from '@/shared/contracts/kangur';
+import type { KangurLesson, KangurLessonComponentId } from '@/shared/contracts/kangur';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
@@ -54,6 +46,7 @@ import {
 import {
   createDefaultKangurLessonDocument,
   createKangurLessonSvgBlock,
+  createStarterKangurLessonDocument,
   hasKangurLessonDocumentContent,
   parseKangurLessonDocumentStore,
   removeKangurLessonDocument,
@@ -62,13 +55,13 @@ import {
   updateKangurLessonDocumentTimestamp,
 } from '../lesson-documents';
 import { importLegacyKangurLessonDocument } from '../legacy-lesson-imports';
-import { KangurLessonDocumentEditor } from './KangurLessonDocumentEditor';
-import { KangurLessonNarrationPanel } from './KangurLessonNarrationPanel';
 
+import { LessonContentEditorDialog } from './components/LessonContentEditorDialog';
 import { LessonMetadataForm } from './components/LessonMetadataForm';
 import { LessonSvgQuickAddModal } from './components/LessonSvgQuickAddModal';
 import { LessonTreeRow } from './components/LessonTreeRow';
 import { TREE_MODE_STORAGE_KEY, CATALOG_TREE_INSTANCE, ORDERED_TREE_INSTANCE } from './constants';
+import { LessonSvgQuickAddRuntimeProvider } from './context/LessonSvgQuickAddRuntimeContext';
 import type { LessonFormData, LessonTreeMode } from './types';
 import {
   countLessonsRequiringLegacyImport,
@@ -136,8 +129,19 @@ export function AdminKangurLessonsManagerPage({
 
   const masterNodes = useMemo(
     () =>
-      isCatalogMode ? buildKangurLessonCatalogMasterNodes(lessons) : buildKangurLessonMasterNodes(lessons),
+      isCatalogMode
+        ? buildKangurLessonCatalogMasterNodes(lessons)
+        : buildKangurLessonMasterNodes(lessons),
     [isCatalogMode, lessons]
+  );
+
+  const geometryPackAddedCount = useMemo(
+    () => appendMissingGeometryKangurLessons(lessons).addedCount,
+    [lessons]
+  );
+  const logicPackAddedCount = useMemo(
+    () => appendMissingLogicalThinkingKangurLessons(lessons).addedCount,
+    [lessons]
   );
 
   const adapter = useMemo(
@@ -145,9 +149,12 @@ export function AdminKangurLessonsManagerPage({
       createMasterFolderTreeTransactionAdapter({
         onApply: async (transaction): Promise<void> => {
           if (isCatalogMode) return;
-          
+
           const internalAdapter = createMasterFolderTreeTransactionAdapter({ onApply: () => {} });
-          const applied = await internalAdapter.apply(transaction, { tx: transaction, preparedAt: Date.now() });
+          const applied = await internalAdapter.apply(transaction, {
+            tx: transaction,
+            preparedAt: Date.now(),
+          });
           if (!applied || !applied.nodes) return;
 
           const nextLessonOrder = resolveKangurLessonOrderFromNodes(applied.nodes, lessonById);
@@ -197,7 +204,14 @@ export function AdminKangurLessonsManagerPage({
   const openContentModal = (lesson: KangurLesson): void => {
     setEditingContentLesson(lesson);
     const existing = lessonDocuments[lesson.id];
-    setContentDraft(existing ?? createDefaultKangurLessonDocument());
+    const starter = createStarterKangurLessonDocument(lesson.componentId);
+    console.log('openContentModal:', {
+      lessonId: lesson.id,
+      componentId: lesson.componentId,
+      existing: !!existing,
+      starterBlocks: starter.blocks.length,
+    });
+    setContentDraft(existing ?? starter);
     setShowContentModal(true);
   };
 
@@ -225,14 +239,9 @@ export function AdminKangurLessonsManagerPage({
       const nextBlocks =
         svgBlockIndex !== -1
           ? firstPage.blocks.map((b, i) =>
-            i === svgBlockIndex && b.type === 'svg'
-              ? { ...b, markup: sanitized, viewBox }
-              : b
+            i === svgBlockIndex && b.type === 'svg' ? { ...b, markup: sanitized, viewBox } : b
           )
-          : [
-            { ...createKangurLessonSvgBlock(), markup: sanitized, viewBox },
-            ...firstPage.blocks,
-          ];
+          : [{ ...createKangurLessonSvgBlock(), markup: sanitized, viewBox }, ...firstPage.blocks];
 
       const nextPages = pages.map((p, i) => (i === 0 ? { ...p, blocks: nextBlocks } : p));
       const nextDoc = updateKangurLessonDocumentPages(existingDoc, nextPages);
@@ -293,9 +302,15 @@ export function AdminKangurLessonsManagerPage({
 
       toast(editingLesson ? 'Lesson updated.' : 'Lesson created.', { variant: 'success' });
       setShowModal(false);
-      setEditingLesson(null);
-    } catch (error) {
-      logClientError(error, { context: { source: 'AdminKangurLessonsManagerPage', action: 'saveLesson' } });
+
+      if (!editingLesson && nextLesson.contentMode === 'document') {
+        openContentModal(nextLesson);
+      }
+
+      setEditingLesson(null);    } catch (error) {
+      logClientError(error, {
+        context: { source: 'AdminKangurLessonsManagerPage', action: 'saveLesson' },
+      });
       toast('Failed to save lesson.', { variant: 'error' });
     }
   };
@@ -322,7 +337,9 @@ export function AdminKangurLessonsManagerPage({
       toast('Lesson deleted.', { variant: 'success' });
       setLessonToDelete(null);
     } catch (error) {
-      logClientError(error, { context: { source: 'AdminKangurLessonsManagerPage', action: 'deleteLesson' } });
+      logClientError(error, {
+        context: { source: 'AdminKangurLessonsManagerPage', action: 'deleteLesson' },
+      });
       toast('Failed to delete lesson.', { variant: 'error' });
     }
   };
@@ -340,11 +357,20 @@ export function AdminKangurLessonsManagerPage({
         value: serializeSetting(nextStore),
       });
 
+      const nextLesson: KangurLesson = { ...editingContentLesson, contentMode: 'document' };
+      const nextLessons = canonicalizeKangurLessons(upsertLesson(lessons, nextLesson));
+      await updateSetting.mutateAsync({
+        key: KANGUR_LESSONS_SETTING_KEY,
+        value: serializeSetting(nextLessons),
+      });
+
       toast('Lesson content saved.', { variant: 'success' });
       setShowContentModal(false);
       setEditingContentLesson(null);
     } catch (error) {
-      logClientError(error, { context: { source: 'AdminKangurLessonsManagerPage', action: 'saveContent' } });
+      logClientError(error, {
+        context: { source: 'AdminKangurLessonsManagerPage', action: 'saveContent' },
+      });
       toast('Failed to save lesson content.', { variant: 'error' });
     }
   };
@@ -352,6 +378,13 @@ export function AdminKangurLessonsManagerPage({
   const handleClearLessonContent = async (): Promise<void> => {
     if (!editingContentLesson) return;
     try {
+      const nextLesson: KangurLesson = { ...editingContentLesson, contentMode: 'component' };
+      const nextLessons = canonicalizeKangurLessons(upsertLesson(lessons, nextLesson));
+      await updateSetting.mutateAsync({
+        key: KANGUR_LESSONS_SETTING_KEY,
+        value: serializeSetting(nextLessons),
+      });
+
       const nextStore = { ...lessonDocuments };
       delete nextStore[editingContentLesson.id];
       await updateSetting.mutateAsync({
@@ -362,7 +395,9 @@ export function AdminKangurLessonsManagerPage({
       toast('Custom content cleared.', { variant: 'success' });
       setContentDraft(createDefaultKangurLessonDocument());
     } catch (error) {
-      logClientError(error, { context: { source: 'AdminKangurLessonsManagerPage', action: 'clearContent' } });
+      logClientError(error, {
+        context: { source: 'AdminKangurLessonsManagerPage', action: 'clearContent' },
+      });
       toast('Failed to clear content.', { variant: 'error' });
     }
   };
@@ -376,9 +411,11 @@ export function AdminKangurLessonsManagerPage({
         return;
       }
       setContentDraft(result.document);
-      toast('Legacy lesson imported. Review and save to apply.', { variant: 'info' });
+      toast('Imported legacy lesson. Review and save to apply.', { variant: 'success' });
     } catch (error) {
-      logClientError(error, { context: { source: 'AdminKangurLessonsManagerPage', action: 'importLegacy' } });
+      logClientError(error, {
+        context: { source: 'AdminKangurLessonsManagerPage', action: 'importLegacy' },
+      });
       toast('Failed to import legacy lesson.', { variant: 'error' });
     }
   };
@@ -393,7 +430,9 @@ export function AdminKangurLessonsManagerPage({
       });
       toast('Geometry lesson pack added.', { variant: 'success' });
     } catch (error) {
-      logClientError(error, { context: { source: 'AdminKangurLessonsManagerPage', action: 'addGeometryPack' } });
+      logClientError(error, {
+        context: { source: 'AdminKangurLessonsManagerPage', action: 'addGeometryPack' },
+      });
       toast('Failed to add geometry pack.', { variant: 'error' });
     }
   };
@@ -408,7 +447,9 @@ export function AdminKangurLessonsManagerPage({
       });
       toast('Logical thinking lesson pack added.', { variant: 'success' });
     } catch (error) {
-      logClientError(error, { context: { source: 'AdminKangurLessonsManagerPage', action: 'addLogicPack' } });
+      logClientError(error, {
+        context: { source: 'AdminKangurLessonsManagerPage', action: 'addLogicPack' },
+      });
       toast('Failed to add logic pack.', { variant: 'error' });
     }
   };
@@ -438,7 +479,9 @@ export function AdminKangurLessonsManagerPage({
       });
       toast(`Imported ${updatedCount} lessons to modular editor.`, { variant: 'success' });
     } catch (error) {
-      logClientError(error, { context: { source: 'AdminKangurLessonsManagerPage', action: 'importAll' } });
+      logClientError(error, {
+        context: { source: 'AdminKangurLessonsManagerPage', action: 'importAll' },
+      });
       toast('Failed to import all lessons.', { variant: 'error' });
     }
   };
@@ -492,27 +535,33 @@ export function AdminKangurLessonsManagerPage({
               </div>
               <div className='flex items-center gap-1'>
                 <Button
-                  onClick={handleAddGeometryPack}
+                  onClick={() => {
+                    void handleAddGeometryPack();
+                  }}
                   size='sm'
                   variant='outline'
                   className='h-7 border px-2 text-[11px] font-semibold tracking-wide text-cyan-200 hover:bg-cyan-900/30'
-                  disabled={updateSetting.isPending}
+                  disabled={updateSetting.isPending || geometryPackAddedCount === 0}
                 >
                   <Sparkles className='mr-1 size-3.5' />
                   Add geometry pack
                 </Button>
                 <Button
-                  onClick={handleAddLogicalThinkingPack}
+                  onClick={() => {
+                    void handleAddLogicalThinkingPack();
+                  }}
                   size='sm'
                   variant='outline'
                   className='h-7 border px-2 text-[11px] font-semibold tracking-wide text-violet-200 hover:bg-violet-900/30'
-                  disabled={updateSetting.isPending}
+                  disabled={updateSetting.isPending || logicPackAddedCount === 0}
                 >
                   <Sparkles className='mr-1 size-3.5' />
                   Add logic pack
                 </Button>
                 <Button
-                  onClick={handleImportAllLessonsToEditor}
+                  onClick={() => {
+                    void handleImportAllLessonsToEditor();
+                  }}
                   size='sm'
                   variant='outline'
                   className='h-7 border px-2 text-[11px] font-semibold tracking-wide text-emerald-200 hover:bg-emerald-900/30'
@@ -578,7 +627,11 @@ export function AdminKangurLessonsManagerPage({
                 <FolderTreeSearchBar
                   value={treeSearchQuery}
                   onChange={handleTreeSearchChange}
-                  placeholder='Search lessons...'
+                  placeholder={
+                    isCatalogMode
+                      ? 'Search catalog groups and lessons...'
+                      : 'Search lessons, ids, or component types...'
+                  }
                 />
                 {searchState.isActive ? (
                   <div className='text-[11px] text-muted-foreground/80'>
@@ -611,21 +664,25 @@ export function AdminKangurLessonsManagerPage({
         )}
       </FolderTreePanel>
 
-      <LessonSvgQuickAddModal
+      <LessonSvgQuickAddRuntimeProvider
         lesson={svgModalLesson}
         initialMarkup={svgModalInitialMarkup}
         isOpen={Boolean(svgModalLesson)}
         onClose={(): void => setSvgModalLesson(null)}
-        onSave={(markup, viewBox): void => {
+        onSave={(markup: string, viewBox: string): void => {
           void handleSaveLessonSvg(markup, viewBox);
         }}
         isSaving={updateSetting.isPending}
-      />
+      >
+        <LessonSvgQuickAddModal />
+      </LessonSvgQuickAddRuntimeProvider>
 
       <ConfirmModal
         isOpen={Boolean(lessonToDelete)}
         onClose={(): void => setLessonToDelete(null)}
-        onConfirm={handleDeleteLesson}
+        onConfirm={(): void => {
+          void handleDeleteLesson();
+        }}
         title='Delete Lesson'
         message={`Delete lesson "${lessonToDelete?.title ?? ''}"? This action cannot be undone.`}
         confirmText='Delete'
@@ -640,7 +697,9 @@ export function AdminKangurLessonsManagerPage({
         }}
         title={editingLesson ? 'Edit Lesson' : 'Create Lesson'}
         subtitle='Manage lessons visible in Kangur app.'
-        onSave={handleSaveLesson}
+        onSave={(): void => {
+          void handleSaveLesson();
+        }}
         isSaving={updateSetting.isPending}
         isSaveDisabled={isSaveDisabled}
         saveText={editingLesson ? 'Save Lesson' : 'Create Lesson'}
@@ -652,59 +711,24 @@ export function AdminKangurLessonsManagerPage({
         />
       </FormModal>
 
-      <FormModal
+      <LessonContentEditorDialog
+        lesson={editingContentLesson}
+        document={contentDraft}
         isOpen={showContentModal}
+        isSaving={updateSetting.isPending}
         onClose={(): void => {
           setShowContentModal(false);
           setEditingContentLesson(null);
         }}
-        title={editingContentLesson ? `Edit Content: ${editingContentLesson.title}` : 'Edit Lesson Content'}
-        titleTestId='mock-doc-editor-title'
-        subtitle='Author lesson pages with text, SVG blocks, SVG image references, activity widgets, and responsive grid layouts. You can also import the current legacy lesson structure into modular pages.'
-        onSave={handleSaveLessonContent}        isSaving={updateSetting.isPending}
-        saveText='Save Content'
-        size='xl'
-        actions={
-          editingContentLesson ? (
-            <div className='flex flex-wrap items-center gap-2'>
-              <Button
-                type='button'
-                variant='outline'
-                className='text-sky-200 hover:bg-sky-500/10 hover:text-sky-100'
-                onClick={handleImportLegacyLesson}
-                disabled={updateSetting.isPending}
-              >
-                <Sparkles className='mr-1 size-3.5' />
-                Import legacy lesson
-              </Button>
-              {hasKangurLessonDocumentContent(contentDraft) ? (
-                <Button
-                  type='button'
-                  variant='outline'
-                  className='text-rose-300 hover:bg-rose-500/10 hover:text-rose-200'
-                  onClick={(): void => {
-                    void handleClearLessonContent();
-                  }}
-                  disabled={updateSetting.isPending}
-                >
-                  Clear custom content
-                </Button>
-              ) : null}
-            </div>
-          ) : undefined
-        }
-      >
-        {editingContentLesson ? (
-          <div className='space-y-6'>
-            <KangurLessonNarrationPanel
-              lesson={editingContentLesson}
-              document={contentDraft}
-              onChange={setContentDraft}
-            />
-            <KangurLessonDocumentEditor value={contentDraft} onChange={setContentDraft} />
-          </div>
-        ) : null}
-      </FormModal>
+        onChange={setContentDraft}
+        onSave={(): void => {
+          void handleSaveLessonContent();
+        }}
+        onImportLegacy={handleImportLegacyLesson}
+        onClearContent={(): void => {
+          void handleClearLessonContent();
+        }}
+      />
     </div>
   );
 }

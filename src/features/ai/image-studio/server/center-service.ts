@@ -8,6 +8,7 @@ import {
   type ImageStudioCenterRequest,
   type ImageStudioCenterShadowPolicy,
 } from '@/features/ai/image-studio/contracts/center';
+import type { UploadedClientCenterImage } from '@/shared/contracts/image-studio';
 import {
   centerAndScaleObjectByLayout,
   centerObjectByAlpha,
@@ -27,10 +28,6 @@ const STRICT_SERVER_CENTER_ENABLED =
   process.env['IMAGE_STUDIO_CENTER_SERVER_AUTHORITATIVE'] !== 'false';
 
 type StudioSlotRecord = NonNullable<Awaited<ReturnType<typeof getImageStudioSlotById>>>;
-type UploadedClientCenterImage = {
-  buffer: Buffer;
-  mime: string;
-};
 
 export type CenterProcessingResult = {
   outputBuffer: Buffer;

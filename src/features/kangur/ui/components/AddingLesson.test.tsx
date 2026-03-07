@@ -22,10 +22,15 @@ vi.mock('@/features/kangur/ui/components/AddingSynthesisGame', () => ({
 }));
 
 import AddingLesson from '@/features/kangur/ui/components/AddingLesson';
+import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 
 describe('AddingLesson', () => {
   it('exposes the new synthesis subsection and opens its game surface', () => {
-    render(<AddingLesson onBack={vi.fn()} />);
+    render(
+      <KangurLessonNavigationProvider onBack={vi.fn()}>
+        <AddingLesson />
+      </KangurLessonNavigationProvider>
+    );
 
     expect(screen.getByRole('button', { name: /synteza dodawania/i })).toBeInTheDocument();
 

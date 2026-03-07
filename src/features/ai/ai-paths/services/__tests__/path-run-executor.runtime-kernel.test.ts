@@ -211,9 +211,9 @@ describe('runtime kernel telemetry helpers', () => {
     expect(readRuntimeKernelConfigRecordFromMeta(meta)).toEqual(meta.runtimeKernelConfig);
     expect(readRuntimeKernelExecutionTelemetryFromMeta(meta)).toEqual(meta.runtimeKernel);
     expect(matchesRuntimeKernelExecutionTelemetryFromMeta(meta, meta.runtimeKernel)).toBe(true);
-    expect(matchesRuntimeKernelExecutionTelemetryFromMeta({ runtimeKernel: {} }, meta.runtimeKernel)).toBe(
-      false
-    );
+    expect(
+      matchesRuntimeKernelExecutionTelemetryFromMeta({ runtimeKernel: {} }, meta.runtimeKernel)
+    ).toBe(false);
   });
 
   it('normalizes runtime node resolution telemetry payloads', () => {

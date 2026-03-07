@@ -9,7 +9,8 @@ import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { serializeSetting } from '@/shared/utils/settings-json';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { KangurTestQuestion, KangurTestSuite } from '@/shared/contracts/kangur-tests';
+import type { KangurTestQuestion } from '@/shared/contracts/kangur-tests';
+import { useKangurQuestionsManagerRuntimeContext } from './context/KangurQuestionsManagerRuntimeContext';
 
 import {
   KANGUR_TEST_QUESTIONS_SETTING_KEY,
@@ -29,21 +30,14 @@ import {
 import { moveItem } from './utils';
 import { KangurTestQuestionEditor } from './KangurTestQuestionEditor';
 
-type Props = {
-  suite: KangurTestSuite;
-  onClose: () => void;
-};
-
-export function KangurQuestionsManagerPanel({ suite, onClose }: Props): React.JSX.Element {
+export function KangurQuestionsManagerPanel(): React.JSX.Element {
+  const { suite, onClose } = useKangurQuestionsManagerRuntimeContext();
   const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
   const { toast } = useToast();
 
   const rawQuestions = settingsStore.get(KANGUR_TEST_QUESTIONS_SETTING_KEY);
-  const questionStore = useMemo(
-    () => parseKangurTestQuestionStore(rawQuestions),
-    [rawQuestions]
-  );
+  const questionStore = useMemo(() => parseKangurTestQuestionStore(rawQuestions), [rawQuestions]);
   const questions = useMemo(
     () => getQuestionsForSuite(questionStore, suite.id),
     [questionStore, suite.id]
@@ -105,7 +99,9 @@ export function KangurQuestionsManagerPanel({ suite, onClose }: Props): React.JS
       toast('Question deleted.', { variant: 'success' });
       setQuestionToDelete(null);
     } catch (error) {
-      logClientError(error, { context: { source: 'KangurQuestionsManagerPanel', action: 'delete' } });
+      logClientError(error, {
+        context: { source: 'KangurQuestionsManagerPanel', action: 'delete' },
+      });
       toast('Failed to delete question.', { variant: 'error' });
     }
   };
@@ -125,7 +121,9 @@ export function KangurQuestionsManagerPanel({ suite, onClose }: Props): React.JS
       });
       toast('Question duplicated.', { variant: 'success' });
     } catch (error) {
-      logClientError(error, { context: { source: 'KangurQuestionsManagerPanel', action: 'duplicate' } });
+      logClientError(error, {
+        context: { source: 'KangurQuestionsManagerPanel', action: 'duplicate' },
+      });
       toast('Failed to duplicate question.', { variant: 'error' });
     }
   };
@@ -205,7 +203,9 @@ export function KangurQuestionsManagerPanel({ suite, onClose }: Props): React.JS
                     size='sm'
                     variant='ghost'
                     className='h-5 px-1'
-                    onClick={(): void => { void handleMove(index, index - 1); }}
+                    onClick={(): void => {
+                      void handleMove(index, index - 1);
+                    }}
                     disabled={index === 0 || isSaving}
                     aria-label='Move up'
                   >
@@ -216,7 +216,9 @@ export function KangurQuestionsManagerPanel({ suite, onClose }: Props): React.JS
                     size='sm'
                     variant='ghost'
                     className='h-5 px-1'
-                    onClick={(): void => { void handleMove(index, index + 1); }}
+                    onClick={(): void => {
+                      void handleMove(index, index + 1);
+                    }}
                     disabled={index === questions.length - 1 || isSaving}
                     aria-label='Move down'
                   >
@@ -230,16 +232,24 @@ export function KangurQuestionsManagerPanel({ suite, onClose }: Props): React.JS
                     <Badge variant='outline' className='h-4 px-1 text-[9px]'>
                       {q.pointValue}pt
                     </Badge>
-                    <Badge variant='outline' className='h-4 px-1 text-[9px] text-emerald-300 border-emerald-400/40'>
+                    <Badge
+                      variant='outline'
+                      className='h-4 px-1 text-[9px] text-emerald-300 border-emerald-400/40'
+                    >
                       ✓ {q.correctChoiceLabel}
                     </Badge>
                     {hasIllustration(q) ? (
-                      <Badge variant='outline' className='h-4 px-1 text-[9px] text-violet-300 border-violet-400/40'>
+                      <Badge
+                        variant='outline'
+                        className='h-4 px-1 text-[9px] text-violet-300 border-violet-400/40'
+                      >
                         SVG
                       </Badge>
                     ) : null}
                   </div>
-                  <p className='text-sm text-gray-200 line-clamp-2'>{q.prompt || '(empty prompt)'}</p>
+                  <p className='text-sm text-gray-200 line-clamp-2'>
+                    {q.prompt || '(empty prompt)'}
+                  </p>
                 </div>
 
                 <div className='flex shrink-0 items-center gap-1'>
@@ -251,12 +261,21 @@ export function KangurQuestionsManagerPanel({ suite, onClose }: Props): React.JS
                     disabled={isSaving}
                   >
                     <span className='sr-only'>Edit</span>
-                    <svg className='size-3.5' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z'/></svg>
+                    <svg className='size-3.5' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth={2}
+                        d='M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z'
+                      />
+                    </svg>
                   </button>
                   <button
                     type='button'
                     className='inline-flex items-center justify-center rounded p-1 text-gray-400 hover:bg-gray-700/60 hover:text-white'
-                    onClick={(): void => { void handleDuplicate(q); }}
+                    onClick={(): void => {
+                      void handleDuplicate(q);
+                    }}
                     title='Duplicate question'
                     disabled={isSaving}
                   >
@@ -297,11 +316,7 @@ export function KangurQuestionsManagerPanel({ suite, onClose }: Props): React.JS
         size='xl'
       >
         {formData ? (
-          <KangurTestQuestionEditor
-            formData={formData}
-            onChange={setFormData}
-            suiteTitle={suite.title}
-          />
+          <KangurTestQuestionEditor formData={formData} onChange={setFormData} />
         ) : null}
       </FormModal>
 

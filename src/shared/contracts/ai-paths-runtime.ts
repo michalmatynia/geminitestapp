@@ -1,10 +1,6 @@
 import { z } from 'zod';
 import { dtoBaseSchema } from './base';
-import {
-  nodePortValueKindSchema,
-  type AiNode,
-  type Edge,
-} from './ai-paths-core';
+import { nodePortValueKindSchema, type AiNode, type Edge } from './ai-paths-core';
 import type { Toast as ToastFn } from './ui';
 
 /**
@@ -238,6 +234,18 @@ export const runtimeTraceCacheDecisionSchema = z.enum([
 ]);
 export type RuntimeTraceCacheDecision = z.infer<typeof runtimeTraceCacheDecisionSchema>;
 
+export const runtimeSideEffectPolicySchema = z.enum(['per_run', 'per_activation']);
+export type RuntimeSideEffectPolicy = z.infer<typeof runtimeSideEffectPolicySchema>;
+
+export const runtimeSideEffectDecisionSchema = z.enum([
+  'executed',
+  'skipped_duplicate',
+  'skipped_policy',
+  'skipped_missing_idempotency',
+  'failed',
+]);
+export type RuntimeSideEffectDecision = z.infer<typeof runtimeSideEffectDecisionSchema>;
+
 export const runtimeTraceSpanStatusSchema = z.enum([
   'running',
   'completed',
@@ -264,12 +272,40 @@ export const runtimeTraceCacheSchema = z.object({
 export type RuntimeTraceCache = z.infer<typeof runtimeTraceCacheSchema>;
 
 export const runtimeTraceEffectSchema = z.object({
-  policy: z.enum(['per_run', 'per_activation']).nullable().optional(),
-  decision: z.string().nullable().optional(),
+  policy: runtimeSideEffectPolicySchema.nullable().optional(),
+  decision: runtimeSideEffectDecisionSchema.nullable().optional(),
   recordId: z.string().nullable().optional(),
   sourceSpanId: z.string().nullable().optional(),
 });
 export type RuntimeTraceEffect = z.infer<typeof runtimeTraceEffectSchema>;
+
+export const runtimeTraceResumeModeSchema = z.enum(['resume', 'retry', 'replay']);
+export type RuntimeTraceResumeMode = z.infer<typeof runtimeTraceResumeModeSchema>;
+
+export const runtimeTraceResumeDecisionSchema = z.enum(['reused', 'reexecuted']);
+export type RuntimeTraceResumeDecision = z.infer<typeof runtimeTraceResumeDecisionSchema>;
+
+export const runtimeTraceResumeReasonSchema = z.enum([
+  'completed_upstream',
+  'failed_node',
+  'downstream_of_failure',
+  'retry_target',
+  'downstream_of_retry',
+  'incomplete',
+  'replay_requested',
+]);
+export type RuntimeTraceResumeReason = z.infer<typeof runtimeTraceResumeReasonSchema>;
+
+export const runtimeTraceResumeSchema = z.object({
+  mode: runtimeTraceResumeModeSchema,
+  decision: runtimeTraceResumeDecisionSchema,
+  reason: runtimeTraceResumeReasonSchema,
+  sourceTraceId: z.string().nullable().optional(),
+  sourceSpanId: z.string().nullable().optional(),
+  sourceRunStartedAt: z.string().nullable().optional(),
+  sourceStatus: aiPathNodeStatusSchema.nullable().optional(),
+});
+export type RuntimeTraceResume = z.infer<typeof runtimeTraceResumeSchema>;
 
 export const runtimeTraceErrorSchema = z.object({
   code: z.string().nullable().optional(),
@@ -307,6 +343,7 @@ export const runtimeTraceSpanSchema = z.object({
   cache: runtimeTraceCacheSchema.optional(),
   branch: runtimeTraceBranchSchema.optional(),
   effect: runtimeTraceEffectSchema.optional(),
+  resume: runtimeTraceResumeSchema.optional(),
   error: runtimeTraceErrorSchema.optional(),
 });
 export type RuntimeTraceSpan = z.infer<typeof runtimeTraceSpanSchema>;
@@ -337,10 +374,7 @@ export type RuntimeTraceRecord = z.infer<typeof runtimeTraceRecordSchema>;
 
 export type NodeRuntimeResolutionStrategy = 'compatibility' | 'code_object_v3';
 
-export const nodeRuntimeResolutionStrategySchema = z.enum([
-  'compatibility',
-  'code_object_v3',
-]);
+export const nodeRuntimeResolutionStrategySchema = z.enum(['compatibility', 'code_object_v3']);
 
 export const runtimeHistoryEntrySchema = z.object({
   timestamp: z.string(),
@@ -361,10 +395,18 @@ export const runtimeHistoryEntrySchema = z.object({
   requiredPorts: z.array(z.string()).optional(),
   optionalPorts: z.array(z.string()).optional(),
   waitingOnPorts: z.array(z.string()).optional(),
-  sideEffectPolicy: z.enum(['per_run', 'per_activation']).optional(),
-  sideEffectDecision: z.string().optional(),
+  sideEffectPolicy: runtimeSideEffectPolicySchema.optional(),
+  sideEffectDecision: runtimeSideEffectDecisionSchema.optional(),
   activationHash: z.string().nullable().optional(),
   idempotencyKey: z.string().nullable().optional(),
+  effectSourceSpanId: z.string().nullable().optional(),
+  resumeMode: runtimeTraceResumeModeSchema.optional(),
+  resumeDecision: runtimeTraceResumeDecisionSchema.optional(),
+  resumeReason: runtimeTraceResumeReasonSchema.optional(),
+  resumeSourceTraceId: z.string().nullable().optional(),
+  resumeSourceSpanId: z.string().nullable().optional(),
+  resumeSourceRunStartedAt: z.string().nullable().optional(),
+  resumeSourceStatus: aiPathNodeStatusSchema.nullable().optional(),
   correlationIds: z.array(z.string()).optional(),
   cacheDecision: runtimeTraceCacheDecisionSchema.optional(),
   branch: runtimeTraceBranchSchema.optional(),
@@ -455,16 +497,8 @@ export const aiPathRuntimeProfileEventSchema = z.discriminatedUnion('type', [
     requiredPorts: z.array(z.string()).optional(),
     optionalPorts: z.array(z.string()).optional(),
     waitingOnPorts: z.array(z.string()).optional(),
-    sideEffectPolicy: z.enum(['per_run', 'per_activation']).optional(),
-    sideEffectDecision: z
-      .enum([
-        'executed',
-        'skipped_duplicate',
-        'skipped_policy',
-        'skipped_missing_idempotency',
-        'failed',
-      ])
-      .optional(),
+    sideEffectPolicy: runtimeSideEffectPolicySchema.optional(),
+    sideEffectDecision: runtimeSideEffectDecisionSchema.optional(),
     activationHash: z.string().optional(),
     idempotencyKey: z.string().optional(),
     runtimeStrategy: nodeRuntimeResolutionStrategySchema.optional(),
@@ -704,13 +738,8 @@ export interface NodeHandlerContext {
   strictFlowMode: boolean;
   sideEffectControl?:
     | {
-        policy: 'per_run' | 'per_activation';
-        decision:
-          | 'executed'
-          | 'skipped_duplicate'
-          | 'skipped_policy'
-          | 'skipped_missing_idempotency'
-          | 'failed';
+        policy: RuntimeSideEffectPolicy;
+        decision: RuntimeSideEffectDecision;
         activationHash: string | null;
         idempotencyKey: string | null;
       }

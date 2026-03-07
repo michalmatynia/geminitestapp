@@ -116,6 +116,11 @@ describe('KangurAssignmentSpotlight', () => {
 
     expect(screen.getByText('Zadanie od rodzica')).toBeInTheDocument();
     expect(screen.getByText('Powtorka dzielenia')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-assignment-spotlight-divider')).toHaveClass(
+      'h-px',
+      'w-full',
+      'bg-slate-200'
+    );
     expect(screen.queryByText('Ukonczone zadanie')).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Otworz lekcje' })).toHaveAttribute(
       'href',

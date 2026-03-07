@@ -25,8 +25,10 @@ export const ADDING_SYNTHESIS_STAGES = [
     id: 'double_digits',
     icon: '🚀',
     title: 'Dwie cyfry',
-    description: 'Dodawaj dziesiatki i jednosci osobno, a przy przeniesieniu zamieniaj 10 jednosci na nowa dziesiatke.',
-    coachingTip: 'Najpierw dziesiatki, potem jednosci. Gdy wyjdzie 10 lub wiecej, przenies jedna dziesiatke.',
+    description:
+      'Dodawaj dziesiatki i jednosci osobno, a przy przeniesieniu zamieniaj 10 jednosci na nowa dziesiatke.',
+    coachingTip:
+      'Najpierw dziesiatki, potem jednosci. Gdy wyjdzie 10 lub wiecej, przenies jedna dziesiatke.',
     accent: 'emerald',
     noteCount: 4,
   },

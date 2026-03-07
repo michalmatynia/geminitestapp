@@ -5,18 +5,13 @@ import {
   FASTCOMET_STORAGE_CONFIG_SETTING_KEY,
   fileStorageSourceValues,
 } from '@/shared/lib/files/constants';
+import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import type { FastCometStorageConfig, FileStorageSource } from '@/shared/lib/files/constants';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
-
-type SettingsDocument = {
-  _id?: string;
-  key?: string;
-  value?: string;
-};
 
 const SETTINGS_COLLECTION = 'settings';
 const DEFAULT_TIMEOUT_MS = 20_000;
@@ -105,7 +100,7 @@ const readMongoSettingValue = async (key: string): Promise<string | null> => {
   if (!process.env['MONGODB_URI']) return null;
   try {
     const mongo = await getMongoDb();
-    const record = await mongo.collection<SettingsDocument>(SETTINGS_COLLECTION).findOne({
+    const record = await mongo.collection<MongoStringSettingRecord>(SETTINGS_COLLECTION).findOne({
       $or: [{ key }, { _id: key }],
     });
     return typeof record?.value === 'string' ? record.value : null;

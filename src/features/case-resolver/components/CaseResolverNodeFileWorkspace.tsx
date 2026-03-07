@@ -7,8 +7,6 @@ import { CanvasBoard } from '@/features/ai/ai-paths/components/canvas-board';
 import { AiPathsProvider } from '@/features/ai/ai-paths/context';
 import {
   type AiNode,
-  CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS,
-  CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS,
   type CaseResolverNodeFileSnapshot,
 } from '@/shared/contracts/case-resolver';
 import { Button, EmptyState, Card, Chip, Tooltip, useToast, Badge } from '@/shared/ui';
@@ -61,10 +59,8 @@ function CaseResolverNodeFileWorkspaceInner(): React.JSX.Element {
     nodes,
     selectedNodeId,
     selectedNodeFileMeta,
-    selectedFile,
     configOpen,
     isNodeInspectorOpen,
-    newNodeType,
     isSidePanelVisible,
     filesById,
     view,
@@ -72,42 +68,13 @@ function CaseResolverNodeFileWorkspaceInner(): React.JSX.Element {
     hasPendingSnapshotChanges = false,
   } = useNodeFileWorkspaceStateContext();
   const {
-    setNewNodeType,
     setIsNodeInspectorOpen,
     setConfigOpen,
     addNode,
     setNodeFileMeta,
     selectNode,
     handleManualSave,
-    onSelectFile,
   } = useNodeFileWorkspaceActionsContext();
-
-  const resolveCanvasCenter = useCallback((): { x: number; y: number } => {
-    const rect = canvasHostRef.current?.getBoundingClientRect();
-    const centerX = rect ? rect.width / 2 : 400;
-    const centerY = rect ? rect.height / 2 : 300;
-    const safeScale = view.scale || 1;
-    return {
-      x: (centerX - view.x) / safeScale,
-      y: (centerY - view.y) / safeScale,
-    };
-  }, [canvasHostRef, view]);
-
-  const onExplanatoryClick = useCallback(() => {
-    const node = buildNode(
-      {
-        type: 'prompt',
-        title: 'Explanatory Note',
-        description: '',
-        outputs: [...CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS],
-        inputs: [...CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS],
-      },
-      resolveCanvasCenter(),
-      createNodeId(),
-      'Explanatory Note'
-    );
-    addNode(node);
-  }, [addNode, resolveCanvasCenter]);
 
   const orderedNodes = useMemo((): AiNode[] => {
     return nodes
@@ -234,12 +201,7 @@ function CaseResolverNodeFileWorkspaceInner(): React.JSX.Element {
           </div>
         </div>
 
-        <NodeFileDocumentSearchPanel
-          newNodeType={newNodeType}
-          setNewNodeType={setNewNodeType}
-          onExplanatoryClick={onExplanatoryClick}
-          onNodeInspectorClick={() => setIsNodeInspectorOpen(true)}
-        />
+        <NodeFileDocumentSearchPanel />
 
         <div
           ref={canvasHostRef}
@@ -319,13 +281,7 @@ function CaseResolverNodeFileWorkspaceInner(): React.JSX.Element {
       </Card>
 
       {/* Side Panel */}
-      {isSidePanelVisible && selectedNodeFileMeta && (
-        <NodeFilePanel
-          meta={selectedNodeFileMeta}
-          file={selectedFile}
-          onOpen={() => onSelectFile(selectedFile?.id ?? '')}
-        />
-      )}
+      {isSidePanelVisible && selectedNodeFileMeta && <NodeFilePanel />}
 
       {isNodeInspectorOpen ? <CaseResolverNodeInspectorModal /> : null}
     </div>

@@ -9,7 +9,7 @@ import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { Button, useToast, SectionHeader, FormSection, Badge, LoadingState } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-type FrontAppOption = 'products' | 'chatbot' | 'notes';
+type FrontAppOption = 'cms' | 'chatbot' | 'notes';
 
 const FRONT_PAGE_SETTING_KEY = 'front_page_app';
 
@@ -26,7 +26,7 @@ export function AdminFrontManagePage(): React.ReactNode {
 
   const current = settingsQuery.data.get(FRONT_PAGE_SETTING_KEY);
   const initialSelected: FrontAppOption =
-    current === 'products' || current === 'chatbot' || current === 'notes' ? current : 'products';
+    current === 'chatbot' || current === 'notes' ? current : 'cms';
 
   return <AdminFrontManageContent initialSelected={initialSelected} />;
 }
@@ -43,9 +43,10 @@ function AdminFrontManageContent({
   const options = useMemo(
     () => [
       {
-        id: 'products' as const,
-        title: 'Products',
-        description: 'Show the public product listing when visitors open the site.',
+        id: 'cms' as const,
+        title: 'CMS Home',
+        description:
+          'Render the CMS-owned home page so zoning, default slugs, and App Embed blocks stay in control.',
         route: '/',
       },
       {
@@ -94,7 +95,7 @@ function AdminFrontManageContent({
 
       <FormSection
         title='Front Page Destination'
-        description='Choose one application to serve as the entry point for your site.'
+        description='Choose whether HOME should render the CMS page or redirect into an admin workspace.'
         className='p-6'
       >
         <div className='space-y-4'>
@@ -136,6 +137,24 @@ function AdminFrontManageContent({
               )
             )}
           </div>
+
+          {selected === 'cms' ? (
+            <div className='rounded-xl border border-border/40 bg-card/20 px-4 py-3 text-sm text-gray-300'>
+              <div className='font-medium text-white'>Kangur on HOME</div>
+              <div className='mt-1 text-gray-400'>
+                Keep Front Manage on CMS Home, then place a Kangur App Embed block in the default
+                HOME page template zone.
+              </div>
+              <div className='mt-3 flex flex-wrap gap-3 text-xs'>
+                <Link href='/admin/cms/pages' className='text-blue-300 hover:text-blue-200'>
+                  Open CMS pages
+                </Link>
+                <Link href='/admin/app-embeds' className='text-blue-300 hover:text-blue-200'>
+                  Open App Embeds
+                </Link>
+              </div>
+            </div>
+          ) : null}
 
           <div className='flex justify-end pt-4'>
             <Button

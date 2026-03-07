@@ -37,10 +37,13 @@ describe('GeometryDrawingGame', () => {
 
     const starterButton = screen.getByTestId('geometry-difficulty-starter');
     const proButton = screen.getByTestId('geometry-difficulty-pro');
+    const board = screen.getByTestId('geometry-drawing-board');
 
     expect(screen.getByText('1/4')).toBeInTheDocument();
+    expect(screen.getByTestId('geometry-drawing-progress-bar')).toHaveAttribute('aria-valuenow', '0');
     expect(starterButton).toHaveClass('kangur-cta-pill', 'surface-cta');
     expect(proButton).toHaveClass('kangur-cta-pill', 'soft-cta');
+    expect(board).toHaveClass('soft-card', 'border-slate-200/80');
 
     fireEvent.click(proButton);
 

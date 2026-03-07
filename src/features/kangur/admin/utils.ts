@@ -133,8 +133,7 @@ export const resolveInlineHeading = (block: KangurLessonInlineBlock): string => 
 
 const DANGEROUS_SVG_TAGS = /<(script|foreignObject)\b[^>]*>[\s\S]*?<\/\1>/gi;
 const DANGEROUS_SVG_ATTRS = /\bon\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi;
-const DANGEROUS_SVG_HREF =
-  /\b(?:href|xlink:href)\s*=\s*"(?:javascript:|data:)[^"]*"/gi;
+const DANGEROUS_SVG_HREF = /\b(?:href|xlink:href)\s*=\s*"(?:javascript:|data:)[^"]*"/gi;
 
 /**
  * Strip dangerous constructs from admin-authored SVG before persisting.

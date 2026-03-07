@@ -1,7 +1,7 @@
 'use client';
 
 import { Focus } from 'lucide-react';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
@@ -16,6 +16,7 @@ import { VersionGraphInspector } from './VersionGraphInspector';
 import { VersionGraphInspectorProvider } from './VersionGraphInspectorContext';
 import { VersionGraphToolbar } from './VersionGraphToolbar';
 import { VersionNodeDetailsModal } from './VersionNodeDetailsModal';
+import { VersionNodeDetailsModalRuntimeProvider } from './VersionNodeDetailsModalRuntimeContext';
 import { VersionNodeMapCanvas, type VersionNodeMapCanvasRef } from './VersionNodeMapCanvas';
 import { VersionNodeMapProvider } from './VersionNodeMapContext';
 import { VersionNodeMapMinimap } from './VersionNodeMapMinimap';
@@ -311,6 +312,16 @@ export function VersionNodeMapPanel(): React.JSX.Element {
     ] as const)
     : null;
 
+  const detailsModalRuntimeValue = useMemo(
+    () => ({
+      isOpen: Boolean(detailsNode),
+      item: detailsNode,
+      onClose: handleCloseNodeDetails,
+      getSlotImageSrc,
+    }),
+    [detailsNode, handleCloseNodeDetails, getSlotImageSrc]
+  );
+
   const handleMinimapPan = useCallback((x: number, y: number) => {
     canvasRef.current?.setPan({ x, y });
   }, []);
@@ -568,12 +579,9 @@ export function VersionNodeMapPanel(): React.JSX.Element {
           </VersionGraphInspectorProvider>
         ) : null}
 
-        <VersionNodeDetailsModal
-          isOpen={Boolean(detailsNode)}
-          item={detailsNode}
-          onClose={handleCloseNodeDetails}
-          getSlotImageSrc={getSlotImageSrc}
-        />
+        <VersionNodeDetailsModalRuntimeProvider value={detailsModalRuntimeValue}>
+          <VersionNodeDetailsModal />
+        </VersionNodeDetailsModalRuntimeProvider>
       </div>
     </VersionGraphControlsProvider>
   );

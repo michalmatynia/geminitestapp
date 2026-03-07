@@ -14,7 +14,6 @@ import LessonSlideSection, {
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
 import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
 
-type GeometryShapesLessonProps = { onBack: () => void };
 type SectionId = 'podstawowe' | 'ile_bokow' | 'game';
 
 const SHAPE_CARDS = [
@@ -76,12 +75,23 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
 };
 
 export const HUB_SECTIONS = [
-  { id: 'podstawowe', emoji: '🔺', title: 'Podstawowe figury', description: 'Koło, trójkąt, kwadrat, prostokąt' },
+  {
+    id: 'podstawowe',
+    emoji: '🔺',
+    title: 'Podstawowe figury',
+    description: 'Koło, trójkąt, kwadrat, prostokąt',
+  },
   { id: 'ile_bokow', emoji: '🔢', title: 'Boki i rogi', description: 'Każda figura pod lupą' },
-  { id: 'game', emoji: '✍️', title: 'Rysuj figury', description: 'Narysuj kształt i zdobadz XP', isGame: true },
+  {
+    id: 'game',
+    emoji: '✍️',
+    title: 'Rysuj figury',
+    description: 'Narysuj kształt i zdobadz XP',
+    isGame: true,
+  },
 ];
 
-export default function GeometryShapesLesson({ onBack }: GeometryShapesLessonProps): React.JSX.Element {
+export default function GeometryShapesLesson(): React.JSX.Element {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
   const [rewarded, setRewarded] = useState(false);
 
@@ -144,7 +154,6 @@ export default function GeometryShapesLesson({ onBack }: GeometryShapesLessonPro
           setActiveSection(id as SectionId);
         }
       }}
-      onBack={onBack}
     />
   );
 }

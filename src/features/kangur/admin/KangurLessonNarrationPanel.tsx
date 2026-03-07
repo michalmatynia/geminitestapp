@@ -13,16 +13,9 @@ import {
   buildKangurLessonDocumentNarrationScript,
   hasKangurLessonNarrationContent,
 } from '@/features/kangur/tts/script';
-import type { KangurLesson, KangurLessonDocument } from '@/shared/contracts/kangur';
 import { api } from '@/shared/lib/api-client';
 import { cn } from '@/shared/utils';
-
-type KangurLessonNarrationPanelProps = {
-  lesson: Pick<KangurLesson, 'id' | 'title' | 'description'>;
-  document: KangurLessonDocument;
-  onChange?: ((nextDocument: KangurLessonDocument) => void) | undefined;
-  className?: string | undefined;
-};
+import { useLessonContentEditorContext } from './context/LessonContentEditorContext';
 
 type RequestStatus = 'idle' | 'loading' | 'ready' | 'error';
 
@@ -50,15 +43,18 @@ const getLatestAudioCreatedAt = (response: KangurLessonTtsResponse | null): stri
   );
 };
 
-export function KangurLessonNarrationPanel(
-  props: KangurLessonNarrationPanelProps
-): React.JSX.Element {
-  const { lesson, document, onChange, className } = props;
+export function KangurLessonNarrationPanel(): React.JSX.Element {
+  const { lesson, document, onChange } = useLessonContentEditorContext();
   const [status, setStatus] = useState<RequestStatus>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [response, setResponse] = useState<KangurLessonTtsResponse | null>(null);
   const [cacheStatus, setCacheStatus] = useState<KangurLessonTtsStatusResponse | null>(null);
   const [isCheckingCache, setIsCheckingCache] = useState(false);
+
+  if (!lesson) {
+    return <></>;
+  }
+
   const voice = document.narration?.voice ?? KANGUR_TTS_DEFAULT_VOICE;
 
   const script = useMemo(
@@ -136,10 +132,12 @@ export function KangurLessonNarrationPanel(
   }, [hasScriptContent, script, voice]);
 
   const handleVoiceChange = (nextVoice: string): void => {
-    const normalizedVoice = KANGUR_TTS_VOICE_OPTIONS.find((option) => option.value === nextVoice)?.value;
+    const normalizedVoice = KANGUR_TTS_VOICE_OPTIONS.find(
+      (option) => option.value === nextVoice
+    )?.value;
     if (!normalizedVoice) return;
 
-    onChange?.({
+    onChange({
       ...document,
       narration: {
         ...(document.narration ?? {}),
@@ -149,7 +147,7 @@ export function KangurLessonNarrationPanel(
   };
 
   const handleLocaleChange = (nextLocale: string): void => {
-    onChange?.({
+    onChange({
       ...document,
       narration: {
         ...document.narration,
@@ -215,8 +213,7 @@ export function KangurLessonNarrationPanel(
   return (
     <section
       className={cn(
-        'rounded-3xl border border-amber-200/70 bg-gradient-to-br from-amber-50 via-white to-sky-50 p-5 shadow-sm',
-        className
+        'rounded-3xl border border-amber-200/70 bg-gradient-to-br from-amber-50 via-white to-sky-50 p-5 shadow-sm'
       )}
     >
       <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>

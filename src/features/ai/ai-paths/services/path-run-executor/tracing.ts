@@ -11,6 +11,11 @@ export type TracingCtx = {
   baseRuntimeTraceRecord: Record<string, unknown>;
 };
 
+export type RuntimeTraceSpanPatch = Partial<RuntimeTraceRecord['spans'][number]> &
+  Pick<RuntimeTraceRecord['spans'][number], 'nodeId' | 'nodeType' | 'iteration' | 'attempt'>;
+
+export type UpsertRuntimeTraceSpan = (spanId: string, patch: RuntimeTraceSpanPatch) => void;
+
 export const createTracing = (ctx: TracingCtx) => {
   const {
     run,
@@ -22,11 +27,7 @@ export const createTracing = (ctx: TracingCtx) => {
     baseRuntimeTraceRecord,
   } = ctx;
 
-  const upsertRuntimeTraceSpan = (
-    spanId: string,
-    patch: Partial<RuntimeTraceRecord['spans'][number]> &
-      Pick<RuntimeTraceRecord['spans'][number], 'nodeId' | 'nodeType' | 'iteration' | 'attempt'>
-  ): void => {
+  const upsertRuntimeTraceSpan: UpsertRuntimeTraceSpan = (spanId, patch): void => {
     const existing = runtimeTraceSpans.get(spanId);
     const next: RuntimeTraceRecord['spans'][number] = {
       spanId,
@@ -35,8 +36,7 @@ export const createTracing = (ctx: TracingCtx) => {
       traceId,
       nodeId: patch.nodeId,
       nodeType: patch.nodeType,
-      nodeTitle:
-        patch.nodeTitle !== undefined ? patch.nodeTitle : (existing?.nodeTitle ?? null),
+      nodeTitle: patch.nodeTitle !== undefined ? patch.nodeTitle : (existing?.nodeTitle ?? null),
       iteration: patch.iteration,
       attempt: patch.attempt,
       startedAt: patch.startedAt ?? existing?.startedAt ?? new Date().toISOString(),
@@ -56,6 +56,7 @@ export const createTracing = (ctx: TracingCtx) => {
       cache: patch.cache !== undefined ? patch.cache : existing?.cache,
       branch: patch.branch !== undefined ? patch.branch : existing?.branch,
       effect: patch.effect !== undefined ? patch.effect : existing?.effect,
+      resume: patch.resume !== undefined ? patch.resume : existing?.resume,
       error: patch.error !== undefined ? patch.error : existing?.error,
     };
     runtimeTraceSpans.set(spanId, next);

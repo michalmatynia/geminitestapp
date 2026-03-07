@@ -6,9 +6,7 @@ import type {
   PortablePathSigningPolicyProfile,
   PortablePathSigningPolicySurface,
 } from './portable-engine-resolution-types';
-import {
-  parseBooleanFromEnvironment,
-} from './sinks-environment.server';
+import { parseBooleanFromEnvironment } from './sinks-environment.server';
 import {
   readSettingsRawByProviderPriority,
   writeSettingsRawByProviderPriority,
@@ -212,13 +210,11 @@ const resolvePortablePathSigningPolicyAlertLevel = (
 
 export const resolvePortablePathSigningPolicyTrendAlertLevelFromEnvironment = (
   value = process.env[PORTABLE_PATH_SIGNING_POLICY_DRIFT_ALERT_LEVEL_ENV]
-): PortablePathSigningPolicyAlertLevel | null =>
-  resolvePortablePathSigningPolicyAlertLevel(value);
+): PortablePathSigningPolicyAlertLevel | null => resolvePortablePathSigningPolicyAlertLevel(value);
 
 export const resolvePortablePathAuditSinkFailureAlertLevelFromEnvironment = (
   value = process.env[PORTABLE_PATH_AUDIT_SINK_FAILURE_ALERT_LEVEL_ENV]
-): PortablePathSigningPolicyAlertLevel | null =>
-  resolvePortablePathSigningPolicyAlertLevel(value);
+): PortablePathSigningPolicyAlertLevel | null => resolvePortablePathSigningPolicyAlertLevel(value);
 
 export const resolvePortablePathSigningPolicyTrendReportEveryUsesFromEnvironment = (
   value = process.env[PORTABLE_PATH_SIGNING_POLICY_TREND_REPORT_EVERY_USES_ENV]
@@ -246,9 +242,8 @@ export const resolvePortablePathSigningPolicyTrendPersistenceMaxSnapshotsFromEnv
   return resolvePortablePathSigningPolicyTrendPersistenceMaxSnapshots(numeric);
 };
 
-const readPortablePathSigningPolicyTrendRawByProviderPriority =
-  async (): Promise<string | null> =>
-    readSettingsRawByProviderPriority(PORTABLE_PATH_SIGNING_POLICY_TREND_SETTINGS_KEY);
+const readPortablePathSigningPolicyTrendRawByProviderPriority = async (): Promise<string | null> =>
+  readSettingsRawByProviderPriority(PORTABLE_PATH_SIGNING_POLICY_TREND_SETTINGS_KEY);
 
 const writePortablePathSigningPolicyTrendRawByProviderPriority = async (
   raw: string
@@ -262,7 +257,9 @@ const isPortablePathSigningPolicyTrendPersistedSnapshot = (
   const record = value as Record<string, unknown>;
   if (typeof record['at'] !== 'string' || record['at'].trim().length === 0) return false;
   if (record['trigger'] !== 'threshold' && record['trigger'] !== 'manual') return false;
-  return typeof record['reportEveryUses'] === 'number' && Number.isFinite(record['reportEveryUses']);
+  return (
+    typeof record['reportEveryUses'] === 'number' && Number.isFinite(record['reportEveryUses'])
+  );
 };
 
 const parsePortablePathSigningPolicyTrendSnapshotEnvelope = (
@@ -341,7 +338,10 @@ export const appendPortablePathSigningPolicyTrendSnapshot = async (
   );
   const readRaw = options.readRaw ?? readPortablePathSigningPolicyTrendRawByProviderPriority;
   const writeRaw = options.writeRaw ?? writePortablePathSigningPolicyTrendRawByProviderPriority;
-  const existing = parsePortablePathSigningPolicyTrendSnapshotEnvelope(await readRaw(), maxSnapshots);
+  const existing = parsePortablePathSigningPolicyTrendSnapshotEnvelope(
+    await readRaw(),
+    maxSnapshots
+  );
   const serialized = stringifyPortablePathSigningPolicyTrendSnapshotEnvelope(
     [...existing, snapshot],
     maxSnapshots

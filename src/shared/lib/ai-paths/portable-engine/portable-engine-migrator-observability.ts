@@ -79,7 +79,10 @@ const clonePortablePathMigratorObservabilitySnapshot = (
   totals: { ...snapshot.totals },
   sourceCounts: { ...snapshot.sourceCounts },
   bySpecVersion: Object.fromEntries(
-    Object.entries(snapshot.bySpecVersion).map(([specVersion, stats]) => [specVersion, { ...stats }])
+    Object.entries(snapshot.bySpecVersion).map(([specVersion, stats]) => [
+      specVersion,
+      { ...stats },
+    ])
   ),
   recentFailures: snapshot.recentFailures.map((failure) => ({ ...failure })),
 });
@@ -88,7 +91,9 @@ const emitPortablePathMigratorObservabilityEvent = (
   event: PortablePathMigratorObservabilityEvent
 ): void => {
   if (portablePathMigratorObservabilityHooks.size === 0) return;
-  const snapshot = clonePortablePathMigratorObservabilitySnapshot(portablePathMigratorObservabilityState);
+  const snapshot = clonePortablePathMigratorObservabilitySnapshot(
+    portablePathMigratorObservabilityState
+  );
   for (const hook of portablePathMigratorObservabilityHooks) {
     try {
       hook(event, snapshot);
@@ -176,7 +181,10 @@ export const markPortablePathMigratorFailure = (
     at: new Date().toISOString(),
   };
   portablePathMigratorObservabilityState.recentFailures.push(telemetry);
-  if (portablePathMigratorObservabilityState.recentFailures.length > MAX_PORTABLE_PATH_MIGRATOR_FAILURE_EVENTS) {
+  if (
+    portablePathMigratorObservabilityState.recentFailures.length >
+    MAX_PORTABLE_PATH_MIGRATOR_FAILURE_EVENTS
+  ) {
     portablePathMigratorObservabilityState.recentFailures.shift();
   }
   emitPortablePathMigratorObservabilityEvent({

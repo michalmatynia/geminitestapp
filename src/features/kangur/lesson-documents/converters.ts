@@ -34,7 +34,9 @@ export const convertKangurLessonInlineBlockType = (
         ? normalizeText(block.ttsText ?? stripHtmlToText(block.html), '', 2_000)
         : normalizeText(
           block.ttsDescription ??
-              (block.type === 'image' ? block.caption ?? block.altText ?? block.title : block.title),
+              (block.type === 'image'
+                ? (block.caption ?? block.altText ?? block.title)
+                : block.title),
           '',
           2_000
         );
@@ -58,7 +60,7 @@ export const convertKangurLessonInlineBlockType = (
       block.type === 'text'
         ? normalizeText(stripHtmlToText(block.html), '', 300)
         : normalizeText(
-          block.type === 'svg' ? block.title : block.altText ?? block.title,
+          block.type === 'svg' ? block.title : (block.altText ?? block.title),
           '',
           300
         );
@@ -67,7 +69,9 @@ export const convertKangurLessonInlineBlockType = (
         ? normalizeText(block.ttsText ?? stripHtmlToText(block.html), '', 2_000)
         : normalizeText(
           block.ttsDescription ??
-              (block.type === 'image' ? block.caption ?? block.altText ?? block.title : block.title),
+              (block.type === 'image'
+                ? (block.caption ?? block.altText ?? block.title)
+                : block.title),
           '',
           2_000
         );
@@ -125,11 +129,15 @@ export const convertKangurLessonRootBlockType = (
         : normalizeText(block.title, nextBlock.title, 120);
     const derivedDescription =
       block.type === 'text'
-        ? normalizeText(block.ttsText ?? stripHtmlToText(block.html), nextBlock.description ?? '', 500)
+        ? normalizeText(
+          block.ttsText ?? stripHtmlToText(block.html),
+          nextBlock.description ?? '',
+          500
+        )
         : normalizeText(
           block.type === 'image'
-            ? block.caption ?? block.altText ?? block.title
-            : block.ttsDescription ?? block.title,
+            ? (block.caption ?? block.altText ?? block.title)
+            : (block.ttsDescription ?? block.title),
           nextBlock.description ?? '',
           500
         );
@@ -138,8 +146,8 @@ export const convertKangurLessonRootBlockType = (
         ? normalizeText(block.ttsText ?? stripHtmlToText(block.html), '', 2_000)
         : normalizeText(
           block.type === 'image'
-            ? block.ttsDescription ?? block.caption ?? block.altText ?? block.title
-            : block.ttsDescription ?? block.title,
+            ? (block.ttsDescription ?? block.caption ?? block.altText ?? block.title)
+            : (block.ttsDescription ?? block.title),
           '',
           2_000
         );
@@ -154,7 +162,8 @@ export const convertKangurLessonRootBlockType = (
   }
 
   if (block.type === 'activity') {
-    const nextInlineType = nextType === 'text' || nextType === 'svg' || nextType === 'image' ? nextType : 'text';
+    const nextInlineType =
+      nextType === 'text' || nextType === 'svg' || nextType === 'image' ? nextType : 'text';
     const nextBlock = convertKangurLessonInlineBlockType(
       {
         id: block.id,
@@ -212,9 +221,7 @@ export const cloneKangurLessonGridItem = (item: KangurLessonGridItem): KangurLes
   block: cloneKangurLessonInlineBlock(item.block),
 });
 
-export const cloneKangurLessonRootBlock = (
-  block: KangurLessonRootBlock
-): KangurLessonRootBlock => {
+export const cloneKangurLessonRootBlock = (block: KangurLessonRootBlock): KangurLessonRootBlock => {
   if (block.type === 'grid') {
     return {
       ...block,

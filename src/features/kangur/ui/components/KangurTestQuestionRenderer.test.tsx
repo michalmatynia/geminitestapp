@@ -24,14 +24,16 @@ const question: KangurTestQuestion = {
 };
 
 describe('KangurTestQuestionRenderer', () => {
-  it('uses Kangur option-card styling for answer choices across states', () => {
+  it('uses Kangur option-card styling for answer choices and shared feedback surfaces', () => {
     const onSelect = vi.fn();
     const { rerender } = render(
       <KangurTestQuestionRenderer
         question={question}
         selectedLabel={null}
         onSelect={onSelect}
+        questionIndex={0}
         showAnswer={false}
+        totalQuestions={1}
       />
     );
 
@@ -49,7 +51,9 @@ describe('KangurTestQuestionRenderer', () => {
         question={question}
         selectedLabel='A'
         onSelect={onSelect}
+        questionIndex={0}
         showAnswer={false}
+        totalQuestions={1}
       />
     );
 
@@ -60,10 +64,21 @@ describe('KangurTestQuestionRenderer', () => {
         question={question}
         selectedLabel='A'
         onSelect={onSelect}
+        questionIndex={0}
         showAnswer={true}
+        totalQuestions={1}
       />
     );
 
+    expect(screen.getByText('3 pts')).toHaveClass('border-slate-200', 'bg-slate-100');
+    expect(screen.getByText('Explanation').parentElement).toHaveClass(
+      'soft-card',
+      'border-indigo-300'
+    );
+    expect(screen.getByText(/Correct! \+3 pts/i).closest('div')).toHaveClass(
+      'soft-card',
+      'border-emerald-300'
+    );
     expect(screen.getByRole('button', { name: /A.*4/i })).toHaveClass('border-emerald-300');
   });
 });

@@ -1,11 +1,7 @@
 import { z } from 'zod';
 
-import {
-  pathConfigSchema
-} from '@/shared/contracts/ai-paths';
-import {
-  parseAndDeserializeSemanticCanvas,
-} from '@/shared/lib/ai-paths/core/semantic-grammar';
+import { pathConfigSchema } from '@/shared/contracts/ai-paths';
+import { parseAndDeserializeSemanticCanvas } from '@/shared/lib/ai-paths/core/semantic-grammar';
 import {
   beginPortablePathMigratorAttempt,
   markPortablePathMigratorFailure,
@@ -26,9 +22,7 @@ import type {
 import type { ResolvePortablePathInputOptions } from './portable-engine-resolution-types';
 
 const formatZodError = (error: z.ZodError): string =>
-  error.issues
-    .map((issue) => `${issue.path.join('.') || 'document'}: ${issue.message}`)
-    .join('; ');
+  error.issues.map((issue) => `${issue.path.join('.') || 'document'}: ${issue.message}`).join('; ');
 
 export const migratePortablePathInput = (
   input: unknown,

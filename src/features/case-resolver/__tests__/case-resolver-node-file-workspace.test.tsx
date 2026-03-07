@@ -65,13 +65,7 @@ vi.mock('@/features/case-resolver/hooks/useNodeFileWorkspaceState', () => ({
 }));
 
 vi.mock('@/features/case-resolver/components/NodeFileDocumentSearchPanel', () => ({
-  NodeFileDocumentSearchPanel: ({ onNodeInspectorClick }: { onNodeInspectorClick: () => void }) => (
-    <div data-testid='node-file-document-search-panel'>
-      <button type='button' onClick={onNodeInspectorClick}>
-        Node Inspector
-      </button>
-    </div>
-  ),
+  NodeFileDocumentSearchPanel: () => <div data-testid='node-file-document-search-panel' />,
 }));
 
 vi.mock('@/features/case-resolver/components/NodeFilePanel', () => ({

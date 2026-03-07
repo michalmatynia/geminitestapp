@@ -23,9 +23,7 @@ const normalizeString = (value: unknown): string | null => {
   return normalized.length > 0 ? normalized : null;
 };
 
-export const resolveQueueRunSource = (
-  meta?: Record<string, unknown> | null
-): string | null => {
+export const resolveQueueRunSource = (meta?: Record<string, unknown> | null): string | null => {
   if (!meta) return null;
   const source = normalizeString(meta['source']);
   return source;

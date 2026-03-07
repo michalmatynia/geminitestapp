@@ -98,7 +98,12 @@ function FormModalHeaderContent(): React.JSX.Element {
               className='mr-2'
             />
           ) : null}
-          <h2 data-testid={runtime.titleTestId} className='truncate text-2xl font-bold tracking-tight text-white'>{runtime.title}</h2>
+          <h2
+            data-testid={runtime.titleTestId}
+            className='truncate text-2xl font-bold tracking-tight text-white'
+          >
+            {runtime.title}
+          </h2>
         </div>
         {runtime.subtitle ? <p className='mt-1 text-sm text-gray-400'>{runtime.subtitle}</p> : null}
       </div>

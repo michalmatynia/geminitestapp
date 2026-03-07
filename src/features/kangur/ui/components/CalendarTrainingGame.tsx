@@ -1,11 +1,16 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, XCircle, RefreshCw } from 'lucide-react';
-import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
+import {
+  KangurButton,
+  KangurOptionCardButton,
+  KangurPanel,
+  KangurStatusChip,
+} from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_ACCENT_STYLES,
-  KANGUR_OPTION_CARD_CLASSNAME,
   KANGUR_STEP_PILL_CLASSNAME,
+  type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
 import {
   addXp,
@@ -181,9 +186,9 @@ export default function CalendarTrainingGame({
           Wynik: {score}/{TOTAL}
         </h3>
         {xpEarned > 0 && (
-          <div className='bg-indigo-100 text-indigo-700 font-bold px-4 py-2 rounded-full text-sm'>
+          <KangurStatusChip accent='indigo' className='px-4 py-2 text-sm font-bold'>
             +{xpEarned} XP ✨
-          </div>
+          </KangurStatusChip>
         )}
         <p className='text-gray-500 text-center max-w-xs'>
           {score === TOTAL
@@ -229,40 +234,47 @@ export default function CalendarTrainingGame({
 
       <div className='grid grid-cols-2 gap-3 w-full'>
         {question.choices.map((choice, index) => {
-          let choiceClassName = cn(
-            'border-slate-200/80 text-slate-700',
-            KANGUR_ACCENT_STYLES.emerald.hoverCard
-          );
+          let accent: KangurAccent = 'emerald';
+          let emphasis: 'neutral' | 'accent' = 'neutral';
+          let state: 'default' | 'muted' = 'default';
+          let choiceClassName = 'text-slate-700';
           if (selected !== null) {
             if (choice === question.answer) {
-              choiceClassName = cn(
-                KANGUR_ACCENT_STYLES.emerald.activeCard,
-                KANGUR_ACCENT_STYLES.emerald.activeText
-              );
+              accent = 'emerald';
+              emphasis = 'accent';
+              choiceClassName = KANGUR_ACCENT_STYLES.emerald.activeText;
             } else if (choice === selected) {
-              choiceClassName = cn(
-                KANGUR_ACCENT_STYLES.rose.activeCard,
-                KANGUR_ACCENT_STYLES.rose.activeText
-              );
+              accent = 'rose';
+              emphasis = 'accent';
+              choiceClassName = KANGUR_ACCENT_STYLES.rose.activeText;
             } else {
-              choiceClassName = 'border-slate-200/80 bg-white/92 text-slate-400 opacity-70';
+              accent = 'slate';
+              state = 'muted';
+              choiceClassName = '';
             }
           }
           return (
-            <motion.button
+            <motion.div
               key={choice}
               whileHover={selected === null ? { scale: 1.04 } : {}}
               whileTap={selected === null ? { scale: 0.97 } : {}}
-              onClick={() => handleSelect(choice)}
-              className={cn(
-                KANGUR_OPTION_CARD_CLASSNAME,
-                'rounded-[24px] px-4 py-3 font-bold text-base transition-all',
-                choiceClassName
-              )}
-              data-testid={`calendar-training-choice-${index}`}
             >
-              {choice}
-            </motion.button>
+              <KangurOptionCardButton
+                accent={accent}
+                className={cn(
+                  'w-full rounded-[24px] px-4 py-3 font-bold text-base transition-all',
+                  choiceClassName,
+                  selected === null ? 'cursor-pointer' : 'cursor-default'
+                )}
+                data-testid={`calendar-training-choice-${index}`}
+                emphasis={emphasis}
+                onClick={() => handleSelect(choice)}
+                state={state}
+                type='button'
+              >
+                {choice}
+              </KangurOptionCardButton>
+            </motion.div>
           );
         })}
       </div>

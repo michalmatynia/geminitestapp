@@ -129,12 +129,15 @@ const assertNoUnsupportedTriggerDatabaseConfig = (node: AiNode): void => {
         ? parameterInferenceGuard['targetPath'].trim()
         : '';
     if (targetPath.length > 0 && targetPath !== 'parameters') {
-      throw validationError('AI Path config contains unsupported parameter inference target path.', {
-        source: 'ai_paths.trigger_payload',
-        reason: 'unsupported_parameter_inference_target_path',
-        nodeId: node.id,
-        targetPath,
-      });
+      throw validationError(
+        'AI Path config contains unsupported parameter inference target path.',
+        {
+          source: 'ai_paths.trigger_payload',
+          reason: 'unsupported_parameter_inference_target_path',
+          nodeId: node.id,
+          targetPath,
+        }
+      );
     }
   }
 };
@@ -201,36 +204,36 @@ export const sanitizeTriggerPathConfig = (config: PathConfig): PathConfig => {
   }
 
   const contractBackfilledConfig = backfillPathConfigNodeContracts(config).config;
-  const graphNodes = (Array.isArray(contractBackfilledConfig.nodes) ? contractBackfilledConfig.nodes : []).map(
-    (node: AiNode, index: number): AiNode => {
-      assertNoUnsupportedTriggerDatabaseConfig(node);
-      const parsedNode = aiNodeSchema.safeParse(node);
-      if (!parsedNode.success) {
-        throw validationError('Invalid AI Path trigger node payload.', {
-          source: 'ai_paths.trigger_payload',
-          reason: 'invalid_node',
-          index,
-          issues: parsedNode.error.flatten(),
-        });
-      }
-      return parsedNode.data;
+  const graphNodes = (
+    Array.isArray(contractBackfilledConfig.nodes) ? contractBackfilledConfig.nodes : []
+  ).map((node: AiNode, index: number): AiNode => {
+    assertNoUnsupportedTriggerDatabaseConfig(node);
+    const parsedNode = aiNodeSchema.safeParse(node);
+    if (!parsedNode.success) {
+      throw validationError('Invalid AI Path trigger node payload.', {
+        source: 'ai_paths.trigger_payload',
+        reason: 'invalid_node',
+        index,
+        issues: parsedNode.error.flatten(),
+      });
     }
-  );
+    return parsedNode.data;
+  });
 
-  const parsedEdges = (Array.isArray(contractBackfilledConfig.edges) ? contractBackfilledConfig.edges : []).map(
-    (edge: unknown, index: number) => {
-      const parsedEdge = edgeSchema.safeParse(edge);
-      if (!parsedEdge.success) {
-        throw validationError('Invalid AI Path trigger edge payload.', {
-          source: 'ai_paths.trigger_payload',
-          reason: 'invalid_edge',
-          index,
-          issues: parsedEdge.error.flatten(),
-        });
-      }
-      return parsedEdge.data;
+  const parsedEdges = (
+    Array.isArray(contractBackfilledConfig.edges) ? contractBackfilledConfig.edges : []
+  ).map((edge: unknown, index: number) => {
+    const parsedEdge = edgeSchema.safeParse(edge);
+    if (!parsedEdge.success) {
+      throw validationError('Invalid AI Path trigger edge payload.', {
+        source: 'ai_paths.trigger_payload',
+        reason: 'invalid_edge',
+        index,
+        issues: parsedEdge.error.flatten(),
+      });
     }
-  );
+    return parsedEdge.data;
+  });
 
   const normalizedGraphNodes = normalizeNodes(graphNodes);
   assertNoUnsupportedTriggerDataGraph(normalizedGraphNodes, parsedEdges);

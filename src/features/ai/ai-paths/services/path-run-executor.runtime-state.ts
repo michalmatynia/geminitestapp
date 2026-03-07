@@ -1,7 +1,4 @@
-import {
-  type RuntimeState,
-  type RuntimePortValues,
-} from '@/shared/contracts/ai-paths';
+import { type RuntimeState, type RuntimePortValues } from '@/shared/contracts/ai-paths';
 import { runtimeStateSchema } from '@/shared/contracts/ai-paths-runtime';
 import { cloneJsonSafe } from '@/shared/lib/ai-paths';
 import { isAppError, validationError } from '@/shared/errors/app-error';

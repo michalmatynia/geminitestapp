@@ -15,6 +15,7 @@ import {
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 export { KANGUR_LESSONS_SETTING_KEY, KANGUR_LESSON_DOCUMENTS_SETTING_KEY };
+export * from './help-settings';
 
 export const KANGUR_LESSON_SORT_ORDER_GAP = 1000;
 export const KANGUR_NARRATOR_SETTINGS_KEY = 'kangur_narrator_settings_v1';
@@ -244,7 +245,14 @@ export const KANGUR_LESSON_COMPONENT_OPTIONS: Array<{
 
 export type KangurLessonDraft = Pick<
   KangurLesson,
-  'componentId' | 'contentMode' | 'title' | 'description' | 'emoji' | 'color' | 'activeBg' | 'enabled'
+  | 'componentId'
+  | 'contentMode'
+  | 'title'
+  | 'description'
+  | 'emoji'
+  | 'color'
+  | 'activeBg'
+  | 'enabled'
 >;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>

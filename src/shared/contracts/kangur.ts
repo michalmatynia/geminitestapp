@@ -574,13 +574,15 @@ export const kangurAssignmentCreateInputSchema = z.object({
 });
 export type KangurAssignmentCreateInput = z.infer<typeof kangurAssignmentCreateInputSchema>;
 
-export const kangurAssignmentRepositoryCreateInputSchema = kangurAssignmentCreateInputSchema.extend({
-  learnerKey: nonEmptyTrimmedString.max(160),
-  target: kangurAssignmentTargetSchema,
-  assignedByName: z.string().trim().max(120).nullable().optional(),
-  assignedByEmail: z.string().trim().max(160).nullable().optional(),
-  archived: z.boolean().optional(),
-});
+export const kangurAssignmentRepositoryCreateInputSchema = kangurAssignmentCreateInputSchema.extend(
+  {
+    learnerKey: nonEmptyTrimmedString.max(160),
+    target: kangurAssignmentTargetSchema,
+    assignedByName: z.string().trim().max(120).nullable().optional(),
+    assignedByEmail: z.string().trim().max(160).nullable().optional(),
+    archived: z.boolean().optional(),
+  }
+);
 export type KangurAssignmentRepositoryCreateInput = z.infer<
   typeof kangurAssignmentRepositoryCreateInputSchema
 >;
@@ -599,57 +601,3 @@ export const kangurAssignmentListQuerySchema = z.object({
   includeArchived: z.boolean().default(false),
 });
 export type KangurAssignmentListQuery = z.infer<typeof kangurAssignmentListQuerySchema>;
-
-// --- Missing constants and helpers ---
-export const KANGUR_BASE_PATH = '/kangur';
-export const KANGUR_MAIN_PAGE_KEY = 'Game';
-export const KANGUR_EMBED_QUERY_PARAM = 'kangur';
-export const KANGUR_EMBED_BASE_PATH_PREFIX = '__kangur_embed__:';
-export const KANGUR_INTERNAL_QUERY_PARAM_KEYS = ['__kangur_embed__', '__kangur_token__'];
-
-export const normalizeKangurHostPath = (path: string): string => {
-  if (!path) return '/';
-  let normalized = path.trim();
-  if (!normalized.startsWith('/')) normalized = '/' + normalized;
-  return normalized;
-};
-
-export const buildKangurEmbeddedBasePath = (hostPath: string): string =>
-  KANGUR_EMBED_BASE_PATH_PREFIX + normalizeKangurHostPath(hostPath);
-
-export const isKangurEmbeddedBasePath = (path: string): boolean =>
-  path.startsWith(KANGUR_EMBED_BASE_PATH_PREFIX);
-
-export const getKangurEmbeddedHostPath = (embeddedPath: string): string => {
-  if (!isKangurEmbeddedBasePath(embeddedPath)) return embeddedPath;
-  return embeddedPath.replace(KANGUR_EMBED_BASE_PATH_PREFIX, '');
-};
-
-export const normalizeKangurHostPathname = (pathname: string): string => {
-  return pathname.startsWith(KANGUR_BASE_PATH)
-    ? pathname.replace(KANGUR_BASE_PATH, '')
-    : pathname;
-};
-
-export const getKangurPageSlug = (pageKey: string): string => {
-  return pageKey.toLowerCase();
-};
-
-export const appendKangurUrlParams = (
-  href: string,
-  params: Record<string, string | number | boolean | null | undefined>
-): string => {
-  try {
-    const parsed = new URL(href, 'https://kangur.local');
-    Object.entries(params).forEach(([key, value]) => {
-      if (value === null || value === undefined || value === '') {
-        parsed.searchParams.delete(key);
-        return;
-      }
-      parsed.searchParams.set(key, String(value));
-    });
-    return parsed.pathname + parsed.search + parsed.hash;
-  } catch {
-    return href;
-  }
-};

@@ -36,7 +36,7 @@ import {
   resolveBaseConnectionContext,
   resolveCatalogLanguageContext,
   resolvePriceGroupContext,
-} from '@/features/integrations/server-context';
+} from '@/features/integrations/services/imports/base-import-service-context';
 import {
   BASE_IMPORT_HEARTBEAT_EVERY_ITEMS,
   BASE_IMPORT_LEASE_MS,
@@ -48,7 +48,7 @@ import {
   resolveMode,
   shouldReuseIdempotentRun,
   toStringId,
-} from '@/features/integrations/server-shared';
+} from '@/features/integrations/services/imports/base-import-service-shared';
 import { getCatalogRepository } from '@/shared/lib/products/services/catalog-repository';
 import { getCatalogParameterLinks } from '@/features/integrations/services/imports/parameter-import/link-map-repository';
 import { getParameterRepository } from '@/shared/lib/products/services/parameter-repository';

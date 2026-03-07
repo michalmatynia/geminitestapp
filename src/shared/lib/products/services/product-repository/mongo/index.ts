@@ -1,6 +1,3 @@
- 
- 
-
 import 'server-only';
 
 import { Collection } from 'mongodb';

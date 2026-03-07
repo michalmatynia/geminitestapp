@@ -3,7 +3,6 @@
 import React from 'react';
 
 import { cn } from '@/shared/utils';
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { useFolderTreeProfile } from '@/shared/hooks/use-folder-tree-profile';
 import { resolveFolderTreeSearchConfig } from '@/shared/utils/folder-tree-profiles-v2';
 
@@ -28,21 +27,17 @@ import {
   DocumentRelationSearchUiProvider,
   type DocumentRelationSearchUiContextValue,
 } from './DocumentRelationSearchUiContext';
+import {
+  DocumentRelationSearchRuntimeContext,
+  type DocumentRelationSearchRuntimeValue,
+  useDocumentRelationSearchRuntime,
+} from './DocumentRelationSearchRuntimeContext';
 import { RelationTreeBrowser } from './RelationTreeBrowser';
+import {
+  RelationTreeBrowserRuntimeContext,
+  type RelationTreeBrowserRuntimeValue,
+} from './RelationTreeBrowserRuntimeContext';
 import type { RelationTreeInstance } from '../types';
-
-type DocumentRelationSearchRuntimeValue = {
-  relationTreeInstance: RelationTreeInstance;
-};
-
-const {
-  Context: DocumentRelationSearchRuntimeContext,
-  useStrictContext: useDocumentRelationSearchRuntime,
-} = createStrictContext<DocumentRelationSearchRuntimeValue>({
-  hookName: 'useDocumentRelationSearchRuntime',
-  providerName: 'DocumentRelationSearchRuntimeProvider',
-  displayName: 'DocumentRelationSearchRuntimeContext',
-});
 
 function DocumentRelationSearchInner(): React.JSX.Element {
   const { relationTreeInstance } = useDocumentRelationSearchRuntime();
@@ -69,6 +64,32 @@ function DocumentRelationSearchInner(): React.JSX.Element {
     setDocumentSearchQuery('');
   }, [documentSearchQuery, relationTreeSearchEnabled, setDocumentSearchQuery]);
 
+  const relationTreeBrowserRuntimeValue = React.useMemo(
+    (): RelationTreeBrowserRuntimeValue => ({
+      instance: relationTreeInstance,
+      nodes: relationTreeNodes,
+      lookup: relationTreeLookup,
+      isLocked,
+      selectedFileIds,
+      onToggleFileSelection: toggleFileSelection,
+      onLinkFile,
+      onPreviewFile: setPreviewFileId,
+      searchQuery: relationTreeSearchEnabled ? documentSearchQuery : '',
+    }),
+    [
+      documentSearchQuery,
+      isLocked,
+      onLinkFile,
+      relationTreeInstance,
+      relationTreeLookup,
+      relationTreeNodes,
+      relationTreeSearchEnabled,
+      selectedFileIds,
+      setPreviewFileId,
+      toggleFileSelection,
+    ]
+  );
+
   return (
     <>
       <div className='flex flex-col overflow-hidden rounded-md border border-border/60 bg-card/20'>
@@ -76,28 +97,14 @@ function DocumentRelationSearchInner(): React.JSX.Element {
 
         {showFiltersBar && <FilterBar />}
 
-        <SearchBar searchEnabled={relationTreeSearchEnabled} />
+        <SearchBar />
 
         <BulkActionBar />
 
         <div className={cn('overflow-auto', RESULT_HEIGHT_MAP[resultHeight])}>
-          <RelationTreeBrowser
-            instance={relationTreeInstance}
-            mode='link_relations'
-            nodes={relationTreeNodes}
-            lookup={relationTreeLookup}
-            isLocked={isLocked}
-            selectedFileIds={selectedFileIds}
-            onToggleFileSelection={toggleFileSelection}
-            onLinkFile={(fileId): void => {
-              onLinkFile(fileId);
-            }}
-            onPreviewFile={(fileId): void => {
-              setPreviewFileId(fileId);
-            }}
-            searchQuery={relationTreeSearchEnabled ? documentSearchQuery : ''}
-            emptyLabel='No matching files'
-          />
+          <RelationTreeBrowserRuntimeContext.Provider value={relationTreeBrowserRuntimeValue}>
+            <RelationTreeBrowser mode='link_relations' emptyLabel='No matching files' />
+          </RelationTreeBrowserRuntimeContext.Provider>
         </div>
       </div>
 

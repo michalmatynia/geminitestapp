@@ -11,7 +11,12 @@ import type {
   NodeRuntimeResolutionStrategy,
   RuntimeProfileNodeStats,
   RuntimeProfileSummary,
+  RuntimeSideEffectDecision,
+  RuntimeSideEffectPolicy,
+  RuntimeTraceResume,
   RuntimeState,
+  RuntimeHistoryEntry,
+  RuntimeTraceCacheDecision,
   NodeHandler,
 } from '@/shared/contracts/ai-paths-runtime';
 import type { Toast } from '@/shared/contracts/ui';
@@ -70,6 +75,89 @@ export type RuntimeValidationMiddleware = (
   | undefined
   | Promise<RuntimeValidationResult | null | undefined>;
 
+export type RuntimeNodeLifecycleBaseEvent = {
+  runId: string;
+  traceId: string;
+  spanId: string;
+  runStartedAt: string;
+  node: AiNode;
+  iteration: number;
+  attempt: number;
+  runtimeStrategy?: NodeRuntimeResolutionStrategy;
+  runtimeResolutionSource?: NodeRuntimeResolutionSource;
+  runtimeCodeObjectId?: string | null;
+};
+
+export type RuntimeNodeExecutionEvent = RuntimeNodeLifecycleBaseEvent & {
+  nodeInputs: RuntimePortValues;
+  prevOutputs: RuntimePortValues | null;
+};
+
+export type RuntimeNodeStartEvent = RuntimeNodeExecutionEvent;
+
+export type RuntimeNodeFinishEvent = RuntimeNodeExecutionEvent & {
+  nextOutputs: RuntimePortValues;
+  changed: boolean;
+  cached?: boolean;
+  error?: string;
+  cacheDecision?: RuntimeTraceCacheDecision;
+  sideEffectDecision?: RuntimeSideEffectDecision;
+  sideEffectPolicy?: RuntimeSideEffectPolicy;
+  activationHash?: string | null;
+  idempotencyKey?: string | null;
+  effectSourceSpanId?: string | null;
+};
+
+export type RuntimeNodeErrorEvent = RuntimeNodeExecutionEvent & {
+  error: unknown;
+};
+
+export type RuntimeNodeBlockedReason =
+  | 'missing_inputs'
+  | 'flow_control'
+  | 'validation'
+  | 'error'
+  | 'waiting_callback';
+
+export type RuntimeNodeBlockedStatus = 'blocked' | 'waiting_callback';
+
+export type RuntimeNodeBlockedEvent = {
+  runId: string;
+  traceId: string;
+  spanId: string;
+  node: AiNode;
+  iteration: number;
+  attempt: number;
+  reason: RuntimeNodeBlockedReason;
+  status?: RuntimeNodeBlockedStatus;
+  waitingOnPorts?: string[];
+  waitingOnDetails?: Array<Record<string, unknown>>;
+  message?: string;
+  runtimeStrategy?: NodeRuntimeResolutionStrategy;
+  runtimeResolutionSource?: NodeRuntimeResolutionSource;
+  runtimeCodeObjectId?: string | null;
+};
+
+export type RuntimeNodeStatusEvent = {
+  runId: string;
+  traceId: string;
+  spanId: string;
+  node: AiNode;
+  iteration: number;
+  attempt: number;
+  status: RuntimeNodeBlockedStatus;
+  message?: string;
+  waitingOnPorts?: string[];
+  runtimeStrategy?: NodeRuntimeResolutionStrategy;
+  runtimeResolutionSource?: NodeRuntimeResolutionSource;
+  runtimeCodeObjectId?: string | null;
+};
+
+export type RuntimeNodeSuccessEvent = RuntimeNodeExecutionEvent & {
+  outputs: RuntimePortValues;
+  durationMs: number;
+};
+
 export type EvaluateGraphOptions = {
   runId?: string | undefined;
   pathId?: string | undefined;
@@ -85,103 +173,19 @@ export type EvaluateGraphOptions = {
   skipNodeIds?: string[] | undefined;
   seedOutputs?: Record<string, RuntimePortValues> | undefined;
   seedHashes?: Record<string, string> | undefined;
+  seedHashTimestamps?: Record<string, number> | undefined;
+  seedHistory?: Record<string, RuntimeHistoryEntry[]> | undefined;
+  seedRunId?: string | undefined;
+  seedRunStartedAt?: string | undefined;
+  resumeByNodeId?: Record<string, RuntimeTraceResume> | undefined;
   cache?: Map<string, RuntimePortValues> | undefined;
   maxIterations?: number | undefined;
-  onNodeStart?: (event: {
-    runId: string;
-    traceId: string;
-    spanId: string;
-    runStartedAt: string;
-    node: AiNode;
-    nodeInputs: RuntimePortValues;
-    prevOutputs: RuntimePortValues | null;
-    iteration: number;
-    attempt: number;
-    runtimeStrategy?: NodeRuntimeResolutionStrategy;
-    runtimeResolutionSource?: NodeRuntimeResolutionSource;
-    runtimeCodeObjectId?: string | null;
-  }) => Promise<void> | void;
-  onNodeFinish?: (event: {
-    runId: string;
-    traceId: string;
-    spanId: string;
-    runStartedAt: string;
-    node: AiNode;
-    nodeInputs: RuntimePortValues;
-    prevOutputs: RuntimePortValues | null;
-    nextOutputs: RuntimePortValues;
-    changed: boolean;
-    iteration: number;
-    attempt: number;
-    cached?: boolean;
-    error?: string;
-    sideEffectDecision?: string;
-    sideEffectPolicy?: string;
-    activationHash?: string | null;
-    runtimeStrategy?: NodeRuntimeResolutionStrategy;
-    runtimeResolutionSource?: NodeRuntimeResolutionSource;
-    runtimeCodeObjectId?: string | null;
-  }) => Promise<void> | void;
-  onNodeError?: (event: {
-    runId: string;
-    traceId: string;
-    spanId: string;
-    runStartedAt: string;
-    node: AiNode;
-    nodeInputs: RuntimePortValues;
-    prevOutputs: RuntimePortValues | null;
-    error: unknown;
-    iteration: number;
-    attempt: number;
-    runtimeStrategy?: NodeRuntimeResolutionStrategy;
-    runtimeResolutionSource?: NodeRuntimeResolutionSource;
-    runtimeCodeObjectId?: string | null;
-  }) => Promise<void> | void;
-  onNodeBlocked?: (event: {
-    runId: string;
-    traceId: string;
-    spanId: string;
-    node: AiNode;
-    iteration: number;
-    attempt: number;
-    reason: 'missing_inputs' | 'flow_control' | 'validation' | 'error' | 'waiting_callback';
-    status?: 'blocked' | 'waiting_callback';
-    waitingOnPorts?: string[];
-    waitingOnDetails?: Array<Record<string, unknown>>;
-    message?: string;
-    runtimeStrategy?: NodeRuntimeResolutionStrategy;
-    runtimeResolutionSource?: NodeRuntimeResolutionSource;
-    runtimeCodeObjectId?: string | null;
-  }) => Promise<void> | void;
-  onNodeStatus?: (event: {
-    runId: string;
-    traceId: string;
-    spanId: string;
-    node: AiNode;
-    iteration: number;
-    attempt: number;
-    status: 'blocked' | 'waiting_callback';
-    message?: string;
-    waitingOnPorts?: string[];
-    runtimeStrategy?: NodeRuntimeResolutionStrategy;
-    runtimeResolutionSource?: NodeRuntimeResolutionSource;
-    runtimeCodeObjectId?: string | null;
-  }) => Promise<void> | void;
-  onNodeSuccess?: (event: {
-    runId: string;
-    traceId: string;
-    spanId: string;
-    runStartedAt: string;
-    node: AiNode;
-    nodeInputs: RuntimePortValues;
-    outputs: RuntimePortValues;
-    iteration: number;
-    attempt: number;
-    durationMs: number;
-    runtimeStrategy?: NodeRuntimeResolutionStrategy;
-    runtimeResolutionSource?: NodeRuntimeResolutionSource;
-    runtimeCodeObjectId?: string | null;
-  }) => Promise<void> | void;
+  onNodeStart?: (event: RuntimeNodeStartEvent) => Promise<void> | void;
+  onNodeFinish?: (event: RuntimeNodeFinishEvent) => Promise<void> | void;
+  onNodeError?: (event: RuntimeNodeErrorEvent) => Promise<void> | void;
+  onNodeBlocked?: (event: RuntimeNodeBlockedEvent) => Promise<void> | void;
+  onNodeStatus?: (event: RuntimeNodeStatusEvent) => Promise<void> | void;
+  onNodeSuccess?: (event: RuntimeNodeSuccessEvent) => Promise<void> | void;
   onIteration?: (event: {
     runId: string;
     iteration: number;

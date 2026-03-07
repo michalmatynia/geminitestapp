@@ -2,7 +2,11 @@ import Link from 'next/link';
 import { useMemo } from 'react';
 
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
-import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
+import {
+  KangurButton,
+  KangurDivider,
+  KangurPanel,
+} from '@/features/kangur/ui/design/primitives';
 import {
   buildKangurAssignmentHref,
   getKangurAssignmentActionLabel,
@@ -42,11 +46,7 @@ export function KangurAssignmentSpotlight({
         : 'Priorytet niski';
 
   return (
-    <KangurPanel
-      className='w-full border-white/78 bg-white/58'
-      padding='md'
-      variant='elevated'
-    >
+    <KangurPanel className='w-full border-white/78 bg-white/58' padding='md' variant='elevated'>
       <div className='px-3 pt-2 sm:px-4'>
         <div className='text-[1.9rem] font-extrabold tracking-tight text-[#3d4f85] sm:text-[2rem]'>
           Zadanie od rodzica
@@ -81,8 +81,14 @@ export function KangurAssignmentSpotlight({
           </div>
         </div>
 
-        <div className='mt-5 border-t border-[#ebebf0] pt-4 text-sm text-[#7d86a7]'>
-          {assignment.progress.summary}
+        <div className='mt-5 space-y-4 text-sm text-[#7d86a7]'>
+          <KangurDivider
+            accent='slate'
+            className='w-full'
+            data-testid='kangur-assignment-spotlight-divider'
+            size='sm'
+          />
+          <div>{assignment.progress.summary}</div>
         </div>
 
         <KangurButton

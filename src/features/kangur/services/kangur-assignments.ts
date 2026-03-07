@@ -116,7 +116,11 @@ const evaluatePracticeAssignment = (
   const meetsAccuracy =
     target.minAccuracyPercent === null || bestAccuracy >= target.minAccuracyPercent;
   const status =
-    attemptsCompleted === 0 ? 'not_started' : meetsAttempts && meetsAccuracy ? 'completed' : 'in_progress';
+    attemptsCompleted === 0
+      ? 'not_started'
+      : meetsAttempts && meetsAccuracy
+        ? 'completed'
+        : 'in_progress';
 
   return {
     status,
@@ -124,7 +128,8 @@ const evaluatePracticeAssignment = (
     attemptsCompleted: Math.min(attemptsCompleted, attemptsRequired),
     attemptsRequired,
     lastActivityAt: matchingScores[0]?.created_date ?? null,
-    completedAt: status === 'completed' ? (matchingScores[0]?.created_date ?? assignment.updatedAt) : null,
+    completedAt:
+      status === 'completed' ? (matchingScores[0]?.created_date ?? assignment.updatedAt) : null,
     summary:
       target.minAccuracyPercent === null
         ? `Sesje po przydziale: ${attemptsCompleted}/${attemptsRequired}.`

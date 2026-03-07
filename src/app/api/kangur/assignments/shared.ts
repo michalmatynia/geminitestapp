@@ -19,7 +19,9 @@ import type {
 } from '@/shared/contracts/kangur';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
 
-export const resolveAssignmentActor = async (request: NextRequest): Promise<{
+export const resolveAssignmentActor = async (
+  request: NextRequest
+): Promise<{
   learnerKey: string;
   learnerName: string | null;
   learnerEmail: string | null;

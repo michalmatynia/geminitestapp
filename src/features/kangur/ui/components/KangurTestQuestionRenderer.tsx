@@ -2,9 +2,12 @@ import React from 'react';
 import { CheckCircle, XCircle } from 'lucide-react';
 
 import {
-  KANGUR_ACCENT_STYLES,
-  KANGUR_OPTION_CARD_CLASSNAME,
-} from '@/features/kangur/ui/design/tokens';
+  KangurInfoCard,
+  KangurOptionCardButton,
+  KangurStatusChip,
+} from '@/features/kangur/ui/design/primitives';
+import { useOptionalKangurTestSuiteRuntime } from '@/features/kangur/ui/context/KangurTestSuiteRuntimeContext';
+import { KANGUR_ACCENT_STYLES, type KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/shared/utils';
 import type { KangurTestQuestion } from '@/shared/contracts/kangur-tests';
 import { KangurQuestionIllustrationRenderer } from './KangurQuestionIllustrationRenderer';
@@ -26,20 +29,22 @@ export function KangurTestQuestionRenderer({
   questionIndex,
   totalQuestions,
 }: Props): React.JSX.Element {
+  const runtime = useOptionalKangurTestSuiteRuntime();
+  const resolvedTotalQuestions = totalQuestions ?? runtime?.totalQuestions;
   const isAnswered = selectedLabel !== null;
   const isCorrect = selectedLabel === question.correctChoiceLabel;
 
   return (
     <div className='space-y-4'>
       {/* Header */}
-      {questionIndex !== undefined && totalQuestions !== undefined ? (
+      {questionIndex !== undefined && resolvedTotalQuestions !== undefined ? (
         <div className='flex items-center justify-between'>
           <span className='text-xs font-semibold uppercase tracking-wide text-gray-400'>
-            Question {questionIndex + 1} / {totalQuestions}
+            Question {questionIndex + 1} / {resolvedTotalQuestions}
           </span>
-          <span className='rounded-full border border-gray-200 px-2 py-0.5 text-xs font-bold text-gray-600'>
+          <KangurStatusChip accent='slate' size='sm'>
             {question.pointValue} {question.pointValue === 1 ? 'pt' : 'pts'}
-          </span>
+          </KangurStatusChip>
         </div>
       ) : null}
 
@@ -48,10 +53,7 @@ export function KangurTestQuestionRenderer({
 
       {/* Illustration */}
       {question.illustration.type !== 'none' ? (
-        <KangurQuestionIllustrationRenderer
-          illustration={question.illustration}
-          className='my-2'
-        />
+        <KangurQuestionIllustrationRenderer illustration={question.illustration} className='my-2' />
       ) : null}
 
       {/* Choices */}
@@ -60,47 +62,43 @@ export function KangurTestQuestionRenderer({
           const isSelected = selectedLabel === choice.label;
           const isChoiceCorrect = choice.label === question.correctChoiceLabel;
 
-          let cardClassName = cn(
-            'border-slate-200/80 text-slate-700',
-            KANGUR_ACCENT_STYLES.slate.hoverCard
-          );
+          let accent: KangurAccent = 'slate';
+          let emphasis: 'neutral' | 'accent' = 'neutral';
+          let cardClassName = 'text-slate-700';
           let badgeClassName = KANGUR_ACCENT_STYLES.slate.badge;
 
           if (isSelected && !showAnswer) {
-            cardClassName = cn(
-              KANGUR_ACCENT_STYLES.amber.activeCard,
-              KANGUR_ACCENT_STYLES.amber.activeText
-            );
+            accent = 'amber';
+            emphasis = 'accent';
+            cardClassName = KANGUR_ACCENT_STYLES.amber.activeText;
             badgeClassName = KANGUR_ACCENT_STYLES.amber.badge;
           } else if (showAnswer && isChoiceCorrect) {
-            cardClassName = cn(
-              KANGUR_ACCENT_STYLES.emerald.activeCard,
-              KANGUR_ACCENT_STYLES.emerald.activeText
-            );
+            accent = 'emerald';
+            emphasis = 'accent';
+            cardClassName = KANGUR_ACCENT_STYLES.emerald.activeText;
             badgeClassName = KANGUR_ACCENT_STYLES.emerald.badge;
           } else if (showAnswer && isSelected && !isChoiceCorrect) {
-            cardClassName = cn(
-              KANGUR_ACCENT_STYLES.rose.activeCard,
-              KANGUR_ACCENT_STYLES.rose.activeText
-            );
+            accent = 'rose';
+            emphasis = 'accent';
+            cardClassName = KANGUR_ACCENT_STYLES.rose.activeText;
             badgeClassName = KANGUR_ACCENT_STYLES.rose.badge;
           }
 
           return (
-            <button
+            <KangurOptionCardButton
+              accent={accent}
               key={choice.label}
               type='button'
               onClick={(): void => {
                 if (!showAnswer) onSelect(choice.label);
               }}
-              disabled={showAnswer}
               data-testid={`kangur-test-question-choice-${index}`}
               className={cn(
-                KANGUR_OPTION_CARD_CLASSNAME,
                 'flex items-center gap-3 rounded-[24px] px-4 py-3 text-left text-sm font-semibold transition-all',
                 cardClassName,
                 showAnswer ? 'cursor-default' : 'cursor-pointer'
               )}
+              emphasis={emphasis}
             >
               <span
                 className={cn(
@@ -117,30 +115,31 @@ export function KangurTestQuestionRenderer({
               {showAnswer && isSelected && !isChoiceCorrect ? (
                 <XCircle className='size-4 shrink-0 text-rose-500' />
               ) : null}
-            </button>
+            </KangurOptionCardButton>
           );
         })}
       </div>
 
       {/* Explanation */}
       {showAnswer && question.explanation ? (
-        <div className='rounded-xl border border-indigo-100 bg-indigo-50 p-3'>
+        <KangurInfoCard accent='indigo' className='rounded-[22px]' padding='md' tone='accent'>
           <div className='mb-1 text-xs font-bold uppercase tracking-wide text-indigo-600'>
             Explanation
           </div>
           <p className='text-sm text-indigo-900'>{question.explanation}</p>
-        </div>
+        </KangurInfoCard>
       ) : null}
 
       {/* Result indicator */}
       {showAnswer && isAnswered ? (
-        <div
+        <KangurInfoCard
+          accent={isCorrect ? 'emerald' : 'rose'}
           className={cn(
-            'flex items-center gap-2 rounded-xl p-3 text-sm font-semibold',
-            isCorrect
-              ? 'bg-emerald-50 text-emerald-700'
-              : 'bg-rose-50 text-rose-700'
+            'flex items-center gap-2 rounded-[22px] text-sm font-semibold',
+            isCorrect ? 'text-emerald-700' : 'text-rose-700'
           )}
+          padding='md'
+          tone='accent'
         >
           {isCorrect ? (
             <>
@@ -153,7 +152,7 @@ export function KangurTestQuestionRenderer({
               Incorrect. Correct answer: {question.correctChoiceLabel}
             </>
           )}
-        </div>
+        </KangurInfoCard>
       ) : null}
     </div>
   );

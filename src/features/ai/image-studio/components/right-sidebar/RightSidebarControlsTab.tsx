@@ -24,7 +24,10 @@ import { useSlotsActions, useSlotsState } from '../../context/SlotsContext';
 import { useUiActions, useUiState } from '../../context/UiContext';
 import { useAiPathsObjectAnalysis } from '../../hooks/useAiPathsObjectAnalysis';
 import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/utils/image-src';
-import { AiPathAnalysisTriggerSection } from '../analysis/sections/AiPathAnalysisTriggerSection';
+import {
+  AiPathAnalysisTriggerProvider,
+  AiPathAnalysisTriggerSection,
+} from '../analysis/sections/AiPathAnalysisTriggerSection';
 import { GenerationToolbar } from '../GenerationToolbar';
 import { LabeledSlider } from '../LabeledSlider';
 import { StudioCard } from '../StudioCard';
@@ -416,7 +419,9 @@ export const RightSidebarControlsTab = React.memo(
               <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>
                 AI Object Analysis
               </div>
-              <AiPathAnalysisTriggerSection variant='compact' analysis={aiPathsAnalysis} />
+              <AiPathAnalysisTriggerProvider value={aiPathsAnalysis}>
+                <AiPathAnalysisTriggerSection variant='compact' />
+              </AiPathAnalysisTriggerProvider>
             </div>
 
             <div className='rounded border border-border/60 bg-card/30 p-3'>

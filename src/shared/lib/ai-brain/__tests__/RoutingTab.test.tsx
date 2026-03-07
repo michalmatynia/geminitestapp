@@ -2,6 +2,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
+import { useBrainRoutingActionsContext } from '@/shared/lib/ai-brain/components/BrainRoutingContext';
 import { RoutingTab } from '@/shared/lib/ai-brain/components/RoutingTab';
 import { useBrain } from '@/shared/lib/ai-brain/context/BrainContext';
 import {
@@ -16,24 +17,24 @@ vi.mock('@/shared/lib/ai-brain/context/BrainContext', () => ({
 }));
 
 vi.mock('@/shared/lib/ai-brain/components/BrainRoutingTree', () => ({
-  BrainRoutingTree: ({
-    onToggleEnabled,
-    onEdit,
-  }: {
-    onToggleEnabled: (capability: string, enabled: boolean) => void;
-    onEdit: (capability: string) => void;
-  }) => (
-    <div>
-      <div>Prompt Engine</div>
-      <div>Prompt Exploder AI</div>
-      <button type='button' onClick={() => onToggleEnabled('prompt_engine.prompt_exploder', false)}>
-        Quick Toggle Route
-      </button>
-      <button type='button' onClick={() => onEdit('prompt_engine.prompt_exploder')}>
-        Edit Route
-      </button>
-    </div>
-  ),
+  BrainRoutingTree: () => {
+    const { onToggleEnabled, onEdit } = useBrainRoutingActionsContext();
+    return (
+      <div>
+        <div>Prompt Engine</div>
+        <div>Prompt Exploder AI</div>
+        <button
+          type='button'
+          onClick={() => onToggleEnabled('prompt_engine.prompt_exploder', false)}
+        >
+          Quick Toggle Route
+        </button>
+        <button type='button' onClick={() => onEdit('prompt_engine.prompt_exploder')}>
+          Edit Route
+        </button>
+      </div>
+    );
+  },
 }));
 
 vi.mock('@/shared/ui', () => ({

@@ -87,8 +87,7 @@ export const resolvePortablePathEnvelopeVerificationAuditSinkBootstrapSettingsFr
   const profile =
     resolvePortablePathEnvelopeVerificationAuditSinkProfileOverrideFromEnvironment(
       env[PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_PROFILE_ENV]
-    ) ??
-    resolvePortablePathEnvelopeVerificationAuditSinkProfileFromEnvironment(env['NODE_ENV']);
+    ) ?? resolvePortablePathEnvelopeVerificationAuditSinkProfileFromEnvironment(env['NODE_ENV']);
   const healthPolicy =
     resolvePortablePathEnvelopeVerificationAuditSinkHealthPolicyFromEnvironment(
       env[PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_POLICY_ENV]

@@ -117,7 +117,8 @@ export function RunTimeline(props: {
 
   const nodeEntryCount = React.useMemo(
     (): number =>
-      timelineItems.filter((item: RuntimeTraceTimelineItem): boolean => item.kind === 'node').length,
+      timelineItems.filter((item: RuntimeTraceTimelineItem): boolean => item.kind === 'node')
+        .length,
     [timelineItems]
   );
 
@@ -552,6 +553,18 @@ export function RunTimeline(props: {
                       <div className='mt-1 text-sm text-white'>{item.label}</div>
                       {item.description ? (
                         <div className='text-xs text-gray-400'>{item.description}</div>
+                      ) : null}
+                      {item.details && item.details.length > 0 ? (
+                        <div className='mt-2 flex flex-wrap gap-1.5 text-[10px] text-gray-300'>
+                          {item.details.map((detail: string) => (
+                            <span
+                              key={`${item.id}-${detail}`}
+                              className='rounded-full border border-border/50 bg-black/20 px-2 py-px font-mono'
+                            >
+                              {detail}
+                            </span>
+                          ))}
+                        </div>
                       ) : null}
                       {item.meta ? (
                         <Alert variant='error' className='mt-2 px-2 py-1 text-[11px]'>

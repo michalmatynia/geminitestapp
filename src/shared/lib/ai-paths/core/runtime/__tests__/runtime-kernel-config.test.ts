@@ -27,10 +27,9 @@ describe('runtime-kernel-config helpers', () => {
   });
 
   it('parses runtime-kernel resolver ids', () => {
-    expect(parseRuntimeKernelCodeObjectResolverIds(' resolver.primary , resolver.fallback ')).toEqual([
-      'resolver.primary',
-      'resolver.fallback',
-    ]);
+    expect(
+      parseRuntimeKernelCodeObjectResolverIds(' resolver.primary , resolver.fallback ')
+    ).toEqual(['resolver.primary', 'resolver.fallback']);
   });
 
   it('normalizes runtime-kernel source labels', () => {

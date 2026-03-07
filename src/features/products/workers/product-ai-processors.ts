@@ -19,10 +19,7 @@ import {
 } from '@/shared/lib/db/services/database-backup-scheduler';
 import type { ImageFileRecord } from '@/shared/lib/files/services/image-file-service';
 import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
-import {
-  listBaseListingsForSync,
-  syncBaseImagesForListing,
-} from '@/features/integrations/server';
+import { listBaseListingsForSync, syncBaseImagesForListing } from '@/features/integrations/server';
 import { getProductRepository } from '@/features/products/server';
 import { buildImageBase64Slots } from '@/shared/lib/products/services/image-base64';
 import type { ProductAiJobRecord } from '@/shared/contracts/jobs';

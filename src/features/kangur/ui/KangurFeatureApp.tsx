@@ -7,7 +7,8 @@ import { useEffect } from 'react';
 import { PageNotFound } from '@/features/kangur/ui/components/PageNotFound';
 import UserNotRegisteredError from '@/features/kangur/ui/components/UserNotRegisteredError';
 import { KANGUR_MAIN_PAGE, kangurPages } from '@/features/kangur/config/pages';
-import { resolveKangurPageKey } from '@/shared/contracts/kangur';
+import { resolveKangurPageKey } from '@/features/kangur/config/routing';
+import { KangurCmsRuntimeScreen } from '@/features/kangur/cms-builder/KangurCmsRuntimeScreen';
 import { KangurAuthProvider, useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { KangurProgressSyncProvider } from '@/features/kangur/ui/context/KangurProgressSyncProvider';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
@@ -58,19 +59,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
     return <PageNotFound />;
   }
 
-  return (
-    <AnimatePresence mode='wait'>
-      <motion.div
-        key={routeTransitionKey}
-        {...routeContentMotionProps}
-        className='min-h-screen'
-        data-route-transition-key={routeTransitionKey}
-        data-testid='kangur-route-content'
-      >
-        <ResolvedPage />
-      </motion.div>
-    </AnimatePresence>
-  );
+  return <KangurCmsRuntimeScreen pageKey={resolvedPageKey} fallback={<ResolvedPage />} />;
 };
 
 export function KangurFeatureApp(): JSX.Element {

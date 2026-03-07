@@ -220,14 +220,20 @@ export const planHierarchySchema = z.object({
       description: z.string().optional(),
       successCriteria: z.string().nullable().optional(),
       priority: z.number().nullable().optional(),
-      dependsOn: z.union([z.array(z.number()), z.array(z.string())]).nullable().optional(),
+      dependsOn: z
+        .union([z.array(z.number()), z.array(z.string())])
+        .nullable()
+        .optional(),
       subgoals: z.array(
         z.object({
           id: z.string(),
           title: z.string(),
           successCriteria: z.string().nullable().optional(),
           priority: z.number().nullable().optional(),
-          dependsOn: z.union([z.array(z.number()), z.array(z.string())]).nullable().optional(),
+          dependsOn: z
+            .union([z.array(z.number()), z.array(z.string())])
+            .nullable()
+            .optional(),
           steps: z.array(
             z.object({
               title: z.string(),
@@ -236,7 +242,10 @@ export const planHierarchySchema = z.object({
               successCriteria: z.string().nullable().optional(),
               phase: z.string().nullable().optional(),
               priority: z.number().nullable().optional(),
-              dependsOn: z.union([z.array(z.number()), z.array(z.string())]).nullable().optional(),
+              dependsOn: z
+                .union([z.array(z.number()), z.array(z.string())])
+                .nullable()
+                .optional(),
             })
           ),
         })

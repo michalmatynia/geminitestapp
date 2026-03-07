@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import Link from 'next/link';
 
 import { JobsProvider, useJobsActions, useJobsState } from '@/shared/lib/jobs/context/JobsContext';
@@ -22,6 +23,10 @@ import {
   ProductListingJobsPanelViewProvider,
   useProductListingJobsPanelView,
 } from './context/ProductListingJobsPanelViewContext';
+import {
+  JobTableActionsRuntimeProvider,
+  JobTablePanelRuntimeProvider,
+} from './context/JobTableRuntimeContext';
 import { ExportJobDetailModal } from './ExportJobDetailModal';
 import { JobTable } from './JobTable';
 
@@ -34,6 +39,7 @@ function ProductListingJobsPanelContent(): React.JSX.Element {
   const {
     listingJobsRefreshing: isRefreshing,
     listingJobsError: error,
+    listingJobs,
     traderaQueueHealth,
     traderaQueueHealthLoading,
     query,
@@ -46,6 +52,8 @@ function ProductListingJobsPanelContent(): React.JSX.Element {
     setPage,
     setPageSize,
     setSelectedListing,
+    confirmCancelListing,
+    isCancellingListing,
     ConfirmationModal,
   } = useJobsActions();
 
@@ -203,16 +211,55 @@ function ProductListingJobsPanelContent(): React.JSX.Element {
     </div>
   );
 
+  const handleViewDetails = React.useCallback(
+    (id: string): void => {
+      const row = listingJobs
+        .flatMap((job) => job.listings.map((listing) => ({ job, listing })))
+        .find((candidate) => candidate.listing.id === id);
+      if (row) {
+        setSelectedListing(row);
+      }
+    },
+    [listingJobs, setSelectedListing]
+  );
+
+  const handleCancel = React.useCallback(
+    (id: string): void => {
+      const row = listingJobs
+        .flatMap((job) => job.listings.map((listing) => ({ job, listing })))
+        .find((candidate) => candidate.listing.id === id);
+      if (row) {
+        confirmCancelListing(row.job.productId, row.listing.id);
+      }
+    },
+    [confirmCancelListing, listingJobs]
+  );
+
+  const panelRuntimeValue = React.useMemo(
+    () => ({
+      header,
+      alerts,
+      filters,
+      footer,
+    }),
+    [alerts, filters, footer, header]
+  );
+  const actionsRuntimeValue = React.useMemo(
+    () => ({
+      onViewDetails: handleViewDetails,
+      onCancel: handleCancel,
+      isCancelling: isCancellingListing,
+    }),
+    [handleCancel, handleViewDetails, isCancellingListing]
+  );
+
   return (
     <>
-      <JobTable
-        data={tableData}
-        isLoading={isLoading}
-        header={header}
-        alerts={alerts}
-        filters={filters}
-        footer={footer}
-      />
+      <JobTablePanelRuntimeProvider value={panelRuntimeValue}>
+        <JobTableActionsRuntimeProvider value={actionsRuntimeValue}>
+          <JobTable data={tableData} isLoading={isLoading} />
+        </JobTableActionsRuntimeProvider>
+      </JobTablePanelRuntimeProvider>
       <ExportJobDetailModal
         isOpen={Boolean(selectedListing)}
         onClose={() => setSelectedListing(null)}

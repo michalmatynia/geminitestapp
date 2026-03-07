@@ -1,8 +1,4 @@
-import type {
-  AiNode,
-  NodePortContract,
-  NodePortValueKind,
-} from '@/shared/contracts/ai-paths';
+import type { AiNode, NodePortContract, NodePortValueKind } from '@/shared/contracts/ai-paths';
 import { palette } from '../definitions';
 import { normalizePortName } from './graph.ports';
 
@@ -27,14 +23,14 @@ palette.forEach((definition): void => {
     const existing = definitionInputContractsByType.get(definition.type) ?? {};
     definitionInputContractsByType.set(definition.type, {
       ...existing,
-      ...(definition.inputContracts),
+      ...definition.inputContracts,
     });
   }
   if (definition.outputContracts) {
     const existingOutputs = definitionOutputContractsByType.get(definition.type) ?? {};
     definitionOutputContractsByType.set(definition.type, {
       ...existingOutputs,
-      ...(definition.outputContracts),
+      ...definition.outputContracts,
     });
   }
 });
@@ -58,9 +54,8 @@ const resolvePortContract = (
   return null;
 };
 
-const normalizeNodePortCardinality = (
-  value: unknown
-): NodePortCardinality | null => (value === 'many' ? 'many' : value === 'single' ? 'single' : null);
+const normalizeNodePortCardinality = (value: unknown): NodePortCardinality | null =>
+  value === 'many' ? 'many' : value === 'single' ? 'single' : null;
 
 const normalizePortValueKind = (value: unknown): NodePortValueKind => {
   switch (value) {
@@ -95,8 +90,7 @@ const buildResolvedNodePortContract = (args: {
   cardinalitySource: ResolvedNodePortCardinalitySource;
 }): ResolvedNodePortContract => ({
   required: args.contract ? args.contract.required !== false : false,
-  cardinality:
-    normalizeNodePortCardinality(args.contract?.cardinality) ?? args.cardinalityFallback,
+  cardinality: normalizeNodePortCardinality(args.contract?.cardinality) ?? args.cardinalityFallback,
   cardinalitySource:
     normalizeNodePortCardinality(args.contract?.cardinality) !== null
       ? args.source === 'runtime'
@@ -169,10 +163,7 @@ export const getResolvedNodeInputPortContract = (
     }
   }
 
-  const runtimeContract = resolvePortContract(
-    node.config?.runtime?.inputContracts,
-    portName
-  );
+  const runtimeContract = resolvePortContract(node.config?.runtime?.inputContracts, portName);
   if (runtimeContract) {
     return buildResolvedNodePortContract({
       contract: runtimeContract,
@@ -181,10 +172,7 @@ export const getResolvedNodeInputPortContract = (
       cardinalitySource,
     });
   }
-  const nodeContract = resolvePortContract(
-    node.inputContracts,
-    portName
-  );
+  const nodeContract = resolvePortContract(node.inputContracts, portName);
   if (nodeContract) {
     return buildResolvedNodePortContract({
       contract: nodeContract,
@@ -224,10 +212,7 @@ export const getResolvedNodeOutputPortContract = (
   node: AiNode,
   portName: string
 ): ResolvedNodePortContract => {
-  const nodeContract = resolvePortContract(
-    node.outputContracts,
-    portName
-  );
+  const nodeContract = resolvePortContract(node.outputContracts, portName);
   if (nodeContract) {
     return buildResolvedNodePortContract({
       contract: nodeContract,

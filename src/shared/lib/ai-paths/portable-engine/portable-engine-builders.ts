@@ -1,18 +1,9 @@
 import { z } from 'zod';
 
-import {
-  type PathConfig,
-  pathConfigSchema
-} from '@/shared/contracts/ai-paths';
-import {
-  canvasSemanticDocumentSchema
-} from '@/shared/contracts/ai-paths-semantic-grammar';
-import {
-  serializePathConfigToSemanticCanvas
-} from '@/shared/lib/ai-paths/core/semantic-grammar';
-import {
-  withPortableNodeCodeObjectManifest
-} from './node-code-objects-v2-manifest';
+import { type PathConfig, pathConfigSchema } from '@/shared/contracts/ai-paths';
+import { canvasSemanticDocumentSchema } from '@/shared/contracts/ai-paths-semantic-grammar';
+import { serializePathConfigToSemanticCanvas } from '@/shared/lib/ai-paths/core/semantic-grammar';
+import { withPortableNodeCodeObjectManifest } from './node-code-objects-v2-manifest';
 import { buildPortablePathJsonSchemaHash } from './portable-engine-integrity-support';
 
 import {

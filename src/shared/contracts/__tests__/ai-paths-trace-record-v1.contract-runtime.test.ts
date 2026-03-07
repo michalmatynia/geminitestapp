@@ -41,6 +41,16 @@ describe('ai-paths trace record v1 runtime contract', () => {
       inputHash: 'hash-2',
       correlationIds: ['corr-1'],
       cacheDecision: 'miss',
+      sideEffectPolicy: 'per_activation',
+      sideEffectDecision: 'skipped_duplicate',
+      effectSourceSpanId: 'node-a:1:1',
+      resumeMode: 'resume',
+      resumeDecision: 'reused',
+      resumeReason: 'completed_upstream',
+      resumeSourceTraceId: 'run-0',
+      resumeSourceSpanId: 'node-a:1:1',
+      resumeSourceRunStartedAt: '2026-03-07T05:00:00.000Z',
+      resumeSourceStatus: 'completed',
       branch: {
         route: 'default',
         fromPort: 'result',
@@ -53,6 +63,9 @@ describe('ai-paths trace record v1 runtime contract', () => {
       spanId: 'node-a:2:1',
       attempt: 2,
       cacheDecision: 'miss',
+      sideEffectDecision: 'skipped_duplicate',
+      effectSourceSpanId: 'node-a:1:1',
+      resumeDecision: 'reused',
     });
   });
 
@@ -78,6 +91,23 @@ describe('ai-paths trace record v1 runtime contract', () => {
           finishedAt: new Date().toISOString(),
           status: 'completed',
           correlationIds: ['corr-1'],
+          cache: {
+            decision: 'seed',
+          },
+          effect: {
+            policy: 'per_activation',
+            decision: 'skipped_duplicate',
+            sourceSpanId: 'node-a:1:1',
+          },
+          resume: {
+            mode: 'resume',
+            decision: 'reused',
+            reason: 'completed_upstream',
+            sourceTraceId: 'run-1',
+            sourceSpanId: 'node-a:1:1',
+            sourceRunStartedAt: '2026-03-07T06:00:00.000Z',
+            sourceStatus: 'completed',
+          },
         },
       ],
       links: [

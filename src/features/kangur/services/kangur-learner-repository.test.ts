@@ -50,10 +50,7 @@ vi.mock('@/shared/lib/ai-brain/server', () => ({
   upsertStoredSettingValue: upsertStoredSettingValueMock,
 }));
 
-import {
-  createKangurLearner,
-  listKangurLearnersByOwner,
-} from './kangur-learner-repository';
+import { createKangurLearner, listKangurLearnersByOwner } from './kangur-learner-repository';
 
 describe('kangur learner repository mongo mode', () => {
   const learnersCollection = {

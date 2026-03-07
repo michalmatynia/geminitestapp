@@ -13,6 +13,9 @@ const getPathRunRepositoryMock = vi.hoisted(() => vi.fn());
 
 const deletePathRunWithRepositoryMock = vi.hoisted(() => vi.fn());
 const deletePathRunsWithRepositoryMock = vi.hoisted(() => vi.fn());
+const recoverStaleRunningRunsMock = vi.hoisted(() => vi.fn());
+const resolveAiPathsStaleRunningCleanupIntervalMsMock = vi.hoisted(() => vi.fn());
+const resolveAiPathsStaleRunningMaxAgeMsMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/features/ai/ai-paths/server', () => ({
   requireAiPathsAccess: requireAiPathsAccessMock,
@@ -20,21 +23,16 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
   enforceAiPathsActionRateLimit: enforceAiPathsActionRateLimitMock,
   assertAiPathRunAccess: assertAiPathRunAccessMock,
   canAccessGlobalAiPathRuns: canAccessGlobalAiPathRunsMock,
-}));
-
-vi.mock('@/features/ai/ai-paths/services/path-run-repository', () => ({
-  getPathRunRepository: getPathRunRepositoryMock,
-}));
-
-vi.mock('@/features/ai/ai-paths/services/path-run-service', () => ({
   deletePathRunWithRepository: deletePathRunWithRepositoryMock,
   deletePathRunsWithRepository: deletePathRunsWithRepositoryMock,
+  recoverStaleRunningRuns: recoverStaleRunningRunsMock,
+  resolveAiPathsStaleRunningCleanupIntervalMs:
+    resolveAiPathsStaleRunningCleanupIntervalMsMock,
+  resolveAiPathsStaleRunningMaxAgeMs: resolveAiPathsStaleRunningMaxAgeMsMock,
 }));
 
-vi.mock('@/features/ai/ai-paths/services/path-run-recovery-service', () => ({
-  recoverStaleRunningRuns: vi.fn().mockResolvedValue(0),
-  resolveAiPathsStaleRunningCleanupIntervalMs: vi.fn().mockReturnValue(120_000),
-  resolveAiPathsStaleRunningMaxAgeMs: vi.fn().mockReturnValue(30 * 60 * 1000),
+vi.mock('@/shared/lib/ai-paths/services/path-run-repository', () => ({
+  getPathRunRepository: getPathRunRepositoryMock,
 }));
 
 import { DELETE_handler as deleteRunHandler } from '@/app/api/ai-paths/runs/[runId]/handler';
@@ -59,6 +57,9 @@ describe('AI Paths run delete handlers', () => {
     assertAiPathRunAccessMock.mockReturnValue(undefined);
     canAccessGlobalAiPathRunsMock.mockReturnValue(false);
     getPathRunRepositoryMock.mockResolvedValue(repoMock);
+    recoverStaleRunningRunsMock.mockResolvedValue(0);
+    resolveAiPathsStaleRunningCleanupIntervalMsMock.mockReturnValue(120_000);
+    resolveAiPathsStaleRunningMaxAgeMsMock.mockReturnValue(30 * 60 * 1000);
   });
 
   it('deletes a single run via service helper', async () => {

@@ -1,7 +1,4 @@
-import type {
-  KangurLessonActivityBlock,
-  KangurLessonActivityId,
-} from '@/shared/contracts/kangur';
+import type { KangurLessonActivityBlock, KangurLessonActivityId } from '@/shared/contracts/kangur';
 
 type KangurLessonActivityDefinition = {
   id: KangurLessonActivityId;
@@ -30,7 +27,8 @@ export const KANGUR_LESSON_ACTIVITY_DEFINITIONS: Record<
     id: 'subtracting-game',
     label: 'Subtracting game',
     title: 'Gra z odejmowaniem',
-    description: 'Trenuj odejmowanie w interaktywnych zadaniach z natychmiastową informacją zwrotną.',
+    description:
+      'Trenuj odejmowanie w interaktywnych zadaniach z natychmiastową informacją zwrotną.',
   },
   'multiplication-array': {
     id: 'multiplication-array',
@@ -70,12 +68,12 @@ export const KANGUR_LESSON_ACTIVITY_DEFINITIONS: Record<
   },
 };
 
-export const KANGUR_LESSON_ACTIVITY_OPTIONS = Object.values(
-  KANGUR_LESSON_ACTIVITY_DEFINITIONS
-).map((definition) => ({
-  value: definition.id,
-  label: definition.label,
-}));
+export const KANGUR_LESSON_ACTIVITY_OPTIONS = Object.values(KANGUR_LESSON_ACTIVITY_DEFINITIONS).map(
+  (definition) => ({
+    value: definition.id,
+    label: definition.label,
+  })
+);
 
 export const getKangurLessonActivityDefinition = (
   activityId: KangurLessonActivityId
@@ -103,8 +101,7 @@ export const retargetKangurLessonActivityBlock = (
   const previousDefinition = getKangurLessonActivityDefinition(block.activityId);
   const nextDefinition = getKangurLessonActivityDefinition(activityId);
 
-  const shouldReplaceTitle =
-    !block.title.trim() || block.title.trim() === previousDefinition.title;
+  const shouldReplaceTitle = !block.title.trim() || block.title.trim() === previousDefinition.title;
   const shouldReplaceDescription =
     !block.description?.trim() || block.description.trim() === previousDefinition.description;
 

@@ -63,7 +63,7 @@ export function CaseResolverPageMainContent(): React.JSX.Element {
       ) : showCaseOverviewWorkspace ? (
         <CaseResolverCaseOverviewWorkspace />
       ) : workspaceView === 'relations' ? (
-        <CaseResolverRelationsWorkspace focusCaseId={activeFile?.id ?? activeCaseId} />
+        <CaseResolverRelationsWorkspace />
       ) : selectedAsset ? (
         <CaseResolverFileViewer />
       ) : editingDocumentDraft?.fileType === 'scanfile' ? (

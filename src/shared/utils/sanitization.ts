@@ -84,10 +84,7 @@ const sanitizeSvgFallback = (svg: string): string =>
     .replace(/<\s*(script|foreignObject|iframe|object|embed)\b[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, '')
     .replace(/\s+on[a-z-]+\s*=\s*(['"]).*?\1/gi, '')
     .replace(/\s+on[a-z-]+\s*=\s*[^\s>]+/gi, '')
-    .replace(
-      /\s+(href|xlink:href|src)\s*=\s*(['"])(?!#).*?\2/gi,
-      ''
-    )
+    .replace(/\s+(href|xlink:href|src)\s*=\s*(['"])(?!#).*?\2/gi, '')
     .replace(/\s+(href|xlink:href|src)\s*=\s*(?!#)[^\s>]+/gi, '')
     .replace(/\s+style\s*=\s*(['"])[\s\S]*?(javascript:|expression\(|url\(\s*https?:).*?\1/gi, '')
     .replace(/javascript:/gi, '');

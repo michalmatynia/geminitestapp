@@ -344,7 +344,8 @@ export function useProductListState(): ProductListContextType & {
   return {
     onCreateProduct: handleOpenCreate,
     onCreateFromDraft: (draftId: string) => void handleCreateFromDraft(draftId),
-    activeDrafts,    page,
+    activeDrafts,
+    page,
     totalPages,
     setPage,
     pageSize,
@@ -418,8 +419,7 @@ export function useProductListState(): ProductListContextType & {
         advancedFilter: advancedFilter || undefined,
         catalogId: catalogFilter === 'all' ? undefined : catalogFilter,
         searchLanguage: preferences.nameLocale,
-        baseExported:
-            baseExported === 'true' ? true : baseExported === 'false' ? false : undefined,
+        baseExported: baseExported === 'true' ? true : baseExported === 'false' ? false : undefined,
       });
     },
     loadingGlobal: loadingGlobalSelection,
@@ -463,7 +463,7 @@ export function useProductListState(): ProductListContextType & {
     initialSku,
     createDraft,
     initialCatalogId:
-        catalogFilter !== 'all' && catalogFilter !== 'unassigned' ? catalogFilter : null,
+      catalogFilter !== 'all' && catalogFilter !== 'unassigned' ? catalogFilter : null,
     onCloseCreate: () => {
       setIsCreateOpen(false);
       setCreateDraft(null);

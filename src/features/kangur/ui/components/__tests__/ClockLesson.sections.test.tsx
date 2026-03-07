@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import ClockLesson from '../ClockLesson';
+import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 
 const addXpMock = vi.fn();
 const loadProgressMock = vi.fn(() => ({
@@ -33,8 +34,15 @@ describe('ClockLesson sectioned structure', () => {
     vi.clearAllMocks();
   });
 
+  const renderClockLesson = (): ReturnType<typeof render> =>
+    render(
+      <KangurLessonNavigationProvider onBack={vi.fn()}>
+        <ClockLesson />
+      </KangurLessonNavigationProvider>
+    );
+
   it('renders three collapsible sections and opens the hours section by default', () => {
-    render(<ClockLesson onBack={vi.fn()} />);
+    renderClockLesson();
 
     expect(screen.getByTestId('clock-lesson-section-toggle-hours')).toBeInTheDocument();
     expect(screen.getByTestId('clock-lesson-section-toggle-minutes')).toBeInTheDocument();
@@ -42,6 +50,11 @@ describe('ClockLesson sectioned structure', () => {
     expect(screen.getByTestId('clock-lesson-section-toggle-hours')).toHaveClass(
       'soft-card',
       'border-indigo-300'
+    );
+    expect(screen.getByTestId('clock-lesson-section-divider-hours')).toHaveClass(
+      'h-px',
+      'w-full',
+      'bg-indigo-200'
     );
     expect(screen.getByTestId('clock-lesson-section-slide-hours-0')).toHaveClass(
       'kangur-cta-pill',
@@ -70,7 +83,7 @@ describe('ClockLesson sectioned structure', () => {
   });
 
   it('does not open locked sections before finishing prior section', async () => {
-    render(<ClockLesson onBack={vi.fn()} />);
+    renderClockLesson();
 
     fireEvent.click(screen.getByTestId('clock-lesson-section-toggle-minutes'));
 
@@ -81,7 +94,7 @@ describe('ClockLesson sectioned structure', () => {
   });
 
   it('opens the minutes section after completing the hours section', async () => {
-    render(<ClockLesson onBack={vi.fn()} />);
+    renderClockLesson();
 
     fireEvent.click(screen.getByRole('button', { name: 'Dalej' }));
     fireEvent.click(screen.getByRole('button', { name: 'Dalej' }));
@@ -100,7 +113,7 @@ describe('ClockLesson sectioned structure', () => {
   });
 
   it('collapses the active section when clicking its header again', async () => {
-    render(<ClockLesson onBack={vi.fn()} />);
+    renderClockLesson();
 
     fireEvent.click(screen.getByTestId('clock-lesson-section-toggle-hours'));
 
@@ -111,7 +124,7 @@ describe('ClockLesson sectioned structure', () => {
   });
 
   it('shows training CTA only on the last slide of the combined section', async () => {
-    render(<ClockLesson onBack={vi.fn()} />);
+    renderClockLesson();
 
     fireEvent.click(screen.getByRole('button', { name: 'Dalej' }));
     fireEvent.click(screen.getByRole('button', { name: 'Dalej' }));
@@ -155,7 +168,7 @@ describe('ClockLesson sectioned structure', () => {
   });
 
   it('marks previous section as completed when moving to next section', async () => {
-    render(<ClockLesson onBack={vi.fn()} />);
+    renderClockLesson();
 
     fireEvent.click(screen.getByRole('button', { name: 'Dalej' }));
     fireEvent.click(screen.getByRole('button', { name: 'Dalej' }));
@@ -171,7 +184,7 @@ describe('ClockLesson sectioned structure', () => {
   });
 
   it('unlocks the combined section only after completing the minutes section', async () => {
-    render(<ClockLesson onBack={vi.fn()} />);
+    renderClockLesson();
 
     expect(screen.getByTestId('clock-lesson-section-status-combined')).toHaveTextContent(
       'Zablokowana'

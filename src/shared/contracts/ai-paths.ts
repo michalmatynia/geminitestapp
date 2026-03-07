@@ -930,9 +930,10 @@ export type AiPathRunUpdate = AiPathRunUpdateRecord & {
 
 export type AiPathRunRepository = {
   createRun(input: AiPathRunCreateInput): Promise<AiPathRunRecord>;
-      updateRun(runId: string, data: AiPathRunUpdate): Promise<AiPathRunRecord>;
-      getRunByRequestId(pathId: string, requestId: string): Promise<AiPathRunRecord | null>;
-      updateRunIfStatus(    runId: string,
+  updateRun(runId: string, data: AiPathRunUpdate): Promise<AiPathRunRecord>;
+  getRunByRequestId(pathId: string, requestId: string): Promise<AiPathRunRecord | null>;
+  updateRunIfStatus(
+    runId: string,
     expectedStatuses: AiPathRunStatus[],
     data: AiPathRunUpdate
   ): Promise<AiPathRunRecord | null>;

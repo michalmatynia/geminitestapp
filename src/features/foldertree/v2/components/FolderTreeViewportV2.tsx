@@ -136,10 +136,22 @@ export function FolderTreeViewportV2(props: FolderTreeViewportV2Props): React.JS
   const runtime = useFolderTreeShellRuntime(runtimeOverride);
   const resolvedMultiSelectConfig = useMemo<ResolvedFolderTreeMultiSelectConfig>(
     () => ({
-      enabled: (multiSelectConfig && 'enabled' in multiSelectConfig) ? (multiSelectConfig.enabled ?? false) : false,
-      ctrlClick: (multiSelectConfig && 'ctrlClick' in multiSelectConfig) ? (multiSelectConfig.ctrlClick ?? true) : true,
-      shiftClick: (multiSelectConfig && 'shiftClick' in multiSelectConfig) ? (multiSelectConfig.shiftClick ?? true) : true,
-      selectAll: (multiSelectConfig && 'selectAll' in multiSelectConfig) ? (multiSelectConfig.selectAll ?? true) : true,
+      enabled:
+        multiSelectConfig && 'enabled' in multiSelectConfig
+          ? (multiSelectConfig.enabled ?? false)
+          : false,
+      ctrlClick:
+        multiSelectConfig && 'ctrlClick' in multiSelectConfig
+          ? (multiSelectConfig.ctrlClick ?? true)
+          : true,
+      shiftClick:
+        multiSelectConfig && 'shiftClick' in multiSelectConfig
+          ? (multiSelectConfig.shiftClick ?? true)
+          : true,
+      selectAll:
+        multiSelectConfig && 'selectAll' in multiSelectConfig
+          ? (multiSelectConfig.selectAll ?? true)
+          : true,
     }),
     [multiSelectConfig]
   );
@@ -203,10 +215,16 @@ export function FolderTreeViewportV2(props: FolderTreeViewportV2Props): React.JS
     return emptyLabel;
   }, [emptyLabel, searchState?.effectiveQuery, searchState?.isActive]);
 
-  const rootDropEnabled = rootDropUi && 'enabled' in rootDropUi ? rootDropUi.enabled ?? true : true;
-  const rootDropLabel = (rootDropUi && 'label' in rootDropUi ? rootDropUi.label?.trim() : '') || 'Drop to Root';
-  const rootDropIdleClassName = (rootDropUi && 'idleClassName' in rootDropUi ? rootDropUi.idleClassName : '') ?? defaultRootDropIdleClassName;
-  const rootDropActiveClassName = (rootDropUi && 'activeClassName' in rootDropUi ? rootDropUi.activeClassName : '') ?? defaultRootDropActiveClassName;
+  const rootDropEnabled =
+    rootDropUi && 'enabled' in rootDropUi ? (rootDropUi.enabled ?? true) : true;
+  const rootDropLabel =
+    (rootDropUi && 'label' in rootDropUi ? rootDropUi.label?.trim() : '') || 'Drop to Root';
+  const rootDropIdleClassName =
+    (rootDropUi && 'idleClassName' in rootDropUi ? rootDropUi.idleClassName : '') ??
+    defaultRootDropIdleClassName;
+  const rootDropActiveClassName =
+    (rootDropUi && 'activeClassName' in rootDropUi ? rootDropUi.activeClassName : '') ??
+    defaultRootDropActiveClassName;
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
 

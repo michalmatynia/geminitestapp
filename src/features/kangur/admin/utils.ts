@@ -128,3 +128,21 @@ export const resolveInlineHeading = (block: KangurLessonInlineBlock): string => 
   if (block.type === 'image') return 'Image block';
   return 'Text block';
 };
+
+// ── SVG sanitization ──────────────────────────────────────────────────────────
+
+const DANGEROUS_SVG_TAGS = /<(script|foreignObject)\b[^>]*>[\s\S]*?<\/\1>/gi;
+const DANGEROUS_SVG_ATTRS = /\bon\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi;
+const DANGEROUS_SVG_HREF =
+  /\b(?:href|xlink:href)\s*=\s*"(?:javascript:|data:)[^"]*"/gi;
+
+/**
+ * Strip dangerous constructs from admin-authored SVG before persisting.
+ * Removes <script>, <foreignObject>, on* event attrs, and javascript:/data: hrefs.
+ * Admin-only use; not a full sanitizer for untrusted input.
+ */
+export const sanitizeSvgMarkup = (raw: string): string =>
+  raw
+    .replace(DANGEROUS_SVG_TAGS, '')
+    .replace(DANGEROUS_SVG_ATTRS, '')
+    .replace(DANGEROUS_SVG_HREF, '');

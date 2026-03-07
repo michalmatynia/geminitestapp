@@ -600,13 +600,14 @@ export default function Lessons() {
                             {activeLesson.description}
                           </p>
                         </div>
-                        <button
+                        <KangurButton
                           type='button'
                           onClick={(): void => setActiveLessonId(null)}
-                          className='inline-flex items-center justify-center rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100'
+                          size='md'
+                          variant='secondary'
                         >
                           Wroc do listy lekcji
-                        </button>
+                        </KangurButton>
                       </div>
                     </div>
                     <KangurLessonDocumentRenderer document={activeLessonDocument} />
@@ -620,13 +621,15 @@ export default function Lessons() {
                     <p className='mt-3 text-sm text-slate-600'>
                       This lesson is set to use custom document content, but no document blocks have been saved yet.
                     </p>
-                    <button
+                    <KangurButton
                       type='button'
                       onClick={(): void => setActiveLessonId(null)}
-                      className='mt-5 inline-flex items-center justify-center rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100'
+                      className='mt-5'
+                      size='md'
+                      variant='secondary'
                     >
                       Wroc do listy lekcji
-                    </button>
+                    </KangurButton>
                   </div>
                 ) : ActiveLessonComponent ? (
                   <ActiveLessonComponent onBack={() => setActiveLessonId(null)} />

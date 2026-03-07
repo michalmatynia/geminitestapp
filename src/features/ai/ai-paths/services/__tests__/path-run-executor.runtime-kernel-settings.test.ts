@@ -63,7 +63,7 @@ vi.mock('@/features/ai/ai-paths/server/settings-store', () => ({
   listAiPathsSettings: listAiPathsSettingsMock,
 }));
 
-vi.mock('@/features/ai/ai-paths/services/path-run-repository', () => ({
+vi.mock('@/shared/lib/ai-paths/services/path-run-repository', () => ({
   getPathRunRepository: getPathRunRepositoryMock,
 }));
 

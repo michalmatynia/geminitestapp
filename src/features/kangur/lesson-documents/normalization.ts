@@ -106,6 +106,7 @@ export const normalizeActivityBlock = (value: unknown): KangurLessonActivityBloc
 
   const activityId =
     value['activityId'] === 'adding-ball' ||
+    value['activityId'] === 'adding-synthesis' ||
     value['activityId'] === 'subtracting-game' ||
     value['activityId'] === 'multiplication-array' ||
     value['activityId'] === 'multiplication-quiz' ||

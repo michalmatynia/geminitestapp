@@ -7,6 +7,7 @@ import {
   createLessonPracticeReward,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
+import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { scheduleKangurRoundFeedback } from '@/features/kangur/ui/services/round-transition';
 
 type DivisionQuotientQuestion = {
@@ -200,7 +201,7 @@ export default function DivisionGame({ onFinish }: DivisionGameProps): React.JSX
               : 'Ćwicz dalej!'}
         </p>
         <div className='flex gap-3 w-full'>
-          <button
+          <KangurButton
             onClick={() => {
               setRoundIndex(0);
               setScore(0);
@@ -210,16 +211,22 @@ export default function DivisionGame({ onFinish }: DivisionGameProps): React.JSX
               setSelected(null);
               setConfirmed(false);
             }}
-            className='flex-1 flex items-center justify-center gap-2 py-2 rounded-2xl border-2 border-gray-200 text-gray-500 font-bold hover:bg-gray-50 transition'
+            className='flex-1'
+            size='lg'
+            type='button'
+            variant='secondary'
           >
             <RefreshCw className='w-4 h-4' /> Jeszcze raz
-          </button>
-          <button
+          </KangurButton>
+          <KangurButton
             onClick={onFinish}
-            className='flex-1 py-2 rounded-2xl bg-gradient-to-r from-blue-500 to-teal-400 text-white font-bold shadow hover:opacity-90 transition'
+            className='flex-1'
+            size='lg'
+            type='button'
+            variant='primary'
           >
             Wróć do lekcji
-          </button>
+          </KangurButton>
         </div>
       </motion.div>
     );
@@ -306,13 +313,16 @@ export default function DivisionGame({ onFinish }: DivisionGameProps): React.JSX
             </motion.div>
           )}
           {!confirmed && (
-            <button
+            <KangurButton
               onClick={handleConfirm}
+              className='w-full'
               disabled={selected === null}
-              className='w-full py-2 rounded-2xl bg-gradient-to-r from-blue-500 to-teal-400 text-white font-extrabold disabled:opacity-40 transition'
+              size='lg'
+              type='button'
+              variant='primary'
             >
               Sprawdź ✓
-            </button>
+            </KangurButton>
           )}
         </motion.div>
       </AnimatePresence>

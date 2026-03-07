@@ -403,22 +403,21 @@ export default function GeometryDrawingGame({
         </motion.div>
       ) : (
         <>
-          <div className='w-full rounded-2xl bg-white/80 p-2 shadow-sm'>
+          <div className='w-full rounded-[26px] border border-white/75 bg-white/86 p-2 shadow-[0_14px_34px_-26px_rgba(20,184,166,0.28)]'>
             <div className='grid grid-cols-2 gap-2'>
               {(['starter', 'pro'] as const).map((mode) => (
-                <button
+                <KangurButton
                   key={mode}
+                  data-testid={`geometry-difficulty-${mode}`}
                   type='button'
                   onClick={() => handleDifficultyChange(mode)}
                   disabled={feedback !== null}
-                  className={`rounded-xl px-3 py-1.5 text-sm font-bold transition ${
-                    difficulty === mode
-                      ? 'bg-slate-900 text-white'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  } disabled:opacity-50`}
+                  className='h-10 px-4 text-xs'
+                  size='sm'
+                  variant={difficulty === mode ? 'surface' : 'secondary'}
                 >
                   {DIFFICULTY_LABELS[mode]}
-                </button>
+                </KangurButton>
               ))}
             </div>
           </div>

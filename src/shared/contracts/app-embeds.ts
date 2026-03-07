@@ -5,10 +5,10 @@ import { namedDtoSchema } from './base';
 /**
  * App Embed Contract
  */
-export const appEmbedTypeSchema = z.enum(['iframe', 'widget', 'script']);
+export const appEmbedTypeSchema = z.enum(['iframe', 'widget', 'script', 'internal-app']);
 export type AppEmbedType = z.infer<typeof appEmbedTypeSchema>;
 
-export const appEmbedIdSchema = z.enum(['chatbot', 'ai-paths', 'notes', 'products']);
+export const appEmbedIdSchema = z.enum(['chatbot', 'ai-paths', 'notes', 'products', 'kangur']);
 export type AppEmbedId = z.infer<typeof appEmbedIdSchema>;
 
 export const appEmbedSchema = namedDtoSchema.extend({

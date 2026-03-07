@@ -1,4 +1,4 @@
-import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { auth } from '@/features/auth/server';
 import {
   getIntegrationRepository,

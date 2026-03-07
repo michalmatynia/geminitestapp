@@ -11,7 +11,7 @@ import type {
   AiPathRunNodeRecord,
   AiPathRunRecord,
 } from '@/shared/contracts/ai-paths';
-import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import type { RuntimeContextProvider } from '../runtime-provider';

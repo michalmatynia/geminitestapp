@@ -1,4 +1,4 @@
-import { AiNode, Edge } from '@/shared/contracts/ai-paths';
+import { AiNode, Edge, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import {
   type EvaluateGraphOptions,
   type RuntimeNodeResolutionTelemetry,
@@ -37,6 +37,16 @@ export type RunExecutionLoopArgs = {
   nodes: AiNode[];
   sanitizedEdges: Edge[];
   emitHalt: (reason: 'blocked' | 'max_iterations' | 'completed' | 'failed') => Promise<void>;
+  executed: {
+    notification: Set<string>;
+    updater: Set<string>;
+    http: Set<string>;
+    delay: Set<string>;
+    poll: Set<string>;
+    ai: Set<string>;
+    schema: Set<string>;
+    mapper: Set<string>;
+  };
 };
 
 export const runExecutionLoop = async (args: RunExecutionLoopArgs): Promise<void> => {
@@ -58,6 +68,7 @@ export const runExecutionLoop = async (args: RunExecutionLoopArgs): Promise<void
     nodes,
     sanitizedEdges,
     emitHalt,
+    executed,
   } = args;
 
   let iteration = 0;
@@ -180,16 +191,17 @@ export const runExecutionLoop = async (args: RunExecutionLoopArgs): Promise<void
           };
           state.blockedNodes.add(node.id);
 
-          if (options.onToast && statusChanged && blockedStatus === 'failed') {
+          if (options.onToast && statusChanged && (blockedStatus === 'blocked' || (blockedStatus as string) === 'failed')) {
             void options.onToast({
-              title: `Node ${node.title || node.id} blocked`,
-              description: message,
-              variant: 'error',
+              runId: resolvedRunId,
+              nodeId: node.id,
+              message: `Node ${node.title || node.id} blocked: ${message}`,
+              options: { variant: 'error' },
             });
           }
 
-          if (options.onNodeStatus) {
-            void options.onNodeStatus({
+          if (options['onNodeStatus'] && typeof options['onNodeStatus'] === 'function') {
+            void (options['onNodeStatus'] as Function)({
               runId: resolvedRunId,
               traceId: resolvedRunId,
               spanId,
@@ -212,7 +224,7 @@ export const runExecutionLoop = async (args: RunExecutionLoopArgs): Promise<void
               iteration,
               attempt,
               reason: 'missing_inputs',
-              status: blockedStatus,
+              status: blockedStatus as 'blocked' | 'waiting_callback',
               message,
               waitingOnPorts: readiness.waitingOnPorts,
               waitingOnDetails: readiness.waitingOnDetails,
@@ -244,6 +256,7 @@ export const runExecutionLoop = async (args: RunExecutionLoopArgs): Promise<void
             sanitizedEdges,
             outgoingEdgesByNode,
             nodeById,
+            executed,
           });
           if (changed) changedInLastIteration = true;
         })

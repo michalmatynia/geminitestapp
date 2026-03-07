@@ -153,8 +153,16 @@ describe('ClockTrainingGame drag interactions', () => {
     const { container } = render(<ClockTrainingGame onFinish={vi.fn()} />);
     const hourHand = getHourHand(container);
     const minuteHand = getMinuteHand(container);
+    const coarseSnapButton = screen.getByTestId('clock-snap-mode-5');
+    const exactSnapButton = screen.getByTestId('clock-snap-mode-1');
 
-    fireEvent.click(screen.getByTestId('clock-snap-mode-1'));
+    expect(coarseSnapButton).toHaveClass('kangur-cta-pill', 'surface-cta');
+    expect(exactSnapButton).toHaveClass('kangur-cta-pill', 'soft-cta');
+
+    fireEvent.click(exactSnapButton);
+
+    expect(coarseSnapButton).toHaveClass('kangur-cta-pill', 'soft-cta');
+    expect(exactSnapButton).toHaveClass('kangur-cta-pill', 'surface-cta');
     dragHandToAngle(hourHand, 90);
     dragHandToAngle(minuteHand, 42);
 

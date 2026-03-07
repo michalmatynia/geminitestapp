@@ -1,4 +1,4 @@
-import { AiNode, NodeCacheScope } from '@/shared/contracts/ai-paths';
+import { AiNode, Edge, NodeCacheScope } from '@/shared/contracts/ai-paths';
 import {
   AiPathRuntimeNodeStatus,
   RuntimeHistoryEntry,

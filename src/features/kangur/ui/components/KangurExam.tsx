@@ -18,6 +18,7 @@ import {
   Q16Illustration,
 } from '@/features/kangur/ui/components/KangurIllustrations';
 import { useKangurGameContext } from '@/features/kangur/ui/context/KangurGameContext';
+import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { getKangurQuestions } from '@/features/kangur/ui/services/kangur-questions';
 import type { KangurExamQuestion, KangurQuestionChoice } from '@/features/kangur/ui/types';
 
@@ -166,30 +167,40 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
     return (
       <div className='w-full flex flex-col gap-4'>
         <div className='flex items-center justify-between'>
-          <button
+          <KangurButton
             onClick={() => setReviewing(null)}
-            className='flex items-center gap-2 text-orange-500 hover:text-orange-700 font-semibold text-sm transition'
+            size='sm'
+            type='button'
+            variant='secondary'
           >
             <ChevronLeft className='w-4 h-4' /> Podsumowanie
-          </button>
+          </KangurButton>
           <div className='flex gap-2'>
-            <button
+            <KangurButton
+              aria-label='Poprzednie pytanie w podgladzie'
               onClick={() => setReviewing(Math.max(0, reviewing - 1))}
               disabled={reviewing === 0}
-              className='p-1.5 rounded-lg border border-gray-200 disabled:opacity-30 hover:bg-gray-50 transition'
+              className='h-9 w-9 min-w-0 px-0'
+              size='sm'
+              type='button'
+              variant='secondary'
             >
               <ChevronLeft className='w-4 h-4 text-gray-500' />
-            </button>
+            </KangurButton>
             <span className='text-xs text-gray-400 self-center font-bold'>
               {reviewing + 1}/{questions.length}
             </span>
-            <button
+            <KangurButton
+              aria-label='Nastepne pytanie w podgladzie'
               onClick={() => setReviewing(Math.min(questions.length - 1, reviewing + 1))}
               disabled={reviewing === questions.length - 1}
-              className='p-1.5 rounded-lg border border-gray-200 disabled:opacity-30 hover:bg-gray-50 transition'
+              className='h-9 w-9 min-w-0 px-0'
+              size='sm'
+              type='button'
+              variant='secondary'
             >
               <ChevronRight className='w-4 h-4 text-gray-500' />
-            </button>
+            </KangurButton>
           </div>
         </div>
 
@@ -327,12 +338,15 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
         })}
       </div>
 
-      <button
+      <KangurButton
         onClick={onBack}
-        className='w-full py-3 rounded-2xl font-bold border-2 border-gray-200 text-gray-500 hover:bg-gray-50 transition'
+        className='w-full'
+        size='lg'
+        type='button'
+        variant='secondary'
       >
         Wróć do menu
-      </button>
+      </KangurButton>
     </motion.div>
   );
 }
@@ -393,18 +407,22 @@ export default function KangurExam(): React.JSX.Element {
           onSelect={handleSelect}
         />
         <div className='flex gap-3'>
-          <button
+          <KangurButton
             onClick={handlePrev}
+            className='flex-1'
             disabled={current === 0}
-            className='flex-1 py-3 rounded-2xl font-bold border-2 border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-30 transition flex items-center justify-center gap-2'
+            size='lg'
+            type='button'
+            variant='secondary'
           >
             <ChevronLeft className='w-4 h-4' /> Poprzednie
-          </button>
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
+          </KangurButton>
+          <KangurButton
             onClick={handleNext}
-            className='flex-1 py-3 rounded-2xl font-extrabold text-white bg-gradient-to-r from-orange-400 to-yellow-400 shadow flex items-center justify-center gap-2'
+            className='flex-1'
+            size='lg'
+            type='button'
+            variant='primary'
           >
             {current === questions.length - 1 ? (
               'Zakończ test 🏁'
@@ -413,7 +431,7 @@ export default function KangurExam(): React.JSX.Element {
                 Następne <ChevronRight className='w-4 h-4' />
               </>
             )}
-          </motion.button>
+          </KangurButton>
         </div>
         {!selected && (
           <p className='text-center text-xs text-gray-400'>

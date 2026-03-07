@@ -15,7 +15,7 @@ import {
   evaluateDisabledNodeTypesPolicy,
   formatDisabledNodeTypesPolicyMessage,
 } from '@/features/ai/ai-paths/services/path-run-policy';
-import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import { getPathRunRepository } from './path-run-repository';
 import { publishRunUpdate } from '@/features/ai/ai-paths/services/run-stream-publisher';
 import {
   getAiPathsRuntimeFingerprint,
@@ -41,12 +41,7 @@ import type {
   UpdaterSampleState,
 } from '@/shared/contracts/ai-paths';
 import type { AiPathRunRepository } from '@/shared/contracts/ai-paths';
-import {
-  badRequestError,
-  internalError,
-  serviceUnavailableError,
-  validationError,
-} from '@/shared/errors/app-error';
+import { validationError } from '@/shared/errors/app-error';
 
 type EnqueueRunInput = {
   userId?: string | null;
@@ -71,7 +66,9 @@ const toRecord = (value: unknown): Record<string, unknown> | null =>
     ? (value as Record<string, unknown>)
     : null;
 
-const toSampleStateMap = <T = unknown>(value: unknown): Record<string, T> | undefined => {
+const toSampleStateMap = <T = unknown>(
+  value: unknown
+): Record<string, T> | undefined => {
   const record = toRecord(value);
   if (!record) return undefined;
   return record as Record<string, T>;
@@ -321,13 +318,11 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
       mode: 'full',
     });
     if (runPreflight.shouldBlock) {
-      throw badRequestError(
-        runPreflight.blockMessage ?? 'Run blocked by preflight validation checks.'
-      );
+      throw new Error(runPreflight.blockMessage ?? 'Run blocked by preflight validation checks.');
     }
     const policyReport = evaluateDisabledNodeTypesPolicy(nodes);
     if (policyReport.violations.length > 0) {
-      throw badRequestError(formatDisabledNodeTypesPolicyMessage(policyReport.violations));
+      throw new Error(formatDisabledNodeTypesPolicyMessage(policyReport.violations));
     }
     const runtimeFingerprint = getAiPathsRuntimeFingerprint();
     const meta = withRuntimeFingerprintMeta({
@@ -434,10 +429,7 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
         durationMs: 0,
         timestamp: finishedAt,
       });
-      throw internalError(message, {
-        pathId: run.pathId,
-        runId: run.id,
-      });
+      throw new Error(message, { cause: setupError });
     }
 
     try {
@@ -528,10 +520,7 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
         });
       }
 
-      throw serviceUnavailableError(message, undefined, {
-        pathId: run.pathId,
-        runId: run.id,
-      });
+      throw new Error(message, { cause: dispatchError });
     }
 
     const enqueueTotalMs = performance.now() - enqueueStartedAt;

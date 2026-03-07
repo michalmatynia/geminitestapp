@@ -1,0 +1,62 @@
+/**
+ * @vitest-environment jsdom
+ */
+
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { describe, expect, it, vi } from 'vitest';
+
+import { KangurTestSuitePlayer } from '@/features/kangur/ui/components/KangurTestSuitePlayer';
+import type { KangurTestQuestion, KangurTestSuite } from '@/shared/contracts/kangur-tests';
+
+const suite: KangurTestSuite = {
+  id: 'suite-2024',
+  title: 'Kangur 2024',
+  description: 'Zestaw probny',
+  year: 2024,
+  gradeLevel: 'III-IV',
+  category: 'matematyczny',
+  enabled: true,
+  sortOrder: 1000,
+};
+
+const questions: KangurTestQuestion[] = [
+  {
+    id: 'question-1',
+    suiteId: 'suite-2024',
+    sortOrder: 1000,
+    prompt: 'Ile to jest 2 + 2?',
+    choices: [
+      { label: 'A', text: '4' },
+      { label: 'B', text: '5' },
+    ],
+    correctChoiceLabel: 'A',
+    pointValue: 3,
+    explanation: '2 + 2 = 4.',
+    illustration: { type: 'none' },
+  },
+];
+
+describe('KangurTestSuitePlayer', () => {
+  it('uses the shared pill CTA styles for suite navigation and restart actions', async () => {
+    const onFinish = vi.fn();
+    render(<KangurTestSuitePlayer suite={suite} questions={questions} onFinish={onFinish} />);
+
+    expect(screen.getByRole('button', { name: /previous/i })).toHaveClass(
+      'kangur-cta-pill',
+      'soft-cta'
+    );
+    expect(screen.getByRole('button', { name: /previous/i })).toBeDisabled();
+
+    await userEvent.click(screen.getByRole('button', { name: /A.*4/i }));
+
+    const finishButton = screen.getByRole('button', { name: /finish/i });
+    expect(finishButton).toHaveClass('kangur-cta-pill', 'play-cta');
+
+    await userEvent.click(finishButton);
+
+    const restartButton = screen.getByRole('button', { name: /try again/i });
+    expect(restartButton).toHaveClass('kangur-cta-pill', 'soft-cta');
+    expect(onFinish).toHaveBeenCalledWith(3, 3, { 'question-1': 'A' });
+  });
+});

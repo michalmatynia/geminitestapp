@@ -11,6 +11,7 @@ import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitive
 import type { KangurLessonActivityBlock as KangurLessonActivityBlockType } from '@/shared/contracts/kangur';
 
 import AddingBallGame from './AddingBallGame';
+import AddingSynthesisGame from './AddingSynthesisGame';
 import CalendarInteractiveGame from './CalendarInteractiveGame';
 import ClockTrainingGame from './ClockTrainingGame';
 import DivisionGame from './DivisionGame';
@@ -33,6 +34,7 @@ const ACTIVITY_COMPONENTS: Record<
   React.ComponentType<ActivityGameProps>
 > = {
   'adding-ball': AddingBallGame,
+  'adding-synthesis': AddingSynthesisGame,
   'subtracting-game': SubtractingGame,
   'multiplication-array': MultiplicationArrayGame,
   'multiplication-quiz': MultiplicationGame,

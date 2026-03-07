@@ -9,7 +9,7 @@ import {
   fromFolderMasterNodeId,
   fromNoteMasterNodeId,
 } from '@/features/notesapp/utils/master-folder-tree';
-import { getDocumentationTooltip } from '@/features/tooltip-engine';
+import { getDocumentationTooltip } from '@/shared/lib/documentation';
 import type { NotesMasterTreeOperations } from '@/shared/contracts/notes';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
 import { Button, Input, Tooltip } from '@/shared/ui';

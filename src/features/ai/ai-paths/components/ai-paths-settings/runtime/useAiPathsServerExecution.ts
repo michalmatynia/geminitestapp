@@ -14,7 +14,6 @@ import type {
 import {
   enqueueAiPathRun,
   streamAiPathRun,
-  aiPathRunNodeSchema,
   resolveAiPathRunFromEnqueueResponseData,
 } from '@/shared/lib/ai-paths';
 import { normalizeRuntimeKernelConfigRecord } from '@/shared/lib/ai-paths/core/runtime/runtime-kernel-config';
@@ -55,7 +54,7 @@ import {
   asString,
   asNumber,
   parseSsePayload,
-  type ApiErrorMetadata,
+  type RuntimeEventLevel,
   readApiErrorMetadata,
   normalizeRuntimeEventLevel,
   normalizeNodeStreamPayload,

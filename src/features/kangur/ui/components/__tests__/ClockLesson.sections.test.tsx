@@ -39,6 +39,14 @@ describe('ClockLesson sectioned structure', () => {
     expect(screen.getByTestId('clock-lesson-section-toggle-hours')).toBeInTheDocument();
     expect(screen.getByTestId('clock-lesson-section-toggle-minutes')).toBeInTheDocument();
     expect(screen.getByTestId('clock-lesson-section-toggle-combined')).toBeInTheDocument();
+    expect(screen.getByTestId('clock-lesson-section-toggle-hours')).toHaveClass(
+      'soft-card',
+      'border-indigo-300'
+    );
+    expect(screen.getByTestId('clock-lesson-section-toggle-minutes')).toHaveClass(
+      'soft-card',
+      'bg-slate-100/85'
+    );
 
     expect(screen.getByText('Co pokazuje krótka wskazówka?')).toBeInTheDocument();
     expect(screen.queryByText('Co pokazuje długa wskazówka?')).toBeNull();
@@ -77,6 +85,10 @@ describe('ClockLesson sectioned structure', () => {
     expect(screen.queryByText('Co pokazuje krótka wskazówka?')).toBeNull();
     expect(screen.queryAllByTestId('clock-lesson-minute-hand').length).toBeGreaterThan(0);
     expect(screen.queryAllByTestId('clock-lesson-hour-hand')).toHaveLength(0);
+    expect(screen.getByTestId('clock-lesson-section-toggle-minutes')).toHaveClass(
+      'soft-card',
+      'border-indigo-300'
+    );
   });
 
   it('collapses the active section when clicking its header again', async () => {

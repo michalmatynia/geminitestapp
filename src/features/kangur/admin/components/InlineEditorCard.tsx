@@ -6,6 +6,7 @@ import { Badge, Button, FormField, Input, SelectSimple, Textarea } from '@/share
 import { cn } from '@/shared/utils';
 import { ALIGNMENT_OPTIONS, MEDIA_FIT_OPTIONS } from '../constants';
 import { clamp, parseNumberInput } from '../utils';
+import { SvgCodeEditor, extractSvgViewBox } from './SvgCodeEditor';
 
 export function InlineEditorCard(
   props: {
@@ -150,6 +151,25 @@ export function InlineEditorCard(
             </FormField>
           </div>
 
+          <div className='space-y-1.5'>
+            <div className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+              SVG Markup
+            </div>
+            <SvgCodeEditor
+              value={block.markup}
+              onChange={(nextMarkup): void => {
+                const detectedViewBox = extractSvgViewBox(nextMarkup);
+                onChange({
+                  ...block,
+                  markup: nextMarkup,
+                  viewBox: detectedViewBox ?? block.viewBox,
+                });
+              }}
+              previewSize='lg'
+              placeholder='<svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg">\n  <!-- SVG content -->\n</svg>'
+            />
+          </div>
+
           <FormField label='Narration Description'>
             <Textarea
               value={block.ttsDescription ?? ''}
@@ -158,17 +178,6 @@ export function InlineEditorCard(
               }}
               placeholder='Optional spoken description of this illustration'
               className='min-h-[100px]'
-            />
-          </FormField>
-
-          <FormField label='SVG Markup'>
-            <Textarea
-              value={block.markup}
-              onChange={(event): void => {
-                onChange({ ...block, markup: event.target.value });
-              }}
-              placeholder='<svg viewBox="0 0 100 100">...</svg>'
-              className='min-h-[220px] font-mono text-xs'
             />
           </FormField>
         </div>

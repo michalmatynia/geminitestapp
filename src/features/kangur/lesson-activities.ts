@@ -20,6 +20,12 @@ export const KANGUR_LESSON_ACTIVITY_DEFINITIONS: Record<
     title: 'Gra z piłkami',
     description: 'Ćwicz dodawanie, przesuwając piłki i rozwiązując zadania krok po kroku.',
   },
+  'adding-synthesis': {
+    id: 'adding-synthesis',
+    label: 'Adding synthesis game',
+    title: 'Synteza dodawania',
+    description: 'Uderzaj w poprawny tor odpowiedzi, gdy działanie zbliża się do linii rytmu.',
+  },
   'subtracting-game': {
     id: 'subtracting-game',
     label: 'Subtracting game',

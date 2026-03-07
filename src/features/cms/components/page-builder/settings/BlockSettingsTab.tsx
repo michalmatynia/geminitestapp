@@ -9,6 +9,9 @@ import {
   APP_EMBED_SETTING_KEY,
   type AppEmbedId,
   APP_EMBED_OPTIONS,
+  DEFAULT_APP_EMBED_ID,
+  KANGUR_APP_EMBED_ENTRY_PAGE_OPTIONS,
+  getAppEmbedOption,
 } from '@/features/app-embeds/lib/constants';
 
 import { SettingsFormProvider } from './SettingsFormContext';
@@ -49,14 +52,22 @@ export function BlockSettingsTab(): React.JSX.Element | null {
     [isRowBlock, selectedBlock, rowHeightMode]
   );
 
+  const selectedAppId =
+    selectedBlock?.type === 'AppEmbed'
+      ? ((selectedBlock.settings['appId'] as string | undefined) ?? DEFAULT_APP_EMBED_ID)
+      : null;
+  const selectedAppOption = getAppEmbedOption(selectedAppId);
+
   const appEmbedOptions = useMemo((): { label: string; value: string }[] => {
     const enabled = parseJsonSetting<AppEmbedId[]>(settingsStore.get(APP_EMBED_SETTING_KEY), []);
-    const options = APP_EMBED_OPTIONS.filter((o) => enabled.includes(o.id)).map((o) => ({
-      label: o.label,
-      value: o.id,
+    const options = APP_EMBED_OPTIONS.filter(
+      (option) => enabled.includes(option.id) || option.id === selectedAppId
+    ).map((option) => ({
+      label: option.label,
+      value: option.id,
     }));
     return options.length > 0 ? options : [{ label: 'No app embeds enabled', value: '' }];
-  }, [settingsStore]);
+  }, [selectedAppId, settingsStore]);
 
   const handleRemoveBlock = useCallback((): void => {
     if (!selectedBlock || !selectedParentSection) return;
@@ -129,12 +140,41 @@ export function BlockSettingsTab(): React.JSX.Element | null {
           groupSettingsFields(prependManagementFields(blockDef.settingsSchema)),
           blockSettingsForRender,
           handleBlockSettingChange,
-          (f) =>
-            selectedBlock.type === 'AppEmbed' && f.key === 'appId'
-              ? { ...f, options: appEmbedOptions }
-              : isRowBlock && rowHeightMode === 'inherit' && f.key === 'height'
-                ? { ...f, disabled: true }
-                : f
+          (f) => {
+            if (selectedBlock.type === 'AppEmbed') {
+              if (f.key === 'appId') {
+                return { ...f, options: appEmbedOptions };
+              }
+
+              if (f.key === 'entryPage') {
+                return {
+                  ...f,
+                  options: [...KANGUR_APP_EMBED_ENTRY_PAGE_OPTIONS],
+                  disabled: selectedAppOption?.id !== 'kangur',
+                };
+              }
+
+              if (f.key === 'basePath') {
+                return {
+                  ...f,
+                  disabled: selectedAppOption?.renderMode !== 'internal-app',
+                };
+              }
+
+              if (f.key === 'embedUrl') {
+                return {
+                  ...f,
+                  disabled: selectedAppOption?.renderMode !== 'iframe',
+                };
+              }
+            }
+
+            if (isRowBlock && rowHeightMode === 'inherit' && f.key === 'height') {
+              return { ...f, disabled: true };
+            }
+
+            return f;
+          }
         )}
         <div className='border-t border-border/30 pt-4'>
           <Button

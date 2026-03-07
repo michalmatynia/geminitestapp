@@ -25,6 +25,10 @@ import {
   KangurPanel,
   KangurTopNavGroup,
 } from '@/features/kangur/ui/design/primitives';
+import {
+  KANGUR_ACCENT_STYLES,
+  KANGUR_OPTION_CARD_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/shared/utils';
 import Link from 'next/link';
 import { ProgressOverview, ScoreHistory } from '@/features/kangur/ui/components/dashboard';
@@ -251,31 +255,57 @@ export default function ParentDashboard() {
           <div className='grid gap-3 sm:grid-cols-2'>
             {user.learners.map((learner) => {
               const isActiveLearner = learner.id === activeLearner?.id;
+              const initial = learner.displayName.trim().charAt(0).toUpperCase() || '?';
               return (
                 <button
+                  aria-pressed={isActiveLearner}
+                  data-testid={`parent-dashboard-learner-card-${learner.id}`}
                   key={learner.id}
                   type='button'
                   onClick={() => void selectLearner(learner.id)}
-                  className={`rounded-2xl border px-4 py-3 text-left transition ${
+                  className={cn(
+                    KANGUR_OPTION_CARD_CLASSNAME,
+                    'flex items-start gap-4 rounded-[30px] px-5 py-4 text-left',
                     isActiveLearner
-                      ? 'border-indigo-300 bg-indigo-50 shadow-sm'
-                      : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-slate-50'
-                  }`}
+                      ? KANGUR_ACCENT_STYLES.indigo.activeCard
+                      : cn('border-slate-200/80', KANGUR_ACCENT_STYLES.slate.hoverCard)
+                  )}
                 >
-                  <div className='flex items-center justify-between gap-3'>
-                    <div>
-                      <div className='font-bold text-slate-800'>{learner.displayName}</div>
-                      <div className='text-xs text-slate-500'>Login: {learner.loginName}</div>
+                  <span
+                    className={cn(
+                      'flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-lg font-extrabold shadow-sm',
+                      isActiveLearner
+                        ? KANGUR_ACCENT_STYLES.indigo.icon
+                        : KANGUR_ACCENT_STYLES.slate.icon
+                    )}
+                  >
+                    {initial}
+                  </span>
+                  <div className='min-w-0 flex-1'>
+                    <div className='flex items-start justify-between gap-3'>
+                      <div className='min-w-0'>
+                        <div className='font-bold text-slate-800'>{learner.displayName}</div>
+                        <div className='text-xs text-slate-500'>Login: {learner.loginName}</div>
+                      </div>
+                      <span
+                        className={cn(
+                          'rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide',
+                          learner.status === 'active'
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : 'bg-slate-200 text-slate-600'
+                        )}
+                      >
+                        {learner.status === 'active' ? 'Aktywny' : 'Wylaczony'}
+                      </span>
                     </div>
-                    <span
-                      className={`rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide ${
-                        learner.status === 'active'
-                          ? 'bg-emerald-100 text-emerald-700'
-                          : 'bg-slate-200 text-slate-600'
-                      }`}
+                    <div
+                      className={cn(
+                        'mt-2 text-xs font-semibold',
+                        isActiveLearner ? 'text-indigo-600' : 'text-slate-500'
+                      )}
                     >
-                      {learner.status === 'active' ? 'Aktywny' : 'Wylaczony'}
-                    </span>
+                      {isActiveLearner ? 'Aktualnie wybrany profil' : 'Kliknij, aby przełączyć profil'}
+                    </div>
                   </div>
                 </button>
               );

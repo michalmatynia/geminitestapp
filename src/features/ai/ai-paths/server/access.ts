@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { resolveAiPathsStaleRunningMaxAgeMs } from '@/features/ai/ai-paths/services/path-run-recovery-service';
 import { auth } from '@/features/auth/server';
 import type { AiPathRunRecord, AiPathRunStatus } from '@/shared/contracts/ai-paths';

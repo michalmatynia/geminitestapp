@@ -6,7 +6,7 @@ import {
   LOG_SOURCE,
 } from './config';
 import { type AiPathRunJobData } from './types';
-import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import {
   processRun,
   processStaleRunRecovery,

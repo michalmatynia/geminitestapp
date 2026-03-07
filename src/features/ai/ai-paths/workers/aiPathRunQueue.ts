@@ -264,7 +264,7 @@ export const scheduleLocalFallbackRun = (runId: string, delayMs: number): void =
       localFallbackTimers.delete(runId);
       try {
         const [{ getPathRunRepository }, { processRun }] = await Promise.all([
-          import('@/features/ai/ai-paths/services/path-run-repository'),
+          import('@/shared/lib/ai-paths/services/path-run-repository'),
           import('@/features/ai/ai-paths/workers/ai-path-run-processor'),
         ]);
         const repo = await getPathRunRepository();

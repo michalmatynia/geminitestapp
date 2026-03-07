@@ -8,7 +8,7 @@ import {
   type ImageStudioDocEntry,
   type ImageStudioDocKey,
 } from '@/shared/lib/documentation';
-import { getDocumentationTooltip } from '@/features/tooltip-engine';
+import { getDocumentationTooltip } from '@/shared/lib/documentation';
 
 export type { ImageStudioDocEntry, ImageStudioDocKey };
 

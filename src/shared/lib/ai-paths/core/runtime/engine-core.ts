@@ -32,7 +32,6 @@ import {
 import {
   RuntimeTelemetryResolver,
 } from './engine-modules/engine-execution-telemetry';
-import { buildSpanId } from './engine-modules/engine-execution-context';
 
 export { GraphExecutionError, GraphExecutionCancelled };
 
@@ -58,7 +57,6 @@ export async function evaluateGraphInternal(
     triggerNodeId: options.triggerNodeId,
     seedHashes: options.seedHashes,
   });
-  const seedHashes: Record<string, string> = options.seedHashes ?? {};
 
   const state = new EngineStateManager(nodes, scopedNodeIds.size, options, incomingEdgesByNode);
 
@@ -68,7 +66,7 @@ export async function evaluateGraphInternal(
     }
   });
 
-  state.skippedNodes.forEach((id) => {
+  state.skippedNodes.forEach((id: string) => {
     if (nodeById.has(id)) {
       state.finishedNodes.add(id);
     }
@@ -76,8 +74,19 @@ export async function evaluateGraphInternal(
 
   // Initial input propagation
   nodes.forEach((node) => {
-    state.inputs[node.id] = collectNodeInputs(node, state.outputs, incomingEdgesByNode);
+    state.inputs[node.id] = collectNodeInputs(node.id, state.outputs, incomingEdgesByNode);
   });
+
+  const executed = {
+    notification: new Set<string>(),
+    updater: new Set<string>(),
+    http: new Set<string>(),
+    delay: new Set<string>(),
+    poll: new Set<string>(),
+    ai: new Set<string>(),
+    schema: new Set<string>(),
+    mapper: new Set<string>(),
+  };
 
   const triggerContext = options.triggerContext ?? null;
   const triggerSource = options.triggerNodeId ? (nodeById.get(options.triggerNodeId) ?? null) : null;
@@ -174,10 +183,11 @@ export async function evaluateGraphInternal(
     triggerContext,
     internalCheckTriggerProvenance,
     telemetryResolver,
-    seedHashes,
+    seedHashes: options.seedHashes ?? {},
     nodes,
     sanitizedEdges,
     emitHalt,
+    executed,
   });
 
   const hasTerminalBlockedNodes = Array.from(state.blockedNodes).some((nodeId) => {

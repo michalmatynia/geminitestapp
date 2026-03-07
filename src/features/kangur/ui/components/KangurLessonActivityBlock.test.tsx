@@ -19,6 +19,9 @@ const { createMockGame } = vi.hoisted(() => ({
 vi.mock('@/features/kangur/ui/components/AddingBallGame', () => ({
   default: createMockGame('AddingBallGame'),
 }));
+vi.mock('@/features/kangur/ui/components/AddingSynthesisGame', () => ({
+  default: createMockGame('AddingSynthesisGame'),
+}));
 vi.mock('@/features/kangur/ui/components/CalendarInteractiveGame', () => ({
   default: createMockGame('CalendarInteractiveGame'),
 }));
@@ -85,5 +88,21 @@ describe('KangurLessonActivityBlock', () => {
     expect(screen.getByText('Ball activity')).toBeInTheDocument();
     expect(screen.getByText(/live game widget is hidden in editor preview/i)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'AddingBallGame' })).toBeNull();
+  });
+
+  it('renders the new addition synthesis activity', () => {
+    render(
+      <KangurLessonActivityBlock
+        block={{
+          id: 'activity-3',
+          type: 'activity',
+          activityId: 'adding-synthesis',
+          title: 'Synteza dodawania',
+          description: 'Lane-based addition trainer.',
+        }}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'AddingSynthesisGame' })).toBeInTheDocument();
   });
 });

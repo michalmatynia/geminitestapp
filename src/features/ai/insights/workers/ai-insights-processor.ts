@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { getBrainAssignmentForCapability } from '@/shared/lib/ai-brain/server';
 import {
   generateAnalyticsInsight,

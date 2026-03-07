@@ -19,9 +19,11 @@ import { KangurFeatureApp } from '@/features/kangur/ui/KangurFeatureApp';
 export function KangurFeaturePage({
   slug = [],
   basePath = KANGUR_BASE_PATH,
+  embedded = false,
 }: {
   slug?: string[];
   basePath?: string;
+  embedded?: boolean;
 }): JSX.Element {
   const normalizedBasePath = normalizeKangurBasePath(basePath);
   const activeSlug = slug[0] ?? null;
@@ -43,6 +45,7 @@ export function KangurFeaturePage({
       pageKey={pageKey}
       requestedPath={requestedPath}
       basePath={normalizedBasePath}
+      embedded={embedded}
     >
       <KangurFeatureApp />
     </KangurRoutingProvider>

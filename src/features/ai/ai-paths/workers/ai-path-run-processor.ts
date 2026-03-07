@@ -2,7 +2,7 @@ import 'server-only';
 
 import { executePathRun } from '@/features/ai/ai-paths/services/path-run-executor';
 import { recoverStaleRunningRuns } from '@/features/ai/ai-paths/services/path-run-recovery-service';
-import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { publishRunUpdate } from '@/features/ai/ai-paths/services/run-stream-publisher';
 import { recordRuntimeRunFinished } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import { isTerminalAiPathRunStatus } from '@/features/ai/ai-paths/lib/path-run-status';

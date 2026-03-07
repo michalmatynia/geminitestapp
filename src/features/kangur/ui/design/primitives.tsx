@@ -2,6 +2,7 @@ import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 
+import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { cn } from '@/shared/utils';
 
 import {
@@ -17,31 +18,31 @@ import {
 } from './tokens';
 
 const kangurButtonVariants = cva(
-  'inline-flex items-center justify-center gap-2 rounded-2xl border text-sm font-bold tracking-tight transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300/70 focus-visible:ring-offset-2 ring-offset-white disabled:pointer-events-none disabled:opacity-40 disabled:shadow-none',
+  'inline-flex cursor-pointer items-center justify-center gap-2 border text-sm font-bold tracking-tight transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300/70 focus-visible:ring-offset-2 ring-offset-white disabled:pointer-events-none disabled:opacity-40 disabled:shadow-none',
   {
     variants: {
       variant: {
         primary:
-          'border-transparent play-cta text-white hover:brightness-[1.02]',
+          'kangur-cta-pill border-transparent play-cta text-white hover:brightness-[1.02]',
         warm:
-          'border-transparent primary-cta text-white hover:brightness-[1.02]',
+          'kangur-cta-pill border-transparent primary-cta text-white hover:brightness-[1.02]',
         secondary:
-          'border-[#eceff7] bg-white text-[#2f467e] shadow-[0_8px_20px_rgba(55,84,170,0.06)] hover:-translate-y-[1px]',
+          'kangur-cta-pill border-transparent soft-cta text-[#2f467e] hover:text-[#24386e]',
         surface:
-          'border-[#e7edf8] bg-[#f5f7fe] text-[#2f4db5] shadow-[0_8px_20px_rgba(55,84,170,0.06)] hover:-translate-y-[1px]',
+          'kangur-cta-pill border-transparent surface-cta text-[#2f4db5] hover:text-[#233e99]',
         success:
-          'border-emerald-200/90 bg-emerald-50/90 text-emerald-700 shadow-[0_8px_20px_rgba(16,185,129,0.12)] hover:-translate-y-[1px]',
+          'kangur-cta-pill border-transparent success-cta text-emerald-800 hover:text-emerald-900',
         warning:
-          'border-[#f2e4c9] bg-[#fcf5e8] text-[#b15a16] shadow-[0_8px_20px_rgba(190,134,55,0.08)] hover:-translate-y-[1px]',
+          'kangur-cta-pill border-transparent warning-cta text-[#9a5418] hover:text-[#7f4310]',
         navigation: KANGUR_TOP_NAV_ITEM_CLASSNAME,
         navigationActive: cn(KANGUR_TOP_NAV_ITEM_CLASSNAME, KANGUR_TOP_NAV_ITEM_ACTIVE_CLASSNAME),
         ghost: 'border-transparent bg-transparent text-[#6e7ee7] hover:bg-white/70 hover:text-[#4f63d8]',
       },
       size: {
-        sm: 'px-3 py-1.5 text-sm',
-        md: 'px-4 py-2.5 text-sm',
-        lg: 'px-5 py-3 text-base',
-        xl: 'px-6 py-3.5 text-lg',
+        sm: 'h-[44px] px-4 text-sm',
+        md: 'h-[50px] px-5 text-sm',
+        lg: 'h-[56px] px-6 text-base',
+        xl: 'h-[62px] px-7 text-lg',
       },
       fullWidth: {
         true: 'w-full',
@@ -112,17 +113,30 @@ export const KangurPageShell = ({
   children,
 }: React.HTMLAttributes<HTMLDivElement> & {
   tone?: KangurPageTone;
-}): React.JSX.Element => (
-  <div
-    className={cn(
-      'relative isolate flex min-h-screen flex-col items-center overflow-hidden text-slate-800',
-      KANGUR_PAGE_TONE_CLASSNAMES[tone],
-      className
-    )}
-  >
-    <div className='relative z-10 flex min-h-screen w-full flex-col items-center'>{children}</div>
-  </div>
-);
+}): React.JSX.Element => {
+  const routing = useOptionalKangurRouting();
+  const embedded = routing?.embedded ?? false;
+
+  return (
+    <div
+      className={cn(
+        'relative isolate flex w-full flex-col items-center overflow-hidden text-slate-800',
+        embedded ? 'min-h-full' : 'min-h-screen',
+        KANGUR_PAGE_TONE_CLASSNAMES[tone],
+        className
+      )}
+    >
+      <div
+        className={cn(
+          'relative z-10 flex w-full flex-col items-center',
+          embedded ? 'min-h-full' : 'min-h-screen'
+        )}
+      >
+        {children}
+      </div>
+    </div>
+  );
+};
 
 export const KangurPageTopBar = ({
   left,

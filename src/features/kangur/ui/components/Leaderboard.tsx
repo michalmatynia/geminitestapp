@@ -5,11 +5,12 @@ import { Trophy, User, Ghost } from 'lucide-react';
 import {
   KangurButton,
   KangurEmptyState,
+  KangurGlassPanel,
   KangurIconBadge,
   KangurInfoCard,
-  KangurPanel,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_SEGMENTED_CONTROL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import {
   useKangurLeaderboardState,
   type KangurLeaderboardUserFilterIcon,
@@ -32,46 +33,53 @@ export default function Leaderboard(): React.JSX.Element {
     useKangurLeaderboardState();
 
   return (
-    <KangurPanel
-      className='w-full max-w-lg'
+    <KangurGlassPanel
+      className='w-full max-w-lg shadow-[0_18px_40px_-30px_rgba(168,175,216,0.2)]'
       data-testid='leaderboard-shell'
       padding='lg'
-      variant='elevated'
+      surface='solid'
+      variant='soft'
     >
       <div className='flex items-center gap-2 mb-4'>
-        <Trophy className='text-yellow-400 w-6 h-6 flex-shrink-0' />
-        <h3 className='text-xl font-extrabold text-gray-800'>Najlepsze wyniki</h3>
+        <Trophy className='text-amber-400 w-6 h-6 flex-shrink-0' />
+        <h3 className='text-xl font-extrabold text-slate-800'>Najlepsze wyniki</h3>
       </div>
 
-      <div className='flex flex-col gap-2 mb-4'>
-        <div className='flex flex-wrap gap-2'>
+      <div className='mb-4 flex flex-col gap-2'>
+        <div
+          className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} flex-wrap justify-start sm:w-auto`}
+          data-testid='leaderboard-operation-filter-group'
+        >
           {operationFilters.map((filter) => (
             <KangurButton
               key={filter.id}
               type='button'
               onClick={filter.select}
               aria-pressed={filter.selected}
-              className='h-9 px-3 text-xs'
+              className='h-10 px-3 text-xs sm:flex-none'
               data-testid={`leaderboard-operation-filter-${filter.id}`}
               size='sm'
-              variant={filter.selected ? 'surface' : 'secondary'}
+              variant={filter.selected ? 'segmentActive' : 'segment'}
             >
               {filter.displayLabel}
             </KangurButton>
           ))}
         </div>
 
-        <div className='flex flex-wrap gap-2'>
+        <div
+          className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} flex-wrap justify-start sm:w-auto`}
+          data-testid='leaderboard-user-filter-group'
+        >
           {userFilters.map((filter) => (
             <KangurButton
               key={filter.id}
               type='button'
               onClick={filter.select}
               aria-pressed={filter.selected}
-              className='h-9 px-3 text-xs'
+              className='h-10 px-3 text-xs sm:flex-none'
               data-testid={`leaderboard-user-filter-${filter.id}`}
               size='sm'
-              variant={filter.selected ? 'surface' : 'secondary'}
+              variant={filter.selected ? 'segmentActive' : 'segment'}
             >
               {renderUserFilterIcon(filter.icon)}
               {filter.label}
@@ -112,13 +120,13 @@ export default function Leaderboard(): React.JSX.Element {
                   {item.isMedal ? (
                     item.rankLabel
                   ) : (
-                    <span className='text-sm font-bold text-gray-400'>{item.rankLabel}</span>
+                    <span className='text-sm font-bold text-slate-400'>{item.rankLabel}</span>
                   )}
                 </span>
 
                 <div className='flex-1 min-w-0'>
                   <div className='flex items-center gap-1 flex-wrap'>
-                    <span className='font-bold text-gray-700 truncate max-w-[120px] sm:max-w-none'>
+                    <span className='max-w-[120px] truncate font-bold text-slate-700 sm:max-w-none'>
                       {item.playerName}
                     </span>
                     {item.isRegistered ? (
@@ -150,22 +158,22 @@ export default function Leaderboard(): React.JSX.Element {
                       </KangurStatusChip>
                     )}
                   </div>
-                  <div className='text-xs text-gray-400'>
+                  <div className='text-xs text-slate-500'>
                     {item.operationEmoji} {item.operationLabel}
                   </div>
                 </div>
 
                 <div className='text-right flex-shrink-0'>
-                  <div className='font-extrabold text-indigo-600 text-sm sm:text-base'>
+                  <div className='text-sm font-extrabold text-indigo-700 sm:text-base'>
                     {item.scoreLabel}
                   </div>
-                  <div className='text-xs text-gray-400'>{item.timeLabel}</div>
+                  <div className='text-xs text-slate-500'>{item.timeLabel}</div>
                 </div>
               </KangurInfoCard>
             );
           })}
         </div>
       )}
-    </KangurPanel>
+    </KangurGlassPanel>
   );
 }

@@ -22,7 +22,7 @@ vi.mock('@/features/kangur/ui/services/kangur-questions', () => ({
 import KangurExam from '@/features/kangur/ui/components/KangurExam';
 
 describe('KangurExam', () => {
-  it('uses shared pill CTAs for navigation and summary actions', async () => {
+  it('uses shared light utility actions and glass summary surfaces', async () => {
     useKangurGameContextMock.mockReturnValue({ mode: 'junior' });
     getKangurQuestionsMock.mockReturnValue([
       {
@@ -56,7 +56,7 @@ describe('KangurExam', () => {
     );
     expect(screen.getByRole('button', { name: /poprzednie/i })).toHaveClass(
       'kangur-cta-pill',
-      'soft-cta'
+      'surface-cta'
     );
     expect(screen.getByRole('button', { name: /zakończ test/i })).toHaveClass(
       'kangur-cta-pill',
@@ -72,9 +72,13 @@ describe('KangurExam', () => {
 
     expect(await screen.findByRole('button', { name: /wróć do menu/i })).toHaveClass(
       'kangur-cta-pill',
-      'soft-cta'
+      'surface-cta'
     );
-    expect(screen.getByTestId('kangur-exam-summary-shell')).toHaveClass('glass-panel');
+    expect(screen.getByTestId('kangur-exam-summary-shell')).toHaveClass(
+      'glass-panel',
+      'border-white/88',
+      'bg-white/94'
+    );
     expect(screen.getByTestId('kangur-exam-summary-emoji')).toHaveClass(
       'inline-flex',
       'text-6xl'
@@ -98,15 +102,15 @@ describe('KangurExam', () => {
 
     expect(screen.getByRole('button', { name: /podsumowanie/i })).toHaveClass(
       'kangur-cta-pill',
-      'soft-cta'
+      'surface-cta'
     );
     expect(screen.getByRole('button', { name: /poprzednie pytanie w podgladzie/i })).toHaveClass(
       'kangur-cta-pill',
-      'soft-cta'
+      'surface-cta'
     );
     expect(screen.getByRole('button', { name: /nastepne pytanie w podgladzie/i })).toHaveClass(
       'kangur-cta-pill',
-      'soft-cta'
+      'surface-cta'
     );
     expect(screen.getByTestId('kangur-exam-review-shell')).toHaveClass(
       'soft-card',

@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -92,7 +92,13 @@ describe('Tests page smoke', () => {
 
   it('renders the page heading', () => {
     render(<Tests />);
-    expect(screen.getByText('🦘 Testy Kangur')).toBeInTheDocument();
+    const heading = screen.getByTestId('kangur-tests-list-heading');
+    expect(heading).toHaveClass('flex', 'flex-col', 'items-center', 'text-center');
+    expect(within(heading).getByRole('heading', { name: 'Testy Kangur' })).toHaveClass(
+      'text-2xl',
+      'text-indigo-700'
+    );
+    expect(within(heading).getByText('🦘')).toHaveClass('bg-indigo-100', 'text-indigo-700');
   });
 
   it('shows the empty state when no suites are configured', () => {
@@ -145,7 +151,7 @@ describe('Tests page smoke', () => {
     expect(screen.getByText('Zestaw testowy')).toHaveClass('border-indigo-200', 'bg-indigo-100');
     expect(screen.getByRole('button', { name: /wróć/i })).toHaveClass(
       'kangur-cta-pill',
-      'soft-cta'
+      'surface-cta'
     );
   });
 

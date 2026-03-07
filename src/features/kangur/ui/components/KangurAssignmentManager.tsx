@@ -20,6 +20,7 @@ import {
   KangurSummaryPanel,
   KangurTextField,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_SEGMENTED_CONTROL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import {
   buildKangurAssignmentHref,
   buildKangurAssignmentCatalog,
@@ -281,7 +282,7 @@ export function KangurAssignmentManager({
             </div>
           </div>
 
-          <KangurButton type='button' onClick={() => void refresh()} size='sm' variant='secondary'>
+          <KangurButton type='button' onClick={() => void refresh()} size='sm' variant='surface'>
             Odśwież postęp
           </KangurButton>
         </div>
@@ -344,17 +345,17 @@ export function KangurAssignmentManager({
           className='mt-5'
         />
 
-        <div className='mt-4 flex flex-wrap gap-2'>
+        <div className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} mt-4 flex-wrap justify-start sm:w-auto`}>
           {FILTER_OPTIONS.map((option) => (
             <KangurButton
               key={option.value}
               type='button'
               onClick={() => setActiveFilter(option.value)}
               aria-pressed={activeFilter === option.value}
-              className='h-10 px-4 text-xs'
+              className='min-w-0 flex-none px-3 text-xs'
               data-testid={`assignment-manager-filter-${option.value}`}
               size='sm'
-              variant={activeFilter === option.value ? 'surface' : 'secondary'}
+              variant={activeFilter === option.value ? 'segmentActive' : 'segment'}
             >
               {option.label}
             </KangurButton>

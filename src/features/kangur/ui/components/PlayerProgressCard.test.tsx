@@ -25,6 +25,11 @@ describe('PlayerProgressCard', () => {
   it('uses shared metric and badge-chip styling for player progress', () => {
     render(<PlayerProgressCard progress={progress} />);
 
+    expect(screen.getByTestId('player-progress-shell')).toHaveClass(
+      'glass-panel',
+      'border-white/88',
+      'bg-white/94'
+    );
     expect(screen.getByTestId('player-progress-level-bar')).toHaveAttribute('aria-valuenow', '92');
     expect(screen.getByText('Gier').parentElement).toHaveClass('soft-card', 'border-indigo-300');
     expect(screen.getByText('Lekcji').parentElement).toHaveClass('soft-card', 'border-violet-300');

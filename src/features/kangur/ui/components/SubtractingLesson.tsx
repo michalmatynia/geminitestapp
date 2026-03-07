@@ -6,7 +6,12 @@ import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
-import { KangurIconBadge } from '@/features/kangur/ui/design/primitives';
+import {
+  KangurDisplayEmoji,
+  KangurEquationDisplay,
+  KangurFeatureHeader,
+  KangurIconBadge,
+} from '@/features/kangur/ui/design/primitives';
 
 type SectionId = 'podstawy' | 'przekroczenie' | 'dwucyfrowe' | 'zapamietaj' | 'game';
 
@@ -19,14 +24,20 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
           <p className='text-gray-700 text-center'>
             Odejmowanie to zabieranie czesci z grupy. Pytamy: ile zostało?
           </p>
-          <div className='flex items-center gap-4 text-5xl'>
-            <span>🍎🍎🍎🍎🍎</span>
-            <span className='text-2xl font-bold text-gray-400'>−</span>
-            <span>🍎🍎</span>
-            <span className='text-2xl font-bold text-gray-400'>=</span>
-            <span>🍎🍎🍎</span>
+          <div className='flex items-center gap-4'>
+            <KangurDisplayEmoji size='md'>🍎🍎🍎🍎🍎</KangurDisplayEmoji>
+            <KangurEquationDisplay accent='slate' as='span' className='text-gray-400' size='md'>
+              −
+            </KangurEquationDisplay>
+            <KangurDisplayEmoji size='md'>🍎🍎</KangurDisplayEmoji>
+            <KangurEquationDisplay accent='slate' as='span' className='text-gray-400' size='md'>
+              =
+            </KangurEquationDisplay>
+            <KangurDisplayEmoji size='md'>🍎🍎🍎</KangurDisplayEmoji>
           </div>
-          <p className='text-red-500 font-bold text-xl'>5 − 2 = 3</p>
+          <KangurEquationDisplay accent='rose' size='sm'>
+            5 − 2 = 3
+          </KangurEquationDisplay>
         </div>
       ),
     },
@@ -38,7 +49,12 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
             Cofaj sie na osi liczbowej lub licz, ile brakuje do wyniku.
           </p>
           <KangurLessonCallout accent='rose' className='text-center'>
-            <p className='text-3xl font-extrabold text-red-500'>9 − 4 = ?</p>
+            <KangurEquationDisplay
+              accent='rose'
+              data-testid='subtracting-lesson-single-digit-equation'
+            >
+              9 − 4 = ?
+            </KangurEquationDisplay>
             <p className='text-gray-500 mt-2'>
               Zacznij od <b>9</b>, cofnij sie 4: 8, 7, 6, <b>5</b> ✓
             </p>
@@ -63,7 +79,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
             Rozdziel odjemnik na dwie czesci: najpierw zejdz do 10, potem odejmij reszte.
           </p>
           <KangurLessonCallout accent='rose' className='text-center'>
-            <p className='text-3xl font-extrabold text-pink-500'>13 − 5 = ?</p>
+            <KangurEquationDisplay accent='rose'>13 − 5 = ?</KangurEquationDisplay>
             <p className='text-gray-500 mt-2'>
               13 − <b>3</b> = 10, 10 − <b>2</b> = <b>8</b> ✓
             </p>
@@ -90,7 +106,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
         <div className='flex flex-col items-center gap-4'>
           <p className='text-gray-700 text-center'>Odejmuj osobno dziesiatki i jednosci!</p>
           <KangurLessonCallout accent='amber' className='max-w-xs text-center'>
-            <p className='text-3xl font-extrabold text-orange-500'>47 − 23 = ?</p>
+            <KangurEquationDisplay accent='amber'>47 − 23 = ?</KangurEquationDisplay>
             <div className='mt-2 text-gray-600 text-left'>
               <p>
                 🔹 Dziesiatki: <b>40 − 20 = 20</b>
@@ -98,9 +114,9 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
               <p>
                 🔹 Jednosci: <b>7 − 3 = 4</b>
               </p>
-              <p className='mt-1 text-orange-700 font-bold'>
-                20 + 4 = <span className='text-2xl'>24</span> ✓
-              </p>
+              <KangurEquationDisplay accent='amber' className='mt-1' size='md'>
+                20 + 4 = 24 ✓
+              </KangurEquationDisplay>
             </div>
           </KangurLessonCallout>
         </div>
@@ -167,7 +183,7 @@ export default function SubtractingLesson(): React.JSX.Element {
   if (activeSection === 'game') {
     return (
       <div className='flex flex-col items-center gap-4 w-full max-w-sm'>
-        <h2 className='text-2xl font-extrabold text-red-500'>🎮 Gra z odejmowaniem!</h2>
+        <KangurFeatureHeader accent='rose' icon='🎮' title='Gra z odejmowaniem!' />
         <SubtractingGame onFinish={() => setActiveSection(null)} />
       </div>
     );

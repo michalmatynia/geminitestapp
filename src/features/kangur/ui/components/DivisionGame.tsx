@@ -14,6 +14,8 @@ import {
 import {
   KangurButton,
   KangurDisplayEmoji,
+  KangurEquationDisplay,
+  KangurHeadline,
   KangurInfoCard,
   KangurOptionCardButton,
   KangurPanel,
@@ -203,9 +205,9 @@ export default function DivisionGame({ onFinish }: DivisionGameProps): React.JSX
           <KangurDisplayEmoji data-testid='division-game-summary-emoji' size='lg'>
             {percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
           </KangurDisplayEmoji>
-          <h2 className='text-2xl font-extrabold text-gray-800'>
+          <KangurHeadline data-testid='division-game-summary-title'>
             Wynik: {score}/{TOTAL}
-          </h2>
+          </KangurHeadline>
           {xpEarned > 0 && (
             <KangurStatusChip accent='indigo' className='px-4 py-2 text-sm font-bold'>
               +{xpEarned} XP ✨
@@ -284,7 +286,9 @@ export default function DivisionGame({ onFinish }: DivisionGameProps): React.JSX
             <p className='text-xs font-bold text-blue-400 uppercase tracking-wide'>
               {question.type === 'remainder' ? 'Jaka jest reszta?' : 'Ile wynosi iloraz?'}
             </p>
-            <p className='text-3xl font-extrabold text-blue-600'>{question.label}</p>
+            <KangurEquationDisplay accent='sky' data-testid='division-game-equation'>
+              {question.label}
+            </KangurEquationDisplay>
 
             {question.type === 'quotient' && (
               <ShareVisual a={question.a} b={question.b} quotient={question.correct} />

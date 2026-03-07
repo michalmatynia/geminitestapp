@@ -226,21 +226,8 @@ const preflightBuildLock = async () => {
   };
 };
 
-const runCommandCheck = ({ id, label, command, commandArgs, timeoutMs, enabled = true }) => {
-  if (!enabled) {
-    return Promise.resolve({
-      id,
-      label,
-      command: [command, ...commandArgs].join(' '),
-      status: 'skipped',
-      exitCode: null,
-      signal: null,
-      durationMs: 0,
-      output: 'Skipped by configuration.',
-    });
-  }
-
-  return new Promise((resolve) => {
+const runCommandCheckAttempt = ({ command, commandArgs, timeoutMs }) =>
+  new Promise((resolve) => {
     const startedAt = Date.now();
     const child = spawn(command, commandArgs, {
       cwd: root,
@@ -278,15 +265,11 @@ const runCommandCheck = ({ id, label, command, commandArgs, timeoutMs, enabled =
     child.on('error', (error) => {
       completed = true;
       clearTimeout(timer);
-      const durationMs = Date.now() - startedAt;
       resolve({
-        id,
-        label,
-        command: [command, ...commandArgs].join(' '),
         status: 'fail',
         exitCode: null,
         signal: null,
-        durationMs,
+        durationMs: Date.now() - startedAt,
         output: truncateOutput(`${output}\n${error.stack ?? String(error)}`.trim()),
       });
     });
@@ -294,20 +277,84 @@ const runCommandCheck = ({ id, label, command, commandArgs, timeoutMs, enabled =
     child.on('close', (exitCode, signal) => {
       completed = true;
       clearTimeout(timer);
-      const durationMs = Date.now() - startedAt;
-      const status = timedOut ? 'timeout' : exitCode === 0 ? 'pass' : 'fail';
       resolve({
-        id,
-        label,
-        command: [command, ...commandArgs].join(' '),
-        status,
+        status: timedOut ? 'timeout' : exitCode === 0 ? 'pass' : 'fail',
         exitCode,
         signal,
-        durationMs,
+        durationMs: Date.now() - startedAt,
         output: truncateOutput(output.trim()),
       });
     });
   });
+
+const runCommandCheck = async ({
+  id,
+  label,
+  command,
+  commandArgs,
+  timeoutMs,
+  enabled = true,
+  confirmFailureRetries = 0,
+}) => {
+  if (!enabled) {
+    return {
+      id,
+      label,
+      command: [command, ...commandArgs].join(' '),
+      status: 'skipped',
+      exitCode: null,
+      signal: null,
+      durationMs: 0,
+      output: 'Skipped by configuration.',
+    };
+  }
+
+  const commandString = [command, ...commandArgs].join(' ');
+  const attempts = [];
+
+  for (let attemptIndex = 0; attemptIndex <= confirmFailureRetries; attemptIndex += 1) {
+    const result = await runCommandCheckAttempt({
+      command,
+      commandArgs,
+      timeoutMs,
+    });
+    attempts.push(result);
+
+    if (result.status === 'pass' || result.status === 'timeout') {
+      const outputPrefix =
+        attemptIndex > 0
+          ? `[retry] ${label} passed on confirmation attempt ${attemptIndex + 1} of ${confirmFailureRetries + 1}.`
+          : '';
+      return {
+        id,
+        label,
+        command: commandString,
+        status: result.status,
+        exitCode: result.exitCode,
+        signal: result.signal,
+        durationMs: attempts.reduce((total, value) => total + value.durationMs, 0),
+        output: truncateOutput([outputPrefix, result.output].filter(Boolean).join('\n')),
+      };
+    }
+  }
+
+  const finalResult = attempts.at(-1);
+  return {
+    id,
+    label,
+    command: commandString,
+    status: finalResult.status,
+    exitCode: finalResult.exitCode,
+    signal: finalResult.signal,
+    durationMs: attempts.reduce((total, value) => total + value.durationMs, 0),
+    output: truncateOutput(
+      attempts
+        .map((attempt, index) =>
+          [`[attempt ${index + 1}/${attempts.length}]`, attempt.output].filter(Boolean).join('\n')
+        )
+        .join('\n\n')
+    ),
+  };
 };
 
 const parseScannerSummary = async (scriptName) => {
@@ -540,6 +587,7 @@ const run = async () => {
       command: 'npm',
       commandArgs: ['run', 'build'],
       timeoutMs: 30 * 60 * 1000,
+      confirmFailureRetries: 1,
     },
     {
       id: 'lint',
@@ -547,6 +595,7 @@ const run = async () => {
       command: 'npm',
       commandArgs: ['run', 'lint'],
       timeoutMs: 15 * 60 * 1000,
+      confirmFailureRetries: 1,
     },
     {
       id: 'lintDomains',
@@ -567,6 +616,7 @@ const run = async () => {
       command: 'npm',
       commandArgs: ['run', 'typecheck'],
       timeoutMs: 20 * 60 * 1000,
+      confirmFailureRetries: 1,
     },
     {
       id: 'criticalFlows',

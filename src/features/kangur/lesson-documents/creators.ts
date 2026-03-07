@@ -2,6 +2,8 @@ import {
   KANGUR_TTS_DEFAULT_LOCALE,
   KANGUR_TTS_DEFAULT_VOICE,
   type KangurLessonActivityBlock,
+  type KangurLessonCalloutBlock,
+  type KangurLessonCalloutVariant,
   type KangurLessonComponentId,
   type KangurLessonDocument,
   type KangurLessonGridBlock,
@@ -9,6 +11,7 @@ import {
   type KangurLessonImageBlock,
   type KangurLessonInlineBlock,
   type KangurLessonPage,
+  type KangurLessonQuizBlock,
   type KangurLessonRootBlock,
   type KangurLessonSvgBlock,
   type KangurLessonTextBlock,
@@ -65,6 +68,34 @@ export const createKangurLessonActivityBlock = (
   ...applyKangurLessonActivityDefaults(activityId),
   ttsDescription: '',
 });
+
+export const createKangurLessonCalloutBlock = (
+  variant: KangurLessonCalloutVariant = 'info'
+): KangurLessonCalloutBlock => ({
+  id: createKangurLessonBlockId('lesson-callout'),
+  type: 'callout',
+  variant,
+  title: '',
+  html: '<p>Add your callout content here.</p>',
+  ttsText: '',
+});
+
+export const createKangurLessonQuizBlock = (): KangurLessonQuizBlock => {
+  const choiceA = createKangurLessonBlockId('quiz-choice');
+  const choiceB = createKangurLessonBlockId('quiz-choice');
+  return {
+    id: createKangurLessonBlockId('lesson-quiz'),
+    type: 'quiz',
+    question: '<p>Enter your question here.</p>',
+    choices: [
+      { id: choiceA, text: 'Choice A' },
+      { id: choiceB, text: 'Choice B' },
+    ],
+    correctChoiceId: '',
+    explanation: '',
+    ttsText: '',
+  };
+};
 
 export const createKangurLessonGridItem = (
   block: KangurLessonInlineBlock = createKangurLessonTextBlock()

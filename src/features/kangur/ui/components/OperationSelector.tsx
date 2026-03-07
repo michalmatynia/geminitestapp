@@ -7,6 +7,7 @@ import { useKangurOperationSelectorState } from '@/features/kangur/ui/hooks/useK
 import {
   KangurIconBadge,
   KangurOptionCardButton,
+  KangurSectionHeading,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_ACCENT_STYLES } from '@/features/kangur/ui/design/tokens';
@@ -38,14 +39,16 @@ export default function OperationSelector({
       className='flex w-full max-w-3xl flex-col items-center gap-6'
     >
       <DifficultySelector selected={difficulty} onSelect={setDifficulty} />
-      <div className='space-y-2 text-center'>
-        <h2 id={headingId} className='text-2xl font-extrabold tracking-tight text-slate-800'>
-          Wybierz swoje wyzwanie
-        </h2>
-        <p id={descriptionId} className='text-sm text-slate-500'>
-          Kazda kategoria ma ten sam uklad. Kolor tylko podpowiada temat.
-        </p>
-      </div>
+      <KangurSectionHeading
+        accent='indigo'
+        data-testid='operation-selector-heading'
+        description='Kazda kategoria ma ten sam uklad. Kolor tylko podpowiada temat.'
+        descriptionId={descriptionId}
+        headingAs='h2'
+        headingSize='md'
+        title='Wybierz swoje wyzwanie'
+        titleId={headingId}
+      />
       <div
         aria-labelledby={headingId}
         className='grid w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3'

@@ -7,7 +7,12 @@ import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
-import { KangurIconBadge } from '@/features/kangur/ui/design/primitives';
+import {
+  KangurDisplayEmoji,
+  KangurEquationDisplay,
+  KangurFeatureHeader,
+  KangurIconBadge,
+} from '@/features/kangur/ui/design/primitives';
 
 type SectionId = 'podstawy' | 'przekroczenie' | 'dwucyfrowe' | 'zapamietaj' | 'synthesis' | 'game';
 
@@ -20,14 +25,20 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
           <p className='text-gray-700 text-center'>
             Dodawanie to łączenie dwóch grup razem, zeby policzyc, ile ich jest łacznie.
           </p>
-          <div className='flex items-center gap-4 text-5xl'>
-            <span>🍎🍎</span>
-            <span className='text-2xl font-bold text-gray-400'>+</span>
-            <span>🍎🍎🍎</span>
-            <span className='text-2xl font-bold text-gray-400'>=</span>
-            <span>🍎🍎🍎🍎🍎</span>
+          <div className='flex items-center gap-4'>
+            <KangurDisplayEmoji size='md'>🍎🍎</KangurDisplayEmoji>
+            <KangurEquationDisplay accent='slate' as='span' className='text-gray-400' size='md'>
+              +
+            </KangurEquationDisplay>
+            <KangurDisplayEmoji size='md'>🍎🍎🍎</KangurDisplayEmoji>
+            <KangurEquationDisplay accent='slate' as='span' className='text-gray-400' size='md'>
+              =
+            </KangurEquationDisplay>
+            <KangurDisplayEmoji size='md'>🍎🍎🍎🍎🍎</KangurDisplayEmoji>
           </div>
-          <p className='text-orange-600 font-bold text-xl'>2 + 3 = 5</p>
+          <KangurEquationDisplay accent='amber' size='sm'>
+            2 + 3 = 5
+          </KangurEquationDisplay>
         </div>
       ),
     },
@@ -39,7 +50,9 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
             Mozesz liczyc na palcach lub w myslach. Zacznij od wiekszej liczby!
           </p>
           <KangurLessonCallout accent='amber' className='text-center'>
-            <p className='text-3xl font-extrabold text-orange-500'>4 + 3 = ?</p>
+            <KangurEquationDisplay accent='amber' data-testid='adding-lesson-single-digit-equation'>
+              4 + 3 = ?
+            </KangurEquationDisplay>
             <p className='text-gray-500 mt-2'>
               Zacznij od <b>4</b>, dolicz 3 w góre: 5, 6, <b>7</b> ✓
             </p>
@@ -64,7 +77,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
             Gdy suma przekracza 10, mozesz uzupełnic do 10 i dodac reszte.
           </p>
           <KangurLessonCallout accent='sky' className='text-center'>
-            <p className='text-3xl font-extrabold text-blue-500'>7 + 5 = ?</p>
+            <KangurEquationDisplay accent='sky'>7 + 5 = ?</KangurEquationDisplay>
             <p className='text-gray-500 mt-2'>
               7 + <b>3</b> = 10, zostaje jeszcze <b>2</b>, więc 10 + 2 = <b>12</b> ✓
             </p>
@@ -80,7 +93,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
         <div className='flex flex-col items-center gap-4'>
           <p className='text-gray-700 text-center'>Dodawaj osobno dziesiatki i jednosci!</p>
           <KangurLessonCallout accent='emerald' className='max-w-xs text-center'>
-            <p className='text-3xl font-extrabold text-green-600'>24 + 13 = ?</p>
+            <KangurEquationDisplay accent='emerald'>24 + 13 = ?</KangurEquationDisplay>
             <div className='mt-2 text-gray-600 text-left'>
               <p>
                 🔹 Dziesiatki: <b>20 + 10 = 30</b>
@@ -88,9 +101,9 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
               <p>
                 🔹 Jednosci: <b>4 + 3 = 7</b>
               </p>
-              <p className='mt-1 text-green-700 font-bold'>
-                30 + 7 = <span className='text-2xl'>37</span> ✓
-              </p>
+              <KangurEquationDisplay accent='emerald' className='mt-1' size='md'>
+                30 + 7 = 37 ✓
+              </KangurEquationDisplay>
             </div>
           </KangurLessonCallout>
         </div>
@@ -170,7 +183,7 @@ export default function AddingLesson(): React.JSX.Element {
   if (activeSection === 'game') {
     return (
       <div className='flex flex-col items-center gap-4 w-full max-w-sm'>
-        <h2 className='text-2xl font-extrabold text-orange-500'>🎮 Gra z piłkami!</h2>
+        <KangurFeatureHeader accent='amber' icon='🎮' title='Gra z piłkami!' />
         <AddingBallGame onFinish={() => setActiveSection(null)} />
       </div>
     );

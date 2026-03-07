@@ -2,8 +2,8 @@ import { motion } from 'framer-motion';
 
 import {
   KangurDisplayEmoji,
+  KangurGlassPanel,
   KangurMetricCard,
-  KangurPanel,
   KangurProgressBar,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
@@ -31,21 +31,27 @@ export default function PlayerProgressCard({
       animate={{ opacity: 1, y: 0 }}
       className='w-full max-w-sm'
     >
-      <KangurPanel className='flex flex-col gap-4' padding='lg' variant='soft'>
+      <KangurGlassPanel
+        className='flex flex-col gap-4 shadow-[0_18px_40px_-30px_rgba(168,175,216,0.2)]'
+        data-testid='player-progress-shell'
+        padding='lg'
+        surface='solid'
+        variant='soft'
+      >
         <div className='flex items-center gap-3'>
           <KangurDisplayEmoji size='sm'>🎖️</KangurDisplayEmoji>
           <div className='flex-1'>
             <p className={`font-extrabold text-lg leading-tight ${currentLevel.color}`}>
               {currentLevel.title}
             </p>
-            <p className='text-xs text-gray-400'>
+            <p className='text-xs text-slate-500'>
               Poziom {currentLevel.level} · {totalXp} XP lacznie
             </p>
           </div>
         </div>
 
         <div>
-          <div className='mb-1 flex justify-between text-xs text-gray-400'>
+          <div className='mb-1 flex justify-between text-xs text-slate-500'>
             <span>{xpIntoLevel} XP</span>
             {nextLevel ? (
               <span>
@@ -81,7 +87,7 @@ export default function PlayerProgressCard({
         </div>
 
         <div>
-          <p className='mb-2 text-xs font-bold uppercase tracking-wide text-gray-400'>Odznaki</p>
+          <p className='mb-2 text-xs font-bold uppercase tracking-wide text-slate-500'>Odznaki</p>
           <div className='flex flex-wrap gap-2'>
             {BADGES.map((badge) => {
               const unlocked = badges.includes(badge.id);
@@ -100,7 +106,7 @@ export default function PlayerProgressCard({
             })}
           </div>
         </div>
-      </KangurPanel>
+      </KangurGlassPanel>
     </motion.div>
   );
 }

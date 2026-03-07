@@ -243,6 +243,18 @@ const collectRootBlockParts = (block: KangurLessonRootBlock): string[] => {
   if (block.type === 'activity') {
     return collectActivityBlockParts(block);
   }
+  if (block.type === 'callout') {
+    const tts = block.ttsText?.trim();
+    if (tts) return [tts];
+    const title = block.title?.trim();
+    const plain = stripHtmlToPlainText(block.html);
+    return [title, plain].filter((s): s is string => Boolean(s?.length));
+  }
+  if (block.type === 'quiz') {
+    const tts = block.ttsText?.trim();
+    if (tts) return [tts];
+    return [stripHtmlToPlainText(block.question)].filter((s) => s.length > 0);
+  }
   return collectInlineBlockParts(block);
 };
 

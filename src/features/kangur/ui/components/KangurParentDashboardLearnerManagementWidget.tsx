@@ -2,9 +2,9 @@
 
 import {
   KangurButton,
+  KangurGlassPanel,
   KangurIconBadge,
   KangurOptionCardButton,
-  KangurPanel,
   KangurSelectField,
   KangurStatusChip,
   KangurTextField,
@@ -33,13 +33,16 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
   }
 
   return (
-    <div className='flex flex-col gap-6'>
-      <KangurPanel className='flex flex-col gap-4' padding='lg' variant='soft'>
-        <div className='flex flex-col gap-1'>
-          <div className='text-sm font-bold uppercase tracking-wide text-gray-500'>
+    <div className='flex flex-col gap-5'>
+      <KangurGlassPanel className='flex flex-col gap-5' padding='lg' surface='mistStrong' variant='soft'>
+        <div className='flex flex-col gap-1.5'>
+          <div className='text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
             Profile uczniow
           </div>
-          <div className='text-sm text-gray-500'>
+          <h2 className='text-lg font-bold tracking-[-0.02em] text-slate-800'>
+            Zarzadzaj profilami bez opuszczania panelu
+          </h2>
+          <div className='max-w-2xl text-sm text-slate-500'>
             Rodzic loguje sie emailem, a uczniowie dostaja osobne nazwy logowania i hasla.
           </div>
         </div>
@@ -98,46 +101,62 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
           })}
         </div>
 
-        <div className='grid gap-3 md:grid-cols-3'>
-          <KangurTextField
-            accent='indigo'
-            value={createForm.displayName}
-            onChange={(event) => updateCreateField('displayName', event.target.value)}
-            placeholder='Imie ucznia'
-          />
-          <KangurTextField
-            accent='indigo'
-            value={createForm.loginName}
-            onChange={(event) => updateCreateField('loginName', event.target.value)}
-            placeholder='Login ucznia'
-          />
-          <KangurTextField
-            accent='indigo'
-            type='password'
-            value={createForm.password}
-            onChange={(event) => updateCreateField('password', event.target.value)}
-            placeholder='Haslo ucznia'
-          />
-        </div>
+        <KangurGlassPanel className='flex flex-col gap-4' padding='md' surface='solid' variant='subtle'>
+          <div className='flex flex-col gap-1'>
+            <div className='text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
+              Nowy profil
+            </div>
+            <div className='text-sm text-slate-500'>
+              Dodaj dziecko i od razu ustaw jego login oraz haslo do gry.
+            </div>
+          </div>
 
-        <div className='flex flex-wrap items-center gap-3'>
-          <KangurButton
-            disabled={isSubmitting}
-            onClick={() => void handleCreateLearner()}
-            size='md'
-            variant='primary'
-            data-doc-id='parent_create_learner'
-          >
-            Dodaj ucznia
-          </KangurButton>
-          {feedback ? <div className='text-sm text-slate-500'>{feedback}</div> : null}
-        </div>
-      </KangurPanel>
+          <div className='grid gap-3 md:grid-cols-3'>
+            <KangurTextField
+              accent='indigo'
+              value={createForm.displayName}
+              onChange={(event) => updateCreateField('displayName', event.target.value)}
+              placeholder='Imie ucznia'
+            />
+            <KangurTextField
+              accent='indigo'
+              value={createForm.loginName}
+              onChange={(event) => updateCreateField('loginName', event.target.value)}
+              placeholder='Login ucznia'
+            />
+            <KangurTextField
+              accent='indigo'
+              type='password'
+              value={createForm.password}
+              onChange={(event) => updateCreateField('password', event.target.value)}
+              placeholder='Haslo ucznia'
+            />
+          </div>
+
+          <div className='flex flex-wrap items-center gap-3'>
+            <KangurButton
+              disabled={isSubmitting}
+              onClick={() => void handleCreateLearner()}
+              size='sm'
+              variant='surface'
+              data-doc-id='parent_create_learner'
+            >
+              Dodaj ucznia
+            </KangurButton>
+            {feedback ? <div className='text-sm text-slate-500'>{feedback}</div> : null}
+          </div>
+        </KangurGlassPanel>
+      </KangurGlassPanel>
 
       {activeLearner ? (
-        <KangurPanel className='flex flex-col gap-4' padding='lg' variant='soft'>
-          <div className='text-sm font-bold uppercase tracking-wide text-gray-500'>
-            Ustawienia wybranego ucznia
+        <KangurGlassPanel className='flex flex-col gap-4' padding='lg' surface='mistSoft' variant='soft'>
+          <div className='flex flex-col gap-1'>
+            <div className='text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
+              Wybrany profil
+            </div>
+            <div className='text-sm text-slate-500'>
+              Aktualizujesz dane ucznia <span className='font-semibold text-slate-700'>{activeLearner.displayName}</span>.
+            </div>
           </div>
           <div className='grid gap-3 md:grid-cols-2'>
             <KangurTextField
@@ -177,8 +196,8 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
             <KangurButton
               disabled={isSubmitting}
               onClick={() => void handleSaveLearner()}
-              size='md'
-              variant='secondary'
+              size='sm'
+              variant='surface'
               data-doc-id='parent_save_learner'
             >
               Zapisz ucznia
@@ -187,7 +206,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
               Login i haslo naleza do ucznia, ale konto pozostaje wlasnoscia rodzica.
             </div>
           </div>
-        </KangurPanel>
+        </KangurGlassPanel>
       ) : null}
     </div>
   );

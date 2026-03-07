@@ -2,7 +2,11 @@
 
 import { LogIn } from 'lucide-react';
 
-import { KangurButton } from '@/features/kangur/ui/design/primitives';
+import {
+  KangurButton,
+  KangurGlassPanel,
+  KangurGradientHeading,
+} from '@/features/kangur/ui/design/primitives';
 import {
   getKangurLearnerProfileDisplayName,
   useKangurLearnerProfileRuntime,
@@ -13,22 +17,32 @@ export function KangurLearnerProfileHeroWidget(): React.JSX.Element {
   const displayName = getKangurLearnerProfileDisplayName(user);
 
   return (
-    <div>
-      <h1 className='bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-4xl font-extrabold text-transparent drop-shadow'>
-        Profil ucznia
-      </h1>
-      <p className='mt-1 text-slate-500'>Statystyki ucznia: {displayName}.</p>
+    <KangurGlassPanel
+      className='flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between'
+      padding='lg'
+      surface='mistStrong'
+      variant='soft'
+    >
+      <div className='max-w-2xl'>
+        <div className='text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
+          Dane i postep
+        </div>
+        <KangurGradientHeading gradientClass='from-indigo-500 to-purple-600' size='lg'>
+          Profil ucznia
+        </KangurGradientHeading>
+        <p className='mt-2 text-sm text-slate-500'>Statystyki ucznia: {displayName}.</p>
+      </div>
       {!user ? (
         <KangurButton
-          className='mt-4'
+          className='sm:self-start'
           onClick={navigateToLogin}
-          size='md'
-          variant='secondary'
+          size='sm'
+          variant='surface'
           data-doc-id='profile_login'
         >
           <LogIn className='h-4 w-4' /> Zaloguj sie, aby synchronizowac postep
         </KangurButton>
       ) : null}
-    </div>
+    </KangurGlassPanel>
   );
 }

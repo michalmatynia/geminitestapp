@@ -9,6 +9,8 @@ import {
 import {
   KangurButton,
   KangurDisplayEmoji,
+  KangurEquationDisplay,
+  KangurHeadline,
   KangurOptionCardButton,
   KangurPanel,
   KangurProgressBar,
@@ -142,9 +144,9 @@ export default function SubtractingGame({ onFinish }: SubtractingGameProps): Rea
           <KangurDisplayEmoji data-testid='subtracting-game-summary-emoji' size='lg'>
             {percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
           </KangurDisplayEmoji>
-          <h2 className='text-2xl font-extrabold text-gray-800'>
+          <KangurHeadline data-testid='subtracting-game-summary-title'>
             Wynik: {score}/{TOTAL}
-          </h2>
+          </KangurHeadline>
           {xpEarned > 0 && (
             <KangurStatusChip accent='indigo' className='px-4 py-2 text-sm font-bold'>
               +{xpEarned} XP ✨
@@ -213,9 +215,9 @@ export default function SubtractingGame({ onFinish }: SubtractingGameProps): Rea
             padding='lg'
             variant='elevated'
           >
-            <p className='text-3xl font-extrabold text-red-500'>
+            <KangurEquationDisplay accent='rose' data-testid='subtracting-game-equation'>
               {question.a} − {question.b} = <span className='text-gray-400'>?</span>
-            </p>
+            </KangurEquationDisplay>
             <AppleVisual a={question.a} b={question.b} />
             <div className='grid grid-cols-2 gap-2 w-full'>
               {question.choices.map((choice, index) => {

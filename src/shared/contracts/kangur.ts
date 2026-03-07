@@ -172,12 +172,44 @@ export const kangurLessonGridBlockSchema = z.object({
 });
 export type KangurLessonGridBlock = z.infer<typeof kangurLessonGridBlockSchema>;
 
+export const kangurLessonCalloutVariantSchema = z.enum(['info', 'tip', 'warning', 'success']);
+export type KangurLessonCalloutVariant = z.infer<typeof kangurLessonCalloutVariantSchema>;
+
+export const kangurLessonCalloutBlockSchema = z.object({
+  id: kangurLessonBlockIdSchema,
+  type: z.literal('callout'),
+  variant: kangurLessonCalloutVariantSchema.default('info'),
+  title: z.string().trim().max(120).optional(),
+  html: z.string().max(10_000).default(''),
+  ttsText: z.string().trim().max(2_000).optional(),
+});
+export type KangurLessonCalloutBlock = z.infer<typeof kangurLessonCalloutBlockSchema>;
+
+export const kangurLessonQuizChoiceSchema = z.object({
+  id: kangurLessonBlockIdSchema,
+  text: z.string().trim().max(500).default(''),
+});
+export type KangurLessonQuizChoice = z.infer<typeof kangurLessonQuizChoiceSchema>;
+
+export const kangurLessonQuizBlockSchema = z.object({
+  id: kangurLessonBlockIdSchema,
+  type: z.literal('quiz'),
+  question: z.string().max(10_000).default(''),
+  choices: z.array(kangurLessonQuizChoiceSchema).min(2).max(4).default([]),
+  correctChoiceId: z.string().max(120).default(''),
+  explanation: z.string().max(10_000).optional(),
+  ttsText: z.string().trim().max(2_000).optional(),
+});
+export type KangurLessonQuizBlock = z.infer<typeof kangurLessonQuizBlockSchema>;
+
 export const kangurLessonRootBlockSchema = z.discriminatedUnion('type', [
   kangurLessonTextBlockSchema,
   kangurLessonSvgBlockSchema,
   kangurLessonImageBlockSchema,
   kangurLessonActivityBlockSchema,
   kangurLessonGridBlockSchema,
+  kangurLessonCalloutBlockSchema,
+  kangurLessonQuizBlockSchema,
 ]);
 export type KangurLessonRootBlock = z.infer<typeof kangurLessonRootBlockSchema>;
 

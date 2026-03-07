@@ -11,6 +11,7 @@ import type {
 import { kangurAssignmentSchema } from '@/shared/contracts/kangur';
 import { notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { executeMongoWriteWithRetry } from '@/shared/lib/db/mongo-write-retry';
 
 import type { KangurAssignmentListInput, KangurAssignmentRepository } from './types';
 
@@ -73,21 +74,23 @@ export const mongoKangurAssignmentRepository: KangurAssignmentRepository = {
     };
     const settingKey = toSettingKey(learnerKey, assignmentId);
 
-    await db.collection<MongoAssignmentSettingDocument>(SETTINGS_COLLECTION).updateOne(
-      {
-        $or: [{ key: settingKey }, { _id: settingKey }],
-      } as Filter<MongoAssignmentSettingDocument>,
-      {
-        $set: {
-          _id: settingKey,
-          key: settingKey,
-          value: JSON.stringify(persistedAssignment),
+    await executeMongoWriteWithRetry(async () => {
+      await db.collection<MongoAssignmentSettingDocument>(SETTINGS_COLLECTION).updateOne(
+        {
+          $or: [{ key: settingKey }, { _id: settingKey }],
+        } as Filter<MongoAssignmentSettingDocument>,
+        {
+          $set: {
+            _id: settingKey,
+            key: settingKey,
+            value: JSON.stringify(persistedAssignment),
+          },
         },
-      },
-      {
-        upsert: true,
-      }
-    );
+        {
+          upsert: true,
+        }
+      );
+    });
 
     return persistedAssignment;
   },
@@ -150,18 +153,20 @@ export const mongoKangurAssignmentRepository: KangurAssignmentRepository = {
       updatedAt: new Date().toISOString(),
     };
 
-    await db.collection<MongoAssignmentSettingDocument>(SETTINGS_COLLECTION).updateOne(
-      {
-        $or: [{ key: settingKey }, { _id: settingKey }],
-      } as Filter<MongoAssignmentSettingDocument>,
-      {
-        $set: {
-          _id: settingKey,
-          key: settingKey,
-          value: JSON.stringify(nextAssignment),
-        },
-      }
-    );
+    await executeMongoWriteWithRetry(async () => {
+      await db.collection<MongoAssignmentSettingDocument>(SETTINGS_COLLECTION).updateOne(
+        {
+          $or: [{ key: settingKey }, { _id: settingKey }],
+        } as Filter<MongoAssignmentSettingDocument>,
+        {
+          $set: {
+            _id: settingKey,
+            key: settingKey,
+            value: JSON.stringify(nextAssignment),
+          },
+        }
+      );
+    });
 
     return nextAssignment;
   },

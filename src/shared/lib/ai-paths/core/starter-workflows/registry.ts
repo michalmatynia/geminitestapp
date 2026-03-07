@@ -173,7 +173,7 @@ export const computeStarterWorkflowGraphHash = (
   return hashString(JSON.stringify(sortObjectDeep({ nodes, edges })));
 };
 
-const TRANSLATION_EN_PL_ADDITIONAL_GRAPH_HASHES: string[] = [];
+const TRANSLATION_EN_PL_ADDITIONAL_GRAPH_HASHES: string[] = ['97eb2bff'];
 
 const buildTriggerDisplay = (label: string): AiTriggerButtonDisplay => ({
   label,
@@ -355,7 +355,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     },
     starterLineage: {
       starterKey: 'translation_en_pl',
-      templateVersion: 3,
+      templateVersion: 4,
       canonicalGraphHashes: TRANSLATION_EN_PL_ADDITIONAL_GRAPH_HASHES,
     },
   },

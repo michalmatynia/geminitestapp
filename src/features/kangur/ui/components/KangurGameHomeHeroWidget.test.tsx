@@ -51,7 +51,7 @@ describe('KangurGameHomeHeroWidget', () => {
     expect(input).toHaveClass('soft-card', 'focus:border-indigo-300');
     expect(screen.getByRole('button', { name: /zaloguj się/i })).toHaveClass(
       'kangur-cta-pill',
-      'soft-cta'
+      'surface-cta'
     );
 
     fireEvent.change(input, { target: { value: 'Ola' } });

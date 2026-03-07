@@ -11,10 +11,10 @@ import type { KangurScoreRecord } from '@/features/kangur/services/ports';
 import {
   KangurButton,
   KangurEmptyState,
+  KangurGlassPanel,
   KangurIconBadge,
   KangurInfoCard,
   KangurMetricCard,
-  KangurPanel,
   KangurProgressBar,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
@@ -259,8 +259,8 @@ export default function ScoreHistory({
         />
       </div>
 
-      <KangurPanel padding='md' variant='soft'>
-        <p className='text-sm font-bold text-gray-500 uppercase tracking-wide mb-3'>
+      <KangurGlassPanel padding='md' surface='mistStrong' variant='soft'>
+        <p className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
           Obraz ostatnich {SCORE_INSIGHT_WINDOW_DAYS} dni
         </p>
         <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3'>
@@ -318,7 +318,7 @@ export default function ScoreHistory({
                   {insights.weakestOperation.attempts}
                 </p>
                 {weakestLessonHref && (
-                  <KangurButton asChild className='mt-3' size='sm' variant='secondary'>
+                  <KangurButton asChild className='mt-3' size='sm' variant='surface'>
                     <Link href={weakestLessonHref}>Powtorz lekcje</Link>
                   </KangurButton>
                 )}
@@ -330,10 +330,10 @@ export default function ScoreHistory({
             )}
           </KangurMetricCard>
         </div>
-      </KangurPanel>
+      </KangurGlassPanel>
 
-      <KangurPanel padding='md' variant='soft'>
-        <p className='text-sm font-bold text-gray-500 uppercase tracking-wide mb-3'>
+      <KangurGlassPanel padding='md' surface='solid' variant='subtle'>
+        <p className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
           Wyniki wg operacji
         </p>
         <div className='flex flex-col gap-2'>
@@ -362,10 +362,12 @@ export default function ScoreHistory({
             );
           })}
         </div>
-      </KangurPanel>
+      </KangurGlassPanel>
 
-      <KangurPanel padding='md' variant='soft'>
-        <p className='text-sm font-bold text-gray-500 uppercase tracking-wide mb-3'>Ostatnie gry</p>
+      <KangurGlassPanel padding='md' surface='solid' variant='subtle'>
+        <p className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
+          Ostatnie gry
+        </p>
         <div className='flex flex-col gap-2 max-h-64 overflow-y-auto'>
           {scores.map((score) => {
             const info = OP_LABELS[score.operation] ?? { label: score.operation, emoji: '❓' };
@@ -411,7 +413,7 @@ export default function ScoreHistory({
             );
           })}
         </div>
-      </KangurPanel>
+      </KangurGlassPanel>
     </div>
   );
 }

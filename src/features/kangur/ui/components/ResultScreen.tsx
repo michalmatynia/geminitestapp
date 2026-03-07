@@ -4,7 +4,8 @@ import { Home, RotateCcw } from 'lucide-react';
 import {
   KangurButton,
   KangurDisplayEmoji,
-  KangurPanel,
+  KangurGlassPanel,
+  KangurHeadline,
   KangurProgressBar,
 } from '@/features/kangur/ui/design/primitives';
 import type { KangurOperation } from '@/features/kangur/ui/types';
@@ -65,14 +66,25 @@ export default function ResultScreen({
         {'☆'.repeat(3 - stars)}
       </KangurDisplayEmoji>
       <p className='sr-only'>{`Ocena: ${stars} z 3 gwiazdek.`}</p>
-      <h2 id='kangur-result-heading' className='text-3xl font-extrabold text-slate-800'>
+      <KangurHeadline
+        as='h2'
+        data-testid='result-screen-title'
+        id='kangur-result-heading'
+        size='lg'
+      >
         Swietna robota, {playerName}!
-      </h2>
+      </KangurHeadline>
       <p role='status' aria-live='polite' className='text-lg text-slate-500'>
         {message}
       </p>
 
-      <KangurPanel className='w-full max-w-sm flex flex-col gap-3' padding='xl' variant='elevated'>
+      <KangurGlassPanel
+        className='w-full max-w-sm flex flex-col gap-3 shadow-[0_18px_40px_-30px_rgba(168,175,216,0.2)]'
+        data-testid='result-screen-shell'
+        padding='xl'
+        surface='solid'
+        variant='soft'
+      >
         <dl className='space-y-3 text-lg'>
           <div className='flex justify-between gap-4'>
             <dt className='text-slate-500'>Wynik</dt>
@@ -103,13 +115,13 @@ export default function ResultScreen({
           size='lg'
           value={percent}
         />
-      </KangurPanel>
+      </KangurGlassPanel>
 
       <div className='flex gap-4'>
         <KangurButton onClick={onRestart} size='lg' variant='primary'>
           <RotateCcw className='w-5 h-5' /> Zagraj ponownie
         </KangurButton>
-        <KangurButton onClick={onHome} size='lg' variant='secondary'>
+        <KangurButton onClick={onHome} size='lg' variant='surface'>
           <Home className='w-5 h-5' /> Strona glowna
         </KangurButton>
       </div>

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildAiPathsMaintenanceReport,
   resolveRequestedMaintenanceActionIds,
+  runMaintenanceAction,
 } from '@/features/ai/ai-paths/server/settings-store.maintenance';
 import type {
   AiPathsMaintenanceActionId,
@@ -12,6 +13,8 @@ import {
   AI_PATHS_CONFIG_KEY_PREFIX,
   AI_PATHS_INDEX_KEY,
 } from '@/features/ai/ai-paths/server/settings-store.constants';
+import type { PathConfig } from '@/shared/contracts/ai-paths';
+import { evaluateRunPreflight } from '@/shared/lib/ai-paths/core/utils/run-preflight';
 
 const buildLegacyRuntimeContractsConfig = (): Record<string, unknown> => ({
   id: 'path_model_legacy',
@@ -78,6 +81,180 @@ const buildSettingsRecords = (): AiPathsSettingRecord[] => [
   },
 ];
 
+const buildOutdatedTranslationStarterConfig = (): PathConfig =>
+  ({
+    id: 'path_translation_v2',
+    version: 2,
+    name: 'Translation EN->PL Description + Parameters v2',
+    description: 'Translate English description and parameters to Polish and update the product.',
+    trigger: 'Product Modal - Translate EN->PL',
+    updatedAt: '2026-03-03T10:00:00.000Z',
+    nodes: [
+      {
+        id: 'node-parser-translate-en-pl',
+        type: 'parser',
+        title: 'JSON Parser',
+        description: '',
+        position: { x: 80, y: 180 },
+        data: {},
+        inputs: ['entityJson', 'context'],
+        outputs: ['bundle', 'description_en', 'parameters', 'entityId'],
+        config: {
+          parser: {
+            mappings: {
+              description_en: '$.description_en',
+              parameters: '$.parameters',
+              entityId: '$.id',
+            },
+            outputMode: 'bundle',
+          },
+        },
+      },
+      {
+        id: 'node-regex-translate-en-pl',
+        type: 'regex',
+        title: 'Regex Description JSON',
+        description: '',
+        position: { x: 380, y: 120 },
+        data: {},
+        inputs: ['value', 'prompt', 'regexCallback'],
+        outputs: ['grouped', 'matches', 'value', 'aiPrompt'],
+        config: {
+          regex: {
+            pattern: '\\{[\\s\\S]*\\}',
+            mode: 'extract_json',
+            matchMode: 'first_overall',
+            outputMode: 'object',
+          },
+        },
+      },
+      {
+        id: 'node-regex-params-translate-en-pl',
+        type: 'regex',
+        title: 'Regex Parameters JSON',
+        description: '',
+        position: { x: 380, y: 280 },
+        data: {},
+        inputs: ['value', 'prompt', 'regexCallback'],
+        outputs: ['grouped', 'matches', 'value', 'aiPrompt'],
+        config: {
+          regex: {
+            pattern: '\\{[\\s\\S]*\\}',
+            mode: 'extract_json',
+            matchMode: 'first_overall',
+            outputMode: 'object',
+          },
+        },
+      },
+      {
+        id: 'node-db-update-translate-en-pl',
+        type: 'database',
+        title: 'Database Update',
+        description: '',
+        position: { x: 760, y: 200 },
+        data: {},
+        inputs: ['entityId', 'entityType', 'value', 'result', 'bundle', 'context'],
+        outputs: ['result', 'bundle'],
+        config: {
+          database: {
+            operation: 'update',
+            entityType: 'product',
+            updatePayloadMode: 'mapping',
+            updateTemplate: '',
+            query: {
+              provider: 'auto',
+              collection: 'products',
+              mode: 'custom',
+              preset: 'by_id',
+              field: 'id',
+              idType: 'string',
+              queryTemplate: '{"id":"{{entityId}}"}',
+              limit: 1,
+              sort: '',
+              projection: '',
+              single: true,
+            },
+            mappings: [
+              {
+                sourcePath: 'description_pl',
+                sourcePort: 'value',
+                targetPath: 'description_pl',
+              },
+              {
+                sourcePath: 'parameters',
+                sourcePort: 'result',
+                targetPath: 'parameters',
+              },
+            ],
+          },
+        },
+      },
+    ],
+    edges: [
+      {
+        id: 'edge-parser-desc',
+        from: 'node-parser-translate-en-pl',
+        to: 'node-regex-translate-en-pl',
+        fromPort: 'description_en',
+        toPort: 'text',
+      },
+      {
+        id: 'edge-parser-params',
+        from: 'node-parser-translate-en-pl',
+        to: 'node-regex-params-translate-en-pl',
+        fromPort: 'parameters',
+        toPort: 'text',
+      },
+      {
+        id: 'edge-parser-bundle',
+        from: 'node-parser-translate-en-pl',
+        to: 'node-db-update-translate-en-pl',
+        fromPort: 'bundle',
+        toPort: 'bundle',
+      },
+      {
+        id: 'edge-desc-update',
+        from: 'node-regex-translate-en-pl',
+        to: 'node-db-update-translate-en-pl',
+        fromPort: 'value',
+        toPort: 'value',
+      },
+      {
+        id: 'edge-params-update',
+        from: 'node-regex-params-translate-en-pl',
+        to: 'node-db-update-translate-en-pl',
+        fromPort: 'value',
+        toPort: 'result',
+      },
+    ],
+    extensions: {
+      aiPathsStarter: {
+        starterKey: 'translation_en_pl',
+        templateId: 'starter_translation_en_pl',
+        templateVersion: 3,
+        seededDefault: false,
+      },
+    },
+  }) as PathConfig;
+
+const buildStarterRefreshRecords = (): AiPathsSettingRecord[] => [
+  {
+    key: AI_PATHS_INDEX_KEY,
+    value: JSON.stringify([
+      {
+        id: 'path_translation_v2',
+        name: 'Translation EN->PL Description + Parameters v2',
+        createdAt: '2026-03-03T10:00:00.000Z',
+        updatedAt: '2026-03-03T10:00:00.000Z',
+      },
+    ]),
+  },
+  {
+    key: `${AI_PATHS_CONFIG_KEY_PREFIX}path_translation_v2`,
+    value: JSON.stringify(buildOutdatedTranslationStarterConfig()),
+  },
+];
+
 describe('AI Paths maintenance forward-only action ids', () => {
   it('does not surface removed runtime migration action ids', () => {
     const report = buildAiPathsMaintenanceReport(buildSettingsRecords());
@@ -103,5 +280,53 @@ describe('AI Paths maintenance forward-only action ids', () => {
       'upgrade_runtime_input_contracts',
     ] as unknown as AiPathsMaintenanceActionId[]);
     expect(resolved).toEqual(['repair_path_index']);
+  });
+
+  it('surfaces the generic starter refresh action for outdated starter-derived configs', () => {
+    const report = buildAiPathsMaintenanceReport(buildStarterRefreshRecords());
+
+    expect(report.actions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'refresh_starter_workflow_configs',
+          status: 'pending',
+          affectedRecords: 1,
+        }),
+      ])
+    );
+  });
+
+  it('refreshes outdated starter-derived translation configs to the current runnable starter graph', () => {
+    const result = runMaintenanceAction({
+      actionId: 'refresh_starter_workflow_configs',
+      records: buildStarterRefreshRecords(),
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.affectedCount).toBe(1);
+
+    const configRecord = result.nextRecords.find(
+      (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_translation_v2`
+    );
+    if (!configRecord) throw new Error('Expected refreshed translation config record');
+
+    const parsed = JSON.parse(configRecord.value) as PathConfig;
+    const report = evaluateRunPreflight({
+      nodes: parsed.nodes,
+      edges: parsed.edges,
+      aiPathsValidation: { enabled: true },
+      strictFlowMode: true,
+      mode: 'full',
+    });
+
+    expect(parsed.nodes.some((node) => node.type === 'trigger')).toBe(true);
+    expect(parsed.extensions?.['aiPathsStarter']).toEqual(
+      expect.objectContaining({
+        templateId: 'starter_translation_en_pl',
+        templateVersion: 4,
+      })
+    );
+    expect(report.shouldBlock).toBe(false);
+    expect(report.dependencyReport?.errors ?? 0).toBe(0);
   });
 });

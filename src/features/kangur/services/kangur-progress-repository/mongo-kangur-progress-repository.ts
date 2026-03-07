@@ -3,6 +3,7 @@ import 'server-only';
 import type { Filter } from 'mongodb';
 
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { executeMongoWriteWithRetry } from '@/shared/lib/db/mongo-write-retry';
 import {
   createDefaultKangurProgressState,
   normalizeKangurProgressState,
@@ -51,20 +52,22 @@ export const mongoKangurProgressRepository: KangurProgressRepository = {
     const settingKey = toSettingKey(userKey);
     const normalized = normalizeKangurProgressState(progress);
 
-    await db.collection<MongoProgressSettingDocument>(SETTINGS_COLLECTION).updateOne(
-      {
-        $or: [{ key: settingKey }, { _id: settingKey }],
-      } as Filter<MongoProgressSettingDocument>,
-      {
-        $set: {
-          key: settingKey,
-          value: JSON.stringify(normalized),
+    await executeMongoWriteWithRetry(async () => {
+      await db.collection<MongoProgressSettingDocument>(SETTINGS_COLLECTION).updateOne(
+        {
+          $or: [{ key: settingKey }, { _id: settingKey }],
+        } as Filter<MongoProgressSettingDocument>,
+        {
+          $set: {
+            key: settingKey,
+            value: JSON.stringify(normalized),
+          },
         },
-      },
-      {
-        upsert: true,
-      }
-    );
+        {
+          upsert: true,
+        }
+      );
+    });
 
     return normalized;
   },

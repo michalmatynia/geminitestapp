@@ -22,9 +22,9 @@ import { useKangurGameContext } from '@/features/kangur/ui/context/KangurGameCon
 import {
   KangurButton,
   KangurDisplayEmoji,
+  KangurGlassPanel,
   KangurInfoCard,
   KangurOptionCardButton,
-  KangurPanel,
   KangurProgressBar,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
@@ -96,12 +96,18 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
           size='sm'
           value={(qIndex / total) * 100}
         />
-        <span className='text-xs font-bold text-gray-400'>
+        <span className='text-xs font-bold text-slate-400'>
           {qIndex + 1}/{total}
         </span>
       </div>
 
-      <KangurPanel className='flex flex-col gap-3' padding='lg' variant='soft'>
+      <KangurGlassPanel
+        className='flex flex-col gap-3'
+        data-testid='kangur-game-question-shell'
+        padding='lg'
+        surface='solid'
+        variant='soft'
+      >
         <div className='flex items-center justify-between mb-1'>
           <p className='text-sm font-bold text-orange-500 uppercase tracking-wide'>
             Pytanie {qIndex + 1}
@@ -112,7 +118,7 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
             </KangurStatusChip>
           )}
         </div>
-        <p className='text-gray-800 font-semibold leading-relaxed'>{q.question}</p>
+        <p className='font-semibold leading-relaxed text-slate-800'>{q.question}</p>
         {ILLUSTRATIONS[q.id] &&
           (() => {
             const Illustration = ILLUSTRATIONS[q.id];
@@ -131,7 +137,7 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
               </KangurInfoCard>
             );
           })()}
-      </KangurPanel>
+      </KangurGlassPanel>
 
       <div className='flex flex-col gap-2'>
         {choices.map((choice, index) => {
@@ -242,18 +248,20 @@ function ResultView({ score, total, onRestart }: ResultViewProps): React.JSX.Ele
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className='w-full'>
-      <KangurPanel
+      <KangurGlassPanel
         className='flex flex-col items-center gap-4 text-center'
+        data-testid='kangur-game-summary-shell'
         padding='xl'
-        variant='elevated'
+        surface='solid'
+        variant='soft'
       >
         <KangurDisplayEmoji data-testid='kangur-game-summary-emoji' size='lg'>
           {emoji}
         </KangurDisplayEmoji>
-        <h2 className='text-2xl font-extrabold text-gray-800'>
+        <h2 className='text-2xl font-extrabold text-slate-800'>
           Wynik: {score}/{total}
         </h2>
-        <p className='text-gray-500'>
+        <p className='text-slate-500'>
           {pct === 100
             ? 'Idealny wynik! Jesteś mistrzem Kangura! 🦘'
             : pct >= 70
@@ -269,16 +277,16 @@ function ResultView({ score, total, onRestart }: ResultViewProps): React.JSX.Ele
           size='lg'
           value={pct}
         />
-        <p className='text-sm text-gray-400'>{pct}% poprawnych odpowiedzi</p>
+        <p className='text-sm text-slate-400'>{pct}% poprawnych odpowiedzi</p>
         <div className='flex w-full gap-3'>
-          <KangurButton className='flex-1' onClick={onBack} size='lg' variant='secondary'>
+          <KangurButton className='flex-1' onClick={onBack} size='lg' variant='surface'>
             Menu
           </KangurButton>
           <KangurButton className='flex-1' onClick={onRestart} size='lg' variant='primary'>
             Spróbuj ponownie 🔁
           </KangurButton>
         </div>
-      </KangurPanel>
+      </KangurGlassPanel>
     </motion.div>
   );
 }

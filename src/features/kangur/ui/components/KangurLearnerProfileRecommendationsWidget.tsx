@@ -2,7 +2,13 @@
 
 import Link from 'next/link';
 
-import { KangurButton, KangurEmptyState, KangurInfoCard, KangurPanel, KangurStatusChip } from '@/features/kangur/ui/design/primitives';
+import {
+  KangurButton,
+  KangurEmptyState,
+  KangurGlassPanel,
+  KangurInfoCard,
+  KangurStatusChip,
+} from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_PROFILE_RECOMMENDATION_ACCENTS,
   buildKangurRecommendationHref,
@@ -14,9 +20,14 @@ export function KangurLearnerProfileRecommendationsWidget(): React.JSX.Element {
   const { basePath, snapshot } = useKangurLearnerProfileRuntime();
 
   return (
-    <KangurPanel padding='lg' variant='soft'>
-      <div className='mb-3 text-sm font-bold uppercase tracking-wide text-gray-500'>
-        Plan na dzis
+    <KangurGlassPanel padding='lg' surface='mistSoft' variant='soft'>
+      <div className='mb-3 flex flex-col gap-1'>
+        <div className='text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
+          Plan na dzis
+        </div>
+        <div className='text-sm text-slate-500'>
+          Krotka lista kolejnych krokow na podstawie ostatnich wynikow i aktywnosci.
+        </div>
       </div>
 
       {snapshot.recommendations.length === 0 ? (
@@ -64,6 +75,6 @@ export function KangurLearnerProfileRecommendationsWidget(): React.JSX.Element {
           })}
         </div>
       )}
-    </KangurPanel>
+    </KangurGlassPanel>
   );
 }

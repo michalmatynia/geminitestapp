@@ -1,11 +1,14 @@
 import {
   type KangurLessonActivityBlock,
+  type KangurLessonCalloutBlock,
   type KangurLessonDocument,
   type KangurLessonGridBlock,
   type KangurLessonGridItem,
   type KangurLessonImageBlock,
   type KangurLessonInlineBlock,
   type KangurLessonPage,
+  type KangurLessonQuizBlock,
+  type KangurLessonQuizChoice,
   type KangurLessonRootBlock,
   type KangurLessonSvgBlock,
   type KangurLessonTextBlock,
@@ -187,12 +190,71 @@ export const normalizeGridBlock = (value: unknown): KangurLessonGridBlock | null
   };
 };
 
+const normalizeCalloutVariant = (value: unknown): KangurLessonCalloutBlock['variant'] => {
+  if (value === 'tip' || value === 'warning' || value === 'success') return value;
+  return 'info';
+};
+
+export const normalizeCalloutBlock = (value: unknown): KangurLessonCalloutBlock | null => {
+  if (!isRecord(value)) return null;
+  return {
+    id: normalizeText(value['id'], createKangurLessonBlockId('lesson-callout'), 120),
+    type: 'callout',
+    variant: normalizeCalloutVariant(value['variant']),
+    title: normalizeText(value['title'], '', 120),
+    html: sanitizeHtml(typeof value['html'] === 'string' ? value['html'] : ''),
+    ttsText: normalizeText(value['ttsText'], '', 2_000),
+  };
+};
+
+const normalizeQuizChoice = (value: unknown, index: number): KangurLessonQuizChoice | null => {
+  if (!isRecord(value)) return null;
+  return {
+    id: normalizeText(value['id'], createKangurLessonBlockId(`quiz-choice-${index}`), 120),
+    text: normalizeText(value['text'], '', 500),
+  };
+};
+
+export const normalizeQuizBlock = (value: unknown): KangurLessonQuizBlock | null => {
+  if (!isRecord(value)) return null;
+
+  const rawChoices = Array.isArray(value['choices']) ? value['choices'] : [];
+  const choices = rawChoices
+    .map((entry, i) => normalizeQuizChoice(entry, i))
+    .filter((entry): entry is KangurLessonQuizChoice => Boolean(entry))
+    .slice(0, 4);
+
+  // Ensure minimum 2 choices
+  while (choices.length < 2) {
+    choices.push({ id: createKangurLessonBlockId('quiz-choice-pad'), text: '' });
+  }
+
+  const correctChoiceId = normalizeText(value['correctChoiceId'], '', 120);
+  const validCorrectChoiceId = choices.some((c) => c.id === correctChoiceId)
+    ? correctChoiceId
+    : '';
+
+  return {
+    id: normalizeText(value['id'], createKangurLessonBlockId('lesson-quiz'), 120),
+    type: 'quiz',
+    question: sanitizeHtml(typeof value['question'] === 'string' ? value['question'] : ''),
+    choices,
+    correctChoiceId: validCorrectChoiceId,
+    explanation: typeof value['explanation'] === 'string'
+      ? sanitizeHtml(value['explanation'])
+      : undefined,
+    ttsText: normalizeText(value['ttsText'], '', 2_000),
+  };
+};
+
 export const normalizeRootBlock = (value: unknown): KangurLessonRootBlock | null => {
   if (!isRecord(value)) return null;
   if (value['type'] === 'svg') return normalizeSvgBlock(value);
   if (value['type'] === 'image') return normalizeImageBlock(value);
   if (value['type'] === 'activity') return normalizeActivityBlock(value);
   if (value['type'] === 'grid') return normalizeGridBlock(value);
+  if (value['type'] === 'callout') return normalizeCalloutBlock(value);
+  if (value['type'] === 'quiz') return normalizeQuizBlock(value);
   return normalizeTextBlock(value);
 };
 

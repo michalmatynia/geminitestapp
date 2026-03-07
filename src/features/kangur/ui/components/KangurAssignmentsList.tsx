@@ -86,10 +86,15 @@ export function KangurAssignmentsList({
       surface={compact ? 'mist' : 'mistStrong'}
       variant='soft'
     >
-      <div className='mb-5 flex items-center justify-between gap-3'>
-        <div className='text-2xl font-extrabold tracking-tight text-[#7a86b0]'>{title}</div>
+      <div className='mb-5 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between'>
+        <div>
+          <div className='text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
+            {compact ? 'Szybki podglad' : 'Przydzielone zadania'}
+          </div>
+          <div className='mt-1 text-xl font-extrabold tracking-tight text-slate-800'>{title}</div>
+        </div>
         {compact ? (
-          <div className='text-sm font-medium text-[#96a0be]'>
+          <div className='text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500'>
             {formatAssignmentCountLabel(assignments.length)}
           </div>
         ) : (
@@ -245,7 +250,7 @@ export function KangurAssignmentsList({
                       type='button'
                       onClick={() => onArchive(assignment.id)}
                       size='sm'
-                      variant='secondary'
+                      variant='ghost'
                     >
                       Archiwizuj
                     </KangurButton>

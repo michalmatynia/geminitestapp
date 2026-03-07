@@ -2,8 +2,8 @@ import { useEffect, useId, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 
 import {
+  KangurGlassPanel,
   KangurOptionCardButton,
-  KangurPanel,
   KangurProgressBar,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_ACCENT_STYLES, type KangurAccent } from '@/features/kangur/ui/design/tokens';
@@ -163,7 +163,7 @@ export default function QuestionCard({
       exit={{ opacity: 0, scale: 0.9 }}
       className='flex flex-col items-center gap-6 w-full max-w-md'
     >
-      <div aria-live='polite' aria-atomic='true' className='text-sm text-gray-400 font-semibold'>
+      <div aria-live='polite' aria-atomic='true' className='text-sm font-semibold text-slate-400'>
         Pytanie {questionNumber} z {total}
       </div>
 
@@ -177,12 +177,18 @@ export default function QuestionCard({
       />
       <div
         aria-hidden='true'
-        className={`text-lg font-bold ${timerPercent <= 25 ? 'text-red-500' : 'text-gray-500'}`}
+        className={`text-lg font-bold ${timerPercent <= 25 ? 'text-rose-500' : 'text-slate-500'}`}
       >
         ⏱ {timeLeft}s
       </div>
 
-      <KangurPanel className='w-full text-center' padding='xl' variant='elevated'>
+      <KangurGlassPanel
+        className='w-full text-center shadow-[0_18px_40px_-30px_rgba(168,175,216,0.2)]'
+        data-testid='question-card-shell'
+        padding='xl'
+        surface='solid'
+        variant='soft'
+      >
         {isClockQuestion ? (
           <div className='flex flex-col items-center gap-2'>
             <h3 id={questionHeadingId} className='text-xl font-bold text-slate-800'>
@@ -193,7 +199,7 @@ export default function QuestionCard({
               hours={normalizedClockHours}
               minutes={normalizedClockMinutes}
             />
-            <div id={questionDescriptionId} className='text-sm text-slate-400'>
+            <div id={questionDescriptionId} className='text-sm text-slate-500'>
               Wybierz odpowiedz, ktora pasuje do polozenia wskazowek.
             </div>
           </div>
@@ -202,12 +208,12 @@ export default function QuestionCard({
             <h3 id={questionHeadingId} className='mb-2 text-5xl font-extrabold text-slate-800'>
               {question.question}
             </h3>
-            <div id={questionDescriptionId} className='text-sm text-slate-400'>
+            <div id={questionDescriptionId} className='text-sm text-slate-500'>
               Jaka jest odpowiedz?
             </div>
           </>
         )}
-      </KangurPanel>
+      </KangurGlassPanel>
 
       <div
         aria-describedby={questionDescriptionId}

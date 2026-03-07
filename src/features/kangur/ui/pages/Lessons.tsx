@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, ChevronLeft, ChevronRight, Home, LayoutGrid } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { ComponentType } from 'react';
 import dynamic from 'next/dynamic';
 
@@ -18,7 +18,7 @@ import {
 import { KANGUR_LESSONS_SETTING_KEY, parseKangurLessons } from '@/features/kangur/settings';
 import { KangurLessonNarrator } from '@/features/kangur/ui/components/KangurLessonNarrator';
 import { KangurLessonDocumentRenderer } from '@/features/kangur/ui/components/KangurLessonDocumentRenderer';
-import { KangurProfileMenu } from '@/features/kangur/ui/components/KangurProfileMenu';
+import { KangurPrimaryNavigation } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
@@ -28,19 +28,17 @@ import {
   KangurButton,
   KangurEmptyState,
   KangurGlassPanel,
+  KangurGradientHeading,
   KangurGradientIconTile,
   KangurOptionCardButton,
   KangurPageContainer,
   KangurPageShell,
-  KangurPageTopBar,
   KangurStatusChip,
   KangurSummaryPanel,
-  KangurTopNavGroup,
 } from '@/features/kangur/ui/design/primitives';
 import { type KangurAccent } from '@/features/kangur/ui/design/tokens';
 import type { KangurLesson, KangurLessonComponentId } from '@/shared/contracts/kangur';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import Link from 'next/link';
 
 type LessonProps = {
   onBack?: () => void;
@@ -407,50 +405,14 @@ export default function Lessons() {
       skipLinkTargetId='kangur-lessons-main'
     >
       <KangurDocsTooltipEnhancer enabled={docsTooltipsEnabled} rootId='kangur-lessons-page' />
-      <KangurPageTopBar
+      <KangurPrimaryNavigation
+        basePath={basePath}
+        canManageLearners={Boolean(user?.canManageLearners)}
         contentClassName='justify-center'
-        left={
-          <KangurTopNavGroup>
-            <KangurButton asChild size='md' variant='navigation' data-doc-id='top_nav_home'>
-              <Link href={createPageUrl('Game', basePath)}>
-                <Home className='h-[22px] w-[22px]' strokeWidth={2.1} />
-                <span>Strona glowna</span>
-              </Link>
-            </KangurButton>
-            <KangurButton
-              asChild
-              size='md'
-              variant='navigationActive'
-              aria-current='page'
-              data-doc-id='top_nav_lessons'
-            >
-              <Link href={createPageUrl('Lessons', basePath)}>
-                <BookOpen className='h-[22px] w-[22px]' strokeWidth={2.1} />
-                <span>Lekcje</span>
-              </Link>
-            </KangurButton>
-            <KangurProfileMenu
-              basePath={basePath}
-              isAuthenticated={Boolean(user)}
-              onLogout={() => logout(false)}
-              onLogin={navigateToLogin}
-              isActive={false}
-            />
-            {user?.canManageLearners && (
-              <KangurButton
-                asChild
-                size='md'
-                variant='navigation'
-                data-doc-id='top_nav_parent_dashboard'
-              >
-                <Link href={createPageUrl('ParentDashboard', basePath)}>
-                  <LayoutGrid className='h-[22px] w-[22px]' strokeWidth={2.1} />
-                  <span>Rodzic</span>
-                </Link>
-              </KangurButton>
-            )}
-          </KangurTopNavGroup>
-        }
+        currentPage='Lessons'
+        isAuthenticated={Boolean(user)}
+        onLogin={navigateToLogin}
+        onLogout={() => logout(false)}
       />
 
       <KangurPageContainer id='kangur-lessons-main' className='flex flex-col items-center'>
@@ -463,20 +425,31 @@ export default function Lessons() {
               exit={{ opacity: 0, y: -20 }}
               className='flex flex-col items-center gap-4 w-full max-w-md'
             >
-              <div className='text-center mb-2'>
-                <h1 className='text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600 drop-shadow'>
+              <KangurGlassPanel
+                className='w-full text-center'
+                padding='lg'
+                surface='mistStrong'
+                variant='soft'
+              >
+                <div className='text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
+                  Biblioteka lekcji
+                </div>
+                <KangurGradientHeading gradientClass='from-indigo-500 to-purple-600' size='lg'>
                   📚 Lekcje
-                </h1>
+                </KangurGradientHeading>
+                <p className='mt-2 text-sm text-slate-500'>
+                  Wybierz temat i przejdz od razu do praktyki lub powtorki.
+                </p>
                 <KangurButton
                   className='mt-4'
                   onClick={handleGoBack}
-                  size='md'
-                  variant='secondary'
+                  size='sm'
+                  variant='surface'
                   data-doc-id='lessons_back_button'
                 >
                   Wróć do poprzedniej strony
                 </KangurButton>
-              </div>
+              </KangurGlassPanel>
 
               {orderedLessons.length === 0 ? (
                 <KangurEmptyState
@@ -661,8 +634,8 @@ export default function Lessons() {
                         <KangurButton
                           type='button'
                           onClick={(): void => setActiveLessonId(null)}
-                          size='md'
-                          variant='secondary'
+                          size='sm'
+                          variant='surface'
                           data-doc-id='lessons_back_button'
                         >
                           Wroc do listy lekcji
@@ -688,8 +661,8 @@ export default function Lessons() {
                       type='button'
                       onClick={(): void => setActiveLessonId(null)}
                       className='mt-5'
-                      size='md'
-                      variant='secondary'
+                      size='sm'
+                      variant='surface'
                       data-doc-id='lessons_back_button'
                     >
                       Wroc do listy lekcji
@@ -710,7 +683,7 @@ export default function Lessons() {
                       onClick={() => setActiveLessonId(prev.id)}
                       className='flex-1 justify-start'
                       size='lg'
-                      variant='secondary'
+                      variant='surface'
                       data-doc-id='lessons_prev_next'
                     >
                       <ChevronLeft className='w-4 h-4 flex-shrink-0' />
@@ -726,7 +699,7 @@ export default function Lessons() {
                       onClick={() => setActiveLessonId(next.id)}
                       className='flex-1 justify-end'
                       size='lg'
-                      variant='secondary'
+                      variant='surface'
                       data-doc-id='lessons_prev_next'
                     >
                       <span>

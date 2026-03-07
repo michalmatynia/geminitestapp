@@ -45,6 +45,16 @@ describe('OperationSelector', () => {
     );
 
     expect(screen.getByRole('list', { name: 'Wybierz swoje wyzwanie' })).toBeInTheDocument();
+    expect(screen.getByTestId('operation-selector-heading')).toHaveClass(
+      'flex',
+      'flex-col',
+      'items-center',
+      'text-center'
+    );
+    expect(screen.getByRole('heading', { name: 'Wybierz swoje wyzwanie' })).toHaveClass(
+      'text-2xl',
+      'text-indigo-700'
+    );
 
     const divisionCard = screen.getByTestId('operation-card-division');
     const additionCard = screen.getByTestId('operation-card-addition');

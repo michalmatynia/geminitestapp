@@ -12,6 +12,8 @@ import {
   KANGUR_PAGE_CONTAINER_CLASSNAME,
   KANGUR_PAGE_TONE_CLASSNAMES,
   KANGUR_PANEL_CLASSNAMES,
+  KANGUR_SEGMENTED_CONTROL_ITEM_ACTIVE_CLASSNAME,
+  KANGUR_SEGMENTED_CONTROL_ITEM_CLASSNAME,
   KANGUR_SURFACE_CARD_CLASSNAME,
   KANGUR_TOP_NAV_GROUP_CLASSNAME,
   KANGUR_TOP_NAV_ITEM_ACTIVE_CLASSNAME,
@@ -37,6 +39,12 @@ const kangurButtonVariants = cva(
           'kangur-cta-pill border-transparent success-cta text-emerald-800 hover:text-emerald-900',
         warning:
           'kangur-cta-pill border-transparent warning-cta text-[#9a5418] hover:text-[#7f4310]',
+        segment: cn('border-transparent text-sm shadow-none', KANGUR_SEGMENTED_CONTROL_ITEM_CLASSNAME),
+        segmentActive: cn(
+          'border-transparent text-sm shadow-none',
+          KANGUR_SEGMENTED_CONTROL_ITEM_CLASSNAME,
+          KANGUR_SEGMENTED_CONTROL_ITEM_ACTIVE_CLASSNAME
+        ),
         navigation: KANGUR_TOP_NAV_ITEM_CLASSNAME,
         navigationActive: cn(KANGUR_TOP_NAV_ITEM_CLASSNAME, KANGUR_TOP_NAV_ITEM_ACTIVE_CLASSNAME),
         ghost:
@@ -171,9 +179,57 @@ const kangurGradientIconTileVariants = cva(
 const kangurDisplayEmojiVariants = cva('inline-flex items-center justify-center leading-none', {
   variants: {
     size: {
+      xs: 'text-3xl',
       sm: 'text-4xl',
       md: 'text-5xl',
       lg: 'text-6xl',
+    },
+  },
+  defaultVariants: {
+    size: 'lg',
+  },
+});
+
+const kangurGradientHeadingVariants = cva(
+  'bg-gradient-to-r bg-clip-text font-extrabold text-transparent',
+  {
+    variants: {
+      size: {
+        md: 'text-2xl',
+        lg: 'text-4xl',
+      },
+      shadow: {
+        true: 'drop-shadow',
+        false: '',
+      },
+    },
+    defaultVariants: {
+      size: 'md',
+      shadow: true,
+    },
+  }
+);
+
+const kangurHeadlineVariants = cva('font-extrabold tracking-tight leading-tight', {
+  variants: {
+    size: {
+      xs: 'text-lg',
+      sm: 'text-xl',
+      md: 'text-2xl',
+      lg: 'text-3xl',
+    },
+  },
+  defaultVariants: {
+    size: 'md',
+  },
+});
+
+const kangurEquationDisplayVariants = cva('font-extrabold leading-tight tracking-tight', {
+  variants: {
+    size: {
+      sm: 'text-xl',
+      md: 'text-2xl',
+      lg: 'text-3xl',
     },
   },
   defaultVariants: {
@@ -249,7 +305,7 @@ const kangurSurfacePanelVariants = cva('glass-panel rounded-[34px]', {
 });
 
 const kangurMenuItemVariants = cva(
-  'relative flex cursor-default select-none items-center rounded-2xl px-3 py-2 text-sm font-medium text-slate-700 outline-none transition-colors focus:bg-slate-100 focus:text-slate-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:bg-slate-100 data-[highlighted]:text-slate-900'
+  'relative flex cursor-default select-none items-center rounded-[16px] px-3.5 py-2.5 text-[15px] font-medium text-slate-600 outline-none transition-colors focus:bg-white/80 focus:text-slate-800 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:bg-white/80 data-[highlighted]:text-slate-800'
 );
 
 const kangurMediaFrameVariants = cva(`${KANGUR_SURFACE_CARD_CLASSNAME}`, {
@@ -634,6 +690,199 @@ export function KangurDisplayEmoji({
   ...props
 }: KangurDisplayEmojiProps): React.JSX.Element {
   return <span className={cn(kangurDisplayEmojiVariants({ size }), className)} {...props} />;
+}
+
+type KangurFeatureHeaderProps = React.HTMLAttributes<HTMLDivElement> & {
+  accent?: KangurAccent;
+  badgeAccent?: KangurAccent;
+  badgeSize?: VariantProps<typeof kangurIconBadgeVariants>['size'];
+  headingAs?: 'h1' | 'h2' | 'h3';
+  headingSize?: VariantProps<typeof kangurHeadlineVariants>['size'];
+  icon: React.ReactNode;
+  title: React.ReactNode;
+  description?: React.ReactNode;
+};
+
+export function KangurFeatureHeader({
+  accent = 'slate',
+  badgeAccent,
+  badgeSize = 'lg',
+  className,
+  description,
+  headingAs = 'h2',
+  headingSize = 'md',
+  icon,
+  title,
+  ...props
+}: KangurFeatureHeaderProps): React.JSX.Element {
+  return (
+    <div className={cn('flex flex-col items-center gap-3 text-center', className)} {...props}>
+      <KangurIconBadge accent={badgeAccent ?? accent} size={badgeSize}>
+        {icon}
+      </KangurIconBadge>
+      <KangurHeadline accent={accent} as={headingAs} size={headingSize}>
+        {title}
+      </KangurHeadline>
+      {description ? <p className='max-w-sm text-sm text-slate-500'>{description}</p> : null}
+    </div>
+  );
+}
+
+type KangurSectionHeadingProps = React.HTMLAttributes<HTMLDivElement> & {
+  accent?: KangurAccent;
+  align?: 'left' | 'center';
+  description?: React.ReactNode;
+  descriptionId?: string;
+  headingAs?: 'h1' | 'h2' | 'h3';
+  headingSize?: VariantProps<typeof kangurHeadlineVariants>['size'];
+  icon?: React.ReactNode;
+  iconAccent?: KangurAccent;
+  iconSize?: VariantProps<typeof kangurIconBadgeVariants>['size'];
+  layout?: 'stacked' | 'inline';
+  title: React.ReactNode;
+  titleId?: string;
+};
+
+export function KangurSectionHeading({
+  accent = 'slate',
+  align = 'center',
+  className,
+  description,
+  descriptionId,
+  headingAs = 'h2',
+  headingSize = 'sm',
+  icon,
+  iconAccent,
+  iconSize = 'md',
+  layout = 'stacked',
+  title,
+  titleId,
+  ...props
+}: KangurSectionHeadingProps): React.JSX.Element {
+  const isInline = layout === 'inline';
+  const alignmentClassName = align === 'left' ? 'items-start text-left' : 'items-center text-center';
+
+  return (
+    <div
+      className={cn(
+        'flex gap-3',
+        isInline ? 'flex-row' : 'flex-col',
+        alignmentClassName,
+        className
+      )}
+      {...props}
+    >
+      {icon ? (
+        <KangurIconBadge accent={iconAccent ?? accent} size={iconSize}>
+          {icon}
+        </KangurIconBadge>
+      ) : null}
+      <div className={cn('space-y-1', isInline ? 'min-w-0' : undefined)}>
+        <KangurHeadline accent={accent} as={headingAs} id={titleId} size={headingSize}>
+          {title}
+        </KangurHeadline>
+        {description ? (
+          <p className='text-sm text-slate-500' id={descriptionId}>
+            {description}
+          </p>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+type KangurGradientHeadingProps = React.HTMLAttributes<HTMLHeadingElement> &
+  VariantProps<typeof kangurGradientHeadingVariants> & {
+    as?: 'h1' | 'h2' | 'h3';
+    gradientClass: string;
+  };
+
+export function KangurGradientHeading({
+  as: Comp = 'h1',
+  className,
+  gradientClass,
+  shadow,
+  size,
+  ...props
+}: KangurGradientHeadingProps): React.JSX.Element {
+  return (
+    <Comp
+      className={cn(kangurGradientHeadingVariants({ size, shadow }), gradientClass, className)}
+      {...props}
+    />
+  );
+}
+
+const KANGUR_HEADLINE_CLASSNAMES: Record<KangurAccent, string> = {
+  indigo: 'text-indigo-700',
+  violet: 'text-violet-700',
+  emerald: 'text-green-700',
+  sky: 'text-sky-700',
+  amber: 'text-amber-700',
+  rose: 'text-rose-700',
+  teal: 'text-teal-700',
+  slate: 'text-slate-800',
+};
+
+type KangurHeadlineProps = React.HTMLAttributes<HTMLElement> &
+  VariantProps<typeof kangurHeadlineVariants> & {
+    accent?: KangurAccent;
+    as?: 'h1' | 'h2' | 'h3' | 'h4' | 'p' | 'div';
+  };
+
+export function KangurHeadline({
+  accent = 'slate',
+  as: Comp = 'h2',
+  className,
+  size,
+  ...props
+}: KangurHeadlineProps): React.JSX.Element {
+  return (
+    <Comp
+      className={cn(
+        kangurHeadlineVariants({ size }),
+        KANGUR_HEADLINE_CLASSNAMES[accent],
+        className
+      )}
+      {...props}
+    />
+  );
+}
+
+const KANGUR_EQUATION_CLASSNAMES: Record<KangurAccent, string> = {
+  indigo: 'text-indigo-700',
+  violet: 'text-purple-600',
+  emerald: 'text-green-600',
+  sky: 'text-blue-600',
+  amber: 'text-orange-500',
+  rose: 'text-red-500',
+  teal: 'text-teal-600',
+  slate: 'text-gray-700',
+};
+
+type KangurEquationDisplayProps = React.HTMLAttributes<HTMLElement> &
+  VariantProps<typeof kangurEquationDisplayVariants> & {
+    accent?: KangurAccent;
+    as?: 'p' | 'div' | 'h2' | 'h3' | 'span';
+  };
+
+export function KangurEquationDisplay({
+  accent = 'slate',
+  as: Comp = 'p',
+  className,
+  size,
+  ...props
+}: KangurEquationDisplayProps): React.JSX.Element {
+  return (
+    <Comp
+      className={cn(
+        kangurEquationDisplayVariants({ size }),
+        KANGUR_EQUATION_CLASSNAMES[accent],
+        className
+      )}
+      {...props}
+    />
+  );
 }
 
 type KangurActivityColumnProps = React.HTMLAttributes<HTMLDivElement> & {

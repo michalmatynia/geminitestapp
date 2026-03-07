@@ -36,6 +36,16 @@ describe('DifficultySelector', () => {
     render(<DifficultySelector onSelect={onSelect} selected='medium' />);
 
     expect(screen.getByRole('group', { name: 'Wybierz poziom trudnosci' })).toBeInTheDocument();
+    expect(screen.getByTestId('difficulty-selector-heading')).toHaveClass(
+      'flex',
+      'flex-col',
+      'items-center',
+      'text-center'
+    );
+    expect(screen.getByRole('heading', { name: 'Wybierz poziom trudnosci' })).toHaveClass(
+      'text-xl',
+      'text-slate-800'
+    );
 
     const easyOption = screen.getByTestId('difficulty-option-easy');
     const mediumOption = screen.getByTestId('difficulty-option-medium');

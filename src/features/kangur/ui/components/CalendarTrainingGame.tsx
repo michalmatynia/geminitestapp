@@ -4,6 +4,7 @@ import { CheckCircle, XCircle, RefreshCw } from 'lucide-react';
 import {
   KangurButton,
   KangurDisplayEmoji,
+  KangurHeadline,
   KangurInlineFallback,
   KangurOptionCardButton,
   KangurPanel,
@@ -191,9 +192,9 @@ export default function CalendarTrainingGame({
         >
           {score >= 5 ? '🏆' : score >= 3 ? '😊' : '💪'}
         </KangurDisplayEmoji>
-        <h3 className='text-2xl font-extrabold text-green-700'>
+        <KangurHeadline accent='emerald' as='h3' data-testid='calendar-training-summary-title'>
           Wynik: {score}/{TOTAL}
-        </h3>
+        </KangurHeadline>
         {xpEarned > 0 && (
           <KangurStatusChip accent='indigo' className='px-4 py-2 text-sm font-bold'>
             +{xpEarned} XP ✨

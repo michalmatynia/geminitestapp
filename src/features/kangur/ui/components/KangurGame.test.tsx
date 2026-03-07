@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { useKangurGameContextMock, getKangurQuestionsMock, isExamModeMock } = vi.hoisted(() => ({
@@ -53,6 +53,11 @@ describe('KangurGame', () => {
       'bg-emerald-100'
     );
     expect(screen.getByTestId('kangur-game-progress-bar')).toHaveAttribute('aria-valuenow', '0');
+    expect(screen.getByTestId('kangur-game-question-shell')).toHaveClass(
+      'glass-panel',
+      'border-white/88',
+      'bg-white/94'
+    );
     expect(screen.getByTestId('kangur-game-illustration-shell')).toHaveClass(
       'soft-card',
       'border-slate-200/80'
@@ -69,5 +74,19 @@ describe('KangurGame', () => {
     expect(wrongChoice).toHaveClass('border-rose-300');
     expect(correctChoice).toHaveClass('border-emerald-300');
     expect(screen.getByTestId('kangur-game-explanation')).toHaveClass('soft-card', 'border-sky-300');
+
+    act(() => {
+      vi.advanceTimersByTime(1400);
+    });
+
+    expect(screen.getByTestId('kangur-game-summary-shell')).toHaveClass(
+      'glass-panel',
+      'border-white/88',
+      'bg-white/94'
+    );
+    expect(screen.getByRole('button', { name: 'Menu' })).toHaveClass(
+      'kangur-cta-pill',
+      'surface-cta'
+    );
   });
 });

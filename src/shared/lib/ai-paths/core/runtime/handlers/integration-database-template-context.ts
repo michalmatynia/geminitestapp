@@ -146,7 +146,9 @@ export function prepareDatabaseTemplateContext({
   const ensureExistingParameterTemplateContext = async (targetPath: string): Promise<void> => {
     if (!targetPath) return;
     const existingFromInputs = normalizeParameterEntries(
-      resolveExistingParameterValueFromInputs(templateInputs, targetPath),
+      resolveExistingParameterValueFromInputs(templateInputs, targetPath, {
+        includeDerivedPorts: false,
+      }),
       { allowEmptyValue: true }
     );
     if (existingFromInputs.length > 0) {

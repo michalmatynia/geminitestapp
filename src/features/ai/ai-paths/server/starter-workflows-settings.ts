@@ -1,8 +1,11 @@
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
+import type { PathConfig } from '@/shared/contracts/ai-paths';
 import { serializeAiTriggerButtonsRaw } from '@/features/ai/ai-paths/validations/trigger-buttons';
 import {
+  computeStarterWorkflowGraphHash,
   getAutoSeedStarterWorkflowEntries,
   materializeStarterWorkflowPathConfig,
+  resolveStarterWorkflowForPathConfig,
   type StarterWorkflowTriggerPreset,
 } from '@/shared/lib/ai-paths/core/starter-workflows';
 
@@ -67,6 +70,86 @@ const hasEquivalentStarterTriggerButton = (
     if ((button.pathId ?? null) !== preset.pathId) return false;
     return (button.locations ?? []).some((location) => preset.locations.includes(location));
   });
+
+const parsePathConfigRecord = (value: string): PathConfig | null => {
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+    return parsed as PathConfig;
+  } catch {
+    return null;
+  }
+};
+
+const buildRefreshedStarterWorkflowConfig = (config: PathConfig): PathConfig | null => {
+  const resolution = resolveStarterWorkflowForPathConfig(config);
+  if (!resolution) return null;
+
+  const currentHash = computeStarterWorkflowGraphHash(config);
+  const canonicalHashes = new Set(resolution.entry.starterLineage.canonicalGraphHashes);
+  if (!canonicalHashes.has(currentHash)) return null;
+
+  const latest = materializeStarterWorkflowPathConfig(resolution.entry, {
+    pathId: config.id,
+    name: typeof config.name === 'string' && config.name.trim().length > 0 ? config.name : undefined,
+    description:
+      typeof config.description === 'string' && config.description.trim().length > 0
+        ? config.description
+        : undefined,
+    isActive: config.isActive,
+    isLocked: config.isLocked,
+    seededDefault:
+      config.id === resolution.entry.seedPolicy?.defaultPathId &&
+      resolution.entry.seedPolicy?.autoSeed === true,
+    updatedAt: config.updatedAt,
+  });
+
+  const currentNodesById = new Map((config.nodes ?? []).map((node) => [node.id, node] as const));
+  const currentEdgesById = new Map((config.edges ?? []).map((edge) => [edge.id, edge] as const));
+
+  const nextConfig: PathConfig = {
+    ...config,
+    ...latest,
+    id: config.id,
+    name: typeof config.name === 'string' && config.name.trim().length > 0 ? config.name : latest.name,
+    description:
+      typeof config.description === 'string' && config.description.trim().length > 0
+        ? config.description
+        : latest.description,
+    isActive: config.isActive ?? latest.isActive,
+    isLocked: config.isLocked ?? latest.isLocked,
+    updatedAt: config.updatedAt ?? latest.updatedAt,
+    nodes: (latest.nodes ?? []).map((node) => {
+      const currentNode = currentNodesById.get(node.id);
+      return {
+        ...node,
+        position: currentNode?.position ?? node.position,
+        data: currentNode?.data ?? node.data,
+        createdAt: currentNode?.createdAt ?? node.createdAt,
+        updatedAt: currentNode?.updatedAt ?? node.updatedAt,
+      };
+    }),
+    edges: (latest.edges ?? []).map((edge) => {
+      const currentEdge = currentEdgesById.get(edge.id);
+      return {
+        ...edge,
+        createdAt: currentEdge?.createdAt ?? edge.createdAt,
+        updatedAt: currentEdge?.updatedAt ?? edge.updatedAt,
+        data: currentEdge?.data ?? edge.data,
+      };
+    }),
+    extensions:
+      config.extensions || latest.extensions
+        ? {
+          ...(config.extensions ?? {}),
+          ...(latest.extensions ?? {}),
+        }
+        : undefined,
+    uiState: config.uiState ?? latest.uiState,
+  };
+
+  return JSON.stringify(nextConfig) === JSON.stringify(config) ? null : nextConfig;
+};
 
 export const countPendingStarterWorkflowDefaults = (records: AiPathsSettingRecord[]): number => {
   if (records.length === 0) return getAutoSeedStarterWorkflowEntries().length;
@@ -187,5 +270,30 @@ export const ensureStarterWorkflowDefaults = (
 
   indexEntry.value = JSON.stringify(nextMetas);
   triggerButtonsEntry.value = serializeAiTriggerButtonsRaw(nextButtons);
+  return { nextRecords, affectedCount };
+};
+
+export const countPendingStarterWorkflowConfigRefreshes = (
+  records: AiPathsSettingRecord[]
+): number => refreshStarterWorkflowConfigs(records).affectedCount;
+
+export const refreshStarterWorkflowConfigs = (
+  records: AiPathsSettingRecord[]
+): { nextRecords: AiPathsSettingRecord[]; affectedCount: number } => {
+  const nextRecords = records.map((record) => ({ ...record }));
+  let affectedCount = 0;
+
+  nextRecords.forEach((record) => {
+    if (!record.key.startsWith(AI_PATHS_CONFIG_KEY_PREFIX)) return;
+    const parsedConfig = parsePathConfigRecord(record.value);
+    if (!parsedConfig) return;
+
+    const refreshed = buildRefreshedStarterWorkflowConfig(parsedConfig);
+    if (!refreshed) return;
+
+    record.value = JSON.stringify(refreshed);
+    affectedCount += 1;
+  });
+
   return { nextRecords, affectedCount };
 };

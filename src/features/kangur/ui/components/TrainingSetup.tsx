@@ -1,14 +1,11 @@
-import { useState } from 'react';
+import { useId } from 'react';
 import { motion } from 'framer-motion';
 import { Dumbbell } from 'lucide-react';
 
 import DifficultySelector from '@/features/kangur/ui/components/DifficultySelector';
+import { useKangurTrainingSetupState } from '@/features/kangur/ui/hooks/useKangurTrainingSetupState';
 import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
-import type {
-  KangurDifficulty,
-  KangurOperation,
-  KangurTrainingSelection,
-} from '@/features/kangur/ui/types';
+import type { KangurTrainingSelection } from '@/features/kangur/ui/types';
 import { cn } from '@/shared/utils';
 
 export type TrainingSetupProps = {
@@ -16,35 +13,24 @@ export type TrainingSetupProps = {
   onBack: () => void;
 };
 
-const ALL_CATEGORIES: Array<{ id: KangurOperation; label: string; emoji: string }> = [
-  { id: 'addition', label: 'Dodawanie', emoji: '➕' },
-  { id: 'subtraction', label: 'Odejmowanie', emoji: '➖' },
-  { id: 'multiplication', label: 'Mnozenie', emoji: '✖️' },
-  { id: 'division', label: 'Dzielenie', emoji: '➗' },
-  { id: 'decimals', label: 'Ulamki', emoji: '🔢' },
-  { id: 'powers', label: 'Potegi', emoji: '⚡' },
-  { id: 'roots', label: 'Pierwiastki', emoji: '√' },
-];
-
-const QUESTION_COUNTS = [5, 10, 15, 20, 30];
-
 export default function TrainingSetup({ onStart, onBack }: TrainingSetupProps): React.JSX.Element {
-  const [selected, setSelected] = useState<KangurOperation[]>(
-    ALL_CATEGORIES.map((category) => category.id)
-  );
-  const [count, setCount] = useState(10);
-  const [difficulty, setDifficulty] = useState<KangurDifficulty>('medium');
-
-  const toggle = (id: KangurOperation): void => {
-    setSelected((previous) => {
-      if (previous.includes(id)) {
-        return previous.length > 1 ? previous.filter((item) => item !== id) : previous;
-      }
-      return [...previous, id];
-    });
-  };
-
-  const allSelected = selected.length === ALL_CATEGORIES.length;
+  const {
+    categoryOptions,
+    countOptions,
+    difficulty,
+    goBack,
+    setDifficulty,
+    startTraining,
+    summaryLabel,
+    toggleAllCategories,
+    toggleAllLabel,
+  } = useKangurTrainingSetupState({
+    onBack,
+    onStart,
+  });
+  const categoryHeadingId = useId();
+  const countHeadingId = useId();
+  const summaryId = useId();
 
   return (
     <motion.div
@@ -59,35 +45,33 @@ export default function TrainingSetup({ onStart, onBack }: TrainingSetupProps): 
           <h2 className='text-2xl font-extrabold text-slate-800'>Tryb treningowy</h2>
         </div>
 
+        <div id={summaryId} aria-live='polite' aria-atomic='true' className='sr-only'>
+          {summaryLabel}
+        </div>
+
         <DifficultySelector selected={difficulty} onSelect={setDifficulty} />
 
-        <div>
+        <section aria-labelledby={categoryHeadingId}>
           <div className='mb-2 flex items-center justify-between'>
-            <span className='text-sm font-bold text-slate-700'>Kategorie pytan</span>
-            <KangurButton
-              onClick={() =>
-                setSelected(
-                  allSelected
-                    ? [ALL_CATEGORIES[0]?.id ?? 'addition']
-                    : ALL_CATEGORIES.map((category) => category.id)
-                )
-              }
-              size='sm'
-              variant='ghost'
-            >
-              {allSelected ? 'Odznacz wszystkie' : 'Zaznacz wszystkie'}
+            <h3 id={categoryHeadingId} className='text-sm font-bold text-slate-700'>
+              Kategorie pytan
+            </h3>
+            <KangurButton onClick={toggleAllCategories} size='sm' variant='ghost' type='button'>
+              {toggleAllLabel}
             </KangurButton>
           </div>
-          <div className='grid grid-cols-2 gap-2 sm:grid-cols-3'>
-            {ALL_CATEGORIES.map((category) => {
-              const isActive = selected.includes(category.id);
+          <div aria-labelledby={categoryHeadingId} className='grid grid-cols-2 gap-2 sm:grid-cols-3' role='group'>
+            {categoryOptions.map((category) => {
               return (
                 <KangurButton
                   key={category.id}
-                  onClick={() => toggle(category.id)}
-                  className={cn('justify-start rounded-xl', isActive ? 'shadow-sm' : '')}
+                  aria-label={category.label}
+                  aria-pressed={category.selected}
+                  onClick={category.select}
+                  className={cn('justify-start rounded-xl', category.selected ? 'shadow-sm' : '')}
                   size='md'
-                  variant={isActive ? 'surface' : 'secondary'}
+                  type='button'
+                  variant={category.selected ? 'surface' : 'secondary'}
                 >
                   <span>{category.emoji}</span>
                   <span>{category.label}</span>
@@ -95,34 +79,34 @@ export default function TrainingSetup({ onStart, onBack }: TrainingSetupProps): 
               );
             })}
           </div>
-        </div>
+        </section>
 
-        <div>
-          <span className='mb-2 block text-sm font-bold text-slate-700'>Liczba pytan</span>
-          <div className='flex flex-wrap gap-2'>
-            {QUESTION_COUNTS.map((value) => (
+        <section aria-labelledby={countHeadingId}>
+          <h3 id={countHeadingId} className='mb-2 block text-sm font-bold text-slate-700'>
+            Liczba pytan
+          </h3>
+          <div aria-labelledby={countHeadingId} className='flex flex-wrap gap-2' role='group'>
+            {countOptions.map((option) => (
               <KangurButton
-                key={value}
-                onClick={() => setCount(value)}
+                key={option.id}
+                aria-label={`${option.value} pytan`}
+                aria-pressed={option.selected}
+                onClick={option.select}
                 size='md'
-                variant={count === value ? 'surface' : 'secondary'}
+                type='button'
+                variant={option.selected ? 'surface' : 'secondary'}
               >
-                {value}
+                {option.value}
               </KangurButton>
             ))}
           </div>
-        </div>
+        </section>
 
         <div className='flex gap-3'>
-          <KangurButton className='flex-1' onClick={onBack} size='lg' variant='secondary'>
+          <KangurButton className='flex-1' onClick={goBack} size='lg' type='button' variant='secondary'>
             ← Wroc
           </KangurButton>
-          <KangurButton
-            className='flex-grow-[2]'
-            onClick={() => onStart({ categories: selected, count, difficulty })}
-            size='lg'
-            variant='primary'
-          >
+          <KangurButton className='flex-grow-[2]' onClick={startTraining} size='lg' type='button' variant='primary'>
             Start! 🚀
           </KangurButton>
         </div>

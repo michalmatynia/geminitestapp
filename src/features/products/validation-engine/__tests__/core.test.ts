@@ -52,7 +52,7 @@ function makePattern(
     launchFlags: null,
     appliesToScopes: ['draft_template', 'product_create', 'product_edit'],
   };
-  return { ...base, ...overrides, target: overrides.target as ProductValidationPattern['target'] };
+  return { ...base, ...overrides, target: overrides.target };
 }
 
 const SCOPE = 'product_edit' as const;

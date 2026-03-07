@@ -3,6 +3,7 @@
 import React from 'react';
 
 import type { RequestPreviewImage } from '@/features/ai/image-studio/utils/run-request-preview';
+import type { ParamLeaf } from '@/shared/contracts/prompt-engine';
 
 export interface ActionHistoryEntrySummary {
   id: string;
@@ -25,9 +26,11 @@ export type RightSidebarContextValue = {
   canRecenterCanvasImage: boolean;
   onApplyCanvasSizePreset: () => void;
   onOpenResizeCanvasModal: () => void;
+  closeResizeCanvasModal: () => void;
   quickActionsHostEl: HTMLElement | null;
   quickActionsPanelContent: React.ReactNode;
   resizeCanvasDisabled: boolean;
+  resizeCanvasOpen: boolean;
 
   // Action History
   actionHistoryEntriesLength: number;
@@ -43,24 +46,31 @@ export type RightSidebarContextValue = {
   activeImages: RequestPreviewImage[];
   activeRequestPreviewEndpoint: string;
   activeRequestPreviewJson: string;
+  closeRequestPreview: () => void;
   maskShapeCount: number;
+  requestPreviewOpen: boolean;
   requestPreviewMode: 'without_sequence' | 'with_sequence';
   resolvedPromptLength: number;
   sequenceStepCount: number;
   setRequestPreviewMode: (mode: 'without_sequence' | 'with_sequence') => void;
 
   // Quick Actions
+  closeControls: () => void;
+  controlsOpen: boolean;
   estimatedGenerationCost: number;
   estimatedPromptTokens: number;
+  flattenedParamsList: ParamLeaf[];
   generationBusy: boolean;
   generationLabel: string;
   hasExtractedControls: boolean;
   modelSupportsSequenceGeneration: boolean;
   onOpenControls: () => void;
   onOpenPromptControl: () => void;
+  closePromptControl: () => void;
   onOpenRequestPreview: () => void;
   onRunGeneration: () => void;
   onRunSequenceGeneration: () => void;
+  promptControlOpen: boolean;
   selectedModelId: string;
   sequenceRunBusy: boolean;
 };

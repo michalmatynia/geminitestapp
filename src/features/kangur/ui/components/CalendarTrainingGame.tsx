@@ -3,8 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, XCircle, RefreshCw } from 'lucide-react';
 import {
   KangurButton,
+  KangurDisplayEmoji,
+  KangurInlineFallback,
   KangurOptionCardButton,
   KangurPanel,
+  KangurResultBadge,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import {
@@ -133,7 +136,7 @@ export default function CalendarTrainingGame({
 
   const question = questions[current];
   if (!question) {
-    return <div className='text-sm text-gray-500'>Brak pytania.</div>;
+    return <KangurInlineFallback data-testid='calendar-training-empty' title='Brak pytania.' />;
   }
 
   const handleSelect = (choice: string) => {
@@ -181,7 +184,13 @@ export default function CalendarTrainingGame({
         animate={{ opacity: 1, y: 0 }}
         className='flex flex-col items-center gap-5 py-4'
       >
-        <div className='text-6xl'>{score >= 5 ? '🏆' : score >= 3 ? '😊' : '💪'}</div>
+        <KangurDisplayEmoji
+          aria-hidden='true'
+          data-testid='calendar-training-summary-emoji'
+          size='lg'
+        >
+          {score >= 5 ? '🏆' : score >= 3 ? '😊' : '💪'}
+        </KangurDisplayEmoji>
         <h3 className='text-2xl font-extrabold text-green-700'>
           Wynik: {score}/{TOTAL}
         </h3>
@@ -208,9 +217,15 @@ export default function CalendarTrainingGame({
   }
 
   return (
-    <div className='flex flex-col items-center gap-5 w-full'>
+    <section
+      aria-labelledby='calendar-training-question-title'
+      className='flex flex-col items-center gap-5 w-full'
+    >
+      <div aria-live='polite' aria-atomic='true' className='sr-only'>
+        Pytanie {current + 1} z {TOTAL}. {question.question}
+      </div>
       {/* Progress dots */}
-      <div className='flex gap-2'>
+      <div aria-hidden='true' className='flex gap-2'>
         {questions.map((_, i) => (
           <div
             key={i}
@@ -229,10 +244,16 @@ export default function CalendarTrainingGame({
       </div>
 
       <KangurPanel className='w-full text-center' padding='lg' variant='soft'>
-        <p className='text-lg font-extrabold text-green-800'>{question.question}</p>
+        <p id='calendar-training-question-title' className='text-lg font-extrabold text-green-800'>
+          {question.question}
+        </p>
       </KangurPanel>
 
-      <div className='grid grid-cols-2 gap-3 w-full'>
+      <div
+        aria-labelledby='calendar-training-question-title'
+        className='grid grid-cols-2 gap-3 w-full'
+        role='group'
+      >
         {question.choices.map((choice, index) => {
           let accent: KangurAccent = 'emerald';
           let emphasis: 'neutral' | 'accent' = 'neutral';
@@ -261,6 +282,8 @@ export default function CalendarTrainingGame({
             >
               <KangurOptionCardButton
                 accent={accent}
+                aria-disabled={selected !== null}
+                aria-label={`Odpowiedz ${choice}`}
                 className={cn(
                   'w-full rounded-[24px] px-4 py-3 font-bold text-base transition-all',
                   choiceClassName,
@@ -282,27 +305,30 @@ export default function CalendarTrainingGame({
       <AnimatePresence>
         {selected !== null && (
           <motion.div
+            aria-atomic='true'
+            aria-live='assertive'
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl font-bold text-lg ${
-              selected === question.answer
-                ? 'bg-green-100 text-green-700'
-                : 'bg-red-100 text-red-700'
-            }`}
+            role='status'
           >
-            {selected === question.answer ? (
-              <>
-                <CheckCircle className='w-5 h-5' /> Brawo! Dobrze!
-              </>
-            ) : (
-              <>
-                <XCircle className='w-5 h-5' /> Poprawna odpowiedź: {question.answer}
-              </>
-            )}
+            <KangurResultBadge
+              data-testid='calendar-training-feedback'
+              tone={selected === question.answer ? 'success' : 'error'}
+            >
+              {selected === question.answer ? (
+                <>
+                  <CheckCircle className='w-5 h-5' /> Brawo! Dobrze!
+                </>
+              ) : (
+                <>
+                  <XCircle className='w-5 h-5' /> Poprawna odpowiedź: {question.answer}
+                </>
+              )}
+            </KangurResultBadge>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </section>
   );
 }

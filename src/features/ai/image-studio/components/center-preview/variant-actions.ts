@@ -1,5 +1,9 @@
 import { studioKeys } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
-import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+import type {
+  ImageStudioDeleteVariantResponse,
+  ImageStudioSlotRecord,
+  StudioSlotsResponse,
+} from '@/shared/contracts/image-studio';
 import { api } from '@/shared/lib/api-client';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateAiPathRuns, invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
@@ -63,20 +67,6 @@ type DeleteVariantFromCenterPreviewParams = {
   slots: ImageStudioSlotRecord[];
   toast: ToastFn;
   variant: VariantThumbnailInfo;
-};
-
-type DeleteVariantApiResponse = {
-  ok: boolean;
-  modeUsed: 'slot_cascade' | 'asset_only' | 'noop';
-  matchedSlotIds: string[];
-  deletedSlotIds: string[];
-  deletedFileIds: string[];
-  deletedFilepaths: string[];
-  warnings: string[];
-};
-
-type StudioSlotsResponse = {
-  slots: ImageStudioSlotRecord[];
 };
 
 const toTemporaryUpload = (variant: VariantThumbnailInfo): TemporaryUpload | null => {
@@ -284,7 +274,7 @@ export const deleteVariantFromCenterPreview = async ({
       ? (variant.id.split(':')[1]?.trim() ?? '')
       : '';
     const generationRunId = runIdFromVariantId || activeRunId?.trim() || null;
-    const response = await api.post<DeleteVariantApiResponse>(
+    const response = await api.post<ImageStudioDeleteVariantResponse>(
       `/api/image-studio/projects/${encodeURIComponent(projectId)}/variants/delete`,
       {
         slotId: targetSlotId ?? variant.slotId ?? undefined,

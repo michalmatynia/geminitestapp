@@ -116,6 +116,14 @@ const readJsonIfExists = async (relativePath) => {
   }
 };
 
+const isProcessInspectionPermissionError = (error) =>
+  Boolean(
+    error &&
+      typeof error === 'object' &&
+      'code' in error &&
+      (error.code === 'EPERM' || error.code === 'EACCES')
+  );
+
 const summarizeTrend = (payload) => {
   if (!payload || !Array.isArray(payload.runs)) {
     return null;
@@ -188,7 +196,21 @@ const preflightBuildLock = async () => {
     };
   }
 
-  const processLines = await listProcessCommands();
+  let processLines;
+  try {
+    processLines = await listProcessCommands();
+  } catch (error) {
+    if (isProcessInspectionPermissionError(error)) {
+      const code = typeof error?.code === 'string' ? error.code : 'unknown';
+      return {
+        action: 'skip',
+        message:
+          `Skipping build because .next/lock exists and process inspection is unavailable (${code}).`,
+      };
+    }
+    throw error;
+  }
+
   const activeBuilds = findActiveRepoBuildProcesses(processLines);
   if (activeBuilds.length > 0) {
     return {

@@ -2,13 +2,14 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import CalendarInteractiveGame from '@/features/kangur/ui/components/CalendarInteractiveGame';
 
 describe('CalendarInteractiveGame', () => {
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -49,6 +50,10 @@ describe('CalendarInteractiveGame', () => {
     fireEvent.click(mondayButton);
 
     expect(mondayButton).toHaveClass('border-emerald-300');
+    expect(screen.getByTestId('calendar-interactive-feedback')).toHaveClass(
+      'border-emerald-200',
+      'bg-emerald-100'
+    );
   });
 
   it('uses shared option-card buttons for season drop targets', () => {
@@ -62,5 +67,29 @@ describe('CalendarInteractiveGame', () => {
 
     fireEvent.dragOver(winterTarget);
     expect(winterTarget).toHaveClass('border-sky-300');
+  });
+
+  it('uses the shared display emoji on the summary screen', () => {
+    vi.useFakeTimers();
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+
+    render(<CalendarInteractiveGame onFinish={() => undefined} />);
+
+    for (let round = 0; round < 6; round += 1) {
+      fireEvent.click(screen.getByTestId('calendar-weekday-0'));
+
+      act(() => {
+        vi.advanceTimersByTime(1300);
+      });
+    }
+
+    expect(screen.getByTestId('calendar-interactive-summary-emoji')).toHaveClass(
+      'inline-flex',
+      'text-6xl'
+    );
+    expect(screen.getByTestId('calendar-interactive-summary-progress-bar')).toHaveAttribute(
+      'aria-valuenow',
+      '100'
+    );
   });
 });

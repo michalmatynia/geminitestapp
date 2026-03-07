@@ -2,6 +2,7 @@ import { createRequire } from 'module';
 
 import { NextRequest, NextResponse } from 'next/server';
 
+import { caseResolverPdfExportRequestSchema } from '@/shared/contracts/case-resolver';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import {
   badRequestError,
@@ -9,11 +10,6 @@ import {
   internalError,
   isAppError,
 } from '@/shared/errors/app-error';
-
-type CaseResolverExportPdfRequest = {
-  html?: unknown;
-  filename?: unknown;
-};
 
 type PlaywrightPage = {
   setContent: (
@@ -74,14 +70,18 @@ const sanitizePdfFilename = (value: unknown): string => {
 };
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  let payload: CaseResolverExportPdfRequest;
+  let rawPayload: unknown;
   try {
-    payload = (await req.json()) as CaseResolverExportPdfRequest;
+    rawPayload = (await req.json()) as unknown;
   } catch {
     throw badRequestError('Invalid JSON payload.');
   }
+  const parsedRequest = caseResolverPdfExportRequestSchema.safeParse(rawPayload);
+  if (!parsedRequest.success) {
+    throw badRequestError('Invalid PDF export payload.', { errors: parsedRequest.error.format() });
+  }
 
-  const html = normalizeHtml(payload.html);
+  const html = normalizeHtml(parsedRequest.data.html);
   if (!html) {
     throw badRequestError('html is required.');
   }
@@ -89,7 +89,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     throw badRequestError('html payload is too large.');
   }
 
-  const filename = sanitizePdfFilename(payload.filename);
+  const filename = sanitizePdfFilename(parsedRequest.data.filename);
 
   let browser: PlaywrightBrowser | null = null;
   let page: PlaywrightPage | null = null;

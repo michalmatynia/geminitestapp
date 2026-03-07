@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
-import { KangurPanel } from '@/features/kangur/ui/design/primitives';
+import { KangurGlassPanel } from '@/features/kangur/ui/design/primitives';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import { cn } from '@/shared/utils';
 
@@ -197,9 +197,11 @@ export function KangurGameHomeActionsWidget(): React.JSX.Element | null {
   ];
 
   return (
-    <KangurPanel
-      className='w-full border-white/78 bg-white/58 shadow-[0_24px_60px_rgba(168,175,216,0.18)]'
+    <KangurGlassPanel
+      className='w-full shadow-[0_24px_60px_rgba(168,175,216,0.18)]'
+      data-testid='kangur-home-actions-shell'
       padding='lg'
+      surface='mist'
       variant='elevated'
     >
       <section aria-labelledby='kangur-home-actions-heading'>
@@ -212,6 +214,6 @@ export function KangurGameHomeActionsWidget(): React.JSX.Element | null {
           ))}
         </div>
       </section>
-    </KangurPanel>
+    </KangurGlassPanel>
   );
 }

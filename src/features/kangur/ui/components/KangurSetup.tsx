@@ -1,17 +1,15 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Lock } from 'lucide-react';
 
 import {
   KangurButton,
+  KangurIconBadge,
   KangurOptionCardButton,
   KangurPanel,
   KangurStatusChip,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
-import {
-  KANGUR_ACCENT_STYLES,
-} from '@/features/kangur/ui/design/tokens';
 import type { KangurMode } from '@/features/kangur/ui/types';
 import { cn } from '@/shared/utils';
 
@@ -87,11 +85,20 @@ const EDITIONS: KangurEdition[] = [
 
 export default function KangurSetup({ onStart, onBack }: KangurSetupProps): React.JSX.Element {
   const [selectedEdition, setSelectedEdition] = useState<KangurEdition | null>(null);
+  const editionsHeadingId = useId();
+  const setsHeadingId = useId();
 
   if (!selectedEdition) {
     return (
-      <div className='flex w-full max-w-md flex-col gap-4'>
-        <KangurButton onClick={onBack} variant='ghost' size='sm' className='self-start'>
+      <section aria-labelledby={editionsHeadingId} className='flex w-full max-w-md flex-col gap-4'>
+        <KangurButton
+          aria-label='Wroc do poprzedniego widoku'
+          onClick={onBack}
+          type='button'
+          variant='ghost'
+          size='sm'
+          className='self-start'
+        >
           <ArrowLeft className='w-4 h-4' /> Wroc
         </KangurButton>
 
@@ -100,21 +107,32 @@ export default function KangurSetup({ onStart, onBack }: KangurSetupProps): Reac
           padding='xl'
           variant='elevated'
         >
-          <div className='text-6xl'>🦘</div>
-          <h2 className='text-2xl font-extrabold text-slate-800'>Kangur Matematyczny</h2>
+        <KangurIconBadge
+          accent='amber'
+          data-testid='kangur-setup-overview-icon'
+          size='3xl'
+        >
+          🦘
+        </KangurIconBadge>
+          <h2 id={editionsHeadingId} className='text-2xl font-extrabold text-slate-800'>
+            Kangur Matematyczny
+          </h2>
           <p className='text-sm leading-relaxed text-slate-500'>
             Wybierz edycje konkursu, z ktorej chcesz rozwiazywac zadania.
           </p>
 
-          <div className='flex w-full flex-col gap-3'>
+          <div aria-labelledby={editionsHeadingId} className='flex w-full flex-col gap-3' role='list'>
             {EDITIONS.map((edition) => (
               <motion.div
                 key={edition.year}
                 whileHover={edition.available ? { scale: 1.03 } : {}}
                 whileTap={edition.available ? { scale: 0.97 } : {}}
+                role='listitem'
               >
                 <KangurOptionCardButton
                   accent='amber'
+                  aria-describedby={`kangur-setup-edition-status-${edition.year}`}
+                  aria-label={`${edition.label}. ${edition.available ? 'Dostepna.' : 'Niedostepna, wkrotce dostepna.'}`}
                   className='flex w-full items-center gap-4 rounded-[28px] px-5 py-4'
                   data-testid={`kangur-setup-edition-${edition.year}`}
                   disabled={!edition.available}
@@ -125,19 +143,20 @@ export default function KangurSetup({ onStart, onBack }: KangurSetupProps): Reac
                     }
                   }}
                 >
-                  <span
-                    className={cn(
-                      'flex h-12 w-12 items-center justify-center rounded-2xl text-3xl shadow-sm',
-                      edition.available
-                        ? KANGUR_ACCENT_STYLES.amber.icon
-                        : 'bg-slate-200 text-slate-500'
-                    )}
+                  <KangurIconBadge
+                    accent={edition.available ? 'amber' : 'slate'}
+                    className={edition.available ? undefined : 'bg-slate-200 text-slate-500'}
+                    data-testid={`kangur-setup-edition-icon-${edition.year}`}
+                    size='xl'
                   >
                     {edition.emoji}
-                  </span>
+                  </KangurIconBadge>
                   <div className='flex flex-1 flex-col'>
                     <span className='text-lg font-extrabold text-slate-800'>{edition.label}</span>
-                    <span className='mt-1 flex flex-wrap items-center gap-2'>
+                    <span
+                      id={`kangur-setup-edition-status-${edition.year}`}
+                      className='mt-1 flex flex-wrap items-center gap-2'
+                    >
                       <KangurStatusChip accent='amber' size='sm'>
                         {edition.year}
                       </KangurStatusChip>
@@ -162,16 +181,18 @@ export default function KangurSetup({ onStart, onBack }: KangurSetupProps): Reac
             padding='md'
           />
         </KangurPanel>
-      </div>
+      </section>
     );
   }
 
   return (
-    <div className='flex w-full max-w-md flex-col gap-4'>
+    <section aria-labelledby={setsHeadingId} className='flex w-full max-w-md flex-col gap-4'>
       <KangurButton
+        aria-label='Wroc do listy edycji'
         onClick={() => setSelectedEdition(null)}
         className='self-start'
         size='sm'
+        type='button'
         variant='ghost'
       >
         <ArrowLeft className='w-4 h-4' /> Edycje
@@ -182,22 +203,33 @@ export default function KangurSetup({ onStart, onBack }: KangurSetupProps): Reac
         padding='xl'
         variant='elevated'
       >
-        <div className='text-5xl'>{selectedEdition.emoji}</div>
-        <h2 className='text-2xl font-extrabold text-slate-800'>{selectedEdition.label}</h2>
+        <KangurIconBadge
+          accent='amber'
+          data-testid='kangur-setup-selected-edition-icon'
+          size='2xl'
+        >
+          {selectedEdition.emoji}
+        </KangurIconBadge>
+        <h2 id={setsHeadingId} className='text-2xl font-extrabold text-slate-800'>
+          {selectedEdition.label}
+        </h2>
         <KangurStatusChip accent='amber' size='sm'>
           {selectedEdition.year}
         </KangurStatusChip>
         <p className='text-sm text-slate-500'>Wybierz zestaw pytan:</p>
 
-        <div className='flex w-full flex-col gap-3'>
+        <div aria-labelledby={setsHeadingId} className='flex w-full flex-col gap-3' role='list'>
           {selectedEdition.sets.map((setItem) => (
             <motion.div
               key={setItem.id}
               whileHover={setItem.available ? { scale: 1.03 } : {}}
               whileTap={setItem.available ? { scale: 0.97 } : {}}
+              role='listitem'
             >
               <KangurOptionCardButton
                 accent='amber'
+                aria-describedby={`kangur-setup-set-description-${setItem.id}`}
+                aria-label={`${setItem.label}. ${setItem.isExam ? 'Tryb konkursowy.' : 'Tryb treningowy.'} ${setItem.available ? 'Dostepny.' : 'Niedostepny, wkrotce dostepny.'}`}
                 className='flex w-full flex-col items-start gap-2 rounded-[28px] px-5 py-4'
                 data-testid={`kangur-setup-set-${setItem.id}`}
                 disabled={!setItem.available}
@@ -223,6 +255,7 @@ export default function KangurSetup({ onStart, onBack }: KangurSetupProps): Reac
                   {!setItem.available && <Lock className='h-3.5 w-3.5' />}
                 </span>
                 <span
+                  id={`kangur-setup-set-description-${setItem.id}`}
                   className={cn(
                     'text-xs',
                     setItem.available ? 'text-slate-500' : 'text-slate-400'
@@ -235,6 +268,6 @@ export default function KangurSetup({ onStart, onBack }: KangurSetupProps): Reac
           ))}
         </div>
       </KangurPanel>
-    </div>
+    </section>
   );
 }

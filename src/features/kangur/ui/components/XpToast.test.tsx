@@ -30,6 +30,16 @@ describe('XpToast', () => {
   it('uses shared status chips for xp and badge rewards', () => {
     render(<XpToast newBadges={['first_game']} visible xpGained={25} />);
 
+    expect(screen.getByTestId('xp-toast-xp-shell')).toHaveClass(
+      'glass-panel',
+      'border-indigo-200/70',
+      'bg-white/95'
+    );
+    expect(screen.getByTestId('xp-toast-badge-shell-first_game')).toHaveClass(
+      'glass-panel',
+      'border-amber-200/80',
+      'bg-white/95'
+    );
     expect(screen.getByText('+25 XP')).toHaveClass('border-indigo-200', 'bg-indigo-100');
     expect(screen.getByText(/Nowa odznaka/)).toHaveClass('border-amber-200', 'bg-amber-100');
     expect(screen.getByText('Pierwsza gra')).toBeInTheDocument();

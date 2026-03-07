@@ -45,6 +45,19 @@ describe('ScoreHistory', () => {
     vi.clearAllMocks();
   });
 
+  it('uses the shared empty-state surface while score history is loading', () => {
+    scoreFilterMock.mockImplementation(() => new Promise<KangurScoreRecord[]>(() => {}));
+
+    render(<ScoreHistory playerName='Jan' createdBy='jan@example.com' />);
+
+    expect(screen.getByTestId('score-history-loading')).toHaveClass(
+      'soft-card',
+      'border-dashed',
+      'border-slate-200/80'
+    );
+    expect(screen.getByText('Ladowanie wynikow...')).toBeInTheDocument();
+  });
+
   it('loads learner-scoped results by account and display name without falling back to global history', async () => {
     scoreFilterMock.mockImplementation(
       (criteria: Partial<KangurScoreRecord>): Promise<KangurScoreRecord[]> => {
@@ -109,6 +122,14 @@ describe('ScoreHistory', () => {
     expect(screen.getByTestId('score-history-operation-progress-addition')).toHaveAttribute(
       'aria-valuenow',
       '80'
+    );
+    expect(screen.getByTestId('score-history-recent-row-score-3')).toHaveClass(
+      'soft-card',
+      'border-sky-300'
+    );
+    expect(screen.getByTestId('score-history-recent-score-score-2')).toHaveClass(
+      'border-emerald-200',
+      'bg-emerald-100'
     );
     expect(screen.getAllByText('Dzielenie').length).toBeGreaterThan(0);
   });

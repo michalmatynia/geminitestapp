@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Button, Tabs, TabsList, TabsTrigger } from '@/shared/ui';
+import { Tabs, TabsList, TabsTrigger } from '@/shared/ui';
 
 import { SlotInlineEditCardTab } from './SlotInlineEditCardTab';
 import { SlotInlineEditCompositesTab } from './SlotInlineEditCompositesTab';
@@ -15,52 +15,11 @@ import { GenerationPreviewModal } from '../modals/GenerationPreviewModalImpl';
 import { SlotInlineEditModal } from '../modals/SlotInlineEditModal';
 
 export function StudioInlineEditPanels(): React.JSX.Element {
-  const {
-    editCardTab,
-    extractReviewOpen,
-    generationPreviewModalOpen,
-    onCopyCardId,
-    onSaveInlineSlot,
-    selectedSlot,
-    setEditCardTab,
-    setExtractReviewOpen,
-    setGenerationPreviewModalOpen,
-    slotInlineEditOpen,
-    setSlotInlineEditOpen,
-    slotUpdateBusy,
-  } = useStudioInlineEdit();
-
-  const editCardModalHeader = (
-    <div className='flex items-center gap-3'>
-      <div className='flex items-center gap-4'>
-        <Button
-          onClick={() => {
-            void onSaveInlineSlot();
-          }}
-          disabled={slotUpdateBusy || !selectedSlot}
-          className='min-w-[100px] border border-white/20 hover:border-white/40'
-        >
-          {slotUpdateBusy ? 'Saving...' : 'Save Card'}
-        </Button>
-        <div className='flex items-center gap-2'>
-          <h2 className='text-2xl font-bold text-white'>Edit Card</h2>
-        </div>
-      </div>
-    </div>
-  );
+  const { editCardTab, setEditCardTab } = useStudioInlineEdit();
 
   return (
     <>
-      <SlotInlineEditModal
-        isOpen={slotInlineEditOpen}
-        onClose={() => setSlotInlineEditOpen(false)}
-        onSuccess={() => {}}
-        item={selectedSlot}
-        onCopyId={(id) => {
-          void onCopyCardId(id);
-        }}
-        header={editCardModalHeader}
-      >
+      <SlotInlineEditModal>
         <Tabs
           value={editCardTab}
           onValueChange={(value: string) => {
@@ -101,15 +60,9 @@ export function StudioInlineEditPanels(): React.JSX.Element {
         </Tabs>
       </SlotInlineEditModal>
 
-      <GenerationPreviewModal
-        isOpen={generationPreviewModalOpen}
-        onClose={() => setGenerationPreviewModalOpen(false)}
-      />
+      <GenerationPreviewModal />
 
-      <ExtractPromptParamsModal
-        isOpen={extractReviewOpen}
-        onClose={() => setExtractReviewOpen(false)}
-      />
+      <ExtractPromptParamsModal />
     </>
   );
 }

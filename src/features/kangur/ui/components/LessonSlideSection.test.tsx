@@ -9,6 +9,25 @@ import LessonSlideSection from '@/features/kangur/ui/components/LessonSlideSecti
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 
 describe('LessonSlideSection', () => {
+  it('uses the shared empty-state surface when no slides are provided', () => {
+    render(
+      <LessonSlideSection
+        slides={[]}
+        onBack={vi.fn()}
+        dotActiveClass='bg-orange-400'
+        dotDoneClass='bg-orange-200'
+        gradientClass='from-orange-400 to-yellow-400'
+      />
+    );
+
+    expect(screen.getByTestId('lesson-slide-empty')).toHaveClass(
+      'soft-card',
+      'border-dashed',
+      'border-slate-200/80'
+    );
+    expect(screen.getByText('Brak slajdu.')).toBeInTheDocument();
+  });
+
   it('renders slide indicators as clickable Kangur micro pills', async () => {
     render(
       <LessonSlideSection

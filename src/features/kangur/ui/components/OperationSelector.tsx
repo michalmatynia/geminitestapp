@@ -1,16 +1,15 @@
-import { useMemo, useState } from 'react';
+import { useId } from 'react';
 import { motion } from 'framer-motion';
 
 import DifficultySelector from '@/features/kangur/ui/components/DifficultySelector';
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
+import { useKangurOperationSelectorState } from '@/features/kangur/ui/hooks/useKangurOperationSelectorState';
 import {
+  KangurIconBadge,
   KangurOptionCardButton,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import {
-  KANGUR_ACCENT_STYLES,
-  type KangurAccent,
-} from '@/features/kangur/ui/design/tokens';
+import { KANGUR_ACCENT_STYLES } from '@/features/kangur/ui/design/tokens';
 import type { KangurDifficulty, KangurOperation } from '@/features/kangur/ui/types';
 import { cn } from '@/shared/utils';
 
@@ -21,85 +20,44 @@ export type OperationSelectorProps = {
   >;
 };
 
-const OPERATIONS: Array<{
-  id: KangurOperation;
-  label: string;
-  accent: KangurAccent;
-  emoji: string;
-}> = [
-  { id: 'addition', label: 'Dodawanie', accent: 'emerald', emoji: '➕' },
-  { id: 'subtraction', label: 'Odejmowanie', accent: 'sky', emoji: '➖' },
-  { id: 'multiplication', label: 'Mnozenie', accent: 'violet', emoji: '✖️' },
-  { id: 'division', label: 'Dzielenie', accent: 'amber', emoji: '➗' },
-  { id: 'decimals', label: 'Ulamki', accent: 'teal', emoji: '🔢' },
-  { id: 'powers', label: 'Potegi', accent: 'amber', emoji: '⚡' },
-  { id: 'roots', label: 'Pierwiastki', accent: 'indigo', emoji: '√' },
-  { id: 'clock', label: 'Zegar', accent: 'sky', emoji: '🕐' },
-  { id: 'mixed', label: 'Mieszane', accent: 'rose', emoji: '🎲' },
-];
-
-const PRIORITY_LABELS = {
-  high: 'Priorytet wysoki',
-  medium: 'Priorytet sredni',
-  low: 'Priorytet niski',
-} as const;
-
-const PRIORITY_ACCENTS = {
-  high: 'rose',
-  medium: 'amber',
-  low: 'emerald',
-} as const;
-
-const PRIORITY_ORDER = {
-  high: 0,
-  medium: 1,
-  low: 2,
-} as const;
-
 export default function OperationSelector({
   onSelect,
   priorityAssignmentsByOperation = {},
 }: OperationSelectorProps): React.JSX.Element {
-  const [difficulty, setDifficulty] = useState<KangurDifficulty>('medium');
-  const sortedOperations = useMemo(
-    () =>
-      [...OPERATIONS].sort((left, right) => {
-        const leftAssignment = priorityAssignmentsByOperation[left.id] ?? null;
-        const rightAssignment = priorityAssignmentsByOperation[right.id] ?? null;
-        const leftRank = leftAssignment
-          ? PRIORITY_ORDER[leftAssignment.priority]
-          : Number.POSITIVE_INFINITY;
-        const rightRank = rightAssignment
-          ? PRIORITY_ORDER[rightAssignment.priority]
-          : Number.POSITIVE_INFINITY;
-
-        if (leftRank !== rightRank) {
-          return leftRank - rightRank;
-        }
-
-        return (
-          OPERATIONS.findIndex((operation) => operation.id === left.id) -
-          OPERATIONS.findIndex((operation) => operation.id === right.id)
-        );
-      }),
-    [priorityAssignmentsByOperation]
-  );
+  const { difficulty, operations, setDifficulty } = useKangurOperationSelectorState({
+    onSelect,
+    priorityAssignmentsByOperation,
+  });
+  const headingId = useId();
+  const descriptionId = useId();
 
   return (
-    <div className='flex w-full max-w-3xl flex-col items-center gap-6'>
+    <section
+      aria-describedby={descriptionId}
+      aria-labelledby={headingId}
+      className='flex w-full max-w-3xl flex-col items-center gap-6'
+    >
       <DifficultySelector selected={difficulty} onSelect={setDifficulty} />
       <div className='space-y-2 text-center'>
-        <h2 className='text-2xl font-extrabold tracking-tight text-slate-800'>
+        <h2 id={headingId} className='text-2xl font-extrabold tracking-tight text-slate-800'>
           Wybierz swoje wyzwanie
         </h2>
-        <p className='text-sm text-slate-500'>
+        <p id={descriptionId} className='text-sm text-slate-500'>
           Kazda kategoria ma ten sam uklad. Kolor tylko podpowiada temat.
         </p>
       </div>
-      <div className='grid w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3'>
-        {sortedOperations.map((operation, index) => {
-          const priorityAssignment = priorityAssignmentsByOperation[operation.id] ?? null;
+      <div
+        aria-labelledby={headingId}
+        className='grid w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3'
+        role='list'
+      >
+        {operations.map((operation, index) => {
           const accent = KANGUR_ACCENT_STYLES[operation.accent];
+          const descriptionElementId = `operation-card-description-${operation.id}`;
+          const statusElementId = `operation-card-status-${operation.id}`;
+          const priorityElementId = operation.hasPriorityAssignment
+            ? `operation-card-priority-${operation.id}`
+            : null;
 
           return (
             <motion.div
@@ -109,58 +67,63 @@ export default function OperationSelector({
               transition={{ delay: index * 0.08 }}
               whileHover={{ scale: 1.07 }}
               whileTap={{ scale: 0.95 }}
+              role='listitem'
             >
               <KangurOptionCardButton
                 accent={operation.accent}
                 className='flex min-h-[180px] flex-col gap-4 rounded-[30px] p-5'
                 data-testid={`operation-card-${operation.id}`}
-                emphasis={priorityAssignment ? 'accent' : 'neutral'}
-                onClick={() => onSelect(operation.id, difficulty)}
+                emphasis={operation.hasPriorityAssignment ? 'accent' : 'neutral'}
+                aria-describedby={
+                  priorityElementId
+                    ? `${statusElementId} ${priorityElementId} ${descriptionElementId}`
+                    : `${statusElementId} ${descriptionElementId}`
+                }
+                onClick={operation.select}
               >
-                {priorityAssignment ? (
+                {operation.hasPriorityAssignment ? (
                   <KangurStatusChip
-                    accent={PRIORITY_ACCENTS[priorityAssignment.priority]}
+                    accent='rose'
                     className='absolute right-3 top-3 text-[10px] uppercase tracking-[0.16em]'
+                    id={priorityElementId ?? undefined}
                     size='sm'
                   >
-                    {PRIORITY_LABELS[priorityAssignment.priority]}
+                    {operation.priorityLabel}
                   </KangurStatusChip>
                 ) : null}
                 <div className='flex items-start justify-between gap-3'>
-                  <span
-                    className={cn(
-                      'inline-flex h-12 w-12 items-center justify-center rounded-2xl text-3xl shadow-sm',
-                      accent.icon
-                    )}
+                  <KangurIconBadge
+                    accent={operation.accent}
+                    data-testid={`operation-icon-${operation.id}`}
+                    size='xl'
                   >
                     {operation.emoji}
-                  </span>
+                  </KangurIconBadge>
                   <KangurStatusChip
-                    accent={priorityAssignment ? operation.accent : 'slate'}
+                    accent={operation.hasPriorityAssignment ? operation.accent : 'slate'}
                     className='text-[11px] font-semibold'
+                    id={statusElementId}
                     size='sm'
                   >
-                    {priorityAssignment ? 'Zadanie od rodzica' : 'Trening swobodny'}
+                    {operation.statusLabel}
                   </KangurStatusChip>
                 </div>
                 <div className='space-y-1 text-left'>
                   <span className='block text-lg font-extrabold text-slate-800'>
                     {operation.label}
                   </span>
-                  <span className='block text-sm text-slate-500'>
-                    {priorityAssignment
-                      ? `${priorityAssignment.progress.percent}% · ${priorityAssignment.title}`
-                      : 'Wejdz do serii pytan i cwicz we wlasnym tempie.'}
+                  <span id={descriptionElementId} className='block text-sm text-slate-500'>
+                    {operation.description}
                   </span>
                 </div>
                 <span className={cn('mt-auto text-sm font-semibold', accent.activeText)}>
-                  Zacznij lekcje
+                  {operation.actionLabel}
                 </span>
               </KangurOptionCardButton>
             </motion.div>
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }

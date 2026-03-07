@@ -53,11 +53,44 @@ vi.mock('@/shared/lib/ai-paths/portable-engine/server', () => ({
 import { GET_handler } from './handler';
 
 import * as builders from './handler.builders.test';
+
 describe('ai-paths portable-engine trend snapshots handler', () => {
   beforeEach(() => {
     builders.requireAiPathsAccessMock.mockReset().mockResolvedValue(undefined);
     builders.getPortablePathRunExecutionSnapshotMock.mockReset().mockReturnValue({
       totals: {
+        attempts: 0,
+        successes: 0,
+        failures: 0,
+      },
+      byRunner: {
+        client: { attempts: 0, successes: 0, failures: 0 },
+        server: { attempts: 0, successes: 0, failures: 0 },
+      },
+      bySurface: {
+        canvas: { attempts: 0, successes: 0, failures: 0 },
+        product: { attempts: 0, successes: 0, failures: 0 },
+        api: { attempts: 0, successes: 0, failures: 0 },
+      },
+      bySource: {
+        portable_package: { attempts: 0, successes: 0, failures: 0 },
+        portable_envelope: { attempts: 0, successes: 0, failures: 0 },
+        semantic_canvas: { attempts: 0, successes: 0, failures: 0 },
+        path_config: { attempts: 0, successes: 0, failures: 0 },
+      },
+      failureStageCounts: {
+        resolve: 0,
+        validation: 0,
+        runtime: 0,
+      },
+      recentEvents: [],
+    });
+    builders.loadPortablePathAuditSinkAutoRemediationDeadLettersMock
+      .mockReset()
+      .mockResolvedValue([]);
+    builders.loadPortablePathSigningPolicyTrendSnapshotsMock.mockReset();
+  });
+
   it('applies trigger/date filters and returns latest matching snapshots within limit', async () => {
     builders.loadPortablePathSigningPolicyTrendSnapshotsMock.mockResolvedValue([
       {

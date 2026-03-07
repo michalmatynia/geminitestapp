@@ -122,6 +122,10 @@ describe('KangurLessonNarrator', () => {
       expect(screen.getByRole('button', { name: /^play$/i })).toBeInTheDocument()
     );
 
+    expect(screen.getByTestId('lesson-narrator-shell')).toHaveClass(
+      'glass-panel',
+      'border-indigo-200/70'
+    );
     expect(screen.getByText('Lesson narrator')).toHaveClass('border-indigo-200', 'bg-indigo-100');
 
     fireEvent.click(screen.getByRole('button', { name: /^play$/i }));

@@ -24,7 +24,11 @@ describe('KangurProfileMenu', () => {
 
     await user.click(screen.getByRole('button', { name: 'Profil' }));
 
-    expect(screen.getByRole('menu')).toHaveClass('soft-card', 'border-slate-200/80');
+    expect(screen.getByTestId('kangur-profile-menu-shell')).toHaveClass(
+      'glass-panel',
+      'border-white/88',
+      'bg-white/94'
+    );
     expect(screen.getByRole('menuitem', { name: 'Status' })).toHaveClass('rounded-2xl', 'text-sm');
     expect(screen.getByRole('menuitem', { name: 'Wyloguj' })).toHaveClass(
       'rounded-2xl',
@@ -52,7 +56,11 @@ describe('KangurProfileMenu', () => {
     );
 
     await user.click(screen.getByRole('button', { name: 'Profil' }));
-    expect(screen.getByRole('menu')).toHaveClass('soft-card', 'border-slate-200/80');
+    expect(screen.getByTestId('kangur-profile-menu-shell')).toHaveClass(
+      'glass-panel',
+      'border-white/88',
+      'bg-white/94'
+    );
     expect(screen.getByRole('menuitem', { name: 'Zaloguj się' })).toHaveClass(
       'rounded-2xl',
       'text-sm'

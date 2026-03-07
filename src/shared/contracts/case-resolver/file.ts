@@ -38,6 +38,24 @@ export type CaseResolverDocumentDateProposal = z.infer<
   typeof caseResolverDocumentDateProposalSchema
 >;
 
+export const caseResolverPdfExtractRequestSchema = z.object({
+  filepath: z.string(),
+});
+export type CaseResolverPdfExtractRequest = z.infer<typeof caseResolverPdfExtractRequestSchema>;
+
+export const caseResolverPdfExtractResponseSchema = z.object({
+  filepath: z.string(),
+  text: z.string(),
+  pageCount: z.number().int().nullable(),
+});
+export type CaseResolverPdfExtractResponse = z.infer<typeof caseResolverPdfExtractResponseSchema>;
+
+export const caseResolverPdfExportRequestSchema = z.object({
+  html: z.string(),
+  filename: z.string().optional(),
+});
+export type CaseResolverPdfExportRequest = z.infer<typeof caseResolverPdfExportRequestSchema>;
+
 /**
  * Case Resolver Document & File DTOs
  */

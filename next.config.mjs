@@ -69,12 +69,26 @@ const nextConfig = {
     '@prisma/client',
     'bcrypt',
     'bullmq',
+    '@grpc/grpc-js',
+    'ioredis',
+    // Keep Node-only OpenTelemetry SDK/exporters external so webpack doesn't try
+    // to bundle optional gRPC internals into instrumentation builds.
+    '@opentelemetry/auto-instrumentations-node',
+    '@opentelemetry/exporter-logs-otlp-grpc',
+    '@opentelemetry/exporter-logs-otlp-http',
+    '@opentelemetry/exporter-trace-otlp-http',
+    '@opentelemetry/otlp-grpc-exporter-base',
+    '@opentelemetry/resources',
+    '@opentelemetry/sdk-logs',
+    '@opentelemetry/sdk-node',
     // Turbopack struggles to bundle Playwright assets (ttf/html) pulled via playwright-core internals.
     // Keep Playwright external on the server bundle.
     'playwright',
     'playwright-core',
     // MongoDB driver pulls in Node built-ins that Turbopack currently struggles to bundle.
     'mongodb',
+    // Native image processing is Node-only and should stay external in server builds.
+    'sharp',
     // instrumentation-winston lazily requires this optional transport at runtime.
     '@opentelemetry/winston-transport',
   ],

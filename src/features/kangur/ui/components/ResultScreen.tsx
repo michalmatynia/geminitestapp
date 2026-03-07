@@ -3,10 +3,23 @@ import { Home, RotateCcw } from 'lucide-react';
 
 import {
   KangurButton,
+  KangurDisplayEmoji,
   KangurPanel,
   KangurProgressBar,
 } from '@/features/kangur/ui/design/primitives';
 import type { KangurOperation } from '@/features/kangur/ui/types';
+
+const OPERATION_LABELS: Partial<Record<KangurOperation, string>> = {
+  addition: 'Dodawanie',
+  subtraction: 'Odejmowanie',
+  multiplication: 'Mnozenie',
+  division: 'Dzielenie',
+  decimals: 'Ulamki',
+  powers: 'Potegi',
+  roots: 'Pierwiastki',
+  clock: 'Zegar',
+  mixed: 'Mieszane',
+};
 
 export type ResultScreenProps = {
   score: number;
@@ -29,6 +42,7 @@ export default function ResultScreen({
 }: ResultScreenProps): React.JSX.Element {
   const percent = total > 0 ? Math.round((score / total) * 100) : 0;
   const stars = percent >= 90 ? 3 : percent >= 60 ? 2 : 1;
+  const operationLabel = operation ? OPERATION_LABELS[operation] ?? operation : 'Mieszane';
 
   const message =
     percent === 100
@@ -41,39 +55,49 @@ export default function ResultScreen({
 
   return (
     <motion.div
+      aria-labelledby='kangur-result-heading'
       initial={{ opacity: 0, scale: 0.85 }}
       animate={{ opacity: 1, scale: 1 }}
       className='flex flex-col items-center gap-6 text-center'
     >
-      <div className='text-6xl'>
+      <KangurDisplayEmoji aria-hidden='true' data-testid='result-screen-emoji' size='lg'>
         {'⭐'.repeat(stars)}
         {'☆'.repeat(3 - stars)}
-      </div>
-      <h2 className='text-3xl font-extrabold text-slate-800'>Swietna robota, {playerName}!</h2>
-      <p className='text-lg text-slate-500'>{message}</p>
+      </KangurDisplayEmoji>
+      <p className='sr-only'>{`Ocena: ${stars} z 3 gwiazdek.`}</p>
+      <h2 id='kangur-result-heading' className='text-3xl font-extrabold text-slate-800'>
+        Swietna robota, {playerName}!
+      </h2>
+      <p role='status' aria-live='polite' className='text-lg text-slate-500'>
+        {message}
+      </p>
 
       <KangurPanel className='w-full max-w-sm flex flex-col gap-3' padding='xl' variant='elevated'>
-        <div className='flex justify-between text-lg'>
-          <span className='text-slate-500'>Wynik</span>
-          <span className='font-bold text-indigo-600'>
-            {score} / {total}
-          </span>
-        </div>
-        <div className='flex justify-between text-lg'>
-          <span className='text-slate-500'>Dokladnosc</span>
-          <span className='font-bold text-green-500'>{percent}%</span>
-        </div>
-        <div className='flex justify-between text-lg'>
-          <span className='text-slate-500'>Czas</span>
-          <span className='font-bold text-amber-500'>{timeTaken}s</span>
-        </div>
-        <div className='flex justify-between text-lg'>
-          <span className='text-slate-500'>Temat</span>
-          <span className='font-bold text-purple-500 capitalize'>{operation ?? 'mixed'}</span>
-        </div>
+        <dl className='space-y-3 text-lg'>
+          <div className='flex justify-between gap-4'>
+            <dt className='text-slate-500'>Wynik</dt>
+            <dd className='font-bold text-indigo-600'>
+              {score} / {total}
+            </dd>
+          </div>
+          <div className='flex justify-between gap-4'>
+            <dt className='text-slate-500'>Dokladnosc</dt>
+            <dd className='font-bold text-green-500'>{percent}%</dd>
+          </div>
+          <div className='flex justify-between gap-4'>
+            <dt className='text-slate-500'>Czas</dt>
+            <dd className='font-bold text-amber-500'>{timeTaken}s</dd>
+          </div>
+          <div className='flex justify-between gap-4'>
+            <dt className='text-slate-500'>Temat</dt>
+            <dd className='font-bold text-purple-500'>{operationLabel}</dd>
+          </div>
+        </dl>
         <KangurProgressBar
           accent='indigo'
           animated
+          aria-label='Dokladnosc odpowiedzi'
+          aria-valuetext={`${percent}% poprawnych odpowiedzi`}
           className='mt-2'
           data-testid='result-screen-progress-bar'
           size='lg'

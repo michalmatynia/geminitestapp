@@ -15,6 +15,14 @@ describe('MultiplicationArrayGame', () => {
       'aria-valuenow',
       '0'
     );
+    expect(screen.getByTestId('multiplication-array-counter-collected')).toHaveClass(
+      'soft-card',
+      'border-violet-300'
+    );
+    expect(screen.getByTestId('multiplication-array-counter-target')).toHaveClass(
+      'soft-card',
+      'border-slate-200/80'
+    );
     const firstGroup = screen.getByTestId('multiplication-array-group-0');
 
     expect(firstGroup).toHaveClass('soft-card', 'rounded-[24px]');

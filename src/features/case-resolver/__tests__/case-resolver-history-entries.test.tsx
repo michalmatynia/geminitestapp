@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { CaseResolverDocumentHistoryEntry } from '@/shared/contracts/case-resolver';
 import { CaseResolverHistoryEntries } from '@/features/case-resolver/components/page/CaseResolverHistoryEntries';
+import { CaseResolverHistoryEntriesRuntimeProvider } from '@/features/case-resolver/components/page/CaseResolverHistoryEntriesRuntimeContext';
 
 const buildHistoryEntry = (
   overrides: Partial<CaseResolverDocumentHistoryEntry> = {}
@@ -20,6 +21,28 @@ const buildHistoryEntry = (
 });
 
 describe('CaseResolverHistoryEntries', () => {
+  it('supports the shared runtime context path when explicit props are omitted', () => {
+    render(
+      <CaseResolverHistoryEntriesRuntimeProvider
+        value={{
+          entries: [
+            buildHistoryEntry({
+              documentContentPlainText: 'Runtime preview text',
+            }),
+          ],
+          formatTimestamp: (value: string): string => `CTX:${value}`,
+          onRestore: vi.fn(),
+          isRestoreDisabled: false,
+        }}
+      >
+        <CaseResolverHistoryEntries />
+      </CaseResolverHistoryEntriesRuntimeProvider>
+    );
+
+    expect(screen.getByText('CTX:2026-02-24T12:00:00.000Z')).toBeInTheDocument();
+    expect(screen.getByText('Runtime preview text')).toBeInTheDocument();
+  });
+
   it('renders preview text for revision entries', () => {
     render(
       <CaseResolverHistoryEntries

@@ -97,6 +97,24 @@ export type CaseResolverOcrObservabilitySnapshot = {
   distinctCorrelationIds: number;
 };
 
+export const caseResolverOcrModelKeySourceSchema = z.literal('brain');
+export type CaseResolverOcrModelKeySource = z.infer<typeof caseResolverOcrModelKeySourceSchema>;
+
+export const caseResolverOcrModelsWarningSchema = z.object({
+  code: z.string(),
+  message: z.string(),
+});
+export type CaseResolverOcrModelsWarning = z.infer<typeof caseResolverOcrModelsWarningSchema>;
+
+export const caseResolverOcrModelsResponseSchema = z.object({
+  models: z.array(z.string()),
+  ollamaModels: z.array(z.string()),
+  otherModels: z.array(z.string()),
+  keySource: caseResolverOcrModelKeySourceSchema,
+  warning: caseResolverOcrModelsWarningSchema.optional(),
+});
+export type CaseResolverOcrModelsResponse = z.infer<typeof caseResolverOcrModelsResponseSchema>;
+
 export const createCaseResolverOcrJobSchema = z.object({
   filepath: z.string().trim().min(1),
   model: z.string().trim().optional(),

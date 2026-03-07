@@ -111,6 +111,10 @@ describe('Tests page smoke', () => {
     );
     render(<Tests />);
     expect(screen.getByRole('button', { name: /Kangur 2024 — 3 pkt/i })).toHaveClass('soft-card');
+    expect(screen.getByTestId('tests-suite-icon-suite-math-2024')).toHaveClass(
+      'bg-indigo-100',
+      'text-indigo-700'
+    );
     expect(screen.queryByText('Ukryty zestaw')).not.toBeInTheDocument();
   });
 

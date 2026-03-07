@@ -145,7 +145,7 @@ describe('JobQueueProvider enqueue event listeners', () => {
 
     const view = renderProvider();
     const channel = channels[0];
-    if (!channel || !channel.onmessage) {
+    if (!channel?.onmessage) {
       throw new Error('Broadcast channel listener was not initialized.');
     }
 

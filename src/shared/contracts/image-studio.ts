@@ -771,6 +771,8 @@ export type ImageStudioRunHistoryEvent = {
   payload?: Record<string, unknown>;
 };
 
+export type ImageStudioRunOutputRecord = ImageFileRecord;
+
 export type ImageStudioRunRecord = {
   id: string;
   projectId: string;
@@ -778,13 +780,17 @@ export type ImageStudioRunRecord = {
   dispatchMode: 'queued' | 'inline' | null;
   request: ImageStudioRunRequest;
   expectedOutputs: number;
-  outputs: Array<{ id: string; filepath: string }>;
+  outputs: ImageStudioRunOutputRecord[];
   errorMessage: string | null;
   createdAt: string;
   updatedAt: string;
   startedAt: string | null;
   finishedAt: string | null;
   historyEvents: ImageStudioRunHistoryEvent[];
+};
+
+export type ImageStudioRunDetailResponse = {
+  run: ImageStudioRunRecord;
 };
 
 // --- Sequence Runs ---
@@ -872,6 +878,18 @@ export type RunsTotalResponseDto<TRun> = {
 export type RunsTotalResponse<TRun> = RunsTotalResponseDto<TRun>;
 
 export type ImageStudioRunsResponse = RunsTotalResponseDto<ImageStudioRunRecord>;
+
+export type ImageStudioDeleteVariantMode = 'slot_cascade' | 'asset_only' | 'noop';
+
+export type ImageStudioDeleteVariantResponse = {
+  ok: true;
+  modeUsed: ImageStudioDeleteVariantMode;
+  matchedSlotIds: string[];
+  deletedSlotIds: string[];
+  deletedFileIds: string[];
+  deletedFilepaths: string[];
+  warnings: string[];
+};
 
 // --- Run Execution ---
 

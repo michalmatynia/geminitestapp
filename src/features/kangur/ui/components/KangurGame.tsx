@@ -21,6 +21,7 @@ import {
 import { useKangurGameContext } from '@/features/kangur/ui/context/KangurGameContext';
 import {
   KangurButton,
+  KangurDisplayEmoji,
   KangurInfoCard,
   KangurOptionCardButton,
   KangurPanel,
@@ -246,7 +247,9 @@ function ResultView({ score, total, onRestart }: ResultViewProps): React.JSX.Ele
         padding='xl'
         variant='elevated'
       >
-        <div className='text-6xl'>{emoji}</div>
+        <KangurDisplayEmoji data-testid='kangur-game-summary-emoji' size='lg'>
+          {emoji}
+        </KangurDisplayEmoji>
         <h2 className='text-2xl font-extrabold text-gray-800'>
           Wynik: {score}/{total}
         </h2>

@@ -2,13 +2,13 @@
 
 import {
   KangurButton,
+  KangurIconBadge,
   KangurOptionCardButton,
   KangurPanel,
   KangurSelectField,
   KangurStatusChip,
   KangurTextField,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_ACCENT_STYLES } from '@/features/kangur/ui/design/tokens';
 import { useKangurParentDashboardRuntime } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 import { cn } from '@/shared/utils';
 
@@ -60,16 +60,14 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                 onClick={() => void selectLearner(learner.id)}
                 type='button'
               >
-                <span
-                  className={cn(
-                    'flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-lg font-extrabold shadow-sm',
-                    isActiveLearner
-                      ? KANGUR_ACCENT_STYLES.indigo.icon
-                      : KANGUR_ACCENT_STYLES.slate.icon
-                  )}
+                <KangurIconBadge
+                  accent={isActiveLearner ? 'indigo' : 'slate'}
+                  className='shrink-0 text-lg font-extrabold'
+                  data-testid={`parent-dashboard-learner-icon-${learner.id}`}
+                  size='md'
                 >
                   {initial}
-                </span>
+                </KangurIconBadge>
                 <div className='min-w-0 flex-1'>
                   <div className='flex items-start justify-between gap-3'>
                     <div className='min-w-0'>

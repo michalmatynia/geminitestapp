@@ -4,12 +4,12 @@ import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getDiskPathFromPublicPath } from '@/features/files/server';
+import {
+  caseResolverPdfExtractRequestSchema,
+  type CaseResolverPdfExtractResponse,
+} from '@/shared/contracts/case-resolver';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
-
-type ExtractPdfRequest = {
-  filepath?: unknown;
-};
 
 const CASE_RESOLVER_UPLOAD_PREFIX = '/uploads/case-resolver/';
 const CASE_RESOLVER_UPLOAD_DISK_PREFIX = path.join(
@@ -29,14 +29,15 @@ const normalizePublicFilepath = (value: unknown): string | null => {
 };
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  let payload: ExtractPdfRequest;
+  let rawPayload: unknown;
   try {
-    payload = (await req.json()) as ExtractPdfRequest;
+    rawPayload = (await req.json()) as unknown;
   } catch (error) {
     throw badRequestError('Invalid JSON payload', { error });
   }
 
-  const filepath = normalizePublicFilepath(payload.filepath);
+  const parsedRequest = caseResolverPdfExtractRequestSchema.safeParse(rawPayload);
+  const filepath = normalizePublicFilepath(parsedRequest.success ? parsedRequest.data.filepath : null);
   if (!filepath) {
     throw badRequestError('filepath is required');
   }
@@ -61,10 +62,11 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   ).default;
   const parsed = await pdfParse(fileBuffer);
   const text = typeof parsed.text === 'string' ? parsed.text.trim() : '';
-
-  return NextResponse.json({
+  const response: CaseResolverPdfExtractResponse = {
     filepath,
     text,
     pageCount: typeof parsed.numpages === 'number' ? parsed.numpages : null,
-  });
+  };
+
+  return NextResponse.json(response);
 }

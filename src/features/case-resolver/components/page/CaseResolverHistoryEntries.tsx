@@ -5,18 +5,27 @@ import type { CaseResolverDocumentHistoryEntry } from '@/shared/contracts/case-r
 import { Button } from '@/shared/ui';
 
 import { resolveCaseResolverHistoryEntryPreview } from '@/features/case-resolver/utils/caseResolverUtils';
+import {
+  type CaseResolverHistoryEntriesRuntimeValue,
+  useOptionalCaseResolverHistoryEntriesRuntime,
+} from './CaseResolverHistoryEntriesRuntimeContext';
 
-type CaseResolverHistoryEntriesProps = {
-  entries: CaseResolverDocumentHistoryEntry[];
-  formatTimestamp: (value: string) => string;
-  onRestore: (entry: CaseResolverDocumentHistoryEntry) => void;
-  isRestoreDisabled: boolean;
-};
+type CaseResolverHistoryEntriesProps = CaseResolverHistoryEntriesRuntimeValue;
 
 export function CaseResolverHistoryEntries(
-  props: CaseResolverHistoryEntriesProps
+  props: Partial<CaseResolverHistoryEntriesProps> = {}
 ): React.JSX.Element {
-  const { entries, formatTimestamp, onRestore, isRestoreDisabled } = props;
+  const runtime = useOptionalCaseResolverHistoryEntriesRuntime();
+  const resolvedProps =
+    props.onRestore !== undefined ? (props as CaseResolverHistoryEntriesProps) : runtime;
+
+  if (!resolvedProps) {
+    throw new Error(
+      'CaseResolverHistoryEntries must be used within CaseResolverHistoryEntriesRuntimeProvider or receive explicit props'
+    );
+  }
+
+  const { entries, formatTimestamp, onRestore, isRestoreDisabled } = resolvedProps;
 
   return (
     <div className='rounded-lg border border-border/40 bg-card/20 overflow-hidden'>

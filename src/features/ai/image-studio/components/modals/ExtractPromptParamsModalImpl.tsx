@@ -3,7 +3,6 @@
 import { Zap, Cpu, Sparkles, Wand2 } from 'lucide-react';
 import React from 'react';
 
-import type { ModalStateProps } from '@/shared/contracts/ui';
 import { FormModal, Label, StandardDataTablePanel, EmptyState } from '@/shared/ui';
 
 import { PromptExtractionHistoryPanel } from '../studio-modals/PromptExtractionHistoryPanel';
@@ -12,9 +11,7 @@ import { StudioActionButtonRow, type StudioActionButtonConfig } from './StudioAc
 import { StudioPromptTextSection } from './StudioPromptTextSection';
 import type { ColumnDef } from '@tanstack/react-table';
 
-export function ExtractPromptParamsModal(props: ModalStateProps): React.JSX.Element {
-  const { isOpen, onClose } = props;
-
+export function ExtractPromptParamsModal(): React.JSX.Element {
   const {
     extractDraftPrompt,
     setExtractDraftPrompt,
@@ -27,15 +24,12 @@ export function ExtractPromptParamsModal(props: ModalStateProps): React.JSX.Elem
     previewParams,
     extractError,
     extractHistory,
-    selectedExtractHistory,
-    selectedExtractDiffLines,
-    selectedExtractChanged,
-    setSelectedExtractHistoryId,
-    setExtractHistory,
     studioSettings,
     previewValidation,
     previewLeaves,
     previewControls,
+    extractReviewOpen,
+    setExtractReviewOpen,
   } = useStudioInlineEdit();
 
   const columns = React.useMemo<ColumnDef<{ path: string; value: unknown }>[]>(
@@ -129,8 +123,8 @@ export function ExtractPromptParamsModal(props: ModalStateProps): React.JSX.Elem
 
   return (
     <FormModal
-      open={isOpen}
-      onClose={onClose}
+      open={extractReviewOpen}
+      onClose={() => setExtractReviewOpen(false)}
       title='Extract Prompt Params'
       size='xl'
       onSave={() => {
@@ -157,17 +151,7 @@ export function ExtractPromptParamsModal(props: ModalStateProps): React.JSX.Elem
         ) : null}
 
         {extractHistory.length > 0 ? (
-          <PromptExtractionHistoryPanel
-            extractHistory={extractHistory}
-            selectedExtractHistory={selectedExtractHistory}
-            selectedExtractDiffLines={selectedExtractDiffLines}
-            selectedExtractChanged={selectedExtractChanged}
-            onSelectExtractHistory={setSelectedExtractHistoryId}
-            onClearHistory={() => {
-              setExtractHistory([]);
-              setSelectedExtractHistoryId(null);
-            }}
-          />
+          <PromptExtractionHistoryPanel />
         ) : null}
 
         {studioSettings.promptExtraction.showValidationSummary && previewValidation ? (

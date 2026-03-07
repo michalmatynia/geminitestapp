@@ -1,6 +1,8 @@
 import { palette } from '@/shared/lib/ai-paths/core/definitions';
 import { type Edge as AiEdge, type AiNode, type NodeDefinition } from '@/shared/contracts/ai-paths';
 import {
+  type CaseResolverPdfExtractRequest,
+  type CaseResolverPdfExtractResponse,
   DEFAULT_CASE_RESOLVER_EDGE_META,
   DEFAULT_CASE_RESOLVER_NODE_META,
   resolveCaseResolverPdfExtractionTemplate,
@@ -25,11 +27,6 @@ import {
   normalizeExtractedPdfText,
   resolvePromptConfig,
 } from './case-resolver-canvas-utils';
-
-type PdfExtractResponse = {
-  text?: unknown;
-  pageCount?: unknown;
-};
 
 type ToastFn = (message: string, options?: { variant?: 'error' | 'warning' | 'success' }) => void;
 
@@ -111,12 +108,13 @@ export const createCaseResolverCanvasDropHandlers = ({
 
   const extractPdfText = async (filepath: string): Promise<string> => {
     try {
+      const request: CaseResolverPdfExtractRequest = { filepath };
       const response = await fetch('/api/case-resolver/assets/extract-pdf', {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ filepath }),
+        body: JSON.stringify(request),
       });
       if (!response.ok) {
         const fallbackMessage = `Failed to extract PDF (${response.status})`;
@@ -133,7 +131,7 @@ export const createCaseResolverCanvasDropHandlers = ({
         }
         throw new Error(detail);
       }
-      const payload = (await response.json()) as PdfExtractResponse;
+      const payload = (await response.json()) as CaseResolverPdfExtractResponse;
       return typeof payload.text === 'string' ? payload.text : '';
     } catch (error) {
       throw new Error(

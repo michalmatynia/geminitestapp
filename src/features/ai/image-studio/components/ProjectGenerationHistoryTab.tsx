@@ -5,6 +5,7 @@ import Image from 'next/image';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { api } from '@/shared/lib/api-client';
+import type { ImageStudioRunRecord, ImageStudioRunsResponse } from '@/shared/contracts/image-studio';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 import {
@@ -22,51 +23,6 @@ import type { FilterField } from '@/shared/contracts/ui';
 
 import { useProjectsState } from '../context/ProjectsContext';
 import { studioKeys } from '../hooks/useImageStudioQueries';
-
-type HistoryRunOutput = {
-  id: string;
-  filepath: string;
-  filename: string;
-  size: number;
-  width: number | null;
-  height: number | null;
-};
-
-type HistoryRunRequest = {
-  prompt?: string;
-  asset?: { filepath?: string; id?: string };
-  referenceAssets?: Array<{ filepath?: string; id?: string }>;
-  mask?: unknown;
-  studioSettings?: Record<string, unknown>;
-};
-
-type HistoryRunRecord = {
-  id: string;
-  projectId: string;
-  status: 'queued' | 'running' | 'completed' | 'failed';
-  dispatchMode: 'queued' | 'inline' | null;
-  request: HistoryRunRequest;
-  expectedOutputs: number;
-  outputs: HistoryRunOutput[];
-  errorMessage: string | null;
-  createdAt: string;
-  updatedAt: string;
-  startedAt: string | null;
-  finishedAt: string | null;
-  historyEvents?: Array<{
-    id: string;
-    type: string;
-    source: 'api' | 'queue' | 'worker' | 'stream' | 'client';
-    message: string;
-    at: string;
-    payload?: Record<string, unknown>;
-  }>;
-};
-
-type HistoryRunsResponse = {
-  runs?: HistoryRunRecord[];
-  total?: number;
-};
 
 type RunTimelineEvent = {
   id: string;
@@ -116,7 +72,7 @@ const asRecord = (value: unknown): Record<string, unknown> | null => {
   return value as Record<string, unknown>;
 };
 
-const buildFallbackRunTimeline = (run: HistoryRunRecord): RunTimelineEvent[] => {
+const buildFallbackRunTimeline = (run: ImageStudioRunRecord): RunTimelineEvent[] => {
   const events: RunTimelineEvent[] = [
     {
       id: `${run.id}:queued`,
@@ -171,7 +127,7 @@ const buildFallbackRunTimeline = (run: HistoryRunRecord): RunTimelineEvent[] => 
   return events;
 };
 
-const resolveRunTimeline = (run: HistoryRunRecord): RunTimelineEvent[] => {
+const resolveRunTimeline = (run: ImageStudioRunRecord): RunTimelineEvent[] => {
   const storedEvents = Array.isArray(run.historyEvents) ? run.historyEvents : [];
   if (storedEvents.length === 0) {
     return buildFallbackRunTimeline(run);
@@ -192,7 +148,7 @@ const resolveRunTimeline = (run: HistoryRunRecord): RunTimelineEvent[] => {
   });
 };
 
-const resolveExecutionMeta = (run: HistoryRunRecord): Record<string, unknown> | null => {
+const resolveExecutionMeta = (run: ImageStudioRunRecord): Record<string, unknown> | null => {
   const events = Array.isArray(run.historyEvents) ? run.historyEvents : [];
   for (let index = events.length - 1; index >= 0; index -= 1) {
     const event = events[index];
@@ -205,7 +161,9 @@ const resolveExecutionMeta = (run: HistoryRunRecord): Record<string, unknown> | 
   return null;
 };
 
-const classifyRunDuration = (run: HistoryRunRecord): 'unknown' | 'fast' | 'moderate' | 'slow' => {
+const classifyRunDuration = (
+  run: ImageStudioRunRecord
+): 'unknown' | 'fast' | 'moderate' | 'slow' => {
   if (!run.startedAt || !run.finishedAt) return 'unknown';
   const started = new Date(run.startedAt).getTime();
   const finished = new Date(run.finishedAt).getTime();
@@ -219,7 +177,7 @@ const classifyRunDuration = (run: HistoryRunRecord): 'unknown' | 'fast' | 'moder
 };
 
 const resolveExecutionSummary = (
-  _run: HistoryRunRecord,
+  _run: ImageStudioRunRecord,
   executionMeta: Record<string, unknown> | null
 ): {
   operationLabel: string;
@@ -260,7 +218,7 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
   const { projectId } = useProjectsState();
   const [expandedRunId, setExpandedRunId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState<'all' | HistoryRunRecord['status']>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | ImageStudioRunRecord['status']>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showSlowOnly, setShowSlowOnly] = useState(false);
 
@@ -269,7 +227,7 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
     setExpandedRunId(null);
   }, [projectId]);
 
-  const runsQuery = createListQueryV2<HistoryRunsResponse, HistoryRunsResponse>({
+  const runsQuery = createListQueryV2<ImageStudioRunsResponse, ImageStudioRunsResponse>({
     queryKey: studioKeys.runs({
       projectId: projectId ?? null,
       page,
@@ -278,7 +236,7 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
     }),
     queryFn: ({ signal }) => {
       if (!projectId) return Promise.resolve({ runs: [], total: 0 });
-      return api.get<HistoryRunsResponse>('/api/image-studio/runs', {
+      return api.get<ImageStudioRunsResponse>('/api/image-studio/runs', {
         params: {
           projectId,
           limit: PAGE_SIZE,

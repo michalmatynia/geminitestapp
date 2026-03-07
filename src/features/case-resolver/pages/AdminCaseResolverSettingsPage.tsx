@@ -36,18 +36,10 @@ import {
   parseCaseResolverDefaultDocumentFormat,
   parseCaseResolverSettings,
 } from '../settings';
-import type { CaseResolverSettings } from '@/shared/contracts/case-resolver';
-
-type CaseResolverOcrModelsResponse = {
-  models?: string[];
-  ollamaModels?: string[];
-  otherModels?: string[];
-  keySource?: 'image_studio_openai_api_key' | 'openai_api_key' | 'env_openai_api_key' | 'none';
-  warning?: {
-    code?: string;
-    message?: string;
-  };
-};
+import type {
+  CaseResolverOcrModelsResponse,
+  CaseResolverSettings,
+} from '@/shared/contracts/case-resolver';
 
 export function AdminCaseResolverSettingsPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -146,15 +138,10 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
 
   const ocrKeySourceLabel = useMemo((): string => {
     switch (modelsQuery.data?.keySource) {
-      case 'image_studio_openai_api_key':
-        return 'Image Studio API key (image_studio_openai_api_key)';
-      case 'openai_api_key':
-        return 'openai_api_key setting';
-      case 'env_openai_api_key':
-        return 'OPENAI_API_KEY environment variable';
-      case 'none':
+      case 'brain':
+        return 'Brain OCR model catalog';
       default:
-        return 'No OpenAI key detected';
+        return 'OCR model source unavailable';
     }
   }, [modelsQuery.data?.keySource]);
   const detectedOcrProviderLabel = useMemo((): string => {

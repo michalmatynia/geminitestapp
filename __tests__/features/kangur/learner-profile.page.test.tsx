@@ -179,6 +179,22 @@ describe('LearnerProfile page', () => {
     expect(screen.getByRole('heading', { name: 'Profil ucznia' })).toBeInTheDocument();
     expect(screen.getByText('Statystyki ucznia: Jan.')).toBeInTheDocument();
     expect(screen.getByText('Poziom 4 · 620 XP lacznie')).toBeInTheDocument();
+    expect(screen.getByTestId('learner-profile-overview-average-accuracy')).toHaveClass(
+      'soft-card',
+      'border-indigo-300'
+    );
+    expect(screen.getByTestId('learner-profile-overview-streak')).toHaveClass(
+      'soft-card',
+      'border-amber-300'
+    );
+    expect(screen.getByTestId('learner-profile-overview-daily-goal')).toHaveClass(
+      'soft-card',
+      'border-teal-300'
+    );
+    expect(screen.getByTestId('learner-profile-overview-badges')).toHaveClass(
+      'soft-card',
+      'border-amber-300'
+    );
     expect(screen.getByTestId('learner-profile-level-progress-bar')).toHaveAttribute(
       'aria-valuenow',
       '30'
@@ -195,6 +211,22 @@ describe('LearnerProfile page', () => {
     expect(screen.getByTestId('learner-profile-operation-progress-addition')).toHaveAttribute(
       'aria-valuenow',
       '80'
+    );
+    expect(screen.getByTestId('learner-profile-session-s2')).toHaveClass(
+      'soft-card',
+      'border-violet-300'
+    );
+    expect(screen.getByTestId('learner-profile-session-score-s2')).toHaveClass(
+      'border-emerald-200',
+      'bg-emerald-100'
+    );
+    expect(screen.getByTestId('learner-profile-badge-first_game')).toHaveClass(
+      'border-indigo-200',
+      'bg-indigo-100'
+    );
+    expect(screen.getByTestId('learner-profile-badge-clock_master')).toHaveClass(
+      'border-slate-200',
+      'bg-slate-100'
     );
     expect(screen.getByText('Plan na dzis')).toBeInTheDocument();
     expect(screen.getByText('Opanowanie lekcji')).toBeInTheDocument();
@@ -249,6 +281,12 @@ describe('LearnerProfile page', () => {
 
     expect(scoreFilterMock).not.toHaveBeenCalled();
     expect(screen.getByText('Statystyki ucznia: Tryb lokalny.')).toBeInTheDocument();
+    expect(screen.getByTestId('learner-profile-operation-empty')).toHaveClass(
+      'soft-card',
+      'border-dashed',
+      'border-slate-200/80'
+    );
+    expect(screen.getByText('Brak danych o operacjach.')).toBeInTheDocument();
 
     const loginButton = screen.getByRole('button', { name: 'Zaloguj sie, aby synchronizowac postep' });
     await userEvent.click(loginButton);

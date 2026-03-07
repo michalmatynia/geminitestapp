@@ -3,7 +3,12 @@ import { z } from 'zod';
 import { dtoBaseSchema, namedDtoSchema } from '../base';
 
 import { type BaseImportStartResponse, type BaseImportRunDetailResponse } from './base-com';
-import type { ImportTemplateParameterImport as IntegrationTemplateParameterImport } from './templates';
+import {
+  integrationTemplateMappingSchema as sharedIntegrationTemplateMappingSchema,
+  importTemplateParameterImportSchema as sharedImportTemplateParameterImportSchema,
+  type ImportTemplateParameterImport as IntegrationTemplateParameterImport,
+  type IntegrationTemplateMapping as SharedIntegrationTemplateMapping,
+} from './templates';
 
 /**
  * Data Import/Export DTOs
@@ -49,23 +54,13 @@ export const importTemplateSchema = namedDtoSchema.extend({
 
 export type ImportTemplateDto = z.infer<typeof importTemplateSchema>;
 
-export const importExportTemplateMappingSchema = z.object({
-  sourceKey: z.string(),
-  targetField: z.string(),
-});
+export const importExportTemplateMappingSchema = sharedIntegrationTemplateMappingSchema;
 
-export type ImportExportTemplateMappingDto = z.infer<typeof importExportTemplateMappingSchema>;
+export type ImportExportTemplateMappingDto = SharedIntegrationTemplateMapping;
 export type ImportExportTemplateMapping = ImportExportTemplateMappingDto;
 export type TemplateMapping = ImportExportTemplateMapping;
 
-export const importTemplateParameterImportSchema = z.object({
-  enabled: z.boolean().optional(),
-  mode: z.enum(['all', 'mapped']).optional(),
-  languageScope: z.enum(['catalog_languages', 'default_only']).optional(),
-  createMissingParameters: z.boolean().optional(),
-  overwriteExistingValues: z.boolean().optional(),
-  matchBy: z.enum(['base_id_then_name', 'name_only']).optional(),
-});
+export const importTemplateParameterImportSchema = sharedImportTemplateParameterImportSchema;
 
 export type ImportTemplateParameterImportDto = IntegrationTemplateParameterImport;
 export type ImportTemplateParameterImport = ImportTemplateParameterImportDto;

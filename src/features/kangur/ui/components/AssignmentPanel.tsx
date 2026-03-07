@@ -10,8 +10,8 @@ import { KANGUR_ACCENT_STYLES } from '@/features/kangur/ui/design/tokens';
 import {
   KangurButton,
   KangurEmptyState,
+  KangurGlassPanel,
   KangurInfoCard,
-  KangurPanel,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import { buildKangurAssignments } from '@/features/kangur/ui/services/assignments';
@@ -55,7 +55,12 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
   };
 
   return (
-    <KangurPanel className='border-slate-200/70 bg-white/88' padding='lg' variant='soft'>
+    <KangurGlassPanel
+      data-testid='assignment-panel-shell'
+      padding='lg'
+      surface='neutral'
+      variant='soft'
+    >
       <header className='flex items-center justify-between gap-3'>
         <div className='text-sm font-bold uppercase tracking-[0.18em] text-slate-500'>Zadania</div>
         <KangurStatusChip accent='slate' className='text-[11px] uppercase tracking-[0.14em]'>
@@ -154,7 +159,7 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
           })}
         </div>
       )}
-    </KangurPanel>
+    </KangurGlassPanel>
   );
 }
 

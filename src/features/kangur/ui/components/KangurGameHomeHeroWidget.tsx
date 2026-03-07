@@ -3,7 +3,11 @@
 import { LogIn } from 'lucide-react';
 
 import KangurAssignmentSpotlight from '@/features/kangur/ui/components/KangurAssignmentSpotlight';
-import { KangurButton, KangurPanel, KangurTextField } from '@/features/kangur/ui/design/primitives';
+import {
+  KangurButton,
+  KangurGlassPanel,
+  KangurTextField,
+} from '@/features/kangur/ui/design/primitives';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 
 export function KangurGameHomeHeroWidget(): React.JSX.Element | null {
@@ -30,7 +34,13 @@ export function KangurGameHomeHeroWidget(): React.JSX.Element | null {
   const playerNameHintId = 'kangur-home-player-name-hint';
 
   return (
-    <KangurPanel className='w-full border-white/78 bg-white/58' padding='lg' variant='elevated'>
+    <KangurGlassPanel
+      className='w-full'
+      data-testid='kangur-home-hero-shell'
+      padding='lg'
+      surface='mist'
+      variant='elevated'
+    >
       <div className='px-1'>
         <label
           id={playerNameLabelId}
@@ -69,6 +79,6 @@ export function KangurGameHomeHeroWidget(): React.JSX.Element | null {
           </KangurButton>
         </div>
       </div>
-    </KangurPanel>
+    </KangurGlassPanel>
   );
 }

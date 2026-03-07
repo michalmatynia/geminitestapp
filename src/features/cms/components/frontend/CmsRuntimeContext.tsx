@@ -8,6 +8,7 @@ export {
   isCmsNodeVisible,
   resolveCmsConnectedSettings,
   resolveCmsRuntimeAction,
+  resolveCmsRuntimeCollection,
   resolveCmsRuntimeValue,
   type CmsRuntimeAction,
   type CmsRuntimeContextValue,
@@ -24,6 +25,27 @@ export function CmsRuntimeProvider({
   children: React.ReactNode;
 }): React.ReactNode {
   const value = useMemo<CmsRuntimeContextValue>(() => ({ sources }), [sources]);
+
+  return <CmsRuntimeContext.Provider value={value}>{children}</CmsRuntimeContext.Provider>;
+}
+
+export function CmsRuntimeScopeProvider({
+  sources,
+  children,
+}: {
+  sources: CmsRuntimeSources;
+  children: React.ReactNode;
+}): React.ReactNode {
+  const parentRuntime = useContext(CmsRuntimeContext);
+  const value = useMemo<CmsRuntimeContextValue>(
+    () => ({
+      sources: {
+        ...(parentRuntime?.sources ?? {}),
+        ...sources,
+      },
+    }),
+    [parentRuntime, sources]
+  );
 
   return <CmsRuntimeContext.Provider value={value}>{children}</CmsRuntimeContext.Provider>;
 }

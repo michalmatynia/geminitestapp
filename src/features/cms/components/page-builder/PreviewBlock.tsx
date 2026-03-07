@@ -61,6 +61,7 @@ import {
   PreviewHeroBlock,
   PreviewRichTextBlock,
   PreviewBlockSectionBlock,
+  PreviewRepeaterBlock,
   PreviewTextAtomBlock,
   registerPreviewBlockItem,
 } from './preview/PreviewSectionBlocks';
@@ -614,6 +615,7 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
             {block.type === 'TextAtom' && <PreviewTextAtomBlock block={resolvedBlock} />}
             {block.type === 'Carousel' && <PreviewCarouselBlock block={resolvedBlock} />}
             {block.type === 'Slideshow' && <PreviewSlideshowBlock block={resolvedBlock} />}
+            {block.type === 'Repeater' && <PreviewRepeaterBlock block={resolvedBlock} />}
           </BlockContextProvider>
         </div>
         {showEditorChrome && onOpenMedia && (

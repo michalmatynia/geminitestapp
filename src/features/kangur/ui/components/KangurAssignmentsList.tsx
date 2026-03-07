@@ -5,8 +5,8 @@ import {
   KangurButton,
   KangurDivider,
   KangurEmptyState,
+  KangurGlassPanel,
   KangurInfoCard,
-  KangurPanel,
   KangurProgressBar,
   KangurStatusChip,
   KangurSummaryPanel,
@@ -80,9 +80,10 @@ export function KangurAssignmentsList({
   onArchive,
 }: KangurAssignmentsListProps): React.JSX.Element {
   return (
-    <KangurPanel
-      className={compact ? 'border-white/78 bg-white/58' : 'border-white/78 bg-white/68'}
+    <KangurGlassPanel
+      data-testid='kangur-assignments-list-shell'
       padding='lg'
+      surface={compact ? 'mist' : 'mistStrong'}
       variant='soft'
     >
       <div className='mb-5 flex items-center justify-between gap-3'>
@@ -255,7 +256,7 @@ export function KangurAssignmentsList({
           })}
         </div>
       )}
-    </KangurPanel>
+    </KangurGlassPanel>
   );
 }
 

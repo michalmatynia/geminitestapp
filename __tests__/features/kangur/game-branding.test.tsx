@@ -154,6 +154,10 @@ describe('Game branding', () => {
   it('renders every home action as a featured glass CTA without pre-hovering any of them', () => {
     render(<Game />);
 
+    expect(screen.getByTestId('kangur-home-actions-shell')).toHaveClass(
+      'border-white/78',
+      'bg-white/58'
+    );
     const actionLabels = [
       'Lekcje',
       'Grajmy!',

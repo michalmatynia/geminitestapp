@@ -20,6 +20,7 @@ const SECTION_BLOCK_TYPES = [
   'TextAtom',
   'Carousel',
   'Slideshow',
+  'Repeater',
 ];
 
 interface ColumnBlockPickerProps {

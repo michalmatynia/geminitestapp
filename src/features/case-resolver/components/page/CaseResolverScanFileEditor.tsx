@@ -37,9 +37,11 @@ import {
   useCaseResolverViewStateContext,
 } from '../CaseResolverViewContext';
 import { CaseResolverPartySelectField } from './CaseResolverPartySelectField';
+import { CaseResolverPartyFieldRuntimeProvider } from './CaseResolverPartyFieldRuntimeContext';
 import { DocumentRelationSearchPanel } from '../../relation-search';
 import type { EditorDetailsTab } from './CaseResolverDocumentEditor';
 import { CaseResolverHistoryEntries } from './CaseResolverHistoryEntries';
+import { CaseResolverHistoryEntriesRuntimeProvider } from './CaseResolverHistoryEntriesRuntimeContext';
 
 const formatHistoryTimestamp = (value: string): string => {
   const parsed = Date.parse(value);
@@ -149,6 +151,22 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
 
   const createdAtLabel = draft.createdAt ? formatHistoryTimestamp(draft.createdAt) : 'Unknown';
   const updatedAtLabel = draft.updatedAt ? formatHistoryTimestamp(draft.updatedAt) : 'Unknown';
+  const historyEntriesRuntimeValue = useMemo(
+    () => ({
+      entries: draft.documentHistory ?? [],
+      formatTimestamp: formatHistoryTimestamp,
+      onRestore: handleUseHistoryEntry,
+      isRestoreDisabled: Boolean(isEditingDocumentLocked),
+    }),
+    [draft.documentHistory, handleUseHistoryEntry, isEditingDocumentLocked]
+  );
+  const partyFieldRuntimeValue = useMemo(
+    () => ({
+      options: partyOptions,
+      disabled: Boolean(isEditingDocumentLocked),
+    }),
+    [isEditingDocumentLocked, partyOptions]
+  );
 
   return (
     <div className='flex min-h-0 flex-1 flex-col gap-6 overflow-auto pr-1'>
@@ -556,24 +574,22 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
                   triggerClassName='bg-card/20 border-border/60'
                 />
               </FormField>
-              <CaseResolverPartySelectField
-                label='Addresser (From)'
-                value={encodedAddresser}
-                onValueChange={(v) =>
-                  updateEditingDocumentDraft({ addresser: decodeFilemakerPartyReference(v) })
-                }
-                options={partyOptions}
-                disabled={isEditingDocumentLocked}
-              />
-              <CaseResolverPartySelectField
-                label='Addressee (To)'
-                value={encodedAddressee}
-                onValueChange={(v) =>
-                  updateEditingDocumentDraft({ addressee: decodeFilemakerPartyReference(v) })
-                }
-                options={partyOptions}
-                disabled={isEditingDocumentLocked}
-              />
+              <CaseResolverPartyFieldRuntimeProvider value={partyFieldRuntimeValue}>
+                <CaseResolverPartySelectField
+                  label='Addresser (From)'
+                  value={encodedAddresser}
+                  onValueChange={(v) =>
+                    updateEditingDocumentDraft({ addresser: decodeFilemakerPartyReference(v) })
+                  }
+                />
+                <CaseResolverPartySelectField
+                  label='Addressee (To)'
+                  value={encodedAddressee}
+                  onValueChange={(v) =>
+                    updateEditingDocumentDraft({ addressee: decodeFilemakerPartyReference(v) })
+                  }
+                />
+              </CaseResolverPartyFieldRuntimeProvider>
               <FormField label='OCR Model'>
                 <Input
                   value={draft.scanOcrModel ?? ''}
@@ -597,12 +613,9 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
 
           {/* ── History Tab ── */}
           <TabsContent value='revisions' className='m-0'>
-            <CaseResolverHistoryEntries
-              entries={draft.documentHistory ?? []}
-              formatTimestamp={formatHistoryTimestamp}
-              onRestore={handleUseHistoryEntry}
-              isRestoreDisabled={!!isEditingDocumentLocked}
-            />
+            <CaseResolverHistoryEntriesRuntimeProvider value={historyEntriesRuntimeValue}>
+              <CaseResolverHistoryEntries />
+            </CaseResolverHistoryEntriesRuntimeProvider>
           </TabsContent>
         </div>
       </Tabs>

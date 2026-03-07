@@ -17,6 +17,8 @@ import {
   getAiPathRun,
   listAiPathRuns,
   removeAiPathRun,
+  resumeAiPathRun,
+  retryAiPathRunNode,
 } from '@/shared/lib/ai-paths';
 import type { AiPathRunRecord, AiPathRunVisibility } from '@/shared/lib/ai-paths';
 import {
@@ -112,6 +114,8 @@ export type JobQueueContextValue = {
   // Actions
   refetchQueueData: () => void;
   handleClearRuns: (scope: 'terminal' | 'all') => Promise<void>;
+  handleResumeRun: (runId: string, mode: 'resume' | 'replay') => Promise<void>;
+  handleRetryRunNode: (runId: string, nodeId: string) => Promise<void>;
   handleCancelRun: (runId: string) => Promise<void>;
   handleDeleteRun: (runId: string) => Promise<void>;
   loadRunDetail: (runId: string) => Promise<void>;
@@ -136,6 +140,8 @@ type JobQueueActionKey =
   | 'setRunToDelete'
   | 'refetchQueueData'
   | 'handleClearRuns'
+  | 'handleResumeRun'
+  | 'handleRetryRunNode'
   | 'handleCancelRun'
   | 'handleDeleteRun'
   | 'loadRunDetail';
@@ -815,6 +821,32 @@ export function JobQueueProvider({
     },
     [clearRunsMutation.mutateAsync]
   );
+  const handleResumeRun = useCallback(
+    async (id: string, mode: 'resume' | 'replay'): Promise<void> => {
+      const response = await resumeAiPathRun(id, mode);
+      if (!response.ok) {
+        toast(response.error || 'Failed to resume run.', { variant: 'error' });
+        return;
+      }
+      toast(mode === 'resume' ? 'Run resumed.' : 'Run replay queued.', {
+        variant: 'success',
+      });
+      refetchQueueData({ fresh: true, markBurst: true });
+    },
+    [refetchQueueData, toast]
+  );
+  const handleRetryRunNode = useCallback(
+    async (id: string, nodeId: string): Promise<void> => {
+      const response = await retryAiPathRunNode(id, nodeId);
+      if (!response.ok) {
+        toast(response.error || 'Failed to queue node retry.', { variant: 'error' });
+        return;
+      }
+      toast('Node retry queued.', { variant: 'success' });
+      refetchQueueData({ fresh: true, markBurst: true });
+    },
+    [refetchQueueData, toast]
+  );
   const handleCancelRun = useCallback(
     async (id: string): Promise<void> => {
       await cancelRunMutation.mutateAsync(id);
@@ -916,6 +948,8 @@ export function JobQueueProvider({
       setRunToDelete,
       refetchQueueData: refetchQueueDataAction,
       handleClearRuns,
+      handleResumeRun,
+      handleRetryRunNode,
       handleCancelRun,
       handleDeleteRun,
       loadRunDetail,
@@ -939,6 +973,8 @@ export function JobQueueProvider({
       setRunToDelete,
       refetchQueueDataAction,
       handleClearRuns,
+      handleResumeRun,
+      handleRetryRunNode,
       handleCancelRun,
       handleDeleteRun,
       loadRunDetail,

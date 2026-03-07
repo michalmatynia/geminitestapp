@@ -18,6 +18,7 @@ vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
 }));
 
 vi.mock('@/features/kangur/config/routing', () => ({
+  KANGUR_MAIN_PAGE_KEY: 'Game',
   resolveKangurPageKey: resolveKangurPageKeyMock,
 }));
 

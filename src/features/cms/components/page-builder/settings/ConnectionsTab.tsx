@@ -24,7 +24,8 @@ function ConnectionsTab(): React.ReactNode {
       </div>
       <div className='rounded border border-dashed border-border/30 bg-gray-900/30 px-3 py-2 text-[11px] text-gray-500'>
         Runtime-capable pages can bind blocks to live data. Example: source <code>kangur</code>,
-        path <code>game.screen</code> or <code>progress.level</code>.
+        path <code>game.screen</code> or <code>progress.level</code>. Inside repeater items, use
+        source <code>item</code> with paths like <code>title</code> or <code>progressPercent</code>.
       </div>
       <div className='space-y-2'>
         <Label className='text-xs text-gray-400'>Data source</Label>

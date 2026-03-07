@@ -21,12 +21,7 @@ import {
 } from '@/features/ai/image-studio/utils/canvas-resize';
 import { useToast } from '@/shared/ui';
 
-export function CanvasResizeModal(props: {
-  isOpen: boolean;
-  onClose: () => void;
-}): React.JSX.Element {
-  const { isOpen, onClose } = props;
-
+export function CanvasResizeModal(): React.JSX.Element {
   const { projectId } = useProjectsState();
   const { handleResizeProjectCanvas, resizeProjectCanvasMutation } = useProjectsActions();
   const { workingSlot } = useSlotsState();
@@ -35,7 +30,8 @@ export function CanvasResizeModal(props: {
   const { canvasImageOffset } = useUiState();
   const { setCanvasImageOffset, getPreviewCanvasImageFrame } = useUiActions();
   const { toast } = useToast();
-  const { canvasSizeLabel, canvasSizePresetValue } = useRightSidebarContext();
+  const { canvasSizeLabel, canvasSizePresetValue, resizeCanvasOpen, closeResizeCanvasModal } =
+    useRightSidebarContext();
 
   const [widthDraft, setWidthDraft] = useState('');
   const [heightDraft, setHeightDraft] = useState('');
@@ -48,13 +44,13 @@ export function CanvasResizeModal(props: {
   );
 
   useEffect(() => {
-    if (isOpen) {
+    if (resizeCanvasOpen) {
       const [w, h] = canvasSizePresetValue.split('x');
       setWidthDraft(w || String(fallbackCanvasWidthPx));
       setHeightDraft(h || String(fallbackCanvasHeightPx));
       setDirection('down-right');
     }
-  }, [isOpen, canvasSizePresetValue, fallbackCanvasWidthPx, fallbackCanvasHeightPx]);
+  }, [resizeCanvasOpen, canvasSizePresetValue, fallbackCanvasWidthPx, fallbackCanvasHeightPx]);
 
   const widthValue = useMemo(() => parseCanvasDimensionInput(widthDraft), [widthDraft]);
   const heightValue = useMemo(() => parseCanvasDimensionInput(heightDraft), [heightDraft]);
@@ -100,7 +96,7 @@ export function CanvasResizeModal(props: {
       });
       setMaskShapes(transform.shapes);
       setCanvasImageOffset(transform.imageOffset);
-      onClose();
+      closeResizeCanvasModal();
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to resize canvas.', {
         variant: 'error',
@@ -121,20 +117,20 @@ export function CanvasResizeModal(props: {
     handleResizeProjectCanvas,
     setMaskShapes,
     setCanvasImageOffset,
-    onClose,
+    closeResizeCanvasModal,
     toast,
   ]);
 
   return (
     <DetailModal
-      isOpen={isOpen}
-      onClose={onClose}
+      isOpen={resizeCanvasOpen}
+      onClose={closeResizeCanvasModal}
       title='Resize Canvas'
       size='md'
       footer={
         <FormActions
           size='xs'
-          onCancel={onClose}
+          onCancel={closeResizeCanvasModal}
           onSave={() => {
             void handleSubmit();
           }}

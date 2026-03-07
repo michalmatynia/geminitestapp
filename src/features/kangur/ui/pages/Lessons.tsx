@@ -27,6 +27,8 @@ import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProg
 import {
   KangurButton,
   KangurEmptyState,
+  KangurGlassPanel,
+  KangurGradientIconTile,
   KangurOptionCardButton,
   KangurPageContainer,
   KangurPageShell,
@@ -45,9 +47,15 @@ type LessonProps = {
 };
 
 const LessonLoadingFallback = (): React.JSX.Element => (
-  <div className='w-full max-w-2xl rounded-3xl border border-indigo-200/70 bg-white/90 p-6 text-center shadow-lg text-sm text-indigo-500'>
+  <KangurGlassPanel
+    className='w-full max-w-2xl text-center text-sm text-indigo-500'
+    data-testid='lessons-loading-fallback'
+    padding='lg'
+    surface='solid'
+    variant='soft'
+  >
     Ladowanie lekcji...
-  </div>
+  </KangurGlassPanel>
 );
 
 const loadLessonComponent = (
@@ -394,7 +402,7 @@ export default function Lessons() {
 
   return (
     <KangurPageShell
-      tone='learn'
+      tone='learn' className='min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100'
       id='kangur-lessons-page'
       skipLinkTargetId='kangur-lessons-main'
     >
@@ -504,11 +512,13 @@ export default function Lessons() {
                         onClick={() => setActiveLessonId(lesson.id)}
                         type='button'
                       >
-                        <span
-                          className={`flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-[24px] bg-gradient-to-br ${lesson.color} text-5xl shadow-sm`}
+                        <KangurGradientIconTile
+                          data-testid={`lesson-library-icon-${lesson.id}`}
+                          gradientClass={lesson.color}
+                          size='lg'
                         >
                           {lesson.emoji}
-                        </span>
+                        </KangurGradientIconTile>
                         <div className='flex-1'>
                           <div className='flex items-start justify-between gap-3'>
                             <div>
@@ -638,12 +648,14 @@ export default function Lessons() {
                   <div className='w-full max-w-5xl space-y-4'>
                     <KangurSummaryPanel
                       accent='sky'
-                      className='rounded-[30px] shadow-lg'
+                      className='w-full'
+                      data-testid='lessons-document-summary'
                       description={activeLesson.description}
                       label='Lesson document'
                       labelAccent='sky'
                       padding='lg'
                       title={activeLesson.title}
+                      tone='accent'
                     >
                       <div className='mt-4 flex justify-start md:justify-end'>
                         <KangurButton
@@ -663,7 +675,8 @@ export default function Lessons() {
                   <KangurSummaryPanel
                     accent='amber'
                     align='center'
-                    className='w-full max-w-3xl rounded-[30px] shadow-lg'
+                    className='w-full max-w-3xl'
+                    data-testid='lessons-empty-document-summary'
                     description='This lesson is set to use custom document content, but no document blocks have been saved yet.'
                     label='Lesson document'
                     labelAccent='amber'

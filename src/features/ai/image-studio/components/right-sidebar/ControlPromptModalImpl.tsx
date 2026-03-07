@@ -39,12 +39,7 @@ import { savePromptExploderDraftPrompt } from '@/features/prompt-exploder/bridge
 import { useRouter } from 'next/navigation';
 import { useRightSidebarContext } from '../RightSidebarContext';
 
-export function ControlPromptModal(props: {
-  isOpen: boolean;
-  onClose: () => void;
-}): React.JSX.Element {
-  const { isOpen, onClose } = props;
-
+export function ControlPromptModal(): React.JSX.Element {
   const router = useRouter();
   const { toast } = useToast();
   const { projectId } = useProjectsState();
@@ -53,6 +48,8 @@ export function ControlPromptModal(props: {
   const { validatorEnabled, formatterEnabled } = useUiState();
   const { setValidatorEnabled, setFormatterEnabled } = useUiActions();
   const {
+    promptControlOpen,
+    closePromptControl,
     generationBusy,
     sequenceRunBusy,
     modelSupportsSequenceGeneration,
@@ -243,14 +240,14 @@ export function ControlPromptModal(props: {
   };
 
   const handlePromptExploderClick = React.useCallback((): void => {
-    onClose();
+    closePromptControl();
     handleOpenPromptExploder();
-  }, [onClose, handleOpenPromptExploder]);
+  }, [closePromptControl, handleOpenPromptExploder]);
 
   const promptControlHeaderRuntimeValue =
     React.useMemo<RightSidebarPromptControlHeaderRuntimeValue>(
       () => ({
-        onClose,
+        onClose: closePromptControl,
         onOpenPromptExploder: handlePromptExploderClick,
         onSave: handleSavePromptToProject,
         projectId,
@@ -258,7 +255,7 @@ export function ControlPromptModal(props: {
         promptText,
       }),
       [
-        onClose,
+        closePromptControl,
         handlePromptExploderClick,
         handleSavePromptToProject,
         projectId,
@@ -306,7 +303,7 @@ export function ControlPromptModal(props: {
         ariaLabel: 'Extract functions and selectors from prompt',
         disabled: !promptText.trim(),
         onClick: () => {
-          onClose();
+          closePromptControl();
           handleExtractReviewOpen();
         },
         icon: <Sparkles className='size-4' />,
@@ -317,7 +314,7 @@ export function ControlPromptModal(props: {
     generationBusy,
     handleExtractReviewOpen,
     modelSupportsSequenceGeneration,
-    onClose,
+    closePromptControl,
     onRunGeneration,
     onRunSequenceGeneration,
     promptText,
@@ -326,8 +323,8 @@ export function ControlPromptModal(props: {
 
   return (
     <DetailModal
-      isOpen={isOpen}
-      onClose={onClose}
+      isOpen={promptControlOpen}
+      onClose={closePromptControl}
       title='Control Prompt'
       size='md'
       header={promptControlHeader}

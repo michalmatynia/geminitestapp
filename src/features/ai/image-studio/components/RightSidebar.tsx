@@ -4,16 +4,17 @@ import { Clock3, GitBranch, Redo2, Sparkles, Undo2, Workflow } from 'lucide-reac
 import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import { Button, DetailModal, useToast } from '@/shared/ui';
+import { Button, useToast } from '@/shared/ui';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { cn } from '@/shared/utils';
 
 import { ImageStudioAnalysisTab } from './ImageStudioAnalysisTab';
 import { ACTION_HISTORY_MAX_STEPS } from './right-sidebar/right-sidebar-utils';
+import { RightSidebarControlsModal } from './right-sidebar/RightSidebarControlsModal';
 import { RightSidebarControlsTab } from './right-sidebar/RightSidebarControlsTab';
 import { RightSidebarHistoryTab } from './right-sidebar/RightSidebarHistoryTab';
 import { RightSidebarQuickActions } from './right-sidebar/RightSidebarQuickActions';
-import { RightSidebarRequestPreviewBody } from './right-sidebar/RightSidebarRequestPreviewBody';
+import { RightSidebarRequestPreviewModal } from './right-sidebar/RightSidebarRequestPreviewModal';
 import { useRightSidebarActionHistory } from './right-sidebar/useRightSidebarActionHistory';
 import { useRightSidebarSequence } from './right-sidebar/useRightSidebarSequence';
 import { RightSidebarProvider, type RightSidebarContextValue } from './RightSidebarContext';
@@ -39,7 +40,6 @@ import {
 } from './right-sidebar/right-sidebar-utils';
 import { CanvasResizeModal } from './right-sidebar/CanvasResizeModalImpl';
 import { ControlPromptModal } from './right-sidebar/ControlPromptModalImpl';
-import { ParamRow } from './ParamRow';
 import { flattenParams } from '@/shared/lib/prompt-engine';
 import type { ParamSpec } from '@/shared/contracts/prompt-engine';
 import { type ParamUiControl } from '@/features/ai/image-studio/utils/param-ui';
@@ -488,9 +488,11 @@ export function RightSidebar(): React.JSX.Element {
       canRecenterCanvasImage,
       onApplyCanvasSizePreset: () => {},
       onOpenResizeCanvasModal: () => setResizeCanvasOpen(true),
+      closeResizeCanvasModal: () => setResizeCanvasOpen(false),
       quickActionsHostEl,
       quickActionsPanelContent,
       resizeCanvasDisabled: !projectId.trim(),
+      resizeCanvasOpen,
 
       // Action History
       actionHistoryEntriesLength: actionHistoryEntries.length,
@@ -506,24 +508,31 @@ export function RightSidebar(): React.JSX.Element {
       activeImages: activeRequestPreview.images || [],
       activeRequestPreviewEndpoint,
       activeRequestPreviewJson,
+      closeRequestPreview: () => setRequestPreviewOpen(false),
       maskShapeCount: activeRequestPreview.maskShapeCount,
+      requestPreviewOpen,
       requestPreviewMode,
       resolvedPromptLength: promptText.length,
       sequenceStepCount: sequenceRequestPreview.stepCount || 0,
       setRequestPreviewMode,
 
       // Quick Actions
+      closeControls: () => setControlsOpen(false),
+      controlsOpen,
       estimatedGenerationCost,
       estimatedPromptTokens,
+      flattenedParamsList,
       generationBusy,
       generationLabel,
       hasExtractedControls,
       modelSupportsSequenceGeneration,
       onOpenControls: () => setControlsOpen(true),
       onOpenPromptControl: () => setPromptControlOpen(true),
+      closePromptControl: () => setPromptControlOpen(false),
       onOpenRequestPreview: () => setRequestPreviewOpen(true),
       onRunGeneration: handleRunGeneration,
       onRunSequenceGeneration: handleRunSequenceGeneration,
+      promptControlOpen,
       selectedModelId,
       sequenceRunBusy,
     }),
@@ -536,6 +545,7 @@ export function RightSidebar(): React.JSX.Element {
       quickActionsHostEl,
       quickActionsPanelContent,
       projectId,
+      resizeCanvasOpen,
       actionHistoryEntries.length,
       actionHistoryItems,
       activeActionHistoryIndex,
@@ -544,16 +554,20 @@ export function RightSidebar(): React.JSX.Element {
       activeRequestPreview,
       activeRequestPreviewEndpoint,
       activeRequestPreviewJson,
+      requestPreviewOpen,
       requestPreviewMode,
       promptText,
       sequenceRequestPreview,
       setRequestPreviewMode,
+      controlsOpen,
       estimatedGenerationCost,
       estimatedPromptTokens,
+      flattenedParamsList,
       generationBusy,
       generationLabel,
       hasExtractedControls,
       modelSupportsSequenceGeneration,
+      promptControlOpen,
       handleRunGeneration,
       handleRunSequenceGeneration,
       selectedModelId,
@@ -652,37 +666,13 @@ export function RightSidebar(): React.JSX.Element {
         )}
       </div>
 
-      <ControlPromptModal isOpen={promptControlOpen} onClose={() => setPromptControlOpen(false)} />
+      <ControlPromptModal />
 
-      <DetailModal
-        isOpen={controlsOpen}
-        onClose={() => setControlsOpen(false)}
-        title='Controls'
-        size='lg'
-      >
-        <div className='space-y-4 text-sm text-gray-200'>
-          {hasExtractedControls ? (
-            <div className='max-h-[70vh] space-y-3 overflow-auto pr-1'>
-              {flattenedParamsList.map((leaf) => (
-                <ParamRow key={leaf.path} leaf={leaf} />
-              ))}
-            </div>
-          ) : (
-            <div className='text-xs text-gray-500'>No extracted controls available yet.</div>
-          )}
-        </div>
-      </DetailModal>
+      <RightSidebarControlsModal />
 
-      <CanvasResizeModal isOpen={resizeCanvasOpen} onClose={() => setResizeCanvasOpen(false)} />
+      <CanvasResizeModal />
 
-      <DetailModal
-        isOpen={requestPreviewOpen}
-        onClose={() => setRequestPreviewOpen(false)}
-        title='Generation Request Preview'
-        size='xl'
-      >
-        <RightSidebarRequestPreviewBody />
-      </DetailModal>
+      <RightSidebarRequestPreviewModal />
     </RightSidebarProvider>
   );
 }

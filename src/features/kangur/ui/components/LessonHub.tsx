@@ -3,12 +3,12 @@ import { ChevronLeft } from 'lucide-react';
 
 import {
   KangurButton,
+  KangurDisplayEmoji,
+  KangurIconBadge,
   KangurOptionCardButton,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurLessonBackAction } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
-import { KANGUR_ACCENT_STYLES } from '@/features/kangur/ui/design/tokens';
-import { cn } from '@/shared/utils';
 
 export type HubSection = {
   id: string;
@@ -45,7 +45,9 @@ export default function LessonHub({
         className='flex w-full flex-col gap-3'
       >
         <div className='text-center mb-2'>
-          <p className='text-5xl mb-1'>{lessonEmoji}</p>
+          <KangurDisplayEmoji className='mb-1' size='md'>
+            {lessonEmoji}
+          </KangurDisplayEmoji>
           <h1
             className={`text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r ${gradientClass}`}
           >
@@ -75,14 +77,14 @@ export default function LessonHub({
                 onClick={() => onSelect(section.id)}
                 type='button'
               >
-                <span
-                  className={cn(
-                    'flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl text-3xl shadow-sm',
-                    KANGUR_ACCENT_STYLES[accent].icon
-                  )}
+                <KangurIconBadge
+                  accent={accent}
+                  className='shrink-0'
+                  data-testid={`lesson-hub-icon-${section.id}`}
+                  size='xl'
                 >
                   {section.emoji}
-                </span>
+                </KangurIconBadge>
                 <div className='min-w-0'>
                   <p className='text-base font-extrabold leading-tight text-slate-800'>
                     {section.title}

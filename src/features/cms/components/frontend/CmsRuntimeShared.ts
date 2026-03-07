@@ -146,6 +146,15 @@ export function resolveCmsRuntimeAction(
   return typeof action === 'function' ? (action as CmsRuntimeAction) : null;
 }
 
+export function resolveCmsRuntimeCollection(
+  runtime: CmsRuntimeContextValue | null,
+  source: unknown,
+  path: unknown
+): unknown[] {
+  const value = resolveCmsRuntimeValue(runtime, source, path);
+  return Array.isArray(value) ? value : [];
+}
+
 export function isCmsNodeVisible(
   settings: Record<string, unknown>,
   runtime: CmsRuntimeContextValue | null

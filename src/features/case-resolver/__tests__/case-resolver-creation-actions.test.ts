@@ -18,7 +18,7 @@ import * as workspacePersistence from '@/features/case-resolver/workspace-persis
 vi.mock('@/features/case-resolver/workspace-persistence', async () => {
   const actual = await vi.importActual<
     typeof import('@/features/case-resolver/workspace-persistence')
-  >('@/features/case-resolver/workspace-persistence');
+      >('@/features/case-resolver/workspace-persistence');
   return {
     ...actual,
     fetchCaseResolverWorkspaceSnapshot: vi.fn(),

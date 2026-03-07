@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getImageStudioRunById } from '@/features/ai/image-studio/server';
+import type { ImageStudioRunDetailResponse } from '@/shared/contracts/image-studio';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
@@ -19,5 +20,6 @@ export async function GET_handler(
     throw notFoundError('Run not found', { runId });
   }
 
-  return NextResponse.json({ run });
+  const payload: ImageStudioRunDetailResponse = { run };
+  return NextResponse.json(payload);
 }

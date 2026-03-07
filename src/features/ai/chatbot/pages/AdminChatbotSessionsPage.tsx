@@ -90,7 +90,9 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
                   value={draftTitle}
                   onChange={(e) => setDraftTitle(e.target.value)}
                   className='h-7 max-w-xs text-xs'
-                  autoFocus
+                  ref={(node) => {
+                    node?.focus();
+                  }}
                 />
               ) : (
                 <span className='font-medium text-white'>

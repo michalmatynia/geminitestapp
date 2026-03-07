@@ -135,7 +135,10 @@ export function AdminImageStudioSettingsView({
       )}
 
       <Tabs value={activeSettingsTab} onValueChange={handleTabChange} className='w-full'>
-        <TabsList className='mb-6 grid w-full grid-cols-4 md:max-w-2xl'>
+        <TabsList
+          className='mb-6 grid w-full grid-cols-4 md:max-w-2xl'
+          aria-label='Image studio settings tabs'
+        >
           <TabsTrigger value='prompt'>Prompts</TabsTrigger>
           <TabsTrigger value='generation'>AI Models</TabsTrigger>
           <TabsTrigger value='validation'>Safety</TabsTrigger>

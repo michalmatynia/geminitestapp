@@ -80,6 +80,10 @@ export function TemplatesTabContent(): React.JSX.Element {
     savingExportTemplate,
     applyTemplate,
   } = useImportExportActions();
+  const exportImagesAsBase64Id = 'export-images-as-base64';
+  const parameterImportEnabledId = 'import-template-parameter-import-enabled';
+  const createMissingParametersId = 'import-template-create-missing-parameters';
+  const overwriteExistingValuesId = 'import-template-overwrite-existing-values';
 
   const customParameterTargetsQuery = useProductParameters(catalogId || null);
   const simpleParameterTargetsQuery = useProductSimpleParameters(catalogId || null);
@@ -248,7 +252,7 @@ export function TemplatesTabContent(): React.JSX.Element {
           value={templateScope}
           onValueChange={(v: string): void => setTemplateScope(v as 'import' | 'export')}
         >
-          <TabsList className='bg-muted/60'>
+          <TabsList className='bg-muted/60' aria-label='Template scope tabs'>
             <TabsTrigger value='import'>Import</TabsTrigger>
             <TabsTrigger value='export'>Export</TabsTrigger>
           </TabsList>
@@ -358,18 +362,21 @@ export function TemplatesTabContent(): React.JSX.Element {
           </div>
 
           {templateScope === 'export' && (
-            <label className='flex items-center gap-2 cursor-pointer w-fit group'>
+            <div className='group flex w-fit items-center gap-2'>
               <Checkbox
-                id='exportImagesAsBase64'
+                id={exportImagesAsBase64Id}
                 checked={exportImagesAsBase64}
                 onCheckedChange={(v: boolean | 'indeterminate') =>
                   setExportImagesAsBase64(Boolean(v))
                 }
               />
-              <span className='text-sm text-gray-300 group-hover:text-white transition-colors'>
+              <Label
+                htmlFor={exportImagesAsBase64Id}
+                className='cursor-pointer text-sm text-gray-300 transition-colors group-hover:text-white'
+              >
                 Export images as Base64 data strings
-              </span>
-            </label>
+              </Label>
+            </div>
           )}
 
           {templateScope === 'import' && (
@@ -385,8 +392,9 @@ export function TemplatesTabContent(): React.JSX.Element {
                     Import dynamic Base.com parameters with multilingual values.
                   </p>
                 </div>
-                <label className='flex items-center gap-2 cursor-pointer'>
+                <div className='flex items-center gap-2'>
                   <Checkbox
+                    id={parameterImportEnabledId}
                     checked={importTemplateParameterImport.enabled}
                     onCheckedChange={(value: boolean | 'indeterminate'): void =>
                       setImportTemplateParameterImport((prev) => ({
@@ -395,8 +403,13 @@ export function TemplatesTabContent(): React.JSX.Element {
                       }))
                     }
                   />
-                  <span className='text-xs text-gray-300'>Enabled</span>
-                </label>
+                  <Label
+                    htmlFor={parameterImportEnabledId}
+                    className='cursor-pointer text-xs text-gray-300'
+                  >
+                    Enabled
+                  </Label>
+                </div>
               </div>
 
               <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
@@ -452,8 +465,9 @@ export function TemplatesTabContent(): React.JSX.Element {
               </div>
 
               <div className='flex flex-wrap gap-4 pt-1'>
-                <label className='flex items-center gap-2 cursor-pointer'>
+                <div className='flex items-center gap-2'>
                   <Checkbox
+                    id={createMissingParametersId}
                     checked={importTemplateParameterImport.createMissingParameters}
                     onCheckedChange={(value: boolean | 'indeterminate'): void =>
                       setImportTemplateParameterImport((prev) => ({
@@ -462,10 +476,16 @@ export function TemplatesTabContent(): React.JSX.Element {
                       }))
                     }
                   />
-                  <span className='text-xs text-gray-300'>Create missing parameters</span>
-                </label>
-                <label className='flex items-center gap-2 cursor-pointer'>
+                  <Label
+                    htmlFor={createMissingParametersId}
+                    className='cursor-pointer text-xs text-gray-300'
+                  >
+                    Create missing parameters
+                  </Label>
+                </div>
+                <div className='flex items-center gap-2'>
                   <Checkbox
+                    id={overwriteExistingValuesId}
                     checked={importTemplateParameterImport.overwriteExistingValues}
                     onCheckedChange={(value: boolean | 'indeterminate'): void =>
                       setImportTemplateParameterImport((prev) => ({
@@ -474,8 +494,13 @@ export function TemplatesTabContent(): React.JSX.Element {
                       }))
                     }
                   />
-                  <span className='text-xs text-gray-300'>Overwrite existing values</span>
-                </label>
+                  <Label
+                    htmlFor={overwriteExistingValuesId}
+                    className='cursor-pointer text-xs text-gray-300'
+                  >
+                    Overwrite existing values
+                  </Label>
+                </div>
               </div>
             </Card>
           )}

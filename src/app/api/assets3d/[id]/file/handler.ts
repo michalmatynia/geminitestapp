@@ -1,9 +1,9 @@
 import { existsSync } from 'fs';
 import { readFile } from 'fs/promises';
-import { join } from 'path';
 
 import { NextRequest, NextResponse } from 'next/server';
 
+import { getDiskPathFromPublicPath, isHttpFilepath } from '@/features/files/server';
 import { getAsset3DRepository } from '@/features/viewer3d/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
@@ -21,7 +21,21 @@ export async function GET_handler(
     throw notFoundError(`Asset or filepath not found in database: ${id}`);
   }
 
-  const diskPath = join(process.cwd(), 'public', asset.filepath.replace(/^\/+/, ''));
+  if (isHttpFilepath(asset.filepath)) {
+    const response = await fetch(asset.filepath, { cache: 'no-store' });
+    if (!response.ok) {
+      throw notFoundError(`Remote file not found: ${asset.filepath}`);
+    }
+    const fileBuffer = Buffer.from(await response.arrayBuffer());
+    return new NextResponse(fileBuffer, {
+      headers: {
+        'Content-Type': asset.mimetype || response.headers.get('content-type') || 'application/octet-stream',
+        'Cache-Control': 'public, max-age=31536000',
+      },
+    });
+  }
+
+  const diskPath = getDiskPathFromPublicPath(asset.filepath);
 
   if (!existsSync(diskPath)) {
     throw notFoundError(`File not found on disk: ${diskPath}`);

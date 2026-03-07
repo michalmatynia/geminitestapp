@@ -184,7 +184,9 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
                 value={editingName}
                 onChange={(e) => setEditingName(e.target.value)}
                 className='h-8 py-0'
-                autoFocus
+                ref={(node) => {
+                  node?.focus();
+                }}
               />
             );
           }

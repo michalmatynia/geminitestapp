@@ -7,6 +7,7 @@ import { LoadingState } from '@/shared/ui/LoadingState';
 import { SkipToContentLink } from '@/shared/ui/SkipToContentLink';
 import { FileUploadTrigger } from '@/shared/ui/file-upload';
 import { SelectSimple } from '@/shared/ui/select-simple';
+import { StatusToggle } from '@/shared/ui/status-toggle';
 import { Tooltip } from '@/shared/ui/tooltip';
 import { GenericGridPicker } from '@/shared/ui/templates/pickers/GenericGridPicker';
 import { GenericPickerDropdown } from '@/shared/ui/templates/pickers/GenericPickerDropdown';
@@ -223,6 +224,17 @@ describe('shared accessibility primitives', () => {
     const button = screen.getByRole('button', { name: 'Saving changes' });
     expect(button).toHaveAttribute('aria-busy', 'true');
     expect(button.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  it('renders StatusToggle as a pressed button instead of a clickable badge', () => {
+    const onToggle = vi.fn();
+    render(<StatusToggle enabled onToggle={onToggle} enabledLabel='Enabled' disabledLabel='Disabled' />);
+
+    const toggle = screen.getByRole('button', { name: 'Enabled' });
+    expect(toggle).toHaveAttribute('aria-pressed', 'true');
+
+    fireEvent.click(toggle);
+    expect(onToggle).toHaveBeenCalledWith(false);
   });
 
   it('announces LoadingState as a polite status update', () => {

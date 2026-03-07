@@ -1,5 +1,7 @@
 'use client';
 
+import React from 'react';
+
 import { Checkbox, Input, Label, SelectSimple, Textarea } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -31,6 +33,7 @@ export function AssignmentEditor(props: {
   const resolvedProvider = activeAllowedProviders.includes(assignment.provider)
     ? assignment.provider
     : (activeAllowedProviders[0] ?? assignment.provider);
+  const enabledCheckboxId = React.useId().replace(/:/g, '');
 
   const updateField = (patch: Partial<AiBrainAssignment>): void => {
     const next = {
@@ -45,16 +48,19 @@ export function AssignmentEditor(props: {
 
   return (
     <div className={cn('grid gap-3', readOnly ? 'opacity-70' : '')} aria-disabled={!!readOnly}>
-      <label className='flex items-center gap-2 text-xs text-gray-300'>
+      <div className='flex items-center gap-2 text-xs text-gray-300'>
         <Checkbox
+          id={enabledCheckboxId}
           checked={assignment.enabled}
           onCheckedChange={(checked: boolean | 'indeterminate') =>
             updateField({ enabled: Boolean(checked) })
           }
           disabled={!!readOnly}
         />
-        Enabled
-      </label>
+        <Label htmlFor={enabledCheckboxId} className='cursor-pointer text-xs text-gray-300'>
+          Enabled
+        </Label>
+      </div>
 
       <div className='grid gap-2 md:grid-cols-2'>
         <div className='space-y-1'>

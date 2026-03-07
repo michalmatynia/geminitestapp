@@ -130,7 +130,7 @@ export default function ProductForm({
           }}
           className='w-full'
         >
-          <TabsList className='grid w-full grid-cols-4 md:grid-cols-8'>
+          <TabsList className='grid w-full grid-cols-4 md:grid-cols-8' aria-label='Product form tabs'>
             <TabsTrigger value='general'>General</TabsTrigger>
             <TabsTrigger value='other'>Other</TabsTrigger>
             <TabsTrigger value='parameters'>Parameters</TabsTrigger>

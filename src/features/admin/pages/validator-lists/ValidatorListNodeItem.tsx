@@ -70,6 +70,18 @@ export function ValidatorListNodeItem(props: ValidatorListNodeItemProps): React.
             event.stopPropagation();
             select(event);
           }}
+          onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
+            if (event.target !== event.currentTarget) {
+              return;
+            }
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              event.stopPropagation();
+              select(event as unknown as React.MouseEvent<HTMLDivElement>);
+            }
+          }}
+          role='button'
+          tabIndex={0}
         >
           <span className='inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center opacity-0 transition-opacity group-hover:opacity-100'>
             <GripVertical className='size-3.5 shrink-0 cursor-grab text-gray-500' />

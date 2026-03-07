@@ -117,3 +117,14 @@ export const shouldShowSectionDivider = (settings: Record<string, unknown>): boo
   const mb = getSpacingValue(settings['marginBottom']);
   return mt === 0 && mb === 0;
 };
+
+type SelectableSurfaceProps = Pick<
+  React.HTMLAttributes<HTMLElement>,
+  'onClick'
+>;
+
+export const getSelectableSurfaceProps = (
+  onSelect: (event: React.SyntheticEvent<HTMLElement>) => void
+): SelectableSurfaceProps => ({
+  onClick: onSelect,
+});

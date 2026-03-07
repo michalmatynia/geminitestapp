@@ -44,6 +44,14 @@ vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
   useKangurAssignments: useKangurAssignmentsMock,
 }));
 
+vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
+  KangurAiTutorSessionSync: () => null,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurTutorAnchor', () => ({
+  useKangurTutorAnchor: () => undefined,
+}));
+
 import Lessons from '@/features/kangur/ui/pages/Lessons';
 
 const lessonsSettingsValue = JSON.stringify([
@@ -180,7 +188,8 @@ describe('Lessons page mastery list', () => {
   it('shows mastery badges and summaries for each lesson card', async () => {
     render(<Lessons />);
 
-    expect(await screen.findByRole('heading', { name: '📚 Lekcje' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Lekcje' })).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-lessons-heading-art')).toHaveAttribute('viewBox', '0 0 560 164');
     expect(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Wszystkie' })).not.toBeInTheDocument();
     const link = screen.getByRole('link', { name: 'Strona glowna' });
@@ -217,7 +226,7 @@ describe('Lessons page mastery list', () => {
 
     render(<Lessons />);
 
-    await screen.findByRole('heading', { name: '📚 Lekcje' });
+    await screen.findByRole('heading', { name: 'Lekcje' });
     const link = screen.getByRole('link', { name: 'Strona glowna' });
     const topBar = link.closest('div.sticky');
     expect(topBar).toBeInTheDocument();

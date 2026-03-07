@@ -20,6 +20,7 @@ export const KANGUR_PAGE_TO_SLUG: Record<string, string> = Object.freeze({
   Game: 'game',
   LearnerProfile: 'profile',
   Lessons: 'lessons',
+  Tests: 'tests',
   ParentDashboard: 'parent-dashboard',
 });
 

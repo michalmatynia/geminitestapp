@@ -60,8 +60,8 @@ export function GenerationToolbarAutoScalerSection(): React.JSX.Element {
   ): React.JSX.Element => {
     if (!autoScaleTooltipsEnabled) return child;
     return (
-      <Tooltip content={content} maxWidth='440px'>
-        <span className={wrapperClassName}>{child}</span>
+      <Tooltip content={content} maxWidth='440px' className={wrapperClassName}>
+        {child}
       </Tooltip>
     );
   };

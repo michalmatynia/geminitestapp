@@ -125,7 +125,10 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
         onValueChange={(v) => setActiveTab(v as 'environment' | 'effects' | 'view')}
         className='flex flex-col h-full'
       >
-        <TabsList className='flex border-b border-gray-700 h-auto bg-transparent p-0 rounded-none'>
+        <TabsList
+          className='flex border-b border-gray-700 h-auto bg-transparent p-0 rounded-none'
+          aria-label='3D viewer settings tabs'
+        >
           <TabsTrigger
             value='environment'
             className={cn(

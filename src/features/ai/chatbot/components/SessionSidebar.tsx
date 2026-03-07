@@ -45,6 +45,18 @@ export function SessionSidebar(): React.JSX.Element {
                       : 'text-gray-400 hover:bg-muted/50 hover:text-white'
                   }`}
                   onClick={(): void => onSelectSession(session.id)}
+                  onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
+                    if (event.target !== event.currentTarget) {
+                      return;
+                    }
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      onSelectSession(session.id);
+                    }
+                  }}
+                  role='button'
+                  tabIndex={0}
+                  aria-pressed={currentSessionId === session.id}
                 >
                   <MessageSquare className='size-4 flex-shrink-0' />
                   <div className='flex-1 overflow-hidden'>

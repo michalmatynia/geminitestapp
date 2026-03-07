@@ -83,8 +83,8 @@ export function GenerationToolbarCenterSection(): React.JSX.Element {
   ): React.JSX.Element => {
     if (!centerTooltipsEnabled) return child;
     return (
-      <Tooltip content={content} maxWidth='440px'>
-        <span className={wrapperClassName}>{child}</span>
+      <Tooltip content={content} maxWidth='440px' className={wrapperClassName}>
+        {child}
       </Tooltip>
     );
   };

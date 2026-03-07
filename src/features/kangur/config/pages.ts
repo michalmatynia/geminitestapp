@@ -13,6 +13,10 @@ const Lessons = dynamic(() => import('@/features/kangur/ui/pages/Lessons'), {
   ssr: false,
   loading: () => null,
 });
+const Tests = dynamic(() => import('@/features/kangur/ui/pages/Tests'), {
+  ssr: false,
+  loading: () => null,
+});
 const ParentDashboard = dynamic(() => import('@/features/kangur/ui/pages/ParentDashboard'), {
   ssr: false,
   loading: () => null,
@@ -22,6 +26,7 @@ export const kangurPages: Readonly<Record<string, ComponentType>> = Object.freez
   Game,
   LearnerProfile,
   Lessons,
+  Tests,
   ParentDashboard,
 });
 

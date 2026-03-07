@@ -41,7 +41,7 @@ function ChatbotPageInner(): React.JSX.Element | null {
         <Card className='flex flex-col overflow-hidden border-border/60 bg-card/40 p-0 lg:col-span-3'>
           <Tabs value={activeTab} onValueChange={setActiveTab} className='flex h-full flex-col'>
             <div className='border-b border-border/60 bg-muted/40 px-4 py-2'>
-              <TabsList className='bg-card'>
+              <TabsList className='bg-card' aria-label='Chatbot workspace tabs'>
                 <TabsTrigger value='chat'>Chat</TabsTrigger>
                 <TabsTrigger value='settings'>Settings</TabsTrigger>
               </TabsList>

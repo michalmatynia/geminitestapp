@@ -109,6 +109,57 @@ export function NoteDetailPreview(): React.JSX.Element | null {
   );
 
   const contentRenderer = renderMarkdownToHtml as (val: string) => string;
+  const previewContentRef = React.useRef<HTMLDivElement | null>(null);
+
+  React.useEffect(() => {
+    const previewContent = previewContentRef.current;
+    if (!previewContent) return;
+
+    const revealCopyButton = (event: MouseEvent, visible: boolean): void => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const wrapper = target.closest('[data-code]');
+      const button = wrapper?.querySelector('[data-copy-code]');
+      if (button instanceof HTMLElement) {
+        button.style.opacity = visible ? '1' : '0';
+      }
+    };
+
+    const handleClick = (event: MouseEvent): void => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const copyButton = target.closest('[data-copy-code]');
+      if (!(copyButton instanceof HTMLButtonElement)) return;
+      const wrapper = copyButton.closest('[data-code]');
+      const encoded = wrapper?.getAttribute('data-code');
+      if (!encoded) return;
+      const originalLabel = copyButton.textContent;
+      void navigator.clipboard
+        .writeText(decodeURIComponent(encoded))
+        .then((): void => {
+          copyButton.textContent = 'Copied';
+          window.setTimeout((): void => {
+            copyButton.textContent = originalLabel ?? 'Copy';
+          }, 1500);
+        })
+        .catch((): void => {
+          toast('Failed to copy code', { variant: 'error' });
+        });
+    };
+
+    const handleMouseOver = (event: MouseEvent): void => revealCopyButton(event, true);
+    const handleMouseOut = (event: MouseEvent): void => revealCopyButton(event, false);
+
+    previewContent.addEventListener('mouseover', handleMouseOver);
+    previewContent.addEventListener('mouseout', handleMouseOut);
+    previewContent.addEventListener('click', handleClick);
+
+    return (): void => {
+      previewContent.removeEventListener('mouseover', handleMouseOver);
+      previewContent.removeEventListener('mouseout', handleMouseOut);
+      previewContent.removeEventListener('click', handleClick);
+    };
+  }, [toast]);
 
   return (
     <div
@@ -120,6 +171,7 @@ export function NoteDetailPreview(): React.JSX.Element | null {
         {selectedNote.title}
       </h1>
       <div
+        ref={previewContentRef}
         className='prose max-w-none'
         style={previewTypographyStyle}
         dangerouslySetInnerHTML={{
@@ -128,41 +180,6 @@ export function NoteDetailPreview(): React.JSX.Element | null {
               ? selectedNote.content
               : contentRenderer(selectedNote.content)
           ),
-        }}
-        onMouseOver={(e: React.MouseEvent<HTMLDivElement>): void => {
-          const target = e.target;
-          if (!(target instanceof HTMLElement)) return;
-          const wrapper = target.closest('[data-code]');
-          const button = wrapper?.querySelector('[data-copy-code]');
-          if (button instanceof HTMLElement) button.style.opacity = '1';
-        }}
-        onMouseOut={(e: React.MouseEvent<HTMLDivElement>): void => {
-          const target = e.target;
-          if (!(target instanceof HTMLElement)) return;
-          const wrapper = target.closest('[data-code]');
-          const button = wrapper?.querySelector('[data-copy-code]');
-          if (button instanceof HTMLElement) button.style.opacity = '0';
-        }}
-        onClick={(e: React.MouseEvent<HTMLDivElement>): void => {
-          const target = e.target;
-          if (!(target instanceof HTMLElement)) return;
-          const copyButton = target.closest('[data-copy-code]');
-          if (!(copyButton instanceof HTMLButtonElement)) return;
-          const wrapper = copyButton.closest('[data-code]');
-          const encoded = wrapper?.getAttribute('data-code');
-          if (!encoded) return;
-          const originalLabel = copyButton.textContent;
-          void navigator.clipboard
-            .writeText(decodeURIComponent(encoded))
-            .then((): void => {
-              copyButton.textContent = 'Copied';
-              window.setTimeout((): void => {
-                copyButton.textContent = originalLabel ?? 'Copy';
-              }, 1500);
-            })
-            .catch((): void => {
-              toast('Failed to copy code', { variant: 'error' });
-            });
         }}
       />
 

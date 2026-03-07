@@ -79,4 +79,44 @@ describe('normalizeAgentPersonas', () => {
       customInstructions: 'Stay concise',
     });
   });
+
+  it('injects a neutral mood and preserves persona visuals', () => {
+    const normalized = normalizeAgentPersonas([
+      {
+        id: 'persona-visuals',
+        name: 'Visual Persona',
+        role: 'Tutor',
+        instructions: 'Stay warm and short.',
+        defaultMoodId: 'encouraging',
+        moods: [
+          {
+            id: 'encouraging',
+            label: 'Cheer On',
+            svgContent: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" /></svg>',
+          },
+        ],
+      },
+    ]);
+
+    expect(normalized[0]?.role).toBe('Tutor');
+    expect(normalized[0]?.instructions).toBe('Stay warm and short.');
+    expect(normalized[0]?.defaultMoodId).toBe('neutral');
+    expect(normalized[0]?.moods.map((mood) => mood.id)).toEqual(['neutral', 'encouraging']);
+    expect(normalized[0]?.moods[1]?.label).toBe('Cheer On');
+  });
+
+  it('rejects duplicate persona mood ids', () => {
+    expect(() =>
+      normalizeAgentPersonas([
+        {
+          id: 'persona-duplicate-mood',
+          name: 'Duplicate Mood Persona',
+          moods: [
+            { id: 'neutral', label: 'Neutral', svgContent: '' },
+            { id: 'neutral', label: 'Duplicate Neutral', svgContent: '' },
+          ],
+        },
+      ])
+    ).toThrowError(/duplicate agent persona mood id "neutral"/i);
+  });
 });

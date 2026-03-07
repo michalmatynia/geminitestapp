@@ -372,7 +372,12 @@ export function RunTimeline(props: {
                   minMaxNodeDuration.min.durationMs
                 )}`}
               >
-                <span className='cursor-help'>
+                <span
+                  className='cursor-help'
+                  aria-label={`Fastest: ${minMaxNodeDuration.min.label} · ${formatDurationMs(
+                    minMaxNodeDuration.min.durationMs
+                  )}`}
+                >
                   Min {formatDurationMs(durationStats.min) ?? '—'}
                 </span>
               </Tooltip>
@@ -386,7 +391,12 @@ export function RunTimeline(props: {
                   minMaxNodeDuration.max.durationMs
                 )}`}
               >
-                <span className='cursor-help'>
+                <span
+                  className='cursor-help'
+                  aria-label={`Slowest: ${minMaxNodeDuration.max.label} · ${formatDurationMs(
+                    minMaxNodeDuration.max.durationMs
+                  )}`}
+                >
                   Max {formatDurationMs(durationStats.max) ?? '—'}
                 </span>
               </Tooltip>

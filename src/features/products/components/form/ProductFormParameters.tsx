@@ -212,7 +212,7 @@ export default function ProductFormParameters(): React.JSX.Element {
               onValueChange={setActiveParameterLanguageTab}
               className='w-full'
             >
-              <TabsList className='mb-1'>
+              <TabsList className='mb-1' aria-label='Product parameter language tabs'>
                 {catalogLanguages.map((language: CatalogLanguageOption) => (
                   <TabsTrigger
                     key={language.code}

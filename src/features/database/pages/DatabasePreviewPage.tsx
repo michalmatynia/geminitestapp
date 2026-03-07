@@ -175,7 +175,10 @@ function TableDetailCard({
         <div className='border-t border-border bg-black/20'>
           <Tabs defaultValue='columns' className='w-full'>
             <div className='px-4 pt-2'>
-              <TabsList className='h-8 bg-transparent border-b border-white/5 w-full justify-start rounded-none'>
+              <TabsList
+                className='h-8 bg-transparent border-b border-white/5 w-full justify-start rounded-none'
+                aria-label='Table detail tabs'
+              >
                 <TabsTrigger value='columns' className='text-[10px] uppercase tracking-wider'>
                   Columns ({detail.columns.length})
                 </TabsTrigger>

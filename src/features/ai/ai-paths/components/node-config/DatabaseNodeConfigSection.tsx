@@ -246,7 +246,10 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
               }
               className='space-y-4'
             >
-              <TabsList className='justify-start border border-border bg-card/60'>
+              <TabsList
+                className='justify-start border border-border bg-card/60'
+                aria-label='Database node tabs'
+              >
                 <TabsTrigger value='settings'>Query</TabsTrigger>
                 <TabsTrigger value='constructor'>Constructor</TabsTrigger>
                 <TabsTrigger value='presets'>Presets</TabsTrigger>

@@ -38,8 +38,8 @@ export function DocumentationTooltip(props: DocumentationTooltipProps): React.JS
   }
 
   return (
-    <Tooltip content={content} maxWidth={maxWidth} side={side}>
-      <span className={wrapperClassName}>{children}</span>
+    <Tooltip content={content} maxWidth={maxWidth} side={side} className={wrapperClassName}>
+      {children}
     </Tooltip>
   );
 }

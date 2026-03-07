@@ -18,19 +18,19 @@ import {
 import { KANGUR_LESSONS_SETTING_KEY, parseKangurLessons } from '@/features/kangur/settings';
 import { KangurLessonNarrator } from '@/features/kangur/ui/components/KangurLessonNarrator';
 import { KangurLessonDocumentRenderer } from '@/features/kangur/ui/components/KangurLessonDocumentRenderer';
+import { KangurLessonsWordmark } from '@/features/kangur/ui/components/KangurLessonsWordmark';
 import { KangurPrimaryNavigation } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
-import { KangurAiTutorProvider } from '@/features/kangur/ui/context/KangurAiTutorContext';
-import { KangurAiTutorWidget } from '@/features/kangur/ui/components/KangurAiTutorWidget';
+import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
+import { KangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import {
   KangurButton,
   KangurEmptyState,
   KangurGlassPanel,
-  KangurGradientHeading,
   KangurGradientIconTile,
   KangurOptionCardButton,
   KangurPageContainer,
@@ -389,7 +389,10 @@ export default function Lessons() {
     activeLesson && !activeLessonAssignment
       ? (completedLessonAssignmentsByComponent.get(activeLesson.componentId) ?? null)
       : null;
+  const activeLessonMastery = activeLesson ? getLessonMasteryPresentation(activeLesson, progress) : null;
   const activeLessonContentRef = useRef<HTMLDivElement | null>(null);
+  const activeLessonHeaderRef = useRef<HTMLDivElement | null>(null);
+  const activeLessonAssignmentRef = useRef<HTMLDivElement | null>(null);
   const handleGoBack = (): void => {
     if (typeof window === 'undefined') return;
     if (window.history.length > 1) {
@@ -401,12 +404,71 @@ export default function Lessons() {
   };
 
   const learnerId = user?.activeLearner?.id ?? user?.id ?? null;
+  useKangurTutorAnchor({
+    id: activeLesson ? `kangur-lesson-header:${activeLesson.id}` : 'kangur-lesson-header',
+    kind: 'lesson_header',
+    ref: activeLessonHeaderRef,
+    surface: 'lesson',
+    enabled: Boolean(activeLesson),
+    priority: 30,
+    metadata: {
+      contentId: activeLesson?.id ?? null,
+      label: activeLesson?.title ?? null,
+    },
+  });
+  useKangurTutorAnchor({
+    id: activeLesson ? `kangur-lesson-assignment:${activeLesson.id}` : 'kangur-lesson-assignment',
+    kind: 'assignment',
+    ref: activeLessonAssignmentRef,
+    surface: 'lesson',
+    enabled: Boolean(activeLesson && activeLessonAssignment),
+    priority: 80,
+    metadata: {
+      contentId: activeLesson?.id ?? null,
+      label: activeLessonAssignment?.title ?? null,
+      assignmentId: activeLessonAssignment?.id ?? null,
+    },
+  });
+  useKangurTutorAnchor({
+    id: activeLesson ? `kangur-lesson-document:${activeLesson.id}` : 'kangur-lesson-document',
+    kind: 'document',
+    ref: activeLessonContentRef,
+    surface: 'lesson',
+    enabled: Boolean(activeLesson),
+    priority: 10,
+    metadata: {
+      contentId: activeLesson?.id ?? null,
+      label: activeLesson?.title ?? null,
+    },
+  });
+  const lessonTutorContext = useMemo(
+    () => ({
+      surface: 'lesson' as const,
+      contentId: activeLesson?.id,
+      title: activeLesson?.title ?? 'Lekcje',
+      description:
+        activeLesson?.description ??
+        'Wybierz temat, aby rozpocząć lekcję lub wrócić do ćwiczeń.',
+      masterySummary: activeLessonMastery?.summaryLabel,
+      assignmentSummary:
+        activeLessonAssignment?.description ?? completedActiveLessonAssignment?.progress.summary,
+    }),
+    [
+      activeLesson?.description,
+      activeLesson?.id,
+      activeLesson?.title,
+      activeLessonAssignment?.description,
+      activeLessonMastery?.summaryLabel,
+      completedActiveLessonAssignment?.progress.summary,
+    ]
+  );
 
   return (
-    <KangurAiTutorProvider
-      learnerId={learnerId}
-      lessonContext={activeLesson?.title}
-    >
+    <>
+      <KangurAiTutorSessionSync
+        learnerId={learnerId}
+        sessionContext={lessonTutorContext}
+      />
       <KangurPageShell
         tone='learn' className='min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100'
         id='kangur-lessons-page'
@@ -439,23 +501,24 @@ export default function Lessons() {
                   surface='mistStrong'
                   variant='soft'
                 >
-                  <div className='text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
-                  Biblioteka lekcji
-                  </div>
-                  <KangurGradientHeading gradientClass='from-indigo-500 to-purple-600' size='lg'>
-                  📚 Lekcje
-                  </KangurGradientHeading>
-                  <p className='mt-2 text-sm text-slate-500'>
-                  Wybierz temat i przejdz od razu do praktyki lub powtorki.
+                  <h1 className='flex justify-center' data-testid='kangur-lessons-list-heading'>
+                    <span className='sr-only'>Lekcje</span>
+                    <KangurLessonsWordmark
+                      className='mx-auto'
+                      data-testid='kangur-lessons-heading-art'
+                    />
+                  </h1>
+                  <p className='mt-3 text-sm text-slate-500'>
+                    Wybierz temat i przejdz od razu do praktyki lub powtorki.
                   </p>
                   <KangurButton
                     className='mt-4'
+                    data-doc-id='lessons_back_button'
                     onClick={handleGoBack}
                     size='sm'
                     variant='surface'
-                    data-doc-id='lessons_back_button'
                   >
-                  Wróć do poprzedniej strony
+                    Wróć do poprzedniej strony
                   </KangurButton>
                 </KangurGlassPanel>
 
@@ -597,16 +660,18 @@ export default function Lessons() {
                 className='w-full flex flex-col items-center gap-4'
               >
                 {activeLessonAssignment ? (
-                  <KangurSummaryPanel
-                    accent='rose'
-                    className='w-full max-w-2xl'
-                    description={activeLessonAssignment.description}
-                    label='Priorytet rodzica'
-                    labelAccent='rose'
-                    padding='md'
-                    title={activeLessonAssignment.title}
-                    tone='accent'
-                  />
+                  <div ref={activeLessonAssignmentRef} className='w-full max-w-2xl'>
+                    <KangurSummaryPanel
+                      accent='rose'
+                      className='w-full'
+                      description={activeLessonAssignment.description}
+                      label='Priorytet rodzica'
+                      labelAccent='rose'
+                      padding='md'
+                      title={activeLessonAssignment.title}
+                      tone='accent'
+                    />
+                  </div>
                 ) : completedActiveLessonAssignment ? (
                   <KangurSummaryPanel
                     accent='emerald'
@@ -619,11 +684,13 @@ export default function Lessons() {
                     tone='accent'
                   />
                 ) : null}
-                <KangurLessonNarrator
-                  lesson={activeLesson}
-                  lessonDocument={activeLessonDocument}
-                  lessonContentRef={activeLessonContentRef}
-                />
+                <div ref={activeLessonHeaderRef} className='w-full max-w-5xl'>
+                  <KangurLessonNarrator
+                    lesson={activeLesson}
+                    lessonDocument={activeLessonDocument}
+                    lessonContentRef={activeLessonContentRef}
+                  />
+                </div>
                 <div ref={activeLessonContentRef} className='w-full flex flex-col items-center gap-4'>
                   {shouldRenderLessonDocument && activeLessonDocument ? (
                     <div className='w-full max-w-5xl space-y-4'>
@@ -724,8 +791,7 @@ export default function Lessons() {
             )}
           </AnimatePresence>
         </KangurPageContainer>
-        <KangurAiTutorWidget />
       </KangurPageShell>
-    </KangurAiTutorProvider>
+    </>
   );
 }

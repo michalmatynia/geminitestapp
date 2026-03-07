@@ -100,7 +100,10 @@ export function PromptEngineFilters(): React.JSX.Element {
             setPatternTab(value as PatternCollectionTab);
           }}
         >
-          <TabsList className='grid w-full max-w-md grid-cols-2'>
+          <TabsList
+            className='grid w-full max-w-md grid-cols-2'
+            aria-label='Pattern collection tabs'
+          >
             <TabsTrigger value='core'>Core Patterns</TabsTrigger>
             <TabsTrigger value='prompt_exploder'>Exploder</TabsTrigger>
           </TabsList>
@@ -113,7 +116,10 @@ export function PromptEngineFilters(): React.JSX.Element {
             setExploderSubTab(value as ExploderPatternSubTab);
           }}
         >
-          <TabsList className='grid w-full max-w-2xl grid-cols-3'>
+          <TabsList
+            className='grid w-full max-w-2xl grid-cols-3'
+            aria-label='Exploder rule tabs'
+          >
             <TabsTrigger value='prompt_exploder_rules'>Prompt Exploder</TabsTrigger>
             <TabsTrigger value='image_studio_rules'>Image Studio</TabsTrigger>
             <TabsTrigger value='case_resolver_rules'>Case Resolver</TabsTrigger>

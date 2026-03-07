@@ -9,6 +9,7 @@ import OpenAI from 'openai';
 import { IMAGE_STUDIO_OPENAI_API_KEY_KEY } from '@/shared/contracts/image-studio';
 import { readStoredSettingValue, upsertStoredSettingValue } from '@/shared/lib/ai-brain/server';
 import { uploadsRoot } from '@/shared/lib/files/constants';
+import { getDiskPathFromPublicPath } from '@/shared/lib/files/services/image-file-service';
 import { uploadToConfiguredStorage } from '@/shared/lib/files/services/storage/file-storage-service';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils';
 
@@ -82,8 +83,7 @@ const parseAudioCache = (raw: string | null): KangurLessonAudioCache => {
 
 const isLocalPublicPath = (value: string): boolean => value.startsWith('/uploads/');
 
-const resolveLocalAudioDiskPath = (publicPath: string): string =>
-  path.join(process.cwd(), 'public', publicPath.replace(/^\/+/, ''));
+const resolveLocalAudioDiskPath = (publicPath: string): string => getDiskPathFromPublicPath(publicPath);
 
 const doesCachedAudioExist = async (entry: KangurLessonAudioCacheEntry): Promise<boolean> => {
   if (!isLocalPublicPath(entry.audioUrl)) {

@@ -14,6 +14,7 @@ import {
   SimpleSettingsList,
   ToggleRow,
   CollapsibleSection,
+  Label,
 } from '@/shared/ui';
 
 import { useBrain } from '../context/BrainContext';
@@ -227,17 +228,23 @@ export function ReportsTab(): React.JSX.Element {
             };
           })}
           columns={2}
-          renderActions={(item) => (
-            <label className='flex items-center gap-2 text-[11px] text-gray-400 cursor-pointer'>
-              <Checkbox
-                checked={item.original.overrideEnabled}
-                onCheckedChange={(checked: boolean) =>
-                  toggleOverride(item.original.feature.key, Boolean(checked))
-                }
-              />
-              Override
-            </label>
-          )}
+          renderActions={(item) => {
+            const checkboxId = `reports-feature-override-${item.id}`;
+            return (
+              <div className='flex items-center gap-2 text-[11px] text-gray-400'>
+                <Checkbox
+                  id={checkboxId}
+                  checked={item.original.overrideEnabled}
+                  onCheckedChange={(checked: boolean) =>
+                    toggleOverride(item.original.feature.key, Boolean(checked))
+                  }
+                />
+                <Label htmlFor={checkboxId} className='cursor-pointer text-[11px] text-gray-400'>
+                  Override
+                </Label>
+              </div>
+            );
+          }}
           renderCustomContent={(item) => (
             <div className='space-y-2'>
               <AssignmentEditor

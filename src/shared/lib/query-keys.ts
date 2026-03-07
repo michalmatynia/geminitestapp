@@ -389,6 +389,11 @@ export const QUERY_KEYS = {
       summary: (range: '24h' | '7d' | '30d') =>
         [...QUERY_KEYS.kangur.observability.all, 'summary', { range }] as const,
     },
+    aiTutor: {
+      all: ['kangur', 'ai-tutor'] as const,
+      usage: (learnerId: string | null) =>
+        [...QUERY_KEYS.kangur.aiTutor.all, 'usage', { learnerId }] as const,
+    },
   },
   playwright: {
     all: ['playwright'] as const,

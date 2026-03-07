@@ -162,7 +162,6 @@ export function FolderNodeItem(props: FolderNodeItemProps): React.JSX.Element | 
         </TreeRow>
       ) : (
         <TreeRow
-          asChild
           depth={depth}
           baseIndent={8}
           indent={12}
@@ -173,40 +172,9 @@ export function FolderNodeItem(props: FolderNodeItemProps): React.JSX.Element | 
           dragOverClassName='bg-transparent text-gray-100 ring-0'
           className='relative h-8 text-xs'
         >
-          <button
-            type='button'
-            className='flex h-full w-full min-w-0 cursor-pointer items-center gap-1 text-left'
-            onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
-              event.stopPropagation();
-              if (selectedSlotId) {
-                // Delay folder selection to differentiate from potential double-click rename
-                setTimeout(() => {
-                  if (stickySelectionMode && isSelected) {
-                    clearSelection();
-                    return;
-                  }
-                  select(event);
-                  onSelectFolder(folderPath);
-                }, 180);
-                return;
-              }
-              if (stickySelectionMode && isSelected) {
-                clearSelection();
-                return;
-              }
-              select(event);
-              onSelectFolder(folderPath);
-            }}
-            onDoubleClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
-              event.preventDefault();
-              event.stopPropagation();
-              startFolderRename(node.id);
-            }}
-            title={folderPath || 'Project root'}
-            data-folder-path={folderPath}
-          >
+          <div className='flex h-full w-full min-w-0 items-center gap-1 text-left'>
             <span className='inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center opacity-0 transition-opacity group-hover:opacity-100'>
-              <DragHandleIcon className='size-3.5 shrink-0 cursor-grab text-gray-500' />
+              <DragHandleIcon className='size-3.5 shrink-0 cursor-grab text-gray-500' aria-hidden='true' />
             </span>
             <div
               className={cn(
@@ -224,53 +192,75 @@ export function FolderNodeItem(props: FolderNodeItemProps): React.JSX.Element | 
               buttonClassName='hover:bg-gray-700'
               placeholderClassName='w-3'
             />
-            {isExpanded ? (
-              <span className='inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center'>
-                <FolderOpenIcon className='size-3.5 text-gray-400' />
-              </span>
-            ) : (
-              <span className='inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center'>
-                <FolderClosedIcon className='size-3.5 text-gray-400' />
-              </span>
-            )}
-            <span
-              className='min-w-0 flex-1 cursor-pointer truncate'
-              onDoubleClick={(event: React.MouseEvent<HTMLSpanElement>): void => {
+            <button
+              type='button'
+              className='flex h-full min-w-0 flex-1 cursor-pointer items-center gap-1 text-left'
+              onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                event.stopPropagation();
+                if (selectedSlotId) {
+                  // Delay folder selection to differentiate from potential double-click rename
+                  setTimeout(() => {
+                    if (stickySelectionMode && isSelected) {
+                      clearSelection();
+                      return;
+                    }
+                    select(event);
+                    onSelectFolder(folderPath);
+                  }, 180);
+                  return;
+                }
+                if (stickySelectionMode && isSelected) {
+                  clearSelection();
+                  return;
+                }
+                select(event);
+                onSelectFolder(folderPath);
+              }}
+              onDoubleClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
                 event.preventDefault();
                 event.stopPropagation();
                 startFolderRename(node.id);
               }}
-              title='Double-click name to rename'
+              title={folderPath || 'Project root'}
+              data-folder-path={folderPath}
             >
-              {node.name}
+              {isExpanded ? (
+                <span className='inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center'>
+                  <FolderOpenIcon className='size-3.5 text-gray-400' aria-hidden='true' />
+                </span>
+              ) : (
+                <span className='inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center'>
+                  <FolderClosedIcon className='size-3.5 text-gray-400' aria-hidden='true' />
+                </span>
+              )}
+              <span className='min-w-0 flex-1 truncate'>{node.name}</span>
+            </button>
+            <span
+              className={cn(
+                'shrink-0 text-[10px] transition-opacity duration-150',
+                showInlineDrop
+                  ? `${placeholderClasses.badgeActive} opacity-100`
+                  : `${placeholderClasses.badgeIdle} opacity-0`
+              )}
+            >
+              {profile.placeholders.inlineDropLabel}
             </span>
-            <span className='ml-1 flex shrink-0 items-center gap-1'>
-              <span
-                className={cn(
-                  'text-[10px] transition-opacity duration-150',
-                  showInlineDrop
-                    ? `${placeholderClasses.badgeActive} opacity-100`
-                    : `${placeholderClasses.badgeIdle} opacity-0`
-                )}
-              >
-                {profile.placeholders.inlineDropLabel}
-              </span>
-              <span
-                className='inline-flex items-center justify-center rounded p-0.5 text-gray-400 opacity-0 transition hover:bg-red-500/20 hover:text-red-300 group-hover:opacity-100'
-                onMouseDown={(event: React.MouseEvent<HTMLSpanElement>): void => {
-                  event.stopPropagation();
-                }}
-                onClick={(event: React.MouseEvent<HTMLSpanElement>): void => {
-                  event.stopPropagation();
-                  onDeleteFolder(folderPath);
-                }}
-                title='Delete folder'
-                aria-hidden='true'
-              >
-                <Trash2 className='size-3' />
-              </span>
-            </span>
-          </button>
+            <button
+              type='button'
+              className='inline-flex shrink-0 items-center justify-center rounded p-0.5 text-gray-400 opacity-0 transition hover:bg-red-500/20 hover:text-red-300 group-hover:opacity-100'
+              onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                event.stopPropagation();
+              }}
+              onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                event.stopPropagation();
+                onDeleteFolder(folderPath);
+              }}
+              title='Delete folder'
+              aria-label={`Delete ${node.name}`}
+            >
+              <Trash2 className='size-3' aria-hidden='true' />
+            </button>
+          </div>
         </TreeRow>
       )}
     </TreeContextMenu>

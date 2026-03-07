@@ -94,7 +94,9 @@ export function PromptExploderTreeNode(props: PromptExploderTreeNodeProps): Reac
         select();
       }}
     >
-      <span
+      <button
+        type='button'
+        aria-label='Drag node'
         data-master-tree-drag-handle='true'
         onPointerDown={(): void => {
           armDragHandle(node.id);
@@ -108,7 +110,7 @@ export function PromptExploderTreeNode(props: PromptExploderTreeNodeProps): Reac
         className='inline-flex size-5 shrink-0 items-center justify-center rounded cursor-grab text-gray-400 transition hover:bg-white/10 hover:text-gray-100 active:cursor-grabbing'
       >
         <GripVertical className='size-3.5' />
-      </span>
+      </button>
       {hasChildren ? (
         <Button
           variant='ghost'

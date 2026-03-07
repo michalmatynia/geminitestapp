@@ -260,7 +260,7 @@ function NodeConfigDialogContent(): React.JSX.Element | null {
       >
         <AiPathConfigProviderWithContext overrides={configContextOverrides}>
           <Tabs defaultValue='settings' className='mt-2'>
-            <TabsList className='w-full justify-start'>
+            <TabsList className='w-full justify-start' aria-label='Node configuration tabs'>
               <TabsTrigger value='settings'>Settings</TabsTrigger>
               <TabsTrigger value='notes'>Notes</TabsTrigger>
               <TabsTrigger value='history'>History</TabsTrigger>

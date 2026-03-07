@@ -153,7 +153,13 @@ export function ImportListPreviewSection(): React.JSX.Element {
             </span>
             {row.original.skuExists && (
               <Tooltip content={skuExistsTooltip}>
-                <span className='text-[10px] opacity-70 cursor-help'>⚠</span>
+                <span
+                  className='text-[10px] opacity-70 cursor-help'
+                  aria-label={skuExistsTooltip}
+                  role='img'
+                >
+                  ⚠
+                </span>
               </Tooltip>
             )}
           </div>

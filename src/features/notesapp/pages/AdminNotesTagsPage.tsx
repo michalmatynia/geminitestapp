@@ -169,7 +169,9 @@ export function AdminNotesTagsPage(): React.JSX.Element {
                     setEditingName(event.target.value)
                   }
                   className='h-8 w-full sm:max-w-[200px]'
-                  autoFocus
+                  ref={(node) => {
+                    node?.focus();
+                  }}
                 />
                 <div className='flex items-center gap-2'>
                   <Input

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Pin, Star } from 'lucide-react';
+import { GripVertical, Pin, Star } from 'lucide-react';
 
 import { useNotesAppActions } from '@/features/notesapp/hooks/NotesAppContext';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
@@ -12,6 +12,10 @@ export type NoteCardHeaderRuntimeValue = {
   note: NoteWithRelations;
   backgroundColor: string;
   relatedNoteStyle: React.CSSProperties;
+  onSelectNote: (note: NoteWithRelations) => void;
+  enableDrag: boolean;
+  onNoteDragStart: (event: React.DragEvent<HTMLElement>) => void;
+  onNoteDragEnd: () => void;
 };
 
 const { Context: NoteCardHeaderRuntimeContext, useStrictContext: useNoteCardHeaderRuntime } =
@@ -24,7 +28,8 @@ const { Context: NoteCardHeaderRuntimeContext, useStrictContext: useNoteCardHead
 export { NoteCardHeaderRuntimeContext, useNoteCardHeaderRuntime };
 
 export function NoteCardHeader(): React.JSX.Element {
-  const { note } = useNoteCardHeaderRuntime();
+  const { note, onSelectNote, enableDrag, onNoteDragStart, onNoteDragEnd } =
+    useNoteCardHeaderRuntime();
   const { handleToggleFavorite } = useNotesAppActions();
 
   const isCodeNote = (note.editorType as string) === 'code';
@@ -34,13 +39,40 @@ export function NoteCardHeader(): React.JSX.Element {
 
   return (
     <div className='mb-2 flex items-start justify-between gap-2'>
-      <div className='flex items-center gap-2'>
-        <h3 className='font-semibold'>{note.title}</h3>
-        {isCodeNote && (
-          <Badge variant='success' className='text-[10px] h-4'>
-            CODE
-          </Badge>
-        )}
+      <div className='flex min-w-0 flex-1 items-start gap-2'>
+        {enableDrag ? (
+          <button
+            type='button'
+            draggable
+            className='mt-0.5 inline-flex size-6 shrink-0 cursor-grab items-center justify-center rounded text-gray-500 transition hover:bg-black/10 hover:text-gray-200 active:cursor-grabbing'
+            onDragStart={(event: React.DragEvent<HTMLButtonElement>): void => {
+              event.stopPropagation();
+              onNoteDragStart(event);
+            }}
+            onDragEnd={(): void => onNoteDragEnd()}
+            onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+              event.preventDefault();
+              event.stopPropagation();
+            }}
+            aria-label='Drag note'
+            title='Drag note'
+          >
+            <GripVertical size={16} aria-hidden='true' />
+          </button>
+        ) : null}
+        <button
+          type='button'
+          className='min-w-0 flex flex-1 items-center gap-2 rounded-sm text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black/20'
+          onClick={(): void => onSelectNote(note)}
+          aria-label={`Open note ${note.title}`}
+        >
+          <h3 className='font-semibold'>{note.title}</h3>
+          {isCodeNote && (
+            <Badge variant='success' className='text-[10px] h-4'>
+              CODE
+            </Badge>
+          )}
+        </button>
       </div>
       <div className='flex items-center gap-2'>
         {isCodeNote && (

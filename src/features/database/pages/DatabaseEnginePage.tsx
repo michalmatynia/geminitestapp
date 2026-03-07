@@ -309,7 +309,10 @@ function DatabaseEngineContent(): React.JSX.Element {
         onValueChange={(v) => setActiveView(v as DatabaseEngineWorkspaceView)}
         className='w-full'
       >
-        <TabsList className='grid h-auto w-full grid-cols-1 gap-2 border border-border/60 bg-card/30 p-2 md:grid-cols-3'>
+        <TabsList
+          className='grid h-auto w-full grid-cols-1 gap-2 border border-border/60 bg-card/30 p-2 md:grid-cols-3'
+          aria-label='Database engine workspace tabs'
+        >
           <TabsTrigger value='engine' className='h-12 justify-start gap-2 px-3 text-left'>
             <SlidersHorizontalIcon className='size-4' />
             <span className='text-xs font-semibold uppercase tracking-wide'>Engine Settings</span>

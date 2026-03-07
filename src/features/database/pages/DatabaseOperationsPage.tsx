@@ -57,7 +57,7 @@ function DatabaseOperationsContent(): React.JSX.Element {
       )}
 
       <Tabs defaultValue='sql' className='w-full'>
-        <TabsList className='mb-4'>
+        <TabsList className='mb-4' aria-label='Database workspace tabs'>
           <TabsTrigger value='sql' className='text-xs'>
             SQL Console
           </TabsTrigger>

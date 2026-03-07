@@ -6,12 +6,15 @@ import { useEffect } from 'react';
 
 import { PageNotFound } from '@/features/kangur/ui/components/PageNotFound';
 import UserNotRegisteredError from '@/features/kangur/ui/components/UserNotRegisteredError';
+import { KangurAiTutorWidget } from '@/features/kangur/ui/components/KangurAiTutorWidget';
 import { KANGUR_MAIN_PAGE, kangurPages } from '@/features/kangur/config/pages';
 import { resolveKangurPageKey } from '@/features/kangur/config/routing';
 import { KangurCmsRuntimeScreen } from '@/features/kangur/cms-builder/KangurCmsRuntimeScreen';
+import { KangurAiTutorProvider } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { KangurAuthProvider, useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { KangurProgressSyncProvider } from '@/features/kangur/ui/context/KangurProgressSyncProvider';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
+import { KangurTutorAnchorProvider } from '@/features/kangur/ui/context/KangurTutorAnchorContext';
 
 const AuthenticatedApp = (): JSX.Element | null => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useKangurAuth();
@@ -62,7 +65,12 @@ export function KangurFeatureApp(): JSX.Element {
   return (
     <KangurAuthProvider>
       <KangurProgressSyncProvider>
-        <AuthenticatedApp />
+        <KangurAiTutorProvider>
+          <KangurTutorAnchorProvider>
+            <AuthenticatedApp />
+            <KangurAiTutorWidget />
+          </KangurTutorAnchorProvider>
+        </KangurAiTutorProvider>
       </KangurProgressSyncProvider>
     </KangurAuthProvider>
   );

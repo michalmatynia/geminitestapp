@@ -303,12 +303,14 @@ export function AdminFilemakerEmailEditPage(): React.JSX.Element {
         ) : (
           persons.map((person: FilemakerPerson) => {
             const checked = linkedPersonIds.includes(person.id);
+            const checkboxId = `filemaker-email-person-${person.id}`;
             return (
-              <label
+              <div
                 key={person.id}
                 className='flex items-start gap-3 rounded-md border border-border/60 bg-card/25 p-2'
               >
                 <Checkbox
+                  id={checkboxId}
                   checked={checked}
                   onCheckedChange={(value): void => {
                     setLinkedPersonIds((previous: string[]) =>
@@ -316,13 +318,13 @@ export function AdminFilemakerEmailEditPage(): React.JSX.Element {
                     );
                   }}
                 />
-                <div className='min-w-0 flex-1'>
+                <label htmlFor={checkboxId} className='min-w-0 flex-1 cursor-pointer'>
                   <div className='text-xs font-medium text-white'>
                     {person.firstName} {person.lastName}
                   </div>
                   <div className='text-[11px] text-gray-400'>{formatFilemakerAddress(person)}</div>
-                </div>
-              </label>
+                </label>
+              </div>
             );
           })
         )}
@@ -334,12 +336,14 @@ export function AdminFilemakerEmailEditPage(): React.JSX.Element {
         ) : (
           organizations.map((organization: FilemakerOrganization) => {
             const checked = linkedOrganizationIds.includes(organization.id);
+            const checkboxId = `filemaker-email-organization-${organization.id}`;
             return (
-              <label
+              <div
                 key={organization.id}
                 className='flex items-start gap-3 rounded-md border border-border/60 bg-card/25 p-2'
               >
                 <Checkbox
+                  id={checkboxId}
                   checked={checked}
                   onCheckedChange={(value): void => {
                     setLinkedOrganizationIds((previous: string[]) =>
@@ -347,13 +351,13 @@ export function AdminFilemakerEmailEditPage(): React.JSX.Element {
                     );
                   }}
                 />
-                <div className='min-w-0 flex-1'>
+                <label htmlFor={checkboxId} className='min-w-0 flex-1 cursor-pointer'>
                   <div className='text-xs font-medium text-white'>{organization.name}</div>
                   <div className='text-[11px] text-gray-400'>
                     {formatFilemakerAddress(organization)}
                   </div>
-                </div>
-              </label>
+                </label>
+              </div>
             );
           })
         )}

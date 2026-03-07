@@ -67,14 +67,22 @@ export function Tooltip({
     }
   }, [disableHover, setVisible]);
 
-  const handleKeyDown = React.useCallback(
-    (event: React.KeyboardEvent<HTMLDivElement>) => {
+  React.useEffect(() => {
+    if (!isVisible || typeof document === 'undefined') {
+      return undefined;
+    }
+
+    const handleDocumentKeyDown = (event: KeyboardEvent): void => {
       if (event.key === 'Escape') {
         setVisible(false);
       }
-    },
-    [setVisible]
-  );
+    };
+
+    document.addEventListener('keydown', handleDocumentKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleDocumentKeyDown);
+    };
+  }, [isVisible, setVisible]);
 
   const describedBy =
     React.isValidElement(children) && typeof children.props === 'object' && children.props !== null
@@ -85,8 +93,8 @@ export function Tooltip({
     : describedBy;
   const trigger = React.isValidElement(children)
     ? React.cloneElement(children, {
-        'aria-describedby': mergedDescribedBy || undefined,
-      } as Record<string, unknown>)
+      'aria-describedby': mergedDescribedBy || undefined,
+    } as Record<string, unknown>)
     : children;
 
   const sideStyles = {
@@ -103,7 +111,6 @@ export function Tooltip({
       onMouseLeave={handleMouseLeave}
       onFocus={handleFocus}
       onBlur={handleBlur}
-      onKeyDown={handleKeyDown}
     >
       {trigger}
       {isVisible && content && (

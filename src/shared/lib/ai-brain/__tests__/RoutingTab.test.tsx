@@ -52,15 +52,18 @@ vi.mock('@/shared/ui', () => ({
     </div>
   ),
   Checkbox: ({
+    id,
     checked,
     onCheckedChange,
     disabled,
   }: {
+    id?: string;
     checked?: boolean;
     onCheckedChange?: (checked: boolean) => void;
     disabled?: boolean;
   }) => (
     <input
+      id={id}
       type='checkbox'
       checked={checked}
       disabled={disabled}
@@ -68,7 +71,15 @@ vi.mock('@/shared/ui', () => ({
     />
   ),
   Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
-  Label: ({ children }: { children: React.ReactNode }) => <label>{children}</label>,
+  Label: ({
+    children,
+    htmlFor,
+    className,
+  }: React.LabelHTMLAttributes<HTMLLabelElement>) => (
+    <label htmlFor={htmlFor} className={className}>
+      {children}
+    </label>
+  ),
   SelectSimple: ({
     value,
     onValueChange,

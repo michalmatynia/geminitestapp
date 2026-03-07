@@ -149,7 +149,6 @@ export function CardNodeItem(props: CardNodeItemProps): React.JSX.Element | null
         </TreeRow>
       ) : (
         <TreeRow
-          asChild
           depth={depth}
           baseIndent={8}
           indent={12}
@@ -158,27 +157,9 @@ export function CardNodeItem(props: CardNodeItemProps): React.JSX.Element | null
           selectedClassName='bg-muted text-white hover:bg-muted'
           className='relative h-8 text-xs'
         >
-          <button
-            type='button'
-            className='flex h-full w-full min-w-0 items-center gap-1 text-left'
-            data-slot-id={card.id}
-            onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
-              event.stopPropagation();
-              if (stickySelectionMode && isSelected) {
-                clearSelection();
-                return;
-              }
-              select(event);
-              onSelectCardNode(card, node.id);
-            }}
-            onDoubleClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
-              event.stopPropagation();
-              startCardRename(node.id);
-            }}
-            title={card.name || card.id}
-          >
+          <div className='flex h-full w-full min-w-0 items-center gap-1 text-left'>
             <span className='inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center opacity-0 transition-opacity group-hover:opacity-100'>
-              <DragHandleIcon className='size-3.5 shrink-0 cursor-grab text-gray-500' />
+              <DragHandleIcon className='size-3.5 shrink-0 cursor-grab text-gray-500' aria-hidden='true' />
             </span>
             <TreeCaret
               isOpen={isExpanded}
@@ -189,42 +170,63 @@ export function CardNodeItem(props: CardNodeItemProps): React.JSX.Element | null
               buttonClassName='hover:bg-gray-700'
               placeholderClassName='w-3'
             />
-            <span className='inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center'>
-              <FileIcon className='size-3.5 text-gray-400' />
-            </span>
-            <span className='min-w-0 flex-1 truncate'>{card.name || node.name}</span>
-            <span className='ml-1 flex shrink-0 items-center gap-1'>
+            <button
+              type='button'
+              className='flex h-full min-w-0 flex-1 items-center gap-1 text-left'
+              data-slot-id={card.id}
+              onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                event.stopPropagation();
+                if (stickySelectionMode && isSelected) {
+                  clearSelection();
+                  return;
+                }
+                select(event);
+                onSelectCardNode(card, node.id);
+              }}
+              onDoubleClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                event.stopPropagation();
+                startCardRename(node.id);
+              }}
+              title={card.name || card.id}
+            >
+              <span className='inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center'>
+                <FileIcon className='size-3.5 text-gray-400' aria-hidden='true' />
+              </span>
+              <span className='min-w-0 flex-1 truncate'>{card.name || node.name}</span>
               {roleLabel ? (
-                <span className='max-w-[90px] truncate text-[10px] uppercase tracking-wide text-gray-500'>
+                <span className='max-w-[90px] shrink-0 truncate text-[10px] uppercase tracking-wide text-gray-500'>
                   {roleLabel}
                 </span>
               ) : null}
               <span
                 className={cn(
-                  'size-1 rounded-full bg-blue-300/55 transition-opacity duration-150',
+                  'size-1 shrink-0 rounded-full bg-blue-300/55 transition-opacity duration-150',
                   isSelected ? 'opacity-100' : 'opacity-0'
                 )}
-              />
-              <span
-                className={cn(
-                  'inline-flex items-center justify-center rounded p-0.5 text-gray-400 transition',
-                  'opacity-0 group-hover:opacity-100 hover:bg-red-500/20 hover:text-red-300',
-                  deleteSlotMutationPending ? 'pointer-events-none opacity-40' : 'cursor-pointer'
-                )}
-                onMouseDown={(event: React.MouseEvent<HTMLSpanElement>): void => {
-                  event.stopPropagation();
-                }}
-                onClick={(event: React.MouseEvent<HTMLSpanElement>): void => {
-                  event.stopPropagation();
-                  onDeleteSlot(card);
-                }}
-                title='Delete card'
                 aria-hidden='true'
-              >
-                <Trash2 className='size-3' />
-              </span>
-            </span>
-          </button>
+              />
+            </button>
+            <button
+              type='button'
+              className={cn(
+                'inline-flex shrink-0 items-center justify-center rounded p-0.5 text-gray-400 transition',
+                'opacity-0 group-hover:opacity-100 hover:bg-red-500/20 hover:text-red-300',
+                deleteSlotMutationPending ? 'cursor-not-allowed opacity-40' : undefined
+              )}
+              onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                event.stopPropagation();
+              }}
+              onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                event.stopPropagation();
+                onDeleteSlot(card);
+              }}
+              title='Delete card'
+              aria-label={`Delete ${card.name || node.name}`}
+              disabled={deleteSlotMutationPending}
+            >
+              <Trash2 className='size-3' aria-hidden='true' />
+            </button>
+          </div>
         </TreeRow>
       )}
     </TreeContextMenu>

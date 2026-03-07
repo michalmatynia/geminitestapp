@@ -702,7 +702,7 @@ export function DraftCreator({
         >
           <div className='space-y-6'>
             <Tabs defaultValue='details' className='w-full'>
-              <TabsList className='mb-6'>
+              <TabsList className='mb-6' aria-label='Draft creator tabs'>
                 <TabsTrigger value='details'>Details</TabsTrigger>
                 <TabsTrigger value='images'>Images</TabsTrigger>
                 <TabsTrigger value='parameters'>Parameters</TabsTrigger>

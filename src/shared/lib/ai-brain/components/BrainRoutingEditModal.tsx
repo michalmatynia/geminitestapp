@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
-import { Checkbox, FormModal } from '@/shared/ui';
+import { Checkbox, FormModal, Label } from '@/shared/ui';
 
 import { useBrain } from '../context/BrainContext';
 import {
@@ -42,6 +42,7 @@ export function BrainRoutingEditModal(props: BrainRoutingEditModalProps): React.
     clearCapabilityOverride,
   } = useBrain();
   const [state, setState] = useState<BrainRoutingEditModalState | null>(null);
+  const overrideCheckboxId = React.useId().replace(/:/g, '');
 
   const capabilityDefinition = useMemo(
     () => (capability ? getBrainCapabilityDefinition(capability) : null),
@@ -108,8 +109,9 @@ export function BrainRoutingEditModal(props: BrainRoutingEditModalProps): React.
           </div>
         </div>
 
-        <label className='flex items-center gap-2 text-xs text-gray-300 cursor-pointer'>
+        <div className='flex items-center gap-2 text-xs text-gray-300'>
           <Checkbox
+            id={overrideCheckboxId}
             checked={state.overrideEnabled}
             onCheckedChange={(checked: boolean | 'indeterminate') => {
               const enabled = Boolean(checked);
@@ -125,8 +127,10 @@ export function BrainRoutingEditModal(props: BrainRoutingEditModalProps): React.
               });
             }}
           />
-          Use capability-specific override
-        </label>
+          <Label htmlFor={overrideCheckboxId} className='cursor-pointer text-xs text-gray-300'>
+            Use capability-specific override
+          </Label>
+        </div>
 
         <AssignmentEditor
           assignment={state.assignment}

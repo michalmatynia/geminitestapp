@@ -198,7 +198,9 @@ const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCe
           |
         </span>
         <Tooltip content={categoryLabel}>
-          <span className='max-w-[14rem] truncate'>{categoryLabel}</span>
+          <span className='max-w-[14rem] truncate' aria-label={categoryLabel} title={categoryLabel}>
+            {categoryLabel}
+          </span>
         </Tooltip>
         {isImported && (
           <Tooltip
@@ -270,7 +272,13 @@ const PriceCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function Price
       />
       {showCurrencyIndicator && displayPrice !== product.price && (
         <Tooltip content={`Converted: ${displayPrice?.toFixed(2)} ${actualCurrency}`}>
-          <span className='text-xs text-muted-foreground'>→{displayPrice?.toFixed(2)}</span>
+          <span
+            className='text-xs text-muted-foreground'
+            aria-label={`Converted price: ${displayPrice?.toFixed(2)} ${actualCurrency}`}
+            title={`Converted: ${displayPrice?.toFixed(2)} ${actualCurrency}`}
+          >
+            →{displayPrice?.toFixed(2)}
+          </span>
         </Tooltip>
       )}
     </div>

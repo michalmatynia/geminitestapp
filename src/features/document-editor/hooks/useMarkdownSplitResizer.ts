@@ -97,6 +97,7 @@ export function useMarkdownSplitResizer({
     editorWidth: effectiveEditorWidth,
     isDragging: effectiveIsDragging,
     updateDragging,
+    updateEditorWidth,
     handleMouseDown,
   };
 }

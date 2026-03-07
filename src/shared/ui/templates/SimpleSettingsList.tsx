@@ -82,14 +82,29 @@ export function SimpleSettingsList<T extends SimpleSettingsListItem>(
     <div className={cn('grid gap-4', gridCols, className)}>
       {items.map((item) => {
         const isSelected = selectedId === item.id;
+        const isClickable = typeof onSelect === 'function';
         return (
           <div
             key={item.id}
             onClick={() => onSelect?.(item)}
+            onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
+              if (!isClickable || event.target !== event.currentTarget) {
+                return;
+              }
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                onSelect(item);
+              }
+            }}
+            role={isClickable ? 'button' : undefined}
+            tabIndex={isClickable ? 0 : undefined}
+            aria-pressed={isClickable ? isSelected : undefined}
             className={cn(
               'group flex flex-col justify-between rounded-lg border border-border bg-card/40 transition-colors',
               onSelect && 'cursor-pointer hover:border-blue-500/50',
               isSelected ? 'border-blue-500/50 bg-blue-500/5' : 'hover:bg-card/60',
+              isClickable &&
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
               paddingClasses,
               itemClassName
             )}

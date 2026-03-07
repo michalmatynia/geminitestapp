@@ -3,7 +3,10 @@
 import { type UseMutationResult, type UseQueryResult } from '@tanstack/react-query';
 
 import { AGENT_PERSONA_SETTINGS_KEY } from '@/shared/contracts/agents';
-import { fetchAgentPersonas } from '@/features/ai/agentcreator/utils/personas';
+import {
+  fetchAgentPersonas,
+  normalizeAgentPersonas,
+} from '@/features/ai/agentcreator/utils/personas';
 import { invalidateSettingsCache } from '@/shared/api/settings-client';
 import type { AgentPersona } from '@/shared/contracts/agents';
 import { api } from '@/shared/lib/api-client';
@@ -40,9 +43,10 @@ export function useSaveAgentPersonasMutation(): UseMutationResult<
   return createUpdateMutationV2<void, { personas: AgentPersona[] }>({
     mutationKey: agentPersonaKeys.mutation('save'),
     mutationFn: async ({ personas }: { personas: AgentPersona[] }): Promise<void> => {
+      const canonicalPersonas = normalizeAgentPersonas(personas);
       await api.post('/api/settings', {
         key: AGENT_PERSONA_SETTINGS_KEY,
-        value: serializeSetting(personas),
+        value: serializeSetting(canonicalPersonas),
       });
       invalidateSettingsCache();
     },

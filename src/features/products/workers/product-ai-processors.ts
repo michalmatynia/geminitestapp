@@ -1,7 +1,6 @@
 import 'server-only';
 
 import fs from 'fs/promises';
-import path from 'path';
 
 import {
   resolveAiPathsNodeExecutionConfig,
@@ -17,7 +16,10 @@ import {
   markDatabaseBackupJobRunning,
   markDatabaseBackupJobSucceeded,
 } from '@/shared/lib/db/services/database-backup-scheduler';
-import type { ImageFileRecord } from '@/shared/lib/files/services/image-file-service';
+import {
+  getDiskPathFromPublicPath,
+  type ImageFileRecord,
+} from '@/shared/lib/files/services/image-file-service';
 import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
 import { listBaseListingsForSync, syncBaseImagesForListing } from '@/features/integrations/server';
 import { getProductRepository } from '@/features/products/server';
@@ -131,8 +133,7 @@ const buildImageParts = async (
           base64Image = buffer.toString('base64');
           mimetype = res.headers.get('content-type') || 'image/jpeg';
         } else {
-          const normalized = item.startsWith('/') ? item.slice(1) : item;
-          const imagePath = path.join(process.cwd(), 'public', normalized);
+          const imagePath = getDiskPathFromPublicPath(item);
           const buffer = await fs.readFile(imagePath);
           base64Image = buffer.toString('base64');
           const record = imageFileMap.get(item);

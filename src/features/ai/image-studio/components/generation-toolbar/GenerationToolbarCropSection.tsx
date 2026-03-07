@@ -25,8 +25,8 @@ export function GenerationToolbarCropSection(): React.JSX.Element {
   const maybeWrapTooltip = (content: string, child: React.JSX.Element): React.JSX.Element => {
     if (!cropTooltipsEnabled) return child;
     return (
-      <Tooltip content={content}>
-        <span className='inline-flex'>{child}</span>
+      <Tooltip content={content} className='inline-flex'>
+        {child}
       </Tooltip>
     );
   };

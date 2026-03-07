@@ -1,0 +1,665 @@
+/**
+ * @vitest-environment jsdom
+ */
+
+import React from 'react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+const {
+  settingsStoreMock,
+  apiGetMock,
+  apiPostMock,
+  useAgentPersonasMock,
+  trackKangurClientEventMock,
+  logKangurClientErrorMock,
+} = vi.hoisted(() => ({
+  settingsStoreMock: {
+    get: vi.fn<(key: string) => string | undefined>(),
+  },
+  apiGetMock: vi.fn(),
+  apiPostMock: vi.fn(),
+  useAgentPersonasMock: vi.fn(),
+  trackKangurClientEventMock: vi.fn(),
+  logKangurClientErrorMock: vi.fn(),
+}));
+
+vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
+  useSettingsStore: () => settingsStoreMock,
+}));
+
+vi.mock('@/shared/lib/api-client', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/lib/api-client')>();
+  return {
+    ...actual,
+    api: {
+      get: apiGetMock,
+      post: apiPostMock,
+    },
+  };
+});
+
+vi.mock('@/features/ai/agentcreator/hooks/useAgentPersonas', () => ({
+  useAgentPersonas: useAgentPersonasMock,
+}));
+
+vi.mock('@/features/kangur/observability/client', () => ({
+  trackKangurClientEvent: trackKangurClientEventMock,
+  logKangurClientError: logKangurClientErrorMock,
+}));
+
+import { KANGUR_AI_TUTOR_SETTINGS_KEY } from '@/features/kangur/settings-ai-tutor';
+import { ApiError } from '@/shared/lib/api-client';
+import {
+  KangurAiTutorProvider,
+  KangurAiTutorSessionSync,
+  useKangurAiTutor,
+} from './KangurAiTutorContext';
+
+function Harness(): React.JSX.Element {
+  const {
+    tutorName,
+    tutorMoodId,
+    tutorAvatarSvg,
+    messages,
+    sendMessage,
+    usageSummary,
+    isOpen,
+    isLoading,
+    isUsageLoading,
+    openChat,
+  } = useKangurAiTutor();
+  const followUpSummary = messages
+    .flatMap((message) =>
+      (message.followUpActions ?? []).map((action) => `${action.reason ?? action.id}:${action.label}`)
+    )
+    .join(' | ');
+
+  return (
+    <div>
+      <div data-testid='tutor-name'>{tutorName}</div>
+      <div data-testid='tutor-mood'>{tutorMoodId}</div>
+      <div data-testid='tutor-avatar'>{tutorAvatarSvg ? 'present' : 'missing'}</div>
+      <div data-testid='is-open'>{String(isOpen)}</div>
+      <div data-testid='is-loading'>{String(isLoading)}</div>
+      <div data-testid='is-usage-loading'>{String(isUsageLoading)}</div>
+      <div data-testid='usage-summary'>
+        {usageSummary
+          ? `${usageSummary.messageCount}/${usageSummary.dailyMessageLimit ?? 'none'}/${usageSummary.remainingMessages ?? 'none'}`
+          : 'none'}
+      </div>
+      <button type='button' onClick={openChat}>
+        Open tutor
+      </button>
+      <button
+        type='button'
+        onClick={() =>
+          void sendMessage('Pomóż mi z tym zadaniem.', {
+            promptMode: 'hint',
+            selectedText: '2 + 2',
+          })
+        }
+      >
+        Send
+      </button>
+      <div data-testid='messages'>{messages.map((message) => message.content).join(' | ')}</div>
+      <div data-testid='follow-up-actions'>{followUpSummary || 'none'}</div>
+    </div>
+  );
+}
+
+function SelectedTextHarness(): React.JSX.Element {
+  const { messages, sendMessage } = useKangurAiTutor();
+
+  return (
+    <div>
+      <button
+        type='button'
+        onClick={() =>
+          void sendMessage('Wyjaśnij zaznaczony fragment.', {
+            promptMode: 'selected_text',
+            selectedText: '2 + 2',
+          })
+        }
+      >
+        Send selected text
+      </button>
+      <div data-testid='selected-text-messages'>
+        {messages.map((message) => message.content).join(' | ')}
+      </div>
+    </div>
+  );
+}
+
+describe('KangurAiTutorContext', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    window.sessionStorage.clear();
+    apiGetMock.mockResolvedValue({
+      usage: {
+        dateKey: '2026-03-07',
+        messageCount: 0,
+        dailyMessageLimit: null,
+        remainingMessages: null,
+      },
+    });
+
+    settingsStoreMock.get.mockImplementation((key: string) => {
+      if (key === KANGUR_AI_TUTOR_SETTINGS_KEY) {
+        return JSON.stringify({
+          'learner-1': {
+            enabled: true,
+            teachingAgentId: 'teacher-1',
+            agentPersonaId: 'persona-1',
+            motionPresetId: null,
+            allowLessons: true,
+            testAccessMode: 'guided',
+            showSources: true,
+            allowSelectedTextSupport: true,
+            dailyMessageLimit: null,
+          },
+        });
+      }
+      return undefined;
+    });
+
+    useAgentPersonasMock.mockReturnValue({
+      data: [
+        {
+          id: 'persona-1',
+          name: 'Mila',
+          defaultMoodId: 'neutral',
+          moods: [
+            {
+              id: 'neutral',
+              label: 'Neutral',
+              svgContent:
+                '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="32" fill="#ffffff" /></svg>',
+            },
+            {
+              id: 'thinking',
+              label: 'Thinking',
+              svgContent:
+                '<svg viewBox="0 0 100 100"><rect x="22" y="22" width="56" height="56" fill="#ffffff" /></svg>',
+            },
+            {
+              id: 'encouraging',
+              label: 'Encouraging',
+              svgContent:
+                '<svg viewBox="0 0 100 100"><path d="M20 60 Q50 20 80 60" fill="none" stroke="#ffffff" stroke-width="8" /></svg>',
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  it('loads current tutor usage and refreshes it after a successful tutor send', async () => {
+    settingsStoreMock.get.mockImplementation((key: string) => {
+      if (key === KANGUR_AI_TUTOR_SETTINGS_KEY) {
+        return JSON.stringify({
+          'learner-1': {
+            enabled: true,
+            teachingAgentId: 'teacher-1',
+            agentPersonaId: 'persona-1',
+            motionPresetId: null,
+            allowLessons: true,
+            testAccessMode: 'guided',
+            showSources: true,
+            allowSelectedTextSupport: true,
+            dailyMessageLimit: 3,
+          },
+        });
+      }
+      return undefined;
+    });
+    apiGetMock.mockResolvedValue({
+      usage: {
+        dateKey: '2026-03-07',
+        messageCount: 1,
+        dailyMessageLimit: 3,
+        remainingMessages: 2,
+      },
+    });
+    apiPostMock.mockResolvedValue({
+      message: 'Spróbuj policzyć krok po kroku.',
+      sources: [
+        {
+          documentId: 'doc-1',
+          collectionId: 'math-docs',
+          score: 0.88,
+          text: 'Dodawanie polega na łączeniu dwóch liczb.',
+        },
+      ],
+      followUpActions: [
+        {
+          id: 'recommendation:strengthen_lesson_mastery',
+          label: 'Otworz lekcje',
+          page: 'Lessons',
+          query: {
+            focus: 'adding',
+          },
+          reason: 'Powtorz lekcje: Dodawanie',
+        },
+      ],
+      usage: {
+        dateKey: '2026-03-07',
+        messageCount: 2,
+        dailyMessageLimit: 3,
+        remainingMessages: 1,
+      },
+    });
+
+    render(
+      <KangurAiTutorProvider
+        learnerId='learner-1'
+        sessionContext={{
+          surface: 'test',
+          contentId: 'suite-1',
+          title: 'Kangur Mini',
+        }}
+      >
+        <Harness />
+      </KangurAiTutorProvider>
+    );
+
+    expect(screen.getByTestId('tutor-name')).toHaveTextContent('Mila');
+    expect(screen.getByTestId('tutor-mood')).toHaveTextContent('neutral');
+    expect(screen.getByTestId('tutor-avatar')).toHaveTextContent('present');
+    await waitFor(() => expect(apiGetMock).toHaveBeenCalledWith('/api/kangur/ai-tutor/usage'));
+    expect(screen.getByTestId('usage-summary')).toHaveTextContent('1/3/2');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+
+    await waitFor(() => expect(apiPostMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByTestId('tutor-mood')).toHaveTextContent('encouraging'));
+
+    expect(apiPostMock).toHaveBeenCalledWith('/api/kangur/ai-tutor/chat', {
+      messages: [{ role: 'user', content: 'Pomóż mi z tym zadaniem.' }],
+      context: {
+        surface: 'test',
+        contentId: 'suite-1',
+        title: 'Kangur Mini',
+        promptMode: 'hint',
+        selectedText: '2 + 2',
+      },
+    });
+    expect(trackKangurClientEventMock).toHaveBeenNthCalledWith(
+      1,
+      'kangur_ai_tutor_message_sent',
+      expect.objectContaining({
+        surface: 'test',
+        contentId: 'suite-1',
+        promptMode: 'hint',
+        hasSelectedText: true,
+        messageCount: 1,
+      })
+    );
+    expect(trackKangurClientEventMock).toHaveBeenNthCalledWith(
+      2,
+      'kangur_ai_tutor_message_succeeded',
+      expect.objectContaining({
+        surface: 'test',
+        contentId: 'suite-1',
+        promptMode: 'hint',
+        hasSources: true,
+        sourcesCount: 1,
+        followUpActionCount: 1,
+      })
+    );
+    expect(logKangurClientErrorMock).not.toHaveBeenCalled();
+    await waitFor(() =>
+      expect(screen.getByTestId('messages')).toHaveTextContent(
+        'Pomóż mi z tym zadaniem. | Spróbuj policzyć krok po kroku.'
+      )
+    );
+    expect(screen.getByTestId('follow-up-actions')).toHaveTextContent(
+      'Powtorz lekcje: Dodawanie:Otworz lekcje'
+    );
+    expect(screen.getByTestId('usage-summary')).toHaveTextContent('2/3/1');
+  });
+
+  it('tracks failed tutor sends and logs the client error', async () => {
+    apiPostMock.mockRejectedValue(
+      new ApiError('Daily AI tutor message limit reached for this learner. Try again tomorrow.', 429)
+    );
+
+    render(
+      <KangurAiTutorProvider
+        learnerId='learner-1'
+        sessionContext={{
+          surface: 'lesson',
+          contentId: 'lesson-1',
+          title: 'Dodawanie',
+        }}
+      >
+        <Harness />
+      </KangurAiTutorProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+
+    await waitFor(() =>
+      expect(trackKangurClientEventMock).toHaveBeenCalledWith(
+        'kangur_ai_tutor_message_failed',
+        expect.objectContaining({
+          surface: 'lesson',
+          contentId: 'lesson-1',
+          promptMode: 'hint',
+        })
+      )
+    );
+    expect(logKangurClientErrorMock).toHaveBeenCalledWith(
+      expect.any(ApiError),
+      expect.objectContaining({
+        source: 'KangurAiTutorContext',
+        action: 'sendMessage',
+        surface: 'lesson',
+        contentId: 'lesson-1',
+        promptMode: 'hint',
+      })
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId('messages')).toHaveTextContent(
+        'Pomóż mi z tym zadaniem. | Daily AI tutor message limit reached for this learner. Try again tomorrow.'
+      )
+    );
+  });
+
+  it('switches to the thinking mood while a tutor response is loading', async () => {
+    let resolveChat:
+      | ((value: { message: string; sources: []; followUpActions: []; }) => void)
+      | null = null;
+    apiPostMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveChat = resolve;
+        })
+    );
+
+    render(
+      <KangurAiTutorProvider
+        learnerId='learner-1'
+        sessionContext={{
+          surface: 'lesson',
+          contentId: 'lesson-1',
+          title: 'Dodawanie',
+        }}
+      >
+        <Harness />
+      </KangurAiTutorProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+
+    await waitFor(() => expect(screen.getByTestId('tutor-mood')).toHaveTextContent('thinking'));
+
+    resolveChat?.({
+      message: 'Spróbuj policzyć od lewej.',
+      sources: [],
+      followUpActions: [],
+    });
+
+    await waitFor(() => expect(screen.getByTestId('tutor-mood')).toHaveTextContent('encouraging'));
+  });
+
+  it('drops selected-text metadata and hidden sources when parent guardrails disable them', async () => {
+    settingsStoreMock.get.mockImplementation((key: string) => {
+      if (key === KANGUR_AI_TUTOR_SETTINGS_KEY) {
+        return JSON.stringify({
+          'learner-1': {
+            enabled: true,
+            teachingAgentId: 'teacher-1',
+            agentPersonaId: 'persona-1',
+            motionPresetId: null,
+            allowLessons: true,
+            testAccessMode: 'guided',
+            showSources: false,
+            allowSelectedTextSupport: false,
+            dailyMessageLimit: 10,
+          },
+        });
+      }
+      return undefined;
+    });
+
+    apiPostMock.mockResolvedValue({
+      message: 'Najpierw sprawdź działanie.',
+      sources: [
+        {
+          documentId: 'doc-1',
+          collectionId: 'math-docs',
+          score: 0.88,
+          text: 'Dodawanie polega na łączeniu dwóch liczb.',
+        },
+      ],
+    });
+
+    render(
+      <KangurAiTutorProvider
+        learnerId='learner-1'
+        sessionContext={{
+          surface: 'lesson',
+          contentId: 'lesson-1',
+          title: 'Dodawanie',
+        }}
+      >
+        <SelectedTextHarness />
+      </KangurAiTutorProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Send selected text' }));
+
+    await waitFor(() => expect(apiPostMock).toHaveBeenCalledTimes(1));
+
+    expect(apiPostMock).toHaveBeenCalledWith('/api/kangur/ai-tutor/chat', {
+      messages: [{ role: 'user', content: 'Wyjaśnij zaznaczony fragment.' }],
+      context: {
+        surface: 'lesson',
+        contentId: 'lesson-1',
+        title: 'Dodawanie',
+        promptMode: 'chat',
+      },
+    });
+    expect(trackKangurClientEventMock).toHaveBeenNthCalledWith(
+      1,
+      'kangur_ai_tutor_message_sent',
+      expect.objectContaining({
+        promptMode: 'chat',
+        hasSelectedText: false,
+      })
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId('selected-text-messages')).toHaveTextContent(
+        'Wyjaśnij zaznaczony fragment. | Najpierw sprawdź działanie.'
+      )
+    );
+  });
+
+  it('persists tutor conversations per session key across session switches', async () => {
+    apiPostMock.mockResolvedValue({
+      message: 'Skup się na pierwszym kroku.',
+      sources: [],
+    });
+
+    function SessionSwitcherHarness(): React.JSX.Element {
+      const [lessonId, setLessonId] = React.useState<'lesson-1' | 'lesson-2'>('lesson-1');
+
+      return (
+        <div>
+          <KangurAiTutorSessionSync
+            learnerId='learner-1'
+            sessionContext={{
+              surface: 'lesson',
+              contentId: lessonId,
+              title: lessonId === 'lesson-1' ? 'Dodawanie' : 'Odejmowanie',
+            }}
+          />
+          <button type='button' onClick={() => setLessonId('lesson-1')}>
+            Go to lesson 1
+          </button>
+          <button type='button' onClick={() => setLessonId('lesson-2')}>
+            Go to lesson 2
+          </button>
+          <Harness />
+        </div>
+      );
+    }
+
+    render(
+      <KangurAiTutorProvider>
+        <SessionSwitcherHarness />
+      </KangurAiTutorProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open tutor' }));
+    expect(screen.getByTestId('is-open')).toHaveTextContent('true');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+    await waitFor(() =>
+      expect(screen.getByTestId('messages')).toHaveTextContent(
+        'Pomóż mi z tym zadaniem. | Skup się na pierwszym kroku.'
+      )
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Go to lesson 2' }));
+    expect(screen.getByTestId('is-open')).toHaveTextContent('true');
+    await waitFor(() => expect(screen.getByTestId('messages')).toHaveTextContent(''));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Go to lesson 1' }));
+    expect(screen.getByTestId('is-open')).toHaveTextContent('true');
+    await waitFor(() =>
+      expect(screen.getByTestId('messages')).toHaveTextContent(
+        'Pomóż mi z tym zadaniem. | Skup się na pierwszym kroku.'
+      )
+    );
+  });
+
+  it('does not hit a render loop when the provider receives an equivalent session context object', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    try {
+      const { rerender } = render(
+        <React.StrictMode>
+          <KangurAiTutorProvider
+            learnerId='learner-1'
+            sessionContext={{
+              surface: 'lesson',
+              contentId: 'lesson-1',
+              title: 'Dodawanie',
+            }}
+          >
+            <Harness />
+          </KangurAiTutorProvider>
+        </React.StrictMode>
+      );
+
+      await waitFor(() => expect(screen.getByTestId('tutor-name')).toHaveTextContent('Mila'));
+
+      rerender(
+        <React.StrictMode>
+          <KangurAiTutorProvider
+            learnerId='learner-1'
+            sessionContext={{
+              surface: 'lesson',
+              contentId: 'lesson-1',
+              title: 'Dodawanie',
+            }}
+          >
+            <Harness />
+          </KangurAiTutorProvider>
+        </React.StrictMode>
+      );
+
+      await waitFor(() => expect(screen.getByTestId('tutor-name')).toHaveTextContent('Mila'));
+
+      expect(
+        consoleErrorSpy.mock.calls.some((args) =>
+          args.some(
+            (value) =>
+              typeof value === 'string' && value.includes('Maximum update depth exceeded')
+          )
+        )
+      ).toBe(false);
+    } finally {
+      consoleErrorSpy.mockRestore();
+    }
+  });
+
+  it('hydrates persisted tutor runtime state without restoring transient loading flags', async () => {
+    settingsStoreMock.get.mockImplementation((key: string) => {
+      if (key === KANGUR_AI_TUTOR_SETTINGS_KEY) {
+        return JSON.stringify({
+          'learner-1': {
+            enabled: true,
+            teachingAgentId: 'teacher-1',
+            agentPersonaId: 'persona-1',
+            motionPresetId: null,
+            allowLessons: true,
+            testAccessMode: 'guided',
+            showSources: true,
+            allowSelectedTextSupport: true,
+            dailyMessageLimit: 3,
+          },
+        });
+      }
+      return undefined;
+    });
+    apiGetMock.mockResolvedValue({
+      usage: {
+        dateKey: '2026-03-07',
+        messageCount: 1,
+        dailyMessageLimit: 3,
+        remainingMessages: 2,
+      },
+    });
+
+    window.sessionStorage.setItem(
+      'kangur-ai-tutor-runtime-v1',
+      JSON.stringify({
+        isOpen: true,
+        sessionStates: {
+          'learner-1:lesson:lesson-1': {
+            messages: [
+              {
+                role: 'assistant',
+                content: 'Witaj ponownie.',
+              },
+            ],
+            isLoading: true,
+            isUsageLoading: true,
+            highlightedText: '2 + 2',
+            usageSummary: {
+              dateKey: '2026-03-07',
+              messageCount: 1,
+              dailyMessageLimit: 3,
+              remainingMessages: 2,
+            },
+          },
+        },
+      })
+    );
+
+    render(
+      <KangurAiTutorProvider
+        learnerId='learner-1'
+        sessionContext={{
+          surface: 'lesson',
+          contentId: 'lesson-1',
+          title: 'Dodawanie',
+        }}
+      >
+        <Harness />
+      </KangurAiTutorProvider>
+    );
+
+    await waitFor(() => expect(screen.getByTestId('is-open')).toHaveTextContent('true'));
+    expect(screen.getByTestId('messages')).toHaveTextContent('Witaj ponownie.');
+    expect(screen.getByTestId('is-loading')).toHaveTextContent('false');
+    expect(screen.getByTestId('is-usage-loading')).toHaveTextContent('false');
+  });
+});

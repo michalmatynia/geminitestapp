@@ -19,7 +19,7 @@ export function FileManagerContent(): React.JSX.Element {
         setActiveTab(value as 'uploads' | 'links' | 'base64' | 'assets3d')
       }
     >
-      <TabsList className='mb-4'>
+      <TabsList className='mb-4' aria-label='File manager source tabs'>
         <TabsTrigger value='uploads'>Uploads</TabsTrigger>
         <TabsTrigger value='links'>Links</TabsTrigger>
         <TabsTrigger value='base64'>Base64</TabsTrigger>

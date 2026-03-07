@@ -8,11 +8,16 @@ import {
   useSaveAgentPersonasMutation,
 } from '@/features/ai/agentcreator/hooks/useAgentPersonas';
 import {
+  buildDefaultAgentPersonaMoods,
   buildAgentPersonaSettings,
   createAgentPersonaId,
+  normalizeAgentPersonas,
 } from '@/features/ai/agentcreator/utils/personas';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { AgentPersona } from '@/shared/contracts/agents';
+import {
+  DEFAULT_AGENT_PERSONA_MOOD_ID,
+  type AgentPersona,
+} from '@/shared/contracts/agents';
 import { ItemLibrary, useToast, Button } from '@/shared/ui';
 
 export function AgentPersonasPage(): React.JSX.Element {
@@ -30,14 +35,20 @@ export function AgentPersonasPage(): React.JSX.Element {
 
     const now = new Date().toISOString();
     const existing = personas.find((p) => p.id === draft.id);
-    const nextPersona: AgentPersona = {
-      id: existing?.id ?? createAgentPersonaId(),
-      name,
-      description: draft.description?.trim() || undefined,
-      settings: buildAgentPersonaSettings(draft.settings),
-      createdAt: existing?.createdAt ?? now,
-      updatedAt: now,
-    };
+    const nextPersona = normalizeAgentPersonas([
+      {
+        ...existing,
+        ...draft,
+        id: existing?.id ?? createAgentPersonaId(),
+        name,
+        description: draft.description?.trim() || null,
+        settings: buildAgentPersonaSettings(draft.settings),
+        defaultMoodId: DEFAULT_AGENT_PERSONA_MOOD_ID,
+        moods: draft.moods ?? existing?.moods ?? buildDefaultAgentPersonaMoods(),
+        createdAt: existing?.createdAt ?? now,
+        updatedAt: now,
+      },
+    ])[0] as AgentPersona;
 
     const next = existing
       ? personas.map((p) => (p.id === existing.id ? nextPersona : p))
@@ -74,7 +85,7 @@ export function AgentPersonasPage(): React.JSX.Element {
   return (
     <ItemLibrary<AgentPersona & { description: string | null }>
       title='Agent Personas'
-      description='Assign models to each reasoning stage for autonomous agents and AI Paths.'
+      description='Manage visible tutor personas, SVG mood avatars, and AI Brain-backed persona routing.'
       entityName='Persona'
       items={personas as (AgentPersona & { description: string | null })[]}
       isLoading={loading}
@@ -93,10 +104,14 @@ export function AgentPersonasPage(): React.JSX.Element {
       buildDefaultItem={() => ({
         name: '',
         description: '',
+        defaultMoodId: DEFAULT_AGENT_PERSONA_MOOD_ID,
+        moods: buildDefaultAgentPersonaMoods(),
         settings: buildAgentPersonaSettings(),
       })}
       renderItemTags={() => ['Routing: AI Brain']}
-      renderExtraFields={() => <AgentPersonaSettingsForm />}
+      renderExtraFields={(item, onChange) => (
+        <AgentPersonaSettingsForm item={item} onChange={onChange} />
+      )}
     />
   );
 }

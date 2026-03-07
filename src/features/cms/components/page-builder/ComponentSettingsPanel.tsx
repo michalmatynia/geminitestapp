@@ -86,7 +86,10 @@ function ComponentSettingsPanelInner(): React.JSX.Element {
             onValueChange={(v) => setActiveTab(v as TabValue)}
             className='flex min-h-0 flex-1 flex-col overflow-hidden'
           >
-            <TabsList className='mx-4 mt-3 w-[calc(100%-2rem)]'>
+            <TabsList
+              className='mx-4 mt-3 w-[calc(100%-2rem)]'
+              aria-label='Component settings tabs'
+            >
               <TabsTrigger value='settings' className='flex-1 text-xs'>
                 Settings
               </TabsTrigger>

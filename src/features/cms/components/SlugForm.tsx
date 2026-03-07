@@ -34,6 +34,9 @@ export function SlugForm(props: SlugFormProps): React.JSX.Element {
   const [domainIds, setDomainIds] = useState<string[]>(initialData?.domainIds ?? []);
   const [error, setError] = useState<string | null>(null);
   const { zoningEnabled } = useCmsDomainSelection();
+  const slugInputRef = React.useCallback((node: HTMLInputElement | null): void => {
+    node?.focus();
+  }, []);
 
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
@@ -57,12 +60,12 @@ export function SlugForm(props: SlugFormProps): React.JSX.Element {
               required
             >
               <Input
+                ref={slugInputRef}
                 id='slug'
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
                 placeholder='e.g. my-awesome-page'
                 className='h-9'
-                autoFocus
               />
             </FormField>
 

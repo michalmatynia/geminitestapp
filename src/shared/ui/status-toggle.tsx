@@ -5,7 +5,7 @@ import { type VariantProps } from 'class-variance-authority';
 
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { cn } from '@/shared/utils';
-import { Badge, badgeVariants } from './badge';
+import { badgeVariants } from './badge';
 
 export interface StatusToggleProps {
   enabled: boolean;
@@ -24,6 +24,8 @@ type StatusToggleRuntimeValue = {
   onClick: (() => void) | undefined;
   className: string;
   label: string;
+  disabled: boolean;
+  pressed: boolean;
 };
 
 const { Context: StatusToggleRuntimeContext, useStrictContext: useStatusToggleRuntime } =
@@ -36,9 +38,15 @@ const { Context: StatusToggleRuntimeContext, useStrictContext: useStatusToggleRu
 function StatusToggleBadge(): React.JSX.Element {
   const runtime = useStatusToggleRuntime();
   return (
-    <Badge variant={runtime.variant} onClick={runtime.onClick} className={runtime.className}>
+    <button
+      type='button'
+      className={cn(badgeVariants({ variant: runtime.variant }), runtime.className)}
+      onClick={runtime.onClick}
+      disabled={runtime.disabled}
+      aria-pressed={runtime.pressed}
+    >
       {runtime.label}
-    </Badge>
+    </button>
   );
 }
 
@@ -87,10 +95,12 @@ export function StatusToggle({
       className: cn(
         'cursor-pointer select-none font-bold transition-all border',
         size === 'sm' ? 'h-6 px-2 text-[9px]' : 'h-7 px-2.5 text-[10px]',
-        disabled && 'opacity-50 pointer-events-none',
+        disabled && 'cursor-not-allowed opacity-50',
         className
       ),
       label: enabled ? enabledLabel : disabledLabel,
+      disabled: Boolean(disabled),
+      pressed: enabled,
     }),
     [className, disabled, enabled, enabledLabel, disabledLabel, onToggle, size]
   );

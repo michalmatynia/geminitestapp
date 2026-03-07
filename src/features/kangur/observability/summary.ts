@@ -44,6 +44,18 @@ const KANGUR_ANALYTICS_EVENT_NAMES = [
   'kangur_api_write_succeeded',
   'kangur_api_write_failed',
   'kangur_api_read_failed',
+  'kangur_ai_tutor_opened',
+  'kangur_ai_tutor_closed',
+  'kangur_ai_tutor_selection_cta_shown',
+  'kangur_ai_tutor_selection_cta_clicked',
+  'kangur_ai_tutor_anchor_changed',
+  'kangur_ai_tutor_motion_completed',
+  'kangur_ai_tutor_context_switched',
+  'kangur_ai_tutor_quick_action_clicked',
+  'kangur_ai_tutor_follow_up_clicked',
+  'kangur_ai_tutor_message_sent',
+  'kangur_ai_tutor_message_succeeded',
+  'kangur_ai_tutor_message_failed',
 ] as const;
 
 const SYSTEM_LOGS_COLLECTION_NAME = 'system_logs';

@@ -62,18 +62,24 @@ const { Context: ConfirmModalRuntimeContext, useStrictContext: useConfirmModalRu
 
 function ConfirmModalPasswordField(): React.JSX.Element | null {
   const runtime = useConfirmModalRuntime();
+  const inputRef = React.useRef<HTMLInputElement | null>(null);
+  React.useEffect(() => {
+    if (!runtime.loading) {
+      inputRef.current?.focus();
+    }
+  }, [runtime.loading]);
   if (!runtime.onConfirmPasswordChange) return null;
 
   return (
     <div className='space-y-2'>
       <Label className='text-xs font-medium text-gray-300'>{runtime.confirmPasswordLabel}</Label>
       <Input
+        ref={inputRef}
         type='password'
         value={runtime.confirmPassword}
         onChange={(event) => runtime.onConfirmPasswordChange?.(event.target.value)}
         placeholder='Enter your password'
         disabled={runtime.loading}
-        autoFocus
       />
     </div>
   );

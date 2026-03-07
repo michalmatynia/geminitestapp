@@ -9,43 +9,28 @@ import { encodeFilemakerPartyReference } from '@/features/filemaker/settings';
 import { Badge, Button, FormField, SelectSimple } from '@/shared/ui';
 import { ConfirmDialog } from '@/shared/ui/confirm-dialog';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
+import {
+  type PromptExploderCaptureMappingModalRuntimeValue,
+  useOptionalPromptExploderCaptureMappingModalRuntime,
+} from './PromptExploderCaptureMappingModalRuntimeContext';
 
-type PromptExploderCaptureMappingModalProps = {
-  open: boolean;
-  draft: CaseResolverCaptureProposalState | null;
-  applying: boolean;
-  targetFileName: string | null;
-  partyOptions: Array<{ value: string; label: string }>;
-  onClose: () => void;
-  onApply: () => void;
-  onUpdateAction: (role: 'addresser' | 'addressee', action: CaseResolverCaptureAction) => void;
-  onUpdateReference: (role: 'addresser' | 'addressee', value: string) => void;
-  onUpdateDateAction: (action: CaseResolverCaptureDocumentDateAction) => void;
-  resolveMatchedPartyLabel: (
-    reference: CaseResolverCaptureProposalState['addresser'] extends infer T
-      ? T extends { existingReference?: infer R | null }
-        ? R | null | undefined
-        : null | undefined
-      : null | undefined
-  ) => string;
-  diagnostics: {
-    status: 'idle' | 'success' | 'failed';
-    stage: 'precheck' | 'mutation' | 'rebase' | null;
-    message: string;
-    targetFileId: string | null;
-    resolvedTargetFileId: string | null;
-    workspaceRevision: number;
-    attempts: number;
-    at: string;
-    cleanupDurationMs?: number | null;
-    mutationDurationMs?: number | null;
-    totalDurationMs?: number | null;
-  } | null;
-};
+type PromptExploderCaptureMappingModalProps = PromptExploderCaptureMappingModalRuntimeValue;
 
 export function PromptExploderCaptureMappingModal(
-  props: PromptExploderCaptureMappingModalProps
+  props: Partial<PromptExploderCaptureMappingModalProps> = {}
 ): React.JSX.Element {
+  const runtime = useOptionalPromptExploderCaptureMappingModalRuntime();
+  const resolvedProps =
+    props.onUpdateAction !== undefined
+      ? (props as PromptExploderCaptureMappingModalProps)
+      : runtime;
+
+  if (!resolvedProps) {
+    throw new Error(
+      'PromptExploderCaptureMappingModal must be used within PromptExploderCaptureMappingModalRuntimeProvider or receive explicit props'
+    );
+  }
+
   const {
     open,
     draft,
@@ -59,7 +44,7 @@ export function PromptExploderCaptureMappingModal(
     onUpdateDateAction,
     resolveMatchedPartyLabel,
     diagnostics,
-  } = props;
+  } = resolvedProps;
 
   const [closeConfirmOpen, setCloseConfirmOpen] = React.useState(false);
 

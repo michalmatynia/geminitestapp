@@ -20,7 +20,7 @@ import {
 } from '@/features/kangur/tts/script';
 import {
   KangurButton,
-  KangurPanel,
+  KangurSurfacePanel,
   KangurStatusChip,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
@@ -410,11 +410,13 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
   }
 
   return (
-    <KangurPanel
+    <KangurSurfacePanel
+      accent='indigo'
       data-kangur-tts-ignore='true'
-      className={cn('w-full max-w-5xl border-indigo-200/80 bg-white/92', className)}
+      data-testid='lesson-narrator-shell'
+      className={cn('w-full max-w-5xl', className)}
+      fillHeight
       padding='lg'
-      variant='soft'
     >
       <audio ref={audioRef} preload='none' className='hidden' />
       <div className='flex flex-col gap-4 md:flex-row md:items-start md:justify-between'>
@@ -479,6 +481,6 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
           tone='accent'
         />
       ) : null}
-    </KangurPanel>
+    </KangurSurfacePanel>
   );
 }

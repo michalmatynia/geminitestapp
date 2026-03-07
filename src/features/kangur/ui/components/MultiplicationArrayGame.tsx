@@ -8,6 +8,8 @@ import {
 } from '@/features/kangur/ui/design/tokens';
 import {
   KangurButton,
+  KangurDisplayEmoji,
+  KangurMetricCard,
   KangurOptionCardButton,
   KangurPanel,
   KangurProgressBar,
@@ -127,7 +129,9 @@ export default function MultiplicationArrayGame({
           padding='xl'
           variant='elevated'
         >
-          <div className='text-6xl'>{percent === 100 ? '🏆' : percent >= 67 ? '🌟' : '💪'}</div>
+          <KangurDisplayEmoji data-testid='multiplication-array-summary-emoji' size='lg'>
+            {percent === 100 ? '🏆' : percent >= 67 ? '🌟' : '💪'}
+          </KangurDisplayEmoji>
           <h2 className='text-2xl font-extrabold text-gray-800'>
             Zebrałeś {score}/{TOTAL_ROUNDS} grup!
           </h2>
@@ -211,23 +215,34 @@ export default function MultiplicationArrayGame({
 
             {/* Running total counter */}
             <div className='flex items-center gap-2'>
-              <div className='bg-purple-50 border border-purple-200 rounded-2xl px-5 py-2 text-center'>
-                <p className='text-xs text-purple-400 font-semibold'>Zebrane</p>
-                <motion.p
-                  key={collectedCount}
-                  initial={{ scale: 1.4, color: '#7c3aed' }}
-                  animate={{ scale: 1, color: '#4b5563' }}
-                  transition={{ duration: 0.25 }}
-                  className='text-2xl font-extrabold text-gray-600'
-                >
-                  {collectedCount}
-                </motion.p>
-              </div>
+              <KangurMetricCard
+                accent='violet'
+                align='center'
+                className='min-w-[110px]'
+                data-testid='multiplication-array-counter-collected'
+                label='Zebrane'
+                padding='sm'
+                value={
+                  <motion.span
+                    key={collectedCount}
+                    animate={{ scale: 1 }}
+                    initial={{ scale: 1.4 }}
+                    transition={{ duration: 0.25 }}
+                  >
+                    {collectedCount}
+                  </motion.span>
+                }
+              />
               <div className='text-gray-300 text-2xl font-bold'>/</div>
-              <div className='bg-gray-50 border border-gray-200 rounded-2xl px-5 py-2 text-center'>
-                <p className='text-xs text-gray-400 font-semibold'>Cel</p>
-                <p className='text-2xl font-extrabold text-gray-400'>{total}</p>
-              </div>
+              <KangurMetricCard
+                accent='slate'
+                align='center'
+                className='min-w-[110px]'
+                data-testid='multiplication-array-counter-target'
+                label='Cel'
+                padding='sm'
+                value={total}
+              />
             </div>
 
             {/* Groups grid */}

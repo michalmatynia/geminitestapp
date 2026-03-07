@@ -116,6 +116,21 @@ describe('KangurAssignmentSpotlight', () => {
 
     expect(screen.getByText('Zadanie od rodzica')).toBeInTheDocument();
     expect(screen.getByText('Powtorka dzielenia')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-assignment-spotlight-shell')).toHaveClass(
+      'glass-panel',
+      'border-white/78',
+      'bg-white/58'
+    );
+    expect(screen.getByTestId('kangur-assignment-spotlight-inner-shell')).toHaveClass(
+      'soft-card',
+      'border-white/88',
+      'bg-white/94'
+    );
+    expect(screen.getByText('Priorytet wysoki')).toHaveClass('border-amber-200', 'bg-amber-100');
+    expect(screen.getByTestId('kangur-assignment-spotlight-progress')).toHaveClass(
+      'border-amber-200',
+      'bg-amber-100'
+    );
     expect(screen.getByTestId('kangur-assignment-spotlight-divider')).toHaveClass(
       'h-px',
       'w-full',

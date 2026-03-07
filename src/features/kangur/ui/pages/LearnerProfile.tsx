@@ -35,7 +35,7 @@ export default function LearnerProfile(): React.JSX.Element {
   return (
     <KangurLearnerProfileRuntimeBoundary enabled>
       <KangurPageShell
-        tone='profile'
+        tone='profile' className='min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100'
         id='kangur-learner-profile-page'
         skipLinkTargetId='kangur-learner-profile-main'
       >
@@ -84,6 +84,7 @@ export default function LearnerProfile(): React.JSX.Element {
         />
 
         <KangurPageContainer id='kangur-learner-profile-main' className='flex flex-col gap-6'>
+          <h2 className='sr-only'>Statystyki ucznia</h2>
           <KangurLearnerProfileHeroWidget />
           <KangurLearnerProfileLevelProgressWidget />
           <KangurLearnerProfileOverviewWidget />

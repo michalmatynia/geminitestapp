@@ -77,6 +77,11 @@ describe('KangurAssignmentsList', () => {
       />
     );
 
+    expect(screen.getByTestId('kangur-assignments-list-shell')).toHaveClass(
+      'glass-panel',
+      'border-white/78',
+      'bg-white/68'
+    );
     expect(screen.getByTestId('kangur-assignments-list-card-assignment-regular')).toHaveClass(
       'soft-card',
       'border-slate-200/80'
@@ -106,6 +111,11 @@ describe('KangurAssignmentsList', () => {
       />
     );
 
+    expect(screen.getByTestId('kangur-assignments-list-shell')).toHaveClass(
+      'glass-panel',
+      'border-white/78',
+      'bg-white/58'
+    );
     expect(screen.getByTestId('kangur-assignments-list-card-assignment-compact')).toHaveClass(
       'soft-card',
       'border-slate-200/80'

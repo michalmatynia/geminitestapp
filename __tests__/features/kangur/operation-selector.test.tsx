@@ -44,11 +44,21 @@ describe('OperationSelector', () => {
       />
     );
 
+    expect(screen.getByRole('list', { name: 'Wybierz swoje wyzwanie' })).toBeInTheDocument();
+
     const divisionCard = screen.getByTestId('operation-card-division');
     const additionCard = screen.getByTestId('operation-card-addition');
 
     expect(divisionCard).toHaveClass('soft-card', 'border-amber-300');
     expect(additionCard).toHaveClass('soft-card', 'border-slate-200/80');
+    expect(within(divisionCard).getByTestId('operation-icon-division')).toHaveClass(
+      'bg-amber-100',
+      'text-amber-700'
+    );
+    expect(within(additionCard).getByTestId('operation-icon-addition')).toHaveClass(
+      'bg-emerald-100',
+      'text-emerald-700'
+    );
     expect(within(divisionCard).getByText('Zadanie od rodzica')).toBeInTheDocument();
     expect(within(divisionCard).getByText('Zadanie od rodzica')).toHaveClass(
       'border-amber-200',
@@ -60,6 +70,10 @@ describe('OperationSelector', () => {
       'bg-rose-100'
     );
     expect(within(divisionCard).getByText('40% · Praktyka: Dzielenie')).toBeInTheDocument();
+    expect(divisionCard).toHaveAttribute(
+      'aria-describedby',
+      expect.stringContaining('operation-card-status-division')
+    );
     expect(within(additionCard).queryByText('Zadanie od rodzica')).not.toBeInTheDocument();
   });
 });

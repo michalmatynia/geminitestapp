@@ -144,13 +144,13 @@ describe('queued-product-ops', () => {
     const { result } = renderHook(() => freshOps.useQueuedProductIds());
     expect(result.current.size).toBe(0);
 
-    await act(() => {
+    act(() => {
       freshOps.addQueuedProductId('product-1');
     });
 
     expect(result.current.has('product-1')).toBe(true);
 
-    await act(() => {
+    act(() => {
       freshOps.removeQueuedProductId('product-1');
     });
 

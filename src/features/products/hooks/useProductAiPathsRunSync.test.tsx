@@ -176,7 +176,7 @@ describe('useProductAiPathsRunSync', () => {
     });
 
     const channel = channels[0];
-    if (!channel || channel.name !== AI_PATH_RUN_QUEUE_CHANNEL) {
+    if (channel?.name !== AI_PATH_RUN_QUEUE_CHANNEL) {
       throw new Error('Broadcast channel listener was not initialized.');
     }
 

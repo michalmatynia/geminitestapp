@@ -14,17 +14,9 @@ const { useJobQueueStateMock, useJobQueueActionsMock } = vi.hoisted(() => ({
   useJobQueueActionsMock: vi.fn(),
 }));
 
-const { useRunHistoryActionsMock } = vi.hoisted(() => ({
-  useRunHistoryActionsMock: vi.fn(),
-}));
-
 vi.mock('@/features/ai/ai-paths/components/JobQueueContext', () => ({
   useJobQueueState: (...args: unknown[]) => useJobQueueStateMock(...args),
   useJobQueueActions: (...args: unknown[]) => useJobQueueActionsMock(...args),
-}));
-
-vi.mock('@/features/ai/ai-paths/context', () => ({
-  useRunHistoryActions: (...args: unknown[]) => useRunHistoryActionsMock(...args),
 }));
 
 import { JobQueueRunCard } from '../job-queue-run-card';
@@ -91,6 +83,8 @@ const buildContextValue = (): JobQueueContextValue =>
     isDeletingRun: () => false,
     refetchQueueData: vi.fn(),
     handleClearRuns: async () => {},
+    handleResumeRun: async () => {},
+    handleRetryRunNode: async () => {},
     handleCancelRun: async () => {},
     handleDeleteRun: async () => {},
     loadRunDetail: async () => {},
@@ -115,6 +109,8 @@ const toActionsValue = (value: JobQueueContextValue): JobQueueActionsValue => ({
   setRunToDelete: value.setRunToDelete,
   refetchQueueData: value.refetchQueueData,
   handleClearRuns: value.handleClearRuns,
+  handleResumeRun: value.handleResumeRun,
+  handleRetryRunNode: value.handleRetryRunNode,
   handleCancelRun: value.handleCancelRun,
   handleDeleteRun: value.handleDeleteRun,
   loadRunDetail: value.loadRunDetail,
@@ -140,6 +136,8 @@ const toStateValue = (value: JobQueueContextValue): JobQueueStateValue => {
     setRunToDelete: _setRunToDelete,
     refetchQueueData: _refetchQueueData,
     handleClearRuns: _handleClearRuns,
+    handleResumeRun: _handleResumeRun,
+    handleRetryRunNode: _handleRetryRunNode,
     handleCancelRun: _handleCancelRun,
     handleDeleteRun: _handleDeleteRun,
     loadRunDetail: _loadRunDetail,
@@ -151,16 +149,10 @@ const toStateValue = (value: JobQueueContextValue): JobQueueStateValue => {
 describe('JobQueueRunCard status pills', () => {
   beforeEach(() => {
     const contextValue = buildContextValue();
-    const runHistoryActions = {
-      resumeRun: vi.fn(),
-      retryRunNode: vi.fn(),
-    };
     useJobQueueStateMock.mockReset();
     useJobQueueActionsMock.mockReset();
-    useRunHistoryActionsMock.mockReset();
     useJobQueueStateMock.mockReturnValue(toStateValue(contextValue));
     useJobQueueActionsMock.mockReturnValue(toActionsValue(contextValue));
-    useRunHistoryActionsMock.mockReturnValue(runHistoryActions);
   });
 
   it('renders only dotted running indicator for running runs', () => {
@@ -178,13 +170,9 @@ describe('JobQueueRunCard status pills', () => {
   });
 
   it('retries failed history entries from the run card history panel', () => {
-    const retryRunNode = vi.fn().mockResolvedValue(undefined);
-    useRunHistoryActionsMock.mockReturnValue({
-      resumeRun: vi.fn(),
-      retryRunNode,
-    });
-
     const contextValue = buildContextValue();
+    const handleRetryRunNode = vi.fn().mockResolvedValue(undefined);
+    contextValue.handleRetryRunNode = handleRetryRunNode;
     contextValue.expandedRunIds = new Set(['run-1']);
     contextValue.runDetails = {
       'run-1': {
@@ -238,6 +226,6 @@ describe('JobQueueRunCard status pills', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Run history' }));
     fireEvent.click(screen.getByRole('button', { name: 'Retry node' }));
 
-    expect(retryRunNode).toHaveBeenCalledWith('run-1', 'node-failed');
+    expect(handleRetryRunNode).toHaveBeenCalledWith('run-1', 'node-failed');
   });
 });

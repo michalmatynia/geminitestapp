@@ -6,14 +6,14 @@ import {
   getProductListingRepository,
   getIntegrationRepository,
 } from '@/features/integrations/server';
+import type { ListingBadgesPayload, MarketplaceBadgeEntry } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { env } from '@/shared/lib/env';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
-type MarketplaceBadgeKey = 'base' | 'tradera';
-type ProductListingBadgesPayload = Record<string, Partial<Record<MarketplaceBadgeKey, string>>>;
+type MarketplaceBadgeKey = keyof MarketplaceBadgeEntry;
 const shouldLogTiming = () => env.DEBUG_API_TIMING;
 
 const buildServerTiming = (entries: Record<string, number | null | undefined>): string => {
@@ -138,7 +138,7 @@ const buildPayload = async (
     removed: 0,
   };
 
-  const byProduct = new Map<string, Partial<Record<MarketplaceBadgeKey, string>>>();
+  const byProduct = new Map<string, MarketplaceBadgeEntry>();
   const assembleStart = performance.now();
   for (const listing of listings) {
     const marketplace =
@@ -171,7 +171,7 @@ const buildPayload = async (
     timings['assemble'] = performance.now() - assembleStart;
   }
 
-  return NextResponse.json(Object.fromEntries(byProduct.entries()) as ProductListingBadgesPayload);
+  return NextResponse.json(Object.fromEntries(byProduct.entries()) as ListingBadgesPayload);
 };
 
 /**

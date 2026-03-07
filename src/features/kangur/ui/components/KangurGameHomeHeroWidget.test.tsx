@@ -43,6 +43,11 @@ describe('KangurGameHomeHeroWidget', () => {
 
     const input = screen.getByPlaceholderText('Wpisz swoje imie...');
 
+    expect(screen.getByTestId('kangur-home-hero-shell')).toHaveClass(
+      'glass-panel',
+      'border-white/78',
+      'bg-white/58'
+    );
     expect(input).toHaveClass('soft-card', 'focus:border-indigo-300');
     expect(screen.getByRole('button', { name: /zaloguj się/i })).toHaveClass(
       'kangur-cta-pill',

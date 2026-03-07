@@ -47,6 +47,7 @@ import {
   useCaseResolverViewStateContext,
 } from '../CaseResolverViewContext';
 import { CaseResolverPartySelectField } from './CaseResolverPartySelectField';
+import { CaseResolverPartyFieldRuntimeProvider } from './CaseResolverPartyFieldRuntimeContext';
 import { DocumentRelationSearchPanel } from '../../relation-search';
 import { getCaseResolverDocTooltipWithFallback } from '../../relation-search/utils/docs';
 import {
@@ -54,6 +55,7 @@ import {
   type PromptExploderTransferUiStatus,
 } from '../../hooks/prompt-exploder-transfer-lifecycle';
 import { CaseResolverHistoryEntries } from './CaseResolverHistoryEntries';
+import { CaseResolverHistoryEntriesRuntimeProvider } from './CaseResolverHistoryEntriesRuntimeContext';
 import type { EditorDetailsTab } from '@/shared/contracts/case-resolver';
 export type { EditorDetailsTab };
 
@@ -152,6 +154,22 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
   );
 
   const pendingPromptTransferId = pendingPromptExploderPayload?.transferId ?? '';
+  const historyEntriesRuntimeValue = useMemo(
+    () => ({
+      entries: editingDocumentDraft.documentHistory || [],
+      formatTimestamp: formatHistoryTimestamp,
+      onRestore: handleUseHistoryEntry,
+      isRestoreDisabled: Boolean(isEditingDocumentLocked),
+    }),
+    [editingDocumentDraft.documentHistory, handleUseHistoryEntry, isEditingDocumentLocked]
+  );
+  const partyFieldRuntimeValue = useMemo(
+    () => ({
+      options: partyOptions,
+      disabled: Boolean(isEditingDocumentLocked),
+    }),
+    [isEditingDocumentLocked, partyOptions]
+  );
 
   return (
     <div className='flex min-h-0 flex-1 flex-col gap-6 overflow-auto pr-1'>
@@ -393,26 +411,24 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
                   disabled={isEditingDocumentLocked}
                   className='bg-card/20 border-border/60'
                 />
-                <CaseResolverPartySelectField
-                  label='From'
-                  value={encodedAddresser}
-                  onValueChange={(v) =>
-                    updateEditingDocumentDraft({ addresser: decodeFilemakerPartyReference(v) })
-                  }
-                  options={partyOptions}
-                  placeholder='From...'
-                  disabled={isEditingDocumentLocked}
-                />
-                <CaseResolverPartySelectField
-                  label='To'
-                  value={encodedAddressee}
-                  onValueChange={(v) =>
-                    updateEditingDocumentDraft({ addressee: decodeFilemakerPartyReference(v) })
-                  }
-                  options={partyOptions}
-                  placeholder='To...'
-                  disabled={isEditingDocumentLocked}
-                />
+                <CaseResolverPartyFieldRuntimeProvider value={partyFieldRuntimeValue}>
+                  <CaseResolverPartySelectField
+                    label='From'
+                    value={encodedAddresser}
+                    onValueChange={(v) =>
+                      updateEditingDocumentDraft({ addresser: decodeFilemakerPartyReference(v) })
+                    }
+                    placeholder='From...'
+                  />
+                  <CaseResolverPartySelectField
+                    label='To'
+                    value={encodedAddressee}
+                    onValueChange={(v) =>
+                      updateEditingDocumentDraft({ addressee: decodeFilemakerPartyReference(v) })
+                    }
+                    placeholder='To...'
+                  />
+                </CaseResolverPartyFieldRuntimeProvider>
               </div>
 
               <DocumentWysiwygEditor
@@ -588,12 +604,9 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
           </TabsContent>
 
           <TabsContent value='revisions' className='m-0'>
-            <CaseResolverHistoryEntries
-              entries={editingDocumentDraft.documentHistory || []}
-              formatTimestamp={formatHistoryTimestamp}
-              onRestore={handleUseHistoryEntry}
-              isRestoreDisabled={!!isEditingDocumentLocked}
-            />
+            <CaseResolverHistoryEntriesRuntimeProvider value={historyEntriesRuntimeValue}>
+              <CaseResolverHistoryEntries />
+            </CaseResolverHistoryEntriesRuntimeProvider>
           </TabsContent>
         </div>
       </Tabs>

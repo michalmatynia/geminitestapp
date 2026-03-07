@@ -102,6 +102,11 @@ describe('AssignmentPanel', () => {
   it('renders dynamic mastery-driven assignments with actionable links', async () => {
     render(<AssignmentPanel basePath='/kangur' progress={progress} />);
 
+    expect(screen.getByTestId('assignment-panel-shell')).toHaveClass(
+      'glass-panel',
+      'border-slate-200/70',
+      'bg-white/88'
+    );
     expect(screen.getByText('Zadania')).toBeInTheDocument();
     expect(screen.getByText('Ukończono 0/3')).toBeInTheDocument();
     expect(screen.getByText('Ukończono 0/3')).toHaveClass('border-slate-200', 'bg-slate-100');

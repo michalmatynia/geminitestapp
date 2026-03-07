@@ -9,14 +9,19 @@ import {
   KangurAccentDot,
   KangurActivityColumn,
   KangurDivider,
+  KangurDisplayEmoji,
   KangurEmptyState,
+  KangurGlassPanel,
+  KangurGradientIconTile,
   KangurIconBadge,
+  KangurInlineFallback,
   KangurMediaFrame,
   KangurMetricCard,
   KangurMenuItem,
   KangurOptionCardButton,
   KangurProgressBar,
   KangurProse,
+  KangurResultBadge,
   KangurSelectField,
   KangurStatusChip,
   KangurSummaryPanel,
@@ -33,6 +38,19 @@ describe('Kangur shared primitives', () => {
         <KangurIconBadge accent='emerald' data-testid='kangur-icon-badge' size='sm'>
           4
         </KangurIconBadge>
+        <KangurIconBadge accent='amber' data-testid='kangur-icon-badge-3xl' size='3xl'>
+          🦘
+        </KangurIconBadge>
+        <KangurGradientIconTile
+          data-testid='kangur-gradient-icon-tile'
+          gradientClass='from-indigo-400 to-fuchsia-500'
+          size='lg'
+        >
+          📚
+        </KangurGradientIconTile>
+        <KangurDisplayEmoji data-testid='kangur-display-emoji' size='lg'>
+          🏆
+        </KangurDisplayEmoji>
         <KangurDivider accent='indigo' data-testid='kangur-divider' size='sm' />
         <KangurActivityColumn
           accent='indigo'
@@ -62,6 +80,11 @@ describe('Kangur shared primitives', () => {
           description='Nothing here yet'
           title='Empty'
         />
+        <KangurInlineFallback
+          accent='amber'
+          data-testid='kangur-inline-fallback'
+          title='Missing shared content'
+        />
         <KangurOptionCardButton
           accent='amber'
           data-testid='kangur-option'
@@ -75,10 +98,37 @@ describe('Kangur shared primitives', () => {
         <KangurSurfacePanel accent='sky' data-testid='kangur-surface-panel' fillHeight>
           Shared surface
         </KangurSurfacePanel>
+        <KangurGlassPanel data-testid='kangur-glass-panel' surface='solid' variant='elevated'>
+          Shared glass
+        </KangurGlassPanel>
+        <KangurGlassPanel data-testid='kangur-glass-panel-frost' surface='frost'>
+          Frost glass
+        </KangurGlassPanel>
+        <KangurGlassPanel data-testid='kangur-glass-panel-mist-soft' surface='mistSoft'>
+          Soft mist glass
+        </KangurGlassPanel>
+        <KangurGlassPanel data-testid='kangur-glass-panel-warm-glow' surface='warmGlow'>
+          Warm glow glass
+        </KangurGlassPanel>
+        <KangurGlassPanel data-testid='kangur-glass-panel-success-glow' surface='successGlow'>
+          Success glow glass
+        </KangurGlassPanel>
+        <KangurGlassPanel data-testid='kangur-glass-panel-play-glow' surface='playGlow'>
+          Play glow glass
+        </KangurGlassPanel>
+        <KangurGlassPanel data-testid='kangur-glass-panel-play-field' surface='playField'>
+          Play field glass
+        </KangurGlassPanel>
+        <KangurGlassPanel data-testid='kangur-glass-panel-teal-field' surface='tealField'>
+          Teal field glass
+        </KangurGlassPanel>
         <KangurMenuItem data-testid='kangur-menu-item'>Shared menu item</KangurMenuItem>
         <KangurMediaFrame accent='amber' data-testid='kangur-media-frame' mediaType='image'>
           <img alt='Example' src='/example.png' />
         </KangurMediaFrame>
+        <KangurResultBadge data-testid='kangur-result-badge' tone='success'>
+          Brawo!
+        </KangurResultBadge>
         <KangurProse
           accent='indigo'
           data-testid='kangur-prose'
@@ -107,6 +157,21 @@ describe('Kangur shared primitives', () => {
       'bg-emerald-100',
       'text-emerald-700'
     );
+    expect(screen.getByTestId('kangur-icon-badge-3xl')).toHaveClass(
+      'h-24',
+      'w-24',
+      'text-5xl',
+      'bg-amber-100',
+      'text-amber-700'
+    );
+    expect(screen.getByTestId('kangur-gradient-icon-tile')).toHaveClass(
+      'h-16',
+      'w-16',
+      'rounded-[24px]',
+      'from-indigo-400',
+      'to-fuchsia-500'
+    );
+    expect(screen.getByTestId('kangur-display-emoji')).toHaveClass('inline-flex', 'text-6xl');
     expect(screen.getByTestId('kangur-divider')).toHaveClass('h-px', 'w-12', 'bg-indigo-200');
     expect(screen.getByTestId('kangur-activity-column')).toHaveClass(
       'bg-gradient-to-t',
@@ -124,6 +189,12 @@ describe('Kangur shared primitives', () => {
       'border-dashed',
       'border-slate-200/80'
     );
+    expect(screen.getByTestId('kangur-inline-fallback')).toHaveClass(
+      'soft-card',
+      'border-dashed',
+      'border-slate-200/80',
+      'w-full'
+    );
     expect(screen.getByTestId('kangur-option')).toHaveClass('soft-card', 'border-amber-300');
     expect(screen.getByTestId('kangur-option-muted')).toHaveClass(
       'soft-card',
@@ -137,6 +208,42 @@ describe('Kangur shared primitives', () => {
       'bg-white/95',
       'flex'
     );
+    expect(screen.getByTestId('kangur-glass-panel')).toHaveClass(
+      'glass-panel',
+      'border-white/88',
+      'bg-white/94'
+    );
+    expect(screen.getByTestId('kangur-glass-panel-frost')).toHaveClass(
+      'glass-panel',
+      'border-white/75',
+      'bg-white/88'
+    );
+    expect(screen.getByTestId('kangur-glass-panel-mist-soft')).toHaveClass(
+      'glass-panel',
+      'border-white/70',
+      'bg-white/45'
+    );
+    expect(screen.getByTestId('kangur-glass-panel-warm-glow')).toHaveClass(
+      'glass-panel',
+      'border-amber-200/70'
+    );
+    expect(screen.getByTestId('kangur-glass-panel-success-glow')).toHaveClass(
+      'glass-panel',
+      'border-emerald-200/70'
+    );
+    expect(screen.getByTestId('kangur-glass-panel-play-glow')).toHaveClass(
+      'glass-panel',
+      'border-indigo-200/70'
+    );
+    expect(screen.getByTestId('kangur-glass-panel-play-field')).toHaveClass(
+      'glass-panel',
+      'border-white/80'
+    );
+    expect(screen.getByTestId('kangur-glass-panel-teal-field')).toHaveClass(
+      'glass-panel',
+      'border-white/75',
+      'bg-white/86'
+    );
     expect(screen.getByTestId('kangur-menu-item')).toHaveClass(
       'rounded-2xl',
       'text-sm',
@@ -146,6 +253,11 @@ describe('Kangur shared primitives', () => {
       'soft-card',
       'border-amber-100',
       'from-amber-50'
+    );
+    expect(screen.getByTestId('kangur-result-badge')).toHaveClass(
+      'border-emerald-200',
+      'bg-emerald-100',
+      'text-emerald-700'
     );
     expect(screen.getByTestId('kangur-prose')).toHaveClass(
       '[&_a]:text-indigo-600',

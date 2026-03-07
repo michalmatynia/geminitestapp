@@ -35,6 +35,8 @@ import { useDocumentRelationSearchRuntime } from '@/features/case-resolver/relat
 import { useRelationTreeBrowserRuntime } from '@/features/case-resolver/relation-search/components/RelationTreeBrowserRuntimeContext';
 import { useRelationTreeNodeRuntimeContext } from '@/features/case-resolver/relation-search/components/RelationTreeNodeRuntimeContext';
 import { useDocumentRelationSearchUiContext } from '@/features/case-resolver/relation-search/components/DocumentRelationSearchUiContext';
+import { useCaseResolverHistoryEntriesRuntime } from '@/features/case-resolver/components/page/CaseResolverHistoryEntriesRuntimeContext';
+import { usePromptExploderCaptureMappingModalRuntime } from '@/features/case-resolver/components/PromptExploderCaptureMappingModalRuntimeContext';
 
 function CaseListNodeRuntimeConsumer(): React.JSX.Element {
   useCaseListNodeRuntimeContext();
@@ -73,6 +75,16 @@ function RelationTreeNodeRuntimeConsumer(): React.JSX.Element {
 
 function RelationTreeBrowserRuntimeConsumer(): React.JSX.Element {
   useRelationTreeBrowserRuntime();
+  return <div>ok</div>;
+}
+
+function CaseResolverHistoryEntriesRuntimeConsumer(): React.JSX.Element {
+  useCaseResolverHistoryEntriesRuntime();
+  return <div>ok</div>;
+}
+
+function PromptExploderCaptureMappingModalRuntimeConsumer(): React.JSX.Element {
+  usePromptExploderCaptureMappingModalRuntime();
   return <div>ok</div>;
 }
 
@@ -186,6 +198,18 @@ describe('prop-drilling runtime contexts', () => {
   it('throws when RelationTreeBrowserRuntime context is missing', () => {
     expect(() => render(<RelationTreeBrowserRuntimeConsumer />)).toThrow(
       'useRelationTreeBrowserRuntime must be used within RelationTreeBrowserRuntimeProvider'
+    );
+  });
+
+  it('throws when CaseResolverHistoryEntriesRuntime context is missing', () => {
+    expect(() => render(<CaseResolverHistoryEntriesRuntimeConsumer />)).toThrow(
+      'useCaseResolverHistoryEntriesRuntime must be used within CaseResolverHistoryEntriesRuntimeProvider'
+    );
+  });
+
+  it('throws when PromptExploderCaptureMappingModalRuntime context is missing', () => {
+    expect(() => render(<PromptExploderCaptureMappingModalRuntimeConsumer />)).toThrow(
+      'usePromptExploderCaptureMappingModalRuntime must be used within PromptExploderCaptureMappingModalRuntimeProvider'
     );
   });
 

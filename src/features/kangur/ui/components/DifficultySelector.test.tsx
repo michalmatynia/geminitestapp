@@ -35,11 +35,23 @@ describe('DifficultySelector', () => {
 
     render(<DifficultySelector onSelect={onSelect} selected='medium' />);
 
+    expect(screen.getByRole('group', { name: 'Wybierz poziom trudnosci' })).toBeInTheDocument();
+
     const easyOption = screen.getByTestId('difficulty-option-easy');
     const mediumOption = screen.getByTestId('difficulty-option-medium');
 
     expect(easyOption).toHaveClass('soft-card');
     expect(mediumOption).toHaveClass('soft-card', 'border-amber-300');
+    expect(easyOption).toHaveAttribute('aria-pressed', 'false');
+    expect(mediumOption).toHaveAttribute('aria-pressed', 'true');
+    expect(within(easyOption).getByTestId('difficulty-icon-easy')).toHaveClass(
+      'bg-emerald-100',
+      'text-emerald-700'
+    );
+    expect(within(mediumOption).getByTestId('difficulty-icon-medium')).toHaveClass(
+      'bg-amber-100',
+      'text-amber-700'
+    );
     expect(within(easyOption).getByText(/s$/)).toHaveClass('border-emerald-200', 'bg-emerald-100');
     expect(within(mediumOption).getByText(/s$/)).toHaveClass('border-amber-200', 'bg-amber-100');
 

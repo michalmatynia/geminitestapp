@@ -5,6 +5,7 @@ import Link from 'next/link';
 import {
   KangurActivityColumn,
   KangurButton,
+  KangurEmptyState,
   KangurPanel,
   KangurProgressBar,
 } from '@/features/kangur/ui/design/primitives';
@@ -50,7 +51,14 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
         </div>
         <div className='flex flex-col gap-3'>
           {snapshot.operationPerformance.length === 0 ? (
-            <div className='py-6 text-center text-sm text-gray-400'>Brak danych o operacjach.</div>
+            <KangurEmptyState
+              accent='slate'
+              align='center'
+              data-testid='learner-profile-operation-empty'
+              description='Rozegraj kilka zadan, aby zobaczyc skutecznosc dla poszczegolnych operacji.'
+              padding='md'
+              title='Brak danych o operacjach.'
+            />
           ) : (
             snapshot.operationPerformance.map((item) => (
               <div key={item.operation}>

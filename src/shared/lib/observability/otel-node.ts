@@ -1,12 +1,24 @@
-import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
-import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http';
-import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
-import { resourceFromAttributes } from '@opentelemetry/resources';
-import { NodeSDK } from '@opentelemetry/sdk-node';
-import { BatchLogRecordProcessor } from '@opentelemetry/sdk-logs';
+type NodeSdkConstructor = typeof import('@opentelemetry/sdk-node').NodeSDK;
+type NodeSdkInstance = InstanceType<NodeSdkConstructor>;
+type BatchLogRecordProcessorConstructor =
+  typeof import('@opentelemetry/sdk-logs').BatchLogRecordProcessor;
+type OTLPLogExporterConstructor =
+  typeof import('@opentelemetry/exporter-logs-otlp-http').OTLPLogExporter;
+type OTLPTraceExporterConstructor =
+  typeof import('@opentelemetry/exporter-trace-otlp-http').OTLPTraceExporter;
+
+type OTelRuntimeModules = {
+  BatchLogRecordProcessor: BatchLogRecordProcessorConstructor;
+  getNodeAutoInstrumentations:
+    typeof import('@opentelemetry/auto-instrumentations-node').getNodeAutoInstrumentations;
+  NodeSDK: NodeSdkConstructor;
+  OTLPLogExporter: OTLPLogExporterConstructor;
+  OTLPTraceExporter: OTLPTraceExporterConstructor;
+  resourceFromAttributes: typeof import('@opentelemetry/resources').resourceFromAttributes;
+};
 
 type OTelGlobal = typeof globalThis & {
-  __otelNodeSdk?: NodeSDK | undefined;
+  __otelNodeSdk?: NodeSdkInstance | undefined;
   __otelNodeInitialized?: boolean | undefined;
   __otelNodeShutdownHooksRegistered?: boolean | undefined;
   __otelNodeShuttingDown?: boolean | undefined;
@@ -67,8 +79,8 @@ const parseOtlpHeaders = (raw: string | null): Record<string, string> | undefine
 const hasExplicitOtelEndpoint = (): boolean =>
   Boolean(
     readEnvTrimmed('OTEL_EXPORTER_OTLP_ENDPOINT') ||
-    readEnvTrimmed('OTEL_EXPORTER_OTLP_TRACES_ENDPOINT') ||
-    readEnvTrimmed('OTEL_EXPORTER_OTLP_LOGS_ENDPOINT')
+      readEnvTrimmed('OTEL_EXPORTER_OTLP_TRACES_ENDPOINT') ||
+      readEnvTrimmed('OTEL_EXPORTER_OTLP_LOGS_ENDPOINT')
   );
 
 const shouldEnableNodeOtel = (): boolean =>
@@ -88,7 +100,37 @@ const resolveLogsEndpoint = (): string | null => {
   return logsEndpoint ? normalizeSignalEndpoint(logsEndpoint, LOG_SIGNAL_PATH) : null;
 };
 
-const buildTraceExporter = (headers: Record<string, string> | undefined): OTLPTraceExporter => {
+const loadOtelRuntimeModules = async (): Promise<OTelRuntimeModules> => {
+  const [
+    autoInstrumentationsModule,
+    logsExporterModule,
+    tracesExporterModule,
+    resourcesModule,
+    sdkNodeModule,
+    sdkLogsModule,
+  ] = await Promise.all([
+    import('@opentelemetry/auto-instrumentations-node'),
+    import('@opentelemetry/exporter-logs-otlp-http'),
+    import('@opentelemetry/exporter-trace-otlp-http'),
+    import('@opentelemetry/resources'),
+    import('@opentelemetry/sdk-node'),
+    import('@opentelemetry/sdk-logs'),
+  ]);
+
+  return {
+    BatchLogRecordProcessor: sdkLogsModule.BatchLogRecordProcessor,
+    getNodeAutoInstrumentations: autoInstrumentationsModule.getNodeAutoInstrumentations,
+    NodeSDK: sdkNodeModule.NodeSDK,
+    OTLPLogExporter: logsExporterModule.OTLPLogExporter,
+    OTLPTraceExporter: tracesExporterModule.OTLPTraceExporter,
+    resourceFromAttributes: resourcesModule.resourceFromAttributes,
+  };
+};
+
+const buildTraceExporter = (
+  OTLPTraceExporter: OTLPTraceExporterConstructor,
+  headers: Record<string, string> | undefined
+) => {
   const tracesEndpoint = resolveTraceEndpoint();
 
   return new OTLPTraceExporter({
@@ -97,7 +139,10 @@ const buildTraceExporter = (headers: Record<string, string> | undefined): OTLPTr
   });
 };
 
-const buildLogExporter = (headers: Record<string, string> | undefined): OTLPLogExporter => {
+const buildLogExporter = (
+  OTLPLogExporter: OTLPLogExporterConstructor,
+  headers: Record<string, string> | undefined
+) => {
   const logsEndpoint = resolveLogsEndpoint();
 
   return new OTLPLogExporter({
@@ -129,7 +174,7 @@ export const getNodeOtelRuntimeStatus = (): NodeOtelRuntimeStatus => {
   };
 };
 
-const registerShutdownHooks = (globalScope: OTelGlobal, sdk: NodeSDK): void => {
+const registerShutdownHooks = (globalScope: OTelGlobal, sdk: NodeSdkInstance): void => {
   if (globalScope.__otelNodeShutdownHooksRegistered) return;
   globalScope.__otelNodeShutdownHooksRegistered = true;
 
@@ -169,6 +214,15 @@ export const initializeNodeOtel = async (): Promise<void> => {
   }
 
   try {
+    const {
+      BatchLogRecordProcessor,
+      getNodeAutoInstrumentations,
+      NodeSDK,
+      OTLPLogExporter,
+      OTLPTraceExporter,
+      resourceFromAttributes,
+    } = await loadOtelRuntimeModules();
+
     const headers = parseOtlpHeaders(readEnvTrimmed('OTEL_EXPORTER_OTLP_HEADERS'));
     const serviceName = readEnvTrimmed('OTEL_SERVICE_NAME') || OTEL_SERVICE_NAME_FALLBACK;
     const serviceVersion = readEnvTrimmed('OTEL_SERVICE_VERSION');
@@ -179,8 +233,10 @@ export const initializeNodeOtel = async (): Promise<void> => {
     const sdk = new NodeSDK({
       serviceName,
       ...(resource ? { resource } : {}),
-      traceExporter: buildTraceExporter(headers),
-      logRecordProcessors: [new BatchLogRecordProcessor(buildLogExporter(headers))],
+      traceExporter: buildTraceExporter(OTLPTraceExporter, headers),
+      logRecordProcessors: [
+        new BatchLogRecordProcessor(buildLogExporter(OTLPLogExporter, headers)),
+      ],
       instrumentations: [getNodeAutoInstrumentations()],
     });
 

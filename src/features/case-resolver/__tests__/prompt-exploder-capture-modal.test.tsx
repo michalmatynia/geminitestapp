@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { PromptExploderCaptureMappingModal } from '@/features/case-resolver/components/PromptExploderCaptureMappingModal';
+import { PromptExploderCaptureMappingModalRuntimeProvider } from '@/features/case-resolver/components/PromptExploderCaptureMappingModalRuntimeContext';
 import type { CaseResolverCaptureProposalState } from '@/features/case-resolver-capture/proposals';
 
 const buildProposalDraft = (): CaseResolverCaptureProposalState =>
@@ -73,6 +74,37 @@ describe('PromptExploderCaptureMappingModal', () => {
         resolveMatchedPartyLabel={(): string => 'None'}
         diagnostics={null}
       />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Apply Mapping' }));
+
+    expect(onApply).toHaveBeenCalledTimes(1);
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('renders from PromptExploderCaptureMappingModalRuntimeProvider when explicit props are omitted', () => {
+    const onClose = vi.fn();
+    const onApply = vi.fn();
+
+    render(
+      <PromptExploderCaptureMappingModalRuntimeProvider
+        value={{
+          open: true,
+          draft: buildProposalDraft(),
+          applying: false,
+          targetFileName: 'Test File',
+          partyOptions: [{ value: 'none', label: 'None' }],
+          onClose,
+          onApply,
+          onUpdateAction: vi.fn(),
+          onUpdateReference: vi.fn(),
+          onUpdateDateAction: vi.fn(),
+          resolveMatchedPartyLabel: (): string => 'None',
+          diagnostics: null,
+        }}
+      >
+        <PromptExploderCaptureMappingModal />
+      </PromptExploderCaptureMappingModalRuntimeProvider>
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Apply Mapping' }));

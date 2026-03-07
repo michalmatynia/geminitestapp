@@ -1,4 +1,5 @@
 import {
+  KangurDisplayEmoji,
   KangurMetricCard,
   KangurPanel,
   KangurProgressBar,
@@ -54,7 +55,7 @@ export default function ProgressOverview({ progress }: ProgressOverviewProps): R
   return (
     <div className='flex flex-col gap-5'>
       <KangurPanel className='flex items-center gap-4' padding='lg' variant='soft'>
-        <div className='text-5xl'>🎖️</div>
+        <KangurDisplayEmoji size='md'>🎖️</KangurDisplayEmoji>
         <div className='flex-1'>
           <p className={`font-extrabold text-xl ${currentLevel.color}`}>{currentLevel.title}</p>
           <p className='text-sm text-gray-400 mb-2'>

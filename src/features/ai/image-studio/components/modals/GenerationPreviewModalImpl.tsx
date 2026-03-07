@@ -2,31 +2,31 @@
 
 import React from 'react';
 
-import type { EntityModalProps } from '@/shared/contracts/ui';
 import { StatusBadge, MetadataItem, FormActions } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 import { formatDateTime, formatFileSize } from '@/shared/utils';
 
 import { InlineImagePreviewCanvas } from '../studio-modals/InlineImagePreviewCanvas';
 import { useStudioInlineEdit } from '../studio-modals/StudioInlineEditContext';
-import type { LinkedGeneratedVariantViewModel as LinkedGeneratedVariant } from '../studio-modals/slot-inline-edit-tab-types';
 
-export function GenerationPreviewModal(
-  props: Pick<EntityModalProps<LinkedGeneratedVariant>, 'isOpen' | 'onClose'>
-): React.JSX.Element {
-  const { isOpen, onClose } = props;
-
+export function GenerationPreviewModal(): React.JSX.Element {
   const {
     selectedGenerationPreview,
     selectedGenerationModalDimensions,
     slotUpdateBusy,
     onApplyLinkedVariantToCard,
     setGenerationModalPreviewNaturalSize,
+    generationPreviewModalOpen,
+    setGenerationPreviewModalOpen,
   } = useStudioInlineEdit();
+
+  const onClose = React.useCallback((): void => {
+    setGenerationPreviewModalOpen(false);
+  }, [setGenerationPreviewModalOpen]);
 
   return (
     <DetailModal
-      isOpen={isOpen}
+      isOpen={generationPreviewModalOpen}
       onClose={onClose}
       title='Generation Preview'
       subtitle={selectedGenerationPreview?.output.filename ?? ''}

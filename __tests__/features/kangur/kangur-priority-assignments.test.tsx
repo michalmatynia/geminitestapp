@@ -20,6 +20,25 @@ describe('KangurPriorityAssignments', () => {
     vi.clearAllMocks();
   });
 
+  it('uses the shared neutral glass panel while loading', () => {
+    useKangurAssignmentsMock.mockReturnValue({
+      assignments: [],
+      isLoading: true,
+      error: null,
+      createAssignment: vi.fn(),
+      updateAssignment: vi.fn(),
+      refresh: vi.fn(),
+    });
+
+    render(<KangurPriorityAssignments basePath='/kangur' />);
+
+    expect(screen.getByTestId('kangur-priority-assignments-loading')).toHaveClass(
+      'glass-panel',
+      'border-slate-200/70',
+      'bg-white/88'
+    );
+  });
+
   it('shows only active priority tasks for the learner', () => {
     useKangurAssignmentsMock.mockReturnValue({
       assignments: [
@@ -94,5 +113,25 @@ describe('KangurPriorityAssignments', () => {
       'href',
       '/kangur/lessons?focus=division'
     );
+  });
+
+  it('uses the shared mist glass panel for the empty state', () => {
+    useKangurAssignmentsMock.mockReturnValue({
+      assignments: [],
+      isLoading: false,
+      error: null,
+      createAssignment: vi.fn(),
+      updateAssignment: vi.fn(),
+      refresh: vi.fn(),
+    });
+
+    render(<KangurPriorityAssignments basePath='/kangur' />);
+
+    expect(screen.getByTestId('kangur-priority-assignments-empty')).toHaveClass(
+      'glass-panel',
+      'border-white/78',
+      'bg-white/58'
+    );
+    expect(screen.getByText('Brak aktywnych zadan od rodzica.')).toBeInTheDocument();
   });
 });

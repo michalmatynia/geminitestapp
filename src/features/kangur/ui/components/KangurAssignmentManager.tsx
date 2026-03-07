@@ -13,9 +13,9 @@ import KangurAssignmentsList from '@/features/kangur/ui/components/KangurAssignm
 import {
   KangurButton,
   KangurEmptyState,
+  KangurGlassPanel,
   KangurInfoCard,
   KangurMetricCard,
-  KangurPanel,
   KangurStatusChip,
   KangurSummaryPanel,
   KangurTextField,
@@ -265,7 +265,12 @@ export function KangurAssignmentManager({
 
   return (
     <div className='flex flex-col gap-5'>
-      <KangurPanel className='border-slate-200/70 bg-white/88' padding='lg' variant='soft'>
+      <KangurGlassPanel
+        data-testid='assignment-manager-create-shell'
+        padding='lg'
+        surface='neutral'
+        variant='soft'
+      >
         <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
           <div className='max-w-2xl'>
             <KangurStatusChip accent='indigo' className='text-[11px] uppercase tracking-[0.18em]'>
@@ -429,9 +434,14 @@ export function KangurAssignmentManager({
             padding='lg'
           />
         ) : null}
-      </KangurPanel>
+      </KangurGlassPanel>
 
-      <KangurPanel className='border-slate-200/70 bg-white/88' padding='lg' variant='soft'>
+      <KangurGlassPanel
+        data-testid='assignment-manager-tracking-shell'
+        padding='lg'
+        surface='neutral'
+        variant='soft'
+      >
         <div className='flex flex-col gap-1'>
           <KangurStatusChip
             accent='slate'
@@ -491,7 +501,8 @@ export function KangurAssignmentManager({
             <KangurEmptyState
               accent='emerald'
               align='left'
-              className='mt-4 bg-white/80'
+              className='mt-4'
+              data-testid='assignment-manager-attention-empty'
               description='Brak zadań wymagających dodatkowej reakcji.'
               padding='md'
             />
@@ -533,7 +544,7 @@ export function KangurAssignmentManager({
             </div>
           )}
         </KangurSummaryPanel>
-      </KangurPanel>
+      </KangurGlassPanel>
 
       <KangurAssignmentsList
         assignments={activeAssignments}

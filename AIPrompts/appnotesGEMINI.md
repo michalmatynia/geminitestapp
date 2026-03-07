@@ -41,6 +41,7 @@ pursue project-wide standardization
 apply the standardized mutation factories
 Develop further robust Tanstack factories for different requests connect them to centralised logging system
 migrate products/image-studio/integrations hooks to v2 factories behind flags.
+bump application versioning on all features
 
 VALIDATION
 

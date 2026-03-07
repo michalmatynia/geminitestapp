@@ -24,6 +24,7 @@ import {
 } from '../blocks/MiscellaneousBlocks';
 import { Model3DBlock } from '../blocks/Model3DBlock';
 import { ProgressBlock } from '../blocks/ProgressBlock';
+import { RepeaterBlock } from '../blocks/RepeaterBlock';
 import { RichTextBlock } from '../blocks/RichTextBlock';
 import { CssAnimationWrapper } from '../CssAnimationWrapper';
 import { GsapAnimationWrapper } from '../GsapAnimationWrapper';
@@ -102,6 +103,8 @@ function BlockContent(): React.ReactNode {
       return <InputBlock />;
     case 'Progress':
       return <ProgressBlock />;
+    case 'Repeater':
+      return <RepeaterBlock />;
     case 'Model3D':
       return <Model3DBlock />;
     case 'VideoEmbed':

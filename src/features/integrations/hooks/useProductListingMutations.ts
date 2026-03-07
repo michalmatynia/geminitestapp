@@ -4,6 +4,8 @@ import { useQueryClient } from '@tanstack/react-query';
 
 import { invalidateProducts } from '@/features/products/hooks/productCache';
 import type {
+  ListingBadgesPayload,
+  MarketplaceBadgeEntry,
   ProductListingWithDetails,
   ProductJob,
   ExportToBaseVariables,
@@ -24,11 +26,6 @@ import {
 } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-type MarketplaceBadgeEntry = {
-  base?: string;
-  tradera?: string;
-};
-type ListingBadgesPayload = Record<string, MarketplaceBadgeEntry>;
 type GenericExportToBaseVariables = ExportToBaseVariables & {
   productId: string;
   requestId?: string;

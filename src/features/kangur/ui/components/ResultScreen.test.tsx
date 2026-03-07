@@ -21,7 +21,14 @@ describe('ResultScreen', () => {
       />
     );
 
+    expect(screen.getByRole('heading', { name: 'Swietna robota, Maja!' })).toBeInTheDocument();
+    expect(screen.getByText('Dodawanie')).toBeInTheDocument();
+    expect(screen.getByTestId('result-screen-emoji')).toHaveClass('inline-flex', 'text-6xl');
     expect(screen.getByTestId('result-screen-progress-bar')).toHaveAttribute('aria-valuenow', '75');
+    expect(screen.getByTestId('result-screen-progress-bar')).toHaveAttribute(
+      'aria-valuetext',
+      '75% poprawnych odpowiedzi'
+    );
     expect(screen.getByTestId('result-screen-progress-bar')).toHaveClass(
       'rounded-full',
       'bg-slate-100/95'

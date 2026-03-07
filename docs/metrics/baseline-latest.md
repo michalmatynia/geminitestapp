@@ -1,23 +1,23 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-07T08:20:20.912Z
+Generated at: 2026-03-07T10:03:01.659Z
 
 ## Snapshot
 
-- Source files: 4787
-- Source lines: 774204
-- use client files: 1377
-- Files >= 1000 LOC: 3
-- Files >= 1500 LOC: 0
-- Largest file: `src/features/kangur/cms-builder/project.ts` (1099 LOC)
+- Source files: 4818
+- Source lines: 782115
+- use client files: 1392
+- Files >= 1000 LOC: 5
+- Files >= 1500 LOC: 1
+- Largest file: `src/features/kangur/cms-builder/project.ts` (2855 LOC)
 - API routes: 324
-- API delegated server routes: 13
-- API routes without apiHandler/delegation: 0
+- API delegated server routes: 4
+- API routes without apiHandler/delegation: 9
 - API explicit cache policy coverage: 324/324 (100.0%)
 - Cross-feature dependency pairs: 72
 - Shared -> features imports: 11
 - setInterval occurrences: 22
-- Prop-drilling chains (depth >= 3): 1
+- Prop-drilling chains (depth >= 3): 4
 - Prop-drilling chains (depth >= 4): 0
 
 ## Top API Hotspots (by LOC)
@@ -47,7 +47,7 @@ Generated at: 2026-03-07T08:20:20.912Z
 | `cms -> kangur` | 49 |
 | `kangur -> cms` | 26 |
 | `cms -> gsap` | 19 |
-| `case-resolver -> case-resolver-capture` | 16 |
+| `case-resolver -> case-resolver-capture` | 18 |
 | `case-resolver -> foldertree` | 15 |
 | `case-resolver -> filemaker` | 13 |
 | `drafter -> products` | 13 |
@@ -64,7 +64,9 @@ Generated at: 2026-03-07T08:20:20.912Z
 
 | File | LOC |
 | --- | ---: |
-| `src/features/kangur/cms-builder/project.ts` | 1099 |
+| `src/features/kangur/cms-builder/project.ts` | 2855 |
+| `src/features/kangur/ui/design/primitives.tsx` | 1170 |
+| `src/features/cms/components/page-builder/registry/block-definitions-content.ts` | 1138 |
 | `src/features/ai/ai-paths/components/__tests__/canvas-connection-preview.test.tsx` | 1055 |
 | `src/features/ai/ai-paths/components/__tests__/run-trace-utils.test.ts` | 1003 |
 | `src/shared/contracts/ai-paths.ts` | 993 |
@@ -73,14 +75,12 @@ Generated at: 2026-03-07T08:20:20.912Z
 | `src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts` | 969 |
 | `src/features/ai/ai-paths/components/JobQueueContext.tsx` | 968 |
 | `src/features/kangur/admin/KangurLessonDocumentEditor.tsx` | 962 |
-| `src/features/cms/components/page-builder/registry/block-definitions-content.ts` | 957 |
 | `src/features/cms/components/page-builder/registry/block-definitions-media.ts` | 957 |
+| `src/features/kangur/ui/components/ClockTrainingGame.tsx` | 957 |
 | `src/shared/contracts/ai-paths-core/nodes.ts` | 953 |
-| `src/features/kangur/ui/components/ClockTrainingGame.tsx` | 938 |
 | `src/shared/lib/ai-paths/core/utils/__tests__/graph-compile.test.ts` | 929 |
 | `src/app/api/image-studio/slots/[slotId]/autoscale/handler.test.ts` | 927 |
-| `src/app/api/image-studio/slots/[slotId]/crop/handler.ts` | 926 |
+| `src/app/api/image-studio/slots/[slotId]/crop/handler.ts` | 923 |
 | `src/features/notesapp/context/NoteFormContext.tsx` | 918 |
+| `src/features/cms/components/page-builder/PreviewBlock.tsx` | 912 |
 | `src/shared/lib/documentation/catalogs/validator-docs.ts` | 909 |
-| `src/features/ai/ai-paths/components/run-history-panel.tsx` | 902 |
-| `src/features/case-resolver-capture/__tests__/proposals.test.ts` | 901 |

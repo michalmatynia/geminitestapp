@@ -5,7 +5,7 @@ import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssign
 import { selectKangurPriorityAssignments } from '@/features/kangur/ui/services/delegated-assignments';
 import {
   KangurEmptyState,
-  KangurPanel,
+  KangurGlassPanel,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
 
@@ -45,33 +45,48 @@ export function KangurPriorityAssignments({
 
   if (isLoading) {
     return (
-      <KangurPanel className='border-slate-200/70 bg-white/88' padding='lg' variant='soft'>
+      <KangurGlassPanel
+        data-testid='kangur-priority-assignments-loading'
+        padding='lg'
+        surface='neutral'
+        variant='soft'
+      >
         <KangurEmptyState
           accent='slate'
           className='text-sm'
           description='Ładowanie priorytetowych zadań...'
           padding='lg'
         />
-      </KangurPanel>
+      </KangurGlassPanel>
     );
   }
 
   if (error) {
     return (
-      <KangurPanel className='border-rose-200/70 bg-white/88' padding='lg' variant='soft'>
+      <KangurGlassPanel
+        data-testid='kangur-priority-assignments-error'
+        padding='lg'
+        surface='rose'
+        variant='soft'
+      >
         <KangurSummaryPanel
           accent='rose'
           description={error}
           padding='lg'
           tone='accent'
         />
-      </KangurPanel>
+      </KangurGlassPanel>
     );
   }
 
   if (visibleAssignments.length === 0) {
     return (
-      <KangurPanel className='border-white/78 bg-white/58' padding='lg' variant='soft'>
+      <KangurGlassPanel
+        data-testid='kangur-priority-assignments-empty'
+        padding='lg'
+        surface='mist'
+        variant='soft'
+      >
         <div className='mb-5 flex items-center justify-between gap-3'>
           <div className='text-2xl font-extrabold tracking-tight text-[#7a86b0]'>
             {title ?? PRIORITY_ASSIGNMENTS_TITLE}
@@ -84,7 +99,7 @@ export function KangurPriorityAssignments({
           description={emptyLabel ?? PRIORITY_ASSIGNMENTS_EMPTY_DESCRIPTION}
           padding='lg'
         />
-      </KangurPanel>
+      </KangurGlassPanel>
     );
   }
 

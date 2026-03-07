@@ -5,6 +5,11 @@ import NextImage from 'next/image';
 import React from 'react';
 
 import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
+import {
+  CmsRuntimeScopeProvider,
+  resolveCmsRuntimeCollection,
+  useOptionalCmsRuntime,
+} from '@/features/cms/components/frontend/CmsRuntimeContext';
 import type { PreviewBlockItemProps, PreviewBlockProps } from '@/shared/contracts/cms';
 import { Card } from '@/shared/ui';
 
@@ -16,6 +21,12 @@ import { getSectionStyles, getTextAlign } from '../../frontend/theme-styles';
 import type { BlockInstance } from '../../../types/page-builder';
 
 const CONTAINED_BLOCK_CONTEXT_VALUE = { contained: true };
+
+const resolvePositiveNumber = (value: unknown, fallback: number): number =>
+  typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : fallback;
+
+const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
 
 // ---------------------------------------------------------------------------
 // PreviewBlockItem is needed as a dependency - import it lazily to avoid circular deps
@@ -243,6 +254,114 @@ export function PreviewBlockSectionBlock({
           </BlockContextProvider>
         </div>
       )}
+    </div>
+  );
+}
+
+export function PreviewRepeaterBlock({
+  block,
+  stretch = false,
+}: PreviewBlockProps): React.ReactNode {
+  const { stretch: contextStretch } = useBlockContext();
+  const resolvedStretch = stretch ?? contextStretch ?? false;
+  const { inspectorSettings } = usePreviewEditorState();
+  const runtime = useOptionalCmsRuntime();
+  const showEditorChrome = inspectorSettings?.showEditorChrome ?? false;
+  const collectionSource = block.settings['collectionSource'];
+  const collectionPath = block.settings['collectionPath'];
+  const items = React.useMemo(
+    () => resolveCmsRuntimeCollection(runtime, collectionSource, collectionPath),
+    [collectionPath, collectionSource, runtime]
+  );
+  const itemLimit = resolvePositiveNumber(block.settings['itemLimit'], 0);
+  const visibleItems = itemLimit > 0 ? items.slice(0, itemLimit) : items;
+  const itemsGap = resolvePositiveNumber(block.settings['itemsGap'], 16);
+  const listDirection = block.settings['listLayoutDirection'] === 'row' ? 'row' : 'column';
+  const listWrap = block.settings['listWrap'] === 'nowrap' ? 'nowrap' : 'wrap';
+  const listJustifyContent =
+    resolveJustifyContent(block.settings['listJustifyContent']) ?? 'flex-start';
+  const listAlignItems = resolveAlignItems(block.settings['listAlignItems']) ?? 'stretch';
+  const itemGap = resolvePositiveNumber(block.settings['itemGap'], 12);
+  const itemDirection = block.settings['itemLayoutDirection'] === 'row' ? 'row' : 'column';
+  const itemWrap = block.settings['itemWrap'] === 'nowrap' ? 'nowrap' : 'wrap';
+  const justifyContent = resolveJustifyContent(block.settings['itemJustifyContent']) ?? 'flex-start';
+  const alignItems = resolveAlignItems(block.settings['itemAlignItems']) ?? 'stretch';
+  const listWrapperClass =
+    listDirection === 'row'
+      ? listWrap === 'nowrap'
+        ? 'flex flex-row flex-nowrap'
+        : 'flex flex-row flex-wrap'
+      : 'flex flex-col';
+  const itemWrapperClass =
+    itemDirection === 'row'
+      ? itemWrap === 'nowrap'
+        ? 'flex flex-row flex-nowrap'
+        : 'flex flex-row flex-wrap'
+      : 'flex flex-col';
+  const childBlockContextValue = React.useMemo(
+    () => ({ contained: true, stretch: resolvedStretch && (block.blocks?.length ?? 0) === 1 }),
+    [block.blocks?.length, resolvedStretch]
+  );
+  const emptyMessage =
+    typeof block.settings['emptyMessage'] === 'string' ? block.settings['emptyMessage'].trim() : '';
+
+  if (
+    (typeof collectionSource !== 'string' || collectionSource.trim().length === 0) &&
+    showEditorChrome
+  ) {
+    return (
+      <Card
+        variant='subtle-compact'
+        padding='sm'
+        className='border-dashed border-border/40 bg-card/20 text-[11px] text-gray-500'
+      >
+        Connect repeater to a collection.
+      </Card>
+    );
+  }
+
+  if (visibleItems.length === 0) {
+    if (!showEditorChrome && !emptyMessage) {
+      return null;
+    }
+
+    return (
+      <Card
+        variant='subtle-compact'
+        padding='sm'
+        className='border-dashed border-border/40 bg-card/20 text-[11px] text-gray-500'
+      >
+        {emptyMessage || 'No items in collection.'}
+      </Card>
+    );
+  }
+
+  return (
+    <div
+      className={`${listWrapperClass} ${resolvedStretch ? 'h-full' : ''}`.trim()}
+      style={{ gap: `${itemsGap}px`, justifyContent: listJustifyContent, alignItems: listAlignItems }}
+    >
+      {visibleItems.map((item: unknown, index: number) => {
+        const itemKey =
+          isObjectRecord(item) && typeof item['id'] === 'string'
+            ? item['id']
+            : `${block.id}-preview-item-${index}`;
+
+        return (
+          <CmsRuntimeScopeProvider key={itemKey} sources={{ item, itemIndex: index }}>
+            <div
+              className={itemWrapperClass}
+              style={{ gap: `${itemGap}px`, justifyContent, alignItems }}
+            >
+              <BlockContextProvider value={childBlockContextValue}>
+                {(block.blocks ?? []).map((child: BlockInstance) => (
+                  <PreviewBlockItemProxy key={child.id} block={child} />
+                ))}
+              </BlockContextProvider>
+            </div>
+          </CmsRuntimeScopeProvider>
+        );
+      })}
     </div>
   );
 }

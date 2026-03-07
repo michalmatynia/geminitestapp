@@ -2,6 +2,10 @@ import 'server-only';
 
 import fs from 'fs/promises';
 
+import type {
+  ImageStudioDeleteVariantMode,
+  ImageStudioDeleteVariantResponse,
+} from '@/shared/contracts/image-studio';
 import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
 import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
@@ -24,17 +28,9 @@ type DeleteImageStudioVariantInput = {
   sourceSlotId?: string | null;
 };
 
-export type DeleteImageStudioVariantMode = 'slot_cascade' | 'asset_only' | 'noop';
+export type DeleteImageStudioVariantMode = ImageStudioDeleteVariantMode;
 
-export type DeleteImageStudioVariantResult = {
-  ok: true;
-  modeUsed: DeleteImageStudioVariantMode;
-  matchedSlotIds: string[];
-  deletedSlotIds: string[];
-  deletedFileIds: string[];
-  deletedFilepaths: string[];
-  warnings: string[];
-};
+export type DeleteImageStudioVariantResult = ImageStudioDeleteVariantResponse;
 
 type DeleteImageStudioVariantDeps = {
   listSlots: (projectId: string) => Promise<ImageStudioSlotRecord[]>;

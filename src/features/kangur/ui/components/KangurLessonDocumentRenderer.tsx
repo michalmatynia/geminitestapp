@@ -12,8 +12,9 @@ import type {
 import { resolveKangurLessonDocumentPages } from '@/features/kangur/lesson-documents';
 import {
   KangurEmptyState,
+  KangurGlassPanel,
+  KangurInlineFallback,
   KangurMediaFrame,
-  KangurPanel,
   KangurProse,
   KangurStatusChip,
   KangurSurfacePanel,
@@ -237,15 +238,15 @@ function renderImageBlock(
             // eslint-disable-next-line @next/next/no-img-element
             <img src={block.src} alt={altText} className='rounded-[18px]' loading='lazy' />
           ) : (
-            <KangurEmptyState
+            <KangurInlineFallback
               accent='amber'
-              className='min-h-[180px] rounded-[18px] border-amber-200/80 bg-white/70 px-4 py-5 text-amber-700/80 shadow-none'
+              className='min-h-[180px] rounded-[18px] border-amber-200/80 text-amber-700/80 shadow-none'
+              data-testid={`lesson-image-empty-${block.id}`}
               icon={
                 <span aria-hidden='true' className='text-lg'>
                   🖼️
                 </span>
               }
-              padding='md'
               title='Image block has no source yet.'
             />
           )}
@@ -358,13 +359,15 @@ export function KangurLessonDocumentRenderer(
             currentSectionIdentity.length > 0 && currentSectionIdentity !== previousSectionIdentity;
 
           return (
-            <KangurPanel
+            <KangurGlassPanel
               key={page.id}
+              data-testid={`lesson-page-shell-${page.id}`}
               className={cn(
-                'space-y-6 border-white/70 bg-white/45 backdrop-blur-sm',
+                'space-y-6 backdrop-blur-sm',
                 page.blocks.length === 0 && 'border-dashed'
               )}
               padding='md'
+              surface='mistSoft'
               variant='elevated'
             >
               {showSectionHeader ? (
@@ -411,7 +414,7 @@ export function KangurLessonDocumentRenderer(
                   return renderInlineBlock(block, block.id);
                 })
               )}
-            </KangurPanel>
+            </KangurGlassPanel>
           );
         })()
       )}

@@ -21,6 +21,7 @@ import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingCont
 import {
   KangurButton,
   KangurEmptyState,
+  KangurIconBadge,
   KangurOptionCardButton,
   KangurPageContainer,
   KangurPageShell,
@@ -189,9 +190,14 @@ export default function Tests(): React.JSX.Element {
                         onClick={(): void => setActiveSuite(suite)}
                         type='button'
                       >
-                        <div className='flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-100 text-2xl'>
+                        <KangurIconBadge
+                          accent='indigo'
+                          className='shrink-0 text-2xl'
+                          data-testid={`tests-suite-icon-${suite.id}`}
+                          size='md'
+                        >
                           🦘
-                        </div>
+                        </KangurIconBadge>
                         <div className='min-w-0 flex-1 text-left'>
                           <div className='truncate font-bold text-indigo-900'>{suite.title}</div>
                           {suite.description ? (

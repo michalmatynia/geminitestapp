@@ -19,7 +19,6 @@ import {
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { cn } from '@/shared/utils';
 
 const kangurPlatform = getKangurPlatform();
 
@@ -68,10 +67,7 @@ export function PageNotFound(): React.JSX.Element {
 
   return (
     <div
-      className={cn(
-        'flex items-center justify-center bg-slate-50 p-6',
-        embedded ? 'min-h-full' : 'min-h-screen'
-      )}
+      className={embedded ? 'min-h-full flex items-center justify-center p-6 bg-slate-50' : 'min-h-screen flex items-center justify-center p-6 bg-slate-50'}
     >
       <div className='max-w-md w-full'>
         <div className='text-center space-y-6'>

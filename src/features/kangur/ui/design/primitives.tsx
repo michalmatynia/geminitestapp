@@ -96,6 +96,28 @@ const kangurStatusChipVariants = cva(
   }
 );
 
+const kangurResultBadgeVariants = cva(
+  'inline-flex items-center justify-center gap-2 rounded-2xl border font-bold shadow-[0_18px_42px_-30px_rgba(15,23,42,0.18)]',
+  {
+    variants: {
+      tone: {
+        success: 'border-emerald-200 bg-emerald-100 text-emerald-700',
+        error: 'border-rose-200 bg-rose-100 text-rose-700',
+        warning: 'border-amber-200 bg-amber-100 text-amber-700',
+        neutral: 'border-slate-200 bg-slate-100 text-slate-700',
+      },
+      size: {
+        md: 'px-4 py-2 text-base',
+        lg: 'px-5 py-2.5 text-lg',
+      },
+    },
+    defaultVariants: {
+      tone: 'neutral',
+      size: 'lg',
+    },
+  }
+);
+
 const kangurAccentDotVariants = cva(
   'inline-flex shrink-0 rounded-full border border-white/85 shadow-[0_0_0_1px_rgba(15,23,42,0.05)]',
   {
@@ -120,6 +142,9 @@ const kangurIconBadgeVariants = cva(
         sm: 'h-9 w-9 text-sm',
         md: 'h-12 w-12 text-base',
         lg: 'h-16 w-16 text-xl',
+        xl: 'h-16 w-16 text-3xl',
+        '2xl': 'h-20 w-20 text-4xl',
+        '3xl': 'h-24 w-24 text-5xl',
       },
     },
     defaultVariants: {
@@ -127,6 +152,34 @@ const kangurIconBadgeVariants = cva(
     },
   }
 );
+
+const kangurGradientIconTileVariants = cva(
+  'inline-flex shrink-0 items-center justify-center bg-gradient-to-br shadow-sm',
+  {
+    variants: {
+      size: {
+        md: 'h-12 w-12 rounded-2xl text-3xl',
+        lg: 'h-16 w-16 rounded-[24px] text-5xl',
+      },
+    },
+    defaultVariants: {
+      size: 'lg',
+    },
+  }
+);
+
+const kangurDisplayEmojiVariants = cva('inline-flex items-center justify-center leading-none', {
+  variants: {
+    size: {
+      sm: 'text-4xl',
+      md: 'text-5xl',
+      lg: 'text-6xl',
+    },
+  },
+  defaultVariants: {
+    size: 'lg',
+  },
+});
 
 const kangurDividerVariants = cva('rounded-full', {
   variants: {
@@ -327,6 +380,26 @@ type KangurButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> &
     asChild?: boolean;
   };
 
+const KANGUR_GLASS_PANEL_SURFACE_CLASSNAMES = {
+  mist: 'border-white/78 bg-white/58',
+  mistSoft: 'border-white/70 bg-white/45',
+  mistStrong: 'border-white/78 bg-white/68',
+  frost: 'border-white/75 bg-white/88',
+  solid: 'border-white/88 bg-white/94',
+  neutral: 'border-slate-200/70 bg-white/88',
+  rose: 'border-rose-200/70 bg-white/88',
+  warmGlow:
+    'border-amber-200/70 bg-[radial-gradient(circle_at_top,rgba(254,243,199,0.9),rgba(255,255,255,0.94)_42%,rgba(238,242,255,0.9)_100%)]',
+  successGlow:
+    'border-emerald-200/70 bg-[radial-gradient(circle_at_top,rgba(209,250,229,0.85),rgba(255,255,255,0.95)_44%,rgba(238,242,255,0.92)_100%)]',
+  playGlow:
+    'border-indigo-200/70 bg-[radial-gradient(circle_at_top,rgba(255,251,235,0.85),rgba(255,255,255,0.97)_42%,rgba(238,242,255,0.92)_100%)]',
+  playField:
+    'border-white/80 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.98),rgba(244,247,255,0.94)_58%,rgba(255,247,237,0.86)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]',
+  tealField:
+    'border-white/75 bg-white/86 shadow-[0_14px_34px_-26px_rgba(20,184,166,0.28)]',
+} as const;
+
 export const KangurButton = React.forwardRef<HTMLButtonElement, KangurButtonProps>(
   ({ className, variant, size, fullWidth, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : 'button';
@@ -348,6 +421,24 @@ export const KangurPanel = React.forwardRef<
   <div ref={ref} className={cn(kangurPanelVariants({ variant, padding }), className)} {...props} />
 ));
 KangurPanel.displayName = 'KangurPanel';
+
+type KangurGlassPanelProps = React.HTMLAttributes<HTMLDivElement> &
+  VariantProps<typeof kangurPanelVariants> & {
+    surface?: keyof typeof KANGUR_GLASS_PANEL_SURFACE_CLASSNAMES;
+  };
+
+export const KangurGlassPanel = React.forwardRef<HTMLDivElement, KangurGlassPanelProps>(
+  ({ className, padding, surface = 'mist', variant = 'soft', ...props }, ref) => (
+    <KangurPanel
+      ref={ref}
+      className={cn(KANGUR_GLASS_PANEL_SURFACE_CLASSNAMES[surface], className)}
+      padding={padding}
+      variant={variant}
+      {...props}
+    />
+  )
+);
+KangurGlassPanel.displayName = 'KangurGlassPanel';
 
 type KangurOptionCardButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> &
   VariantProps<typeof kangurOptionCardButtonVariants> & {
@@ -438,6 +529,18 @@ export function KangurStatusChip({
   );
 }
 
+type KangurResultBadgeProps = React.HTMLAttributes<HTMLDivElement> &
+  VariantProps<typeof kangurResultBadgeVariants>;
+
+export function KangurResultBadge({
+  className,
+  size,
+  tone,
+  ...props
+}: KangurResultBadgeProps): React.JSX.Element {
+  return <div className={cn(kangurResultBadgeVariants({ size, tone }), className)} {...props} />;
+}
+
 type KangurDividerProps = React.HTMLAttributes<HTMLDivElement> &
   VariantProps<typeof kangurDividerVariants> & {
     accent?: KangurAccent;
@@ -501,6 +604,36 @@ export function KangurIconBadge({
       {...props}
     />
   );
+}
+
+type KangurGradientIconTileProps = React.HTMLAttributes<HTMLSpanElement> &
+  VariantProps<typeof kangurGradientIconTileVariants> & {
+    gradientClass: string;
+  };
+
+export function KangurGradientIconTile({
+  className,
+  gradientClass,
+  size,
+  ...props
+}: KangurGradientIconTileProps): React.JSX.Element {
+  return (
+    <span
+      className={cn(kangurGradientIconTileVariants({ size }), gradientClass, className)}
+      {...props}
+    />
+  );
+}
+
+type KangurDisplayEmojiProps = React.HTMLAttributes<HTMLSpanElement> &
+  VariantProps<typeof kangurDisplayEmojiVariants>;
+
+export function KangurDisplayEmoji({
+  className,
+  size,
+  ...props
+}: KangurDisplayEmojiProps): React.JSX.Element {
+  return <span className={cn(kangurDisplayEmojiVariants({ size }), className)} {...props} />;
 }
 
 type KangurActivityColumnProps = React.HTMLAttributes<HTMLDivElement> & {
@@ -871,6 +1004,37 @@ export function KangurEmptyState({
   );
 }
 
+type KangurInlineFallbackProps = React.HTMLAttributes<HTMLDivElement> &
+  Pick<KangurEmptyStateProps, 'accent'> & {
+    align?: 'left' | 'center';
+    description?: React.ReactNode;
+    icon?: React.ReactNode;
+    title: React.ReactNode;
+  };
+
+export function KangurInlineFallback({
+  accent = 'slate',
+  align = 'center',
+  className,
+  description,
+  icon,
+  title,
+  ...props
+}: KangurInlineFallbackProps): React.JSX.Element {
+  return (
+    <KangurEmptyState
+      accent={accent}
+      align={align}
+      className={cn('w-full', className)}
+      description={description}
+      icon={icon}
+      padding='md'
+      title={title}
+      {...props}
+    />
+  );
+}
+
 type KangurMetricCardProps = React.HTMLAttributes<HTMLDivElement> &
   Pick<KangurInfoCardProps, 'accent' | 'padding'> & {
     align?: 'left' | 'center';
@@ -993,7 +1157,7 @@ export const KangurPageTopBar = ({
   className?: string;
   contentClassName?: string;
 }): React.JSX.Element => (
-  <header className={cn(KANGUR_TOP_BAR_CLASSNAME, className)}>
+  <div className={cn(KANGUR_TOP_BAR_CLASSNAME, className)}>
     <div
       className={cn(
         KANGUR_TOP_BAR_INNER_CLASSNAME,
@@ -1004,7 +1168,7 @@ export const KangurPageTopBar = ({
       <div className='flex min-w-0 flex-1 items-center'>{left}</div>
       {right ? <div className='flex shrink-0 items-center gap-3'>{right}</div> : null}
     </div>
-  </header>
+  </div>
 );
 
 type KangurPageContainerProps = React.HTMLAttributes<HTMLElement> & {

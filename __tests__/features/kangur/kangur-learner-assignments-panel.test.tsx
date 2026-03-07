@@ -118,10 +118,53 @@ describe('KangurLearnerAssignmentsPanel', () => {
     render(<KangurLearnerAssignmentsPanel basePath='/kangur' enabled={false} />);
 
     expect(screen.getByText('Przebieg przydzielonych zadan')).toBeInTheDocument();
+    expect(screen.getByTestId('learner-assignments-disabled')).toHaveClass(
+      'soft-card',
+      'border-slate-200/80'
+    );
     expect(
       screen.getByText(
         'Po zalogowaniu zobaczysz zadania przypisane przez rodzica oraz historie ich wykonania.'
       )
     ).toBeInTheDocument();
+  });
+
+  it('uses the shared empty-state surface while assignments are loading', () => {
+    useKangurAssignmentsMock.mockReturnValue({
+      assignments: [],
+      isLoading: true,
+      error: null,
+      createAssignment: vi.fn(),
+      updateAssignment: vi.fn(),
+      refresh: vi.fn(),
+    });
+
+    render(<KangurLearnerAssignmentsPanel basePath='/kangur' />);
+
+    expect(screen.getByTestId('learner-assignments-loading')).toHaveClass(
+      'soft-card',
+      'border-dashed',
+      'border-slate-200/80'
+    );
+    expect(screen.getByText('Ladowanie przydzielonych zadan...')).toBeInTheDocument();
+  });
+
+  it('uses the shared summary panel for assignment errors', () => {
+    useKangurAssignmentsMock.mockReturnValue({
+      assignments: [],
+      isLoading: false,
+      error: 'Nie udalo sie pobrac przydzialow.',
+      createAssignment: vi.fn(),
+      updateAssignment: vi.fn(),
+      refresh: vi.fn(),
+    });
+
+    render(<KangurLearnerAssignmentsPanel basePath='/kangur' />);
+
+    expect(screen.getByTestId('learner-assignments-error')).toHaveClass(
+      'soft-card',
+      'border-rose-300'
+    );
+    expect(screen.getByText('Nie udalo sie pobrac przydzialow.')).toBeInTheDocument();
   });
 });

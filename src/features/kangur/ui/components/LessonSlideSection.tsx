@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
+import { KangurButton, KangurEmptyState, KangurPanel } from '@/features/kangur/ui/design/primitives';
 import { useKangurLessonBackAction } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 import { KANGUR_STEP_PILL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/shared/utils';
@@ -33,7 +33,18 @@ export default function LessonSlideSection({
   const isLast = slide === slides.length - 1;
   const activeSlide = slides[slide];
 
-  if (!activeSlide) return <div className='text-sm text-gray-500'>Brak slajdu.</div>;
+  if (!activeSlide) {
+    return (
+      <KangurEmptyState
+        accent='slate'
+        align='center'
+        data-testid='lesson-slide-empty'
+        description='Dodaj przynajmniej jeden slajd, aby uruchomic te sekcje lekcji.'
+        padding='lg'
+        title='Brak slajdu.'
+      />
+    );
+  }
 
   const handleDone = (): void => {
     onComplete?.();

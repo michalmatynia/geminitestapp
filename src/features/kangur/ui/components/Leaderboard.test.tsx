@@ -95,6 +95,18 @@ describe('Leaderboard', () => {
     expect(divisionOperationFilter).toHaveAttribute('aria-pressed', 'false');
     expect(allUserFilter).toHaveClass('kangur-cta-pill', 'surface-cta');
     expect(anonymousUserFilter).toHaveClass('kangur-cta-pill', 'soft-cta');
+    expect(await screen.findByTestId('leaderboard-row-score-1')).toHaveClass(
+      'soft-card',
+      'border-indigo-300'
+    );
+    expect(screen.getByTestId('leaderboard-current-user-badge-score-1')).toHaveClass(
+      'border-indigo-200',
+      'bg-indigo-100'
+    );
+    expect(screen.getByTestId('leaderboard-row-score-2')).toHaveClass(
+      'soft-card',
+      'border-slate-200/80'
+    );
 
     expect(screen.getByText('Ada')).toBeInTheDocument();
     expect(screen.getByText('Bartek')).toBeInTheDocument();
@@ -116,5 +128,18 @@ describe('Leaderboard', () => {
     expect(allUserFilter).toHaveClass('soft-cta');
     expect(screen.queryByText('Bartek')).not.toBeInTheDocument();
     expect(screen.getByText('Olek')).toBeInTheDocument();
+  });
+
+  it('uses the shared empty-state surface when no scores match filters', async () => {
+    scoreListMock.mockResolvedValue([]);
+
+    render(<Leaderboard />);
+
+    expect(await screen.findByTestId('leaderboard-empty')).toHaveClass(
+      'soft-card',
+      'border-dashed',
+      'border-slate-200/80'
+    );
+    expect(screen.getByText('Brak wynikow dla tych filtrow.')).toBeInTheDocument();
   });
 });

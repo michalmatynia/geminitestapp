@@ -1,8 +1,10 @@
+import { useId } from 'react';
 import { motion } from 'framer-motion';
 import { Clock } from 'lucide-react';
 
 import { DIFFICULTY_CONFIG } from '@/features/kangur/ui/services/math-questions';
 import {
+  KangurIconBadge,
   KangurOptionCardButton,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
@@ -31,15 +33,28 @@ export default function DifficultySelector({
   selected,
   onSelect,
 }: DifficultySelectorProps): React.JSX.Element {
+  const headingId = useId();
+  const descriptionId = useId();
+
   return (
-    <div className='flex w-full flex-col items-center gap-4'>
+    <section
+      aria-describedby={descriptionId}
+      aria-labelledby={headingId}
+      className='flex w-full flex-col items-center gap-4'
+    >
       <div className='space-y-1 text-center'>
-        <h2 className='text-xl font-extrabold tracking-tight text-slate-800'>
+        <h2 id={headingId} className='text-xl font-extrabold tracking-tight text-slate-800'>
           Wybierz poziom trudnosci
         </h2>
-        <p className='text-sm text-slate-500'>Ten sam uklad, tylko rosnacy poziom wyzwania.</p>
+        <p id={descriptionId} className='text-sm text-slate-500'>
+          Ten sam uklad, tylko rosnacy poziom wyzwania.
+        </p>
       </div>
-      <div className='grid w-full max-w-3xl gap-3 md:grid-cols-3'>
+      <div
+        aria-labelledby={headingId}
+        className='grid w-full max-w-3xl gap-3 md:grid-cols-3'
+        role='group'
+      >
         {DIFFICULTIES.map((difficulty, index) => {
           const config = DIFFICULTY_CONFIG[difficulty.id];
           const isSelected = selected === difficulty.id;
@@ -56,20 +71,21 @@ export default function DifficultySelector({
             >
               <KangurOptionCardButton
                 accent={difficulty.accent}
+                aria-label={`${config.label}. Limit ${config.timeLimit} sekund. Zakres od 1 do ${config.range}.`}
                 className='flex w-full flex-col items-center gap-3 rounded-[28px] px-4 py-5 text-center'
                 data-testid={`difficulty-option-${difficulty.id}`}
                 emphasis={isSelected ? 'accent' : 'neutral'}
+                aria-pressed={isSelected}
                 onClick={() => onSelect(difficulty.id)}
                 type='button'
               >
-                <span
-                  className={cn(
-                    'inline-flex h-12 w-12 items-center justify-center rounded-2xl text-3xl shadow-sm',
-                    accent.icon
-                  )}
+                <KangurIconBadge
+                  accent={difficulty.accent}
+                  data-testid={`difficulty-icon-${difficulty.id}`}
+                  size='xl'
                 >
                   {config.emoji}
-                </span>
+                </KangurIconBadge>
                 <span
                   className={cn(
                     'text-lg font-extrabold',
@@ -89,6 +105,6 @@ export default function DifficultySelector({
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }

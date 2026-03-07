@@ -13,10 +13,12 @@ import {
 } from '@/features/kangur/ui/services/progress';
 import {
   KangurButton,
+  KangurDisplayEmoji,
   KangurInfoCard,
   KangurOptionCardButton,
   KangurPanel,
   KangurProgressBar,
+  KangurResultBadge,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import { scheduleKangurRoundFeedback } from '@/features/kangur/ui/services/round-transition';
@@ -118,11 +120,15 @@ function ShareVisual({
   );
 
   return (
-    <div className='flex flex-wrap gap-2 justify-center max-w-xs'>
+    <div className='flex flex-wrap gap-2 justify-center max-w-xs' data-testid='division-share-visual'>
       {groups.map((group, groupIndex) => (
-        <div
+        <KangurInfoCard
+          accent='sky'
+          className='flex min-w-[72px] flex-col items-center gap-0.5 rounded-[22px]'
+          data-testid={`division-share-group-${groupIndex}`}
           key={groupIndex}
-          className='flex flex-col items-center gap-0.5 bg-blue-50 rounded-xl p-2 border border-blue-100'
+          padding='sm'
+          tone='accent'
         >
           <p className='text-xs text-blue-400 font-bold'>{groupIndex + 1}</p>
           <div className='flex flex-wrap gap-0.5 justify-center max-w-[60px]'>
@@ -132,7 +138,7 @@ function ShareVisual({
               </span>
             ))}
           </div>
-        </div>
+        </KangurInfoCard>
       ))}
     </div>
   );
@@ -194,7 +200,9 @@ export default function DivisionGame({ onFinish }: DivisionGameProps): React.JSX
           padding='xl'
           variant='elevated'
         >
-          <div className='text-6xl'>{percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}</div>
+          <KangurDisplayEmoji data-testid='division-game-summary-emoji' size='lg'>
+            {percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
+          </KangurDisplayEmoji>
           <h2 className='text-2xl font-extrabold text-gray-800'>
             Wynik: {score}/{TOTAL}
           </h2>
@@ -353,9 +361,14 @@ export default function DivisionGame({ onFinish }: DivisionGameProps): React.JSX
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                className={`text-lg font-extrabold ${selected === question.correct ? 'text-green-600' : 'text-red-500'}`}
               >
-                {selected === question.correct ? '🎉 Brawo!' : `❌ Odpowiedź: ${question.correct}`}
+                <KangurResultBadge
+                  data-testid='division-game-feedback'
+                  size='md'
+                  tone={selected === question.correct ? 'success' : 'error'}
+                >
+                  {selected === question.correct ? '🎉 Brawo!' : `❌ Odpowiedź: ${question.correct}`}
+                </KangurResultBadge>
               </motion.div>
             )}
             {!confirmed && (

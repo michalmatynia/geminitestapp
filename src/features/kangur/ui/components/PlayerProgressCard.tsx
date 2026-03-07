@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 
 import {
+  KangurDisplayEmoji,
   KangurMetricCard,
   KangurPanel,
   KangurProgressBar,
@@ -32,7 +33,7 @@ export default function PlayerProgressCard({
     >
       <KangurPanel className='flex flex-col gap-4' padding='lg' variant='soft'>
         <div className='flex items-center gap-3'>
-          <div className='text-4xl'>🎖️</div>
+          <KangurDisplayEmoji size='sm'>🎖️</KangurDisplayEmoji>
           <div className='flex-1'>
             <p className={`font-extrabold text-lg leading-tight ${currentLevel.color}`}>
               {currentLevel.title}

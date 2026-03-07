@@ -3,6 +3,10 @@
 import React from 'react';
 import { PromptExploderCaptureMappingModal } from '../PromptExploderCaptureMappingModal';
 import {
+  PromptExploderCaptureMappingModalRuntimeProvider,
+  type PromptExploderCaptureMappingModalRuntimeValue,
+} from '../PromptExploderCaptureMappingModalRuntimeContext';
+import {
   useCaseResolverViewActionsContext,
   useCaseResolverViewStateContext,
 } from '../CaseResolverViewContext';
@@ -25,21 +29,40 @@ export function CaseResolverCaptureMappingModal(): React.JSX.Element {
   } = useCaseResolverViewActionsContext();
 
   const { isPromptExploderPartyProposalOpen, isApplyingPromptExploderPartyProposal } = state;
+  const runtimeValue = React.useMemo<PromptExploderCaptureMappingModalRuntimeValue>(
+    () => ({
+      open: isPromptExploderPartyProposalOpen,
+      draft: promptExploderProposalDraft,
+      applying: isApplyingPromptExploderPartyProposal,
+      targetFileName: captureProposalTargetFileName,
+      partyOptions,
+      onClose: handleClosePromptExploderProposalModal,
+      onApply: handleApplyPromptExploderProposal,
+      onUpdateAction: updatePromptExploderProposalAction,
+      onUpdateReference: updatePromptExploderProposalReference,
+      onUpdateDateAction: updatePromptExploderProposalDateAction,
+      resolveMatchedPartyLabel: resolvePromptExploderMatchedPartyLabel,
+      diagnostics: captureApplyDiagnostics,
+    }),
+    [
+      isPromptExploderPartyProposalOpen,
+      promptExploderProposalDraft,
+      isApplyingPromptExploderPartyProposal,
+      captureProposalTargetFileName,
+      partyOptions,
+      handleClosePromptExploderProposalModal,
+      handleApplyPromptExploderProposal,
+      updatePromptExploderProposalAction,
+      updatePromptExploderProposalReference,
+      updatePromptExploderProposalDateAction,
+      resolvePromptExploderMatchedPartyLabel,
+      captureApplyDiagnostics,
+    ]
+  );
 
   return (
-    <PromptExploderCaptureMappingModal
-      open={isPromptExploderPartyProposalOpen}
-      draft={promptExploderProposalDraft}
-      applying={isApplyingPromptExploderPartyProposal}
-      targetFileName={captureProposalTargetFileName}
-      partyOptions={partyOptions}
-      onClose={handleClosePromptExploderProposalModal}
-      onApply={handleApplyPromptExploderProposal}
-      onUpdateAction={updatePromptExploderProposalAction}
-      onUpdateReference={updatePromptExploderProposalReference}
-      onUpdateDateAction={updatePromptExploderProposalDateAction}
-      resolveMatchedPartyLabel={resolvePromptExploderMatchedPartyLabel}
-      diagnostics={captureApplyDiagnostics}
-    />
+    <PromptExploderCaptureMappingModalRuntimeProvider value={runtimeValue}>
+      <PromptExploderCaptureMappingModal />
+    </PromptExploderCaptureMappingModalRuntimeProvider>
   );
 }

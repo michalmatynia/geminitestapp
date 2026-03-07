@@ -4,6 +4,8 @@ import { CheckCircle, Eraser, PencilRuler, RefreshCw, XCircle } from 'lucide-rea
 
 import {
   KangurButton,
+  KangurDisplayEmoji,
+  KangurGlassPanel,
   KangurInfoCard,
   KangurPanel,
   KangurProgressBar,
@@ -154,6 +156,11 @@ const LEGACY_SHAPE_ROUNDS: ShapeRound[] = [
 
 const CANVAS_WIDTH = 320;
 const CANVAS_HEIGHT = 220;
+const KEYBOARD_DRAW_STEP = 14;
+const KEYBOARD_CURSOR_START = {
+  x: Math.round(CANVAS_WIDTH / 2),
+  y: Math.round(CANVAS_HEIGHT / 2),
+} as const;
 
 const flattenPoints = (strokes: GeometryDrawPoint[][]): GeometryDrawPoint[] =>
   strokes.flatMap((stroke) => stroke);
@@ -171,6 +178,11 @@ export default function GeometryDrawingGame({
   const [xpEarned, setXpEarned] = useState(0);
   const [feedback, setFeedback] = useState<FeedbackState>(null);
   const [strokes, setStrokes] = useState<GeometryDrawPoint[][]>([]);
+  const [keyboardCursor, setKeyboardCursor] = useState<GeometryDrawPoint>(KEYBOARD_CURSOR_START);
+  const [keyboardDrawing, setKeyboardDrawing] = useState(false);
+  const [keyboardStatus, setKeyboardStatus] = useState(
+    'Plansza gotowa do rysowania klawiaturą.'
+  );
 
   const rounds =
     SHAPE_ROUNDS_BY_DIFFICULTY[difficulty]?.length > 0
@@ -240,6 +252,8 @@ export default function GeometryDrawingGame({
       redrawCanvas([]);
       return [];
     });
+    setKeyboardDrawing(false);
+    setKeyboardStatus('Wyczyszczono planszę.');
   }, [redrawCanvas]);
 
   const resolvePoint = useCallback(
@@ -319,13 +333,104 @@ export default function GeometryDrawingGame({
     setDone(false);
     setXpEarned(0);
     setFeedback(null);
+    setKeyboardCursor(KEYBOARD_CURSOR_START);
+    setKeyboardDrawing(false);
+    setKeyboardStatus('Rozpoczęto nową rundę figur.');
     clearDrawing();
   }, [clearDrawing]);
 
   const handleDifficultyChange = (nextDifficulty: GeometryDifficultyId): void => {
     if (nextDifficulty === difficulty) return;
     setDifficulty(nextDifficulty);
+    setKeyboardCursor(KEYBOARD_CURSOR_START);
+    setKeyboardDrawing(false);
+    setKeyboardStatus(`Zmieniono poziom na ${DIFFICULTY_LABELS[nextDifficulty]}.`);
     resetRun();
+  };
+
+  const appendKeyboardPoint = useCallback(
+    (point: GeometryDrawPoint): void => {
+      updateStrokes((current) => {
+        if (current.length === 0) {
+          return [[point]];
+        }
+
+        const next = [...current];
+        const lastStroke = next[next.length - 1] ?? [];
+        next[next.length - 1] = [...lastStroke, point];
+        return next;
+      });
+    },
+    [updateStrokes]
+  );
+
+  const beginKeyboardStroke = useCallback((): void => {
+    const point = { ...keyboardCursor };
+    updateStrokes((current) => [...current, [point]]);
+    setKeyboardDrawing(true);
+    setKeyboardStatus('Rozpoczęto rysowanie klawiaturą.');
+  }, [keyboardCursor, updateStrokes]);
+
+  const finishKeyboardStroke = useCallback((): void => {
+    if (keyboardDrawing) {
+      appendKeyboardPoint({ ...keyboardCursor });
+    }
+    setKeyboardDrawing(false);
+    setKeyboardStatus('Zakończono rysowanie klawiaturą.');
+  }, [appendKeyboardPoint, keyboardCursor, keyboardDrawing]);
+
+  const handleCanvasKeyDown = (event: React.KeyboardEvent<HTMLCanvasElement>): void => {
+    if (done || feedback) return;
+
+    const key = event.key;
+    if (
+      key !== 'ArrowUp' &&
+      key !== 'ArrowDown' &&
+      key !== 'ArrowLeft' &&
+      key !== 'ArrowRight' &&
+      key !== 'Enter' &&
+      key !== ' ' &&
+      key !== 'Escape'
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+
+    if (key === 'Enter' || key === ' ') {
+      if (keyboardDrawing) {
+        finishKeyboardStroke();
+      } else {
+        beginKeyboardStroke();
+      }
+      return;
+    }
+
+    if (key === 'Escape') {
+      clearDrawing();
+      setKeyboardCursor(KEYBOARD_CURSOR_START);
+      setKeyboardStatus('Wyczyszczono planszę i ustawiono kursor na środku.');
+      return;
+    }
+
+    const delta =
+      key === 'ArrowUp'
+        ? { x: 0, y: -KEYBOARD_DRAW_STEP }
+        : key === 'ArrowDown'
+          ? { x: 0, y: KEYBOARD_DRAW_STEP }
+          : key === 'ArrowLeft'
+            ? { x: -KEYBOARD_DRAW_STEP, y: 0 }
+            : { x: KEYBOARD_DRAW_STEP, y: 0 };
+
+    const nextPoint = {
+      x: Math.max(12, Math.min(CANVAS_WIDTH - 12, keyboardCursor.x + delta.x)),
+      y: Math.max(12, Math.min(CANVAS_HEIGHT - 12, keyboardCursor.y + delta.y)),
+    };
+
+    setKeyboardCursor(nextPoint);
+    if (keyboardDrawing) {
+      appendKeyboardPoint(nextPoint);
+    }
   };
 
   const moveToNextRound = useCallback(
@@ -383,7 +488,10 @@ export default function GeometryDrawingGame({
     feedback?.kind === 'success' ? 'emerald' : feedback?.kind === 'error' ? 'rose' : 'amber';
 
   return (
-    <div className='flex flex-col items-center gap-4 w-full max-w-sm'>
+    <section
+      aria-labelledby='geometry-drawing-heading'
+      className='flex flex-col items-center gap-4 w-full max-w-sm'
+    >
       {done ? (
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
@@ -395,16 +503,22 @@ export default function GeometryDrawingGame({
             padding='xl'
             variant='elevated'
           >
-            <div className='text-6xl'>
+            <KangurDisplayEmoji
+              aria-hidden='true'
+              data-testid='geometry-drawing-summary-emoji'
+              size='lg'
+            >
               {score === totalRounds ? '🏆' : score >= 3 ? '🌟' : '💪'}
-            </div>
-            <h3 className='text-2xl font-extrabold text-gray-800'>
+            </KangurDisplayEmoji>
+            <h3 id='geometry-drawing-heading' className='text-2xl font-extrabold text-gray-800'>
               Wynik: {score}/{totalRounds}
             </h3>
             <p className='text-gray-500'>Zdobyte XP: +{xpEarned}</p>
             <KangurProgressBar
               accent='emerald'
               animated
+              aria-label='Dokladnosc w treningu figur'
+              aria-valuetext={`${Math.round((score / totalRounds) * 100)}% poprawnych figur`}
               data-testid='geometry-drawing-summary-progress-bar'
               size='md'
               value={Math.round((score / totalRounds) * 100)}
@@ -427,15 +541,29 @@ export default function GeometryDrawingGame({
         </motion.div>
       ) : (
         <>
-          <KangurInfoCard
-            className='w-full rounded-[26px] border-white/75 bg-white/86 shadow-[0_14px_34px_-26px_rgba(20,184,166,0.28)]'
-            padding='sm'
-            tone='neutral'
+          <div aria-live='polite' aria-atomic='true' className='sr-only'>
+            Runda {roundIndex + 1} z {totalRounds}. Narysuj figurę {currentRound?.label}. Poziom{' '}
+            {DIFFICULTY_LABELS[difficulty]}.
+          </div>
+          <div
+            aria-live='polite'
+            aria-atomic='true'
+            className='sr-only'
+            data-testid='geometry-drawing-keyboard-status'
           >
-            <div className='grid grid-cols-2 gap-2'>
+            {keyboardStatus}
+          </div>
+          <KangurGlassPanel
+            className='w-full rounded-[26px] !p-3'
+            data-testid='geometry-difficulty-shell'
+            surface='tealField'
+            variant='soft'
+          >
+            <div aria-label='Poziom trudnosci figur' className='grid grid-cols-2 gap-2' role='group'>
               {(['starter', 'pro'] as const).map((mode) => (
                 <KangurButton
                   key={mode}
+                  aria-pressed={difficulty === mode}
                   data-testid={`geometry-difficulty-${mode}`}
                   type='button'
                   onClick={() => handleDifficultyChange(mode)}
@@ -448,11 +576,13 @@ export default function GeometryDrawingGame({
                 </KangurButton>
               ))}
             </div>
-          </KangurInfoCard>
+          </KangurGlassPanel>
 
           <div className='w-full flex items-center gap-3'>
             <KangurProgressBar
               accent='emerald'
+              aria-label='Postep treningu figur'
+              aria-valuetext={`Runda ${roundIndex + 1} z ${totalRounds}`}
               className='flex-1'
               data-testid='geometry-drawing-progress-bar'
               size='sm'
@@ -474,11 +604,13 @@ export default function GeometryDrawingGame({
               padding='lg'
               variant='elevated'
             >
-              <div className='text-5xl'>{currentRound?.emoji}</div>
-              <h3 className='text-xl font-extrabold text-gray-800'>
+              <KangurDisplayEmoji size='md'>{currentRound?.emoji}</KangurDisplayEmoji>
+              <h3 id='geometry-drawing-heading' className='text-xl font-extrabold text-gray-800'>
                 Narysuj: {currentRound?.label}
               </h3>
-              <p className='text-sm text-gray-500 text-center'>{currentRound?.hint}</p>
+              <p id='geometry-drawing-hint' className='text-sm text-gray-500 text-center'>
+                {currentRound?.hint}
+              </p>
 
               <KangurInfoCard
                 accent={boardAccent}
@@ -491,15 +623,30 @@ export default function GeometryDrawingGame({
                 tone={feedback ? 'accent' : 'neutral'}
               >
                 <canvas
+                  aria-describedby='geometry-drawing-hint geometry-drawing-input-help'
+                  aria-label={`Plansza do rysowania figury ${currentRound?.label}. Uzyj myszy lub dotyku, aby narysowac figure.`}
+                  aria-keyshortcuts='Enter Space ArrowUp ArrowDown ArrowLeft ArrowRight Escape'
+                  data-testid='geometry-drawing-canvas'
+                  role='img'
                   ref={canvasRef}
+                  tabIndex={0}
                   width={CANVAS_WIDTH}
                   height={CANVAS_HEIGHT}
                   className='w-full rounded-[20px] bg-white touch-none'
+                  onKeyDown={handleCanvasKeyDown}
                   onPointerDown={handlePointerDown}
                   onPointerMove={handlePointerMove}
                   onPointerUp={handlePointerUp}
                   onPointerCancel={handlePointerUp}
                   onPointerLeave={handlePointerUp}
+                />
+                <div
+                  aria-hidden='true'
+                  className={cn(
+                    'pointer-events-none absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border border-emerald-400/80 bg-emerald-100/70 shadow-[0_0_0_3px_rgba(16,185,129,0.12)] transition-transform duration-75',
+                    keyboardDrawing ? 'scale-110' : 'scale-100'
+                  )}
+                  style={{ left: `${keyboardCursor.x}px`, top: `${keyboardCursor.y}px` }}
                 />
                 {points.length === 0 && (
                   <div className='pointer-events-none absolute inset-0 flex items-center justify-center text-slate-400 text-sm font-semibold'>
@@ -508,14 +655,21 @@ export default function GeometryDrawingGame({
                   </div>
                 )}
               </KangurInfoCard>
+              <p id='geometry-drawing-input-help' className='text-xs text-center text-slate-400'>
+                Pole rysowania obsluguje mysz, dotyk lub klawiature. Enter albo spacja zaczyna i
+                konczy kreske, strzalki przesuwaja kursor, Escape czysci plansze.
+              </p>
 
               <AnimatePresence>
                 {feedback && (
                   <motion.div
+                    aria-atomic='true'
+                    aria-live='assertive'
                     initial={{ opacity: 0, scale: 0.94 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.94 }}
                     className='w-full'
+                    role='status'
                   >
                     <KangurInfoCard
                       accent={feedbackAccent}
@@ -542,6 +696,7 @@ export default function GeometryDrawingGame({
                   className='flex-1'
                   disabled={feedback !== null || points.length === 0}
                   onClick={clearDrawing}
+                  type='button'
                   size='lg'
                   variant='secondary'
                 >
@@ -552,6 +707,7 @@ export default function GeometryDrawingGame({
                   className='flex-1'
                   disabled={feedback !== null}
                   onClick={handleCheck}
+                  type='button'
                   size='lg'
                   variant='primary'
                 >
@@ -562,6 +718,6 @@ export default function GeometryDrawingGame({
           </motion.div>
         </>
       )}
-    </div>
+    </section>
   );
 }

@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const MONTHS = [
@@ -87,6 +87,7 @@ const deriveCorrectAnswer = (questionText: string): string => {
 
 describe('CalendarTrainingGame', () => {
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -97,22 +98,62 @@ describe('CalendarTrainingGame', () => {
     const pendingProgress = screen.getByTestId('calendar-training-progress-1');
     const firstChoice = screen.getByTestId('calendar-training-choice-0');
     const secondChoice = screen.getByTestId('calendar-training-choice-1');
-
-    expect(activeProgress).toHaveClass('rounded-full', 'bg-emerald-500');
-    expect(pendingProgress).toHaveClass('rounded-full', 'soft-cta');
-    expect(firstChoice).toHaveClass('soft-card');
-    expect(secondChoice).toHaveClass('soft-card');
-
     const questionText =
       screen.getByText((content, element) =>
         element?.tagName.toLowerCase() === 'p' && element.className.includes('text-green-800')
           ? content.length > 0
           : false
       ).textContent ?? '';
+
+    expect(activeProgress).toHaveClass('rounded-full', 'bg-emerald-500');
+    expect(pendingProgress).toHaveClass('rounded-full', 'soft-cta');
+    expect(screen.getByRole('group', { name: questionText })).toBeInTheDocument();
+    expect(firstChoice).toHaveClass('soft-card');
+    expect(secondChoice).toHaveClass('soft-card');
+
     const correctAnswer = deriveCorrectAnswer(questionText);
 
-    fireEvent.click(screen.getByRole('button', { name: correctAnswer }));
+    fireEvent.click(screen.getByRole('button', { name: `Odpowiedz ${correctAnswer}` }));
 
-    expect(screen.getByRole('button', { name: correctAnswer })).toHaveClass('border-emerald-300');
+    expect(screen.getByRole('button', { name: `Odpowiedz ${correctAnswer}` })).toHaveClass(
+      'border-emerald-300'
+    );
+    expect(screen.getByRole('button', { name: `Odpowiedz ${correctAnswer}` })).toHaveAttribute(
+      'aria-disabled',
+      'true'
+    );
+    expect(screen.getByTestId('calendar-training-feedback')).toHaveClass(
+      'border-emerald-200',
+      'bg-emerald-100'
+    );
+    expect(screen.getByRole('status')).toBeInTheDocument();
+  });
+
+  it('uses the shared display emoji on the summary screen', () => {
+    vi.useFakeTimers();
+
+    render(<CalendarTrainingGame onFinish={() => undefined} />);
+
+    for (let questionIndex = 0; questionIndex < 6; questionIndex += 1) {
+      const questionText =
+        screen.getByText((content, element) =>
+          element?.tagName.toLowerCase() === 'p' && element.className.includes('text-green-800')
+            ? content.length > 0
+            : false
+        ).textContent ?? '';
+      const correctAnswer = deriveCorrectAnswer(questionText);
+
+      fireEvent.click(screen.getByRole('button', { name: `Odpowiedz ${correctAnswer}` }));
+
+      act(() => {
+        vi.advanceTimersByTime(1200);
+      });
+    }
+
+    expect(screen.getByTestId('calendar-training-summary-emoji')).toHaveClass(
+      'inline-flex',
+      'text-6xl'
+    );
+    expect(screen.getByText('Wynik: 6/6')).toBeInTheDocument();
   });
 });

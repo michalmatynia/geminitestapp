@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 
 import {
@@ -21,14 +21,26 @@ export type QuestionCardProps = {
 type AnalogClockSmallProps = {
   hours: number;
   minutes: number;
+  ariaLabel?: string;
 };
 
-function AnalogClockSmall({ hours, minutes }: AnalogClockSmallProps): React.JSX.Element {
+function AnalogClockSmall({
+  hours,
+  minutes,
+  ariaLabel,
+}: AnalogClockSmallProps): React.JSX.Element {
   const hourAngle = ((hours % 12) + minutes / 60) * 30;
   const minuteAngle = minutes * 6;
 
   return (
-    <svg viewBox='0 0 200 200' width='140' height='140' className='drop-shadow-lg'>
+    <svg
+      aria-label={ariaLabel}
+      role='img'
+      viewBox='0 0 200 200'
+      width='140'
+      height='140'
+      className='drop-shadow-lg'
+    >
       <circle cx='100' cy='100' r='95' fill='white' stroke='#6366f1' strokeWidth='4' />
       {Array.from({ length: 12 }, (_, index) => {
         const angle = (index * 30 - 90) * (Math.PI / 180);
@@ -92,6 +104,9 @@ export default function QuestionCard({
   total,
   timeLimit,
 }: QuestionCardProps): React.JSX.Element {
+  const questionHeadingId = useId();
+  const questionDescriptionId = useId();
+  const choicesGroupId = useId();
   const [selected, setSelected] = useState<KangurQuestionChoice | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [timeLeft, setTimeLeft] = useState(timeLimit);
@@ -133,44 +148,74 @@ export default function QuestionCard({
   const clockParts = isClockQuestion ? question.question.split(':') : null;
   const clockHours = Number.parseInt(clockParts?.[1] ?? '0', 10);
   const clockMinutes = Number.parseInt(clockParts?.[2] ?? '0', 10);
+  const normalizedClockHours = ((clockHours % 12) + 12) % 12 || 12;
+  const normalizedClockMinutes = Math.max(0, Math.min(59, clockMinutes));
+  const clockAriaLabel = `Zegar analogowy pokazuje godzine ${normalizedClockHours}:${String(
+    normalizedClockMinutes
+  ).padStart(2, '0')}.`;
 
   return (
-    <motion.div
+    <motion.section
+      aria-labelledby={questionHeadingId}
       key={question.question}
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
       className='flex flex-col items-center gap-6 w-full max-w-md'
     >
-      <div className='text-sm text-gray-400 font-semibold'>
+      <div aria-live='polite' aria-atomic='true' className='text-sm text-gray-400 font-semibold'>
         Pytanie {questionNumber} z {total}
       </div>
 
       <KangurProgressBar
         accent={timerAccent}
+        aria-label='Pozostaly czas'
+        aria-valuetext={`${timeLeft} sekund pozostalo`}
         data-testid='question-card-timer-bar'
         size='lg'
         value={timerPercent}
       />
-      <div className={`text-lg font-bold ${timerPercent <= 25 ? 'text-red-500' : 'text-gray-500'}`}>
+      <div
+        aria-hidden='true'
+        className={`text-lg font-bold ${timerPercent <= 25 ? 'text-red-500' : 'text-gray-500'}`}
+      >
         ⏱ {timeLeft}s
       </div>
 
       <KangurPanel className='w-full text-center' padding='xl' variant='elevated'>
         {isClockQuestion ? (
           <div className='flex flex-col items-center gap-2'>
-            <AnalogClockSmall hours={clockHours} minutes={clockMinutes} />
-            <div className='text-sm text-slate-400'>Ktora godzine pokazuje zegar?</div>
+            <h3 id={questionHeadingId} className='text-xl font-bold text-slate-800'>
+              Ktora godzine pokazuje zegar?
+            </h3>
+            <AnalogClockSmall
+              ariaLabel={clockAriaLabel}
+              hours={normalizedClockHours}
+              minutes={normalizedClockMinutes}
+            />
+            <div id={questionDescriptionId} className='text-sm text-slate-400'>
+              Wybierz odpowiedz, ktora pasuje do polozenia wskazowek.
+            </div>
           </div>
         ) : (
           <>
-            <div className='mb-2 text-5xl font-extrabold text-slate-800'>{question.question}</div>
-            <div className='text-sm text-slate-400'>Jaka jest odpowiedz?</div>
+            <h3 id={questionHeadingId} className='mb-2 text-5xl font-extrabold text-slate-800'>
+              {question.question}
+            </h3>
+            <div id={questionDescriptionId} className='text-sm text-slate-400'>
+              Jaka jest odpowiedz?
+            </div>
           </>
         )}
       </KangurPanel>
 
-      <div className='grid grid-cols-2 gap-4 w-full'>
+      <div
+        aria-describedby={questionDescriptionId}
+        aria-labelledby={questionHeadingId}
+        className='grid grid-cols-2 gap-4 w-full'
+        id={choicesGroupId}
+        role='group'
+      >
         {question.choices.map((choice) => {
           let accent: KangurAccent = 'indigo';
           let emphasis: 'neutral' | 'accent' = 'neutral';
@@ -199,6 +244,8 @@ export default function QuestionCard({
             >
               <KangurOptionCardButton
                 accent={accent}
+                aria-disabled={showResult}
+                aria-label={`Odpowiedz ${String(choice)}`}
                 className={cn(
                   'w-full flex items-center justify-center rounded-[24px] px-4 py-4 text-center text-2xl font-bold shadow transition-all',
                   cardClass,
@@ -220,9 +267,12 @@ export default function QuestionCard({
       <AnimatePresence>
         {showResult && (
           <motion.div
+            aria-atomic='true'
+            aria-live='assertive'
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
+            role='status'
             className={`text-2xl font-bold ${selected === question.answer ? 'text-green-500' : 'text-red-500'}`}
           >
             {selected === question.answer
@@ -233,6 +283,6 @@ export default function QuestionCard({
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </motion.section>
   );
 }

@@ -11,15 +11,7 @@ import {
   type PromptDiffLine,
   type PromptExtractHistoryEntry,
 } from './prompt-extract-utils';
-
-type PromptExtractionHistoryPanelProps = {
-  extractHistory: PromptExtractHistoryEntry[];
-  selectedExtractHistory: PromptExtractHistoryEntry | null;
-  selectedExtractDiffLines: PromptDiffLine[];
-  selectedExtractChanged: boolean;
-  onSelectExtractHistory: (id: string) => void;
-  onClearHistory: () => void;
-};
+import { useStudioInlineEdit } from './StudioInlineEditContext';
 
 const PromptExtractionHistoryResetContext = React.createContext<(() => void) | null>(null);
 
@@ -48,14 +40,21 @@ function PromptExtractionClearHistoryButton(): React.JSX.Element {
   );
 }
 
-export function PromptExtractionHistoryPanel({
-  extractHistory,
-  selectedExtractHistory,
-  selectedExtractDiffLines,
-  selectedExtractChanged,
-  onSelectExtractHistory,
-  onClearHistory,
-}: PromptExtractionHistoryPanelProps): React.JSX.Element {
+export function PromptExtractionHistoryPanel(): React.JSX.Element {
+  const {
+    extractHistory,
+    selectedExtractHistory,
+    selectedExtractDiffLines,
+    selectedExtractChanged,
+    setSelectedExtractHistoryId,
+    setExtractHistory,
+  } = useStudioInlineEdit();
+
+  const onClearHistory = React.useCallback((): void => {
+    setExtractHistory([]);
+    setSelectedExtractHistoryId(null);
+  }, [setExtractHistory, setSelectedExtractHistoryId]);
+
   return (
     <div className='space-y-2 rounded border border-indigo-500/30 bg-indigo-500/5 p-3'>
       <div className='flex flex-wrap items-center justify-between gap-2'>
@@ -73,7 +72,7 @@ export function PromptExtractionHistoryPanel({
               <button
                 key={entry.id}
                 type='button'
-                onClick={() => onSelectExtractHistory(entry.id)}
+                onClick={() => setSelectedExtractHistoryId(entry.id)}
                 className={`w-full rounded border px-2 py-1.5 text-left text-[11px] transition-colors ${
                   isSelected
                     ? 'border-indigo-400/60 bg-indigo-500/20 text-indigo-100'

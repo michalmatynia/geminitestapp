@@ -8,9 +8,11 @@ import {
 } from '@/features/kangur/ui/design/tokens';
 import {
   KangurButton,
+  KangurDisplayEmoji,
   KangurOptionCardButton,
   KangurPanel,
   KangurProgressBar,
+  KangurResultBadge,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import {
@@ -164,7 +166,9 @@ export default function MultiplicationGame({
           padding='xl'
           variant='elevated'
         >
-          <div className='text-6xl'>{percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}</div>
+          <KangurDisplayEmoji data-testid='multiplication-game-summary-emoji' size='lg'>
+            {percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
+          </KangurDisplayEmoji>
           <h2 className='text-2xl font-extrabold text-gray-800'>
             Wynik: {score}/{TOTAL}
           </h2>
@@ -323,9 +327,14 @@ export default function MultiplicationGame({
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                className={`text-lg font-extrabold ${selected === question.correct ? 'text-green-600' : 'text-red-500'}`}
               >
-                {selected === question.correct ? '🎉 Brawo!' : `❌ Odpowiedź: ${question.correct}`}
+                <KangurResultBadge
+                  data-testid='multiplication-game-feedback'
+                  tone={selected === question.correct ? 'success' : 'error'}
+                  size='md'
+                >
+                  {selected === question.correct ? '🎉 Brawo!' : `❌ Odpowiedź: ${question.correct}`}
+                </KangurResultBadge>
               </motion.div>
             )}
             {!confirmed && (

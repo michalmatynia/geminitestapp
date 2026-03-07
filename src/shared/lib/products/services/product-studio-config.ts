@@ -198,18 +198,18 @@ const writeMongoSetting = async (key: string, value: string): Promise<void> => {
   await mongo
     .collection<MongoTimestampedStringSettingRecord<string, Date>>(SETTINGS_COLLECTION)
     .updateOne(
-    { key },
-    {
-      $set: {
-        key,
-        value,
-        updatedAt: now,
+      { key },
+      {
+        $set: {
+          key,
+          value,
+          updatedAt: now,
+        },
+        $setOnInsert: {
+          createdAt: now,
+        },
       },
-      $setOnInsert: {
-        createdAt: now,
-      },
-    },
-    { upsert: true }
+      { upsert: true }
     );
 };
 

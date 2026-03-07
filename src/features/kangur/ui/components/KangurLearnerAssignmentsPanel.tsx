@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 
 import KangurAssignmentsList from '@/features/kangur/ui/components/KangurAssignmentsList';
 import {
+  KangurEmptyState,
   KangurMetricCard,
   KangurPanel,
   KangurSummaryPanel,
@@ -66,30 +67,41 @@ export function KangurLearnerAssignmentsPanel({
 
   if (!enabled) {
     return (
-      <KangurPanel padding='lg' variant='soft'>
-        <div className='text-sm font-bold text-gray-500 uppercase tracking-wide'>
-          Przebieg przydzielonych zadan
-        </div>
-        <div className='mt-2 text-sm text-gray-500'>
-          Po zalogowaniu zobaczysz zadania przypisane przez rodzica oraz historie ich wykonania.
-        </div>
-      </KangurPanel>
+      <KangurSummaryPanel
+        accent='slate'
+        data-testid='learner-assignments-disabled'
+        description='Po zalogowaniu zobaczysz zadania przypisane przez rodzica oraz historie ich wykonania.'
+        label='Tryb lokalny'
+        padding='lg'
+        title='Przebieg przydzielonych zadan'
+      />
     );
   }
 
   if (isLoading) {
     return (
-      <KangurPanel padding='lg' variant='soft' className='text-sm text-slate-400'>
-        Ladowanie przydzielonych zadan...
-      </KangurPanel>
+      <KangurEmptyState
+        accent='slate'
+        align='center'
+        data-testid='learner-assignments-loading'
+        description='Sprawdzamy aktywne i zakonczone przydzialy dla tego profilu.'
+        padding='lg'
+        title='Ladowanie przydzielonych zadan...'
+      />
     );
   }
 
   if (error) {
     return (
-      <KangurPanel padding='lg' variant='soft' className='text-sm text-rose-500'>
-        {error}
-      </KangurPanel>
+      <KangurSummaryPanel
+        accent='rose'
+        data-testid='learner-assignments-error'
+        description='Sprobuj ponownie za chwile albo odswiez profil ucznia.'
+        label='Blad przydzialow'
+        padding='lg'
+        title={error}
+        tone='accent'
+      />
     );
   }
 

@@ -97,6 +97,10 @@ describe('ParentDashboard page', () => {
   it('shows an authentication gate instead of a local PIN for anonymous users', async () => {
     render(<ParentDashboard />);
 
+    expect(screen.getByTestId('parent-dashboard-auth-icon')).toHaveClass(
+      'bg-indigo-100',
+      'text-indigo-700'
+    );
     expect(screen.getByRole('heading', { name: 'Panel Rodzica / Nauczyciela' })).toBeInTheDocument();
     expect(
       screen.getByText('Ten widok pokazuje prywatne postepy ucznia, wiec dostep wymaga zalogowanego konta.')
@@ -169,6 +173,13 @@ describe('ParentDashboard page', () => {
     expect(activeLearnerCard).toHaveClass('soft-card', 'rounded-[30px]', 'border-indigo-300');
     expect(inactiveLearnerCard).toHaveAttribute('aria-pressed', 'false');
     expect(inactiveLearnerCard).toHaveClass('soft-card', 'rounded-[30px]', 'border-slate-200/80');
+    expect(within(activeLearnerCard).getByTestId('parent-dashboard-learner-icon-learner-1')).toHaveClass(
+      'bg-indigo-100',
+      'text-indigo-700'
+    );
+    expect(
+      within(inactiveLearnerCard).getByTestId('parent-dashboard-learner-icon-learner-2')
+    ).toHaveClass('bg-slate-100', 'text-slate-700');
     expect(screen.getByTestId('parent-dashboard-role-chip')).toHaveClass(
       'border-slate-200',
       'bg-slate-100'

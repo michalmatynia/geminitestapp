@@ -1,12 +1,45 @@
 'use client';
 
+import { cn } from '@/shared/utils';
+
 import { BADGES } from '@/features/kangur/ui/services/progress';
-import { KangurPanel } from '@/features/kangur/ui/design/primitives';
+import {
+  KangurEmptyState,
+  KangurIconBadge,
+  KangurInfoCard,
+  KangurPanel,
+  KangurStatusChip,
+} from '@/features/kangur/ui/design/primitives';
+import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import {
   formatKangurProfileDateTime,
   formatKangurProfileDuration,
   useKangurLearnerProfileRuntime,
 } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
+
+const SESSION_ACCENTS: Record<string, KangurAccent> = {
+  addition: 'amber',
+  subtraction: 'rose',
+  multiplication: 'violet',
+  division: 'sky',
+  mixed: 'indigo',
+  clock: 'indigo',
+  calendar: 'emerald',
+  geometry: 'teal',
+};
+
+const resolveSessionAccent = (operation: string): KangurAccent =>
+  SESSION_ACCENTS[operation] ?? 'indigo';
+
+const resolveSessionScoreAccent = (accuracyPercent: number): KangurAccent => {
+  if (accuracyPercent >= 90) {
+    return 'emerald';
+  }
+  if (accuracyPercent >= 70) {
+    return 'amber';
+  }
+  return 'rose';
+};
 
 export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
   const { isLoadingScores, scoresError, snapshot } = useKangurLearnerProfileRuntime();
@@ -18,35 +51,70 @@ export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
           Ostatnie sesje
         </div>
         {isLoadingScores ? (
-          <div className='py-6 text-center text-sm text-gray-400'>Ladowanie historii...</div>
+          <KangurEmptyState
+            accent='slate'
+            align='center'
+            data-testid='learner-profile-sessions-loading'
+            description='Sprawdzamy ostatnie podejscia ucznia.'
+            title='Ladowanie historii...'
+          />
         ) : scoresError ? (
-          <div className='py-6 text-center text-sm text-red-500'>{scoresError}</div>
+          <KangurEmptyState
+            accent='rose'
+            align='center'
+            data-testid='learner-profile-sessions-error'
+            description='Sprobuj odswiezyc profil za chwile.'
+            title={scoresError}
+          />
         ) : snapshot.recentSessions.length === 0 ? (
-          <div className='py-6 text-center text-sm text-gray-400'>Brak rozegranych sesji.</div>
+          <KangurEmptyState
+            accent='slate'
+            align='center'
+            data-testid='learner-profile-sessions-empty'
+            description='Pierwsze sesje pojawia sie tutaj automatycznie.'
+            title='Brak rozegranych sesji.'
+          />
         ) : (
           <div className='flex flex-col gap-2'>
-            {snapshot.recentSessions.map((session) => (
-              <div
-                key={session.id}
-                className='flex items-center gap-3 rounded-xl border border-slate-100 bg-white/80 px-3 py-2'
-              >
-                <div className='text-xl'>{session.operationEmoji}</div>
-                <div className='flex-1'>
-                  <div className='text-sm font-semibold text-gray-700'>{session.operationLabel}</div>
-                  <div className='text-xs text-gray-500'>
-                    {formatKangurProfileDateTime(session.createdAt)}
+            {snapshot.recentSessions.map((session) => {
+              const sessionAccent = resolveSessionAccent(session.operation);
+              return (
+                <KangurInfoCard
+                  accent={sessionAccent}
+                  className='flex items-center gap-3'
+                  data-testid={`learner-profile-session-${session.id}`}
+                  key={session.id}
+                  padding='sm'
+                  tone='accent'
+                >
+                  <KangurIconBadge
+                    accent={sessionAccent}
+                    data-testid={`learner-profile-session-icon-${session.id}`}
+                    size='sm'
+                  >
+                    <span aria-hidden='true'>{session.operationEmoji}</span>
+                  </KangurIconBadge>
+                  <div className='flex-1'>
+                    <div className='text-sm font-semibold text-gray-700'>{session.operationLabel}</div>
+                    <div className='text-xs text-gray-500'>
+                      {formatKangurProfileDateTime(session.createdAt)}
+                    </div>
                   </div>
-                </div>
-                <div className='text-right'>
-                  <div className='text-sm font-extrabold text-indigo-600'>
-                    {session.score}/{session.totalQuestions}
+                  <div className='flex flex-col items-end gap-1 text-right'>
+                    <KangurStatusChip
+                      accent={resolveSessionScoreAccent(session.accuracyPercent)}
+                      data-testid={`learner-profile-session-score-${session.id}`}
+                      size='sm'
+                    >
+                      {session.score}/{session.totalQuestions}
+                    </KangurStatusChip>
+                    <div className='text-xs text-gray-500'>
+                      {formatKangurProfileDuration(session.timeTakenSeconds)}
+                    </div>
                   </div>
-                  <div className='text-xs text-gray-500'>
-                    {formatKangurProfileDuration(session.timeTakenSeconds)}
-                  </div>
-                </div>
-              </div>
-            ))}
+                </KangurInfoCard>
+              );
+            })}
           </div>
         )}
       </KangurPanel>
@@ -57,16 +125,17 @@ export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
           {BADGES.map((badge) => {
             const unlocked = snapshot.unlockedBadgeIds.includes(badge.id);
             return (
-              <div
+              <KangurStatusChip
+                accent={unlocked ? 'indigo' : 'slate'}
+                className={cn('gap-1.5', !unlocked && 'opacity-70')}
+                data-testid={`learner-profile-badge-${badge.id}`}
                 key={badge.id}
+                size='sm'
                 title={`${badge.name}: ${badge.desc}`}
-                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
-                  unlocked ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-400'
-                }`}
               >
                 <span className={unlocked ? '' : 'grayscale'}>{badge.emoji}</span>
                 <span>{badge.name}</span>
-              </div>
+              </KangurStatusChip>
             );
           })}
         </div>

@@ -66,11 +66,11 @@ describe('ClockTrainingGame clock behavior', () => {
   });
 
   it('builds near-miss feedback details', () => {
-    const feedback = buildClockWrongFeedback(7, 55, 8, 0);
+    const feedback = buildClockWrongFeedback(7, 56, 8, 0);
     expect(feedback.kind).toBe('wrong');
     expect(feedback.tone).toBe('near');
     expect(feedback.title).toBe('Bardzo blisko!');
-    expect(feedback.details).toContain('Różnica: 5 min');
+    expect(feedback.details).toContain('Różnica: 4 min');
   });
 
   it('schedules a retry task once by default', () => {

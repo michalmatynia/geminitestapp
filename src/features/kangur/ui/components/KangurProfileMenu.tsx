@@ -6,7 +6,10 @@ import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
 import { LogIn, LogOut, User } from 'lucide-react';
 
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
-import { KangurInfoCard, KangurMenuItem } from '@/features/kangur/ui/design/primitives';
+import {
+  KangurGlassPanel,
+  KangurMenuItem,
+} from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_TOP_NAV_ITEM_ACTIVE_CLASSNAME,
   KANGUR_TOP_NAV_ITEM_CLASSNAME,
@@ -25,16 +28,17 @@ const DropdownMenuContent = React.forwardRef<
 >(({ children, className, sideOffset = 4, ...props }, ref) => (
   <DropdownMenuPrimitive.Portal>
     <DropdownMenuPrimitive.Content asChild ref={ref} sideOffset={sideOffset} {...props}>
-      <KangurInfoCard
+      <KangurGlassPanel
         className={cn(
-          'z-50 min-w-[11rem] overflow-hidden rounded-[22px] bg-white/96 p-2 text-slate-700 backdrop-blur-xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
+          'z-50 min-w-[11rem] overflow-hidden rounded-[22px] p-2 text-slate-700 backdrop-blur-xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
           className
         )}
-        padding='sm'
-        tone='neutral'
+        data-testid='kangur-profile-menu-shell'
+        surface='solid'
+        variant='soft'
       >
         {children}
-      </KangurInfoCard>
+      </KangurGlassPanel>
     </DropdownMenuPrimitive.Content>
   </DropdownMenuPrimitive.Portal>
 ));

@@ -41,7 +41,6 @@ import { RunHistoryEntries } from './RunHistoryEntries';
 import { resolveRunHistoryEntryAction } from './run-history-entry-actions';
 import { useJobQueueActions, useJobQueueState } from './JobQueueContext';
 import { buildHistoryNodeOptions } from './run-history-utils';
-import { useRunHistoryActions } from '../context';
 
 type HistoryOption = {
   id: string;
@@ -69,11 +68,12 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
     toggleRun,
     toggleStream,
     loadRunDetail,
+    handleResumeRun,
+    handleRetryRunNode,
     handleCancelRun,
     setRunToDelete,
     setHistorySelection,
   } = useJobQueueActions();
-  const { resumeRun, retryRunNode } = useRunHistoryActions();
 
   const isExpanded = expandedRunIds.has(runId);
   const detail = normalizeRunDetail(runDetails[runId]);
@@ -342,10 +342,12 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
                     onReplayFromEntry={(entry): void => {
                       const action = resolveRunHistoryEntryAction(entry);
                       if (action.kind === 'retry_node') {
-                        void retryRunNode(detailRun.id, entry.nodeId).catch(() => {});
+                        void handleRetryRunNode(detailRun.id, entry.nodeId).catch(() => {});
                         return;
                       }
-                      void resumeRun(detailRun.id, action.resumeMode ?? 'replay').catch(() => {});
+                      void handleResumeRun(detailRun.id, action.resumeMode ?? 'replay').catch(
+                        () => {}
+                      );
                     }}
                   />
                 </div>

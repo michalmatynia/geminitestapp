@@ -4,10 +4,12 @@ import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 
 import {
   KangurButton,
+  KangurDisplayEmoji,
   KangurInfoCard,
   KangurOptionCardButton,
   KangurPanel,
   KangurProgressBar,
+  KangurResultBadge,
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_ACCENT_STYLES,
@@ -302,7 +304,13 @@ export default function CalendarInteractiveGame({
           padding='xl'
           variant='elevated'
         >
-          <div className='text-6xl'>{percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}</div>
+          <KangurDisplayEmoji
+            aria-hidden='true'
+            data-testid='calendar-interactive-summary-emoji'
+            size='lg'
+          >
+            {percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
+          </KangurDisplayEmoji>
           <h2 className='text-2xl font-extrabold text-gray-800'>
             Wynik: {score}/{TOTAL}
           </h2>
@@ -383,9 +391,13 @@ export default function CalendarInteractiveGame({
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             exit={{ opacity: 0 }}
-            className={`text-xl font-extrabold px-5 py-2 rounded-2xl ${feedback === 'correct' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}
           >
-            {feedback === 'correct' ? '🎉 Brawo!' : '❌ Nie tym razem!'}
+            <KangurResultBadge
+              data-testid='calendar-interactive-feedback'
+              tone={feedback === 'correct' ? 'success' : 'error'}
+            >
+              {feedback === 'correct' ? '🎉 Brawo!' : '❌ Nie tym razem!'}
+            </KangurResultBadge>
           </motion.div>
         )}
       </AnimatePresence>

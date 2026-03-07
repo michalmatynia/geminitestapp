@@ -1,47 +1,92 @@
 'use client';
 
 import { Upload } from 'lucide-react';
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import FileManager, { FileManagerRuntimeContext } from '@/features/files/components/FileManager';
 import type { ImageFileSelection } from '@/shared/contracts/files';
-import type { ModalStateProps } from '@/shared/contracts/ui';
-import { Button } from '@/shared/ui';
+import { Button, FileUploadTrigger } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
-interface DriveImportModalProps extends ModalStateProps {
-  title: string;
-  isUploading: boolean;
-  localUploadTrigger?: React.ReactNode;
-  onSelectFile: (files: ImageFileSelection[]) => void;
-}
+import { useStudioImportContext } from '../studio-modals/StudioImportContext';
 
-export function DriveImportModal(props: DriveImportModalProps): React.JSX.Element | null {
-  const { isOpen, onClose, title, isUploading, localUploadTrigger, onSelectFile } = props;
+export function DriveImportModal(): React.JSX.Element | null {
+  const {
+    driveImportMode,
+    driveImportOpen,
+    driveImportTargetId,
+    handleDriveSelection,
+    handleLocalUpload,
+    selectedSlot,
+    setDriveImportMode,
+    setDriveImportOpen,
+    setDriveImportTargetId,
+    setLocalUploadMode,
+    setLocalUploadTargetId,
+    uploadPending,
+  } = useStudioImportContext();
 
-  const fileManagerRuntimeValue = useMemo(() => ({ onSelectFile }), [onSelectFile]);
+  const title =
+    driveImportMode === 'replace'
+      ? 'Attach Image To Selected Card'
+      : driveImportMode === 'temporary-object'
+        ? 'Select Object Image'
+        : driveImportMode === 'environment'
+          ? 'Select Environment Reference Image'
+          : 'Import Images';
+
+  const onClose = useCallback((): void => {
+    setDriveImportOpen(false);
+    setDriveImportMode('create');
+    setDriveImportTargetId(null);
+  }, [setDriveImportMode, setDriveImportOpen, setDriveImportTargetId]);
+
+  const localUploadTrigger = (
+    <FileUploadTrigger
+      accept='image/*'
+      onFilesSelected={(files) => {
+        void handleLocalUpload(files);
+      }}
+      disabled={uploadPending}
+      asChild
+    >
+      <Button
+        size='sm'
+        type='button'
+        variant='outline'
+        disabled={uploadPending}
+        className='gap-2'
+        onClick={() => {
+          setLocalUploadMode(driveImportMode);
+          setLocalUploadTargetId(
+            driveImportMode === 'replace' || driveImportMode === 'environment'
+              ? (driveImportTargetId ?? selectedSlot?.id ?? null)
+              : null
+          );
+        }}
+      >
+        <Upload className='size-4' />
+        Upload From Computer
+      </Button>
+    </FileUploadTrigger>
+  );
+
+  const fileManagerRuntimeValue = useMemo(
+    () => ({
+      onSelectFile: (files: ImageFileSelection[]) => {
+        void handleDriveSelection(files);
+      },
+    }),
+    [handleDriveSelection]
+  );
 
   return (
     <DetailModal
-      isOpen={isOpen}
+      isOpen={driveImportOpen}
       onClose={onClose}
       title={title}
       size='xl'
-      footer={
-        localUploadTrigger || (
-          <Button
-            size='sm'
-            type='button'
-            variant='outline'
-            disabled={isUploading}
-            className='gap-2'
-            loading={isUploading}
-          >
-            <Upload className='size-4' />
-            Upload From Computer
-          </Button>
-        )
-      }
+      footer={localUploadTrigger}
     >
       <div className='space-y-4'>
         <p className='text-xs text-muted-foreground px-1'>

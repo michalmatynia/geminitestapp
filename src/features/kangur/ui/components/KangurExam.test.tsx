@@ -41,10 +41,15 @@ describe('KangurExam', () => {
       'border-slate-200/80'
     );
     expect(screen.getByTestId('kangur-exam-progress-bar')).toHaveAttribute('aria-valuenow', '0');
+    expect(screen.getByTestId('kangur-exam-progress-bar')).toHaveAttribute(
+      'aria-valuetext',
+      'Pytanie 1 z 1'
+    );
     expect(screen.getByTestId('kangur-exam-question-point-chip')).toHaveClass(
       'border-amber-200',
       'bg-amber-100'
     );
+    expect(screen.getByRole('group', { name: 'Pytanie 1' })).toBeInTheDocument();
     expect(screen.getByTestId('kangur-exam-question-illustration')).toHaveClass(
       'soft-card',
       'border-slate-200/80'
@@ -58,7 +63,11 @@ describe('KangurExam', () => {
       'play-cta'
     );
 
-    await userEvent.click(screen.getByRole('button', { name: /B4/i }));
+    await userEvent.click(screen.getByRole('button', { name: /odpowiedz b\. 4/i }));
+    expect(screen.getByRole('button', { name: /odpowiedz b\. 4/i })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
     await userEvent.click(screen.getByRole('button', { name: /zakończ test/i }));
 
     expect(await screen.findByRole('button', { name: /wróć do menu/i })).toHaveClass(
@@ -66,10 +75,19 @@ describe('KangurExam', () => {
       'soft-cta'
     );
     expect(screen.getByTestId('kangur-exam-summary-shell')).toHaveClass('glass-panel');
+    expect(screen.getByTestId('kangur-exam-summary-emoji')).toHaveClass(
+      'inline-flex',
+      'text-6xl'
+    );
     expect(screen.getByTestId('kangur-exam-summary-progress-bar')).toHaveAttribute(
       'aria-valuenow',
       '100'
     );
+    expect(screen.getByTestId('kangur-exam-summary-progress-bar')).toHaveAttribute(
+      'aria-valuetext',
+      '100% poprawnych odpowiedzi'
+    );
+    expect(screen.getByRole('list', { name: 'Przeglad pytan testowych' })).toBeInTheDocument();
 
     const reviewButton = screen
       .getAllByRole('button')

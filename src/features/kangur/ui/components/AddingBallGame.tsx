@@ -6,6 +6,7 @@ import { RefreshCw } from 'lucide-react';
 
 import {
   KangurButton,
+  KangurDisplayEmoji,
   KangurInfoCard,
   KangurPanel,
   KangurProgressBar,
@@ -787,7 +788,9 @@ export default function AddingBallGame({ onFinish }: AddingBallGameProps): React
           padding='xl'
           variant='elevated'
         >
-          <div className='text-6xl'>{percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}</div>
+          <KangurDisplayEmoji data-testid='adding-ball-summary-emoji' size='lg'>
+            {percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
+          </KangurDisplayEmoji>
           <h2 className='text-2xl font-extrabold text-gray-800'>
             Wynik: {score}/{TOTAL_ROUNDS}
           </h2>

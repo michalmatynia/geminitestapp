@@ -7,7 +7,9 @@ import { CheckCircle, RefreshCw, XCircle } from 'lucide-react';
 import {
   KangurAccentDot,
   KangurButton,
+  KangurDisplayEmoji,
   KangurInfoCard,
+  KangurInlineFallback,
   KangurPanel,
   KangurStatusChip,
   KangurSummaryPanel,
@@ -604,7 +606,7 @@ export default function ClockTrainingGame({ onFinish }: ClockTrainingGameProps):
 
   const task = tasks[current];
   if (!task) {
-    return <div className='text-sm text-gray-500'>Brak zadania.</div>;
+    return <KangurInlineFallback data-testid='clock-training-empty' title='Brak zadania.' />;
   }
 
   const handleDone = useCallback(
@@ -779,7 +781,13 @@ export default function ClockTrainingGame({ onFinish }: ClockTrainingGameProps):
           padding='xl'
           variant='elevated'
         >
-          <div className='text-6xl'>{score >= 4 ? '🏆' : score >= 2 ? '😊' : '💪'}</div>
+          <KangurDisplayEmoji
+            aria-hidden='true'
+            data-testid='clock-training-summary-emoji'
+            size='lg'
+          >
+            {score >= 4 ? '🏆' : score >= 2 ? '😊' : '💪'}
+          </KangurDisplayEmoji>
           <h3 className='text-2xl font-extrabold text-indigo-700'>
             Wynik: {score}/{tasks.length}
           </h3>

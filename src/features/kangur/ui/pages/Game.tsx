@@ -53,15 +53,15 @@ function GameContent(): React.JSX.Element {
     () =>
       prefersReducedMotion
         ? {
-            initial: { opacity: 1, y: 0 },
-            animate: { opacity: 1, y: 0 },
-            exit: { opacity: 1, y: 0 },
-          }
+          initial: { opacity: 1, y: 0 },
+          animate: { opacity: 1, y: 0 },
+          exit: { opacity: 1, y: 0 },
+        }
         : {
-            initial: { opacity: 0, y: 20 },
-            animate: { opacity: 1, y: 0 },
-            exit: { opacity: 0, y: -20 },
-          },
+          initial: { opacity: 0, y: 20 },
+          animate: { opacity: 1, y: 0 },
+          exit: { opacity: 0, y: -20 },
+        },
     [prefersReducedMotion]
   );
 
@@ -98,7 +98,7 @@ function GameContent(): React.JSX.Element {
   );
 
   return (
-    <KangurPageShell tone='play' id='kangur-game-page' skipLinkTargetId={GAME_MAIN_ID}>
+    <KangurPageShell tone='play' className='min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100' id='kangur-game-page' skipLinkTargetId={GAME_MAIN_ID}>
       <KangurDocsTooltipEnhancer enabled={docsTooltipsEnabled} rootId='kangur-game-page' />
       <XpToast
         xpGained={xpToast.xpGained}

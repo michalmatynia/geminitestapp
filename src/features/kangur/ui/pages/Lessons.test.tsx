@@ -215,6 +215,10 @@ describe('Lessons', () => {
     fireEvent.click(screen.getByRole('button', { name: /shapes with svg/i }));
 
     expect(screen.getByTestId('lesson-document-renderer')).toBeInTheDocument();
+    expect(screen.getByTestId('lessons-document-summary')).toHaveClass(
+      'soft-card',
+      'border-sky-300'
+    );
     expect(screen.queryByTestId('legacy-lesson')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Wroc do listy lekcji' })).toHaveClass(
       'kangur-cta-pill',
@@ -318,6 +322,10 @@ describe('Lessons', () => {
         'This lesson is set to use custom document content, but no document blocks have been saved yet.'
       )
     ).toBeInTheDocument();
+    expect(screen.getByTestId('lessons-empty-document-summary')).toHaveClass(
+      'soft-card',
+      'border-amber-300'
+    );
     expect(screen.getByText('Lesson document')).toHaveClass('border-amber-200', 'bg-amber-100');
     expect(screen.queryByTestId('legacy-lesson')).not.toBeInTheDocument();
     expect(screen.queryByTestId('lesson-document-renderer')).not.toBeInTheDocument();
@@ -397,6 +405,11 @@ describe('Lessons', () => {
     render(<Lessons />);
 
     expect(screen.getByRole('button', { name: /nauka zegara/i })).toHaveClass('soft-card');
+    expect(screen.getByTestId('lesson-library-icon-clock-doc')).toHaveClass(
+      'h-16',
+      'w-16',
+      'rounded-[24px]'
+    );
     expect(screen.getByText('Wlasna zawartosc')).toHaveClass('border-sky-200', 'bg-sky-100');
     expect(screen.getAllByText('Priorytet rodzica')[0]).toHaveClass('border-rose-200', 'bg-rose-100');
     expect(screen.getByText('Opanowane 92%')).toHaveClass('border-emerald-200', 'bg-emerald-100');

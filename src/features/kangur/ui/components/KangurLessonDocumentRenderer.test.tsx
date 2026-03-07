@@ -194,6 +194,11 @@ describe('KangurLessonDocumentRenderer', () => {
     );
 
     expect(screen.getByText('Page 1')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-page-shell-page-1')).toHaveClass(
+      'glass-panel',
+      'border-white/70',
+      'bg-white/45'
+    );
     expect(screen.getAllByText('Section')).toHaveLength(2);
     expect(screen.getByText('Introduction')).toBeInTheDocument();
     expect(screen.getByText('Get oriented before the lesson starts')).toBeInTheDocument();
@@ -282,6 +287,12 @@ describe('KangurLessonDocumentRenderer', () => {
       />
     );
 
+    expect(screen.getByTestId('lesson-page-shell-page-empty')).toHaveClass(
+      'glass-panel',
+      'border-white/70',
+      'bg-white/45',
+      'border-dashed'
+    );
     expect(screen.getAllByText('Section')[0].parentElement).toHaveClass(
       'soft-card',
       'border-slate-200/80'

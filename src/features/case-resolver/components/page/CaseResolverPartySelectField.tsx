@@ -4,6 +4,7 @@ import React from 'react';
 import { Building2, User, X } from 'lucide-react';
 
 import { SelectSimple, SegmentedControl, Button } from '@/shared/ui';
+import { useOptionalCaseResolverPartyFieldRuntime } from './CaseResolverPartyFieldRuntimeContext';
 
 type PartyKindFilter = 'all' | 'person' | 'organization';
 
@@ -11,7 +12,7 @@ interface CaseResolverPartySelectFieldProps {
   label: string;
   value: string;
   onValueChange: (value: string) => void;
-  options: Array<{ value: string; label: string; description?: string | undefined }>;
+  options?: Array<{ value: string; label: string; description?: string | undefined }>;
   disabled?: boolean | undefined;
   placeholder?: string | undefined;
 }
@@ -19,7 +20,23 @@ interface CaseResolverPartySelectFieldProps {
 export function CaseResolverPartySelectField(
   props: CaseResolverPartySelectFieldProps
 ): React.JSX.Element {
-  const { label, value, onValueChange, options, disabled = false, placeholder } = props;
+  const runtime = useOptionalCaseResolverPartyFieldRuntime();
+  const {
+    label,
+    value,
+    onValueChange,
+    options: explicitOptions,
+    disabled: explicitDisabled,
+    placeholder,
+  } = props;
+  const options = explicitOptions ?? runtime?.options;
+  const disabled = explicitDisabled ?? runtime?.disabled ?? false;
+
+  if (!options) {
+    throw new Error(
+      'CaseResolverPartySelectField must be used within CaseResolverPartyFieldRuntimeProvider or receive explicit options'
+    );
+  }
 
   const [filter, setFilter] = React.useState<PartyKindFilter>('all');
 

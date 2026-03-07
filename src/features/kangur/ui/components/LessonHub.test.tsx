@@ -64,6 +64,14 @@ describe('LessonHub', () => {
 
     expect(lessonCard).toHaveClass('soft-card');
     expect(gameCard).toHaveClass('soft-card', 'border-indigo-300');
+    expect(within(lessonCard).getByTestId('lesson-hub-icon-days')).toHaveClass(
+      'bg-slate-100',
+      'text-slate-700'
+    );
+    expect(within(gameCard).getByTestId('lesson-hub-icon-game')).toHaveClass(
+      'bg-indigo-100',
+      'text-indigo-700'
+    );
     expect(within(lessonCard).getByText('Lekcja')).toHaveClass('border-slate-200', 'bg-slate-100');
     expect(within(gameCard).getByText('Gra')).toHaveClass('border-indigo-200', 'bg-indigo-100');
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { listImageStudioRuns } from '@/features/ai/image-studio/server';
-import { type ImageStudioRunStatus } from '@/shared/contracts/image-studio';
+import type { ImageStudioRunStatus, ImageStudioRunsResponse } from '@/shared/contracts/image-studio';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const RUN_STATUSES = new Set<ImageStudioRunStatus>(['queued', 'running', 'completed', 'failed']);
@@ -25,7 +25,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const limit = parsePositiveInteger(searchParams.get('limit'), 50);
   const offset = parsePositiveInteger(searchParams.get('offset'), 0);
 
-  const result = await listImageStudioRuns({
+  const result: ImageStudioRunsResponse = await listImageStudioRuns({
     ...(projectId ? { projectId } : {}),
     ...(sourceSlotId ? { sourceSlotId } : {}),
     ...(status ? { status } : {}),

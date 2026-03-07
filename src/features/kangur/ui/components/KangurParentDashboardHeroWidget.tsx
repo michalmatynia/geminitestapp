@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
 import {
   KangurButton,
+  KangurIconBadge,
   KangurPanel,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
@@ -27,7 +28,6 @@ export function KangurParentDashboardHeroWidget({
   const {
     activeLearner,
     basePath,
-    canAccessDashboard,
     canManageLearners,
     isAuthenticated,
     logout,
@@ -43,7 +43,13 @@ export function KangurParentDashboardHeroWidget({
         padding='xl'
         variant='elevated'
       >
-        <div className='text-6xl'>🪪</div>
+        <KangurIconBadge
+          accent='indigo'
+          data-testid='parent-dashboard-auth-icon'
+          size='3xl'
+        >
+          🪪
+        </KangurIconBadge>
         <h1 className='text-center text-2xl font-extrabold text-gray-800'>
           Panel Rodzica / Nauczyciela
         </h1>
@@ -78,7 +84,13 @@ export function KangurParentDashboardHeroWidget({
         padding='xl'
         variant='elevated'
       >
-        <div className='text-6xl'>🔒</div>
+        <KangurIconBadge
+          accent='slate'
+          data-testid='parent-dashboard-locked-icon'
+          size='3xl'
+        >
+          🔒
+        </KangurIconBadge>
         <h1 className='text-center text-2xl font-extrabold text-gray-800'>Panel Rodzica</h1>
         <p className='text-center text-sm text-gray-500'>
           Ten widok jest dostepny tylko dla konta rodzica, ktore zarzadza profilami uczniow.
@@ -141,10 +153,6 @@ export function KangurParentDashboardHeroWidget({
           </div>
         ) : null}
       </div>
-
-      {!canAccessDashboard ? (
-        <div className='text-sm text-slate-500'>Brak dostepu do panelu.</div>
-      ) : null}
     </KangurPanel>
   );
 }

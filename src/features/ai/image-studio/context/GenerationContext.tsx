@@ -13,7 +13,10 @@ import React, {
 
 import { useRunStudio } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
 import type {
+  ImageStudioRunDetailResponse,
+  ImageStudioRunOutputRecord,
   ImageStudioRunRecord,
+  ImageStudioRunsResponse,
   ImageStudioRunStatus,
   RunStudioEnqueueResult,
   RunStudioPayload,
@@ -161,21 +164,20 @@ const buildPendingLandingSlots = (
 };
 
 const toImageFileRecord = (
-  output: { id: string; filepath: string },
+  output: ImageStudioRunOutputRecord,
   timestamp: string
 ): ImageFileRecord => ({
-  id: output.id,
-  filepath: output.filepath,
-  filename: output.filepath.split('/').pop() || output.id,
-  mimetype: 'image/png',
-  size: 0,
-  tags: [],
-  createdAt: timestamp,
-  updatedAt: timestamp,
+  ...output,
+  filename: output.filename || output.filepath.split('/').pop() || output.id,
+  mimetype: output.mimetype || 'image/png',
+  size: Number.isFinite(output.size) ? output.size : 0,
+  tags: Array.isArray(output.tags) ? output.tags : [],
+  createdAt: output.createdAt ?? timestamp,
+  updatedAt: output.updatedAt ?? timestamp,
 });
 
 const toImageFileRecords = (
-  outputs: Array<{ id: string; filepath: string }>
+  outputs: ImageStudioRunOutputRecord[]
 ): ImageFileRecord[] => {
   const timestamp = new Date().toISOString();
   return outputs.map((output) => toImageFileRecord(output, timestamp));
@@ -448,7 +450,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
       };
 
       const fetchAndApplyRunStatus = async (): Promise<boolean> => {
-        const response = await api.get<{ run: ImageStudioRunRecord }>(
+        const response = await api.get<ImageStudioRunDetailResponse>(
           `/api/image-studio/runs/${encodeURIComponent(params.runId)}`
         );
         return applyRunSnapshot(response.run);
@@ -563,7 +565,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
 
     const hydrateLatestRun = async (): Promise<void> => {
       try {
-        const response = await api.get<{ runs?: ImageStudioRunRecord[] }>(
+        const response = await api.get<ImageStudioRunsResponse>(
           `/api/image-studio/runs?projectId=${encodeURIComponent(projectId)}&limit=25`,
           { signal: hydrationAbortController.signal }
         );

@@ -55,7 +55,7 @@ function ParentDashboardContent(): React.JSX.Element {
 
   return (
     <KangurPageShell
-      tone='dashboard'
+      tone='dashboard' className='min-h-screen bg-gradient-to-br from-slate-100 to-blue-50'
       id='kangur-parent-dashboard-page'
       skipLinkTargetId='kangur-parent-dashboard-main'
     >

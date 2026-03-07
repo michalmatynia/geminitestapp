@@ -80,6 +80,20 @@ export const queueHealthStatusSchema = z.object({
 export type QueueHealthStatusDto = z.infer<typeof queueHealthStatusSchema>;
 export type QueueHealthStatus = QueueHealthStatusDto;
 
+export const traderaQueueHealthResponseSchema = z.object({
+  ok: z.boolean(),
+  mode: z.enum(['bullmq', 'inline']),
+  redisAvailable: z.boolean(),
+  timestamp: z.string(),
+  queues: z.object({
+    listings: queueHealthStatusSchema.nullable(),
+    relistScheduler: queueHealthStatusSchema.nullable(),
+  }),
+});
+
+export type TraderaQueueHealthResponseDto = z.infer<typeof traderaQueueHealthResponseSchema>;
+export type TraderaQueueHealthResponse = TraderaQueueHealthResponseDto;
+
 /**
  * Product AI Job DTOs
  */

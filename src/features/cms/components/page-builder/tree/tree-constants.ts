@@ -66,6 +66,7 @@ export const BLOCK_ICONS: Record<string, LucideIcon> = {
   Button: MousePointerClick,
   Input: TextCursorInput,
   Progress: Gauge,
+  Repeater: ListCollapse,
   Column: Columns,
   Block: Box,
   ImageWithText: Layers,
@@ -100,6 +101,7 @@ export const SECTION_BLOCK_TYPES: string[] = [
   'TextAtom',
   'Carousel',
   'Slideshow',
+  'Repeater',
 ];
 
 /**

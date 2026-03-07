@@ -3,10 +3,11 @@ import Link from 'next/link';
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 import {
   KangurButton,
-  KangurPanel,
+  KangurGlassPanel,
   KangurProgressBar,
   KangurStatusChip,
   KangurSummaryPanel,
+  KangurSurfacePanel,
 } from '@/features/kangur/ui/design/primitives';
 import {
   buildKangurAssignmentHref,
@@ -41,17 +42,24 @@ export function KangurPracticeAssignmentBanner({
         )}.`;
 
   return (
-    <KangurPanel
-      className='w-full max-w-md border-amber-200/80 bg-gradient-to-r from-amber-50/95 via-orange-50/90 to-rose-50/90'
+    <KangurSurfacePanel
+      accent='amber'
+      className='w-full max-w-md bg-gradient-to-r from-amber-50/95 via-orange-50/90 to-rose-50/90'
+      data-testid='kangur-practice-assignment-shell'
       padding='lg'
-      variant='elevated'
     >
       <KangurStatusChip accent='amber' className='text-[11px] uppercase tracking-[0.18em]'>
         Priorytet rodzica
       </KangurStatusChip>
       <div className='mt-3 text-sm font-semibold leading-6 text-amber-900'>{helperLabel}</div>
 
-      <KangurPanel className='mt-4 border-white/85 bg-white/95' padding='lg' variant='subtle'>
+      <KangurGlassPanel
+        className='mt-4'
+        data-testid='kangur-practice-assignment-inner-shell'
+        padding='lg'
+        surface='solid'
+        variant='soft'
+      >
         <div className='flex flex-wrap items-start justify-between gap-3'>
           <div className='min-w-0'>
             <KangurStatusChip accent='amber' className='text-[11px] uppercase tracking-[0.16em]'>
@@ -87,8 +95,8 @@ export function KangurPracticeAssignmentBanner({
             {getKangurAssignmentActionLabel(assignment)}
           </Link>
         </KangurButton>
-      </KangurPanel>
-    </KangurPanel>
+      </KangurGlassPanel>
+    </KangurSurfacePanel>
   );
 }
 

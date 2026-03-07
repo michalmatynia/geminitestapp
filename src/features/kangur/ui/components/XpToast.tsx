@@ -1,6 +1,9 @@
 import { AnimatePresence, motion } from 'framer-motion';
 
-import { KangurPanel, KangurStatusChip } from '@/features/kangur/ui/design/primitives';
+import {
+  KangurStatusChip,
+  KangurSurfacePanel,
+} from '@/features/kangur/ui/design/primitives';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { BADGES } from '@/features/kangur/ui/services/progress';
 import type { KangurXpToastState } from '@/features/kangur/ui/types';
@@ -31,10 +34,10 @@ export default function XpToast({ xpGained, newBadges, visible }: XpToastProps):
           )}
         >
           {xpGained > 0 && (
-            <KangurPanel
-              className='border-indigo-200/80 bg-white/96'
+            <KangurSurfacePanel
+              accent='indigo'
+              data-testid='xp-toast-xp-shell'
               padding='md'
-              variant='elevated'
             >
               <div className='flex items-center gap-3'>
                 <KangurStatusChip accent='indigo' className='text-sm font-bold'>
@@ -44,14 +47,14 @@ export default function XpToast({ xpGained, newBadges, visible }: XpToastProps):
                   Świetnie, zdobywasz kolejne punkty
                 </span>
               </div>
-            </KangurPanel>
+            </KangurSurfacePanel>
           )}
           {badgeDetails.map((badge) => (
-            <KangurPanel
+            <KangurSurfacePanel
+              accent='amber'
+              data-testid={`xp-toast-badge-shell-${badge.id}`}
               key={badge.id}
-              className='border-amber-200/80 bg-white/96'
               padding='md'
-              variant='elevated'
             >
               <div className='flex items-center gap-3'>
                 <KangurStatusChip accent='amber' className='text-sm font-bold'>
@@ -59,7 +62,7 @@ export default function XpToast({ xpGained, newBadges, visible }: XpToastProps):
                 </KangurStatusChip>
                 <span className='text-sm font-bold text-slate-900'>{badge.name}</span>
               </div>
-            </KangurPanel>
+            </KangurSurfacePanel>
           ))}
         </motion.div>
       )}

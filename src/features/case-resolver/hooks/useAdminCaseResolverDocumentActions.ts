@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation';
 import type {
   CaseResolverDocumentHistoryEntry,
   CaseResolverPartyReference,
+  CaseResolverPdfExportRequest,
 } from '@/shared/contracts/case-resolver';
 import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
 import { useToast } from '@/shared/ui';
@@ -359,15 +360,16 @@ export function useAdminCaseResolverDocumentActions({
       const documentBaseName = sanitizeDocumentExportBaseName(
         editingDocumentDraft.name || 'Case Resolver Document'
       );
+      const payload: CaseResolverPdfExportRequest = {
+        html: markup,
+        filename: `${documentBaseName}.pdf`,
+      };
       const response = await fetch('/api/case-resolver/documents/export-pdf', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          html: markup,
-          filename: `${documentBaseName}.pdf`,
-        }),
+        body: JSON.stringify(payload),
       });
       if (!response.ok) {
         let message = `Failed to export PDF (${response.status}).`;

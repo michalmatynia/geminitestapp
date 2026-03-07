@@ -5,6 +5,7 @@ import type { JSX } from 'react';
 import { hasKangurLessonDocumentContent } from '@/features/kangur/lesson-documents';
 import {
   KangurEmptyState,
+  KangurGradientIconTile,
   KangurOptionCardButton,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
@@ -56,11 +57,13 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
             onClick={() => selectLesson(lesson.id)}
             type='button'
           >
-            <span
-              className={`flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-[24px] bg-gradient-to-br ${lesson.color} text-5xl shadow-sm`}
+            <KangurGradientIconTile
+              data-testid={`lessons-catalog-icon-${lesson.id}`}
+              gradientClass={lesson.color}
+              size='lg'
             >
               {lesson.emoji}
-            </span>
+            </KangurGradientIconTile>
             <div className='flex-1'>
               <div className='flex items-start justify-between gap-3'>
                 <div>

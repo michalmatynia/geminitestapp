@@ -24,7 +24,12 @@ import {
 import { useOptionalKangurLessonsRuntime } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
+import { useKangurLeaderboardState } from '@/features/kangur/ui/hooks/useKangurLeaderboardState';
+import { useKangurOperationSelectorState } from '@/features/kangur/ui/hooks/useKangurOperationSelectorState';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
+import { useKangurTrainingSetupState } from '@/features/kangur/ui/hooks/useKangurTrainingSetupState';
+import type { KangurGameScreen } from '@/features/kangur/ui/types';
+import type { KangurPracticeAssignmentOperation } from '@/shared/contracts/kangur';
 
 const resolveResultStars = (percent: number): number =>
   percent >= 90 ? 3 : percent >= 60 ? 2 : 1;
@@ -62,6 +67,17 @@ const resolveAssignmentPriorityLabel = (priority: 'high' | 'medium' | 'low'): st
   return 'Priorytet niski';
 };
 
+const resolvePracticeAssignmentHelperLabel = (
+  screen: KangurGameScreen,
+  operation: KangurPracticeAssignmentOperation
+): string => {
+  if (screen === 'training' || screen === 'playing') {
+    return 'W tej sesji realizujesz przydzielone zadanie.';
+  }
+
+  return `Najblizszy priorytet w praktyce: ${formatKangurAssignmentOperationLabel(operation)}.`;
+};
+
 export function KangurCmsRuntimeDataProvider({
   children,
 }: {
@@ -74,6 +90,19 @@ export function KangurCmsRuntimeDataProvider({
   const lessons = useOptionalKangurLessonsRuntime();
   const learnerProfile = useOptionalKangurLearnerProfileRuntime();
   const parentDashboard = useOptionalKangurParentDashboardRuntime();
+  const leaderboard = useKangurLeaderboardState({
+    enabled: routing?.pageKey === 'Game',
+  });
+  const trainingSetup = useKangurTrainingSetupState({
+    active: game?.screen === 'training',
+    onBack: game?.handleHome,
+    onStart: game?.handleStartTraining,
+  });
+  const operationSelector = useKangurOperationSelectorState({
+    active: game?.screen === 'operation',
+    onSelect: game?.handleSelectOperation,
+    priorityAssignmentsByOperation: game?.practiceAssignmentsByOperation,
+  });
   const { assignments: delegatedAssignments, error: assignmentsError, isLoading: isLoadingAssignments } =
     useKangurAssignments({
       enabled: routing?.pageKey === 'Game' && auth.isAuthenticated,
@@ -112,13 +141,34 @@ export function KangurCmsRuntimeDataProvider({
         : 'Maksymalny poziom!',
     };
   }, [progress]);
-  const homeSpotlightAssignment = useMemo(() => {
+  const priorityAssignments = useMemo(() => {
     if (isLoadingAssignments || assignmentsError) {
-      return null;
+      return [];
     }
 
-    return selectKangurPriorityAssignments(delegatedAssignments, 1)[0] ?? null;
+    return selectKangurPriorityAssignments(delegatedAssignments, delegatedAssignments.length);
   }, [assignmentsError, delegatedAssignments, isLoadingAssignments]);
+  const homeSpotlightAssignment = priorityAssignments[0] ?? null;
+  const priorityAssignmentItems = useMemo(
+    () =>
+      priorityAssignments.map((assignment) => ({
+        actionLabel: getKangurAssignmentActionLabel(assignment),
+        description: assignment.description,
+        id: assignment.id,
+        openAssignment: (): void => {
+          if (typeof window === 'undefined') {
+            return;
+          }
+
+          window.location.href = buildKangurAssignmentHref(routing?.basePath ?? '', assignment);
+        },
+        priorityLabel: resolveAssignmentPriorityLabel(assignment.priority),
+        progressLabel: assignment.progress.summary,
+        progressPercent: assignment.progress.percent,
+        title: assignment.title,
+      })),
+    [priorityAssignments, routing?.basePath]
+  );
   const openHomeSpotlightAssignment = useCallback((): void => {
     if (typeof window === 'undefined' || !homeSpotlightAssignment) {
       return;
@@ -136,6 +186,16 @@ export function KangurCmsRuntimeDataProvider({
       game.resultPracticeAssignment
     );
   }, [game?.resultPracticeAssignment, routing?.basePath]);
+  const openActivePracticeAssignment = useCallback((): void => {
+    if (typeof window === 'undefined' || !game?.activePracticeAssignment) {
+      return;
+    }
+
+    window.location.href = buildKangurAssignmentHref(
+      routing?.basePath ?? '',
+      game.activePracticeAssignment
+    );
+  }, [game?.activePracticeAssignment, routing?.basePath]);
   const gameRuntime = useMemo(() => {
     if (!game) {
       return null;
@@ -162,6 +222,122 @@ export function KangurCmsRuntimeDataProvider({
         progressLabel: homeSpotlightAssignment?.progress.summary ?? '0% ukonczono',
         progressPercent: homeSpotlightAssignment?.progress.percent ?? 0,
         title: homeSpotlightAssignment?.title ?? 'Zadanie od rodzica',
+      },
+      priorityAssignments: {
+        count: priorityAssignmentItems.length,
+        countLabel: `${priorityAssignmentItems.length} zadan`,
+        hasItems: priorityAssignmentItems.length > 0,
+        items: priorityAssignmentItems,
+      },
+      activePracticeAssignmentBanner: {
+        actionLabel: game.activePracticeAssignment
+          ? getKangurAssignmentActionLabel(game.activePracticeAssignment)
+          : 'Kontynuuj zadanie',
+        description:
+          game.activePracticeAssignment?.description?.trim() ||
+          'Wroc do zadania i kontynuuj wyzwanie.',
+        hasAssignment: Boolean(game.activePracticeAssignment),
+        helperLabel: game.activePracticeAssignment
+          ? resolvePracticeAssignmentHelperLabel(
+            game.screen,
+            game.activePracticeAssignment.target.operation
+          )
+          : 'Najblizszy priorytet w praktyce.',
+        openAssignment: openActivePracticeAssignment,
+        priorityLabel: game.activePracticeAssignment
+          ? resolveAssignmentPriorityLabel(game.activePracticeAssignment.priority)
+          : 'Priorytet wysoki',
+        progressLabel: game.activePracticeAssignment?.progress.summary ?? '0% ukonczono',
+        progressPercent: game.activePracticeAssignment?.progress.percent ?? 0,
+        title: game.activePracticeAssignment?.title ?? 'Zadanie od rodzica',
+      },
+      leaderboard: {
+        emptyStateLabel: leaderboard.emptyStateLabel,
+        hasItems: leaderboard.items.length > 0,
+        isLoading: leaderboard.loading,
+        items: leaderboard.items,
+        operationFilters: {
+          items: leaderboard.operationFilters.map((filter) => ({
+            displayLabel: filter.displayLabel,
+            id: filter.id,
+            label: filter.label,
+            select: filter.select,
+            selected: filter.selected,
+          })),
+        },
+        showEmptyState: !leaderboard.loading && leaderboard.items.length === 0,
+        userFilters: {
+          items: leaderboard.userFilters.map((filter) => ({
+            displayLabel: filter.displayLabel,
+            icon: filter.icon,
+            id: filter.id,
+            label: filter.label,
+            select: filter.select,
+            selected: filter.selected,
+          })),
+        },
+      },
+      trainingSetup: {
+        categoryOptions: {
+          items: trainingSetup.categoryOptions.map((option) => ({
+            displayLabel: option.displayLabel,
+            emoji: option.emoji,
+            id: option.id,
+            label: option.label,
+            select: option.select,
+            selected: option.selected,
+          })),
+        },
+        countOptions: {
+          items: trainingSetup.countOptions.map((option) => ({
+            displayLabel: option.displayLabel,
+            id: option.id,
+            select: option.select,
+            selected: option.selected,
+            value: option.value,
+          })),
+        },
+        difficultyOptions: {
+          items: trainingSetup.difficultyOptions.map((option) => ({
+            displayLabel: option.displayLabel,
+            id: option.id,
+            label: option.label,
+            metaLabel: option.metaLabel,
+            select: option.select,
+            selected: option.selected,
+          })),
+        },
+        start: trainingSetup.startTraining,
+        summaryLabel: trainingSetup.summaryLabel,
+        toggleAllCategories: trainingSetup.toggleAllCategories,
+        toggleAllLabel: trainingSetup.toggleAllLabel,
+      },
+      operationSelector: {
+        difficultyOptions: {
+          items: operationSelector.difficultyOptions.map((option) => ({
+            displayLabel: option.displayLabel,
+            id: option.id,
+            label: option.label,
+            metaLabel: option.metaLabel,
+            select: option.select,
+            selected: option.selected,
+          })),
+        },
+        greetingLabel: `Czesc, ${game.playerName || 'Graczu'}! 👋`,
+        operations: {
+          items: operationSelector.operations.map((item) => ({
+            actionLabel: item.actionLabel,
+            description: item.description,
+            displayLabel: item.displayLabel,
+            emoji: item.emoji,
+            hasPriorityAssignment: item.hasPriorityAssignment,
+            id: item.id,
+            label: item.label,
+            priorityLabel: item.priorityLabel,
+            select: item.select,
+            statusLabel: item.statusLabel,
+          })),
+        },
       },
       result: {
         accuracyLabel: `${resultPercent}%`,
@@ -191,7 +367,28 @@ export function KangurCmsRuntimeDataProvider({
         title: resolveResultTitle(game.playerName),
       },
     };
-  }, [game, homeSpotlightAssignment, openHomeSpotlightAssignment, openResultAssignment]);
+  }, [
+    game,
+    homeSpotlightAssignment,
+    leaderboard.emptyStateLabel,
+    leaderboard.items,
+    leaderboard.loading,
+    leaderboard.operationFilters,
+    leaderboard.userFilters,
+    openActivePracticeAssignment,
+    openHomeSpotlightAssignment,
+    openResultAssignment,
+    operationSelector.difficultyOptions,
+    operationSelector.operations,
+    priorityAssignmentItems,
+    trainingSetup.categoryOptions,
+    trainingSetup.countOptions,
+    trainingSetup.difficultyOptions,
+    trainingSetup.startTraining,
+    trainingSetup.summaryLabel,
+    trainingSetup.toggleAllCategories,
+    trainingSetup.toggleAllLabel,
+  ]);
   const navigateToPage = useCallback(
     (pageKey: unknown): void => {
       if (typeof window === 'undefined' || typeof pageKey !== 'string' || pageKey.trim().length === 0) {

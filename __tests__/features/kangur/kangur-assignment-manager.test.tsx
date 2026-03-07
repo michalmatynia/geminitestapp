@@ -102,6 +102,16 @@ describe('KangurAssignmentManager', () => {
   it('renders recommendations, filters catalog items, and creates assignments from the parent panel', async () => {
     render(<KangurAssignmentManager basePath='/kangur' />);
 
+    expect(screen.getByTestId('assignment-manager-create-shell')).toHaveClass(
+      'glass-panel',
+      'border-slate-200/70',
+      'bg-white/88'
+    );
+    expect(screen.getByTestId('assignment-manager-tracking-shell')).toHaveClass(
+      'glass-panel',
+      'border-slate-200/70',
+      'bg-white/88'
+    );
     const allFilter = screen.getByTestId('assignment-manager-filter-all');
     const practiceFilter = screen.getByTestId('assignment-manager-filter-practice');
 
@@ -282,5 +292,53 @@ describe('KangurAssignmentManager', () => {
 
     expect(createAssignmentMock).toHaveBeenCalledTimes(1);
     expect(screen.getByText('To zadanie jest juz aktywne.')).toBeInTheDocument();
+  });
+
+  it('uses the shared empty-state surface when no attention items are present', () => {
+    useKangurAssignmentsMock.mockReturnValue({
+      assignments: [
+        {
+          id: 'assignment-1',
+          learnerKey: 'ada@example.com',
+          title: 'Powtorka: Zegar',
+          description: 'Powtorz lekcje zegara.',
+          priority: 'low',
+          archived: false,
+          target: {
+            type: 'lesson',
+            lessonComponentId: 'clock',
+            requiredCompletions: 1,
+            baselineCompletions: 0,
+          },
+          assignedByName: 'Ada',
+          assignedByEmail: 'ada@example.com',
+          createdAt: '2026-03-06T10:00:00.000Z',
+          updatedAt: '2026-03-06T10:00:00.000Z',
+          progress: {
+            status: 'completed',
+            percent: 100,
+            summary: 'Powtorki po przydziale: 1/1.',
+            attemptsCompleted: 1,
+            attemptsRequired: 1,
+            lastActivityAt: '2026-03-06T10:10:00.000Z',
+            completedAt: '2026-03-06T10:10:00.000Z',
+          },
+        },
+      ],
+      isLoading: false,
+      error: null,
+      createAssignment: createAssignmentMock,
+      updateAssignment: updateAssignmentMock,
+      refresh: refreshMock,
+    });
+
+    render(<KangurAssignmentManager basePath='/kangur' />);
+
+    expect(screen.getByTestId('assignment-manager-attention-empty')).toHaveClass(
+      'soft-card',
+      'border-dashed',
+      'border-slate-200/80'
+    );
+    expect(screen.getByText('Brak zadań wymagających dodatkowej reakcji.')).toBeInTheDocument();
   });
 });

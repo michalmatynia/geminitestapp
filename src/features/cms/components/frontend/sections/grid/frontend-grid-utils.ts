@@ -8,6 +8,7 @@ export const SECTION_BLOCK_TYPES = new Set([
   'TextAtom',
   'Carousel',
   'Slideshow',
+  'Repeater',
 ]);
 
 export const getGapClass = (gap?: string): string => {
@@ -60,6 +61,7 @@ export const DEFAULT_BLOCK_MIN_HEIGHT: Record<string, number> = {
   Button: 44,
   Input: 44,
   Progress: 28,
+  Repeater: 120,
   ImageElement: 140,
   Image: 140,
   VideoEmbed: 160,

@@ -8,9 +8,11 @@ import {
 } from '@/features/kangur/ui/design/tokens';
 import {
   KangurButton,
+  KangurDisplayEmoji,
   KangurOptionCardButton,
   KangurPanel,
   KangurProgressBar,
+  KangurResultBadge,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import {
@@ -137,7 +139,9 @@ export default function SubtractingGame({ onFinish }: SubtractingGameProps): Rea
           padding='xl'
           variant='elevated'
         >
-          <div className='text-6xl'>{percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}</div>
+          <KangurDisplayEmoji data-testid='subtracting-game-summary-emoji' size='lg'>
+            {percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
+          </KangurDisplayEmoji>
           <h2 className='text-2xl font-extrabold text-gray-800'>
             Wynik: {score}/{TOTAL}
           </h2>
@@ -268,9 +272,14 @@ export default function SubtractingGame({ onFinish }: SubtractingGameProps): Rea
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                className={`text-lg font-extrabold ${selected === question.correct ? 'text-green-600' : 'text-red-500'}`}
               >
-                {selected === question.correct ? '🎉 Brawo!' : `❌ Odpowiedź: ${question.correct}`}
+                <KangurResultBadge
+                  data-testid='subtracting-game-feedback'
+                  size='md'
+                  tone={selected === question.correct ? 'success' : 'error'}
+                >
+                  {selected === question.correct ? '🎉 Brawo!' : `❌ Odpowiedź: ${question.correct}`}
+                </KangurResultBadge>
               </motion.div>
             )}
             {!confirmed && (

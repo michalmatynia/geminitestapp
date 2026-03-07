@@ -232,6 +232,33 @@ const makeProgressBlock = (id: string, settings: Record<string, unknown> = {}): 
   },
 });
 
+const makeRepeaterBlock = (
+  id: string,
+  blocks: BlockInstance[],
+  settings: Record<string, unknown> = {}
+): BlockInstance => ({
+  id,
+  type: 'Repeater',
+  settings: {
+    collectionSource: '',
+    collectionPath: '',
+    emptyMessage: 'No items to show yet.',
+    itemLimit: 0,
+    itemsGap: 16,
+    listLayoutDirection: 'column',
+    listWrap: 'wrap',
+    listAlignItems: 'stretch',
+    listJustifyContent: 'start',
+    itemGap: 12,
+    itemLayoutDirection: 'column',
+    itemWrap: 'wrap',
+    itemAlignItems: 'stretch',
+    itemJustifyContent: 'start',
+    ...settings,
+  },
+  blocks,
+});
+
 const makeContainerBlock = (input: {
   id: string;
   blocks: BlockInstance[];
@@ -488,6 +515,855 @@ const makeGameUserVisibilitySettings = (mode: 'truthy' | 'falsy'): Record<string
     path: 'game.user',
   });
 
+const makeSelectableButtonRepeater = (input: {
+  collectionPath: string;
+  fallbackLabel?: string;
+  id: string;
+  itemsGap?: number;
+}): BlockInstance =>
+  makeRepeaterBlock(
+    input.id,
+    [
+      makeButtonBlock(`${input.id}-button-selected`, input.fallbackLabel ?? 'Filtr', {
+        runtimeActionSource: 'item',
+        runtimeActionPath: 'select',
+        buttonStyle: 'solid',
+        fontSize: 14,
+        fontWeight: '700',
+        textColor: '#ffffff',
+        bgColor: '#4f46e5',
+        borderColor: '#4f46e5',
+        borderRadius: 18,
+        borderWidth: 1,
+        connection: {
+          enabled: true,
+          source: 'item',
+          path: 'displayLabel',
+          fallback: input.fallbackLabel ?? 'Filtr',
+        },
+        ...makeRuntimeVisibilitySettings({
+          mode: 'truthy',
+          path: 'selected',
+          source: 'item',
+        }),
+      }),
+      makeButtonBlock(`${input.id}-button-default`, input.fallbackLabel ?? 'Filtr', {
+        runtimeActionSource: 'item',
+        runtimeActionPath: 'select',
+        buttonStyle: 'outline',
+        fontSize: 14,
+        fontWeight: '700',
+        textColor: '#475569',
+        bgColor: '#ffffff',
+        borderColor: '#dbe4f3',
+        borderRadius: 18,
+        borderWidth: 1,
+        connection: {
+          enabled: true,
+          source: 'item',
+          path: 'displayLabel',
+          fallback: input.fallbackLabel ?? 'Filtr',
+        },
+        ...makeRuntimeVisibilitySettings({
+          mode: 'falsy',
+          path: 'selected',
+          source: 'item',
+        }),
+      }),
+    ],
+    {
+      collectionSource: 'kangur',
+      collectionPath: input.collectionPath,
+      emptyMessage: '',
+      itemLimit: 0,
+      itemsGap: input.itemsGap ?? 8,
+      listLayoutDirection: 'row',
+      listWrap: 'wrap',
+      listAlignItems: 'stretch',
+      listJustifyContent: 'start',
+      itemGap: 0,
+      itemLayoutDirection: 'column',
+      itemWrap: 'wrap',
+      itemAlignItems: 'stretch',
+      itemJustifyContent: 'start',
+    }
+  );
+
+const makeLeaderboardFilterRepeater = (input: {
+  collectionPath: string;
+  id: string;
+}): BlockInstance =>
+  makeSelectableButtonRepeater({
+    collectionPath: input.collectionPath,
+    id: input.id,
+  });
+
+const makeGamePracticeAssignmentPanel = (input: { id: string }): BlockInstance =>
+  makeContainerBlock({
+    id: input.id,
+    settings: {
+      maxWidth: 760,
+      paddingTop: 24,
+      paddingBottom: 24,
+      paddingLeft: 24,
+      paddingRight: 24,
+      blockGap: 12,
+      background: { type: 'solid', color: '#fff7ed' },
+      sectionBorder: {
+        width: 1,
+        style: 'solid',
+        color: '#fed7aa',
+        radius: 28,
+      },
+      sectionShadow: {
+        x: 0,
+        y: 20,
+        blur: 50,
+        spread: 0,
+        color: '#fdba741f',
+      },
+      ...makeRuntimeVisibilitySettings({
+        mode: 'truthy',
+        path: 'game.activePracticeAssignmentBanner.hasAssignment',
+      }),
+    },
+    blocks: [
+      makeTextBlock(`${input.id}-helper`, 'Najblizszy priorytet w praktyce.', {
+        fontSize: 14,
+        fontWeight: '700',
+        textColor: '#9a3412',
+        connection: {
+          enabled: true,
+          source: 'kangur',
+          path: 'game.activePracticeAssignmentBanner.helperLabel',
+          fallback: 'Najblizszy priorytet w praktyce.',
+        },
+      }),
+      makeTextBlock(`${input.id}-priority`, 'Priorytet wysoki', {
+        fontSize: 12,
+        fontWeight: '700',
+        letterSpacing: 1.2,
+        textColor: '#ea580c',
+        connection: {
+          enabled: true,
+          source: 'kangur',
+          path: 'game.activePracticeAssignmentBanner.priorityLabel',
+          fallback: 'Priorytet wysoki',
+        },
+      }),
+      makeHeadingBlock(`${input.id}-title`, 'Zadanie od rodzica', 26, {
+        textColor: '#7c2d12',
+        connection: {
+          enabled: true,
+          source: 'kangur',
+          path: 'game.activePracticeAssignmentBanner.title',
+          fallback: 'Zadanie od rodzica',
+        },
+      }),
+      makeTextBlock(`${input.id}-description`, 'Wroc do zadania i kontynuuj wyzwanie.', {
+        fontSize: 15,
+        textColor: '#9a3412',
+        connection: {
+          enabled: true,
+          source: 'kangur',
+          path: 'game.activePracticeAssignmentBanner.description',
+          fallback: 'Wroc do zadania i kontynuuj wyzwanie.',
+        },
+      }),
+      makeProgressBlock(`${input.id}-progress`, {
+        progressMax: 100,
+        progressHeight: 12,
+        borderRadius: 999,
+        fillColor: '#f97316',
+        trackColor: '#ffedd5',
+        showPercentage: 'true',
+        connection: {
+          enabled: true,
+          source: 'kangur',
+          path: 'game.activePracticeAssignmentBanner.progressPercent',
+          fallback: '0',
+        },
+      }),
+      makeTextBlock(`${input.id}-progress-label`, '0% ukonczono', {
+        fontSize: 14,
+        textColor: '#9a3412',
+        connection: {
+          enabled: true,
+          source: 'kangur',
+          path: 'game.activePracticeAssignmentBanner.progressLabel',
+          fallback: '0% ukonczono',
+        },
+      }),
+      makeButtonBlock(`${input.id}-button`, 'Kontynuuj zadanie', {
+        runtimeActionSource: 'kangur',
+        runtimeActionPath: 'game.activePracticeAssignmentBanner.openAssignment',
+        buttonStyle: 'solid',
+        fontSize: 15,
+        fontWeight: '700',
+        textColor: '#ffffff',
+        bgColor: '#ea580c',
+        borderColor: '#ea580c',
+        borderRadius: 18,
+        borderWidth: 1,
+        connection: {
+          enabled: true,
+          source: 'kangur',
+          path: 'game.activePracticeAssignmentBanner.actionLabel',
+          fallback: 'Kontynuuj zadanie',
+        },
+      }),
+    ],
+  });
+
+const makeGameTrainingSetupPanel = (input: { id: string }): BlockInstance =>
+  makeContainerBlock({
+    id: input.id,
+    settings: {
+      alignItems: 'center',
+      blockGap: 16,
+    },
+    blocks: [
+      makeGamePracticeAssignmentPanel({ id: `${input.id}-assignment` }),
+      makeContainerBlock({
+        id: `${input.id}-main`,
+        settings: {
+          maxWidth: 960,
+          paddingTop: 28,
+          paddingBottom: 28,
+          paddingLeft: 28,
+          paddingRight: 28,
+          blockGap: 16,
+          background: { type: 'solid', color: '#ffffff' },
+          sectionBorder: {
+            width: 1,
+            style: 'solid',
+            color: '#eceff7',
+            radius: 28,
+          },
+          sectionShadow: {
+            x: 0,
+            y: 24,
+            blur: 60,
+            spread: 0,
+            color: '#a8afd82e',
+          },
+        },
+        blocks: [
+          makeHeadingBlock(`${input.id}-title`, 'Tryb treningowy', 28, {
+            textColor: '#1e293b',
+          }),
+          makeTextBlock(
+            `${input.id}-description`,
+            'Ten ekran jest juz skladany w CMS builderze. Zmieniaj etykiety, kolejnosc i akcje bez wracania do komponentu treningowego.',
+            {
+              fontSize: 15,
+              textColor: '#7a86b0',
+            }
+          ),
+          makeTextBlock(`${input.id}-summary`, 'Wybrano 7 kategorii, 10 pytan, poziom sredni.', {
+            fontSize: 14,
+            fontWeight: '700',
+            textColor: '#4f46e5',
+            connection: {
+              enabled: true,
+              source: 'kangur',
+              path: 'game.trainingSetup.summaryLabel',
+              fallback: 'Wybrano 7 kategorii, 10 pytan, poziom sredni.',
+            },
+          }),
+          makeTextBlock(`${input.id}-difficulty-label`, 'Poziom trudnosci', {
+            fontSize: 13,
+            fontWeight: '700',
+            letterSpacing: 1.2,
+            textColor: '#94a3b8',
+          }),
+          makeSelectableButtonRepeater({
+            id: `${input.id}-difficulty-options`,
+            collectionPath: 'game.trainingSetup.difficultyOptions.items',
+            fallbackLabel: 'Poziom',
+          }),
+          makeContainerBlock({
+            id: `${input.id}-category-header`,
+            settings: {
+              layoutDirection: 'row',
+              wrap: 'wrap',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              blockGap: 12,
+            },
+            blocks: [
+              makeTextBlock(`${input.id}-category-label`, 'Kategorie pytan', {
+                fontSize: 13,
+                fontWeight: '700',
+                letterSpacing: 1.2,
+                textColor: '#94a3b8',
+              }),
+              makeButtonBlock(`${input.id}-toggle-all`, 'Zaznacz wszystkie', {
+                runtimeActionSource: 'kangur',
+                runtimeActionPath: 'game.trainingSetup.toggleAllCategories',
+                buttonStyle: 'outline',
+                fontSize: 13,
+                fontWeight: '700',
+                textColor: '#475569',
+                bgColor: '#ffffff',
+                borderColor: '#dbe4f3',
+                borderRadius: 16,
+                borderWidth: 1,
+                connection: {
+                  enabled: true,
+                  source: 'kangur',
+                  path: 'game.trainingSetup.toggleAllLabel',
+                  fallback: 'Zaznacz wszystkie',
+                },
+              }),
+            ],
+          }),
+          makeSelectableButtonRepeater({
+            id: `${input.id}-category-options`,
+            collectionPath: 'game.trainingSetup.categoryOptions.items',
+            fallbackLabel: 'Kategoria',
+            itemsGap: 10,
+          }),
+          makeTextBlock(`${input.id}-count-label`, 'Liczba pytan', {
+            fontSize: 13,
+            fontWeight: '700',
+            letterSpacing: 1.2,
+            textColor: '#94a3b8',
+          }),
+          makeSelectableButtonRepeater({
+            id: `${input.id}-count-options`,
+            collectionPath: 'game.trainingSetup.countOptions.items',
+            fallbackLabel: '10',
+          }),
+          makeContainerBlock({
+            id: `${input.id}-actions`,
+            settings: {
+              layoutDirection: 'row',
+              wrap: 'wrap',
+              alignItems: 'stretch',
+              justifyContent: 'space-between',
+              blockGap: 12,
+            },
+            blocks: [
+              makeButtonBlock(`${input.id}-back`, '← Wroc', {
+                runtimeActionSource: 'kangur',
+                runtimeActionPath: 'game.handleHome',
+                buttonStyle: 'outline',
+                fontSize: 15,
+                fontWeight: '700',
+                textColor: '#334155',
+                bgColor: '#ffffff',
+                borderColor: '#dbe4f3',
+                borderRadius: 18,
+                borderWidth: 1,
+              }),
+              makeButtonBlock(`${input.id}-start`, 'Start! 🚀', {
+                runtimeActionSource: 'kangur',
+                runtimeActionPath: 'game.trainingSetup.start',
+                buttonStyle: 'solid',
+                fontSize: 15,
+                fontWeight: '700',
+                textColor: '#ffffff',
+                bgColor: '#4f46e5',
+                borderColor: '#4f46e5',
+                borderRadius: 18,
+                borderWidth: 1,
+              }),
+            ],
+          }),
+        ],
+      }),
+    ],
+  });
+
+const makeGameOperationSelectorPanel = (input: { id: string }): BlockInstance =>
+  makeContainerBlock({
+    id: input.id,
+    settings: {
+      alignItems: 'center',
+      blockGap: 16,
+    },
+    blocks: [
+      makeGamePracticeAssignmentPanel({ id: `${input.id}-assignment` }),
+      makeContainerBlock({
+        id: `${input.id}-main`,
+        settings: {
+          maxWidth: 1120,
+          paddingTop: 28,
+          paddingBottom: 28,
+          paddingLeft: 28,
+          paddingRight: 28,
+          blockGap: 16,
+          background: { type: 'solid', color: '#ffffff' },
+          sectionBorder: {
+            width: 1,
+            style: 'solid',
+            color: '#eceff7',
+            radius: 28,
+          },
+          sectionShadow: {
+            x: 0,
+            y: 24,
+            blur: 60,
+            spread: 0,
+            color: '#a8afd82e',
+          },
+        },
+        blocks: [
+          makeTextBlock(`${input.id}-greeting`, 'Czesc, Graczu! 👋', {
+            fontSize: 18,
+            fontWeight: '700',
+            textColor: '#4f46e5',
+            connection: {
+              enabled: true,
+              source: 'kangur',
+              path: 'game.operationSelector.greetingLabel',
+              fallback: 'Czesc, Graczu! 👋',
+            },
+          }),
+          makeHeadingBlock(`${input.id}-title`, 'Wybierz swoje wyzwanie', 28, {
+            textColor: '#1e293b',
+          }),
+          makeTextBlock(
+            `${input.id}-description`,
+            'Ten ekran jest juz skladany w CMS builderze. Zmieniaj karty kategorii, kolejki zadan i szybkie akcje bez wracania do komponentu wyboru.',
+            {
+              fontSize: 15,
+              textColor: '#7a86b0',
+            }
+          ),
+          makeTextBlock(`${input.id}-difficulty-label`, 'Poziom trudnosci', {
+            fontSize: 13,
+            fontWeight: '700',
+            letterSpacing: 1.2,
+            textColor: '#94a3b8',
+          }),
+          makeSelectableButtonRepeater({
+            id: `${input.id}-difficulty-options`,
+            collectionPath: 'game.operationSelector.difficultyOptions.items',
+            fallbackLabel: 'Poziom',
+          }),
+          makeRepeaterBlock(
+            `${input.id}-operation-cards`,
+            [
+              makeContainerBlock({
+                id: `${input.id}-operation-card`,
+                settings: {
+                  maxWidth: 320,
+                  customCss: 'width: min(100%, 320px);',
+                  paddingTop: 20,
+                  paddingBottom: 20,
+                  paddingLeft: 20,
+                  paddingRight: 20,
+                  blockGap: 10,
+                  background: { type: 'solid', color: '#f8fafc' },
+                  sectionBorder: {
+                    width: 1,
+                    style: 'solid',
+                    color: '#e2e8f0',
+                    radius: 24,
+                  },
+                },
+                blocks: [
+                  makeTextBlock(`${input.id}-operation-priority`, 'Priorytet wysoki', {
+                    fontSize: 12,
+                    fontWeight: '700',
+                    letterSpacing: 1.2,
+                    textColor: '#f59e0b',
+                    connection: {
+                      enabled: true,
+                      source: 'item',
+                      path: 'priorityLabel',
+                      fallback: 'Priorytet wysoki',
+                    },
+                    ...makeRuntimeVisibilitySettings({
+                      mode: 'truthy',
+                      path: 'hasPriorityAssignment',
+                      source: 'item',
+                    }),
+                  }),
+                  makeTextBlock(`${input.id}-operation-status`, 'Trening swobodny', {
+                    fontSize: 12,
+                    fontWeight: '700',
+                    letterSpacing: 1.2,
+                    textColor: '#94a3b8',
+                    connection: {
+                      enabled: true,
+                      source: 'item',
+                      path: 'statusLabel',
+                      fallback: 'Trening swobodny',
+                    },
+                  }),
+                  makeHeadingBlock(`${input.id}-operation-title`, '➕ Dodawanie', 24, {
+                    headingSize: 'small',
+                    textColor: '#1e293b',
+                    connection: {
+                      enabled: true,
+                      source: 'item',
+                      path: 'displayLabel',
+                      fallback: '➕ Dodawanie',
+                    },
+                  }),
+                  makeTextBlock(
+                    `${input.id}-operation-description`,
+                    'Wejdz do serii pytan i cwicz we wlasnym tempie.',
+                    {
+                      fontSize: 14,
+                      textColor: '#64748b',
+                      connection: {
+                        enabled: true,
+                        source: 'item',
+                        path: 'description',
+                        fallback: 'Wejdz do serii pytan i cwicz we wlasnym tempie.',
+                      },
+                    }
+                  ),
+                  makeButtonBlock(`${input.id}-operation-button`, 'Zacznij lekcje', {
+                    runtimeActionSource: 'item',
+                    runtimeActionPath: 'select',
+                    buttonStyle: 'solid',
+                    fontSize: 14,
+                    fontWeight: '700',
+                    textColor: '#ffffff',
+                    bgColor: '#4f46e5',
+                    borderColor: '#4f46e5',
+                    borderRadius: 18,
+                    borderWidth: 1,
+                    connection: {
+                      enabled: true,
+                      source: 'item',
+                      path: 'actionLabel',
+                      fallback: 'Zacznij lekcje',
+                    },
+                  }),
+                ],
+              }),
+            ],
+            {
+              collectionSource: 'kangur',
+              collectionPath: 'game.operationSelector.operations.items',
+              emptyMessage: '',
+              itemLimit: 0,
+              itemsGap: 16,
+              listLayoutDirection: 'row',
+              listWrap: 'wrap',
+              listAlignItems: 'stretch',
+              listJustifyContent: 'start',
+              itemGap: 0,
+              itemLayoutDirection: 'column',
+              itemWrap: 'wrap',
+              itemAlignItems: 'stretch',
+              itemJustifyContent: 'start',
+            }
+          ),
+          makeContainerBlock({
+            id: `${input.id}-quick-actions`,
+            settings: {
+              layoutDirection: 'row',
+              wrap: 'wrap',
+              alignItems: 'stretch',
+              justifyContent: 'space-between',
+              blockGap: 12,
+            },
+            blocks: [
+              makeButtonBlock(`${input.id}-calendar`, '📅 Cwiczenia z Kalendarzem', {
+                runtimeActionSource: 'kangur',
+                runtimeActionPath: 'game.setScreen',
+                runtimeActionArgs: 'calendar_quiz',
+                buttonStyle: 'outline',
+                fontSize: 14,
+                fontWeight: '700',
+                textColor: '#334155',
+                bgColor: '#ffffff',
+                borderColor: '#dbe4f3',
+                borderRadius: 18,
+                borderWidth: 1,
+              }),
+              makeButtonBlock(`${input.id}-geometry`, '🔷 Cwiczenia z Figurami', {
+                runtimeActionSource: 'kangur',
+                runtimeActionPath: 'game.setScreen',
+                runtimeActionArgs: 'geometry_quiz',
+                buttonStyle: 'solid',
+                fontSize: 14,
+                fontWeight: '700',
+                textColor: '#ffffff',
+                bgColor: '#0f766e',
+                borderColor: '#0f766e',
+                borderRadius: 18,
+                borderWidth: 1,
+              }),
+            ],
+          }),
+        ],
+      }),
+    ],
+  });
+
+const makeGameLeaderboardPanel = (input: {
+  description: string;
+  id: string;
+  title: string;
+}): BlockInstance =>
+  makeContainerBlock({
+    id: `${input.id}-panel`,
+    settings: {
+      paddingTop: 24,
+      paddingBottom: 24,
+      paddingLeft: 24,
+      paddingRight: 24,
+      blockGap: 16,
+      background: { type: 'solid', color: '#ffffff' },
+      sectionBorder: {
+        width: 1,
+        style: 'solid',
+        color: '#eceff7',
+        radius: 28,
+      },
+      sectionShadow: {
+        x: 0,
+        y: 24,
+        blur: 60,
+        spread: 0,
+        color: '#a8afd82e',
+      },
+    },
+    blocks: [
+      makeHeadingBlock(`${input.id}-title`, input.title, 26, {
+        textColor: '#1e293b',
+      }),
+      makeTextBlock(`${input.id}-description`, input.description, {
+        fontSize: 15,
+        textColor: '#7a86b0',
+      }),
+      makeContainerBlock({
+        id: `${input.id}-filters`,
+        settings: {
+          blockGap: 10,
+        },
+        blocks: [
+          makeTextBlock(`${input.id}-operation-filter-label`, 'Dzial', {
+            fontSize: 13,
+            fontWeight: '700',
+            letterSpacing: 1.2,
+            textColor: '#94a3b8',
+          }),
+          makeLeaderboardFilterRepeater({
+            id: `${input.id}-operation-filters`,
+            collectionPath: 'game.leaderboard.operationFilters.items',
+          }),
+          makeTextBlock(`${input.id}-user-filter-label`, 'Gracze', {
+            fontSize: 13,
+            fontWeight: '700',
+            letterSpacing: 1.2,
+            textColor: '#94a3b8',
+          }),
+          makeLeaderboardFilterRepeater({
+            id: `${input.id}-user-filters`,
+            collectionPath: 'game.leaderboard.userFilters.items',
+          }),
+        ],
+      }),
+      makeTextBlock(`${input.id}-loading`, 'Ladowanie...', {
+        fontSize: 14,
+        textColor: '#94a3b8',
+        ...makeRuntimeVisibilitySettings({
+          mode: 'truthy',
+          path: 'game.leaderboard.isLoading',
+        }),
+      }),
+      makeTextBlock(`${input.id}-empty`, 'Brak wynikow dla tych filtrow.', {
+        fontSize: 14,
+        textColor: '#94a3b8',
+        connection: {
+          enabled: true,
+          source: 'kangur',
+          path: 'game.leaderboard.emptyStateLabel',
+          fallback: 'Brak wynikow dla tych filtrow.',
+        },
+        ...makeRuntimeVisibilitySettings({
+          mode: 'truthy',
+          path: 'game.leaderboard.showEmptyState',
+        }),
+      }),
+      makeRepeaterBlock(
+        `${input.id}-rows`,
+        [
+          makeContainerBlock({
+            id: `${input.id}-row-card`,
+            settings: {
+              paddingTop: 18,
+              paddingBottom: 18,
+              paddingLeft: 18,
+              paddingRight: 18,
+              blockGap: 10,
+              background: { type: 'solid', color: '#f8fafc' },
+              sectionBorder: {
+                width: 1,
+                style: 'solid',
+                color: '#e2e8f0',
+                radius: 22,
+              },
+            },
+            blocks: [
+              makeContainerBlock({
+                id: `${input.id}-row-shell`,
+                settings: {
+                  layoutDirection: 'row',
+                  wrap: 'wrap',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  blockGap: 14,
+                },
+                blocks: [
+                  makeContainerBlock({
+                    id: `${input.id}-row-left`,
+                    settings: {
+                      layoutDirection: 'row',
+                      wrap: 'wrap',
+                      alignItems: 'center',
+                      blockGap: 14,
+                    },
+                    blocks: [
+                      makeHeadingBlock(`${input.id}-row-rank`, '1.', 28, {
+                        headingSize: 'small',
+                        textColor: '#4f46e5',
+                        connection: {
+                          enabled: true,
+                          source: 'item',
+                          path: 'rankLabel',
+                          fallback: '1.',
+                        },
+                      }),
+                      makeContainerBlock({
+                        id: `${input.id}-row-copy`,
+                        settings: {
+                          blockGap: 4,
+                        },
+                        blocks: [
+                          makeContainerBlock({
+                            id: `${input.id}-row-name-shell`,
+                            settings: {
+                              layoutDirection: 'row',
+                              wrap: 'wrap',
+                              alignItems: 'center',
+                              blockGap: 8,
+                            },
+                            blocks: [
+                              makeHeadingBlock(`${input.id}-row-name`, 'Gracz', 22, {
+                                headingSize: 'small',
+                                textColor: '#1e293b',
+                                connection: {
+                                  enabled: true,
+                                  source: 'item',
+                                  path: 'playerName',
+                                  fallback: 'Gracz',
+                                },
+                              }),
+                              makeContainerBlock({
+                                id: `${input.id}-row-badge`,
+                                settings: {
+                                  paddingTop: 4,
+                                  paddingBottom: 4,
+                                  paddingLeft: 10,
+                                  paddingRight: 10,
+                                  background: { type: 'solid', color: '#eef2ff' },
+                                  sectionBorder: {
+                                    width: 1,
+                                    style: 'solid',
+                                    color: '#c7d2fe',
+                                    radius: 999,
+                                  },
+                                  ...makeRuntimeVisibilitySettings({
+                                    mode: 'truthy',
+                                    path: 'isCurrentUser',
+                                    source: 'item',
+                                  }),
+                                },
+                                blocks: [
+                                  makeTextBlock(`${input.id}-row-badge-label`, 'Ty', {
+                                    fontSize: 12,
+                                    fontWeight: '700',
+                                    textColor: '#4f46e5',
+                                    connection: {
+                                      enabled: true,
+                                      source: 'item',
+                                      path: 'currentUserBadgeLabel',
+                                      fallback: 'Ty',
+                                    },
+                                  }),
+                                ],
+                              }),
+                            ],
+                          }),
+                          makeTextBlock(`${input.id}-row-meta`, '🎲 Mieszane · Anonim', {
+                            fontSize: 13,
+                            textColor: '#64748b',
+                            connection: {
+                              enabled: true,
+                              source: 'item',
+                              path: 'metaLabel',
+                              fallback: '🎲 Mieszane · Anonim',
+                            },
+                          }),
+                        ],
+                      }),
+                    ],
+                  }),
+                  makeContainerBlock({
+                    id: `${input.id}-row-right`,
+                    settings: {
+                      blockGap: 4,
+                      alignItems: 'end',
+                      contentAlignment: 'right',
+                    },
+                    blocks: [
+                      makeHeadingBlock(`${input.id}-row-score`, '0/0', 24, {
+                        headingSize: 'small',
+                        textColor: '#4f46e5',
+                        connection: {
+                          enabled: true,
+                          source: 'item',
+                          path: 'scoreLabel',
+                          fallback: '0/0',
+                        },
+                      }),
+                      makeTextBlock(`${input.id}-row-time`, '0s', {
+                        fontSize: 13,
+                        textColor: '#94a3b8',
+                        connection: {
+                          enabled: true,
+                          source: 'item',
+                          path: 'timeLabel',
+                          fallback: '0s',
+                        },
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+            ],
+          }),
+        ],
+        {
+          collectionSource: 'kangur',
+          collectionPath: 'game.leaderboard.items',
+          emptyMessage: '',
+          itemLimit: 10,
+          itemsGap: 12,
+          itemGap: 0,
+          itemLayoutDirection: 'column',
+          itemWrap: 'wrap',
+          itemAlignItems: 'stretch',
+          itemJustifyContent: 'start',
+          ...makeRuntimeVisibilitySettings({
+            mode: 'truthy',
+            path: 'game.leaderboard.hasItems',
+          }),
+        }
+      ),
+    ],
+  });
+
 const createDefaultGameScreenComponents = (): PageComponentInput[] =>
   withOrders([
     makeBlockSection({
@@ -727,11 +1603,194 @@ const createDefaultGameScreenComponents = (): PageComponentInput[] =>
                     ),
                   ],
                 }),
-                makeWidgetBlock('kangur-widget-game-home-priority', 'priority-assignments', {
-                  title: 'Priorytetowe zadania',
-                  emptyLabel: 'Brak aktywnych zadan od rodzica.',
-                  limit: 3,
-                  ...makeGameUserVisibilitySettings('truthy'),
+                makeContainerBlock({
+                  id: 'kangur-game-home-priority-panel',
+                  settings: {
+                    paddingTop: 24,
+                    paddingBottom: 24,
+                    paddingLeft: 24,
+                    paddingRight: 24,
+                    blockGap: 14,
+                    background: { type: 'solid', color: '#ffffff' },
+                    sectionBorder: {
+                      width: 1,
+                      style: 'solid',
+                      color: '#eceff7',
+                      radius: 28,
+                    },
+                    sectionShadow: {
+                      x: 0,
+                      y: 24,
+                      blur: 60,
+                      spread: 0,
+                      color: '#a8afd82e',
+                    },
+                    ...makeGameUserVisibilitySettings('truthy'),
+                  },
+                  blocks: [
+                    makeContainerBlock({
+                      id: 'kangur-game-home-priority-header',
+                      settings: {
+                        layoutDirection: 'row',
+                        wrap: 'wrap',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        blockGap: 10,
+                      },
+                      blocks: [
+                        makeHeadingBlock(
+                          'kangur-game-home-priority-title',
+                          'Priorytetowe zadania',
+                          26,
+                          {
+                            textColor: '#1e293b',
+                          }
+                        ),
+                        makeTextBlock('kangur-game-home-priority-count', '0 zadan', {
+                          fontSize: 14,
+                          fontWeight: '700',
+                          textColor: '#94a3b8',
+                          connection: {
+                            enabled: true,
+                            source: 'kangur',
+                            path: 'game.priorityAssignments.countLabel',
+                            fallback: '0 zadan',
+                          },
+                        }),
+                      ],
+                    }),
+                    makeRepeaterBlock(
+                      'kangur-game-home-priority-list',
+                      [
+                        makeContainerBlock({
+                          id: 'kangur-game-home-priority-item',
+                          settings: {
+                            paddingTop: 18,
+                            paddingBottom: 18,
+                            paddingLeft: 18,
+                            paddingRight: 18,
+                            blockGap: 10,
+                            background: { type: 'solid', color: '#f8fafc' },
+                            sectionBorder: {
+                              width: 1,
+                              style: 'solid',
+                              color: '#e2e8f0',
+                              radius: 22,
+                            },
+                          },
+                          blocks: [
+                            makeTextBlock(
+                              'kangur-game-home-priority-item-priority',
+                              'Priorytet wysoki',
+                              {
+                                fontSize: 12,
+                                fontWeight: '700',
+                                letterSpacing: 1.2,
+                                textColor: '#f59e0b',
+                                connection: {
+                                  enabled: true,
+                                  source: 'item',
+                                  path: 'priorityLabel',
+                                  fallback: 'Priorytet wysoki',
+                                },
+                              }
+                            ),
+                            makeHeadingBlock(
+                              'kangur-game-home-priority-item-title',
+                              'Zadanie',
+                              22,
+                              {
+                                headingSize: 'small',
+                                textColor: '#1e293b',
+                                connection: {
+                                  enabled: true,
+                                  source: 'item',
+                                  path: 'title',
+                                  fallback: 'Zadanie',
+                                },
+                              }
+                            ),
+                            makeTextBlock(
+                              'kangur-game-home-priority-item-description',
+                              'Opis zadania.',
+                              {
+                                fontSize: 14,
+                                textColor: '#64748b',
+                                connection: {
+                                  enabled: true,
+                                  source: 'item',
+                                  path: 'description',
+                                  fallback: 'Opis zadania.',
+                                },
+                              }
+                            ),
+                            makeProgressBlock('kangur-game-home-priority-item-progress', {
+                              progressMax: 100,
+                              progressHeight: 10,
+                              borderRadius: 999,
+                              fillColor: '#6366f1',
+                              trackColor: '#dbeafe',
+                              showPercentage: 'true',
+                              connection: {
+                                enabled: true,
+                                source: 'item',
+                                path: 'progressPercent',
+                                fallback: '0',
+                              },
+                            }),
+                            makeTextBlock(
+                              'kangur-game-home-priority-item-progress-label',
+                              '0% ukonczono',
+                              {
+                                fontSize: 13,
+                                textColor: '#7a86b0',
+                                connection: {
+                                  enabled: true,
+                                  source: 'item',
+                                  path: 'progressLabel',
+                                  fallback: '0% ukonczono',
+                                },
+                              }
+                            ),
+                            makeButtonBlock(
+                              'kangur-game-home-priority-item-button',
+                              'Kontynuuj zadanie',
+                              {
+                                runtimeActionSource: 'item',
+                                runtimeActionPath: 'openAssignment',
+                                buttonStyle: 'solid',
+                                fontSize: 14,
+                                fontWeight: '700',
+                                textColor: '#ffffff',
+                                bgColor: '#4f46e5',
+                                borderColor: '#4f46e5',
+                                borderRadius: 18,
+                                borderWidth: 1,
+                                connection: {
+                                  enabled: true,
+                                  source: 'item',
+                                  path: 'actionLabel',
+                                  fallback: 'Kontynuuj zadanie',
+                                },
+                              }
+                            ),
+                          ],
+                        }),
+                      ],
+                      {
+                        collectionSource: 'kangur',
+                        collectionPath: 'game.priorityAssignments.items',
+                        emptyMessage: 'Brak aktywnych zadan od rodzica.',
+                        itemLimit: 3,
+                        itemsGap: 14,
+                        itemGap: 0,
+                        itemLayoutDirection: 'column',
+                        itemWrap: 'wrap',
+                        itemAlignItems: 'stretch',
+                        itemJustifyContent: 'start',
+                      }
+                    ),
+                  ],
                 }),
               ],
             }),
@@ -973,7 +2032,14 @@ const createDefaultGameScreenComponents = (): PageComponentInput[] =>
     }),
     makeBlockSection({
       id: 'kangur-game-home-leaderboard',
-      blocks: [makeWidgetBlock('kangur-widget-game-home-leaderboard', 'leaderboard')],
+      blocks: [
+        makeGameLeaderboardPanel({
+          id: 'kangur-game-home-leaderboard',
+          title: 'Najlepsze wyniki',
+          description:
+            'Ta tablica wynikow jest teraz skladana z blokow CMS. Zmieniaj filtry, teksty i wyglad bez wracania do widgetu.',
+        }),
+      ],
       paddingTop: 0,
       paddingBottom: 0,
       paddingLeft: 0,
@@ -982,7 +2048,7 @@ const createDefaultGameScreenComponents = (): PageComponentInput[] =>
     }),
     makeBlockSection({
       id: 'kangur-game-training-setup',
-      blocks: [makeWidgetBlock('kangur-widget-game-training-setup', 'game-training-setup')],
+      blocks: [makeGameTrainingSetupPanel({ id: 'kangur-game-training-setup' })],
       paddingTop: 0,
       paddingBottom: 0,
       paddingLeft: 0,
@@ -1031,9 +2097,7 @@ const createDefaultGameScreenComponents = (): PageComponentInput[] =>
     }),
     makeBlockSection({
       id: 'kangur-game-operation-selector',
-      blocks: [
-        makeWidgetBlock('kangur-widget-game-operation-selector', 'game-operation-selector'),
-      ],
+      blocks: [makeGameOperationSelectorPanel({ id: 'kangur-game-operation-selector' })],
       paddingTop: 0,
       paddingBottom: 0,
       paddingLeft: 0,
@@ -1344,7 +2408,14 @@ const createDefaultGameScreenComponents = (): PageComponentInput[] =>
     }),
     makeBlockSection({
       id: 'kangur-game-result-leaderboard',
-      blocks: [makeWidgetBlock('kangur-widget-game-result-leaderboard', 'leaderboard')],
+      blocks: [
+        makeGameLeaderboardPanel({
+          id: 'kangur-game-result-leaderboard',
+          title: 'Tablica wynikow',
+          description:
+            'Po zakonczeniu gry nadal mozesz przebudowac ten ranking z poziomu CMS buildera.',
+        }),
+      ],
       paddingTop: 0,
       paddingBottom: 0,
       paddingLeft: 0,

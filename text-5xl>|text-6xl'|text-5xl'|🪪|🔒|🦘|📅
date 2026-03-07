@@ -1,0 +1,15 @@
+src/features/kangur/ui/components/KangurExam.tsx:386:        <div className='text-6xl'>{emoji}</div>
+src/features/kangur/ui/components/MultiplicationGame.tsx:168:          <div className='text-6xl'>{percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}</div>
+src/features/kangur/ui/components/ClockTrainingGame.tsx:782:          <div className='text-6xl'>{score >= 4 ? '🏆' : score >= 2 ? '😊' : '💪'}</div>
+src/features/kangur/ui/components/SubtractingGame.tsx:141:          <div className='text-6xl'>{percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}</div>
+src/features/kangur/ui/components/ResultScreen.tsx:62:      <div aria-hidden='true' className='text-6xl'>
+src/features/kangur/ui/components/KangurParentDashboardHeroWidget.tsx:46:        <div className='text-6xl'>🪪</div>
+src/features/kangur/ui/components/KangurParentDashboardHeroWidget.tsx:81:        <div className='text-6xl'>🔒</div>
+src/features/kangur/ui/components/KangurGame.tsx:249:        <div className='text-6xl'>{emoji}</div>
+src/features/kangur/ui/components/CalendarInteractiveGame.tsx:306:          <div className='text-6xl'>{percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}</div>
+src/features/kangur/ui/components/AddingBallGame.tsx:790:          <div className='text-6xl'>{percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}</div>
+src/features/kangur/ui/components/GeometryDrawingGame.tsx:504:            <div className='text-6xl'>
+src/features/kangur/ui/components/CalendarTrainingGame.tsx:185:        <div className='text-6xl'>{score >= 5 ? '🏆' : score >= 3 ? '😊' : '💪'}</div>
+src/features/kangur/ui/components/MultiplicationArrayGame.tsx:130:          <div className='text-6xl'>{percent === 100 ? '🏆' : percent >= 67 ? '🌟' : '💪'}</div>
+src/features/kangur/ui/components/KangurSetup.tsx:110:          <div className='text-6xl'>🦘</div>
+src/features/kangur/ui/components/DivisionGame.tsx:198:          <div className='text-6xl'>{percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}</div>

@@ -2,25 +2,36 @@
 
 import React from 'react';
 
-import type { ModalStateProps } from '@/shared/contracts/ui';
 import { Button } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
-interface SlotCreateModalProps extends ModalStateProps {
-  onSelectMode: (mode: 'empty' | 'image' | 'local') => void;
-  disabled?: boolean;
-}
+import { useStudioImportContext } from '../studio-modals/StudioImportContext';
 
-export function SlotCreateModal(props: SlotCreateModalProps): React.JSX.Element | null {
-  const { isOpen, onClose, onSelectMode, disabled = false } = props;
+export function SlotCreateModal(): React.JSX.Element | null {
+  const {
+    handleCreateEmptySlot,
+    projectId,
+    setDriveImportMode,
+    setDriveImportOpen,
+    setDriveImportTargetId,
+    setSlotCreateOpen,
+    slotCreateOpen,
+    triggerLocalUpload,
+  } = useStudioImportContext();
+
+  const disabled = !projectId;
+
+  const onClose = React.useCallback((): void => {
+    setSlotCreateOpen(false);
+  }, [setSlotCreateOpen]);
 
   return (
-    <DetailModal isOpen={isOpen} onClose={onClose} title='New Card' size='sm' footer={null}>
+    <DetailModal isOpen={slotCreateOpen} onClose={onClose} title='New Card' size='sm' footer={null}>
       <div className='grid gap-3'>
         <Button
           variant='secondary'
           onClick={() => {
-            onSelectMode('empty');
+            void handleCreateEmptySlot();
             onClose();
           }}
           disabled={disabled}
@@ -34,8 +45,10 @@ export function SlotCreateModal(props: SlotCreateModalProps): React.JSX.Element 
         <Button
           variant='primary'
           onClick={() => {
-            onSelectMode('image');
-            onClose();
+            setSlotCreateOpen(false);
+            setDriveImportMode('create');
+            setDriveImportTargetId(null);
+            setDriveImportOpen(true);
           }}
           disabled={disabled}
           className='w-full h-12 justify-start px-4 text-sm'
@@ -48,8 +61,8 @@ export function SlotCreateModal(props: SlotCreateModalProps): React.JSX.Element 
         <Button
           variant='outline'
           onClick={() => {
-            onSelectMode('local');
-            onClose();
+            setSlotCreateOpen(false);
+            triggerLocalUpload('create', null);
           }}
           disabled={disabled}
           className='w-full h-12 justify-start px-4 text-sm'

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle, ChevronLeft, ChevronRight, XCircle } from 'lucide-react';
 
@@ -20,7 +20,9 @@ import {
 import { useKangurGameContext } from '@/features/kangur/ui/context/KangurGameContext';
 import {
   KangurButton,
+  KangurDisplayEmoji,
   KangurInfoCard,
+  KangurInlineFallback,
   KangurOptionCardButton,
   KangurPanel,
   KangurProgressBar,
@@ -98,12 +100,16 @@ function ExamQuestion({
 }: ExamQuestionProps): React.JSX.Element {
   const Illustration = ILLUSTRATIONS[q.id];
   const pointLabel = POINT_LABELS[q.id];
+  const headingId = useId();
+  const descriptionId = useId();
 
   return (
-    <div className='flex flex-col gap-4 w-full'>
-      <div className='flex items-center gap-2'>
+    <section aria-labelledby={headingId} className='flex flex-col gap-4 w-full'>
+      <div aria-live='polite' aria-atomic='true' className='flex items-center gap-2'>
         <KangurProgressBar
           accent='amber'
+          aria-label='Postep w tescie Kangur'
+          aria-valuetext={`Pytanie ${qIndex + 1} z ${total}`}
           className='flex-1'
           data-testid='kangur-exam-progress-bar'
           size='sm'
@@ -121,7 +127,7 @@ function ExamQuestion({
         tone='neutral'
       >
         <div className='flex items-center justify-between mb-1'>
-          <p className='text-sm font-bold text-orange-500 uppercase tracking-wide'>
+          <p id={headingId} className='text-sm font-bold text-orange-500 uppercase tracking-wide'>
             Pytanie {qIndex + 1}
           </p>
           {pointLabel ? (
@@ -130,7 +136,9 @@ function ExamQuestion({
             </KangurStatusChip>
           ) : null}
         </div>
-        <p className='text-gray-800 font-semibold leading-relaxed'>{q.question}</p>
+        <p id={descriptionId} className='text-gray-800 font-semibold leading-relaxed'>
+          {q.question}
+        </p>
         {Illustration && (
           <KangurInfoCard
             accent='slate'
@@ -144,7 +152,12 @@ function ExamQuestion({
         )}
       </KangurInfoCard>
 
-      <div className='flex flex-col gap-2'>
+      <div
+        aria-describedby={descriptionId}
+        aria-labelledby={headingId}
+        className='flex flex-col gap-2'
+        role='group'
+      >
         {q.choices.map((choice, index) => {
           const isSelected = selected === choice;
           const accent: KangurAccent = isSelected ? 'amber' : 'slate';
@@ -158,6 +171,8 @@ function ExamQuestion({
             >
               <KangurOptionCardButton
                 accent={accent}
+                aria-label={`Odpowiedz ${String.fromCharCode(65 + index)}. ${String(choice)}`}
+                aria-pressed={isSelected}
                 className={cn(
                   'w-full rounded-[24px] px-4 py-3 font-semibold transition-all flex items-center gap-3',
                   isSelected ? KANGUR_ACCENT_STYLES.amber.activeText : 'text-slate-700'
@@ -181,7 +196,7 @@ function ExamQuestion({
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -199,7 +214,10 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
     const question = questions[reviewing];
     if (!question) {
       return (
-        <div className='w-full text-center text-sm text-gray-500'>Brak pytania do podglądu.</div>
+        <KangurInlineFallback
+          data-testid='kangur-exam-review-empty'
+          title='Brak pytania do podglądu.'
+        />
       );
     }
     const userAnswer = answers[question.id];
@@ -370,7 +388,9 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
         padding='xl'
         variant='elevated'
       >
-        <div className='text-6xl'>{emoji}</div>
+        <KangurDisplayEmoji data-testid='kangur-exam-summary-emoji' size='lg'>
+          {emoji}
+        </KangurDisplayEmoji>
         <h2 className='text-2xl font-extrabold text-gray-800'>
           Wynik: {score}/{questions.length}
         </h2>
@@ -386,6 +406,8 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
         <KangurProgressBar
           accent='amber'
           animated
+          aria-label='Dokladnosc odpowiedzi w tescie Kangur'
+          aria-valuetext={`${pct}% poprawnych odpowiedzi`}
           data-testid='kangur-exam-summary-progress-bar'
           size='md'
           value={pct}
@@ -397,7 +419,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
         Kliknij pytanie, aby zobaczyć rozwiązanie:
       </p>
 
-      <div className='grid grid-cols-4 gap-2'>
+      <div aria-label='Przeglad pytan testowych' className='grid grid-cols-4 gap-2' role='list'>
         {questions.map((question, index) => {
           const userAnswer = answers[question.id];
           const correct = userAnswer === question.answer;
@@ -408,9 +430,11 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
               key={question.id}
               whileHover={{ scale: 1.08 }}
               whileTap={{ scale: 0.95 }}
+              role='listitem'
             >
               <KangurOptionCardButton
                 accent={accent}
+                aria-label={`Pytanie ${index + 1}. ${skipped ? 'Pominiete.' : correct ? 'Poprawna odpowiedz.' : `Niepoprawna odpowiedz ${String(userAnswer)}.`} Kliknij, aby zobaczyc rozwiazanie.`}
                 className={cn(
                   'min-h-[92px] w-full rounded-[22px] p-2 flex flex-col items-center gap-1 transition text-center',
                   skipped

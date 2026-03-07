@@ -67,11 +67,11 @@ describe('validator runtime canonical prune guard', () => {
   it('keeps validator runtime evaluation logic free of legacy alias fallbacks', () => {
     const content = readFileSync(runtimeEvaluateFile, 'utf8');
     const forbiddenSnippets = [
-      "config['replacementPath']",
-      "config['value']",
-      "config['expected']",
-      "renderedPayload['query']",
-      "config['payload'] as Record<string, unknown>)\n      : config;",
+      'config[\'replacementPath\']',
+      'config[\'value\']',
+      'config[\'expected\']',
+      'renderedPayload[\'query\']',
+      'config[\'payload\'] as Record<string, unknown>)\n      : config;',
     ];
 
     const found = forbiddenSnippets.filter((snippet: string): boolean => content.includes(snippet));

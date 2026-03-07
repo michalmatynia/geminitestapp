@@ -111,18 +111,18 @@ const writeSimpleParametersRaw = async (value: string): Promise<void> => {
     await mongo
       .collection<MongoTimestampedStringSettingRecord<string, Date>>('settings')
       .updateOne(
-      toMongoSettingFilter(PRODUCT_SIMPLE_PARAMETERS_SETTING_KEY),
-      {
-        $set: {
-          key: PRODUCT_SIMPLE_PARAMETERS_SETTING_KEY,
-          value,
-          updatedAt: new Date(),
+        toMongoSettingFilter(PRODUCT_SIMPLE_PARAMETERS_SETTING_KEY),
+        {
+          $set: {
+            key: PRODUCT_SIMPLE_PARAMETERS_SETTING_KEY,
+            value,
+            updatedAt: new Date(),
+          },
+          $setOnInsert: {
+            createdAt: new Date(),
+          },
         },
-        $setOnInsert: {
-          createdAt: new Date(),
-        },
-      },
-      { upsert: true }
+        { upsert: true }
       );
     return;
   }

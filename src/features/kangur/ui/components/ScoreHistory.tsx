@@ -11,10 +11,14 @@ import type { KangurScoreRecord } from '@/features/kangur/services/ports';
 import {
   KangurButton,
   KangurEmptyState,
+  KangurIconBadge,
+  KangurInfoCard,
   KangurMetricCard,
   KangurPanel,
   KangurProgressBar,
+  KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { loadScopedKangurScores } from '@/features/kangur/ui/services/learner-profile-scores';
 import {
   SCORE_INSIGHT_WINDOW_DAYS,
@@ -49,6 +53,18 @@ const OP_LABELS: Record<string, OperationLabel> = {
   roots: { label: 'Pierwiastki', emoji: '√' },
   clock: { label: 'Zegar', emoji: '🕐' },
   mixed: { label: 'Mieszane', emoji: '🎲' },
+};
+
+const OP_ACCENTS: Record<string, KangurAccent> = {
+  addition: 'amber',
+  subtraction: 'rose',
+  multiplication: 'violet',
+  division: 'sky',
+  decimals: 'teal',
+  powers: 'amber',
+  roots: 'indigo',
+  clock: 'indigo',
+  mixed: 'violet',
 };
 
 const kangurPlatform = getKangurPlatform();
@@ -106,6 +122,18 @@ const formatTrendContext = (
 
 const buildLessonFocusHref = (basePath: string, operation: string): string =>
   appendKangurUrlParams(createPageUrl('Lessons', basePath), { focus: operation }, basePath);
+
+const resolveOperationAccent = (operation: string): KangurAccent => OP_ACCENTS[operation] ?? 'slate';
+
+const resolveAccuracyAccent = (percent: number): KangurAccent => {
+  if (percent >= 90) {
+    return 'emerald';
+  }
+  if (percent >= 70) {
+    return 'amber';
+  }
+  return 'rose';
+};
 
 export default function ScoreHistory({
   learnerId = null,
@@ -173,9 +201,14 @@ export default function ScoreHistory({
 
   if (loading) {
     return (
-      <KangurPanel className='py-8 text-center text-gray-400' padding='lg' variant='soft'>
-        Ladowanie wynikow...
-      </KangurPanel>
+      <KangurEmptyState
+        accent='slate'
+        align='center'
+        data-testid='score-history-loading'
+        description='Pobieramy ostatnie wyniki i przygotowujemy podsumowanie postepu.'
+        padding='lg'
+        title='Ladowanie wynikow...'
+      />
     );
   }
 
@@ -339,29 +372,42 @@ export default function ScoreHistory({
             const percent = Math.round(
               ((score.correct_answers || 0) / (score.total_questions || 10)) * 100
             );
+            const rowAccent = resolveOperationAccent(score.operation);
             return (
-              <div
+              <KangurInfoCard
+                accent={rowAccent}
+                className='flex items-center gap-3'
+                data-testid={`score-history-recent-row-${score.id}`}
                 key={score.id}
-                className='flex items-center gap-3 border border-gray-100 rounded-xl px-3 py-2'
+                padding='sm'
+                tone='accent'
               >
-                <span className='text-lg'>{info.emoji}</span>
+                <KangurIconBadge
+                  accent={rowAccent}
+                  data-testid={`score-history-recent-icon-${score.id}`}
+                  size='sm'
+                >
+                  <span aria-hidden='true'>{info.emoji}</span>
+                </KangurIconBadge>
                 <div className='flex-1'>
                   <p className='text-sm font-semibold text-gray-700'>{info.label}</p>
                   <p className='text-xs text-gray-400'>
                     {new Date(score.created_date).toLocaleDateString('pl-PL')}
                   </p>
                 </div>
-                <div className='text-right'>
-                  <p
-                    className={`text-sm font-extrabold ${percent === 100 ? 'text-green-600' : percent >= 70 ? 'text-amber-600' : 'text-red-500'}`}
+                <div className='flex flex-col items-end gap-1 text-right'>
+                  <KangurStatusChip
+                    accent={resolveAccuracyAccent(percent)}
+                    data-testid={`score-history-recent-score-${score.id}`}
+                    size='sm'
                   >
                     {score.correct_answers}/{score.total_questions || 10}
-                  </p>
+                  </KangurStatusChip>
                   {score.time_taken > 0 && (
                     <p className='text-xs text-gray-400'>{score.time_taken}s</p>
                   )}
                 </div>
-              </div>
+              </KangurInfoCard>
             );
           })}
         </div>

@@ -23,5 +23,13 @@ describe('MultiplicationGame', () => {
     fireEvent.click(firstChoice);
 
     expect(firstChoice).toHaveClass('border-amber-300');
+    fireEvent.click(screen.getByRole('button', { name: 'Sprawdź ✓' }));
+
+    const feedback = screen.getByTestId('multiplication-game-feedback');
+    expect(feedback).toHaveClass(
+      feedback.textContent?.includes('Brawo')
+        ? 'border-emerald-200'
+        : 'border-rose-200'
+    );
   });
 });

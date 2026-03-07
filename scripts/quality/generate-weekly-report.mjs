@@ -19,6 +19,8 @@ const shouldWriteHistory = !args.has('--ci') && !args.has('--no-history');
 
 const MAX_OUTPUT_BYTES = 160_000;
 const BUILD_LOCK_PATH = path.join(root, '.next', 'lock');
+const BUILD_STANDALONE_PATH = path.join(root, '.next', 'standalone');
+const BUILD_TRACE_PATH = path.join(root, '.next', 'trace-build');
 const DURATION_ALERT_BUDGETS_MS = Object.freeze({
   build: 3 * 60 * 1000,
   lint: 4 * 60 * 1000,
@@ -187,43 +189,70 @@ const createCheckResult = ({
   output,
 });
 
-const preflightBuildLock = async () => {
+const pathExists = async (absolutePath) => {
   try {
-    await fs.access(BUILD_LOCK_PATH);
+    await fs.access(absolutePath);
+    return true;
   } catch {
+    return false;
+  }
+};
+
+const preflightBuildLock = async () => {
+  const hasLock = await pathExists(BUILD_LOCK_PATH);
+  const hasStandalone = await pathExists(BUILD_STANDALONE_PATH);
+  const hasTrace = await pathExists(BUILD_TRACE_PATH);
+
+  if (!hasLock && !hasStandalone && !hasTrace) {
     return {
       action: 'none',
-      message: 'No .next/lock detected.',
+      message: 'No build preflight cleanup required.',
     };
   }
 
-  let processLines;
-  try {
-    processLines = await listProcessCommands();
-  } catch (error) {
-    if (isProcessInspectionPermissionError(error)) {
-      const code = typeof error?.code === 'string' ? error.code : 'unknown';
+  if (hasLock) {
+    let processLines;
+    try {
+      processLines = await listProcessCommands();
+    } catch (error) {
+      if (isProcessInspectionPermissionError(error)) {
+        const code = typeof error?.code === 'string' ? error.code : 'unknown';
+        return {
+          action: 'skip',
+          message:
+            `Skipping build because .next/lock exists and process inspection is unavailable (${code}).`,
+        };
+      }
+      throw error;
+    }
+
+    const activeBuilds = findActiveRepoBuildProcesses(processLines);
+    if (activeBuilds.length > 0) {
       return {
         action: 'skip',
         message:
-          `Skipping build because .next/lock exists and process inspection is unavailable (${code}).`,
+          `Skipping build because an active next build process is already running for this workspace (${activeBuilds.length} detected).`,
       };
     }
-    throw error;
   }
 
-  const activeBuilds = findActiveRepoBuildProcesses(processLines);
-  if (activeBuilds.length > 0) {
-    return {
-      action: 'skip',
-      message: `Skipping build because an active next build process is already running for this workspace (${activeBuilds.length} detected).`,
-    };
+  const cleanupMessages = [];
+  if (hasLock) {
+    await fs.unlink(BUILD_LOCK_PATH);
+    cleanupMessages.push('Removed stale .next/lock before running build check.');
+  }
+  if (hasStandalone) {
+    await fs.rm(BUILD_STANDALONE_PATH, { recursive: true, force: true });
+    cleanupMessages.push('Removed .next/standalone before build to reclaim disk space.');
+  }
+  if (hasTrace) {
+    await fs.rm(BUILD_TRACE_PATH, { recursive: true, force: true });
+    cleanupMessages.push('Removed stale .next/trace-build before running build check.');
   }
 
-  await fs.unlink(BUILD_LOCK_PATH);
   return {
     action: 'removed',
-    message: 'Removed stale .next/lock before running build check.',
+    message: cleanupMessages.join(' '),
   };
 };
 

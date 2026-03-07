@@ -50,6 +50,7 @@ export default function Tests(): React.JSX.Element {
     () => (activeSuite ? getQuestionsForSuite(questionStore, activeSuite.id) : []),
     [activeSuite, questionStore]
   );
+  const learnerId = user?.activeLearner?.id ?? user?.id ?? null;
 
   return (
     <KangurPageShell
@@ -124,6 +125,7 @@ export default function Tests(): React.JSX.Element {
                 <KangurTestSuitePlayer
                   suite={activeSuite}
                   questions={activeSuiteQuestions}
+                  learnerId={learnerId}
                   onFinish={(): void => {}}
                 />
               </KangurGlassPanel>

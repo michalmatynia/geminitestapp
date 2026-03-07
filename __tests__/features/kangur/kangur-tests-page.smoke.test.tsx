@@ -47,9 +47,13 @@ vi.mock('@/features/kangur/docs/tooltips', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurTestSuitePlayer', () => ({
-  KangurTestSuitePlayer: ({ suite }: { suite: { title: string } }) => (
-    <div data-testid='suite-player'>{suite.title}</div>
-  ),
+  KangurTestSuitePlayer: (props: { suite: { title: string }; learnerId?: string | null }) => {
+    return (
+      <div data-testid='suite-player' data-learner-id={props.learnerId ?? ''}>
+        {props.suite.title}
+      </div>
+    );
+  },
 }));
 
 import Tests from '@/features/kangur/ui/pages/Tests';
@@ -153,6 +157,25 @@ describe('Tests page smoke', () => {
       'kangur-cta-pill',
       'surface-cta'
     );
+  });
+
+  it('passes the active learner id into the suite player', async () => {
+    settingsStoreGetMock.mockImplementation((key: string) =>
+      key === KANGUR_TEST_SUITES_SETTING_KEY ? twoSuitesRaw : null
+    );
+    useKangurAuthMock.mockReturnValue({
+      user: {
+        id: 'parent-1',
+        activeLearner: { id: 'learner-77' },
+      },
+      navigateToLogin: vi.fn(),
+      logout: vi.fn(),
+    });
+
+    render(<Tests />);
+    await userEvent.click(screen.getByRole('button', { name: /Kangur 2024 — 3 pkt/i }));
+
+    expect(await screen.findByTestId('suite-player')).toHaveAttribute('data-learner-id', 'learner-77');
   });
 
   it('shows suite metadata (year, gradeLevel, question count)', () => {

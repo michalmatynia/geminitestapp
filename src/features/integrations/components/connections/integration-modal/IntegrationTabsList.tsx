@@ -17,6 +17,7 @@ export function IntegrationTabsList(): React.JSX.Element {
 
   return (
     <TabsList
+      aria-label='Integration modal tabs'
       className='grid w-full'
       style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}
     >

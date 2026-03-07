@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Card, Checkbox, CollapsibleSection, StatusBadge } from '@/shared/ui';
+import { Card, Checkbox, CollapsibleSection, Label, StatusBadge } from '@/shared/ui';
 
 import { useBrain } from '../context/BrainContext';
 import { type AiBrainAssignment } from '../settings';
@@ -103,6 +103,7 @@ export function RoutingTab(): React.JSX.Element {
               const featureAssignment = featureOverrideEnabled
                 ? (settings.assignments[feature.key] ?? effectiveAssignments[feature.key])
                 : effectiveAssignments[feature.key];
+              const checkboxId = `routing-feature-override-${feature.key}`;
 
               return (
                 <Card
@@ -117,15 +118,21 @@ export function RoutingTab(): React.JSX.Element {
                       <div className='text-[11px] text-gray-400'>{feature.description}</div>
                     </div>
 
-                    <label className='flex items-center gap-2 text-[11px] text-gray-400 cursor-pointer'>
+                    <div className='flex items-center gap-2 text-[11px] text-gray-400'>
                       <Checkbox
+                        id={checkboxId}
                         checked={featureOverrideEnabled}
                         onCheckedChange={(checked: boolean | 'indeterminate') =>
                           toggleOverride(feature.key, Boolean(checked))
                         }
                       />
-                      Override feature fallback
-                    </label>
+                      <Label
+                        htmlFor={checkboxId}
+                        className='cursor-pointer text-[11px] text-gray-400'
+                      >
+                        Override feature fallback
+                      </Label>
+                    </div>
 
                     <AssignmentEditor
                       assignment={featureAssignment}

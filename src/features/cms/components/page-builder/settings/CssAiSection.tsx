@@ -190,7 +190,7 @@ function CssAiSection(): React.JSX.Element {
               }
               className='mt-3'
             >
-              <TabsList className='w-full'>
+              <TabsList className='w-full' aria-label='CSS AI context tabs'>
                 <TabsTrigger value='page' className='flex-1 text-xs'>
                   Page
                 </TabsTrigger>

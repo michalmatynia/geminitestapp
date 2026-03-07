@@ -4,10 +4,11 @@ import React, { useCallback } from 'react';
 
 import type { ClusterPreset } from '@/shared/contracts/ai-paths';
 import type { ModalStateProps } from '@/shared/contracts/ui';
-import { Button, Textarea } from '@/shared/ui';
+import { Button, Textarea, useToast } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
+import { usePresetsActions, usePresetsState } from '../context';
 
-import { useAiPathsSettingsOrchestrator } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
+import { usePresetsImport } from './hooks/usePresetsImport';
 
 export interface PresetsDialogProps extends ModalStateProps {
   presetsJson: string;
@@ -18,15 +19,10 @@ export interface PresetsDialogProps extends ModalStateProps {
 }
 
 export function PresetsDialog(): React.JSX.Element {
-  const {
-    presetsModalOpen: isOpen,
-    setPresetsModalOpen,
-    presetsJson,
-    setPresetsJson,
-    clusterPresets,
-    handleImportPresets: onImport,
-    toast,
-  } = useAiPathsSettingsOrchestrator();
+  const { presetsModalOpen: isOpen, presetsJson, clusterPresets } = usePresetsState();
+  const { setPresetsModalOpen, setPresetsJson } = usePresetsActions();
+  const { handleImportPresets: onImport, ConfirmationModal } = usePresetsImport();
+  const { toast } = useToast();
 
   const onClose = () => setPresetsModalOpen(false);
 
@@ -50,6 +46,7 @@ export function PresetsDialog(): React.JSX.Element {
   );
 
   return (
+    <>
     <DetailModal
       isOpen={isOpen}
       onClose={onClose}
@@ -104,5 +101,7 @@ export function PresetsDialog(): React.JSX.Element {
         </div>
       </div>
     </DetailModal>
+    <ConfirmationModal />
+    </>
   );
 }

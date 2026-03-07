@@ -17,10 +17,33 @@ vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: useKangurRoutingMock,
 }));
 
-vi.mock('@/features/kangur/config/routing', () => ({
-  KANGUR_MAIN_PAGE_KEY: 'Game',
-  resolveKangurPageKey: resolveKangurPageKeyMock,
+vi.mock('@/features/kangur/ui/context/KangurProgressSyncProvider', () => ({
+  KangurProgressSyncProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
+
+vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
+  KangurAiTutorProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurTutorAnchorContext', () => ({
+  KangurTutorAnchorProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+}));
+
+vi.mock('@/features/kangur/ui/components/KangurAiTutorWidget', () => ({
+  KangurAiTutorWidget: () => null,
+}));
+
+vi.mock('@/features/kangur/config/routing', async () => {
+  const actual = await vi.importActual<typeof import('@/features/kangur/config/routing')>(
+    '@/features/kangur/config/routing'
+  );
+
+  return {
+    ...actual,
+    KANGUR_MAIN_PAGE_KEY: 'Game',
+    resolveKangurPageKey: resolveKangurPageKeyMock,
+  };
+});
 
 vi.mock('@/features/kangur/config/pages', () => ({
   KANGUR_MAIN_PAGE: 'Game',
@@ -37,6 +60,10 @@ vi.mock('@/features/kangur/ui/components/PageNotFound', () => ({
 
 vi.mock('@/features/kangur/ui/components/UserNotRegisteredError', () => ({
   default: () => <div data-testid='kangur-user-not-registered'>User not registered</div>,
+}));
+
+vi.mock('@/features/kangur/cms-builder/KangurCmsRuntimeScreen', () => ({
+  KangurCmsRuntimeScreen: ({ fallback }: { fallback: ReactNode }) => <>{fallback}</>,
 }));
 
 import { KangurFeatureApp } from '@/features/kangur/ui/KangurFeatureApp';

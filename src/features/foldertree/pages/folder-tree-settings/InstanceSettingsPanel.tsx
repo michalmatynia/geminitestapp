@@ -54,6 +54,35 @@ interface InstanceSettingsPanelProps {
   ) => void;
 }
 
+type CheckboxCardFieldArgs = {
+  id: string;
+  checked: boolean;
+  onCheckedChange: (checked: boolean | 'indeterminate') => void;
+  label: string;
+};
+
+function renderCheckboxCardField({
+  id,
+  checked,
+  onCheckedChange,
+  label,
+}: CheckboxCardFieldArgs): React.JSX.Element {
+  return (
+    <div className='block'>
+      <Card
+        variant='subtle-compact'
+        padding='sm'
+        className='flex items-start gap-2 border-border/50 bg-card/30'
+      >
+        <Checkbox id={id} checked={checked} onCheckedChange={onCheckedChange} />
+        <label htmlFor={id} className='flex-1 cursor-pointer text-xs text-gray-300'>
+          {label}
+        </label>
+      </Card>
+    </div>
+  );
+}
+
 export function InstanceSettingsPanel(props: InstanceSettingsPanelProps): React.JSX.Element {
   const { meta, profile, updateProfile } = props;
 
@@ -155,27 +184,20 @@ export function InstanceSettingsPanel(props: InstanceSettingsPanelProps): React.
           />
         </FormField>
 
-        <label className='block cursor-pointer'>
-          <Card
-            variant='subtle-compact'
-            padding='sm'
-            className='flex items-start gap-2 border-border/50 bg-card/30'
-          >
-            <Checkbox
-              checked={profile.nesting.defaultAllow}
-              onCheckedChange={(checked: boolean | 'indeterminate'): void => {
-                updateProfile(meta.id, (current) => ({
-                  ...current,
-                  nesting: {
-                    ...current.nesting,
-                    defaultAllow: checked === true,
-                  },
-                }));
-              }}
-            />
-            <span className='text-xs text-gray-300'>Default allow (fallback)</span>
-          </Card>
-        </label>
+        {renderCheckboxCardField({
+          id: `folder-tree-${meta.id}-default-allow`,
+          checked: profile.nesting.defaultAllow,
+          onCheckedChange: (checked: boolean | 'indeterminate'): void => {
+            updateProfile(meta.id, (current) => ({
+              ...current,
+              nesting: {
+                ...current.nesting,
+                defaultAllow: checked === true,
+              },
+            }));
+          },
+          label: 'Default allow (fallback)',
+        })}
       </div>
 
       <div className='grid gap-4 md:grid-cols-2'>
@@ -211,77 +233,49 @@ export function InstanceSettingsPanel(props: InstanceSettingsPanelProps): React.
       </div>
 
       <div className='grid gap-4 md:grid-cols-2'>
-        <label className='block cursor-pointer'>
-          <Card
-            variant='subtle-compact'
-            padding='sm'
-            className='flex items-start gap-2 border-border/50 bg-card/30'
-          >
-            <Checkbox
-              checked={allowFolderToFolder}
-              onCheckedChange={(checked: boolean | 'indeterminate'): void => {
-                updateProfile(meta.id, (current) =>
-                  upsertRule(current, 'folder_to_folder', { allow: checked === true })
-                );
-              }}
-            />
-            <span className='text-xs text-gray-300'>Allow folder inside folder</span>
-          </Card>
-        </label>
+        {renderCheckboxCardField({
+          id: `folder-tree-${meta.id}-allow-folder-to-folder`,
+          checked: allowFolderToFolder,
+          onCheckedChange: (checked: boolean | 'indeterminate'): void => {
+            updateProfile(meta.id, (current) =>
+              upsertRule(current, 'folder_to_folder', { allow: checked === true })
+            );
+          },
+          label: 'Allow folder inside folder',
+        })}
 
-        <label className='block cursor-pointer'>
-          <Card
-            variant='subtle-compact'
-            padding='sm'
-            className='flex items-start gap-2 border-border/50 bg-card/30'
-          >
-            <Checkbox
-              checked={allowFileToFolder}
-              onCheckedChange={(checked: boolean | 'indeterminate'): void => {
-                updateProfile(meta.id, (current) =>
-                  upsertRule(current, 'file_to_folder', { allow: checked === true })
-                );
-              }}
-            />
-            <span className='text-xs text-gray-300'>Allow file inside folder</span>
-          </Card>
-        </label>
+        {renderCheckboxCardField({
+          id: `folder-tree-${meta.id}-allow-file-to-folder`,
+          checked: allowFileToFolder,
+          onCheckedChange: (checked: boolean | 'indeterminate'): void => {
+            updateProfile(meta.id, (current) =>
+              upsertRule(current, 'file_to_folder', { allow: checked === true })
+            );
+          },
+          label: 'Allow file inside folder',
+        })}
 
-        <label className='block cursor-pointer'>
-          <Card
-            variant='subtle-compact'
-            padding='sm'
-            className='flex items-start gap-2 border-border/50 bg-card/30'
-          >
-            <Checkbox
-              checked={allowFolderToRoot}
-              onCheckedChange={(checked: boolean | 'indeterminate'): void => {
-                updateProfile(meta.id, (current) =>
-                  upsertRule(current, 'folder_to_root', { allow: checked === true })
-                );
-              }}
-            />
-            <span className='text-xs text-gray-300'>Allow folder drop to root</span>
-          </Card>
-        </label>
+        {renderCheckboxCardField({
+          id: `folder-tree-${meta.id}-allow-folder-to-root`,
+          checked: allowFolderToRoot,
+          onCheckedChange: (checked: boolean | 'indeterminate'): void => {
+            updateProfile(meta.id, (current) =>
+              upsertRule(current, 'folder_to_root', { allow: checked === true })
+            );
+          },
+          label: 'Allow folder drop to root',
+        })}
 
-        <label className='block cursor-pointer'>
-          <Card
-            variant='subtle-compact'
-            padding='sm'
-            className='flex items-start gap-2 border-border/50 bg-card/30'
-          >
-            <Checkbox
-              checked={allowFileToRoot}
-              onCheckedChange={(checked: boolean | 'indeterminate'): void => {
-                updateProfile(meta.id, (current) =>
-                  upsertRule(current, 'file_to_root', { allow: checked === true })
-                );
-              }}
-            />
-            <span className='text-xs text-gray-300'>Allow file drop to root</span>
-          </Card>
-        </label>
+        {renderCheckboxCardField({
+          id: `folder-tree-${meta.id}-allow-file-to-root`,
+          checked: allowFileToRoot,
+          onCheckedChange: (checked: boolean | 'indeterminate'): void => {
+            updateProfile(meta.id, (current) =>
+              upsertRule(current, 'file_to_root', { allow: checked === true })
+            );
+          },
+          label: 'Allow file drop to root',
+        })}
       </div>
 
       <div className='grid gap-4 md:grid-cols-2'>
@@ -475,196 +469,133 @@ export function InstanceSettingsPanel(props: InstanceSettingsPanelProps): React.
           {/* Keyboard Navigation */}
           <div className='space-y-2'>
             <p className='text-xs font-semibold text-gray-300'>Keyboard Navigation</p>
-            <label className='block cursor-pointer'>
-              <Card
-                variant='subtle-compact'
-                padding='sm'
-                className='flex items-start gap-2 border-border/50 bg-card/30'
-              >
-                <Checkbox
-                  checked={keyboardConfig.enabled}
-                  onCheckedChange={(checked: boolean | 'indeterminate'): void => {
-                    updateProfile(meta.id, (current) => ({
-                      ...current,
-                      keyboard: { ...current.keyboard, enabled: checked === true },
-                    }));
-                  }}
-                />
-                <span className='text-xs text-gray-300'>Enable keyboard nav</span>
-              </Card>
-            </label>
-            <label className='block cursor-pointer'>
-              <Card
-                variant='subtle-compact'
-                padding='sm'
-                className='flex items-start gap-2 border-border/50 bg-card/30'
-              >
-                <Checkbox
-                  checked={keyboardConfig.arrowNavigation}
-                  onCheckedChange={(checked: boolean | 'indeterminate'): void => {
-                    updateProfile(meta.id, (current) => ({
-                      ...current,
-                      keyboard: {
-                        ...current.keyboard,
-                        arrowNavigation: checked === true,
-                      },
-                    }));
-                  }}
-                />
-                <span className='text-xs text-gray-300'>Arrow key navigation</span>
-              </Card>
-            </label>
-            <label className='block cursor-pointer'>
-              <Card
-                variant='subtle-compact'
-                padding='sm'
-                className='flex items-start gap-2 border-border/50 bg-card/30'
-              >
-                <Checkbox
-                  checked={keyboardConfig.enterToRename}
-                  onCheckedChange={(checked: boolean | 'indeterminate'): void => {
-                    updateProfile(meta.id, (current) => ({
-                      ...current,
-                      keyboard: {
-                        ...current.keyboard,
-                        enterToRename: checked === true,
-                      },
-                    }));
-                  }}
-                />
-                <span className='text-xs text-gray-300'>Enter to rename</span>
-              </Card>
-            </label>
-            <label className='block cursor-pointer'>
-              <Card
-                variant='subtle-compact'
-                padding='sm'
-                className='flex items-start gap-2 border-border/50 bg-card/30'
-              >
-                <Checkbox
-                  checked={keyboardConfig.deleteKey}
-                  onCheckedChange={(checked: boolean | 'indeterminate'): void => {
-                    updateProfile(meta.id, (current) => ({
-                      ...current,
-                      keyboard: { ...current.keyboard, deleteKey: checked === true },
-                    }));
-                  }}
-                />
-                <span className='text-xs text-gray-300'>Delete key</span>
-              </Card>
-            </label>
+            {renderCheckboxCardField({
+              id: `folder-tree-${meta.id}-keyboard-enabled`,
+              checked: keyboardConfig.enabled,
+              onCheckedChange: (checked: boolean | 'indeterminate'): void => {
+                updateProfile(meta.id, (current) => ({
+                  ...current,
+                  keyboard: { ...current.keyboard, enabled: checked === true },
+                }));
+              },
+              label: 'Enable keyboard nav',
+            })}
+            {renderCheckboxCardField({
+              id: `folder-tree-${meta.id}-keyboard-arrow-navigation`,
+              checked: keyboardConfig.arrowNavigation,
+              onCheckedChange: (checked: boolean | 'indeterminate'): void => {
+                updateProfile(meta.id, (current) => ({
+                  ...current,
+                  keyboard: {
+                    ...current.keyboard,
+                    arrowNavigation: checked === true,
+                  },
+                }));
+              },
+              label: 'Arrow key navigation',
+            })}
+            {renderCheckboxCardField({
+              id: `folder-tree-${meta.id}-keyboard-enter-to-rename`,
+              checked: keyboardConfig.enterToRename,
+              onCheckedChange: (checked: boolean | 'indeterminate'): void => {
+                updateProfile(meta.id, (current) => ({
+                  ...current,
+                  keyboard: {
+                    ...current.keyboard,
+                    enterToRename: checked === true,
+                  },
+                }));
+              },
+              label: 'Enter to rename',
+            })}
+            {renderCheckboxCardField({
+              id: `folder-tree-${meta.id}-keyboard-delete-key`,
+              checked: keyboardConfig.deleteKey,
+              onCheckedChange: (checked: boolean | 'indeterminate'): void => {
+                updateProfile(meta.id, (current) => ({
+                  ...current,
+                  keyboard: { ...current.keyboard, deleteKey: checked === true },
+                }));
+              },
+              label: 'Delete key',
+            })}
           </div>
 
           {/* Multi-Selection */}
           <div className='space-y-2'>
             <p className='text-xs font-semibold text-gray-300'>Multi-Selection</p>
-            <label className='block cursor-pointer'>
-              <Card
-                variant='subtle-compact'
-                padding='sm'
-                className='flex items-start gap-2 border-border/50 bg-card/30'
-              >
-                <Checkbox
-                  checked={multiSelectConfig.enabled}
-                  onCheckedChange={(checked: boolean | 'indeterminate'): void => {
-                    updateProfile(meta.id, (current) => ({
-                      ...current,
-                      multiSelect: {
-                        ...current.multiSelect,
-                        enabled: checked === true,
-                      },
-                    }));
-                  }}
-                />
-                <span className='text-xs text-gray-300'>Enable multi-selection</span>
-              </Card>
-            </label>
-            <label className='block cursor-pointer'>
-              <Card
-                variant='subtle-compact'
-                padding='sm'
-                className='flex items-start gap-2 border-border/50 bg-card/30'
-              >
-                <Checkbox
-                  checked={multiSelectConfig.ctrlClick}
-                  onCheckedChange={(checked: boolean | 'indeterminate'): void => {
-                    updateProfile(meta.id, (current) => ({
-                      ...current,
-                      multiSelect: {
-                        ...current.multiSelect,
-                        ctrlClick: checked === true,
-                      },
-                    }));
-                  }}
-                />
-                <span className='text-xs text-gray-300'>Ctrl/Cmd+click toggle</span>
-              </Card>
-            </label>
-            <label className='block cursor-pointer'>
-              <Card
-                variant='subtle-compact'
-                padding='sm'
-                className='flex items-start gap-2 border-border/50 bg-card/30'
-              >
-                <Checkbox
-                  checked={multiSelectConfig.shiftClick}
-                  onCheckedChange={(checked: boolean | 'indeterminate'): void => {
-                    updateProfile(meta.id, (current) => ({
-                      ...current,
-                      multiSelect: {
-                        ...current.multiSelect,
-                        shiftClick: checked === true,
-                      },
-                    }));
-                  }}
-                />
-                <span className='text-xs text-gray-300'>Shift+click range</span>
-              </Card>
-            </label>
-            <label className='block cursor-pointer'>
-              <Card
-                variant='subtle-compact'
-                padding='sm'
-                className='flex items-start gap-2 border-border/50 bg-card/30'
-              >
-                <Checkbox
-                  checked={multiSelectConfig.selectAll}
-                  onCheckedChange={(checked: boolean | 'indeterminate'): void => {
-                    updateProfile(meta.id, (current) => ({
-                      ...current,
-                      multiSelect: {
-                        ...current.multiSelect,
-                        selectAll: checked === true,
-                      },
-                    }));
-                  }}
-                />
-                <span className='text-xs text-gray-300'>Ctrl/Cmd+A select all</span>
-              </Card>
-            </label>
+            {renderCheckboxCardField({
+              id: `folder-tree-${meta.id}-multi-select-enabled`,
+              checked: multiSelectConfig.enabled,
+              onCheckedChange: (checked: boolean | 'indeterminate'): void => {
+                updateProfile(meta.id, (current) => ({
+                  ...current,
+                  multiSelect: {
+                    ...current.multiSelect,
+                    enabled: checked === true,
+                  },
+                }));
+              },
+              label: 'Enable multi-selection',
+            })}
+            {renderCheckboxCardField({
+              id: `folder-tree-${meta.id}-multi-select-ctrl-click`,
+              checked: multiSelectConfig.ctrlClick,
+              onCheckedChange: (checked: boolean | 'indeterminate'): void => {
+                updateProfile(meta.id, (current) => ({
+                  ...current,
+                  multiSelect: {
+                    ...current.multiSelect,
+                    ctrlClick: checked === true,
+                  },
+                }));
+              },
+              label: 'Ctrl/Cmd+click toggle',
+            })}
+            {renderCheckboxCardField({
+              id: `folder-tree-${meta.id}-multi-select-shift-click`,
+              checked: multiSelectConfig.shiftClick,
+              onCheckedChange: (checked: boolean | 'indeterminate'): void => {
+                updateProfile(meta.id, (current) => ({
+                  ...current,
+                  multiSelect: {
+                    ...current.multiSelect,
+                    shiftClick: checked === true,
+                  },
+                }));
+              },
+              label: 'Shift+click range',
+            })}
+            {renderCheckboxCardField({
+              id: `folder-tree-${meta.id}-multi-select-select-all`,
+              checked: multiSelectConfig.selectAll,
+              onCheckedChange: (checked: boolean | 'indeterminate'): void => {
+                updateProfile(meta.id, (current) => ({
+                  ...current,
+                  multiSelect: {
+                    ...current.multiSelect,
+                    selectAll: checked === true,
+                  },
+                }));
+              },
+              label: 'Ctrl/Cmd+A select all',
+            })}
           </div>
 
           {/* Search Bar */}
           <div className='space-y-2'>
             <p className='text-xs font-semibold text-gray-300'>Search Bar</p>
-            <label className='block cursor-pointer'>
-              <Card
-                variant='subtle-compact'
-                padding='sm'
-                className='flex items-start gap-2 border-border/50 bg-card/30'
-              >
-                <Checkbox
-                  checked={searchConfig.enabled}
-                  onCheckedChange={(checked: boolean | 'indeterminate'): void => {
-                    updateProfile(meta.id, (current) => ({
-                      ...current,
-                      search: { ...current.search, enabled: checked === true },
-                    }));
-                  }}
-                />
-                <span className='text-xs text-gray-300'>Enable search bar</span>
-              </Card>
-            </label>
+            {renderCheckboxCardField({
+              id: `folder-tree-${meta.id}-search-enabled`,
+              checked: searchConfig.enabled,
+              onCheckedChange: (checked: boolean | 'indeterminate'): void => {
+                updateProfile(meta.id, (current) => ({
+                  ...current,
+                  search: { ...current.search, enabled: checked === true },
+                }));
+              },
+              label: 'Enable search bar',
+            })}
             <FormField label='Filter Mode'>
               <SelectSimple
                 size='sm'

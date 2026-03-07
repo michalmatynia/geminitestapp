@@ -227,7 +227,10 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
         className='flex flex-1 flex-col min-h-0'
       >
         <div className='flex items-center justify-between gap-4'>
-          <TabsList className='h-9 w-fit border border-border/40 bg-card/40 p-1'>
+          <TabsList
+            className='h-9 w-fit border border-border/40 bg-card/40 p-1'
+            aria-label='Scan editor tabs'
+          >
             <TabsTrigger
               value='document'
               className='h-7 px-4 text-xs data-[state=active]:bg-blue-600/20 data-[state=active]:text-blue-400'

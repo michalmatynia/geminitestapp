@@ -72,6 +72,25 @@ export function NotesAppTreeNode(props: NotesAppTreeNodeProps): React.JSX.Elemen
           void handleSelectNoteFromTree(noteId);
         }
       }}
+      onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
+        if (event.target !== event.currentTarget) {
+          return;
+        }
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          select(event as unknown as React.MouseEvent<HTMLDivElement>);
+          if (folderId) {
+            setSelectedFolderId(folderId);
+            setSelectedNote(null);
+            setIsEditing(false);
+          } else if (noteId) {
+            void handleSelectNoteFromTree(noteId);
+          }
+        }
+      }}
+      role='button'
+      tabIndex={0}
+      aria-pressed={isSelected}
     >
       <DragHandleIcon className='size-3 shrink-0 text-gray-500 opacity-0 transition-opacity group-hover:opacity-100' />
       {canToggle ? (
@@ -93,7 +112,9 @@ export function NotesAppTreeNode(props: NotesAppTreeNodeProps): React.JSX.Elemen
       <Icon className='size-3.5 shrink-0' />
       {isRenaming ? (
         <Input
-          autoFocus
+          ref={(node) => {
+            node?.focus();
+          }}
           value={controller.renameDraft}
           onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
             controller.updateRenameDraft(event.target.value);

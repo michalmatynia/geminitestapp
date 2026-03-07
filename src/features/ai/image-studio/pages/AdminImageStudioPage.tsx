@@ -180,7 +180,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
   }, [projectId, returnToPath, router, selectedSlot?.id]);
 
   const tabsList = (
-    <TabsList className='bg-card'>
+    <TabsList className='bg-card' aria-label='Image studio workspace tabs'>
       <TabsTrigger value='studio'>Studio</TabsTrigger>
       <TabsTrigger value='projects'>Projects</TabsTrigger>
       <TabsTrigger value='settings'>Settings</TabsTrigger>

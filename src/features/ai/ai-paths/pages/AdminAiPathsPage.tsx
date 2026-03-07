@@ -3,12 +3,18 @@
 import { useEffect, useState } from 'react';
 
 import { useAdminLayoutActions } from '@/features/admin/context/AdminLayoutContext';
-import { Tabs, TabsList, TabsTrigger, Card } from '@/shared/ui';
+import { Card } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { AiPathsSettings } from '../components/AiPathsSettings';
 import { FocusModeTogglePortal } from '../components/FocusModeTogglePortal';
 import { PortableEngineTrendSnapshotsPanel } from '../components/PortableEngineTrendSnapshotsPanel';
+
+const WORKSPACE_VIEWS = [
+  { id: 'canvas', label: 'Canvas' },
+  { id: 'paths', label: 'Paths' },
+  { id: 'docs', label: 'Docs' },
+] as const;
 
 export function AdminAiPathsPage(): React.JSX.Element {
   const [activeTab, setActiveTab] = useState<'canvas' | 'paths' | 'docs'>('canvas');
@@ -45,16 +51,29 @@ export function AdminAiPathsPage(): React.JSX.Element {
         className={`mb-2 flex items-center justify-between gap-4 px-1 ${isFocusMode ? 'hidden' : ''}`}
       >
         {mounted ? (
-          <Tabs
-            value={activeTab}
-            onValueChange={(value: string) => setActiveTab(value as 'canvas' | 'paths' | 'docs')}
+          <div
+            role='group'
+            aria-label='AI paths workspace views'
+            className='inline-flex h-10 items-center justify-center rounded-md border border-foreground/10 bg-card/70 p-1 text-muted-foreground/80'
           >
-            <TabsList className='bg-card/70'>
-              <TabsTrigger value='canvas'>Canvas</TabsTrigger>
-              <TabsTrigger value='paths'>Paths</TabsTrigger>
-              <TabsTrigger value='docs'>Docs</TabsTrigger>
-            </TabsList>
-          </Tabs>
+            {WORKSPACE_VIEWS.map((view) => {
+              const isActive = activeTab === view.id;
+              return (
+                <button
+                  key={view.id}
+                  type='button'
+                  aria-pressed={isActive}
+                  onClick={() => setActiveTab(view.id)}
+                  className={cn(
+                    'inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 hover:bg-foreground/6',
+                    isActive ? 'bg-foreground/10 text-foreground' : 'text-muted-foreground/80'
+                  )}
+                >
+                  {view.label}
+                </button>
+              );
+            })}
+          </div>
         ) : (
           <div className='h-9 w-[180px]' />
         )}

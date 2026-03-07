@@ -42,12 +42,19 @@ export function PromptModal(props: PromptModalProps): React.JSX.Element {
   } = props;
 
   const [value, setValue] = useState(defaultValue);
+  const inputRef = React.useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (open) {
       setValue(defaultValue);
     }
   }, [open, defaultValue]);
+
+  useEffect(() => {
+    if (open && !isLoading) {
+      inputRef.current?.focus();
+    }
+  }, [open, isLoading]);
 
   const handleConfirm = () => {
     if (required && !value.trim()) return;
@@ -78,7 +85,7 @@ export function PromptModal(props: PromptModalProps): React.JSX.Element {
         <div className='space-y-2'>
           {label && <Label className='text-xs font-medium text-gray-300'>{label}</Label>}
           <Input
-            autoFocus
+            ref={inputRef}
             value={value}
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={handleKeyDown}

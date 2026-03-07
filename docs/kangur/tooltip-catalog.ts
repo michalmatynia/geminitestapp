@@ -385,6 +385,16 @@ export const KANGUR_TOOLTIP_CATALOG: KangurTooltipDocEntry[] = [
     uiTargets: ['parent-dashboard.tab.assignments'],
   },
   {
+    id: 'parent_ai_tutor_tab',
+    title: 'Parent AI Tutor Tab',
+    summary: 'Shows learner-specific AI tutor controls such as enablement, live daily usage, guardrails, daily caps, persona selection, and teaching-agent configuration.',
+    section: 'Parent Dashboard',
+    aliases: ['ai tutor', 'tutor tab', 'parent ai tutor'],
+    docPath: '/docs/kangur/profile-and-parent-dashboard.md',
+    tags: ['kangur', 'parent', 'ai-tutor'],
+    uiTargets: ['parent-dashboard.tab.ai-tutor'],
+  },
+  {
     id: 'parent_learner_profile_card',
     title: 'Learner Profile Card',
     summary: 'Selects the active learner profile inside the parent dashboard.',

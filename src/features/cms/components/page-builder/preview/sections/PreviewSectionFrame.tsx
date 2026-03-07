@@ -4,6 +4,7 @@ import React from 'react';
 
 import { getSectionStyles } from '@/features/cms/public';
 import { useCmsPageContext } from '@/features/cms/components/frontend/CmsPageContext';
+import { getSelectableSurfaceProps } from '@/features/cms/components/page-builder/preview/preview-utils';
 import { usePreviewSectionContext } from '@/features/cms/components/page-builder/preview/context/PreviewSectionContext';
 import { cn } from '@/shared/utils';
 
@@ -32,10 +33,14 @@ export function PreviewSectionFrame({
   } = usePreviewSectionContext();
 
   const sectionStyles = getSectionStyles(section.settings, colorSchemes);
+  const selectableSectionProps = getSelectableSurfaceProps((event) => {
+    event.stopPropagation();
+    handleSelect();
+  });
 
   const frame = (
     <div
-      onClick={handleSelect}
+      {...selectableSectionProps}
       style={sectionStyles}
       className={cn(
         'relative group w-full cursor-pointer text-left transition',

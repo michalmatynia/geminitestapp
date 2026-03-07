@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
 
@@ -13,8 +13,8 @@ import {
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
 import { KangurTestSuiteRuntimeProvider } from '@/features/kangur/ui/context/KangurTestSuiteRuntimeContext';
-import { KangurAiTutorProvider } from '@/features/kangur/ui/context/KangurAiTutorContext';
-import { KangurAiTutorWidget } from './KangurAiTutorWidget';
+import { KangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
+import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { KangurTestQuestionRenderer } from './KangurTestQuestionRenderer';
 
 type Props = {
@@ -95,6 +95,8 @@ export function KangurTestSuitePlayer({ suite, questions, learnerId, onFinish }:
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [showAnswer, setShowAnswer] = useState(false);
   const [finished, setFinished] = useState(false);
+  const questionAnchorRef = useRef<HTMLDivElement | null>(null);
+  const summaryAnchorRef = useRef<HTMLDivElement | null>(null);
 
   const currentQuestion = questions[currentIndex] ?? null;
   const selectedLabel = currentQuestion ? (answers[currentQuestion.id] ?? null) : null;
@@ -105,6 +107,66 @@ export function KangurTestSuitePlayer({ suite, questions, learnerId, onFinish }:
     return total;
   }, 0);
   const maxScore = questions.reduce((total, q) => total + q.pointValue, 0);
+  const totalQuestions = questions.length;
+  const activeTutorContext = useMemo(
+    () => ({
+      surface: 'test' as const,
+      contentId: suite.id,
+      title: suite.title,
+      description: suite.description,
+      currentQuestion: currentQuestion?.prompt,
+      questionProgressLabel:
+        totalQuestions > 0 ? `Pytanie ${currentIndex + 1}/${totalQuestions}` : undefined,
+      answerRevealed: showAnswer,
+    }),
+    [
+      currentIndex,
+      currentQuestion?.prompt,
+      showAnswer,
+      suite.description,
+      suite.id,
+      suite.title,
+      totalQuestions,
+    ]
+  );
+  const summaryTutorContext = useMemo(
+    () => ({
+      surface: 'test' as const,
+      contentId: suite.id,
+      title: suite.title,
+      description:
+        suite.description ||
+        `Wynik ${score}/${maxScore} punktów. Możesz poprosić o wyjaśnienie po zakończonym teście.`,
+      questionProgressLabel: `Ukończono ${totalQuestions}/${totalQuestions}`,
+      answerRevealed: true,
+    }),
+    [maxScore, score, suite.description, suite.id, suite.title, totalQuestions]
+  );
+  useKangurTutorAnchor({
+    id: `kangur-test-question:${suite.id}:${currentQuestion?.id ?? 'none'}`,
+    kind: showAnswer ? 'review' : 'question',
+    ref: questionAnchorRef,
+    surface: 'test',
+    enabled: Boolean(currentQuestion) && !finished,
+    priority: showAnswer ? 78 : 82,
+    metadata: {
+      contentId: suite.id,
+      label:
+        totalQuestions > 0 ? `Pytanie ${currentIndex + 1}/${totalQuestions}` : currentQuestion?.prompt ?? null,
+    },
+  });
+  useKangurTutorAnchor({
+    id: `kangur-test-summary:${suite.id}`,
+    kind: 'summary',
+    ref: summaryAnchorRef,
+    surface: 'test',
+    enabled: finished,
+    priority: 70,
+    metadata: {
+      contentId: suite.id,
+      label: suite.title,
+    },
+  });
 
   const handleSelect = (label: string): void => {
     if (!currentQuestion || showAnswer) return;
@@ -135,7 +197,6 @@ export function KangurTestSuitePlayer({ suite, questions, learnerId, onFinish }:
     setShowAnswer(false);
     setFinished(false);
   };
-  const totalQuestions = questions.length;
 
   if (totalQuestions === 0) {
     return (
@@ -150,24 +211,33 @@ export function KangurTestSuitePlayer({ suite, questions, learnerId, onFinish }:
 
   if (finished) {
     return (
-      <KangurAiTutorProvider learnerId={learnerId ?? null} lessonContext={suite.title}>
+      <>
+        <KangurAiTutorSessionSync
+          learnerId={learnerId ?? null}
+          sessionContext={summaryTutorContext}
+        />
         <KangurTestSuiteRuntimeProvider totalQuestions={totalQuestions}>
-          <ExamSummary
-            suite={suite}
-            questions={questions}
-            answers={answers}
-            score={score}
-            maxScore={maxScore}
-            onRestart={handleRestart}
-          />
+          <div ref={summaryAnchorRef}>
+            <ExamSummary
+              suite={suite}
+              questions={questions}
+              answers={answers}
+              score={score}
+              maxScore={maxScore}
+              onRestart={handleRestart}
+            />
+          </div>
         </KangurTestSuiteRuntimeProvider>
-        <KangurAiTutorWidget />
-      </KangurAiTutorProvider>
+      </>
     );
   }
 
   return (
-    <KangurAiTutorProvider learnerId={learnerId ?? null} lessonContext={suite.title}>
+    <>
+      <KangurAiTutorSessionSync
+        learnerId={learnerId ?? null}
+        sessionContext={activeTutorContext}
+      />
       <KangurTestSuiteRuntimeProvider totalQuestions={totalQuestions}>
         <div className='space-y-4'>
           {/* Progress bar */}
@@ -187,6 +257,7 @@ export function KangurTestSuitePlayer({ suite, questions, learnerId, onFinish }:
           {/* Question */}
           <AnimatePresence mode='wait'>
             <motion.div
+              ref={questionAnchorRef}
               key={currentIndex}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -236,7 +307,6 @@ export function KangurTestSuitePlayer({ suite, questions, learnerId, onFinish }:
           </div>
         </div>
       </KangurTestSuiteRuntimeProvider>
-      <KangurAiTutorWidget />
-    </KangurAiTutorProvider>
+    </>
   );
 }

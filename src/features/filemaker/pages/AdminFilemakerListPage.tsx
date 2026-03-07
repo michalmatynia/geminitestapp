@@ -324,7 +324,7 @@ export function AdminFilemakerListPage(): React.JSX.Element {
       />
 
       <Tabs defaultValue='persons' className='w-full'>
-        <TabsList className='mb-4'>
+        <TabsList className='mb-4' aria-label='FileMaker entity tabs'>
           <TabsTrigger value='persons' className='gap-2'>
             <Users className='size-3.5' />
             Persons

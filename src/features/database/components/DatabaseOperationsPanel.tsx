@@ -115,7 +115,10 @@ function DatabaseOperationsPanelContent(): React.JSX.Element {
       }
     >
       <Tabs defaultValue='sql' className='w-full'>
-        <TabsList className='mb-4 border border-border/60 bg-card/30'>
+        <TabsList
+          className='mb-4 border border-border/60 bg-card/30'
+          aria-label='Database operations tabs'
+        >
           <TabsTrigger value='sql' className='gap-2 text-xs'>
             <TerminalSquareIcon className='size-3.5' />
             SQL Console

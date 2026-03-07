@@ -42,6 +42,14 @@ vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
   useKangurAssignments: useKangurAssignmentsMock,
 }));
 
+vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
+  KangurAiTutorSessionSync: () => null,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurTutorAnchor', () => ({
+  useKangurTutorAnchor: () => undefined,
+}));
+
 import Lessons from '@/features/kangur/ui/pages/Lessons';
 
 const lessonsSettingsValue = JSON.stringify([
@@ -137,7 +145,7 @@ describe('Lessons page focus query support', () => {
 
     render(<Lessons />);
 
-    expect(await screen.findByRole('heading', { name: '📚 Lekcje' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Lekcje' })).toBeInTheDocument();
     expect(screen.queryByText('Co to dzielenie?')).not.toBeInTheDocument();
     expect(window.location.search).toBe('?focus=unknown');
   });

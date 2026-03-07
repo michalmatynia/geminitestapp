@@ -661,7 +661,7 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
         onValueChange={(value: string): void => setActiveTab(value as 'config' | 'templates')}
         className='space-y-4'
       >
-        <TabsList className='h-9 border border-border bg-card/60'>
+        <TabsList className='h-9 border border-border bg-card/60' aria-label='Regex node tabs'>
           <TabsTrigger value='config'>Config</TabsTrigger>
           <TabsTrigger value='templates'>Templates</TabsTrigger>
         </TabsList>

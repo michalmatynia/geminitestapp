@@ -35,9 +35,47 @@ type NoteCardProps = {
   note: NoteWithRelations;
 };
 
+const shouldIgnoreSelectionTarget = (
+  target: EventTarget | null,
+  currentTarget: HTMLElement
+): boolean => {
+  if (!(target instanceof HTMLElement)) return false;
+
+  let current: HTMLElement | null = target;
+  while (current && current !== currentTarget) {
+    const tagName = current.tagName;
+    if (
+      tagName === 'BUTTON' ||
+      tagName === 'A' ||
+      tagName === 'INPUT' ||
+      tagName === 'TEXTAREA' ||
+      tagName === 'SELECT' ||
+      tagName === 'SUMMARY'
+    ) {
+      return true;
+    }
+
+    const role = current.getAttribute('role');
+    if (
+      role === 'button' ||
+      role === 'link' ||
+      role === 'menuitem' ||
+      role === 'option' ||
+      current.isContentEditable
+    ) {
+      return true;
+    }
+
+    current = current.parentElement;
+  }
+
+  return false;
+};
+
 function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
   const { isFolderTreeCollapsed, getThemeForNote } = useNotesAppState();
   const { setSelectedNote, setIsEditing, setDraggedNoteId } = useNotesAppActions();
+  const cardRef = React.useRef<HTMLDivElement | null>(null);
 
   const enableDrag = !isFolderTreeCollapsed;
   const onSelectNote = (next: NoteWithRelations): void => {
@@ -46,6 +84,19 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
   };
   const onDragStart = (noteId: string): void => setDraggedNoteId(noteId);
   const onDragEnd = (): void => setDraggedNoteId(null);
+  const onNoteDragStart = (event: React.DragEvent<HTMLElement>): void => {
+    setNoteDragData(event.dataTransfer, note.id);
+    if (cardRef.current) {
+      cardRef.current.style.opacity = '0.5';
+    }
+    onDragStart(note.id);
+  };
+  const onNoteDragEnd = (): void => {
+    if (cardRef.current) {
+      cardRef.current.style.opacity = '1';
+    }
+    onDragEnd();
+  };
 
   // Use provided theme or fall back to dark mode theme
   const effectiveTheme = getThemeForNote(note) ?? FALLBACK_THEME;
@@ -78,34 +129,53 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
     color: effectiveTheme.relatedNoteTextColor,
   } as const;
   const noteCardHeaderRuntimeValue = React.useMemo<NoteCardHeaderRuntimeValue>(
-    () => ({ note, backgroundColor, relatedNoteStyle }),
-    [note, backgroundColor, relatedNoteStyle]
+    () => ({
+      note,
+      backgroundColor,
+      relatedNoteStyle,
+      onSelectNote,
+      enableDrag,
+      onNoteDragStart,
+      onNoteDragEnd,
+    }),
+    [
+      note,
+      backgroundColor,
+      relatedNoteStyle,
+      onSelectNote,
+      enableDrag,
+      onNoteDragStart,
+      onNoteDragEnd,
+    ]
   );
 
   return (
     <div
+      ref={cardRef}
       key={note.id}
-      draggable={enableDrag}
-      onDragStart={
-        enableDrag
-          ? (e: React.DragEvent): void => {
-            setNoteDragData(e.dataTransfer, note.id);
-            const target = e.currentTarget as HTMLElement;
-            target.style.opacity = '0.5';
-            onDragStart(note.id);
-          }
-          : undefined
-      }
-      onDragEnd={
-        enableDrag
-          ? (e: React.DragEvent): void => {
-            const target = e.currentTarget as HTMLElement;
-            target.style.opacity = '1';
-            onDragEnd();
-          }
-          : undefined
-      }
-      onClick={(): void => onSelectNote(note)}
+      role='button'
+      tabIndex={0}
+      aria-label={`Open note ${note.title}`}
+      onClick={(event: React.MouseEvent<HTMLElement>): void => {
+        if (shouldIgnoreSelectionTarget(event.target, event.currentTarget)) {
+          return;
+        }
+        if (event.defaultPrevented) return;
+        onSelectNote(note);
+      }}
+      onKeyDown={(event: React.KeyboardEvent<HTMLElement>): void => {
+        if (
+          event.target !== event.currentTarget ||
+          shouldIgnoreSelectionTarget(event.target, event.currentTarget)
+        ) {
+          return;
+        }
+        if (event.defaultPrevented) return;
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onSelectNote(note);
+        }
+      }}
       style={{
         backgroundColor,
         color: textColor,
@@ -119,15 +189,15 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
       }}
       className={cn(
         'rounded-lg border border-border/60 p-4 transition',
-        enableDrag
-          ? 'cursor-grab active:cursor-grabbing hover:shadow-md'
-          : 'cursor-pointer hover:shadow-md hover:brightness-90'
+        'cursor-pointer hover:shadow-md hover:brightness-90'
       )}
     >
       <NoteCardHeaderRuntimeContext.Provider value={noteCardHeaderRuntimeValue}>
-        <NoteCardHeader />
-        <NoteCardContent />
-        <NoteCardFooter />
+        <div>
+          <NoteCardHeader />
+          <NoteCardContent />
+          <NoteCardFooter />
+        </div>
       </NoteCardHeaderRuntimeContext.Provider>
     </div>
   );

@@ -26,6 +26,7 @@ import {
   resolveJustifyContent,
   resolveAlignItems,
   getBlockMinHeight,
+  getSelectableSurfaceProps,
 } from '@/features/cms/components/page-builder/preview/preview-utils';
 import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
 import type { BlockInstance } from '@/shared/contracts/cms';
@@ -55,6 +56,18 @@ export function PreviewGridSection() {
 
   const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
   const sectionStyles = getSectionStyles(section.settings, colorSchemes);
+  const selectableSectionProps = getSelectableSurfaceProps((event) => {
+    event.stopPropagation();
+    handleSelect();
+  });
+  const getSelectableNodeProps = React.useCallback(
+    (nodeId: string) =>
+      getSelectableSurfaceProps((event) => {
+        event.stopPropagation();
+        onSelect(nodeId);
+      }),
+    [onSelect]
+  );
 
   const rowBlocks = section.blocks.filter((b: BlockInstance) => b.type === 'Row');
 
@@ -127,7 +140,7 @@ export function PreviewGridSection() {
 
   return wrapInspector(
     <div
-      onClick={handleSelect}
+      {...selectableSectionProps}
       style={sectionStyles}
       className={`relative group w-full text-left transition cursor-pointer ${selectedRing} cms-node-${section.id}`}
     >
@@ -201,10 +214,7 @@ export function PreviewGridSection() {
                   return (
                     <div key={row.id}>
                       <div
-                        onClick={(e: React.MouseEvent): void => {
-                          e.stopPropagation();
-                          onSelect(row.id);
-                        }}
+                        {...getSelectableNodeProps(row.id)}
                         style={{ ...rowStyles, ...(rowHeightStyle ?? {}) }}
                         className={`relative group cms-node-${row.id} ${hasRowBackground ? 'overflow-hidden' : ''} ${
                           isRowSelected ? 'ring-1 ring-inset ring-blue-500/40' : ''
@@ -339,10 +349,7 @@ export function PreviewGridSection() {
                                 className='w-full'
                               >
                                 <div
-                                  onClick={(e: React.MouseEvent): void => {
-                                    e.stopPropagation();
-                                    onSelect(column.id);
-                                  }}
+                                  {...getSelectableNodeProps(column.id)}
                                   style={{ ...columnStyles, ...columnStyle }}
                                   className={`relative group h-full text-left transition cursor-pointer cms-node-${column.id} ${
                                     isColumnSelected ? 'ring-1 ring-inset ring-blue-500/40' : ''

@@ -40,11 +40,13 @@ export function AiPathsSettings(props: AiPathsSettingsProps): React.JSX.Element 
 function AiPathsSettingsInnerOrchestrator(props: AiPathsSettingsProps): React.JSX.Element {
   const state = useAiPathsSettingsState({ activeTab: props.activeTab });
   const pageContextValue = useAiPathsSettingsPageValue(props, state);
+  const ConfirmationModal = state.ConfirmationModal;
 
   return (
     <AiPathsSettingsPageProvider value={pageContextValue}>
       <AiPathsSettingsOrchestratorProvider value={state}>
         <AiPathsSettingsView />
+        <ConfirmationModal />
       </AiPathsSettingsOrchestratorProvider>
     </AiPathsSettingsPageProvider>
   );

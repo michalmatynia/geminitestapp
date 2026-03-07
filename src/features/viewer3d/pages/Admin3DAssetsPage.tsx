@@ -84,12 +84,14 @@ function Admin3DAssetsContent(): React.JSX.Element {
         header: 'Name',
         cell: ({ row }) => (
           <div className='flex items-center gap-3'>
-            <div
+            <button
+              type='button'
               className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-border bg-muted/40 hover:bg-muted/60 transition-colors'
               onClick={() => setPreviewAsset(row.original)}
+              aria-label={`Preview ${row.original.name || row.original.filename}`}
             >
               <Box className='h-4 w-4 text-muted-foreground' />
-            </div>
+            </button>
             <span className='text-sm font-medium text-foreground truncate'>
               {row.original.name || row.original.filename}
             </span>

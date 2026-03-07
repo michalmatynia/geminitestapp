@@ -156,9 +156,11 @@ export function LearnerAgentForm(props: LearnerAgentFormProps): React.JSX.Elemen
               const checked = (draft.collectionIds ?? []).includes(collection.id);
               const sameModel =
                 !effectiveEmbeddingModel || collection.embeddingModel === effectiveEmbeddingModel;
+              const checkboxId = `learner-agent-collection-${collection.id}`;
               return (
                 <label
                   key={collection.id}
+                  htmlFor={checkboxId}
                   className={cn(
                     'flex items-start gap-2 rounded-md border px-3 py-2 text-sm transition-colors cursor-pointer',
                     checked
@@ -173,6 +175,7 @@ export function LearnerAgentForm(props: LearnerAgentFormProps): React.JSX.Elemen
                   }
                 >
                   <Checkbox
+                    id={checkboxId}
                     className='mt-1'
                     checked={checked}
                     onCheckedChange={(val: boolean | 'indeterminate') => {

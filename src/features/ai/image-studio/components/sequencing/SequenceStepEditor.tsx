@@ -68,7 +68,7 @@ export function SequenceStepEditor(props: SequenceStepEditorProps): React.JSX.El
     if (!sequencerFieldTooltipsEnabled) return child;
     return (
       <Tooltip content={content} className={wrapperClassName} maxWidth='440px'>
-        <span className='inline-flex w-full'>{child}</span>
+        {child}
       </Tooltip>
     );
   };

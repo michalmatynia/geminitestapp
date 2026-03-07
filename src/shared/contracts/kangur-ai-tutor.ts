@@ -1,0 +1,109 @@
+import { z } from 'zod';
+
+import { agentTeachingChatSourceSchema } from './agent-teaching';
+
+const nonEmptyTrimmedString = z.string().trim().min(1);
+
+export const kangurAiTutorChatMessageSchema = z.object({
+  role: z.enum(['user', 'assistant', 'system']),
+  content: nonEmptyTrimmedString.max(8_000),
+});
+export type KangurAiTutorChatMessage = z.infer<typeof kangurAiTutorChatMessageSchema>;
+
+export const kangurAiTutorPromptModeSchema = z.enum([
+  'chat',
+  'hint',
+  'explain',
+  'selected_text',
+]);
+export type KangurAiTutorPromptMode = z.infer<typeof kangurAiTutorPromptModeSchema>;
+
+export const kangurAiTutorFocusKindSchema = z.enum([
+  'selection',
+  'lesson_header',
+  'assignment',
+  'document',
+  'question',
+  'review',
+  'summary',
+]);
+export type KangurAiTutorFocusKind = z.infer<typeof kangurAiTutorFocusKindSchema>;
+
+export const kangurAiTutorInteractionIntentSchema = z.enum([
+  'hint',
+  'explain',
+  'review',
+  'next_step',
+]);
+export type KangurAiTutorInteractionIntent = z.infer<
+  typeof kangurAiTutorInteractionIntentSchema
+>;
+
+export const kangurAiTutorSurfaceSchema = z.enum(['lesson', 'test']);
+export type KangurAiTutorSurface = z.infer<typeof kangurAiTutorSurfaceSchema>;
+
+export const kangurAiTutorActionPageSchema = z.enum([
+  'Game',
+  'Lessons',
+  'ParentDashboard',
+  'LearnerProfile',
+]);
+export type KangurAiTutorActionPage = z.infer<typeof kangurAiTutorActionPageSchema>;
+
+export const kangurAiTutorConversationContextSchema = z.object({
+  surface: kangurAiTutorSurfaceSchema,
+  contentId: z.string().trim().max(120).optional(),
+  title: z.string().trim().max(200).optional(),
+  description: z.string().trim().max(600).optional(),
+  masterySummary: z.string().trim().max(240).optional(),
+  assignmentSummary: z.string().trim().max(500).optional(),
+  selectedText: z.string().trim().max(1_000).optional(),
+  currentQuestion: z.string().trim().max(2_000).optional(),
+  questionProgressLabel: z.string().trim().max(60).optional(),
+  answerRevealed: z.boolean().optional(),
+  promptMode: kangurAiTutorPromptModeSchema.optional(),
+  focusKind: kangurAiTutorFocusKindSchema.optional(),
+  focusId: z.string().trim().max(120).optional(),
+  focusLabel: z.string().trim().max(240).optional(),
+  assignmentId: z.string().trim().max(120).optional(),
+  interactionIntent: kangurAiTutorInteractionIntentSchema.optional(),
+});
+export type KangurAiTutorConversationContext = z.infer<
+  typeof kangurAiTutorConversationContextSchema
+>;
+
+export const kangurAiTutorChatRequestSchema = z.object({
+  messages: z.array(kangurAiTutorChatMessageSchema).min(1),
+  context: kangurAiTutorConversationContextSchema.optional(),
+});
+export type KangurAiTutorChatRequest = z.infer<typeof kangurAiTutorChatRequestSchema>;
+
+export const kangurAiTutorUsageSummarySchema = z.object({
+  dateKey: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  messageCount: z.number().int().nonnegative(),
+  dailyMessageLimit: z.number().int().positive().nullable(),
+  remainingMessages: z.number().int().nonnegative().nullable(),
+});
+export type KangurAiTutorUsageSummary = z.infer<typeof kangurAiTutorUsageSummarySchema>;
+
+export const kangurAiTutorFollowUpActionSchema = z.object({
+  id: nonEmptyTrimmedString.max(120),
+  label: nonEmptyTrimmedString.max(80),
+  page: kangurAiTutorActionPageSchema,
+  query: z.record(z.string().trim().min(1).max(80), z.string().trim().max(240)).optional(),
+  reason: z.string().trim().max(240).optional(),
+});
+export type KangurAiTutorFollowUpAction = z.infer<typeof kangurAiTutorFollowUpActionSchema>;
+
+export const kangurAiTutorChatResponseSchema = z.object({
+  message: z.string(),
+  sources: z.array(agentTeachingChatSourceSchema).default([]),
+  followUpActions: z.array(kangurAiTutorFollowUpActionSchema).default([]),
+  usage: kangurAiTutorUsageSummarySchema.optional(),
+});
+export type KangurAiTutorChatResponse = z.infer<typeof kangurAiTutorChatResponseSchema>;
+
+export const kangurAiTutorUsageResponseSchema = z.object({
+  usage: kangurAiTutorUsageSummarySchema,
+});
+export type KangurAiTutorUsageResponse = z.infer<typeof kangurAiTutorUsageResponseSchema>;

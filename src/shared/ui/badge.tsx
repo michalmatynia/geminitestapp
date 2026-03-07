@@ -54,18 +54,35 @@ function Badge({
   removeLabel,
   children,
   onClick,
+  onKeyDown,
   ...props
 }: BadgeProps) {
   const isClickable = !!onClick;
+  const handleKeyDown = React.useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      onKeyDown?.(event);
+      if (event.defaultPrevented || !isClickable) {
+        return;
+      }
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        onClick?.(event as unknown as React.MouseEvent<HTMLDivElement>);
+      }
+    },
+    [isClickable, onClick, onKeyDown]
+  );
 
   return (
     <div
+      role={isClickable ? 'button' : undefined}
+      tabIndex={isClickable ? 0 : undefined}
       className={cn(
         badgeVariants({ variant }),
         isClickable && 'cursor-pointer hover:brightness-110 active:opacity-80 transition-all',
         className
       )}
       onClick={onClick}
+      onKeyDown={handleKeyDown}
       {...props}
     >
       {icon && <span className='mr-1.5 shrink-0'>{icon}</span>}

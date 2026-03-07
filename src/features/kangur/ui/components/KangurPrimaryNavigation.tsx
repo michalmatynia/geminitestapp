@@ -26,6 +26,7 @@ type NavActionProps = {
   docId: string;
   href?: string;
   onClick?: () => void;
+  testId?: string;
 };
 
 type KangurPrimaryNavigationProps = {
@@ -54,6 +55,7 @@ const NavAction = ({
   docId,
   href,
   onClick,
+  testId,
 }: NavActionProps): React.JSX.Element => {
   const variant = active ? 'navigationActive' : 'navigation';
 
@@ -64,6 +66,7 @@ const NavAction = ({
         aria-current={active ? 'page' : undefined}
         className={className}
         data-doc-id={docId}
+        data-testid={testId}
         size='md'
         variant={variant}
       >
@@ -77,6 +80,7 @@ const NavAction = ({
       aria-current={active ? 'page' : undefined}
       className={className}
       data-doc-id={docId}
+      data-testid={testId}
       onClick={onClick}
       size='md'
       type='button'
@@ -101,7 +105,7 @@ export function KangurPrimaryNavigation({
   onLogout,
   rightAccessory,
   showParentDashboard = canManageLearners,
-  showTests = currentPage === 'Tests',
+  showTests = true,
 }: KangurPrimaryNavigationProps): React.JSX.Element {
   const authAction = isAuthenticated ? (
     <NavAction docId='profile_logout' onClick={onLogout}>
@@ -127,6 +131,7 @@ export function KangurPrimaryNavigation({
             docId='top_nav_home'
             href={onHomeClick ? undefined : createPageUrl('Game', basePath)}
             onClick={onHomeClick}
+            testId='kangur-primary-nav-home'
           >
             <span
               className='flex items-center justify-center transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:scale-[1.02] motion-reduce:transform-none motion-reduce:transition-none'
@@ -141,13 +146,19 @@ export function KangurPrimaryNavigation({
             active={currentPage === 'Lessons'}
             docId='top_nav_lessons'
             href={createPageUrl('Lessons', basePath)}
+            testId='kangur-primary-nav-lessons'
           >
             <BookOpen className={ICON_CLASSNAME} strokeWidth={2.15} />
             <span>Lekcje</span>
           </NavAction>
 
           {showTests ? (
-            <NavAction active={currentPage === 'Tests'} docId='top_nav_tests'>
+            <NavAction
+              active={currentPage === 'Tests'}
+              docId='top_nav_tests'
+              href={createPageUrl('Tests', basePath)}
+              testId='kangur-primary-nav-tests'
+            >
               <Trophy className={ICON_CLASSNAME} strokeWidth={2.15} />
               <span>Testy</span>
             </NavAction>
@@ -163,6 +174,7 @@ export function KangurPrimaryNavigation({
               active={currentPage === 'ParentDashboard'}
               docId='top_nav_parent_dashboard'
               href={createPageUrl('ParentDashboard', basePath)}
+              testId='kangur-primary-nav-parent-dashboard'
             >
               <LayoutGrid className={ICON_CLASSNAME} strokeWidth={2.15} />
               <span>Rodzic</span>

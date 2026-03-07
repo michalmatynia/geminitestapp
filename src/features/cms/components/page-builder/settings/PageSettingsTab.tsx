@@ -113,7 +113,7 @@ function PageSettingsTab(): React.ReactNode {
         </div>
       </div>
 
-      <TabsList className='mx-4 mt-3 w-[calc(100%-2rem)]'>
+      <TabsList className='mx-4 mt-3 w-[calc(100%-2rem)]' aria-label='Page settings tabs'>
         <TabsTrigger value='page' className='flex-1 text-xs'>
           Page
         </TabsTrigger>

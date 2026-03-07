@@ -10,7 +10,21 @@ npx prisma generate
 npx prisma migrate dev
 npx prisma migrate reset
 npx prisma db push
-
+npm run perf:ops:weekly
+    "check:api-error-sources": "tsx scripts/debug/check-api-error-sources.ts",
+    "observability:scan": "node scripts/observability/check-observability.mjs --mode=scan",
+    "observability:check": "node scripts/observability/check-observability.mjs --mode=check",
+    "metrics:collect": "node scripts/architecture/collect-metrics.mjs",
+    "metrics:prop-drilling": "node scripts/architecture/scan-prop-drilling.mjs",
+    "metrics:type-clusters": "node scripts/architecture/scan-type-clusters.mjs",
+    "metrics:hotspots": "node scripts/perf/route-hotspots.mjs",
+    "metrics:all": "npm run metrics:collect && npm run metrics:hotspots && npm run metrics:guardrails",
+    "quality:weekly-report:strict": "node scripts/quality/generate-weekly-report.mjs --strict",
+    "check:factory-meta:strict": "CHECK_FACTORY_META_STRICT_ALIAS=1 node scripts/query/check-factory-meta.cjs",
+    "canonical:check:sitewide": "node scripts/canonical/check-sitewide.mjs",
+ accessibility smoke, security smoke, critical flows, and
+  weekly quality rollups
+  
 ## address vitest Prisma mock issues
 
 INVESTIGATION AN PLANNING
@@ -21,6 +35,7 @@ INVESTIGATION AN PLANNING
 -Scan the application and Prepare a thorough GEMINI.MD
 -Scan the application and tell me if there are any modules or application that I could you to improve the app
 
+run application cleanup
 ---
 
 ERROR DETECTION

@@ -1,5 +1,3 @@
-import { createHash } from 'crypto';
-
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { KANGUR_LESSON_AUDIO_CACHE_SETTING_KEY } from './contracts';
@@ -30,6 +28,9 @@ vi.mock('fs/promises', () => ({
     mkdir: fsMkdirMock,
     writeFile: fsWriteFileMock,
   },
+  stat: fsStatMock,
+  mkdir: fsMkdirMock,
+  writeFile: fsWriteFileMock,
 }));
 
 vi.mock('openai', () => ({
@@ -51,11 +52,69 @@ vi.mock('@/shared/lib/ai-brain/server', () => ({
   upsertStoredSettingValue: upsertStoredSettingValueMock,
 }));
 
-vi.mock('@/shared/lib/files/services/storage/file-storage-service', () => ({
-  uploadToConfiguredStorage: uploadToConfiguredStorageMock,
-}));
+vi.mock('@/shared/lib/files/services/storage/file-storage-service', async () => {
+  const actual =
+    await vi.importActual<typeof import('@/shared/lib/files/services/storage/file-storage-service')>(
+      '@/shared/lib/files/services/storage/file-storage-service'
+    );
+
+  return {
+    ...actual,
+    uploadToConfiguredStorage: uploadToConfiguredStorageMock,
+  };
+});
 
 import { ensureKangurLessonNarrationAudio, inspectKangurLessonNarrationAudio } from './server';
+
+const createLessonScript = (text = 'To jest lekcja zegara.') => ({
+  lessonId: 'clock',
+  title: 'Nauka zegara',
+  description: '',
+  locale: 'pl-PL',
+  segments: [{ id: 'segment-1', text }],
+});
+
+const primeCachedAudioManifest = async (text = 'To jest lekcja zegara.'): Promise<{
+  cacheValue: string;
+  createdAt: string;
+}> => {
+  let cacheValue: string | null = null;
+
+  uploadToConfiguredStorageMock.mockResolvedValueOnce({
+    filepath: '/uploads/kangur/tts/existing.mp3',
+    source: 'local',
+    mirroredLocally: true,
+  });
+  upsertStoredSettingValueMock.mockImplementationOnce(async (_key: string, value: string) => {
+    cacheValue = value;
+    return true;
+  });
+  readStoredSettingValueMock.mockImplementation(async (key: string): Promise<string | null> => {
+    if (key === 'openai_api_key') return 'test-openai-key';
+    if (key === KANGUR_LESSON_AUDIO_CACHE_SETTING_KEY) return cacheValue;
+    return null;
+  });
+
+  await ensureKangurLessonNarrationAudio({
+    script: createLessonScript(text),
+    voice: 'coral',
+  });
+
+  if (!cacheValue) {
+    throw new Error('Expected cached audio manifest to be persisted.');
+  }
+
+  const parsedCache = JSON.parse(cacheValue) as Record<string, { createdAt: string }>;
+  const firstEntry = Object.values(parsedCache)[0];
+  if (!firstEntry?.createdAt) {
+    throw new Error('Expected cached audio manifest to include createdAt.');
+  }
+
+  return {
+    cacheValue,
+    createdAt: firstEntry.createdAt,
+  };
+};
 
 describe('kangur tts server', () => {
   beforeEach(() => {
@@ -145,44 +204,18 @@ describe('kangur tts server', () => {
 
   it('reuses cached local audio when the asset still exists', async () => {
     const text = 'To jest lekcja zegara.';
-    const cacheKey = createHash('sha256')
-      .update(
-        JSON.stringify({
-          version: 1,
-          model: 'gpt-4o-mini-tts',
-          locale: 'pl-PL',
-          voice: 'coral',
-          text,
-        })
-      )
-      .digest('hex')
-      .slice(0, 40);
-    const textHash = createHash('sha256').update(text).digest('hex');
+    const { cacheValue, createdAt } = await primeCachedAudioManifest(text);
 
+    vi.clearAllMocks();
+    fsStatMock.mockResolvedValue(undefined);
     readStoredSettingValueMock.mockImplementation(async (key: string): Promise<string | null> => {
       if (key === 'openai_api_key') return 'test-openai-key';
-      if (key === KANGUR_LESSON_AUDIO_CACHE_SETTING_KEY) {
-        return JSON.stringify({
-          [cacheKey]: {
-            audioUrl: '/uploads/kangur/tts/existing.mp3',
-            voice: 'coral',
-            model: 'gpt-4o-mini-tts',
-            textHash,
-            createdAt: '2026-03-06T12:00:00.000Z',
-          },
-        });
-      }
+      if (key === KANGUR_LESSON_AUDIO_CACHE_SETTING_KEY) return cacheValue;
       return null;
     });
 
     const result = await ensureKangurLessonNarrationAudio({
-      script: {
-        lessonId: 'clock',
-        title: 'Nauka zegara',
-        description: '',
-        locale: 'pl-PL',
-        segments: [{ id: 'segment-1', text }],
-      },
+      script: createLessonScript(text),
       voice: 'coral',
     });
 
@@ -196,9 +229,9 @@ describe('kangur tts server', () => {
       segments: [
         {
           id: 'segment-1',
-          text: 'To jest lekcja zegara.',
+          text,
           audioUrl: '/uploads/kangur/tts/existing.mp3',
-          createdAt: '2026-03-06T12:00:00.000Z',
+          createdAt,
         },
       ],
     });
@@ -231,57 +264,31 @@ describe('kangur tts server', () => {
 
   it('reports ready when all cached audio segments already exist', async () => {
     const text = 'To jest lekcja zegara.';
-    const cacheKey = createHash('sha256')
-      .update(
-        JSON.stringify({
-          version: 1,
-          model: 'gpt-4o-mini-tts',
-          locale: 'pl-PL',
-          voice: 'coral',
-          text,
-        })
-      )
-      .digest('hex')
-      .slice(0, 40);
-    const textHash = createHash('sha256').update(text).digest('hex');
+    const { cacheValue, createdAt } = await primeCachedAudioManifest(text);
 
+    vi.clearAllMocks();
+    fsStatMock.mockResolvedValue(undefined);
     readStoredSettingValueMock.mockImplementation(async (key: string): Promise<string | null> => {
-      if (key === KANGUR_LESSON_AUDIO_CACHE_SETTING_KEY) {
-        return JSON.stringify({
-          [cacheKey]: {
-            audioUrl: '/uploads/kangur/tts/existing.mp3',
-            voice: 'coral',
-            model: 'gpt-4o-mini-tts',
-            textHash,
-            createdAt: '2026-03-06T12:00:00.000Z',
-          },
-        });
-      }
+      if (key === KANGUR_LESSON_AUDIO_CACHE_SETTING_KEY) return cacheValue;
       return null;
     });
 
     const result = await inspectKangurLessonNarrationAudio({
-      script: {
-        lessonId: 'clock',
-        title: 'Nauka zegara',
-        description: '',
-        locale: 'pl-PL',
-        segments: [{ id: 'segment-1', text }],
-      },
+      script: createLessonScript(text),
       voice: 'coral',
     });
 
     expect(result).toEqual({
       state: 'ready',
       voice: 'coral',
-      latestCreatedAt: '2026-03-06T12:00:00.000Z',
+      latestCreatedAt: createdAt,
       message: 'Cached audio is available for this lesson draft.',
       segments: [
         {
           id: 'segment-1',
           text,
           audioUrl: '/uploads/kangur/tts/existing.mp3',
-          createdAt: '2026-03-06T12:00:00.000Z',
+          createdAt,
         },
       ],
     });

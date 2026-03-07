@@ -202,7 +202,12 @@ export function NoteMetadata({ showTitle = true }: NoteMetadataProps): React.JSX
             </Card>
           )}
           {isTagDropdownOpen && (
-            <div className='fixed inset-0 z-0' onClick={(): void => setIsTagDropdownOpen(false)} />
+            <button
+              type='button'
+              aria-label='Close tag suggestions'
+              className='fixed inset-0 z-0'
+              onClick={(): void => setIsTagDropdownOpen(false)}
+            />
           )}
         </div>
       </div>
@@ -335,7 +340,9 @@ export function NoteMetadata({ showTitle = true }: NoteMetadataProps): React.JSX
               </Card>
             )}
             {isRelatedDropdownOpen && (
-              <div
+              <button
+                type='button'
+                aria-label='Close related note suggestions'
                 className='fixed inset-0 z-0'
                 onClick={(): void => setIsRelatedDropdownOpen(false)}
               />

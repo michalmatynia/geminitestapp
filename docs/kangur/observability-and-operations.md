@@ -126,6 +126,25 @@ Use this runbook when Kangur shows elevated sign-in failures, progress sync issu
   - `kangur.tts.POST`
   - `kangur.tts.status.POST`
 
+### AI Tutor
+
+- Client events:
+  - `kangur_ai_tutor_opened`
+  - `kangur_ai_tutor_closed`
+  - `kangur_ai_tutor_selection_cta_shown`
+  - `kangur_ai_tutor_selection_cta_clicked`
+  - `kangur_ai_tutor_anchor_changed`
+  - `kangur_ai_tutor_motion_completed`
+  - `kangur_ai_tutor_context_switched`
+  - `kangur_ai_tutor_quick_action_clicked`
+  - `kangur_ai_tutor_follow_up_clicked`
+  - `kangur_ai_tutor_message_sent`
+  - `kangur_ai_tutor_message_succeeded`
+  - `kangur_ai_tutor_message_failed`
+- Server sources:
+  - `kangur.ai-tutor.chat.completed`
+  - `kangur.ai-tutor.chat.failed`
+
 ## Mitigation Paths
 
 ### Learner sign-in failures spike

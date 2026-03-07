@@ -11,15 +11,25 @@ import {
   useAgentPersonas,
   useSaveAgentPersonasMutation,
 } from '@/features/ai/agentcreator/hooks/useAgentPersonas';
-import { fetchAgentPersonas } from '@/features/ai/agentcreator/utils/personas';
+import {
+  fetchAgentPersonas,
+  normalizeAgentPersonas,
+} from '@/features/ai/agentcreator/utils/personas';
 import { invalidateSettingsCache } from '@/shared/api/settings-client';
 import type { AgentPersona } from '@/shared/contracts/agents';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-vi.mock('@/features/ai/agentcreator/utils/personas', () => ({
-  fetchAgentPersonas: vi.fn(),
-}));
+vi.mock('@/features/ai/agentcreator/utils/personas', async () => {
+  const actual = await vi.importActual<typeof import('@/features/ai/agentcreator/utils/personas')>(
+    '@/features/ai/agentcreator/utils/personas'
+  );
+
+  return {
+    ...actual,
+    fetchAgentPersonas: vi.fn(),
+  };
+});
 
 vi.mock('@/shared/api/settings-client', () => ({
   invalidateSettingsCache: vi.fn(),
@@ -78,6 +88,7 @@ describe('useAgentPersonas hooks', () => {
 
   it('saves personas and invalidates persona list query', async () => {
     const personas = createPersonasFixture();
+    const canonicalPersonas = normalizeAgentPersonas(personas);
     vi.mocked(api.post).mockResolvedValue({ ok: true } as never);
 
     const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
@@ -87,7 +98,7 @@ describe('useAgentPersonas hooks', () => {
 
     expect(api.post).toHaveBeenCalledWith('/api/settings', {
       key: AGENT_PERSONA_SETTINGS_KEY,
-      value: JSON.stringify(personas),
+      value: JSON.stringify(canonicalPersonas),
     });
     expect(invalidateSettingsCache).toHaveBeenCalledTimes(1);
     await waitFor(() =>

@@ -18,6 +18,12 @@ describe('kangur routing config', () => {
     expect(resolveKangurPageKeyFromSlug('PROFILE')).toBe('LearnerProfile');
   });
 
+  it('maps tests to the public tests slug', () => {
+    expect(getKangurPageHref('Tests')).toBe('/kangur/tests');
+    expect(resolveKangurPageKeyFromSlug('tests')).toBe('Tests');
+    expect(resolveKangurPageKeyFromSlug('TESTS')).toBe('Tests');
+  });
+
   it('builds embedded host-page links for cms-mounted kangur routes', () => {
     const embeddedBasePath = buildKangurEmbeddedBasePath('/home?preview=1');
 

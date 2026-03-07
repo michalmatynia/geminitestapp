@@ -2,6 +2,8 @@
 
 import { useMemo } from 'react';
 
+import { AgentPersonaMoodEditor } from '@/features/ai/agentcreator/components/AgentPersonaMoodEditor';
+import type { AgentPersona } from '@/shared/contracts/agents';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import type { AiBrainCapabilityKey } from '@/shared/lib/ai-brain/settings';
 import { FormField, Input } from '@/shared/ui';
@@ -10,6 +12,11 @@ type ModelField = {
   label: string;
   description: string;
   capability: AiBrainCapabilityKey;
+};
+
+type AgentPersonaSettingsFormProps = {
+  item: Partial<AgentPersona>;
+  onChange: (updates: Partial<AgentPersona>) => void;
 };
 
 const MODEL_FIELDS: ModelField[] = [
@@ -108,13 +115,22 @@ function BrainManagedModelField({
   );
 }
 
-export function AgentPersonaSettingsForm(): React.JSX.Element {
+export function AgentPersonaSettingsForm({
+  item,
+  onChange,
+}: AgentPersonaSettingsFormProps): React.JSX.Element {
   return (
     <div className='space-y-4'>
       <div className='rounded-md border border-border/60 bg-card/35 px-3 py-2 text-xs text-gray-400'>
         Agent runtime model routing is managed in AI Brain. Persona-level capability overrides are
         no longer stored locally.
       </div>
+
+      <AgentPersonaMoodEditor
+        moods={item.moods}
+        onChange={(updates) => onChange(updates)}
+      />
+
       <div className='grid gap-4 md:grid-cols-2'>
         {MODEL_FIELDS.map((field: ModelField) => (
           <BrainManagedModelField key={field.capability} capability={field.capability} />

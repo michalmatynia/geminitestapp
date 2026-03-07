@@ -31,7 +31,7 @@ export function AgentRunDetailModal(props: AgentRunDetailModalProps): React.JSX.
   return (
     <DetailModal isOpen={isOpen} onClose={onClose} title='Agent job details' size='xl'>
       <Tabs defaultValue='summary' className='w-full'>
-        <TabsList className='grid w-full grid-cols-7'>
+        <TabsList className='grid w-full grid-cols-7' aria-label='Agent job detail tabs'>
           <TabsTrigger value='summary'>Summary</TabsTrigger>
           <TabsTrigger value='preview'>Preview</TabsTrigger>
           <TabsTrigger value='dom'>DOM</TabsTrigger>

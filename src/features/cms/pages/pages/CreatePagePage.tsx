@@ -33,6 +33,9 @@ export default function CreatePagePage(): React.JSX.Element {
   const allSlugsQuery = useCmsAllSlugs(includeAllZones);
   const createPage = useCreatePage();
   const [error, setError] = useState<string | null>(null);
+  const nameInputRef = (node: HTMLInputElement | null): void => {
+    node?.focus();
+  };
 
   const domainSlugs = useMemo(() => slugsQuery.data ?? [], [slugsQuery.data]);
   const allSlugs = allSlugsQuery.data ?? [];
@@ -102,12 +105,12 @@ export default function CreatePagePage(): React.JSX.Element {
           <FormSection title='General Information' className='p-6'>
             <FormField label='Page Name' error={error} required>
               <Input
+                ref={nameInputRef}
                 id='name'
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder='e.g. Summer Collection 2026'
                 className='h-9'
-                autoFocus
               />
             </FormField>
           </FormSection>

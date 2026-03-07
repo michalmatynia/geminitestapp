@@ -35,7 +35,7 @@ export function StudioInlineEditPanels(): React.JSX.Element {
           }}
           className='space-y-4'
         >
-          <TabsList className='grid w-full grid-cols-5 bg-card/50'>
+          <TabsList className='grid w-full grid-cols-5 bg-card/50' aria-label='Inline edit tabs'>
             <TabsTrigger value='card' className='text-xs'>
               Card
             </TabsTrigger>

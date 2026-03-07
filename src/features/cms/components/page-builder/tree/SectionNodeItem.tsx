@@ -200,9 +200,6 @@ export function SectionNodeItem(props: SectionNodeItemProps): React.JSX.Element 
           data-cms-section-row='true'
           data-cms-section-id={section.id}
           data-cms-section-zone={section.zone}
-          aria-label={`${section.type} section`}
-          tabIndex={0}
-          draggable
           className={cn(
             'flex items-center gap-2 rounded-md border py-1.5 pl-1 pr-2 transition',
             isInsideDropOver ? 'border-emerald-500/60 bg-emerald-500/10' : '',
@@ -210,19 +207,6 @@ export function SectionNodeItem(props: SectionNodeItemProps): React.JSX.Element 
               ? 'border-blue-500/50 bg-blue-500/10'
               : 'border-border/40 bg-card/20 hover:border-border/80 hover:bg-card/40'
           )}
-          onClick={(e: React.MouseEvent): void => {
-            e.stopPropagation();
-            selectNode(section.id);
-          }}
-          onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
-            if (event.key === 'Enter' || event.key === ' ') {
-              event.preventDefault();
-              event.stopPropagation();
-              selectNode(section.id);
-            }
-          }}
-          onDragStart={handleSectionDragStart}
-          onDragEnd={handleSectionDragEnd}
           onDragOver={handleSectionRowDragOver}
           onDragLeave={handleSectionRowDragLeave}
           onDrop={handleSectionRowDrop}
@@ -238,14 +222,33 @@ export function SectionNodeItem(props: SectionNodeItemProps): React.JSX.Element 
             iconClassName='size-3'
             placeholderClassName='block size-3 shrink-0'
           />
-          <div
+          <button
+            type='button'
             data-cms-section-drag-handle='true'
-            className='flex h-7 w-5 cursor-grab items-center justify-center text-gray-600 hover:text-gray-400 active:cursor-grabbing'
+            draggable
+            className='flex h-7 w-5 shrink-0 cursor-grab items-center justify-center rounded text-gray-600 hover:bg-black/10 hover:text-gray-400 active:cursor-grabbing'
+            onDragStart={handleSectionDragStart}
+            onDragEnd={handleSectionDragEnd}
+            onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+              event.preventDefault();
+              event.stopPropagation();
+            }}
+            aria-label={`Drag ${section.type} section`}
+            title={`Drag ${section.type} section`}
           >
-            <GripVertical className='size-3.5' />
-          </div>
+            <GripVertical className='size-3.5' aria-hidden='true' />
+          </button>
 
-          <div className='flex min-w-0 flex-1 items-center gap-2'>
+          <button
+            type='button'
+            className='flex min-w-0 flex-1 items-center gap-2 text-left'
+            onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+              event.stopPropagation();
+              selectNode(section.id);
+            }}
+            aria-pressed={isSelected}
+            aria-label={`Select ${section.type} section`}
+          >
             <SectionIcon
               className={cn('size-4 shrink-0', isHidden ? 'text-gray-600' : 'text-sky-400/80')}
             />
@@ -257,15 +260,15 @@ export function SectionNodeItem(props: SectionNodeItemProps): React.JSX.Element 
             >
               {section.type}
             </span>
-            {isHidden && (
-              <Badge
-                variant='neutral'
-                className='bg-gray-800/50 text-[9px] uppercase tracking-wider text-gray-500 h-4 px-1'
-              >
-                Hidden
-              </Badge>
-            )}
-          </div>
+          </button>
+          {isHidden && (
+            <Badge
+              variant='neutral'
+              className='bg-gray-800/50 text-[9px] uppercase tracking-wider text-gray-500 h-4 px-1'
+            >
+              Hidden
+            </Badge>
+          )}
 
           <div className='flex shrink-0 items-center gap-1 opacity-0 transition group-hover:opacity-100'>
             <Button

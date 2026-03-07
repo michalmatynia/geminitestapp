@@ -57,7 +57,10 @@ function AdminBrainPageContent(): React.JSX.Element {
       <BrainStateOverview />
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className='space-y-4'>
-        <TabsList className='grid h-auto w-full grid-cols-2 gap-1 p-1 md:grid-cols-5'>
+        <TabsList
+          className='grid h-auto w-full grid-cols-2 gap-1 p-1 md:grid-cols-5'
+          aria-label='AI brain admin tabs'
+        >
           <TabsTrigger value='operations' className='gap-2 text-xs md:text-sm'>
             <Activity className='size-4' />
             Operations

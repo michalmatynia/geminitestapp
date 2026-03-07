@@ -114,6 +114,14 @@ vi.mock('@/features/kangur/ui/hooks/useKangurProgressState', () => ({
   useKangurProgressState: () => progressState.value,
 }));
 
+vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
+  KangurAiTutorSessionSync: () => null,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurTutorAnchor', () => ({
+  useKangurTutorAnchor: () => undefined,
+}));
+
 vi.mock('@/features/kangur/ui/components/KangurProfileMenu', () => ({
   KangurProfileMenu: () => <div data-testid='kangur-profile-menu' />,
 }));

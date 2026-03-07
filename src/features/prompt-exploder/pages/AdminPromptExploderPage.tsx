@@ -146,7 +146,10 @@ export function AdminPromptExploderPage(): React.JSX.Element {
               onValueChange={handleTabChange}
               className='flex flex-1 flex-col min-h-0 w-full space-y-4'
             >
-              <TabsList className='grid h-auto w-full grid-cols-3 gap-2 border border-border/60 bg-card/30 p-2'>
+              <TabsList
+                className='grid h-auto w-full grid-cols-3 gap-2 border border-border/60 bg-card/30 p-2'
+                aria-label='Prompt exploder tabs'
+              >
                 <TabsTrigger value='workspace' className='h-10'>
                   Workspace
                 </TabsTrigger>

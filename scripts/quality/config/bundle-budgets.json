@@ -1,0 +1,72 @@
+{
+  "sharedBase": {
+    "maxBytes": 600000,
+    "maxChunkCount": 6
+  },
+  "routes": [
+    {
+      "id": "frontend-home",
+      "name": "Frontend Home",
+      "route": "/",
+      "maxTotalBytes": 5600000,
+      "maxRouteBytes": 5100000,
+      "maxChunkCount": 72
+    },
+    {
+      "id": "auth-signin",
+      "name": "Auth Sign In",
+      "route": "/auth/signin",
+      "maxTotalBytes": 5600000,
+      "maxRouteBytes": 5200000,
+      "maxChunkCount": 72
+    },
+    {
+      "id": "admin-products",
+      "name": "Admin Products",
+      "route": "/admin/products",
+      "maxTotalBytes": 5600000,
+      "maxRouteBytes": 5100000,
+      "maxChunkCount": 72
+    },
+    {
+      "id": "admin-ai-paths",
+      "name": "Admin AI Paths",
+      "route": "/admin/ai-paths",
+      "maxTotalBytes": 7500000,
+      "maxRouteBytes": 6900000,
+      "maxChunkCount": 82
+    },
+    {
+      "id": "admin-image-studio",
+      "name": "Admin Image Studio",
+      "route": "/admin/image-studio",
+      "maxTotalBytes": 6500000,
+      "maxRouteBytes": 6000000,
+      "maxChunkCount": 80
+    },
+    {
+      "id": "admin-case-resolver",
+      "name": "Admin Case Resolver",
+      "route": "/admin/case-resolver",
+      "maxTotalBytes": 7500000,
+      "maxRouteBytes": 6900000,
+      "maxChunkCount": 84
+    },
+    {
+      "id": "admin-chatbot",
+      "name": "Admin Chatbot",
+      "route": "/admin/chatbot",
+      "maxTotalBytes": 5700000,
+      "maxRouteBytes": 5300000,
+      "maxChunkCount": 76
+    },
+    {
+      "id": "admin-kangur",
+      "name": "Admin Kangur",
+      "route": "/admin/kangur",
+      "maxTotalBytes": 5700000,
+      "maxRouteBytes": 5300000,
+      "maxChunkCount": 76
+    }
+  ]
+}

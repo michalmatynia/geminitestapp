@@ -46,7 +46,7 @@ export function ProductConstructorPage(): React.JSX.Element {
   return (
     <div className='rounded-lg bg-card p-6 shadow-lg'>
       <Tabs defaultValue='parameters' className='w-full'>
-        <TabsList className='mb-6'>
+        <TabsList className='mb-6' aria-label='Product constructor tabs'>
           <TabsTrigger value='parameters'>Parameters</TabsTrigger>
         </TabsList>
 

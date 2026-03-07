@@ -470,7 +470,7 @@ export default function ProductFormGeneral(): React.JSX.Element {
       {hasCatalogs && languagesReady && (
         <FormSection>
           <Tabs value={resolvedActiveNameTab} onValueChange={setActiveNameTab} className='w-full'>
-            <TabsList className='mb-4'>
+            <TabsList className='mb-4' aria-label='Product name language tabs'>
               {filteredLanguages.map((language: { name: string; code: string }) => {
                 const fieldName = `name_${language.code.toLowerCase()}` as keyof ProductFormData;
                 const fieldValue = displayValues[String(fieldName)] as string | undefined;
@@ -508,7 +508,7 @@ export default function ProductFormGeneral(): React.JSX.Element {
             onValueChange={setActiveDescriptionTab}
             className='w-full mt-4'
           >
-            <TabsList className='mb-4'>
+            <TabsList className='mb-4' aria-label='Product description language tabs'>
               {filteredLanguages.map((language: { name: string; code: string }) => {
                 const fieldName =
                   `description_${language.code.toLowerCase()}` as keyof ProductFormData;

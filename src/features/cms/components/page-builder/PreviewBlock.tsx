@@ -48,6 +48,7 @@ import {
   resolveJustifyContent,
   resolveAlignItems,
   getSpacingValue,
+  getSelectableSurfaceProps,
   shouldShowSectionDivider,
   type MediaReplaceTarget,
 } from './preview/preview-utils';
@@ -228,6 +229,10 @@ export function PreviewSection(props: PreviewSectionProps): React.ReactNode {
   const handleSelect = (): void => {
     onSelect(section.id);
   };
+  const selectableSectionProps = getSelectableSurfaceProps((event) => {
+    event.stopPropagation();
+    handleSelect();
+  });
 
   const renderSelectionButton = (className?: string): React.ReactNode => {
     if (!showEditorChrome) return null;
@@ -377,7 +382,7 @@ export function PreviewSection(props: PreviewSectionProps): React.ReactNode {
 
     return wrapInspector(
       <div
-        onClick={handleSelect}
+        {...selectableSectionProps}
         style={containerStyles}
         className={`relative group w-full transition cursor-pointer ${selectedRing} ${inspectorZ}${isBlockSection ? ` cms-node-${section.id}` : ''}`}
       >
@@ -430,7 +435,7 @@ export function PreviewSection(props: PreviewSectionProps): React.ReactNode {
     if (!text.trim() && !showEditorChrome) return null;
     return wrapInspector(
       <div
-        onClick={handleSelect}
+        {...selectableSectionProps}
         style={getSectionStyles(resolvedSettings, colorSchemes)}
         className={`relative group w-full text-left transition cursor-pointer ${selectedRing}`}
       >
@@ -469,7 +474,7 @@ export function PreviewSection(props: PreviewSectionProps): React.ReactNode {
 
     return wrapInspector(
       <div
-        onClick={handleSelect}
+        {...selectableSectionProps}
         className={`relative group w-full text-left transition cursor-pointer ${selectedRing}`}
       >
         {renderSelectionButton()}
@@ -489,7 +494,7 @@ export function PreviewSection(props: PreviewSectionProps): React.ReactNode {
   if (!showEditorChrome) return null;
   return wrapInspector(
     <div
-      onClick={handleSelect}
+      {...selectableSectionProps}
       style={sectionStyles}
       className={`relative group w-full px-4 text-left transition cursor-pointer ${selectedRing}`}
     >
@@ -588,6 +593,7 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
     event.stopPropagation();
     onSelect?.(block.id);
   };
+  const selectableBlockProps = getSelectableSurfaceProps(handleSelect);
 
   const blockLabel = resolveNodeLabel(block.type, block.settings['label']);
   const renderBlockSelectionButton = (className?: string): React.ReactNode => {
@@ -611,7 +617,7 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
       <div className='relative group'>
         {renderBlockSelectionButton('left-2 top-2')}
         <div
-          onClick={handleSelect}
+          {...selectableBlockProps}
           className={buildContainerClass(
             `w-full text-left text-sm transition ${contained ? 'max-w-full' : ''} ${showEditorChrome ? 'overflow-hidden' : ''}`,
             `rounded ${isSelected ? 'ring-2 ring-inset ring-blue-500/40 bg-blue-500/15' : 'ring-1 ring-inset ring-border/30 bg-gray-800/30 hover:ring-border/50'}`
@@ -659,7 +665,7 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
     const typoStyles = getBlockTypographyStyles(resolvedSettings);
     return wrapBlock(
       <div
-        onClick={handleSelect}
+        {...selectableBlockProps}
         className={buildContainerClass(
           `relative group w-full text-left transition ${contained ? 'max-w-full' : ''}`,
           ''
@@ -682,7 +688,7 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
     if (!text.trim() && !showEditorChrome) return null;
     return wrapBlock(
       <div
-        onClick={handleSelect}
+        {...selectableBlockProps}
         className={buildContainerClass(
           `relative group w-full text-left transition ${contained ? 'max-w-full' : ''}`,
           `rounded ${isSelected ? 'ring-2 ring-inset ring-blue-500/40 bg-blue-500/15' : 'ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50'}`
@@ -723,7 +729,7 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
 
     return wrapBlock(
       <div
-        onClick={handleSelect}
+        {...selectableBlockProps}
         className={buildContainerClass(
           `relative group w-full text-left transition ${contained ? 'max-w-full' : ''}`,
           `rounded ${isSelected ? 'ring-2 ring-inset ring-blue-500/40 bg-blue-500/15' : 'ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50'}`
@@ -751,7 +757,7 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
 
     return wrapBlock(
       <div
-        onClick={handleSelect}
+        {...selectableBlockProps}
         className={buildContainerClass(
           `relative group w-full text-left transition ${contained ? 'max-w-full' : ''}`,
           `rounded ${isSelected ? 'ring-2 ring-inset ring-blue-500/40 bg-blue-500/15' : 'ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50'}`
@@ -798,7 +804,7 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
 
     return wrapBlock(
       <div
-        onClick={handleSelect}
+        {...selectableBlockProps}
         className={buildContainerClass(
           `relative group w-full text-left transition ${contained ? 'max-w-full' : ''}`,
           `rounded ${isSelected ? 'ring-2 ring-inset ring-blue-500/40 bg-blue-500/15' : 'ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50'}`
@@ -848,7 +854,7 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
       <Card
         variant='subtle'
         padding='md'
-        onClick={handleSelect}
+        {...selectableBlockProps}
         className='relative group w-full border-border/40 bg-card/40 text-left'
       >
         {renderBlockSelectionButton('left-2 top-2')}
@@ -880,7 +886,7 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
       <Card
         variant='subtle'
         padding='md'
-        onClick={handleSelect}
+        {...selectableBlockProps}
         className='relative group w-full border-border/40 bg-card/40 text-left'
       >
         {renderBlockSelectionButton('left-2 top-2')}
@@ -900,7 +906,7 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
 
   return wrapBlock(
     <div
-      onClick={handleSelect}
+      {...selectableBlockProps}
       className={buildContainerClass('relative group w-full', '')}
     >
       {renderBlockSelectionButton('left-2 top-2')}

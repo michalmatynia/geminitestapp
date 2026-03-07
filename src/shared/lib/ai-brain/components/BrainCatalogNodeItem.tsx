@@ -67,65 +67,70 @@ export function BrainCatalogNodeItem(props: BrainCatalogNodeItemProps): React.JS
         selected={isSelected}
         selectedClassName='bg-muted text-white hover:bg-muted'
         className={cn('relative h-8 text-xs', isDragging && 'opacity-50')}
-        onClick={(event: React.MouseEvent<HTMLDivElement>): void => {
-          event.stopPropagation();
-          select();
-        }}
       >
         <div className='flex h-full w-full min-w-0 items-center gap-1.5 text-left'>
-          <span className='inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center opacity-0 transition-opacity group-hover:opacity-100'>
-            <GripVertical className='size-3.5 shrink-0 cursor-grab text-gray-500' />
-          </span>
-
-          <span className='min-w-0 flex-1 truncate font-medium text-gray-100' title={node.name}>
-            {node.name}
-          </span>
-
-          <span className='ml-1 flex shrink-0 items-center gap-1'>
-            <Badge
-              variant='outline'
-              className='h-4 px-1 text-[10px] text-gray-400 border-gray-600/50'
-            >
-              {poolLabel}
-            </Badge>
-            <span
-              className={cn(
-                'inline-flex items-center justify-center rounded p-0.5 transition',
-                'opacity-0 group-hover:opacity-100 hover:bg-gray-700/60 text-gray-400',
-                isPending && 'pointer-events-none opacity-40'
-              )}
-              onMouseDown={(event: React.MouseEvent<HTMLSpanElement>): void => {
-                event.stopPropagation();
-              }}
-              onClick={(event: React.MouseEvent<HTMLSpanElement>): void => {
-                event.stopPropagation();
-                onEdit(entry);
-              }}
-              title='Edit item'
-              aria-hidden='true'
-            >
-              <Pencil className='size-3' />
+          <button
+            type='button'
+            className='flex h-full min-w-0 flex-1 items-center gap-1.5 text-left'
+            onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+              event.stopPropagation();
+              select();
+            }}
+            title={node.name}
+          >
+            <span className='inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center opacity-0 transition-opacity group-hover:opacity-100'>
+              <GripVertical className='size-3.5 shrink-0 cursor-grab text-gray-500' aria-hidden='true' />
             </span>
-            <span
-              className={cn(
-                'inline-flex items-center justify-center rounded p-0.5 transition',
-                'opacity-0 group-hover:opacity-100',
-                'text-gray-400 hover:bg-red-500/20 hover:text-red-300',
-                isPending && 'pointer-events-none opacity-40'
-              )}
-              onMouseDown={(event: React.MouseEvent<HTMLSpanElement>): void => {
-                event.stopPropagation();
-              }}
-              onClick={(event: React.MouseEvent<HTMLSpanElement>): void => {
-                event.stopPropagation();
-                onRemove(entry);
-              }}
-              title='Remove item'
-              aria-hidden='true'
-            >
-              <Trash2 className='size-3' />
-            </span>
-          </span>
+
+            <span className='min-w-0 flex-1 truncate font-medium text-gray-100'>{node.name}</span>
+          </button>
+
+          <Badge
+            variant='outline'
+            className='h-4 shrink-0 px-1 text-[10px] text-gray-400 border-gray-600/50'
+          >
+            {poolLabel}
+          </Badge>
+          <button
+            type='button'
+            className={cn(
+              'inline-flex shrink-0 items-center justify-center rounded p-0.5 text-gray-400 transition',
+              'opacity-0 group-hover:opacity-100 hover:bg-gray-700/60',
+              isPending ? 'cursor-not-allowed opacity-40' : undefined
+            )}
+            onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+              event.stopPropagation();
+              onEdit(entry);
+            }}
+            onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => {
+              event.stopPropagation();
+            }}
+            title='Edit item'
+            aria-label={`Edit ${node.name}`}
+            disabled={isPending}
+          >
+            <Pencil className='size-3' aria-hidden='true' />
+          </button>
+          <button
+            type='button'
+            className={cn(
+              'inline-flex shrink-0 items-center justify-center rounded p-0.5 text-gray-400 transition',
+              'opacity-0 group-hover:opacity-100 hover:bg-red-500/20 hover:text-red-300',
+              isPending ? 'cursor-not-allowed opacity-40' : undefined
+            )}
+            onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+              event.stopPropagation();
+              onRemove(entry);
+            }}
+            onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => {
+              event.stopPropagation();
+            }}
+            title='Remove item'
+            aria-label={`Remove ${node.name}`}
+            disabled={isPending}
+          >
+            <Trash2 className='size-3' aria-hidden='true' />
+          </button>
         </div>
       </TreeRow>
     </TreeContextMenu>

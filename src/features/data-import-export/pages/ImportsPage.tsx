@@ -71,7 +71,7 @@ function ImportsPageContent(): React.JSX.Element {
       />
 
       <Tabs defaultValue='imports' className='w-full'>
-        <TabsList className='bg-muted/40 p-1'>
+        <TabsList className='bg-muted/40 p-1' aria-label='Import export tabs'>
           <TabsTrigger value='imports' className='gap-2'>
             <Download className='size-3.5' />
             Imports

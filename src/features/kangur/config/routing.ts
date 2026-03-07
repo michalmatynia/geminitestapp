@@ -1,28 +1,24 @@
-export const KANGUR_BASE_PATH = '/kangur';
-export const KANGUR_MAIN_PAGE_KEY = 'Game';
+import {
+  KANGUR_BASE_PATH,
+  KANGUR_MAIN_PAGE_KEY,
+  KANGUR_EMBED_BASE_PATH_PREFIX,
+  KANGUR_EMBED_QUERY_PARAM,
+  KANGUR_SLUG_TO_PAGE,
+  buildKangurEmbeddedBasePath,
+  getKangurEmbeddedHostPath,
+  normalizeKangurHostPathname,
+  getKangurPageSlug,
+  appendKangurUrlParams,
+} from '@/shared/contracts/kangur';
 
-export const KANGUR_PAGE_TO_SLUG: Record<string, string> = Object.freeze({
-  Game: 'game',
-  LearnerProfile: 'profile',
-  Lessons: 'lessons',
-  ParentDashboard: 'parent-dashboard',
-});
-
-const KANGUR_SLUG_TO_PAGE: Record<string, string> = Object.freeze(
-  Object.entries(KANGUR_PAGE_TO_SLUG).reduce<Record<string, string>>((acc, [pageKey, slug]) => {
-    acc[slug.toLowerCase()] = pageKey;
-    return acc;
-  }, {})
-);
-
-const toKebabCase = (value: string): string =>
-  value
-    .trim()
-    .replace(/([a-z])([A-Z])/g, '$1-$2')
-    .replace(/[\s_]+/g, '-')
-    .toLowerCase();
+export * from '@/shared/contracts/kangur';
 
 export const normalizeKangurBasePath = (basePath: string | null | undefined): string => {
+  const embeddedHostPath = getKangurEmbeddedHostPath(basePath);
+  if (embeddedHostPath) {
+    return buildKangurEmbeddedBasePath(embeddedHostPath);
+  }
+
   if (typeof basePath !== 'string') {
     return KANGUR_BASE_PATH;
   }
@@ -32,9 +28,12 @@ export const normalizeKangurBasePath = (basePath: string | null | undefined): st
     return KANGUR_BASE_PATH;
   }
 
-  const withLeadingSlash = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
-  const withoutTrailingSlashes = withLeadingSlash.replace(/\/+$/, '');
-  return withoutTrailingSlashes.length > 0 ? withoutTrailingSlashes : '/';
+  try {
+    const parsed = new URL(trimmed.startsWith('/') ? trimmed : `/${trimmed}`, 'https://kangur.local');
+    return normalizeKangurHostPathname(parsed.pathname);
+  } catch {
+    return normalizeKangurHostPathname(trimmed);
+  }
 };
 
 const joinKangurPath = (basePath: string, suffix: string): string => {
@@ -51,6 +50,13 @@ export const normalizeKangurRequestedPath = (
   basePath: string = KANGUR_BASE_PATH
 ): string => {
   const normalizedBasePath = normalizeKangurBasePath(basePath);
+  const embeddedHostPath = getKangurEmbeddedHostPath(normalizedBasePath);
+  if (embeddedHostPath) {
+    const requestedSlug = slugSegments.join('/');
+    return appendKangurUrlParams(embeddedHostPath, {
+      [KANGUR_EMBED_QUERY_PARAM]: requestedSlug || null,
+    });
+  }
   if (slugSegments.length === 0) {
     return normalizedBasePath;
   }
@@ -61,9 +67,17 @@ export const getKangurPageHref = (
   pageName: string,
   basePath: string = KANGUR_BASE_PATH
 ): string => {
-  const mappedSlug = KANGUR_PAGE_TO_SLUG[pageName];
-  const slug = mappedSlug ?? toKebabCase(pageName);
-  return joinKangurPath(basePath, slug);
+  const normalizedBasePath = normalizeKangurBasePath(basePath);
+  const slug = getKangurPageSlug(pageName);
+  const embeddedHostPath = getKangurEmbeddedHostPath(normalizedBasePath);
+
+  if (embeddedHostPath) {
+    return appendKangurUrlParams(embeddedHostPath, {
+      [KANGUR_EMBED_QUERY_PARAM]: slug,
+    });
+  }
+
+  return joinKangurPath(normalizedBasePath, slug);
 };
 
 export const resolveKangurPageKeyFromSlug = (slug: string | null | undefined): string | null => {

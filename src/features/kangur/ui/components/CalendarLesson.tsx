@@ -12,6 +12,8 @@ import {
 import LessonHub from '@/features/kangur/ui/components/LessonHub';
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
 import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_STEP_PILL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { cn } from '@/shared/utils';
 
 type CalendarLessonProps = { onBack: () => void };
 type SectionId = 'intro' | 'dni' | 'miesiace' | 'data' | 'game';
@@ -185,8 +187,19 @@ function SectionView({ sectionId, onBack, onGameStart }: { sectionId: Exclude<Se
               <button
                 key={i}
                 onClick={() => setSlide(i)}
-                className={`h-2.5 rounded-full transition-all ${i === slide ? 'w-6 bg-emerald-500' : 'w-2.5 bg-gray-200 hover:bg-emerald-200'}`}
                 type='button'
+                aria-label={`Przejdz do slajdu ${i + 1}`}
+                aria-current={i === slide ? 'step' : undefined}
+                className={cn(
+                  KANGUR_STEP_PILL_CLASSNAME,
+                  'h-[14px] min-w-[14px]',
+                  i === slide
+                    ? 'w-8 scale-[1.04] bg-emerald-500'
+                    : i < slide
+                      ? 'w-6 bg-emerald-200'
+                      : 'w-[14px] soft-cta opacity-80 hover:opacity-100'
+                )}
+                data-testid={`calendar-lesson-slide-${sectionId}-${i}`}
               />
             ))}
           </div>

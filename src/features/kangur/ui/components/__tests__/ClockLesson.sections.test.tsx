@@ -43,6 +43,14 @@ describe('ClockLesson sectioned structure', () => {
       'soft-card',
       'border-indigo-300'
     );
+    expect(screen.getByTestId('clock-lesson-section-slide-hours-0')).toHaveClass(
+      'kangur-cta-pill',
+      'bg-indigo-500'
+    );
+    expect(screen.getByTestId('clock-lesson-section-slide-hours-1')).toHaveClass(
+      'kangur-cta-pill',
+      'soft-cta'
+    );
     expect(screen.getByTestId('clock-lesson-section-toggle-minutes')).toHaveClass(
       'soft-card',
       'bg-slate-100/85'

@@ -15,7 +15,7 @@ import {
   extractBaseImageUrls,
 } from '@/features/integrations/server';
 import type { BaseProductRecord } from '@/features/integrations/server';
-import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
+import { resolveBaseConnectionToken } from '@/features/integrations/server';
 import {
   getCatalogRepository,
   getProductDataProvider,

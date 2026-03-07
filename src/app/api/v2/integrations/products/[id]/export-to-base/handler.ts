@@ -5,7 +5,7 @@ import {
   getExportWarehouseId,
   LogCapture,
 } from '@/features/integrations/server';
-import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
+import { resolveBaseConnectionToken } from '@/features/integrations/server';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { parseJsonBody } from '@/features/products/server';
 import type { ProductWithImages } from '@/shared/contracts/products';

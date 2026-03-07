@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { callBaseApi } from '@/features/integrations/server';
-import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
+import { resolveBaseConnectionToken } from '@/features/integrations/server';
 import { getImportParameterCache, setImportParameterCache } from '@/features/integrations/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { parseJsonBody } from '@/features/products/server';

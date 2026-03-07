@@ -11,6 +11,7 @@ import {
   nextChoiceLabel,
   parseKangurTestQuestionStore,
   reorderQuestions,
+  sanitizeQuestionIllustration,
   toQuestionFormData,
   upsertKangurTestQuestion,
 } from '@/features/kangur/test-questions';
@@ -165,6 +166,37 @@ describe('createPanelIllustration', () => {
   });
 });
 
+describe('sanitizeQuestionIllustration', () => {
+  it('preserves empty svg slots but strips unsafe and raster-backed markup', () => {
+    expect(sanitizeQuestionIllustration({ type: 'single', svgContent: '   ' })).toEqual({
+      type: 'single',
+      svgContent: '',
+    });
+
+    expect(
+      sanitizeQuestionIllustration({
+        type: 'single',
+        svgContent:
+          '<svg viewBox="0 0 10 10"><script>alert(1)</script><image href="/uploads/kangur/example.png" /><circle cx="5" cy="5" r="4" /></svg>',
+      })
+    ).toEqual({
+      type: 'single',
+      svgContent: expect.not.stringContaining('<script'),
+    });
+
+    const sanitized = sanitizeQuestionIllustration({
+      type: 'single',
+      svgContent:
+        '<svg viewBox="0 0 10 10"><script>alert(1)</script><image href="/uploads/kangur/example.png" /><circle cx="5" cy="5" r="4" /></svg>',
+    });
+
+    expect(sanitized.type).toBe('single');
+    expect(sanitized.type === 'single' ? sanitized.svgContent : '').not.toContain('<script');
+    expect(sanitized.type === 'single' ? sanitized.svgContent : '').not.toContain('.png');
+    expect(sanitized.type === 'single' ? sanitized.svgContent : '').toContain('<circle');
+  });
+});
+
 // ─── parseKangurTestQuestionStore ────────────────────────────────────────────
 
 describe('parseKangurTestQuestionStore', () => {
@@ -190,6 +222,30 @@ describe('parseKangurTestQuestionStore', () => {
     const result = parseKangurTestQuestionStore(raw);
     expect(result['q-abc']?.prompt).toBe('What is 2+2?');
     expect(result['q-abc']?.correctChoiceLabel).toBe('B');
+  });
+
+  it('sanitizes stored illustration svg content', () => {
+    const q = makeQuestion({
+      id: 'q-svg',
+      illustration: {
+        type: 'single',
+        svgContent:
+          '<svg viewBox="0 0 10 10"><image href="/uploads/kangur/example.png" /><script>alert(1)</script><rect x="1" y="1" width="8" height="8" /></svg>',
+      },
+    });
+    const result = parseKangurTestQuestionStore(JSON.stringify({ 'q-svg': q }));
+
+    expect(result['q-svg']?.illustration.type).toBe('single');
+    expect(
+      result['q-svg']?.illustration.type === 'single'
+        ? result['q-svg'].illustration.svgContent
+        : ''
+    ).not.toContain('.png');
+    expect(
+      result['q-svg']?.illustration.type === 'single'
+        ? result['q-svg'].illustration.svgContent
+        : ''
+    ).not.toContain('<script');
   });
 
   it('drops entries that fail question schema validation', () => {
@@ -277,6 +333,48 @@ describe('reorderQuestions', () => {
 
   it('returns [] for empty input', () => {
     expect(reorderQuestions([])).toEqual([]);
+  });
+});
+
+describe('formDataToQuestion', () => {
+  it('sanitizes illustration markup before saving', () => {
+    const question = formDataToQuestion(
+      {
+        prompt: '  Co widzisz?  ',
+        choices: [
+          { label: 'A', text: 'Kwadrat' },
+          { label: 'B', text: 'Trojkat' },
+        ],
+        correctChoiceLabel: 'A',
+        pointValue: 3,
+        explanation: '  To jest kwadrat.  ',
+        illustration: {
+          type: 'panels',
+          layout: 'row',
+          panels: [
+            {
+              id: 'panel-1',
+              label: 'A',
+              svgContent:
+                '<svg viewBox="0 0 10 10"><image href="https://example.com/image.png" /><rect x="1" y="1" width="8" height="8" /></svg>',
+              description: 'Panel A',
+            },
+          ],
+        },
+      },
+      'question-save',
+      'suite-1',
+      1000
+    );
+
+    expect(question.prompt).toBe('Co widzisz?');
+    expect(question.explanation).toBe('To jest kwadrat.');
+    expect(question.illustration.type).toBe('panels');
+    expect(
+      question.illustration.type === 'panels'
+        ? question.illustration.panels[0]?.svgContent
+        : ''
+    ).not.toContain('image.png');
   });
 });
 
@@ -399,7 +497,8 @@ describe('toQuestionFormData / formDataToQuestion round-trip', () => {
     const restored = formDataToQuestion(fd, q.id, q.suiteId, q.sortOrder);
     expect(restored.illustration.type).toBe('single');
     if (restored.illustration.type === 'single') {
-      expect(restored.illustration.svgContent).toBe('<svg><rect/></svg>');
+      expect(restored.illustration.svgContent).toContain('<rect');
+      expect(restored.illustration.svgContent).toContain('viewBox=');
     }
   });
 

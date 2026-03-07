@@ -12,6 +12,7 @@ import {
 import {
   KANGUR_ACCENT_STYLES,
   KANGUR_OPTION_CARD_CLASSNAME,
+  KANGUR_STEP_PILL_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
 import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
@@ -716,12 +717,19 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
                       onClick={() => {
                         setSectionSlideIndex(sectionIndex, slideIndex);
                       }}
-                      className={`h-2.5 rounded-full transition-all ${
-                        slideIndex === sectionSlideIndex
-                          ? 'w-7 bg-indigo-500'
-                          : 'w-2.5 bg-gray-200 hover:bg-indigo-200'
-                      }`}
                       type='button'
+                      aria-label={`Przejdz do slajdu ${slideIndex + 1} w sekcji ${section.title}`}
+                      aria-current={slideIndex === sectionSlideIndex ? 'step' : undefined}
+                      className={cn(
+                        KANGUR_STEP_PILL_CLASSNAME,
+                        'h-[14px] min-w-[14px]',
+                        slideIndex === sectionSlideIndex
+                          ? 'w-8 scale-[1.04] bg-indigo-500'
+                          : slideIndex < sectionSlideIndex
+                            ? 'w-6 bg-indigo-200'
+                            : 'w-[14px] soft-cta opacity-80 hover:opacity-100'
+                      )}
+                      data-testid={`clock-lesson-section-slide-${section.id}-${slideIndex}`}
                     />
                   ))}
                 </div>

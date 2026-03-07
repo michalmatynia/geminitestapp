@@ -4,7 +4,7 @@ import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
 import {
   getRuntimeAnalyticsSummary,
   resolveRuntimeAnalyticsRangeWindow,
-} from '@/features/ai/ai-paths/services/runtime-analytics-service';
+} from '@/features/ai/ai-paths/server';
 import { startAiInsightsQueue, startAiPathRunQueue } from '@/features/jobs/server';
 import type { AiPathRuntimeAnalyticsRange } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

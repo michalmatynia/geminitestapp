@@ -17,7 +17,7 @@ import {
   createDefaultFilemakerDatabase,
   parseFilemakerDatabase,
 } from '@/features/filemaker/settings';
-import { useCountries } from '@/features/internationalization/hooks/useInternationalizationQueries';
+import { useCountries } from '@/shared/hooks/use-i18n-queries';
 import type {
   CaseResolverCategory,
   CaseResolverEditorNodeContext,

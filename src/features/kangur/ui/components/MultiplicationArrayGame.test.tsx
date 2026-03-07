@@ -15,6 +15,11 @@ describe('MultiplicationArrayGame', () => {
       'aria-valuenow',
       '0'
     );
+    expect(screen.getByTestId('multiplication-array-round-shell')).toHaveClass(
+      'glass-panel',
+      'border-white/88',
+      'bg-white/94'
+    );
     expect(screen.getByTestId('multiplication-array-counter-collected')).toHaveClass(
       'soft-card',
       'border-violet-300'

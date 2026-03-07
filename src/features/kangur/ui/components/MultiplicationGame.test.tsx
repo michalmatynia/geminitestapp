@@ -11,7 +11,11 @@ describe('MultiplicationGame', () => {
   it('uses Kangur option-card styling for multiplication choices', () => {
     render(<MultiplicationGame onFinish={() => undefined} />);
 
-    expect(screen.getByTestId('multiplication-game-round-shell')).toHaveClass('glass-panel');
+    expect(screen.getByTestId('multiplication-game-round-shell')).toHaveClass(
+      'glass-panel',
+      'border-white/88',
+      'bg-white/94'
+    );
     expect(screen.getByTestId('multiplication-game-progress-bar')).toHaveAttribute(
       'aria-valuenow',
       '0'

@@ -82,8 +82,9 @@ describe('AddingBallGame', () => {
     expect(screen.getByTestId('adding-ball-slotB')).toHaveClass('border-slate-200/80');
     expect(screen.getByTestId('adding-ball-pool')).toHaveClass('soft-card');
     expect(screen.getByTestId('adding-ball-round-shell')).toHaveClass(
-      'soft-card',
-      'border-slate-200/80'
+      'glass-panel',
+      'border-white/88',
+      'bg-white/94'
     );
     expect(screen.getByRole('button', { name: /sprawdź/i })).toHaveClass(
       'kangur-cta-pill',

@@ -21,8 +21,8 @@ describe('CalendarInteractiveGame', () => {
     const previousMonthButton = screen.getByRole('button', { name: 'Poprzedni miesiac' });
     const nextMonthButton = screen.getByRole('button', { name: 'Nastepny miesiac' });
 
-    expect(previousMonthButton).toHaveClass('kangur-cta-pill', 'soft-cta');
-    expect(nextMonthButton).toHaveClass('kangur-cta-pill', 'soft-cta');
+    expect(previousMonthButton).toHaveClass('kangur-cta-pill', 'surface-cta');
+    expect(nextMonthButton).toHaveClass('kangur-cta-pill', 'surface-cta');
     expect(screen.getByTestId('calendar-interactive-progress-bar')).toHaveAttribute(
       'aria-valuenow',
       '0'
@@ -86,6 +86,11 @@ describe('CalendarInteractiveGame', () => {
     expect(screen.getByTestId('calendar-interactive-summary-emoji')).toHaveClass(
       'inline-flex',
       'text-6xl'
+    );
+    expect(screen.getByTestId('calendar-interactive-summary-shell')).toHaveClass(
+      'glass-panel',
+      'border-white/88',
+      'bg-white/94'
     );
     expect(screen.getByTestId('calendar-interactive-summary-progress-bar')).toHaveAttribute(
       'aria-valuenow',

@@ -8,13 +8,16 @@ import {
   KangurAccentDot,
   KangurButton,
   KangurDisplayEmoji,
+  KangurGlassPanel,
   KangurInfoCard,
   KangurInlineFallback,
-  KangurPanel,
   KangurStatusChip,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_STEP_PILL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_SEGMENTED_CONTROL_CLASSNAME,
+  KANGUR_STEP_PILL_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import {
   addXp,
   buildLessonMasteryUpdate,
@@ -393,7 +396,7 @@ function DraggableClock({
 
   return (
     <div className='flex flex-col items-center gap-4'>
-      <p className='text-sm text-gray-400'>Przeciągnij wskazówki, aby ustawić godzinę:</p>
+      <p className='text-sm text-slate-400'>Przeciągnij wskazówki, aby ustawić godzinę:</p>
       <KangurStatusChip
         accent='indigo'
         className='px-5 py-2 text-2xl font-extrabold'
@@ -401,18 +404,20 @@ function DraggableClock({
       >
         {displayHour}:{pad(displayMinutes)}
       </KangurStatusChip>
-      <KangurInfoCard
-        className='inline-flex w-auto items-center gap-2 rounded-[26px] p-1.5'
+      <div
+        className={cn(
+          KANGUR_SEGMENTED_CONTROL_CLASSNAME,
+          'inline-flex w-auto flex-wrap items-center justify-center'
+        )}
         data-testid='clock-snap-mode-switch'
-        padding='sm'
       >
         <KangurButton
           type='button'
           data-testid='clock-snap-mode-5'
           onClick={() => setMinuteSnapMode('5min')}
-          className='h-10 px-3.5 text-xs'
+          className='h-10 px-3.5 text-xs sm:flex-none'
           size='sm'
-          variant={minuteSnapMode === '5min' ? 'surface' : 'secondary'}
+          variant={minuteSnapMode === '5min' ? 'segmentActive' : 'segment'}
         >
           Skok co 5 min
         </KangurButton>
@@ -420,14 +425,14 @@ function DraggableClock({
           type='button'
           data-testid='clock-snap-mode-1'
           onClick={() => setMinuteSnapMode('1min')}
-          className='h-10 px-3.5 text-xs'
+          className='h-10 px-3.5 text-xs sm:flex-none'
           size='sm'
-          variant={minuteSnapMode === '1min' ? 'surface' : 'secondary'}
+          variant={minuteSnapMode === '1min' ? 'segmentActive' : 'segment'}
         >
           Dokładnie co 1 min
         </KangurButton>
-      </KangurInfoCard>
-      <p className='text-xs text-gray-500'>
+      </div>
+      <p className='text-xs text-slate-500'>
         {activeHand === 'hour'
           ? 'Przestawiasz krótką wskazówkę (godziny).'
           : activeHand === 'minute'
@@ -558,7 +563,7 @@ function DraggableClock({
         <circle cx='100' cy='100' r='5' fill='#6366f1' />
       </svg>
 
-      <div className='flex gap-3 text-sm text-gray-500'>
+      <div className='flex gap-3 text-sm text-slate-500'>
         <span className='flex items-center gap-1'>
           <KangurAccentDot
             accent='rose'
@@ -776,10 +781,12 @@ export default function ClockTrainingGame({ onFinish }: ClockTrainingGameProps):
   if (done) {
     return (
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className='py-4'>
-        <KangurPanel
+        <KangurGlassPanel
           className='flex flex-col items-center gap-5 text-center'
+          data-testid='clock-training-summary-shell'
           padding='xl'
-          variant='elevated'
+          surface='solid'
+          variant='soft'
         >
           <KangurDisplayEmoji
             aria-hidden='true'
@@ -812,48 +819,52 @@ export default function ClockTrainingGame({ onFinish }: ClockTrainingGameProps):
               +{xpEarned} XP ✨
             </KangurStatusChip>
           )}
-          <p className='text-gray-500 text-center max-w-xs'>
+          <p className='max-w-xs text-center text-slate-500'>
             {score === tasks.length
               ? 'Idealnie! Świetnie znasz zegar!'
               : 'Ćwicz dalej, a będziesz mistrzem zegara!'}
           </p>
           <div className='flex gap-3'>
-            <KangurButton onClick={() => resetSession(gameMode)} size='lg' variant='secondary'>
+            <KangurButton onClick={() => resetSession(gameMode)} size='lg' variant='surface'>
               <RefreshCw className='w-4 h-4' /> Jeszcze raz
             </KangurButton>
             <KangurButton onClick={onFinish} size='lg' variant='primary'>
               Zakończ lekcję ✅
             </KangurButton>
           </div>
-        </KangurPanel>
+        </KangurGlassPanel>
       </motion.div>
     );
   }
 
   return (
     <div className='flex flex-col items-center gap-4 w-full'>
-      <KangurInfoCard
+      <div
         data-testid='clock-mode-switch'
-        className='inline-flex w-auto items-center gap-2 rounded-[24px] p-1.5'
-        padding='sm'
+        className={cn(
+          KANGUR_SEGMENTED_CONTROL_CLASSNAME,
+          'inline-flex w-auto flex-wrap items-center justify-center'
+        )}
       >
         <KangurButton
           data-testid='clock-mode-practice'
           onClick={() => resetSession('practice')}
+          className='h-10 px-4 text-xs sm:flex-none'
           size='sm'
-          variant={gameMode === 'practice' ? 'primary' : 'secondary'}
+          variant={gameMode === 'practice' ? 'segmentActive' : 'segment'}
         >
           Tryb Nauka
         </KangurButton>
         <KangurButton
           data-testid='clock-mode-challenge'
           onClick={() => resetSession('challenge')}
+          className='h-10 px-4 text-xs sm:flex-none'
           size='sm'
-          variant={gameMode === 'challenge' ? 'warning' : 'secondary'}
+          variant={gameMode === 'challenge' ? 'segmentActive' : 'segment'}
         >
           Tryb Wyzwanie
         </KangurButton>
-      </KangurInfoCard>
+      </div>
       {gameMode === 'challenge' ? (
         <div className='inline-flex flex-wrap items-center gap-2'>
           <KangurStatusChip

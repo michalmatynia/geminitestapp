@@ -5,9 +5,9 @@ import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import {
   KangurButton,
   KangurDisplayEmoji,
+  KangurGlassPanel,
   KangurInfoCard,
   KangurOptionCardButton,
-  KangurPanel,
   KangurProgressBar,
   KangurResultBadge,
 } from '@/features/kangur/ui/design/primitives';
@@ -298,11 +298,12 @@ export default function CalendarInteractiveGame({
         animate={{ opacity: 1, scale: 1 }}
         className='w-full max-w-sm'
       >
-        <KangurPanel
+        <KangurGlassPanel
           className='flex flex-col items-center gap-4 text-center'
           data-testid='calendar-interactive-summary-shell'
           padding='xl'
-          variant='elevated'
+          surface='solid'
+          variant='soft'
         >
           <KangurDisplayEmoji
             aria-hidden='true'
@@ -311,7 +312,7 @@ export default function CalendarInteractiveGame({
           >
             {percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
           </KangurDisplayEmoji>
-          <h2 className='text-2xl font-extrabold text-gray-800'>
+          <h2 className='text-2xl font-extrabold text-slate-800'>
             Wynik: {score}/{TOTAL}
           </h2>
           <KangurProgressBar
@@ -321,7 +322,7 @@ export default function CalendarInteractiveGame({
             size='md'
             value={percent}
           />
-          <p className='text-gray-500'>
+          <p className='text-slate-500'>
             {percent === 100
               ? 'Idealnie! Znasz kalendarz na wylot!'
               : percent >= 60
@@ -334,7 +335,7 @@ export default function CalendarInteractiveGame({
               className='flex-1'
               size='lg'
               type='button'
-              variant='secondary'
+              variant='surface'
             >
               <RefreshCw className='w-4 h-4' /> Jeszcze raz
             </KangurButton>
@@ -348,7 +349,7 @@ export default function CalendarInteractiveGame({
               Wróć
             </KangurButton>
           </div>
-        </KangurPanel>
+        </KangurGlassPanel>
       </motion.div>
     );
   }
@@ -363,7 +364,7 @@ export default function CalendarInteractiveGame({
           size='sm'
           value={(round / TOTAL) * 100}
         />
-        <span className='text-xs font-bold text-gray-400'>
+        <span className='text-xs font-bold text-slate-400'>
           {round + 1}/{TOTAL}
         </span>
       </div>
@@ -418,9 +419,9 @@ export default function CalendarInteractiveGame({
               className='h-9 w-9 min-w-0 px-0'
               size='sm'
               type='button'
-              variant='secondary'
+              variant='surface'
             >
-              <ChevronLeft className='w-4 h-4 text-gray-500' />
+              <ChevronLeft className='w-4 h-4 text-slate-500' />
             </KangurButton>
             <p className='font-extrabold text-green-700 text-sm'>
               {monthData.name} {YEAR}
@@ -431,9 +432,9 @@ export default function CalendarInteractiveGame({
               className='h-9 w-9 min-w-0 px-0'
               size='sm'
               type='button'
-              variant='secondary'
+              variant='surface'
             >
-              <ChevronRight className='w-4 h-4 text-gray-500' />
+              <ChevronRight className='w-4 h-4 text-slate-500' />
             </KangurButton>
           </div>
 
@@ -441,7 +442,7 @@ export default function CalendarInteractiveGame({
             {DAY_LABELS.map((dayLabel, idx) => (
               <div
                 key={dayLabel}
-                className={`text-xs font-bold py-0.5 ${idx >= 5 ? 'text-red-400' : 'text-gray-400'}`}
+                className={`text-xs font-bold py-0.5 ${idx >= 5 ? 'text-red-400' : 'text-slate-400'}`}
               >
                 {dayLabel}
               </div>
@@ -585,7 +586,7 @@ export default function CalendarInteractiveGame({
           >
             📅 {task.monthName}
           </div>
-          <p className='text-xs text-gray-400'>Przeciągnij powyżej na właściwą porę roku ⬇️</p>
+          <p className='text-xs text-slate-400'>Przeciągnij powyżej na właściwą porę roku ⬇️</p>
 
           <div className='grid grid-cols-2 gap-2 w-full'>
             {SEASONS.map((season, index) => {

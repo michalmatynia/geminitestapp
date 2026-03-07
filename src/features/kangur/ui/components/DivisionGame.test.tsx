@@ -15,7 +15,11 @@ describe('DivisionGame', () => {
   it('uses the shared pill CTA style for the confirm action', () => {
     render(<DivisionGame onFinish={() => undefined} />);
 
-    expect(screen.getByTestId('division-game-round-shell')).toHaveClass('glass-panel');
+    expect(screen.getByTestId('division-game-round-shell')).toHaveClass(
+      'glass-panel',
+      'border-white/88',
+      'bg-white/94'
+    );
     expect(screen.getByTestId('division-game-progress-bar')).toHaveAttribute('aria-valuenow', '0');
     expect(screen.getByTestId('division-game-equation')).toHaveClass('text-3xl', 'text-blue-600');
     expect(screen.getByRole('button', { name: 'Sprawdź ✓' })).toHaveClass(

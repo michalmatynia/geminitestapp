@@ -7,8 +7,8 @@ import { RefreshCw } from 'lucide-react';
 import {
   KangurButton,
   KangurDisplayEmoji,
+  KangurGlassPanel,
   KangurInfoCard,
-  KangurPanel,
   KangurProgressBar,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
@@ -325,7 +325,7 @@ function CompleteEquation({
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <div className='flex flex-col items-center gap-4 w-full'>
-        <p className='text-lg font-bold text-gray-700'>
+        <p className='text-lg font-bold text-slate-700'>
           Przeciągnij piłki tak, żeby uzupełnić równanie:
         </p>
         <div className='flex items-center gap-3 flex-wrap justify-center'>
@@ -336,7 +336,7 @@ function CompleteEquation({
             checked={checked}
             correct={correct}
           />
-          <span className='text-3xl font-extrabold text-gray-500'>+</span>
+          <span className='text-3xl font-extrabold text-slate-500'>+</span>
           <SlotZone
             id='slotB'
             items={state.slotB}
@@ -344,7 +344,7 @@ function CompleteEquation({
             checked={checked}
             correct={correct}
           />
-          <span className='text-3xl font-extrabold text-gray-500'>= {round.target}</span>
+          <span className='text-3xl font-extrabold text-slate-500'>= {round.target}</span>
         </div>
 
         <Droppable droppableId='pool' direction='horizontal'>
@@ -412,7 +412,7 @@ function SlotZone({ id, items, label, checked, correct }: SlotZoneProps): React.
 
         return (
           <div>
-            <p className='text-xs text-gray-400 text-center mb-1'>{label}</p>
+            <p className='mb-1 text-center text-xs text-slate-400'>{label}</p>
             <KangurInfoCard
               ref={provided.innerRef}
               accent={surface.accent}
@@ -510,7 +510,7 @@ function GroupSum({
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <div className='flex flex-col items-center gap-4 w-full'>
-        <p className='text-lg font-bold text-gray-700'>
+        <p className='text-lg font-bold text-slate-700'>
           Podziel {total} piłek na dwie grupy sumujące się do{' '}
           <span className='text-orange-500'>{round.target}</span>
         </p>
@@ -532,7 +532,7 @@ function GroupSum({
 
                 return (
                   <div>
-                    <p className='text-xs text-gray-400 text-center mb-1'>{group.label}</p>
+                    <p className='mb-1 text-center text-xs text-slate-400'>{group.label}</p>
                     <KangurInfoCard
                       ref={provided.innerRef}
                       accent={surface.accent}
@@ -654,10 +654,10 @@ function PickAnswer({
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <div className='flex flex-col items-center gap-6 w-full'>
-        <p className='text-2xl font-extrabold text-gray-700'>
+        <p className='text-2xl font-extrabold text-slate-700'>
           {round.a} + {round.b} = <span className='text-orange-400'>?</span>
         </p>
-        <p className='text-sm text-gray-500'>
+        <p className='text-sm text-slate-500'>
           Przeciągnij piłkę z właściwą odpowiedzią do pola poniżej
         </p>
 
@@ -686,7 +686,7 @@ function PickAnswer({
                     <span className='text-white font-extrabold text-xl'>{dropped.num}</span>
                   </div>
                 ) : (
-                  <span className='text-gray-300 text-3xl'>?</span>
+                  <span className='text-slate-300 text-3xl'>?</span>
                 )}
                 {provided.placeholder}
               </KangurInfoCard>
@@ -782,16 +782,17 @@ export default function AddingBallGame({ onFinish }: AddingBallGameProps): React
         animate={{ opacity: 1, scale: 1 }}
         className='w-full max-w-sm'
       >
-        <KangurPanel
+        <KangurGlassPanel
           className='flex flex-col items-center gap-4 text-center'
           data-testid='adding-ball-summary-shell'
           padding='xl'
-          variant='elevated'
+          surface='solid'
+          variant='soft'
         >
           <KangurDisplayEmoji data-testid='adding-ball-summary-emoji' size='lg'>
             {percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
           </KangurDisplayEmoji>
-          <h2 className='text-2xl font-extrabold text-gray-800'>
+          <h2 className='text-2xl font-extrabold text-slate-800'>
             Wynik: {score}/{TOTAL_ROUNDS}
           </h2>
           {xpEarned > 0 && (
@@ -800,7 +801,7 @@ export default function AddingBallGame({ onFinish }: AddingBallGameProps): React
             </KangurStatusChip>
           )}
           <KangurProgressBar accent='amber' animated size='md' value={percent} />
-          <p className='text-gray-500'>
+          <p className='text-slate-500'>
             {percent === 100
               ? 'Idealnie! Jesteś mistrzem dodawania!'
               : percent >= 60
@@ -818,7 +819,7 @@ export default function AddingBallGame({ onFinish }: AddingBallGameProps): React
                 setRound(generateRound(MODES[0] ?? 'complete_equation'));
               }}
               size='lg'
-              variant='secondary'
+              variant='surface'
             >
               <RefreshCw className='w-4 h-4' /> Jeszcze raz
             </KangurButton>
@@ -826,7 +827,7 @@ export default function AddingBallGame({ onFinish }: AddingBallGameProps): React
               Wróć do lekcji
             </KangurButton>
           </div>
-        </KangurPanel>
+        </KangurGlassPanel>
       </motion.div>
     );
   }
@@ -848,16 +849,17 @@ export default function AddingBallGame({ onFinish }: AddingBallGameProps): React
           size='sm'
           value={(roundIdx / TOTAL_ROUNDS) * 100}
         />
-        <span className='text-xs font-bold text-gray-400'>
+        <span className='text-xs font-bold text-slate-400'>
           {roundIdx + 1}/{TOTAL_ROUNDS}
         </span>
       </div>
 
-      <KangurInfoCard
-        className='w-full rounded-[24px]'
+      <KangurGlassPanel
+        className='w-full'
         data-testid='adding-ball-round-shell'
         padding='lg'
-        tone='neutral'
+        surface='solid'
+        variant='soft'
       >
         <p className='text-xs font-bold text-orange-500 uppercase tracking-wide mb-3'>
           {modeLabel}
@@ -876,7 +878,7 @@ export default function AddingBallGame({ onFinish }: AddingBallGameProps): React
             {round.mode === 'pick_answer' && <PickAnswer round={round} onResult={handleResult} />}
           </motion.div>
         </AnimatePresence>
-      </KangurInfoCard>
+      </KangurGlassPanel>
     </div>
   );
 }

@@ -48,6 +48,11 @@ describe('GeometryDrawingGame', () => {
       'Runda 1 z 4'
     );
     expect(difficultyShell).toHaveClass('glass-panel', 'border-white/75', 'bg-white/86');
+    expect(screen.getByTestId('geometry-drawing-round-shell')).toHaveClass(
+      'glass-panel',
+      'border-white/88',
+      'bg-white/94'
+    );
     expect(starterButton).toHaveClass('kangur-cta-pill', 'surface-cta');
     expect(proButton).toHaveClass('kangur-cta-pill', 'soft-cta');
     expect(starterButton).toHaveAttribute('aria-pressed', 'true');
@@ -73,6 +78,7 @@ describe('GeometryDrawingGame', () => {
     const clearButton = screen.getByRole('button', { name: /wyczyść/i });
     const checkButton = screen.getByRole('button', { name: /sprawdź/i });
 
+    expect(clearButton).toHaveClass('kangur-cta-pill', 'surface-cta');
     expect(clearButton).toBeDisabled();
     expect(screen.getByText(/klawiature/i)).toBeInTheDocument();
 

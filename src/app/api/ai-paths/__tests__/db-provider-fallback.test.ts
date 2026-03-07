@@ -131,7 +131,7 @@ describe('AI Paths DB provider fallback', () => {
     );
     expect(updateOneMock).toHaveBeenCalledWith(
       { id: 'product-1' },
-      { $set: { name_en: 'Updated name' } },
+      { $set: { name_en: 'Updated name', updatedAt: expect.any(Date) } },
       expect.any(Object)
     );
   });
@@ -295,7 +295,7 @@ describe('AI Paths DB provider fallback', () => {
     });
     expect(updateOneMock).toHaveBeenCalledWith(
       { id: 'product-1' },
-      { $set: { name_en: 'Updated name' } },
+      { $set: { name_en: 'Updated name', updatedAt: expect.any(Date) } },
       { upsert: false }
     );
     expect(Object.prototype.hasOwnProperty.call(body, 'provider')).toBe(false);
@@ -308,5 +308,49 @@ describe('AI Paths DB provider fallback', () => {
         code: 'record_not_found',
       })
     );
+  });
+
+  it('stamps updatedAt on mongodb findOneAndUpdate for products', async () => {
+    const payload = {
+      provider: 'mongodb',
+      collection: 'products',
+      action: 'findOneAndUpdate',
+      filter: { id: 'product-1' },
+      update: { $set: { name_en: 'Updated name' } },
+      returnDocument: 'after',
+    };
+    resolveCollectionProviderForRequestMock.mockResolvedValueOnce('mongodb');
+
+    const findOneAndUpdateMock = vi.fn().mockResolvedValue({
+      value: { id: 'product-1', name_en: 'Updated name' },
+      ok: 1,
+    });
+    getMongoDbMock.mockResolvedValue({
+      collection: vi.fn().mockReturnValue({
+        findOneAndUpdate: findOneAndUpdateMock,
+      }),
+    });
+
+    process.env['MONGODB_URI'] = 'mongodb://localhost/test';
+
+    const response = await (postAiPathsDbActionHandler as any)(
+      new Request('http://localhost/api/ai-paths/db-action', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
+      }),
+      {}
+    );
+    const body = (await response.json()) as Record<string, unknown>;
+
+    expect(findOneAndUpdateMock).toHaveBeenCalledWith(
+      { id: 'product-1' },
+      { $set: { name_en: 'Updated name', updatedAt: expect.any(Date) } },
+      expect.objectContaining({
+        returnDocument: 'after',
+      })
+    );
+    expect(body['resolvedProvider']).toBe('mongodb');
+    expect(body['value']).toEqual({ id: 'product-1', name_en: 'Updated name' });
   });
 });

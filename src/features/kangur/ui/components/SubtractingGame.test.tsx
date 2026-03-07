@@ -11,7 +11,11 @@ describe('SubtractingGame', () => {
   it('uses Kangur option-card styling for subtraction choices', () => {
     render(<SubtractingGame onFinish={() => undefined} />);
 
-    expect(screen.getByTestId('subtracting-game-round-shell')).toHaveClass('glass-panel');
+    expect(screen.getByTestId('subtracting-game-round-shell')).toHaveClass(
+      'glass-panel',
+      'border-white/88',
+      'bg-white/94'
+    );
     expect(screen.getByTestId('subtracting-game-progress-bar')).toHaveAttribute('aria-valuenow', '0');
     expect(screen.getByTestId('subtracting-game-equation')).toHaveClass('text-3xl', 'text-red-500');
 

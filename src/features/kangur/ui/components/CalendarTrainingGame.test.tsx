@@ -107,6 +107,11 @@ describe('CalendarTrainingGame', () => {
 
     expect(activeProgress).toHaveClass('rounded-full', 'bg-emerald-500');
     expect(pendingProgress).toHaveClass('rounded-full', 'soft-cta');
+    expect(screen.getByTestId('calendar-training-question-shell')).toHaveClass(
+      'glass-panel',
+      'border-white/88',
+      'bg-white/94'
+    );
     expect(screen.getByRole('group', { name: questionText })).toBeInTheDocument();
     expect(firstChoice).toHaveClass('soft-card');
     expect(secondChoice).toHaveClass('soft-card');
@@ -154,10 +159,19 @@ describe('CalendarTrainingGame', () => {
       'inline-flex',
       'text-6xl'
     );
+    expect(screen.getByTestId('calendar-training-summary-shell')).toHaveClass(
+      'glass-panel',
+      'border-white/88',
+      'bg-white/94'
+    );
     expect(screen.getByTestId('calendar-training-summary-title')).toHaveClass(
       'text-2xl',
       'text-green-700'
     );
     expect(screen.getByText('Wynik: 6/6')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /jeszcze raz/i })).toHaveClass(
+      'kangur-cta-pill',
+      'surface-cta'
+    );
   });
 });

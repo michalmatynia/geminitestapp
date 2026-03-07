@@ -12,6 +12,7 @@ import {
 function ConnectionsTab(): React.ReactNode {
   const { hasSelection, selectedLabel, connectionSettings } = useComponentSettingsState();
   const { updateConnectionSetting } = useComponentSettingsActions();
+  const enabledCheckboxId = 'cms-connections-enabled';
 
   if (!hasSelection) {
     return <div className='text-xs text-gray-500'>Select an element to configure connections.</div>;
@@ -60,15 +61,18 @@ function ConnectionsTab(): React.ReactNode {
           className='h-8 text-xs'
         />
       </div>
-      <label className='flex items-center gap-2 text-xs text-gray-400'>
+      <div className='flex items-center gap-2 text-xs text-gray-400'>
         <Checkbox
+          id={enabledCheckboxId}
           checked={connectionSettings.enabled}
           onCheckedChange={(value: boolean | 'indeterminate'): void =>
             updateConnectionSetting({ enabled: value === true })
           }
         />
-        Enable data connection
-      </label>
+        <Label htmlFor={enabledCheckboxId} className='cursor-pointer text-xs text-gray-400'>
+          Enable data connection
+        </Label>
+      </div>
     </div>
   );
 }

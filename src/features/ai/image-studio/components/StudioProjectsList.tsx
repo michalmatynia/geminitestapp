@@ -18,6 +18,7 @@ import {
   useToast,
   StandardDataTablePanel,
 } from '@/shared/ui';
+import { focusOnMount } from '@/shared/utils/focus-on-mount';
 import { cn } from '@/shared/utils';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
@@ -367,13 +368,13 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
           if (isEditing) {
             return (
               <Input
+                ref={focusOnMount}
                 size='sm'
                 value={editingProjectValue}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                   setEditingProjectValue(event.target.value);
                 }}
                 className='h-8 text-xs max-w-[230px]'
-                autoFocus
                 onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => {
                   if (event.key === 'Enter') {
                     event.preventDefault();

@@ -3,7 +3,8 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useRef } from 'react';
 
-import type { AiNode } from '@/shared/lib/ai-paths';
+import type { AiNode, AiPathRunRecord } from '@/shared/lib/ai-paths';
+import { mergeEnqueuedAiPathRunForCache } from '@/shared/lib/ai-paths';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
   invalidateAiPathQueue,
@@ -225,7 +226,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
           args.appendRuntimeEvent({ source: 'server', kind: 'run_warning', level: 'warn', message: 'Recovered queued server run after losing the enqueue response.' });
         }
 
-        const queuedRunForCache = runRecord ?? {
+        const queuedRunFallback: AiPathRunRecord = {
           id: runId,
           pathId: args.activePathId,
           pathName: args.pathName ?? null,
@@ -235,6 +236,11 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
           entityId: enqueueInfo.entityId,
           entityType: enqueueInfo.entityType,
         };
+        const queuedRunForCache = mergeEnqueuedAiPathRunForCache({
+          fallbackRun: queuedRunFallback,
+          runId,
+          runRecord,
+        });
         optimisticallyInsertAiPathRunInQueueCache(queryClient, queuedRunForCache);
         void invalidateAiPathQueue(queryClient);
         void invalidateAiPathRuns(queryClient);

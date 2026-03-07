@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import { getKangurScoreRepository, resolveKangurActor } from '@/features/kangur/server';
 import { badRequestError } from '@/shared/errors/app-error';
 import {
@@ -52,7 +53,7 @@ export async function getKangurScoresHandler(
 
 export async function postKangurScoresHandler(
   req: NextRequest,
-  _ctx: ApiHandlerContext
+  ctx: ApiHandlerContext
 ): Promise<Response> {
   const payload = parseKangurScoreCreatePayload(await readBodyJson(req));
   const actor = await resolveKangurActor(req);
@@ -65,5 +66,20 @@ export async function postKangurScoresHandler(
     owner_user_id: actor.ownerUserId,
   });
 
+  void logKangurServerEvent({
+    source: 'kangur.scores.create',
+    message: 'Kangur score created',
+    request: req,
+    requestContext: ctx,
+    actor,
+    statusCode: 201,
+    context: {
+      operation: row.operation,
+      score: row.score,
+      totalQuestions: row.total_questions,
+      correctAnswers: row.correct_answers,
+      timeTaken: row.time_taken,
+    },
+  });
   return NextResponse.json(row, { status: 201 });
 }

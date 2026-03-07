@@ -15,8 +15,8 @@ import {
   KangurButton,
   KangurDisplayEmoji,
   KangurFeatureHeader,
+  KangurGlassPanel,
   KangurHeadline,
-  KangurPanel,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_STEP_PILL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/shared/utils';
@@ -64,14 +64,14 @@ function MiniCalendar({
       </p>
       <div className='grid grid-cols-7 gap-0.5 text-xs text-center'>
         {DAYS.map((d, i) => (
-          <div key={d} className={`font-bold py-1 ${i >= 5 ? 'text-red-500' : 'text-gray-500'}`}>
+          <div key={d} className={`font-bold py-1 ${i >= 5 ? 'text-red-500' : 'text-slate-500'}`}>
             {d}
           </div>
         ))}
         {cells.map((d, i) => (
           <div
             key={i}
-            className={`py-1 rounded-full text-sm font-semibold ${d === highlightDay ? 'bg-indigo-500 text-white' : d !== null && i % 7 >= 5 ? 'text-red-400' : d !== null ? 'text-gray-700' : ''}`}
+            className={`py-1 rounded-full text-sm font-semibold ${d === highlightDay ? 'bg-indigo-500 text-white' : d !== null && i % 7 >= 5 ? 'text-red-400' : d !== null ? 'text-slate-700' : ''}`}
           >
             {d || ''}
           </div>
@@ -91,7 +91,7 @@ export const SECTION_SLIDES: Record<Exclude<SectionId, 'game'>, Slide[]> = {
           <KangurDisplayEmoji data-testid='calendar-lesson-intro-emoji' size='lg'>
             📅
           </KangurDisplayEmoji>
-          <p className='text-gray-600 leading-relaxed max-w-xs'>
+          <p className='max-w-xs leading-relaxed text-slate-600'>
             Kalendarz to sposob organizowania czasu.
             <br />
             <br />
@@ -117,7 +117,7 @@ export const SECTION_SLIDES: Record<Exclude<SectionId, 'game'>, Slide[]> = {
                 padding='sm'
               >
                 <span className='text-indigo-500 font-bold w-5'>{i + 1}.</span>
-                <span className='font-semibold text-gray-700'>{d}</span>
+                <span className='font-semibold text-slate-700'>{d}</span>
                 <span className='ml-auto text-xs text-indigo-400'>📚 Szkoła</span>
               </KangurLessonCallout>
             ))}
@@ -129,7 +129,7 @@ export const SECTION_SLIDES: Record<Exclude<SectionId, 'game'>, Slide[]> = {
                 padding='sm'
               >
                 <span className='text-pink-500 font-bold w-5'>{i + 6}.</span>
-                <span className='font-semibold text-gray-700'>{d}</span>
+                <span className='font-semibold text-slate-700'>{d}</span>
                 <span className='ml-auto text-xs text-pink-400'>🎉 Weekend</span>
               </KangurLessonCallout>
             ))}
@@ -168,11 +168,11 @@ export const SECTION_SLIDES: Record<Exclude<SectionId, 'game'>, Slide[]> = {
               },
             ].map((g) => (
               <KangurLessonCallout key={g.season} accent={g.accent} padding='sm'>
-                <p className='font-bold text-sm text-gray-600 mb-1'>{g.season}</p>
+                <p className='mb-1 text-sm font-bold text-slate-600'>{g.season}</p>
                 {g.months.map((m) => (
-                  <p key={m.name} className='text-sm text-gray-700'>
+                  <p key={m.name} className='text-sm text-slate-700'>
                     <span className='font-bold'>{m.num}.</span> {m.name}{' '}
-                    <span className='text-gray-400'>({m.days}d)</span>
+                    <span className='text-slate-400'>({m.days}d)</span>
                   </p>
                 ))}
               </KangurLessonCallout>
@@ -211,11 +211,11 @@ export const SECTION_SLIDES: Record<Exclude<SectionId, 'game'>, Slide[]> = {
         <div className='flex flex-col items-center gap-4 text-center'>
           <MiniCalendar month={3} year={2025} highlightDay={15} />
           <KangurLessonCallout accent='indigo' className='max-w-xs text-left space-y-2'>
-            <p className='text-gray-700 font-semibold'>Jak zapisac date?</p>
-            <p className='text-gray-600'>
+            <p className='font-semibold text-slate-700'>Jak zapisac date?</p>
+            <p className='text-slate-600'>
               📅 <strong>15 marca 2025</strong>
             </p>
-            <p className='text-gray-600'>
+            <p className='text-slate-600'>
               📝 Lub: <strong>15/03/2025</strong>
             </p>
             <p className='text-indigo-700 font-bold mt-1'>Dzien / Miesiac / Rok</p>
@@ -252,7 +252,12 @@ function SectionView({
 
   return (
     <div className='flex flex-col items-center w-full max-w-lg gap-4'>
-      <KangurPanel className='w-full flex flex-col items-center gap-5' padding='xl' variant='soft'>
+      <KangurGlassPanel
+        className='flex w-full flex-col items-center gap-5'
+        data-testid={`calendar-lesson-section-shell-${sectionId}`}
+        padding='xl'
+        surface='solid'
+      >
         {slides.length > 1 && (
           <div className='flex gap-2'>
             {slides.map((_, i) => (
@@ -301,7 +306,7 @@ function SectionView({
             onClick={slide === 0 ? onBack : () => setSlide(slide - 1)}
             size='lg'
             type='button'
-            variant='secondary'
+            variant='surface'
           >
             <ArrowLeft className='w-4 h-4' /> {slide === 0 ? 'Menu' : 'Wstecz'}
           </KangurButton>
@@ -322,7 +327,7 @@ function SectionView({
             )}
           </KangurButton>
         </div>
-      </KangurPanel>
+      </KangurGlassPanel>
     </div>
   );
 }
@@ -366,14 +371,15 @@ export default function CalendarLesson(): React.JSX.Element {
           className='self-start'
           size='sm'
           type='button'
-          variant='ghost'
+          variant='surface'
         >
           <ArrowLeft className='w-4 h-4' /> Wróc do menu
         </KangurButton>
-        <KangurPanel
-          className='w-full flex flex-col items-center gap-5'
+        <KangurGlassPanel
+          className='flex w-full flex-col items-center gap-5'
+          data-testid='calendar-lesson-game-shell'
           padding='xl'
-          variant='soft'
+          surface='solid'
         >
           <KangurFeatureHeader
             accent='emerald'
@@ -384,7 +390,7 @@ export default function CalendarLesson(): React.JSX.Element {
             title='Gra z kalendarzem'
           />
           <CalendarInteractiveGame onFinish={() => setActiveSection(null)} />
-        </KangurPanel>
+        </KangurGlassPanel>
       </div>
     );
   }

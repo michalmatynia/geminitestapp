@@ -2,11 +2,10 @@
 
 import { JsonViewer } from '@/shared/ui';
 
-import { useAiPathsSettingsOrchestrator } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
+import { useRuntimeState } from '@/features/ai/ai-paths/context';
 
 export function GraphModelDebugPanel(): React.JSX.Element {
-  const orchestrator = useAiPathsSettingsOrchestrator();
-  const payload = orchestrator.runtimeState;
+  const { runtimeState: payload } = useRuntimeState();
 
   return (
     <div className='space-y-2'>

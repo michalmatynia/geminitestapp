@@ -20,7 +20,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       title: 'Co to jest symetria?',
       content: (
         <div className='flex flex-col gap-4 text-center'>
-          <p className='text-gray-700'>
+          <p className='text-slate-700'>
             Figura jest <strong>symetryczna</strong>, gdy po złożeniu na pół obie strony pasuja do
             siebie.
           </p>
@@ -28,7 +28,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             🦋
             <p className='mt-2 text-sm text-emerald-700'>Motyl jest prawie symetryczny.</p>
           </KangurLessonCallout>
-          <p className='text-gray-500 text-sm'>
+          <p className='text-sm text-slate-500'>
             Symetria to reguła: lewa strona = prawa strona (lub góra = dół).
           </p>
         </div>
@@ -40,7 +40,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       title: 'Os symetrii',
       content: (
         <div className='flex flex-col gap-4 text-center'>
-          <p className='text-gray-700'>
+          <p className='text-slate-700'>
             <strong>Os symetrii</strong> to linia, po której dzielimy figurę na dwie pasujace
             czesci.
           </p>
@@ -50,9 +50,9 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               <div className='h-24 w-0.5 bg-emerald-600' />
               <div className='h-20 w-16 rounded-r-full bg-emerald-300' />
             </div>
-            <p className='mt-2 text-sm text-gray-600'>Pionowa kreska to os symetrii.</p>
+            <p className='mt-2 text-sm text-slate-600'>Pionowa kreska to os symetrii.</p>
           </KangurLessonCallout>
-          <p className='text-gray-500 text-sm'>Figura może miec więcej niż jedna os symetrii!</p>
+          <p className='text-sm text-slate-500'>Figura może miec więcej niż jedna os symetrii!</p>
         </div>
       ),
     },
@@ -81,7 +81,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               </KangurLessonCallout>
             ))}
           </div>
-          <p className='text-xs text-gray-500 text-center'>
+          <p className='text-center text-xs text-slate-500'>
             Koło ma nieskonczona liczbe osi symetrii!
           </p>
         </div>
@@ -102,7 +102,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             <KangurLessonCallout
               key={text}
               accent='emerald'
-              className='text-sm text-gray-700'
+              className='text-sm text-slate-700'
               padding='sm'
             >
               ✅ {text}

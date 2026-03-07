@@ -2,7 +2,11 @@ import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-import { KangurButton, KangurEmptyState, KangurPanel } from '@/features/kangur/ui/design/primitives';
+import {
+  KangurButton,
+  KangurEmptyState,
+  KangurGlassPanel,
+} from '@/features/kangur/ui/design/primitives';
 import { useKangurLessonBackAction } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 import { KANGUR_STEP_PILL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/shared/utils';
@@ -85,10 +89,15 @@ export default function LessonSlideSection({
           exit={{ opacity: 0, x: -30 }}
           className='w-full'
         >
-          <KangurPanel className='flex min-h-[260px] flex-col gap-4' padding='xl' variant='soft'>
+          <KangurGlassPanel
+            className='flex min-h-[260px] flex-col gap-4'
+            data-testid='lesson-slide-shell'
+            padding='xl'
+            surface='solid'
+          >
             <h2 className='text-xl font-extrabold text-slate-800'>{activeSlide.title}</h2>
             <div className='flex-1'>{activeSlide.content}</div>
-          </KangurPanel>
+          </KangurGlassPanel>
         </motion.div>
       </AnimatePresence>
 
@@ -96,7 +105,7 @@ export default function LessonSlideSection({
         <KangurButton
           onClick={slide === 0 ? handleBack : () => setSlide(slide - 1)}
           size='lg'
-          variant='secondary'
+          variant='surface'
         >
           <ChevronLeft className='w-4 h-4' />
           {slide === 0 ? 'Menu' : 'Poprzedni'}

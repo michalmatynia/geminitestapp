@@ -116,6 +116,40 @@ const openAdminProductsPage = async (page: Page): Promise<void> => {
   await expect(productsHeading).toBeVisible({ timeout: 15_000 });
 };
 
+const openAdminQueuePage = async (page: Page): Promise<boolean> => {
+  const queueHeading = page.getByRole('heading', { name: 'Job Queue', exact: true });
+  const signInHeading = page.getByRole('heading', { name: 'Sign in' });
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    await page
+      .goto('/admin/ai-paths/queue?tab=paths-all', {
+        waitUntil: 'domcontentloaded',
+      })
+      .catch(() => null);
+
+    if (await queueHeading.isVisible().catch(() => false)) {
+      await expect(queueHeading).toBeVisible();
+      return true;
+    }
+
+    const needsAuth =
+      page.url().includes('/auth/signin') || (await signInHeading.isVisible().catch(() => false));
+    if (needsAuth) {
+      const authenticated = await ensureAdminSession(page);
+      if (!authenticated) {
+        return false;
+      }
+      continue;
+    }
+
+    if (attempt < 2) {
+      await page.waitForTimeout(500);
+    }
+  }
+
+  return false;
+};
+
 const createProductFixture = (
   id: string,
   sku: string,
@@ -609,6 +643,20 @@ test.describe('Products trigger button queue integration', () => {
       .toBeGreaterThan(requestsBeforeTrigger);
   };
 
+  const assertQueuedRunVisibleInAllRuns = async (page: Page, runId: string): Promise<boolean> => {
+    const queueOpened = await openAdminQueuePage(page);
+    if (!queueOpened) return false;
+
+    await expect(page.getByRole('tab', { name: 'All Runs' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+    await expect(page.getByText(runId)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText('E2E Trigger Path')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText('Showing 1 of 1 runs')).toBeVisible({ timeout: 15_000 });
+    return true;
+  };
+
   const assertTriggerRunRejected = async (
     page: Page,
     setup: {
@@ -656,6 +704,27 @@ test.describe('Products trigger button queue integration', () => {
       },
     });
     await assertTriggerRunQueued(page, setup);
+  });
+
+  test('surfaces Product row trigger run in Job Queue All Runs immediately', async ({ page }) => {
+    const authenticated = await ensureAdminSession(page);
+    test.skip(!authenticated, 'Admin authentication is required for this e2e test.');
+
+    const setup = await setupProductTriggerHarness(page, {
+      enqueueBody: {
+        run: {
+          id: 'run-e2e-product-trigger-queue',
+          status: 'queued',
+        },
+      },
+    });
+    await assertTriggerRunQueued(page, setup);
+
+    const queueOpened = await assertQueuedRunVisibleInAllRuns(
+      page,
+      'run-e2e-product-trigger-queue'
+    );
+    test.skip(queueOpened === false, 'Admin AI Paths queue access is required for this e2e test.');
   });
 
   test('handles legacy enqueue payloads exposing only run._id and still updates queue state', async ({

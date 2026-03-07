@@ -12,6 +12,7 @@ const root = process.cwd();
 const outDir = path.join(root, 'docs', 'metrics');
 
 const includeE2E = args.has('--include-e2e');
+const includeFullLint = args.has('--include-full-lint');
 const includeFullUnit = args.has('--include-full-unit');
 const strictMode = args.has('--strict');
 const shouldWriteHistory = !args.has('--ci') && !args.has('--no-history');
@@ -437,6 +438,12 @@ const toMarkdown = (report) => {
   lines.push(`- E2E test pass rate: ${report.passRates.e2e ?? 'n/a'}%`);
   lines.push(`- Duration budget alerts: ${report.durationAlerts.length}`);
   lines.push('');
+  if (!includeFullLint) {
+    lines.push(
+      'Full repository lint was skipped in this run. Use `--include-full-lint` to include the broad `eslint src` sweep.'
+    );
+    lines.push('');
+  }
   if (!includeFullUnit) {
     lines.push(
       'Full unit suite was skipped in this run. Use `--include-full-unit` to include full unit coverage in baseline.'
@@ -596,6 +603,7 @@ const run = async () => {
       commandArgs: ['run', 'lint'],
       timeoutMs: 15 * 60 * 1000,
       confirmFailureRetries: 1,
+      enabled: includeFullLint,
     },
     {
       id: 'lintDomains',

@@ -17,7 +17,7 @@ import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingCont
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 
-export type KangurParentDashboardTabId = 'progress' | 'scores' | 'assign';
+export type KangurParentDashboardTabId = 'progress' | 'scores' | 'assign' | 'ai-tutor';
 export type KangurParentDashboardPanelDisplayMode = 'always' | 'active-tab';
 
 type KangurParentDashboardCreateForm = {

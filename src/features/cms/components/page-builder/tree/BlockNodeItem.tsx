@@ -224,9 +224,8 @@ export function BlockNodeItem(props: BlockNodeItemProps): React.ReactNode {
               endBlockDrag();
             }}
             onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
-            onClick={(e: React.MouseEvent) => e.stopPropagation()}
             className='flex items-center justify-center opacity-0 group-hover:opacity-100'
-            aria-label='Drag element'
+            aria-hidden='true'
           >
             <GripVertical className='size-3 shrink-0 text-gray-600 cursor-grab active:cursor-grabbing' />
           </div>

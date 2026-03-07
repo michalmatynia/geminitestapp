@@ -460,7 +460,7 @@ export default function AddingSynthesisGame({
                 <Sparkles className='h-4 w-4' />
                 Start synteze
               </KangurButton>
-              <KangurButton type='button' size='lg' variant='secondary' onClick={onFinish}>
+              <KangurButton type='button' size='lg' variant='surface' onClick={onFinish}>
                 Wroc do Dodawania
               </KangurButton>
             </div>
@@ -514,7 +514,7 @@ export default function AddingSynthesisGame({
                 <RefreshCw className='h-4 w-4' />
                 Zagraj jeszcze raz
               </KangurButton>
-              <KangurButton type='button' size='lg' variant='secondary' onClick={onFinish}>
+              <KangurButton type='button' size='lg' variant='surface' onClick={onFinish}>
                 Wroc do Dodawania
               </KangurButton>
             </div>

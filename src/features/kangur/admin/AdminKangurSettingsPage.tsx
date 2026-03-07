@@ -394,6 +394,63 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
           <KangurDocumentationCenter />
         </FormSection>
 
+        <FormSection
+          title='Operations & Observability'
+          description='Quick access to Kangur telemetry, summary health, and log triage surfaces.'
+          className='p-6'
+        >
+          <div className='grid gap-4 lg:grid-cols-3'>
+            <div className='rounded-2xl border border-border/70 bg-background/90 px-4 py-4 shadow-sm'>
+              <div className='text-sm font-semibold text-foreground'>Observability dashboard</div>
+              <p className='mt-1 text-sm text-muted-foreground'>
+                Open the dedicated Kangur dashboard with alerts, route health, client telemetry,
+                recent server logs, and the latest performance baseline.
+              </p>
+              <Button asChild variant='outline' size='sm' className='mt-4'>
+                <Link href='/admin/kangur/observability'>Open observability dashboard</Link>
+              </Button>
+            </div>
+
+            <div className='rounded-2xl border border-border/70 bg-background/90 px-4 py-4 shadow-sm'>
+              <div className='text-sm font-semibold text-foreground'>Kangur system logs</div>
+              <p className='mt-1 text-sm text-muted-foreground'>
+                Jump into System Logs scoped to Kangur events. Saved presets available there:
+                Kangur, Kangur Auth, Kangur Progress, and Kangur TTS.
+              </p>
+              <div className='mt-4 flex flex-wrap gap-2'>
+                <Button asChild variant='outline' size='sm'>
+                  <Link href='/admin/system/logs?query=kangur.'>Open Kangur logs</Link>
+                </Button>
+                <Button asChild variant='ghost' size='sm'>
+                  <Link href='/admin/system/logs?source=kangur.tts.fallback'>TTS fallbacks</Link>
+                </Button>
+              </div>
+            </div>
+
+            <div className='rounded-2xl border border-border/70 bg-background/90 px-4 py-4 shadow-sm'>
+              <div className='text-sm font-semibold text-foreground'>Raw summary and runbook</div>
+              <p className='mt-1 text-sm text-muted-foreground'>
+                Use the summary API for direct payload inspection. Operational steps live in
+                <span className='font-mono text-xs text-foreground'>
+                  {' '}
+                  docs/kangur/observability-and-operations.md
+                </span>
+                .
+              </p>
+              <div className='mt-4 flex flex-wrap gap-2'>
+                <Button asChild variant='outline' size='sm'>
+                  <Link href='/api/kangur/observability/summary?range=24h'>
+                    Open 24h summary JSON
+                  </Link>
+                </Button>
+                <Button asChild variant='ghost' size='sm'>
+                  <Link href='/api/kangur/observability/summary?range=7d'>Open 7d summary JSON</Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </FormSection>
+
         <div className='flex items-center justify-between border-t border-border pt-6'>
           <p className='text-xs text-muted-foreground'>
             Saved narrator mode:{' '}

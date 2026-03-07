@@ -23,6 +23,7 @@ interface FieldProps<T> {
   onChange: (value: T) => void;
   className?: string;
   disabled?: boolean;
+  ariaLabel?: string;
 }
 
 export function ImagePickerField(props: FieldProps<string>): React.JSX.Element {
@@ -146,7 +147,7 @@ export function ImagePickerField(props: FieldProps<string>): React.JSX.Element {
 }
 
 export function Asset3DPickerField(props: FieldProps<string>): React.JSX.Element {
-  const { label, value, onChange, disabled } = props;
+  const { label, value, onChange, disabled, ariaLabel } = props;
 
   const [open, setOpen] = useState(false);
   const [previewAsset, setPreviewAsset] = useState<Asset3DRecord | null>(null);
@@ -205,6 +206,7 @@ export function Asset3DPickerField(props: FieldProps<string>): React.JSX.Element
             className='text-xs'
             onClick={(): void => setOpen(true)}
             disabled={disabled}
+            aria-label={ariaLabel ? `${ariaLabel} browse 3D assets` : 'Browse 3D assets'}
           >
             Browse 3D assets
           </Button>
@@ -217,6 +219,7 @@ export function Asset3DPickerField(props: FieldProps<string>): React.JSX.Element
               if (selectedAsset) setPreviewAsset(selectedAsset);
             }}
             disabled={disabled || !selectedAsset}
+            aria-label={ariaLabel ? `${ariaLabel} preview asset` : 'Preview 3D asset'}
           >
             Preview
           </Button>
@@ -229,6 +232,7 @@ export function Asset3DPickerField(props: FieldProps<string>): React.JSX.Element
             className='w-full text-xs text-gray-400 hover:text-gray-200'
             onClick={(): void => onChange('')}
             disabled={disabled}
+            aria-label={ariaLabel ? `Clear ${ariaLabel}` : 'Clear asset'}
           >
             Clear asset
           </Button>
@@ -252,12 +256,13 @@ export function Asset3DPickerField(props: FieldProps<string>): React.JSX.Element
 }
 
 export function ColorField(props: FieldProps<string>): React.JSX.Element {
-  const { label, value, onChange, className, disabled } = props;
+  const { label, value, onChange, className, disabled, ariaLabel } = props;
+  const resolvedLabel = ariaLabel ?? label ?? 'Color';
 
   return (
     <FormField label={label} className={className}>
       <div className='flex items-center gap-2 mt-1'>
-        <label
+        <div
           className={cn(
             'relative flex size-7 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded border border-border/50',
             disabled && 'cursor-not-allowed opacity-50'
@@ -265,19 +270,21 @@ export function ColorField(props: FieldProps<string>): React.JSX.Element {
         >
           <input
             type='color'
+            aria-label={`${resolvedLabel} color picker`}
             value={value || '#ffffff'}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(e.target.value)}
             className='absolute inset-0 size-full cursor-pointer opacity-0'
             disabled={disabled}
           />
           <div className='size-full rounded' style={{ backgroundColor: value || '#ffffff' }} />
-        </label>
+        </div>
         <Input
           value={value || '#ffffff'}
           onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(e.target.value)}
           className='h-7 flex-1 bg-card/40 text-xs font-mono'
           maxLength={7}
           disabled={disabled}
+          aria-label={`${resolvedLabel} value`}
         />
       </div>
     </FormField>
@@ -293,6 +300,7 @@ export function NumberField(
   }
 ): React.JSX.Element {
   const { label, value, onChange, className, disabled, suffix, min, max, step } = props;
+  const resolvedLabel = props.ariaLabel ?? label ?? 'Number value';
 
   return (
     <FormField label={label} className={className}>
@@ -308,6 +316,7 @@ export function NumberField(
           }
           className='h-7 flex-1 bg-card/40 text-xs'
           disabled={disabled}
+          aria-label={resolvedLabel}
         />
         {suffix && <span className='text-[10px] text-gray-500'>{suffix}</span>}
       </div>
@@ -324,6 +333,7 @@ export function RangeField(
   }
 ): React.JSX.Element {
   const { label, value, onChange, className, disabled, min, max, step, suffix } = props;
+  const resolvedLabel = props.ariaLabel ?? label ?? 'Range value';
 
   const safeValue = Number.isFinite(value) ? value : min;
   return (
@@ -348,6 +358,7 @@ export function RangeField(
         }
         className={cn('w-full accent-blue-500 mt-1', disabled && 'opacity-50 cursor-not-allowed')}
         disabled={disabled}
+        aria-label={resolvedLabel}
       />
     </FormField>
   );
@@ -360,6 +371,7 @@ export function SelectField(
   }
 ): React.JSX.Element {
   const { label, value, onChange, options, className, disabled, placeholder } = props;
+  const resolvedLabel = props.ariaLabel ?? label;
 
   return (
     <FormField label={label} className={className}>
@@ -370,6 +382,7 @@ export function SelectField(
         disabled={disabled || false}
         options={options}
         placeholder={placeholder}
+        ariaLabel={resolvedLabel}
         triggerClassName='h-7 bg-card/40 text-xs mt-1'
       />
     </FormField>
@@ -404,7 +417,8 @@ export function CheckboxField(props: {
 }
 
 export function TextField(props: FieldProps<string> & { placeholder?: string }): React.JSX.Element {
-  const { label, value, onChange, className, disabled, placeholder } = props;
+  const { label, value, onChange, className, disabled, placeholder, ariaLabel } = props;
+  const resolvedLabel = ariaLabel ?? label;
 
   return (
     <FormField label={label} className={className}>
@@ -414,6 +428,7 @@ export function TextField(props: FieldProps<string> & { placeholder?: string }):
         placeholder={placeholder}
         className='h-7 bg-card/40 text-xs mt-1'
         disabled={disabled}
+        aria-label={resolvedLabel}
       />
     </FormField>
   );

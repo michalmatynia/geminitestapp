@@ -3,9 +3,10 @@
  */
 
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { render } from '@/__tests__/test-utils';
 const { settingsStoreMock, authState, assignmentsState, progressState } = vi.hoisted(() => ({
   settingsStoreMock: {
     get: vi.fn<(key: string) => string | undefined>(),

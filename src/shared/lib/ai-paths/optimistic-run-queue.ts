@@ -247,6 +247,35 @@ export const listOptimisticAiPathRuns = (filters?: OptimisticRunFilters): AiPath
     .filter((run) => aiPathRunMatchesFilters(run, filters));
 };
 
+export const previewAiPathQueuePayloadWithOptimisticRuns = (
+  payload: AiPathQueuePayload,
+  options?: OptimisticRunFilters & {
+    limit?: number;
+    offset?: number;
+  }
+): AiPathQueuePayload => {
+  const currentRuns = Array.isArray(payload.runs) ? payload.runs : [];
+  const offset = typeof options?.offset === 'number' ? options.offset : 0;
+  if (offset > 0) return payload;
+
+  const currentRunIds = new Set<string>();
+  currentRuns.forEach((run) => {
+    const runId = normalizeRunId(run?.id);
+    if (runId) currentRunIds.add(runId);
+  });
+
+  const optimisticRuns = listOptimisticAiPathRuns(options).filter((run) => !currentRunIds.has(run.id));
+  if (optimisticRuns.length === 0) return payload;
+
+  const combinedRuns = [...optimisticRuns, ...currentRuns];
+  const limit = typeof options?.limit === 'number' ? options.limit : null;
+
+  return {
+    runs: limit && limit > 0 ? combinedRuns.slice(0, limit) : combinedRuns,
+    total: payload.total + optimisticRuns.length,
+  };
+};
+
 export const mergeAiPathQueuePayloadWithOptimisticRuns = (
   payload: AiPathQueuePayload,
   options?: OptimisticRunFilters & {
@@ -263,22 +292,7 @@ export const mergeAiPathQueuePayloadWithOptimisticRuns = (
   if (serverRunIds.size > 0) {
     removeOptimisticAiPathRuns(serverRunIds);
   }
-
-  const offset = typeof options?.offset === 'number' ? options.offset : 0;
-  if (offset > 0) return payload;
-
-  const optimisticRuns = listOptimisticAiPathRuns(options).filter(
-    (run) => !serverRunIds.has(run.id)
-  );
-  if (optimisticRuns.length === 0) return payload;
-
-  const combinedRuns = [...optimisticRuns, ...serverRuns];
-  const limit = typeof options?.limit === 'number' ? options.limit : null;
-
-  return {
-    runs: limit && limit > 0 ? combinedRuns.slice(0, limit) : combinedRuns,
-    total: payload.total + optimisticRuns.length,
-  };
+  return previewAiPathQueuePayloadWithOptimisticRuns(payload, options);
 };
 
 export const patchQueuedCountWithOptimisticRuns = <T extends { queuedCount?: number | null }>(

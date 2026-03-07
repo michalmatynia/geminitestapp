@@ -740,6 +740,8 @@ export function MenuSettingsPanel({
                       size='sm'
                       onClick={(): void => toggleSection(section)}
                       className='h-8 w-8 p-0'
+                      aria-label={`${isOpen ? 'Collapse' : 'Expand'} ${section}`}
+                      title={`${isOpen ? 'Collapse' : 'Expand'} ${section}`}
                     >
                       <ChevronDown
                         className={`size-4 text-gray-500 transition ${isOpen ? 'rotate-180' : ''}`}

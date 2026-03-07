@@ -51,4 +51,28 @@ describe('log-triage-presets', () => {
     expect(resolved.fromDate).toBe('2026-02-03');
     expect(resolved.toDate).toBe('2026-02-10');
   });
+
+  it('resolves Kangur auth preset to the kangur auth source prefix', () => {
+    const preset = SYSTEM_LOG_TRIAGE_PRESETS.find((item) => item.id === 'kangur-auth-last3d');
+    expect(preset).toBeDefined();
+
+    const now = new Date(2026, 1, 10, 12, 0, 0);
+    const resolved = resolveSystemLogPresetFilters(preset, now);
+
+    expect(resolved.source).toBe('kangur.auth.');
+    expect(resolved.fromDate).toBe('2026-02-07');
+    expect(resolved.toDate).toBe('2026-02-10');
+  });
+
+  it('resolves Kangur TTS preset to the kangur tts source prefix', () => {
+    const preset = SYSTEM_LOG_TRIAGE_PRESETS.find((item) => item.id === 'kangur-tts-last3d');
+    expect(preset).toBeDefined();
+
+    const now = new Date(2026, 1, 10, 12, 0, 0);
+    const resolved = resolveSystemLogPresetFilters(preset, now);
+
+    expect(resolved.source).toBe('kangur.tts.');
+    expect(resolved.fromDate).toBe('2026-02-07');
+    expect(resolved.toDate).toBe('2026-02-10');
+  });
 });

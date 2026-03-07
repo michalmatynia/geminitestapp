@@ -16,6 +16,7 @@ import {
   readKangurUrlParam,
   type KangurInternalQueryParamKey,
 } from '@/features/kangur/config/routing';
+import { trackKangurClientEvent } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurAssignmentSnapshot, KangurUser } from '@/features/kangur/services/ports';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
@@ -307,6 +308,18 @@ export function KangurGameRuntimeProvider({
         gamesPlayed: storedProgress.gamesPlayed + 1,
         perfectGames: isPerfect ? storedProgress.perfectGames + 1 : storedProgress.perfectGames,
         operationsPlayed,
+      });
+      trackKangurClientEvent('kangur_game_completed', {
+        operation: selectedOperation,
+        difficulty,
+        screen,
+        kangurMode: kangurMode ?? 'practice',
+        totalQuestions,
+        correctAnswers: nextScore,
+        accuracyPercent: Math.round((nextScore / totalQuestions) * 100),
+        isPerfect,
+        xpAwarded: xp,
+        playerNamePresent: playerName.trim().length > 0,
       });
       showXpToast(xp, newBadges);
 

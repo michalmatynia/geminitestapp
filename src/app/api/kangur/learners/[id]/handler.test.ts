@@ -3,18 +3,26 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
-const { getKangurLearnerByIdMock, resolveKangurActorMock, updateKangurLearnerMock } = vi.hoisted(
-  () => ({
-    getKangurLearnerByIdMock: vi.fn(),
-    resolveKangurActorMock: vi.fn(),
-    updateKangurLearnerMock: vi.fn(),
-  })
-);
+const {
+  getKangurLearnerByIdMock,
+  resolveKangurActorMock,
+  updateKangurLearnerMock,
+  logKangurServerEventMock,
+} = vi.hoisted(() => ({
+  getKangurLearnerByIdMock: vi.fn(),
+  resolveKangurActorMock: vi.fn(),
+  updateKangurLearnerMock: vi.fn(),
+  logKangurServerEventMock: vi.fn(),
+}));
 
 vi.mock('@/features/kangur/server', () => ({
   getKangurLearnerById: getKangurLearnerByIdMock,
   resolveKangurActor: resolveKangurActorMock,
   updateKangurLearner: updateKangurLearnerMock,
+}));
+
+vi.mock('@/features/kangur/observability/server', () => ({
+  logKangurServerEvent: logKangurServerEventMock,
 }));
 
 import { patchKangurLearnerHandler } from './handler';
@@ -80,6 +88,16 @@ describe('kangur learner [id] handler', () => {
     expect(updateKangurLearnerMock).toHaveBeenCalledWith('learner-1', {
       password: 'KangurParentReset2026!',
     });
+    expect(logKangurServerEventMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'kangur.learners.update',
+        statusCode: 200,
+        context: expect.objectContaining({
+          learnerId: 'learner-1',
+          updatedFields: ['password'],
+        }),
+      })
+    );
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual(
       expect.objectContaining({

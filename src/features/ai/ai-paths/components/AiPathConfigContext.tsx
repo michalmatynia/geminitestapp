@@ -24,8 +24,10 @@ import {
   useRuntimeState,
   useSelectionActions,
   useSelectionState,
+  usePersistenceActions,
 } from '../context';
 import { useAiPathsSettingsOrchestrator } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
+import { useAiPathsNodeConfigActions } from './ai-paths-settings/hooks/useAiPathsNodeConfigActions';
 
 // --- Selection Context ---
 export interface AiPathSelectionData {
@@ -130,7 +132,7 @@ type AiPathConfigValue = AiPathSelectionData &
   AiPathOrchestratorData;
 
 const useAiPathConfigDefaults = () => {
-  const orchestrator = useAiPathsSettingsOrchestrator();
+  const { handleClearNodeHistory } = useAiPathsSettingsOrchestrator();
   const { toast } = useToast();
   const { selectedNodeId, configOpen } = useSelectionState();
   const selectionActions = useSelectionActions();
@@ -139,6 +141,8 @@ const useAiPathConfigDefaults = () => {
   const runtimeActions = useRuntimeActions();
   const presetsState = usePresetsState();
   const presetsActions = usePresetsActions();
+  const { savePathConfig } = usePersistenceActions();
+  const nodeConfigActions = useAiPathsNodeConfigActions({ selectedNodeId });
 
   const selectedNode = useMemo(
     () =>
@@ -211,18 +215,18 @@ const useAiPathConfigDefaults = () => {
 
   const orchestratorValue = useMemo<AiPathOrchestratorData>(
     () => ({
-      updateSelectedNode: orchestrator.updateSelectedNode,
-      updateSelectedNodeConfig: orchestrator.updateSelectedNodeConfig,
-      clearNodeHistory: orchestrator.handleClearNodeHistory,
-      // Node dialog saves should use the orchestrator save pipeline directly.
-      savePathConfig: orchestrator.handleSave,
+      updateSelectedNode: nodeConfigActions.updateSelectedNode,
+      updateSelectedNodeConfig: nodeConfigActions.updateSelectedNodeConfig,
+      clearNodeHistory: handleClearNodeHistory,
+      // Node dialog saves route through PersistenceContext which delegates to handleSave.
+      savePathConfig,
       toast,
     }),
     [
-      orchestrator.updateSelectedNode,
-      orchestrator.updateSelectedNodeConfig,
-      orchestrator.handleClearNodeHistory,
-      orchestrator.handleSave,
+      nodeConfigActions.updateSelectedNode,
+      nodeConfigActions.updateSelectedNodeConfig,
+      handleClearNodeHistory,
+      savePathConfig,
       toast,
     ]
   );

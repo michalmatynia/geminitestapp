@@ -9,7 +9,7 @@ import { isObjectRecord } from '@/shared/utils/object-utils';
 import { ImagePickerField } from '../../../shared-fields';
 
 export function BackgroundField(): React.ReactNode {
-  const { value, onChange } = useCompositeFieldContext();
+  const { value, onChange, buildAriaLabel } = useCompositeFieldContext();
   const bg: Record<string, unknown> = isObjectRecord(value) ? value : { type: 'none' };
   const bgType = typeof bg['type'] === 'string' ? bg['type'] : 'none';
   const update = (key: string, v: unknown): void => {
@@ -38,6 +38,7 @@ export function BackgroundField(): React.ReactNode {
         onValueChange={(v: string): void => update('type', v)}
         options={BG_TYPE_OPTIONS}
         triggerClassName='text-xs h-7'
+        ariaLabel={buildAriaLabel('type')}
       />
 
       {bgType === 'none' && (
@@ -55,6 +56,7 @@ export function BackgroundField(): React.ReactNode {
               update('color', e.target.value)
             }
             className='h-8 w-10 cursor-pointer rounded border border-border/50 bg-transparent p-0.5'
+            aria-label={buildAriaLabel('solid color picker')}
           />
           <Input
             value={(bg['color'] as string) ?? '#000000'}
@@ -63,6 +65,7 @@ export function BackgroundField(): React.ReactNode {
             }
             className='flex-1 text-xs font-mono'
             maxLength={7}
+            aria-label={buildAriaLabel('solid color value')}
           />
         </div>
       )}
@@ -81,6 +84,7 @@ export function BackgroundField(): React.ReactNode {
               options={GRADIENT_DIRECTION_OPTIONS}
               className='flex-1'
               triggerClassName='text-xs h-7'
+              ariaLabel={buildAriaLabel('gradient direction')}
             />
           </div>
           <div className='flex items-center gap-2'>
@@ -92,6 +96,7 @@ export function BackgroundField(): React.ReactNode {
                 update('gradientFrom', e.target.value)
               }
               className='h-7 w-7 cursor-pointer rounded border border-border/50 bg-transparent p-0.5'
+              aria-label={buildAriaLabel('gradient from color picker')}
             />
             <Input
               value={(bg['gradientFrom'] as string) ?? '#000000'}
@@ -100,6 +105,7 @@ export function BackgroundField(): React.ReactNode {
               }
               className='flex-1 text-xs font-mono'
               maxLength={7}
+              aria-label={buildAriaLabel('gradient from color value')}
             />
             <Input
               type='number'
@@ -111,6 +117,7 @@ export function BackgroundField(): React.ReactNode {
               min={0}
               max={100}
               title='Opacity (%)'
+              aria-label={buildAriaLabel('gradient from opacity')}
             />
           </div>
           <div className='flex items-center gap-2'>
@@ -122,6 +129,7 @@ export function BackgroundField(): React.ReactNode {
                 update('gradientTo', e.target.value)
               }
               className='h-7 w-7 cursor-pointer rounded border border-border/50 bg-transparent p-0.5'
+              aria-label={buildAriaLabel('gradient to color picker')}
             />
             <Input
               value={(bg['gradientTo'] as string) ?? '#ffffff'}
@@ -130,6 +138,7 @@ export function BackgroundField(): React.ReactNode {
               }
               className='flex-1 text-xs font-mono'
               maxLength={7}
+              aria-label={buildAriaLabel('gradient to color value')}
             />
             <Input
               type='number'
@@ -141,6 +150,7 @@ export function BackgroundField(): React.ReactNode {
               min={0}
               max={100}
               title='Opacity (%)'
+              aria-label={buildAriaLabel('gradient to opacity')}
             />
           </div>
           <div className='flex items-center gap-2'>
@@ -154,6 +164,7 @@ export function BackgroundField(): React.ReactNode {
               className='w-20 text-xs h-7'
               min={0}
               max={360}
+              aria-label={buildAriaLabel('gradient angle')}
             />
             <span className='text-xs text-gray-500'>deg</span>
           </div>

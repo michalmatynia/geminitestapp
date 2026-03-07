@@ -9,51 +9,23 @@ const mocks = vi.hoisted(() => ({
   setSelectedExtractHistoryId: vi.fn(),
 }));
 
-vi.mock('@/shared/ui', () => ({
-  Button: ({
-    children,
-    ...rest
-  }: React.ButtonHTMLAttributes<HTMLButtonElement>): React.JSX.Element => (
-    <button {...rest}>{children}</button>
-  ),
-}));
+vi.mock('@/shared/ui', async () => {
+  const mocks = await import('./studioInlineEditRuntimeMockComponents');
+  return {
+    Button: mocks.MockButton,
+  };
+});
 
-vi.mock('../StudioInlineEditContext', () => ({
-  useStudioInlineEdit: () => ({
-    extractHistory: [
-      {
-        id: 'history-1',
-        createdAt: Date.parse('2026-03-07T10:00:00.000Z'),
-        runKind: 'smart',
-        source: 'gpt',
-        modeRequested: 'smart',
-        fallbackUsed: false,
-        autofixApplied: true,
-        promptBefore: 'before',
-        promptAfter: 'after',
-        validationBeforeCount: 2,
-        validationAfterCount: 1,
-      },
-    ],
-    selectedExtractHistory: {
-      id: 'history-1',
-      createdAt: Date.parse('2026-03-07T10:00:00.000Z'),
-      runKind: 'smart',
-      source: 'gpt',
-      modeRequested: 'smart',
-      fallbackUsed: false,
-      autofixApplied: true,
-      promptBefore: 'before',
-      promptAfter: 'after',
-      validationBeforeCount: 2,
-      validationAfterCount: 1,
-    },
-    selectedExtractDiffLines: [{ before: 'before', after: 'after', changed: true }],
-    selectedExtractChanged: true,
-    setSelectedExtractHistoryId: mocks.setSelectedExtractHistoryId,
-    setExtractHistory: mocks.setExtractHistory,
-  }),
-}));
+vi.mock(
+  '../StudioInlineEditContext',
+  async () => {
+    const { createStudioInlineEditMockModule } = await import('./studioInlineEditTestUtils');
+    return createStudioInlineEditMockModule(() => ({
+      setSelectedExtractHistoryId: mocks.setSelectedExtractHistoryId,
+      setExtractHistory: mocks.setExtractHistory,
+    }));
+  }
+);
 
 describe('PromptExtractionHistoryPanel context path', () => {
   beforeEach(() => {

@@ -467,9 +467,20 @@ export function VersionNodeMapPanel(): React.JSX.Element {
     focusNode: handleFocusNode,
   });
 
+  useEffect(() => {
+    const handleWindowKeyDown = (event: KeyboardEvent) => {
+      handleKeyDown(event as unknown as React.KeyboardEvent);
+    };
+
+    window.addEventListener('keydown', handleWindowKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleWindowKeyDown);
+    };
+  }, [handleKeyDown]);
+
   return (
     <VersionGraphControlsProvider value={controlsContextValue}>
-      <div className='flex h-full min-h-0 flex-col' tabIndex={-1} onKeyDown={handleKeyDown}>
+      <div className='flex h-full min-h-0 flex-col'>
         {/* Toolbar */}
         <VersionGraphToolbar />
 

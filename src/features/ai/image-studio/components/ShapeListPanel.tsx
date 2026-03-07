@@ -15,6 +15,7 @@ import React, { useCallback, useState } from 'react';
 
 import type { VectorShape, VectorShapeRole } from '@/shared/contracts/vector';
 import { Button, Input, SelectSimple } from '@/shared/ui';
+import { focusOnMount } from '@/shared/utils/focus-on-mount';
 import { cn } from '@/shared/utils';
 
 import { useMaskingState, useMaskingActions } from '../context/MaskingContext';
@@ -118,11 +119,22 @@ export function ShapeListPanel({ className }: ShapeListPanelProps): React.JSX.El
         return (
           <div
             key={shape.id}
+            role='button'
+            tabIndex={0}
+            aria-pressed={isActive}
             className={cn(
               'group flex items-center gap-1.5 rounded px-2 py-1 text-xs transition-colors cursor-pointer',
               isActive ? 'bg-accent/20 ring-1 ring-accent/40' : 'hover:bg-accent/10'
             )}
             onClick={() => setActiveMaskId(shape.id)}
+            onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>) => {
+              if (event.key !== 'Enter' && event.key !== ' ') {
+                return;
+              }
+
+              event.preventDefault();
+              setActiveMaskId(shape.id);
+            }}
           >
             {/* Color dot */}
             <span
@@ -135,6 +147,7 @@ export function ShapeListPanel({ className }: ShapeListPanelProps): React.JSX.El
             <div className='min-w-0 flex-1'>
               {editingId === shape.id ? (
                 <Input
+                  ref={focusOnMount}
                   size='sm'
                   value={editName}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditName(e.target.value)}
@@ -147,7 +160,6 @@ export function ShapeListPanel({ className }: ShapeListPanelProps): React.JSX.El
                     }
                   }}
                   className='h-5 px-1 text-xs'
-                  autoFocus
                   onClick={(e: React.MouseEvent) => e.stopPropagation()}
                 />
               ) : (
@@ -171,8 +183,8 @@ export function ShapeListPanel({ className }: ShapeListPanelProps): React.JSX.El
             {isActive && (
               <div
                 className='shrink-0'
-                onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
+                onClickCapture={(e: React.MouseEvent) => e.stopPropagation()}
+                onMouseDownCapture={(e: React.MouseEvent) => e.stopPropagation()}
               >
                 <SelectSimple
                   size='xs'

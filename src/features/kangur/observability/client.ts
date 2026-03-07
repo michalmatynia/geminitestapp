@@ -6,11 +6,101 @@ import {
 } from '@/shared/utils/observability/client-error-logger';
 
 type KangurClientErrorContext = Record<string, unknown>;
+type KangurClientEventContext = Record<string, unknown>;
 
 const KANGUR_CLIENT_CONTEXT = Object.freeze({
   feature: 'kangur',
   service: 'kangur.client',
 });
+
+const VISITOR_COOKIE = 'pa_vid';
+const SESSION_STORAGE_KEY = 'pa_sid';
+const ENABLE_KANGUR_EVENT_ANALYTICS_IN_DEV =
+  process.env['NEXT_PUBLIC_ENABLE_KANGUR_EVENT_ANALYTICS_IN_DEV'] === 'true';
+const ENABLE_KANGUR_EVENT_ANALYTICS =
+  process.env['NEXT_PUBLIC_ENABLE_KANGUR_EVENT_ANALYTICS'] === 'true' ||
+  (process.env['NEXT_PUBLIC_ENABLE_KANGUR_EVENT_ANALYTICS'] !== 'false' &&
+    (process.env.NODE_ENV === 'production' ||
+      process.env.NODE_ENV === 'test' ||
+      ENABLE_KANGUR_EVENT_ANALYTICS_IN_DEV));
+
+let currentKangurContext: {
+  pageKey: string | null;
+  requestedPath: string;
+} = {
+  pageKey: null,
+  requestedPath: '',
+};
+
+const readCookie = (name: string): string | null => {
+  if (typeof document === 'undefined') return null;
+  const parts = document.cookie.split(';').map((part) => part.trim());
+  const match = parts.find((part) => part.startsWith(`${name}=`));
+  if (!match) return null;
+  return decodeURIComponent(match.slice(name.length + 1));
+};
+
+const setCookie = (name: string, value: string, days: number): void => {
+  if (typeof document === 'undefined') return;
+  const maxAgeSeconds = Math.floor(days * 24 * 60 * 60);
+  document.cookie = `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=${maxAgeSeconds}; SameSite=Lax`;
+};
+
+const generateId = (): string => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+};
+
+const getOrCreateVisitorId = (): string => {
+  const existing = readCookie(VISITOR_COOKIE);
+  if (existing) return existing;
+  const created = generateId();
+  setCookie(VISITOR_COOKIE, created, 180);
+  return created;
+};
+
+const getOrCreateSessionId = (): string => {
+  if (typeof sessionStorage === 'undefined') return generateId();
+  const existing = sessionStorage.getItem(SESSION_STORAGE_KEY);
+  if (existing) return existing;
+  const created = generateId();
+  sessionStorage.setItem(SESSION_STORAGE_KEY, created);
+  return created;
+};
+
+const getTimeZone = (): string | null => {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone ?? null;
+  } catch {
+    return null;
+  }
+};
+
+const getConnectionInfo = (): Record<string, unknown> | null => {
+  if (typeof navigator === 'undefined') {
+    return null;
+  }
+
+  const nav = navigator as Navigator & {
+    connection?: {
+      effectiveType?: string;
+      downlink?: number;
+      rtt?: number;
+      saveData?: boolean;
+    };
+  };
+
+  if (!nav.connection) return null;
+
+  return {
+    effectiveType: nav.connection.effectiveType ?? null,
+    downlink: typeof nav.connection.downlink === 'number' ? nav.connection.downlink : null,
+    rtt: typeof nav.connection.rtt === 'number' ? nav.connection.rtt : null,
+    saveData: typeof nav.connection.saveData === 'boolean' ? nav.connection.saveData : null,
+  };
+};
 
 export const logKangurClientError = (
   error: unknown,
@@ -28,6 +118,10 @@ export const setKangurClientObservabilityContext = (context: {
   pageKey: string | null;
   requestedPath: string;
 }): void => {
+  currentKangurContext = {
+    pageKey: context.pageKey,
+    requestedPath: context.requestedPath,
+  };
   setClientErrorBaseContext({
     feature: 'kangur',
     kangur: {
@@ -38,7 +132,83 @@ export const setKangurClientObservabilityContext = (context: {
 };
 
 export const clearKangurClientObservabilityContext = (): void => {
+  currentKangurContext = {
+    pageKey: null,
+    requestedPath: '',
+  };
   setClientErrorBaseContext({
     kangur: null,
+  });
+};
+
+export const trackKangurClientEvent = (
+  name: string,
+  context: KangurClientEventContext = {}
+): void => {
+  if (!ENABLE_KANGUR_EVENT_ANALYTICS || typeof window === 'undefined') {
+    return;
+  }
+
+  const eventName = name.trim();
+  if (!eventName) {
+    return;
+  }
+
+  const path = window.location.pathname || currentKangurContext.requestedPath || '/';
+  const search = window.location.search || '';
+  const scope = path.startsWith('/admin') ? 'admin' : 'public';
+  const payload = {
+    type: 'event',
+    name: eventName,
+    scope,
+    path,
+    ...(search ? { search } : {}),
+    url: window.location.href,
+    title: document.title || null,
+    visitorId: getOrCreateVisitorId(),
+    sessionId: getOrCreateSessionId(),
+    language: typeof navigator !== 'undefined' ? navigator.language || null : null,
+    languages:
+      typeof navigator !== 'undefined' && Array.isArray(navigator.languages)
+        ? [...navigator.languages]
+        : null,
+    timeZone: getTimeZone(),
+    viewport: { width: window.innerWidth, height: window.innerHeight },
+    screen: {
+      width: window.screen?.width ?? 0,
+      height: window.screen?.height ?? 0,
+      dpr: window.devicePixelRatio ?? 1,
+    },
+    connection: getConnectionInfo(),
+    clientTs: new Date().toISOString(),
+    meta: {
+      ...KANGUR_CLIENT_CONTEXT,
+      pageKey: currentKangurContext.pageKey,
+      requestedPath: currentKangurContext.requestedPath || path,
+      ...context,
+    },
+  };
+  const body = JSON.stringify(payload);
+
+  try {
+    if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
+      const blob = new Blob([body], { type: 'application/json' });
+      const ok = navigator.sendBeacon('/api/analytics/events', blob);
+      if (ok) {
+        return;
+      }
+    }
+  } catch {
+    // Fall back to fetch when sendBeacon is unavailable or fails.
+  }
+
+  void fetch('/api/analytics/events', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body,
+    credentials: 'include',
+    keepalive: true,
+  }).catch(() => {
+    // Keep analytics non-blocking for the learner experience.
   });
 };

@@ -96,6 +96,12 @@ export const jobKeys = QUERY_KEYS.jobs;
 export const analyticsKeys = QUERY_KEYS.analytics;
 
 /**
+ * Kangur query keys (from kangur)
+ * Used in: Kangur observability hooks
+ */
+export const kangurKeys = QUERY_KEYS.kangur;
+
+/**
  * Marketplace query keys (from integrations.marketplace)
  * Used in: integration query hooks
  */

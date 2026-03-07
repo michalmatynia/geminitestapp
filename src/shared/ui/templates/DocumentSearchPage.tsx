@@ -47,16 +47,23 @@ export function DocumentSearchPage(props: DocumentSearchPageProps): React.JSX.El
         </div>
       }
       filters={filters}
-      contentClassName={cn('flex min-h-0 flex-1 flex-col overflow-y-auto pr-1', contentClassName)}
+      contentClassName={cn('flex min-h-0 flex-1 flex-col', contentClassName)}
     >
-      {breadcrumb}
-      {loading ? (
-        <LoadingState message='Searching documents...' />
-      ) : hasResults ? (
-        children
-      ) : (
-        emptyState
-      )}
+      <div
+        role='region'
+        aria-label={`${title} content`}
+        tabIndex={0}
+        className='min-h-0 flex-1 overflow-y-auto pr-1 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background'
+      >
+        {breadcrumb}
+        {loading ? (
+          <LoadingState message='Searching documents...' />
+        ) : hasResults ? (
+          children
+        ) : (
+          emptyState
+        )}
+      </div>
     </ListPanel>
   );
 }

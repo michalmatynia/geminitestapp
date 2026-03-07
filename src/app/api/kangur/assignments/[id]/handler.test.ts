@@ -9,6 +9,7 @@ const {
   getKangurAssignmentRepositoryMock,
   getKangurProgressRepositoryMock,
   getKangurScoreRepositoryMock,
+  logKangurServerEventMock,
   updateAssignmentMock,
   listAssignmentsMock,
   getProgressMock,
@@ -18,6 +19,7 @@ const {
   getKangurAssignmentRepositoryMock: vi.fn(),
   getKangurProgressRepositoryMock: vi.fn(),
   getKangurScoreRepositoryMock: vi.fn(),
+  logKangurServerEventMock: vi.fn(),
   updateAssignmentMock: vi.fn(),
   listAssignmentsMock: vi.fn(),
   getProgressMock: vi.fn(),
@@ -30,6 +32,10 @@ vi.mock('@/features/kangur/server', () => ({
   getKangurProgressRepository: getKangurProgressRepositoryMock,
   getKangurScoreRepository: getKangurScoreRepositoryMock,
   resolveKangurActor: resolveKangurActorMock,
+}));
+
+vi.mock('@/features/kangur/observability/server', () => ({
+  logKangurServerEvent: logKangurServerEventMock,
 }));
 
 import { patchKangurAssignmentHandler } from './handler';
@@ -119,6 +125,17 @@ describe('kangur assignment patch handler', () => {
     expect(updateAssignmentMock).toHaveBeenCalledWith('learner-1', 'assignment-1', {
       archived: true,
     });
+    expect(logKangurServerEventMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'kangur.assignments.update',
+        statusCode: 200,
+        context: expect.objectContaining({
+          learnerId: 'learner-1',
+          assignmentId: 'assignment-1',
+          updateKeys: ['archived'],
+        }),
+      })
+    );
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual(
       expect.objectContaining({

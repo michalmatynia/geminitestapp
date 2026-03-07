@@ -17,11 +17,11 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       title: 'Co to jest wnioskowanie?',
       content: (
         <div className='flex flex-col items-center gap-4'>
-          <p className='text-gray-700 text-center'>
+          <p className='text-center text-slate-700'>
             Wnioskowanie to wyciaganie nowych wniosków z tego, co juz wiemy. Idziemy od znanych
             faktów do nowej prawdy.
           </p>
-          <KangurLessonCallout accent='indigo' className='w-full text-sm text-gray-600'>
+          <KangurLessonCallout accent='indigo' className='w-full text-sm text-slate-600'>
             <p className='font-semibold text-indigo-700 mb-2'>Dwa typy wnioskowania:</p>
             <div className='space-y-2'>
               <KangurLessonInset accent='indigo' padding='sm'>
@@ -50,7 +50,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       title: 'Jesli… to…',
       content: (
         <div className='flex flex-col items-center gap-4'>
-          <p className='text-gray-700 text-center'>
+          <p className='text-center text-slate-700'>
             Zdanie <b>„Jesli P, to Q"</b> znaczy: gdy P jest prawdziwe, Q tez musi byc prawdziwe.
           </p>
           <div className='flex flex-col gap-2 w-full'>
@@ -68,12 +68,12 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             ].map(({ rule, note }) => (
               <KangurLessonCallout key={rule} accent='indigo' className='text-sm' padding='sm'>
                 <p className='font-bold text-indigo-700'>{rule}</p>
-                <p className='text-gray-500 text-xs mt-1'>{note}</p>
+                <p className='mt-1 text-xs text-slate-500'>{note}</p>
               </KangurLessonCallout>
             ))}
             <KangurLessonCallout accent='amber' className='text-sm' padding='sm'>
               <p className='font-bold text-amber-700'>Uwaga na odwrotnosc!</p>
-              <p className='text-gray-500 text-xs mt-1'>
+              <p className='mt-1 text-xs text-slate-500'>
                 „Jesli P, to Q" NIE znaczy „Jesli Q, to P"! Biore parasol → nie musi padac. ❌
               </p>
             </KangurLessonCallout>
@@ -87,7 +87,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       title: 'Wszyscy, niektórzy, zaden',
       content: (
         <div className='flex flex-col items-center gap-4'>
-          <p className='text-gray-700 text-center'>
+          <p className='text-center text-slate-700'>
             Kwantyfikatory mówia o <b>zasięgu</b> twierdzenia.
           </p>
           <div className='flex flex-col gap-2 w-full'>
@@ -112,10 +112,10 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               },
             ].map(({ icon, label, accent, text }) => (
               <KangurLessonCallout key={label} accent={accent} padding='sm'>
-                <p className='font-bold text-sm text-gray-800'>
+                <p className='text-sm font-bold text-slate-800'>
                   {icon} {label}
                 </p>
-                <p className='text-xs text-gray-600 mt-1'>{text}</p>
+                <p className='mt-1 text-xs text-slate-600'>{text}</p>
               </KangurLessonCallout>
             ))}
           </div>
@@ -126,7 +126,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       title: 'Prawda czy falsz?',
       content: (
         <div className='flex flex-col items-center gap-4'>
-          <p className='text-gray-700 text-center'>
+          <p className='text-center text-slate-700'>
             Zdanie logiczne musi byc albo prawdziwe, albo fałszywe. Sprawdzaj kazde twierdzenie
             osobno!
           </p>
@@ -150,8 +150,8 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
                 <div className='flex items-start gap-2'>
                   <span className='text-lg'>{answer ? '✅' : '❌'}</span>
                   <div>
-                    <p className='font-bold text-gray-800'>{stmt}</p>
-                    <p className='text-xs text-gray-500 mt-0.5'>{explain}</p>
+                    <p className='font-bold text-slate-800'>{stmt}</p>
+                    <p className='mt-0.5 text-xs text-slate-500'>{explain}</p>
                   </div>
                 </div>
               </KangurLessonCallout>
@@ -166,12 +166,12 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       title: 'Zagadka logiczna',
       content: (
         <div className='flex flex-col items-center gap-4'>
-          <p className='text-gray-700 text-center'>
+          <p className='text-center text-slate-700'>
             Zagadki logiczne wymagaja łaczenia kilku informacji naraz.
           </p>
           <KangurLessonCallout accent='indigo' className='w-full text-sm'>
             <p className='font-bold text-indigo-700 mb-2'>Zagadka: Kto mieszka w którym domu?</p>
-            <ul className='text-gray-600 space-y-1 text-xs'>
+            <ul className='space-y-1 text-xs text-slate-600'>
               <li>🏠 Sa trzy domy: czerwony, niebieski, zielony.</li>
               <li>👧 Ania nie mieszka w czerwonym.</li>
               <li>👦 Bartek mieszka w niebieskim.</li>
@@ -179,7 +179,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             </ul>
             <KangurLessonInset accent='indigo' className='mt-3' padding='sm'>
               <p className='text-xs font-bold text-indigo-600'>Rozwiazanie:</p>
-              <p className='text-xs text-gray-600'>
+              <p className='text-xs text-slate-600'>
                 Bartek → niebieski ✅<br />
                 Celina → nie zielony, nie niebieski → czerwony ✅<br />
                 Ania → zielony ✅
@@ -194,7 +194,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       content: (
         <div className='flex flex-col items-center gap-4'>
           <KangurLessonInset accent='indigo' className='w-full' padding='md'>
-            <ol className='text-gray-700 space-y-3 text-sm list-decimal list-inside'>
+            <ol className='list-decimal list-inside space-y-3 text-sm text-slate-700'>
               <li>
                 <b>Przeczytaj wszystkie wskazówki</b> — nie spiesz sie.
               </li>
@@ -214,7 +214,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           </KangurLessonInset>
           <KangurLessonCallout
             accent='indigo'
-            className='w-full text-center text-xs text-gray-600'
+            className='w-full text-center text-xs text-slate-600'
             padding='sm'
           >
             Dobry logik nigdy nie zgaduje — zawsze uzasadnia kazdy krok!
@@ -229,7 +229,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       content: (
         <div className='flex flex-col items-center gap-4'>
           <KangurLessonCallout accent='amber' className='w-full'>
-            <ul className='text-gray-700 space-y-2 text-sm'>
+            <ul className='space-y-2 text-sm text-slate-700'>
               <li>
                 💡 <b>Wnioskowanie</b> — od faktów do nowych wniosków
               </li>

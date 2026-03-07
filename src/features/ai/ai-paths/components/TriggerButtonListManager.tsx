@@ -243,10 +243,10 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
         cell: ({ row }) => (
           <div
             className='flex items-center gap-2'
-            onPointerDown={(event: React.PointerEvent<HTMLDivElement>): void => {
+            onPointerDownCapture={(event: React.PointerEvent<HTMLDivElement>): void => {
               event.stopPropagation();
             }}
-            onClick={(event: React.MouseEvent<HTMLDivElement>): void => {
+            onClickCapture={(event: React.MouseEvent<HTMLDivElement>): void => {
               event.stopPropagation();
             }}
           >

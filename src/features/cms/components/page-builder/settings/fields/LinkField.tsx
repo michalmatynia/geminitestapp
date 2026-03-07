@@ -9,8 +9,9 @@ import { useCmsSlugs } from '../../../../hooks/useCmsQueries';
 export function LinkField(props: {
   value: string;
   onChange: (v: string) => void;
+  ariaLabel?: string;
 }): React.ReactNode {
-  const { value, onChange } = props;
+  const { value, onChange, ariaLabel = 'Link' } = props;
 
   const [open, setOpen] = useState(false);
   const { data: slugs = [] } = useCmsSlugs();
@@ -32,12 +33,15 @@ export function LinkField(props: {
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
         placeholder='URL or pick a slug...'
         className='h-8 text-xs'
+        aria-label={ariaLabel}
       />
       <Button
         size='icon'
         variant='outline'
         className='h-8 w-8 shrink-0'
         onClick={() => setOpen(true)}
+        aria-label={`Select ${ariaLabel.toLowerCase()} from page slug`}
+        title='Select page link'
       >
         <Link2 className='size-3.5' />
       </Button>

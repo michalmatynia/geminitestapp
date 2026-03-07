@@ -5,6 +5,7 @@ import { GripVertical, Layers } from 'lucide-react';
 
 import type { FolderTreeViewportRenderNodeInput as SequenceGroupFolderNodeItemProps } from '@/features/foldertree/v2';
 import { TreeCaret, TreeContextMenu, TreeRow, Button } from '@/shared/ui';
+import { focusOnMount } from '@/shared/utils/focus-on-mount';
 import { cn } from '@/shared/utils';
 
 import { fromSeqGroupMasterNodeId } from '../validator-pattern-master-tree';
@@ -93,7 +94,10 @@ export function SequenceGroupFolderNodeItem(
         >
           <div
             className='flex h-full w-full min-w-0 items-center gap-1'
-            onClick={(event: React.MouseEvent<HTMLDivElement>): void => {
+            onMouseDownCapture={(event: React.MouseEvent<HTMLDivElement>): void => {
+              event.stopPropagation();
+            }}
+            onClickCapture={(event: React.MouseEvent<HTMLDivElement>): void => {
               event.stopPropagation();
             }}
           >
@@ -111,7 +115,7 @@ export function SequenceGroupFolderNodeItem(
               <Layers className='size-3.5 text-cyan-400' />
             </span>
             <input
-              autoFocus
+              ref={focusOnMount}
               value={controller.renameDraft}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                 controller.updateRenameDraft(event.target.value);

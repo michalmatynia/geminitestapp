@@ -1,0 +1,128 @@
+{
+  "generatedAt": "2026-03-07T12:33:58.759Z",
+  "strictMode": false,
+  "failOnWarningBudgetExceed": false,
+  "summary": {
+    "total": 8,
+    "passed": 7,
+    "failed": 1,
+    "actWarnings": 1,
+    "warningBudget": 10,
+    "warningBudgetStatus": "ok",
+    "warningBudgetEnforcement": "telemetry-only"
+  },
+  "results": [
+    {
+      "id": "app-shell-a11y",
+      "name": "App Shell Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "src/app/__tests__/shell-accessibility.test.tsx"
+      ],
+      "command": "npx vitest run --project unit src/app/__tests__/shell-accessibility.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 2658,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/app/__tests__/shell-accessibility.test.tsx (2 tests) 94ms\n\n Test Files  1 passed (1)\n      Tests  2 passed (2)\n   Start at  13:33:17\n   Duration  1.14s (transform 255ms, setup 181ms, import 437ms, tests 94ms, environment 323ms)"
+    },
+    {
+      "id": "auth-signin-a11y",
+      "name": "Auth Sign-In Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "__tests__/features/auth/pages/signin-page.test.tsx"
+      ],
+      "command": "npx vitest run --project unit __tests__/features/auth/pages/signin-page.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 4587,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/auth/pages/signin-page.test.tsx (10 tests) 798ms\n\n Test Files  1 passed (1)\n      Tests  10 passed (10)\n   Start at  13:33:19\n   Duration  3.18s (transform 1.13s, setup 259ms, import 1.72s, tests 798ms, environment 303ms)"
+    },
+    {
+      "id": "products-edit-a11y",
+      "name": "Products Edit Form Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "__tests__/features/products/pages/product-edit-page.test.tsx"
+      ],
+      "command": "npx vitest run --project unit __tests__/features/products/pages/product-edit-page.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 7165,
+      "actWarnings": 1,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\nstderr | __tests__/features/products/pages/product-edit-page.test.tsx > EditProductForm > supports keyboard tab order across product tabs\nAn update to ForwardRef inside a test was not wrapped in act(...).\n\nWhen testing, code that causes React state updates should be wrapped into act(...):\n\nact(() => {\n  /* fire events that update state */\n});\n/* assert on the output */\n\nThis ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act\n\n ✓ |unit| __tests__/features/products/pages/product-edit-page.test.tsx (7 tests) 1986ms\n     ✓ renders the form with product data in the General tab  397ms\n     ✓ has no obvious accessibility violations in the default edit form view  387ms\n     ✓ enables Update after SKU value changes  385ms\n     ✓ submits the updated product when Update is clicked  386ms\n\n Test Files  1 passed (1)\n      Tests  7 passed (7)\n   Start at  13:33:24\n   Duration  5.23s (transform 1.72s, setup 222ms, import 2.52s, tests 1.99s, environment 378ms)"
+    },
+    {
+      "id": "image-studio-a11y",
+      "name": "Image Studio UI Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx"
+      ],
+      "command": "npx vitest run --project unit src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 5381,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx (7 tests) 608ms\n\n Test Files  1 passed (1)\n      Tests  7 passed (7)\n   Start at  13:33:31\n   Duration  3.92s (transform 1.63s, setup 458ms, import 2.25s, tests 608ms, environment 470ms)"
+    },
+    {
+      "id": "ai-paths-a11y",
+      "name": "AI Paths Canvas Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx"
+      ],
+      "command": "npx vitest run --project unit src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 6390,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx (4 tests) 380ms\n\n Test Files  1 passed (1)\n      Tests  4 passed (4)\n   Start at  13:33:36\n   Duration  4.94s (transform 2.81s, setup 216ms, import 3.87s, tests 380ms, environment 326ms)"
+    },
+    {
+      "id": "case-resolver-a11y",
+      "name": "Case Resolver Header Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx"
+      ],
+      "command": "npx vitest run --project unit src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 7723,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx (10 tests) 694ms\n     ✓ has no obvious accessibility violations in the default tree header state  410ms\n\n Test Files  1 passed (1)\n      Tests  10 passed (10)\n   Start at  13:33:43\n   Duration  6.08s (transform 2.82s, setup 554ms, import 3.99s, tests 694ms, environment 665ms)"
+    },
+    {
+      "id": "kangur-profile-a11y",
+      "name": "Kangur Profile Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "__tests__/features/kangur/kangur-accessibility-smoke.test.tsx"
+      ],
+      "command": "npx vitest run --project unit __tests__/features/kangur/kangur-accessibility-smoke.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 5163,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/kangur/kangur-accessibility-smoke.test.tsx (4 tests) 1186ms\n     ✓ exposes profile landmarks and action links by accessible role/name  312ms\n     ✓ has no obvious accessibility violations in the learner profile shell  582ms\n\n Test Files  1 passed (1)\n      Tests  4 passed (4)\n   Start at  13:33:51\n   Duration  3.45s (transform 1.00s, setup 293ms, import 1.50s, tests 1.19s, environment 344ms)"
+    },
+    {
+      "id": "public-auth-routes-browser-a11y",
+      "name": "Public Auth Route Accessibility",
+      "runner": "playwright",
+      "tests": [
+        "e2e/features/accessibility/public-auth-accessibility.spec.ts"
+      ],
+      "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/public-auth-accessibility.spec.ts",
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 4115,
+      "actWarnings": 0,
+      "output": "[WebServer] ⨯ Unable to acquire lock at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev/dev/lock, is another instance of next dev running?\nError: Process from config.webServer was not able to start. Exit code: 1"
+    }
+  ]
+}

@@ -15,6 +15,7 @@ import { RightSidebarControlsTab } from './right-sidebar/RightSidebarControlsTab
 import { RightSidebarHistoryTab } from './right-sidebar/RightSidebarHistoryTab';
 import { RightSidebarQuickActions } from './right-sidebar/RightSidebarQuickActions';
 import { RightSidebarRequestPreviewModal } from './right-sidebar/RightSidebarRequestPreviewModal';
+import { useRightSidebarCanvasResize } from './right-sidebar/useRightSidebarCanvasResize';
 import { useRightSidebarActionHistory } from './right-sidebar/useRightSidebarActionHistory';
 import { useRightSidebarSequence } from './right-sidebar/useRightSidebarSequence';
 import { RightSidebarProvider, type RightSidebarContextValue } from './RightSidebarContext';
@@ -36,6 +37,7 @@ import {
   estimatePromptTokens,
   resolveModelCostProfile,
   cloneSerializableValue,
+  parseCanvasSizePresetValue,
   type StudioActionHistorySnapshot,
 } from './right-sidebar/right-sidebar-utils';
 import { CanvasResizeModal } from './right-sidebar/CanvasResizeModalImpl';
@@ -127,6 +129,11 @@ export function RightSidebar(): React.JSX.Element {
   const { toast } = useToast();
 
   const switchToControls = React.useCallback(() => setSidebarTab('controls'), []);
+  const {
+    applyCanvasSizePreset,
+    canResizeCanvas,
+    resizeCanvasBusy,
+  } = useRightSidebarCanvasResize();
 
   const flattenedParamsList = useMemo(
     () =>
@@ -462,6 +469,26 @@ export function RightSidebar(): React.JSX.Element {
     setCanvasSizePresetValue(currentCanvasSizeValue);
   }, [currentCanvasSizeValue, projectId]);
 
+  const canApplyCanvasSizePreset = useMemo(
+    () =>
+      canResizeCanvas &&
+      !resizeCanvasBusy &&
+      parseCanvasSizePresetValue(canvasSizePresetValue) !== null,
+    [canResizeCanvas, resizeCanvasBusy, canvasSizePresetValue]
+  );
+
+  const handleApplyCanvasSizePreset = React.useCallback((): void => {
+    void applyCanvasSizePreset({ presetValue: canvasSizePresetValue });
+  }, [applyCanvasSizePreset, canvasSizePresetValue]);
+  const openResizeCanvasModal = React.useCallback((): void => setResizeCanvasOpen(true), []);
+  const closeResizeCanvasModal = React.useCallback((): void => setResizeCanvasOpen(false), []);
+  const closeRequestPreview = React.useCallback((): void => setRequestPreviewOpen(false), []);
+  const closeControls = React.useCallback((): void => setControlsOpen(false), []);
+  const openControls = React.useCallback((): void => setControlsOpen(true), []);
+  const openPromptControl = React.useCallback((): void => setPromptControlOpen(true), []);
+  const closePromptControl = React.useCallback((): void => setPromptControlOpen(false), []);
+  const openRequestPreview = React.useCallback((): void => setRequestPreviewOpen(true), []);
+
   useEffect((): (() => void) | void => {
     if (typeof document === 'undefined') return;
     const resolveHost = (): void => {
@@ -484,14 +511,14 @@ export function RightSidebar(): React.JSX.Element {
       canvasSizePresetValue,
       setCanvasSizePresetValue,
       canvasSizeLabel: projectCanvasSizeLabel,
-      canApplyCanvasSizePreset: true,
+      canApplyCanvasSizePreset,
       canRecenterCanvasImage,
-      onApplyCanvasSizePreset: () => {},
-      onOpenResizeCanvasModal: () => setResizeCanvasOpen(true),
-      closeResizeCanvasModal: () => setResizeCanvasOpen(false),
+      onApplyCanvasSizePreset: handleApplyCanvasSizePreset,
+      onOpenResizeCanvasModal: openResizeCanvasModal,
+      closeResizeCanvasModal,
       quickActionsHostEl,
       quickActionsPanelContent,
-      resizeCanvasDisabled: !projectId.trim(),
+      resizeCanvasDisabled: !canResizeCanvas || resizeCanvasBusy,
       resizeCanvasOpen,
 
       // Action History
@@ -508,7 +535,7 @@ export function RightSidebar(): React.JSX.Element {
       activeImages: activeRequestPreview.images || [],
       activeRequestPreviewEndpoint,
       activeRequestPreviewJson,
-      closeRequestPreview: () => setRequestPreviewOpen(false),
+      closeRequestPreview,
       maskShapeCount: activeRequestPreview.maskShapeCount,
       requestPreviewOpen,
       requestPreviewMode,
@@ -517,7 +544,7 @@ export function RightSidebar(): React.JSX.Element {
       setRequestPreviewMode,
 
       // Quick Actions
-      closeControls: () => setControlsOpen(false),
+      closeControls,
       controlsOpen,
       estimatedGenerationCost,
       estimatedPromptTokens,
@@ -526,10 +553,10 @@ export function RightSidebar(): React.JSX.Element {
       generationLabel,
       hasExtractedControls,
       modelSupportsSequenceGeneration,
-      onOpenControls: () => setControlsOpen(true),
-      onOpenPromptControl: () => setPromptControlOpen(true),
-      closePromptControl: () => setPromptControlOpen(false),
-      onOpenRequestPreview: () => setRequestPreviewOpen(true),
+      onOpenControls: openControls,
+      onOpenPromptControl: openPromptControl,
+      closePromptControl,
+      onOpenRequestPreview: openRequestPreview,
       onRunGeneration: handleRunGeneration,
       onRunSequenceGeneration: handleRunSequenceGeneration,
       promptControlOpen,
@@ -541,10 +568,15 @@ export function RightSidebar(): React.JSX.Element {
       canvasSizePresetOptions,
       canvasSizePresetValue,
       projectCanvasSizeLabel,
+      canApplyCanvasSizePreset,
       canRecenterCanvasImage,
+      handleApplyCanvasSizePreset,
+      openResizeCanvasModal,
+      closeResizeCanvasModal,
       quickActionsHostEl,
       quickActionsPanelContent,
-      projectId,
+      canResizeCanvas,
+      resizeCanvasBusy,
       resizeCanvasOpen,
       actionHistoryEntries.length,
       actionHistoryItems,
@@ -554,11 +586,13 @@ export function RightSidebar(): React.JSX.Element {
       activeRequestPreview,
       activeRequestPreviewEndpoint,
       activeRequestPreviewJson,
+      closeRequestPreview,
       requestPreviewOpen,
       requestPreviewMode,
       promptText,
       sequenceRequestPreview,
       setRequestPreviewMode,
+      closeControls,
       controlsOpen,
       estimatedGenerationCost,
       estimatedPromptTokens,
@@ -567,6 +601,10 @@ export function RightSidebar(): React.JSX.Element {
       generationLabel,
       hasExtractedControls,
       modelSupportsSequenceGeneration,
+      openControls,
+      openPromptControl,
+      closePromptControl,
+      openRequestPreview,
       promptControlOpen,
       handleRunGeneration,
       handleRunSequenceGeneration,

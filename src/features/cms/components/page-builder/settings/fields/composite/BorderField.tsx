@@ -6,7 +6,7 @@ import { useCompositeFieldContext } from '../CompositeFieldContext';
 import { BORDER_STYLE_OPTIONS } from '../settings-field-constants';
 
 export function BorderField(): React.ReactNode {
-  const { value, onChange } = useCompositeFieldContext();
+  const { value, onChange, buildAriaLabel } = useCompositeFieldContext();
   const border = (value as Record<string, unknown>) ?? {
     width: 0,
     style: 'solid',
@@ -29,6 +29,7 @@ export function BorderField(): React.ReactNode {
             }
             className='text-xs h-7'
             min={0}
+            aria-label={buildAriaLabel('width')}
           />
         </div>
         <div className='space-y-0.5'>
@@ -41,6 +42,7 @@ export function BorderField(): React.ReactNode {
             }
             className='text-xs h-7'
             min={0}
+            aria-label={buildAriaLabel('radius')}
           />
         </div>
       </div>
@@ -53,6 +55,7 @@ export function BorderField(): React.ReactNode {
             onValueChange={(v: string): void => update('style', v)}
             options={BORDER_STYLE_OPTIONS}
             triggerClassName='text-xs h-7'
+            ariaLabel={buildAriaLabel('style')}
           />
         </div>
         <div className='space-y-0.5'>
@@ -65,6 +68,7 @@ export function BorderField(): React.ReactNode {
                 update('color', e.target.value)
               }
               className='h-7 w-7 cursor-pointer rounded border border-border/50 bg-transparent p-0.5'
+              aria-label={buildAriaLabel('color picker')}
             />
             <Input
               value={(border['color'] as string) ?? '#4b5563'}
@@ -73,6 +77,7 @@ export function BorderField(): React.ReactNode {
               }
               className='text-xs h-7 font-mono flex-1'
               maxLength={7}
+              aria-label={buildAriaLabel('color value')}
             />
           </div>
         </div>

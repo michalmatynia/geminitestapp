@@ -16,9 +16,9 @@ import {
   KangurButton,
   KangurDivider,
   KangurFeatureHeader,
+  KangurGlassPanel,
   KangurHeadline,
   KangurOptionCardButton,
-  KangurPanel,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import { cn } from '@/shared/utils';
@@ -137,7 +137,7 @@ function AnalogClock({
         )}
         <circle cx='100' cy='100' r='5' fill='#6366f1' />
       </svg>
-      {label && <p className='text-sm font-semibold text-gray-500 text-center'>{label}</p>}
+      {label && <p className='text-center text-sm font-semibold text-slate-500'>{label}</p>}
     </div>
   );
 }
@@ -169,7 +169,7 @@ export const LESSON_SECTIONS: LessonSection[] = [
                 label='Krótka wskazówka na 8'
               />
             </div>
-            <p className='text-gray-600 leading-relaxed max-w-xs'>
+            <p className='max-w-xs leading-relaxed text-slate-600'>
               Patrzymy na <strong className='text-red-600'>krótką wskazówkę</strong>. Ona mówi nam,
               która jest godzina.
             </p>
@@ -204,7 +204,7 @@ export const LESSON_SECTIONS: LessonSection[] = [
                 label='11:00'
               />
             </div>
-            <p className='text-gray-600 leading-relaxed max-w-xs'>
+            <p className='max-w-xs leading-relaxed text-slate-600'>
               W tej sekcji trenujemy tylko odczyt godziny: 1, 6, 11.
             </p>
           </div>
@@ -223,8 +223,8 @@ export const LESSON_SECTIONS: LessonSection[] = [
               label='Jaka to godzina?'
             />
             <KangurLessonCallout accent='rose' className='max-w-xs text-left'>
-              <p className='text-gray-700 font-semibold'>Krok:</p>
-              <p className='text-gray-600 text-sm mt-1'>
+              <p className='font-semibold text-slate-700'>Krok:</p>
+              <p className='mt-1 text-sm text-slate-600'>
                 1. Znajdź krótką wskazówkę.
                 <br />
                 2. Odczytaj numer, na który pokazuje.
@@ -253,7 +253,7 @@ export const LESSON_SECTIONS: LessonSection[] = [
               showHourHand={false}
               label='Długa wskazówka = minuty'
             />
-            <p className='text-gray-600 leading-relaxed max-w-xs'>
+            <p className='max-w-xs leading-relaxed text-slate-600'>
               <strong className='text-green-600'>Długa wskazówka</strong> chodzi po tarczy i mówi,
               ile minut minęło.
             </p>
@@ -288,7 +288,7 @@ export const LESSON_SECTIONS: LessonSection[] = [
                 label='9 = 45 min'
               />
             </div>
-            <p className='text-gray-600 leading-relaxed max-w-xs'>
+            <p className='max-w-xs leading-relaxed text-slate-600'>
               Zapamiętaj: każda kolejna liczba to +5 minut.
             </p>
           </div>
@@ -307,8 +307,8 @@ export const LESSON_SECTIONS: LessonSection[] = [
               label='Jaka to liczba minut?'
             />
             <KangurLessonCallout accent='emerald' className='max-w-xs text-left'>
-              <p className='text-gray-700 font-semibold'>Krok:</p>
-              <p className='text-gray-600 text-sm mt-1'>
+              <p className='font-semibold text-slate-700'>Krok:</p>
+              <p className='mt-1 text-sm text-slate-600'>
                 Długa wskazówka stoi przy 7.
                 <br />7 × 5 = 35 minut.
               </p>
@@ -331,9 +331,9 @@ export const LESSON_SECTIONS: LessonSection[] = [
           <div className='flex flex-col items-center gap-4 text-center'>
             <AnalogClock hours={8} minutes={30} label='Przykład: 8:30' />
             <KangurLessonCallout accent='indigo' className='max-w-xs text-left space-y-2'>
-              <p className='text-gray-700 font-semibold'>Kroki:</p>
-              <p className='text-gray-600 text-sm'>1. Krótka wskazówka: godzina = 8</p>
-              <p className='text-gray-600 text-sm'>2. Długa wskazówka: minuty = 30</p>
+              <p className='font-semibold text-slate-700'>Kroki:</p>
+              <p className='text-sm text-slate-600'>1. Krótka wskazówka: godzina = 8</p>
+              <p className='text-sm text-slate-600'>2. Długa wskazówka: minuty = 30</p>
               <p className='text-indigo-700 font-extrabold'>Wynik: 8:30</p>
             </KangurLessonCallout>
           </div>
@@ -348,7 +348,7 @@ export const LESSON_SECTIONS: LessonSection[] = [
               <AnalogClock hours={5} minutes={15} label='5:15 - kwadrans po 5' />
               <AnalogClock hours={5} minutes={45} label='5:45 - kwadrans do 6' />
             </div>
-            <p className='text-gray-600 leading-relaxed max-w-xs'>
+            <p className='max-w-xs leading-relaxed text-slate-600'>
               Odczytujemy godzinę i minuty jednocześnie.
             </p>
           </div>
@@ -360,7 +360,7 @@ export const LESSON_SECTIONS: LessonSection[] = [
         content: (
           <div className='flex flex-col items-center gap-4 text-center'>
             <div className='text-7xl'>🏆</div>
-            <p className='text-gray-600 leading-relaxed max-w-xs'>
+            <p className='max-w-xs leading-relaxed text-slate-600'>
               Brawo! Umiesz:
               <br />
               🔴 czytać godziny,
@@ -546,14 +546,15 @@ export default function ClockLesson(): React.JSX.Element {
           className='self-start'
           size='sm'
           type='button'
-          variant='ghost'
+          variant='surface'
         >
           <ArrowLeft className='w-4 h-4' /> Wróć do lekcji
         </KangurButton>
-        <KangurPanel
-          className='w-full flex flex-col items-center gap-5'
+        <KangurGlassPanel
+          className='flex w-full flex-col items-center gap-5'
+          data-testid='clock-lesson-training-shell'
           padding='xl'
-          variant='soft'
+          surface='solid'
         >
           <KangurFeatureHeader
             accent='indigo'
@@ -564,7 +565,7 @@ export default function ClockLesson(): React.JSX.Element {
             title='Ćwiczenie z zegarem'
           />
           <ClockTrainingGame onFinish={handleBack} />
-        </KangurPanel>
+        </KangurGlassPanel>
       </div>
     );
   }
@@ -577,7 +578,7 @@ export default function ClockLesson(): React.JSX.Element {
           className='self-start'
           size='sm'
           type='button'
-          variant='ghost'
+          variant='surface'
         >
           <ArrowLeft className='w-4 h-4' /> Wróć do lekcji
         </KangurButton>
@@ -590,11 +591,12 @@ export default function ClockLesson(): React.JSX.Element {
         </KangurLessonCallout>
 
         {LESSON_SECTIONS.map((section, sectionIndex) => (
-          <KangurPanel
+          <KangurGlassPanel
             key={section.id}
-            className='w-full flex flex-col gap-3 border-indigo-100/80'
+            className='flex w-full flex-col gap-3'
+            data-testid={`clock-lesson-section-shell-${section.id}`}
             padding='lg'
-            variant='soft'
+            surface='solid'
           >
             {(() => {
               const status = getSectionStatus(sectionIndex, false);
@@ -620,7 +622,7 @@ export default function ClockLesson(): React.JSX.Element {
                     <KangurHeadline accent='indigo' as='h3' size='xs'>
                       {section.title}
                     </KangurHeadline>
-                    <p className='text-sm text-gray-500 mt-1'>{section.subtitle}</p>
+                    <p className='mt-1 text-sm text-slate-500'>{section.subtitle}</p>
                     <KangurStatusChip
                       accent={status.accent}
                       data-testid={`clock-lesson-section-status-${section.id}`}
@@ -646,7 +648,7 @@ export default function ClockLesson(): React.JSX.Element {
                 </KangurOptionCardButton>
               );
             })()}
-          </KangurPanel>
+          </KangurGlassPanel>
         ))}
       </div>
     );
@@ -659,7 +661,7 @@ export default function ClockLesson(): React.JSX.Element {
         className='self-start'
         size='sm'
         type='button'
-        variant='ghost'
+        variant='surface'
       >
         <ArrowLeft className='w-4 h-4' /> Wróć do lekcji
       </KangurButton>
@@ -672,11 +674,12 @@ export default function ClockLesson(): React.JSX.Element {
         const isLocked = !unlockedSections[sectionIndex];
 
         return (
-          <KangurPanel
+          <KangurGlassPanel
             key={section.id}
-            className='w-full flex flex-col gap-3 border-indigo-100/80'
+            className='flex w-full flex-col gap-3'
+            data-testid={`clock-lesson-section-shell-${section.id}`}
             padding='lg'
-            variant='soft'
+            surface='solid'
           >
             <KangurOptionCardButton
               accent='indigo'
@@ -698,7 +701,7 @@ export default function ClockLesson(): React.JSX.Element {
                 <KangurHeadline accent='indigo' as='h3' size='xs'>
                   {section.title}
                 </KangurHeadline>
-                <p className='text-sm text-gray-500 mt-1'>{section.subtitle}</p>
+                <p className='mt-1 text-sm text-slate-500'>{section.subtitle}</p>
                 <KangurStatusChip
                   accent={status.accent}
                   data-testid={`clock-lesson-section-status-${section.id}`}
@@ -779,7 +782,7 @@ export default function ClockLesson(): React.JSX.Element {
                 </AnimatePresence>
 
                 <div className='flex gap-3 w-full'>
-                  <KangurButton onClick={goPrev} size='lg' type='button' variant='secondary'>
+                  <KangurButton onClick={goPrev} size='lg' type='button' variant='surface'>
                     <ArrowLeft className='w-4 h-4' />
                     {openSection === 0 && activeSlideIndex === 0 ? 'Wróć' : 'Wstecz'}
                   </KangurButton>
@@ -805,7 +808,7 @@ export default function ClockLesson(): React.JSX.Element {
                 </div>
               </div>
             )}
-          </KangurPanel>
+          </KangurGlassPanel>
         );
       })}
     </div>

@@ -3,10 +3,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
-const { ensureKangurLessonNarrationAudioMock, resolveKangurActorMock } = vi.hoisted(() => ({
-  ensureKangurLessonNarrationAudioMock: vi.fn(),
-  resolveKangurActorMock: vi.fn(),
-}));
+const { ensureKangurLessonNarrationAudioMock, resolveKangurActorMock, logKangurServerEventMock } =
+  vi.hoisted(() => ({
+    ensureKangurLessonNarrationAudioMock: vi.fn(),
+    resolveKangurActorMock: vi.fn(),
+    logKangurServerEventMock: vi.fn(),
+  }));
 
 vi.mock('@/features/kangur/server', () => ({
   resolveKangurActor: resolveKangurActorMock,
@@ -14,6 +16,10 @@ vi.mock('@/features/kangur/server', () => ({
 
 vi.mock('@/features/kangur/tts/server', () => ({
   ensureKangurLessonNarrationAudio: ensureKangurLessonNarrationAudioMock,
+}));
+
+vi.mock('@/features/kangur/observability/server', () => ({
+  logKangurServerEvent: logKangurServerEventMock,
 }));
 
 import { postKangurTtsHandler } from './handler';
@@ -102,6 +108,13 @@ describe('kangur tts handler', () => {
       voice: 'coral',
       forceRegenerate: false,
     });
+    expect(logKangurServerEventMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'kangur.tts.generate',
+        service: 'kangur.tts',
+        statusCode: 200,
+      })
+    );
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
       mode: 'audio',
@@ -121,6 +134,54 @@ describe('kangur tts handler', () => {
     await expect(
       postKangurTtsHandler(createPostRequest('{invalid-json'), createRequestContext())
     ).rejects.toThrow('Invalid JSON payload.');
+  });
+
+  it('emits a dedicated fallback log when browser narration is used', async () => {
+    ensureKangurLessonNarrationAudioMock.mockResolvedValueOnce({
+      mode: 'fallback',
+      reason: 'tts_unavailable',
+      message: 'Neural narration could not be prepared right now.',
+      segments: [
+        {
+          id: 'clock-segment-1',
+          text: 'Nauka zegara.',
+        },
+      ],
+    });
+
+    const response = await postKangurTtsHandler(
+      createPostRequest(
+        JSON.stringify({
+          script: {
+            lessonId: 'clock',
+            title: 'Nauka zegara',
+            description: 'Opis lekcji',
+            locale: 'pl-PL',
+            segments: [{ id: 'clock-segment-1', text: 'Nauka zegara.' }],
+          },
+          voice: 'coral',
+        })
+      ),
+      createRequestContext()
+    );
+
+    expect(logKangurServerEventMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'kangur.tts.fallback',
+        level: 'warn',
+        context: expect.objectContaining({
+          reason: 'tts_unavailable',
+          segmentCount: 1,
+        }),
+      })
+    );
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({
+        mode: 'fallback',
+        reason: 'tts_unavailable',
+      })
+    );
   });
 
   it('rejects unauthenticated access', async () => {

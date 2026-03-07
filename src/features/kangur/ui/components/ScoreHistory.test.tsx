@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { buildKangurEmbeddedBasePath } from '@/features/kangur/config/routing';
@@ -26,6 +26,11 @@ vi.mock('@/features/kangur/observability/client', () => ({
 }));
 
 import ScoreHistory from '@/features/kangur/ui/components/ScoreHistory';
+
+const getParagraphByTextContent = (scope: HTMLElement, snippet: string): HTMLElement =>
+  within(scope).getByText(
+    (_, element) => element?.tagName === 'P' && element.textContent?.includes(snippet) === true
+  );
 
 const createScore = (overrides: Partial<KangurScoreRecord>): KangurScoreRecord => ({
   id: 'score-1',
@@ -127,6 +132,12 @@ describe('ScoreHistory', () => {
       'soft-card',
       'border-sky-300'
     );
+    expect(
+      within(screen.getByTestId('score-history-recent-row-score-3')).getByText('Dzielenie')
+    ).toHaveClass('text-slate-700');
+    expect(
+      getParagraphByTextContent(screen.getByTestId('score-history-recent-row-score-3'), '42s')
+    ).toHaveClass('text-slate-400');
     expect(screen.getByTestId('score-history-recent-score-score-2')).toHaveClass(
       'border-emerald-200',
       'bg-emerald-100'

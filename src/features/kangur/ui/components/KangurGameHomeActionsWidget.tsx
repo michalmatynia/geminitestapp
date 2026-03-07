@@ -50,6 +50,21 @@ const HOME_ACTION_TONE_STYLES: Record<
   },
 };
 
+const KANGUR_ADMIN_BASE_PATH = '/admin/kangur';
+
+const resolveHomeActionDocId = (actionId: string): string => {
+  switch (actionId) {
+    case 'lessons':
+      return 'home_lessons_action';
+    case 'kangur':
+      return 'home_kangur_exam_action';
+    case 'observability':
+      return 'home_admin_observability_action';
+    default:
+      return 'home_quick_practice_action';
+  }
+};
+
 function KangurHomeActionCard({
   action,
   index,
@@ -57,12 +72,7 @@ function KangurHomeActionCard({
   action: HomeAction;
   index: number;
 }): React.JSX.Element {
-  const docId =
-    action.id === 'lessons'
-      ? 'home_lessons_action'
-      : action.id === 'kangur'
-        ? 'home_kangur_exam_action'
-        : 'home_quick_practice_action';
+  const docId = resolveHomeActionDocId(action.id);
   const tone = HOME_ACTION_TONE_STYLES[action.tone];
   const wrapperClassName = cn(
     'relative home-action-featured-shell',
@@ -156,6 +166,7 @@ function KangurHomeActionCard({
 export function KangurGameHomeActionsWidget(): React.JSX.Element | null {
   const { basePath, canStartFromHome, handleStartGame, screen, setScreen } =
     useKangurGameRuntime();
+  const isAdminStudio = basePath.startsWith(KANGUR_ADMIN_BASE_PATH);
 
   if (screen !== 'home') {
     return null;
@@ -195,6 +206,17 @@ export function KangurGameHomeActionsWidget(): React.JSX.Element | null {
       disabled: !canStartFromHome,
     },
   ];
+
+  if (isAdminStudio) {
+    actions.push({
+      id: 'observability',
+      label: 'Obserwowalność',
+      symbol: '📡',
+      trailingSymbol: '🧭',
+      tone: 'mist',
+      href: `${KANGUR_ADMIN_BASE_PATH}/observability`,
+    });
+  }
 
   return (
     <KangurGlassPanel

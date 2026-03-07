@@ -53,7 +53,7 @@ describe('master-folder-tree-engine', () => {
     expect(moved?.path.includes('/')).toBe(false);
   });
 
-  it('blocks file drop to root when profile disallows file-to-root', () => {
+  it('allows file drop to root when the profile default allows it', () => {
     const nodes: MasterTreeNode[] = [
       node({
         id: 'cat-root',
@@ -78,9 +78,9 @@ describe('master-folder-tree-engine', () => {
       profile: defaultFolderTreeProfilesV2.product_categories,
     });
 
-    expect(result.ok).toBe(false);
-    if (result.ok) return;
-    expect(result.code).toBe('PROFILE_RULE_BLOCKED');
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(findNode(result.nodes, 'file-1')?.parentId).toBeNull();
   });
 
   it('rejects drop inside non-folder targets', () => {

@@ -173,6 +173,15 @@ export function SelectSimple({
   const hasValue =
     value !== undefined && normalizedOptions.some((option) => option.value === value);
   const safeValue = hasValue && typeof value === 'string' ? value : '';
+  const resolvedAriaLabel = React.useMemo(() => {
+    if (ariaLabel?.trim()) {
+      return ariaLabel.trim();
+    }
+    if (placeholder.trim()) {
+      return placeholder.trim();
+    }
+    return 'Select option';
+  }, [ariaLabel, placeholder]);
   const runtimeValue = React.useMemo<SelectSimpleRuntimeValue>(
     () => ({
       safeValue,
@@ -181,7 +190,7 @@ export function SelectSimple({
       placeholder,
       triggerClassName,
       contentClassName,
-      ariaLabel,
+      ariaLabel: resolvedAriaLabel,
       size,
       variant,
       dataDocId,
@@ -195,7 +204,7 @@ export function SelectSimple({
       placeholder,
       triggerClassName,
       contentClassName,
-      ariaLabel,
+      resolvedAriaLabel,
       size,
       variant,
       dataDocId,

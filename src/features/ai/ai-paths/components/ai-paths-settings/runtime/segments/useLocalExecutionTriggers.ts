@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import type { AiNode, RuntimeState, RuntimePortValues } from '@/shared/lib/ai-paths';
 import { TRIGGER_EVENTS, evaluateRunPreflight, stableStringify } from '@/shared/lib/ai-paths';
 
@@ -43,16 +43,24 @@ export function useLocalExecutionTriggers(
     ) => void;
   }
 ) {
+  // Stable refs — callbacks read the latest values without needing them in deps.
+  const argsRef = useRef(args);
+  argsRef.current = args;
+  const loopRef = useRef(loop);
+  loopRef.current = loop;
+  const outcomeRef = useRef(outcome);
+  outcomeRef.current = outcome;
   const getConnectedSimulationNodesForTrigger = useCallback(
     (triggerNodeId: string): AiNode[] => {
+      const { normalizedNodes, sanitizedEdges } = argsRef.current;
       const simulationById = new Map<string, AiNode>(
-        args.normalizedNodes
+        normalizedNodes
           .filter((node: AiNode): boolean => node.type === 'simulation')
           .map((node: AiNode): [string, AiNode] => [node.id, node])
       );
       const connected: AiNode[] = [];
       const added = new Set<string>();
-      args.sanitizedEdges.forEach((edge) => {
+      sanitizedEdges.forEach((edge) => {
         if (edge.to !== triggerNodeId || !edge.from) return;
         const toPort = (edge.toPort?.trim() || 'context').toLowerCase();
         if (toPort !== 'context') return;
@@ -63,19 +71,20 @@ export function useLocalExecutionTriggers(
       });
       return connected;
     },
-    [args.normalizedNodes, args.sanitizedEdges]
+    []
   );
 
   const getConnectedFetcherNodesForTrigger = useCallback(
     (triggerNodeId: string): AiNode[] => {
+      const { normalizedNodes, sanitizedEdges } = argsRef.current;
       const fetcherById = new Map<string, AiNode>(
-        args.normalizedNodes
+        normalizedNodes
           .filter((node: AiNode): boolean => node.type === 'fetcher')
           .map((node: AiNode): [string, AiNode] => [node.id, node])
       );
       const connected: AiNode[] = [];
       const added = new Set<string>();
-      args.sanitizedEdges.forEach((edge) => {
+      sanitizedEdges.forEach((edge) => {
         if (edge.from !== triggerNodeId || !edge.to) return;
         const fromPort = (edge.fromPort?.trim() || '').toLowerCase();
         const toPort = (edge.toPort?.trim() || '').toLowerCase();
@@ -88,7 +97,7 @@ export function useLocalExecutionTriggers(
       });
       return connected;
     },
-    [args.normalizedNodes, args.sanitizedEdges]
+    []
   );
 
   const resolveSimulationContextForNode = useCallback(
@@ -96,6 +105,7 @@ export function useLocalExecutionTriggers(
       simulationNode: AiNode,
       contextFallback?: Record<string, unknown> | null
     ): Promise<Record<string, unknown> | null> => {
+      const args = argsRef.current;
       const configuredEntityId =
         simulationNode.config?.simulation?.entityId?.trim() ||
         simulationNode.config?.simulation?.productId?.trim() ||
@@ -129,7 +139,7 @@ export function useLocalExecutionTriggers(
         ...(entityType === 'product' && entity ? { product: entity } : {}),
       };
     },
-    [args.fetchEntityByType, args.toast]
+    []
   );
 
   const runGraphForTrigger = useCallback(
@@ -139,6 +149,9 @@ export function useLocalExecutionTriggers(
       contextOverride?: Record<string, unknown>,
       options?: { mode?: 'run' | 'step' }
     ): Promise<void> => {
+      const args = argsRef.current;
+      const loop = loopRef.current;
+      const outcome = outcomeRef.current;
       const mode = options?.mode ?? 'run';
       const triggerDisplayName = triggerNode.title ?? triggerNode.id;
       const shouldAnnounceLaunch = mode === 'run' && event !== undefined;
@@ -731,9 +744,6 @@ export function useLocalExecutionTriggers(
       }
     },
     [
-      args,
-      loop,
-      outcome,
       getConnectedSimulationNodesForTrigger,
       getConnectedFetcherNodesForTrigger,
       resolveSimulationContextForNode,
@@ -763,16 +773,18 @@ export function useLocalExecutionTriggers(
   );
 
   const handleCancelLocalRun = useCallback((): void => {
-    if (args.abortControllerRef.current) {
-      args.abortControllerRef.current.abort();
+    const a = argsRef.current;
+    if (a.abortControllerRef.current) {
+      a.abortControllerRef.current.abort();
     }
-    args.pauseRequestedRef.current = false;
-    args.runLoopActiveRef.current = false;
-    args.runInFlightRef.current = false;
-    args.setRunStatus('idle');
-  }, [args]);
+    a.pauseRequestedRef.current = false;
+    a.runLoopActiveRef.current = false;
+    a.runInFlightRef.current = false;
+    a.setRunStatus('idle');
+  }, []);
 
   const handleClearLocalRun = useCallback((): void => {
+    const args = argsRef.current;
     handleCancelLocalRun();
     args.resetRuntimeNodeStatuses({});
     const clearedState: RuntimeState = {
@@ -796,10 +808,11 @@ export function useLocalExecutionTriggers(
     args.triggerContextRef.current = null;
     args.lastTriggerNodeIdRef.current = null;
     args.lastTriggerEventRef.current = null;
-  }, [args, handleCancelLocalRun]);
+  }, [handleCancelLocalRun]);
 
   const handleSyncSimulationOutputs = useCallback(
     (simulationNode: AiNode, context: Record<string, unknown>): void => {
+      const args = argsRef.current;
       const simulationOutputs = buildSimulationOutputsFromContext(context);
       args.setRuntimeState((prev: RuntimeState): RuntimeState => {
         const nextSimulationOutputs = mergeRuntimeNodeOutputsForStatus({
@@ -828,7 +841,7 @@ export function useLocalExecutionTriggers(
         message: `Node ${simulationNode.title ?? simulationNode.id} synced with live context.`,
       });
     },
-    [args]
+    []
   );
 
   const handleTriggerConnectedSimulation = useCallback(

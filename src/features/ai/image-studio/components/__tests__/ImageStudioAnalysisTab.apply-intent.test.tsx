@@ -9,6 +9,7 @@ import {
   saveImageStudioAnalysisPlanSnapshot,
   type ImageStudioAnalysisPlanSnapshot,
 } from '@/features/ai/image-studio/utils/analysis-bridge';
+import { expectNoAxeViolations } from '@/testing/accessibility/axe';
 
 import { ImageStudioAnalysisTab } from '../ImageStudioAnalysisTab';
 
@@ -205,6 +206,22 @@ describe('ImageStudioAnalysisTab apply intent routing', () => {
     expect(mocks.setSelectedSlotId).toHaveBeenCalledWith('slot-2');
     expect(mocks.setWorkingSlotId).toHaveBeenCalledWith('slot-2');
     expect(mocks.switchToControls).toHaveBeenCalledTimes(1);
+  });
+
+  it('has no obvious accessibility violations when a snapshot is ready to apply', async () => {
+    const slot2Url = 'https://example.test/slot-2.png';
+    saveImageStudioAnalysisPlanSnapshot(
+      'project-alpha',
+      createSnapshot('slot-2', createSlotSourceSignature('slot-2', slot2Url))
+    );
+
+    const { container } = render(<ImageStudioAnalysisTab />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('snapshot-slot')).toHaveTextContent('slot-2');
+    });
+
+    await expectNoAxeViolations(container);
   });
 
   it('supports keyboard focus on apply intent action', async () => {

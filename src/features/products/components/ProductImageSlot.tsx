@@ -182,14 +182,14 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={displayUrl}
-                  alt={`Product Image ${index + 1}`}
+                  alt={`Product ${index + 1}`}
                   className='h-full w-full rounded-md object-cover pointer-events-none'
                   draggable={false}
                 />
               ) : (
                 <NextImage
                   src={displayUrl}
-                  alt={`Product Image ${index + 1}`}
+                  alt={`Product ${index + 1}`}
                   width={previewSize}
                   height={previewSize}
                   sizes={`${previewSize}px`}

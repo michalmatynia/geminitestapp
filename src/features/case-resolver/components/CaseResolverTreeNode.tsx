@@ -18,6 +18,7 @@ import {
 } from '../master-tree';
 import { parseString, isCaseResolverDraggableFileNode } from './CaseResolverFolderTree.helpers';
 import { Button, Badge, Input } from '@/shared/ui';
+import { focusOnMount } from '@/shared/utils/focus-on-mount';
 import { cn } from '@/shared/utils';
 import { useCaseResolverTreeNodeRuntimeContext } from './CaseResolverTreeNodeRuntimeContext';
 
@@ -248,7 +249,8 @@ export function CaseResolverTreeNode(props: CaseResolverTreeNodeProps): React.JS
         }
       }}
     >
-      <span
+      <button
+        type='button'
         data-master-tree-drag-handle='true'
         onPointerDown={(): void => {
           if (!isDraggableFileNode) return;
@@ -261,10 +263,15 @@ export function CaseResolverTreeNode(props: CaseResolverTreeNodeProps): React.JS
           armDragHandle(node.id);
         }}
         onMouseUp={releaseDragHandle}
+        onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+          event.stopPropagation();
+        }}
+        aria-label={isDraggableFileNode ? 'Drag file node' : 'Drag unavailable'}
+        tabIndex={isDraggableFileNode ? 0 : -1}
         className={`inline-flex size-5 shrink-0 items-center justify-center rounded ${
           isDraggableFileNode
-            ? `cursor-grab active:cursor-grabbing ${hoverOnlyControlClass}`
-            : 'cursor-default'
+            ? `cursor-grab border-0 bg-transparent p-0 active:cursor-grabbing ${hoverOnlyControlClass}`
+            : 'cursor-default border-0 bg-transparent p-0'
         }`}
       >
         <DragHandleIcon
@@ -276,7 +283,7 @@ export function CaseResolverTreeNode(props: CaseResolverTreeNodeProps): React.JS
               : 'text-gray-500'
           }`}
         />
-      </span>
+      </button>
       {canToggle ? (
         <Button
           variant='ghost'
@@ -317,7 +324,7 @@ export function CaseResolverTreeNode(props: CaseResolverTreeNodeProps): React.JS
       <div className='min-w-0 flex flex-1 items-center gap-1'>
         {isRenaming ? (
           <Input
-            autoFocus
+            ref={focusOnMount}
             value={renameDraft}
             onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
               onUpdateRenameDraft(event.target.value);

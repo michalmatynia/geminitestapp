@@ -7,7 +7,9 @@ import type { PreviewBlockItemProps, PreviewBlockProps } from '@/shared/contract
 import type { BlockInstance } from '@/shared/contracts/cms';
 
 import { BlockContextProvider, useBlockContext } from './context/BlockContext';
-import { usePreviewEditorState } from './context/PreviewEditorContext';
+import { resolveNodeLabel } from './InspectorOverlay';
+import { PreviewNodeSelectionButton } from './PreviewNodeSelectionButton';
+import { usePreviewEditorActions, usePreviewEditorState } from './context/PreviewEditorContext';
 import { normalizeSlideshowAnimationType } from './preview-utils';
 import { Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
@@ -259,7 +261,8 @@ export function PreviewSlideshowBlock({
 }: PreviewBlockProps): React.ReactNode {
   const { stretch: contextStretch } = useBlockContext();
   const resolvedStretch = stretch ?? contextStretch ?? false;
-  const { inspectorSettings, pauseSlideshowOnHoverInEditor } = usePreviewEditorState();
+  const { selectedNodeId, inspectorSettings, pauseSlideshowOnHoverInEditor } = usePreviewEditorState();
+  const { onSelect } = usePreviewEditorActions();
   const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
   const transition = (block.settings['transition'] as string) || 'fade';
   const transitionDuration = (block.settings['transitionDuration'] as number) || 700;
@@ -300,6 +303,13 @@ export function PreviewSlideshowBlock({
     }
   }, [activeIndex, slideCount]);
 
+  useEffect((): void => {
+    const selectedFrameIndex = frames.findIndex((frame) => frame.id === selectedNodeId);
+    if (selectedFrameIndex >= 0 && selectedFrameIndex !== currentActiveIndex) {
+      setActiveIndex(selectedFrameIndex);
+    }
+  }, [currentActiveIndex, frames, selectedNodeId]);
+
   useEffect((): (() => void) | undefined => {
     if (!autoplay || isPaused || slideCount <= 1 || autoplaySpeed <= 0) return undefined;
     const interval = window.setInterval(goToNext, autoplaySpeed);
@@ -335,6 +345,7 @@ export function PreviewSlideshowBlock({
           >
             {frames.map((frame: BlockInstance, idx: number) => {
               const frameSettings = frame.settings ?? {};
+              const frameLabel = resolveNodeLabel('Slideshow Frame', frameSettings['label']);
               const backgroundColor = (frameSettings['backgroundColor'] as string) || '';
               const contentAlignment = (frameSettings['contentAlignment'] as string) || 'center';
               const verticalAlignment = (frameSettings['verticalAlignment'] as string) || 'center';
@@ -377,6 +388,7 @@ export function PreviewSlideshowBlock({
                   : frameAnimEasing;
               const stagger = elementAnimationStagger;
               const isActiveFrame = idx === currentActiveIndex;
+              const isFrameSelected = selectedNodeId === frame.id;
               const frameChildren = frame.blocks ?? [];
 
               return (
@@ -396,7 +408,18 @@ export function PreviewSlideshowBlock({
                       }
                   }
                 >
-                  <div className='flex h-full w-full flex-col' style={frameStyle}>
+                  <div className='relative group flex h-full w-full flex-col' style={frameStyle}>
+                    {showEditorChrome ? (
+                      <PreviewNodeSelectionButton
+                        label={`Select block ${frameLabel}`}
+                        selected={isFrameSelected}
+                        onSelect={() => {
+                          setActiveIndex(idx);
+                          onSelect?.(frame.id);
+                        }}
+                        className='left-2 top-2 size-6'
+                      />
+                    ) : null}
                     <BlockContextProvider value={getParentBlockContextValue(frame.id)}>
                       {frameChildren.length > 0 ? (
                         frameChildren.map((child: BlockInstance, blockIdx: number) => {

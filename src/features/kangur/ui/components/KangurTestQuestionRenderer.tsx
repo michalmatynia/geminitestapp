@@ -39,7 +39,7 @@ export function KangurTestQuestionRenderer({
       {/* Header */}
       {questionIndex !== undefined && resolvedTotalQuestions !== undefined ? (
         <div className='flex items-center justify-between'>
-          <span className='text-xs font-semibold uppercase tracking-wide text-gray-400'>
+          <span className='text-xs font-semibold uppercase tracking-wide text-slate-400'>
             Question {questionIndex + 1} / {resolvedTotalQuestions}
           </span>
           <KangurStatusChip accent='slate' size='sm'>
@@ -49,7 +49,7 @@ export function KangurTestQuestionRenderer({
       ) : null}
 
       {/* Prompt */}
-      <p className='text-sm font-medium leading-relaxed text-gray-800'>{question.prompt}</p>
+      <p className='text-sm font-medium leading-relaxed text-slate-800'>{question.prompt}</p>
 
       {/* Illustration */}
       {question.illustration.type !== 'none' ? (

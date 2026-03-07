@@ -1,0 +1,170 @@
+{
+  "generatedAt": "2026-03-07T13:05:55.016Z",
+  "strictMode": false,
+  "failOnWarningBudgetExceed": false,
+  "summary": {
+    "total": 11,
+    "passed": 11,
+    "failed": 0,
+    "actWarnings": 0,
+    "warningBudget": 10,
+    "warningBudgetStatus": "ok",
+    "warningBudgetEnforcement": "telemetry-only"
+  },
+  "results": [
+    {
+      "id": "app-shell-a11y",
+      "name": "App Shell Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "src/app/__tests__/shell-accessibility.test.tsx"
+      ],
+      "command": "npx vitest run --project unit src/app/__tests__/shell-accessibility.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 1672,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/app/__tests__/shell-accessibility.test.tsx (2 tests) 118ms\n\n Test Files  1 passed (1)\n      Tests  2 passed (2)\n   Start at  14:04:07\n   Duration  959ms (transform 226ms, setup 168ms, import 309ms, tests 118ms, environment 278ms)"
+    },
+    {
+      "id": "auth-signin-a11y",
+      "name": "Auth Sign-In Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "__tests__/features/auth/pages/signin-page.test.tsx"
+      ],
+      "command": "npx vitest run --project unit __tests__/features/auth/pages/signin-page.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 2926,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/auth/pages/signin-page.test.tsx (10 tests) 636ms\n\n Test Files  1 passed (1)\n      Tests  10 passed (10)\n   Start at  14:04:08\n   Duration  2.25s (transform 731ms, setup 169ms, import 1.07s, tests 636ms, environment 283ms)"
+    },
+    {
+      "id": "products-edit-a11y",
+      "name": "Products Edit Form Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "__tests__/features/products/pages/product-edit-page.test.tsx"
+      ],
+      "command": "npx vitest run --project unit __tests__/features/products/pages/product-edit-page.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 4574,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/products/pages/product-edit-page.test.tsx (7 tests) 1586ms\n     ✓ renders the form with product data in the General tab  349ms\n     ✓ has no obvious accessibility violations in the default edit form view  365ms\n     ✓ enables Update after SKU value changes  302ms\n\n Test Files  1 passed (1)\n      Tests  7 passed (7)\n   Start at  14:04:11\n   Duration  3.90s (transform 1.30s, setup 167ms, import 1.78s, tests 1.59s, environment 284ms)"
+    },
+    {
+      "id": "image-studio-a11y",
+      "name": "Image Studio UI Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx"
+      ],
+      "command": "npx vitest run --project unit src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 3025,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx (7 tests) 517ms\n\n Test Files  1 passed (1)\n      Tests  7 passed (7)\n   Start at  14:04:16\n   Duration  2.32s (transform 911ms, setup 170ms, import 1.27s, tests 517ms, environment 279ms)"
+    },
+    {
+      "id": "ai-paths-a11y",
+      "name": "AI Paths Canvas Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx"
+      ],
+      "command": "npx vitest run --project unit src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 3475,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx (4 tests) 189ms\n\n Test Files  1 passed (1)\n      Tests  4 passed (4)\n   Start at  14:04:19\n   Duration  2.80s (transform 1.54s, setup 167ms, import 2.08s, tests 189ms, environment 277ms)"
+    },
+    {
+      "id": "case-resolver-a11y",
+      "name": "Case Resolver Header Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx"
+      ],
+      "command": "npx vitest run --project unit src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 2665,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx (10 tests) 272ms\n\n Test Files  1 passed (1)\n      Tests  10 passed (10)\n   Start at  14:04:22\n   Duration  2.00s (transform 880ms, setup 165ms, import 1.20s, tests 272ms, environment 278ms)"
+    },
+    {
+      "id": "kangur-profile-a11y",
+      "name": "Kangur Profile Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "__tests__/features/kangur/kangur-accessibility-smoke.test.tsx"
+      ],
+      "command": "npx vitest run --project unit __tests__/features/kangur/kangur-accessibility-smoke.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 2640,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/kangur/kangur-accessibility-smoke.test.tsx (4 tests) 567ms\n\n Test Files  1 passed (1)\n      Tests  4 passed (4)\n   Start at  14:04:25\n   Duration  1.99s (transform 589ms, setup 169ms, import 892ms, tests 567ms, environment 276ms)"
+    },
+    {
+      "id": "public-auth-routes-browser-a11y",
+      "name": "Public Auth Route Accessibility",
+      "runner": "playwright",
+      "tests": [
+        "e2e/features/accessibility/public-auth-accessibility.spec.ts"
+      ],
+      "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/public-auth-accessibility.spec.ts",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 25612,
+      "actWarnings": 0,
+      "output": "Running 2 tests using 1 worker\n\n(node:41863) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:41863) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✓  1 e2e/features/accessibility/public-auth-accessibility.spec.ts:8:3 › /auth/signin exposes skip navigation and passes the accessibility smoke scan (785ms)\n  ✓  2 e2e/features/accessibility/public-auth-accessibility.spec.ts:8:3 › /auth/register exposes skip navigation and passes the accessibility smoke scan (736ms)\n\n  2 passed (24.8s)"
+    },
+    {
+      "id": "admin-dashboard-browser-a11y",
+      "name": "Admin Dashboard Accessibility",
+      "runner": "playwright",
+      "tests": [
+        "e2e/features/accessibility/admin-dashboard-accessibility.spec.ts"
+      ],
+      "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/admin-dashboard-accessibility.spec.ts",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 20333,
+      "actWarnings": 0,
+      "output": "Running 1 test using 1 worker\n\n(node:43611) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:43611) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✓  1 e2e/features/accessibility/admin-dashboard-accessibility.spec.ts:6:1 › admin dashboard exposes shell landmarks and passes the accessibility smoke scan (4.4s)\n\n  1 passed (19.4s)"
+    },
+    {
+      "id": "products-list-browser-a11y",
+      "name": "Products List Accessibility",
+      "runner": "playwright",
+      "tests": [
+        "e2e/features/accessibility/products-list-accessibility.spec.ts"
+      ],
+      "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/products-list-accessibility.spec.ts",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 27160,
+      "actWarnings": 0,
+      "output": "Running 1 test using 1 worker\n\n(node:44825) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:44825) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✓  1 e2e/features/accessibility/products-list-accessibility.spec.ts:6:1 › products list exposes search and actions accessibly and passes the accessibility smoke scan (5.8s)\n\n  1 passed (26.3s)"
+    },
+    {
+      "id": "cms-pages-browser-a11y",
+      "name": "CMS Pages Accessibility",
+      "runner": "playwright",
+      "tests": [
+        "e2e/features/accessibility/cms-pages-accessibility.spec.ts"
+      ],
+      "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/cms-pages-accessibility.spec.ts",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 14566,
+      "actWarnings": 0,
+      "output": "Running 1 test using 1 worker\n\n(node:46667) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:46667) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✓  1 e2e/features/accessibility/cms-pages-accessibility.spec.ts:6:1 › cms pages list exposes filters and actions accessibly and passes the accessibility smoke scan (5.7s)\n\n  1 passed (13.7s)"
+    }
+  ]
+}

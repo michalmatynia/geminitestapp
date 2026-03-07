@@ -16,19 +16,25 @@ import {
   Card,
   Hint,
 } from '@/shared/ui';
-import { useAiPathsSettingsOrchestrator } from '../ai-paths-settings/AiPathsSettingsOrchestratorContext';
+import {
+  DOCS_OVERVIEW_SNIPPET,
+  DOCS_WIRING_SNIPPET,
+  DOCS_DESCRIPTION_SNIPPET,
+  DOCS_JOBS_SNIPPET,
+} from '@/shared/lib/ai-paths/core/definitions/docs-snippets';
+import { useAiPathsSettingsDocsActions } from '../ai-paths-settings/useAiPathsSettingsDocsActions';
+import { useAiPathsErrorState } from '../ai-paths-settings/hooks/useAiPathsErrorState';
 import { buildFullDocumentationClipboardText } from './docs-utils';
 
 export function DocsTabPanel(): React.JSX.Element {
-  const orchestrator = useAiPathsSettingsOrchestrator();
   const { toast } = useToast();
-  const resolvedDocsOverviewSnippet = orchestrator.docsOverviewSnippet;
-  const resolvedDocsWiringSnippet = orchestrator.docsWiringSnippet;
-  const resolvedDocsDescriptionSnippet = orchestrator.docsDescriptionSnippet;
-  const resolvedDocsJobsSnippet = orchestrator.docsJobsSnippet;
-  const handleCopyDocsWiring = orchestrator.handleCopyDocsWiring;
-  const handleCopyDocsDescription = orchestrator.handleCopyDocsDescription;
-  const handleCopyDocsJobs = orchestrator.handleCopyDocsJobs;
+  const { reportAiPathsError } = useAiPathsErrorState({ toast });
+  const { handleCopyDocsWiring, handleCopyDocsDescription, handleCopyDocsJobs } =
+    useAiPathsSettingsDocsActions({ toast, reportAiPathsError });
+  const resolvedDocsOverviewSnippet = DOCS_OVERVIEW_SNIPPET;
+  const resolvedDocsWiringSnippet = DOCS_WIRING_SNIPPET;
+  const resolvedDocsDescriptionSnippet = DOCS_DESCRIPTION_SNIPPET;
+  const resolvedDocsJobsSnippet = DOCS_JOBS_SNIPPET;
 
   const overviewLines = resolvedDocsOverviewSnippet
     .split('\\n')

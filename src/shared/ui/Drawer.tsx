@@ -6,7 +6,7 @@ import React, { useEffect } from 'react';
 import { cn } from '@/shared/utils';
 
 import { Button } from './button';
-import { SectionHeader } from './section-header';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from './dialog';
 
 interface DrawerProps {
   children: React.ReactNode;
@@ -56,35 +56,40 @@ export function Drawer(props: DrawerProps): React.JSX.Element | null {
   if (!open) return null;
 
   const drawerWidth = typeof width === 'number' ? `${width}px` : width;
+  const hasVisibleHeader = Boolean(title || description || actions || showClose);
+  const resolvedTitle = title ?? 'Drawer panel';
+  const resolvedDescription = description ?? 'Application drawer panel';
 
   return (
-    <div className='fixed inset-0 z-[70]'>
-      {/* Backdrop */}
-      <div
-        className='absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity'
-        onClick={onClose}
-      />
-
-      {/* Panel */}
-      <aside
+    <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
+      <DialogContent
         className={cn(
-          'absolute top-0 h-full bg-gray-950 shadow-2xl transition-transform duration-300 ease-in-out flex flex-col',
-          position === 'right' ? 'right-0 border-l border-border' : 'left-0 border-r border-border',
+          'top-0 grid h-screen max-h-screen w-full max-w-none translate-y-0 gap-0 rounded-none border-0 bg-gray-950 p-0 shadow-2xl duration-300 ease-in-out',
+          position === 'right'
+            ? 'right-0 left-auto translate-x-0 border-l border-border'
+            : 'left-0 translate-x-0 border-r border-border',
           className
         )}
         style={{ width: drawerWidth }}
       >
-        {(title || showClose) && (
+        {hasVisibleHeader ? (
           <div
             className={cn(
-              'flex items-center justify-between border-b border-border px-4 py-3',
+              'flex items-start justify-between gap-3 border-b border-border px-4 py-3',
               headerClassName
             )}
           >
-            <SectionHeader title={title} description={description} size='xs' className='flex-1' />
-            <div className='flex items-center gap-2 ml-4'>
+            <div className='min-w-0 flex-1'>
+              <DialogTitle className='truncate text-sm font-semibold tracking-tight text-white'>
+                {resolvedTitle}
+              </DialogTitle>
+              <DialogDescription className='mt-1 text-sm text-gray-400'>
+                {resolvedDescription}
+              </DialogDescription>
+            </div>
+            <div className='ml-4 flex shrink-0 items-center gap-2'>
               {actions}
-              {showClose && (
+              {showClose ? (
                 <Button
                   variant='ghost'
                   size='icon'
@@ -92,15 +97,20 @@ export function Drawer(props: DrawerProps): React.JSX.Element | null {
                   className='h-7 w-7'
                   aria-label='Close drawer'
                 >
-                  <XIcon className='size-4' />
+                  <XIcon className='size-4' aria-hidden='true' />
                 </Button>
-              )}
+              ) : null}
             </div>
           </div>
+        ) : (
+          <>
+            <DialogTitle className='sr-only'>{resolvedTitle}</DialogTitle>
+            <DialogDescription className='sr-only'>{resolvedDescription}</DialogDescription>
+          </>
         )}
 
         <div className={cn('flex-1 overflow-y-auto p-4', contentClassName)}>{children}</div>
-      </aside>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

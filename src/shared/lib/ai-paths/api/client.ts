@@ -323,6 +323,66 @@ export const resolveAiPathRunFromEnqueueResponseData = (
   return { runId, runRecord };
 };
 
+const mergeNullableRecord = (
+  primary: unknown,
+  fallback: Record<string, unknown> | null | undefined
+): Record<string, unknown> | null | undefined => {
+  const normalizedPrimary = asRecord(primary);
+  const normalizedFallback = asRecord(fallback);
+  if (normalizedPrimary && normalizedFallback) {
+    return {
+      ...normalizedFallback,
+      ...normalizedPrimary,
+    };
+  }
+  if (normalizedPrimary) return normalizedPrimary;
+  if (normalizedFallback) return normalizedFallback;
+  if (primary === null || fallback === null) return null;
+  return undefined;
+};
+
+const mergeOptionalRecord = (
+  primary: unknown,
+  fallback: Record<string, unknown> | undefined
+): Record<string, unknown> | undefined => {
+  const normalizedPrimary = asRecord(primary);
+  const normalizedFallback = asRecord(fallback);
+  if (normalizedPrimary && normalizedFallback) {
+    return {
+      ...normalizedFallback,
+      ...normalizedPrimary,
+    };
+  }
+  return normalizedPrimary ?? normalizedFallback ?? undefined;
+};
+
+export const mergeEnqueuedAiPathRunForCache = (args: {
+  fallbackRun: AiPathRunRecord;
+  runId: string;
+  runRecord?: AiPathRunRecord | null;
+}): AiPathRunRecord => {
+  const { fallbackRun, runId, runRecord } = args;
+
+  return {
+    ...fallbackRun,
+    ...(runRecord ?? {}),
+    id: runId,
+    status: runRecord?.status ?? fallbackRun.status,
+    createdAt: runRecord?.createdAt ?? fallbackRun.createdAt,
+    updatedAt: runRecord?.updatedAt ?? fallbackRun.updatedAt,
+    pathId: runRecord?.pathId ?? fallbackRun.pathId ?? null,
+    pathName: runRecord?.pathName ?? fallbackRun.pathName ?? null,
+    requestId: runRecord?.requestId ?? fallbackRun.requestId ?? null,
+    triggerNodeId: runRecord?.triggerNodeId ?? fallbackRun.triggerNodeId ?? null,
+    triggerEvent: runRecord?.triggerEvent ?? fallbackRun.triggerEvent ?? null,
+    entityId: runRecord?.entityId ?? fallbackRun.entityId ?? null,
+    entityType: runRecord?.entityType ?? fallbackRun.entityType ?? null,
+    meta: mergeNullableRecord(runRecord?.meta, fallbackRun.meta),
+    triggerContext: mergeNullableRecord(runRecord?.triggerContext, fallbackRun.triggerContext),
+    context: mergeOptionalRecord(runRecord?.context, fallbackRun.context),
+  };
+};
+
 export async function listAiPathRuns(options?: {
   pathId?: string;
   nodeId?: string;

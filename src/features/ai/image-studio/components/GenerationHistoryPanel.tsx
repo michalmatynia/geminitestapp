@@ -43,16 +43,18 @@ export function GenerationHistoryPanel({
             key={record.id}
             className='rounded border border-border/40 bg-card/30 px-2 py-1.5 text-xs'
           >
-            <div
-              className='flex items-center gap-2 cursor-pointer'
+            <button
+              type='button'
+              className='flex w-full items-center gap-2 border-0 bg-transparent p-0 text-left'
               onClick={() => setExpandedId(isExpanded ? null : record.id)}
+              aria-expanded={isExpanded}
             >
               <span className='shrink-0 text-[10px] text-muted-foreground'>{timeStr}</span>
               <span className='min-w-0 flex-1 truncate'>{record.prompt.slice(0, 60)}</span>
               <span className='shrink-0 text-[10px] text-muted-foreground'>
                 {record.outputs.length} img{record.outputs.length !== 1 ? 's' : ''}
               </span>
-            </div>
+            </button>
 
             {isExpanded && (
               <div className='mt-1.5 space-y-1.5 border-t border-border/30 pt-1.5'>

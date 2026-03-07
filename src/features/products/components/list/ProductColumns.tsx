@@ -173,11 +173,13 @@ const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCe
 
   return (
     <div>
-      <span
+      <button
+        type='button'
         className={[
           'inline whitespace-normal break-words',
           'select-text',
           'cursor-pointer hover:underline',
+          'border-0 bg-transparent p-0 text-left',
           'text-sm font-normal text-white/90',
           'hover:text-white/80',
         ].join(' ')}
@@ -188,7 +190,7 @@ const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCe
         }}
       >
         {nameValue || '—'}
-      </span>
+      </button>
 
       <div className='flex items-center gap-1.5 text-sm text-gray-500'>
         <span className={['select-text cursor-text'].join(' ')}>{normalizedSku || 'No SKU'}</span>

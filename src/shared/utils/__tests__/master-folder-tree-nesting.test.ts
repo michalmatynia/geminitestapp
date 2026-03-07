@@ -273,7 +273,7 @@ describe('cross-profile nesting rules', () => {
       expect(result.ok).toBe(true);
     });
 
-    it('rejects file drop into category folder', () => {
+    it('allows file drop into category folder when the profile default allows it', () => {
       const nodes: MasterTreeNode[] = [
         node({ id: 'cat-root', type: 'folder', kind: 'category', name: 'Root' }),
         node({ id: 'file-product', type: 'file', kind: 'product', name: 'Product' }),
@@ -285,8 +285,7 @@ describe('cross-profile nesting rules', () => {
         position: 'inside',
         profile,
       });
-      expect(result.ok).toBe(false);
-      expect(result.reason).toBe('PROFILE_RULE_BLOCKED');
+      expect(result.ok).toBe(true);
     });
   });
 

@@ -13,6 +13,7 @@ const listIntegrationsMock = vi.hoisted(() => vi.fn());
 const listConnectionsMock = vi.hoisted(() => vi.fn());
 const callBaseApiMock = vi.hoisted(() => vi.fn());
 const setImportParameterCacheMock = vi.hoisted(() => vi.fn());
+const resolveBaseConnectionTokenMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/features/integrations/server', () => ({
   getIntegrationRepository: vi.fn(async () => ({
@@ -20,6 +21,7 @@ vi.mock('@/features/integrations/server', () => ({
     listConnections: listConnectionsMock,
   })),
   callBaseApi: callBaseApiMock,
+  resolveBaseConnectionToken: resolveBaseConnectionTokenMock,
   getImportParameterCache: vi.fn(async () => null),
   setImportParameterCache: setImportParameterCacheMock,
 }));
@@ -50,6 +52,7 @@ describe('base import parameters handler', () => {
     const encryptedToken = encryptSecret('token-1');
     listIntegrationsMock.mockResolvedValue([{ id: 'integration-base', slug: 'base-com' }]);
     listConnectionsMock.mockResolvedValue([{ id: 'conn-1', baseApiToken: encryptedToken, password: null }]);
+    resolveBaseConnectionTokenMock.mockReturnValue({ token: 'token-1', error: null });
     setImportParameterCacheMock.mockResolvedValue(undefined);
   });
 

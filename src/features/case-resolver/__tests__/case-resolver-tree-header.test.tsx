@@ -17,6 +17,7 @@ import type {
   CaseResolverFolderTreeUiStateContextValue,
 } from '@/features/case-resolver/context/CaseResolverFolderTreeContext';
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
+import { expectNoAxeViolations } from '@/testing/accessibility/axe';
 
 const routerPushMock = vi.fn();
 const onRetryCaseContextMock = vi.fn();
@@ -118,6 +119,12 @@ describe('CaseResolverTreeHeader', () => {
 
     fireEvent.click(screen.getByLabelText('Show nested folders and files'));
     expect(setShowChildCaseFoldersMock).toHaveBeenCalledWith(false);
+  });
+
+  it('has no obvious accessibility violations in the default tree header state', async () => {
+    const { container } = render(<CaseResolverTreeHeader searchQuery='' onSearchChange={vi.fn()} />);
+
+    await expectNoAxeViolations(container);
   });
 
   it('supports the tree header context path when search props are omitted', () => {

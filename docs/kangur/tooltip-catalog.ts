@@ -83,6 +83,14 @@ export const KANGUR_DOCUMENTATION_GUIDES: KangurDocumentationGuide[] = [
     docPath: '/docs/kangur/svg-and-media-rules.md',
     sectionsCovered: ['SVG-only rule', 'Rationale', 'Authoring impact'],
   },
+  {
+    id: 'observability-and-operations',
+    title: 'Observability And Operations',
+    summary: 'Documents Kangur alert thresholds, summary surfaces, log presets, and incident triage steps.',
+    audience: 'admin',
+    docPath: '/docs/kangur/observability-and-operations.md',
+    sectionsCovered: ['Primary surfaces', 'Alert thresholds', 'Triage', 'Mitigation'],
+  },
 ];
 
 export const KANGUR_TOOLTIP_CATALOG: KangurTooltipDocEntry[] = [
@@ -215,6 +223,16 @@ export const KANGUR_TOOLTIP_CATALOG: KangurTooltipDocEntry[] = [
     docPath: '/docs/kangur/tests-and-exams.md',
     tags: ['kangur', 'home', 'exam'],
     uiTargets: ['home.kangur-exam'],
+  },
+  {
+    id: 'home_admin_observability_action',
+    title: 'Admin Observability Action',
+    summary: 'Opens the Kangur observability dashboard with alerts, route health, analytics, and recent server logs.',
+    section: 'Home',
+    aliases: ['observability', 'diagnostics', 'admin observability'],
+    docPath: '/docs/kangur/observability-and-operations.md',
+    tags: ['kangur', 'home', 'admin', 'observability'],
+    uiTargets: ['home.admin-observability'],
   },
   {
     id: 'home_priority_assignments',
@@ -515,5 +533,35 @@ export const KANGUR_TOOLTIP_CATALOG: KangurTooltipDocEntry[] = [
     docPath: '/docs/kangur/settings-and-narration.md',
     tags: ['kangur', 'settings', 'save'],
     uiTargets: ['admin-settings.save'],
+  },
+  {
+    id: 'admin_observability_range',
+    title: 'Observability Range Selector',
+    summary: 'Changes the active Kangur observability window between 24 hours, 7 days, and 30 days.',
+    section: 'Admin Observability',
+    aliases: ['range selector', 'observability range', '24h 7d 30d'],
+    docPath: '/docs/kangur/observability-and-operations.md',
+    tags: ['kangur', 'admin', 'observability', 'range'],
+    uiTargets: ['admin-observability.range'],
+  },
+  {
+    id: 'admin_observability_alerts',
+    title: 'Observability Alerts',
+    summary: 'Summarizes the current Kangur alert thresholds for server errors, sign-in failures, progress sync, TTS fallback, and the performance baseline.',
+    section: 'Admin Observability',
+    aliases: ['alerts', 'thresholds', 'status cards'],
+    docPath: '/docs/kangur/observability-and-operations.md',
+    tags: ['kangur', 'admin', 'observability', 'alerts'],
+    uiTargets: ['admin-observability.alerts'],
+  },
+  {
+    id: 'admin_observability_quick_links',
+    title: 'Observability Quick Links',
+    summary: 'Opens Kangur-scoped log searches, analytics, and the raw summary payload for faster triage.',
+    section: 'Admin Observability',
+    aliases: ['quick links', 'log links', 'summary json'],
+    docPath: '/docs/kangur/observability-and-operations.md',
+    tags: ['kangur', 'admin', 'observability', 'links'],
+    uiTargets: ['admin-observability.quick-links'],
   },
 ];

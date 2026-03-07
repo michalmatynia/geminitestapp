@@ -3,14 +3,21 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
-const { resolveKangurActorMock, toKangurAuthUserMock } = vi.hoisted(() => ({
-  resolveKangurActorMock: vi.fn(),
-  toKangurAuthUserMock: vi.fn(),
-}));
+const { resolveKangurActorMock, toKangurAuthUserMock, logKangurServerEventMock } = vi.hoisted(
+  () => ({
+    resolveKangurActorMock: vi.fn(),
+    toKangurAuthUserMock: vi.fn(),
+    logKangurServerEventMock: vi.fn(),
+  })
+);
 
 vi.mock('@/features/kangur/server', () => ({
   resolveKangurActor: resolveKangurActorMock,
   toKangurAuthUser: toKangurAuthUserMock,
+}));
+
+vi.mock('@/features/kangur/observability/server', () => ({
+  logKangurServerEvent: logKangurServerEventMock,
 }));
 
 import { getKangurAuthMeHandler } from './handler';
@@ -50,6 +57,17 @@ describe('kangur auth me handler', () => {
 
     expect(resolveKangurActorMock).toHaveBeenCalledTimes(1);
     expect(toKangurAuthUserMock).toHaveBeenCalledWith({ actorType: 'parent' });
+    expect(logKangurServerEventMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'kangur.auth.me',
+        statusCode: 200,
+        context: expect.objectContaining({
+          actorType: 'parent',
+          learnerCount: 0,
+          hasActiveLearner: false,
+        }),
+      })
+    );
     await expect(response.json()).resolves.toEqual(
       expect.objectContaining({
         id: 'parent-1',

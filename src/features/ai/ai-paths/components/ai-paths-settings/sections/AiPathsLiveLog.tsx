@@ -2,11 +2,11 @@
 
 import React, { useMemo } from 'react';
 import { StatusBadge, EmptyState } from '@/shared/ui';
-import { useAiPathsSettingsOrchestrator } from '../AiPathsSettingsOrchestratorContext';
+import { useRuntimeState } from '@/features/ai/ai-paths/context';
 import type { AiPathRuntimeEvent } from '@/shared/lib/ai-paths';
 
 export function AiPathsLiveLog(): React.JSX.Element {
-  const { runtimeEvents } = useAiPathsSettingsOrchestrator();
+  const { runtimeEvents } = useRuntimeState();
 
   const runtimeLogEvents = useMemo(
     (): AiPathRuntimeEvent[] =>

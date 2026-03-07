@@ -1,37 +1,40 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import {
-  getBrainAssignmentForFeature,
   getBrainAssignmentForCapability,
 } from '@/shared/lib/ai-brain/server';
 import {
+  AI_INSIGHTS_SETTINGS_KEYS,
   generateAnalyticsInsight,
   generateLogsInsight,
   generateRuntimeAnalyticsInsight,
+  getAiInsightsMeta,
   getScheduleSettings,
-} from '@/features/ai/insights/generator';
-import { getAiInsightsMeta, setAiInsightsMeta } from '@/features/ai/insights/repository';
+  setAiInsightsMeta,
+} from '@/features/ai/insights/server';
 import { tick } from '@/features/ai/insights/workers/ai-insights-processor';
 import { listSystemLogs } from '@/shared/lib/observability/system-logger';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 
-vi.mock('@/features/ai/ai-paths/services/path-run-repository', () => ({
+vi.mock('@/shared/lib/ai-paths/services/path-run-repository', () => ({
   getPathRunRepository: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/ai-brain/server', () => ({
-  getBrainAssignmentForFeature: vi.fn(),
   getBrainAssignmentForCapability: vi.fn(),
 }));
 
-vi.mock('@/features/ai/insights/generator', () => ({
+vi.mock('@/features/ai/insights/server', () => ({
+  AI_INSIGHTS_SETTINGS_KEYS: {
+    analyticsLastRunAt: 'analyticsLastRunAt',
+    runtimeAnalyticsLastRunAt: 'runtimeAnalyticsLastRunAt',
+    logsLastRunAt: 'logsLastRunAt',
+    logsLastErrorSeenAt: 'logsLastErrorSeenAt',
+  },
   generateAnalyticsInsight: vi.fn(),
   generateLogsInsight: vi.fn(),
   generateRuntimeAnalyticsInsight: vi.fn(),
   getScheduleSettings: vi.fn(),
-}));
-
-vi.mock('@/features/ai/insights/repository', () => ({
   getAiInsightsMeta: vi.fn(),
   setAiInsightsMeta: vi.fn(),
 }));
@@ -74,7 +77,6 @@ describe('ai-insights-processor tick', () => {
     vi.mocked(setAiInsightsMeta).mockResolvedValue(undefined);
     vi.mocked(getAiInsightsMeta).mockResolvedValue(null);
     vi.mocked(listSystemLogs).mockResolvedValue({ logs: [] } as any);
-    vi.mocked(getBrainAssignmentForFeature).mockResolvedValue(enabledAssignment as any);
     vi.mocked(getBrainAssignmentForCapability).mockResolvedValue(enabledAssignment as any);
   });
 
@@ -107,8 +109,8 @@ describe('ai-insights-processor tick', () => {
       logsMinutes: 15,
       logsAutoOnError: false,
     });
-    vi.mocked(getBrainAssignmentForFeature).mockImplementation(async (feature) => {
-      if (feature === 'analytics') return enabledAssignment as any;
+    vi.mocked(getBrainAssignmentForCapability).mockImplementation(async (capability) => {
+      if (capability === 'insights.analytics') return enabledAssignment as any;
       return disabledAssignment as any;
     });
     vi.mocked(getAiInsightsMeta).mockResolvedValue(new Date().toISOString());
@@ -129,8 +131,8 @@ describe('ai-insights-processor tick', () => {
       logsMinutes: 15,
       logsAutoOnError: false,
     });
-    vi.mocked(getBrainAssignmentForFeature).mockImplementation(async (feature) => {
-      if (feature === 'analytics') return enabledAssignment as any;
+    vi.mocked(getBrainAssignmentForCapability).mockImplementation(async (capability) => {
+      if (capability === 'insights.analytics') return enabledAssignment as any;
       return disabledAssignment as any;
     });
     vi.mocked(getAiInsightsMeta).mockResolvedValue(null);

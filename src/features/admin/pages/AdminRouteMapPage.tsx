@@ -54,6 +54,8 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
   '/admin/case-resolver/settings': 'Configure Case Resolver OCR model settings.',
   '/admin/kangur':
     'Open the Kangur learning and competition workspace for math training and score tracking.',
+  '/admin/kangur/observability':
+    'Monitor Kangur-specific alerts, route health, client telemetry, and recent server activity.',
   '/admin/kangur/lessons-manager':
     'Manage Kangur lessons list, order, and visibility using the Master Folder Tree runtime.',
   '/admin/kangur/settings':

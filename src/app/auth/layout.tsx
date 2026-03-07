@@ -8,7 +8,13 @@ export default function AuthPublicLayout({
 }): React.JSX.Element {
   return (
     <AuthProvider mode='public'>
-      <QueryErrorBoundary>{children}</QueryErrorBoundary>
+      <main
+        id='app-content'
+        tabIndex={-1}
+        className='min-h-screen bg-background focus:outline-none'
+      >
+        <QueryErrorBoundary>{children}</QueryErrorBoundary>
+      </main>
     </AuthProvider>
   );
 }

@@ -5,6 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 
 import { cn } from '@/shared/utils';
+import { focusOnMount } from '@/shared/utils/focus-on-mount';
 import { Button, SelectSimple } from '@/shared/ui';
 
 import {
@@ -247,12 +248,12 @@ function EditRow(props: EditRowProps): React.JSX.Element {
   return (
     <div className='space-y-1.5 rounded border border-border/40 bg-background/30 p-2'>
       <input
+        ref={focusOnMount}
         type='text'
         value={label}
         onChange={(e) => onLabelChange(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder='Button label…'
-        autoFocus
         className={cn(
           'h-6 w-full rounded border border-border/60 bg-background/50 px-2',
           'text-xs text-gray-200 placeholder:text-gray-600',

@@ -4,6 +4,7 @@ import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const enqueueAiPathRunMock = vi.hoisted(() => vi.fn());
+const mergeEnqueuedAiPathRunForCacheMock = vi.hoisted(() => vi.fn());
 const resolveAiPathRunFromEnqueueResponseDataMock = vi.hoisted(() => vi.fn());
 const fetchPathSettingsMock = vi.hoisted(() => vi.fn());
 const findTriggerPathMock = vi.hoisted(() => vi.fn());
@@ -18,6 +19,7 @@ const logClientErrorMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/shared/lib/ai-paths/api/client', () => ({
   enqueueAiPathRun: enqueueAiPathRunMock,
+  mergeEnqueuedAiPathRunForCache: mergeEnqueuedAiPathRunForCacheMock,
   resolveAiPathRunFromEnqueueResponseData: resolveAiPathRunFromEnqueueResponseDataMock,
 }));
 
@@ -101,6 +103,7 @@ const buildPathConfig = (): PathConfig =>
 describe('useAiPathTrigger', () => {
   beforeEach(() => {
     enqueueAiPathRunMock.mockReset();
+    mergeEnqueuedAiPathRunForCacheMock.mockReset();
     resolveAiPathRunFromEnqueueResponseDataMock.mockReset();
     fetchPathSettingsMock.mockReset();
     findTriggerPathMock.mockReset();
@@ -114,6 +117,18 @@ describe('useAiPathTrigger', () => {
     recoverEnqueuedRunByRequestIdMock.mockReset().mockResolvedValue(null);
     toastMock.mockReset();
     logClientErrorMock.mockReset();
+
+    mergeEnqueuedAiPathRunForCacheMock.mockImplementation(
+      ({ fallbackRun, runId, runRecord }: { fallbackRun: Record<string, unknown>; runId: string; runRecord: Record<string, unknown> | null }) => ({
+        ...fallbackRun,
+        ...(runRecord ?? {}),
+        id: runId,
+        status:
+          typeof runRecord?.['status'] === 'string' && runRecord['status'].trim().length > 0
+            ? runRecord['status']
+            : fallbackRun['status'],
+      })
+    );
 
     const pathConfig = buildPathConfig();
     fetchPathSettingsMock.mockResolvedValue({

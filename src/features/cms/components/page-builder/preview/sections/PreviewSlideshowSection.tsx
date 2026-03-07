@@ -5,7 +5,12 @@ import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { getSectionContainerClass, getSectionStyles } from '@/features/cms/public';
 import { useCmsPageContext } from '@/features/cms/components/frontend/CmsPageContext';
 import { BlockContextProvider } from '@/features/cms/components/page-builder/preview/context/BlockContext';
-import { usePreviewEditorState } from '@/features/cms/components/page-builder/preview/context/PreviewEditorContext';
+import {
+  usePreviewEditorActions,
+  usePreviewEditorState,
+} from '@/features/cms/components/page-builder/preview/context/PreviewEditorContext';
+import { resolveNodeLabel } from '@/features/cms/components/page-builder/preview/InspectorOverlay';
+import { PreviewNodeSelectionButton } from '@/features/cms/components/page-builder/preview/PreviewNodeSelectionButton';
 import { usePreviewSectionContext } from '@/features/cms/components/page-builder/preview/context/PreviewSectionContext';
 import { normalizeSlideshowAnimationType } from '@/features/cms/components/page-builder/preview/preview-utils';
 import type { BlockInstance } from '@/shared/contracts/cms';
@@ -18,13 +23,15 @@ export function PreviewSlideshowSection() {
     section,
     selectedRing,
     renderSectionActions,
+    renderSelectionButton,
     divider,
     wrapInspector,
     handleSelect,
     PreviewBlockItem,
   } = usePreviewSectionContext();
 
-  const { inspectorSettings, pauseSlideshowOnHoverInEditor } = usePreviewEditorState();
+  const { selectedNodeId, inspectorSettings, pauseSlideshowOnHoverInEditor } = usePreviewEditorState();
+  const { onSelect } = usePreviewEditorActions();
 
   const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
   const sectionStyles = getSectionStyles(section.settings, colorSchemes);
@@ -75,6 +82,13 @@ export function PreviewSlideshowSection() {
     }
   }, [slideCount, slideshowIndex]);
 
+  useEffect((): void => {
+    const selectedFrameIndex = slideshowFrames.findIndex((frame) => frame.id === selectedNodeId);
+    if (selectedFrameIndex >= 0 && selectedFrameIndex !== currentSlideshowIndex) {
+      setSlideshowIndex(selectedFrameIndex);
+    }
+  }, [currentSlideshowIndex, selectedNodeId, slideshowFrames]);
+
   useEffect((): (() => void) | undefined => {
     if (!slideshowAutoplay || slideshowPaused || slideCount <= 1 || slideshowAutoplaySpeed <= 0) {
       return undefined;
@@ -98,15 +112,11 @@ export function PreviewSlideshowSection() {
 
   return wrapInspector(
     <div
-      role='button'
-      tabIndex={0}
       onClick={handleSelect}
-      onKeyDown={(e: React.KeyboardEvent): void => {
-        if (e.key === 'Enter' || e.key === ' ') handleSelect();
-      }}
       style={sectionStyles}
-      className={`relative w-full text-left transition cursor-pointer ${selectedRing} cms-node-${section.id}`}
+      className={`relative group w-full text-left transition cursor-pointer ${selectedRing} cms-node-${section.id}`}
     >
+      {renderSelectionButton()}
       {renderSectionActions()}
       {divider}
       {slideCount === 0 ? (
@@ -139,6 +149,7 @@ export function PreviewSlideshowSection() {
           >
             {slideshowFrames.map((frame: BlockInstance, idx: number) => {
               const frameSettings = frame.settings ?? {};
+              const frameLabel = resolveNodeLabel('Slideshow Frame', frameSettings['label']);
               const backgroundColor = (frameSettings['backgroundColor'] as string) || '';
               const contentAlignment = (frameSettings['contentAlignment'] as string) || 'center';
               const verticalAlignment = (frameSettings['verticalAlignment'] as string) || 'center';
@@ -183,6 +194,7 @@ export function PreviewSlideshowSection() {
                   : frameAnimEasing;
               const stagger = slideshowElementAnimationStagger;
               const isActiveFrame = idx === currentSlideshowIndex;
+              const isFrameSelected = selectedNodeId === frame.id;
               const frameBlocks = frame.blocks ?? [];
 
               return (
@@ -202,7 +214,18 @@ export function PreviewSlideshowSection() {
                       }
                   }
                 >
-                  <div className='flex h-full w-full flex-col' style={frameStyle}>
+                  <div className='relative group flex h-full w-full flex-col' style={frameStyle}>
+                    {showEditorChrome ? (
+                      <PreviewNodeSelectionButton
+                        label={`Select block ${frameLabel}`}
+                        selected={isFrameSelected}
+                        onSelect={() => {
+                          setSlideshowIndex(idx);
+                          onSelect?.(frame.id);
+                        }}
+                        className='left-2 top-2 size-6'
+                      />
+                    ) : null}
                     {frameBlocks.length > 0 ? (
                       frameBlocks.map((child: BlockInstance, blockIdx: number) => {
                         const blockDelay = animationDelay + blockIdx * stagger;

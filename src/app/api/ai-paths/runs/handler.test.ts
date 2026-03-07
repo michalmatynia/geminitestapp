@@ -24,20 +24,14 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
   requireAiPathsRunAccess: requireAiPathsRunAccessMock,
   canAccessGlobalAiPathRuns: canAccessGlobalAiPathRunsMock,
   enforceAiPathsActionRateLimit: enforceAiPathsActionRateLimitMock,
-}));
-
-vi.mock('@/features/ai/ai-paths/services/path-run-recovery-service', () => ({
   recoverStaleRunningRuns: recoverStaleRunningRunsMock,
   resolveAiPathsStaleRunningCleanupIntervalMs: vi.fn(() => 60_000),
   resolveAiPathsStaleRunningMaxAgeMs: vi.fn(() => 300_000),
+  deletePathRunsWithRepository: deletePathRunsWithRepositoryMock,
 }));
 
 vi.mock('@/shared/lib/ai-paths/services/path-run-repository', () => ({
   getPathRunRepository: getPathRunRepositoryMock,
-}));
-
-vi.mock('@/features/ai/ai-paths/server', () => ({
-  deletePathRunsWithRepository: deletePathRunsWithRepositoryMock,
 }));
 
 import { __testOnly, GET_handler } from './handler';

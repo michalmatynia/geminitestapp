@@ -5,13 +5,17 @@ import { describe, expect, it, vi } from 'vitest';
 
 const {
   useAiPathRuntimeAnalyticsMock,
-  useAiPathsSettingsOrchestratorMock,
+  useRuntimeStateMock,
+  useGraphStateMock,
+  useAiPathsErrorStateMock,
   useRunHistoryActionsMock,
   useBrainAssignmentMock,
   toastMock,
 } = vi.hoisted(() => ({
   useAiPathRuntimeAnalyticsMock: vi.fn(),
-  useAiPathsSettingsOrchestratorMock: vi.fn(),
+  useRuntimeStateMock: vi.fn(),
+  useGraphStateMock: vi.fn(),
+  useAiPathsErrorStateMock: vi.fn(),
   useRunHistoryActionsMock: vi.fn(),
   useBrainAssignmentMock: vi.fn(),
   toastMock: vi.fn(),
@@ -21,16 +25,18 @@ vi.mock('@/shared/lib/ai-paths/hooks/useAiPathQueries', () => ({
   useAiPathRuntimeAnalytics: useAiPathRuntimeAnalyticsMock,
 }));
 
-vi.mock(
-  '@/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsOrchestratorContext',
-  () => ({
-    useAiPathsSettingsOrchestrator: useAiPathsSettingsOrchestratorMock,
-  })
-);
-
 vi.mock('@/features/ai/ai-paths/context', () => ({
   useRunHistoryActions: useRunHistoryActionsMock,
+  useRuntimeState: useRuntimeStateMock,
+  useGraphState: useGraphStateMock,
 }));
+
+vi.mock(
+  '@/features/ai/ai-paths/components/ai-paths-settings/hooks/useAiPathsErrorState',
+  () => ({
+    useAiPathsErrorState: useAiPathsErrorStateMock,
+  })
+);
 
 vi.mock('@/shared/lib/ai-brain/hooks/useBrainAssignment', () => ({
   useBrainAssignment: useBrainAssignmentMock,
@@ -45,16 +51,41 @@ vi.mock('@/shared/ui', async () => {
 });
 
 import { AiPathsRuntimeAnalysis } from '@/features/ai/ai-paths/components/ai-paths-settings/panels/AiPathsRuntimeAnalysis';
+import { expectNoAxeViolations } from '@/testing/accessibility/axe';
 
 describe('AiPathsRuntimeAnalysis', () => {
-  it('shows a disabled state and does not enable the runtime analytics query when the capability is off', () => {
-    useAiPathsSettingsOrchestratorMock.mockReturnValue({
-      runtimeRunStatus: 'idle',
-      runtimeNodeStatuses: {},
-      activePathId: null,
-      nodes: [],
-      reportAiPathsError: vi.fn(),
+  it('has no obvious accessibility violations in the disabled analytics state', async () => {
+    useRuntimeStateMock.mockReturnValue({ runtimeRunStatus: 'idle', runtimeNodeStatuses: {} });
+    useGraphStateMock.mockReturnValue({ activePathId: null, nodes: [] });
+    useAiPathsErrorStateMock.mockReturnValue({ reportAiPathsError: vi.fn() });
+    useRunHistoryActionsMock.mockReturnValue({
+      setRunHistoryNodeId: vi.fn(),
+      setRunFilter: vi.fn(),
+      openRunDetail: vi.fn(),
     });
+    useBrainAssignmentMock.mockImplementation(
+      ({ capability }: { capability?: 'insights.runtime_analytics' | 'ai_paths.model' }) => ({
+        assignment: {
+          enabled: capability === 'ai_paths.model',
+        },
+        effectiveModelId: '',
+      })
+    );
+    useAiPathRuntimeAnalyticsMock.mockReturnValue({
+      data: undefined,
+      isFetching: false,
+      refetch: vi.fn(),
+    });
+
+    const { container } = render(<AiPathsRuntimeAnalysis />);
+
+    await expectNoAxeViolations(container);
+  });
+
+  it('shows a disabled state and does not enable the runtime analytics query when the capability is off', () => {
+    useRuntimeStateMock.mockReturnValue({ runtimeRunStatus: 'idle', runtimeNodeStatuses: {} });
+    useGraphStateMock.mockReturnValue({ activePathId: null, nodes: [] });
+    useAiPathsErrorStateMock.mockReturnValue({ reportAiPathsError: vi.fn() });
     useRunHistoryActionsMock.mockReturnValue({
       setRunHistoryNodeId: vi.fn(),
       setRunFilter: vi.fn(),
@@ -85,13 +116,9 @@ describe('AiPathsRuntimeAnalysis', () => {
     const user = userEvent.setup();
     const refetchMock = vi.fn().mockResolvedValue(undefined);
 
-    useAiPathsSettingsOrchestratorMock.mockReturnValue({
-      runtimeRunStatus: 'idle',
-      runtimeNodeStatuses: {},
-      activePathId: null,
-      nodes: [],
-      reportAiPathsError: vi.fn(),
-    });
+    useRuntimeStateMock.mockReturnValue({ runtimeRunStatus: 'idle', runtimeNodeStatuses: {} });
+    useGraphStateMock.mockReturnValue({ activePathId: null, nodes: [] });
+    useAiPathsErrorStateMock.mockReturnValue({ reportAiPathsError: vi.fn() });
     useRunHistoryActionsMock.mockReturnValue({
       setRunHistoryNodeId: vi.fn(),
       setRunFilter: vi.fn(),
@@ -154,13 +181,9 @@ describe('AiPathsRuntimeAnalysis', () => {
   });
 
   it('renders portable engine analytics details when provided by runtime summary', () => {
-    useAiPathsSettingsOrchestratorMock.mockReturnValue({
-      runtimeRunStatus: 'running',
-      runtimeNodeStatuses: {},
-      activePathId: null,
-      nodes: [],
-      reportAiPathsError: vi.fn(),
-    });
+    useRuntimeStateMock.mockReturnValue({ runtimeRunStatus: 'running', runtimeNodeStatuses: {} });
+    useGraphStateMock.mockReturnValue({ activePathId: null, nodes: [] });
+    useAiPathsErrorStateMock.mockReturnValue({ reportAiPathsError: vi.fn() });
     useRunHistoryActionsMock.mockReturnValue({
       setRunHistoryNodeId: vi.fn(),
       setRunFilter: vi.fn(),

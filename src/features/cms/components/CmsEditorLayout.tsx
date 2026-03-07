@@ -26,7 +26,9 @@ export default function CmsEditorLayout({
       <CmsEditorProvider value={editorContextValue}>
         <div className='flex h-screen bg-background text-white'>
           <CmsSideMenu />
-          <main className='flex-1 p-4 overflow-y-auto'>{children}</main>
+          <section aria-label='CMS editor workspace' className='flex-1 overflow-y-auto p-4'>
+            {children}
+          </section>
         </div>
       </CmsEditorProvider>
     </AdminLayout>

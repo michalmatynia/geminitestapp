@@ -563,7 +563,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
             {LOCATION_OPTIONS.map((option): React.JSX.Element => {
               const checked = draft.locations.includes(option.value);
               return (
-                <label key={option.value} className='block cursor-pointer'>
+                <div key={option.value} className='block'>
                   <Card
                     variant='subtle-compact'
                     padding='none'
@@ -574,6 +574,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
                   >
                     <Checkbox
                       checked={checked}
+                      aria-label={option.label}
                       onCheckedChange={(value: boolean | 'indeterminate') => {
                         const nextChecked = Boolean(value);
                         setDraft((prev: TriggerButtonDraft): TriggerButtonDraft => {
@@ -588,7 +589,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
                       {option.label}
                     </Hint>
                   </Card>
-                </label>
+                </div>
               );
             })}
           </div>

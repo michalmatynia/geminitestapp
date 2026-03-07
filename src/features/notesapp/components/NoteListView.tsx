@@ -149,6 +149,9 @@ export function NoteListView(): React.JSX.Element {
                 ? 'border-blue-500 bg-blue-600 text-white'
                 : 'border bg-gray-800 text-gray-300'
             }`}
+            aria-label='Filter pinned notes'
+            aria-pressed={filterPinned === true}
+            title='Filter pinned notes'
           >
             <Pin size={20} />
           </Button>
@@ -159,6 +162,9 @@ export function NoteListView(): React.JSX.Element {
                 ? 'border-gray-500 bg-gray-700 text-white'
                 : 'border bg-gray-800 text-gray-300'
             }`}
+            aria-label='Filter archived notes'
+            aria-pressed={filterArchived === true}
+            title='Filter archived notes'
           >
             <Archive size={20} />
           </Button>

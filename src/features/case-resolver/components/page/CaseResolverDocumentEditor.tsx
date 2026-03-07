@@ -41,6 +41,7 @@ import {
   EmptyState,
   FormSection,
 } from '@/shared/ui';
+import { focusOnMount } from '@/shared/utils/focus-on-mount';
 import { cn } from '@/shared/utils';
 import {
   useCaseResolverViewActionsContext,
@@ -122,7 +123,6 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
 
   const [isRenamingName, setIsRenamingName] = React.useState(false);
   const [nameInputValue, setNameInputValue] = React.useState('');
-  const nameInputRef = React.useRef<HTMLInputElement>(null);
 
   const draftId = editingDocumentDraft?.id ?? null;
   const originalFile = useMemo(
@@ -199,8 +199,7 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
 
             {isRenamingName ? (
               <Input
-                ref={nameInputRef}
-                autoFocus
+                ref={focusOnMount}
                 value={nameInputValue}
                 onChange={(e) => setNameInputValue(e.target.value)}
                 onBlur={() => {

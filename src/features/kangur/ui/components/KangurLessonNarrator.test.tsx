@@ -133,6 +133,10 @@ describe('KangurLessonNarrator', () => {
     await waitFor(() => expect(speechSynthesisMock.speak).toHaveBeenCalledTimes(1));
 
     expect(apiPostMock).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: /^stop$/i })).toHaveClass(
+      'kangur-cta-pill',
+      'surface-cta'
+    );
     expect(screen.queryByText('Voice')).toBeNull();
     expect(screen.queryByText('Playback speed')).toBeNull();
   });

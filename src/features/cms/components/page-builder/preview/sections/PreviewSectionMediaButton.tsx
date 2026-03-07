@@ -36,7 +36,7 @@ export function PreviewSectionMediaButton(
         });
       }}
       className={cn(
-        'absolute left-3 top-3 z-10 h-7 rounded-full border-border/40 bg-gray-900/70 px-2 text-[10px] text-gray-300 opacity-0 transition group-hover:opacity-100 hover:bg-gray-900/90 hover:text-white',
+        'absolute left-12 top-3 z-10 h-7 rounded-full border-border/40 bg-gray-900/70 px-2 text-[10px] text-gray-300 opacity-0 transition group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 hover:bg-gray-900/90 hover:text-white',
         className
       )}
     >

@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { executePathRun } from '@/features/ai/ai-paths/services/path-run-executor';
-import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { computeBackoffMs, processRun } from '@/features/ai/ai-paths/workers/ai-path-run-processor';
 import {
   assertAiPathRunQueueReady,
@@ -14,6 +13,7 @@ import {
   computeAiPathRunQueueSlo,
   type QueueSloThresholds,
 } from '@/features/ai/ai-paths/workers/ai-path-run-queue-slo';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 
 const getRuntimeAnalyticsSummaryMock = vi.hoisted(() => vi.fn());
 const getRuntimeAnalyticsAvailabilityMock = vi.hoisted(() => vi.fn());
@@ -27,7 +27,7 @@ vi.mock('@/features/ai/ai-paths/services/path-run-executor', () => ({
   executePathRun: vi.fn(),
 }));
 
-vi.mock('@/features/ai/ai-paths/services/path-run-repository', () => ({
+vi.mock('@/shared/lib/ai-paths/services/path-run-repository', () => ({
   getPathRunRepository: vi.fn(),
 }));
 

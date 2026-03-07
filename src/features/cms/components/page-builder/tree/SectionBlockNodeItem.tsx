@@ -221,9 +221,8 @@ export function SectionBlockNodeItem(props: SectionBlockNodeItemProps): React.Re
               endBlockDrag();
             }}
             onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
-            onClick={(e: React.MouseEvent) => e.stopPropagation()}
             className='flex items-center justify-center opacity-0 group-hover/sblock:opacity-100'
-            aria-label='Drag element'
+            aria-hidden='true'
           >
             <GripVertical className='size-3 shrink-0 text-gray-600 cursor-grab active:cursor-grabbing' />
           </div>
@@ -239,13 +238,11 @@ export function SectionBlockNodeItem(props: SectionBlockNodeItemProps): React.Re
           <span className='flex-1 truncate text-left'>{blockLabel}</span>
           {!isTextAtom && (
             <TreeActionSlot show='always' align='inline'>
-              <div draggable={false} onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}>
-                <ColumnBlockPicker
-                  onSelect={(elemType: string) =>
-                    blockActions.addElementToNestedBlock(sectionId, columnId, block.id, elemType)
-                  }
-                />
-              </div>
+              <ColumnBlockPicker
+                onSelect={(elemType: string) =>
+                  blockActions.addElementToNestedBlock(sectionId, columnId, block.id, elemType)
+                }
+              />
             </TreeActionSlot>
           )}
           {/* Delete button for section-type blocks */}

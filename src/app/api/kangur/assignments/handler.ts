@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import {
   parseKangurAssignmentCreatePayload,
   parseKangurAssignmentListQuery,
@@ -36,7 +37,7 @@ export async function getKangurAssignmentsHandler(
 
 export async function postKangurAssignmentsHandler(
   req: NextRequest,
-  _ctx: ApiHandlerContext
+  ctx: ApiHandlerContext
 ): Promise<Response> {
   const actor = await resolveAssignmentActor(req);
   const payload = parseKangurAssignmentCreatePayload(await readKangurJsonBody(req, 'assignment'));
@@ -48,5 +49,19 @@ export async function postKangurAssignmentsHandler(
     payload,
   });
 
+  void logKangurServerEvent({
+    source: 'kangur.assignments.create',
+    message: 'Kangur assignment created',
+    request: req,
+    requestContext: ctx,
+    statusCode: 201,
+    context: {
+      learnerId: actor.learnerKey,
+      targetType: snapshot.target.type,
+      assignmentId: snapshot.id,
+      priority: snapshot.priority,
+      status: snapshot.progress.status,
+    },
+  });
   return NextResponse.json(snapshot, { status: 201 });
 }

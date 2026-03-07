@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 vi.unmock('@/shared/lib/db/prisma');
-vi.unmock('@/features/ai/ai-paths/services/path-run-repository');
+vi.unmock('@/shared/lib/ai-paths/services/path-run-repository');
 
 const { enqueuePathRunJobMock, removePathRunQueueEntriesMock, scheduleLocalFallbackRunMock } =
   vi.hoisted(() => ({
@@ -10,7 +10,6 @@ const { enqueuePathRunJobMock, removePathRunQueueEntriesMock, scheduleLocalFallb
    scheduleLocalFallbackRunMock: vi.fn(),
  }));
 
-import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import {
   enqueuePathRun,
   resumePathRun,
@@ -26,6 +25,7 @@ import type {
   AiPathRunRepository,
   AiPathRunEventRecord,
 } from '@/shared/contracts/ai-paths';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import prisma from '@/shared/lib/db/prisma';
 
 vi.mock('@/features/ai/ai-paths/workers/aiPathRunQueue', () => ({

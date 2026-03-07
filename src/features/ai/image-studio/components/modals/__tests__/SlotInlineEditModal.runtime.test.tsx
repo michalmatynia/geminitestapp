@@ -16,49 +16,34 @@ const mocks = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('@/shared/ui', () => ({
-  Button: ({
-    children,
-    ...rest
-  }: React.ButtonHTMLAttributes<HTMLButtonElement>): React.JSX.Element => (
-    <button {...rest}>{children}</button>
-  ),
-}));
+vi.mock('@/shared/ui', async () => {
+  const mocks = await import('../../studio-modals/__tests__/studioInlineEditRuntimeMockComponents');
+  return {
+    Button: mocks.MockButton,
+  };
+});
 
-vi.mock('@/shared/ui/templates/modals', () => ({
-  DetailModal: ({
-    children,
-    footer,
-    isOpen,
-    onClose,
-    title,
-  }: {
-    children: React.ReactNode;
-    footer?: React.ReactNode;
-    isOpen: boolean;
-    onClose: () => void;
-    title: string;
-  }): React.JSX.Element | null =>
-    isOpen ? (
-      <div data-testid='slot-inline-edit-modal'>
-        <div>{title}</div>
-        <button type='button' onClick={onClose}>
-          Close
-        </button>
-        {children}
-        {footer}
-      </div>
-    ) : null,
-}));
+vi.mock('@/shared/ui/templates/modals', async () => {
+  const mocks = await import('../../studio-modals/__tests__/studioInlineEditRuntimeMockComponents');
+  return {
+    DetailModal: mocks.MockDetailModal,
+  };
+});
 
-vi.mock('../../studio-modals/StudioInlineEditContext', () => ({
-  useStudioInlineEdit: () => ({
-    selectedSlot: mocks.runtime.selectedSlot,
-    slotInlineEditOpen: mocks.runtime.slotInlineEditOpen,
-    setSlotInlineEditOpen: mocks.setSlotInlineEditOpen,
-    onCopyCardId: mocks.onCopyCardId,
-  }),
-}));
+vi.mock(
+  '../../studio-modals/StudioInlineEditContext',
+  async () => {
+    const { createStudioInlineEditMockModule } = await import(
+      '../../studio-modals/__tests__/studioInlineEditTestUtils'
+    );
+    return createStudioInlineEditMockModule(() => ({
+      selectedSlot: mocks.runtime.selectedSlot,
+      slotInlineEditOpen: mocks.runtime.slotInlineEditOpen,
+      setSlotInlineEditOpen: mocks.setSlotInlineEditOpen,
+      onCopyCardId: mocks.onCopyCardId,
+    }));
+  }
+);
 
 describe('SlotInlineEditModal runtime path', () => {
   beforeEach(() => {
@@ -77,7 +62,7 @@ describe('SlotInlineEditModal runtime path', () => {
       </SlotInlineEditModal>
     );
 
-    expect(screen.getByTestId('slot-inline-edit-modal')).toBeInTheDocument();
+    expect(screen.getByTestId('detail-modal')).toBeInTheDocument();
     expect(screen.getByText('Edit Card')).toBeInTheDocument();
     expect(screen.getByText('Modal Body')).toBeInTheDocument();
 

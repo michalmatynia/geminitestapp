@@ -4,8 +4,8 @@ import type { JSX } from 'react';
 
 export default function FrontendLayout({ children }: { children: React.ReactNode }): JSX.Element {
   return (
-    <div className='min-h-screen bg-background'>
+    <main id='app-content' tabIndex={-1} className='min-h-screen bg-background focus:outline-none'>
       <QueryErrorBoundary>{children}</QueryErrorBoundary>
-    </div>
+    </main>
   );
 }

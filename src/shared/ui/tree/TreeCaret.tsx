@@ -63,10 +63,10 @@ export function TreeCaret({
   }
 
   return (
-    <span
-      role='button'
-      tabIndex={0}
-      aria-label={ariaLabel}
+    <button
+      type='button'
+      aria-label={ariaLabel ?? (isOpen ? 'Collapse section' : 'Expand section')}
+      aria-expanded={isOpen}
       className={cn('rounded p-0.5 hover:bg-muted/50', sharedClasses, buttonClassName)}
       onClick={(event: React.MouseEvent): void => {
         event.stopPropagation();
@@ -85,7 +85,7 @@ export function TreeCaret({
         }
       }}
     >
-      <Icon className={iconClasses} />
-    </span>
+      <Icon className={iconClasses} aria-hidden='true' />
+    </button>
   );
 }

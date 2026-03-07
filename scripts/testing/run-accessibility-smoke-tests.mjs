@@ -1,4 +1,6 @@
+import fsSync from 'node:fs';
 import fs from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 
@@ -12,37 +14,104 @@ const warningBudget = Number.parseInt(warningBudgetArg?.split('=')[1] ?? '10', 1
 const root = process.cwd();
 const outDir = path.join(root, 'docs', 'metrics');
 const MAX_OUTPUT_BYTES = 100_000;
+const preferredBrowserNodeBinDir = (() => {
+  const explicitBinDir = process.env['A11Y_SMOKE_BROWSER_NODE_BIN'];
+  if (explicitBinDir && fsSync.existsSync(path.join(explicitBinDir, 'node'))) {
+    return explicitBinDir;
+  }
+
+  const nvmVersionsDir = path.join(os.homedir(), '.nvm', 'versions', 'node');
+  if (!fsSync.existsSync(nvmVersionsDir)) {
+    return null;
+  }
+
+  const node22Dirs = fsSync
+    .readdirSync(nvmVersionsDir)
+    .filter((entry) => /^v22\./.test(entry))
+    .sort((left, right) => left.localeCompare(right, undefined, { numeric: true }));
+  const latestNode22Dir = node22Dirs.at(-1);
+
+  return latestNode22Dir ? path.join(nvmVersionsDir, latestNode22Dir, 'bin') : null;
+})();
 
 const suites = [
   {
+    id: 'app-shell-a11y',
+    name: 'App Shell Accessibility',
+    runner: 'vitest',
+    tests: ['src/app/__tests__/shell-accessibility.test.tsx'],
+  },
+  {
     id: 'auth-signin-a11y',
     name: 'Auth Sign-In Accessibility',
+    runner: 'vitest',
     tests: ['__tests__/features/auth/pages/signin-page.test.tsx'],
   },
   {
     id: 'products-edit-a11y',
     name: 'Products Edit Form Accessibility',
+    runner: 'vitest',
     tests: ['__tests__/features/products/pages/product-edit-page.test.tsx'],
   },
   {
     id: 'image-studio-a11y',
     name: 'Image Studio UI Accessibility',
+    runner: 'vitest',
     tests: ['src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx'],
   },
   {
     id: 'ai-paths-a11y',
     name: 'AI Paths Canvas Accessibility',
+    runner: 'vitest',
     tests: ['src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx'],
   },
   {
     id: 'case-resolver-a11y',
     name: 'Case Resolver Header Accessibility',
+    runner: 'vitest',
     tests: ['src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx'],
   },
   {
     id: 'kangur-profile-a11y',
     name: 'Kangur Profile Accessibility',
+    runner: 'vitest',
     tests: ['__tests__/features/kangur/kangur-accessibility-smoke.test.tsx'],
+  },
+  {
+    id: 'public-auth-routes-browser-a11y',
+    name: 'Public Auth Route Accessibility',
+    runner: 'playwright',
+    tests: ['e2e/features/accessibility/public-auth-accessibility.spec.ts'],
+  },
+  {
+    id: 'admin-dashboard-browser-a11y',
+    name: 'Admin Dashboard Accessibility',
+    runner: 'playwright',
+    tests: ['e2e/features/accessibility/admin-dashboard-accessibility.spec.ts'],
+  },
+  {
+    id: 'products-list-browser-a11y',
+    name: 'Products List Accessibility',
+    runner: 'playwright',
+    tests: ['e2e/features/accessibility/products-list-accessibility.spec.ts'],
+  },
+  {
+    id: 'cms-pages-browser-a11y',
+    name: 'CMS Pages Accessibility',
+    runner: 'playwright',
+    tests: ['e2e/features/accessibility/cms-pages-accessibility.spec.ts'],
+  },
+  {
+    id: 'notes-workspace-browser-a11y',
+    name: 'Notes Workspace Accessibility',
+    runner: 'playwright',
+    tests: ['e2e/features/accessibility/notes-workspace-accessibility.spec.ts'],
+  },
+  {
+    id: 'cms-builder-browser-a11y',
+    name: 'CMS Builder Accessibility',
+    runner: 'playwright',
+    tests: ['e2e/features/accessibility/cms-builder-accessibility.spec.ts'],
   },
 ];
 
@@ -56,16 +125,40 @@ const formatDuration = (ms) => {
 
 const countActWarnings = (value) => (value.match(/not wrapped in act\(\.\.\.\)/g) ?? []).length;
 
+const resolveSuiteCommand = (suite) => {
+  if (suite.runner === 'playwright') {
+    const command = preferredBrowserNodeBinDir
+      ? path.join(preferredBrowserNodeBinDir, 'npx')
+      : 'npx';
+    return {
+      command,
+      args: ['playwright', 'test', ...suite.tests],
+      env:
+        preferredBrowserNodeBinDir !== null
+          ? {
+              PATH: `${preferredBrowserNodeBinDir}${path.delimiter}${process.env['PATH'] ?? ''}`,
+            }
+          : {},
+    };
+  }
+
+  return {
+    command: 'npx',
+    args: ['vitest', 'run', '--project', 'unit', ...suite.tests],
+    env: {},
+  };
+};
+
 const runSuite = (suite) =>
   new Promise((resolve) => {
     const startedAt = Date.now();
-    const command = 'npx';
-    const commandArgs = ['vitest', 'run', '--project', 'unit', ...suite.tests];
+    const { command, args: commandArgs, env: suiteEnv } = resolveSuiteCommand(suite);
 
     const child = spawn(command, commandArgs, {
       cwd: root,
       env: {
         ...process.env,
+        ...(suiteEnv ?? {}),
         FORCE_COLOR: '0',
       },
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -89,6 +182,7 @@ const runSuite = (suite) =>
       resolve({
         id: suite.id,
         name: suite.name,
+        runner: suite.runner ?? 'vitest',
         tests: suite.tests,
         command: [command, ...commandArgs].join(' '),
         status: 'fail',
@@ -104,6 +198,7 @@ const runSuite = (suite) =>
       resolve({
         id: suite.id,
         name: suite.name,
+        runner: suite.runner ?? 'vitest',
         tests: suite.tests,
         command: [command, ...commandArgs].join(' '),
         status: exitCode === 0 ? 'pass' : 'fail',
@@ -133,11 +228,11 @@ const toMarkdown = (payload) => {
   lines.push('');
   lines.push('## Suite Status');
   lines.push('');
-  lines.push('| Suite | Status | Duration | Exit | Tests |');
-  lines.push('| --- | --- | ---: | ---: | --- |');
+  lines.push('| Suite | Runner | Status | Duration | Exit | Tests |');
+  lines.push('| --- | --- | --- | ---: | ---: | --- |');
   for (const result of payload.results) {
     lines.push(
-      `| ${result.name} | ${result.status.toUpperCase()} | ${formatDuration(result.durationMs)} | ${result.exitCode ?? '-'} | ${result.tests.map((test) => `\`${test}\``).join(', ')} |`
+      `| ${result.name} | ${result.runner} | ${result.status.toUpperCase()} | ${formatDuration(result.durationMs)} | ${result.exitCode ?? '-'} | ${result.tests.map((test) => `\`${test}\``).join(', ')} |`
     );
   }
   lines.push('');
@@ -151,7 +246,8 @@ const toMarkdown = (payload) => {
   lines.push('');
   lines.push('## Notes');
   lines.push('');
-  lines.push('- This smoke suite tracks keyboard/focus/label accessibility checks across critical user flows.');
+  lines.push('- This smoke suite tracks keyboard/focus/label checks plus axe-core scans across critical user flows.');
+  lines.push('- Unit suites cover shared semantics and component states; Playwright suites cover browser-rendered routes.');
   lines.push('- Run `npm run test:accessibility-smoke` before UI-facing changes.');
   lines.push('- Use `--fail-on-warning-budget-exceed` in strict mode to fail when warning budget is exceeded.');
   return `${lines.join('\n')}\n`;

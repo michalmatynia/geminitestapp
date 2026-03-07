@@ -138,6 +138,8 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
   return (
     <div className='dark relative h-screen w-full max-w-full overflow-hidden bg-background text-white'>
       <aside
+        id='admin-sidebar'
+        aria-label='Admin sidebar'
         className={`fixed inset-y-0 left-0 z-30 flex flex-col overflow-x-hidden border-r border-border/70 bg-slate-900/95 backdrop-blur transition-all duration-300 ${sidebarClassName}`}
         aria-hidden={isMenuHidden}
       >
@@ -150,6 +152,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
                 variant='ghost'
                 onClick={handleToggleCollapse}
                 className='p-2 rounded-full hover:bg-muted/40'
+                aria-controls='admin-sidebar'
+                aria-expanded={!isMenuCollapsed}
+                aria-label={isMenuCollapsed ? 'Expand admin sidebar' : 'Collapse admin sidebar'}
               >
                 <ChevronLeftIcon
                   className={`transition-transform duration-300 ${
@@ -167,7 +172,10 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
       <div
         className={`relative flex h-full min-w-0 flex-col overflow-x-hidden transition-[margin-left] duration-300 ${contentClassName}`}
       >
-        <header className='absolute top-0 right-0 z-[90] flex h-14 items-center px-6 pointer-events-none'>
+        <header
+          className='absolute top-0 right-0 z-[90] flex h-14 items-center px-6 pointer-events-none'
+          aria-label='Admin toolbar'
+        >
           <div className='pointer-events-auto'>
             <div className='flex items-center gap-2'>
               <div id='ai-paths-header-actions' className='flex items-center gap-2' />
@@ -175,7 +183,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
             </div>
           </div>
         </header>
-        <main className={mainClassName}>
+        <main id='app-content' tabIndex={-1} className={`${mainClassName} focus:outline-none`}>
           <QueryErrorBoundary>
             <div className='min-w-0 max-w-full'>{children}</div>
           </QueryErrorBoundary>

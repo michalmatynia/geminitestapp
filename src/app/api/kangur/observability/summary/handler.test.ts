@@ -1,0 +1,162 @@
+import { NextRequest } from 'next/server';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { authError } from '@/shared/errors/app-error';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
+
+const { authMock, getKangurObservabilitySummaryMock } = vi.hoisted(() => ({
+  authMock: vi.fn(),
+  getKangurObservabilitySummaryMock: vi.fn(),
+}));
+
+vi.mock('@/features/auth/server', () => ({
+  auth: authMock,
+}));
+
+vi.mock('@/features/kangur/observability/summary', () => ({
+  getKangurObservabilitySummary: getKangurObservabilitySummaryMock,
+}));
+
+import { GET_handler } from './handler';
+
+const createRequestContext = (): ApiHandlerContext =>
+  ({
+    requestId: 'request-kangur-observability-summary-1',
+    traceId: 'trace-kangur-observability-summary-1',
+    correlationId: 'corr-kangur-observability-summary-1',
+    startTime: Date.now(),
+    getElapsedMs: () => 1,
+  }) as ApiHandlerContext;
+
+describe('kangur observability summary handler', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('rejects unauthorized users', async () => {
+    authMock.mockResolvedValue({
+      user: {
+        id: 'user-1',
+        isElevated: false,
+        permissions: [],
+      },
+    });
+
+    await expect(
+      GET_handler(
+        new NextRequest('http://localhost/api/kangur/observability/summary'),
+        createRequestContext()
+      )
+    ).rejects.toMatchObject(authError('Unauthorized.'));
+  });
+
+  it('returns the Kangur summary for elevated users', async () => {
+    authMock.mockResolvedValue({
+      user: {
+        id: 'admin-1',
+        isElevated: true,
+        permissions: [],
+      },
+    });
+    getKangurObservabilitySummaryMock.mockResolvedValue({
+      generatedAt: '2026-03-07T12:00:00.000Z',
+      range: '7d',
+      overallStatus: 'warning',
+      window: {
+        from: '2026-02-28T12:00:00.000Z',
+        to: '2026-03-07T12:00:00.000Z',
+      },
+      keyMetrics: {
+        serverErrorRatePercent: 2.4,
+        learnerSignInAttempts: 12,
+        learnerSignInFailureRatePercent: 8.3,
+        progressSyncFailures: 4,
+        ttsRequests: 11,
+        ttsFallbackRatePercent: 18.2,
+      },
+      alerts: [],
+      serverLogs: {
+        metrics: null,
+        recent: [],
+      },
+      routes: {
+        authMeGet: null,
+        learnerSignInPost: null,
+        progressPatch: null,
+        scoresPost: null,
+        assignmentsPost: null,
+        learnersPost: null,
+        ttsPost: null,
+      },
+      analytics: {
+        totals: { events: 10, pageviews: 4 },
+        visitors: 3,
+        sessions: 5,
+        topPaths: [],
+        topEventNames: [],
+        importantEvents: [],
+        recent: [],
+      },
+      performanceBaseline: null,
+      errors: null,
+    });
+
+    const response = await GET_handler(
+      new NextRequest('http://localhost/api/kangur/observability/summary?range=7d'),
+      createRequestContext()
+    );
+
+    expect(getKangurObservabilitySummaryMock).toHaveBeenCalledWith({ range: '7d' });
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({
+        summary: expect.objectContaining({
+          range: '7d',
+          overallStatus: 'warning',
+        }),
+      })
+    );
+  });
+
+  it('rejects invalid ranges', async () => {
+    authMock.mockResolvedValue({
+      user: {
+        id: 'admin-1',
+        isElevated: true,
+        permissions: [],
+      },
+    });
+
+    await expect(
+      GET_handler(
+        new NextRequest('http://localhost/api/kangur/observability/summary?range=2h'),
+        createRequestContext()
+      )
+    ).rejects.toThrow('Invalid range');
+  });
+
+  it('rejects invalid summary payloads that do not match the shared contract', async () => {
+    authMock.mockResolvedValue({
+      user: {
+        id: 'admin-1',
+        isElevated: true,
+        permissions: [],
+      },
+    });
+    getKangurObservabilitySummaryMock.mockResolvedValue({
+      generatedAt: '2026-03-07T12:00:00.000Z',
+      range: '7d',
+    });
+
+    await expect(
+      GET_handler(
+        new NextRequest('http://localhost/api/kangur/observability/summary?range=7d'),
+        createRequestContext()
+      )
+    ).rejects.toMatchObject({
+      message: 'Invalid Kangur observability summary contract',
+      code: 'INTERNAL_SERVER_ERROR',
+      httpStatus: 500,
+    });
+  });
+});

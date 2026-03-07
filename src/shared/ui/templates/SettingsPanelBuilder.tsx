@@ -120,11 +120,13 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                 error={fieldError}
               >
                 <Textarea
+                  id={fieldId}
                   value={(values[field.key] as string) || ''}
                   onChange={(e) => handleFieldChange(field.key, e.target.value)}
                   placeholder={field.placeholder}
                   disabled={field.disabled || disabled}
                   className='min-h-[100px]'
+                  aria-label={field.label}
                 />
               </FormField>
             ) : field.type === 'select' ? (
@@ -143,6 +145,7 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                     []
                   }
                   placeholder={field.placeholder || 'Select an option'}
+                  ariaLabel={field.label}
                 />
               </FormField>
             ) : field.type === 'checkbox' ? (
@@ -198,18 +201,22 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                   >
                     <input
                       type='color'
+                      id={`${fieldId}-picker`}
                       value={String(values[field.key] || '#000000')}
                       onChange={(e) => handleFieldChange(field.key, e.target.value)}
                       className='opacity-0 size-full cursor-pointer'
                       disabled={field.disabled || disabled}
+                      aria-label={`${field.label} color picker`}
                     />
                   </div>
                   <Input
+                    id={fieldId}
                     value={String(values[field.key] || '#000000')}
                     onChange={(e) => handleFieldChange(field.key, e.target.value)}
                     placeholder='#000000'
                     disabled={field.disabled || disabled}
                     className='font-mono'
+                    aria-label={`${field.label} value`}
                   />
                 </div>
               </FormField>
@@ -227,6 +234,7 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                 }
               >
                 <input
+                  id={fieldId}
                   type='range'
                   min={field.min ?? 0}
                   max={field.max ?? 100}
@@ -235,6 +243,7 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                   onChange={(e) => handleFieldChange(field.key, Number(e.target.value))}
                   className='w-full accent-primary h-2 bg-muted rounded-lg appearance-none cursor-pointer'
                   disabled={field.disabled || disabled}
+                  aria-label={field.label}
                 />
               </FormField>
             ) : (
@@ -246,6 +255,7 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
               >
                 <div className='flex items-center gap-2'>
                   <Input
+                    id={fieldId}
                     type={field.type}
                     value={
                       values[field.key] !== undefined && values[field.key] !== null
@@ -264,6 +274,7 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                     max={field.max}
                     step={field.step}
                     className='flex-1'
+                    aria-label={field.label}
                   />
                   {field.suffix && (
                     <span className='text-xs text-muted-foreground'>{field.suffix}</span>

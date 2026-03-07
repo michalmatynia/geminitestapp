@@ -51,7 +51,7 @@ describe('GenericPickerDropdown', () => {
     const trigger = screen.getByRole('button', { name: /add item/i });
     await userEvent.click(trigger);
 
-    const gridOption = screen.getByRole('button', { name: /grid/i });
+    const gridOption = screen.getByRole('option', { name: /grid/i });
     await userEvent.click(gridOption);
 
     expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ key: 'grid', label: 'Grid' }));
@@ -64,7 +64,7 @@ describe('GenericPickerDropdown', () => {
     const trigger = screen.getByRole('button', { name: /add item/i });
     await userEvent.click(trigger);
 
-    const gridOption = screen.getByRole('button', { name: /grid/i });
+    const gridOption = screen.getByRole('option', { name: /grid/i });
     await userEvent.click(gridOption);
 
     await waitFor(() => {
@@ -79,7 +79,7 @@ describe('GenericPickerDropdown', () => {
     const trigger = screen.getByRole('button', { name: /add item/i });
     await userEvent.click(trigger);
 
-    fireEvent.keyDown(screen.getByRole('button', { name: /close picker/i }), {
+    fireEvent.keyDown(screen.getByRole('listbox', { name: /add item/i }), {
       key: 'Escape',
     });
 
@@ -98,8 +98,8 @@ describe('GenericPickerDropdown', () => {
     const searchInput = screen.getByPlaceholderText('Search...');
     await userEvent.type(searchInput, 'grid');
 
-    expect(screen.getByRole('button', { name: /grid/i })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /block/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /grid/i })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: /block/i })).not.toBeInTheDocument();
   });
 
   it('highlights selected option', async () => {
@@ -109,7 +109,7 @@ describe('GenericPickerDropdown', () => {
     const trigger = screen.getByRole('button', { name: /add item/i });
     await userEvent.click(trigger);
 
-    const gridOption = screen.getByRole('button', { name: /grid/i });
+    const gridOption = screen.getByRole('option', { name: /grid/i });
     expect(gridOption).toHaveClass('bg-blue-500/20');
   });
 
@@ -118,7 +118,7 @@ describe('GenericPickerDropdown', () => {
     render(<GenericPickerDropdown groups={mockGroups} onSelect={onSelect} disabled />);
 
     const trigger = screen.getByRole('button', { name: /add item/i });
-    expect(trigger).toHaveAttribute('aria-disabled', 'true');
+    expect(trigger).toBeDisabled();
   });
 
   it('returns null when no options', () => {

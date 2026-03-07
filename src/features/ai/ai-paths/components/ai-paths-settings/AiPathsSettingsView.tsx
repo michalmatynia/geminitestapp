@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useAiPathsSettingsPageContext } from './AiPathsSettingsPageContext';
-import { useAiPathsSettingsOrchestrator } from './AiPathsSettingsOrchestratorContext';
+import { usePersistenceState } from '../../context';
 import { AiPathsCanvasView } from './sections/AiPathsCanvasView';
 import { AiPathsListView } from './sections/AiPathsListView';
 import { AiPathsDocsView } from './sections/AiPathsDocsView';
@@ -13,7 +13,7 @@ import { useAiPathsDocsTooltips } from '@/features/ai/ai-paths/hooks/useAiPathsD
 
 export function AiPathsSettingsView(): React.JSX.Element {
   const { isFocusMode } = useAiPathsSettingsPageContext();
-  const { loading } = useAiPathsSettingsOrchestrator();
+  const { loading } = usePersistenceState();
 
   const { docsTooltipsEnabled } = useAiPathsDocsTooltips();
 

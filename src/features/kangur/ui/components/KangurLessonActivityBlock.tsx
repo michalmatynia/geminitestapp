@@ -118,7 +118,7 @@ export function KangurLessonActivityBlock(
           <KangurButton
             type='button'
             size='sm'
-            variant='secondary'
+            variant='surface'
             className='mt-4'
             onClick={(): void => {
               setIsCompleted(false);

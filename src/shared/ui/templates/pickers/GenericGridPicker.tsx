@@ -69,7 +69,7 @@ export const GenericGridPicker = memo(function GenericGridPicker<
   );
 
   const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLDivElement>, item: T) => {
+    (e: React.KeyboardEvent<HTMLButtonElement>, item: T) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         handleSelect(item);
@@ -90,6 +90,7 @@ export const GenericGridPicker = memo(function GenericGridPicker<
           <input
             type='text'
             placeholder={searchPlaceholder}
+            aria-label={searchPlaceholder}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             disabled={disabled}
@@ -121,7 +122,8 @@ export const GenericGridPicker = memo(function GenericGridPicker<
             gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
             gap,
           }}
-          role='grid'
+          role='listbox'
+          aria-disabled={disabled}
         >
           {filtered.map((item: T) => {
             const isSelected = selectedId === item.id;
@@ -129,26 +131,27 @@ export const GenericGridPicker = memo(function GenericGridPicker<
             const isDisabledItem = item.disabled || disabled;
 
             return (
-              <div
+              <button
                 key={item.id}
-                role='gridcell'
+                type='button'
+                role='option'
+                aria-selected={isSelected}
+                disabled={isDisabledItem}
                 onClick={() => handleSelect(item)}
                 onKeyDown={(e) => handleKeyDown(e, item)}
                 onFocus={() => setLocalFocused(item.id)}
                 onBlur={() => setLocalFocused(null)}
-                tabIndex={isDisabledItem ? -1 : 0}
                 className={cn(
-                  'cursor-pointer rounded transition outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1',
+                  'w-full rounded border-0 bg-transparent p-0 text-left transition outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1',
+                  !isDisabledItem && 'cursor-pointer',
                   isSelected && 'ring-2 ring-blue-500',
                   isFocused && 'ring-2 ring-blue-400',
                   isDisabledItem && 'cursor-not-allowed opacity-50',
                   !isDisabledItem && 'hover:ring-1 hover:ring-blue-300'
                 )}
-                aria-selected={isSelected}
-                aria-disabled={isDisabledItem}
               >
                 {renderItem(item, isSelected)}
-              </div>
+              </button>
             );
           })}
         </div>

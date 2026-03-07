@@ -18,6 +18,11 @@ describe('CalendarLesson', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /miesiace i pory roku/i }));
 
+    expect(screen.getByTestId('calendar-lesson-section-shell-miesiace')).toHaveClass(
+      'glass-panel',
+      'border-white/88',
+      'bg-white/94'
+    );
     const firstIndicator = screen.getByTestId('calendar-lesson-slide-miesiace-0');
     const secondIndicator = screen.getByTestId('calendar-lesson-slide-miesiace-1');
 
@@ -42,6 +47,11 @@ describe('CalendarLesson', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /czym jest kalendarz/i }));
 
+    expect(screen.getByTestId('calendar-lesson-section-shell-intro')).toHaveClass(
+      'glass-panel',
+      'border-white/88',
+      'bg-white/94'
+    );
     expect(screen.getByTestId('calendar-lesson-intro-emoji')).toHaveClass('inline-flex', 'text-6xl');
     expect(screen.getByTestId('calendar-lesson-slide-title-intro')).toHaveClass(
       'text-xl',
@@ -52,6 +62,11 @@ describe('CalendarLesson', () => {
     fireEvent.click(screen.getByRole('button', { name: /gra z kalendarzem/i }));
 
     const header = screen.getByTestId('calendar-lesson-game-header');
+    expect(screen.getByTestId('calendar-lesson-game-shell')).toHaveClass(
+      'glass-panel',
+      'border-white/88',
+      'bg-white/94'
+    );
 
     expect(within(header).getByRole('heading', { name: /gra z kalendarzem/i })).toHaveClass(
       'text-xl',

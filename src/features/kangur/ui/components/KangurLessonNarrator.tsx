@@ -464,7 +464,7 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
             type='button'
             onClick={stopPlayback}
             disabled={status === 'loading' || status === 'idle'}
-            variant='secondary'
+            variant='surface'
             data-doc-id='lessons_narrator'
           >
             <Square className='size-4' /> Stop

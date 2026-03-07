@@ -13,11 +13,14 @@ import {
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
 import { KangurTestSuiteRuntimeProvider } from '@/features/kangur/ui/context/KangurTestSuiteRuntimeContext';
+import { KangurAiTutorProvider } from '@/features/kangur/ui/context/KangurAiTutorContext';
+import { KangurAiTutorWidget } from './KangurAiTutorWidget';
 import { KangurTestQuestionRenderer } from './KangurTestQuestionRenderer';
 
 type Props = {
   suite: KangurTestSuite;
   questions: KangurTestQuestion[];
+  learnerId?: string | null;
   onFinish?: (score: number, maxScore: number, answers: Record<string, string>) => void;
 };
 
@@ -87,7 +90,7 @@ function ExamSummary({
   );
 }
 
-export function KangurTestSuitePlayer({ suite, questions, onFinish }: Props): React.JSX.Element {
+export function KangurTestSuitePlayer({ suite, questions, learnerId, onFinish }: Props): React.JSX.Element {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [showAnswer, setShowAnswer] = useState(false);
@@ -147,20 +150,24 @@ export function KangurTestSuitePlayer({ suite, questions, onFinish }: Props): Re
 
   if (finished) {
     return (
-      <KangurTestSuiteRuntimeProvider totalQuestions={totalQuestions}>
-        <ExamSummary
-          suite={suite}
-          questions={questions}
-          answers={answers}
-          score={score}
-          maxScore={maxScore}
-          onRestart={handleRestart}
-        />
-      </KangurTestSuiteRuntimeProvider>
+      <KangurAiTutorProvider learnerId={learnerId ?? null} lessonContext={suite.title}>
+        <KangurTestSuiteRuntimeProvider totalQuestions={totalQuestions}>
+          <ExamSummary
+            suite={suite}
+            questions={questions}
+            answers={answers}
+            score={score}
+            maxScore={maxScore}
+            onRestart={handleRestart}
+          />
+        </KangurTestSuiteRuntimeProvider>
+        <KangurAiTutorWidget />
+      </KangurAiTutorProvider>
     );
   }
 
   return (
+    <KangurAiTutorProvider learnerId={learnerId ?? null} lessonContext={suite.title}>
     <KangurTestSuiteRuntimeProvider totalQuestions={totalQuestions}>
       <div className='space-y-4'>
         {/* Progress bar */}
@@ -229,5 +236,7 @@ export function KangurTestSuitePlayer({ suite, questions, onFinish }: Props): Re
         </div>
       </div>
     </KangurTestSuiteRuntimeProvider>
+    <KangurAiTutorWidget />
+    </KangurAiTutorProvider>
   );
 }

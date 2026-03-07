@@ -235,6 +235,21 @@ describe('Notes page UI', () => {
     expect(screen.getByRole('heading', { name: 'Beta' })).toBeInTheDocument();
   });
 
+  it('exposes named pinned and archived filter toggles', async () => {
+    renderNotesPage();
+
+    expect(await screen.findByRole('heading', { name: 'Alpha' })).toBeInTheDocument();
+
+    expect(screen.getByRole('button', { name: 'Filter pinned notes' })).toHaveAttribute(
+      'aria-pressed',
+      'false'
+    );
+    expect(screen.getByRole('button', { name: 'Filter archived notes' })).toHaveAttribute(
+      'aria-pressed',
+      'false'
+    );
+  });
+
   it('creates a new note from the modal', async () => {
     renderNotesPage();
     const user = userEvent.setup();

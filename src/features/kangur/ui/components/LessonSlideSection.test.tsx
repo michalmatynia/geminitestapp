@@ -45,6 +45,11 @@ describe('LessonSlideSection', () => {
     const firstIndicator = screen.getByTestId('lesson-slide-indicator-0');
     const secondIndicator = screen.getByTestId('lesson-slide-indicator-1');
 
+    expect(screen.getByTestId('lesson-slide-shell')).toHaveClass(
+      'glass-panel',
+      'border-white/88',
+      'bg-white/94'
+    );
     expect(firstIndicator).toHaveClass('kangur-cta-pill', 'bg-orange-400');
     expect(firstIndicator).toHaveAttribute('aria-current', 'step');
     expect(secondIndicator).toHaveClass('kangur-cta-pill', 'soft-cta');
@@ -74,6 +79,10 @@ describe('LessonSlideSection', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Menu' }));
 
+    expect(screen.getByRole('button', { name: 'Menu' })).toHaveClass(
+      'kangur-cta-pill',
+      'surface-cta'
+    );
     expect(onBack).toHaveBeenCalledTimes(1);
   });
 });

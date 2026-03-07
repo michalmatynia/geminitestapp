@@ -3,7 +3,10 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 
 import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
-import { logKangurClientError } from '@/features/kangur/observability/client';
+import {
+  logKangurClientError,
+  trackKangurClientEvent,
+} from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurProgressRecord, KangurUser } from '@/features/kangur/services/ports';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
@@ -92,6 +95,14 @@ export function KangurProgressSyncProvider({
           }
         }
 
+        trackKangurClientEvent('kangur_progress_hydrated', {
+          userKey,
+          localOwnerKeyChanged: localOwnerKey !== userKey,
+          updatedLocal: shouldUpdateLocal,
+          updatedRemote: shouldUpdateRemote,
+          totalXp: mergedProgress.totalXp,
+          gamesPlayed: mergedProgress.gamesPlayed,
+        });
         lastSyncedProgressRef.current = serializeProgress(mergedProgress);
       } catch (error: unknown) {
         if (cancelled) {
@@ -103,6 +114,10 @@ export function KangurProgressSyncProvider({
           return;
         }
 
+        trackKangurClientEvent('kangur_progress_hydration_failed', {
+          userKey,
+          errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        });
         logKangurClientError(error, {
           source: 'KangurProgressSyncProvider',
           action: 'hydrateProgress',
@@ -154,6 +169,12 @@ export function KangurProgressSyncProvider({
             return;
           }
 
+          trackKangurClientEvent('kangur_progress_sync_failed', {
+            userKey,
+            totalXp: progress.totalXp,
+            gamesPlayed: progress.gamesPlayed,
+            errorMessage: error instanceof Error ? error.message : 'Unknown error',
+          });
           logKangurClientError(error, {
             source: 'KangurProgressSyncProvider',
             action: 'syncProgress',

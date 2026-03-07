@@ -21,19 +21,21 @@ export function PreviewSectionFrame({
   children,
 }: PreviewSectionFrameProps): React.JSX.Element {
   const { colorSchemes } = useCmsPageContext();
-  const { section, selectedRing, handleSelect, wrapInspector, renderSectionActions, divider } =
-    usePreviewSectionContext();
+  const {
+    section,
+    selectedRing,
+    handleSelect,
+    wrapInspector,
+    renderSectionActions,
+    renderSelectionButton,
+    divider,
+  } = usePreviewSectionContext();
 
   const sectionStyles = getSectionStyles(section.settings, colorSchemes);
 
   const frame = (
     <div
-      role='button'
-      tabIndex={0}
       onClick={handleSelect}
-      onKeyDown={(event: React.KeyboardEvent): void => {
-        if (event.key === 'Enter' || event.key === ' ') handleSelect();
-      }}
       style={sectionStyles}
       className={cn(
         'relative group w-full cursor-pointer text-left transition',
@@ -42,6 +44,7 @@ export function PreviewSectionFrame({
         className
       )}
     >
+      {renderSelectionButton()}
       {renderSectionActions()}
       {dividerPosition === 'before' ? divider : null}
       {topSlot}

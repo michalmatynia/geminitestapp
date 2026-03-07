@@ -18,6 +18,7 @@ import {
   updateAiPathsSettingsBulk,
 } from '@/shared/lib/ai-paths/settings-store-client';
 import { Button, StatusBadge, SelectSimple } from '@/shared/ui';
+import { focusOnMount } from '@/shared/utils/focus-on-mount';
 import { useAiPathsSettingsPageContext } from '../AiPathsSettingsPageContext';
 import { useGraphActions, useSelectionActions, useSelectionState } from '../../../context';
 import { CanvasBoard } from '../../canvas-board';
@@ -775,6 +776,7 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
             <div className='flex items-center gap-2'>
               {isPathNameEditing ? (
                 <input
+                  ref={focusOnMount}
                   data-doc-id='canvas_path_name_field'
                   type='text'
                   value={renameDraft}
@@ -793,7 +795,6 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                       cancelPathNameEdit();
                     }
                   }}
-                  autoFocus
                   className='h-9 w-[320px] rounded-md border border-border bg-card/60 px-3 text-sm text-white outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
                   placeholder='Path name'
                   disabled={!activePath}

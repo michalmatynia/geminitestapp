@@ -4,12 +4,13 @@ import { useQueryClient } from '@tanstack/react-query';
 
 import {
   enqueueAiPathRun,
+  mergeEnqueuedAiPathRunForCache,
   resolveAiPathRunFromEnqueueResponseData,
 } from '@/shared/lib/ai-paths/api/client';
 import { TRIGGER_EVENTS } from '@/shared/lib/ai-paths/core/constants';
 import { sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { AiNode, PathConfig, Edge } from '@/shared/contracts/ai-paths';
+import type { AiNode, AiPathRunRecord, PathConfig, Edge } from '@/shared/contracts/ai-paths';
 import {
   invalidateAiPathQueue,
   notifyAiPathRunEnqueued,
@@ -389,7 +390,7 @@ export function useAiPathTrigger(): {
         });
         return;
       }
-      const queuedRunForCache = runRecord ?? {
+      const queuedRunFallback: AiPathRunRecord = {
         id: runId,
         pathId,
         pathName: selectedConfig.name ?? null,
@@ -406,6 +407,11 @@ export function useAiPathTrigger(): {
           requestId,
         },
       };
+      const queuedRunForCache = mergeEnqueuedAiPathRunForCache({
+        fallbackRun: queuedRunFallback,
+        runId,
+        runRecord,
+      });
       optimisticallyInsertAiPathRunInQueueCache(queryClient, queuedRunForCache);
       void invalidateAiPathQueue(queryClient);
       notifyAiPathRunEnqueued(runId, {

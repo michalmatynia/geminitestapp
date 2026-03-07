@@ -74,7 +74,7 @@ describe('SectionTemplatePicker Component', () => {
   it('should call onSelect when a template is selected', () => {
     render(<SectionTemplatePicker zone='header' onSelect={mockOnSelect} />);
 
-    const templateItem = screen.getByText('Standard Hero').closest('[role="gridcell"]');
+    const templateItem = screen.getByRole('option', { name: /standard hero/i });
     expect(templateItem).toBeInTheDocument();
     fireEvent.click(templateItem!);
 

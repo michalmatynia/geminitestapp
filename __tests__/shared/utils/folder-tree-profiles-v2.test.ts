@@ -21,9 +21,9 @@ describe('folder-tree-profiles-v2', () => {
   it('ships native v2 defaults for every tree instance', () => {
     expect(defaultFolderTreeProfilesV2.notes.version).toBe(2);
     expect(defaultFolderTreeProfilesV2.notes.placeholders.style).toBe('ghost');
-    expect(defaultFolderTreeProfilesV2.product_categories.placeholders.preset).toBe('classic');
-    expect(defaultFolderTreeProfilesV2.product_categories.icons.slots.file).toBeNull();
-    expect(defaultFolderTreeProfilesV2.cms_page_builder.icons.slots.root).toBe('LayoutGrid');
+    expect(defaultFolderTreeProfilesV2.product_categories.placeholders.preset).toBe('sublime');
+    expect(defaultFolderTreeProfilesV2.product_categories.icons.slots.file).toBe('FileText');
+    expect(defaultFolderTreeProfilesV2.cms_page_builder.icons.slots.root).toBe('Folder');
     expect(
       defaultFolderTreeProfilesV2.image_studio.nesting.rules.some(
         (rule) => rule.targetType === 'root'

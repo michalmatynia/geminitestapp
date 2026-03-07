@@ -12,13 +12,19 @@ import {
   saveProgress,
 } from '@/features/kangur/ui/services/progress';
 
-const { useKangurAuthMock, progressGetMock, progressUpdateMock, logKangurClientErrorMock } =
-  vi.hoisted(() => ({
-    useKangurAuthMock: vi.fn(),
-    progressGetMock: vi.fn(),
-    progressUpdateMock: vi.fn(),
-    logKangurClientErrorMock: vi.fn(),
-  }));
+const {
+  useKangurAuthMock,
+  progressGetMock,
+  progressUpdateMock,
+  logKangurClientErrorMock,
+  trackKangurClientEventMock,
+} = vi.hoisted(() => ({
+  useKangurAuthMock: vi.fn(),
+  progressGetMock: vi.fn(),
+  progressUpdateMock: vi.fn(),
+  logKangurClientErrorMock: vi.fn(),
+  trackKangurClientEventMock: vi.fn(),
+}));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: useKangurAuthMock,
@@ -35,6 +41,7 @@ vi.mock('@/features/kangur/services/kangur-platform', () => ({
 
 vi.mock('@/features/kangur/observability/client', () => ({
   logKangurClientError: logKangurClientErrorMock,
+  trackKangurClientEvent: trackKangurClientEventMock,
 }));
 
 import { KangurProgressSyncProvider } from './KangurProgressSyncProvider';
@@ -120,6 +127,14 @@ describe('KangurProgressSyncProvider', () => {
           badges: ['first_game'],
         })
       )
+    );
+    expect(trackKangurClientEventMock).toHaveBeenCalledWith(
+      'kangur_progress_hydrated',
+      expect.objectContaining({
+        userKey: 'learner-1',
+        updatedLocal: true,
+        updatedRemote: true,
+      })
     );
     expect(screen.getByTestId('kangur-progress-total-xp')).toHaveTextContent('120');
     expect(localStorage.getItem(KANGUR_PROGRESS_OWNER_STORAGE_KEY)).toBe('learner-1');

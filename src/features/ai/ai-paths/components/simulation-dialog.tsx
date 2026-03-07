@@ -7,9 +7,8 @@ import type { EntityModalProps } from '@/shared/contracts/ui';
 import { Button, Input, Alert, FormField } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
-import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
-import { useSelectionActions, useSelectionState } from '@/features/ai/ai-paths/context';
-import { useAiPathsSettingsOrchestrator } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
+import { useGraphActions, useGraphState } from '@/features/ai/ai-paths/context/GraphContext';
+import { useSelectionActions, useSelectionState, useRuntimeActions } from '@/features/ai/ai-paths/context';
 
 export interface SimulationDialogProps extends EntityModalProps<AiNode> {
   isPathLocked: boolean;
@@ -30,7 +29,8 @@ const applySimulationEntityId = (node: AiNode, entityId: string): AiNode => ({
 });
 
 export function SimulationDialog(): React.JSX.Element | null {
-  const { nodes, isPathLocked, handleRunSimulation } = useAiPathsSettingsOrchestrator();
+  const { nodes, isPathLocked } = useGraphState();
+  const { runSimulation: handleRunSimulation } = useRuntimeActions();
   const { simulationOpenNodeId } = useSelectionState();
   const { setSimulationOpenNodeId } = useSelectionActions();
   const { setNodes } = useGraphActions();

@@ -13,6 +13,7 @@ import SignInPage, {
   resolveSignInCallbackNavigation,
 } from '@/features/auth/pages/public/SignInPage';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
+import { expectNoAxeViolations } from '@/testing/accessibility/axe';
 
 const searchParamsGetMock = vi.fn<(key: string) => string | null>();
 const routerPushMock = vi.fn<(href: string) => void>();
@@ -92,6 +93,13 @@ describe('SignInPage', () => {
       'aria-busy',
       'false'
     );
+  });
+
+  it('has no obvious accessibility violations in the sign-in form shell', async () => {
+    const { container } = renderPage();
+
+    await screen.findByRole('heading', { name: /sign in/i });
+    await expectNoAxeViolations(container);
   });
 
   it('handles successful sign in', async () => {
@@ -194,19 +202,22 @@ describe('SignInPage', () => {
   });
 
   it('supports keyboard tab order across sign-in controls', async () => {
-    const user = userEvent.setup();
     renderPage();
 
     const emailInput = await screen.findByLabelText(/email/i);
     const passwordInput = screen.getByLabelText(/password/i);
     const submitButton = screen.getByRole('button', { name: /sign in/i });
+    const form = submitButton.closest('form');
 
-    emailInput.focus();
-    expect(emailInput).toHaveFocus();
-    await user.tab();
-    expect(passwordInput).toHaveFocus();
-    await user.tab();
-    expect(submitButton).toHaveFocus();
+    expect(form).not.toBeNull();
+    const tabbableControls = Array.from(form?.elements ?? []).filter(
+      (element): element is HTMLElement =>
+        element instanceof HTMLElement &&
+        !element.hasAttribute('disabled') &&
+        element.tabIndex >= 0
+    );
+
+    expect(tabbableControls).toEqual([emailInput, passwordInput, submitButton]);
   });
 });
 

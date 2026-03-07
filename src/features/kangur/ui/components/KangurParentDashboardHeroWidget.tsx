@@ -52,10 +52,10 @@ export function KangurParentDashboardHeroWidget({
         >
           🪪
         </KangurIconBadge>
-        <h1 className='text-center text-2xl font-extrabold text-gray-800'>
+        <h1 className='text-center text-2xl font-extrabold text-slate-800'>
           Panel Rodzica / Nauczyciela
         </h1>
-        <p className='text-center text-sm text-gray-500'>
+        <p className='text-center text-sm text-slate-500'>
           Ten widok pokazuje prywatne postepy ucznia, wiec dostep wymaga zalogowanego konta.
         </p>
 
@@ -94,8 +94,8 @@ export function KangurParentDashboardHeroWidget({
         >
           🔒
         </KangurIconBadge>
-        <h1 className='text-center text-2xl font-extrabold text-gray-800'>Panel Rodzica</h1>
-        <p className='text-center text-sm text-gray-500'>
+        <h1 className='text-center text-2xl font-extrabold text-slate-800'>Panel Rodzica</h1>
+        <p className='text-center text-sm text-slate-500'>
           Ten widok jest dostepny tylko dla konta rodzica, ktore zarzadza profilami uczniow.
         </p>
         <KangurButton asChild size='lg' variant='primary' data-doc-id='top_nav_profile'>
@@ -114,11 +114,11 @@ export function KangurParentDashboardHeroWidget({
               Rola: {viewerRoleLabel}
             </KangurStatusChip>
           ) : null}
-          <h1 className='text-3xl font-extrabold text-gray-800'>Panel Rodzica</h1>
-          <p className='mt-1 text-gray-500'>
-            Konto wlasciciela: <span className='font-semibold text-gray-700'>{viewerName}</span>.
+          <h1 className='text-3xl font-extrabold text-slate-800'>Panel Rodzica</h1>
+          <p className='mt-1 text-slate-500'>
+            Konto wlasciciela: <span className='font-semibold text-slate-700'>{viewerName}</span>.
             Wybrany uczen:{' '}
-            <span className='font-semibold text-gray-700'>
+            <span className='font-semibold text-slate-700'>
               {activeLearner?.displayName ?? 'Brak profilu'}
             </span>
             .

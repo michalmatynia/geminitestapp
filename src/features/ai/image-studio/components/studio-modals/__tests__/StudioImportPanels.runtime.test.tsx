@@ -21,45 +21,34 @@ const mocks = vi.hoisted(() => ({
   triggerLocalUpload: vi.fn(),
 }));
 
-vi.mock('@/shared/ui', () => ({
-  Button: ({
-    children,
-    ...rest
-  }: React.ButtonHTMLAttributes<HTMLButtonElement>): React.JSX.Element => (
-    <button {...rest}>{children}</button>
-  ),
-  FileUploadTrigger: ({
-    children,
-  }: {
-    children: React.ReactNode;
-  }): React.JSX.Element => <>{children}</>,
-}));
+vi.mock('@/shared/ui', async () => {
+  const mocks = await import('./studioInlineEditRuntimeMockComponents');
+  return {
+    Button: mocks.MockButton,
+    FileUploadTrigger: mocks.MockFileUploadTrigger,
+  };
+});
 
-vi.mock('@/shared/ui/templates/modals', () => ({
-  DetailModal: ({
-    children,
-    footer,
-    isOpen,
-    onClose,
-    title,
-  }: {
-    children: React.ReactNode;
-    footer?: React.ReactNode;
-    isOpen: boolean;
-    onClose: () => void;
-    title: string;
-  }): React.JSX.Element | null =>
-    isOpen ? (
-      <div data-testid={`modal-${title}`}>
-        <div>{title}</div>
-        <button type='button' onClick={onClose}>
-          Close Modal
-        </button>
-        {children}
-        {footer}
-      </div>
-    ) : null,
-}));
+vi.mock('@/shared/ui/templates/modals', async () => {
+  const mocks = await import('./studioInlineEditRuntimeMockComponents');
+  return {
+    DetailModal: ({
+      title,
+      ...props
+    }: {
+      children: React.ReactNode;
+      footer?: React.ReactNode;
+      isOpen: boolean;
+      onClose: () => void;
+      title: string;
+    }): React.JSX.Element | null =>
+      props.isOpen ? (
+        <div data-testid={`modal-${title}`}>
+          <mocks.MockDetailModal title={title} {...props} />
+        </div>
+      ) : null,
+  };
+});
 
 vi.mock('@/features/files/components/FileManager', async () => {
   const React = await import('react');
@@ -154,7 +143,7 @@ describe('StudioImportPanels runtime path', () => {
     expect(mocks.setLocalUploadMode).toHaveBeenCalledWith('replace');
     expect(mocks.setLocalUploadTargetId).toHaveBeenCalledWith('target-slot-1');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Close Modal' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
     expect(mocks.setDriveImportOpen).toHaveBeenCalledWith(false);
     expect(mocks.setDriveImportMode).toHaveBeenCalledWith('create');
     expect(mocks.setDriveImportTargetId).toHaveBeenCalledWith(null);

@@ -124,3 +124,6 @@ export const KANGUR_ACCENT_STYLES: Record<KangurAccent, KangurAccentStyles> = {
 
 export const KANGUR_OPTION_CARD_CLASSNAME =
   'soft-card group w-full rounded-[26px] p-4 text-left transition duration-200 hover:-translate-y-[1px]';
+
+export const KANGUR_STEP_PILL_CLASSNAME =
+  'kangur-cta-pill inline-flex items-center justify-center rounded-full border border-transparent transition-all duration-200';

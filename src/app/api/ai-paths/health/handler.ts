@@ -6,7 +6,7 @@ import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-re
 import {
   getRuntimeAnalyticsSummary,
   resolveRuntimeAnalyticsRangeWindow,
-} from '@/features/ai/ai-paths/services/runtime-analytics-service';
+} from '@/features/ai/ai-paths/server';
 import {
   getAiPathRunQueueStatus,
   startAiInsightsQueue,

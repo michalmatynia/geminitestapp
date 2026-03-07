@@ -8,6 +8,7 @@ import {
   type KangurTestQuestion,
   type KangurTestQuestionStore,
 } from '@/shared/contracts/kangur-tests';
+import { sanitizeSvg } from '@/shared/utils';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 export { KANGUR_TEST_QUESTIONS_SETTING_KEY };
@@ -31,6 +32,37 @@ const createPanelId = (): string =>
   `panel_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
 
 export const createDefaultIllustration = (): KangurQuestionIllustration => ({ type: 'none' });
+
+const sanitizeOptionalSvgMarkup = (markup: string): string =>
+  markup.trim().length > 0 ? sanitizeSvg(markup) : '';
+
+export const sanitizeQuestionIllustration = (
+  illustration: KangurQuestionIllustration
+): KangurQuestionIllustration => {
+  if (illustration.type === 'none') {
+    return illustration;
+  }
+
+  if (illustration.type === 'single') {
+    return {
+      ...illustration,
+      svgContent: sanitizeOptionalSvgMarkup(illustration.svgContent),
+    };
+  }
+
+  return {
+    ...illustration,
+    panels: illustration.panels.map((panel) => ({
+      ...panel,
+      svgContent: sanitizeOptionalSvgMarkup(panel.svgContent),
+    })),
+  };
+};
+
+const sanitizeQuestion = (question: KangurTestQuestion): KangurTestQuestion => ({
+  ...question,
+  illustration: sanitizeQuestionIllustration(question.illustration),
+});
 
 export const createPanelIllustration = (
   count: number,
@@ -61,17 +93,19 @@ export const createKangurTestQuestion = (
   suiteId: string,
   sortOrder = 0
 ): KangurTestQuestion =>
-  kangurTestQuestionSchema.parse({
-    id: createKangurTestQuestionId(),
-    suiteId,
-    sortOrder,
-    prompt: '',
-    choices: DEFAULT_CHOICE_LABELS.slice(0, 5).map((label) => ({ label, text: '' })),
-    correctChoiceLabel: 'A',
-    pointValue: 3,
-    explanation: '',
-    illustration: createDefaultIllustration(),
-  });
+  sanitizeQuestion(
+    kangurTestQuestionSchema.parse({
+      id: createKangurTestQuestionId(),
+      suiteId,
+      sortOrder,
+      prompt: '',
+      choices: DEFAULT_CHOICE_LABELS.slice(0, 5).map((label) => ({ label, text: '' })),
+      correctChoiceLabel: 'A',
+      pointValue: 3,
+      explanation: '',
+      illustration: createDefaultIllustration(),
+    })
+  );
 
 // ─── Store operations ─────────────────────────────────────────────────────────
 
@@ -79,7 +113,16 @@ export const parseKangurTestQuestionStore = (raw: unknown): KangurTestQuestionSt
   const parsed = kangurTestQuestionStoreSchema.safeParse(
     parseJsonSetting(typeof raw === 'string' ? raw : null, {})
   );
-  return parsed.success ? parsed.data : {};
+  if (!parsed.success) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(parsed.data).map(([questionId, question]) => [
+      questionId,
+      sanitizeQuestion(question),
+    ])
+  );
 };
 
 export const getQuestionsForSuite = (
@@ -102,7 +145,7 @@ export const upsertKangurTestQuestion = (
   question: KangurTestQuestion
 ): KangurTestQuestionStore => ({
   ...store,
-  [question.id]: question,
+  [question.id]: sanitizeQuestion(question),
 });
 
 export const deleteKangurTestQuestion = (
@@ -165,14 +208,16 @@ export const formDataToQuestion = (
   suiteId: string,
   sortOrder: number
 ): KangurTestQuestion =>
-  kangurTestQuestionSchema.parse({
-    id,
-    suiteId,
-    sortOrder,
-    prompt: formData.prompt.trim(),
-    choices: formData.choices,
-    correctChoiceLabel: formData.correctChoiceLabel,
-    pointValue: formData.pointValue,
-    explanation: formData.explanation.trim() || undefined,
-    illustration: formData.illustration,
-  });
+  sanitizeQuestion(
+    kangurTestQuestionSchema.parse({
+      id,
+      suiteId,
+      sortOrder,
+      prompt: formData.prompt.trim(),
+      choices: formData.choices,
+      correctChoiceLabel: formData.correctChoiceLabel,
+      pointValue: formData.pointValue,
+      explanation: formData.explanation.trim() || undefined,
+      illustration: formData.illustration,
+    })
+  );

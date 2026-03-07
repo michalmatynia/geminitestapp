@@ -17,7 +17,7 @@ import {
   getAiPathsSetting,
   requireAiPathsRunAccess,
 } from '@/features/ai/ai-paths/server';
-import { enqueuePathRun } from '@/features/ai/ai-paths/services/path-run-service';
+import { enqueuePathRun } from '@/features/ai/ai-paths/server';
 import { assertAiPathRunQueueReadyForEnqueue } from '@/features/jobs/server';
 import { parseJsonBody } from '@/features/products/server';
 import {

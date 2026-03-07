@@ -7,7 +7,7 @@ import {
   requireAiPathsAccess,
 } from '@/features/ai/ai-paths/server';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
-import { resumePathRun } from '@/features/ai/ai-paths/services/path-run-service';
+import { resumePathRun } from '@/features/ai/ai-paths/server';
 import { assertAiPathRunQueueReady } from '@/features/jobs/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

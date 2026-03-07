@@ -3,6 +3,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_STEP_PILL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { cn } from '@/shared/utils';
 
 export type LessonSlide = {
   title: string;
@@ -41,11 +43,22 @@ export default function LessonSlideSection({
       {slides.length > 1 && (
         <div className='flex gap-2'>
           {slides.map((_, i) => (
-            <div
+            <button
               key={i}
-              className={`w-2.5 h-2.5 rounded-full transition-all ${
-                i === slide ? `${dotActiveClass} scale-125` : i < slide ? dotDoneClass : 'bg-gray-200'
-              }`}
+              type='button'
+              onClick={() => setSlide(i)}
+              aria-label={`Przejdz do slajdu ${i + 1}`}
+              aria-current={i === slide ? 'step' : undefined}
+              className={cn(
+                KANGUR_STEP_PILL_CLASSNAME,
+                'h-[14px] min-w-[14px]',
+                i === slide
+                  ? ['w-8 scale-[1.04]', dotActiveClass]
+                  : i < slide
+                    ? ['w-6', dotDoneClass]
+                    : 'w-[14px] soft-cta opacity-80 hover:opacity-100'
+              )}
+              data-testid={`lesson-slide-indicator-${i}`}
             />
           ))}
         </div>

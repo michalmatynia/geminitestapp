@@ -1,12 +1,10 @@
 import React from 'react';
-import { cn } from '@/shared/utils';
+import { cn, sanitizeSvg } from '@/shared/utils';
 import type { KangurQuestionIllustration } from '@/shared/contracts/kangur-tests';
 
 /**
  * Renders a KangurQuestionIllustration (none | single | panels).
- * SVG content is injected via dangerouslySetInnerHTML.
- * In production, pipe content through DOMPurify before storage
- * so it is safe to render here without additional sanitization.
+ * SVG content is sanitized before injection so only safe vector markup renders.
  */
 type Props = {
   illustration: KangurQuestionIllustration;
@@ -24,7 +22,7 @@ export function KangurQuestionIllustrationRenderer({
     return (
       <div
         className={cn('w-full max-w-sm mx-auto', className)}
-        dangerouslySetInnerHTML={{ __html: illustration.svgContent }}
+        dangerouslySetInnerHTML={{ __html: sanitizeSvg(illustration.svgContent) }}
       />
     );
   }
@@ -44,14 +42,14 @@ export function KangurQuestionIllustrationRenderer({
       {panels.map((panel) => (
         <figure key={panel.id} className='flex flex-col items-center gap-1'>
           {panel.label ? (
-            <figcaption className='text-xs font-bold text-gray-600'>{panel.label})</figcaption>
+            <figcaption className='text-xs font-bold text-gray-600'>{panel.label}</figcaption>
           ) : null}
           {panel.svgContent.trim() ? (
             <div
               className='w-20 h-20'
               title={panel.description}
               aria-label={panel.description || `Panel ${panel.label}`}
-              dangerouslySetInnerHTML={{ __html: panel.svgContent }}
+              dangerouslySetInnerHTML={{ __html: sanitizeSvg(panel.svgContent) }}
             />
           ) : (
             <div className='w-20 h-20 rounded border border-dashed border-gray-200 bg-gray-50' />

@@ -1,4 +1,4 @@
-import { AiNode, Edge, RuntimePortValues } from '@/shared/contracts/ai-paths';
+import { AiNode, Edge } from '@/shared/contracts/ai-paths';
 import {
   type EvaluateGraphOptions,
   type RuntimeNodeResolutionTelemetry,

@@ -9,7 +9,7 @@ import {
   DEFAULT_APP_EMBED_ID,
   getAppEmbedOption,
 } from '@/features/app-embeds/lib/constants';
-import { KANGUR_MAIN_PAGE_KEY, KANGUR_PAGE_TO_SLUG } from '@/features/kangur/config/routing';
+import { KANGUR_MAIN_PAGE_KEY, KANGUR_PAGE_TO_SLUG, getKangurPageSlug } from '@/shared/contracts/kangur';
 import { KangurFeaturePage } from '@/features/kangur/ui/KangurFeaturePage';
 import { Card } from '@/shared/ui';
 

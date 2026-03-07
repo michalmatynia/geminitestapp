@@ -4,11 +4,11 @@ import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { removeImageStudioRunOutputs } from '@/features/ai/image-studio/server/run-repository';
+import { removeImageStudioRunOutputs } from '@/features/ai/image-studio/server';
 import {
   deleteImageStudioSlotCascade,
   listImageStudioSlots,
-} from '@/features/ai/image-studio/server/slot-repository';
+} from '@/features/ai/image-studio/server';
 import { deleteImageStudioVariant } from '@/features/ai/image-studio/server/variant-delete';
 import { getImageFileRepository } from '@/features/files/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

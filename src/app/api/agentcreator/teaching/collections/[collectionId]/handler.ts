@@ -5,7 +5,7 @@ import {
   deleteEmbeddingCollection,
   getEmbeddingCollectionById,
   upsertEmbeddingCollection,
-} from '@/features/ai/agentcreator/teaching/server/repository';
+} from '@/features/ai/agentcreator/server';
 import type { AgentTeachingEmbeddingCollectionRecord } from '@/shared/contracts/agent-teaching';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';

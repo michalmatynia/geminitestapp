@@ -9,7 +9,7 @@ import {
   createImageStudioRun,
   getImageStudioRunById,
   updateImageStudioRun,
-} from '@/features/ai/image-studio/server/run-repository';
+} from '@/features/ai/image-studio/server';
 import {
   enqueueImageStudioRunJob,
   startImageStudioRunQueue,

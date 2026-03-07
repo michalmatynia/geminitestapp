@@ -3,11 +3,11 @@ import { headers } from 'next/headers';
 import {
   getMediaInlineStyles,
   getMediaStyleVars,
-} from '@/features/cms/components/frontend/theme-styles';
-import { resolveCmsDomainFromHeaders } from '@/features/cms/services/cms-domain';
-import { getCmsMenuSettings } from '@/features/cms/services/cms-menu-settings';
-import { getCmsRepository } from '@/features/cms/services/cms-repository';
-import { getCmsThemeSettings } from '@/features/cms/services/cms-theme-settings';
+} from '@/features/cms/public';
+import { resolveCmsDomainFromHeaders } from '@/features/cms/server';
+import { getCmsMenuSettings } from '@/features/cms/server';
+import { getCmsRepository } from '@/features/cms/server';
+import { getCmsThemeSettings } from '@/features/cms/server';
 import type { CmsTheme, Page, PageComponent } from '@/shared/contracts/cms';
 import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
 import type { SlugRenderData as PreviewRenderData } from '../../[...slug]/slug-page-data';

@@ -24,7 +24,7 @@ const resolveTrackedProductRun = (
   value: unknown
 ): { runId: string; productId: string } | null => {
   const payload = parseAiPathRunEnqueuedEventPayload(value);
-  if (!payload || payload.entityType !== 'product' || !payload.entityId) {
+  if (payload?.entityType !== 'product' || !payload.entityId) {
     return null;
   }
   return {

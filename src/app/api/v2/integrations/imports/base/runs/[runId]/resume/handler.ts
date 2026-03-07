@@ -5,7 +5,7 @@ import {
   resumeBaseImportRun,
   toStartResponse,
   updateBaseImportRunQueueJob,
-} from '@/features/integrations/services/imports/base-import-service';
+} from '@/features/integrations/server';
 import { enqueueBaseImportRunJob } from '@/features/integrations/workers/baseImportQueue';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 

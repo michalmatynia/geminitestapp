@@ -1,8 +1,8 @@
 import { auth } from '@/features/auth/auth';
-import { CmsPageShell } from '@/features/cms/components/frontend/CmsPageShell';
-import { getCmsMenuSettings } from '@/features/cms/services/cms-menu-settings';
-import { getCmsRepository } from '@/features/cms/services/cms-repository';
-import { getCmsThemeSettings } from '@/features/cms/services/cms-theme-settings';
+import { CmsPageShell } from '@/features/cms/public';
+import { getCmsMenuSettings } from '@/features/cms/server';
+import { getCmsRepository } from '@/features/cms/server';
+import { getCmsThemeSettings } from '@/features/cms/server';
 import { productService } from '@/features/products/server';
 import type { Page, Slug } from '@/shared/contracts/cms';
 import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';

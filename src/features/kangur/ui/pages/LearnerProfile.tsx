@@ -11,7 +11,10 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
-import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
+import {
+  appendKangurUrlParams,
+  getKangurPageHref as createPageUrl,
+} from '@/features/kangur/config/routing';
 import KangurLearnerAssignmentsPanel from '@/features/kangur/ui/components/KangurLearnerAssignmentsPanel';
 import { logKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
@@ -96,7 +99,6 @@ const buildOperationPracticeHref = (
   operation: string,
   averageAccuracy: number
 ): string => {
-  const baseHref = createPageUrl('Game', basePath);
   const params = new URLSearchParams({ quickStart: 'training' });
 
   if (QUICK_START_OPERATIONS.has(operation as KangurOperation)) {
@@ -105,7 +107,7 @@ const buildOperationPracticeHref = (
     params.set('difficulty', resolvePracticeDifficulty(averageAccuracy));
   }
 
-  return `${baseHref}?${params.toString()}`;
+  return appendKangurUrlParams(createPageUrl('Game', basePath), Object.fromEntries(params));
 };
 
 const buildRecommendationHref = (
@@ -116,8 +118,7 @@ const buildRecommendationHref = (
   }
 ): string => {
   const baseHref = createPageUrl(action.page, basePath);
-  const query = action.query ? new URLSearchParams(action.query).toString() : '';
-  return query.length > 0 ? `${baseHref}?${query}` : baseHref;
+  return action.query ? appendKangurUrlParams(baseHref, action.query) : baseHref;
 };
 
 export default function LearnerProfile() {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { getBaseImportRunDetailOrThrow } from '@/features/integrations/services/imports/base-import-service';
+import { getBaseImportRunDetailOrThrow } from '@/features/integrations/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const querySchema = z.object({

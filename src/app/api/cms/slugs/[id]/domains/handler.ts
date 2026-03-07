@@ -6,9 +6,9 @@ import {
   isDomainZoningEnabled,
   removeDomainSlug,
   resolveCmsDomainScopeById,
-} from '@/features/cms/services/cms-domain';
-import { getCmsRepository } from '@/features/cms/services/cms-repository';
-import { cmsSlugDomainsUpdateSchema } from '@/features/cms/validations/api';
+} from '@/features/cms/server';
+import { getCmsRepository } from '@/features/cms/server';
+import { cmsSlugDomainsUpdateSchema } from '@/features/cms/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';

@@ -1,22 +1,22 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-07T03:59:08.680Z
+Generated at: 2026-03-07T04:53:06.083Z
 
 ## Snapshot
 
-- Source files: 4650
-- Source lines: 757309
-- use client files: 1353
-- Files >= 1000 LOC: 4
+- Source files: 4682
+- Source lines: 760258
+- use client files: 1336
+- Files >= 1000 LOC: 1
 - Files >= 1500 LOC: 0
-- Largest file: `src/features/ai/ai-paths/services/path-run-executor/index.ts` (1125 LOC)
+- Largest file: `src/features/ai/ai-paths/components/__tests__/canvas-connection-preview.test.tsx` (1055 LOC)
 - API routes: 324
 - API delegated server routes: 13
 - API routes without apiHandler/delegation: 0
 - API explicit cache policy coverage: 324/324 (100.0%)
-- Cross-feature dependency pairs: 72
+- Cross-feature dependency pairs: 71
 - Shared -> features imports: 11
-- setInterval occurrences: 23
+- setInterval occurrences: 22
 - Prop-drilling chains (depth >= 3): 34
 - Prop-drilling chains (depth >= 4): 4
 
@@ -53,21 +53,18 @@ Generated at: 2026-03-07T03:59:08.680Z
 | `jobs -> ai` | 12 |
 | `products -> integrations` | 12 |
 | `case-resolver -> ai` | 10 |
+| `cms -> app-embeds` | 8 |
 | `cms -> viewer3d` | 8 |
 | `integrations -> products` | 8 |
 | `kangur -> foldertree` | 8 |
 | `products -> internationalization` | 8 |
 | `ai -> products` | 7 |
-| `cms -> app-embeds` | 7 |
 
 ## Top File Hotspots (by LOC)
 
 | File | LOC |
 | --- | ---: |
-| `src/features/ai/ai-paths/services/path-run-executor/index.ts` | 1125 |
 | `src/features/ai/ai-paths/components/__tests__/canvas-connection-preview.test.tsx` | 1055 |
-| `src/shared/utils/folder-tree-profiles-v2/defaults.ts` | 1018 |
-| `src/features/ai/ai-paths/services/path-run-service.ts` | 1001 |
 | `src/shared/contracts/ai-paths.ts` | 992 |
 | `src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts` | 989 |
 | `src/features/ai/ai-paths/components/JobQueueContext.tsx` | 968 |
@@ -82,5 +79,8 @@ Generated at: 2026-03-07T03:59:08.680Z
 | `src/features/notesapp/context/NoteFormContext.tsx` | 918 |
 | `src/shared/lib/documentation/catalogs/validator-docs.ts` | 909 |
 | `src/features/case-resolver-capture/__tests__/proposals.test.ts` | 901 |
+| `src/features/kangur/ui/components/ClockTrainingGame.tsx` | 901 |
 | `src/features/cms/components/page-builder/registry/block-definitions-media.ts` | 898 |
 | `src/shared/lib/ai-paths/core/utils/data-contract-preflight.ts` | 897 |
+| `src/shared/contracts/cms.ts` | 895 |
+| `src/shared/lib/ai-brain/context/BrainContext.tsx` | 891 |

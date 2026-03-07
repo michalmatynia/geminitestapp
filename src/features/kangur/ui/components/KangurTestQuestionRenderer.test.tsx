@@ -38,8 +38,8 @@ describe('KangurTestQuestionRenderer', () => {
     const correctChoiceButton = screen.getByRole('button', { name: /A.*4/i });
     const wrongChoiceButton = screen.getByRole('button', { name: /B.*5/i });
 
-    expect(correctChoiceButton).toHaveClass('rounded-xl', 'cursor-pointer');
-    expect(wrongChoiceButton).toHaveClass('rounded-xl', 'cursor-pointer');
+    expect(correctChoiceButton).toHaveClass('soft-card', 'rounded-[24px]', 'cursor-pointer');
+    expect(wrongChoiceButton).toHaveClass('soft-card', 'rounded-[24px]', 'cursor-pointer');
 
     fireEvent.click(correctChoiceButton);
     expect(onSelect).toHaveBeenCalledWith('A');
@@ -53,7 +53,7 @@ describe('KangurTestQuestionRenderer', () => {
       />
     );
 
-    expect(screen.getByRole('button', { name: /A.*4/i })).toHaveClass('border-indigo-400');
+    expect(screen.getByRole('button', { name: /A.*4/i })).toHaveClass('border-amber-300');
 
     rerender(
       <KangurTestQuestionRenderer
@@ -64,6 +64,6 @@ describe('KangurTestQuestionRenderer', () => {
       />
     );
 
-    expect(screen.getByRole('button', { name: /A.*4/i })).toHaveClass('border-emerald-400');
+    expect(screen.getByRole('button', { name: /A.*4/i })).toHaveClass('border-emerald-300');
   });
 });

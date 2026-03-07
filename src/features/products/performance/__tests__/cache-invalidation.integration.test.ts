@@ -31,7 +31,7 @@ vi.mock('@/shared/lib/products/services/productService', () => ({
 }));
 
 import { queryCache, ProductCacheHelpers } from '@/features/products/performance/query-cache';
-import { CachedProductMutations, withCacheInvalidation } from '@/features/products/performance/cached-service';
+import { CachedProductMutations, withCacheInvalidation } from '@/features/products/server';
 import { productService } from '@/shared/lib/products/services/productService';
 
 const createProductMock = productService.createProduct as ReturnType<typeof vi.fn>;

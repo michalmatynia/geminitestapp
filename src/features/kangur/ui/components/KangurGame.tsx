@@ -20,9 +20,14 @@ import {
 } from '@/features/kangur/ui/components/KangurIllustrations';
 import { useKangurGameContext } from '@/features/kangur/ui/context/KangurGameContext';
 import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
+import {
+  KANGUR_ACCENT_STYLES,
+  KANGUR_OPTION_CARD_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { getKangurQuestions, isExamMode } from '@/features/kangur/ui/services/kangur-questions';
 import { XP_REWARDS, addXp, loadProgress } from '@/features/kangur/ui/services/progress';
 import type { KangurExamQuestion, KangurQuestionChoice } from '@/features/kangur/ui/types';
+import { cn } from '@/shared/utils';
 
 type IllustrationComponent = () => React.JSX.Element;
 
@@ -118,17 +123,31 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
 
       <div className='flex flex-col gap-2'>
         {choices.map((choice, index) => {
-          let style = 'bg-white border-2 border-gray-200 text-gray-700 hover:border-orange-400';
+          let style = cn('border-slate-200/80 text-slate-700', KANGUR_ACCENT_STYLES.slate.hoverCard);
+          let badgeClassName = KANGUR_ACCENT_STYLES.slate.badge;
           if (confirmed) {
             if (choice === q.answer) {
-              style = 'bg-green-100 border-2 border-green-500 text-green-800';
+              style = cn(
+                KANGUR_ACCENT_STYLES.emerald.activeCard,
+                KANGUR_ACCENT_STYLES.emerald.activeText
+              );
+              badgeClassName = KANGUR_ACCENT_STYLES.emerald.badge;
             } else if (choice === selected) {
-              style = 'bg-red-100 border-2 border-red-400 text-red-700';
+              style = cn(
+                KANGUR_ACCENT_STYLES.rose.activeCard,
+                KANGUR_ACCENT_STYLES.rose.activeText
+              );
+              badgeClassName = KANGUR_ACCENT_STYLES.rose.badge;
             } else {
-              style = 'bg-white border-2 border-gray-100 text-gray-400 opacity-60';
+              style = 'border-slate-200/80 bg-white/92 text-slate-400 opacity-70';
+              badgeClassName = KANGUR_ACCENT_STYLES.slate.badge;
             }
           } else if (choice === selected) {
-            style = 'bg-orange-50 border-2 border-orange-400 text-orange-800';
+            style = cn(
+              KANGUR_ACCENT_STYLES.amber.activeCard,
+              KANGUR_ACCENT_STYLES.amber.activeText
+            );
+            badgeClassName = KANGUR_ACCENT_STYLES.amber.badge;
           }
 
           return (
@@ -137,9 +156,19 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
               whileHover={!confirmed ? { scale: 1.02 } : {}}
               whileTap={!confirmed ? { scale: 0.98 } : {}}
               onClick={() => handleSelect(choice)}
-              className={`w-full text-left px-4 py-3 rounded-xl font-semibold transition-all flex items-center gap-3 ${style}`}
+              className={cn(
+                KANGUR_OPTION_CARD_CLASSNAME,
+                'w-full rounded-[24px] px-4 py-3 font-semibold transition-all flex items-center gap-3',
+                style
+              )}
+              data-testid={`kangur-game-choice-${index}`}
             >
-              <span className='w-7 h-7 rounded-full bg-orange-100 text-orange-600 font-extrabold text-sm flex items-center justify-center flex-shrink-0'>
+              <span
+                className={cn(
+                  'flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-sm font-extrabold',
+                  badgeClassName
+                )}
+              >
                 {String.fromCharCode(65 + index)}
               </span>
               <span>{choice}</span>

@@ -173,7 +173,7 @@ export const convertKangurLessonRootBlockType = (
     };
   }
 
-  return convertKangurLessonInlineBlockType(block as KangurLessonInlineBlock, nextType as KangurLessonInlineBlock['type']);
+  return convertKangurLessonInlineBlockType(block, nextType);
 };
 
 export const cloneKangurLessonInlineBlock = (

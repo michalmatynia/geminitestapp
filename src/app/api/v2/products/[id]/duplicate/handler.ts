@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { parseJsonBody } from '@/features/products/server';
-import { CachedProductService } from '@/features/products/performance/cached-service';
+import { CachedProductService } from '@/features/products/server';
 import { productService } from '@/shared/lib/products/services/productService'; // Direct import
 import type { ProductWithImages } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

@@ -6,7 +6,7 @@ import React, { useMemo, useCallback } from 'react';
 import {
   defaultImageStudioSettings,
   getImageStudioProjectSettingsKey,
-} from '@/features/ai/image-studio/studio-settings';
+} from '@/features/ai/image-studio/utils/studio-settings';
 import type { ImageStudioProjectRecord } from '@/shared/contracts/image-studio';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import {

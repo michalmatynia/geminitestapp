@@ -6,6 +6,7 @@ import {
 
 export const DEFAULT_SVG_VIEWBOX = '0 0 100 100';
 export const DEFAULT_IMAGE_SRC = '';
+const SVG_IMAGE_SOURCE_PATTERN = /\.svg(?:$|[?#])/i;
 
 export const KANGUR_LESSON_GRID_TEMPLATE_IDS = [
   'two-column',
@@ -39,6 +40,19 @@ export const normalizeText = (value: unknown, fallback: string, maxLength: numbe
   const trimmed = value.trim();
   if (!trimmed) return fallback;
   return trimmed.slice(0, maxLength);
+};
+
+export const isSvgImageSource = (value: unknown): value is string => {
+  if (typeof value !== 'string') return false;
+  const trimmed = value.trim();
+  if (!trimmed || /^javascript:/i.test(trimmed)) return false;
+  return SVG_IMAGE_SOURCE_PATTERN.test(trimmed);
+};
+
+export const normalizeSvgImageSource = (value: unknown): string => {
+  if (typeof value !== 'string') return DEFAULT_IMAGE_SRC;
+  const trimmed = value.trim().slice(0, 2_000);
+  return isSvgImageSource(trimmed) ? trimmed : DEFAULT_IMAGE_SRC;
 };
 
 export const stripHtmlToText = (value: string): string =>

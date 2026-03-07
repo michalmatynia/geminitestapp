@@ -4,7 +4,7 @@ import React, { useCallback } from 'react';
 import { Clipboard, X } from 'lucide-react';
 
 import { Button, Textarea } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { cn, sanitizeSvg } from '@/shared/utils';
 
 // ── Snippet helpers (60×60 viewBox — suitable for panels and inline blocks) ──
 
@@ -229,7 +229,7 @@ export function SvgCodeEditor({
               /* admin-only: SVG authored by admin, rendered for instant preview */
               <div
                 className='max-h-full max-w-full'
-                dangerouslySetInnerHTML={{ __html: value }}
+                dangerouslySetInnerHTML={{ __html: sanitizeSvg(value) }}
               />
             ) : (
               <p className='text-center text-xs text-gray-300'>

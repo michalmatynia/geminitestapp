@@ -22,7 +22,7 @@ import { getImageFileRepository } from '@/shared/lib/files/services/image-file-r
 import {
   listBaseListingsForSync,
   syncBaseImagesForListing,
-} from '@/features/integrations/services/base-image-sync';
+} from '@/features/integrations/server';
 import { getProductRepository } from '@/features/products/server';
 import { buildImageBase64Slots } from '@/shared/lib/products/services/image-base64';
 import type { ProductAiJobRecord } from '@/shared/contracts/jobs';
@@ -301,9 +301,9 @@ export async function processGraphModel(job: Job): Promise<Record<string, unknow
     productId,
     ...(completionRetryCount > 0
       ? {
-          completionRetryCount,
-          completionRetryReason: retryReason,
-        }
+        completionRetryCount,
+        completionRetryReason: retryReason,
+      }
       : {}),
     ...(brainApplied ? { brainApplied } : {}),
   };

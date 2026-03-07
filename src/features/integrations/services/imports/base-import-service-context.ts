@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
+import { resolveBaseConnectionToken } from '@/features/integrations/server';
 import {
   fetchBaseProductDetails,
   type BaseProductRecord,
@@ -12,7 +12,7 @@ import {
   toStringId,
   type BaseConnectionContext,
   type PriceGroupLookup,
-} from '@/features/integrations/services/imports/base-import-service-shared';
+} from '@/features/integrations/server-shared';
 import { getIntegrationRepository } from '@/features/integrations/services/integration-repository';
 import type { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';

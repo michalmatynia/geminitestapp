@@ -1,7 +1,7 @@
 import 'server-only';
 
-import { resolveImageStudioSequenceActiveSteps } from '@/features/ai/image-studio/studio-settings';
-import type { ImageStudioSlotRecord } from '@/features/ai/image-studio/server/slot-repository';
+import { resolveImageStudioSequenceActiveSteps } from '@/features/ai/image-studio/server';
+import type { ImageStudioSlotRecord } from '@/features/ai/image-studio/server';
 import {
   normalizeProductStudioSequenceGenerationMode,
   type ProductStudioExecutionRoute,

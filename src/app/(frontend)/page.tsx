@@ -2,8 +2,8 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { JSX } from 'react';
 
-import { getCmsRepository } from '@/features/cms/services/cms-repository';
-import { getSlugsForDomain, resolveCmsDomainFromHeaders } from '@/features/cms/services/cms-domain';
+import { getCmsRepository } from '@/features/cms/server';
+import { getSlugsForDomain, resolveCmsDomainFromHeaders } from '@/features/cms/server';
 
 import { HomeContent } from './HomeContent';
 import {

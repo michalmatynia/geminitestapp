@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { getImageStudioSlotById } from '@/features/ai/image-studio/server/slot-repository';
+import { getImageStudioSlotById } from '@/features/ai/image-studio/server';
 import {
   IMAGE_STUDIO_SEQUENCE_OPERATIONS,
   normalizeImageStudioSequenceSteps,

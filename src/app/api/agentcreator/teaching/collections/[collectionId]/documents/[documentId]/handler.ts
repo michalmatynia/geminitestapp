@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { deleteEmbeddingDocument } from '@/features/ai/agentcreator/teaching/server/repository';
+import { deleteEmbeddingDocument } from '@/features/ai/agentcreator/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 

@@ -29,6 +29,9 @@ export {
 // Contracts & Types
 export * from '@/shared/contracts/products';
 
+// Performance & Caching
+export * from './performance';
+
 // Validations & Utils
 export * from '@/shared/lib/products/validations';
 export * from '@/shared/lib/products/utils';

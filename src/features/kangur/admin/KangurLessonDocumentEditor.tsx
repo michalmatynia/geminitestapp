@@ -597,7 +597,7 @@ export function KangurLessonDocumentEditor(
             </Button>
           </div>
           <div className='text-xs text-muted-foreground'>
-            Build lesson pages from typed blocks. Mix text, SVG, uploaded images, interactive activities, and responsive grid layouts.
+            Build lesson pages from typed blocks. Mix text, SVG image references, interactive activities, and responsive grid layouts.
           </div>
         </div>
 

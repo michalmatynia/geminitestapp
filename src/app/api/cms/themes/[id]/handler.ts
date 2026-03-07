@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getCmsRepository } from '@/features/cms/services/cms-repository';
-import { cmsThemeUpdateSchema } from '@/features/cms/validations/api';
+import { getCmsRepository } from '@/features/cms/server';
+import { cmsThemeUpdateSchema } from '@/features/cms/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { UpdateCmsThemeDto } from '@/shared/contracts/cms';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

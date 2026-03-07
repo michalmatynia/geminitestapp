@@ -1,4 +1,3 @@
-'use client';
 
 import { readDocsTooltipsEnabled, useDocsTooltipsSetting } from '@/features/tooltip-engine';
 

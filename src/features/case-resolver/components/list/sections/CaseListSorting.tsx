@@ -1,4 +1,3 @@
-'use client';
 
 import React from 'react';
 import { ArrowDown, ArrowUp, Lock, Save, Unlock } from 'lucide-react';

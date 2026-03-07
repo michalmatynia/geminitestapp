@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
 
 import {
   DEFAULT_APP_EMBED_BASE_PATH,
@@ -9,8 +10,15 @@ import {
   DEFAULT_APP_EMBED_ID,
   getAppEmbedOption,
 } from '@/features/app-embeds/lib/constants';
-import { KANGUR_MAIN_PAGE_KEY, KANGUR_PAGE_TO_SLUG, getKangurPageSlug } from '@/shared/contracts/kangur';
-import { KangurFeaturePage } from '@/features/kangur/ui/KangurFeaturePage';
+import {
+  buildKangurEmbeddedBasePath,
+  getKangurPageSlug,
+  KANGUR_EMBED_QUERY_PARAM,
+  KANGUR_INTERNAL_QUERY_PARAM_KEYS,
+  KANGUR_MAIN_PAGE_KEY,
+  KANGUR_PAGE_TO_SLUG,
+} from '@/features/kangur/config/routing';
+import { KangurFeaturePage } from '@/features/kangur/public';
 import { Card } from '@/shared/ui';
 
 import { useRequiredBlockSettings } from './BlockContext';
@@ -22,42 +30,67 @@ const resolveAppEmbedHeight = (value: unknown): number => {
   return Math.max(240, value);
 };
 
-const resolveKangurEntrySlug = (entryPage: unknown): string[] => {
-  if (typeof entryPage !== 'string' || entryPage.trim().length === 0) {
-    return [];
+const resolveKangurSlug = (value: unknown): string | null => {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    return null;
   }
 
-  const trimmed = entryPage.trim();
-  if (trimmed === KANGUR_MAIN_PAGE_KEY) {
-    return [];
-  }
-
-  const pageSlug = KANGUR_PAGE_TO_SLUG[trimmed];
-  if (pageSlug) {
-    return pageSlug === KANGUR_PAGE_TO_SLUG[KANGUR_MAIN_PAGE_KEY] ? [] : [pageSlug];
+  const trimmed = value.trim();
+  const directPageSlug = KANGUR_PAGE_TO_SLUG[trimmed];
+  if (directPageSlug) {
+    return directPageSlug;
   }
 
   const directMatch = Object.entries(KANGUR_PAGE_TO_SLUG).find(
     ([, slug]) => slug.toLowerCase() === trimmed.toLowerCase()
   );
   if (directMatch) {
-    return directMatch[0] === KANGUR_MAIN_PAGE_KEY ? [] : [directMatch[1]];
+    return directMatch[1];
   }
 
-  return [];
+  return null;
+};
+
+const resolveKangurEntrySlug = (entryPage: unknown): string[] => {
+  const resolvedSlug = resolveKangurSlug(entryPage);
+  if (!resolvedSlug) {
+    return [];
+  }
+
+  if (resolvedSlug === getKangurPageSlug(KANGUR_MAIN_PAGE_KEY)) {
+    return [];
+  }
+
+  return [resolvedSlug];
 };
 
 export function AppEmbedBlock(): React.ReactNode {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const settings = useRequiredBlockSettings();
   const rawAppId = settings['appId'];
   const appOption = getAppEmbedOption(typeof rawAppId === 'string' ? rawAppId : DEFAULT_APP_EMBED_ID);
   const title = (settings['title'] as string) || '';
   const embedUrl = (settings['embedUrl'] as string) || '';
   const height = resolveAppEmbedHeight(settings['height']);
-  const basePath = (settings['basePath'] as string) || DEFAULT_APP_EMBED_BASE_PATH;
+  const configuredBasePath = (settings['basePath'] as string) || DEFAULT_APP_EMBED_BASE_PATH;
   const entryPage = (settings['entryPage'] as string) || DEFAULT_APP_EMBED_ENTRY_PAGE;
   const appLabel = appOption?.label ?? 'App';
   const heading = title || appLabel;
+  const hostPageSearchParams = new URLSearchParams(searchParams.toString());
+
+  KANGUR_INTERNAL_QUERY_PARAM_KEYS.forEach((key) => {
+    hostPageSearchParams.delete(key);
+  });
+
+  const currentHostHref = `${pathname || '/'}${
+    hostPageSearchParams.toString().length > 0 ? `?${hostPageSearchParams.toString()}` : ''
+  }`;
+  const hostPath = configuredBasePath.trim().length > 0 ? configuredBasePath : currentHostHref;
+  const embeddedBasePath = buildKangurEmbeddedBasePath(hostPath);
+  const requestedSlug = searchParams.get(KANGUR_EMBED_QUERY_PARAM);
+  const activeSlug =
+    requestedSlug === null ? resolveKangurEntrySlug(entryPage) : requestedSlug ? [requestedSlug] : [];
 
   return (
     <Card
@@ -70,7 +103,7 @@ export function AppEmbedBlock(): React.ReactNode {
           <div className='text-sm font-semibold text-white'>{heading}</div>
           <div className='text-[10px] uppercase tracking-wide text-gray-500'>
             {appOption?.renderMode === 'internal-app'
-              ? `Internal app mount${basePath ? ` · ${basePath}` : ''}`
+              ? `Internal app mount${hostPath ? ` · ${hostPath}` : ''}`
               : 'App embed'}
           </div>
         </div>
@@ -81,8 +114,8 @@ export function AppEmbedBlock(): React.ReactNode {
           style={{ minHeight: height }}
         >
           <KangurFeaturePage
-            slug={resolveKangurEntrySlug(entryPage)}
-            basePath={basePath}
+            slug={activeSlug}
+            basePath={embeddedBasePath}
             embedded
           />
         </div>

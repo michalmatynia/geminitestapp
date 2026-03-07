@@ -13,11 +13,11 @@ import {
 import {
   getImageStudioSlotLinkBySourceAndRelation,
   upsertImageStudioSlotLink,
-} from '@/features/ai/image-studio/server/slot-link-repository';
+} from '@/features/ai/image-studio/server';
 import {
   createImageStudioSlots,
   getImageStudioSlotById,
-} from '@/features/ai/image-studio/server/slot-repository';
+} from '@/features/ai/image-studio/server';
 import {
   buildUpscaleFingerprint,
   buildUpscaleFingerprintRelationType,

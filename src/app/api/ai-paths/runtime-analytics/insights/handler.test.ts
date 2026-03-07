@@ -21,11 +21,11 @@ vi.mock('@/features/jobs/server', () => ({
   startAiInsightsQueue: startAiInsightsQueueMock,
 }));
 
-vi.mock('@/features/ai/insights/repository', () => ({
+vi.mock('@/features/ai/insights/server', () => ({
   listAiInsights: listAiInsightsMock,
 }));
 
-vi.mock('@/features/ai/insights/generator', () => ({
+vi.mock('@/features/ai/insights/server', () => ({
   generateRuntimeAnalyticsInsight: generateRuntimeAnalyticsInsightMock,
 }));
 

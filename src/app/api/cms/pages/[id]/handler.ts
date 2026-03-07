@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { logCmsActivity } from '@/features/cms/services/cms-activity';
-import { getCmsRepository } from '@/features/cms/services/cms-repository';
-import { cmsPageUpdateSchema } from '@/features/cms/validations/api';
+import { getCmsRepository } from '@/features/cms/server';
+import { cmsPageUpdateSchema } from '@/features/cms/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError, validationError } from '@/shared/errors/app-error';

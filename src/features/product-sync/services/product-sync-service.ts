@@ -8,7 +8,7 @@ import {
   getProductListingRepository,
   findProductListingByProductAndConnectionAcrossProviders,
 } from '@/features/integrations/server';
-import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
+import { resolveBaseConnectionToken } from '@/features/integrations/server';
 import {
   callBaseApi,
   fetchBaseProductDetails,

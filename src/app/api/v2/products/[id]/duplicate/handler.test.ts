@@ -19,7 +19,7 @@ vi.mock('@/shared/lib/products/services/productService', () => ({
   },
 }));
 
-vi.mock('@/features/products/performance/cached-service', () => ({
+vi.mock('@/features/products/server', () => ({
   CachedProductService: {
     invalidateAll: invalidateAllMock,
   },

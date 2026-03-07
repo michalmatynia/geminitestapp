@@ -22,6 +22,7 @@ interface FileManagerProps {
   defaultFolder?: string;
   showBulkActions?: boolean;
   showTagSearch?: boolean;
+  filepathFilter?: (filepath: string) => boolean;
 }
 
 export type FileManagerRuntimeValue = {
@@ -40,6 +41,7 @@ export default function FileManager(props: FileManagerProps): React.JSX.Element 
     defaultFolder,
     showBulkActions,
     showTagSearch,
+    filepathFilter,
   } = props;
 
   const runtime = React.useContext(FileManagerRuntimeContext);
@@ -55,6 +57,7 @@ export default function FileManager(props: FileManagerProps): React.JSX.Element 
       {...(defaultFolder !== undefined ? { defaultFolder } : {})}
       {...(showBulkActions !== undefined ? { showBulkActions } : {})}
       {...(showTagSearch !== undefined ? { showTagSearch } : {})}
+      {...(filepathFilter !== undefined ? { filepathFilter } : {})}
     >
       <Card variant='glass' padding='md' className='text-white shadow-xl border-border/60'>
         <FileManagerHeader />

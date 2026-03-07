@@ -22,7 +22,7 @@ vi.mock('@/features/ai/image-studio/server/auto-scaler-utils', () => ({
   analyzeImageByAutoScalerLayout: analyzeImageByAutoScalerLayoutMock,
 }));
 
-vi.mock('@/features/ai/image-studio/server/slot-repository', () => ({
+vi.mock('@/features/ai/image-studio/server', () => ({
   getImageStudioSlotById: getImageStudioSlotByIdMock,
 }));
 

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { clearOfflineMutationQueue } from '@/shared/hooks/offline/useOfflineMutation';
+import { useInterval } from '@/shared/hooks/use-interval';
 
 export type OfflineQueueItem = {
   id: string;
@@ -40,7 +41,7 @@ export function useOfflineQueueStatus(): {
   count: number;
   refresh: () => void;
   clear: () => void;
-  } {
+} {
   const [items, setItems] = useState<OfflineQueueItem[]>((): OfflineQueueItem[] =>
     readQueueFromStorage()
   );
@@ -57,8 +58,9 @@ export function useOfflineQueueStatus(): {
     setItems([]);
   }, []);
 
+  useInterval(refresh, 5000);
+
   useEffect((): (() => void) => {
-    const intervalId = setInterval(refresh, 5000);
     const onStorage = (event: StorageEvent): void => {
       if (event.key === STORAGE_KEY) {
         refresh();
@@ -66,7 +68,6 @@ export function useOfflineQueueStatus(): {
     };
     window.addEventListener('storage', onStorage);
     return (): void => {
-      clearInterval(intervalId);
       window.removeEventListener('storage', onStorage);
     };
   }, [refresh]);

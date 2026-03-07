@@ -27,14 +27,14 @@ palette.forEach((definition): void => {
     const existing = definitionInputContractsByType.get(definition.type) ?? {};
     definitionInputContractsByType.set(definition.type, {
       ...existing,
-      ...(definition.inputContracts as Record<string, PortContract>),
+      ...(definition.inputContracts),
     });
   }
   if (definition.outputContracts) {
     const existingOutputs = definitionOutputContractsByType.get(definition.type) ?? {};
     definitionOutputContractsByType.set(definition.type, {
       ...existingOutputs,
-      ...(definition.outputContracts as Record<string, PortContract>),
+      ...(definition.outputContracts),
     });
   }
 });
@@ -170,7 +170,7 @@ export const getResolvedNodeInputPortContract = (
   }
 
   const runtimeContract = resolvePortContract(
-    node.config?.runtime?.inputContracts as Record<string, PortContract> | undefined,
+    node.config?.runtime?.inputContracts,
     portName
   );
   if (runtimeContract) {
@@ -182,7 +182,7 @@ export const getResolvedNodeInputPortContract = (
     });
   }
   const nodeContract = resolvePortContract(
-    node.inputContracts as Record<string, PortContract> | undefined,
+    node.inputContracts,
     portName
   );
   if (nodeContract) {
@@ -225,7 +225,7 @@ export const getResolvedNodeOutputPortContract = (
   portName: string
 ): ResolvedNodePortContract => {
   const nodeContract = resolvePortContract(
-    node.outputContracts as Record<string, PortContract> | undefined,
+    node.outputContracts,
     portName
   );
   if (nodeContract) {

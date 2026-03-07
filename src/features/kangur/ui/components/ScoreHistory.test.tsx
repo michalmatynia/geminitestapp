@@ -5,6 +5,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { buildKangurEmbeddedBasePath } from '@/shared/contracts/kangur';
 import type { KangurScoreRecord } from '@/features/kangur/services/ports';
 
 const { scoreFilterMock, logKangurClientErrorMock } = vi.hoisted(() => ({
@@ -165,5 +166,62 @@ describe('ScoreHistory', () => {
 
     const followUpLink = await screen.findByRole('link', { name: 'Powtorz lekcje' });
     expect(followUpLink).toHaveAttribute('href', '/kangur/lessons?focus=division');
+  });
+
+  it('renders an embedded cms follow-up link when using a host page base path', async () => {
+    scoreFilterMock.mockImplementation(
+      (criteria: Partial<KangurScoreRecord>): Promise<KangurScoreRecord[]> => {
+        if (criteria.created_by) {
+          return Promise.resolve([
+            createScore({
+              id: 'score-1',
+              operation: 'division',
+              correct_answers: 4,
+              score: 4,
+              created_date: '2026-03-06T11:00:00.000Z',
+            }),
+            createScore({
+              id: 'score-2',
+              operation: 'multiplication',
+              correct_answers: 10,
+              score: 10,
+              created_date: '2026-03-05T11:00:00.000Z',
+            }),
+          ]);
+        }
+
+        if (criteria.player_name) {
+          return Promise.resolve([
+            createScore({
+              id: 'score-3',
+              operation: 'division',
+              correct_answers: 5,
+              score: 5,
+              created_date: '2026-03-04T11:00:00.000Z',
+            }),
+            createScore({
+              id: 'score-4',
+              operation: 'multiplication',
+              correct_answers: 9,
+              score: 9,
+              created_date: '2026-03-03T11:00:00.000Z',
+            }),
+          ]);
+        }
+
+        return Promise.resolve([]);
+      }
+    );
+
+    render(
+      <ScoreHistory
+        playerName='Jan'
+        createdBy='jan@example.com'
+        basePath={buildKangurEmbeddedBasePath('/home?preview=1')}
+      />
+    );
+
+    const followUpLink = await screen.findByRole('link', { name: 'Powtorz lekcje' });
+    expect(followUpLink).toHaveAttribute('href', '/home?preview=1&kangur=lessons&focus=division');
   });
 });

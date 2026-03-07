@@ -232,16 +232,16 @@ const readRuntimeTraceSnapshot = (meta: unknown): RuntimeTraceSnapshot | null =>
 const collectTraceSpans = (snapshot: RuntimeTraceSnapshot): RuntimeTraceSpanSummary[] => {
   const v1Spans = Array.isArray(snapshot.spans)
     ? snapshot.spans
-        .map((span: unknown) => normalizeRuntimeTraceSpan(span))
-        .filter((span): span is RuntimeTraceSpanSummary => Boolean(span))
+      .map((span: unknown) => normalizeRuntimeTraceSpan(span))
+      .filter((span): span is RuntimeTraceSpanSummary => Boolean(span))
     : [];
   if (v1Spans.length > 0) {
     return v1Spans;
   }
   return Array.isArray(snapshot.profile?.nodeSpans)
     ? snapshot.profile.nodeSpans
-        .map((span: unknown) => normalizeRuntimeTraceSpan(span))
-        .filter((span): span is RuntimeTraceSpanSummary => Boolean(span))
+      .map((span: unknown) => normalizeRuntimeTraceSpan(span))
+      .filter((span): span is RuntimeTraceSpanSummary => Boolean(span))
     : [];
 };
 

@@ -7,9 +7,9 @@ import {
   generateLogsInsight,
   generateRuntimeAnalyticsInsight,
   getScheduleSettings,
-} from '@/features/ai/insights/generator';
-import { getAiInsightsMeta, setAiInsightsMeta } from '@/features/ai/insights/repository';
-import { AI_INSIGHTS_SETTINGS_KEYS } from '@/features/ai/insights/settings';
+} from '@/features/ai/insights/server';
+import { getAiInsightsMeta, setAiInsightsMeta } from '@/features/ai/insights/server';
+import { AI_INSIGHTS_SETTINGS_KEYS } from '@/features/ai/insights/server';
 import { listSystemLogs } from '@/shared/lib/observability/system-logger';
 
 const AI_INSIGHTS_RUN_PATH_ID = 'brain-ai-insights';

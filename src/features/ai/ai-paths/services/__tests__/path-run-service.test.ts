@@ -51,7 +51,7 @@ vi.mock('@/shared/utils/observability/error-system', () => ({
   },
 }));
 
-const loadModule = async () => await import('@/features/ai/ai-paths/services/path-run-service');
+const loadModule = async () => await import('@/features/ai/ai-paths/server');
 
 describe('path-run-service enqueuePathRun', () => {
   beforeEach(() => {

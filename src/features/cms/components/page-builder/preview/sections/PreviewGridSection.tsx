@@ -7,7 +7,7 @@ import {
   getSectionContainerClass,
   getSectionStyles,
   getTextAlign,
-} from '@/features/cms/components/frontend/theme-styles';
+} from '@/features/cms/public';
 import { useCmsPageContext } from '@/features/cms/components/frontend/CmsPageContext';
 import { useMediaStyles } from '@/features/cms/components/frontend/media-styles-context';
 import { BlockContextProvider } from '@/features/cms/components/page-builder/preview/context/BlockContext';

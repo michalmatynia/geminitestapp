@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getCmsRepository } from '@/features/cms/services/cms-repository';
-import { cmsPageCreateSchema } from '@/features/cms/validations/api';
+import { getCmsRepository } from '@/features/cms/server';
+import { cmsPageCreateSchema } from '@/features/cms/server';
 import { parseJsonBody } from '@/features/products/server';
 import { ActivityTypes } from '@/shared/constants/observability';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

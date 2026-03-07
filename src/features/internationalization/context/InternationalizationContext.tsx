@@ -11,7 +11,7 @@ import {
   useCountries,
   useCurrencies,
   useLanguages,
-} from '@/features/internationalization/hooks/useInternationalizationQueries';
+} from '@/shared/hooks/use-i18n-queries';
 import type {
   CountryOption,
   CurrencyOption,

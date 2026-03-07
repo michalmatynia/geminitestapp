@@ -534,31 +534,31 @@ export function RunTimeline(props: {
               {filteredTimelineItems.map(
                 (item: RuntimeTraceTimelineItem, index: number): React.JSX.Element => {
                   return (
-                  <div key={`${item.id}-${index}`} className='relative pb-4'>
-                    <div className='absolute -left-[7px] top-2 h-2.5 w-2.5 rounded-full bg-gray-400' />
-                    <div className='flex flex-wrap items-center gap-2 text-xs text-gray-300'>
-                      <span className='text-[11px] text-gray-500'>
-                        {item.timestamp.toLocaleString()}
-                      </span>
-                      <StatusBadge
-                        status={item.status ?? item.kind}
-                        variant={statusToVariant(item.status ?? item.kind)}
-                        size='sm'
-                        className='font-medium'
-                      />
-                      <span className='text-[11px] uppercase text-gray-500'>{item.kind}</span>
-                      <span className='text-[11px] uppercase text-gray-500'>{item.source}</span>
+                    <div key={`${item.id}-${index}`} className='relative pb-4'>
+                      <div className='absolute -left-[7px] top-2 h-2.5 w-2.5 rounded-full bg-gray-400' />
+                      <div className='flex flex-wrap items-center gap-2 text-xs text-gray-300'>
+                        <span className='text-[11px] text-gray-500'>
+                          {item.timestamp.toLocaleString()}
+                        </span>
+                        <StatusBadge
+                          status={item.status ?? item.kind}
+                          variant={statusToVariant(item.status ?? item.kind)}
+                          size='sm'
+                          className='font-medium'
+                        />
+                        <span className='text-[11px] uppercase text-gray-500'>{item.kind}</span>
+                        <span className='text-[11px] uppercase text-gray-500'>{item.source}</span>
+                      </div>
+                      <div className='mt-1 text-sm text-white'>{item.label}</div>
+                      {item.description ? (
+                        <div className='text-xs text-gray-400'>{item.description}</div>
+                      ) : null}
+                      {item.meta ? (
+                        <Alert variant='error' className='mt-2 px-2 py-1 text-[11px]'>
+                          {item.meta}
+                        </Alert>
+                      ) : null}
                     </div>
-                    <div className='mt-1 text-sm text-white'>{item.label}</div>
-                    {item.description ? (
-                      <div className='text-xs text-gray-400'>{item.description}</div>
-                    ) : null}
-                    {item.meta ? (
-                      <Alert variant='error' className='mt-2 px-2 py-1 text-[11px]'>
-                        {item.meta}
-                      </Alert>
-                    ) : null}
-                  </div>
                   );
                 }
               )}

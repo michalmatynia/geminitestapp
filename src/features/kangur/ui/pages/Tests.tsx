@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Home, LayoutGrid, Trophy } from 'lucide-react';
 import Link from 'next/link';
 
-import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
+import { getKangurPageHref as createPageUrl } from '@/shared/contracts/kangur';
 import {
   KANGUR_TEST_SUITES_SETTING_KEY,
   KANGUR_TEST_QUESTIONS_SETTING_KEY,

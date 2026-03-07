@@ -3,10 +3,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, XCircle, RefreshCw } from 'lucide-react';
 import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
 import {
+  KANGUR_ACCENT_STYLES,
+  KANGUR_OPTION_CARD_CLASSNAME,
+  KANGUR_STEP_PILL_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
+import {
   addXp,
   buildLessonMasteryUpdate,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
+import { cn } from '@/shared/utils';
 
 type CalendarTrainingGameProps = {
   onFinish: () => void;
@@ -203,13 +209,16 @@ export default function CalendarTrainingGame({
         {questions.map((_, i) => (
           <div
             key={i}
-            className={`w-3 h-3 rounded-full transition-all ${
+            className={cn(
+              KANGUR_STEP_PILL_CLASSNAME,
+              'h-[14px] min-w-[14px]',
               i < current
-                ? 'bg-green-400'
+                ? 'w-6 bg-emerald-200'
                 : i === current
-                  ? 'bg-green-600 scale-125'
-                  : 'bg-gray-200'
-            }`}
+                  ? 'w-8 scale-[1.04] bg-emerald-500'
+                  : 'w-[14px] soft-cta opacity-80'
+            )}
+            data-testid={`calendar-training-progress-${i}`}
           />
         ))}
       </div>
@@ -219,12 +228,25 @@ export default function CalendarTrainingGame({
       </KangurPanel>
 
       <div className='grid grid-cols-2 gap-3 w-full'>
-        {question.choices.map((choice) => {
-          let bg = 'bg-white hover:bg-green-50 border-green-200';
+        {question.choices.map((choice, index) => {
+          let choiceClassName = cn(
+            'border-slate-200/80 text-slate-700',
+            KANGUR_ACCENT_STYLES.emerald.hoverCard
+          );
           if (selected !== null) {
-            if (choice === question.answer) bg = 'bg-green-100 border-green-500';
-            else if (choice === selected) bg = 'bg-red-100 border-red-400';
-            else bg = 'bg-gray-50 border-gray-200';
+            if (choice === question.answer) {
+              choiceClassName = cn(
+                KANGUR_ACCENT_STYLES.emerald.activeCard,
+                KANGUR_ACCENT_STYLES.emerald.activeText
+              );
+            } else if (choice === selected) {
+              choiceClassName = cn(
+                KANGUR_ACCENT_STYLES.rose.activeCard,
+                KANGUR_ACCENT_STYLES.rose.activeText
+              );
+            } else {
+              choiceClassName = 'border-slate-200/80 bg-white/92 text-slate-400 opacity-70';
+            }
           }
           return (
             <motion.button
@@ -232,7 +254,12 @@ export default function CalendarTrainingGame({
               whileHover={selected === null ? { scale: 1.04 } : {}}
               whileTap={selected === null ? { scale: 0.97 } : {}}
               onClick={() => handleSelect(choice)}
-              className={`border-2 rounded-2xl px-4 py-3 font-bold text-gray-700 text-base transition-all ${bg}`}
+              className={cn(
+                KANGUR_OPTION_CARD_CLASSNAME,
+                'rounded-[24px] px-4 py-3 font-bold text-base transition-all',
+                choiceClassName
+              )}
+              data-testid={`calendar-training-choice-${index}`}
             >
               {choice}
             </motion.button>

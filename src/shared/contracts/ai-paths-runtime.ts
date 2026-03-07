@@ -229,7 +229,13 @@ export const runtimeHistoryLinkSchema = z.object({
 
 export type RuntimeHistoryLink = z.infer<typeof runtimeHistoryLinkSchema>;
 
-export const runtimeTraceCacheDecisionSchema = z.enum(['miss', 'hit', 'refresh', 'disabled']);
+export const runtimeTraceCacheDecisionSchema = z.enum([
+  'miss',
+  'hit',
+  'refresh',
+  'disabled',
+  'seed',
+]);
 export type RuntimeTraceCacheDecision = z.infer<typeof runtimeTraceCacheDecisionSchema>;
 
 export const runtimeTraceSpanStatusSchema = z.enum([

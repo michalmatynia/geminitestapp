@@ -26,7 +26,7 @@ vi.mock('@/features/ai/chatbot/services/chatbot-job-repository', () => ({
   },
 }));
 
-vi.mock('@/features/ai/image-studio/server/run-repository', () => ({
+vi.mock('@/features/ai/image-studio/server', () => ({
   listImageStudioRuns: listImageStudioRunsMock,
 }));
 
@@ -38,7 +38,7 @@ vi.mock('@/shared/lib/db/prisma', () => ({
   },
 }));
 
-vi.mock('@/features/ai/insights/repository', () => ({
+vi.mock('@/features/ai/insights/server', () => ({
   listAiInsights: listAiInsightsMock,
 }));
 

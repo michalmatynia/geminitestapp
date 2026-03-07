@@ -191,6 +191,22 @@ export const runExecutionLoop = async (args: RunExecutionLoopArgs): Promise<void
           };
           state.blockedNodes.add(node.id);
 
+          if (options.profile?.onEvent) {
+            options.profile.onEvent({
+              type: 'node',
+              runId: resolvedRunId,
+              runStartedAt: resolvedRunStartedAt,
+              nodeId: node.id,
+              nodeType: node.type,
+              iteration,
+              status: 'skipped',
+              durationMs: 0,
+              reason: 'missing_inputs',
+              waitingOnPorts: readiness.waitingOnPorts,
+              ...buildRuntimeTelemetryFields(runtimeTelemetry),
+            });
+          }
+
           if (options.onToast && statusChanged && (blockedStatus === 'blocked' || (blockedStatus as string) === 'failed')) {
             void options.onToast({
               runId: resolvedRunId,
@@ -224,7 +240,7 @@ export const runExecutionLoop = async (args: RunExecutionLoopArgs): Promise<void
               iteration,
               attempt,
               reason: 'missing_inputs',
-              status: blockedStatus as 'blocked' | 'waiting_callback',
+              status: blockedStatus,
               message,
               waitingOnPorts: readiness.waitingOnPorts,
               waitingOnDetails: readiness.waitingOnDetails,

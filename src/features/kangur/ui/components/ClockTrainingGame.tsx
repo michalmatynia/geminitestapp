@@ -5,12 +5,14 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle, RefreshCw, XCircle } from 'lucide-react';
 
 import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_STEP_PILL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import {
   addXp,
   buildLessonMasteryUpdate,
   XP_REWARDS,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
+import { cn } from '@/shared/utils';
 
 type ClockTrainingGameProps = {
   onFinish: () => void;
@@ -832,7 +834,16 @@ export default function ClockTrainingGame({ onFinish }: ClockTrainingGameProps):
         {tasks.map((_, idx) => (
           <div
             key={idx}
-            className={`w-3 h-3 rounded-full transition-all ${idx < current ? 'bg-indigo-400' : idx === current ? 'bg-indigo-600 scale-125' : 'bg-gray-200'}`}
+            className={cn(
+              KANGUR_STEP_PILL_CLASSNAME,
+              'h-[14px] min-w-[14px]',
+              idx < current
+                ? 'w-6 bg-indigo-200'
+                : idx === current
+                  ? 'w-8 scale-[1.04] bg-indigo-500'
+                  : 'w-[14px] soft-cta opacity-80'
+            )}
+            data-testid={`clock-training-progress-${idx}`}
           />
         ))}
       </div>

@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 
 import { useCreateTheme } from '@/features/cms/hooks/useCmsQueries';
-import { cmsThemeCreateSchema } from '@/features/cms/validations/api';
+import { cmsThemeCreateSchema } from '@/features/cms/server';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { CmsThemeCreateInput } from '@/shared/contracts/cms';
 import { PageLayout, Alert, Breadcrumbs } from '@/shared/ui';

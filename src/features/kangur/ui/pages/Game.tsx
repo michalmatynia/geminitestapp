@@ -21,7 +21,7 @@ import KangurPriorityAssignments from '@/features/kangur/ui/components/KangurPri
 import KangurPracticeAssignmentBanner from '@/features/kangur/ui/components/KangurPracticeAssignmentBanner';
 import { KangurProfileMenu } from '@/features/kangur/ui/components/KangurProfileMenu';
 import { PlayerProgressCard, XpToast } from '@/features/kangur/ui/components/progress';
-import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
+import { getKangurPageHref as createPageUrl } from '@/shared/contracts/kangur';
 import {
   KangurButton,
   KangurPageContainer,

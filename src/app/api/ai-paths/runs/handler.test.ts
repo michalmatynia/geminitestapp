@@ -36,7 +36,7 @@ vi.mock('@/shared/lib/ai-paths/services/path-run-repository', () => ({
   getPathRunRepository: getPathRunRepositoryMock,
 }));
 
-vi.mock('@/features/ai/ai-paths/services/path-run-service', () => ({
+vi.mock('@/features/ai/ai-paths/server', () => ({
   deletePathRunsWithRepository: deletePathRunsWithRepositoryMock,
 }));
 

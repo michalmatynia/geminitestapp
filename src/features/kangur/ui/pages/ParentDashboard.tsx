@@ -10,7 +10,7 @@ import {
   LogIn,
   LogOut,
 } from 'lucide-react';
-import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
+import { getKangurPageHref as createPageUrl } from '@/shared/contracts/kangur';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import KangurAssignmentManager from '@/features/kangur/ui/components/KangurAssignmentManager';
 import { KangurProfileMenu } from '@/features/kangur/ui/components/KangurProfileMenu';

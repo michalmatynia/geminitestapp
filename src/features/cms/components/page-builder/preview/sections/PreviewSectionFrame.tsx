@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { getSectionStyles } from '@/features/cms/components/frontend/theme-styles';
+import { getSectionStyles } from '@/features/cms/public';
 import { useCmsPageContext } from '@/features/cms/components/frontend/CmsPageContext';
 import { usePreviewSectionContext } from '@/features/cms/components/page-builder/preview/context/PreviewSectionContext';
 import { cn } from '@/shared/utils';

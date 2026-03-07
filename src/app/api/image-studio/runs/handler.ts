@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { listImageStudioRuns } from '@/features/ai/image-studio/server/run-repository';
+import { listImageStudioRuns } from '@/features/ai/image-studio/server';
 import { type ImageStudioRunStatus } from '@/shared/contracts/image-studio';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 

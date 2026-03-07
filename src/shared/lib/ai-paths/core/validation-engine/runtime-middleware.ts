@@ -387,9 +387,9 @@ export const createAiPathsRuntimeValidationMiddleware = ({
       ...builtInIssues,
       ...(hasRuleFailures
         ? report.findings.map(
-            (finding: AiPathsValidationFinding): RuntimeValidationIssue =>
-              toRuntimeValidationIssue(finding, stage, node)
-          )
+          (finding: AiPathsValidationFinding): RuntimeValidationIssue =>
+            toRuntimeValidationIssue(finding, stage, node)
+        )
         : []),
     ]
       .slice(0, issueLimit);

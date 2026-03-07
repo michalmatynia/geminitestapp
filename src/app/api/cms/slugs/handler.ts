@@ -6,9 +6,9 @@ import {
   getSlugForDomainById,
   resolveCmsDomainFromRequest,
   resolveCmsDomainScopeById,
-} from '@/features/cms/services/cms-domain';
-import { getCmsRepository } from '@/features/cms/services/cms-repository';
-import { cmsSlugCreateSchema } from '@/features/cms/validations/api';
+} from '@/features/cms/server';
+import { getCmsRepository } from '@/features/cms/server';
+import { cmsSlugCreateSchema } from '@/features/cms/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError, validationError } from '@/shared/errors/app-error';

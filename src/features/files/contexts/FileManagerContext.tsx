@@ -120,6 +120,7 @@ export function FileManagerProvider({
   defaultFolder,
   showBulkActions = false,
   showTagSearch = false,
+  filepathFilter,
 }: {
   children: ReactNode;
   onSelectFile?: (files: ImageFileSelection[]) => void;
@@ -130,6 +131,7 @@ export function FileManagerProvider({
   defaultFolder?: string;
   showBulkActions?: boolean;
   showTagSearch?: boolean;
+  filepathFilter?: (filepath: string) => boolean;
 }): React.JSX.Element {
   const [filenameSearch, setFilenameSearch] = useState('');
   const [productNameSearch, setProductNameSearch] = useState('');
@@ -161,6 +163,12 @@ export function FileManagerProvider({
   }, [filenameSearch, productNameSearch, tagSearchList, enableTagSearch]);
 
   const { data: files = [] } = useFileQueries(queryParams);
+
+  const visibleFiles = useMemo(
+    (): ExpandedImageFile[] =>
+      filepathFilter ? files.filter((file: ExpandedImageFile) => filepathFilter(file.filepath)) : files,
+    [files, filepathFilter]
+  );
 
   const assetFilters = useMemo<Asset3DListFilters>(() => {
     const filters: Asset3DListFilters = { search: filenameSearch || null };
@@ -216,11 +224,11 @@ export function FileManagerProvider({
 
   const uploadFiles = useMemo(
     () =>
-      files.filter((file: ExpandedImageFile) => {
+      visibleFiles.filter((file: ExpandedImageFile) => {
         const kind = getFileKind(file.filepath);
         return kind === 'upload' || kind === 'other';
       }),
-    [files, getFileKind]
+    [visibleFiles, getFileKind]
   );
 
   const folderOptions = useMemo((): string[] => {
@@ -240,11 +248,11 @@ export function FileManagerProvider({
 
   const tagOptions = useMemo((): string[] => {
     const tags = new Set<string>();
-    files.forEach((file: ExpandedImageFile) => {
+    visibleFiles.forEach((file: ExpandedImageFile) => {
       (file.tags ?? []).forEach((tag: string) => tags.add(tag));
     });
     return Array.from(tags).sort();
-  }, [files]);
+  }, [visibleFiles]);
 
   const filterByTab = useMemo(() => {
     if (activeTab === 'links')
@@ -258,15 +266,15 @@ export function FileManagerProvider({
   }, [activeTab, getFileKind]);
 
   const filteredFiles = useMemo((): ExpandedImageFile[] => {
-    const base = files.filter(filterByTab);
+    const base = visibleFiles.filter(filterByTab);
     if (activeTab !== 'uploads') return base;
     if (folderFilter === 'all') return base;
     return base.filter((file: ExpandedImageFile) => resolveFolder(file.filepath) === folderFilter);
-  }, [files, filterByTab, folderFilter, activeTab, resolveFolder]);
+  }, [visibleFiles, filterByTab, folderFilter, activeTab, resolveFolder]);
 
   const fileById = useMemo((): Map<string, ExpandedImageFile> => {
-    return new Map(files.map((file: ExpandedImageFile) => [file.id, file]));
-  }, [files]);
+    return new Map(visibleFiles.map((file: ExpandedImageFile) => [file.id, file]));
+  }, [visibleFiles]);
 
   const handleToggleSelect = useCallback(
     (file: ImageFileSelection): void => {

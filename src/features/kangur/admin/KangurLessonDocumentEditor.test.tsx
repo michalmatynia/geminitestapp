@@ -31,12 +31,20 @@ vi.mock('@/features/cms/components/page-builder/MediaLibraryPanel', () => ({
     onSelect: (filepaths: string[]) => void;
   }) =>
     open ? (
-      <button
-        type='button'
-        onClick={(): void => onSelect(['/uploads/kangur/mock-image.png'])}
-      >
-        Pick library image
-      </button>
+      <>
+        <button
+          type='button'
+          onClick={(): void => onSelect(['/uploads/kangur/mock-image.svg'])}
+        >
+          Pick library SVG
+        </button>
+        <button
+          type='button'
+          onClick={(): void => onSelect(['/uploads/kangur/mock-image.png'])}
+        >
+          Pick library PNG
+        </button>
+      </>
     ) : null,
 }));
 
@@ -279,7 +287,7 @@ describe('KangurLessonDocumentEditor', () => {
     expect(nextDocument.pages?.[1]?.blocks[1]?.type).toBe('grid');
   });
 
-  it('applies a media-library selection to an image block source', () => {
+  it('applies an SVG media-library selection to an image block source', () => {
     const handleChange = vi.fn();
 
     render(
@@ -303,14 +311,43 @@ describe('KangurLessonDocumentEditor', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: /choose from library/i }));
-    fireEvent.click(screen.getByRole('button', { name: /pick library image/i }));
+    fireEvent.click(screen.getByRole('button', { name: /pick library svg/i }));
 
     const nextDocument = handleChange.mock.calls.at(-1)?.[0] as {
       blocks: Array<{ type: string; src?: string }>;
     };
 
     expect(nextDocument.blocks[0]?.type).toBe('image');
-    expect(nextDocument.blocks[0]?.src).toBe('/uploads/kangur/mock-image.png');
+    expect(nextDocument.blocks[0]?.src).toBe('/uploads/kangur/mock-image.svg');
+  });
+
+  it('ignores a non-SVG media-library selection for an image block source', () => {
+    const handleChange = vi.fn();
+
+    render(
+      <StatefulEditorHarness
+        value={{
+          version: 1,
+          blocks: [
+            {
+              id: 'image-1',
+              type: 'image',
+              title: 'Photo',
+              src: '',
+              align: 'center',
+              fit: 'contain',
+              maxWidth: 360,
+            },
+          ],
+        }}
+        onChange={handleChange}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /choose from library/i }));
+    fireEvent.click(screen.getByRole('button', { name: /pick library png/i }));
+
+    expect(handleChange).not.toHaveBeenCalled();
   });
 
   it('adds a grid block with starter items', () => {

@@ -4,7 +4,7 @@ import {
   clearEnsureImageStudioSlotFromUploadInFlightStateForTests,
   ensureImageStudioSlotFromUploadedAsset,
 } from '@/features/ai/image-studio/server/ensure-slot-from-upload';
-import type { ImageStudioSlotRecord } from '@/features/ai/image-studio/server/slot-repository';
+import type { ImageStudioSlotRecord } from '@/features/ai/image-studio/server';
 
 const makeSlot = (overrides: Partial<ImageStudioSlotRecord> = {}): ImageStudioSlotRecord => ({
   id: overrides.id ?? 'slot-1',

@@ -4,7 +4,7 @@ import React, { useCallback } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 
 import { Button, FormField, Input, SelectSimple } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { cn, sanitizeSvg } from '@/shared/utils';
 import type {
   KangurIllustrationPanel,
   KangurQuestionIllustration,
@@ -143,7 +143,7 @@ function CompositePanelPreview({
               <div
                 className='flex h-20 w-full items-center justify-center overflow-hidden rounded-lg border border-gray-100'
                 /* admin-only preview */
-                dangerouslySetInnerHTML={{ __html: panel.svgContent }}
+                dangerouslySetInnerHTML={{ __html: sanitizeSvg(panel.svgContent) }}
               />
             ) : (
               <div className='flex h-20 w-full items-center justify-center rounded-lg border border-dashed border-gray-200'>

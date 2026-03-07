@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 
 import {
   FolderTreeViewportV2,
@@ -9,6 +9,7 @@ import {
 } from '@/features/foldertree/v2';
 import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/v2';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
+import { useInterval } from '@/shared/hooks/use-interval';
 
 type RuntimeRouteId = 'alpha' | 'beta';
 
@@ -89,19 +90,18 @@ function RouteTreeHarness({ routeId }: { routeId: RuntimeRouteId }): React.JSX.E
     return runtime.registerKeyboardHandler(instanceId, handler);
   }, [instanceId, runtime]);
 
-  useEffect(() => {
-    const updateSnapshot = (): void => {
-      setRuntimeSnapshot({
-        instanceIds: runtime.getInstanceIds().join(','),
-        focusedInstance: runtime.getFocusedInstance() ?? '',
-      });
-    };
-    updateSnapshot();
-    const intervalId = window.setInterval(updateSnapshot, 50);
-    return (): void => {
-      window.clearInterval(intervalId);
-    };
+  const updateSnapshot = useCallback((): void => {
+    setRuntimeSnapshot({
+      instanceIds: runtime.getInstanceIds().join(','),
+      focusedInstance: runtime.getFocusedInstance() ?? '',
+    });
   }, [runtime]);
+
+  useEffect(() => {
+    updateSnapshot();
+  }, [updateSnapshot]);
+
+  useInterval(updateSnapshot, 50);
 
   useEffect(() => {
     controllerRef.current.selectNode(nodes[0]?.id ?? null);

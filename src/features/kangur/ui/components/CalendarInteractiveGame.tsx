@@ -3,6 +3,12 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
+import {
+  KANGUR_ACCENT_STYLES,
+  KANGUR_OPTION_CARD_CLASSNAME,
+  type KangurAccent,
+} from '@/features/kangur/ui/design/tokens';
+import { cn } from '@/shared/utils';
 
 type CalendarInteractiveGameProps = {
   onFinish: () => void;
@@ -36,6 +42,12 @@ const WEEKDAY_NAMES = [
   'niedzielę',
 ] as const;
 const SEASONS = ['🌸 Wiosna', '☀️ Lato', '🍂 Jesień', '❄️ Zima'] as const;
+const SEASON_ACCENTS: Record<Season, KangurAccent> = {
+  '🌸 Wiosna': 'emerald',
+  '☀️ Lato': 'amber',
+  '🍂 Jesień': 'rose',
+  '❄️ Zima': 'sky',
+};
 
 type DayLabel = (typeof DAY_LABELS)[number];
 type Season = (typeof SEASONS)[number];
@@ -182,15 +194,17 @@ export default function CalendarInteractiveGame({
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
   const [dragOver, setDragOver] = useState<Season | null>(null);
-  const [clicked, setClicked] = useState<number[]>([]);
+  const [selectedDays, setSelectedDays] = useState<number[]>([]);
+  const [selectedSeason, setSelectedSeason] = useState<Season | null>(null);
 
   const nextRound = (correct: boolean): void => {
     const nextScore = correct ? score + 1 : score;
     setScore(nextScore);
     setFeedback(correct ? 'correct' : 'wrong');
-    setClicked([]);
 
     setTimeout(() => {
+      setSelectedDays([]);
+      setSelectedSeason(null);
       setFeedback(null);
       if (round + 1 >= TOTAL) {
         setDone(true);
@@ -214,22 +228,23 @@ export default function CalendarInteractiveGame({
     if (feedback) return;
 
     if (task.type === 'click_date') {
+      setSelectedDays([day]);
       nextRound(day === task.targetDay);
       return;
     }
 
     if (task.type === 'click_all_weekends') {
-      if (clicked.includes(day)) {
+      if (selectedDays.includes(day)) {
         return;
       }
 
-      const newClicked = [...clicked, day];
-      setClicked(newClicked);
+      const newSelectedDays = [...selectedDays, day];
+      setSelectedDays(newSelectedDays);
 
-      const allTargetsSelected = task.targets.every((target) => newClicked.includes(target));
-      if (newClicked.length === task.targets.length && allTargetsSelected) {
+      const allTargetsSelected = task.targets.every((target) => newSelectedDays.includes(target));
+      if (newSelectedDays.length === task.targets.length && allTargetsSelected) {
         nextRound(true);
-      } else if (newClicked.length >= task.targets.length) {
+      } else if (newSelectedDays.length >= task.targets.length) {
         nextRound(false);
       }
     }
@@ -248,6 +263,7 @@ export default function CalendarInteractiveGame({
     setDragOver(null);
     if (feedback) return;
     if (task.type !== 'drag_season') return;
+    setSelectedSeason(season);
     nextRound(season === task.correctSeason);
   };
 
@@ -257,7 +273,8 @@ export default function CalendarInteractiveGame({
     setScore(0);
     setDone(false);
     setFeedback(null);
-    setClicked([]);
+    setSelectedDays([]);
+    setSelectedSeason(null);
     setDragOver(null);
     setMonth(startMonth);
     setTask(generateTask(startMonth, YEAR));
@@ -398,44 +415,85 @@ export default function CalendarInteractiveGame({
             {cells.map((day, idx) => {
               const isWeekend = idx % 7 >= 5;
               const isNumberDay = typeof day === 'number';
+              const isClickable =
+                isNumberDay &&
+                feedback === null &&
+                (task.type === 'click_date' || task.type === 'click_all_weekends');
+              const isSelected = isNumberDay && selectedDays.includes(day);
               const isTarget =
                 task.type === 'click_date' &&
                 isNumberDay &&
                 day === task.targetDay &&
                 feedback === 'correct';
+              const isWrongDateSelection =
+                task.type === 'click_date' && isSelected && feedback === 'wrong';
               const isClicked =
-                task.type === 'click_all_weekends' && isNumberDay && clicked.includes(day);
+                task.type === 'click_all_weekends' && isNumberDay && isSelected && feedback === null;
+              const isWrongWeekendSelection =
+                task.type === 'click_all_weekends' &&
+                isNumberDay &&
+                isSelected &&
+                feedback === 'wrong' &&
+                !task.targets.includes(day);
               const isCorrectWeekend =
                 task.type === 'click_all_weekends' &&
                 isNumberDay &&
                 task.targets.includes(day) &&
                 feedback !== null;
+              const dayClassName = !isNumberDay
+                ? 'h-10 rounded-[16px]'
+                : cn(
+                  KANGUR_OPTION_CARD_CLASSNAME,
+                  'h-10 rounded-[16px] p-0 text-xs font-semibold',
+                  isWeekend ? 'text-rose-600' : 'text-slate-700',
+                  isWeekend
+                    ? cn('border-rose-200/80', KANGUR_ACCENT_STYLES.rose.hoverCard)
+                    : cn('border-slate-200/80', KANGUR_ACCENT_STYLES.slate.hoverCard),
+                  !isClickable && 'cursor-default hover:translate-y-0',
+                  isTarget &&
+                      cn(
+                        KANGUR_ACCENT_STYLES.emerald.activeCard,
+                        KANGUR_ACCENT_STYLES.emerald.activeText
+                      ),
+                  isWrongDateSelection &&
+                      cn(
+                        KANGUR_ACCENT_STYLES.rose.activeCard,
+                        KANGUR_ACCENT_STYLES.rose.activeText
+                      ),
+                  isClicked &&
+                      cn(
+                        KANGUR_ACCENT_STYLES.teal.activeCard,
+                        KANGUR_ACCENT_STYLES.teal.activeText,
+                        'scale-[1.02]'
+                      ),
+                  isWrongWeekendSelection &&
+                      cn(
+                        KANGUR_ACCENT_STYLES.rose.activeCard,
+                        KANGUR_ACCENT_STYLES.rose.activeText
+                      ),
+                  isCorrectWeekend &&
+                      !isSelected &&
+                      cn(
+                        KANGUR_ACCENT_STYLES.emerald.activeCard,
+                        KANGUR_ACCENT_STYLES.emerald.activeText
+                      )
+                );
 
               return (
-                <button
-                  key={`${idx}-${day ?? 'empty'}`}
-                  onClick={() => {
-                    if (isNumberDay) {
-                      handleDateClick(day);
-                    }
-                  }}
-                  disabled={!isNumberDay || feedback !== null}
-                  className={`py-1.5 rounded-full text-xs font-semibold transition-all select-none
-                    ${!isNumberDay ? 'cursor-default' : 'cursor-pointer hover:bg-green-100'}
-                    ${isTarget ? 'bg-green-400 text-white' : ''}
-                    ${isClicked ? 'bg-teal-400 text-white scale-110' : ''}
-                    ${isCorrectWeekend && !isClicked ? 'bg-green-200' : ''}
-                    ${
-                isNumberDay && isWeekend && !isClicked && !isTarget
-                  ? 'text-red-400'
-                  : isNumberDay && !isClicked && !isTarget
-                    ? 'text-gray-700'
-                    : ''
-                }
-                  `}
-                >
-                  {isNumberDay ? day : ''}
-                </button>
+                isNumberDay ? (
+                  <button
+                    key={`${idx}-${day}`}
+                    type='button'
+                    onClick={() => handleDateClick(day)}
+                    disabled={!isClickable}
+                    className={dayClassName}
+                    data-testid={`calendar-day-${day}`}
+                  >
+                    {day}
+                  </button>
+                ) : (
+                  <div key={`${idx}-empty`} aria-hidden='true' className={dayClassName} />
+                )
               );
             })}
           </div>
@@ -447,10 +505,13 @@ export default function CalendarInteractiveGame({
           {DAY_LABELS.map((dayLabel, idx) => {
             const className =
               feedback && idx === task.targetIdx
-                ? 'bg-green-100 border-green-400 text-green-700'
+                ? cn(
+                  KANGUR_ACCENT_STYLES.emerald.activeCard,
+                  KANGUR_ACCENT_STYLES.emerald.activeText
+                )
                 : idx >= 5
-                  ? 'bg-red-50 border-red-200 text-red-500 hover:bg-red-100'
-                  : 'bg-white border-gray-200 text-gray-700 hover:border-green-400';
+                  ? cn('border-rose-200/80', KANGUR_ACCENT_STYLES.rose.hoverCard)
+                  : cn('border-slate-200/80', KANGUR_ACCENT_STYLES.slate.hoverCard);
 
             return (
               <motion.button
@@ -459,7 +520,12 @@ export default function CalendarInteractiveGame({
                 whileTap={{ scale: 0.95 }}
                 onClick={() => handleWeekdayNameClick(idx)}
                 disabled={feedback !== null}
-                className={`py-3 rounded-2xl font-bold text-sm border-2 transition-all ${className}`}
+                className={cn(
+                  KANGUR_OPTION_CARD_CLASSNAME,
+                  'rounded-[24px] py-3 text-sm font-bold',
+                  idx >= 5 ? 'text-rose-600' : 'text-slate-700',
+                  className
+                )}
               >
                 {dayLabel}
               </motion.button>
@@ -479,34 +545,58 @@ export default function CalendarInteractiveGame({
           <p className='text-xs text-gray-400'>Przeciągnij powyżej na właściwą porę roku ⬇️</p>
 
           <div className='grid grid-cols-2 gap-2 w-full'>
-            {SEASONS.map((season) => (
-              <div
-                key={season}
-                onDragOver={(event) => {
-                  event.preventDefault();
-                  setDragOver(season);
-                }}
-                onDragLeave={() => setDragOver(null)}
-                onDrop={(event) => {
-                  event.preventDefault();
-                  handleDrop(season);
-                }}
-                className={`py-4 rounded-2xl border-2 flex flex-col items-center gap-1 transition-all text-center
-                  ${
-              dragOver === season
-                ? 'border-green-400 bg-green-50 scale-105'
-                : feedback && season === task.correctSeason
-                  ? 'border-green-400 bg-green-50'
-                  : 'border-dashed border-gray-300 bg-white'
-              }
-                `}
-              >
-                <span className='text-2xl'>{season.split(' ')[0]}</span>
-                <span className='text-xs font-bold text-gray-600'>
-                  {season.split(' ').slice(1).join(' ')}
-                </span>
-              </div>
-            ))}
+            {SEASONS.map((season, index) => {
+              const accent = SEASON_ACCENTS[season];
+              const isCorrectSeason = feedback !== null && season === task.correctSeason;
+              const isWrongSelectedSeason =
+                feedback === 'wrong' && selectedSeason === season && season !== task.correctSeason;
+              const isDragOverSeason = dragOver === season && feedback === null;
+              const isMutedSeason =
+                feedback === 'wrong' &&
+                selectedSeason !== null &&
+                season !== task.correctSeason &&
+                season !== selectedSeason;
+
+              return (
+                <div
+                  key={season}
+                  onDragOver={(event) => {
+                    event.preventDefault();
+                    setDragOver(season);
+                  }}
+                  onDragLeave={() => setDragOver(null)}
+                  onDrop={(event) => {
+                    event.preventDefault();
+                    handleDrop(season);
+                  }}
+                  className={cn(
+                    KANGUR_OPTION_CARD_CLASSNAME,
+                    'flex min-h-[108px] flex-col items-center justify-center gap-1 rounded-[24px] text-center',
+                    KANGUR_ACCENT_STYLES[accent].activeText,
+                    cn('border-slate-200/80', KANGUR_ACCENT_STYLES[accent].hoverCard),
+                    isDragOverSeason &&
+                      cn(KANGUR_ACCENT_STYLES[accent].activeCard, 'scale-[1.02]'),
+                    isCorrectSeason &&
+                      cn(
+                        KANGUR_ACCENT_STYLES.emerald.activeCard,
+                        KANGUR_ACCENT_STYLES.emerald.activeText
+                      ),
+                    isWrongSelectedSeason &&
+                      cn(
+                        KANGUR_ACCENT_STYLES.rose.activeCard,
+                        KANGUR_ACCENT_STYLES.rose.activeText
+                      ),
+                    isMutedSeason && 'opacity-70'
+                  )}
+                  data-testid={`calendar-season-${index}`}
+                >
+                  <span className='text-2xl'>{season.split(' ')[0]}</span>
+                  <span className='text-xs font-bold'>
+                    {season.split(' ').slice(1).join(' ')}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

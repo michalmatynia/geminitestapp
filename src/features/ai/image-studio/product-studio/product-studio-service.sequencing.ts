@@ -1,5 +1,5 @@
 import { supportsImageSequenceGeneration } from '@/features/ai/image-studio/utils/image-models';
-import { type ImageStudioSequenceStep } from '@/features/ai/image-studio/studio-settings';
+import { type ImageStudioSequenceStep } from '@/features/ai/image-studio/server';
 import {
   DEFAULT_PRODUCT_STUDIO_SEQUENCE_READINESS,
   type ProductStudioExecutionRoute,

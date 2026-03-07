@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { getBrainAssignmentForCapability } from '@/shared/lib/ai-brain/server';
-import { getScheduleSettings } from '@/features/ai/insights/generator';
+import { getScheduleSettings } from '@/features/ai/insights/server';
 import { tick } from '@/features/ai/insights/workers/ai-insights-processor';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { createManagedQueue } from '@/shared/lib/queue';

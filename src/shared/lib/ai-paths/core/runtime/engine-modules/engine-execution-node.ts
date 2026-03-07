@@ -1,6 +1,7 @@
 import { AiNode, Edge, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import {
   NodeHandlerContext,
+  RuntimeHistoryEntry,
 } from '@/shared/contracts/ai-paths-runtime';
 import { cloneValue } from '../utils';
 import { nowMs, resolveNodeTimeoutMs, withTimeout, withRetries } from '../execution-helpers';
@@ -15,6 +16,8 @@ import {
   resolveCacheScopeFingerprint,
 } from './engine-hashing';
 import {
+  buildInputLinks,
+  buildOutputLinks,
   collectNodeInputs,
   resolveEdgeToNodeId,
 } from './engine-utils';
@@ -35,7 +38,19 @@ import {
 import {
   buildRuntimeTelemetryFields,
 } from './engine-execution-telemetry';
-import { buildSpanId, appendHistoryEntry } from './engine-execution-context';
+import { buildSpanId } from './engine-execution-context';
+
+const EXECUTED_STATE_KEY = '__executed_state__';
+const createExecutedState = (): NodeHandlerContext['executed'] => ({
+  notification: new Set<string>(),
+  updater: new Set<string>(),
+  http: new Set<string>(),
+  delay: new Set<string>(),
+  poll: new Set<string>(),
+  ai: new Set<string>(),
+  schema: new Set<string>(),
+  mapper: new Set<string>(),
+});
 
 export type RunNodeArgs = {
   node: AiNode;
@@ -52,6 +67,178 @@ export type RunNodeArgs = {
   sanitizedEdges: Edge[];
   outgoingEdgesByNode: Map<string, Edge[]>;
   nodeById: Map<string, AiNode>;
+  executed: NodeHandlerContext['executed'];
+};
+
+const EFFECT_NODE_TYPES = new Set<string>([
+  'agent',
+  'api_advanced',
+  'database',
+  'http',
+  'learner_agent',
+  'model',
+  'notification',
+  'playwright',
+]);
+
+const DEFAULT_SIDE_EFFECT_POLICY_BY_NODE_TYPE = new Map<
+  string,
+  'per_run' | 'per_activation'
+>([
+  ['agent', 'per_activation'],
+  ['api_advanced', 'per_activation'],
+  ['database', 'per_activation'],
+  ['http', 'per_activation'],
+  ['learner_agent', 'per_activation'],
+  ['model', 'per_activation'],
+  ['notification', 'per_run'],
+  ['playwright', 'per_activation'],
+]);
+
+const EFFECT_EXECUTED_BUCKET_BY_NODE_TYPE = new Map<
+  string,
+  keyof NodeHandlerContext['executed']
+>([
+  ['agent', 'ai'],
+  ['api_advanced', 'http'],
+  ['database', 'updater'],
+  ['http', 'http'],
+  ['learner_agent', 'ai'],
+  ['model', 'ai'],
+  ['notification', 'notification'],
+  ['playwright', 'ai'],
+]);
+
+const resolveNodeSideEffectPolicy = (node: AiNode): 'per_run' | 'per_activation' | undefined => {
+  const configured = node.config?.runtime?.sideEffectPolicy;
+  if (configured === 'per_run' || configured === 'per_activation') {
+    return configured;
+  }
+  return DEFAULT_SIDE_EFFECT_POLICY_BY_NODE_TYPE.get(node.type);
+};
+
+const resolveNodeIdempotencyKey = (input: {
+  node: AiNode;
+  runId: string;
+  activationHash: string | null;
+  policy?: 'per_run' | 'per_activation';
+}): string | null => {
+  if (!input.policy) return null;
+
+  const explicitPolicy = input.node.config?.runtime?.sideEffectPolicy;
+  const hasAdvancedApiIdempotency = Boolean(
+    String(input.node.type) === 'api_advanced' || String(input.node.type) === 'advanced_api'
+      ? input.node.config?.apiAdvanced?.idempotencyEnabled ||
+        (input.node.config?.apiAdvanced?.idempotencyKeyTemplate ?? '').trim().length > 0
+      : false
+  );
+  if (
+    explicitPolicy !== 'per_run' &&
+    explicitPolicy !== 'per_activation' &&
+    !hasAdvancedApiIdempotency
+  ) {
+    return null;
+  }
+
+  const activationScope = input.activationHash ?? 'activation';
+  return input.policy === 'per_run'
+    ? `${input.runId}:${input.node.id}:${activationScope}`
+    : `${input.node.id}:${activationScope}`;
+};
+
+const resolveSourceSpanId = (input: {
+  state: EngineStateManager;
+  options: EvaluateGraphOptions;
+  nodeId: string;
+  nodeHash: string | null;
+  activationHash: string | null;
+  preferSeedHistory: boolean;
+}): string | null => {
+  const readEntries = (value: unknown): RuntimeHistoryEntry[] => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return [];
+    const entries = (value as Record<string, unknown>)[input.nodeId];
+    return Array.isArray(entries) ? (entries as RuntimeHistoryEntry[]) : [];
+  };
+
+  const findMatch = (entries: RuntimeHistoryEntry[]): RuntimeHistoryEntry | null => {
+    for (let index = entries.length - 1; index >= 0; index -= 1) {
+      const entry = entries[index];
+      if (!entry) continue;
+      if (input.nodeHash && entry.inputHash === input.nodeHash) return entry;
+      if (input.activationHash && entry.activationHash === input.activationHash) return entry;
+    }
+    return entries.at(-1) ?? null;
+  };
+
+  const entries = input.preferSeedHistory
+    ? readEntries(input.options['seedHistory'])
+    : input.state.history.get(input.nodeId) ?? [];
+  const matched = findMatch(entries);
+  return typeof matched?.spanId === 'string' ? matched.spanId : null;
+};
+
+const appendNodeHistoryEntry = (input: {
+  state: EngineStateManager;
+  options: EvaluateGraphOptions;
+  resolvedRunId: string;
+  spanId: string;
+  node: AiNode;
+  status: 'executed' | 'cached' | 'failed';
+  iteration: number;
+  attempt: number;
+  nodeInputs: RuntimePortValues;
+  nodeOutputs: RuntimePortValues;
+  nodeById: Map<string, AiNode>;
+  sanitizedEdges: Edge[];
+  inputHash?: string | null;
+  activationHash?: string | null;
+  cacheDecision?: 'hit' | 'miss' | 'disabled' | 'seed';
+  sideEffectPolicy?: 'per_run' | 'per_activation';
+  sideEffectDecision?: string;
+  idempotencyKey?: string | null;
+  error?: string | null;
+  durationMs?: number;
+  runtimeTelemetry?: RuntimeNodeResolutionTelemetry | null;
+}): void => {
+  if (!input.options['recordHistory']) return;
+  const entries = input.state.history.get(input.node.id) ?? [];
+  entries.push({
+    timestamp: new Date().toISOString(),
+    pathId: input.options.pathId ?? null,
+    pathName: input.options.pathName ?? null,
+    traceId: input.resolvedRunId,
+    spanId: input.spanId,
+    nodeId: input.node.id,
+    nodeType: input.node.type,
+    nodeTitle: input.node.title ?? null,
+    status: input.status,
+    iteration: input.iteration,
+    attempt: input.attempt,
+    inputs: cloneValue(input.nodeInputs),
+    outputs: cloneValue(input.nodeOutputs),
+    inputHash: input.inputHash ?? null,
+    activationHash: input.activationHash ?? null,
+    cacheDecision: input.cacheDecision,
+    sideEffectPolicy: input.sideEffectPolicy,
+    sideEffectDecision: input.sideEffectDecision,
+    idempotencyKey: input.idempotencyKey ?? null,
+    error: input.error ?? undefined,
+    inputsFrom: buildInputLinks(
+      input.node.id,
+      input.sanitizedEdges,
+      input.nodeById,
+      input.nodeInputs
+    ),
+    outputsTo: buildOutputLinks(
+      input.node.id,
+      input.sanitizedEdges,
+      input.nodeById,
+      input.nodeOutputs
+    ),
+    durationMs: input.durationMs ?? 0,
+    ...buildRuntimeTelemetryFields(input.runtimeTelemetry ?? null),
+  } as RuntimeHistoryEntry);
+  input.state.history.set(input.node.id, entries);
 };
 
 export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
@@ -70,6 +257,7 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
     sanitizedEdges,
     outgoingEdgesByNode,
     nodeById,
+    executed: executedState,
   } = args;
 
   const rawInputs = state.inputs[node.id] ?? {};
@@ -105,6 +293,15 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
   const isImplicitTriggerNode = node.type === 'trigger' && !options.triggerNodeId;
   const cacheMode = node.config?.runtime?.cache?.mode ?? 'auto';
   const isCacheDisabled = cacheMode === 'disabled';
+  const isEffectNodeType = EFFECT_NODE_TYPES.has(node.type);
+  const sideEffectPolicy = resolveNodeSideEffectPolicy(node);
+  const effectExecutedBucket = EFFECT_EXECUTED_BUCKET_BY_NODE_TYPE.get(node.type);
+  const idempotencyKey = resolveNodeIdempotencyKey({
+    node,
+    runId: resolvedRunId,
+    activationHash,
+    policy: sideEffectPolicy,
+  });
 
   let validCacheHit = false;
   let cacheSource: RuntimePortValues | null = null;
@@ -132,21 +329,31 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
 
   if (validCacheHit && cacheSource) {
     const attempt = state.getNodeAttempt(node.id);
+    const spanId = buildSpanId(node.id, attempt, iteration);
     const out = cacheSource;
     state.outputs[node.id] = cloneValue(out) ?? {};
 
     applyCachedNodeRuntimeStatus(state, node.id, out);
 
-    appendHistoryEntry(state, options, {
+    appendNodeHistoryEntry({
+      state,
+      options,
+      resolvedRunId,
+      spanId,
       node,
       status: 'cached',
       iteration,
       attempt,
-      inputs: nodeInputs,
-      outputs: state.outputs[node.id] ?? {},
+      nodeInputs,
+      nodeOutputs: state.outputs[node.id] ?? {},
+      nodeById,
+      sanitizedEdges,
       inputHash: nodeHash,
       activationHash,
       cacheDecision: isSeedMatch ? 'seed' : 'hit',
+      sideEffectPolicy,
+      sideEffectDecision: isEffectNodeType ? 'skipped_duplicate' : undefined,
+      idempotencyKey,
       runtimeTelemetry,
     });
 
@@ -160,6 +367,42 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
         iteration,
         status: 'cached',
         durationMs: 0,
+        sideEffectPolicy,
+        sideEffectDecision: isEffectNodeType ? 'skipped_duplicate' : undefined,
+        activationHash: activationHash ?? undefined,
+        ...(idempotencyKey ? { idempotencyKey } : {}),
+        ...buildRuntimeTelemetryFields(runtimeTelemetry),
+      });
+    }
+    if (options['onNodeFinish'] && typeof options['onNodeFinish'] === 'function') {
+      await (options['onNodeFinish'] as Function)({
+        runId: resolvedRunId,
+        traceId: resolvedRunId,
+        spanId,
+        runStartedAt: resolvedRunStartedAt,
+        node,
+        nodeInputs,
+        prevOutputs,
+        nextOutputs: state.outputs[node.id] ?? {},
+        changed: false,
+        iteration,
+        attempt,
+        cached: true,
+        cacheDecision: isSeedMatch ? 'seed' : 'hit',
+        sideEffectPolicy,
+        sideEffectDecision: isEffectNodeType ? 'skipped_duplicate' : undefined,
+        activationHash,
+        idempotencyKey,
+        effectSourceSpanId: isEffectNodeType
+          ? resolveSourceSpanId({
+              state,
+              options,
+              nodeId: node.id,
+              nodeHash,
+              activationHash,
+              preferSeedHistory: isSeedMatch,
+            })
+          : null,
         ...buildRuntimeTelemetryFields(runtimeTelemetry),
       });
     }
@@ -175,9 +418,11 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
   const spanId = buildSpanId(node.id, attempt, iteration);
   const existingExecutedState = state.variables[EXECUTED_STATE_KEY];
   const executed =
-    existingExecutedState && typeof existingExecutedState === 'object'
-      ? (existingExecutedState as NodeHandlerContext['executed'])
-      : createExecutedState();
+    executedState && typeof executedState === 'object'
+      ? executedState
+      : existingExecutedState && typeof existingExecutedState === 'object'
+        ? (existingExecutedState as NodeHandlerContext['executed'])
+        : createExecutedState();
   state.variables[EXECUTED_STATE_KEY] = executed;
 
   try {
@@ -235,18 +480,12 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
 
     const retryPolicy = readRuntimeRetryPolicy(node);
 
-    const sideEffectDecision: 'executed' | 'skipped_policy' | undefined = 'executed';
-
-    const executed = {
-      notification: new Set<string>(),
-      updater: new Set<string>(),
-      http: new Set<string>(),
-      delay: new Set<string>(),
-      poll: new Set<string>(),
-      ai: new Set<string>(),
-      schema: new Set<string>(),
-      mapper: new Set<string>(),
-    };
+    const sideEffectDecision: 'executed' | 'skipped_policy' | undefined =
+      isEffectNodeType && effectExecutedBucket && executed[effectExecutedBucket].has(node.id)
+        ? 'skipped_policy'
+        : isEffectNodeType
+          ? 'executed'
+          : undefined;
 
     const ctx: NodeHandlerContext = {
       node,
@@ -272,11 +511,22 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
       skipAiJobs: Boolean(options.skipAiJobs),
       isDryRun: Boolean(options['isDryRun']),
       sideEffectDecision,
+      sideEffectControl: sideEffectPolicy
+        ? {
+            policy: sideEffectPolicy,
+            decision: sideEffectDecision === 'skipped_policy' ? 'skipped_policy' : 'executed',
+            activationHash,
+            idempotencyKey,
+          }
+        : undefined,
       now: new Date().toISOString(),
       abortSignal: options.abortSignal,
-      allOutputs: state.outputs as Record<string, Record<string, unknown>>,
-      allInputs: state.inputs as Record<string, Record<string, unknown>>,
-      fetchEntityCached: options.fetchEntityCached ?? (async () => null),
+      allOutputs: state.outputs,
+      allInputs: state.inputs,
+      fetchEntityCached:
+        options.fetchEntityCached ??
+        options.fetchEntityByType ??
+        (async () => null),
       reportAiPathsError: options.reportAiPathsError,
       toast: (message, toastOptions) => {
         options.toast?.(message, toastOptions);
@@ -325,7 +575,7 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
       options.abortSignal
     );
 
-    const nextOutputs = (cloneValue(nodeResult) ?? {}) as RuntimePortValues;
+    const nextOutputs = (cloneValue(nodeResult) ?? {});
     const postExecuteValidation = await runRuntimeValidation({
       stage: 'node_post_execute',
       iteration,
@@ -371,20 +621,33 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
     state.errorNodes.delete(node.id);
     state.outputs[node.id] = nextOutputs;
 
+    if (effectExecutedBucket === 'notification' && sideEffectDecision === 'executed') {
+      executed.notification.add(node.id);
+    }
+
     if (nodeHash && state.effectiveCache) {
       state.effectiveCache.set(nodeHash, nextOutputs);
     }
 
-    appendHistoryEntry(state, options, {
+    appendNodeHistoryEntry({
+      state,
+      options,
+      resolvedRunId,
+      spanId,
       node,
       status: 'executed',
       iteration,
       attempt,
-      inputs: nodeInputs,
-      outputs: nextOutputs,
+      nodeInputs,
+      nodeOutputs: nextOutputs,
+      nodeById,
+      sanitizedEdges,
       inputHash: nodeHash,
       activationHash,
       cacheDecision: isCacheDisabled ? 'disabled' : 'miss',
+      sideEffectPolicy,
+      sideEffectDecision,
+      idempotencyKey,
       durationMs: nodeDurationMs,
       runtimeTelemetry,
     });
@@ -399,6 +662,32 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
         iteration,
         status: 'executed',
         durationMs: nodeDurationMs,
+        sideEffectPolicy,
+        sideEffectDecision,
+        activationHash: activationHash ?? undefined,
+        ...(idempotencyKey ? { idempotencyKey } : {}),
+        ...buildRuntimeTelemetryFields(runtimeTelemetry),
+      });
+    }
+
+    if (options['onNodeFinish'] && typeof options['onNodeFinish'] === 'function') {
+      await (options['onNodeFinish'] as Function)({
+        runId: resolvedRunId,
+        traceId: resolvedRunId,
+        spanId,
+        runStartedAt: resolvedRunStartedAt,
+        node,
+        nodeInputs,
+        prevOutputs,
+        nextOutputs,
+        changed: true,
+        iteration,
+        attempt,
+        cacheDecision: isCacheDisabled ? 'disabled' : 'miss',
+        sideEffectPolicy,
+        sideEffectDecision,
+        activationHash,
+        idempotencyKey,
         ...buildRuntimeTelemetryFields(runtimeTelemetry),
       });
     }
@@ -518,19 +807,28 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
       error instanceof Error ? error : undefined
     );
 
-    appendHistoryEntry(state, options, {
+    appendNodeHistoryEntry({
+      state,
+      options,
+      resolvedRunId,
+      spanId,
       node,
       status: 'failed',
       iteration,
       attempt,
-      inputs: nodeInputs,
-      outputs: {
+      nodeInputs,
+      nodeOutputs: {
         status: 'failed',
         error: graphError.message,
       },
+      nodeById,
+      sanitizedEdges,
       inputHash: nodeHash,
       activationHash,
       cacheDecision: isCacheDisabled ? 'disabled' : 'miss',
+      sideEffectPolicy,
+      sideEffectDecision: sideEffectPolicy ? 'failed' : undefined,
+      idempotencyKey,
       error: graphError.message,
       durationMs: nodeDurationMs,
       runtimeTelemetry,
@@ -547,11 +845,22 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
         status: 'error',
         durationMs: nodeDurationMs,
         reason: graphError.message,
+        sideEffectPolicy,
+        sideEffectDecision: sideEffectPolicy ? 'failed' : undefined,
+        activationHash: activationHash ?? undefined,
+        ...(idempotencyKey ? { idempotencyKey } : {}),
         ...buildRuntimeTelemetryFields(runtimeTelemetry),
       });
     }
 
-    if (options['onNodeError'] && typeof options['onNodeError'] === 'function') {
+    const shouldNotifyNodeError =
+      !(graphError instanceof GraphExecutionError) ||
+      !graphError.message.startsWith('No handler found for node type:');
+    if (
+      shouldNotifyNodeError &&
+      options['onNodeError'] &&
+      typeof options['onNodeError'] === 'function'
+    ) {
       await (options['onNodeError'] as Function)({
         runId: resolvedRunId,
         traceId: resolvedRunId,

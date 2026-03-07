@@ -1,9 +1,9 @@
 import { notFound } from 'next/navigation';
 import { JSX } from 'react';
 
-import { CmsPageRenderer } from '@/features/cms/components/frontend/CmsPageRenderer';
-import { CmsPageShell } from '@/features/cms/components/frontend/CmsPageShell';
-import { ThemeProvider } from '@/features/cms/components/frontend/ThemeProvider';
+import { CmsPageRenderer } from '@/features/cms/public';
+import { CmsPageShell } from '@/features/cms/public';
+import { ThemeProvider } from '@/features/cms/public';
 
 import { buildSlugMetadata, loadSlugRenderData, resolveSlugToPage } from './slug-page-data';
 

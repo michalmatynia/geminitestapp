@@ -2,6 +2,7 @@ import {
   KANGUR_TTS_DEFAULT_LOCALE,
   KANGUR_TTS_DEFAULT_VOICE,
   type KangurLessonActivityBlock,
+  type KangurLessonComponentId,
   type KangurLessonDocument,
   type KangurLessonGridBlock,
   type KangurLessonGridItem,
@@ -353,3 +354,33 @@ export const createKangurLessonDocumentFromTemplate = (
       return createDefaultKangurLessonDocument();
   }
 };
+
+const STARTER_TEMPLATE_BY_COMPONENT_ID: Record<
+  KangurLessonComponentId,
+  KangurLessonDocumentTemplateId
+> = {
+  clock: 'text-with-figure',
+  calendar: 'text-with-figure',
+  adding: 'text-with-figure',
+  subtracting: 'text-with-figure',
+  multiplication: 'text-with-figure',
+  division: 'text-with-figure',
+  geometry_basics: 'svg-mosaic-page',
+  geometry_shapes: 'svg-mosaic-page',
+  geometry_symmetry: 'svg-mosaic-page',
+  geometry_perimeter: 'svg-mosaic-page',
+  logical_thinking: 'article',
+  logical_patterns: 'article',
+  logical_classification: 'article',
+  logical_reasoning: 'article',
+  logical_analogies: 'article',
+};
+
+export const resolveStarterKangurLessonDocumentTemplate = (
+  componentId: KangurLessonComponentId
+): KangurLessonDocumentTemplateId => STARTER_TEMPLATE_BY_COMPONENT_ID[componentId];
+
+export const createStarterKangurLessonDocument = (
+  componentId: KangurLessonComponentId
+): KangurLessonDocument =>
+  createKangurLessonDocumentFromTemplate(resolveStarterKangurLessonDocumentTemplate(componentId));

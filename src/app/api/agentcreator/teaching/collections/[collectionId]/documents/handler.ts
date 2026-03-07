@@ -6,7 +6,7 @@ import {
   createEmbeddingDocument,
   getEmbeddingCollectionById,
   listEmbeddingDocuments,
-} from '@/features/ai/agentcreator/teaching/server/repository';
+} from '@/features/ai/agentcreator/server';
 import type {
   AgentTeachingEmbeddingDocumentListItem,
   AgentTeachingSourceType,

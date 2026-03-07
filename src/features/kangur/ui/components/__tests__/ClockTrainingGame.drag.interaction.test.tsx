@@ -155,9 +155,13 @@ describe('ClockTrainingGame drag interactions', () => {
     const minuteHand = getMinuteHand(container);
     const coarseSnapButton = screen.getByTestId('clock-snap-mode-5');
     const exactSnapButton = screen.getByTestId('clock-snap-mode-1');
+    const activeProgress = screen.getByTestId('clock-training-progress-0');
+    const pendingProgress = screen.getByTestId('clock-training-progress-1');
 
     expect(coarseSnapButton).toHaveClass('kangur-cta-pill', 'surface-cta');
     expect(exactSnapButton).toHaveClass('kangur-cta-pill', 'soft-cta');
+    expect(activeProgress).toHaveClass('rounded-full', 'bg-indigo-500');
+    expect(pendingProgress).toHaveClass('soft-cta');
 
     fireEvent.click(exactSnapButton);
 

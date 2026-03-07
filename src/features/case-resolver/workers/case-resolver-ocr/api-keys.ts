@@ -1,4 +1,4 @@
-import { IMAGE_STUDIO_OPENAI_API_KEY_KEY } from '@/features/ai/image-studio/studio-settings';
+import { IMAGE_STUDIO_OPENAI_API_KEY_KEY } from '@/features/ai/image-studio/server';
 import { readStoredSettingValue } from '@/shared/lib/ai-brain/server';
 
 export const resolveOpenAiApiKey = async (): Promise<string> => {

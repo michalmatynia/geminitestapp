@@ -4,7 +4,7 @@ import { BookOpen, ChevronLeft, ChevronRight, Home, LayoutGrid } from 'lucide-re
 import type { ComponentType } from 'react';
 import dynamic from 'next/dynamic';
 
-import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
+import { getKangurPageHref as createPageUrl } from '@/shared/contracts/kangur';
 import {
   hasKangurLessonDocumentContent,
   KANGUR_LESSON_DOCUMENTS_SETTING_KEY,

@@ -17,7 +17,7 @@ import {
   useAdminLayoutState,
 } from '@/features/admin/context/AdminLayoutContext';
 import { useCreateChatbotSession } from '@/features/ai/chatbot/hooks/useChatbotMutations';
-import { useChatbotSessions } from '@/features/ai/chatbot/hooks/useChatbotQueries';
+import { useChatbotSessions } from '@/features/ai/chatbot/public';
 import type { AdminMenuCustomNode, AdminMenuColorOption } from '@/shared/contracts/admin';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Button, SearchInput, Tooltip, TreeHeader } from '@/shared/ui';

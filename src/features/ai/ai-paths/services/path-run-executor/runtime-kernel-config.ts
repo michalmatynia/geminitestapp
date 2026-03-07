@@ -44,7 +44,7 @@ export const resolveRuntimeKernelConfigForPathRun = async (args: {
     });
     return [];
   });
-  
+
   const runtimeKernelSettingsMap = new Map(
     runtimeKernelSettings.map((record) => [record.key, record.value])
   );

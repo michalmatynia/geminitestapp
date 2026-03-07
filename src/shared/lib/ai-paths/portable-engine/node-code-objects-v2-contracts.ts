@@ -73,11 +73,7 @@ const parseContractsCatalog = (input: unknown): PortableNodeCodeObjectContractsC
         if (!parsedEntry) return null;
         return [normalizedType, parsedEntry];
       })
-      .filter(
-        (
-          row
-        ): row is [string, PortableNodeCodeObjectContractEntry] => Boolean(row)
-      )
+      .filter((row): row is [string, PortableNodeCodeObjectContractEntry] => Boolean(row))
       .sort(([left], [right]) => left.localeCompare(right))
   );
   const schemaVersion = asTrimmedString(record['schemaVersion']) ?? 'invalid';
@@ -101,10 +97,11 @@ const parseContractsCatalog = (input: unknown): PortableNodeCodeObjectContractsC
 const PORTABLE_NODE_CODE_OBJECT_CONTRACTS: PortableNodeCodeObjectContractsCatalog =
   parseContractsCatalog(nodeCodeObjectContractsJson);
 
-export const getPortableNodeCodeObjectContractsCatalog = (): PortableNodeCodeObjectContractsCatalog => ({
-  ...PORTABLE_NODE_CODE_OBJECT_CONTRACTS,
-  contracts: { ...PORTABLE_NODE_CODE_OBJECT_CONTRACTS.contracts },
-});
+export const getPortableNodeCodeObjectContractsCatalog =
+  (): PortableNodeCodeObjectContractsCatalog => ({
+    ...PORTABLE_NODE_CODE_OBJECT_CONTRACTS,
+    contracts: { ...PORTABLE_NODE_CODE_OBJECT_CONTRACTS.contracts },
+  });
 
 export const getPortableNodeCodeObjectContractsHash = (): string =>
   PORTABLE_NODE_CODE_OBJECT_CONTRACTS.contractsHash;

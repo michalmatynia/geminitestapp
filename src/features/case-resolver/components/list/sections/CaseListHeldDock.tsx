@@ -1,20 +1,12 @@
-
 import React from 'react';
 import { Pin, X } from 'lucide-react';
 
-import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 import { Button } from '@/shared/ui';
+import { useCaseListPanelControlsContext } from '../CaseListPanelControlsContext';
 
-type CaseListHeldDockProps = {
-  heldCaseFile: CaseResolverFile | null;
-  isHierarchyLocked: boolean;
-  onPrefetchCase: (caseId: string) => void;
-  onOpenCase: (caseId: string) => void;
-  onClearHeldCase: () => void;
-};
-
-export function CaseListHeldDock(props: CaseListHeldDockProps): React.JSX.Element | null {
-  const { heldCaseFile, isHierarchyLocked, onPrefetchCase, onOpenCase, onClearHeldCase } = props;
+export function CaseListHeldDock(): React.JSX.Element | null {
+  const { heldCaseFile, isHierarchyLocked, onPrefetchCase, onOpenCase, onClearHeldCase } =
+    useCaseListPanelControlsContext();
 
   if (!heldCaseFile) return null;
 

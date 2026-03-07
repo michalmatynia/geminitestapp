@@ -1,7 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
 
-import { KangurLessonChip } from '@/features/kangur/ui/design/lesson-primitives';
-import { KangurPanel } from '@/features/kangur/ui/design/primitives';
+import { KangurPanel, KangurStatusChip } from '@/features/kangur/ui/design/primitives';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { BADGES } from '@/features/kangur/ui/services/progress';
 import type { KangurXpToastState } from '@/features/kangur/ui/types';
@@ -23,6 +22,9 @@ export default function XpToast({ xpGained, newBadges, visible }: XpToastProps):
           initial={{ opacity: 0, y: -40, scale: 0.9 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -30, scale: 0.9 }}
+          role='status'
+          aria-live='polite'
+          aria-atomic='true'
           className={cn(
             'left-1/2 z-50 flex flex-col items-center gap-2 -translate-x-1/2 pointer-events-none',
             embedded ? 'absolute top-6' : 'fixed top-20'
@@ -35,10 +37,12 @@ export default function XpToast({ xpGained, newBadges, visible }: XpToastProps):
               variant='elevated'
             >
               <div className='flex items-center gap-3'>
-                <KangurLessonChip accent='indigo' className='text-sm font-bold'>
+                <KangurStatusChip accent='indigo' className='text-sm font-bold'>
                   +{xpGained} XP
-                </KangurLessonChip>
-                <span className='text-sm font-bold text-slate-900'>Świetnie, zdobywasz kolejne punkty</span>
+                </KangurStatusChip>
+                <span className='text-sm font-bold text-slate-900'>
+                  Świetnie, zdobywasz kolejne punkty
+                </span>
               </div>
             </KangurPanel>
           )}
@@ -50,9 +54,9 @@ export default function XpToast({ xpGained, newBadges, visible }: XpToastProps):
               variant='elevated'
             >
               <div className='flex items-center gap-3'>
-                <KangurLessonChip accent='amber' className='text-sm font-bold'>
+                <KangurStatusChip accent='amber' className='text-sm font-bold'>
                   {badge.emoji} Nowa odznaka
-                </KangurLessonChip>
+                </KangurStatusChip>
                 <span className='text-sm font-bold text-slate-900'>{badge.name}</span>
               </div>
             </KangurPanel>

@@ -85,9 +85,17 @@ describe('AddingSynthesisGame', () => {
 
     render(<AddingSynthesisGame onFinish={onFinish} />);
 
+    expect(screen.getByText('Nowa gra')).toHaveClass('border-amber-200', 'bg-amber-100');
+    expect(screen.getByText('Synthesia-style')).toHaveClass('border-violet-200', 'bg-violet-100');
+
     fireEvent.click(screen.getByRole('button', { name: /start synteze/i }));
 
     expect(screen.getByText('2 + 3')).toBeInTheDocument();
+    expect(screen.getByText('Nuta 1/1')).toHaveClass('border-slate-200', 'bg-slate-100');
+    expect(screen.getByTestId('adding-synthesis-session-progress-bar')).toHaveAttribute(
+      'aria-valuenow',
+      '0'
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Tor 2: 5' }));
 
@@ -97,7 +105,17 @@ describe('AddingSynthesisGame', () => {
 
     expect(screen.getByTestId('adding-synthesis-summary')).toBeInTheDocument();
     expect(screen.getByText('Wynik 1/1')).toBeInTheDocument();
-    expect(createLessonPracticeRewardMock).toHaveBeenCalledWith(expect.anything(), 'adding', 1, 1, 65);
+    expect(screen.getByText('Sesja zakonczona')).toHaveClass('border-emerald-200', 'bg-emerald-100');
+    expect(screen.getByText('+25 XP')).toHaveClass('border-amber-200', 'bg-amber-100');
+    expect(screen.getByText('Skutecznosc').parentElement).toHaveClass('soft-card', 'border-emerald-300');
+    expect(screen.getByText('Idealne trafienia').parentElement).toHaveClass('soft-card', 'border-violet-300');
+    expect(createLessonPracticeRewardMock).toHaveBeenCalledWith(
+      expect.anything(),
+      'adding',
+      1,
+      1,
+      65
+    );
     expect(addXpMock).toHaveBeenCalledWith(
       25,
       expect.objectContaining({

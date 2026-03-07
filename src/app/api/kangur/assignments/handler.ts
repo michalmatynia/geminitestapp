@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { parseKangurAssignmentCreatePayload, parseKangurAssignmentListQuery } from '@/shared/validations/kangur';
+import {
+  parseKangurAssignmentCreatePayload,
+  parseKangurAssignmentListQuery,
+} from '@/shared/validations/kangur';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 

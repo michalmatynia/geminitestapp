@@ -8,10 +8,16 @@ import {
   getKangurEmbeddedHostPath,
   getKangurPageHref,
   KANGUR_EMBED_QUERY_PARAM,
+  readKangurUrlParam,
 } from '@/features/kangur/config/routing';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
-import { KangurButton } from '@/features/kangur/ui/design/primitives';
+import {
+  KangurAccentDot,
+  KangurButton,
+  KangurDivider,
+  KangurSummaryPanel,
+} from '@/features/kangur/ui/design/primitives';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { cn } from '@/shared/utils';
 
@@ -30,7 +36,9 @@ export function PageNotFound(): React.JSX.Element {
     if (embeddedHostPath) {
       try {
         const parsed = new URL(requestedPath || embeddedHostPath, 'https://kangur.local');
-        return parsed.searchParams.get(KANGUR_EMBED_QUERY_PARAM) || 'unknown';
+        return (
+          readKangurUrlParam(parsed.searchParams, KANGUR_EMBED_QUERY_PARAM, basePath) || 'unknown'
+        );
       } catch {
         return requestedPath?.replace(/^\/+/, '') || 'unknown';
       }
@@ -69,7 +77,12 @@ export function PageNotFound(): React.JSX.Element {
         <div className='text-center space-y-6'>
           <div className='space-y-2'>
             <h1 className='text-7xl font-light text-slate-300'>404</h1>
-            <div className='h-0.5 w-16 bg-slate-200 mx-auto'></div>
+            <KangurDivider
+              accent='slate'
+              className='mx-auto'
+              data-testid='page-not-found-divider'
+              size='md'
+            />
           </div>
 
           <div className='space-y-3'>
@@ -81,19 +94,25 @@ export function PageNotFound(): React.JSX.Element {
           </div>
 
           {isFetched && authData?.isAuthenticated && authData.user?.role === 'admin' && (
-            <div className='mt-8 p-4 bg-slate-100 rounded-lg border border-slate-200'>
-              <div className='flex items-start space-x-3'>
-                <div className='flex-shrink-0 w-5 h-5 rounded-full bg-orange-100 flex items-center justify-center mt-0.5'>
-                  <div className='w-2 h-2 rounded-full bg-orange-400'></div>
-                </div>
-                <div className='text-left space-y-1'>
-                  <p className='text-sm font-medium text-slate-700'>Admin Note</p>
-                  <p className='text-sm text-slate-600 leading-relaxed'>
-                    This could mean that the AI has not implemented this page yet.
-                  </p>
-                </div>
-              </div>
-            </div>
+            <KangurSummaryPanel
+              accent='amber'
+              className='mt-8 text-left'
+              data-testid='page-not-found-admin-note'
+              description='This could mean that the AI has not implemented this page yet.'
+              label={
+                <span className='inline-flex items-center gap-2'>
+                  <KangurAccentDot
+                    accent='amber'
+                    aria-hidden='true'
+                    data-testid='page-not-found-admin-dot'
+                    size='sm'
+                  />
+                  Admin Note
+                </span>
+              }
+              labelAccent='amber'
+              padding='md'
+            />
           )}
 
           <div className='pt-6'>

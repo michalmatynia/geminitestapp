@@ -7,15 +7,9 @@ import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
+import { KangurIconBadge } from '@/features/kangur/ui/design/primitives';
 
-type AddingLessonProps = { onBack: () => void };
-type SectionId =
-  | 'podstawy'
-  | 'przekroczenie'
-  | 'dwucyfrowe'
-  | 'zapamietaj'
-  | 'synthesis'
-  | 'game';
+type SectionId = 'podstawy' | 'przekroczenie' | 'dwucyfrowe' | 'zapamietaj' | 'synthesis' | 'game';
 
 export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlide[]> = {
   podstawy: [
@@ -51,10 +45,10 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
             </p>
           </KangurLessonCallout>
           <div className='flex gap-1 flex-wrap justify-center'>
-            {[1,2,3,4,5,6,7,8,9].map((n) => (
-              <span key={n} className='w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm'>
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
+              <KangurIconBadge key={n} accent='indigo' size='sm'>
                 {n}
-              </span>
+              </KangurIconBadge>
             ))}
           </div>
         </div>
@@ -88,9 +82,15 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
           <KangurLessonCallout accent='emerald' className='max-w-xs text-center'>
             <p className='text-3xl font-extrabold text-green-600'>24 + 13 = ?</p>
             <div className='mt-2 text-gray-600 text-left'>
-              <p>🔹 Dziesiatki: <b>20 + 10 = 30</b></p>
-              <p>🔹 Jednosci: <b>4 + 3 = 7</b></p>
-              <p className='mt-1 text-green-700 font-bold'>30 + 7 = <span className='text-2xl'>37</span> ✓</p>
+              <p>
+                🔹 Dziesiatki: <b>20 + 10 = 30</b>
+              </p>
+              <p>
+                🔹 Jednosci: <b>4 + 3 = 7</b>
+              </p>
+              <p className='mt-1 text-green-700 font-bold'>
+                30 + 7 = <span className='text-2xl'>37</span> ✓
+              </p>
             </div>
           </KangurLessonCallout>
         </div>
@@ -104,8 +104,12 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
         <div className='flex flex-col items-center gap-4'>
           <KangurLessonCallout accent='amber' className='max-w-xs'>
             <ul className='text-gray-700 space-y-2 text-sm'>
-              <li>✅ Kolejnosc nie ma znaczenia: <b>3+5 = 5+3</b></li>
-              <li>✅ Dodawanie 0 nic nie zmienia: <b>7+0 = 7</b></li>
+              <li>
+                ✅ Kolejnosc nie ma znaczenia: <b>3+5 = 5+3</b>
+              </li>
+              <li>
+                ✅ Dodawanie 0 nic nie zmienia: <b>7+0 = 7</b>
+              </li>
               <li>✅ Zacznij od wiekszej liczby, zeby liczyc szybciej!</li>
               <li>✅ Grupuj do 10 przy przekroczeniu</li>
             </ul>
@@ -117,9 +121,24 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
 };
 
 export const HUB_SECTIONS = [
-  { id: 'podstawy', emoji: '➕', title: 'Podstawy dodawania', description: 'Co to dodawanie? Jednocyfrowe' },
-  { id: 'przekroczenie', emoji: '🔟', title: 'Dodawanie przez 10', description: 'Uzupełnianie do dziesięci' },
-  { id: 'dwucyfrowe', emoji: '💡', title: 'Dodawanie dwucyfrowe', description: 'Dziesiatki i jednosci osobno' },
+  {
+    id: 'podstawy',
+    emoji: '➕',
+    title: 'Podstawy dodawania',
+    description: 'Co to dodawanie? Jednocyfrowe',
+  },
+  {
+    id: 'przekroczenie',
+    emoji: '🔟',
+    title: 'Dodawanie przez 10',
+    description: 'Uzupełnianie do dziesięci',
+  },
+  {
+    id: 'dwucyfrowe',
+    emoji: '💡',
+    title: 'Dodawanie dwucyfrowe',
+    description: 'Dziesiatki i jednosci osobno',
+  },
   { id: 'zapamietaj', emoji: '🧠', title: 'Zapamietaj!', description: 'Zasady dodawania' },
   {
     id: 'synthesis',
@@ -128,10 +147,16 @@ export const HUB_SECTIONS = [
     description: 'Rytmiczne tory odpowiedzi i szybkie sumy',
     isGame: true,
   },
-  { id: 'game', emoji: '⚽', title: 'Gra z piłkami', description: 'Cwicz dodawanie przesuwajac piłki', isGame: true },
+  {
+    id: 'game',
+    emoji: '⚽',
+    title: 'Gra z piłkami',
+    description: 'Cwicz dodawanie przesuwajac piłki',
+    isGame: true,
+  },
 ];
 
-export default function AddingLesson({ onBack }: AddingLessonProps): React.JSX.Element {
+export default function AddingLesson(): React.JSX.Element {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
 
   if (activeSection === 'synthesis') {
@@ -170,7 +195,6 @@ export default function AddingLesson({ onBack }: AddingLessonProps): React.JSX.E
       gradientClass='from-orange-400 to-yellow-400'
       sections={HUB_SECTIONS}
       onSelect={(id) => setActiveSection(id as SectionId)}
-      onBack={onBack}
     />
   );
 }

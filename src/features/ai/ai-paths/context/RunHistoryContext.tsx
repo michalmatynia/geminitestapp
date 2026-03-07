@@ -35,6 +35,7 @@ export type { RunDetailData, RunStreamStatus };
 export interface RunHistoryOperationHandlers {
   refreshRuns?: (() => Promise<void> | void) | undefined;
   resumeRun?: ((runId: string, mode: 'resume' | 'replay') => Promise<void> | void) | undefined;
+  retryRunNode?: ((runId: string, nodeId: string) => Promise<void> | void) | undefined;
   cancelRun?: ((runId: string) => Promise<void> | void) | undefined;
   requeueDeadLetter?: ((runId: string) => Promise<void> | void) | undefined;
 }
@@ -72,6 +73,7 @@ export interface RunHistoryActions {
   setRunsRefreshing: (refreshing: boolean) => void;
   refreshRuns: () => Promise<void>;
   resumeRun: (runId: string, mode: 'resume' | 'replay') => Promise<void>;
+  retryRunNode: (runId: string, nodeId: string) => Promise<void>;
   cancelRun: (runId: string) => Promise<void>;
   requeueDeadLetter: (runId: string) => Promise<void>;
   setRunOperationHandlers: (handlers: RunHistoryOperationHandlers | null) => void;
@@ -187,6 +189,10 @@ export function RunHistoryProvider({ children }: RunHistoryProviderProps): React
     await runOperationHandlersRef.current.resumeRun?.(runId, mode);
   }, []);
 
+  const retryRunNode = useCallback(async (runId: string, nodeId: string): Promise<void> => {
+    await runOperationHandlersRef.current.retryRunNode?.(runId, nodeId);
+  }, []);
+
   const cancelRun = useCallback(async (runId: string): Promise<void> => {
     await runOperationHandlersRef.current.cancelRun?.(runId);
   }, []);
@@ -211,6 +217,7 @@ export function RunHistoryProvider({ children }: RunHistoryProviderProps): React
       setRunsRefreshing: setRunsRefreshingInternal,
       refreshRuns,
       resumeRun,
+      retryRunNode,
       cancelRun,
       requeueDeadLetter,
       setRunOperationHandlers,
@@ -283,6 +290,7 @@ export function RunHistoryProvider({ children }: RunHistoryProviderProps): React
       refreshRuns,
       requeueDeadLetter,
       resumeRun,
+      retryRunNode,
       setRunDetail,
       setOpenRunDetailHandler,
       setRunOperationHandlers,

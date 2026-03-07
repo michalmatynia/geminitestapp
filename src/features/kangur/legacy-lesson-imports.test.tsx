@@ -14,14 +14,17 @@ describe('importLegacyKangurLessonDocument', () => {
     expect(result?.importedPageCount).toBe(8);
     expect(result?.warnings).toEqual([]);
     expect(result?.document.pages?.[0]?.title).toBe('Overview');
-    expect(result?.document.pages?.some((page) => page.title === 'Co to znaczy dodawac?')).toBe(true);
+    expect(result?.document.pages?.some((page) => page.title === 'Co to znaczy dodawac?')).toBe(
+      true
+    );
     expect(result?.document.pages?.some((page) => page.title === 'Gra z piłkami')).toBe(true);
     expect(result?.document.pages?.some((page) => page.title === 'Synteza dodawania')).toBe(true);
     expect(
       result?.document.pages?.find((page) => page.title === 'Co to znaczy dodawac?')?.sectionTitle
     ).toBe('Podstawy dodawania');
     expect(
-      result?.document.pages?.find((page) => page.title === 'Co to znaczy dodawac?')?.sectionDescription
+      result?.document.pages?.find((page) => page.title === 'Co to znaczy dodawac?')
+        ?.sectionDescription
     ).toBe('Co to dodawanie? Jednocyfrowe');
     expect(
       result?.document.pages?.find((page) => page.title === 'Gra z piłkami')?.blocks[0]
@@ -74,8 +77,8 @@ describe('importLegacyKangurLessonDocument', () => {
       type: 'activity',
       activityId: 'clock-training',
     });
-    expect(result?.document.pages?.some((page) => page.title === 'Co pokazuje krótka wskazówka?')).toBe(
-      true
-    );
+    expect(
+      result?.document.pages?.some((page) => page.title === 'Co pokazuje krótka wskazówka?')
+    ).toBe(true);
   });
 });

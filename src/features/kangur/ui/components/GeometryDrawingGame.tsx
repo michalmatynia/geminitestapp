@@ -2,7 +2,13 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle, Eraser, PencilRuler, RefreshCw, XCircle } from 'lucide-react';
 
-import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
+import {
+  KangurButton,
+  KangurInfoCard,
+  KangurPanel,
+  KangurProgressBar,
+} from '@/features/kangur/ui/design/primitives';
+import { KANGUR_ACCENT_STYLES } from '@/features/kangur/ui/design/tokens';
 import {
   evaluateGeometryDrawing,
   type GeometryDrawPoint,
@@ -14,6 +20,7 @@ import {
   buildLessonMasteryUpdate,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
+import { cn } from '@/shared/utils';
 
 type GeometryDrawingGameProps = {
   onFinish: () => void;
@@ -364,6 +371,17 @@ export default function GeometryDrawingGame({
     resetRun();
   };
 
+  const boardAccent =
+    feedback?.kind === 'success'
+      ? 'emerald'
+      : feedback?.kind === 'error'
+        ? 'rose'
+        : feedback?.kind === 'info'
+          ? 'amber'
+          : 'teal';
+  const feedbackAccent =
+    feedback?.kind === 'success' ? 'emerald' : feedback?.kind === 'error' ? 'rose' : 'amber';
+
   return (
     <div className='flex flex-col items-center gap-4 w-full max-w-sm'>
       {done ? (
@@ -377,21 +395,27 @@ export default function GeometryDrawingGame({
             padding='xl'
             variant='elevated'
           >
-            <div className='text-6xl'>{score === totalRounds ? '🏆' : score >= 3 ? '🌟' : '💪'}</div>
+            <div className='text-6xl'>
+              {score === totalRounds ? '🏆' : score >= 3 ? '🌟' : '💪'}
+            </div>
             <h3 className='text-2xl font-extrabold text-gray-800'>
               Wynik: {score}/{totalRounds}
             </h3>
             <p className='text-gray-500'>Zdobyte XP: +{xpEarned}</p>
-            <div className='w-full h-3 rounded-full bg-gray-100 overflow-hidden'>
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${Math.round((score / totalRounds) * 100)}%` }}
-                transition={{ duration: 0.6 }}
-                className='h-full bg-gradient-to-r from-emerald-500 to-cyan-500'
-              />
-            </div>
+            <KangurProgressBar
+              accent='emerald'
+              animated
+              data-testid='geometry-drawing-summary-progress-bar'
+              size='md'
+              value={Math.round((score / totalRounds) * 100)}
+            />
             <div className='flex gap-3 w-full'>
-              <KangurButton className='flex-1' onClick={handleRestart} size='lg' variant='secondary'>
+              <KangurButton
+                className='flex-1'
+                onClick={handleRestart}
+                size='lg'
+                variant='secondary'
+              >
                 <RefreshCw className='w-4 h-4' />
                 Jeszcze raz
               </KangurButton>
@@ -403,7 +427,11 @@ export default function GeometryDrawingGame({
         </motion.div>
       ) : (
         <>
-          <div className='w-full rounded-[26px] border border-white/75 bg-white/86 p-2 shadow-[0_14px_34px_-26px_rgba(20,184,166,0.28)]'>
+          <KangurInfoCard
+            className='w-full rounded-[26px] border-white/75 bg-white/86 shadow-[0_14px_34px_-26px_rgba(20,184,166,0.28)]'
+            padding='sm'
+            tone='neutral'
+          >
             <div className='grid grid-cols-2 gap-2'>
               {(['starter', 'pro'] as const).map((mode) => (
                 <KangurButton
@@ -420,15 +448,16 @@ export default function GeometryDrawingGame({
                 </KangurButton>
               ))}
             </div>
-          </div>
+          </KangurInfoCard>
 
           <div className='w-full flex items-center gap-3'>
-            <div className='flex-1 h-2 rounded-full bg-gray-100 overflow-hidden'>
-              <div
-                className='h-full rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 transition-all duration-500'
-                style={{ width: `${(roundIndex / totalRounds) * 100}%` }}
-              />
-            </div>
+            <KangurProgressBar
+              accent='emerald'
+              className='flex-1'
+              data-testid='geometry-drawing-progress-bar'
+              size='sm'
+              value={(roundIndex / totalRounds) * 100}
+            />
             <span className='text-xs font-bold text-gray-500'>
               {roundIndex + 1}/{totalRounds}
             </span>
@@ -440,17 +469,32 @@ export default function GeometryDrawingGame({
             animate={{ opacity: 1, y: 0 }}
             className='w-full'
           >
-            <KangurPanel className='flex flex-col items-center gap-3' padding='lg' variant='elevated'>
+            <KangurPanel
+              className='flex flex-col items-center gap-3'
+              padding='lg'
+              variant='elevated'
+            >
               <div className='text-5xl'>{currentRound?.emoji}</div>
-              <h3 className='text-xl font-extrabold text-gray-800'>Narysuj: {currentRound?.label}</h3>
+              <h3 className='text-xl font-extrabold text-gray-800'>
+                Narysuj: {currentRound?.label}
+              </h3>
               <p className='text-sm text-gray-500 text-center'>{currentRound?.hint}</p>
 
-              <div className='relative w-full'>
+              <KangurInfoCard
+                accent={boardAccent}
+                className={cn(
+                  'relative w-full overflow-hidden rounded-[26px] p-0',
+                  !feedback && KANGUR_ACCENT_STYLES.teal.hoverCard
+                )}
+                data-testid='geometry-drawing-board'
+                padding='sm'
+                tone={feedback ? 'accent' : 'neutral'}
+              >
                 <canvas
                   ref={canvasRef}
                   width={CANVAS_WIDTH}
                   height={CANVAS_HEIGHT}
-                  className='w-full rounded-2xl border-2 border-slate-200 bg-white touch-none'
+                  className='w-full rounded-[20px] bg-white touch-none'
                   onPointerDown={handlePointerDown}
                   onPointerMove={handlePointerMove}
                   onPointerUp={handlePointerUp}
@@ -458,12 +502,12 @@ export default function GeometryDrawingGame({
                   onPointerLeave={handlePointerUp}
                 />
                 {points.length === 0 && (
-                  <div className='pointer-events-none absolute inset-0 flex items-center justify-center text-slate-300 text-sm font-semibold'>
+                  <div className='pointer-events-none absolute inset-0 flex items-center justify-center text-slate-400 text-sm font-semibold'>
                     <PencilRuler className='w-4 h-4 mr-2' />
                     Rysuj tutaj
                   </div>
                 )}
-              </div>
+              </KangurInfoCard>
 
               <AnimatePresence>
                 {feedback && (
@@ -471,22 +515,24 @@ export default function GeometryDrawingGame({
                     initial={{ opacity: 0, scale: 0.94 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.94 }}
-                    className={`w-full rounded-2xl px-4 py-2 text-sm font-bold flex items-center justify-center gap-2 ${
-                      feedback.kind === 'success'
-                        ? 'bg-emerald-50 text-emerald-700'
-                        : feedback.kind === 'error'
-                          ? 'bg-rose-50 text-rose-700'
-                          : 'bg-amber-50 text-amber-700'
-                    }`}
+                    className='w-full'
                   >
-                    {feedback.kind === 'success' ? (
-                      <CheckCircle className='w-4 h-4' />
-                    ) : feedback.kind === 'error' ? (
-                      <XCircle className='w-4 h-4' />
-                    ) : (
-                      <PencilRuler className='w-4 h-4' />
-                    )}
-                    {feedback.text}
+                    <KangurInfoCard
+                      accent={feedbackAccent}
+                      className='flex w-full items-center justify-center gap-2 rounded-[24px] text-sm font-bold'
+                      data-testid='geometry-drawing-feedback'
+                      padding='sm'
+                      tone='accent'
+                    >
+                      {feedback.kind === 'success' ? (
+                        <CheckCircle className='w-4 h-4' />
+                      ) : feedback.kind === 'error' ? (
+                        <XCircle className='w-4 h-4' />
+                      ) : (
+                        <PencilRuler className='w-4 h-4' />
+                      )}
+                      {feedback.text}
+                    </KangurInfoCard>
                   </motion.div>
                 )}
               </AnimatePresence>

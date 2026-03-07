@@ -1,9 +1,5 @@
-
 import type { AiNode, PathConfig } from '@/shared/contracts/ai-paths';
-import {
-  AI_PATHS_UI_STATE_KEY,
-  TRIGGER_EVENTS,
-} from '@/shared/lib/ai-paths/core/constants';
+import { AI_PATHS_UI_STATE_KEY, TRIGGER_EVENTS } from '@/shared/lib/ai-paths/core/constants';
 import { safeParseJson } from '@/shared/lib/ai-paths/core/utils/runtime';
 import { loadPathConfigsFromSettings } from './trigger-event-settings';
 

@@ -6,6 +6,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { useLessonContentEditorContext } from '../context/LessonContentEditorContext';
+
 const {
   mutateAsyncMock,
   apiPostMock,
@@ -34,9 +36,6 @@ vi.mock('@/features/foldertree/v2', async (importOriginal) => {
     createMasterFolderTreeTransactionAdapter: vi.fn(() => ({ apply: vi.fn() })),
     FolderTreeViewportV2: (props: {
       renderNode: (input: any) => React.ReactNode;
-      onEditContent?: (lesson: any) => void;
-      onEdit?: (lesson: any) => void;
-      onDelete?: (lesson: any) => void;
     }) => (
       <div data-testid='folder-tree-viewport'>
         {latestNodesState.value.map((node, index) => (
@@ -53,15 +52,6 @@ vi.mock('@/features/foldertree/v2', async (importOriginal) => {
               toggleExpand: () => undefined,
               startRename: () => undefined,
             })}
-            <button type='button' onClick={() => props.onEditContent?.(node)}>
-              Mock Edit lesson content
-            </button>
-            <button type='button' onClick={() => props.onEdit?.(node)}>
-              Mock Edit lesson
-            </button>
-            <button type='button' onClick={() => props.onDelete?.(node)}>
-              Mock Delete lesson
-            </button>
           </div>
         ))}
       </div>
@@ -100,44 +90,34 @@ vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
 }));
 
 vi.mock('@/features/kangur/admin/KangurLessonDocumentEditor', () => ({
-  KangurLessonDocumentEditor: ({
-    value,
-    onChange,
-  }: {
-    value: { blocks?: unknown[] };
-    onChange: (nextValue: {
-      version: 1;
-      blocks: Array<{
-        id: string;
-        type: 'text';
-        html: string;
-        align: 'left';
-      }>;
-    }) => void;
-  }) => (
-    <div>
-      <div data-testid='mock-doc-editor-block-count'>{value.blocks?.length ?? 0}</div>
-      <div data-testid='mock-doc-editor-json'>{JSON.stringify(value)}</div>
-      <button
-        type='button'
-        onClick={(): void =>
-          onChange({
-            version: 1,
-            blocks: [
-              {
-                id: 'content-text-1',
-                type: 'text',
-                html: '<p>Custom lesson content</p>',
-                align: 'left',
-              },
-            ],
-          })
-        }
-      >
-        Set sample content
-      </button>
-    </div>
-  ),
+  KangurLessonDocumentEditor: () => {
+    const { lesson, document, onChange } = useLessonContentEditorContext();
+    return (
+      <div>
+        <div data-testid='mock-doc-editor-title'>{lesson?.title ?? 'Mock Document Editor'}</div>
+        <div data-testid='mock-doc-editor-block-count'>{document.blocks?.length ?? 0}</div>
+        <div data-testid='mock-doc-editor-json'>{JSON.stringify(document)}</div>
+        <button
+          type='button'
+          onClick={(): void =>
+            onChange({
+              version: 1,
+              blocks: [
+                {
+                  id: 'content-text-1',
+                  type: 'text',
+                  html: '<p>Custom lesson content</p>',
+                  align: 'left',
+                },
+              ],
+            })
+          }
+        >
+          Set sample content
+        </button>
+      </div>
+    );
+  },
 }));
 
 vi.mock('@/features/kangur/admin/KangurLessonNarrationPanel', () => ({
@@ -157,6 +137,14 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </button>
   ),
+  Dialog: ({ children, open }: { children: React.ReactNode; open?: boolean }) =>
+    open ? <div data-testid='mock-dialog'>{children}</div> : null,
+  DialogContent: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div className={className}>{children}</div>
+  ),
+  DialogHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  DialogTitle: ({ children }: { children: React.ReactNode }) => <h2>{children}</h2>,
+  DialogDescription: ({ children }: { children: React.ReactNode }) => <p>{children}</p>,
   FolderTreePanel: ({
     children,
     header,
@@ -169,13 +157,7 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </div>
   ),
-  FormField: ({
-    label,
-    children,
-  }: {
-    label: string;
-    children: React.ReactElement;
-  }) => {
+  FormField: ({ label, children }: { label: string; children: React.ReactElement }) => {
     const id = label.replace(/\s+/g, '-').toLowerCase();
     return (
       <label>
@@ -220,7 +202,8 @@ vi.mock('@/shared/ui', () => ({
         </button>
       </div>
     ) : null;
-  },  Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
+  },
+  Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
   SectionHeader: ({ title }: { title: string }) => <h1>{title}</h1>,
   SelectSimple: ({
     value,
@@ -370,8 +353,8 @@ describe('AdminKangurLessonsManagerPage content mode flow', () => {
     const createdLesson = createdLessons.find((lesson) => lesson.title === 'SVG Playground');
     expect(createdLesson?.contentMode).toBe('document');
 
-    expect(screen.getByTestId('mock-doc-editor-title')).toHaveTextContent('SVG Playground');
-    expect(screen.getByTestId('mock-doc-editor-block-count')).toHaveTextContent('1');
+    expect(await screen.findByTestId('mock-doc-editor-title')).toHaveTextContent('SVG Playground');
+    expect(screen.getByTestId('mock-doc-editor-block-count')).toHaveTextContent('2');
 
     fireEvent.click(screen.getByRole('button', { name: /set sample content/i }));
     fireEvent.click(screen.getByRole('button', { name: /save content/i }));
@@ -432,9 +415,9 @@ describe('AdminKangurLessonsManagerPage content mode flow', () => {
 
     render(<AdminKangurLessonsManagerPage />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Mock Edit lesson content' }));
-    expect(screen.getByRole('button', { name: /clear custom content/i })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /clear custom content/i }));
+    fireEvent.click(screen.getByRole('button', { name: /edit lesson content/i }));
+    expect(screen.getByRole('button', { name: /clear content/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /clear content/i }));
 
     await waitFor(() => expect(mutateAsyncMock).toHaveBeenCalledTimes(2));
 
@@ -448,9 +431,8 @@ describe('AdminKangurLessonsManagerPage content mode flow', () => {
     expect(JSON.parse(documentSave.value)).toEqual({});
   });
 
-  it('opens geometry document lessons with the mosaic starter layout', () => {
-    settingsStoreMock.get.mockImplementation((key: string) => {
-      if (key === KANGUR_LESSONS_SETTING_KEY) {
+  it('opens geometry document lessons with the mosaic starter layout', async () => {
+    settingsStoreMock.get.mockImplementation((key: string) => {      if (key === KANGUR_LESSONS_SETTING_KEY) {
         return JSON.stringify([
           {
             ...baseLessons[0],
@@ -469,16 +451,16 @@ describe('AdminKangurLessonsManagerPage content mode flow', () => {
 
     render(<AdminKangurLessonsManagerPage />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Mock Edit lesson content' }));
+    fireEvent.click(screen.getByRole('button', { name: /edit lesson content/i }));
 
-    expect(screen.getByTestId('mock-doc-editor-title')).toHaveTextContent('Figury geometryczne');
-    expect(screen.getByTestId('mock-doc-editor-block-count')).toHaveTextContent('1');
+    expect(await screen.findByTestId('mock-doc-editor-title')).toHaveTextContent('Figury geometryczne');
+    expect(screen.getByTestId('mock-doc-editor-block-count')).toHaveTextContent('2');
     expect(screen.getByTestId('mock-doc-editor-json')).toHaveTextContent('"denseFill":true');
     expect(screen.getByTestId('mock-doc-editor-json')).toHaveTextContent('"columnStart":1');
     expect(screen.getByTestId('mock-doc-editor-json')).toHaveTextContent('"rowStart":1');
-  });
+    });
 
-  it('imports the legacy lesson structure into the document editor draft', async () => {
+    it('imports the legacy lesson structure into the document editor draft', async () => {
     settingsStoreMock.get.mockImplementation((key: string) => {
       if (key === KANGUR_LESSONS_SETTING_KEY) {
         return JSON.stringify(baseLessons);
@@ -491,11 +473,10 @@ describe('AdminKangurLessonsManagerPage content mode flow', () => {
 
     render(<AdminKangurLessonsManagerPage />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Mock Edit lesson content' }));
-    expect(screen.getByTestId('mock-doc-editor-block-count')).toHaveTextContent('1');
+    fireEvent.click(screen.getByRole('button', { name: /edit lesson content/i }));
+    expect(await screen.findByTestId('mock-doc-editor-block-count')).toHaveTextContent('2');
 
-    fireEvent.click(screen.getByRole('button', { name: /import legacy lesson/i }));
-
+    fireEvent.click(screen.getByRole('button', { name: /import legacy/i }));
     await waitFor(() => {
       expect(screen.getByTestId('mock-doc-editor-json')).toHaveTextContent('"Overview"');
     });
@@ -547,7 +528,9 @@ describe('AdminKangurLessonsManagerPage content mode flow', () => {
     expect(documentStore['kangur-lesson-clock']?.pages?.[0]?.title).toBe('Overview');
     expect(
       documentStore['kangur-lesson-clock']?.pages?.some((page) =>
-        page.blocks.some((block) => block.type === 'activity' && block.activityId === 'clock-training')
+        page.blocks.some(
+          (block) => block.type === 'activity' && block.activityId === 'clock-training'
+        )
       )
     ).toBe(true);
     expect(

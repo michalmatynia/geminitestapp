@@ -86,7 +86,8 @@ const matchesStringArray = (value: unknown, expected: string[]): boolean =>
   Array.isArray(value) &&
   value.length === expected.length &&
   value.every(
-    (entry: unknown, index: number): boolean => typeof entry === 'string' && entry === expected[index]
+    (entry: unknown, index: number): boolean =>
+      typeof entry === 'string' && entry === expected[index]
   );
 
 const appendChangedField = (
@@ -101,9 +102,7 @@ const appendChangedField = (
 export const normalizeRuntimeKernelValueSource = (
   value: unknown
 ): RuntimeKernelValueSource | null =>
-  value === 'env' || value === 'path' || value === 'settings' || value === 'default'
-    ? value
-    : null;
+  value === 'env' || value === 'path' || value === 'settings' || value === 'default' ? value : null;
 
 export const parseRuntimeKernelNodeTypes = (value: unknown): string[] | undefined =>
   parseRuntimeKernelListValue({
@@ -111,9 +110,7 @@ export const parseRuntimeKernelNodeTypes = (value: unknown): string[] | undefine
     normalizeToken: normalizeRuntimeKernelNodeTypeToken,
   });
 
-export const parseRuntimeKernelCodeObjectResolverIds = (
-  value: unknown
-): string[] | undefined =>
+export const parseRuntimeKernelCodeObjectResolverIds = (value: unknown): string[] | undefined =>
   parseRuntimeKernelListValue({
     value,
     normalizeToken: normalizeRuntimeKernelResolverIdToken,
@@ -136,7 +133,7 @@ export const normalizeRuntimeKernelConfigRecordDetailed = (
 
   const nodeTypes = parseRuntimeKernelNodeTypes(
     translateLegacyAliases
-      ? value['nodeTypes'] ?? value[DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD]
+      ? (value['nodeTypes'] ?? value[DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD])
       : value['nodeTypes']
   );
   if (nodeTypes) {
@@ -155,7 +152,8 @@ export const normalizeRuntimeKernelConfigRecordDetailed = (
 
   const resolverIds = parseRuntimeKernelCodeObjectResolverIds(
     translateLegacyAliases
-      ? value['codeObjectResolverIds'] ?? value[DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD]
+      ? (value['codeObjectResolverIds'] ??
+          value[DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD])
       : value['codeObjectResolverIds']
   );
   if (resolverIds) {

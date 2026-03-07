@@ -70,7 +70,7 @@ const mockRepo = vi.hoisted(() => {
   return repo as AiPathRunRepository;
 });
 
-vi.mock('@/features/ai/ai-paths/services/path-run-repository', () => ({
+vi.mock('@/shared/lib/ai-paths/services/path-run-repository', () => ({
   getPathRunRepository: vi.fn().mockResolvedValue(mockRepo),
 }));
 
@@ -579,7 +579,7 @@ describe('PathRunExecutor', () => {
       .mocked(mockRepo.updateRunIfStatus)
       .mock.calls.find((c) => (c[2] as any).meta?.runtimeTrace);
     const runtimeTrace = (updateCall?.[2] as any).meta.runtimeTrace;
-    const nodeSpans = runtimeTrace?.profile?.nodeSpans ?? [];
+    const nodeSpans = runtimeTrace?.spans ?? [];
     expect(nodeSpans.length).toBeGreaterThan(0);
     expect(nodeSpans[0]).toMatchObject({
       nodeId: mockNodes[0]!.id,
@@ -666,6 +666,433 @@ describe('PathRunExecutor', () => {
         sourceSpanId: 'node-111111111111111111111111:1:1',
       },
       activationHash: 'activation-hash-1',
+    });
+
+    const finishEventCall = vi.mocked(mockRepo.createRunEvent).mock.calls.find((call) => {
+      const metadata = call[0]?.metadata as Record<string, unknown> | undefined;
+      return metadata?.['effectSourceSpanId'] === 'node-111111111111111111111111:1:1';
+    });
+    expect(finishEventCall?.[0]).toMatchObject({
+      metadata: expect.objectContaining({
+        cacheDecision: 'seed',
+        sideEffectPolicy: 'per_activation',
+        sideEffectDecision: 'skipped_duplicate',
+        activationHash: 'activation-hash-1',
+        idempotencyKey: 'http-node:activation-hash-1',
+        effectSourceSpanId: 'node-111111111111111111111111:1:1',
+      }),
+    });
+  });
+
+  it('should materialize resume reuse and re-execution provenance in runtime trace spans', async () => {
+    const resumeNodes: AiNode[] = [
+      {
+        id: 'node-upstream',
+        type: 'constant',
+        title: 'Upstream',
+        description: '',
+        position: { x: 0, y: 0 },
+        inputs: [],
+        outputs: ['value'],
+        config: { constant: { valueType: 'string', value: 'seeded' } },
+      },
+      {
+        id: 'node-failed',
+        type: 'template',
+        title: 'Recover',
+        description: '',
+        position: { x: 240, y: 0 },
+        inputs: ['value'],
+        outputs: ['value'],
+        config: { template: { template: '{{value}}-recovered' } },
+      },
+    ];
+    const resumeEdges: Edge[] = [
+      {
+        id: 'edge-upstream-failed',
+        from: 'node-upstream',
+        to: 'node-failed',
+        fromPort: 'value',
+        toPort: 'value',
+      },
+    ];
+
+    vi.mocked(mockRepo.listRunNodes).mockResolvedValue([
+      {
+        id: 'rn-upstream',
+        runId: 'mock-run-id',
+        nodeId: 'node-upstream',
+        nodeType: 'constant',
+        nodeTitle: 'Upstream',
+        status: 'completed',
+        attempt: 1,
+        inputs: {},
+        outputs: { value: 'seeded' },
+        errorMessage: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        startedAt: new Date().toISOString(),
+        finishedAt: new Date().toISOString(),
+      } as any,
+      {
+        id: 'rn-failed',
+        runId: 'mock-run-id',
+        nodeId: 'node-failed',
+        nodeType: 'template',
+        nodeTitle: 'Recover',
+        status: 'failed',
+        attempt: 1,
+        inputs: { value: 'seeded' },
+        outputs: { status: 'failed', error: 'boom' },
+        errorMessage: 'boom',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        startedAt: new Date().toISOString(),
+        finishedAt: new Date().toISOString(),
+      } as any,
+    ]);
+
+    vi.mocked(evaluateGraphWithIteratorAutoContinue).mockImplementation(
+      async (options: EvaluateGraphArgs) => {
+        expect(options.skipNodeIds).toEqual(['node-upstream']);
+        const node = options.nodes.find((entry) => entry.id === 'node-failed')!;
+        const spanId = `${node.id}:2:1`;
+        if (options.onNodeStart) {
+          await options.onNodeStart({
+            runId: options.runId!,
+            traceId: options.runId!,
+            spanId,
+            runStartedAt: new Date().toISOString(),
+            node,
+            nodeInputs: { value: 'seeded' },
+            prevOutputs: {},
+            iteration: 1,
+            attempt: 2,
+          });
+        }
+        if (options.onNodeFinish) {
+          await options.onNodeFinish({
+            runId: options.runId!,
+            traceId: options.runId!,
+            spanId,
+            runStartedAt: new Date().toISOString(),
+            node,
+            nodeInputs: { value: 'seeded' },
+            prevOutputs: {},
+            nextOutputs: { value: 'seeded-recovered' },
+            iteration: 1,
+            attempt: 2,
+            changed: true,
+          });
+        }
+
+        return {
+          status: 'completed',
+          nodeStatuses: {
+            'node-upstream': 'skipped',
+            'node-failed': 'completed',
+          },
+          nodeOutputs: {
+            'node-upstream': { value: 'seeded' },
+            'node-failed': { value: 'seeded-recovered' },
+          },
+          variables: {},
+          events: [],
+          inputs: {
+            'node-upstream': {},
+            'node-failed': { value: 'seeded' },
+          },
+          outputs: {
+            'node-upstream': { value: 'seeded' },
+            'node-failed': { value: 'seeded-recovered' },
+          },
+          history: {
+            'node-upstream': [
+              {
+                timestamp: '2026-03-07T06:00:00.000Z',
+                pathId: 'test',
+                pathName: null,
+                traceId: 'mock-run-id',
+                spanId: 'node-upstream:1:1',
+                nodeId: 'node-upstream',
+                nodeType: 'constant',
+                nodeTitle: 'Upstream',
+                status: 'executed',
+                iteration: 1,
+                attempt: 1,
+                inputs: {},
+                outputs: { value: 'seeded' },
+                inputHash: 'hash-upstream',
+              },
+            ],
+            'node-failed': [
+              {
+                timestamp: '2026-03-07T06:00:01.000Z',
+                pathId: 'test',
+                pathName: null,
+                traceId: 'mock-run-id',
+                spanId: 'node-failed:1:1',
+                nodeId: 'node-failed',
+                nodeType: 'template',
+                nodeTitle: 'Recover',
+                status: 'failed',
+                iteration: 1,
+                attempt: 1,
+                inputs: { value: 'seeded' },
+                outputs: { status: 'failed', error: 'boom' },
+                inputHash: 'hash-failed',
+                error: 'boom',
+              },
+              {
+                timestamp: '2026-03-07T06:00:02.000Z',
+                pathId: 'test',
+                pathName: null,
+                traceId: 'mock-run-id',
+                spanId: 'node-failed:2:1',
+                nodeId: 'node-failed',
+                nodeType: 'template',
+                nodeTitle: 'Recover',
+                status: 'executed',
+                iteration: 1,
+                attempt: 2,
+                inputs: { value: 'seeded' },
+                outputs: { value: 'seeded-recovered' },
+                inputHash: 'hash-failed-2',
+                resumeMode: 'resume',
+                resumeDecision: 'reexecuted',
+                resumeReason: 'failed_node',
+                resumeSourceTraceId: 'mock-run-id',
+                resumeSourceSpanId: 'node-failed:1:1',
+                resumeSourceRunStartedAt: '2026-03-07T06:00:00.000Z',
+                resumeSourceStatus: 'failed',
+              },
+            ],
+          },
+          hashes: {
+            'node-upstream': 'hash-upstream',
+            'node-failed': 'hash-failed-2',
+          },
+        } as any;
+      }
+    );
+
+    const run = await mockRepo.createRun({
+      pathId: 'test',
+      status: 'failed',
+      graph: { nodes: resumeNodes, edges: resumeEdges },
+      meta: {
+        aiPathsValidation: { enabled: false },
+        resumeMode: 'resume',
+      },
+      runtimeState: {
+        status: 'failed',
+        currentRun: {
+          id: 'mock-run-id',
+          status: 'failed',
+          startedAt: '2026-03-07T06:00:00.000Z',
+        },
+        nodeStatuses: {
+          'node-upstream': 'completed',
+          'node-failed': 'failed',
+        },
+        nodeOutputs: {
+          'node-upstream': { value: 'seeded' },
+          'node-failed': { status: 'failed', error: 'boom' },
+        },
+        variables: {},
+        events: [],
+        inputs: {
+          'node-upstream': {},
+          'node-failed': { value: 'seeded' },
+        },
+        outputs: {
+          'node-upstream': { value: 'seeded' },
+        },
+        history: {
+          'node-upstream': [
+            {
+              timestamp: '2026-03-07T06:00:00.000Z',
+              pathId: 'test',
+              pathName: null,
+              traceId: 'mock-run-id',
+              spanId: 'node-upstream:1:1',
+              nodeId: 'node-upstream',
+              nodeType: 'constant',
+              nodeTitle: 'Upstream',
+              status: 'executed',
+              iteration: 1,
+              attempt: 1,
+              inputs: {},
+              outputs: { value: 'seeded' },
+              inputHash: 'hash-upstream',
+            },
+          ],
+          'node-failed': [
+            {
+              timestamp: '2026-03-07T06:00:01.000Z',
+              pathId: 'test',
+              pathName: null,
+              traceId: 'mock-run-id',
+              spanId: 'node-failed:1:1',
+              nodeId: 'node-failed',
+              nodeType: 'template',
+              nodeTitle: 'Recover',
+              status: 'failed',
+              iteration: 1,
+              attempt: 1,
+              inputs: { value: 'seeded' },
+              outputs: { status: 'failed', error: 'boom' },
+              inputHash: 'hash-failed',
+              error: 'boom',
+            },
+          ],
+        },
+        hashes: {
+          'node-upstream': 'hash-upstream',
+          'node-failed': 'hash-failed',
+        },
+      } as any,
+    });
+
+    await executePathRun(run);
+
+    const runtimeTraceUpdates = vi
+      .mocked(mockRepo.updateRunIfStatus)
+      .mock.calls.filter((call) => (call[2] as any).meta?.runtimeTrace);
+    const runtimeTrace = (runtimeTraceUpdates.at(-1)?.[2] as any).meta.runtimeTrace;
+
+    expect(runtimeTrace?.spans).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          nodeId: 'node-upstream',
+          spanId: 'resume-node-upstream-2-1',
+          status: 'cached',
+          cache: expect.objectContaining({
+            decision: 'seed',
+          }),
+          resume: expect.objectContaining({
+            mode: 'resume',
+            decision: 'reused',
+            reason: 'completed_upstream',
+            sourceSpanId: 'node-upstream:1:1',
+            sourceStatus: 'completed',
+          }),
+        }),
+        expect.objectContaining({
+          nodeId: 'node-failed',
+          spanId: 'node-failed:2:1',
+          status: 'completed',
+          resume: expect.objectContaining({
+            mode: 'resume',
+            decision: 'reexecuted',
+            reason: 'failed_node',
+            sourceSpanId: 'node-failed:1:1',
+            sourceStatus: 'failed',
+          }),
+        }),
+      ])
+    );
+
+    const updatedRun = await mockRepo.findRunById(run.id);
+    expect((updatedRun?.runtimeState as any)?.nodeStatuses?.['node-upstream']).toBe('cached');
+    expect((updatedRun?.runtimeState as any)?.history?.['node-upstream']).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          spanId: 'resume-node-upstream-2-1',
+          status: 'cached',
+          cacheDecision: 'seed',
+          resumeMode: 'resume',
+          resumeDecision: 'reused',
+          resumeReason: 'completed_upstream',
+          resumeSourceSpanId: 'node-upstream:1:1',
+          resumeSourceStatus: 'completed',
+        }),
+      ])
+    );
+    expect((updatedRun?.runtimeState as any)?.history?.['node-failed']).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          spanId: 'node-failed:2:1',
+          status: 'executed',
+          resumeMode: 'resume',
+          resumeDecision: 'reexecuted',
+          resumeReason: 'failed_node',
+          resumeSourceSpanId: 'node-failed:1:1',
+          resumeSourceStatus: 'failed',
+        }),
+      ])
+    );
+
+    const reuseEvent = vi.mocked(mockRepo.createRunEvent).mock.calls.find((call) => {
+      const metadata = call[0]?.metadata as Record<string, unknown> | undefined;
+      return metadata?.['resumeDecision'] === 'reused';
+    });
+    expect(reuseEvent?.[0]).toMatchObject({
+      metadata: expect.objectContaining({
+        resumeMode: 'resume',
+        resumeDecision: 'reused',
+        resumeReason: 'completed_upstream',
+        resumeSourceSpanId: 'node-upstream:1:1',
+      }),
+    });
+  });
+
+  it('should persist skipped node finishes as skipped trace spans', async () => {
+    vi.mocked(evaluateGraphWithIteratorAutoContinue).mockImplementation(
+      async (options: EvaluateGraphArgs) => {
+        const node = options.nodes[0]!;
+        const spanId = `${node.id}:1:1`;
+        if (options.onNodeStart) {
+          await options.onNodeStart({
+            runId: options.runId!,
+            traceId: options.runId!,
+            spanId,
+            runStartedAt: new Date().toISOString(),
+            node,
+            nodeInputs: {},
+            prevOutputs: {},
+            iteration: 1,
+            attempt: 1,
+          });
+        }
+        if (options.onNodeFinish) {
+          await options.onNodeFinish({
+            runId: options.runId!,
+            traceId: options.runId!,
+            spanId,
+            runStartedAt: new Date().toISOString(),
+            node,
+            nodeInputs: {},
+            prevOutputs: {},
+            nextOutputs: { status: 'skipped', reason: 'upstream_skipped' },
+            iteration: 1,
+            attempt: 1,
+            changed: false,
+          });
+        }
+
+        return {
+          status: 'completed',
+          outputs: { [node.id]: { status: 'skipped', reason: 'upstream_skipped' } },
+        } as any;
+      }
+    );
+
+    const run = await mockRepo.createRun({
+      pathId: 'test',
+      graph: { nodes: mockNodes, edges: mockEdges },
+      meta: { aiPathsValidation: { enabled: false } },
+    });
+
+    await executePathRun(run);
+
+    const updateCall = vi
+      .mocked(mockRepo.updateRunIfStatus)
+      .mock.calls.find((c) => (c[2] as any).meta?.runtimeTrace);
+    const runtimeTrace = (updateCall?.[2] as any).meta.runtimeTrace;
+    expect(runtimeTrace?.spans?.[0]).toMatchObject({
+      nodeId: mockNodes[0]!.id,
+      status: 'skipped',
     });
   });
 

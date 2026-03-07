@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
+import { useKangurLessonBackAction } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 import { KANGUR_STEP_PILL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/shared/utils';
 
@@ -13,7 +14,7 @@ export type LessonSlide = {
 
 type LessonSlideSectionProps = {
   slides: LessonSlide[];
-  onBack: () => void;
+  onBack?: () => void;
   onComplete?: () => void;
   dotActiveClass: string;
   dotDoneClass: string;
@@ -27,6 +28,7 @@ export default function LessonSlideSection({
   dotActiveClass,
   dotDoneClass,
 }: LessonSlideSectionProps): React.JSX.Element {
+  const handleBack = useKangurLessonBackAction(onBack);
   const [slide, setSlide] = useState(0);
   const isLast = slide === slides.length - 1;
   const activeSlide = slides[slide];
@@ -35,7 +37,7 @@ export default function LessonSlideSection({
 
   const handleDone = (): void => {
     onComplete?.();
-    onBack();
+    handleBack();
   };
 
   return (
@@ -81,7 +83,7 @@ export default function LessonSlideSection({
 
       <div className='flex gap-3 w-full'>
         <KangurButton
-          onClick={slide === 0 ? onBack : () => setSlide(slide - 1)}
+          onClick={slide === 0 ? handleBack : () => setSlide(slide - 1)}
           size='lg'
           variant='secondary'
         >
@@ -90,12 +92,7 @@ export default function LessonSlideSection({
         </KangurButton>
 
         {isLast ? (
-          <KangurButton
-            onClick={handleDone}
-            className='flex-1'
-            size='lg'
-            variant='primary'
-          >
+          <KangurButton onClick={handleDone} className='flex-1' size='lg' variant='primary'>
             Gotowe!
           </KangurButton>
         ) : (

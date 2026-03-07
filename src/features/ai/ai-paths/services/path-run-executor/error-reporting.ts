@@ -12,7 +12,8 @@ export type ErrorReportingCtx = {
 };
 
 export const createErrorReporting = (ctx: ErrorReportingCtx) => {
-  const { run, repo, traceId, runtimeFingerprint, runStartedAt, runtimeKernelExecutionTelemetry } = ctx;
+  const { run, repo, traceId, runtimeFingerprint, runStartedAt, runtimeKernelExecutionTelemetry } =
+    ctx;
 
   const reportAiPathsError = async (
     error: unknown,

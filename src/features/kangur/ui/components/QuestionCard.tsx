@@ -1,8 +1,14 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 
-import { KangurPanel } from '@/features/kangur/ui/design/primitives';
+import {
+  KangurOptionCardButton,
+  KangurPanel,
+  KangurProgressBar,
+} from '@/features/kangur/ui/design/primitives';
+import { KANGUR_ACCENT_STYLES, type KangurAccent } from '@/features/kangur/ui/design/tokens';
 import type { KangurQuestion, KangurQuestionChoice } from '@/features/kangur/ui/types';
+import { cn } from '@/shared/utils';
 
 export type QuestionCardProps = {
   question: KangurQuestion;
@@ -121,8 +127,8 @@ export default function QuestionCard({
   };
 
   const timerPercent = timeLimit > 0 ? (timeLeft / timeLimit) * 100 : 0;
-  const timerColor =
-    timerPercent > 50 ? 'bg-green-400' : timerPercent > 25 ? 'bg-yellow-400' : 'bg-red-500';
+  const timerAccent: KangurAccent =
+    timerPercent > 50 ? 'emerald' : timerPercent > 25 ? 'amber' : 'rose';
   const isClockQuestion = question.question.startsWith('CLOCK:');
   const clockParts = isClockQuestion ? question.question.split(':') : null;
   const clockHours = Number.parseInt(clockParts?.[1] ?? '0', 10);
@@ -140,13 +146,12 @@ export default function QuestionCard({
         Pytanie {questionNumber} z {total}
       </div>
 
-      <div className='w-full bg-gray-100 rounded-full h-4 overflow-hidden'>
-        <motion.div
-          className={`h-4 rounded-full transition-colors ${timerColor}`}
-          animate={{ width: `${timerPercent}%` }}
-          transition={{ duration: 0.4 }}
-        />
-      </div>
+      <KangurProgressBar
+        accent={timerAccent}
+        data-testid='question-card-timer-bar'
+        size='lg'
+        value={timerPercent}
+      />
       <div className={`text-lg font-bold ${timerPercent <= 25 ? 'text-red-500' : 'text-gray-500'}`}>
         ⏱ {timeLeft}s
       </div>
@@ -167,27 +172,47 @@ export default function QuestionCard({
 
       <div className='grid grid-cols-2 gap-4 w-full'>
         {question.choices.map((choice) => {
-          let cardClass =
-            'bg-white border-2 border-slate-200 text-slate-700 hover:border-indigo-300 hover:bg-indigo-50/80';
+          let accent: KangurAccent = 'indigo';
+          let emphasis: 'neutral' | 'accent' = 'neutral';
+          let state: 'default' | 'muted' = 'default';
+          let cardClass = 'text-slate-700';
           if (showResult) {
             if (choice === question.answer) {
-              cardClass = 'bg-emerald-50 border-2 border-emerald-400 text-emerald-700';
+              accent = 'emerald';
+              emphasis = 'accent';
+              cardClass = KANGUR_ACCENT_STYLES.emerald.activeText;
             } else if (choice === selected) {
-              cardClass = 'bg-rose-50 border-2 border-rose-400 text-rose-700';
+              accent = 'rose';
+              emphasis = 'accent';
+              cardClass = KANGUR_ACCENT_STYLES.rose.activeText;
             } else {
-              cardClass = 'bg-white border-2 border-slate-200 text-slate-400 opacity-60';
+              accent = 'slate';
+              state = 'muted';
+              cardClass = 'opacity-60';
             }
           }
           return (
-            <motion.button
+            <motion.div
               key={String(choice)}
               whileHover={!showResult ? { scale: 1.05 } : {}}
               whileTap={!showResult ? { scale: 0.97 } : {}}
-              onClick={() => handleChoice(choice)}
-              className={`rounded-2xl py-4 text-2xl font-bold shadow transition-all ${cardClass}`}
             >
-              {choice}
-            </motion.button>
+              <KangurOptionCardButton
+                accent={accent}
+                className={cn(
+                  'w-full flex items-center justify-center rounded-[24px] px-4 py-4 text-center text-2xl font-bold shadow transition-all',
+                  cardClass,
+                  showResult ? 'cursor-default' : 'cursor-pointer'
+                )}
+                data-testid={`question-card-choice-${String(choice)}`}
+                emphasis={emphasis}
+                onClick={() => handleChoice(choice)}
+                state={state}
+                type='button'
+              >
+                {choice}
+              </KangurOptionCardButton>
+            </motion.div>
           );
         })}
       </div>

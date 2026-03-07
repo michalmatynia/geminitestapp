@@ -59,8 +59,7 @@ export const resolvePortablePathVerificationModes = (
   const fingerprintVerificationMode =
     options?.fingerprintVerificationMode ?? signingPolicy.fingerprintVerificationMode;
   const envelopeSignatureVerificationMode =
-    options?.envelopeSignatureVerificationMode ??
-    signingPolicy.envelopeSignatureVerificationMode;
+    options?.envelopeSignatureVerificationMode ?? signingPolicy.envelopeSignatureVerificationMode;
   if (!modeOptions?.skipUsageTelemetry) {
     recordPortablePathSigningPolicyUsage({
       profile: signingPolicy.profile,

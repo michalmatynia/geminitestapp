@@ -1,24 +1,14 @@
-
 import React from 'react';
 import { ArrowDown, ArrowUp, Lock, Save, Unlock } from 'lucide-react';
 import { Button, SelectSimple, Switch } from '@/shared/ui';
 import type { CaseSortKey } from '@/features/case-resolver/context/admin-cases/types';
+import { useCaseListPanelControlsContext } from '../CaseListPanelControlsContext';
 
 export interface CaseListSortingProps {
-  caseSortBy: CaseSortKey;
-  setCaseSortBy: (value: CaseSortKey) => void;
-  caseSortOrder: 'asc' | 'desc';
-  setCaseSortOrder: (v: 'asc' | 'desc') => void;
-  isHierarchyLocked: boolean;
-  setIsHierarchyLocked: (v: boolean | ((p: boolean) => boolean)) => void;
-  caseShowNestedContent: boolean;
-  setCaseShowNestedContent: (v: boolean) => void;
-  handleSaveDefaults: () => Promise<void>;
-  isSavingDefaults: boolean;
   className?: string;
 }
 
-export function CaseListSorting(props: CaseListSortingProps): React.JSX.Element {
+export function CaseListSorting({ className = '' }: CaseListSortingProps): React.JSX.Element {
   const {
     caseSortBy,
     setCaseSortBy,
@@ -30,8 +20,7 @@ export function CaseListSorting(props: CaseListSortingProps): React.JSX.Element 
     setCaseShowNestedContent,
     handleSaveDefaults,
     isSavingDefaults,
-    className = '',
-  } = props;
+  } = useCaseListPanelControlsContext();
 
   return (
     <div

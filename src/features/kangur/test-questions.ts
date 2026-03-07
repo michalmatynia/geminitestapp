@@ -28,8 +28,7 @@ export const nextChoiceLabel = (existingLabels: string[]): string => {
 
 // ─── Illustration helpers ─────────────────────────────────────────────────────
 
-const createPanelId = (): string =>
-  `panel_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+const createPanelId = (): string => `panel_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
 
 export const createDefaultIllustration = (): KangurQuestionIllustration => ({ type: 'none' });
 
@@ -89,10 +88,7 @@ export const hasIllustration = (q: KangurTestQuestion): boolean =>
 export const createKangurTestQuestionId = (): string =>
   `ktq_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
-export const createKangurTestQuestion = (
-  suiteId: string,
-  sortOrder = 0
-): KangurTestQuestion =>
+export const createKangurTestQuestion = (suiteId: string, sortOrder = 0): KangurTestQuestion =>
   sanitizeQuestion(
     kangurTestQuestionSchema.parse({
       id: createKangurTestQuestionId(),

@@ -1,4 +1,3 @@
-
 import { TriggerEventEntityType } from '@/shared/contracts/ai-trigger-buttons';
 
 export const isTimeoutMessage = (message: string | null | undefined): boolean => {
@@ -7,9 +6,7 @@ export const isTimeoutMessage = (message: string | null | undefined): boolean =>
   return normalized.includes('timed out') || normalized.includes('timeout');
 };
 
-export const isRecoverableTriggerEnqueueError = (
-  message: string | null | undefined
-): boolean => {
+export const isRecoverableTriggerEnqueueError = (message: string | null | undefined): boolean => {
   if (!message || typeof message !== 'string') return false;
   const normalized = message.toLowerCase();
   return (

@@ -1,11 +1,6 @@
-import {
-  type Edge,
-  type PathConfig,
-} from '@/shared/contracts/ai-paths';
+import { type Edge, type PathConfig } from '@/shared/contracts/ai-paths';
 import { palette } from '@/shared/lib/ai-paths/core/definitions';
-import {
-  serializePathConfigToSemanticCanvas,
-} from '@/shared/lib/ai-paths/core/semantic-grammar';
+import { serializePathConfigToSemanticCanvas } from '@/shared/lib/ai-paths/core/semantic-grammar';
 import {
   type PathIdentityRepairWarning,
   repairPathNodeIdentities,
@@ -18,9 +13,7 @@ import {
   type AiPathPortablePackageEnvelope,
   type PortablePathInputSource,
 } from './portable-engine-contract';
-import type {
-  PortablePathMigrationWarning,
-} from './portable-engine-migration-types';
+import type { PortablePathMigrationWarning } from './portable-engine-migration-types';
 import type { ResolvePortablePathInputResult } from './portable-engine-runtime-types';
 import type {
   PortablePayloadLimits,

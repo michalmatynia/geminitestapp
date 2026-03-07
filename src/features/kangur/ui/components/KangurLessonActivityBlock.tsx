@@ -4,10 +4,12 @@ import React from 'react';
 
 import { getKangurLessonActivityDefinition } from '@/features/kangur/lesson-activities';
 import {
-  KangurLessonCallout,
-  KangurLessonChip,
-} from '@/features/kangur/ui/design/lesson-primitives';
-import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
+  KangurButton,
+  KangurEmptyState,
+  KangurStatusChip,
+  KangurSummaryPanel,
+  KangurSurfacePanel,
+} from '@/features/kangur/ui/design/primitives';
 import type { KangurLessonActivityBlock as KangurLessonActivityBlockType } from '@/shared/contracts/kangur';
 
 import AddingBallGame from './AddingBallGame';
@@ -58,37 +60,45 @@ export function KangurLessonActivityBlock(
 
   if (renderMode === 'editor') {
     return (
-      <KangurPanel className='border-emerald-200/80 bg-white/95' padding='lg' variant='soft'>
+      <KangurSurfacePanel
+        accent='emerald'
+        data-testid='lesson-activity-block-editor-shell'
+        padding='lg'
+      >
         <div className='mb-3 flex flex-wrap items-center gap-2'>
-          <KangurLessonChip accent='emerald' className='text-[10px] uppercase tracking-wide'>
+          <KangurStatusChip accent='emerald' className='text-[10px] uppercase tracking-wide' size='sm'>
             Activity
-          </KangurLessonChip>
-          <div className='text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700/80'>
+          </KangurStatusChip>
+          <KangurStatusChip accent='slate' className='text-[10px] uppercase tracking-wide' size='sm'>
             {definition.label}
-          </div>
+          </KangurStatusChip>
         </div>
         <h3 className='text-xl font-extrabold text-slate-900'>{title}</h3>
         <p className='mt-2 text-sm leading-6 text-slate-600'>{description}</p>
-        <KangurLessonCallout
+        <KangurEmptyState
           accent='emerald'
-          className='mt-4 border-dashed text-sm text-emerald-900'
+          align='left'
+          className='mt-4 text-sm'
+          description='The live game widget is hidden in editor preview. Open the lesson in learner mode to use this activity.'
           padding='lg'
-        >
-          The live game widget is hidden in editor preview. Open the lesson in learner mode to use this activity.
-        </KangurLessonCallout>
-      </KangurPanel>
+        />
+      </KangurSurfacePanel>
     );
   }
 
   return (
-    <KangurPanel className='border-emerald-200/80 bg-white/95' padding='lg' variant='soft'>
+    <KangurSurfacePanel
+      accent='emerald'
+      data-testid='lesson-activity-block-shell'
+      padding='lg'
+    >
       <div className='mb-4 flex flex-wrap items-center gap-2'>
-        <KangurLessonChip accent='emerald' className='text-[10px] uppercase tracking-wide'>
+        <KangurStatusChip accent='emerald' className='text-[10px] uppercase tracking-wide' size='sm'>
           Activity
-        </KangurLessonChip>
-        <div className='text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700/80'>
+        </KangurStatusChip>
+        <KangurStatusChip accent='slate' className='text-[10px] uppercase tracking-wide' size='sm'>
           {definition.label}
-        </div>
+        </KangurStatusChip>
       </div>
 
       <div className='mb-4'>
@@ -97,11 +107,14 @@ export function KangurLessonActivityBlock(
       </div>
 
       {isCompleted ? (
-        <KangurLessonCallout accent='emerald' className='text-sm text-emerald-950' padding='lg'>
-          <p className='font-semibold'>Activity completed.</p>
-          <p className='mt-2 text-emerald-900'>
-            You can restart the activity to practice again without leaving the lesson page.
-          </p>
+        <KangurSummaryPanel
+          accent='emerald'
+          className='text-sm'
+          description='You can restart the activity to practice again without leaving the lesson page.'
+          padding='lg'
+          title='Activity completed.'
+          tone='accent'
+        >
           <KangurButton
             type='button'
             size='sm'
@@ -114,7 +127,7 @@ export function KangurLessonActivityBlock(
           >
             Restart activity
           </KangurButton>
-        </KangurLessonCallout>
+        </KangurSummaryPanel>
       ) : (
         <ActivityComponent
           key={`${block.id}-${instanceKey}`}
@@ -123,6 +136,6 @@ export function KangurLessonActivityBlock(
           }}
         />
       )}
-    </KangurPanel>
+    </KangurSurfacePanel>
   );
 }

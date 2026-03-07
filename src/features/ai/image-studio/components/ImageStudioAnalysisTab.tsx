@@ -63,8 +63,12 @@ import {
   type AnalysisSettingsSectionConfig,
 } from './analysis/sections/AnalysisSettingsSection';
 import { AnalysisResultSection } from './analysis/sections/AnalysisResultSection';
-import { AiPathAnalysisTriggerSection } from './analysis/sections/AiPathAnalysisTriggerSection';
+import {
+  AiPathAnalysisTriggerProvider,
+  AiPathAnalysisTriggerSection,
+} from './analysis/sections/AiPathAnalysisTriggerSection';
 import { CustomTriggerButtonsSection } from './analysis/sections/CustomTriggerButtonsSection';
+import { ImageStudioAnalysisRuntimeProvider } from './analysis/sections/ImageStudioAnalysisRuntimeContext';
 import { useAiPathsObjectAnalysis } from '../hooks/useAiPathsObjectAnalysis';
 
 const sanitizePaddingInput = (value: string): string => value.replace(/[^0-9.]/g, '');
@@ -570,6 +574,15 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
     controller.abort();
   };
 
+  const availableSlots = useMemo(
+    () =>
+      slots.map((slot) => ({
+        id: slot.id,
+        label: slot.name ?? undefined,
+      })),
+    [slots]
+  );
+
   const analysisSettingsConfig: AnalysisSettingsSectionConfig = {
     mode,
     setMode,
@@ -655,6 +668,60 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
     sanitizeThresholdInput,
   };
 
+  const customTriggerButtonsRuntime = useMemo(
+    () => ({
+      projectId: activeProjectId,
+      pathMetas: aiPathsAnalysis.pathMetas,
+      triggerAnalysisForPath: aiPathsAnalysis.triggerAnalysisForPath,
+      isRunning:
+        aiPathsAnalysis.status !== 'idle' &&
+        aiPathsAnalysis.status !== 'completed' &&
+        aiPathsAnalysis.status !== 'error',
+    }),
+    [
+      activeProjectId,
+      aiPathsAnalysis.pathMetas,
+      aiPathsAnalysis.status,
+      aiPathsAnalysis.triggerAnalysisForPath,
+    ]
+  );
+
+  const analysisResultRuntime = useMemo(
+    () => ({
+      result,
+      resultSourceSlotId,
+      persistedPlanSnapshot,
+      currentWorkingSlotId: workingSlot?.id?.trim() ?? '',
+      availableSlots,
+      slotSelectionLocked,
+      analysisSourceSignatureMissing,
+      analysisCurrentSourceMetadataMissing,
+      analysisPlanIsStale,
+      queueAnalysisApplyIntent,
+    }),
+    [
+      result,
+      resultSourceSlotId,
+      persistedPlanSnapshot,
+      workingSlot?.id,
+      availableSlots,
+      slotSelectionLocked,
+      analysisSourceSignatureMissing,
+      analysisCurrentSourceMetadataMissing,
+      analysisPlanIsStale,
+      queueAnalysisApplyIntent,
+    ]
+  );
+
+  const analysisRuntimeValue = useMemo(
+    () => ({
+      settingsConfig: analysisSettingsConfig,
+      resultRuntime: analysisResultRuntime,
+      customTriggerButtonsRuntime,
+    }),
+    [analysisSettingsConfig, analysisResultRuntime, customTriggerButtonsRuntime]
+  );
+
   return (
     <div className='container mx-auto max-w-6xl py-2'>
       <Card variant='subtle' padding='md' className='border-border/60 bg-card/40 space-y-4'>
@@ -666,36 +733,17 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
           </div>
         </div>
 
-        <CustomTriggerButtonsSection
-          projectId={activeProjectId}
-          pathMetas={aiPathsAnalysis.pathMetas}
-          triggerAnalysisForPath={aiPathsAnalysis.triggerAnalysisForPath}
-          isRunning={
-            aiPathsAnalysis.status !== 'idle' &&
-            aiPathsAnalysis.status !== 'completed' &&
-            aiPathsAnalysis.status !== 'error'
-          }
-        />
+        <ImageStudioAnalysisRuntimeProvider value={analysisRuntimeValue}>
+          <CustomTriggerButtonsSection />
 
-        <AiPathAnalysisTriggerSection variant='full' analysis={aiPathsAnalysis} />
+          <AiPathAnalysisTriggerProvider value={aiPathsAnalysis}>
+            <AiPathAnalysisTriggerSection variant='full' />
+          </AiPathAnalysisTriggerProvider>
 
-        <AnalysisSettingsSection config={analysisSettingsConfig} />
+          <AnalysisSettingsSection />
 
-        <AnalysisResultSection
-          result={result}
-          resultSourceSlotId={resultSourceSlotId}
-          persistedPlanSnapshot={persistedPlanSnapshot}
-          currentWorkingSlotId={workingSlot?.id?.trim() ?? ''}
-          availableSlots={slots.map((slot) => ({
-            id: slot.id,
-            label: slot.name ?? undefined,
-          }))}
-          slotSelectionLocked={slotSelectionLocked}
-          analysisSourceSignatureMissing={analysisSourceSignatureMissing}
-          analysisCurrentSourceMetadataMissing={analysisCurrentSourceMetadataMissing}
-          analysisPlanIsStale={analysisPlanIsStale}
-          queueAnalysisApplyIntent={queueAnalysisApplyIntent}
-        />
+          <AnalysisResultSection />
+        </ImageStudioAnalysisRuntimeProvider>
       </Card>
     </div>
   );

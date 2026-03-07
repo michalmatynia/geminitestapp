@@ -1,4 +1,3 @@
-
 import { Building2, CalendarDays, Database, Mail, Users } from 'lucide-react';
 import type { ReactNode } from 'react';
 

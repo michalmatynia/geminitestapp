@@ -40,10 +40,6 @@ import { parseCanonicalCaseResolverEdge } from '../settings.edge-validation';
 import { fromCaseResolverCaseNodeId, fromCaseResolverFileNodeId } from '../master-tree';
 import { resolveCaseResolverTreeWorkspace } from './case-resolver-tree-workspace';
 
-type CaseResolverRelationsWorkspaceProps = {
-  focusCaseId?: string | null;
-};
-
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 const isCaseResolverFile = (value: unknown): value is CaseResolverFile =>
@@ -97,6 +93,16 @@ const readWorkspaceSnapshot = (
 
 const hasKnownNodeType = (value: string): value is AiNode['type'] =>
   Object.prototype.hasOwnProperty.call(typeStyles, value);
+
+const resolveFocusedCaseId = (
+  activeFileId: string | null | undefined,
+  activeCaseId: string | null | undefined
+): string | null => {
+  const preferredFocusCaseId = activeFileId?.trim() ?? '';
+  if (preferredFocusCaseId) return preferredFocusCaseId;
+  const fallbackCaseId = activeCaseId?.trim() ?? '';
+  return fallbackCaseId || null;
+};
 
 const toRuntimeNodes = (nodes: CaseResolverRelationGraph['nodes']): AiNode[] =>
   nodes
@@ -276,9 +282,8 @@ const projectCaseOnlyRelationGraph = (
 };
 
 function CaseResolverRelationsWorkspaceInner(): React.JSX.Element {
-  const { relationGraph, focusCaseId, workspaceSnapshot } =
-    useCaseResolverRelationsWorkspaceContext();
-  const { selectedFileId } = useCaseResolverPageState();
+  const { relationGraph, workspaceSnapshot } = useCaseResolverRelationsWorkspaceContext();
+  const { activeCaseId, activeFile, selectedFileId } = useCaseResolverPageState();
   const { onSelectFile, onRelationGraphChange } = useCaseResolverPageActions();
   const { nodes, edges } = useGraphState();
   const { setNodes, setEdges } = useGraphActions();
@@ -382,6 +387,8 @@ function CaseResolverRelationsWorkspaceInner(): React.JSX.Element {
     onRelationGraphChange(nextCaseOnlyGraph);
   }, [nextCaseOnlyGraph, nextGraphHash, onRelationGraphChange]);
 
+  const focusCaseId = resolveFocusedCaseId(activeFile?.id, activeCaseId);
+
   const focusNodeId = React.useMemo((): string | null => {
     const normalizedCaseId = focusCaseId?.trim() ?? '';
     if (!normalizedCaseId) return null;
@@ -414,9 +421,7 @@ function CaseResolverRelationsWorkspaceInner(): React.JSX.Element {
   );
 }
 
-export function CaseResolverRelationsWorkspace({
-  focusCaseId = null,
-}: CaseResolverRelationsWorkspaceProps = {}): React.JSX.Element {
+export function CaseResolverRelationsWorkspace(): React.JSX.Element {
   const searchParams = useSearchParams();
   const requestedFileIdRaw = searchParams.get('fileId');
   const requestedFileId = React.useMemo((): string | null => {
@@ -428,7 +433,7 @@ export function CaseResolverRelationsWorkspace({
     if (decodedFileNodeId) return decodedFileNodeId;
     return normalizedRequestedFileId;
   }, [requestedFileIdRaw]);
-  const { workspace, selectedFileId, activeCaseId } = useCaseResolverPageState();
+  const { workspace, selectedFileId, activeCaseId, activeFile } = useCaseResolverPageState();
   const scopedWorkspace = React.useMemo(
     () =>
       resolveCaseResolverTreeWorkspace({
@@ -476,16 +481,17 @@ export function CaseResolverRelationsWorkspace({
     );
   }
 
+  const focusCaseId = resolveFocusedCaseId(activeFile?.id, activeCaseId);
+
   const initialSelectedNodeId = focusCaseId?.trim()
     ? toCaseResolverRelationCaseNodeId(focusCaseId.trim())
     : undefined;
   const relationsWorkspaceValue = React.useMemo(
     () => ({
       relationGraph,
-      focusCaseId,
       workspaceSnapshot,
     }),
-    [focusCaseId, relationGraph, workspaceSnapshot]
+    [relationGraph, workspaceSnapshot]
   );
 
   return (

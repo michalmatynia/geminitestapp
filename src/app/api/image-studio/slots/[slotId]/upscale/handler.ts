@@ -14,10 +14,7 @@ import {
   getImageStudioSlotLinkBySourceAndRelation,
   upsertImageStudioSlotLink,
 } from '@/features/ai/image-studio/server';
-import {
-  createImageStudioSlots,
-  getImageStudioSlotById,
-} from '@/features/ai/image-studio/server';
+import { createImageStudioSlots, getImageStudioSlotById } from '@/features/ai/image-studio/server';
 import {
   buildUpscaleFingerprint,
   buildUpscaleFingerprintRelationType,

@@ -162,6 +162,8 @@ describe('portable AI-path cross-page portability', () => {
     expect(transferredRun.resolved.source).toBe('portable_package');
     expect(sourceRuntimeState.outputs).toEqual(transferredRun.runtimeState.outputs);
     expect(sourceRuntimeState.outputs[templateNodeId as string]?.['prompt']).toBe('sum=12');
-    expect(transferredRun.runtimeState.outputs[templateNodeId as string]?.['prompt']).toBe('sum=12');
+    expect(transferredRun.runtimeState.outputs[templateNodeId as string]?.['prompt']).toBe(
+      'sum=12'
+    );
   });
 });

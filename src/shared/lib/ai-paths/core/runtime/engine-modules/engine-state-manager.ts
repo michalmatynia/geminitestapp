@@ -55,6 +55,23 @@ export const resolveNodeCacheScope = (node: AiNode): NodeCacheScope => {
   return DEFAULT_NODE_CACHE_SCOPE;
 };
 
+const seedNodeAttemptsFromHistory = (
+  seedHistory: Record<string, RuntimeHistoryEntry[]> | undefined,
+  nodeAttemptMap: Map<string, number>
+): void => {
+  if (!seedHistory) return;
+  Object.entries(seedHistory).forEach(([nodeId, entries]) => {
+    if (!Array.isArray(entries) || entries.length === 0) return;
+    const maxAttempt = entries.reduce((acc, entry) => {
+      const attempt = typeof entry?.attempt === 'number' ? entry.attempt : 0;
+      return Math.max(acc, attempt);
+    }, 0);
+    if (maxAttempt > 0) {
+      nodeAttemptMap.set(nodeId, maxAttempt);
+    }
+  });
+};
+
 export class EngineStateManager {
   nodeStats = new Map<string, RuntimeProfileNodeStats>();
   inputs: Record<string, RuntimePortValues> = {};
@@ -82,6 +99,7 @@ export class EngineStateManager {
     this.outputs = options.seedOutputs ? cloneValue(options.seedOutputs) : {};
     this.skippedNodes = new Set(options.skipNodeIds ?? []);
     this.incomingEdgesByNode = incomingEdgesByNode;
+    seedNodeAttemptsFromHistory(options.seedHistory, this.nodeAttemptMap);
 
     // Auto-create an in-run cache Map when any node has cache mode enabled and no external cache
     // was provided.

@@ -1,5 +1,5 @@
 import { auth } from '@/features/auth/auth';
-import { CmsPageShell } from '@/features/cms/public';
+import { CmsPageShell } from '@/features/cms/components/frontend/CmsPageShell';
 import { getCmsMenuSettings } from '@/features/cms/server';
 import { getCmsRepository } from '@/features/cms/server';
 import { getCmsThemeSettings } from '@/features/cms/server';

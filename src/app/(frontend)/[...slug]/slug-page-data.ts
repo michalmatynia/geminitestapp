@@ -2,14 +2,8 @@ import { headers } from 'next/headers';
 
 import { auth } from '@/features/auth/auth';
 import { getUserPreferences } from '@/features/auth/server';
-import {
-  getMediaInlineStyles,
-  getMediaStyleVars,
-} from '@/features/cms/public';
-import {
-  getSlugForDomainByValue,
-  resolveCmsDomainFromHeaders,
-} from '@/features/cms/server';
+import { getMediaInlineStyles, getMediaStyleVars } from '@/features/cms/public';
+import { getSlugForDomainByValue, resolveCmsDomainFromHeaders } from '@/features/cms/server';
 import { getCmsMenuSettings } from '@/features/cms/server';
 import { getCmsRepository } from '@/features/cms/server';
 import { getCmsThemeSettings } from '@/features/cms/server';

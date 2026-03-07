@@ -54,17 +54,20 @@ export const updateKangurLessonDocumentPages = (
   document: KangurLessonDocument,
   pages: KangurLessonPage[]
 ): KangurLessonDocument => {
-  const normalizedPages = pages.length > 0 ? pages : [
-    {
-      id: 'lesson-page-legacy',
-      sectionKey: '',
-      sectionTitle: '',
-      sectionDescription: '',
-      title: '',
-      description: '',
-      blocks: [],
-    }
-  ];
+  const normalizedPages =
+    pages.length > 0
+      ? pages
+      : [
+        {
+          id: 'lesson-page-legacy',
+          sectionKey: '',
+          sectionTitle: '',
+          sectionDescription: '',
+          title: '',
+          description: '',
+          blocks: [],
+        },
+      ];
 
   return {
     ...document,
@@ -84,9 +87,7 @@ export const parseKangurLessonDocument = (
   return parsed ? normalizeKangurLessonDocument(parsed) : null;
 };
 
-export const normalizeKangurLessonDocumentStore = (
-  value: unknown
-): KangurLessonDocumentStore => {
+export const normalizeKangurLessonDocumentStore = (value: unknown): KangurLessonDocumentStore => {
   if (!isRecord(value)) return {};
 
   const normalized: KangurLessonDocumentStore = {};
@@ -154,7 +155,7 @@ export const hasKangurLessonDocumentContent = (
           );
         });
       }
-      
+
       return false;
     })
   );

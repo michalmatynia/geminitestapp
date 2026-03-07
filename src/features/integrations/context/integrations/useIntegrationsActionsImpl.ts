@@ -3,8 +3,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
- 
-
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
 import { useCallback, useState } from 'react';
@@ -108,7 +106,8 @@ export function useIntegrationsActionsImpl(args: {
       let currentIntegrations = args.integrations;
       if (!currentIntegrations.length && args.integrationsQuery.isFetching) {
         const refreshed = await args.integrationsQuery.refetch();
-        currentIntegrations = (refreshed.data as Integration[]) ?? args.integrationsQuery.data ?? [];
+        currentIntegrations =
+          (refreshed.data as Integration[]) ?? args.integrationsQuery.data ?? [];
       }
       const existing = currentIntegrations.find((i: Integration) => i.slug === def.slug);
       if (existing) return existing;

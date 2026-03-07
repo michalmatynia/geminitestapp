@@ -23,7 +23,7 @@ type HandlerContext = Parameters<NextRequestHandler>[1];
 const shouldBypassAuth = (request: NextRequest): boolean =>
   request.nextUrl.pathname.startsWith('/api/');
 
-export function proxy(
+export function middleware(
   request: NextRequest,
   context?: HandlerContext
 ): Promise<Response> | Response {
@@ -37,8 +37,9 @@ export function proxy(
   return handler(request, resolvedContext);
 }
 
-export default proxy;
+export default middleware;
 
 export const config = {
   matcher: ['/admin/:path*', '/api/:path*'],
+  runtime: 'nodejs',
 };

@@ -178,9 +178,9 @@ describe('ai-paths trigger-buttons GET handler', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    await expect(
-      POST_handler(request, {} as Parameters<typeof POST_handler>[1])
-    ).rejects.toThrow('AI Path "path-missing" does not exist.');
+    await expect(POST_handler(request, {} as Parameters<typeof POST_handler>[1])).rejects.toThrow(
+      'AI Path "path-missing" does not exist.'
+    );
 
     expect(upsertAiPathsSettingMock).not.toHaveBeenCalled();
   });

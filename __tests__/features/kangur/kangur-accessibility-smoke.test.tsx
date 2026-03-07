@@ -13,6 +13,7 @@ const {
   useKangurRoutingMock,
   useKangurAuthMock,
   useKangurProgressStateMock,
+  useKangurAssignmentsMock,
   scoreFilterMock,
   navigateToLoginMock,
   logoutMock,
@@ -20,6 +21,7 @@ const {
   useKangurRoutingMock: vi.fn(),
   useKangurAuthMock: vi.fn(),
   useKangurProgressStateMock: vi.fn(),
+  useKangurAssignmentsMock: vi.fn(),
   scoreFilterMock: vi.fn(),
   navigateToLoginMock: vi.fn(),
   logoutMock: vi.fn(),
@@ -27,14 +29,38 @@ const {
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: useKangurRoutingMock,
+  useOptionalKangurRouting: () => null,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: useKangurAuthMock,
 }));
 
+vi.mock('@/features/kangur/docs/tooltips', () => ({
+  KangurDocsTooltipEnhancer: () => null,
+  useKangurDocsTooltips: () => ({
+    enabled: false,
+    helpSettings: {
+      version: 1,
+      docsTooltips: {
+        enabled: false,
+        homeEnabled: false,
+        lessonsEnabled: false,
+        testsEnabled: false,
+        profileEnabled: false,
+        parentDashboardEnabled: false,
+        adminEnabled: false,
+      },
+    },
+  }),
+}));
+
 vi.mock('@/features/kangur/ui/hooks/useKangurProgressState', () => ({
   useKangurProgressState: useKangurProgressStateMock,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
+  useKangurAssignments: useKangurAssignmentsMock,
 }));
 
 vi.mock('@/features/kangur/services/kangur-platform', () => ({
@@ -45,11 +71,26 @@ vi.mock('@/features/kangur/services/kangur-platform', () => ({
   }),
 }));
 
+vi.mock('@/features/kangur/ui/components/Leaderboard', () => ({
+  __esModule: true,
+  default: () => <div data-testid='leaderboard' />,
+}));
+
+vi.mock('@/features/kangur/ui/components/progress', () => ({
+  PlayerProgressCard: () => <div data-testid='player-progress-card' />,
+  XpToast: () => null,
+}));
+
+vi.mock('@/features/kangur/ui/components/KangurPriorityAssignments', () => ({
+  KangurPriorityAssignments: () => <div data-testid='kangur-priority-assignments' />,
+}));
+
 vi.mock('@/features/kangur/ui/components/KangurLearnerAssignmentsPanel', () => ({
   __esModule: true,
   default: () => <div data-testid='kangur-learner-assignments-panel' />,
 }));
 
+import Game from '@/features/kangur/ui/pages/Game';
 import LearnerProfile from '@/features/kangur/ui/pages/LearnerProfile';
 
 const baseProgress: KangurProgressState = {
@@ -115,6 +156,14 @@ describe('Kangur accessibility smoke', () => {
       basePath: '/kangur',
     });
     useKangurProgressStateMock.mockReturnValue(baseProgress);
+    useKangurAssignmentsMock.mockReturnValue({
+      assignments: [],
+      isLoading: false,
+      error: null,
+      createAssignment: vi.fn(),
+      updateAssignment: vi.fn(),
+      refresh: vi.fn(),
+    });
     useKangurAuthMock.mockReturnValue({
       user: createUser(),
       navigateToLogin: navigateToLoginMock,
@@ -141,6 +190,12 @@ describe('Kangur accessibility smoke', () => {
     expect(scoreFilterMock).toHaveBeenCalledWith({ learner_id: 'learner-jan' }, '-created_date', 120);
     expect(scoreFilterMock).toHaveBeenCalledWith({ created_by: 'jan@example.com' }, '-created_date', 120);
     expect(scoreFilterMock).toHaveBeenCalledWith({ player_name: 'Jan' }, '-created_date', 120);
+    expect(screen.getByRole('link', { name: 'Przejdz do glownej tresci' })).toHaveAttribute(
+      'href',
+      '#kangur-learner-profile-main'
+    );
+    expect(screen.getByRole('navigation', { name: 'Glowna nawigacja Kangur' })).toBeInTheDocument();
+    expect(screen.getByRole('main')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Profil ucznia' })).toBeInTheDocument();
 
     expect(screen.getByRole('link', { name: 'Strona glowna' })).toBeVisible();
@@ -171,5 +226,29 @@ describe('Kangur accessibility smoke', () => {
     await user.keyboard('{Enter}');
 
     expect(navigateToLoginMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('exposes skip navigation, landmarks, and labeled home controls on the game page', () => {
+    useKangurAuthMock.mockReturnValue({
+      user: null,
+      navigateToLogin: navigateToLoginMock,
+      logout: logoutMock,
+    });
+
+    render(<Game />);
+
+    expect(screen.getByRole('link', { name: 'Przejdz do glownej tresci' })).toHaveAttribute(
+      'href',
+      '#kangur-game-main'
+    );
+    expect(screen.getByRole('navigation', { name: 'Glowna nawigacja Kangur' })).toBeInTheDocument();
+    expect(screen.getByRole('main', { name: /Sprycio/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Strona glowna' })).toHaveAttribute(
+      'aria-current',
+      'page'
+    );
+    expect(screen.getByRole('heading', { name: 'Ekran startowy' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Imie gracza' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Wybierz aktywnosc' })).toBeInTheDocument();
   });
 });

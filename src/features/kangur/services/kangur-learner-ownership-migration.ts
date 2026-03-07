@@ -70,7 +70,9 @@ export const buildKangurMigrationLegacyKeys = (input: BuildLegacyKeysInput): str
     normalizeMigrationKey(input.ownerUserId),
   ];
 
-  return ordered.filter((value, index): value is string => value !== null && ordered.indexOf(value) === index);
+  return ordered.filter(
+    (value, index): value is string => value !== null && ordered.indexOf(value) === index
+  );
 };
 
 export const isDefaultKangurProgressState = (progress: KangurProgressState): boolean =>
@@ -167,8 +169,10 @@ export const resolveAdoptedLegacyUserKey = (input: {
     return null;
   }
 
-  return buildKangurMigrationLegacyKeys({
-    ownerEmail: input.ownerEmail,
-    ownerUserId: input.ownerUserId,
-  })[0] ?? null;
+  return (
+    buildKangurMigrationLegacyKeys({
+      ownerEmail: input.ownerEmail,
+      ownerUserId: input.ownerUserId,
+    })[0] ?? null
+  );
 };

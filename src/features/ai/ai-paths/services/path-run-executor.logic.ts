@@ -11,11 +11,11 @@ import type {
 import type {
   AiPathRuntimeProfileEvent,
   RuntimeProfileSummary,
+  RuntimeTraceResume,
+  RuntimeTraceResumeMode,
+  RuntimeTraceResumeReason,
 } from '@/shared/contracts/ai-paths-runtime';
-import {
-  EMPTY_RUNTIME_STATE,
-  collectDroppedRuntimePorts,
-} from './path-run-executor.runtime-state';
+import { EMPTY_RUNTIME_STATE, collectDroppedRuntimePorts } from './path-run-executor.runtime-state';
 import {
   RUNTIME_PROFILE_HIGHLIGHT_LIMIT,
   RUNTIME_PROFILE_SLOW_NODE_MS,
@@ -284,39 +284,197 @@ export const resolveTriggerNodeId = (
   return connected?.id ?? candidates[0]?.id;
 };
 
-export const buildSkipSet = (
+const TERMINAL_REUSED_STATUSES = new Set<AiPathNodeStatus>(['completed', 'cached']);
+const FAILED_RESUME_STATUSES = new Set<AiPathNodeStatus>(['failed', 'timeout']);
+
+const toResumeSourceStatus = (value: unknown): AiPathNodeStatus | null => {
+  if (value === 'executed') return 'completed';
+  return toRuntimeNodeStatus(value);
+};
+
+const getLatestRuntimeHistoryEntry = (
+  runtimeState: RuntimeState,
+  nodeId: string
+): NonNullable<RuntimeState['history']>[string][number] | null => {
+  const entries = runtimeState.history?.[nodeId];
+  return Array.isArray(entries) && entries.length > 0 ? (entries.at(-1) ?? null) : null;
+};
+
+export type RuntimeResumePlan = {
+  skipNodeIds: Set<string>;
+  resumeByNodeId: Map<string, RuntimeTraceResume>;
+  sourceHistoryByNodeId: Map<string, NonNullable<RuntimeState['history']>[string][number]>;
+};
+
+export const buildResumePlan = (
   run: AiPathRunRecord,
   edges: Edge[],
-  nodeStatusMap: Map<string, string>
-): Set<string> => {
+  nodeStatusMap: Map<string, string>,
+  runtimeState: RuntimeState
+): RuntimeResumePlan => {
   const meta = (run.meta ?? {}) as {
     resumeMode?: string;
     retryNodeIds?: string[];
   };
   const mode = meta.resumeMode ?? 'replay';
-  if (mode === 'replay') return new Set<string>();
+  if (mode === 'replay') {
+    return {
+      skipNodeIds: new Set<string>(),
+      resumeByNodeId: new Map<string, RuntimeTraceResume>(),
+      sourceHistoryByNodeId: new Map<
+        string,
+        NonNullable<RuntimeState['history']>[string][number]
+      >(),
+    };
+  }
 
-  const completed = new Set(
-    Array.from(nodeStatusMap.entries())
-      .filter(([, status]: [string, string]) => status === 'completed' || status === 'cached')
-      .map(([nodeId]: [string, string]) => nodeId)
-  );
-  if (mode === 'resume') {
-    const failedNodes = new Set(
-      Array.from(nodeStatusMap.entries())
-        .filter(([, status]: [string, string]) => status === 'failed')
-        .map(([nodeId]: [string, string]) => nodeId)
-    );
-    if (failedNodes.size === 0) {
-      return completed;
+  const sourceRunStartedAt = runtimeState.currentRun?.startedAt ?? null;
+  const retryNodes = new Set(meta.retryNodeIds ?? []);
+  const completed = new Set<string>();
+  const failed = new Set<string>();
+  const sourceHistoryByNodeId = new Map<
+    string,
+    NonNullable<RuntimeState['history']>[string][number]
+  >();
+
+  nodeStatusMap.forEach((status, nodeId) => {
+    const normalized = toRuntimeNodeStatus(status);
+    if (!normalized) return;
+    if (TERMINAL_REUSED_STATUSES.has(normalized)) {
+      completed.add(nodeId);
     }
-    const affected = computeDownstreamNodes(edges, failedNodes);
-    return new Set(Array.from(completed).filter((nodeId: string) => !affected.has(nodeId)));
-  }
-  if (mode === 'retry') {
-    const retryNodes = new Set(meta.retryNodeIds ?? []);
+    if (FAILED_RESUME_STATUSES.has(normalized)) {
+      failed.add(nodeId);
+    }
+    const latestHistory = getLatestRuntimeHistoryEntry(runtimeState, nodeId);
+    if (latestHistory) {
+      sourceHistoryByNodeId.set(nodeId, latestHistory);
+    }
+  });
+
+  let skipNodeIds = new Set<string>();
+  const resumeByNodeId = new Map<string, RuntimeTraceResume>();
+
+  const buildResumeEntry = (
+    nodeId: string,
+    input: {
+      mode: RuntimeTraceResumeMode;
+      decision: RuntimeTraceResume['decision'];
+      reason: RuntimeTraceResumeReason;
+    }
+  ): RuntimeTraceResume => {
+    const latestHistory = sourceHistoryByNodeId.get(nodeId) ?? null;
+    const sourceStatus =
+      toRuntimeNodeStatus(nodeStatusMap.get(nodeId)) ??
+      toResumeSourceStatus(latestHistory?.status) ??
+      null;
+    return {
+      mode: input.mode,
+      decision: input.decision,
+      reason: input.reason,
+      sourceTraceId: latestHistory?.traceId ?? runtimeState.currentRun?.id ?? run.id ?? null,
+      sourceSpanId: typeof latestHistory?.spanId === 'string' ? latestHistory.spanId : null,
+      sourceRunStartedAt,
+      sourceStatus,
+    };
+  };
+
+  if (mode === 'resume') {
+    if (failed.size === 0) {
+      skipNodeIds = completed;
+    } else {
+      const affected = computeDownstreamNodes(edges, failed);
+      skipNodeIds = new Set(
+        Array.from(completed).filter((nodeId: string) => !affected.has(nodeId))
+      );
+
+      failed.forEach((nodeId) => {
+        resumeByNodeId.set(
+          nodeId,
+          buildResumeEntry(nodeId, {
+            mode: 'resume',
+            decision: 'reexecuted',
+            reason: 'failed_node',
+          })
+        );
+      });
+
+      affected.forEach((nodeId) => {
+        if (failed.has(nodeId)) return;
+        resumeByNodeId.set(
+          nodeId,
+          buildResumeEntry(nodeId, {
+            mode: 'resume',
+            decision: 'reexecuted',
+            reason: 'downstream_of_failure',
+          })
+        );
+      });
+    }
+
+    nodeStatusMap.forEach((status, nodeId) => {
+      if (skipNodeIds.has(nodeId)) return;
+      if (resumeByNodeId.has(nodeId)) return;
+      const normalized = toRuntimeNodeStatus(status);
+      if (!normalized || TERMINAL_REUSED_STATUSES.has(normalized)) return;
+      resumeByNodeId.set(
+        nodeId,
+        buildResumeEntry(nodeId, {
+          mode: 'resume',
+          decision: 'reexecuted',
+          reason: 'incomplete',
+        })
+      );
+    });
+  } else if (mode === 'retry') {
     const affected = computeDownstreamNodes(edges, retryNodes);
-    return new Set(Array.from(completed).filter((nodeId: string) => !affected.has(nodeId)));
+    skipNodeIds = new Set(Array.from(completed).filter((nodeId: string) => !affected.has(nodeId)));
+
+    retryNodes.forEach((nodeId) => {
+      resumeByNodeId.set(
+        nodeId,
+        buildResumeEntry(nodeId, {
+          mode: 'retry',
+          decision: 'reexecuted',
+          reason: 'retry_target',
+        })
+      );
+    });
+
+    affected.forEach((nodeId) => {
+      if (retryNodes.has(nodeId)) return;
+      resumeByNodeId.set(
+        nodeId,
+        buildResumeEntry(nodeId, {
+          mode: 'retry',
+          decision: 'reexecuted',
+          reason: 'downstream_of_retry',
+        })
+      );
+    });
   }
-  return new Set<string>();
+
+  skipNodeIds.forEach((nodeId) => {
+    resumeByNodeId.set(
+      nodeId,
+      buildResumeEntry(nodeId, {
+        mode: mode === 'retry' ? 'retry' : 'resume',
+        decision: 'reused',
+        reason: 'completed_upstream',
+      })
+    );
+  });
+
+  return {
+    skipNodeIds,
+    resumeByNodeId,
+    sourceHistoryByNodeId,
+  };
 };
+
+export const buildSkipSet = (
+  run: AiPathRunRecord,
+  edges: Edge[],
+  nodeStatusMap: Map<string, string>,
+  runtimeState: RuntimeState = EMPTY_RUNTIME_STATE
+): Set<string> => buildResumePlan(run, edges, nodeStatusMap, runtimeState).skipNodeIds;

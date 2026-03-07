@@ -1,0 +1,103 @@
+{
+  "generatedAt": "2026-03-07T07:43:41.620Z",
+  "strictMode": false,
+  "summary": {
+    "total": 6,
+    "passed": 5,
+    "failed": 1
+  },
+  "results": [
+    {
+      "id": "auth-session",
+      "name": "Authentication + Session Bootstrap",
+      "kpi": "Successful sign-in completion rate",
+      "tests": [
+        "__tests__/features/auth/pages/signin-page.test.tsx"
+      ],
+      "command": "npx vitest run --project unit __tests__/features/auth/pages/signin-page.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 3165,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/auth/pages/signin-page.test.tsx (9 tests) 600ms\n\n Test Files  1 passed (1)\n      Tests  9 passed (9)\n   Start at  08:43:19\n   Duration  2.22s (transform 718ms, setup 175ms, import 1.02s, tests 600ms, environment 287ms)"
+    },
+    {
+      "id": "products-core-crud",
+      "name": "Products CRUD + Listing Refresh",
+      "kpi": "Create/edit success rate without retries",
+      "tests": [
+        "__tests__/features/products/services/getSettingValue.test.ts"
+      ],
+      "command": "npx vitest run --project unit __tests__/features/products/services/getSettingValue.test.ts",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 1440,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/products/services/getSettingValue.test.ts (5 tests) 6ms\n\n Test Files  1 passed (1)\n      Tests  5 passed (5)\n   Start at  08:43:22\n   Duration  659ms (transform 133ms, setup 180ms, import 93ms, tests 6ms, environment 290ms)"
+    },
+    {
+      "id": "image-studio-generate",
+      "name": "Image Studio Generate + Preview",
+      "kpi": "Generation completion under timeout budget",
+      "tests": [
+        "src/features/ai/image-studio/utils/__tests__/studio-settings.test.ts"
+      ],
+      "command": "npx vitest run --project unit src/features/ai/image-studio/utils/__tests__/studio-settings.test.ts",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 1313,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/ai/image-studio/utils/__tests__/studio-settings.test.ts (11 tests) 18ms\n\n Test Files  1 passed (1)\n      Tests  11 passed (11)\n   Start at  08:43:23\n   Duration  627ms (transform 106ms, setup 171ms, import 63ms, tests 18ms, environment 290ms)"
+    },
+    {
+      "id": "ai-paths-runtime",
+      "name": "AI Paths Run Execution",
+      "kpi": "Run completion without fallback/error path",
+      "tests": [
+        "__tests__/features/ai/ai-paths/services/path-run-executor.test.ts"
+      ],
+      "command": "npx vitest run --project unit __tests__/features/ai/ai-paths/services/path-run-executor.test.ts",
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 3414,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ❯ |unit| __tests__/features/ai/ai-paths/services/path-run-executor.test.ts (20 tests | 1 failed) 149ms\n     ✓ should execute a run successfully 8ms\n     ✓ should fail the run if graph is invalid 2ms\n     ✓ should update node records during execution 2ms\n     ✓ should persist cached node finishes as cached status 2ms\n     ✓ should persist blocked node finishes as blocked status 1ms\n     ✓ does not fail run when halt is blocked but all blocked nodes are waiting_callback 1ms\n     ✓ should fail run when required processing node finishes with failed status 1ms\n     ✓ should handle node errors correctly 2ms\n     ✓ should propagate cancellation to runtime evaluation via abort signal 102ms\n     ✓ should persist runtime trace profile summary for completed runs 2ms\n     ✓ should persist structured node spans in runtime trace metadata 1ms\n     ✓ should persist effect metadata in runtime trace spans 1ms\n     × should materialize resume reuse and re-execution provenance in runtime trace spans 8ms\n     ✓ should persist skipped node finishes as skipped trace spans 1ms\n     ✓ should block execution when disabled node policy is violated 1ms\n     ✓ should block strict runs when dependency inspector reports errors and node validation is enabled 2ms\n     ✓ should bypass strict-flow preflight when node validation is disabled 2ms\n     ✓ should bypass compile blockers when node validation is disabled 1ms\n     ✓ should block compile errors when node validation is enabled 1ms\n     ✓ should block run when AI Paths validation preflight policy fails 1ms\n\n⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯\n\n FAIL  |unit| __tests__/features/ai/ai-paths/services/path-run-executor.test.ts > PathRunExecutor > should materialize resume reuse and re-execution provenance in runtime trace spans\nAssertionError: expected [ { …(20) }, { …(20) } ] to deeply equal ArrayContaining{…}\n\n- Expected\n+ Received\n\n- ArrayContaining [\n-   ObjectContaining {\n-     \"cache\": ObjectContaining {\n+ [\n+   {\n+     \"activationHash\": undefined,\n+     \"attempt\": 2,\n+     \"branch\": undefined,\n+     \"cache\": {\n        \"decision\": \"seed\",\n+     },\n+     \"correlationIds\": [],\n+     \"effect\": {\n+       \"sourceSpanId\": \"node-upstream:1:1\",\n      },\n+     \"error\": undefined,\n+     \"finishedAt\": \"2026-03-07T07:43:27.426Z\",\n+     \"inputHash\": \"5465b825\",\n+     \"iteration\": 1,\n      \"nodeId\": \"node-upstream\",\n-     \"resume\": ObjectContaining {\n+     \"nodeTitle\": \"Upstream\",\n+     \"nodeType\": \"constant\",\n+     \"parentSpanId\": null,\n+     \"resume\": {\n        \"decision\": \"reused\",\n        \"mode\": \"resume\",\n        \"reason\": \"completed_upstream\",\n+       \"sourceRunStartedAt\": \"2026-03-07T06:00:00.000Z\",\n        \"sourceSpanId\": \"node-upstream:1:1\",\n        \"sourceStatus\": \"completed\",\n+       \"sourceTraceId\": \"mock-run-id\",\n      },\n-     \"spanId\": \"node-upstream:2:1\",\n+     \"runId\": \"mock-run-id\",\n+     \"spanId\": \"resume-node-upstream-2-1\",\n+     \"startedAt\": \"2026-03-07T07:43:27.426Z\",\n      \"status\": \"cached\",\n+     \"traceId\": \"mock-run-id\",\n    },\n-   ObjectContaining {\n+   {\n+     \"activationHash\": undefined,\n+     \"attempt\": 2,\n+     \"branch\": undefined,\n+     \"cache\": {\n+       \"decision\": \"miss\",\n+     },\n+     \"correlationIds\": [],\n+     \"effect\": undefined,\n+     \"error\": undefined,\n+     \"finishedAt\": \"2026-03-07T07:43:27.427Z\",\n+     \"inputHash\": \"006386b4\",\n+     \"iteration\": 1,\n      \"nodeId\": \"node-failed\",\n-     \"resume\": ObjectContaining {\n+     \"nodeTitle\": \"Recover\",\n+     \"nodeType\": \"template\",\n+     \"parentSpanId\": null,\n+     \"resume\": {\n        \"decision\": \"reexecuted\",\n        \"mode\": \"resume\",\n        \"reason\": \"failed_node\",\n+       \"sourceRunStartedAt\": \"2026-03-07T06:00:00.000Z\",\n        \"sourceSpanId\": \"node-failed:1:1\",\n        \"sourceStatus\": \"failed\",\n+       \"sourceTraceId\": \"mock-run-id\",\n      },\n+     \"runId\": \"mock-run-id\",\n      \"spanId\": \"node-failed:2:1\",\n+     \"startedAt\": \"2026-03-07T07:43:27.427Z\",\n      \"status\": \"completed\",\n+     \"traceId\": \"mock-run-id\",\n    },\n  ]\n\n ❯ __tests__/features/ai/ai-paths/services/path-run-executor.test.ts:941:33\n    939|     const runtimeTrace = (runtimeTraceUpdates.at(-1)?.[2] as any).meta…\n    940| \n    941|     expect(runtimeTrace?.spans).toEqual(\n       |                                 ^\n    942|       expect.arrayContaining([\n    943|         expect.objectContaining({\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 19 passed (20)\n   Start at  08:43:24\n   Duration  2.72s (transform 1.45s, setup 173ms, import 2.02s, tests 149ms, environment 284ms)"
+    },
+    {
+      "id": "case-resolver-capture",
+      "name": "Case Resolver OCR + Capture Mapping",
+      "kpi": "Queue-to-review completion without manual recovery",
+      "tests": [
+        "src/features/case-resolver/__tests__/workspace-persistence.test.ts"
+      ],
+      "command": "npx vitest run --project unit src/features/case-resolver/__tests__/workspace-persistence.test.ts",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 2079,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/case-resolver/__tests__/workspace-persistence.test.ts (13 tests) 26ms\n\n Test Files  1 passed (1)\n      Tests  13 passed (13)\n   Start at  08:43:28\n   Duration  1.30s (transform 590ms, setup 227ms, import 670ms, tests 26ms, environment 288ms)"
+    },
+    {
+      "id": "products-trigger-queue-integration",
+      "name": "Products Trigger Button Queue Integration",
+      "kpi": "Trigger enqueue updates queue state without invalid run-id regressions",
+      "tests": [
+        "src/features/ai/ai-paths/components/__tests__/job-queue-context.enqueue-events.test.tsx",
+        "src/shared/contracts/__tests__/ai-paths-run-enqueued-event.contract-runtime.test.ts",
+        "src/shared/lib/__tests__/query-invalidation.notify-ai-path-run-enqueued.test.ts",
+        "src/shared/lib/__tests__/query-invalidation.optimistically-insert-run.test.ts",
+        "src/shared/lib/ai-paths/__tests__/optimistic-run-queue.test.ts",
+        "src/shared/lib/ai-paths/api/__tests__/enqueue-client-contract.test.ts",
+        "src/features/products/hooks/useProductAiPathsRunSync.test.tsx",
+        "src/features/products/state/queued-product-ops.test.ts",
+        "src/shared/lib/ai-paths/hooks/trigger-event-selection.test.ts",
+        "src/shared/lib/ai-paths/hooks/trigger-event-sanitization.test.ts",
+        "src/shared/lib/ai-paths/hooks/trigger-event-utils.test.ts",
+        "src/shared/lib/ai-paths/hooks/trigger-event-recovery.test.ts",
+        "src/shared/lib/ai-paths/hooks/trigger-event-context.test.ts",
+        "src/shared/lib/ai-paths/hooks/trigger-event-invalidation.test.ts",
+        "src/shared/lib/ai-paths/hooks/trigger-event-settings.test.ts"
+      ],
+      "command": "npx vitest run --project unit src/features/ai/ai-paths/components/__tests__/job-queue-context.enqueue-events.test.tsx src/shared/contracts/__tests__/ai-paths-run-enqueued-event.contract-runtime.test.ts src/shared/lib/__tests__/query-invalidation.notify-ai-path-run-enqueued.test.ts src/shared/lib/__tests__/query-invalidation.optimistically-insert-run.test.ts src/shared/lib/ai-paths/__tests__/optimistic-run-queue.test.ts src/shared/lib/ai-paths/api/__tests__/enqueue-client-contract.test.ts src/features/products/hooks/useProductAiPathsRunSync.test.tsx src/features/products/state/queued-product-ops.test.ts src/shared/lib/ai-paths/hooks/trigger-event-selection.test.ts src/shared/lib/ai-paths/hooks/trigger-event-sanitization.test.ts src/shared/lib/ai-paths/hooks/trigger-event-utils.test.ts src/shared/lib/ai-paths/hooks/trigger-event-recovery.test.ts src/shared/lib/ai-paths/hooks/trigger-event-context.test.ts src/shared/lib/ai-paths/hooks/trigger-event-invalidation.test.ts src/shared/lib/ai-paths/hooks/trigger-event-settings.test.ts",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 12048,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/products/state/queued-product-ops.test.ts (15 tests) 89ms\n ✓ |unit| src/features/ai/ai-paths/components/__tests__/job-queue-context.enqueue-events.test.tsx (3 tests) 27ms\n ✓ |unit| src/shared/lib/ai-paths/hooks/trigger-event-context.test.ts (13 tests) 48ms\n ✓ |unit| src/features/products/hooks/useProductAiPathsRunSync.test.tsx (5 tests) 29ms\n ✓ |unit| src/shared/lib/ai-paths/__tests__/optimistic-run-queue.test.ts (13 tests) 22ms\n ✓ |unit| src/shared/lib/ai-paths/hooks/trigger-event-settings.test.ts (18 tests) 18ms\n ✓ |unit| src/shared/lib/__tests__/query-invalidation.notify-ai-path-run-enqueued.test.ts (4 tests) 10ms\n ✓ |unit| src/shared/lib/ai-paths/hooks/trigger-event-recovery.test.ts (14 tests) 8ms\n ✓ |unit| src/shared/lib/ai-paths/api/__tests__/enqueue-client-contract.test.ts (6 tests) 9ms\n ✓ |unit| src/shared/lib/__tests__/query-invalidation.optimistically-insert-run.test.ts (12 tests) 11ms\n ✓ |unit| src/shared/lib/ai-paths/hooks/trigger-event-utils.test.ts (20 tests) 8ms\n ✓ |unit| src/shared/lib/ai-paths/hooks/trigger-event-selection.test.ts (10 tests) 10ms\n ✓ |unit| src/shared/contracts/__tests__/ai-paths-run-enqueued-event.contract-runtime.test.ts (3 tests) 11ms\n ✓ |unit| src/shared/lib/ai-paths/hooks/trigger-event-sanitization.test.ts (15 tests) 8ms\n ✓ |unit| src/shared/lib/ai-paths/hooks/trigger-event-invalidation.test.ts (7 tests) 8ms\n\n Test Files  15 passed (15)\n      Tests  158 passed (158)\n   Start at  08:43:30\n   Duration  11.05s (transform 1.63s, setup 1.83s, import 2.82s, tests 315ms, environment 4.70s)"
+    }
+  ]
+}

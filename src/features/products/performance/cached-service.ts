@@ -2,7 +2,11 @@ import 'server-only';
 
 import { productService } from '@/shared/lib/products/services/productService';
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
-import type { ProductParameter, ProductWithImages, ProductRecord } from '@/shared/contracts/products';
+import type {
+  ProductParameter,
+  ProductWithImages,
+  ProductRecord,
+} from '@/shared/contracts/products';
 import type { ProductFilters } from '@/shared/contracts/products';
 
 import { withQueryCache, ProductCacheHelpers, queryCache, stableStringify } from './query-cache';
@@ -357,10 +361,8 @@ export class CachedProductMutations {
     }
   );
 
-  static updateProduct: (
-    id: string,
-    data: Record<string, unknown>
-  ) => Promise<ProductWithImages> = withCacheInvalidation(
+  static updateProduct: (id: string, data: Record<string, unknown>) => Promise<ProductWithImages> =
+    withCacheInvalidation(
       async (id: string, data: Record<string, unknown>): Promise<ProductWithImages> => {
         return productService.updateProduct(id, data);
       },

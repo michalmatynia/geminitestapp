@@ -28,6 +28,8 @@ describe('folder-tree-profiles-v2', () => {
       'admin_menu_layout',
       'kangur_lessons_manager',
       'kangur_lessons_manager_catalog',
+      'kangur_test_suites_manager',
+      'kangur_test_suites_manager_catalog',
       'brain_catalog_tree',
       'brain_routing_tree',
     ]);

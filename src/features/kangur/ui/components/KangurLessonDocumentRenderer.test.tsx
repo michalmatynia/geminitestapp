@@ -200,18 +200,107 @@ describe('KangurLessonDocumentRenderer', () => {
     expect(screen.getByText('Intro')).toBeInTheDocument();
     expect(screen.getByText('Lesson heading')).toBeInTheDocument();
     expect(screen.getByText('Image caption')).toBeInTheDocument();
+    expect(screen.getByText('Photo reference')).toHaveClass('border-amber-200', 'bg-amber-100');
+    expect(screen.getByTestId('lesson-text-block-text-1')).toHaveClass(
+      'glass-panel',
+      'border-indigo-200/70'
+    );
+    expect(screen.getByTestId('lesson-image-frame-image-1')).toHaveClass(
+      'soft-card',
+      'border-amber-100',
+      'from-amber-50'
+    );
     expect(screen.getByText('Triangle')).toBeInTheDocument();
+    expect(screen.getByText('Triangle')).toHaveClass('border-sky-200', 'bg-sky-100');
+    expect(screen.getByTestId('lesson-svg-frame-svg-1')).toHaveClass(
+      'soft-card',
+      'border-sky-100',
+      'from-sky-50'
+    );
     expect(screen.getByText('Clock practice')).toBeInTheDocument();
-    expect(
-      screen.getByText(/live game widget is hidden in editor preview/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/live game widget is hidden in editor preview/i)).toBeInTheDocument();
     expect(screen.getByText('Practice')).toBeInTheDocument();
     expect(screen.getByText('Grid copy')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-grid-block-grid-1')).toHaveClass(
+      'glass-panel',
+      'border-violet-200/80'
+    );
     expect(container.querySelector('img')).not.toBeNull();
     expect(container.querySelectorAll('svg').length).toBeGreaterThanOrEqual(2);
     expect(container.querySelector('[style*="grid-auto-rows: 180px"]')).not.toBeNull();
     expect(container.querySelector('.md\\:grid-flow-row-dense')).not.toBeNull();
     expect(container.querySelector('[style*="--lesson-grid-column-start: 2"]')).not.toBeNull();
     expect(container.querySelector('[style*="--lesson-grid-row-start: 1"]')).not.toBeNull();
+  });
+
+  it('uses shared summary and empty-state surfaces for page metadata and missing content', () => {
+    render(
+      <KangurLessonDocumentRenderer
+        renderMode='editor'
+        document={{
+          version: 1,
+          pages: [
+            {
+              id: 'page-empty',
+              sectionKey: 'draft',
+              sectionTitle: 'Draft section',
+              title: 'Empty page',
+              blocks: [],
+            },
+            {
+              id: 'page-image',
+              sectionKey: 'media',
+              sectionTitle: 'Media',
+              title: 'Image page',
+              blocks: [
+                {
+                  id: 'image-empty',
+                  type: 'image',
+                  title: 'Missing image',
+                  src: '',
+                  caption: '',
+                  align: 'center',
+                  fit: 'contain',
+                  maxWidth: 320,
+                },
+              ],
+            },
+          ],
+          blocks: [
+            {
+              id: 'image-empty',
+              type: 'image',
+              title: 'Missing image',
+              src: '',
+              caption: '',
+              align: 'center',
+              fit: 'contain',
+              maxWidth: 320,
+            },
+          ],
+        }}
+      />
+    );
+
+    expect(screen.getAllByText('Section')[0].parentElement).toHaveClass(
+      'soft-card',
+      'border-slate-200/80'
+    );
+    expect(screen.getByText('Missing image')).toHaveClass('border-amber-200', 'bg-amber-100');
+    expect(screen.getByTestId('lesson-image-frame-image-empty')).toHaveClass(
+      'soft-card',
+      'border-amber-100',
+      'from-amber-50'
+    );
+    expect(screen.getByText('This page has no blocks yet.').parentElement).toHaveClass(
+      'soft-card',
+      'border-dashed',
+      'border-slate-200/80'
+    );
+    expect(screen.getByText('Image block has no source yet.').parentElement).toHaveClass(
+      'soft-card',
+      'border-dashed',
+      'border-amber-200/80'
+    );
   });
 });

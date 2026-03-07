@@ -341,9 +341,9 @@ const CLIENT_HANDLER_CATALOG = createNodeRuntimeHandlerCatalog({
   bounds_normalizer: handleBoundsNormalizer,
   canvas_output: handleCanvasOutput,
 });
-export const CLIENT_LEGACY_HANDLER_NODE_TYPES: readonly string[] = Object.freeze(
-  [...CLIENT_HANDLER_CATALOG.legacyNodeTypes]
-);
+export const CLIENT_LEGACY_HANDLER_NODE_TYPES: readonly string[] = Object.freeze([
+  ...CLIENT_HANDLER_CATALOG.legacyNodeTypes,
+]);
 
 const resolveLegacyHandler = (type: string): NodeHandler | null => {
   const handler = CLIENT_HANDLER_CATALOG.resolveLegacyHandler(type);
@@ -356,9 +356,9 @@ const resolveLegacyHandler = (type: string): NodeHandler | null => {
     );
   };
 };
-export const CLIENT_NATIVE_CODE_OBJECT_HANDLER_IDS: readonly string[] = Object.freeze(
-  [...CLIENT_HANDLER_CATALOG.nativeCodeObjectHandlerIds]
-);
+export const CLIENT_NATIVE_CODE_OBJECT_HANDLER_IDS: readonly string[] = Object.freeze([
+  ...CLIENT_HANDLER_CATALOG.nativeCodeObjectHandlerIds,
+]);
 const defaultResolveCodeObjectHandler = createNodeCodeObjectV3ContractResolver({
   resolveLegacyHandler,
   resolveNativeCodeObjectHandler: CLIENT_HANDLER_CATALOG.resolveNativeCodeObjectHandler,
@@ -373,7 +373,9 @@ const resolveUnsupportedClientCodeObjectHandler = ({
   if (resolveNodeCodeObjectV3ContractByCodeObjectId(codeObjectId)) {
     return null;
   }
-  return CLIENT_HANDLER_CATALOG.resolveLegacyHandler(nodeType) ? null : resolveLegacyHandler(nodeType);
+  return CLIENT_HANDLER_CATALOG.resolveLegacyHandler(nodeType)
+    ? null
+    : resolveLegacyHandler(nodeType);
 };
 
 export async function evaluateGraphClient(

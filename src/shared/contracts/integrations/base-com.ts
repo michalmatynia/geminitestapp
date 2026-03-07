@@ -71,14 +71,14 @@ export type FetchMarketplaceCategoriesRequest = z.infer<
 >;
 
 export const bulkCategoryMappingRequestSchema = z.object({
-  connectionId: z.string(),
-  catalogId: z.string(),
+  connectionId: z.string().trim().min(1),
+  catalogId: z.string().trim().min(1),
   mappings: z.array(
     z.object({
-      externalCategoryId: z.string(),
-      internalCategoryId: z.string().nullable(),
+      externalCategoryId: z.string().trim().min(1),
+      internalCategoryId: z.string().trim().min(1).nullable(),
     })
-  ),
+  ).min(1),
 });
 
 export type BulkCategoryMappingRequest = z.infer<typeof bulkCategoryMappingRequestSchema>;

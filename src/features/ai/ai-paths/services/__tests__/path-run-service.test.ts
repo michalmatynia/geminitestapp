@@ -24,6 +24,10 @@ const {
 
 vi.mock('server-only', () => ({}));
 
+vi.mock('@/features/auth/server', () => ({
+  auth: vi.fn(),
+}));
+
 vi.mock('@/shared/lib/ai-paths/services/path-run-repository', () => ({
   getPathRunRepository: getPathRunRepositoryMock,
 }));

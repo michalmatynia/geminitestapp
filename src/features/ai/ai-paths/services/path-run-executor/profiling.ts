@@ -96,3 +96,5 @@ export function createPathRunProfiling() {
     captureRuntimeProfileEvent,
   };
 }
+
+export type PathRunProfiling = ReturnType<typeof createPathRunProfiling>;

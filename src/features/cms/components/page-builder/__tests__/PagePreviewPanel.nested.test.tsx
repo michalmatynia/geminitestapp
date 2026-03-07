@@ -76,8 +76,10 @@ vi.mock('@/features/cms/components/page-builder/ThemeSettingsContext', () => ({
 
 vi.mock('@/features/cms/hooks/useCmsDomainSelection', () => ({
   useCmsDomainSelection: () => ({
+    domains: [],
     activeDomainId: null,
     activeDomain: null,
+    zoningEnabled: false,
   }),
 }));
 

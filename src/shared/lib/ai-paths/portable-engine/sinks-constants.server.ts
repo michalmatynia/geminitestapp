@@ -92,8 +92,7 @@ export const PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_ALERT_
   'portable_audit_sink_auto_remediation_dead_letter_replay';
 export const PORTABLE_PATH_SIGNING_POLICY_TREND_KIND =
   'ai-paths.portable-signing-policy-trend.v1' as const;
-export const PORTABLE_PATH_SIGNING_POLICY_TREND_CATEGORY =
-  'ai_path_portable_signing_policy_trend';
+export const PORTABLE_PATH_SIGNING_POLICY_TREND_CATEGORY = 'ai_path_portable_signing_policy_trend';
 export const PORTABLE_PATH_SIGNING_POLICY_TREND_SOURCE =
   'ai-paths.portable-engine.signing-policy-trend';
 export const PORTABLE_PATH_SIGNING_POLICY_TREND_SETTINGS_KEY =
@@ -103,5 +102,7 @@ export const PORTABLE_PATH_AUDIT_SINK_STARTUP_HEALTH_STATE_SETTINGS_KEY =
 export const PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_SETTINGS_KEY =
   'ai_paths_portable_audit_sink_auto_remediation_dead_letters_v1';
 export const PORTABLE_PATH_SIGNING_POLICY_ALERT_LEVELS = ['off', 'warn', 'error'] as const;
-export const PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_EXPORT_REDACTION_MODES =
-  ['off', 'sensitive'] as const;
+export const PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_EXPORT_REDACTION_MODES = [
+  'off',
+  'sensitive',
+] as const;

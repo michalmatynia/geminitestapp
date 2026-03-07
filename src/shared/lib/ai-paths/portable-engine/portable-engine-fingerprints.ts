@@ -5,13 +5,8 @@ import {
   normalizePortableFingerprintInput,
   toHex,
 } from './portable-engine-integrity-support';
-import type {
-  AiPathPortablePackage,
-  PortablePathFingerprint,
-} from './portable-engine-contract';
-import type {
-  PortablePathMigrationWarning,
-} from './portable-engine-migration-types';
+import type { AiPathPortablePackage, PortablePathFingerprint } from './portable-engine-contract';
+import type { PortablePathMigrationWarning } from './portable-engine-migration-types';
 import type { PortablePathFingerprintVerificationMode } from './portable-engine-resolution-types';
 
 export const computePortablePathFingerprintSync = (input: unknown): PortablePathFingerprint => {
@@ -119,11 +114,10 @@ export const verifyPortablePackageFingerprint = (
 export const verifyPortablePackageFingerprintAsync = async (
   portablePackage: AiPathPortablePackage,
   mode: PortablePathFingerprintVerificationMode
-):
-  Promise<
-    | { ok: true; warnings: PortablePathMigrationWarning[] }
-    | { ok: false; error: string; warnings: PortablePathMigrationWarning[] }
-  > => {
+): Promise<
+  | { ok: true; warnings: PortablePathMigrationWarning[] }
+  | { ok: false; error: string; warnings: PortablePathMigrationWarning[] }
+> => {
   if (mode === 'off') {
     return { ok: true, warnings: [] };
   }

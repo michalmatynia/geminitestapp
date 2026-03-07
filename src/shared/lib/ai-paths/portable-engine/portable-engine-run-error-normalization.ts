@@ -62,8 +62,9 @@ export const toPortablePathRunExecutionErrorMessage = (value: unknown): string =
     return truncatePortablePathRunExecutionErrorMessage(direct);
   }
   if (value && typeof value === 'object' && !Array.isArray(value)) {
-    const fromRecord =
-      toPortablePathRunExecutionErrorMessageFromRecord(value as Record<string, unknown>);
+    const fromRecord = toPortablePathRunExecutionErrorMessageFromRecord(
+      value as Record<string, unknown>
+    );
     if (fromRecord) {
       return truncatePortablePathRunExecutionErrorMessage(fromRecord);
     }

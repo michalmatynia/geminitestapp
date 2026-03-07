@@ -1,4 +1,3 @@
-
 import { QueryClient } from '@tanstack/react-query';
 import {
   invalidateAiPathQueue,
@@ -19,7 +18,7 @@ export const handleAiPathTriggerInvalidation = async (args: {
   const { queryClient, runId, entityType, entityId } = args;
 
   void invalidateAiPathQueue(queryClient);
-  
+
   notifyAiPathRunEnqueued(runId, {
     entityId: entityId ?? null,
     entityType: entityType,
@@ -35,7 +34,7 @@ export const handleAiPathTriggerInvalidation = async (args: {
   if (entityType === 'note') {
     void invalidateNotes(queryClient);
   }
-  
+
   // @ts-ignore - integration is a valid entity type in the contract but TypeScript is being overly restrictive here.
   if (entityType === 'integration') {
     void invalidateIntegrationJobs(queryClient);

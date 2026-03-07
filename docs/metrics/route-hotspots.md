@@ -1,6 +1,6 @@
 # Route Hotspots (Static Heuristic)
 
-Generated at: 2026-03-07T03:59:14.807Z
+Generated at: 2026-03-07T08:20:23.642Z
 
 This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
@@ -34,7 +34,7 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 | Page | LOC |
 | --- | ---: |
 | `src/app/(frontend)/preview/foldertree-shell-runtime/page.tsx` | 189 |
-| `src/app/(frontend)/kangur/login/page.tsx` | 148 |
+| `src/app/(frontend)/kangur/login/page.tsx` | 153 |
 | `src/app/(frontend)/[...slug]/page.tsx` | 67 |
 | `src/app/(frontend)/preview/[id]/page.tsx` | 67 |
 | `src/app/(admin)/admin/settings/recovery/page.tsx` | 50 |

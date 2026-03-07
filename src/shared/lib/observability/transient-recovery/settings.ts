@@ -1,6 +1,7 @@
 import { ObjectId } from 'mongodb';
 
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
+import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
@@ -10,8 +11,6 @@ import {
   TRANSIENT_RECOVERY_KEYS,
   type TransientRecoverySettings,
 } from './constants';
-
-type SettingRecord = { _id?: string | ObjectId; key?: string; value?: string };
 
 const toMongoId = (id: string): string | ObjectId => {
   if (ObjectId.isValid(id) && id.length === 24) return new ObjectId(id);
@@ -47,7 +46,7 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
   if (!process.env['MONGODB_URI']) return null;
   const mongo = await getMongoDb();
   const doc = await mongo
-    .collection<SettingRecord>('settings')
+    .collection<MongoStringSettingRecord<string | ObjectId>>('settings')
     .findOne({ $or: [{ _id: toMongoId(key) }, { key }] });
   return typeof doc?.value === 'string' ? doc.value : null;
 };

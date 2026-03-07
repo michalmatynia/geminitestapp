@@ -10,7 +10,6 @@ import type {
 
 export interface CaseResolverRelationsWorkspaceContextValue {
   relationGraph: CaseResolverRelationGraph;
-  focusCaseId: string | null;
   workspaceSnapshot: {
     relationGraphSource: unknown;
     folders: string[];

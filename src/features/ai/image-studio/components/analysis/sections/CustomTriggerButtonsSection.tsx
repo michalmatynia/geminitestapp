@@ -7,32 +7,42 @@ import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { cn } from '@/shared/utils';
 import { Button, SelectSimple } from '@/shared/ui';
 
-import type { AiPathMeta } from '@/features/ai/image-studio/utils/ai-paths-object-analysis';
 import {
   loadCustomTriggerButtons,
   saveCustomTriggerButtons,
   type ImageStudioCustomTriggerButton,
 } from '@/features/ai/image-studio/utils/ai-paths-object-analysis';
+import {
+  type CustomTriggerButtonsSectionRuntime,
+  useOptionalImageStudioAnalysisRuntime,
+} from './ImageStudioAnalysisRuntimeContext';
 
 // ---------------------------------------------------------------------------
 // Props
 // ---------------------------------------------------------------------------
 
-export interface CustomTriggerButtonsSectionProps {
-  projectId: string;
-  pathMetas: AiPathMeta[];
-  triggerAnalysisForPath: (pathId: string) => Promise<void>;
-  isRunning: boolean;
-}
+export type CustomTriggerButtonsSectionProps = CustomTriggerButtonsSectionRuntime;
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
 export function CustomTriggerButtonsSection(
-  props: CustomTriggerButtonsSectionProps
+  props: Partial<CustomTriggerButtonsSectionProps> = {}
 ): React.JSX.Element {
-  const { projectId, pathMetas, triggerAnalysisForPath, isRunning } = props;
+  const analysisRuntime = useOptionalImageStudioAnalysisRuntime();
+  const runtime =
+    props.triggerAnalysisForPath !== undefined
+      ? (props as CustomTriggerButtonsSectionProps)
+      : analysisRuntime?.customTriggerButtonsRuntime;
+
+  if (!runtime) {
+    throw new Error(
+      'CustomTriggerButtonsSection must be used within ImageStudioAnalysisRuntimeProvider or receive explicit props'
+    );
+  }
+
+  const { projectId, pathMetas, triggerAnalysisForPath, isRunning } = runtime;
 
   const [buttons, setButtons] = useState<ImageStudioCustomTriggerButton[]>(() =>
     loadCustomTriggerButtons(projectId)

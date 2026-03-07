@@ -87,14 +87,15 @@ export const resolveNodeCodeObjectV3ContractByCodeObjectId = (
   return NODE_CODE_OBJECT_V3_CONTRACTS_BY_CODE_OBJECT_ID.get(codeObjectId) ?? null;
 };
 
-export const listNodeCodeObjectV3NativeRegistryContracts = (): readonly NodeCodeObjectV3ContractEntry[] =>
-  Array.from(NODE_CODE_OBJECT_V3_CONTRACTS_BY_CODE_OBJECT_ID.values())
-    .filter(
-      (entry: NodeCodeObjectV3ContractEntry): boolean =>
-        entry.runtimeStrategy === 'code_object_v3' &&
-        entry.executionAdapter === 'native_handler_registry'
-    )
-    .sort((left, right) => left.codeObjectId.localeCompare(right.codeObjectId));
+export const listNodeCodeObjectV3NativeRegistryContracts =
+  (): readonly NodeCodeObjectV3ContractEntry[] =>
+    Array.from(NODE_CODE_OBJECT_V3_CONTRACTS_BY_CODE_OBJECT_ID.values())
+      .filter(
+        (entry: NodeCodeObjectV3ContractEntry): boolean =>
+          entry.runtimeStrategy === 'code_object_v3' &&
+          entry.executionAdapter === 'native_handler_registry'
+      )
+      .sort((left, right) => left.codeObjectId.localeCompare(right.codeObjectId));
 
 export type CreateNodeCodeObjectV3ContractResolverArgs = {
   resolveLegacyHandler: (nodeType: string) => NodeHandler | null;

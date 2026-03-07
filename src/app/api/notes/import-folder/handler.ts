@@ -1,52 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { noteService } from '@/features/notesapp/server';
 import { parseJsonBody } from '@/features/products/server';
+import {
+  noteFolderImportRequestSchema,
+  type NoteFolderImportNodeDto,
+  type NoteFolderImportResponseDto,
+} from '@/shared/contracts/notes';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
-interface FolderNode {
-  name: string;
-  path: string;
-  children: FolderNode[];
-  notes: NoteImport[];
-}
-
-interface NoteImport {
-  title: string;
-  content: string;
-  path: string;
-}
-
-interface ImportRequest {
-  notebookId: string;
-  parentFolderId?: string | null | undefined;
-  structures: FolderNode[];
-}
-
-const noteImportSchema = z.object({
-  title: z.string().trim().min(1),
-  content: z.string().default(''),
-  path: z.string().trim().min(1),
-});
-
-const folderNodeSchema: z.ZodType<FolderNode> = z.lazy(() =>
-  z.object({
-    name: z.string().trim().min(1),
-    path: z.string().trim().min(1),
-    children: z.array(folderNodeSchema).optional().default([]),
-    notes: z.array(noteImportSchema).optional().default([]),
-  })
-);
-
-const importSchema: z.ZodSchema<ImportRequest> = z.object({
-  notebookId: z.string().trim().min(1),
-  parentFolderId: z.string().trim().min(1).nullable().optional(),
-  structures: z.array(folderNodeSchema).min(1),
-});
-
 async function createFolderStructure(
-  node: FolderNode,
+  node: NoteFolderImportNodeDto,
   notebookId: string,
   parentId: string | null,
   categoryMap: Map<string, string>
@@ -87,7 +51,7 @@ async function createFolderStructure(
 }
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const parsed = await parseJsonBody(req, importSchema, {
+  const parsed = await parseJsonBody(req, noteFolderImportRequestSchema, {
     logPrefix: 'notes.import-folder',
   });
   if (!parsed.ok) {
@@ -101,9 +65,11 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     await createFolderStructure(folderStructure, notebookId, parentFolderId || null, categoryMap);
   }
 
-  return NextResponse.json({
+  const response: NoteFolderImportResponseDto = {
     success: true,
     message: 'Folder structure imported successfully',
     categoriesCreated: categoryMap.size,
-  });
+  };
+
+  return NextResponse.json(response);
 }

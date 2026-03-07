@@ -20,6 +20,7 @@ import type {
   ProductValidationPatternRepository,
   UpdateProductValidationPatternInput,
 } from '@/shared/contracts/products';
+import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/settings';
 import type {
   ProductValidationChainMode,
   ProductValidationDenyBehavior,
@@ -127,13 +128,7 @@ type ProductValidationPatternInsert = {
   updatedAt: Date;
 };
 
-type SettingDoc = Document & {
-  _id: ObjectId | string;
-  key?: string;
-  value?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-};
+type SettingDoc = Document & MongoTimestampedStringSettingRecord<ObjectId | string, Date>;
 
 let indexesInitialized = false;
 let indexesInFlight: Promise<void> | null = null;

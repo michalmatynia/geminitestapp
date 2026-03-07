@@ -1,6 +1,8 @@
-'use client';
-
-import { aiPathRunNodeSchema, type AiPathRunEventRecord, type AiPathRunNodeRecord } from '@/shared/lib/ai-paths';
+import {
+  aiPathRunNodeSchema,
+  type AiPathRunEventRecord,
+  type AiPathRunNodeRecord,
+} from '@/shared/lib/ai-paths';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 export type RuntimeEventLevel = 'debug' | 'info' | 'warn' | 'error';
@@ -115,7 +117,9 @@ export const normalizeEventStreamPayload = (
   return [];
 };
 
-export const resolveEntityIdFromContext = (triggerContext: Record<string, unknown>): string | null => {
+export const resolveEntityIdFromContext = (
+  triggerContext: Record<string, unknown>
+): string | null => {
   return asString(triggerContext['entityId']) ?? asString(triggerContext['productId']) ?? null;
 };
 

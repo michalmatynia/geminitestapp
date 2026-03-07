@@ -14,6 +14,7 @@ const { useKangurRoutingMock, useKangurAuthMock, settingsStoreGetMock } = vi.hoi
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: useKangurRoutingMock,
+  useOptionalKangurRouting: () => null,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
@@ -23,6 +24,25 @@ vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
 vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   useSettingsStore: () => ({
     get: settingsStoreGetMock,
+  }),
+}));
+
+vi.mock('@/features/kangur/docs/tooltips', () => ({
+  KangurDocsTooltipEnhancer: () => null,
+  useKangurDocsTooltips: () => ({
+    enabled: false,
+    helpSettings: {
+      version: 1,
+      docsTooltips: {
+        enabled: false,
+        homeEnabled: false,
+        lessonsEnabled: false,
+        testsEnabled: false,
+        profileEnabled: false,
+        parentDashboardEnabled: false,
+        adminEnabled: false,
+      },
+    },
   }),
 }));
 
@@ -78,6 +98,11 @@ describe('Tests page smoke', () => {
   it('shows the empty state when no suites are configured', () => {
     render(<Tests />);
     expect(screen.getByText(/Brak aktywnych zestawów testowych/)).toBeInTheDocument();
+    expect(screen.getByText('Brak aktywnych zestawów testowych.').parentElement).toHaveClass(
+      'soft-card',
+      'border-dashed',
+      'border-slate-200/80'
+    );
   });
 
   it('shows enabled suites and hides disabled ones', () => {
@@ -85,7 +110,7 @@ describe('Tests page smoke', () => {
       key === KANGUR_TEST_SUITES_SETTING_KEY ? twoSuitesRaw : null
     );
     render(<Tests />);
-    expect(screen.getByText('Kangur 2024 — 3 pkt')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Kangur 2024 — 3 pkt/i })).toHaveClass('soft-card');
     expect(screen.queryByText('Ukryty zestaw')).not.toBeInTheDocument();
   });
 
@@ -113,6 +138,7 @@ describe('Tests page smoke', () => {
     const player = await screen.findByTestId('suite-player');
     expect(player).toBeInTheDocument();
     expect(player).toHaveTextContent('Kangur 2024 — 3 pkt');
+    expect(screen.getByText('Zestaw testowy')).toHaveClass('border-indigo-200', 'bg-indigo-100');
     expect(screen.getByRole('button', { name: /wróć/i })).toHaveClass(
       'kangur-cta-pill',
       'soft-cta'
@@ -124,8 +150,9 @@ describe('Tests page smoke', () => {
       key === KANGUR_TEST_SUITES_SETTING_KEY ? twoSuitesRaw : null
     );
     render(<Tests />);
-    expect(screen.getByText('2024')).toBeInTheDocument();
-    expect(screen.getByText(/III–IV/)).toBeInTheDocument();
+    expect(screen.getByText('2024')).toHaveClass('border-slate-200', 'bg-slate-100');
+    expect(screen.getByText(/III–IV/)).toHaveClass('border-slate-200', 'bg-slate-100');
+    expect(screen.getByText('0 pytań')).toHaveClass('border-indigo-200', 'bg-indigo-100');
   });
 
   it('uses admin basePath for nav links when mounted inside admin shell', () => {

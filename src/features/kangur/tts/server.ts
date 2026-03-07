@@ -152,7 +152,9 @@ const resolveCachedAudioSegments = async (input: {
   script: KangurLessonNarrationScript;
   voice: KangurLessonTtsVoice;
 }): Promise<KangurLessonAudioSegment[] | null> => {
-  const cache = parseAudioCache(await readStoredSettingValue(KANGUR_LESSON_AUDIO_CACHE_SETTING_KEY));
+  const cache = parseAudioCache(
+    await readStoredSettingValue(KANGUR_LESSON_AUDIO_CACHE_SETTING_KEY)
+  );
   const segments: KangurLessonAudioSegment[] = [];
 
   for (const segment of input.script.segments) {
@@ -258,7 +260,9 @@ export const ensureKangurLessonNarrationAudio = async (input: {
   }
 
   const client = new OpenAI({ apiKey });
-  const cache = parseAudioCache(await readStoredSettingValue(KANGUR_LESSON_AUDIO_CACHE_SETTING_KEY));
+  const cache = parseAudioCache(
+    await readStoredSettingValue(KANGUR_LESSON_AUDIO_CACHE_SETTING_KEY)
+  );
   let cacheChanged = false;
 
   try {
@@ -270,7 +274,7 @@ export const ensureKangurLessonNarrationAudio = async (input: {
         voice: input.voice,
         text: segment.text,
       });
-      const existingEntry = input.forceRegenerate ? null : cache[cacheKey] ?? null;
+      const existingEntry = input.forceRegenerate ? null : (cache[cacheKey] ?? null);
       const canReuseEntry =
         existingEntry?.voice === input.voice &&
         existingEntry.model === KANGUR_TTS_DEFAULT_MODEL &&
@@ -325,7 +329,8 @@ export const ensureKangurLessonNarrationAudio = async (input: {
     return {
       mode: 'fallback',
       reason: 'generation_failed',
-      message: 'Neural narration could not be prepared right now, so browser narration fallback will be used.',
+      message:
+        'Neural narration could not be prepared right now, so browser narration fallback will be used.',
       segments: input.script.segments,
     };
   }

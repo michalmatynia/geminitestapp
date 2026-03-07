@@ -2,7 +2,11 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { CaseResolverTreeHeader } from '@/features/case-resolver/components/CaseResolverTreeHeader';
+import {
+  CaseResolverTreeHeader,
+  CaseResolverTreeHeaderRuntimeContext,
+  type CaseResolverTreeHeaderRuntimeValue,
+} from '@/features/case-resolver/components/CaseResolverTreeHeader';
 import type {
   CaseResolverPageActionsValue,
   CaseResolverPageStateValue,
@@ -114,6 +118,27 @@ describe('CaseResolverTreeHeader', () => {
 
     fireEvent.click(screen.getByLabelText('Show nested folders and files'));
     expect(setShowChildCaseFoldersMock).toHaveBeenCalledWith(false);
+  });
+
+  it('supports the tree header context path when search props are omitted', () => {
+    const onSearchChange = vi.fn();
+    const runtimeValue: CaseResolverTreeHeaderRuntimeValue = {
+      searchQuery: 'invoice',
+      onSearchChange,
+      searchEnabled: true,
+    };
+
+    render(
+      <CaseResolverTreeHeaderRuntimeContext.Provider value={runtimeValue}>
+        <CaseResolverTreeHeader />
+      </CaseResolverTreeHeaderRuntimeContext.Provider>
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('Search files & folders…'), {
+      target: { value: 'invoice-2' },
+    });
+
+    expect(onSearchChange).toHaveBeenCalledWith('invoice-2');
   });
 
   it('shows nested switch when case context exists even if activeCaseFile is unresolved', () => {

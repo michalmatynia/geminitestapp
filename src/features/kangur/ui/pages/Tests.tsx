@@ -3,33 +3,40 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Home, LayoutGrid, Trophy } from 'lucide-react';
 import Link from 'next/link';
 
-import { getKangurPageHref as createPageUrl } from '@/shared/contracts/kangur';
+import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
+import { KangurDocsTooltipEnhancer, useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
 import {
   KANGUR_TEST_SUITES_SETTING_KEY,
   KANGUR_TEST_QUESTIONS_SETTING_KEY,
 } from '@/shared/contracts/kangur-tests';
 import { parseKangurTestSuites } from '@/features/kangur/test-suites';
-import { parseKangurTestQuestionStore, getQuestionsForSuite } from '@/features/kangur/test-questions';
+import {
+  parseKangurTestQuestionStore,
+  getQuestionsForSuite,
+} from '@/features/kangur/test-questions';
 import { KangurTestSuitePlayer } from '@/features/kangur/ui/components/KangurTestSuitePlayer';
 import { KangurProfileMenu } from '@/features/kangur/ui/components/KangurProfileMenu';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import {
   KangurButton,
+  KangurEmptyState,
+  KangurOptionCardButton,
   KangurPageContainer,
   KangurPageShell,
   KangurPageTopBar,
   KangurPanel,
+  KangurStatusChip,
+  KangurSummaryPanel,
   KangurTopNavGroup,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_OPTION_CARD_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { cn } from '@/shared/utils';
 import type { KangurTestSuite } from '@/shared/contracts/kangur-tests';
 
 export default function Tests(): React.JSX.Element {
   const { basePath } = useKangurRouting();
   const { user, navigateToLogin, logout } = useKangurAuth();
+  const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('tests');
   const settingsStore = useSettingsStore();
 
   const rawSuites = settingsStore.get(KANGUR_TEST_SUITES_SETTING_KEY);
@@ -48,24 +55,35 @@ export default function Tests(): React.JSX.Element {
   );
 
   return (
-    <KangurPageShell tone='learn' className='min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100'>
+    <KangurPageShell
+      tone='learn'
+      className='min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100'
+      id='kangur-tests-page'
+      skipLinkTargetId='kangur-tests-main'
+    >
+      <KangurDocsTooltipEnhancer enabled={docsTooltipsEnabled} rootId='kangur-tests-page' />
       <KangurPageTopBar
         contentClassName='justify-center'
         left={
           <KangurTopNavGroup>
-            <KangurButton asChild size='md' variant='navigation'>
+            <KangurButton asChild size='md' variant='navigation' data-doc-id='top_nav_home'>
               <Link href={createPageUrl('Game', basePath)}>
                 <Home className='h-[22px] w-[22px]' strokeWidth={2.1} />
                 <span>Strona glowna</span>
               </Link>
             </KangurButton>
-            <KangurButton asChild size='md' variant='navigation'>
+            <KangurButton asChild size='md' variant='navigation' data-doc-id='top_nav_lessons'>
               <Link href={createPageUrl('Lessons', basePath)}>
                 <LayoutGrid className='h-[22px] w-[22px]' strokeWidth={2.1} />
                 <span>Lekcje</span>
               </Link>
             </KangurButton>
-            <KangurButton size='md' variant='navigationActive'>
+            <KangurButton
+              size='md'
+              variant='navigationActive'
+              aria-current='page'
+              data-doc-id='top_nav_tests'
+            >
               <Trophy className='h-[22px] w-[22px]' strokeWidth={2.1} />
               <span>Testy</span>
             </KangurButton>
@@ -81,7 +99,7 @@ export default function Tests(): React.JSX.Element {
         }
       />
 
-      <KangurPageContainer>
+      <KangurPageContainer id='kangur-tests-main'>
         <AnimatePresence mode='wait'>
           {activeSuite ? (
             <motion.div
@@ -92,27 +110,41 @@ export default function Tests(): React.JSX.Element {
               className='w-full max-w-xl mx-auto'
             >
               <KangurPanel className='w-full flex flex-col gap-4' padding='xl' variant='elevated'>
-                <div className='flex items-start justify-between gap-3'>
-                  <div>
-                    <h2 className='text-xl font-extrabold text-indigo-800'>{activeSuite.title}</h2>
-                    {activeSuite.description ? (
-                      <p className='mt-1 text-sm text-indigo-500'>{activeSuite.description}</p>
+                <KangurSummaryPanel
+                  accent='indigo'
+                  description={activeSuite.description || undefined}
+                  label='Zestaw testowy'
+                  labelAccent='indigo'
+                  padding='lg'
+                  title={activeSuite.title}
+                >
+                  <div className='mt-3 flex flex-wrap items-center gap-2'>
+                    {activeSuite.year ? (
+                      <KangurStatusChip accent='slate' size='sm'>
+                        {activeSuite.year}
+                      </KangurStatusChip>
                     ) : null}
-                    <div className='mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-400'>
-                      {activeSuite.year ? <span>{activeSuite.year}</span> : null}
-                      {activeSuite.gradeLevel ? <span>· {activeSuite.gradeLevel}</span> : null}
-                      <span>· {activeSuiteQuestions.length} pytań</span>
-                    </div>
+                    {activeSuite.gradeLevel ? (
+                      <KangurStatusChip accent='slate' size='sm'>
+                        {activeSuite.gradeLevel}
+                      </KangurStatusChip>
+                    ) : null}
+                    <KangurStatusChip accent='indigo' size='sm'>
+                      {activeSuiteQuestions.length} pytań
+                    </KangurStatusChip>
                   </div>
-                  <KangurButton
-                    type='button'
-                    onClick={(): void => setActiveSuite(null)}
-                    size='sm'
-                    variant='secondary'
-                  >
-                    ← Wróć
-                  </KangurButton>
-                </div>
+                  <div className='mt-4 flex justify-start md:justify-end'>
+                    <KangurButton
+                      type='button'
+                      onClick={(): void => setActiveSuite(null)}
+                      size='sm'
+                      variant='secondary'
+                      data-doc-id='tests_back_button'
+                    >
+                      ← Wróć
+                    </KangurButton>
+                  </div>
+                </KangurSummaryPanel>
 
                 <KangurTestSuitePlayer
                   suite={activeSuite}
@@ -137,25 +169,25 @@ export default function Tests(): React.JSX.Element {
               </div>
 
               {enabledSuites.length === 0 ? (
-                <KangurPanel className='text-center py-12' variant='soft'>
-                  <p className='text-indigo-400 text-sm'>
-                    Brak aktywnych zestawów testowych.<br />
-                    Skontaktuj się z administratorem.
-                  </p>
-                </KangurPanel>
+                <KangurEmptyState
+                  accent='indigo'
+                  description='Skontaktuj się z administratorem.'
+                  padding='xl'
+                  title='Brak aktywnych zestawów testowych.'
+                />
               ) : (
                 <div className='flex flex-col gap-3'>
                   {enabledSuites.map((suite) => {
                     const questionCount = getQuestionsForSuite(questionStore, suite.id).length;
                     return (
-                      <button
+                      <KangurOptionCardButton
+                        accent='indigo'
                         key={suite.id}
-                        type='button'
+                        className='flex items-center gap-4'
+                        data-doc-id='tests_suite_card'
+                        emphasis='neutral'
                         onClick={(): void => setActiveSuite(suite)}
-                        className={cn(
-                          KANGUR_OPTION_CARD_CLASSNAME,
-                          'flex items-center gap-4'
-                        )}
+                        type='button'
                       >
                         <div className='flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-100 text-2xl'>
                           🦘
@@ -167,14 +199,24 @@ export default function Tests(): React.JSX.Element {
                               {suite.description}
                             </div>
                           ) : null}
-                          <div className='mt-1 flex flex-wrap items-center gap-2 text-[11px] text-gray-400'>
-                            {suite.year ? <span>{suite.year}</span> : null}
-                            {suite.gradeLevel ? <span>· {suite.gradeLevel}</span> : null}
-                            <span>· {questionCount} pytań</span>
+                          <div className='mt-2 flex flex-wrap items-center gap-2'>
+                            {suite.year ? (
+                              <KangurStatusChip accent='slate' size='sm'>
+                                {suite.year}
+                              </KangurStatusChip>
+                            ) : null}
+                            {suite.gradeLevel ? (
+                              <KangurStatusChip accent='slate' size='sm'>
+                                {suite.gradeLevel}
+                              </KangurStatusChip>
+                            ) : null}
+                            <KangurStatusChip accent='indigo' size='sm'>
+                              {questionCount} pytań
+                            </KangurStatusChip>
                           </div>
                         </div>
                         <div className='shrink-0 text-indigo-300'>›</div>
-                      </button>
+                      </KangurOptionCardButton>
                     );
                   })}
                 </div>

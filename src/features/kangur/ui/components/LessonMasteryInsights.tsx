@@ -1,5 +1,11 @@
+import {
+  KangurEmptyState,
+  KangurInfoCard,
+  KangurPanel,
+  KangurStatusChip,
+} from '@/features/kangur/ui/design/primitives';
+import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { buildLessonMasteryInsights } from '@/features/kangur/ui/services/profile';
-import { KangurPanel } from '@/features/kangur/ui/design/primitives';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 
 type LessonMasteryInsightsProps = {
@@ -22,14 +28,14 @@ const formatCompletedAt = (value: string | null): string => {
   });
 };
 
-const getMasteryTone = (masteryPercent: number): string => {
+const getMasteryTone = (masteryPercent: number): KangurAccent => {
   if (masteryPercent >= 80) {
-    return 'bg-emerald-100 text-emerald-700';
+    return 'emerald';
   }
   if (masteryPercent >= 60) {
-    return 'bg-amber-100 text-amber-700';
+    return 'amber';
   }
-  return 'bg-rose-100 text-rose-700';
+  return 'rose';
 };
 
 type InsightListProps = {
@@ -39,18 +45,18 @@ type InsightListProps = {
 };
 
 const InsightList = ({ emptyState, items, title }: InsightListProps): React.JSX.Element => (
-  <div className='rounded-2xl border border-slate-200 bg-slate-50/80 p-4'>
+  <KangurInfoCard accent='slate' padding='md' tone='muted'>
     <div className='text-xs font-bold uppercase tracking-wide text-slate-500'>{title}</div>
     {items.length === 0 ? (
-      <div className='mt-3 rounded-xl border border-dashed border-slate-200 bg-white/80 px-3 py-4 text-sm text-slate-400'>
-        {emptyState}
-      </div>
+      <KangurEmptyState accent='slate' className='mt-3' description={emptyState} padding='md' />
     ) : (
       <div className='mt-3 flex flex-col gap-3'>
         {items.map((item) => (
-          <div
+          <KangurInfoCard
             key={item.componentId}
-            className='rounded-xl border border-white bg-white/90 px-3 py-3 shadow-sm'
+            accent='slate'
+            className='rounded-[22px]'
+            padding='md'
           >
             <div className='flex items-start justify-between gap-3'>
               <div>
@@ -61,21 +67,19 @@ const InsightList = ({ emptyState, items, title }: InsightListProps): React.JSX.
                   Proby: {item.attempts} · ostatni wynik {item.lastScorePercent}%
                 </div>
               </div>
-              <span
-                className={`rounded-full px-2.5 py-1 text-xs font-bold ${getMasteryTone(item.masteryPercent)}`}
-              >
+              <KangurStatusChip accent={getMasteryTone(item.masteryPercent)} size='md'>
                 {item.masteryPercent}%
-              </span>
+              </KangurStatusChip>
             </div>
             <div className='mt-2 text-[11px] text-slate-500'>
               Najlepszy wynik: {item.bestScorePercent}% · Ostatnia proba:{' '}
               {formatCompletedAt(item.lastCompletedAt)}
             </div>
-          </div>
+          </KangurInfoCard>
         ))}
       </div>
     )}
-  </div>
+  </KangurInfoCard>
 );
 
 export default function LessonMasteryInsights({
@@ -96,17 +100,19 @@ export default function LessonMasteryInsights({
           </p>
         </div>
         {insights.trackedLessons > 0 && (
-          <div className='inline-flex w-fit rounded-full bg-indigo-100 px-3 py-1 text-xs font-bold text-indigo-700'>
+          <KangurStatusChip accent='indigo' size='md'>
             {insights.trackedLessons} lekcji z zapisem
-          </div>
+          </KangurStatusChip>
         )}
       </div>
 
       {insights.trackedLessons === 0 ? (
-        <div className='mt-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-400'>
-          Brak zapisanych prob lekcji. Ukoncz dowolna lekcje, aby zobaczyc mocne strony i obszary do
-          powtorki.
-        </div>
+        <KangurEmptyState
+          accent='slate'
+          className='mt-4'
+          description='Brak zapisanych prob lekcji. Ukoncz dowolna lekcje, aby zobaczyc mocne strony i obszary do powtorki.'
+          padding='lg'
+        />
       ) : (
         <div className='mt-4 grid grid-cols-1 xl:grid-cols-2 gap-4'>
           <InsightList

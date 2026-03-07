@@ -1,5 +1,6 @@
 'use client';
 import { RunHistoryEntries } from '@/features/ai/ai-paths/components/RunHistoryEntries';
+import { resolveRunHistoryEntryAction } from '@/features/ai/ai-paths/components/run-history-entry-actions';
 import { Button } from '@/shared/ui';
 
 import {
@@ -13,7 +14,7 @@ export function NodeHistoryTab(): React.JSX.Element | null {
   const { selectedNode } = useAiPathSelection();
   const { runtimeState } = useAiPathRuntime();
   const { clearNodeHistory } = useAiPathOrchestrator();
-  const { resumeRun } = useRunHistoryActions();
+  const { resumeRun, retryRunNode } = useRunHistoryActions();
   if (!selectedNode) return null;
 
   const history = runtimeState.history?.[selectedNode.id] ?? [];
@@ -50,10 +51,15 @@ export function NodeHistoryTab(): React.JSX.Element | null {
       <RunHistoryEntries
         entries={history}
         emptyMessage='No history yet. Run the path to capture inputs/outputs for this node.'
-        onReplayFromEntry={(): void => {
+        onReplayFromEntry={(entry): void => {
           const currentRunId = runtimeState.currentRun?.id;
           if (!currentRunId) return;
-          void resumeRun(currentRunId, 'replay').catch(() => {});
+          const action = resolveRunHistoryEntryAction(entry);
+          if (action.kind === 'retry_node') {
+            void retryRunNode(currentRunId, entry.nodeId).catch(() => {});
+            return;
+          }
+          void resumeRun(currentRunId, action.resumeMode ?? 'replay').catch(() => {});
         }}
       />
     </div>

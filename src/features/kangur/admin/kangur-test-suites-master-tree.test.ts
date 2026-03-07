@@ -167,7 +167,16 @@ describe('resolveKangurTestSuiteOrderFromNodes', () => {
   it('ignores folder nodes and non-suite file nodes', () => {
     const nodes = [
       ...buildKangurTestSuiteMasterNodes([s1]),
-      { id: 'kangur-test-suite-group:enabled', type: 'folder' as const, kind: 'group', parentId: null, name: 'Group', path: 'enabled', sortOrder: 500, metadata: {} },
+      {
+        id: 'kangur-test-suite-group:enabled',
+        type: 'folder' as const,
+        kind: 'group',
+        parentId: null,
+        name: 'Group',
+        path: 'enabled',
+        sortOrder: 500,
+        metadata: {},
+      },
     ];
     const result = resolveKangurTestSuiteOrderFromNodes(nodes, suiteById);
     expect(result.every((s) => s.id === 's1')).toBe(true);

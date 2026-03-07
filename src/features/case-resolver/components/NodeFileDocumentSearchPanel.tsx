@@ -1,11 +1,16 @@
 'use client';
 
 import { Sparkles } from 'lucide-react';
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import { FolderTreeSearchBar } from '@/features/foldertree/v2/search';
 import { Button, SelectSimple, SegmentedControl } from '@/shared/ui';
-import type { AiNode, CaseResolverFile } from '@/shared/contracts/case-resolver';
+import {
+  CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS,
+  CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS,
+  type AiNode,
+  type CaseResolverFile,
+} from '@/shared/contracts/case-resolver';
 import { useFolderTreeProfile } from '@/shared/hooks/use-folder-tree-profile';
 import { resolveFolderTreeSearchConfig } from '@/shared/utils/folder-tree-profiles-v2';
 
@@ -15,21 +20,12 @@ import {
   useNodeFileWorkspaceStateContext,
 } from './NodeFileWorkspaceContext';
 import { RelationTreeBrowser } from '../relation-search/components/RelationTreeBrowser';
+import { RelationTreeBrowserRuntimeContext } from '../relation-search/components/RelationTreeBrowserRuntimeContext';
 import type { RelationTreeLookup } from '../relation-search/types';
 
-type NodeFileDocumentSearchPanelProps = {
-  newNodeType: 'prompt' | 'model' | 'database' | 'viewer';
-  setNewNodeType: (t: 'prompt' | 'model' | 'database' | 'viewer') => void;
-  onExplanatoryClick: () => void;
-  onNodeInspectorClick: () => void;
-};
-
-export function NodeFileDocumentSearchPanel(
-  props: NodeFileDocumentSearchPanelProps
-): React.JSX.Element {
-  const { newNodeType, setNewNodeType, onExplanatoryClick, onNodeInspectorClick } = props;
-
+export function NodeFileDocumentSearchPanel(): React.JSX.Element {
   const {
+    newNodeType,
     documentSearchScope,
     documentSearchQuery,
     relationTreeNodes,
@@ -38,8 +34,14 @@ export function NodeFileDocumentSearchPanel(
     view,
     canvasHostRef,
   } = useNodeFileWorkspaceStateContext();
-  const { setDocumentSearchScope, setDocumentSearchQuery, addNode, setNodeFileMeta } =
-    useNodeFileWorkspaceActionsContext();
+  const {
+    setNewNodeType,
+    setDocumentSearchScope,
+    setDocumentSearchQuery,
+    addNode,
+    setNodeFileMeta,
+    setIsNodeInspectorOpen,
+  } = useNodeFileWorkspaceActionsContext();
   const relationTreeProfile = useFolderTreeProfile('case_resolver_nodefile_relations');
   const relationTreeSearchEnabled = React.useMemo(
     (): boolean => resolveFolderTreeSearchConfig(relationTreeProfile).enabled,
@@ -89,11 +91,50 @@ export function NodeFileDocumentSearchPanel(
     [addNode, resolveCanvasCenter, setNodeFileMeta]
   );
 
+  const handleAddExplanatoryNode = useCallback((): void => {
+    const node = buildNode(
+      {
+        type: 'prompt',
+        title: 'Explanatory Note',
+        description: '',
+        outputs: [...CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS],
+        inputs: [...CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS],
+      },
+      resolveCanvasCenter(),
+      createNodeId(),
+      'Explanatory Note'
+    );
+    addNode(node);
+  }, [addNode, resolveCanvasCenter]);
+
   React.useEffect((): void => {
     if (relationTreeSearchEnabled) return;
     if (documentSearchQuery.length === 0) return;
     setDocumentSearchQuery('');
   }, [documentSearchQuery, relationTreeSearchEnabled, setDocumentSearchQuery]);
+
+  const relationTreeBrowserRuntimeValue = useMemo(
+    () => ({
+      instance: 'case_resolver_nodefile_relations' as const,
+      nodes: resolvedRelationTreeNodes,
+      lookup: resolvedRelationTreeLookup,
+      onAddFile: (fileId: string): void => {
+        const rowNodeId = resolvedRelationTreeLookup.fileNodeIdByFileId.get(fileId);
+        if (!rowNodeId) return;
+        const row = resolvedRelationTreeLookup.fileRowByNodeId.get(rowNodeId);
+        if (!row) return;
+        addDocumentToCanvas(row.file);
+      },
+      searchQuery: relationTreeSearchEnabled ? documentSearchQuery : '',
+    }),
+    [
+      addDocumentToCanvas,
+      documentSearchQuery,
+      relationTreeSearchEnabled,
+      resolvedRelationTreeLookup,
+      resolvedRelationTreeNodes,
+    ]
+  );
 
   return (
     <div className='shrink-0 border-b border-border/60 bg-card/30'>
@@ -113,7 +154,7 @@ export function NodeFileDocumentSearchPanel(
 
         <div className='flex-1' />
 
-        <Button onClick={onExplanatoryClick} variant='success' size='xs' className='h-8'>
+        <Button onClick={handleAddExplanatoryNode} variant='success' size='xs' className='h-8'>
           <Sparkles className='mr-1 size-3.5' />
           Explanatory Node
         </Button>
@@ -132,7 +173,12 @@ export function NodeFileDocumentSearchPanel(
           triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
         />
 
-        <Button variant='outline' size='xs' className='h-8' onClick={onNodeInspectorClick}>
+        <Button
+          variant='outline'
+          size='xs'
+          className='h-8'
+          onClick={() => setIsNodeInspectorOpen(true)}
+        >
           Node Inspector
         </Button>
       </div>
@@ -158,21 +204,9 @@ export function NodeFileDocumentSearchPanel(
       </div>
 
       <div className='max-h-64 overflow-auto border-t border-border/40'>
-        <RelationTreeBrowser
-          instance='case_resolver_nodefile_relations'
-          mode='add_to_node_canvas'
-          nodes={resolvedRelationTreeNodes}
-          lookup={resolvedRelationTreeLookup}
-          onAddFile={(fileId): void => {
-            const rowNodeId = resolvedRelationTreeLookup.fileNodeIdByFileId.get(fileId);
-            if (!rowNodeId) return;
-            const row = resolvedRelationTreeLookup.fileRowByNodeId.get(rowNodeId);
-            if (!row) return;
-            addDocumentToCanvas(row.file);
-          }}
-          searchQuery={relationTreeSearchEnabled ? documentSearchQuery : ''}
-          emptyLabel='No matching documents'
-        />
+        <RelationTreeBrowserRuntimeContext.Provider value={relationTreeBrowserRuntimeValue}>
+          <RelationTreeBrowser mode='add_to_node_canvas' emptyLabel='No matching documents' />
+        </RelationTreeBrowserRuntimeContext.Provider>
       </div>
 
       {visibleDocumentSearchRows.length > 0 && (

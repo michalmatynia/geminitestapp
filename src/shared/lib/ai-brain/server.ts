@@ -2,6 +2,7 @@ import 'server-only';
 
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { configurationError } from '@/shared/errors/app-error';
+import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 
@@ -21,8 +22,6 @@ import {
   type AiPathsNodeExecutionInput,
 } from './settings';
 
-type SettingDoc = { key?: string; value?: string; _id?: string };
-
 const canUsePrismaSettings = (): boolean =>
   Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
 
@@ -39,7 +38,7 @@ const readMongoSettingValue = async (key: string): Promise<string | null> => {
   if (!process.env['MONGODB_URI']) return null;
   const mongo = await getMongoDb();
   const doc = await mongo
-    .collection<SettingDoc>('settings')
+    .collection<MongoStringSettingRecord>('settings')
     .findOne({ $or: [{ _id: key }, { key }] });
   return typeof doc?.value === 'string' ? doc.value : null;
 };
@@ -57,7 +56,7 @@ const writePrismaSettingValue = async (key: string, value: string): Promise<bool
 const writeMongoSettingValue = async (key: string, value: string): Promise<boolean> => {
   if (!process.env['MONGODB_URI']) return false;
   const mongo = await getMongoDb();
-  await mongo.collection<SettingDoc>('settings').updateOne(
+  await mongo.collection<MongoStringSettingRecord>('settings').updateOne(
     {
       $or: [{ _id: key }, { key }],
     },

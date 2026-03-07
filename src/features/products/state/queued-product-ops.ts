@@ -91,10 +91,13 @@ export const markQueuedProductId = (
     clearTimeout(existingTimer);
   }
 
-  const nextTimer = setTimeout(() => {
-    removalTimers.delete(id);
-    removeQueuedProductId(id);
-  }, Math.max(1_000, ttlMs));
+  const nextTimer = setTimeout(
+    () => {
+      removalTimers.delete(id);
+      removeQueuedProductId(id);
+    },
+    Math.max(1_000, ttlMs)
+  );
   removalTimers.set(id, nextTimer);
 };
 

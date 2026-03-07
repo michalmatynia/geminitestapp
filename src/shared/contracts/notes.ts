@@ -151,6 +151,49 @@ export const createNoteFileSchema = noteFileSchema.omit({
 export type NoteFileCreateInput = z.infer<typeof createNoteFileSchema>;
 
 /**
+ * Note Folder Import DTOs
+ */
+export const noteFolderImportNoteSchema = z.object({
+  title: z.string().trim().min(1),
+  content: z.string().default(''),
+  path: z.string().trim().min(1),
+});
+
+export type NoteFolderImportNoteDto = z.infer<typeof noteFolderImportNoteSchema>;
+
+export interface NoteFolderImportNodeDto {
+  name: string;
+  path: string;
+  children: NoteFolderImportNodeDto[];
+  notes: NoteFolderImportNoteDto[];
+}
+
+export const noteFolderImportNodeSchema: z.ZodType<NoteFolderImportNodeDto> = z.lazy(() =>
+  z.object({
+    name: z.string().trim().min(1),
+    path: z.string().trim().min(1),
+    children: z.array(noteFolderImportNodeSchema).optional().default([]),
+    notes: z.array(noteFolderImportNoteSchema).optional().default([]),
+  })
+);
+
+export const noteFolderImportRequestSchema = z.object({
+  notebookId: z.string().trim().min(1),
+  parentFolderId: z.string().trim().min(1).nullable().optional(),
+  structures: z.array(noteFolderImportNodeSchema).min(1),
+});
+
+export type NoteFolderImportRequestDto = z.infer<typeof noteFolderImportRequestSchema>;
+
+export const noteFolderImportResponseSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+  categoriesCreated: z.number().int().nonnegative(),
+});
+
+export type NoteFolderImportResponseDto = z.infer<typeof noteFolderImportResponseSchema>;
+
+/**
  * Note Contract
  */
 export const noteEditorTypeSchema = z.enum([

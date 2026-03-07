@@ -10,6 +10,39 @@ export const settingRecordSchema = z.object({
 
 export type SettingRecord = z.infer<typeof settingRecordSchema>;
 export type { SettingRecord as SystemSetting };
+export type MongoSettingLookupRecord<TId = string, TValue = string> = {
+  _id?: TId;
+  key?: string;
+  value?: TValue;
+};
+export type MongoStringSettingRecord<TId = string> = MongoSettingLookupRecord<TId, string>;
+export type MongoTimestampedSettingRecord<
+  TId = string,
+  TValue = string,
+  TTimestamp = string | Date,
+> = MongoSettingLookupRecord<TId, TValue> & {
+  createdAt?: TTimestamp;
+  updatedAt?: TTimestamp;
+};
+export type MongoTimestampedStringSettingRecord<
+  TId = string,
+  TTimestamp = string | Date,
+> = MongoTimestampedSettingRecord<TId, string, TTimestamp>;
+export type MongoPersistedSettingRecord<
+  TId = string,
+  TValue = string,
+  TTimestamp = string | Date,
+> = {
+  _id?: TId;
+  key: string;
+  value: TValue;
+  createdAt: TTimestamp;
+  updatedAt: TTimestamp;
+};
+export type MongoPersistedStringSettingRecord<
+  TId = string,
+  TTimestamp = string | Date,
+> = MongoPersistedSettingRecord<TId, string, TTimestamp>;
 
 /**
  * Settings Scope Contract

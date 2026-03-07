@@ -76,7 +76,15 @@ function PaginationInfo(): React.JSX.Element | null {
 }
 
 function PaginationPageSize(): React.JSX.Element | null {
-  const { showPageSize, variant, onPageSizeChange, pageSize, pageSizeOptions, showLabels, onPageChange } = usePaginationContext();
+  const {
+    showPageSize,
+    variant,
+    onPageSizeChange,
+    pageSize,
+    pageSizeOptions,
+    showLabels,
+    onPageChange,
+  } = usePaginationContext();
   const isPanel = variant === 'panel';
   const isCompact = variant === 'compact';
 

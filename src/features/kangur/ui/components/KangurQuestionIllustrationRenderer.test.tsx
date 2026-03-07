@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { KangurQuestionIllustrationRenderer } from '@/features/kangur/ui/components/KangurQuestionIllustrationRenderer';
@@ -23,6 +23,10 @@ describe('KangurQuestionIllustrationRenderer', () => {
     expect(container.innerHTML).not.toContain('.png');
     expect(container.querySelector('svg')).not.toBeNull();
     expect(container.querySelector('circle')).not.toBeNull();
+    expect(screen.getByTestId('kangur-illustration-single-frame')).toHaveClass(
+      'soft-card',
+      'border-slate-200/85'
+    );
   });
 
   it('sanitizes panel illustrations before rendering', () => {
@@ -47,5 +51,42 @@ describe('KangurQuestionIllustrationRenderer', () => {
     expect(getByText('A')).toBeInTheDocument();
     expect(container.innerHTML).not.toContain('image.png');
     expect(container.querySelector('rect')).not.toBeNull();
+    expect(screen.getByTestId('kangur-illustration-panel-label-panel-1')).toHaveClass(
+      'border-slate-200',
+      'bg-slate-100'
+    );
+    expect(screen.getByTestId('kangur-illustration-panel-frame-panel-1')).toHaveClass(
+      'soft-card',
+      'border-slate-200/85'
+    );
+  });
+
+  it('uses the shared placeholder surface for empty panel slots', () => {
+    render(
+      <KangurQuestionIllustrationRenderer
+        illustration={{
+          type: 'panels',
+          layout: 'row',
+          panels: [
+            {
+              id: 'panel-empty',
+              label: 'B',
+              svgContent: '',
+              description: 'Brak rysunku',
+            },
+          ],
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('kangur-illustration-panel-placeholder-panel-empty')).toHaveClass(
+      'soft-card',
+      'border-dashed',
+      'border-slate-200/85'
+    );
+    expect(screen.getByTestId('kangur-illustration-panel-label-panel-empty')).toHaveClass(
+      'border-slate-200',
+      'bg-slate-100'
+    );
   });
 });

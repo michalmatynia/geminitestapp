@@ -40,6 +40,7 @@ describe('QuestionCard', () => {
     const correctChoice = screen.getByTestId('question-card-choice-7');
     const wrongChoice = screen.getByTestId('question-card-choice-8');
 
+    expect(screen.getByTestId('question-card-timer-bar')).toHaveAttribute('aria-valuenow', '100');
     expect(correctChoice).toHaveClass('soft-card', 'border-slate-200/80');
     expect(wrongChoice).toHaveClass('soft-card', 'border-slate-200/80');
 

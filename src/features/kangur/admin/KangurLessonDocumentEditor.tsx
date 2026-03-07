@@ -23,7 +23,6 @@ import {
 } from '@/features/kangur/lesson-documents';
 import { KangurLessonDocumentRenderer } from '@/features/kangur/ui/components/KangurLessonDocumentRenderer';
 import type {
-  KangurLessonDocument,
   KangurLessonGridBlock,
   KangurLessonGridItem,
   KangurLessonPage,
@@ -40,18 +39,8 @@ import {
   GRID_TEMPLATE_OPTIONS,
   ROOT_BLOCK_TYPE_OPTIONS,
 } from './constants';
-import {
-  clamp,
-  clampGridColumnStart,
-  insertAfterIndex,
-  moveItem,
-  parseNumberInput,
-} from './utils';
-
-type KangurLessonDocumentEditorProps = {
-  value: KangurLessonDocument;
-  onChange: (nextValue: KangurLessonDocument) => void;
-};
+import { clamp, clampGridColumnStart, insertAfterIndex, moveItem, parseNumberInput } from './utils';
+import { useLessonContentEditorContext } from './context/LessonContentEditorContext';
 
 const resolvePageSectionOptions = (
   page: KangurLessonPage | null
@@ -65,10 +54,8 @@ const resolvePageSectionOptions = (
   sectionDescription: page?.sectionDescription?.trim() || '',
 });
 
-export function KangurLessonDocumentEditor(
-  props: KangurLessonDocumentEditorProps
-): React.JSX.Element {
-  const { value, onChange } = props;
+export function KangurLessonDocumentEditor(): React.JSX.Element {
+  const { document: value, onChange } = useLessonContentEditorContext();
   const pages = resolveKangurLessonDocumentPages(value);
   const [activePageId, setActivePageId] = useState<string | null>(pages[0]?.id ?? null);
 
@@ -139,7 +126,9 @@ export function KangurLessonDocumentEditor(
       if (!activePage) return;
       const blockToClone = activePage.blocks[index];
       if (!blockToClone) return;
-      updateDocument(insertAfterIndex(activePage.blocks, index, cloneKangurLessonRootBlock(blockToClone)));
+      updateDocument(
+        insertAfterIndex(activePage.blocks, index, cloneKangurLessonRootBlock(blockToClone))
+      );
     },
     [activePage, updateDocument]
   );
@@ -314,7 +303,7 @@ export function KangurLessonDocumentEditor(
                 onClick={(): void => addPageFromTemplate('image-gallery-page')}
               >
                 <Image className='mr-1 size-3.5' />
-                Add image page
+                Add SVG image page
               </Button>
               <Button
                 type='button'
@@ -465,7 +454,9 @@ export function KangurLessonDocumentEditor(
               size='sm'
               variant='outline'
               className='h-8 px-3'
-              onClick={(): void => updateDocument([...(activePage?.blocks ?? []), createKangurLessonTextBlock()])}
+              onClick={(): void =>
+                updateDocument([...(activePage?.blocks ?? []), createKangurLessonTextBlock()])
+              }
               disabled={!activePage}
             >
               <Type className='mr-1 size-3.5' />
@@ -476,7 +467,9 @@ export function KangurLessonDocumentEditor(
               size='sm'
               variant='outline'
               className='h-8 px-3'
-              onClick={(): void => updateDocument([...(activePage?.blocks ?? []), createKangurLessonSvgBlock()])}
+              onClick={(): void =>
+                updateDocument([...(activePage?.blocks ?? []), createKangurLessonSvgBlock()])
+              }
               disabled={!activePage}
             >
               <Image className='mr-1 size-3.5' />
@@ -487,18 +480,22 @@ export function KangurLessonDocumentEditor(
               size='sm'
               variant='outline'
               className='h-8 px-3'
-              onClick={(): void => updateDocument([...(activePage?.blocks ?? []), createKangurLessonImageBlock()])}
+              onClick={(): void =>
+                updateDocument([...(activePage?.blocks ?? []), createKangurLessonImageBlock()])
+              }
               disabled={!activePage}
             >
               <Image className='mr-1 size-3.5' />
-              Add image block
+              Add SVG image block
             </Button>
             <Button
               type='button'
               size='sm'
               variant='outline'
               className='h-8 px-3'
-              onClick={(): void => updateDocument([...(activePage?.blocks ?? []), createKangurLessonActivityBlock()])}
+              onClick={(): void =>
+                updateDocument([...(activePage?.blocks ?? []), createKangurLessonActivityBlock()])
+              }
               disabled={!activePage}
             >
               <Plus className='mr-1 size-3.5' />
@@ -509,7 +506,9 @@ export function KangurLessonDocumentEditor(
               size='sm'
               variant='outline'
               className='h-8 px-3'
-              onClick={(): void => updateDocument([...(activePage?.blocks ?? []), createKangurLessonGridBlock()])}
+              onClick={(): void =>
+                updateDocument([...(activePage?.blocks ?? []), createKangurLessonGridBlock()])
+              }
               disabled={!activePage}
             >
               <Grid2x2 className='mr-1 size-3.5' />
@@ -545,7 +544,7 @@ export function KangurLessonDocumentEditor(
               disabled={!activePage}
             >
               <Image className='mr-1 size-3.5' />
-              Add image gallery
+              Add SVG image gallery
             </Button>
             <Button
               type='button'
@@ -561,7 +560,7 @@ export function KangurLessonDocumentEditor(
               disabled={!activePage}
             >
               <Grid2x2 className='mr-1 size-3.5' />
-              Add image mosaic
+              Add SVG image mosaic
             </Button>
             <Button
               type='button'
@@ -597,13 +596,14 @@ export function KangurLessonDocumentEditor(
             </Button>
           </div>
           <div className='text-xs text-muted-foreground'>
-            Build lesson pages from typed blocks. Mix text, SVG image references, interactive activities, and responsive grid layouts.
+            Build lesson pages from typed blocks. Mix text, SVG image references, interactive
+            activities, and responsive grid layouts.
           </div>
         </div>
 
         {activePage?.blocks.length === 0 ? (
           <div className='rounded-2xl border border-dashed border-border/70 bg-card/20 p-6 text-sm text-muted-foreground'>
-            This page has no content yet. Add a text, SVG, image, activity, or grid block.
+            This page has no content yet. Add a text, SVG, SVG image, activity, or grid block.
           </div>
         ) : null}
 
@@ -672,7 +672,11 @@ export function KangurLessonDocumentEditor(
                       max={4}
                       value={String(block.columns)}
                       onChange={(event): void => {
-                        const nextColumns = clamp(parseNumberInput(event.target.value, block.columns), 1, 4);
+                        const nextColumns = clamp(
+                          parseNumberInput(event.target.value, block.columns),
+                          1,
+                          4
+                        );
                         updateGridBlock(block.id, (currentBlock) => ({
                           ...currentBlock,
                           columns: nextColumns,
@@ -716,7 +720,11 @@ export function KangurLessonDocumentEditor(
                       onChange={(event): void => {
                         updateGridBlock(block.id, (currentBlock) => ({
                           ...currentBlock,
-                          rowHeight: clamp(parseNumberInput(event.target.value, currentBlock.rowHeight), 120, 480),
+                          rowHeight: clamp(
+                            parseNumberInput(event.target.value, currentBlock.rowHeight),
+                            120,
+                            480
+                          ),
                         }));
                       }}
                       className='h-9'
@@ -793,7 +801,10 @@ export function KangurLessonDocumentEditor(
                     onClick={(): void => {
                       updateGridBlock(block.id, (currentBlock) => ({
                         ...currentBlock,
-                        items: [...currentBlock.items, createKangurLessonGridItem(createKangurLessonTextBlock())],
+                        items: [
+                          ...currentBlock.items,
+                          createKangurLessonGridItem(createKangurLessonTextBlock()),
+                        ],
                       }));
                     }}
                   >
@@ -808,7 +819,10 @@ export function KangurLessonDocumentEditor(
                     onClick={(): void => {
                       updateGridBlock(block.id, (currentBlock) => ({
                         ...currentBlock,
-                        items: [...currentBlock.items, createKangurLessonGridItem(createKangurLessonSvgBlock())],
+                        items: [
+                          ...currentBlock.items,
+                          createKangurLessonGridItem(createKangurLessonSvgBlock()),
+                        ],
                       }));
                     }}
                   >
@@ -823,7 +837,10 @@ export function KangurLessonDocumentEditor(
                     onClick={(): void => {
                       updateGridBlock(block.id, (currentBlock) => ({
                         ...currentBlock,
-                        items: [...currentBlock.items, createKangurLessonGridItem(createKangurLessonImageBlock())],
+                        items: [
+                          ...currentBlock.items,
+                          createKangurLessonGridItem(createKangurLessonImageBlock()),
+                        ],
                       }));
                     }}
                   >
@@ -859,7 +876,9 @@ export function KangurLessonDocumentEditor(
                       onDelete={(): void => {
                         updateGridBlock(block.id, (currentBlock) => ({
                           ...currentBlock,
-                          items: currentBlock.items.filter((candidate: KangurLessonGridItem) => candidate.id !== item.id),
+                          items: currentBlock.items.filter(
+                            (candidate: KangurLessonGridItem) => candidate.id !== item.id
+                          ),
                         }));
                       }}
                       onChange={(nextItem): void => {
@@ -890,7 +909,10 @@ export function KangurLessonDocumentEditor(
                         ) {
                           return;
                         }
-                        updateRootBlock(block.id, convertKangurLessonRootBlockType(block, nextValue));
+                        updateRootBlock(
+                          block.id,
+                          convertKangurLessonRootBlockType(block, nextValue)
+                        );
                       }}
                       options={ROOT_BLOCK_TYPE_OPTIONS.map((option) => ({
                         value: option.value,

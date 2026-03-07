@@ -27,6 +27,7 @@ import {
   Skeleton,
   StandardDataTablePanel,
 } from '@/shared/ui';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
@@ -38,6 +39,10 @@ import {
 import { useAdminCaseResolverCasesState } from '../hooks/useAdminCaseResolverCasesState';
 import { CaseFilterPanel } from './CaseFilterPanel';
 import { CaseListHeader } from './list/CaseListHeader';
+import {
+  CaseListPanelControlsContext,
+  type CaseListPanelControlsContextValue,
+} from './list/CaseListPanelControlsContext';
 
 import {
   CASE_RESOLVER_CASES_MASTER_INSTANCE,
@@ -433,6 +438,13 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
     [prefetchCaseResolverHref]
   );
 
+  const handlePrefetchSearchFile = useCallback(
+    (file: CaseResolverFile): void => {
+      handlePrefetchFile(file.id);
+    },
+    [handlePrefetchFile]
+  );
+
   useEffect((): void => {
     if (!heldCaseFile) return;
     handlePrefetchCase(heldCaseFile.id);
@@ -444,6 +456,13 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
       router.push(buildCaseResolverCaseHref(fileId));
     },
     [router, workspace]
+  );
+
+  const handleOpenSearchFile = useCallback(
+    (file: CaseResolverFile): void => {
+      handleOpenFile(file.id);
+    },
+    [handleOpenFile]
   );
 
   const handleCreateCaseLocal = useCallback(
@@ -610,71 +629,158 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
     ]
   );
 
+  const caseListPanelControlsValue = useMemo(
+    (): CaseListPanelControlsContextValue => ({
+      caseSortBy,
+      setCaseSortBy,
+      caseSortOrder,
+      setCaseSortOrder,
+      onCreateCase: (): void => {
+        handleCreateCaseLocal(null);
+      },
+      totalCount: files.length,
+      filteredCount: filteredCases.length,
+      page,
+      totalPages,
+      onPageChange: setPage,
+      pageSize,
+      onPageSizeChange: setPageSize,
+      onSearchChange: setTreeSearchQuery,
+      isHierarchyLocked,
+      setIsHierarchyLocked,
+      caseShowNestedContent,
+      setCaseShowNestedContent,
+      handleSaveDefaults,
+      isSavingDefaults,
+      heldCaseFile,
+      workspace,
+      identifierLabelById: caseIdentifierPathById,
+      searchQuery: treeSearchQuery,
+      caseOrderById: caseSearchOrderById,
+      onPrefetchCase: handlePrefetchCase,
+      onPrefetchFile: handlePrefetchSearchFile,
+      onOpenCase: handleOpenCase,
+      onOpenFile: handleOpenSearchFile,
+      onClearHeldCase: handleClearHeldCase,
+    }),
+    [
+      caseSortBy,
+      setCaseSortBy,
+      caseSortOrder,
+      setCaseSortOrder,
+      handleCreateCaseLocal,
+      files.length,
+      filteredCases.length,
+      page,
+      totalPages,
+      setPage,
+      pageSize,
+      setPageSize,
+      setTreeSearchQuery,
+      isHierarchyLocked,
+      setIsHierarchyLocked,
+      caseShowNestedContent,
+      setCaseShowNestedContent,
+      handleSaveDefaults,
+      isSavingDefaults,
+      heldCaseFile,
+      workspace,
+      caseIdentifierPathById,
+      treeSearchQuery,
+      caseSearchOrderById,
+      handlePrefetchCase,
+      handlePrefetchSearchFile,
+      handleOpenCase,
+      handleOpenSearchFile,
+      handleClearHeldCase,
+    ]
+  );
+
   return (
-    <StandardDataTablePanel
-      header={
-        <CaseListHeader
-          onCreateCase={() => {
-            handleCreateCaseLocal(null);
-          }}
-          filtersContent={<CaseFilterPanel />}
-          filteredCount={filteredCases.length}
-          totalCount={files.length}
-          page={page}
-          totalPages={totalPages}
-          onPageChange={setPage}
-          pageSize={pageSize}
-          onPageSizeChange={setPageSize}
-          searchQuery={treeSearchQuery}
-          onSearchChange={setTreeSearchQuery}
-        />
-      }
-      columns={[]}
-      data={[]}
-      isLoading={false}
-      contentClassName='space-y-3'
-    >
-      {isSearchActive ? (
-        <CaseListSearchPanel
-          workspace={workspace}
-          identifierLabelById={caseIdentifierPathById}
-          query={treeSearchQuery}
-          caseOrderById={caseSearchOrderById}
-          onPrefetchCase={handlePrefetchCase}
-          onPrefetchFile={(file) => {
-            handlePrefetchFile(file.id);
-          }}
-          onOpenCase={handleOpenCase}
-          onOpenFile={(file) => {
-            handleOpenFile(file.id);
-          }}
-        />
-      ) : showLoadingSkeleton ? (
-        <CaseListLoadingSkeleton />
-      ) : casesLoadState === 'no_record' ? (
-        <Card
-          variant='subtle'
-          padding='lg'
-          className='flex flex-col items-center justify-center border-dashed border-border/60 bg-card/20 py-20 text-center'
-        >
-          <FolderOpen className='mb-4 size-10 text-muted-foreground/20' />
-          <p className='text-sm font-medium text-muted-foreground'>No workspace data found.</p>
-          <p className='mt-2 max-w-xl text-xs text-muted-foreground/80'>
-            {casesLoadMessage || 'Case Resolver workspace key is missing.'}
-          </p>
-          <div className='mt-4 flex items-center gap-2'>
+    <CaseListPanelControlsContext.Provider value={caseListPanelControlsValue}>
+      <StandardDataTablePanel
+        header={
+          <CaseListHeader filtersContent={<CaseFilterPanel />} />
+        }
+        columns={[]}
+        data={[]}
+        isLoading={false}
+        contentClassName='space-y-3'
+      >
+        {isSearchActive ? (
+          <CaseListSearchPanel />
+        ) : showLoadingSkeleton ? (
+          <CaseListLoadingSkeleton />
+        ) : casesLoadState === 'no_record' ? (
+          <Card
+            variant='subtle'
+            padding='lg'
+            className='flex flex-col items-center justify-center border-dashed border-border/60 bg-card/20 py-20 text-center'
+          >
+            <FolderOpen className='mb-4 size-10 text-muted-foreground/20' />
+            <p className='text-sm font-medium text-muted-foreground'>No workspace data found.</p>
+            <p className='mt-2 max-w-xl text-xs text-muted-foreground/80'>
+              {casesLoadMessage || 'Case Resolver workspace key is missing.'}
+            </p>
+            <div className='mt-4 flex items-center gap-2'>
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={() => {
+                  void handleRefreshWorkspace();
+                }}
+              >
+                Retry
+              </Button>
+              <Button
+                variant='outline'
+                size='icon-lg'
+                aria-label='Create new case'
+                onClick={() => {
+                  handleCreateCaseLocal(null);
+                }}
+              >
+                <PlusIcon className='h-6 w-6' />
+              </Button>
+            </div>
+          </Card>
+        ) : casesLoadState === 'unavailable' ? (
+          <Card
+            variant='subtle'
+            padding='lg'
+            className='flex flex-col items-center justify-center border-dashed border-border/60 bg-card/20 py-20 text-center'
+          >
+            <p className='text-sm font-medium text-muted-foreground'>
+              Could not load cases workspace.
+            </p>
+            <p className='mt-2 max-w-xl text-xs text-muted-foreground/80'>
+              {casesLoadMessage || 'Retry loading workspace data.'}
+            </p>
             <Button
               variant='outline'
               size='sm'
+              className='mt-4'
               onClick={() => {
                 void handleRefreshWorkspace();
               }}
             >
               Retry
             </Button>
+          </Card>
+        ) : files.length === 0 ? (
+          <Card
+            variant='subtle'
+            padding='lg'
+            className='flex flex-col items-center justify-center border-dashed border-border/60 bg-card/20 py-20 text-center'
+          >
+            <Folder className='mb-4 size-10 text-muted-foreground/20' />
+            <p className='text-sm text-muted-foreground'>
+              No cases found. Create your first case.
+            </p>
             <Button
               variant='outline'
               size='icon-lg'
+              className='mt-4'
               aria-label='Create new case'
               onClick={() => {
                 handleCreateCaseLocal(null);
@@ -682,124 +788,46 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
             >
               <PlusIcon className='h-6 w-6' />
             </Button>
-          </div>
-        </Card>
-      ) : casesLoadState === 'unavailable' ? (
-        <Card
-          variant='subtle'
-          padding='lg'
-          className='flex flex-col items-center justify-center border-dashed border-border/60 bg-card/20 py-20 text-center'
-        >
-          <p className='text-sm font-medium text-muted-foreground'>
-            Could not load cases workspace.
-          </p>
-          <p className='mt-2 max-w-xl text-xs text-muted-foreground/80'>
-            {casesLoadMessage || 'Retry loading workspace data.'}
-          </p>
-          <Button
-            variant='outline'
-            size='sm'
-            className='mt-4'
-            onClick={() => {
-              void handleRefreshWorkspace();
-            }}
-          >
-            Retry
-          </Button>
-        </Card>
-      ) : files.length === 0 ? (
-        <Card
-          variant='subtle'
-          padding='lg'
-          className='flex flex-col items-center justify-center border-dashed border-border/60 bg-card/20 py-20 text-center'
-        >
-          <Folder className='mb-4 size-10 text-muted-foreground/20' />
-          <p className='text-sm text-muted-foreground'>No cases found. Create your first case.</p>
-          <Button
-            variant='outline'
-            size='icon-lg'
-            className='mt-4'
-            aria-label='Create new case'
-            onClick={() => {
-              handleCreateCaseLocal(null);
-            }}
-          >
-            <PlusIcon className='h-6 w-6' />
-          </Button>
-        </Card>
-      ) : filteredCases.length === 0 ? (
-        <>
-          <CaseListSorting
-            caseSortBy={caseSortBy}
-            setCaseSortBy={setCaseSortBy}
-            caseSortOrder={caseSortOrder}
-            setCaseSortOrder={setCaseSortOrder}
-            isHierarchyLocked={isHierarchyLocked}
-            setIsHierarchyLocked={setIsHierarchyLocked}
-            caseShowNestedContent={caseShowNestedContent}
-            setCaseShowNestedContent={setCaseShowNestedContent}
-            handleSaveDefaults={handleSaveDefaults}
-            isSavingDefaults={isSavingDefaults}
-          />
-          <CaseListHeldDock
-            heldCaseFile={heldCaseFile}
-            isHierarchyLocked={isHierarchyLocked}
-            onPrefetchCase={handlePrefetchCase}
-            onOpenCase={handleOpenCase}
-            onClearHeldCase={handleClearHeldCase}
-          />
-          <Card
-            variant='subtle'
-            padding='lg'
-            className='flex flex-col items-center justify-center border-dashed border-border/60 bg-card/20 py-20 text-center'
-          >
-            <p className='text-sm font-medium text-muted-foreground'>
-              No cases match your current filters.
-            </p>
           </Card>
-        </>
-      ) : (
-        <div className='relative'>
-          <CaseListSorting
-            caseSortBy={caseSortBy}
-            setCaseSortBy={setCaseSortBy}
-            caseSortOrder={caseSortOrder}
-            setCaseSortOrder={setCaseSortOrder}
-            isHierarchyLocked={isHierarchyLocked}
-            setIsHierarchyLocked={setIsHierarchyLocked}
-            caseShowNestedContent={caseShowNestedContent}
-            setCaseShowNestedContent={setCaseShowNestedContent}
-            handleSaveDefaults={handleSaveDefaults}
-            isSavingDefaults={isSavingDefaults}
-            className='mb-3'
-          />
-          <CaseListHeldDock
-            heldCaseFile={heldCaseFile}
-            isHierarchyLocked={isHierarchyLocked}
-            onPrefetchCase={handlePrefetchCase}
-            onOpenCase={handleOpenCase}
-            onClearHeldCase={handleClearHeldCase}
-          />
-          <CaseListNodeRuntimeProvider value={caseListNodeRuntimeValue}>
-            <FolderTreeViewportV2
-              controller={controller}
-              scrollToNodeRef={scrollToNodeRef}
-              enableDnd={!isHierarchyLocked}
-              canStartDrag={canStartDrag}
-              canDrop={canDrop}
-              rootDropUi={rootDropUi}
-              onNodeDrop={(input, treeController): void => {
-                void handleNodeDrop(input, treeController);
-              }}
-              renderNode={handleRenderNode}
+        ) : filteredCases.length === 0 ? (
+          <>
+            <CaseListSorting />
+            <CaseListHeldDock />
+            <Card
+              variant='subtle'
+              padding='lg'
+              className='flex flex-col items-center justify-center border-dashed border-border/60 bg-card/20 py-20 text-center'
+            >
+              <p className='text-sm font-medium text-muted-foreground'>
+                No cases match your current filters.
+              </p>
+            </Card>
+          </>
+        ) : (
+          <div className='relative'>
+            <CaseListSorting className='mb-3' />
+            <CaseListHeldDock />
+            <CaseListNodeRuntimeProvider value={caseListNodeRuntimeValue}>
+              <FolderTreeViewportV2
+                controller={controller}
+                scrollToNodeRef={scrollToNodeRef}
+                enableDnd={!isHierarchyLocked}
+                canStartDrag={canStartDrag}
+                canDrop={canDrop}
+                rootDropUi={rootDropUi}
+                onNodeDrop={(input, treeController): void => {
+                  void handleNodeDrop(input, treeController);
+                }}
+                renderNode={handleRenderNode}
+              />
+            </CaseListNodeRuntimeProvider>
+            <MasterTreeSettingsButton
+              instance={CASE_RESOLVER_CASES_MASTER_INSTANCE}
+              href={CASE_RESOLVER_CASES_MASTER_SETTINGS_HREF}
             />
-          </CaseListNodeRuntimeProvider>
-          <MasterTreeSettingsButton
-            instance={CASE_RESOLVER_CASES_MASTER_INSTANCE}
-            href={CASE_RESOLVER_CASES_MASTER_SETTINGS_HREF}
-          />
-        </div>
-      )}
-    </StandardDataTablePanel>
+          </div>
+        )}
+      </StandardDataTablePanel>
+    </CaseListPanelControlsContext.Provider>
   );
 });

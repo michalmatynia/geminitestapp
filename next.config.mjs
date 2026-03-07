@@ -68,12 +68,15 @@ const nextConfig = {
   serverExternalPackages: [
     '@prisma/client',
     'bcrypt',
+    'bullmq',
     // Turbopack struggles to bundle Playwright assets (ttf/html) pulled via playwright-core internals.
     // Keep Playwright external on the server bundle.
     'playwright',
     'playwright-core',
     // MongoDB driver pulls in Node built-ins that Turbopack currently struggles to bundle.
     'mongodb',
+    // instrumentation-winston lazily requires this optional transport at runtime.
+    '@opentelemetry/winston-transport',
   ],
   turbopack: {
     root: __dirname,
@@ -89,6 +92,14 @@ const nextConfig = {
       __dirname,
       'node_modules/three'
     );
+    config.resolve.alias['@opentelemetry/winston-transport'] = false;
+    config.ignoreWarnings = [
+      ...(config.ignoreWarnings ?? []),
+      {
+        module: /@opentelemetry\/instrumentation\/build\/esm\/platform\/node\/instrumentation\.js$/,
+        message: /Critical dependency: the request of a dependency is an expression/,
+      },
+    ];
     return config;
   },
   images: {

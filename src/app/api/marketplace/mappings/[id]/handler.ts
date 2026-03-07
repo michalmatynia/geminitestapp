@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getCategoryMappingRepository } from '@/features/integrations/server';
+import {
+  categoryMappingUpdateInputSchema,
+} from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { notFoundError } from '@/shared/errors/app-error';
-
-type UpdateMappingRequest = {
-  internalCategoryId?: string;
-  isActive?: boolean;
-};
 
 type Params = { id: string };
 
@@ -42,7 +41,14 @@ export async function PUT_handler(
   params: Params
 ): Promise<Response> {
   const { id } = params;
-  const body = (await request.json()) as UpdateMappingRequest;
+  const parsed = await parseJsonBody(request, categoryMappingUpdateInputSchema, {
+    allowEmpty: true,
+    logPrefix: 'marketplace.mappings.update',
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+  const body = parsed.data;
 
   const repo = await getCategoryMappingRepository();
 

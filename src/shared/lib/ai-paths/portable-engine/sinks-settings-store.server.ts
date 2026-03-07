@@ -1,23 +1,16 @@
 import 'server-only';
 
+import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/settings';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import { type PrismaSettingClient, canUsePrismaSettings } from './types';
 
-type PortablePathSettingsStoreSettingRecord = {
-  _id?: string;
-  key?: string;
-  value?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-};
-
 const readSettingsRawFromPrisma = async (key: string): Promise<string | null> => {
   if (!canUsePrismaSettings(prisma)) return null;
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const prismaClient = (prisma as any) as PrismaSettingClient;
+    const prismaClient = prisma as any as PrismaSettingClient;
     if (!prismaClient.setting || typeof prismaClient.setting.findUnique !== 'function') {
       return null;
     }
@@ -35,7 +28,7 @@ const writeSettingsRawToPrisma = async (key: string, raw: string): Promise<boole
   if (!canUsePrismaSettings(prisma)) return false;
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const prismaClient = (prisma as any) as PrismaSettingClient;
+    const prismaClient = prisma as any as PrismaSettingClient;
     if (!prismaClient.setting || typeof prismaClient.setting.upsert !== 'function') {
       return false;
     }
@@ -55,7 +48,7 @@ const readSettingsRawFromMongo = async (key: string): Promise<string | null> => 
   try {
     const mongo = await getMongoDb();
     const record = await mongo
-      .collection<PortablePathSettingsStoreSettingRecord>('settings')
+      .collection<MongoTimestampedStringSettingRecord<string, Date>>('settings')
       .findOne(
         {
           $or: [{ _id: key }, { key }],
@@ -73,25 +66,23 @@ const writeSettingsRawToMongo = async (key: string, raw: string): Promise<boolea
   try {
     const mongo = await getMongoDb();
     const now = new Date();
-    await mongo
-      .collection<PortablePathSettingsStoreSettingRecord>('settings')
-      .updateOne(
-        {
-          $or: [{ _id: key }, { key }],
+    await mongo.collection<MongoTimestampedStringSettingRecord<string, Date>>('settings').updateOne(
+      {
+        $or: [{ _id: key }, { key }],
+      },
+      {
+        $set: {
+          key,
+          value: raw,
+          updatedAt: now,
         },
-        {
-          $set: {
-            key,
-            value: raw,
-            updatedAt: now,
-          },
-          $setOnInsert: {
-            _id: key,
-            createdAt: now,
-          },
+        $setOnInsert: {
+          _id: key,
+          createdAt: now,
         },
-        { upsert: true }
-      );
+      },
+      { upsert: true }
+    );
     return true;
   } catch {
     return false;

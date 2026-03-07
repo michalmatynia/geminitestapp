@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 
 import { cn, type FolderTreeInstance } from '@/shared/utils';

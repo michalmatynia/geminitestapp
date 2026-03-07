@@ -1,29 +1,29 @@
 {
   "summary": {
-    "generatedAt": "2026-03-05T05:28:13.562Z",
-    "scannedFileCount": 1103,
+    "generatedAt": "2026-03-07T06:39:45.640Z",
+    "scannedFileCount": 1225,
     "duplicateNameClusterCount": 0,
     "propSignatureClusterCount": 0,
-    "tokenSimilarityClusterCount": 0,
+    "tokenSimilarityClusterCount": 1,
     "thinReExportWrapperCount": 3,
-    "totalOpportunities": 0,
+    "totalOpportunities": 1,
     "highPriorityCount": 0,
     "familyCounts": [
       {
         "family": "Unknown",
-        "count": 563
+        "count": 659
       },
       {
         "family": "Page",
-        "count": 137
+        "count": 146
       },
       {
         "family": "Section",
-        "count": 133
+        "count": 134
       },
       {
         "family": "Panel",
-        "count": 76
+        "count": 84
       },
       {
         "family": "Modal",
@@ -42,16 +42,16 @@
         "count": 17
       },
       {
-        "family": "List",
-        "count": 14
+        "family": "Card",
+        "count": 17
       },
       {
-        "family": "Card",
-        "count": 13
+        "family": "List",
+        "count": 15
       },
       {
         "family": "Form",
-        "count": 12
+        "count": 14
       },
       {
         "family": "Toolbar",
@@ -63,7 +63,7 @@
       },
       {
         "family": "Dialog",
-        "count": 4
+        "count": 5
       },
       {
         "family": "Sidebar",
@@ -81,19 +81,19 @@
     "domainCounts": [
       {
         "domain": "feature",
-        "count": 790
+        "count": 899
       },
       {
         "domain": "app",
-        "count": 160
+        "count": 170
       },
       {
         "domain": "shared-ui",
-        "count": 116
+        "count": 117
       },
       {
         "domain": "shared",
-        "count": 37
+        "count": 39
       }
     ]
   },
@@ -1885,6 +1885,132 @@
       "thinReExportWrapper": false
     },
     {
+      "path": "src/app/(admin)/admin/kangur/[...slug]/page.tsx",
+      "basename": "page.tsx",
+      "domain": "app",
+      "scope": "app",
+      "family": "Page",
+      "lines": 13,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@/features/kangur/admin/AdminKangurPageShell"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/app/(admin)/admin/kangur/builder/page.tsx",
+      "basename": "page.tsx",
+      "domain": "app",
+      "scope": "app",
+      "family": "Page",
+      "lines": 8,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@/features/kangur/admin/AdminKangurBuilderPage"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/app/(admin)/admin/kangur/content-manager/page.tsx",
+      "basename": "page.tsx",
+      "domain": "app",
+      "scope": "app",
+      "family": "Page",
+      "lines": 8,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@/features/kangur/admin/AdminKangurContentManagerPage"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/app/(admin)/admin/kangur/lessons-manager/page.tsx",
+      "basename": "page.tsx",
+      "domain": "app",
+      "scope": "app",
+      "family": "Page",
+      "lines": 8,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@/features/kangur/admin/AdminKangurLessonsManagerPage"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/app/(admin)/admin/kangur/page.tsx",
+      "basename": "page.tsx",
+      "domain": "app",
+      "scope": "app",
+      "family": "Page",
+      "lines": 8,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@/features/kangur/admin/AdminKangurPageShell"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/app/(admin)/admin/kangur/settings/page.tsx",
+      "basename": "page.tsx",
+      "domain": "app",
+      "scope": "app",
+      "family": "Page",
+      "lines": 8,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@/features/kangur/admin/AdminKangurSettingsPage"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/app/(admin)/admin/kangur/tests-manager/page.tsx",
+      "basename": "page.tsx",
+      "domain": "app",
+      "scope": "app",
+      "family": "Page",
+      "lines": 8,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@/features/kangur/admin/AdminKangurTestSuitesManagerPage"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
       "path": "src/app/(admin)/admin/not-found.tsx",
       "basename": "not-found.tsx",
       "domain": "app",
@@ -2659,10 +2785,8 @@
       "useClient": false,
       "imports": [
         "@/features/auth/auth",
-        "@/features/cms/components/frontend/CmsPageShell",
-        "@/features/cms/services/cms-menu-settings",
-        "@/features/cms/services/cms-repository",
-        "@/features/cms/services/cms-theme-settings",
+        "@/features/cms/public",
+        "@/features/cms/server",
         "@/features/products/server",
         "@/shared/contracts/cms",
         "@/shared/contracts/cms-theme",
@@ -2688,9 +2812,7 @@
       "imports": [
         "next/navigation",
         "react",
-        "@/features/cms/components/frontend/CmsPageRenderer",
-        "@/features/cms/components/frontend/CmsPageShell",
-        "@/features/cms/components/frontend/ThemeProvider",
+        "@/features/cms/public",
         "./slug-page-data",
         "next"
       ],
@@ -2726,11 +2848,10 @@
       "domain": "app",
       "scope": "app",
       "family": "Unknown",
-      "lines": 34,
+      "lines": 31,
       "useClient": false,
       "imports": [
-        "@/features/cms/components/frontend/CmsPageRenderer",
-        "@/features/cms/components/frontend/theme-styles"
+        "@/features/cms/public"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -2744,7 +2865,7 @@
       "domain": "app",
       "scope": "app",
       "family": "Unknown",
-      "lines": 219,
+      "lines": 227,
       "useClient": false,
       "imports": [
         "lucide-react",
@@ -2756,6 +2877,64 @@
       "uiPrimitiveImports": 0,
       "tokenSet": {},
       "propsSignature": "products|showFallbackHeader|themeSettings",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/app/(frontend)/kangur/[[...slug]]/page.tsx",
+      "basename": "page.tsx",
+      "domain": "app",
+      "scope": "app",
+      "family": "Page",
+      "lines": 13,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@/features/kangur/public"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/app/(frontend)/kangur/error.tsx",
+      "basename": "error.tsx",
+      "domain": "app",
+      "scope": "app",
+      "family": "Unknown",
+      "lines": 50,
+      "useClient": true,
+      "imports": [
+        "next/link",
+        "react",
+        "@/features/kangur/observability/client"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "error|reset",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/app/(frontend)/kangur/login/page.tsx",
+      "basename": "page.tsx",
+      "domain": "app",
+      "scope": "app",
+      "family": "Page",
+      "lines": 153,
+      "useClient": true,
+      "imports": [
+        "next/link",
+        "react",
+        "next/navigation",
+        "@/features/kangur/services/kangur-active-learner",
+        "@/shared/lib/security/csrf-client"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
       "thinReExportWrapper": false
     },
     {
@@ -2807,8 +2986,7 @@
         "next/headers",
         "next/navigation",
         "react",
-        "@/features/cms/services/cms-repository",
-        "@/features/cms/services/cms-domain",
+        "@/features/cms/server",
         "./HomeContent",
         "./home-helpers",
         "./home-timing"
@@ -2831,9 +3009,7 @@
         "next/navigation",
         "react",
         "@/features/auth/auth",
-        "@/features/cms/components/frontend/CmsPageRenderer",
-        "@/features/cms/components/frontend/CmsPageShell",
-        "@/features/cms/components/frontend/ThemeProvider",
+        "@/features/cms/public",
         "./preview-page-data",
         "next"
       ],
@@ -2849,12 +3025,13 @@
       "domain": "app",
       "scope": "app",
       "family": "Page",
-      "lines": 193,
+      "lines": 189,
       "useClient": true,
       "imports": [
         "react",
         "@/features/foldertree/v2",
-        "@/shared/utils/master-folder-tree-contract"
+        "@/shared/utils/master-folder-tree-contract",
+        "@/shared/hooks/use-interval"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -2886,8 +3063,8 @@
       "domain": "app",
       "scope": "app",
       "family": "Unknown",
-      "lines": 17,
-      "useClient": true,
+      "lines": 15,
+      "useClient": false,
       "imports": [
         "@/features/auth/",
         "@/shared/ui/QueryErrorBoundary"
@@ -3077,7 +3254,7 @@
         "@/features/admin/constants/admin-menu-settings",
         "@/features/admin/context/AdminLayoutContext",
         "@/features/ai/chatbot/hooks/useChatbotMutations",
-        "@/features/ai/chatbot/hooks/useChatbotQueries",
+        "@/features/ai/chatbot/public",
         "@/shared/contracts/admin",
         "@/shared/providers/SettingsStoreProvider",
         "@/shared/ui",
@@ -3120,7 +3297,7 @@
       "domain": "feature",
       "scope": "feature:admin",
       "family": "Unknown",
-      "lines": 577,
+      "lines": 603,
       "useClient": false,
       "imports": [
         "lucide-react",
@@ -3162,7 +3339,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Section",
-      "lines": 89,
+      "lines": 93,
       "useClient": true,
       "imports": [
         "@/features/ai/agentcreator/hooks/useAgentCreatorSettings",
@@ -3320,7 +3497,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 311,
+      "lines": 324,
       "useClient": true,
       "imports": [
         "react",
@@ -3430,7 +3607,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 584,
+      "lines": 564,
       "useClient": true,
       "imports": [
         "react",
@@ -3445,7 +3622,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "node|ui",
+      "propsSignature": null,
       "thinReExportWrapper": false
     },
     {
@@ -3513,12 +3690,14 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 839,
+      "lines": 968,
       "useClient": true,
       "imports": [
         "react",
         "next/navigation",
         "@/shared/lib/ai-paths",
+        "@/shared/contracts/ai-paths",
+        "@/shared/lib/ai-paths/optimistic-run-queue",
         "@/shared/lib/ai-paths/settings-store-client",
         "@/shared/lib/query-factories-v2",
         "@/shared/lib/query-keys",
@@ -3539,7 +3718,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 113,
+      "lines": 115,
       "useClient": true,
       "imports": [
         "react",
@@ -3560,7 +3739,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Panel",
-      "lines": 94,
+      "lines": 86,
       "useClient": true,
       "imports": [
         "react",
@@ -3679,13 +3858,12 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Panel",
-      "lines": 181,
+      "lines": 330,
       "useClient": true,
       "imports": [
         "lucide-react",
         "react",
-        "@/shared/ui",
-        "@/shared/utils"
+        "@/shared/ui"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -3699,11 +3877,12 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 218,
+      "lines": 263,
       "useClient": false,
       "imports": [
         "@/shared/lib/ai-paths",
-        "@/shared/ui"
+        "@/shared/ui",
+        "./run-history-entry-actions"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -3775,7 +3954,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 77,
+      "lines": 79,
       "useClient": true,
       "imports": [
         "react",
@@ -3821,7 +4000,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 332,
+      "lines": 452,
       "useClient": true,
       "imports": [
         "react",
@@ -3865,11 +4044,14 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 564,
+      "lines": 889,
       "useClient": true,
       "imports": [
         "react",
         "react-dom",
+        "@/shared/lib/ai-paths",
+        "@/shared/lib/ai-paths/core/runtime/runtime-kernel-config",
+        "@/shared/lib/ai-paths/settings-store-client",
         "@/shared/ui",
         "../AiPathsSettingsPageContext",
         "../../../context",
@@ -3974,7 +4156,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 39,
+      "lines": 50,
       "useClient": true,
       "imports": [
         "react",
@@ -4054,13 +4236,13 @@
         "@/shared/lib/ai-paths",
         "./canvas-svg-node-utils",
         "@/features/ai/ai-paths/utils/ui-utils",
-        "../../CanvasBoard.utils",
-        "../../canvas-board-connectors"
+        "../../canvas-board-connectors",
+        "../../CanvasBoardUIContext"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "buildConnectorKey|connectorHitRadius|getConnectorInfo|hoveredConnectorKey|incomingEdgePortSet|node|onCompleteConnection|onConnectorHover|onConnectorLeave|onDisconnectPort|onReconnectInput|onStartConnection|pinnedConnectorKey|setHoveredConnectorKey|setPinnedConnectorKey|showPortLabels",
+      "propsSignature": "buildConnectorKey|connectorHitRadius|getConnectorInfo|incomingEdgePortSet|node|showPortLabels",
       "thinReExportWrapper": false
     },
     {
@@ -4088,7 +4270,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 477,
+      "lines": 498,
       "useClient": true,
       "imports": [
         "react",
@@ -4163,7 +4345,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 216,
+      "lines": 237,
       "useClient": true,
       "imports": [
         "react",
@@ -4184,7 +4366,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 67,
+      "lines": 88,
       "useClient": true,
       "imports": [
         "react",
@@ -4263,7 +4445,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 114,
+      "lines": 116,
       "useClient": true,
       "imports": [
         "react",
@@ -4287,7 +4469,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 562,
+      "lines": 575,
       "useClient": false,
       "imports": [
         "react",
@@ -4297,8 +4479,10 @@
         "./job-queue-running-indicator",
         "./playwright-artifacts",
         "./RunHistoryEntries",
+        "./run-history-entry-actions",
         "./JobQueueContext",
-        "./run-history-utils"
+        "./run-history-utils",
+        "../context"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -4312,8 +4496,8 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 46,
-      "useClient": false,
+      "lines": 50,
+      "useClient": true,
       "imports": [
         "react",
         "@/shared/ui"
@@ -4371,7 +4555,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Section",
-      "lines": 556,
+      "lines": 560,
       "useClient": true,
       "imports": [
         "react",
@@ -4448,7 +4632,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Section",
-      "lines": 779,
+      "lines": 784,
       "useClient": true,
       "imports": [
         "react",
@@ -4489,7 +4673,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Section",
-      "lines": 147,
+      "lines": 142,
       "useClient": false,
       "imports": [
         "lucide-react",
@@ -4511,7 +4695,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 271,
+      "lines": 265,
       "useClient": true,
       "imports": [
         "react",
@@ -4583,7 +4767,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 93,
+      "lines": 86,
       "useClient": true,
       "imports": [
         "react",
@@ -4621,7 +4805,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 216,
+      "lines": 208,
       "useClient": true,
       "imports": [
         "react",
@@ -4699,7 +4883,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 104,
+      "lines": 97,
       "useClient": true,
       "imports": [
         "react"
@@ -4716,7 +4900,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Tab",
-      "lines": 320,
+      "lines": 433,
       "useClient": true,
       "imports": [
         "react",
@@ -5069,7 +5253,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Section",
-      "lines": 132,
+      "lines": 136,
       "useClient": true,
       "imports": [
         "react",
@@ -5132,7 +5316,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Section",
-      "lines": 240,
+      "lines": 244,
       "useClient": true,
       "imports": [
         "@/shared/lib/ai-paths",
@@ -5171,7 +5355,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Section",
-      "lines": 250,
+      "lines": 254,
       "useClient": true,
       "imports": [
         "react",
@@ -5210,10 +5394,11 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Tab",
-      "lines": 58,
+      "lines": 68,
       "useClient": true,
       "imports": [
         "@/features/ai/ai-paths/components/RunHistoryEntries",
+        "@/features/ai/ai-paths/components/run-history-entry-actions",
         "@/shared/ui",
         "../../AiPathConfigContext",
         "../../../context"
@@ -5274,7 +5459,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Section",
-      "lines": 464,
+      "lines": 469,
       "useClient": true,
       "imports": [
         "@/shared/lib/ai-paths",
@@ -5293,7 +5478,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Section",
-      "lines": 468,
+      "lines": 473,
       "useClient": true,
       "imports": [
         "react",
@@ -5316,14 +5501,13 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Section",
-      "lines": 669,
+      "lines": 674,
       "useClient": true,
       "imports": [
         "react",
         "@/shared/lib/ai-paths",
         "@/shared/lib/ai-paths/settings-store-client",
         "@/shared/lib/documentation",
-        "@/features/tooltip-engine",
         "@/shared/lib/query-factories-v2",
         "@/shared/lib/query-keys",
         "@/shared/ui",
@@ -5350,7 +5534,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 101,
+      "lines": 107,
       "useClient": false,
       "imports": [
         "lucide-react",
@@ -5407,7 +5591,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Section",
-      "lines": 347,
+      "lines": 351,
       "useClient": true,
       "imports": [
         "@/shared/lib/ai-paths",
@@ -5426,7 +5610,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Section",
-      "lines": 122,
+      "lines": 126,
       "useClient": true,
       "imports": [
         "@/shared/lib/ai-paths",
@@ -5485,7 +5669,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Section",
-      "lines": 101,
+      "lines": 105,
       "useClient": true,
       "imports": [
         "react",
@@ -5525,7 +5709,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Section",
-      "lines": 219,
+      "lines": 224,
       "useClient": true,
       "imports": [
         "react",
@@ -5631,7 +5815,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Section",
-      "lines": 228,
+      "lines": 233,
       "useClient": true,
       "imports": [
         "next/image",
@@ -5652,7 +5836,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "List",
-      "lines": 68,
+      "lines": 73,
       "useClient": true,
       "imports": [
         "react",
@@ -5708,7 +5892,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Section",
-      "lines": 86,
+      "lines": 88,
       "useClient": true,
       "imports": [
         "react",
@@ -5765,7 +5949,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 352,
+      "lines": 358,
       "useClient": true,
       "imports": [
         "react",
@@ -5812,16 +5996,19 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 500,
+      "lines": 517,
       "useClient": true,
       "imports": [
         "react",
         "@/shared/contracts/ai-paths",
+        "@/shared/lib/ai-paths/error-reporting",
         "@/shared/ui",
         "@/shared/ui/templates/modals/DetailModal",
         "./job-queue-panel-utils",
         "./playwright-artifacts",
         "./run-history-utils",
+        "./run-history-entry-actions",
+        "./run-trace-utils",
         "./run-timeline",
         "./RunHistoryEntries",
         "../context"
@@ -5838,13 +6025,15 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 469,
+      "lines": 823,
       "useClient": true,
       "imports": [
         "react",
         "@/shared/lib/ai-paths",
         "@/shared/ui",
         "./run-history-utils",
+        "./run-history-entry-actions",
+        "./run-trace-utils",
         "./RunHistoryEntries",
         "../context"
       ],
@@ -5860,12 +6049,13 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 734,
+      "lines": 635,
       "useClient": true,
       "imports": [
         "react",
         "@/shared/lib/ai-paths",
-        "@/shared/ui"
+        "@/shared/ui",
+        "./run-trace-utils"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -5899,7 +6089,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 134,
+      "lines": 130,
       "useClient": true,
       "imports": [
         "react",
@@ -5944,7 +6134,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Panel",
-      "lines": 380,
+      "lines": 396,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -6088,7 +6278,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 106,
+      "lines": 150,
       "useClient": true,
       "imports": [
         "react",
@@ -6163,7 +6353,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 230,
+      "lines": 243,
       "useClient": true,
       "imports": [
         "react",
@@ -6341,7 +6531,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Panel",
-      "lines": 133,
+      "lines": 134,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -6399,7 +6589,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Tab",
-      "lines": 704,
+      "lines": 703,
       "useClient": true,
       "imports": [
         "react",
@@ -6466,8 +6656,8 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 59,
-      "useClient": true,
+      "lines": 57,
+      "useClient": false,
       "imports": [
         "react",
         "@/shared/ui"
@@ -6747,7 +6937,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Panel",
-      "lines": 828,
+      "lines": 859,
       "useClient": true,
       "imports": [
         "@tanstack/react-query",
@@ -6776,7 +6966,8 @@
         "./sequencing/useSequenceMonitor",
         "./sequencing/SequenceRuntimeCard",
         "./sequencing/SequencePresetsCard",
-        "./sequencing/SequenceRunCard"
+        "./sequencing/SequenceRunCard",
+        "./sequencing/SequencingPanelContext"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -6864,7 +7055,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 50,
+      "lines": 52,
       "useClient": true,
       "imports": [
         "@/shared/utils",
@@ -6916,12 +7107,12 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "List",
-      "lines": 727,
+      "lines": 725,
       "useClient": true,
       "imports": [
         "lucide-react",
         "react",
-        "@/features/ai/image-studio/studio-settings",
+        "@/features/ai/image-studio/utils/studio-settings",
         "@/shared/contracts/image-studio",
         "@/shared/hooks/use-settings",
         "@/shared/ui",
@@ -6944,7 +7135,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 296,
+      "lines": 291,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -6965,7 +7156,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 39,
+      "lines": 41,
       "useClient": true,
       "imports": [
         "react",
@@ -7341,7 +7532,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 514,
+      "lines": 516,
       "useClient": true,
       "imports": [
         "react",
@@ -7383,7 +7574,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Section",
-      "lines": 367,
+      "lines": 369,
       "useClient": true,
       "imports": [
         "react",
@@ -7487,7 +7678,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 327,
+      "lines": 325,
       "useClient": true,
       "imports": [
         "react",
@@ -7619,7 +7810,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 58,
+      "lines": 60,
       "useClient": true,
       "imports": [
         "react",
@@ -7662,7 +7853,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 32,
+      "lines": 34,
       "useClient": true,
       "imports": [
         "react"
@@ -7679,7 +7870,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Section",
-      "lines": 177,
+      "lines": 179,
       "useClient": true,
       "imports": [
         "react",
@@ -7920,7 +8111,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 249,
+      "lines": 246,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -8250,14 +8441,14 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Card",
-      "lines": 127,
+      "lines": 108,
       "useClient": true,
       "imports": [
         "react",
         "lucide-react",
         "@/shared/ui",
         "../StudioCard",
-        "./sequencing-types"
+        "./SequencingPanelContext"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -8291,7 +8482,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Card",
-      "lines": 620,
+      "lines": 607,
       "useClient": false,
       "imports": [
         "lucide-react",
@@ -8301,12 +8492,13 @@
         "./SequenceStepEditor",
         "./SequenceStepEditorRuntimeContext",
         "./sequencing-constants",
-        "@/features/ai/image-studio/utils/studio-settings"
+        "@/features/ai/image-studio/utils/studio-settings",
+        "./SequencingPanelContext"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "activeGenerationModel|cropShapeGeometryById|cropShapeOptions|editableSequenceSteps|enabledRuntimeSteps|mutateSteps|sequencerFieldTooltipsEnabled",
+      "propsSignature": null,
       "thinReExportWrapper": false
     },
     {
@@ -8329,6 +8521,25 @@
       "uiPrimitiveImports": 0,
       "tokenSet": {},
       "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/ai/image-studio/components/sequencing/SequencingPanelContext.tsx",
+      "basename": "SequencingPanelContext.tsx",
+      "domain": "feature",
+      "scope": "feature:ai",
+      "family": "Unknown",
+      "lines": 65,
+      "useClient": true,
+      "imports": [
+        "react",
+        "./sequencing-types",
+        "@/features/ai/image-studio/utils/studio-settings"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "children|value",
       "thinReExportWrapper": false
     },
     {
@@ -8485,8 +8696,8 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 226,
-      "useClient": false,
+      "lines": 230,
+      "useClient": true,
       "imports": [
         "react",
         "@/shared/ui",
@@ -8759,7 +8970,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Card",
-      "lines": 29,
+      "lines": 67,
       "useClient": false,
       "imports": [
         "react",
@@ -8795,6 +9006,25 @@
     {
       "path": "src/features/ai/insights/components/LogInsightsPanel.tsx",
       "basename": "LogInsightsPanel.tsx",
+      "domain": "feature",
+      "scope": "feature:ai",
+      "family": "Panel",
+      "lines": 22,
+      "useClient": true,
+      "imports": [
+        "react",
+        "./InsightsResultPanel",
+        "../context/InsightsContext"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/ai/insights/components/RuntimeAnalyticsInsightsPanel.tsx",
+      "basename": "RuntimeAnalyticsInsightsPanel.tsx",
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Panel",
@@ -8858,7 +9088,7 @@
       "domain": "feature",
       "scope": "feature:auth",
       "family": "Modal",
-      "lines": 100,
+      "lines": 94,
       "useClient": true,
       "imports": [
         "react",
@@ -8878,7 +9108,7 @@
       "domain": "feature",
       "scope": "feature:auth",
       "family": "Modal",
-      "lines": 122,
+      "lines": 116,
       "useClient": true,
       "imports": [
         "react",
@@ -8899,7 +9129,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Panel",
-      "lines": 271,
+      "lines": 275,
       "useClient": true,
       "imports": [
         "react",
@@ -8940,7 +9170,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Panel",
-      "lines": 816,
+      "lines": 806,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -8978,7 +9208,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Unknown",
-      "lines": 441,
+      "lines": 445,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -9013,7 +9243,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Unknown",
-      "lines": 285,
+      "lines": 287,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -9034,7 +9264,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Unknown",
-      "lines": 479,
+      "lines": 477,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -9055,7 +9285,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Unknown",
-      "lines": 256,
+      "lines": 254,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -9077,7 +9307,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Unknown",
-      "lines": 460,
+      "lines": 469,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -9154,7 +9384,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Unknown",
-      "lines": 505,
+      "lines": 515,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -9186,7 +9416,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Modal",
-      "lines": 491,
+      "lines": 500,
       "useClient": false,
       "imports": [
         "lucide-react",
@@ -9212,7 +9442,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Unknown",
-      "lines": 318,
+      "lines": 321,
       "useClient": true,
       "imports": [
         "react",
@@ -9240,7 +9470,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Unknown",
-      "lines": 501,
+      "lines": 505,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -9309,7 +9539,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Header",
-      "lines": 257,
+      "lines": 268,
       "useClient": true,
       "imports": [
         "react",
@@ -9324,7 +9554,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "onSearchChange|searchQuery",
+      "propsSignature": "onSearchChange|searchEnabled|searchQuery",
       "thinReExportWrapper": false
     },
     {
@@ -9377,7 +9607,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Unknown",
-      "lines": 177,
+      "lines": 210,
       "useClient": true,
       "imports": [
         "react",
@@ -9418,7 +9648,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Unknown",
-      "lines": 335,
+      "lines": 341,
       "useClient": true,
       "imports": [
         "react",
@@ -9445,7 +9675,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Panel",
-      "lines": 166,
+      "lines": 186,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -9453,6 +9683,8 @@
         "@/features/foldertree/v2/search",
         "@/shared/ui",
         "@/shared/contracts/case-resolver",
+        "@/shared/hooks/use-folder-tree-profile",
+        "@/shared/utils/folder-tree-profiles-v2",
         "./case-resolver-canvas-utils",
         "./NodeFileWorkspaceContext",
         "../relation-search/components/RelationTreeBrowser",
@@ -9491,7 +9723,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Unknown",
-      "lines": 118,
+      "lines": 168,
       "useClient": true,
       "imports": [
         "react",
@@ -9535,7 +9767,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Header",
-      "lines": 177,
+      "lines": 175,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -9599,8 +9831,8 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Unknown",
-      "lines": 71,
-      "useClient": true,
+      "lines": 69,
+      "useClient": false,
       "imports": [
         "react",
         "lucide-react",
@@ -9619,7 +9851,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Unknown",
-      "lines": 438,
+      "lines": 454,
       "useClient": true,
       "imports": [
         "react",
@@ -9643,7 +9875,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Unknown",
-      "lines": 57,
+      "lines": 68,
       "useClient": true,
       "imports": [
         "react",
@@ -9662,8 +9894,8 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Unknown",
-      "lines": 124,
-      "useClient": true,
+      "lines": 122,
+      "useClient": false,
       "imports": [
         "react",
         "lucide-react",
@@ -9682,8 +9914,8 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Modal",
-      "lines": 37,
-      "useClient": true,
+      "lines": 35,
+      "useClient": false,
       "imports": [
         "react",
         "@/shared/contracts/ui",
@@ -9702,7 +9934,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Unknown",
-      "lines": 272,
+      "lines": 280,
       "useClient": true,
       "imports": [
         "react",
@@ -9742,7 +9974,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Modal",
-      "lines": 41,
+      "lines": 46,
       "useClient": true,
       "imports": [
         "react",
@@ -9761,7 +9993,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Unknown",
-      "lines": 600,
+      "lines": 603,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -9857,7 +10089,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Unknown",
-      "lines": 607,
+      "lines": 612,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -9882,12 +10114,14 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Panel",
-      "lines": 160,
+      "lines": 173,
       "useClient": true,
       "imports": [
         "react",
         "@/shared/utils",
         "@/shared/lib/react/createStrictContext",
+        "@/shared/hooks/use-folder-tree-profile",
+        "@/shared/utils/folder-tree-profiles-v2",
         "@/shared/contracts/case-resolver",
         "../context/DocumentRelationSearchContext",
         "../../components/CaseResolverNodeFileUtils",
@@ -9938,6 +10172,7 @@
         "@/features/foldertree/v2/search",
         "@/shared/utils/master-folder-tree-contract",
         "@/shared/utils/folder-tree-profiles-v2",
+        "@/shared/hooks/use-folder-tree-profile",
         "../../workspace-persistence",
         "./RelationTreeNodeItem",
         "./RelationTreeNodeRuntimeContext",
@@ -9996,7 +10231,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Unknown",
-      "lines": 40,
+      "lines": 43,
       "useClient": true,
       "imports": [
         "react",
@@ -10016,7 +10251,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Dialog",
-      "lines": 125,
+      "lines": 123,
       "useClient": true,
       "imports": [
         "react",
@@ -10058,7 +10293,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Unknown",
-      "lines": 111,
+      "lines": 116,
       "useClient": true,
       "imports": [
         "react",
@@ -10081,7 +10316,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Unknown",
-      "lines": 27,
+      "lines": 40,
       "useClient": true,
       "imports": [
         "react",
@@ -10402,16 +10637,40 @@
       "thinReExportWrapper": false
     },
     {
+      "path": "src/features/cms/components/frontend/blocks/AppEmbedBlock.test.tsx",
+      "basename": "AppEmbedBlock.test.tsx",
+      "domain": "feature",
+      "scope": "feature:cms",
+      "family": "Unknown",
+      "lines": 164,
+      "useClient": false,
+      "imports": [
+        "@testing-library/react",
+        "vitest",
+        "@/features/kangur/config/routing",
+        "@/features/cms/components/frontend/blocks/AppEmbedBlock",
+        "@/features/cms/components/frontend/blocks/BlockContext"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
       "path": "src/features/cms/components/frontend/blocks/AppEmbedBlock.tsx",
       "basename": "AppEmbedBlock.tsx",
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 50,
+      "lines": 156,
       "useClient": true,
       "imports": [
         "react",
+        "next/navigation",
         "@/features/app-embeds/lib/constants",
+        "@/features/kangur/config/routing",
+        "@/features/kangur/public",
         "@/shared/ui",
         "./BlockContext"
       ],
@@ -10494,6 +10753,36 @@
       "uiPrimitiveImports": 0,
       "tokenSet": {},
       "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx",
+      "basename": "KangurWidgetBlock.tsx",
+      "domain": "feature",
+      "scope": "feature:cms",
+      "family": "Unknown",
+      "lines": 95,
+      "useClient": true,
+      "imports": [
+        "react",
+        "@/features/kangur/cms-builder/project",
+        "@/features/kangur/ui/components/KangurAssignmentSpotlight",
+        "@/features/kangur/ui/components/Leaderboard",
+        "@/features/kangur/ui/components/PlayerProgressCard",
+        "@/features/kangur/ui/components/KangurPriorityAssignments",
+        "@/features/kangur/ui/hooks/useKangurProgressState",
+        "@/features/kangur/ui/context/KangurRoutingContext",
+        "@/features/kangur/ui/pages/Game",
+        "@/features/kangur/ui/pages/LearnerProfile",
+        "@/features/kangur/ui/pages/Lessons",
+        "@/features/kangur/ui/pages/ParentDashboard",
+        "@/shared/ui",
+        "./BlockContext"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "description|title",
       "thinReExportWrapper": false
     },
     {
@@ -10658,7 +10947,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 100,
+      "lines": 103,
       "useClient": true,
       "imports": [
         "react",
@@ -10667,6 +10956,7 @@
         "../blocks/ButtonBlock",
         "../blocks/HeadingBlock",
         "../blocks/ImageBlock",
+        "../blocks/KangurWidgetBlock",
         "../blocks/MiscellaneousBlocks",
         "../blocks/Model3DBlock",
         "../blocks/RichTextBlock",
@@ -10797,7 +11087,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Section",
-      "lines": 248,
+      "lines": 227,
       "useClient": true,
       "imports": [
         "react",
@@ -11099,7 +11389,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 39,
+      "lines": 35,
       "useClient": true,
       "imports": [
         "react",
@@ -11172,7 +11462,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 139,
+      "lines": 125,
       "useClient": true,
       "imports": [
         "react",
@@ -11459,7 +11749,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Panel",
-      "lines": 138,
+      "lines": 168,
       "useClient": false,
       "imports": [
         "lucide-react",
@@ -11513,7 +11803,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 144,
+      "lines": 140,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -11568,8 +11858,8 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 59,
-      "useClient": true,
+      "lines": 57,
+      "useClient": false,
       "imports": [
         "react",
         "@/shared/ui"
@@ -11610,7 +11900,7 @@
       "imports": [
         "lucide-react",
         "react",
-        "@/features/cms",
+        "@/features/cms/components/CmsDomainSelector",
         "@/shared/utils/observability/client-error-logger",
         "@/shared/contracts/cms",
         "@/shared/contracts/cms-theme",
@@ -11670,7 +11960,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 658,
+      "lines": 731,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -11678,6 +11968,8 @@
         "@/features/cms/components/shared/EventEffectsWrapper",
         "@/features/cms/utils/custom-css",
         "@/features/cms/utils/page-builder-normalization",
+        "@/features/app-embeds/lib/constants",
+        "@/features/kangur/cms-builder/project",
         "@/features/gsap",
         "@/shared/contracts/cms",
         "@/shared/lib/react/createStrictContext",
@@ -11810,7 +12102,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 142,
+      "lines": 141,
       "useClient": true,
       "imports": [
         "react",
@@ -11822,7 +12114,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": null,
+      "propsSignature": "children|storageKey",
       "thinReExportWrapper": false
     },
     {
@@ -11831,7 +12123,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Panel",
-      "lines": 242,
+      "lines": 238,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -11934,7 +12226,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 90,
+      "lines": 81,
       "useClient": true,
       "imports": [
         "react",
@@ -12055,14 +12347,13 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Section",
-      "lines": 228,
+      "lines": 225,
       "useClient": true,
       "imports": [
         "react",
         "lucide-react",
         "@/shared/ui",
         "@/shared/lib/documentation",
-        "@/features/tooltip-engine",
         "@/features/gsap",
         "../AnimationConfigContext",
         "../../../../hooks/usePageBuilderContext",
@@ -12080,14 +12371,13 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Section",
-      "lines": 212,
+      "lines": 209,
       "useClient": true,
       "imports": [
         "react",
         "lucide-react",
         "@/shared/ui",
         "@/shared/lib/documentation",
-        "@/features/tooltip-engine",
         "@/features/gsap",
         "../AnimationConfigContext",
         "../../../../hooks/usePageBuilderContext",
@@ -12145,7 +12435,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 530,
+      "lines": 516,
       "useClient": true,
       "imports": [
         "react",
@@ -12167,7 +12457,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 874,
+      "lines": 868,
       "useClient": true,
       "imports": [
         "react",
@@ -12193,7 +12483,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 261,
+      "lines": 260,
       "useClient": true,
       "imports": [
         "react",
@@ -12233,7 +12523,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 512,
+      "lines": 514,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -12302,7 +12592,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 138,
+      "lines": 123,
       "useClient": true,
       "imports": [
         "react",
@@ -12357,12 +12647,12 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Section",
-      "lines": 489,
+      "lines": 454,
       "useClient": true,
       "imports": [
         "lucide-react",
         "react",
-        "@/features/cms/components/frontend/theme-styles",
+        "@/features/cms/public",
         "@/features/cms/components/frontend/CmsPageContext",
         "@/features/cms/components/frontend/media-styles-context",
         "@/features/cms/components/page-builder/preview/context/BlockContext",
@@ -12387,7 +12677,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 53,
+      "lines": 47,
       "useClient": true,
       "imports": [
         "react",
@@ -12408,16 +12698,19 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 60,
+      "lines": 55,
       "useClient": true,
       "imports": [
         "react",
+        "@/features/cms/public",
+        "@/features/cms/components/frontend/CmsPageContext",
+        "@/features/cms/components/page-builder/preview/context/PreviewSectionContext",
         "@/shared/utils"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "children|className|divider|dividerPosition|onSelect|renderSectionActions|sectionId|sectionStyles|selectedRing|topSlot|wrapInspector",
+      "propsSignature": "children|className|dividerPosition|topSlot",
       "thinReExportWrapper": false
     },
     {
@@ -12446,13 +12739,13 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 252,
+      "lines": 200,
       "useClient": true,
       "imports": [
         "lucide-react",
         "next/image",
         "react",
-        "@/features/cms/components/frontend/theme-styles",
+        "@/features/cms/public",
         "@/features/cms/components/frontend/CmsPageContext",
         "@/features/cms/components/frontend/media-styles-context",
         "@/features/cms/components/page-builder/preview/context/PreviewEditorContext",
@@ -12473,11 +12766,11 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Section",
-      "lines": 325,
+      "lines": 322,
       "useClient": true,
       "imports": [
         "react",
-        "@/features/cms/components/frontend/theme-styles",
+        "@/features/cms/public",
         "@/features/cms/components/frontend/CmsPageContext",
         "@/features/cms/components/page-builder/preview/context/BlockContext",
         "@/features/cms/components/page-builder/preview/context/PreviewEditorContext",
@@ -12499,7 +12792,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Tab",
-      "lines": 288,
+      "lines": 227,
       "useClient": true,
       "imports": [
         "react",
@@ -12512,8 +12805,7 @@
         "./field-group-helpers",
         "../section-registry",
         "../../../hooks/usePageBuilderContext",
-        "../context/ComponentSettingsContext",
-        "@/shared/contracts/cms"
+        "../context/ComponentSettingsContext"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -12656,7 +12948,6 @@
         "lucide-react",
         "@/shared/ui",
         "@/shared/lib/documentation",
-        "@/features/tooltip-engine",
         "../../../hooks/page-builder/PageStateContext",
         "../../../hooks/page-builder/PageDispatchContext",
         "../context/ComponentSettingsContext",
@@ -12742,7 +13033,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Tab",
-      "lines": 194,
+      "lines": 197,
       "useClient": true,
       "imports": [
         "react",
@@ -12772,7 +13063,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 72,
+      "lines": 43,
       "useClient": true,
       "imports": [
         "react"
@@ -12847,7 +13138,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 178,
+      "lines": 176,
       "useClient": true,
       "imports": [
         "react",
@@ -12855,7 +13146,8 @@
         "../CompositeFieldContext",
         "../settings-field-constants",
         "@/shared/contracts/cms",
-        "@/shared/utils/object-utils"
+        "@/shared/utils/object-utils",
+        "../../../shared-fields"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -13010,14 +13302,15 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 416,
+      "lines": 421,
       "useClient": true,
       "imports": [
-        "lucide-react",
-        "next/image",
         "react",
+        "@/features/products/components/ProductImageManager",
         "@/features/viewer3d",
         "@/features/viewer3d/hooks/useAsset3dQueries",
+        "@/shared/contracts/image-slots",
+        "@/shared/contracts/product-image-manager",
         "@/shared/contracts/viewer3d",
         "@/shared/ui",
         "@/shared/utils",
@@ -13061,7 +13354,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Section",
-      "lines": 133,
+      "lines": 129,
       "useClient": true,
       "imports": [
         "react",
@@ -13081,7 +13374,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Section",
-      "lines": 131,
+      "lines": 129,
       "useClient": true,
       "imports": [
         "react",
@@ -13317,7 +13610,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 264,
+      "lines": 257,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -13327,6 +13620,7 @@
         "./tree-constants",
         "./TreeColumnContext",
         "./TreeParentBlockContext",
+        "./TreeRowContext",
         "./TreeSectionContext",
         "../../../hooks/useDragStateExtract",
         "../../../hooks/usePageBuilderContext",
@@ -13346,7 +13640,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 274,
+      "lines": 273,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -13421,7 +13715,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 130,
+      "lines": 116,
       "useClient": true,
       "imports": [
         "react",
@@ -13441,7 +13735,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 278,
+      "lines": 280,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -13473,7 +13767,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 282,
+      "lines": 281,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -13505,12 +13799,11 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 215,
+      "lines": 203,
       "useClient": true,
       "imports": [
         "react",
         "@/shared/contracts/cms",
-        "@/shared/utils",
         "./ComponentTreePanelContext",
         "../../../hooks/useDragStateContext",
         "../../../hooks/useTreeActionsContext",
@@ -13530,7 +13823,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 345,
+      "lines": 344,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -13566,7 +13859,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 363,
+      "lines": 362,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -13615,7 +13908,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 39,
+      "lines": 34,
       "useClient": true,
       "imports": [
         "react"
@@ -13649,7 +13942,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 38,
+      "lines": 36,
       "useClient": true,
       "imports": [
         "react"
@@ -13666,7 +13959,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Picker",
-      "lines": 97,
+      "lines": 95,
       "useClient": true,
       "imports": [
         "react",
@@ -13688,7 +13981,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 85,
+      "lines": 82,
       "useClient": true,
       "imports": [
         "react",
@@ -13733,7 +14026,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Modal",
-      "lines": 170,
+      "lines": 173,
       "useClient": true,
       "imports": [
         "react",
@@ -13798,7 +14091,7 @@
       "domain": "feature",
       "scope": "feature:data-import-export",
       "family": "Section",
-      "lines": 109,
+      "lines": 111,
       "useClient": true,
       "imports": [
         "react",
@@ -13861,7 +14154,7 @@
       "domain": "feature",
       "scope": "feature:data-import-export",
       "family": "Section",
-      "lines": 229,
+      "lines": 235,
       "useClient": true,
       "imports": [
         "react",
@@ -13881,7 +14174,7 @@
       "domain": "feature",
       "scope": "feature:data-import-export",
       "family": "Section",
-      "lines": 81,
+      "lines": 82,
       "useClient": true,
       "imports": [
         "react",
@@ -13901,7 +14194,7 @@
       "domain": "feature",
       "scope": "feature:data-import-export",
       "family": "Section",
-      "lines": 283,
+      "lines": 287,
       "useClient": true,
       "imports": [
         "react",
@@ -13941,7 +14234,7 @@
       "domain": "feature",
       "scope": "feature:data-import-export",
       "family": "Section",
-      "lines": 330,
+      "lines": 332,
       "useClient": true,
       "imports": [
         "react",
@@ -13949,7 +14242,6 @@
         "@tanstack/react-table",
         "@/features/data-import-export/context/ImportExportContext",
         "@/shared/lib/documentation",
-        "@/features/tooltip-engine",
         "@/shared/contracts/integrations",
         "@/shared/ui",
         "@/shared/utils",
@@ -13967,7 +14259,7 @@
       "domain": "feature",
       "scope": "feature:data-import-export",
       "family": "Section",
-      "lines": 225,
+      "lines": 223,
       "useClient": true,
       "imports": [
         "react",
@@ -13987,8 +14279,8 @@
       "domain": "feature",
       "scope": "feature:database",
       "family": "Unknown",
-      "lines": 140,
-      "useClient": false,
+      "lines": 141,
+      "useClient": true,
       "imports": [
         "react",
         "@/shared/contracts/database",
@@ -14057,7 +14349,7 @@
       "domain": "feature",
       "scope": "feature:database",
       "family": "Unknown",
-      "lines": 162,
+      "lines": 166,
       "useClient": true,
       "imports": [
         "react",
@@ -14078,7 +14370,7 @@
       "domain": "feature",
       "scope": "feature:database",
       "family": "Panel",
-      "lines": 171,
+      "lines": 167,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -14224,13 +14516,14 @@
       "domain": "feature",
       "scope": "feature:document-editor",
       "family": "Unknown",
-      "lines": 215,
+      "lines": 168,
       "useClient": true,
       "imports": [
         "react",
         "@/shared/ui",
         "../hooks/useMarkdownSplitResizer",
-        "../hooks/useMarkdownPreviewDebounce"
+        "../hooks/useMarkdownPreviewDebounce",
+        "../context/MarkdownSplitEditorContext"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -14244,13 +14537,13 @@
       "domain": "feature",
       "scope": "feature:document-editor",
       "family": "Toolbar",
-      "lines": 357,
+      "lines": 342,
       "useClient": true,
       "imports": [
         "lucide-react",
         "react",
         "@/shared/ui",
-        "../types"
+        "../context/MarkdownToolbarContext"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -14284,7 +14577,7 @@
       "domain": "feature",
       "scope": "feature:document-editor",
       "family": "Unknown",
-      "lines": 617,
+      "lines": 613,
       "useClient": true,
       "imports": [
         "@tiptap/extension-image",
@@ -14338,7 +14631,7 @@
       "domain": "feature",
       "scope": "feature:drafter",
       "family": "Unknown",
-      "lines": 751,
+      "lines": 753,
       "useClient": true,
       "imports": [
         "@tanstack/react-query",
@@ -14375,7 +14668,7 @@
       "domain": "feature",
       "scope": "feature:drafter",
       "family": "Unknown",
-      "lines": 316,
+      "lines": 302,
       "useClient": true,
       "imports": [
         "react",
@@ -14395,7 +14688,7 @@
       "domain": "feature",
       "scope": "feature:drafter",
       "family": "Unknown",
-      "lines": 742,
+      "lines": 734,
       "useClient": true,
       "imports": [
         "react",
@@ -14421,7 +14714,7 @@
       "domain": "feature",
       "scope": "feature:drafter",
       "family": "Modal",
-      "lines": 81,
+      "lines": 77,
       "useClient": true,
       "imports": [
         "react",
@@ -14468,7 +14761,7 @@
       "domain": "feature",
       "scope": "feature:filemaker",
       "family": "Section",
-      "lines": 54,
+      "lines": 53,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -14535,7 +14828,7 @@
       "domain": "feature",
       "scope": "feature:filemaker",
       "family": "Section",
-      "lines": 55,
+      "lines": 57,
       "useClient": true,
       "imports": [
         "react",
@@ -14596,7 +14889,7 @@
       "domain": "feature",
       "scope": "feature:filemaker",
       "family": "Section",
-      "lines": 29,
+      "lines": 27,
       "useClient": true,
       "imports": [
         "react",
@@ -14634,7 +14927,7 @@
       "domain": "feature",
       "scope": "feature:filemaker",
       "family": "Section",
-      "lines": 28,
+      "lines": 27,
       "useClient": true,
       "imports": [
         "react",
@@ -14653,8 +14946,8 @@
       "domain": "feature",
       "scope": "feature:filemaker",
       "family": "Section",
-      "lines": 102,
-      "useClient": true,
+      "lines": 100,
+      "useClient": false,
       "imports": [
         "lucide-react",
         "react",
@@ -14693,8 +14986,8 @@
       "domain": "feature",
       "scope": "feature:filemaker",
       "family": "Section",
-      "lines": 76,
-      "useClient": true,
+      "lines": 74,
+      "useClient": false,
       "imports": [
         "lucide-react",
         "react",
@@ -14713,8 +15006,8 @@
       "domain": "feature",
       "scope": "feature:filemaker",
       "family": "Unknown",
-      "lines": 40,
-      "useClient": true,
+      "lines": 42,
+      "useClient": false,
       "imports": [
         "react",
         "@/shared/ui"
@@ -14731,8 +15024,8 @@
       "domain": "feature",
       "scope": "feature:filemaker",
       "family": "Unknown",
-      "lines": 66,
-      "useClient": true,
+      "lines": 64,
+      "useClient": false,
       "imports": [
         "lucide-react",
         "react",
@@ -14751,7 +15044,7 @@
       "domain": "feature",
       "scope": "feature:files",
       "family": "Unknown",
-      "lines": 69,
+      "lines": 72,
       "useClient": true,
       "imports": [
         "react",
@@ -14776,8 +15069,8 @@
       "domain": "feature",
       "scope": "feature:files",
       "family": "Panel",
-      "lines": 28,
-      "useClient": true,
+      "lines": 26,
+      "useClient": false,
       "imports": [
         "react",
         "../contexts/FileUploadEventsContext",
@@ -14818,7 +15111,7 @@
       "domain": "feature",
       "scope": "feature:files",
       "family": "Unknown",
-      "lines": 58,
+      "lines": 56,
       "useClient": true,
       "imports": [
         "react",
@@ -14837,14 +15130,14 @@
       "domain": "feature",
       "scope": "feature:files",
       "family": "Unknown",
-      "lines": 77,
+      "lines": 78,
       "useClient": true,
       "imports": [
         "react",
         "@/shared/contracts/viewer3d",
         "@/shared/ui",
-        "./FileManagerGrid",
-        "../../contexts/FileManagerContext"
+        "../../contexts/FileManagerContext",
+        "./FileManagerGrid"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -14858,7 +15151,7 @@
       "domain": "feature",
       "scope": "feature:files",
       "family": "Unknown",
-      "lines": 115,
+      "lines": 117,
       "useClient": true,
       "imports": [
         "react",
@@ -14878,7 +15171,7 @@
       "domain": "feature",
       "scope": "feature:files",
       "family": "Unknown",
-      "lines": 143,
+      "lines": 150,
       "useClient": true,
       "imports": [
         "next/image",
@@ -14901,7 +15194,7 @@
       "domain": "feature",
       "scope": "feature:files",
       "family": "Header",
-      "lines": 31,
+      "lines": 36,
       "useClient": true,
       "imports": [
         "react",
@@ -15042,7 +15335,7 @@
       "domain": "feature",
       "scope": "feature:foldertree",
       "family": "Unknown",
-      "lines": 676,
+      "lines": 692,
       "useClient": true,
       "imports": [
         "@tanstack/react-virtual",
@@ -15062,7 +15355,8 @@
         "./DefaultRow",
         "./types",
         "../hooks/useFolderTreeViewportSelection",
-        "../hooks/useFolderTreeViewportDnd"
+        "../hooks/useFolderTreeViewportDnd",
+        "../shell/MasterFolderTreeShellContext"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -15117,7 +15411,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 74,
+      "lines": 78,
       "useClient": true,
       "imports": [
         "@/features/integrations/context/IntegrationsContext",
@@ -15135,7 +15429,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Settings",
-      "lines": 107,
+      "lines": 111,
       "useClient": true,
       "imports": [
         "@/features/integrations/context/IntegrationsContext",
@@ -15153,7 +15447,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 70,
+      "lines": 74,
       "useClient": true,
       "imports": [
         "@/features/integrations/context/IntegrationsContext",
@@ -15211,7 +15505,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Form",
-      "lines": 36,
+      "lines": 39,
       "useClient": false,
       "imports": [
         "react",
@@ -15252,7 +15546,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Modal",
-      "lines": 150,
+      "lines": 153,
       "useClient": true,
       "imports": [
         "react",
@@ -15286,7 +15580,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 84,
+      "lines": 85,
       "useClient": false,
       "imports": [
         "next/link",
@@ -15485,7 +15779,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Modal",
-      "lines": 83,
+      "lines": 87,
       "useClient": true,
       "imports": [
         "react",
@@ -15508,7 +15802,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Form",
-      "lines": 62,
+      "lines": 66,
       "useClient": true,
       "imports": [
         "react",
@@ -15550,7 +15844,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "List",
-      "lines": 112,
+      "lines": 115,
       "useClient": true,
       "imports": [
         "react",
@@ -15572,7 +15866,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 53,
+      "lines": 56,
       "useClient": true,
       "imports": [
         "react",
@@ -15706,7 +16000,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Modal",
-      "lines": 177,
+      "lines": 172,
       "useClient": true,
       "imports": [
         "react",
@@ -15958,7 +16252,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 74,
+      "lines": 78,
       "useClient": true,
       "imports": [
         "react",
@@ -16018,7 +16312,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 39,
+      "lines": 46,
       "useClient": true,
       "imports": [
         "react",
@@ -16079,7 +16373,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Panel",
-      "lines": 192,
+      "lines": 197,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -16137,7 +16431,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 210,
+      "lines": 217,
       "useClient": true,
       "imports": [
         "react",
@@ -16161,7 +16455,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 202,
+      "lines": 204,
       "useClient": true,
       "imports": [
         "react",
@@ -16310,7 +16604,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 81,
+      "lines": 85,
       "useClient": true,
       "imports": [
         "react",
@@ -16356,7 +16650,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Table",
-      "lines": 148,
+      "lines": 152,
       "useClient": true,
       "imports": [
         "@tanstack/react-table",
@@ -16381,7 +16675,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 77,
+      "lines": 80,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -16405,8 +16699,8 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 84,
-      "useClient": false,
+      "lines": 85,
+      "useClient": true,
       "imports": [
         "react",
         "lucide-react",
@@ -16425,7 +16719,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 25,
+      "lines": 23,
       "useClient": false,
       "imports": [
         "react",
@@ -16464,7 +16758,7 @@
       "domain": "feature",
       "scope": "feature:internationalization",
       "family": "Settings",
-      "lines": 197,
+      "lines": 202,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -16511,7 +16805,7 @@
       "domain": "feature",
       "scope": "feature:internationalization",
       "family": "Modal",
-      "lines": 83,
+      "lines": 86,
       "useClient": true,
       "imports": [
         "react",
@@ -16552,8 +16846,8 @@
       "domain": "feature",
       "scope": "feature:internationalization",
       "family": "Unknown",
-      "lines": 65,
-      "useClient": true,
+      "lines": 63,
+      "useClient": false,
       "imports": [
         "react",
         "@/shared/utils",
@@ -16563,6 +16857,2295 @@
       "uiPrimitiveImports": 0,
       "tokenSet": {},
       "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/admin/KangurLessonNarrationPanel.tsx",
+      "basename": "KangurLessonNarrationPanel.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Panel",
+      "lines": 385,
+      "useClient": true,
+      "imports": [
+        "lucide-react",
+        "react",
+        "@/features/kangur/tts/contracts",
+        "@/features/kangur/tts/script",
+        "@/shared/lib/api-client",
+        "@/shared/utils",
+        "./context/LessonContentEditorContext"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/admin/KangurQuestionsManagerPanel.tsx",
+      "basename": "KangurQuestionsManagerPanel.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Panel",
+      "lines": 343,
+      "useClient": true,
+      "imports": [
+        "react",
+        "lucide-react",
+        "@/shared/ui",
+        "@/shared/ui/templates/modals",
+        "@/shared/hooks/use-settings",
+        "@/shared/providers/SettingsStoreProvider",
+        "@/shared/utils/settings-json",
+        "@/shared/utils/observability/client-error-logger",
+        "@/shared/contracts/kangur-tests",
+        "../test-questions",
+        "./utils",
+        "./KangurTestQuestionEditor"
+      ],
+      "templateImports": 1,
+      "uiPrimitiveImports": 1,
+      "tokenSet": {},
+      "propsSignature": "onClose|suite",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/admin/components/ActivityEditorCard.tsx",
+      "basename": "ActivityEditorCard.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Card",
+      "lines": 92,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@/features/kangur/lesson-activities",
+        "@/shared/contracts/kangur",
+        "@/shared/ui"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/admin/components/GridItemEditor.tsx",
+      "basename": "GridItemEditor.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 192,
+      "useClient": false,
+      "imports": [
+        "react",
+        "lucide-react",
+        "@/features/kangur/lesson-documents",
+        "@/shared/contracts/kangur",
+        "@/shared/ui",
+        "../constants",
+        "../utils",
+        "./InlineEditorCard"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/admin/components/GridLayoutCanvas.tsx",
+      "basename": "GridLayoutCanvas.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 100,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@/shared/contracts/kangur",
+        "@/shared/utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "columns|focusedItemId|items|onFocusItem",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/admin/components/InlineEditorCard.tsx",
+      "basename": "InlineEditorCard.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Card",
+      "lines": 416,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@/features/cms/components/page-builder/MediaLibraryPanel",
+        "@/features/document-editor",
+        "@/features/kangur/lesson-documents/utils",
+        "@/shared/contracts/kangur",
+        "@/shared/ui",
+        "@/shared/utils",
+        "../constants",
+        "../utils",
+        "./SvgCodeEditor"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/admin/components/KangurDocumentationCenter.tsx",
+      "basename": "KangurDocumentationCenter.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 235,
+      "useClient": true,
+      "imports": [
+        "react",
+        "@/shared/lib/documentation/catalogs/kangur",
+        "@/shared/ui",
+        "@/shared/utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/admin/components/LessonContentEditorDialog.tsx",
+      "basename": "LessonContentEditorDialog.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Dialog",
+      "lines": 132,
+      "useClient": true,
+      "imports": [
+        "react",
+        "lucide-react",
+        "@/features/kangur/lesson-documents",
+        "@/shared/contracts/kangur",
+        "@/shared/ui",
+        "../KangurLessonDocumentEditor",
+        "../KangurLessonNarrationPanel",
+        "../context/LessonContentEditorContext"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "isOpen|isSaving|onClearContent|onClose|onImportLegacy|onSave",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/admin/components/LessonMetadataForm.tsx",
+      "basename": "LessonMetadataForm.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Form",
+      "lines": 97,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@/features/kangur/settings",
+        "@/shared/ui",
+        "../constants",
+        "../types"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/admin/components/LessonSvgQuickAddModal.tsx",
+      "basename": "LessonSvgQuickAddModal.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Modal",
+      "lines": 67,
+      "useClient": true,
+      "imports": [
+        "react",
+        "@/shared/contracts/kangur",
+        "@/shared/ui",
+        "./SvgCodeEditor"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "initialMarkup|isOpen|isSaving|lesson|onClose|onSave",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/admin/components/LessonTreeRow.tsx",
+      "basename": "LessonTreeRow.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 225,
+      "useClient": false,
+      "imports": [
+        "react",
+        "lucide-react",
+        "@/features/foldertree/v2",
+        "@/shared/ui",
+        "@/shared/utils",
+        "@/shared/contracts/kangur",
+        "../kangur-lessons-master-tree",
+        "../utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/admin/components/QuestionChoicesEditor.tsx",
+      "basename": "QuestionChoicesEditor.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 170,
+      "useClient": false,
+      "imports": [
+        "react",
+        "lucide-react",
+        "@/shared/ui",
+        "@/shared/utils",
+        "@/shared/contracts/kangur-tests",
+        "../../test-questions",
+        "../utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "choices|correctChoiceLabel|onChange|onCorrectChange",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/admin/components/QuestionIllustrationEditor.tsx",
+      "basename": "QuestionIllustrationEditor.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 386,
+      "useClient": true,
+      "imports": [
+        "react",
+        "lucide-react",
+        "@/shared/ui",
+        "@/shared/utils",
+        "@/shared/contracts/kangur-tests",
+        "../../test-questions",
+        "./SvgCodeEditor",
+        "../context/KangurTestQuestionEditorContext"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "canDelete|onDelete|onDescChange|onLabelChange|onSvgChange|panel",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/admin/components/SvgCodeEditor.tsx",
+      "basename": "SvgCodeEditor.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 243,
+      "useClient": true,
+      "imports": [
+        "react",
+        "lucide-react",
+        "@/shared/ui",
+        "@/shared/utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "className|onChange|onViewBoxDetected|placeholder|previewSize|snippets|value",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/admin/components/TestSuiteMetadataForm.tsx",
+      "basename": "TestSuiteMetadataForm.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Form",
+      "lines": 75,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@/shared/ui",
+        "../../test-suites"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/admin/components/TestSuiteTreeRow.tsx",
+      "basename": "TestSuiteTreeRow.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 197,
+      "useClient": false,
+      "imports": [
+        "react",
+        "lucide-react",
+        "@/features/foldertree/v2",
+        "@/shared/ui",
+        "@/shared/utils",
+        "@/shared/contracts/kangur-tests",
+        "../kangur-test-suites-master-tree"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/cms-builder/KangurCmsBuilderLeftPanel.tsx",
+      "basename": "KangurCmsBuilderLeftPanel.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Panel",
+      "lines": 93,
+      "useClient": true,
+      "imports": [
+        "lucide-react",
+        "react",
+        "@/features/cms/components/page-builder/ComponentTreePanel",
+        "@/features/cms/components/page-builder/ThemeSettingsPanel",
+        "@/features/cms/hooks/usePageBuilderContext",
+        "@/shared/ui"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/cms-builder/KangurCmsBuilderRightPanel.tsx",
+      "basename": "KangurCmsBuilderRightPanel.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Panel",
+      "lines": 44,
+      "useClient": true,
+      "imports": [
+        "@/features/cms/components/page-builder/ComponentSettingsPanel",
+        "@/features/cms/hooks/usePageBuilderContext",
+        "@/shared/ui"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/cms-builder/KangurCmsPreviewPanel.tsx",
+      "basename": "KangurCmsPreviewPanel.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Panel",
+      "lines": 614,
+      "useClient": true,
+      "imports": [
+        "next/link",
+        "lucide-react",
+        "react",
+        "@/features/cms/components/page-builder/MediaLibraryPanel",
+        "@/features/cms/components/page-builder/PreviewBlock",
+        "@/features/cms/components/page-builder/ThemeSettingsContext",
+        "@/features/cms/components/page-builder/preview/context/PreviewEditorContext",
+        "@/features/cms/components/page-builder/VectorOverlay",
+        "@/features/cms/components/frontend/CmsPageContext",
+        "@/features/cms/components/frontend/media-styles-context",
+        "@/features/cms/components/frontend/theme-styles",
+        "@/features/cms/hooks/usePageBuilderContext",
+        "@/features/cms/hooks/page-builder/section-hierarchy",
+        "@/features/cms/utils/page-builder-normalization",
+        "@/features/kangur/config/routing",
+        "@/features/kangur/ui/context/KangurAuthContext",
+        "@/features/kangur/ui/context/KangurProgressSyncProvider",
+        "@/features/kangur/ui/context/KangurRoutingContext",
+        "@/shared/contracts/cms",
+        "@/shared/contracts/cms-theme",
+        "@/shared/ui",
+        "@/shared/utils/settings-json",
+        "./project"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "activeScreenKey|draftProject|isSaving|onSave|onSwitchScreen|savedProject",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/AddingBallGame.test.tsx",
+      "basename": "AddingBallGame.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 89,
+      "useClient": false,
+      "imports": [
+        "@testing-library/react",
+        "vitest",
+        "@/features/kangur/ui/components/AddingBallGame"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/AddingBallGame.tsx",
+      "basename": "AddingBallGame.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 809,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@hello-pangea/dnd",
+        "framer-motion",
+        "lucide-react",
+        "@/features/kangur/ui/design/primitives",
+        "@/features/kangur/ui/design/tokens",
+        "@/features/kangur/ui/services/progress",
+        "@/shared/utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "onResult|round",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/AddingLesson.test.tsx",
+      "basename": "AddingLesson.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 41,
+      "useClient": false,
+      "imports": [
+        "@testing-library/react",
+        "vitest",
+        "@/features/kangur/ui/components/AddingLesson"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/AddingLesson.tsx",
+      "basename": "AddingLesson.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 205,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@/features/kangur/ui/components/AddingBallGame",
+        "@/features/kangur/ui/components/AddingSynthesisGame",
+        "@/features/kangur/ui/components/LessonHub",
+        "@/features/kangur/ui/components/LessonSlideSection",
+        "@/features/kangur/ui/design/lesson-primitives"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/AddingSynthesisGame.test.tsx",
+      "basename": "AddingSynthesisGame.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 124,
+      "useClient": false,
+      "imports": [
+        "@testing-library/react",
+        "vitest",
+        "@/features/kangur/ui/components/AddingSynthesisGame",
+        "@/features/kangur/ui/services/adding-synthesis",
+        "@/features/kangur/ui/services/progress"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/AddingSynthesisGame.tsx",
+      "basename": "AddingSynthesisGame.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 767,
+      "useClient": true,
+      "imports": [
+        "react",
+        "lucide-react",
+        "@/features/kangur/ui/design/lesson-primitives",
+        "@/features/kangur/ui/design/primitives",
+        "@/features/kangur/ui/services/progress",
+        "@/features/kangur/ui/services/adding-synthesis",
+        "@/shared/utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/AssignmentPanel.test.tsx",
+      "basename": "AssignmentPanel.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 188,
+      "useClient": false,
+      "imports": [
+        "@testing-library/react",
+        "@testing-library/user-event",
+        "vitest",
+        "@/features/kangur/config/routing",
+        "@/features/kangur/ui/components/AssignmentPanel",
+        "@/features/kangur/ui/types"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/AssignmentPanel.tsx",
+      "basename": "AssignmentPanel.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Panel",
+      "lines": 157,
+      "useClient": false,
+      "imports": [
+        "react",
+        "lucide-react",
+        "next/link",
+        "@/features/kangur/config/routing",
+        "@/features/kangur/ui/design/primitives",
+        "@/features/kangur/ui/services/assignments",
+        "@/features/kangur/ui/types"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "basePath|progress",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/CalendarInteractiveGame.test.tsx",
+      "basename": "CalendarInteractiveGame.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 27,
+      "useClient": false,
+      "imports": [
+        "@testing-library/react",
+        "vitest",
+        "@/features/kangur/ui/components/CalendarInteractiveGame"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/CalendarInteractiveGame.tsx",
+      "basename": "CalendarInteractiveGame.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 604,
+      "useClient": false,
+      "imports": [
+        "react",
+        "framer-motion",
+        "lucide-react",
+        "@/features/kangur/ui/design/primitives",
+        "@/features/kangur/ui/design/tokens",
+        "@/shared/utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/CalendarLesson.test.tsx",
+      "basename": "CalendarLesson.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 31,
+      "useClient": false,
+      "imports": [
+        "@testing-library/react",
+        "vitest",
+        "@/features/kangur/ui/components/CalendarLesson"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/CalendarLesson.tsx",
+      "basename": "CalendarLesson.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 397,
+      "useClient": false,
+      "imports": [
+        "react",
+        "framer-motion",
+        "lucide-react",
+        "./CalendarInteractiveGame",
+        "@/features/kangur/ui/services/progress",
+        "@/features/kangur/ui/components/LessonHub",
+        "@/features/kangur/ui/design/lesson-primitives",
+        "@/features/kangur/ui/design/primitives",
+        "@/features/kangur/ui/design/tokens",
+        "@/shared/utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "highlightDay|month|year",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/CalendarTrainingGame.test.tsx",
+      "basename": "CalendarTrainingGame.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 119,
+      "useClient": false,
+      "imports": [
+        "@testing-library/react",
+        "vitest",
+        "@/features/kangur/ui/components/CalendarTrainingGame"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/CalendarTrainingGame.tsx",
+      "basename": "CalendarTrainingGame.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 297,
+      "useClient": false,
+      "imports": [
+        "react",
+        "framer-motion",
+        "lucide-react",
+        "@/features/kangur/ui/design/primitives",
+        "@/features/kangur/ui/design/tokens",
+        "@/features/kangur/ui/services/progress",
+        "@/shared/utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/ClockLesson.tsx",
+      "basename": "ClockLesson.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 777,
+      "useClient": false,
+      "imports": [
+        "react",
+        "framer-motion",
+        "lucide-react",
+        "./ClockTrainingGame",
+        "@/features/kangur/ui/services/progress",
+        "@/features/kangur/ui/design/tokens",
+        "@/features/kangur/ui/design/lesson-primitives",
+        "@/features/kangur/ui/design/primitives",
+        "@/shared/utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "highlightHour|highlightMinute|hours|label|minutes|showHourHand|showMinuteHand",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/ClockTrainingGame.tsx",
+      "basename": "ClockTrainingGame.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 904,
+      "useClient": false,
+      "imports": [
+        "react",
+        "framer-motion",
+        "lucide-react",
+        "@/features/kangur/ui/design/primitives",
+        "@/features/kangur/ui/design/tokens",
+        "@/features/kangur/ui/services/progress",
+        "@/shared/utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "challengeTimeLeft|challengeTimeLimit|onSubmit|showChallengeRing",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/DifficultySelector.tsx",
+      "basename": "DifficultySelector.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 81,
+      "useClient": false,
+      "imports": [
+        "framer-motion",
+        "lucide-react",
+        "@/features/kangur/ui/services/math-questions",
+        "@/features/kangur/ui/design/tokens",
+        "@/features/kangur/ui/types",
+        "@/shared/utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "onSelect|selected",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/DivisionGame.test.tsx",
+      "basename": "DivisionGame.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 32,
+      "useClient": false,
+      "imports": [
+        "@testing-library/react",
+        "vitest",
+        "@/features/kangur/ui/components/DivisionGame"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/DivisionGame.tsx",
+      "basename": "DivisionGame.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 353,
+      "useClient": false,
+      "imports": [
+        "react",
+        "framer-motion",
+        "lucide-react",
+        "@/features/kangur/ui/design/tokens",
+        "@/features/kangur/ui/services/progress",
+        "@/features/kangur/ui/design/primitives",
+        "@/features/kangur/ui/services/round-transition",
+        "@/shared/utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "a|b|quotient",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/DivisionLesson.tsx",
+      "basename": "DivisionLesson.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 160,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@/features/kangur/ui/components/DivisionGame",
+        "@/features/kangur/ui/components/LessonHub",
+        "@/features/kangur/ui/components/LessonSlideSection",
+        "@/features/kangur/ui/design/lesson-primitives"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/GeometryBasicsLesson.tsx",
+      "basename": "GeometryBasicsLesson.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 169,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@/features/kangur/ui/services/progress",
+        "@/features/kangur/ui/components/LessonHub",
+        "@/features/kangur/ui/components/LessonSlideSection",
+        "@/features/kangur/ui/design/lesson-primitives"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/GeometryDrawingGame.test.tsx",
+      "basename": "GeometryDrawingGame.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 54,
+      "useClient": false,
+      "imports": [
+        "@testing-library/react",
+        "vitest",
+        "@/features/kangur/ui/components/GeometryDrawingGame"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/GeometryDrawingGame.tsx",
+      "basename": "GeometryDrawingGame.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 568,
+      "useClient": false,
+      "imports": [
+        "react",
+        "framer-motion",
+        "lucide-react",
+        "@/features/kangur/ui/design/primitives",
+        "@/features/kangur/ui/design/tokens",
+        "@/features/kangur/ui/services/geometry-drawing",
+        "@/features/kangur/ui/services/progress",
+        "@/shared/utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/GeometryPerimeterLesson.tsx",
+      "basename": "GeometryPerimeterLesson.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 163,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@/features/kangur/ui/services/progress",
+        "@/features/kangur/ui/components/LessonHub",
+        "@/features/kangur/ui/components/LessonSlideSection",
+        "@/features/kangur/ui/design/lesson-primitives"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/GeometryShapesLesson.tsx",
+      "basename": "GeometryShapesLesson.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 164,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@/features/kangur/ui/components/GeometryDrawingGame",
+        "@/features/kangur/ui/services/progress",
+        "@/features/kangur/ui/components/LessonHub",
+        "@/features/kangur/ui/components/LessonSlideSection",
+        "@/features/kangur/ui/design/lesson-primitives",
+        "@/features/kangur/ui/design/primitives"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/GeometrySymmetryLesson.tsx",
+      "basename": "GeometrySymmetryLesson.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 167,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@/features/kangur/ui/services/progress",
+        "@/features/kangur/ui/components/LessonHub",
+        "@/features/kangur/ui/components/LessonSlideSection",
+        "@/features/kangur/ui/design/lesson-primitives"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/KangurAssignmentManager.tsx",
+      "basename": "KangurAssignmentManager.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 557,
+      "useClient": false,
+      "imports": [
+        "react",
+        "next/link",
+        "@/features/kangur/settings",
+        "@/features/kangur/services/ports",
+        "@/features/kangur/ui/hooks/useKangurAssignments",
+        "@/features/kangur/ui/hooks/useKangurProgressState",
+        "@/features/kangur/ui/components/KangurAssignmentsList",
+        "@/features/kangur/ui/design/primitives",
+        "@/features/kangur/ui/services/delegated-assignments",
+        "@/shared/providers/SettingsStoreProvider"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/KangurAssignmentSpotlight.tsx",
+      "basename": "KangurAssignmentSpotlight.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 100,
+      "useClient": false,
+      "imports": [
+        "next/link",
+        "react",
+        "@/features/kangur/ui/hooks/useKangurAssignments",
+        "@/features/kangur/ui/design/primitives",
+        "@/features/kangur/ui/services/delegated-assignments"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "basePath|enabled",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/KangurAssignmentsList.tsx",
+      "basename": "KangurAssignmentsList.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "List",
+      "lines": 250,
+      "useClient": false,
+      "imports": [
+        "next/link",
+        "@/features/kangur/services/ports",
+        "@/features/kangur/ui/design/primitives",
+        "@/features/kangur/ui/services/delegated-assignments"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "assignments|basePath|compact|emptyLabel|onArchive|title",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/KangurExam.test.tsx",
+      "basename": "KangurExam.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 76,
+      "useClient": false,
+      "imports": [
+        "@testing-library/react",
+        "@testing-library/user-event",
+        "vitest",
+        "@/features/kangur/ui/components/KangurExam"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/KangurExam.tsx",
+      "basename": "KangurExam.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 481,
+      "useClient": false,
+      "imports": [
+        "react",
+        "framer-motion",
+        "lucide-react",
+        "@/features/kangur/ui/components/KangurIllustrations",
+        "@/features/kangur/ui/context/KangurGameContext",
+        "@/features/kangur/ui/design/primitives",
+        "@/features/kangur/ui/design/tokens",
+        "@/features/kangur/ui/services/kangur-questions",
+        "@/features/kangur/ui/types",
+        "@/shared/utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "onSelect|q|qIndex|selected|total",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/KangurGame.test.tsx",
+      "basename": "KangurGame.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 63,
+      "useClient": false,
+      "imports": [
+        "@testing-library/react",
+        "vitest",
+        "@/features/kangur/ui/components/KangurGame"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/KangurGame.tsx",
+      "basename": "KangurGame.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 340,
+      "useClient": false,
+      "imports": [
+        "react",
+        "framer-motion",
+        "lucide-react",
+        "@/features/kangur/ui/components/KangurExam",
+        "@/features/kangur/ui/components/KangurIllustrations",
+        "@/features/kangur/ui/context/KangurGameContext",
+        "@/features/kangur/ui/design/primitives",
+        "@/features/kangur/ui/design/tokens",
+        "@/features/kangur/ui/services/kangur-questions",
+        "@/features/kangur/ui/services/progress",
+        "@/features/kangur/ui/types",
+        "@/shared/utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "onAnswer|q|qIndex|total",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/KangurLearnerAssignmentsPanel.tsx",
+      "basename": "KangurLearnerAssignmentsPanel.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Panel",
+      "lines": 171,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@/features/kangur/ui/components/KangurAssignmentsList",
+        "@/features/kangur/ui/design/primitives",
+        "@/features/kangur/ui/hooks/useKangurAssignments",
+        "@/features/kangur/ui/services/delegated-assignments"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "basePath|enabled",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/KangurLessonActivityBlock.test.tsx",
+      "basename": "KangurLessonActivityBlock.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 119,
+      "useClient": false,
+      "imports": [
+        "@testing-library/react",
+        "vitest",
+        "@/features/kangur/ui/components/KangurLessonActivityBlock"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/KangurLessonActivityBlock.tsx",
+      "basename": "KangurLessonActivityBlock.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 134,
+      "useClient": true,
+      "imports": [
+        "react",
+        "@/features/kangur/lesson-activities",
+        "@/features/kangur/ui/design/primitives",
+        "@/shared/contracts/kangur",
+        "./AddingBallGame",
+        "./AddingSynthesisGame",
+        "./CalendarInteractiveGame",
+        "./ClockTrainingGame",
+        "./DivisionGame",
+        "./GeometryDrawingGame",
+        "./MultiplicationArrayGame",
+        "./MultiplicationGame",
+        "./SubtractingGame"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/KangurLessonDocumentRenderer.test.tsx",
+      "basename": "KangurLessonDocumentRenderer.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 284,
+      "useClient": false,
+      "imports": [
+        "@testing-library/react",
+        "vitest",
+        "@/features/kangur/ui/components/KangurLessonDocumentRenderer"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/KangurLessonDocumentRenderer.tsx",
+      "basename": "KangurLessonDocumentRenderer.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 424,
+      "useClient": true,
+      "imports": [
+        "@/shared/contracts/kangur",
+        "@/features/kangur/lesson-documents",
+        "@/features/kangur/ui/design/primitives",
+        "@/shared/utils",
+        "./KangurLessonActivityBlock",
+        "react"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/KangurLessonNarrator.test.tsx",
+      "basename": "KangurLessonNarrator.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 198,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@testing-library/react",
+        "vitest",
+        "@/features/kangur/settings",
+        "@/features/kangur/ui/components/KangurLessonNarrator"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/KangurLessonNarrator.tsx",
+      "basename": "KangurLessonNarrator.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 485,
+      "useClient": true,
+      "imports": [
+        "lucide-react",
+        "react",
+        "@/features/kangur/settings",
+        "@/features/kangur/tts/contracts",
+        "@/features/kangur/tts/script",
+        "@/features/kangur/ui/design/primitives",
+        "@/shared/contracts/kangur",
+        "@/shared/lib/api-client",
+        "@/shared/providers/SettingsStoreProvider",
+        "@/shared/utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/KangurPracticeAssignmentBanner.tsx",
+      "basename": "KangurPracticeAssignmentBanner.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 94,
+      "useClient": false,
+      "imports": [
+        "next/link",
+        "@/features/kangur/services/ports",
+        "@/features/kangur/ui/design/primitives",
+        "@/features/kangur/ui/services/delegated-assignments"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "assignment|basePath|mode",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/KangurPriorityAssignments.tsx",
+      "basename": "KangurPriorityAssignments.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 81,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@/features/kangur/ui/components/KangurAssignmentsList",
+        "@/features/kangur/ui/hooks/useKangurAssignments",
+        "@/features/kangur/ui/services/delegated-assignments",
+        "@/features/kangur/ui/design/primitives"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "basePath|emptyLabel|enabled|limit|title",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/KangurProfileMenu.tsx",
+      "basename": "KangurProfileMenu.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 102,
+      "useClient": true,
+      "imports": [
+        "react",
+        "next/link",
+        "@radix-ui/react-dropdown-menu",
+        "lucide-react",
+        "@/features/kangur/config/routing",
+        "@/features/kangur/ui/design/tokens",
+        "@/shared/utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "basePath|isActive|isAuthenticated|onLogin|onLogout|triggerClassName",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/KangurQuestionIllustrationRenderer.test.tsx",
+      "basename": "KangurQuestionIllustrationRenderer.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 77,
+      "useClient": false,
+      "imports": [
+        "@testing-library/react",
+        "vitest",
+        "@/features/kangur/ui/components/KangurQuestionIllustrationRenderer"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/KangurQuestionIllustrationRenderer.tsx",
+      "basename": "KangurQuestionIllustrationRenderer.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 72,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@/features/kangur/ui/design/tokens",
+        "@/shared/utils",
+        "@/shared/contracts/kangur-tests"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "className|illustration",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/KangurSetup.tsx",
+      "basename": "KangurSetup.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 241,
+      "useClient": false,
+      "imports": [
+        "react",
+        "framer-motion",
+        "lucide-react",
+        "@/features/kangur/ui/design/primitives",
+        "@/features/kangur/ui/design/tokens",
+        "@/features/kangur/ui/types",
+        "@/shared/utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "onBack|onStart",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/KangurTestQuestionRenderer.test.tsx",
+      "basename": "KangurTestQuestionRenderer.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 85,
+      "useClient": false,
+      "imports": [
+        "@testing-library/react",
+        "vitest",
+        "@/features/kangur/ui/components/KangurTestQuestionRenderer",
+        "@/shared/contracts/kangur-tests"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx",
+      "basename": "KangurTestQuestionRenderer.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 160,
+      "useClient": false,
+      "imports": [
+        "react",
+        "lucide-react",
+        "@/features/kangur/ui/design/primitives",
+        "@/features/kangur/ui/design/tokens",
+        "@/shared/utils",
+        "@/shared/contracts/kangur-tests",
+        "./KangurQuestionIllustrationRenderer"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "onSelect|question|questionIndex|selectedLabel|showAnswer|totalQuestions",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/KangurTestSuitePlayer.test.tsx",
+      "basename": "KangurTestSuitePlayer.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 77,
+      "useClient": false,
+      "imports": [
+        "@testing-library/react",
+        "@testing-library/user-event",
+        "vitest",
+        "@/features/kangur/ui/components/KangurTestSuitePlayer",
+        "@/shared/contracts/kangur-tests"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/KangurTestSuitePlayer.tsx",
+      "basename": "KangurTestSuitePlayer.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 228,
+      "useClient": true,
+      "imports": [
+        "react",
+        "framer-motion",
+        "lucide-react",
+        "@/shared/contracts/kangur-tests",
+        "@/features/kangur/ui/design/primitives",
+        "./KangurTestQuestionRenderer"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "answers|maxScore|onRestart|questions|score|suite",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/Leaderboard.test.tsx",
+      "basename": "Leaderboard.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 120,
+      "useClient": false,
+      "imports": [
+        "@testing-library/react",
+        "@testing-library/user-event",
+        "vitest",
+        "@/features/kangur/services/ports",
+        "@/features/kangur/ui/components/Leaderboard"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/Leaderboard.tsx",
+      "basename": "Leaderboard.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 218,
+      "useClient": false,
+      "imports": [
+        "react",
+        "lucide-react",
+        "@/features/kangur/observability/client",
+        "@/features/kangur/services/kangur-platform",
+        "@/features/kangur/services/ports",
+        "@/features/kangur/ui/design/primitives",
+        "@/features/kangur/services/status-errors"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/LessonHub.tsx",
+      "basename": "LessonHub.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 105,
+      "useClient": false,
+      "imports": [
+        "framer-motion",
+        "lucide-react",
+        "@/features/kangur/ui/design/primitives",
+        "@/features/kangur/ui/design/tokens",
+        "@/shared/utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "gradientClass|lessonEmoji|lessonTitle|onBack|onSelect|sections",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/LessonMasteryInsights.test.tsx",
+      "basename": "LessonMasteryInsights.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 70,
+      "useClient": false,
+      "imports": [
+        "@testing-library/react",
+        "vitest",
+        "@/features/kangur/ui/components/LessonMasteryInsights",
+        "@/features/kangur/ui/types"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/LessonMasteryInsights.tsx",
+      "basename": "LessonMasteryInsights.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 133,
+      "useClient": false,
+      "imports": [
+        "@/features/kangur/ui/design/primitives",
+        "@/features/kangur/ui/design/tokens",
+        "@/features/kangur/ui/services/profile",
+        "@/features/kangur/ui/types"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/LessonSlideSection.test.tsx",
+      "basename": "LessonSlideSection.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 41,
+      "useClient": false,
+      "imports": [
+        "@testing-library/react",
+        "vitest",
+        "@/features/kangur/ui/components/LessonSlideSection"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/LessonSlideSection.tsx",
+      "basename": "LessonSlideSection.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Section",
+      "lines": 110,
+      "useClient": false,
+      "imports": [
+        "react",
+        "framer-motion",
+        "lucide-react",
+        "@/features/kangur/ui/design/primitives",
+        "@/features/kangur/ui/design/tokens",
+        "@/shared/utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "dotActiveClass|dotDoneClass|onBack|onComplete|slides",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/LogicalAnalogiesLesson.tsx",
+      "basename": "LogicalAnalogiesLesson.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 290,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@/features/kangur/ui/components/LessonHub",
+        "@/features/kangur/ui/components/LessonSlideSection",
+        "@/features/kangur/ui/design/lesson-primitives"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/LogicalClassificationLesson.tsx",
+      "basename": "LogicalClassificationLesson.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 278,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@/features/kangur/ui/components/LessonHub",
+        "@/features/kangur/ui/components/LessonSlideSection",
+        "@/features/kangur/ui/design/lesson-primitives"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/LogicalPatternsLesson.tsx",
+      "basename": "LogicalPatternsLesson.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 250,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@/features/kangur/ui/components/LessonHub",
+        "@/features/kangur/ui/components/LessonSlideSection",
+        "@/features/kangur/ui/design/lesson-primitives"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/LogicalReasoningLesson.tsx",
+      "basename": "LogicalReasoningLesson.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 313,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@/features/kangur/ui/components/LessonHub",
+        "@/features/kangur/ui/components/LessonSlideSection",
+        "@/features/kangur/ui/design/lesson-primitives"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/LogicalThinkingLesson.tsx",
+      "basename": "LogicalThinkingLesson.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 204,
+      "useClient": false,
+      "imports": [
+        "@/features/kangur/ui/components/LessonSlideSection",
+        "@/features/kangur/ui/design/lesson-primitives"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/MultiplicationArrayGame.test.tsx",
+      "basename": "MultiplicationArrayGame.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 25,
+      "useClient": false,
+      "imports": [
+        "@testing-library/react",
+        "vitest",
+        "@/features/kangur/ui/components/MultiplicationArrayGame"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/MultiplicationArrayGame.tsx",
+      "basename": "MultiplicationArrayGame.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 330,
+      "useClient": false,
+      "imports": [
+        "react",
+        "framer-motion",
+        "lucide-react",
+        "@/features/kangur/ui/design/tokens",
+        "@/features/kangur/ui/design/primitives",
+        "@/features/kangur/ui/services/progress",
+        "@/shared/utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/MultiplicationGame.test.tsx",
+      "basename": "MultiplicationGame.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 23,
+      "useClient": false,
+      "imports": [
+        "@testing-library/react",
+        "vitest",
+        "@/features/kangur/ui/components/MultiplicationGame"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/MultiplicationGame.tsx",
+      "basename": "MultiplicationGame.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 335,
+      "useClient": false,
+      "imports": [
+        "react",
+        "framer-motion",
+        "lucide-react",
+        "@/features/kangur/ui/design/tokens",
+        "@/features/kangur/ui/design/primitives",
+        "@/features/kangur/ui/services/progress",
+        "@/features/kangur/ui/services/round-transition",
+        "@/shared/utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/MultiplicationLesson.tsx",
+      "basename": "MultiplicationLesson.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 192,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@/features/kangur/ui/components/MultiplicationGame",
+        "@/features/kangur/ui/components/MultiplicationArrayGame",
+        "@/features/kangur/ui/components/LessonHub",
+        "@/features/kangur/ui/components/LessonSlideSection",
+        "@/features/kangur/ui/design/lesson-primitives"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/OperationSelector.tsx",
+      "basename": "OperationSelector.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 167,
+      "useClient": false,
+      "imports": [
+        "react",
+        "framer-motion",
+        "@/features/kangur/ui/components/DifficultySelector",
+        "@/features/kangur/services/ports",
+        "@/features/kangur/ui/design/primitives",
+        "@/features/kangur/ui/design/tokens",
+        "@/features/kangur/ui/types",
+        "@/shared/utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "onSelect|priorityAssignmentsByOperation",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/PageNotFound.test.tsx",
+      "basename": "PageNotFound.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 61,
+      "useClient": false,
+      "imports": [
+        "@tanstack/react-query",
+        "@testing-library/react",
+        "react",
+        "vitest",
+        "@/features/kangur/ui/components/PageNotFound"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/PageNotFound.tsx",
+      "basename": "PageNotFound.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 122,
+      "useClient": true,
+      "imports": [
+        "react",
+        "@tanstack/react-query",
+        "lucide-react",
+        "@/features/kangur/config/routing",
+        "@/features/kangur/services/kangur-platform",
+        "@/features/kangur/ui/context/KangurRoutingContext",
+        "@/features/kangur/ui/design/primitives",
+        "@/shared/lib/query-keys",
+        "@/shared/utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/PlayerProgressCard.test.tsx",
+      "basename": "PlayerProgressCard.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 40,
+      "useClient": false,
+      "imports": [
+        "@testing-library/react",
+        "vitest",
+        "@/features/kangur/ui/components/PlayerProgressCard",
+        "@/features/kangur/ui/types"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/PlayerProgressCard.tsx",
+      "basename": "PlayerProgressCard.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Card",
+      "lines": 106,
+      "useClient": false,
+      "imports": [
+        "framer-motion",
+        "@/features/kangur/ui/design/primitives",
+        "@/features/kangur/ui/services/progress",
+        "@/features/kangur/ui/types"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/ProgressOverview.test.tsx",
+      "basename": "ProgressOverview.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 67,
+      "useClient": false,
+      "imports": [
+        "@testing-library/react",
+        "vitest",
+        "@/features/kangur/ui/components/ProgressOverview",
+        "@/features/kangur/ui/types"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/ProgressOverview.tsx",
+      "basename": "ProgressOverview.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 137,
+      "useClient": false,
+      "imports": [
+        "framer-motion",
+        "@/features/kangur/ui/design/primitives",
+        "@/features/kangur/ui/design/tokens",
+        "@/features/kangur/ui/components/LessonMasteryInsights",
+        "@/features/kangur/ui/services/progress",
+        "@/features/kangur/ui/types"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/QuestionCard.test.tsx",
+      "basename": "QuestionCard.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 58,
+      "useClient": false,
+      "imports": [
+        "@testing-library/react",
+        "vitest",
+        "@/features/kangur/ui/types",
+        "@/features/kangur/ui/components/QuestionCard"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/QuestionCard.tsx",
+      "basename": "QuestionCard.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Card",
+      "lines": 232,
+      "useClient": false,
+      "imports": [
+        "react",
+        "framer-motion",
+        "@/features/kangur/ui/design/tokens",
+        "@/features/kangur/ui/design/primitives",
+        "@/features/kangur/ui/types",
+        "@/shared/utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "hours|minutes",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/ResultScreen.tsx",
+      "basename": "ResultScreen.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 91,
+      "useClient": false,
+      "imports": [
+        "framer-motion",
+        "lucide-react",
+        "@/features/kangur/ui/design/primitives",
+        "@/features/kangur/ui/types"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "onHome|onRestart|operation|playerName|score|timeTaken|total",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/ScoreHistory.test.tsx",
+      "basename": "ScoreHistory.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 233,
+      "useClient": false,
+      "imports": [
+        "@testing-library/react",
+        "vitest",
+        "@/features/kangur/config/routing",
+        "@/features/kangur/services/ports",
+        "@/features/kangur/ui/components/ScoreHistory"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/ScoreHistory.tsx",
+      "basename": "ScoreHistory.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 370,
+      "useClient": false,
+      "imports": [
+        "next/link",
+        "react",
+        "@/features/kangur/config/routing",
+        "@/features/kangur/observability/client",
+        "@/features/kangur/services/kangur-platform",
+        "@/features/kangur/services/ports",
+        "@/features/kangur/ui/design/primitives",
+        "@/features/kangur/ui/services/learner-profile-scores",
+        "@/features/kangur/ui/services/score-insights"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "basePath|createdBy|learnerId|playerName",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/SubtractingGame.test.tsx",
+      "basename": "SubtractingGame.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 23,
+      "useClient": false,
+      "imports": [
+        "@testing-library/react",
+        "vitest",
+        "@/features/kangur/ui/components/SubtractingGame"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/SubtractingGame.tsx",
+      "basename": "SubtractingGame.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 280,
+      "useClient": false,
+      "imports": [
+        "react",
+        "framer-motion",
+        "lucide-react",
+        "@/features/kangur/ui/design/tokens",
+        "@/features/kangur/ui/design/primitives",
+        "@/features/kangur/ui/services/progress",
+        "@/features/kangur/ui/services/round-transition",
+        "@/shared/utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/SubtractingLesson.tsx",
+      "basename": "SubtractingLesson.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 202,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@/features/kangur/ui/components/SubtractingGame",
+        "@/features/kangur/ui/components/LessonHub",
+        "@/features/kangur/ui/components/LessonSlideSection",
+        "@/features/kangur/ui/design/lesson-primitives"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/TrainingSetup.tsx",
+      "basename": "TrainingSetup.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 133,
+      "useClient": false,
+      "imports": [
+        "react",
+        "framer-motion",
+        "lucide-react",
+        "@/features/kangur/ui/components/DifficultySelector",
+        "@/features/kangur/ui/design/primitives",
+        "@/features/kangur/ui/types",
+        "@/shared/utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "onBack|onStart",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/UserNotRegisteredError.tsx",
+      "basename": "UserNotRegisteredError.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 60,
+      "useClient": true,
+      "imports": [
+        "lucide-react",
+        "@/features/kangur/ui/design/primitives"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/XpToast.test.tsx",
+      "basename": "XpToast.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 44,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@testing-library/react",
+        "vitest",
+        "@/features/kangur/ui/components/XpToast"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/XpToast.tsx",
+      "basename": "XpToast.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 66,
+      "useClient": false,
+      "imports": [
+        "framer-motion",
+        "@/features/kangur/ui/design/primitives",
+        "@/features/kangur/ui/context/KangurRoutingContext",
+        "@/features/kangur/ui/services/progress",
+        "@/features/kangur/ui/types",
+        "@/shared/utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "newBadges|visible|xpGained",
       "thinReExportWrapper": false
     },
     {
@@ -16593,7 +19176,7 @@
       "domain": "feature",
       "scope": "feature:notesapp",
       "family": "Card",
-      "lines": 143,
+      "lines": 138,
       "useClient": true,
       "imports": [
         "react",
@@ -16616,7 +19199,7 @@
       "domain": "feature",
       "scope": "feature:notesapp",
       "family": "Unknown",
-      "lines": 31,
+      "lines": 32,
       "useClient": true,
       "imports": [
         "react",
@@ -16638,13 +19221,12 @@
       "domain": "feature",
       "scope": "feature:notesapp",
       "family": "Form",
-      "lines": 150,
+      "lines": 137,
       "useClient": true,
       "imports": [
         "lucide-react",
         "next/image",
         "react",
-        "@/features/notesapp/context/MarkdownToolbarActionsContext",
         "@/features/notesapp/context/NoteFormContext",
         "@/shared/contracts/notes",
         "@/shared/ui",
@@ -16652,8 +19234,7 @@
         "./editor/MarkdownEditor",
         "./editor/NotesMarkdownToolbar",
         "./editor/NoteMetadata",
-        "./editor/WysiwygEditor",
-        "@/features/notesapp/hooks/useMarkdownEditor"
+        "./editor/WysiwygEditor"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -16667,7 +19248,7 @@
       "domain": "feature",
       "scope": "feature:notesapp",
       "family": "Unknown",
-      "lines": 217,
+      "lines": 218,
       "useClient": false,
       "imports": [
         "lucide-react",
@@ -16694,7 +19275,7 @@
       "domain": "feature",
       "scope": "feature:notesapp",
       "family": "Unknown",
-      "lines": 225,
+      "lines": 224,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -16747,7 +19328,7 @@
       "domain": "feature",
       "scope": "feature:notesapp",
       "family": "Unknown",
-      "lines": 98,
+      "lines": 93,
       "useClient": true,
       "imports": [
         "react",
@@ -16768,7 +19349,7 @@
       "domain": "feature",
       "scope": "feature:notesapp",
       "family": "Unknown",
-      "lines": 69,
+      "lines": 63,
       "useClient": true,
       "imports": [
         "react",
@@ -16789,7 +19370,7 @@
       "domain": "feature",
       "scope": "feature:notesapp",
       "family": "Unknown",
-      "lines": 182,
+      "lines": 183,
       "useClient": true,
       "imports": [
         "react",
@@ -16833,7 +19414,7 @@
       "domain": "feature",
       "scope": "feature:notesapp",
       "family": "Unknown",
-      "lines": 159,
+      "lines": 162,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -16855,11 +19436,12 @@
       "domain": "feature",
       "scope": "feature:notesapp",
       "family": "Unknown",
-      "lines": 69,
+      "lines": 94,
       "useClient": true,
       "imports": [
         "react",
         "@/features/document-editor",
+        "@/features/document-editor/context/MarkdownSplitEditorContext",
         "@/features/notesapp/context/NoteFormContext",
         "@/shared/ui",
         "@/shared/utils",
@@ -16877,7 +19459,7 @@
       "domain": "feature",
       "scope": "feature:notesapp",
       "family": "Unknown",
-      "lines": 373,
+      "lines": 382,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -16898,14 +19480,14 @@
       "domain": "feature",
       "scope": "feature:notesapp",
       "family": "Toolbar",
-      "lines": 95,
+      "lines": 118,
       "useClient": true,
       "imports": [
         "react",
         "@/features/document-editor",
-        "@/features/notesapp/context/MarkdownToolbarActionsContext",
         "@/features/notesapp/context/NoteFormContext",
-        "@/shared/contracts/notes"
+        "@/shared/contracts/notes",
+        "@/features/notesapp/hooks/useMarkdownEditor"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -16983,7 +19565,7 @@
       "domain": "feature",
       "scope": "feature:notesapp",
       "family": "Header",
-      "lines": 71,
+      "lines": 69,
       "useClient": true,
       "imports": [
         "react",
@@ -17005,7 +19587,7 @@
       "domain": "feature",
       "scope": "feature:notesapp",
       "family": "Header",
-      "lines": 227,
+      "lines": 225,
       "useClient": true,
       "imports": [
         "react",
@@ -17028,7 +19610,7 @@
       "domain": "feature",
       "scope": "feature:notesapp",
       "family": "Unknown",
-      "lines": 236,
+      "lines": 235,
       "useClient": true,
       "imports": [
         "react",
@@ -17036,7 +19618,7 @@
         "@/features/foldertree/v2",
         "@/features/notesapp/hooks/NotesAppContext",
         "@/features/notesapp/utils/master-folder-tree",
-        "@/features/tooltip-engine",
+        "@/shared/lib/documentation",
         "@/shared/contracts/notes",
         "@/shared/contracts/documentation",
         "@/shared/ui",
@@ -17158,14 +19740,13 @@
       "domain": "feature",
       "scope": "feature:observability",
       "family": "Panel",
-      "lines": 555,
+      "lines": 548,
       "useClient": true,
       "imports": [
         "lucide-react",
         "react",
         "@/shared/lib/documentation",
         "@/features/observability/context/SystemLogsContext",
-        "@/features/tooltip-engine",
         "@/shared/contracts/observability",
         "@/shared/ui",
         "@tanstack/react-table",
@@ -17186,7 +19767,7 @@
       "domain": "feature",
       "scope": "feature:observability",
       "family": "Unknown",
-      "lines": 136,
+      "lines": 132,
       "useClient": true,
       "imports": [
         "react",
@@ -17228,7 +19809,7 @@
       "domain": "feature",
       "scope": "feature:observability",
       "family": "Unknown",
-      "lines": 154,
+      "lines": 155,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -17314,7 +19895,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Form",
-      "lines": 98,
+      "lines": 99,
       "useClient": true,
       "imports": [
         "next/dynamic",
@@ -17322,9 +19903,32 @@
         "react",
         "@/features/products/components/ProductForm",
         "@/features/products/context/ProductFormContext",
+        "@/features/products/context/ProductFormCoreContext",
+        "@/features/products/context/ProductFormImageContext",
         "@/shared/contracts/products",
         "@/shared/ui",
         "@/features/files/components/FileManager"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/products/components/EditableCell.test.tsx",
+      "basename": "EditableCell.test.tsx",
+      "domain": "feature",
+      "scope": "feature:products",
+      "family": "Unknown",
+      "lines": 94,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@testing-library/react",
+        "@testing-library/user-event",
+        "vitest",
+        "./EditableCell"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -17338,7 +19942,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 166,
+      "lines": 165,
       "useClient": true,
       "imports": [
         "react",
@@ -17385,7 +19989,7 @@
         "next/navigation",
         "react",
         "@/features/products/components/ProductFormDebugPanel",
-        "@/features/products/context/ProductFormContext",
+        "@/features/products/context/ProductFormCoreContext",
         "@/features/products/context/ProductValidationSettingsContext",
         "@/shared/contracts/products",
         "@/shared/ui",
@@ -17455,11 +20059,10 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 42,
+      "lines": 30,
       "useClient": true,
       "imports": [
         "react",
-        "@/shared/errors/app-error",
         "./ProductImageManager"
       ],
       "templateImports": 0,
@@ -17492,18 +20095,17 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 544,
+      "lines": 526,
       "useClient": true,
       "imports": [
         "react",
-        "@/shared/lib/products/constants",
         "@/features/products/context/ProductFormCoreContext",
         "@/features/products/context/ProductFormImageContext",
         "@/shared/contracts/files",
         "@/shared/contracts/product-image-manager",
         "@/shared/contracts/products",
         "@/shared/lib/api-client",
-        "@/shared/providers/SettingsStoreProvider",
+        "@/features/products/hooks/useProductSettings",
         "./ProductImageManagerControllerContext"
       ],
       "templateImports": 0,
@@ -17525,7 +20127,7 @@
         "next/image",
         "@/shared/utils/image-routing",
         "@/shared/contracts/documentation",
-        "@/features/tooltip-engine",
+        "@/shared/lib/documentation",
         "@/shared/ui",
         "./ProductImageManagerUIContext"
       ],
@@ -17567,7 +20169,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 222,
+      "lines": 321,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -17589,7 +20191,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 322,
+      "lines": 350,
       "useClient": true,
       "imports": [
         "next/dynamic",
@@ -17598,13 +20200,14 @@
         "@/features/integrations/components/listings/MassListProductModal",
         "@/features/integrations/components/listings/ProductListingsModal",
         "@/features/products/context/ProductFormContext",
-        "@/features/products/hooks/editingProductHydration",
+        "@/features/products/context/ProductFormCoreContext",
+        "@/features/products/context/ProductFormImageContext",
         "@/features/products/context/ProductListContext",
+        "@/features/products/hooks/editingProductHydration",
         "@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar",
         "@/shared/contracts/products",
         "@/shared/ui",
         "./ProductForm",
-        "./modals/ProductFormModal",
         "@/features/files/components/FileManager",
         "@/features/integrations/components/listings/SelectIntegrationModal"
       ],
@@ -17661,7 +20264,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 45,
+      "lines": 38,
       "useClient": false,
       "imports": [
         "react",
@@ -17680,7 +20283,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 47,
+      "lines": 45,
       "useClient": false,
       "imports": [
         "react",
@@ -17717,7 +20320,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 75,
+      "lines": 74,
       "useClient": false,
       "imports": [
         "react",
@@ -17737,7 +20340,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 57,
+      "lines": 80,
       "useClient": true,
       "imports": [
         "react",
@@ -17940,7 +20543,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Tab",
-      "lines": 55,
+      "lines": 53,
       "useClient": true,
       "imports": [
         "react",
@@ -17959,7 +20562,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 84,
+      "lines": 83,
       "useClient": true,
       "imports": [
         "next/dynamic",
@@ -17983,13 +20586,12 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 144,
+      "lines": 102,
       "useClient": true,
       "imports": [
         "react",
         "@/features/products/components/ProductImageManager",
-        "@/shared/contracts/files",
-        "@/shared/errors/app-error"
+        "@/shared/contracts/files"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -18003,7 +20605,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 128,
+      "lines": 115,
       "useClient": true,
       "imports": [
         "react",
@@ -18062,7 +20664,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 101,
+      "lines": 109,
       "useClient": true,
       "imports": [
         "react",
@@ -18087,7 +20689,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 214,
+      "lines": 216,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -18212,7 +20814,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 109,
+      "lines": 102,
       "useClient": true,
       "imports": [
         "react",
@@ -18221,9 +20823,8 @@
         "@/shared/ui",
         "@/shared/utils",
         "../../../context/ProductStudioContext",
-        "@/shared/providers/SettingsStoreProvider",
         "@/features/ai/image-studio/image-src",
-        "@/shared/lib/products/constants"
+        "@/features/products/hooks/useProductSettings"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -18237,9 +20838,10 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 468,
+      "lines": 476,
       "useClient": true,
       "imports": [
+        "react",
         "lucide-react",
         "@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar",
         "@/shared/lib/documentation",
@@ -18249,7 +20851,6 @@
         "@/features/products/context/ProductListContext",
         "@/shared/utils/image-routing",
         "@/shared/lib/products/utils/priceCalculation",
-        "@/features/tooltip-engine",
         "@/shared/contracts/products",
         "@tanstack/react-query",
         "@/shared/lib/query-factories-v2",
@@ -18393,7 +20994,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 790,
+      "lines": 821,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -18495,30 +21096,6 @@
         "@/shared/ui",
         "@/shared/utils",
         "../product-column-utils"
-      ],
-      "templateImports": 0,
-      "uiPrimitiveImports": 0,
-      "tokenSet": {},
-      "propsSignature": null,
-      "thinReExportWrapper": false
-    },
-    {
-      "path": "src/features/products/components/modals/ProductFormModal.tsx",
-      "basename": "ProductFormModal.tsx",
-      "domain": "feature",
-      "scope": "feature:products",
-      "family": "Modal",
-      "lines": 100,
-      "useClient": true,
-      "imports": [
-        "next/dynamic",
-        "react",
-        "@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar",
-        "@/features/products/components/ProductForm",
-        "@/features/products/context/ProductFormContext",
-        "@/shared/contracts/ui",
-        "@/shared/ui",
-        "@/features/files/components/FileManager"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -18646,7 +21223,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Settings",
-      "lines": 460,
+      "lines": 452,
       "useClient": true,
       "imports": [
         "next/navigation",
@@ -18656,7 +21233,7 @@
         "@/shared/utils/image-routing",
         "@/shared/contracts/products",
         "@/shared/hooks/use-settings",
-        "@/shared/providers/SettingsStoreProvider",
+        "@/features/products/hooks/useProductSettings",
         "@/shared/ui"
       ],
       "templateImports": 0,
@@ -18671,7 +21248,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 65,
+      "lines": 213,
       "useClient": true,
       "imports": [
         "react",
@@ -19176,7 +21753,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Section",
-      "lines": 149,
+      "lines": 148,
       "useClient": true,
       "imports": [
         "react",
@@ -19273,7 +21850,7 @@
       "imports": [
         "react",
         "@/shared/ui",
-        "../context/PromptEngineContext",
+        "../context/prompt-engine/PromptEngineActionsContext",
         "../context/prompt-engine-context-utils",
         "@/shared/lib/prompt-engine/settings"
       ],
@@ -19289,13 +21866,14 @@
       "domain": "feature",
       "scope": "feature:prompt-engine",
       "family": "List",
-      "lines": 54,
+      "lines": 56,
       "useClient": true,
       "imports": [
         "react",
         "@/shared/ui",
         "./LearnedRuleItem",
-        "../context/PromptEngineContext"
+        "../context/prompt-engine/PromptEngineConfigContext",
+        "../context/prompt-engine/PromptEngineDataContext"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -19309,15 +21887,16 @@
       "domain": "feature",
       "scope": "feature:prompt-engine",
       "family": "Unknown",
-      "lines": 164,
+      "lines": 166,
       "useClient": true,
       "imports": [
         "react",
         "@/shared/ui",
         "@/shared/ui/templates/FilterPanel",
         "@/shared/ui/templates/panels",
-        "../context/PromptEngineContext",
+        "../context/prompt-engine/PromptEngineActionsContext",
         "../context/prompt-engine/PromptEngineConfigContext",
+        "../context/prompt-engine/PromptEngineDataContext",
         "../context/prompt-engine/PromptEngineFiltersContext",
         "@/shared/lib/prompt-engine/settings"
       ],
@@ -19333,14 +21912,16 @@
       "domain": "feature",
       "scope": "feature:prompt-engine",
       "family": "Toolbar",
-      "lines": 161,
+      "lines": 159,
       "useClient": true,
       "imports": [
         "lucide-react",
         "next/link",
         "react",
         "@/shared/ui",
-        "../context/PromptEngineContext",
+        "../context/prompt-engine/PromptEngineActionsContext",
+        "../context/prompt-engine/PromptEngineConfigContext",
+        "../context/prompt-engine/PromptEngineDataContext",
         "../context/PromptEngineValidationPageContext"
       ],
       "templateImports": 0,
@@ -19364,7 +21945,7 @@
         "./context/RuleListDragContext",
         "./rule-item-utils",
         "./RuleItemSimilarPatternsSection",
-        "../context/PromptEngineContext",
+        "../context/prompt-engine/PromptEngineActionsContext",
         "../context/prompt-engine-context-utils",
         "./context/RuleItemContext",
         "./rule-item/RuleItemHeader",
@@ -19406,7 +21987,7 @@
       "domain": "feature",
       "scope": "feature:prompt-engine",
       "family": "List",
-      "lines": 452,
+      "lines": 448,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -19415,8 +21996,11 @@
         "@/shared/utils",
         "./context/RuleListDragContext",
         "./RuleItem",
-        "../context/PromptEngineContext",
+        "../context/prompt-engine/PromptEngineActionsContext",
+        "../context/prompt-engine/PromptEngineConfigContext",
         "../context/prompt-engine-context-utils",
+        "../context/prompt-engine/PromptEngineDataContext",
+        "../context/prompt-engine/PromptEngineFiltersContext",
         "@/shared/lib/prompt-engine/settings"
       ],
       "templateImports": 0,
@@ -19438,7 +22022,7 @@
         "../../context/prompt-engine-context-utils",
         "@/shared/lib/prompt-engine/settings",
         "../rule-item-mutations",
-        "../../context/PromptEngineContext"
+        "../../context/prompt-engine/PromptEngineActionsContext"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -19490,13 +22074,13 @@
       "domain": "feature",
       "scope": "feature:prompt-engine",
       "family": "Settings",
-      "lines": 151,
+      "lines": 154,
       "useClient": true,
       "imports": [
         "react",
         "@/shared/ui",
         "../context/RuleItemContext",
-        "../../context/PromptEngineContext",
+        "../../context/prompt-engine/PromptEngineActionsContext",
         "../rule-item-utils",
         "@/shared/lib/prompt-engine/settings"
       ],
@@ -19563,8 +22147,7 @@
         "lucide-react",
         "@/shared/ui",
         "@/shared/lib/documentation",
-        "@/features/tooltip-engine",
-        "../../context/PromptEngineContext",
+        "../../context/prompt-engine/PromptEngineActionsContext",
         "../context/RuleItemContext",
         "../context/RuleListDragContext",
         "../rule-item-utils"
@@ -19587,7 +22170,7 @@
         "react",
         "@/shared/ui",
         "../context/RuleItemContext",
-        "../../context/PromptEngineContext"
+        "../../context/prompt-engine/PromptEngineActionsContext"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -19836,7 +22419,7 @@
       "domain": "feature",
       "scope": "feature:prompt-exploder",
       "family": "Tab",
-      "lines": 304,
+      "lines": 302,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -20259,7 +22842,7 @@
       "domain": "feature",
       "scope": "feature:viewer3d",
       "family": "Card",
-      "lines": 195,
+      "lines": 193,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -20359,7 +22942,7 @@
       "domain": "feature",
       "scope": "feature:viewer3d",
       "family": "Unknown",
-      "lines": 568,
+      "lines": 565,
       "useClient": true,
       "imports": [
         "@react-three/drei",
@@ -20388,7 +22971,7 @@
       "domain": "feature",
       "scope": "feature:viewer3d",
       "family": "Panel",
-      "lines": 535,
+      "lines": 539,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -20569,7 +23152,7 @@
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Unknown",
-      "lines": 149,
+      "lines": 152,
       "useClient": true,
       "imports": [
         "react",
@@ -20607,18 +23190,41 @@
       "thinReExportWrapper": false
     },
     {
+      "path": "src/shared/lib/ai-brain/components/BrainRoutingContext.tsx",
+      "basename": "BrainRoutingContext.tsx",
+      "domain": "shared",
+      "scope": "shared-lib",
+      "family": "Unknown",
+      "lines": 92,
+      "useClient": true,
+      "imports": [
+        "react",
+        "@/shared/errors/app-error",
+        "@/shared/lib/react/createStrictContext",
+        "../context/BrainContext",
+        "../settings"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
       "path": "src/shared/lib/ai-brain/components/BrainRoutingEditModal.tsx",
       "basename": "BrainRoutingEditModal.tsx",
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Modal",
-      "lines": 134,
+      "lines": 148,
       "useClient": true,
       "imports": [
         "react",
+        "@/shared/errors/app-error",
         "@/shared/ui",
         "../context/BrainContext",
         "../settings",
+        "./BrainRoutingContext",
         "./AssignmentEditor"
       ],
       "templateImports": 0,
@@ -20633,7 +23239,7 @@
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Unknown",
-      "lines": 72,
+      "lines": 81,
       "useClient": true,
       "imports": [
         "react",
@@ -20654,12 +23260,14 @@
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Unknown",
-      "lines": 138,
+      "lines": 153,
       "useClient": true,
       "imports": [
         "react",
+        "@/shared/errors/app-error",
         "@/features/foldertree/v2",
         "../settings",
+        "./BrainRoutingContext",
         "./BrainRoutingCapabilityNodeItem",
         "./BrainRoutingFeatureNodeItem",
         "./brain-routing-master-tree"
@@ -20667,7 +23275,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "effectiveCapabilityAssignments|isPending|onEdit|onToggleEnabled|settings",
+      "propsSignature": null,
       "thinReExportWrapper": false
     },
     {
@@ -20695,7 +23303,7 @@
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Unknown",
-      "lines": 89,
+      "lines": 124,
       "useClient": true,
       "imports": [
         "@/shared/hooks/use-settings",
@@ -20732,7 +23340,7 @@
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Tab",
-      "lines": 252,
+      "lines": 317,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -20752,7 +23360,7 @@
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Tab",
-      "lines": 273,
+      "lines": 413,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -20820,7 +23428,7 @@
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Tab",
-      "lines": 171,
+      "lines": 155,
       "useClient": true,
       "imports": [
         "react",
@@ -20828,6 +23436,7 @@
         "../context/BrainContext",
         "../settings",
         "./AssignmentEditor",
+        "./BrainRoutingContext",
         "./BrainRoutingEditModal",
         "./BrainRoutingTree",
         "./brain-routing-master-tree"
@@ -20844,7 +23453,7 @@
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Unknown",
-      "lines": 197,
+      "lines": 207,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -20858,7 +23467,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "className|entityId|entityType|getEntityJson|location",
+      "propsSignature": "className|entityId|entityType|getEntityJson|location|onRunQueued",
       "thinReExportWrapper": false
     },
     {
@@ -20886,7 +23495,7 @@
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Header",
-      "lines": 80,
+      "lines": 81,
       "useClient": true,
       "imports": [
         "@/shared/contracts",
@@ -21044,7 +23653,7 @@
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Modal",
-      "lines": 6,
+      "lines": 3,
       "useClient": false,
       "imports": [
         "./ExportJobDetailModalImpl"
@@ -21061,7 +23670,7 @@
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Unknown",
-      "lines": 76,
+      "lines": 74,
       "useClient": false,
       "imports": [
         "react",
@@ -21083,15 +23692,15 @@
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Table",
-      "lines": 178,
+      "lines": 110,
       "useClient": true,
       "imports": [
         "lucide-react",
         "next/link",
         "react",
-        "@/shared/lib/jobs/context/JobsContext",
         "@/shared/ui",
         "../types",
+        "./context/JobTableRuntimeContext",
         "./job-table/JobStatusCell",
         "./job-table/JobTimingCell",
         "./job-table/JobActionsCell",
@@ -21109,9 +23718,10 @@
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Panel",
-      "lines": 236,
+      "lines": 285,
       "useClient": true,
       "imports": [
+        "react",
         "next/link",
         "@/shared/lib/jobs/context/JobsContext",
         "@/shared/lib/jobs/hooks/useProductListingJobsProps",
@@ -21119,6 +23729,7 @@
         "@/shared/ui/templates/FilterPanel",
         "@/shared/ui/templates/panels",
         "./context/ProductListingJobsPanelViewContext",
+        "./context/JobTableRuntimeContext",
         "./ExportJobDetailModal",
         "./JobTable"
       ],
@@ -21126,6 +23737,25 @@
       "uiPrimitiveImports": 2,
       "tokenSet": {},
       "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/shared/lib/jobs/components/context/JobTableRuntimeContext.tsx",
+      "basename": "JobTableRuntimeContext.tsx",
+      "domain": "shared",
+      "scope": "shared-lib",
+      "family": "Unknown",
+      "lines": 72,
+      "useClient": true,
+      "imports": [
+        "react",
+        "@/shared/errors/app-error",
+        "@/shared/lib/react/createStrictContext"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "children|value",
       "thinReExportWrapper": false
     },
     {
@@ -21152,12 +23782,12 @@
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Unknown",
-      "lines": 82,
+      "lines": 61,
       "useClient": true,
       "imports": [
-        "react",
         "lucide-react",
-        "@/shared/ui"
+        "@/shared/ui",
+        "../context/JobTableRuntimeContext"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -21171,8 +23801,8 @@
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Unknown",
-      "lines": 63,
-      "useClient": true,
+      "lines": 61,
+      "useClient": false,
       "imports": [
         "react",
         "lucide-react",
@@ -21190,8 +23820,8 @@
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Unknown",
-      "lines": 25,
-      "useClient": true,
+      "lines": 23,
+      "useClient": false,
       "imports": [
         "react"
       ],
@@ -21230,15 +23860,16 @@
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Unknown",
-      "lines": 114,
+      "lines": 122,
       "useClient": true,
       "imports": [
         "react",
         "@/shared/ui",
+        "@/shared/ui/vector-canvas/VectorCanvasContext",
         "../context/VectorDrawingContext"
       ],
       "templateImports": 0,
-      "uiPrimitiveImports": 0,
+      "uiPrimitiveImports": 1,
       "tokenSet": {},
       "propsSignature": null,
       "thinReExportWrapper": false
@@ -21255,7 +23886,6 @@
         "lucide-react",
         "react",
         "@/shared/lib/documentation",
-        "@/features/tooltip-engine",
         "@/shared/ui",
         "@/shared/utils",
         "@/shared/contracts/vector",
@@ -21439,7 +24069,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Modal",
-      "lines": 234,
+      "lines": 242,
       "useClient": true,
       "imports": [
         "@/shared/contracts/ui",
@@ -21556,7 +24186,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 213,
+      "lines": 217,
       "useClient": true,
       "imports": [
         "react",
@@ -21578,7 +24208,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Section",
-      "lines": 216,
+      "lines": 236,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -21757,7 +24387,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 286,
+      "lines": 291,
       "useClient": true,
       "imports": [
         "react",
@@ -21839,7 +24469,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 85,
+      "lines": 86,
       "useClient": false,
       "imports": [
         "class-variance-authority",
@@ -21936,7 +24566,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 113,
+      "lines": 111,
       "useClient": true,
       "imports": [
         "react",
@@ -22280,7 +24910,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 103,
+      "lines": 117,
       "useClient": false,
       "imports": [
         "react",
@@ -22339,7 +24969,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 159,
+      "lines": 250,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -22459,7 +25089,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 211,
+      "lines": 215,
       "useClient": true,
       "imports": [
         "react",
@@ -22558,7 +25188,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 102,
+      "lines": 92,
       "useClient": false,
       "imports": [
         "react",
@@ -22578,7 +25208,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 106,
+      "lines": 104,
       "useClient": true,
       "imports": [
         "react",
@@ -22673,7 +25303,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 91,
+      "lines": 89,
       "useClient": true,
       "imports": [
         "react",
@@ -22748,7 +25378,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Panel",
-      "lines": 265,
+      "lines": 267,
       "useClient": true,
       "imports": [
         "react",
@@ -22786,7 +25416,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Modal",
-      "lines": 143,
+      "lines": 141,
       "useClient": true,
       "imports": [
         "react",
@@ -22806,7 +25436,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 436,
+      "lines": 425,
       "useClient": true,
       "imports": [
         "react",
@@ -22855,7 +25485,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Panel",
-      "lines": 347,
+      "lines": 363,
       "useClient": true,
       "imports": [
         "react",
@@ -23062,7 +25692,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Modal",
-      "lines": 194,
+      "lines": 202,
       "useClient": true,
       "imports": [
         "react",
@@ -23104,7 +25734,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 445,
+      "lines": 443,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -23150,7 +25780,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 116,
+      "lines": 114,
       "useClient": true,
       "imports": [
         "react",
@@ -23291,17 +25921,14 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 193,
+      "lines": 190,
       "useClient": true,
       "imports": [
         "react",
-        "@/shared/lib/react/createStrictContext",
         "@/shared/utils",
         "./card",
         "./checkbox",
-        "./label",
-        "./switch",
-        "./status-toggle"
+        "./switch"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -23460,20 +26087,40 @@
       "thinReExportWrapper": false
     },
     {
+      "path": "src/shared/ui/vector-canvas/VectorCanvasContext.tsx",
+      "basename": "VectorCanvasContext.tsx",
+      "domain": "shared-ui",
+      "scope": "shared-ui",
+      "family": "Unknown",
+      "lines": 84,
+      "useClient": true,
+      "imports": [
+        "react",
+        "@/shared/contracts/vector",
+        "../vector-canvas.geometry"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "children|value",
+      "thinReExportWrapper": false
+    },
+    {
       "path": "src/shared/ui/vector-canvas/components/CanvasBackgroundLayer.tsx",
       "basename": "CanvasBackgroundLayer.tsx",
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 29,
+      "lines": 20,
       "useClient": false,
       "imports": [
-        "react"
+        "react",
+        "../VectorCanvasContext"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "color|enabled|height|width",
+      "propsSignature": null,
       "thinReExportWrapper": false
     },
     {
@@ -23482,15 +26129,16 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 33,
+      "lines": 26,
       "useClient": false,
       "imports": [
-        "react"
+        "react",
+        "../VectorCanvasContext"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "height|show|width",
+      "propsSignature": null,
       "thinReExportWrapper": false
     },
     {
@@ -23499,15 +26147,16 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 23,
+      "lines": 16,
       "useClient": false,
       "imports": [
-        "react"
+        "react",
+        "../VectorCanvasContext"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "height|show|width",
+      "propsSignature": null,
       "thinReExportWrapper": false
     },
     {
@@ -23516,11 +26165,12 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 53,
+      "lines": 52,
       "useClient": false,
       "imports": [
         "react",
-        "../../button"
+        "../../button",
+        "../VectorCanvasContext"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -23534,10 +26184,11 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 38,
+      "lines": 32,
       "useClient": false,
       "imports": [
-        "react"
+        "react",
+        "../VectorCanvasContext"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -23551,7 +26202,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 283,
+      "lines": 379,
       "useClient": true,
       "imports": [
         "react",
@@ -23564,7 +26215,8 @@
         "./components/CanvasGridLayer",
         "./components/CanvasCenterGuides",
         "./components/CanvasImageLayer",
-        "./components/CanvasHud"
+        "./components/CanvasHud",
+        "./VectorCanvasContext"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -23578,7 +26230,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 359,
+      "lines": 372,
       "useClient": true,
       "imports": [
         "react",
@@ -23588,7 +26240,8 @@
         "@/shared/utils",
         "./button",
         "./tooltip",
-        "./vector-canvas.geometry"
+        "./vector-canvas.geometry",
+        "./vector-canvas/VectorCanvasContext"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -23597,10 +26250,72 @@
       "thinReExportWrapper": false
     }
   ],
-  "opportunities": [],
+  "opportunities": [
+    {
+      "method": "token_similarity",
+      "family": "Panel",
+      "score": 706,
+      "fileCount": 2,
+      "totalLines": 230,
+      "maxLines": 137,
+      "featureCount": 2,
+      "scopes": [
+        "feature:cms",
+        "feature:kangur"
+      ],
+      "templateUsers": 0,
+      "templateCoverage": 0,
+      "recommendation": "migrate-to-panel-template",
+      "risk": "low",
+      "similarity": 0.605,
+      "files": [
+        {
+          "path": "src/features/cms/components/page-builder/PageBuilderLeftPanel.tsx",
+          "lines": 137,
+          "scope": "feature:cms",
+          "family": "Panel",
+          "templateImports": 0,
+          "useClient": true
+        },
+        {
+          "path": "src/features/kangur/cms-builder/KangurCmsBuilderLeftPanel.tsx",
+          "lines": 93,
+          "scope": "feature:kangur",
+          "family": "Panel",
+          "templateImports": 0,
+          "useClient": true
+        }
+      ]
+    }
+  ],
   "clusterDiagnostics": {
     "duplicateName": [],
     "propSignature": [],
-    "tokenSimilarity": []
+    "tokenSimilarity": [
+      {
+        "method": "token_similarity",
+        "family": "Panel",
+        "clusterKey": "tokens:Panel:src/features/cms/components/page-builder/PageBuilderLeftPanel.tsx|src/features/kangur/cms-builder/KangurCmsBuilderLeftPanel.tsx",
+        "fileCount": 2,
+        "totalLines": 230,
+        "scopes": [
+          "feature:cms",
+          "feature:kangur"
+        ],
+        "similarity": 0.605,
+        "files": [
+          {
+            "path": "src/features/cms/components/page-builder/PageBuilderLeftPanel.tsx",
+            "lines": 137,
+            "scope": "feature:cms"
+          },
+          {
+            "path": "src/features/kangur/cms-builder/KangurCmsBuilderLeftPanel.tsx",
+            "lines": 93,
+            "scope": "feature:kangur"
+          }
+        ]
+      }
+    ]
   }
 }

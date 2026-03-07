@@ -105,8 +105,7 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem(
     if (isHierarchyLocked) return 'Unlock hierarchy to move held case.';
     if (!heldCaseFile) return 'Held case is no longer available.';
     if (heldCaseFile.isLocked === true) return 'Held case is locked.';
-    if (isHeldCaseAncestorOf(targetCaseId))
-      return 'Cannot nest held case under its descendant.';
+    if (isHeldCaseAncestorOf(targetCaseId)) return 'Cannot nest held case under its descendant.';
     return null;
   })();
 

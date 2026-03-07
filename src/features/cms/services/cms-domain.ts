@@ -2,7 +2,7 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import { getCmsDomainSettings } from '@/features/cms/server-settings';
+import { getCmsDomainSettings } from './cms-domain-settings';
 import { getCmsDataProvider } from '@/shared/lib/cms/services/cms-provider';
 import type { CmsDomain, Slug } from '@/shared/contracts/cms';
 import type { CmsRepository } from '@/shared/contracts/cms';

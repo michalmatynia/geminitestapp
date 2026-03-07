@@ -5,64 +5,49 @@ import React from 'react';
 
 import { Button, Input, Label, SelectSimple, Card, Badge } from '@/shared/ui';
 
-import type { DocumentEditorMode } from '../types';
+import {
+  useOptionalMarkdownToolbarContext,
+  type MarkdownToolbarActionHandlers,
+  type MarkdownToolbarContextValue,
+} from '../context/MarkdownToolbarContext';
 
-export type MarkdownToolbarActionHandlers = {
-  onApplyWrap: (prefix: string, suffix: string, placeholder: string) => void;
-  onApplyLinePrefix: (prefix: string) => void;
-  onInsertAtCursor: (value: string) => void;
-  onApplyBulletList: () => void;
-  onApplyChecklist: () => void;
-  onApplySpanStyle: (colorValue: string, fontValue: string) => void;
-};
+export type { MarkdownToolbarActionHandlers };
 
-export interface MarkdownToolbarProps extends MarkdownToolbarActionHandlers {
-  mode: DocumentEditorMode;
-  onModeChange: (mode: DocumentEditorMode) => void;
-  isModeLocked?: boolean | undefined;
-  isMigrating?: boolean | undefined;
-  onMigrateToWysiwyg?: (() => void) | undefined;
-  onMigrateToMarkdown?: (() => void) | undefined;
-  showPreview?: boolean | undefined;
-  onTogglePreview?: (() => void) | undefined;
-  onUndo?: (() => void) | undefined;
-  onRedo?: (() => void) | undefined;
-  canUndo?: boolean | undefined;
-  canRedo?: boolean | undefined;
-  textColor: string;
-  onTextColorChange: (next: string) => void;
-  fontFamily: string;
-  onFontFamilyChange: (next: string) => void;
-  fileReferenceOptions?: Array<{ value: string; label: string }> | undefined;
-  onInsertFileReference?: ((value: string) => void) | undefined;
-}
+export interface MarkdownToolbarProps extends Partial<MarkdownToolbarContextValue> {}
 
 export function MarkdownToolbar(props: MarkdownToolbarProps): React.JSX.Element {
+  const context = useOptionalMarkdownToolbarContext();
   const {
-    mode,
-    onModeChange,
-    isModeLocked = false,
-    isMigrating = false,
-    onMigrateToWysiwyg,
-    onMigrateToMarkdown,
-    showPreview = false,
-    onTogglePreview,
-    onUndo,
-    onRedo,
-    canUndo = false,
-    canRedo = false,
-    textColor,
-    onTextColorChange,
-    fontFamily,
-    onFontFamilyChange,
-    fileReferenceOptions,
-    onInsertFileReference,
-    onApplyWrap,
-    onApplyLinePrefix,
-    onInsertAtCursor,
-    onApplyBulletList,
-    onApplyChecklist,
-    onApplySpanStyle,
+    mode = props.mode ?? context?.mode ?? 'markdown',
+    onModeChange = props.onModeChange ?? context?.onModeChange ?? ((): void => {}),
+    isModeLocked = props.isModeLocked ?? context?.isModeLocked ?? false,
+    isMigrating = props.isMigrating ?? context?.isMigrating ?? false,
+    onMigrateToWysiwyg = props.onMigrateToWysiwyg ?? context?.onMigrateToWysiwyg,
+    onMigrateToMarkdown = props.onMigrateToMarkdown ?? context?.onMigrateToMarkdown,
+    showPreview = props.showPreview ?? context?.showPreview ?? false,
+    onTogglePreview = props.onTogglePreview ?? context?.onTogglePreview,
+    onUndo = props.onUndo ?? context?.onUndo,
+    onRedo = props.onRedo ?? context?.onRedo,
+    canUndo = props.canUndo ?? context?.canUndo ?? false,
+    canRedo = props.canRedo ?? context?.canRedo ?? false,
+    textColor = props.textColor ?? context?.textColor ?? '',
+    onTextColorChange = props.onTextColorChange ?? context?.onTextColorChange ?? ((): void => {}),
+    fontFamily = props.fontFamily ?? context?.fontFamily ?? 'inherit',
+    onFontFamilyChange = props.onFontFamilyChange ?? context?.onFontFamilyChange ?? ((): void => {}),
+    fileReferenceOptions = props.fileReferenceOptions ?? context?.fileReferenceOptions,
+    onInsertFileReference = props.onInsertFileReference ?? context?.onInsertFileReference,
+    onApplyWrap = props.onApplyWrap ?? context?.onApplyWrap ?? ((): void => {}),
+    onApplyLinePrefix = props.onApplyLinePrefix ??
+      context?.onApplyLinePrefix ??
+      ((): void => {}),
+    onInsertAtCursor = props.onInsertAtCursor ?? context?.onInsertAtCursor ?? ((): void => {}),
+    onApplyBulletList = props.onApplyBulletList ??
+      context?.onApplyBulletList ??
+      ((): void => {}),
+    onApplyChecklist = props.onApplyChecklist ??
+      context?.onApplyChecklist ??
+      ((): void => {}),
+    onApplySpanStyle = props.onApplySpanStyle ?? context?.onApplySpanStyle ?? ((): void => {}),
   } = props;
 
   return (

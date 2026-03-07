@@ -4,7 +4,7 @@ import { Trophy, User, Ghost } from 'lucide-react';
 import { logKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurScoreRecord, KangurUser } from '@/features/kangur/services/ports';
-import { KangurButton } from '@/features/kangur/ui/design/primitives';
+import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 
 type OperationLabel = {
@@ -99,7 +99,12 @@ export default function Leaderboard(): React.JSX.Element {
     .slice(0, 10);
 
   return (
-    <div className='bg-white rounded-3xl shadow-xl p-4 sm:p-6 w-full max-w-lg'>
+    <KangurPanel
+      className='w-full max-w-lg'
+      data-testid='leaderboard-shell'
+      padding='lg'
+      variant='elevated'
+    >
       <div className='flex items-center gap-2 mb-4'>
         <Trophy className='text-yellow-400 w-6 h-6 flex-shrink-0' />
         <h3 className='text-xl font-extrabold text-gray-800'>Najlepsze wyniki</h3>
@@ -212,6 +217,6 @@ export default function Leaderboard(): React.JSX.Element {
           })}
         </div>
       )}
-    </div>
+    </KangurPanel>
   );
 }

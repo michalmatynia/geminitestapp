@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+
 import { Button, Card, SelectSimple, FormActions } from '@/shared/ui';
 import { type AnalysisMode, type ShadowPolicy, type DetectionMode } from '../analysis-types';
 import {
@@ -11,58 +12,29 @@ import {
   CHROMA_THRESHOLD_MIN,
   CHROMA_THRESHOLD_MAX,
 } from '../analysis-types';
+import {
+  type AnalysisSettingsSectionConfig,
+  useOptionalImageStudioAnalysisRuntime,
+} from './ImageStudioAnalysisRuntimeContext';
 
-export interface AnalysisSettingsSectionConfig {
-  mode: AnalysisMode;
-  setMode: (mode: AnalysisMode) => void;
-  layoutPadding: string;
-  setLayoutPadding: (v: string) => void;
-  layoutPaddingX: string;
-  setLayoutPaddingX: (v: string) => void;
-  layoutPaddingY: string;
-  setLayoutPaddingY: (v: string) => void;
-  layoutSplitAxes: boolean;
-  setLayoutSplitAxes: (v: boolean | ((p: boolean) => boolean)) => void;
-  layoutAdvancedEnabled: boolean;
-  setLayoutAdvancedEnabled: (v: boolean | ((p: boolean) => boolean)) => void;
-  layoutDetection: DetectionMode;
-  setLayoutDetection: (mode: DetectionMode) => void;
-  layoutWhiteThreshold: string;
-  setLayoutWhiteThreshold: (v: string) => void;
-  layoutChromaThreshold: string;
-  setLayoutChromaThreshold: (v: string) => void;
-  layoutFillMissingCanvasWhite: boolean;
-  setLayoutFillMissingCanvasWhite: (v: boolean) => void;
-  layoutShadowPolicy: ShadowPolicy;
-  setLayoutShadowPolicy: (mode: ShadowPolicy) => void;
-  layoutPresetOptionValue: string;
-  layoutPresetOptions: Array<{ value: string; label: string }>;
-  layoutPresetDraftName: string;
-  setLayoutPresetDraftName: (v: string) => void;
-  onCenterLayoutPresetChange: (value: string) => void;
-  onCenterLayoutSavePreset: () => void;
-  onCenterLayoutDeletePreset: () => void;
-  layoutCanSavePreset: boolean;
-  layoutCanDeletePreset: boolean;
-  layoutSavePresetLabel: string;
-  projectCanvasSize: { width: number; height: number } | null;
-  busy: boolean;
-  busyLabel: string;
-  handleAnalyze: () => void;
-  handleCancel: () => void;
-  workingSlotId: string | null;
-  workingSlotImageSrc: string | null;
-  sanitizePaddingInput: (v: string) => string;
-  sanitizeThresholdInput: (v: string) => string;
-}
+export type { AnalysisSettingsSectionConfig } from './ImageStudioAnalysisRuntimeContext';
 
 interface AnalysisSettingsSectionProps {
-  config: AnalysisSettingsSectionConfig;
+  config?: AnalysisSettingsSectionConfig;
 }
 
 export function AnalysisSettingsSection({
   config,
 }: AnalysisSettingsSectionProps): React.JSX.Element {
+  const analysisRuntime = useOptionalImageStudioAnalysisRuntime();
+  const resolvedConfig = config ?? analysisRuntime?.settingsConfig;
+
+  if (!resolvedConfig) {
+    throw new Error(
+      'AnalysisSettingsSection must be used within ImageStudioAnalysisRuntimeProvider or receive explicit config'
+    );
+  }
+
   const {
     mode,
     setMode,
@@ -105,7 +77,7 @@ export function AnalysisSettingsSection({
     workingSlotImageSrc,
     sanitizePaddingInput,
     sanitizeThresholdInput,
-  } = config;
+  } = resolvedConfig;
 
   const modeOptions = [
     { value: 'server_analysis', label: 'Analysis Server: Sharp' },

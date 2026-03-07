@@ -49,7 +49,8 @@ export function GridLayoutCanvas({
   return (
     <div className='rounded-xl border border-border/60 bg-card/30 p-3'>
       <div className='mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground'>
-        Layout preview · {columns} column{columns !== 1 ? 's' : ''} · {items.length} item{items.length !== 1 ? 's' : ''}
+        Layout preview · {columns} column{columns !== 1 ? 's' : ''} · {items.length} item
+        {items.length !== 1 ? 's' : ''}
       </div>
       <div style={gridStyle}>
         {items.map((item, index) => {

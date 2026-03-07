@@ -4,10 +4,8 @@ import { X } from 'lucide-react';
 import Image from 'next/image';
 import React from 'react';
 
-import { MarkdownToolbarActionsProvider } from '@/features/notesapp/context/MarkdownToolbarActionsContext';
 import {
   NoteFormProvider,
-  useNoteContentContext,
   useNoteEditorContext,
   useNoteFilesContext,
   useNoteFormRuntime,
@@ -30,8 +28,6 @@ import { NotesMarkdownToolbar } from './editor/NotesMarkdownToolbar';
 import { NoteMetadata } from './editor/NoteMetadata';
 import { WysiwygEditor } from './editor/WysiwygEditor';
 
-import { useMarkdownEditor } from '@/features/notesapp/hooks/useMarkdownEditor';
-
 type NoteFormViewContextValue = {
   formRef?: React.RefObject<HTMLFormElement | null> | undefined;
 };
@@ -45,16 +41,9 @@ function useNoteFormViewContext(): NoteFormViewContextValue {
 function NoteFormInner(): React.JSX.Element {
   const { formRef } = useNoteFormViewContext();
   const { note, handleSubmit } = useNoteFormRuntime();
-  const { content, setContent } = useNoteContentContext();
   const { title, setTitle } = useNoteMetadataContext();
-  const { editorMode, contentRef } = useNoteEditorContext();
+  const { editorMode } = useNoteEditorContext();
   const { lightboxImage, setLightboxImage } = useNoteFilesContext();
-
-  const markdownToolbarActions = useMarkdownEditor({
-    content,
-    setContent,
-    contentRef,
-  });
 
   return (
     <>
@@ -78,9 +67,7 @@ function NoteFormInner(): React.JSX.Element {
           </FormField>
 
           <FormField label='Content'>
-            <MarkdownToolbarActionsProvider value={markdownToolbarActions}>
-              <NotesMarkdownToolbar />
-            </MarkdownToolbarActionsProvider>
+            <NotesMarkdownToolbar />
             <div className='mt-2'>
               {editorMode === 'markdown' || editorMode === 'code' ? (
                 <MarkdownEditor />

@@ -57,11 +57,12 @@ import {
 import { TestSuiteMetadataForm } from './components/TestSuiteMetadataForm';
 import { TestSuiteTreeRow } from './components/TestSuiteTreeRow';
 import { KangurQuestionsManagerPanel } from './KangurQuestionsManagerPanel';
+import { KangurQuestionsManagerRuntimeProvider } from './context/KangurQuestionsManagerRuntimeContext';
 import type { KangurTestSuite } from '@/shared/contracts/kangur-tests';
 
-const ORDERED_TREE_INSTANCE = 'kangur_lessons_manager';
-const CATALOG_TREE_INSTANCE = 'kangur_lessons_manager_catalog';
-const TREE_MODE_STORAGE_KEY = 'kangur_lessons_manager_tree_mode_v1';
+const ORDERED_TREE_INSTANCE = 'kangur_test_suites_manager';
+const CATALOG_TREE_INSTANCE = 'kangur_test_suites_manager_catalog';
+const TREE_MODE_STORAGE_KEY = 'kangur_test_suites_manager_tree_mode_v1';
 
 type TreeMode = 'ordered' | 'catalog';
 
@@ -89,10 +90,7 @@ export function AdminKangurTestSuitesManagerPage({
 
   const suites = useMemo(() => parseKangurTestSuites(rawSuites), [rawSuites]);
   const questionStore = useMemo(() => parseKangurTestQuestionStore(rawQuestions), [rawQuestions]);
-  const suiteById = useMemo(
-    () => new Map(suites.map((s) => [s.id, s])),
-    [suites]
-  );
+  const suiteById = useMemo(() => new Map(suites.map((s) => [s.id, s])), [suites]);
   const questionCountBySuiteId = useMemo((): Map<string, number> => {
     const map = new Map<string, number>();
     for (const suite of suites) {
@@ -105,7 +103,9 @@ export function AdminKangurTestSuitesManagerPage({
   const [editingSuite, setEditingSuite] = useState<KangurTestSuite | null>(null);
   const [suiteToDelete, setSuiteToDelete] = useState<KangurTestSuite | null>(null);
   const [managingSuite, setManagingSuite] = useState<KangurTestSuite | null>(null);
-  const [formData, setFormData] = useState<TestSuiteFormData>(() => createInitialTestSuiteFormData());
+  const [formData, setFormData] = useState<TestSuiteFormData>(() =>
+    createInitialTestSuiteFormData()
+  );
   const [treeMode, setTreeMode] = useState<TreeMode>(() => readPersistedTreeMode());
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -114,42 +114,56 @@ export function AdminKangurTestSuitesManagerPage({
 
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
-    try { window.localStorage.setItem(TREE_MODE_STORAGE_KEY, treeMode); } catch { /* ignore */ }
+    try {
+      window.localStorage.setItem(TREE_MODE_STORAGE_KEY, treeMode);
+    } catch {
+      /* ignore */
+    }
   }, [treeMode]);
 
   const masterNodes = useMemo(
-    () => isCatalogMode
-      ? buildKangurTestSuiteCatalogMasterNodes(suites)
-      : buildKangurTestSuiteMasterNodes(suites),
+    () =>
+      isCatalogMode
+        ? buildKangurTestSuiteCatalogMasterNodes(suites)
+        : buildKangurTestSuiteMasterNodes(suites),
     [isCatalogMode, suites]
   );
 
   const adapter = useMemo(
-    () => createMasterFolderTreeTransactionAdapter({
-      onApply: async (transaction): Promise<void> => {
-        if (isCatalogMode) return;
-        const internalAdapter = createMasterFolderTreeTransactionAdapter({ onApply: () => {} });
-        const applied = await internalAdapter.apply(transaction, { tx: transaction, preparedAt: Date.now() });
-        if (!applied?.nodes) return;
-        const nextOrder = resolveKangurTestSuiteOrderFromNodes(applied.nodes, suiteById);
-        const nextSuites = canonicalizeKangurTestSuites(
-          suites.map((s) => ({
-            ...s,
-            sortOrder:
-              (nextOrder.findIndex((ns) => ns.id === s.id) + 1) * KANGUR_TEST_SUITE_SORT_ORDER_GAP,
-          }))
-        );
-        await updateSetting.mutateAsync({
-          key: KANGUR_TEST_SUITES_SETTING_KEY,
-          value: serializeSetting(nextSuites),
-        });
-      },
-    }),
+    () =>
+      createMasterFolderTreeTransactionAdapter({
+        onApply: async (transaction): Promise<void> => {
+          if (isCatalogMode) return;
+          const internalAdapter = createMasterFolderTreeTransactionAdapter({ onApply: () => {} });
+          const applied = await internalAdapter.apply(transaction, {
+            tx: transaction,
+            preparedAt: Date.now(),
+          });
+          if (!applied?.nodes) return;
+          const nextOrder = resolveKangurTestSuiteOrderFromNodes(applied.nodes, suiteById);
+          const nextSuites = canonicalizeKangurTestSuites(
+            suites.map((s) => ({
+              ...s,
+              sortOrder:
+                (nextOrder.findIndex((ns) => ns.id === s.id) + 1) *
+                KANGUR_TEST_SUITE_SORT_ORDER_GAP,
+            }))
+          );
+          await updateSetting.mutateAsync({
+            key: KANGUR_TEST_SUITES_SETTING_KEY,
+            value: serializeSetting(nextSuites),
+          });
+        },
+      }),
     [isCatalogMode, suiteById, suites, updateSetting]
   );
 
-  const { controller, capabilities, appearance: { rootDropUi }, viewport: { scrollToNodeRef } } =
-    useMasterFolderTreeShell({ instance: activeTreeInstance, nodes: masterNodes, adapter });
+  const {
+    controller,
+    capabilities,
+    appearance: { rootDropUi },
+    viewport: { scrollToNodeRef },
+  } = useMasterFolderTreeShell({ instance: activeTreeInstance, nodes: masterNodes, adapter });
 
   const searchState = useMasterFolderTreeSearch(masterNodes, searchQuery, {
     config: capabilities.search,
@@ -181,7 +195,9 @@ export function AdminKangurTestSuitesManagerPage({
       setShowModal(false);
       setEditingSuite(null);
     } catch (error) {
-      logClientError(error, { context: { source: 'AdminKangurTestSuitesManagerPage', action: 'saveSuite' } });
+      logClientError(error, {
+        context: { source: 'AdminKangurTestSuitesManagerPage', action: 'saveSuite' },
+      });
       toast('Failed to save suite.', { variant: 'error' });
     }
   };
@@ -204,14 +220,17 @@ export function AdminKangurTestSuitesManagerPage({
       toast('Suite deleted.', { variant: 'success' });
       setSuiteToDelete(null);
     } catch (error) {
-      logClientError(error, { context: { source: 'AdminKangurTestSuitesManagerPage', action: 'deleteSuite' } });
+      logClientError(error, {
+        context: { source: 'AdminKangurTestSuitesManagerPage', action: 'deleteSuite' },
+      });
       toast('Failed to delete suite.', { variant: 'error' });
     }
   };
 
   const handleImportLegacy = async (): Promise<void> => {
     try {
-      const { suites: importedSuites, questionStore: importedQuestions } = importLegacyKangurQuestions();
+      const { suites: importedSuites, questionStore: importedQuestions } =
+        importLegacyKangurQuestions();
       const nextSuites = canonicalizeKangurTestSuites([...suites, ...importedSuites]);
       const nextQuestions = { ...questionStore, ...importedQuestions };
       await updateSetting.mutateAsync({
@@ -224,7 +243,9 @@ export function AdminKangurTestSuitesManagerPage({
       });
       toast(`Imported ${importedSuites.length} suites from legacy data.`, { variant: 'success' });
     } catch (error) {
-      logClientError(error, { context: { source: 'AdminKangurTestSuitesManagerPage', action: 'importLegacy' } });
+      logClientError(error, {
+        context: { source: 'AdminKangurTestSuitesManagerPage', action: 'importLegacy' },
+      });
       toast('Failed to import legacy data.', { variant: 'error' });
     }
   };
@@ -266,10 +287,12 @@ export function AdminKangurTestSuitesManagerPage({
           </SectionHeader>
         ) : null}
         <div className='flex-1 overflow-hidden rounded-2xl border border-border/60 bg-card/20 p-4'>
-          <KangurQuestionsManagerPanel
+          <KangurQuestionsManagerRuntimeProvider
             suite={managingSuite}
             onClose={(): void => setManagingSuite(null)}
-          />
+          >
+            <KangurQuestionsManagerPanel />
+          </KangurQuestionsManagerRuntimeProvider>
         </div>
       </div>
     );
@@ -305,7 +328,9 @@ export function AdminKangurTestSuitesManagerPage({
               </div>
               <div className='flex items-center gap-1'>
                 <Button
-                  onClick={(): void => { void handleImportLegacy(); }}
+                  onClick={(): void => {
+                    void handleImportLegacy();
+                  }}
                   size='sm'
                   variant='outline'
                   className='h-7 border px-2 text-[11px] font-semibold tracking-wide text-emerald-200 hover:bg-emerald-900/30'
@@ -396,7 +421,10 @@ export function AdminKangurTestSuitesManagerPage({
       {/* Suite create/edit modal */}
       <FormModal
         isOpen={showModal}
-        onClose={(): void => { setShowModal(false); setEditingSuite(null); }}
+        onClose={(): void => {
+          setShowModal(false);
+          setEditingSuite(null);
+        }}
         title={editingSuite ? 'Edit Suite' : 'Create Suite'}
         subtitle='Test suites group questions together for an exam session.'
         onSave={(): void => {

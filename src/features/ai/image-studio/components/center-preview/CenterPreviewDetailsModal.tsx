@@ -14,6 +14,7 @@ import { useCenterPreviewContext } from './CenterPreviewContext';
 import { useSlotsState } from '../../context/SlotsContext';
 import { buildDetailsNodeForCenterPreview } from './variant-thumbnails';
 import { VersionNodeDetailsModal } from '../VersionNodeDetailsModal';
+import { VersionNodeDetailsModalRuntimeProvider } from '../VersionNodeDetailsModalRuntimeContext';
 
 export function CenterPreviewDetailsModal(): React.JSX.Element {
   const settingsStore = useSettingsStore();
@@ -40,14 +41,23 @@ export function CenterPreviewDetailsModal(): React.JSX.Element {
     [productImagesExternalBaseUrl]
   );
 
+  const handleCloseDetails = useCallback((): void => {
+    setDetailsSlotId(null);
+  }, [setDetailsSlotId]);
+
+  const detailsModalRuntimeValue = useMemo(
+    () => ({
+      isOpen: Boolean(detailsNode),
+      item: detailsNode,
+      onClose: handleCloseDetails,
+      getSlotImageSrc,
+    }),
+    [detailsNode, handleCloseDetails, getSlotImageSrc]
+  );
+
   return (
-    <VersionNodeDetailsModal
-      isOpen={Boolean(detailsNode)}
-      item={detailsNode}
-      onClose={() => {
-        setDetailsSlotId(null);
-      }}
-      getSlotImageSrc={getSlotImageSrc}
-    />
+    <VersionNodeDetailsModalRuntimeProvider value={detailsModalRuntimeValue}>
+      <VersionNodeDetailsModal />
+    </VersionNodeDetailsModalRuntimeProvider>
   );
 }

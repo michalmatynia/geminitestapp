@@ -1,9 +1,6 @@
-
 import React from 'react';
 import type { AiNode } from '@/shared/contracts/ai-paths';
-import {
-  type TriggerEventEntityType,
-} from '@/shared/contracts/ai-trigger-buttons';
+import { type TriggerEventEntityType } from '@/shared/contracts/ai-trigger-buttons';
 import {
   sanitizeTriggerEntitySnapshot,
   shouldEmbedTriggerEntitySnapshot,

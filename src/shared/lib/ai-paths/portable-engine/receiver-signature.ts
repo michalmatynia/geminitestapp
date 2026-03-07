@@ -44,11 +44,7 @@ export type VerifyPortablePathWebhookSignatureResult =
 
 const toNowDate = (value: string | Date | undefined): Date => {
   const candidate =
-    value instanceof Date
-      ? value
-      : typeof value === 'string'
-        ? new Date(value)
-        : new Date();
+    value instanceof Date ? value : typeof value === 'string' ? new Date(value) : new Date();
   return Number.isNaN(candidate.getTime()) ? new Date() : candidate;
 };
 

@@ -25,8 +25,7 @@ describe('normalizeAiPathRunRuntimeKernelMetadataForCleanup', () => {
   it('normalizes legacy runtime-kernel config aliases into canonical fields', () => {
     const result = normalizeAiPathRunRuntimeKernelMetadataForCleanup({
       runtimeKernelConfig: {
-        [DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD]:
-          ` ${DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS} `,
+        [DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD]: ` ${DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS} `,
         [DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD]: ' Template Node, parser ',
         [DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD]:
           ' resolver.primary , resolver.fallback ',
@@ -52,8 +51,7 @@ describe('normalizeAiPathRunRuntimeKernelMetadataForCleanup', () => {
   it('prunes deprecated runtime-kernel telemetry aliases and typed values', () => {
     const result = normalizeAiPathRunRuntimeKernelMetadataForCleanup({
       runtimeKernel: {
-        [DEPRECATED_RUNTIME_KERNEL_TELEMETRY_MODE_FIELD]:
-          DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS,
+        [DEPRECATED_RUNTIME_KERNEL_TELEMETRY_MODE_FIELD]: DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS,
         [DEPRECATED_RUNTIME_KERNEL_TELEMETRY_MODE_SOURCE_FIELD]: 'default',
         [DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_FIELD]: ['constant', 'template'],
         [DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_SOURCE_FIELD]: ' path ',
@@ -135,16 +133,14 @@ describe('normalizeAiPathRunRuntimeKernelMetadataForCleanup', () => {
   it('ignores legacy runtime-kernel aliases during live runtime reads', () => {
     const result = normalizeAiPathRunRuntimeKernelMetadataForRuntimeRead({
       runtimeKernelConfig: {
-        [DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD]:
-          ` ${DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS} `,
+        [DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD]: ` ${DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS} `,
         [DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD]: ' Template Node, parser ',
         [DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD]:
           ' resolver.primary , resolver.fallback ',
         [DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_ALIAS_FIELD]: ' YES ',
       },
       runtimeKernel: {
-        [DEPRECATED_RUNTIME_KERNEL_TELEMETRY_MODE_FIELD]:
-          DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS,
+        [DEPRECATED_RUNTIME_KERNEL_TELEMETRY_MODE_FIELD]: DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS,
         [DEPRECATED_RUNTIME_KERNEL_TELEMETRY_MODE_SOURCE_FIELD]: 'default',
         [DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_FIELD]: ['constant', 'template'],
         [DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_SOURCE_FIELD]: ' path ',
@@ -184,8 +180,7 @@ describe('normalizeAiPathRunRuntimeKernelMetadataForCleanup', () => {
         [DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_NATIVE_FIELD]: true,
       },
       runtimeKernel: {
-        [DEPRECATED_RUNTIME_KERNEL_TELEMETRY_MODE_FIELD]:
-          DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS,
+        [DEPRECATED_RUNTIME_KERNEL_TELEMETRY_MODE_FIELD]: DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS,
         runtimeKernelNodeTypes: ' constant, template ',
         runtimeKernelNodeTypesSource: ' path ',
         runtimeKernelCodeObjectResolverIds: ' resolver.primary , resolver.fallback ',

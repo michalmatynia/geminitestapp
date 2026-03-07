@@ -145,9 +145,7 @@ type KernelRunSummary = {
 };
 
 const buildRuntimeKernelNodeTypes = (mode: RuntimeMode, nodes: AiNode[]): string[] =>
-  mode === 'code_object_v3'
-    ? Array.from(new Set(nodes.map((node) => node.type)))
-    : [];
+  mode === 'code_object_v3' ? Array.from(new Set(nodes.map((node) => node.type))) : [];
 
 const runPath = async (
   mode: RuntimeMode,
@@ -156,6 +154,7 @@ const runPath = async (
 ): Promise<KernelRunSummary> => {
   const profileNodeEvents: Array<Record<string, unknown>> = [];
   const result = await evaluateGraphClient({
+    runId: 'test-run-id',
     nodes,
     edges,
     runtimeKernelNodeTypes: buildRuntimeKernelNodeTypes(mode, nodes),
@@ -175,10 +174,8 @@ const runPath = async (
   };
 };
 
-export const runKernelPath = async (
-  mode: RuntimeMode,
-  value: unknown
-): Promise<KernelRunSummary> => runPath(mode, buildKernelNodes(value), buildKernelEdges());
+export const runKernelPath = async (mode: RuntimeMode, value: unknown): Promise<KernelRunSummary> =>
+  runPath(mode, buildKernelNodes(value), buildKernelEdges());
 
 export const runTransformKernelPath = async (
   mode: RuntimeMode,
@@ -198,6 +195,10 @@ export const stripRuntimeTelemetry = (
       | 'runtimeCodeObjectId'
       | 'timestamp'
       | 'durationMs'
+      | 'traceId'
+      | 'spanId'
+      | 'inputHash'
+      | 'activationHash'
     >
   >
 > =>
@@ -211,6 +212,10 @@ export const stripRuntimeTelemetry = (
           runtimeCodeObjectId: _runtimeCodeObjectId,
           timestamp: _timestamp,
           durationMs: _durationMs,
+          traceId: _traceId,
+          spanId: _spanId,
+          inputHash: _inputHash,
+          activationHash: _activationHash,
           ...rest
         }) => rest
       ),

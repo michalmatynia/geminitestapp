@@ -10,9 +10,7 @@ import {
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 
 vi.mock('@/features/case-resolver/components/CaseResolverRelationsWorkspace', () => ({
-  CaseResolverRelationsWorkspace: ({ focusCaseId }: { focusCaseId?: string | null }) => (
-    <div data-testid='relations-workspace'>{focusCaseId ?? 'none'}</div>
-  ),
+  CaseResolverRelationsWorkspace: () => <div data-testid='relations-workspace'>relations</div>,
 }));
 
 type SelectOption = {
@@ -132,7 +130,7 @@ describe('CaseResolverCaseOverviewWorkspace', () => {
     renderWorkspace(caseFile);
 
     fireEvent.click(screen.getByRole('button', { name: 'Show Relations' }));
-    expect(screen.getByTestId('relations-workspace')).toHaveTextContent(caseFile.id);
+    expect(screen.getByTestId('relations-workspace')).toHaveTextContent('relations');
 
     fireEvent.click(screen.getByRole('button', { name: 'Hide Relations' }));
     expect(screen.queryByTestId('relations-workspace')).not.toBeInTheDocument();

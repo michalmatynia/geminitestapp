@@ -76,10 +76,8 @@ const resolveDefaultProfileInclusion = (
   }
 };
 
-const applyBooleanOverride = (
-  value: boolean,
-  override: boolean | undefined
-): boolean => (override === undefined ? value : override);
+const applyBooleanOverride = (value: boolean, override: boolean | undefined): boolean =>
+  override === undefined ? value : override;
 
 export type BootstrapPortablePathEnvelopeVerificationAuditSinksOptions = {
   profile?: PortablePathEnvelopeVerificationAuditSinkProfile;
@@ -87,10 +85,9 @@ export type BootstrapPortablePathEnvelopeVerificationAuditSinksOptions = {
   includeLogForwarding?: boolean;
   includePrisma?: boolean;
   includeMongo?: boolean;
-  logForwarding?: Omit<
-    CreatePortablePathEnvelopeVerificationLogForwardingSinkOptions,
-    'id'
-  > & { id?: string };
+  logForwarding?: Omit<CreatePortablePathEnvelopeVerificationLogForwardingSinkOptions, 'id'> & {
+    id?: string;
+  };
   prisma?: Omit<CreatePortablePathEnvelopeVerificationPrismaSinkOptions, 'id'> & {
     id?: string;
   };
@@ -118,8 +115,7 @@ export const bootstrapPortablePathEnvelopeVerificationAuditSinks = (
   options: BootstrapPortablePathEnvelopeVerificationAuditSinksOptions = {}
 ): BootstrapPortablePathEnvelopeVerificationAuditSinksResult => {
   const profile =
-    options.profile ??
-    resolvePortablePathEnvelopeVerificationAuditSinkProfileFromEnvironment();
+    options.profile ?? resolvePortablePathEnvelopeVerificationAuditSinkProfileFromEnvironment();
   const defaults = resolveDefaultProfileInclusion(profile);
   const includeLogForwarding = applyBooleanOverride(
     defaults.includeLogForwarding,

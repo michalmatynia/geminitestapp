@@ -9,6 +9,7 @@ import {
   listAiPathRuns,
   aiPathRunRecordSchema,
   resumeAiPathRun,
+  retryAiPathRunNode,
   type AiPathRunEventRecord,
   type AiPathRunRecord,
   type RuntimeHistoryEntry,
@@ -429,6 +430,19 @@ export function useAiPathsRunHistory({ activePathId, toast }: UseAiPathsRunHisto
     [refetchRuns, toast]
   );
 
+  const handleRetryRunNode = useCallback(
+    async (runId: string, nodeId: string): Promise<void> => {
+      const response = await retryAiPathRunNode(runId, nodeId);
+      if (!response.ok) {
+        toast(response.error || 'Failed to queue node retry.', { variant: 'error' });
+        return;
+      }
+      toast('Node retry queued.', { variant: 'success' });
+      void refetchRuns();
+    },
+    [refetchRuns, toast]
+  );
+
   const handleRequeueDeadLetter = useCallback(
     async (runId: string): Promise<void> => {
       const response = await resumeAiPathRun(runId, 'replay');
@@ -457,11 +471,19 @@ export function useAiPathsRunHistory({ activePathId, toast }: UseAiPathsRunHisto
         await refetchRuns();
       },
       resumeRun: handleResumeRun,
+      retryRunNode: handleRetryRunNode,
       cancelRun: handleCancelRun,
       requeueDeadLetter: handleRequeueDeadLetter,
     });
     return () => {
       runHistoryActions.setRunOperationHandlers(null);
     };
-  }, [handleCancelRun, handleRequeueDeadLetter, handleResumeRun, refetchRuns, runHistoryActions]);
+  }, [
+    handleCancelRun,
+    handleRequeueDeadLetter,
+    handleResumeRun,
+    handleRetryRunNode,
+    refetchRuns,
+    runHistoryActions,
+  ]);
 }

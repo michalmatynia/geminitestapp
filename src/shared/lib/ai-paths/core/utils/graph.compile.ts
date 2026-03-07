@@ -9,7 +9,11 @@ import {
   getResolvedNodeOutputPortContract,
 } from './graph.nodes';
 import { normalizePortName } from './graph.ports';
-import { arePortTypesCompatible, getPortDataTypes, getPortDataTypesForValueKind } from './port-types';
+import {
+  arePortTypesCompatible,
+  getPortDataTypes,
+  getPortDataTypesForValueKind,
+} from './port-types';
 
 const resolvePortCompatibilityTypes = (
   node: AiNode,

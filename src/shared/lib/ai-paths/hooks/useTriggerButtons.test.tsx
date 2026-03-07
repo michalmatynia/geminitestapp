@@ -55,9 +55,11 @@ describe('useTriggerButtons', () => {
       data: [BUTTON],
       isLoading: false,
     });
-    fireAiPathTriggerEventMock.mockImplementation(async (args: { onSuccess?: (runId: string) => void }) => {
-      args.onSuccess?.('run-queued-1');
-    });
+    fireAiPathTriggerEventMock.mockImplementation(
+      async (args: { onSuccess?: (runId: string) => void }) => {
+        args.onSuccess?.('run-queued-1');
+      }
+    );
   });
 
   it('calls onRunQueued after a successful enqueue', async () => {
@@ -84,7 +86,11 @@ describe('useTriggerButtons', () => {
   });
 
   it('filters out buttons that do not match the requested location', () => {
-    const otherButton = { ...BUTTON, id: 'button-admin', locations: ['admin_dashboard'] } as AiTriggerButtonRecord;
+    const otherButton = {
+      ...BUTTON,
+      id: 'button-admin',
+      locations: ['admin_dashboard'],
+    } as AiTriggerButtonRecord;
     useAiPathsTriggerButtonsQueryMock.mockReturnValue({
       data: [BUTTON, otherButton],
       isLoading: false,
@@ -102,7 +108,11 @@ describe('useTriggerButtons', () => {
   });
 
   it('filters out disabled buttons', () => {
-    const disabledButton = { ...BUTTON, id: 'button-disabled', enabled: false } as AiTriggerButtonRecord;
+    const disabledButton = {
+      ...BUTTON,
+      id: 'button-disabled',
+      enabled: false,
+    } as AiTriggerButtonRecord;
     useAiPathsTriggerButtonsQueryMock.mockReturnValue({
       data: [BUTTON, disabledButton],
       isLoading: false,
@@ -157,7 +167,10 @@ describe('useTriggerButtons', () => {
 
   it('resets runState to idle after trigger completes', async () => {
     fireAiPathTriggerEventMock.mockImplementation(
-      async (args: { onSuccess?: (runId: string) => void; onProgress?: (p: { status: string; progress: number }) => void }) => {
+      async (args: {
+        onSuccess?: (runId: string) => void;
+        onProgress?: (p: { status: string; progress: number }) => void;
+      }) => {
         args.onProgress?.({ status: 'running', progress: 0.5 });
         args.onProgress?.({ status: 'success', progress: 1 });
         args.onSuccess?.('run-done-1');

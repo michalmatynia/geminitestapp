@@ -347,3 +347,17 @@ export interface TagMappingUpdateInput {
   externalTagId?: string;
   isActive?: boolean;
 }
+
+export const bulkTagMappingItemSchema = z.object({
+  internalTagId: z.string().trim().min(1),
+  externalTagId: z.string().trim().min(1).nullable(),
+});
+
+export type BulkTagMappingItem = z.infer<typeof bulkTagMappingItemSchema>;
+
+export const bulkTagMappingRequestSchema = z.object({
+  connectionId: z.string().trim().min(1),
+  mappings: z.array(bulkTagMappingItemSchema).min(1),
+});
+
+export type BulkTagMappingRequest = z.infer<typeof bulkTagMappingRequestSchema>;

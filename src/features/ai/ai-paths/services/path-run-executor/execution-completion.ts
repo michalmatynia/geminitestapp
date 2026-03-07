@@ -13,9 +13,7 @@ import {
   collectFailedNodeDiagnostics,
   shouldFailBlockedRun,
 } from '../path-run-executor.diagnostics';
-import {
-  summarizeRuntimeKernelParityFromHistory,
-} from '../path-run-executor.runtime-kernel';
+import { summarizeRuntimeKernelParityFromHistory } from '../path-run-executor.runtime-kernel';
 import { PathRunRuntimeStateManager } from './runtime-state-manager';
 import { RuntimeProfileSnapshot } from '../path-run-executor.types';
 

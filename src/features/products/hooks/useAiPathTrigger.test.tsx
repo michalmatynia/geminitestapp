@@ -107,7 +107,9 @@ describe('useAiPathTrigger', () => {
     invalidateAiPathQueueMock.mockReset();
     notifyAiPathRunEnqueuedMock.mockReset();
     optimisticallyInsertAiPathRunInQueueCacheMock.mockReset();
-    createAiPathTriggerRequestIdMock.mockReset().mockReturnValue('trigger:path-product-trigger:req-1');
+    createAiPathTriggerRequestIdMock
+      .mockReset()
+      .mockReturnValue('trigger:path-product-trigger:req-1');
     isRecoverableTriggerEnqueueErrorMock.mockReset().mockReturnValue(false);
     recoverEnqueuedRunByRequestIdMock.mockReset().mockResolvedValue(null);
     toastMock.mockReset();

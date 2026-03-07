@@ -14,7 +14,7 @@ import {
   type NormalizedMappedProduct,
   type ProcessItemResult,
   type ProductLookupMaps,
-} from '@/features/integrations/server-shared';
+} from './base-import-service-shared';
 import { mapBaseProduct } from '@/features/integrations/services/imports/base-mapper';
 import { applyBaseParameterImport } from '@/features/integrations/services/imports/parameter-import/apply';
 import {

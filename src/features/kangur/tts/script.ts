@@ -246,13 +246,14 @@ const collectRootBlockParts = (block: KangurLessonRootBlock): string[] => {
   return collectInlineBlockParts(block);
 };
 
-const collectPageParts = (page: KangurLessonPage): string[] => [
-  page.sectionTitle?.trim() ?? '',
-  page.sectionDescription?.trim() ?? '',
-  page.title?.trim() ?? '',
-  page.description?.trim() ?? '',
-  ...page.blocks.flatMap((block) => collectRootBlockParts(block)),
-].filter((entry): entry is string => entry.trim().length > 0);
+const collectPageParts = (page: KangurLessonPage): string[] =>
+  [
+    page.sectionTitle?.trim() ?? '',
+    page.sectionDescription?.trim() ?? '',
+    page.title?.trim() ?? '',
+    page.description?.trim() ?? '',
+    ...page.blocks.flatMap((block) => collectRootBlockParts(block)),
+  ].filter((entry): entry is string => entry.trim().length > 0);
 
 const collectDocumentParts = (document: KangurLessonDocument): string[] => {
   let previousSectionIdentity = '';
@@ -284,11 +285,9 @@ export const buildKangurLessonNarrationScriptFromText = (input: {
   locale?: string | null;
 }): KangurLessonNarrationScript => {
   const normalizedText = normalizeWhitespace(input.text);
-  const parts = [
-    input.title,
-    input.description ?? '',
-    normalizedText,
-  ].filter((entry): entry is string => typeof entry === 'string' && entry.trim().length > 0);
+  const parts = [input.title, input.description ?? '', normalizedText].filter(
+    (entry): entry is string => typeof entry === 'string' && entry.trim().length > 0
+  );
 
   const segments = toNarrationSegments(input.lessonId, parts);
   return {
@@ -313,7 +312,8 @@ export const buildKangurLessonDocumentNarrationScript = (input: {
     lessonId: input.lessonId,
     title: input.title.trim(),
     description: (input.description ?? '').trim(),
-    locale: input.locale?.trim() || input.document.narration?.locale?.trim() || KANGUR_TTS_DEFAULT_LOCALE,
+    locale:
+      input.locale?.trim() || input.document.narration?.locale?.trim() || KANGUR_TTS_DEFAULT_LOCALE,
     segments,
   } as KangurLessonNarrationScript;
 };

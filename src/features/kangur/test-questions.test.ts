@@ -237,14 +237,10 @@ describe('parseKangurTestQuestionStore', () => {
 
     expect(result['q-svg']?.illustration.type).toBe('single');
     expect(
-      result['q-svg']?.illustration.type === 'single'
-        ? result['q-svg'].illustration.svgContent
-        : ''
+      result['q-svg']?.illustration.type === 'single' ? result['q-svg'].illustration.svgContent : ''
     ).not.toContain('.png');
     expect(
-      result['q-svg']?.illustration.type === 'single'
-        ? result['q-svg'].illustration.svgContent
-        : ''
+      result['q-svg']?.illustration.type === 'single' ? result['q-svg'].illustration.svgContent : ''
     ).not.toContain('<script');
   });
 
@@ -371,9 +367,7 @@ describe('formDataToQuestion', () => {
     expect(question.explanation).toBe('To jest kwadrat.');
     expect(question.illustration.type).toBe('panels');
     expect(
-      question.illustration.type === 'panels'
-        ? question.illustration.panels[0]?.svgContent
-        : ''
+      question.illustration.type === 'panels' ? question.illustration.panels[0]?.svgContent : ''
     ).not.toContain('image.png');
   });
 });
@@ -397,7 +391,10 @@ describe('upsertKangurTestQuestion', () => {
     const store: KangurTestQuestionStore = {
       q1: makeQuestion({ id: 'q1', prompt: 'Old prompt' }),
     };
-    const result = upsertKangurTestQuestion(store, makeQuestion({ id: 'q1', prompt: 'New prompt' }));
+    const result = upsertKangurTestQuestion(
+      store,
+      makeQuestion({ id: 'q1', prompt: 'New prompt' })
+    );
     expect(result['q1']?.prompt).toBe('New prompt');
     expect(Object.keys(result)).toHaveLength(1);
   });

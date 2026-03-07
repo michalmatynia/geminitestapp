@@ -562,9 +562,7 @@ function applyPatternPlansToField({
           length,
           regex: pattern.regex,
           flags: pattern.flags ?? null,
-          replacementValue: hasEffectiveReplacement
-            ? (effectiveReplacement?.value ?? null)
-            : null,
+          replacementValue: hasEffectiveReplacement ? (effectiveReplacement?.value ?? null) : null,
           replacementApplyMode: hasEffectiveReplacement
             ? (effectiveReplacement?.applyMode ?? 'replace_matched_segment')
             : 'replace_matched_segment',
@@ -615,9 +613,7 @@ function applyPatternPlansToField({
     const diff = deriveDiffSegment(aggregate.originalValue, aggregate.finalValue);
     localIssues.push({
       patternId: `sequence:${aggregate.groupId}`,
-      message: aggregate.groupLabel
-        ? `${aggregate.groupLabel} sequence result`
-        : 'Sequence result',
+      message: aggregate.groupLabel ? `${aggregate.groupLabel} sequence result` : 'Sequence result',
       severity: aggregate.severity,
       matchText: diff.matchText,
       index: diff.index,

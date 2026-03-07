@@ -1,8 +1,5 @@
 import { AiNode } from '@/shared/contracts/ai-paths';
-import {
-  NodeHandler,
-  RuntimePortValues,
-} from '@/shared/contracts/ai-paths-runtime';
+import { NodeHandler, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
 import {
   type EvaluateGraphOptions,
   type RuntimeNodeResolutionTelemetry,

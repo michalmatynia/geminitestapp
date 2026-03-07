@@ -23,9 +23,6 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
   requireAiPathsRunAccess: requireAiPathsRunAccessMock,
   enforceAiPathsRunRateLimit: enforceAiPathsRunRateLimitMock,
   getAiPathsSetting: getAiPathsSettingMock,
-}));
-
-vi.mock('@/features/ai/ai-paths/server', () => ({
   enqueuePathRun: enqueuePathRunMock,
 }));
 

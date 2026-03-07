@@ -1,4 +1,5 @@
 import { getUserPreferences } from '@/features/auth/server';
+import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
@@ -6,13 +7,7 @@ import prisma from '@/shared/lib/db/prisma';
 import type { Session } from 'next-auth';
 
 const FRONT_PAGE_SETTING_KEY = 'front_page_app';
-export const FRONT_PAGE_ALLOWED = new Set(['products', 'chatbot', 'notes']);
-
-type SettingDocument = {
-  _id: string;
-  key?: string;
-  value?: string;
-};
+export const FRONT_PAGE_ALLOWED = new Set(['cms', 'products', 'chatbot', 'notes']);
 
 const isAdminSession = (session: Session | null): boolean => {
   if (!session?.user) return false;
@@ -48,7 +43,7 @@ const readMongoFrontPageSetting = async (): Promise<string | null> => {
   try {
     const mongo = await getMongoDb();
     const doc = await mongo
-      .collection<SettingDocument>('settings')
+      .collection<MongoStringSettingRecord<string>>('settings')
       .findOne({ _id: FRONT_PAGE_SETTING_KEY });
     if (doc?.value) return doc.value;
   } catch {

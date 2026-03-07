@@ -33,8 +33,11 @@ export async function runExecutorPreflight(input: {
   const runMetaRecord = run.meta && typeof run.meta === 'object' ? run.meta : null;
   const strictFlowMode = runMetaRecord?.['strictFlowMode'] !== false;
   const blockedRunPolicy: 'fail_run' | 'complete_with_warning' =
-    runMetaRecord?.['blockedRunPolicy'] === 'complete_with_warning' ? 'complete_with_warning' : 'fail_run';
-  const validationConfig = normalizeAiPathsValidationConfig(    runMetaRecord?.['aiPathsValidation'] as Record<string, unknown> | undefined
+    runMetaRecord?.['blockedRunPolicy'] === 'complete_with_warning'
+      ? 'complete_with_warning'
+      : 'fail_run';
+  const validationConfig = normalizeAiPathsValidationConfig(
+    runMetaRecord?.['aiPathsValidation'] as Record<string, unknown> | undefined
   );
   const nodeValidationEnabled = validationConfig.enabled !== false;
 

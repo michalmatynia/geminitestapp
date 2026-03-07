@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { MediaLibraryPanel } from '@/features/cms/components/page-builder/MediaLibraryPanel';
 import { DocumentWysiwygEditor } from '@/features/document-editor';
 import {
@@ -19,14 +20,12 @@ const isSvgUploadFile = (file: File): boolean => {
   return fileType === 'image/svg+xml' || file.name.trim().toLowerCase().endsWith('.svg');
 };
 
-export function InlineEditorCard(
-  props: {
-    block: KangurLessonInlineBlock;
-    onChange: (nextValue: KangurLessonInlineBlock) => void;
-    heading: string;
-    accent?: 'text' | 'svg' | 'image';
-  }
-): React.JSX.Element {
+export function InlineEditorCard(props: {
+  block: KangurLessonInlineBlock;
+  onChange: (nextValue: KangurLessonInlineBlock) => void;
+  heading: string;
+  accent?: 'text' | 'svg' | 'image';
+}): React.JSX.Element {
   const { block, onChange, heading, accent = 'text' } = props;
   const [showMediaLibrary, setShowMediaLibrary] = useState(false);
   const imageSource = block.type === 'image' ? block.src : '';
@@ -140,7 +139,8 @@ export function InlineEditorCard(
                 size='sm'
                 value={block.align}
                 onValueChange={(nextValue: string): void => {
-                  if (nextValue !== 'left' && nextValue !== 'center' && nextValue !== 'right') return;
+                  if (nextValue !== 'left' && nextValue !== 'center' && nextValue !== 'right')
+                    return;
                   onChange({ ...block, align: nextValue });
                 }}
                 options={ALIGNMENT_OPTIONS.map((option) => ({
@@ -169,7 +169,8 @@ export function InlineEditorCard(
                 size='sm'
                 value={block.fit}
                 onValueChange={(nextValue: string): void => {
-                  if (nextValue !== 'contain' && nextValue !== 'cover' && nextValue !== 'none') return;
+                  if (nextValue !== 'contain' && nextValue !== 'cover' && nextValue !== 'none')
+                    return;
                   onChange({ ...block, fit: nextValue });
                 }}
                 options={MEDIA_FIT_OPTIONS.map((option) => ({
@@ -189,7 +190,11 @@ export function InlineEditorCard(
                 onChange={(event): void => {
                   onChange({
                     ...block,
-                    maxWidth: clamp(parseNumberInput(event.target.value, block.maxWidth), 120, 1200),
+                    maxWidth: clamp(
+                      parseNumberInput(event.target.value, block.maxWidth),
+                      120,
+                      1200
+                    ),
                   });
                 }}
                 className='h-9'
@@ -258,7 +263,8 @@ export function InlineEditorCard(
                 size='sm'
                 value={block.align}
                 onValueChange={(nextValue: string): void => {
-                  if (nextValue !== 'left' && nextValue !== 'center' && nextValue !== 'right') return;
+                  if (nextValue !== 'left' && nextValue !== 'center' && nextValue !== 'right')
+                    return;
                   onChange({ ...block, align: nextValue });
                 }}
                 options={ALIGNMENT_OPTIONS.map((option) => ({
@@ -274,7 +280,8 @@ export function InlineEditorCard(
                 size='sm'
                 value={block.fit}
                 onValueChange={(nextValue: string): void => {
-                  if (nextValue !== 'contain' && nextValue !== 'cover' && nextValue !== 'none') return;
+                  if (nextValue !== 'contain' && nextValue !== 'cover' && nextValue !== 'none')
+                    return;
                   onChange({ ...block, fit: nextValue });
                 }}
                 options={MEDIA_FIT_OPTIONS.map((option) => ({
@@ -294,7 +301,11 @@ export function InlineEditorCard(
                 onChange={(event): void => {
                   onChange({
                     ...block,
-                    maxWidth: clamp(parseNumberInput(event.target.value, block.maxWidth), 120, 1200),
+                    maxWidth: clamp(
+                      parseNumberInput(event.target.value, block.maxWidth),
+                      120,
+                      1200
+                    ),
                   });
                 }}
                 className='h-9'
@@ -370,9 +381,12 @@ export function InlineEditorCard(
 
           {isSvgImageSource(block.src) ? (
             <div className='overflow-hidden rounded-2xl border border-amber-200 bg-white/80 p-3'>
-              <img
+              <Image
                 src={block.src}
-                alt={block.altText?.trim() || block.title.trim() || 'Lesson image'}
+                alt={block.altText?.trim() || block.title.trim() || 'Lesson illustration'}
+                width={1200}
+                height={260}
+                unoptimized
                 className='max-h-[260px] w-full rounded-xl object-contain'
               />
             </div>
@@ -383,8 +397,10 @@ export function InlineEditorCard(
             onOpenChange={setShowMediaLibrary}
             selectionMode='single'
             autoConfirmSelection
+            title='SVG Library'
             accept='.svg,image/svg+xml'
             supportedFormatsLabel='SVG files'
+            uploadButtonLabel='Upload SVG files'
             filepathFilter={isSvgImageSource}
             filterUploadFiles={(files): File[] => files.filter((file) => isSvgUploadFile(file))}
             invalidSelectionMessage={SVG_IMAGE_SOURCE_HELPER_TEXT}

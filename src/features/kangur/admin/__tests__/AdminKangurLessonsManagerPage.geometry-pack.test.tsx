@@ -44,6 +44,7 @@ vi.mock('@/features/foldertree/v2', async (importOriginal) => {
 
 vi.mock('@/features/foldertree/v2/search', () => ({
   FolderTreeSearchBar: (props: { placeholder?: string }) => {
+    console.log('FolderTreeSearchBar props:', props);
     folderTreeSearchBarMock(props);
     return <div data-testid='folder-tree-search'>{props.placeholder}</div>;
   },
@@ -64,19 +65,17 @@ vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
 vi.mock('@/shared/ui', () => ({
   Badge: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
   Breadcrumbs: () => <div data-testid='breadcrumbs' />,
-  Button: ({
-    children,
-    onClick,
-    disabled,
-  }: {
-    children: React.ReactNode;
-    onClick?: () => void;
-    disabled?: boolean;
-  }) => (
-    <button type='button' onClick={onClick} disabled={disabled}>
-      {children}
+  Button: (props: any) => (
+    <button type='button' {...props}>
+      {props.children}
     </button>
+  ),  Dialog: ({ children, open }: { children: React.ReactNode; open?: boolean }) =>
+    open ? <div data-testid='mock-dialog'>{children}</div> : null,
+  DialogContent: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div className={className}>{children}</div>
   ),
+  DialogHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  DialogTitle: ({ children }: { children: React.ReactNode }) => <h2>{children}</h2>,
   FolderTreePanel: ({
     children,
     header,
@@ -180,6 +179,7 @@ describe('AdminKangurLessonsManagerPage geometry pack action', () => {
         },
       },
       search: {
+        enabled: true,
         state: { isActive: false, matchNodeIds: new Set() },
         resultCountLabel: '',
         placeholder: 'Search lessons, ids, or component types...',
@@ -212,7 +212,7 @@ describe('AdminKangurLessonsManagerPage geometry pack action', () => {
     const persistedLessons = JSON.parse(firstCallArg.value) as Array<{ componentId: string }>;
     const persistedComponentIds = persistedLessons.map((lesson) => lesson.componentId);
 
-    expect(persistedLessons).toHaveLength(geometryComponentIds.length);
+    expect(persistedLessons).toHaveLength(geometryComponentIds.length + baseLessons.length);
     for (const geometryId of geometryComponentIds) {
       expect(persistedComponentIds).toContain(geometryId);
     }
@@ -258,7 +258,7 @@ describe('AdminKangurLessonsManagerPage geometry pack action', () => {
     const persistedLessons = JSON.parse(firstCallArg.value) as Array<{ componentId: string }>;
     const persistedComponentIds = persistedLessons.map((lesson) => lesson.componentId);
 
-    expect(persistedLessons).toHaveLength(logicalComponentIds.length);
+    expect(persistedLessons).toHaveLength(logicalComponentIds.length + baseLessons.length);
     for (const logicalId of logicalComponentIds) {
       expect(persistedComponentIds).toContain(logicalId);
     }
@@ -294,22 +294,19 @@ describe('AdminKangurLessonsManagerPage geometry pack action', () => {
       capabilities: {
         search: {
           enabled: true,
+          placeholder: 'Search lessons, ids, or component types...',
         },
       },
-      appearance: {
-        rootDropUi: { label: 'Drop lesson' },
-      },
-      controller: {},
-      viewport: {
-        scrollToNodeRef: { current: null },
-      },
+      appearance: { rootDropUi: null },
+      controller: { searchState: { isActive: false, matchNodeIds: new Set() } },
+      viewport: { scrollToNodeRef: { current: null } },
     });
 
     render(<AdminKangurLessonsManagerPage />);
 
     const initialProps = folderTreeViewportMock.mock.calls.at(-1)?.[0] as {
       enableDnd?: boolean;
-      rootDropUi?: { enabled?: boolean };
+      rootDropUi?: { enabled?: boolean } | null;
     };
     const initialShellArgs = useMasterFolderTreeShellMock.mock.calls.at(-1)?.[0] as {
       instance?: string;
@@ -334,15 +331,12 @@ describe('AdminKangurLessonsManagerPage geometry pack action', () => {
       capabilities: {
         search: {
           enabled: true,
+          placeholder: 'Search lessons, ids, or component types...',
         },
       },
-      appearance: {
-        rootDropUi: null,
-      },
-      controller: {},
-      viewport: {
-        scrollToNodeRef: { current: null },
-      },
+      appearance: { rootDropUi: { enabled: true, label: 'test' } },
+      controller: { searchState: { isActive: false, matchNodeIds: new Set() } },
+      viewport: { scrollToNodeRef: { current: null } },
     });
 
     render(<AdminKangurLessonsManagerPage />);
@@ -366,15 +360,12 @@ describe('AdminKangurLessonsManagerPage geometry pack action', () => {
       capabilities: {
         search: {
           enabled: true,
+          placeholder: 'Search lessons, ids, or component types...',
         },
       },
-      appearance: {
-        rootDropUi: null,
-      },
-      controller: {},
-      viewport: {
-        scrollToNodeRef: { current: null },
-      },
+      appearance: { rootDropUi: { enabled: true, label: 'test' } },
+      controller: { searchState: { isActive: false, matchNodeIds: new Set() } },
+      viewport: { scrollToNodeRef: { current: null } },
     });
 
     render(<AdminKangurLessonsManagerPage />);
@@ -429,15 +420,12 @@ describe('AdminKangurLessonsManagerPage geometry pack action', () => {
       capabilities: {
         search: {
           enabled: true,
+          placeholder: 'Search lessons, ids, or component types...',
         },
       },
-      appearance: {
-        rootDropUi: null,
-      },
-      controller: {},
-      viewport: {
-        scrollToNodeRef: { current: null },
-      },
+      appearance: { rootDropUi: { enabled: true, label: 'test' } },
+      controller: { searchState: { isActive: false, matchNodeIds: new Set() } },
+      viewport: { scrollToNodeRef: { current: null } },
     });
 
     render(<AdminKangurLessonsManagerPage />);

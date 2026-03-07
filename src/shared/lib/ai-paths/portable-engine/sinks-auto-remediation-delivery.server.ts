@@ -36,11 +36,7 @@ export const toPortablePathAuditSinkAutoRemediationNotificationTimestamp = (
   value: string | Date | undefined
 ): string => {
   const nowDate =
-    value instanceof Date
-      ? value
-      : typeof value === 'string'
-        ? new Date(value)
-        : new Date();
+    value instanceof Date ? value : typeof value === 'string' ? new Date(value) : new Date();
   return Number.isNaN(nowDate.getTime()) ? new Date().toISOString() : nowDate.toISOString();
 };
 

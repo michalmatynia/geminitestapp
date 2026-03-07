@@ -2,10 +2,15 @@ import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 
-import { KangurButton } from '@/features/kangur/ui/design/primitives';
+import {
+  KangurButton,
+  KangurInfoCard,
+  KangurOptionCardButton,
+  KangurPanel,
+  KangurProgressBar,
+} from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_ACCENT_STYLES,
-  KANGUR_OPTION_CARD_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/shared/utils';
@@ -289,47 +294,53 @@ export default function CalendarInteractiveGame({
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className='flex flex-col items-center gap-4 bg-white rounded-3xl shadow-xl p-8 text-center w-full max-w-sm'
+        className='w-full max-w-sm'
       >
-        <div className='text-6xl'>{percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}</div>
-        <h2 className='text-2xl font-extrabold text-gray-800'>
-          Wynik: {score}/{TOTAL}
-        </h2>
-        <div className='w-full bg-gray-100 rounded-full h-3 overflow-hidden'>
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${percent}%` }}
-            transition={{ duration: 0.8 }}
-            className='h-full bg-gradient-to-r from-green-400 to-teal-400 rounded-full'
+        <KangurPanel
+          className='flex flex-col items-center gap-4 text-center'
+          data-testid='calendar-interactive-summary-shell'
+          padding='xl'
+          variant='elevated'
+        >
+          <div className='text-6xl'>{percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}</div>
+          <h2 className='text-2xl font-extrabold text-gray-800'>
+            Wynik: {score}/{TOTAL}
+          </h2>
+          <KangurProgressBar
+            accent='emerald'
+            animated
+            data-testid='calendar-interactive-summary-progress-bar'
+            size='md'
+            value={percent}
           />
-        </div>
-        <p className='text-gray-500'>
-          {percent === 100
-            ? 'Idealnie! Znasz kalendarz na wylot!'
-            : percent >= 60
-              ? 'Świetnie! Ćwicz dalej!'
-              : 'Nie poddawaj się!'}
-        </p>
-        <div className='flex gap-3 w-full'>
-          <KangurButton
-            onClick={restart}
-            className='flex-1'
-            size='lg'
-            type='button'
-            variant='secondary'
-          >
-            <RefreshCw className='w-4 h-4' /> Jeszcze raz
-          </KangurButton>
-          <KangurButton
-            onClick={onFinish}
-            className='flex-1'
-            size='lg'
-            type='button'
-            variant='primary'
-          >
-            Wróć
-          </KangurButton>
-        </div>
+          <p className='text-gray-500'>
+            {percent === 100
+              ? 'Idealnie! Znasz kalendarz na wylot!'
+              : percent >= 60
+                ? 'Świetnie! Ćwicz dalej!'
+                : 'Nie poddawaj się!'}
+          </p>
+          <div className='flex gap-3 w-full'>
+            <KangurButton
+              onClick={restart}
+              className='flex-1'
+              size='lg'
+              type='button'
+              variant='secondary'
+            >
+              <RefreshCw className='w-4 h-4' /> Jeszcze raz
+            </KangurButton>
+            <KangurButton
+              onClick={onFinish}
+              className='flex-1'
+              size='lg'
+              type='button'
+              variant='primary'
+            >
+              Wróć
+            </KangurButton>
+          </div>
+        </KangurPanel>
       </motion.div>
     );
   }
@@ -337,12 +348,13 @@ export default function CalendarInteractiveGame({
   return (
     <div className='flex flex-col items-center gap-3 w-full max-w-sm'>
       <div className='flex items-center gap-2 w-full'>
-        <div className='flex-1 h-2 bg-gray-100 rounded-full overflow-hidden'>
-          <div
-            style={{ width: `${(round / TOTAL) * 100}%` }}
-            className='h-full bg-gradient-to-r from-green-400 to-teal-400 rounded-full transition-all duration-500'
-          />
-        </div>
+        <KangurProgressBar
+          accent='emerald'
+          className='flex-1'
+          data-testid='calendar-interactive-progress-bar'
+          size='sm'
+          value={(round / TOTAL) * 100}
+        />
         <span className='text-xs font-bold text-gray-400'>
           {round + 1}/{TOTAL}
         </span>
@@ -352,9 +364,17 @@ export default function CalendarInteractiveGame({
         key={round}
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
-        className='bg-green-50 border border-green-200 rounded-2xl px-4 py-3 w-full text-center'
+        className='w-full'
       >
-        <p className='text-sm font-bold text-green-800'>📅 {task.label}</p>
+        <KangurInfoCard
+          accent='emerald'
+          className='w-full rounded-[24px] text-center'
+          data-testid='calendar-interactive-prompt'
+          padding='sm'
+          tone='accent'
+        >
+          <p className='text-sm font-bold text-green-800'>📅 {task.label}</p>
+        </KangurInfoCard>
       </motion.div>
 
       <AnimatePresence>
@@ -373,7 +393,12 @@ export default function CalendarInteractiveGame({
       {(task.type === 'click_date' ||
         task.type === 'click_all_weekends' ||
         task.type === 'flip_month') && (
-        <div className='bg-white rounded-2xl shadow p-3 w-full'>
+        <KangurInfoCard
+          className='w-full rounded-[24px]'
+          data-testid='calendar-interactive-calendar-shell'
+          padding='sm'
+          tone='neutral'
+        >
           <div className='flex items-center justify-between mb-2'>
             <KangurButton
               aria-label='Poprzedni miesiac'
@@ -428,7 +453,10 @@ export default function CalendarInteractiveGame({
               const isWrongDateSelection =
                 task.type === 'click_date' && isSelected && feedback === 'wrong';
               const isClicked =
-                task.type === 'click_all_weekends' && isNumberDay && isSelected && feedback === null;
+                task.type === 'click_all_weekends' &&
+                isNumberDay &&
+                isSelected &&
+                feedback === null;
               const isWrongWeekendSelection =
                 task.type === 'click_all_weekends' &&
                 isNumberDay &&
@@ -440,95 +468,98 @@ export default function CalendarInteractiveGame({
                 isNumberDay &&
                 task.targets.includes(day) &&
                 feedback !== null;
-              const dayClassName = !isNumberDay
-                ? 'h-10 rounded-[16px]'
-                : cn(
-                  KANGUR_OPTION_CARD_CLASSNAME,
-                  'h-10 rounded-[16px] p-0 text-xs font-semibold',
-                  isWeekend ? 'text-rose-600' : 'text-slate-700',
-                  isWeekend
-                    ? cn('border-rose-200/80', KANGUR_ACCENT_STYLES.rose.hoverCard)
-                    : cn('border-slate-200/80', KANGUR_ACCENT_STYLES.slate.hoverCard),
-                  !isClickable && 'cursor-default hover:translate-y-0',
-                  isTarget &&
-                      cn(
-                        KANGUR_ACCENT_STYLES.emerald.activeCard,
-                        KANGUR_ACCENT_STYLES.emerald.activeText
-                      ),
-                  isWrongDateSelection &&
-                      cn(
-                        KANGUR_ACCENT_STYLES.rose.activeCard,
-                        KANGUR_ACCENT_STYLES.rose.activeText
-                      ),
-                  isClicked &&
-                      cn(
-                        KANGUR_ACCENT_STYLES.teal.activeCard,
-                        KANGUR_ACCENT_STYLES.teal.activeText,
-                        'scale-[1.02]'
-                      ),
-                  isWrongWeekendSelection &&
-                      cn(
-                        KANGUR_ACCENT_STYLES.rose.activeCard,
-                        KANGUR_ACCENT_STYLES.rose.activeText
-                      ),
-                  isCorrectWeekend &&
-                      !isSelected &&
-                      cn(
-                        KANGUR_ACCENT_STYLES.emerald.activeCard,
-                        KANGUR_ACCENT_STYLES.emerald.activeText
-                      )
-                );
+              let dayAccent: KangurAccent = isWeekend ? 'rose' : 'slate';
+              let dayEmphasis: 'neutral' | 'accent' = 'neutral';
+              let dayClassName = cn(
+                'h-10 rounded-[16px] p-0 text-xs font-semibold',
+                isWeekend ? 'text-rose-600' : 'text-slate-700',
+                !isClickable && 'cursor-default hover:translate-y-0'
+              );
 
-              return (
-                isNumberDay ? (
-                  <button
-                    key={`${idx}-${day}`}
-                    type='button'
-                    onClick={() => handleDateClick(day)}
-                    disabled={!isClickable}
-                    className={dayClassName}
-                    data-testid={`calendar-day-${day}`}
-                  >
-                    {day}
-                  </button>
-                ) : (
-                  <div key={`${idx}-empty`} aria-hidden='true' className={dayClassName} />
-                )
+              if (isTarget) {
+                dayAccent = 'emerald';
+                dayEmphasis = 'accent';
+                dayClassName = cn(dayClassName, KANGUR_ACCENT_STYLES.emerald.activeText);
+              } else if (isWrongDateSelection) {
+                dayAccent = 'rose';
+                dayEmphasis = 'accent';
+                dayClassName = cn(dayClassName, KANGUR_ACCENT_STYLES.rose.activeText);
+              } else if (isClicked) {
+                dayAccent = 'teal';
+                dayEmphasis = 'accent';
+                dayClassName = cn(
+                  dayClassName,
+                  KANGUR_ACCENT_STYLES.teal.activeText,
+                  'scale-[1.02]'
+                );
+              } else if (isWrongWeekendSelection) {
+                dayAccent = 'rose';
+                dayEmphasis = 'accent';
+                dayClassName = cn(dayClassName, KANGUR_ACCENT_STYLES.rose.activeText);
+              } else if (isCorrectWeekend && !isSelected) {
+                dayAccent = 'emerald';
+                dayEmphasis = 'accent';
+                dayClassName = cn(dayClassName, KANGUR_ACCENT_STYLES.emerald.activeText);
+              }
+
+              return isNumberDay ? (
+                <KangurOptionCardButton
+                  accent={dayAccent}
+                  key={`${idx}-${day}`}
+                  type='button'
+                  onClick={() => {
+                    if (isClickable) {
+                      handleDateClick(day);
+                    }
+                  }}
+                  className={dayClassName}
+                  data-testid={`calendar-day-${day}`}
+                  emphasis={dayEmphasis}
+                >
+                  {day}
+                </KangurOptionCardButton>
+              ) : (
+                <div key={`${idx}-empty`} aria-hidden='true' className='h-10 rounded-[16px]' />
               );
             })}
           </div>
-        </div>
+        </KangurInfoCard>
       )}
 
       {task.type === 'click_weekday_name' && (
         <div className='grid grid-cols-4 gap-2 w-full'>
           {DAY_LABELS.map((dayLabel, idx) => {
-            const className =
+            const buttonAccent: KangurAccent =
+              feedback && idx === task.targetIdx ? 'emerald' : idx >= 5 ? 'rose' : 'slate';
+            const buttonEmphasis: 'neutral' | 'accent' =
+              feedback && idx === task.targetIdx ? 'accent' : 'neutral';
+            const className = cn(
+              'rounded-[24px] py-3 text-sm font-bold',
               feedback && idx === task.targetIdx
-                ? cn(
-                  KANGUR_ACCENT_STYLES.emerald.activeCard,
-                  KANGUR_ACCENT_STYLES.emerald.activeText
-                )
+                ? KANGUR_ACCENT_STYLES.emerald.activeText
                 : idx >= 5
-                  ? cn('border-rose-200/80', KANGUR_ACCENT_STYLES.rose.hoverCard)
-                  : cn('border-slate-200/80', KANGUR_ACCENT_STYLES.slate.hoverCard);
+                  ? 'text-rose-600'
+                  : 'text-slate-700',
+              feedback !== null && 'cursor-default'
+            );
 
             return (
-              <motion.button
+              <motion.div
                 key={dayLabel}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => handleWeekdayNameClick(idx)}
-                disabled={feedback !== null}
-                className={cn(
-                  KANGUR_OPTION_CARD_CLASSNAME,
-                  'rounded-[24px] py-3 text-sm font-bold',
-                  idx >= 5 ? 'text-rose-600' : 'text-slate-700',
-                  className
-                )}
               >
-                {dayLabel}
-              </motion.button>
+                <KangurOptionCardButton
+                  accent={buttonAccent}
+                  className={className}
+                  data-testid={`calendar-weekday-${idx}`}
+                  emphasis={buttonEmphasis}
+                  onClick={() => handleWeekdayNameClick(idx)}
+                  type='button'
+                >
+                  {dayLabel}
+                </KangurOptionCardButton>
+              </motion.div>
             );
           })}
         </div>
@@ -558,7 +589,10 @@ export default function CalendarInteractiveGame({
                 season !== selectedSeason;
 
               return (
-                <div
+                <KangurOptionCardButton
+                  accent={
+                    isCorrectSeason ? 'emerald' : isWrongSelectedSeason ? 'rose' : accent
+                  }
                   key={season}
                   onDragOver={(event) => {
                     event.preventDefault();
@@ -570,31 +604,29 @@ export default function CalendarInteractiveGame({
                     handleDrop(season);
                   }}
                   className={cn(
-                    KANGUR_OPTION_CARD_CLASSNAME,
                     'flex min-h-[108px] flex-col items-center justify-center gap-1 rounded-[24px] text-center',
-                    KANGUR_ACCENT_STYLES[accent].activeText,
-                    cn('border-slate-200/80', KANGUR_ACCENT_STYLES[accent].hoverCard),
-                    isDragOverSeason &&
-                      cn(KANGUR_ACCENT_STYLES[accent].activeCard, 'scale-[1.02]'),
+                    isCorrectSeason
+                      ? KANGUR_ACCENT_STYLES.emerald.activeText
+                      : isWrongSelectedSeason
+                        ? KANGUR_ACCENT_STYLES.rose.activeText
+                        : KANGUR_ACCENT_STYLES[accent].activeText,
+                    isDragOverSeason && 'scale-[1.02]',
                     isCorrectSeason &&
-                      cn(
-                        KANGUR_ACCENT_STYLES.emerald.activeCard,
-                        KANGUR_ACCENT_STYLES.emerald.activeText
-                      ),
-                    isWrongSelectedSeason &&
-                      cn(
-                        KANGUR_ACCENT_STYLES.rose.activeCard,
-                        KANGUR_ACCENT_STYLES.rose.activeText
-                      ),
+                      KANGUR_ACCENT_STYLES.emerald.activeText,
+                    isWrongSelectedSeason && KANGUR_ACCENT_STYLES.rose.activeText,
                     isMutedSeason && 'opacity-70'
                   )}
                   data-testid={`calendar-season-${index}`}
+                  emphasis={
+                    isCorrectSeason || isWrongSelectedSeason || isDragOverSeason
+                      ? 'accent'
+                      : 'neutral'
+                  }
+                  type='button'
                 >
                   <span className='text-2xl'>{season.split(' ')[0]}</span>
-                  <span className='text-xs font-bold'>
-                    {season.split(' ').slice(1).join(' ')}
-                  </span>
-                </div>
+                  <span className='text-xs font-bold'>{season.split(' ').slice(1).join(' ')}</span>
+                </KangurOptionCardButton>
               );
             })}
           </div>

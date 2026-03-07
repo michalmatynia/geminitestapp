@@ -7,14 +7,13 @@ import type {
   AiInsightType,
   AiInsightNotification,
 } from '@/shared/contracts/ai-insights';
+import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 import { AI_INSIGHTS_SETTINGS_KEYS } from './settings';
-
-type SettingDoc = { key?: string; value?: string; _id?: string };
 
 const SETTINGS_COLLECTION = 'settings';
 
@@ -34,7 +33,7 @@ const readSettingValue = async (key: string): Promise<string | null> => {
     if (!process.env['MONGODB_URI']) return null;
     const mongo = await getMongoDb();
     const doc = await mongo
-      .collection<SettingDoc>(SETTINGS_COLLECTION)
+      .collection<MongoStringSettingRecord>(SETTINGS_COLLECTION)
       .findOne({ $or: [{ _id: key }, { key }] });
     return typeof doc?.value === 'string' ? doc.value : null;
   }
@@ -57,7 +56,7 @@ const upsertSettingValue = async (key: string, value: string): Promise<void> => 
     const mongo = await getMongoDb();
     const now = new Date();
     await mongo
-      .collection<SettingDoc>(SETTINGS_COLLECTION)
+      .collection<MongoStringSettingRecord>(SETTINGS_COLLECTION)
       .updateOne(
         { key },
         { $set: { value, updatedAt: now }, $setOnInsert: { createdAt: now } },

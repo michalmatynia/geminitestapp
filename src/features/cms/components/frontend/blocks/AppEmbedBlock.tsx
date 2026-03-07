@@ -13,15 +13,16 @@ import {
 import {
   buildKangurEmbeddedBasePath,
   getKangurPageSlug,
-  KANGUR_EMBED_QUERY_PARAM,
-  KANGUR_INTERNAL_QUERY_PARAM_KEYS,
+  getKangurInternalQueryParamKeys,
   KANGUR_MAIN_PAGE_KEY,
   KANGUR_PAGE_TO_SLUG,
+  readKangurUrlParam,
+  KANGUR_EMBED_QUERY_PARAM,
 } from '@/features/kangur/config/routing';
 import { KangurFeaturePage } from '@/features/kangur/public';
 import { Card } from '@/shared/ui';
 
-import { useRequiredBlockSettings } from './BlockContext';
+import { useRequiredBlockRenderContext, useRequiredBlockSettings } from './BlockContext';
 
 const resolveAppEmbedHeight = (value: unknown): number => {
   if (typeof value !== 'number' || !Number.isFinite(value)) {
@@ -68,8 +69,11 @@ export function AppEmbedBlock(): React.ReactNode {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const settings = useRequiredBlockSettings();
+  const { block } = useRequiredBlockRenderContext();
   const rawAppId = settings['appId'];
-  const appOption = getAppEmbedOption(typeof rawAppId === 'string' ? rawAppId : DEFAULT_APP_EMBED_ID);
+  const appOption = getAppEmbedOption(
+    typeof rawAppId === 'string' ? rawAppId : DEFAULT_APP_EMBED_ID
+  );
   const title = (settings['title'] as string) || '';
   const embedUrl = (settings['embedUrl'] as string) || '';
   const height = resolveAppEmbedHeight(settings['height']);
@@ -78,8 +82,12 @@ export function AppEmbedBlock(): React.ReactNode {
   const appLabel = appOption?.label ?? 'App';
   const heading = title || appLabel;
   const hostPageSearchParams = new URLSearchParams(searchParams.toString());
+  const currentBlockEmbeddedBasePath = buildKangurEmbeddedBasePath('/', block.id);
 
-  KANGUR_INTERNAL_QUERY_PARAM_KEYS.forEach((key) => {
+  getKangurInternalQueryParamKeys(currentBlockEmbeddedBasePath).forEach((key) => {
+    hostPageSearchParams.delete(key);
+  });
+  getKangurInternalQueryParamKeys().forEach((key) => {
     hostPageSearchParams.delete(key);
   });
 
@@ -87,10 +95,18 @@ export function AppEmbedBlock(): React.ReactNode {
     hostPageSearchParams.toString().length > 0 ? `?${hostPageSearchParams.toString()}` : ''
   }`;
   const hostPath = configuredBasePath.trim().length > 0 ? configuredBasePath : currentHostHref;
-  const embeddedBasePath = buildKangurEmbeddedBasePath(hostPath);
-  const requestedSlug = searchParams.get(KANGUR_EMBED_QUERY_PARAM);
+  const embeddedBasePath = buildKangurEmbeddedBasePath(hostPath, block.id);
+  const requestedSlug = readKangurUrlParam(
+    searchParams,
+    KANGUR_EMBED_QUERY_PARAM,
+    embeddedBasePath
+  );
   const activeSlug =
-    requestedSlug === null ? resolveKangurEntrySlug(entryPage) : requestedSlug ? [requestedSlug] : [];
+    requestedSlug === null
+      ? resolveKangurEntrySlug(entryPage)
+      : requestedSlug
+        ? [requestedSlug]
+        : [];
 
   return (
     <Card
@@ -113,11 +129,7 @@ export function AppEmbedBlock(): React.ReactNode {
           className='relative overflow-hidden rounded-[28px] border border-border/40 bg-white/95'
           style={{ minHeight: height }}
         >
-          <KangurFeaturePage
-            slug={activeSlug}
-            basePath={embeddedBasePath}
-            embedded
-          />
+          <KangurFeaturePage slug={activeSlug} basePath={embeddedBasePath} embedded />
         </div>
       ) : embedUrl ? (
         <iframe

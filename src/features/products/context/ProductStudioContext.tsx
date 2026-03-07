@@ -229,8 +229,7 @@ export function ProductStudioProvider({
   const [pendingExpectedOutputs, setPendingExpectedOutputs] = useState<number>(0);
 
   const imageSlotPreviews = useMemo((): ProductImageSlotPreview[] => {
-    const productImagesExternalBaseUrl =
-      getImageExternalBaseUrl();
+    const productImagesExternalBaseUrl = getImageExternalBaseUrl();
     return (imageSlots || [])
       .map((slot, index): ProductImageSlotPreview | null => {
         if (!slot) return null;

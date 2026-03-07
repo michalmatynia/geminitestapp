@@ -162,8 +162,9 @@ export const registerPortablePathEnvelopeVerificationAuditSink = (
   });
   portablePathEnvelopeVerificationAuditSinkState.totals.registrationCount += 1;
   ensurePortablePathEnvelopeVerificationAuditSinkById(sinkId);
-  portablePathEnvelopeVerificationAuditSinkState.registeredSinkIds =
-    Array.from(portablePathEnvelopeVerificationAuditSinks.keys()).sort();
+  portablePathEnvelopeVerificationAuditSinkState.registeredSinkIds = Array.from(
+    portablePathEnvelopeVerificationAuditSinks.keys()
+  ).sort();
   return () => {
     unregisterPortablePathEnvelopeVerificationAuditSink(sinkId);
   };
@@ -175,8 +176,9 @@ export const unregisterPortablePathEnvelopeVerificationAuditSink = (sinkId: stri
   const deleted = portablePathEnvelopeVerificationAuditSinks.delete(normalizedSinkId);
   if (deleted) {
     portablePathEnvelopeVerificationAuditSinkState.totals.unregistrationCount += 1;
-    portablePathEnvelopeVerificationAuditSinkState.registeredSinkIds =
-      Array.from(portablePathEnvelopeVerificationAuditSinks.keys()).sort();
+    portablePathEnvelopeVerificationAuditSinkState.registeredSinkIds = Array.from(
+      portablePathEnvelopeVerificationAuditSinks.keys()
+    ).sort();
   }
   return deleted;
 };
@@ -190,9 +192,9 @@ export const getPortablePathEnvelopeVerificationAuditSinkSnapshot =
       portablePathEnvelopeVerificationAuditSinkState
     );
 
-export const resetPortablePathEnvelopeVerificationAuditSinkSnapshot = (
-  options?: { clearRegisteredSinks?: boolean }
-): void => {
+export const resetPortablePathEnvelopeVerificationAuditSinkSnapshot = (options?: {
+  clearRegisteredSinks?: boolean;
+}): void => {
   const registeredSinkIds = options?.clearRegisteredSinks
     ? []
     : Array.from(portablePathEnvelopeVerificationAuditSinks.keys()).sort();

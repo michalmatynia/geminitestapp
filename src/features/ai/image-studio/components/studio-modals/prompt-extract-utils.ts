@@ -2,7 +2,11 @@ import {
   recommendParamUiControl,
   type ParamUiControl,
 } from '@/features/ai/image-studio/utils/param-ui';
-import type { PromptValidationIssue } from '@/shared/contracts/prompt-engine';
+import type {
+  ImageStudioPromptExtractMode,
+  ImageStudioPromptExtractResponse,
+  ImageStudioPromptExtractSource,
+} from '@/shared/contracts/image-studio';
 import { flattenParams } from '@/shared/utils/prompt-params';
 import { type ParamSpec } from '@/shared/contracts/prompt-engine';
 
@@ -13,23 +17,7 @@ export type UiExtractorSuggestion = {
   control: ParamUiControl;
 };
 
-export type PromptExtractApiResponse = {
-  params?: Record<string, unknown>;
-  source?: 'programmatic' | 'programmatic_autofix' | 'gpt';
-  modeRequested?: 'programmatic' | 'gpt' | 'hybrid';
-  fallbackUsed?: boolean;
-  formattedPrompt?: string | null;
-  validation?: {
-    before?: PromptValidationIssue[];
-    after?: PromptValidationIssue[];
-  };
-  diagnostics?: {
-    programmaticError?: string | null;
-    aiError?: string | null;
-    model?: string | null;
-    autofixApplied?: boolean;
-  };
-};
+export type PromptExtractApiResponse = ImageStudioPromptExtractResponse;
 
 export type PromptExtractRunKind = 'programmatic' | 'smart' | 'ai';
 
@@ -37,8 +25,8 @@ export type PromptExtractHistoryEntry = {
   id: string;
   createdAt: number;
   runKind: PromptExtractRunKind;
-  source: 'programmatic' | 'programmatic_autofix' | 'gpt' | null;
-  modeRequested: 'programmatic' | 'gpt' | 'hybrid' | null;
+  source: ImageStudioPromptExtractSource | null;
+  modeRequested: ImageStudioPromptExtractMode | null;
   fallbackUsed: boolean;
   autofixApplied: boolean;
   promptBefore: string;

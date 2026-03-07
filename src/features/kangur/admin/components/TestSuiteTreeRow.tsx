@@ -25,7 +25,15 @@ export function TestSuiteTreeRow(props: {
   onDelete: (suite: KangurTestSuite) => void;
   isUpdating?: boolean;
 }): React.JSX.Element {
-  const { input, suiteById, questionCountBySuiteId, onEdit, onManageQuestions, onDelete, isUpdating } = props;
+  const {
+    input,
+    suiteById,
+    questionCountBySuiteId,
+    onEdit,
+    onManageQuestions,
+    onDelete,
+    isUpdating,
+  } = props;
   const suiteId = fromKangurTestSuiteNodeId(input.node.id);
   const suite = suiteId ? (suiteById.get(suiteId) ?? null) : null;
 
@@ -66,7 +74,11 @@ export function TestSuiteTreeRow(props: {
             }}
           >
             {input.hasChildren ? (
-              input.isExpanded ? <ChevronDown className='size-3.5' /> : <ChevronRight className='size-3.5' />
+              input.isExpanded ? (
+                <ChevronDown className='size-3.5' />
+              ) : (
+                <ChevronRight className='size-3.5' />
+              )
             ) : (
               <span className='text-[10px] opacity-60'>•</span>
             )}
@@ -129,7 +141,10 @@ export function TestSuiteTreeRow(props: {
         </Badge>
 
         {!suite.enabled ? (
-          <Badge variant='outline' className='h-5 px-1.5 text-[10px] border-amber-400/40 text-amber-300'>
+          <Badge
+            variant='outline'
+            className='h-5 px-1.5 text-[10px] border-amber-400/40 text-amber-300'
+          >
             Disabled
           </Badge>
         ) : null}
@@ -139,7 +154,10 @@ export function TestSuiteTreeRow(props: {
             type='button'
             className='inline-flex items-center justify-center rounded p-1 text-gray-400 hover:bg-sky-500/20 hover:text-sky-200'
             onMouseDown={(e): void => e.stopPropagation()}
-            onClick={(e): void => { e.stopPropagation(); onManageQuestions(suite); }}
+            onClick={(e): void => {
+              e.stopPropagation();
+              onManageQuestions(suite);
+            }}
             title='Manage questions'
             disabled={isUpdating}
           >
@@ -149,7 +167,10 @@ export function TestSuiteTreeRow(props: {
             type='button'
             className='inline-flex items-center justify-center rounded p-1 text-gray-400 hover:bg-gray-700/60 hover:text-white'
             onMouseDown={(e): void => e.stopPropagation()}
-            onClick={(e): void => { e.stopPropagation(); onEdit(suite); }}
+            onClick={(e): void => {
+              e.stopPropagation();
+              onEdit(suite);
+            }}
             title='Edit suite'
             disabled={isUpdating}
           >
@@ -159,7 +180,10 @@ export function TestSuiteTreeRow(props: {
             type='button'
             className='inline-flex items-center justify-center rounded p-1 text-gray-400 hover:bg-red-500/20 hover:text-red-300'
             onMouseDown={(e): void => e.stopPropagation()}
-            onClick={(e): void => { e.stopPropagation(); onDelete(suite); }}
+            onClick={(e): void => {
+              e.stopPropagation();
+              onDelete(suite);
+            }}
             title='Delete suite'
             disabled={isUpdating}
           >

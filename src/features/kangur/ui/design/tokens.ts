@@ -11,7 +11,8 @@ export const KANGUR_TOP_BAR_CLASSNAME =
   'sticky top-0 z-20 w-full px-4 pb-2 pt-4 sm:px-6 sm:pb-3 sm:pt-6';
 export const KANGUR_TOP_BAR_INNER_CLASSNAME =
   'mx-auto flex w-full max-w-[1180px] items-start gap-4';
-export const KANGUR_PAGE_CONTAINER_CLASSNAME = 'w-full max-w-[1440px] px-4 pb-20 pt-10 sm:px-8 xl:px-10';
+export const KANGUR_PAGE_CONTAINER_CLASSNAME =
+  'w-full max-w-[1440px] px-4 pb-20 pt-10 sm:px-8 xl:px-10';
 
 export const KANGUR_PANEL_CLASSNAMES = {
   elevated: 'glass-panel rounded-[36px]',
@@ -78,8 +79,7 @@ export const KANGUR_ACCENT_STYLES: Record<KangurAccent, KangurAccentStyles> = {
   sky: {
     icon: 'bg-sky-100 text-sky-700',
     badge: 'border border-sky-200 bg-sky-100 text-sky-700',
-    activeCard:
-      'border-sky-300 bg-sky-50/80 shadow-[0_24px_60px_-42px_rgba(14,165,233,0.48)]',
+    activeCard: 'border-sky-300 bg-sky-50/80 shadow-[0_24px_60px_-42px_rgba(14,165,233,0.48)]',
     hoverCard: 'hover:border-sky-200 hover:bg-sky-50/40',
     activeText: 'text-sky-700',
     mutedText: 'text-sky-600',
@@ -87,8 +87,7 @@ export const KANGUR_ACCENT_STYLES: Record<KangurAccent, KangurAccentStyles> = {
   amber: {
     icon: 'bg-amber-100 text-amber-700',
     badge: 'border border-amber-200 bg-amber-100 text-amber-700',
-    activeCard:
-      'border-amber-300 bg-amber-50/85 shadow-[0_24px_60px_-42px_rgba(245,158,11,0.48)]',
+    activeCard: 'border-amber-300 bg-amber-50/85 shadow-[0_24px_60px_-42px_rgba(245,158,11,0.48)]',
     hoverCard: 'hover:border-amber-200 hover:bg-amber-50/50',
     activeText: 'text-amber-700',
     mutedText: 'text-amber-700',
@@ -96,8 +95,7 @@ export const KANGUR_ACCENT_STYLES: Record<KangurAccent, KangurAccentStyles> = {
   rose: {
     icon: 'bg-rose-100 text-rose-700',
     badge: 'border border-rose-200 bg-rose-100 text-rose-700',
-    activeCard:
-      'border-rose-300 bg-rose-50/85 shadow-[0_24px_60px_-42px_rgba(244,63,94,0.46)]',
+    activeCard: 'border-rose-300 bg-rose-50/85 shadow-[0_24px_60px_-42px_rgba(244,63,94,0.46)]',
     hoverCard: 'hover:border-rose-200 hover:bg-rose-50/50',
     activeText: 'text-rose-700',
     mutedText: 'text-rose-600',
@@ -105,8 +103,7 @@ export const KANGUR_ACCENT_STYLES: Record<KangurAccent, KangurAccentStyles> = {
   teal: {
     icon: 'bg-teal-100 text-teal-700',
     badge: 'border border-teal-200 bg-teal-100 text-teal-700',
-    activeCard:
-      'border-teal-300 bg-teal-50/85 shadow-[0_24px_60px_-42px_rgba(20,184,166,0.48)]',
+    activeCard: 'border-teal-300 bg-teal-50/85 shadow-[0_24px_60px_-42px_rgba(20,184,166,0.48)]',
     hoverCard: 'hover:border-teal-200 hover:bg-teal-50/50',
     activeText: 'text-teal-700',
     mutedText: 'text-teal-600',
@@ -114,16 +111,17 @@ export const KANGUR_ACCENT_STYLES: Record<KangurAccent, KangurAccentStyles> = {
   slate: {
     icon: 'bg-slate-100 text-slate-700',
     badge: 'border border-slate-200 bg-slate-100 text-slate-700',
-    activeCard:
-      'border-slate-300 bg-slate-50/95 shadow-[0_24px_60px_-46px_rgba(15,23,42,0.35)]',
+    activeCard: 'border-slate-300 bg-slate-50/95 shadow-[0_24px_60px_-46px_rgba(15,23,42,0.35)]',
     hoverCard: 'hover:border-slate-200 hover:bg-slate-50/70',
     activeText: 'text-slate-700',
     mutedText: 'text-slate-500',
   },
 };
 
-export const KANGUR_OPTION_CARD_CLASSNAME =
-  'soft-card group w-full rounded-[26px] p-4 text-left transition duration-200 hover:-translate-y-[1px]';
+export const KANGUR_SURFACE_CARD_CLASSNAME =
+  'soft-card w-full rounded-[26px] border text-left transition duration-200';
+
+export const KANGUR_OPTION_CARD_CLASSNAME = `${KANGUR_SURFACE_CARD_CLASSNAME} group p-4 hover:-translate-y-[1px]`;
 
 export const KANGUR_STEP_PILL_CLASSNAME =
   'kangur-cta-pill inline-flex items-center justify-center rounded-full border border-transparent transition-all duration-200';

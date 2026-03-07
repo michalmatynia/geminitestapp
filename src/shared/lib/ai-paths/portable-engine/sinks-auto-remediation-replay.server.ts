@@ -291,8 +291,7 @@ export const replayPortablePathAuditSinkAutoRemediationDeadLettersCore = async (
       failedCount += 1;
       attemptBase.attempted = true;
       attemptBase.error = deps.toErrorMessage(error);
-      attemptBase.statusCode =
-        toPortablePathAuditSinkAutoRemediationNotificationStatusCode(error);
+      attemptBase.statusCode = toPortablePathAuditSinkAutoRemediationNotificationStatusCode(error);
       const attemptCountAfter = entry.attemptCount + 1;
       attemptBase.attemptCountAfter = attemptCountAfter;
       remainingEntries[index] = {

@@ -164,7 +164,9 @@ describe('portable AI-path run execution observability', () => {
     });
 
     const snapshot = getPortablePathRunExecutionSnapshot();
-    expect(snapshot.recentEvents[0]?.error).toBe('Unserializable portable engine runtime error object.');
+    expect(snapshot.recentEvents[0]?.error).toBe(
+      'Unserializable portable engine runtime error object.'
+    );
     const truncated = snapshot.recentEvents[1]?.error ?? '';
     expect(truncated.length).toBe(320);
     expect(truncated.endsWith('...')).toBe(true);

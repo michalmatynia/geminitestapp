@@ -252,8 +252,7 @@ describe('processGraphModel AI Paths model selection', () => {
 
     const result = await processGraphModel(
       buildJob({
-        prompt:
-          'Return valid JSON only with translated parameters. Output must be a JSON object.',
+        prompt: 'Return valid JSON only with translated parameters. Output must be a JSON object.',
       })
     );
 

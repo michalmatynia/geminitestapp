@@ -132,9 +132,11 @@ export const mongoKangurAssignmentRepository: KangurAssignmentRepository = {
   ): Promise<KangurAssignment> {
     const db = await getMongoDb();
     const settingKey = toSettingKey(learnerKey, assignmentId);
-    const current = await db.collection<MongoAssignmentSettingDocument>(SETTINGS_COLLECTION).findOne({
-      $or: [{ key: settingKey }, { _id: settingKey }],
-    } as Filter<MongoAssignmentSettingDocument>);
+    const current = await db
+      .collection<MongoAssignmentSettingDocument>(SETTINGS_COLLECTION)
+      .findOne({
+        $or: [{ key: settingKey }, { _id: settingKey }],
+      } as Filter<MongoAssignmentSettingDocument>);
     const parsed = parseAssignmentValue(current?.value);
 
     if (!parsed) {

@@ -113,9 +113,7 @@ describe('kangur lesson documents', () => {
       'Spoken image description.'
     );
     expect(activityBlock?.type).toBe('activity');
-    expect(activityBlock?.type === 'activity' ? activityBlock.title : '').toBe(
-      'Gra z kalendarzem'
-    );
+    expect(activityBlock?.type === 'activity' ? activityBlock.title : '').toBe('Gra z kalendarzem');
     expect(activityBlock?.type === 'activity' ? activityBlock.description : '').toBe(
       'Cwicz miesiace i daty.'
     );
@@ -133,8 +131,12 @@ describe('kangur lesson documents', () => {
 
     expect(Object.keys(store)).toEqual(['lessonA', 'lessonB']);
     expect(store.lessonB?.blocks).toHaveLength(2);
-    expect(store.lessonB?.blocks[1]?.type === 'grid' ? store.lessonB.blocks[1].rowHeight : null).toBe(220);
-    expect(store.lessonB?.blocks[1]?.type === 'grid' ? store.lessonB.blocks[1].denseFill : null).toBe(false);
+    expect(
+      store.lessonB?.blocks[1]?.type === 'grid' ? store.lessonB.blocks[1].rowHeight : null
+    ).toBe(220);
+    expect(
+      store.lessonB?.blocks[1]?.type === 'grid' ? store.lessonB.blocks[1].denseFill : null
+    ).toBe(false);
   });
 
   it('clamps explicit column starts so placed items still fit their column span', () => {
@@ -171,7 +173,9 @@ describe('kangur lesson documents', () => {
       ],
     });
 
-    expect(document.blocks[0]?.type === 'grid' ? document.blocks[0].items[0]?.columnStart : null).toBe(2);
+    expect(
+      document.blocks[0]?.type === 'grid' ? document.blocks[0].items[0]?.columnStart : null
+    ).toBe(2);
   });
 
   it('converts inline blocks between text, svg, and image without changing the block id', () => {
@@ -237,16 +241,25 @@ describe('kangur lesson documents', () => {
     expect(
       hasKangurLessonDocumentContent({
         version: 1,
-        blocks: [{ id: 'svg-1', type: 'svg', title: '', markup: '<circle cx="5" cy="5" r="5" />', viewBox: '0 0 10 10', align: 'center', fit: 'contain', maxWidth: 320 }],
+        blocks: [
+          {
+            id: 'svg-1',
+            type: 'svg',
+            title: '',
+            markup: '<circle cx="5" cy="5" r="5" />',
+            viewBox: '0 0 10 10',
+            align: 'center',
+            fit: 'contain',
+            maxWidth: 320,
+          },
+        ],
       })
     ).toBe(true);
 
     expect(
       hasKangurLessonDocumentContent({
         version: 1,
-        blocks: [
-          createKangurLessonActivityBlock('clock-training'),
-        ],
+        blocks: [createKangurLessonActivityBlock('clock-training')],
       })
     ).toBe(true);
 
@@ -375,8 +388,14 @@ describe('kangur lesson documents', () => {
 
     expect(svgMosaicPage.blocks).toHaveLength(2);
     expect(svgMosaicPage.blocks[1]?.type).toBe('grid');
-    expect(svgMosaicPage.blocks[1]?.type === 'grid' ? svgMosaicPage.blocks[1].denseFill : false).toBe(true);
-    expect(svgMosaicPage.blocks[1]?.type === 'grid' ? svgMosaicPage.blocks[1].items[0]?.columnStart : null).toBe(1);
+    expect(
+      svgMosaicPage.blocks[1]?.type === 'grid' ? svgMosaicPage.blocks[1].denseFill : false
+    ).toBe(true);
+    expect(
+      svgMosaicPage.blocks[1]?.type === 'grid'
+        ? svgMosaicPage.blocks[1].items[0]?.columnStart
+        : null
+    ).toBe(1);
 
     expect(resolveStarterKangurLessonDocumentTemplate('geometry_shapes')).toBe('svg-mosaic-page');
     expect(resolveStarterKangurLessonDocumentTemplate('logical_patterns')).toBe('article');
@@ -384,7 +403,9 @@ describe('kangur lesson documents', () => {
 
     const geometryStarter = createStarterKangurLessonDocument('geometry_shapes');
     expect(geometryStarter.blocks[1]?.type).toBe('grid');
-    expect(geometryStarter.blocks[1]?.type === 'grid' ? geometryStarter.blocks[1].denseFill : false).toBe(true);
+    expect(
+      geometryStarter.blocks[1]?.type === 'grid' ? geometryStarter.blocks[1].denseFill : false
+    ).toBe(true);
   });
 
   it('normalizes modular pages and mirrors blocks across page boundaries', () => {

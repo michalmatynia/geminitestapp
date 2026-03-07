@@ -3,26 +3,28 @@
 import React from 'react';
 import { Button, Card } from '@/shared/ui';
 import { ImageStudioAnalysisSummaryChip } from '../../ImageStudioAnalysisSummaryChip';
-import type { AnalysisResult } from '../analysis-types';
-import type { ImageStudioAnalysisPlanSnapshot } from '@/features/ai/image-studio/utils/analysis-bridge';
+import {
+  type AnalysisResultSectionRuntime,
+  useOptionalImageStudioAnalysisRuntime,
+} from './ImageStudioAnalysisRuntimeContext';
 
-export interface AnalysisResultSectionProps {
-  result: AnalysisResult | null;
-  resultSourceSlotId: string;
-  persistedPlanSnapshot: ImageStudioAnalysisPlanSnapshot | null;
-  currentWorkingSlotId: string;
-  availableSlots: Array<{ id: string; label?: string }>;
-  slotSelectionLocked: boolean;
-  analysisSourceSignatureMissing: boolean;
-  analysisCurrentSourceMetadataMissing: boolean;
-  analysisPlanIsStale: boolean;
-  queueAnalysisApplyIntent: (
-    target: 'object_layout' | 'auto_scaler',
-    options?: { runAfterApply?: boolean }
-  ) => void;
-}
+export type AnalysisResultSectionProps = AnalysisResultSectionRuntime;
 
-export function AnalysisResultSection(props: AnalysisResultSectionProps): React.JSX.Element {
+export function AnalysisResultSection(
+  props: Partial<AnalysisResultSectionProps> = {}
+): React.JSX.Element {
+  const analysisRuntime = useOptionalImageStudioAnalysisRuntime();
+  const runtime =
+    props.queueAnalysisApplyIntent !== undefined
+      ? (props as AnalysisResultSectionProps)
+      : analysisRuntime?.resultRuntime;
+
+  if (!runtime) {
+    throw new Error(
+      'AnalysisResultSection must be used within ImageStudioAnalysisRuntimeProvider or receive explicit props'
+    );
+  }
+
   const {
     result,
     resultSourceSlotId,
@@ -34,7 +36,7 @@ export function AnalysisResultSection(props: AnalysisResultSectionProps): React.
     analysisCurrentSourceMetadataMissing,
     analysisPlanIsStale,
     queueAnalysisApplyIntent,
-  } = props;
+  } = runtime;
 
   const resolvedSourceSlotId =
     resultSourceSlotId.trim() || persistedPlanSnapshot?.slotId?.trim() || '';

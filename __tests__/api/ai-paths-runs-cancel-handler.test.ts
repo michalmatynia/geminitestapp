@@ -21,14 +21,11 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
   requireAiPathsAccess: requireAiPathsAccessMock,
   enforceAiPathsActionRateLimit: enforceAiPathsActionRateLimitMock,
   assertAiPathRunAccess: assertAiPathRunAccessMock,
-}));
-
-vi.mock('@/features/ai/ai-paths/services/path-run-repository', () => ({
-  getPathRunRepository: getPathRunRepositoryMock,
-}));
-
-vi.mock('@/features/ai/ai-paths/services/path-run-service', () => ({
   cancelPathRunWithRepository: cancelPathRunWithRepositoryMock,
+}));
+
+vi.mock('@/shared/lib/ai-paths/services/path-run-repository', () => ({
+  getPathRunRepository: getPathRunRepositoryMock,
 }));
 
 vi.mock('@/features/ai/ai-paths/workers/aiPathRunQueue', () => ({

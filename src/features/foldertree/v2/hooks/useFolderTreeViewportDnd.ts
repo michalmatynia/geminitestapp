@@ -26,7 +26,10 @@ export function useFolderTreeViewportDnd(args: {
   controller: MasterFolderTreeController;
   enableDnd: boolean;
   canDrop?: (input: FolderTreeDropInput, controller: MasterFolderTreeController) => boolean;
-  onNodeDrop?: (input: FolderTreeDropInput, controller: MasterFolderTreeController) => Promise<void> | void;
+  onNodeDrop?: (
+    input: FolderTreeDropInput,
+    controller: MasterFolderTreeController
+  ) => Promise<void> | void;
   resolveDropPosition?: (
     event: React.DragEvent<HTMLElement>,
     input: FolderTreeResolveDropPositionInput,

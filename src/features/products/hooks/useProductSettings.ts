@@ -69,10 +69,8 @@ export function useProductSettings(): ProductSettingsSnapshot & {
     imageExternalBaseUrl:
       settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
       DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
-    imageExternalRoutesRaw:
-      settingsStore.get(PRODUCT_IMAGES_EXTERNAL_ROUTES_SETTING_KEY) ?? null,
-    defaultProjectId:
-      settingsStore.get(PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY)?.trim() ?? '',
+    imageExternalRoutesRaw: settingsStore.get(PRODUCT_IMAGES_EXTERNAL_ROUTES_SETTING_KEY) ?? null,
+    defaultProjectId: settingsStore.get(PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY)?.trim() ?? '',
     sequenceGenerationMode: normalizeProductStudioSequenceGenerationMode(
       settingsStore.get(PRODUCT_STUDIO_SEQUENCE_GENERATION_MODE_SETTING_KEY)
     ),

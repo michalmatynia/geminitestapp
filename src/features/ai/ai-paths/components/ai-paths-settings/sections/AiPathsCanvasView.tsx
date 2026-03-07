@@ -202,7 +202,9 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
     }
     const activeConfig = pathConfigs[activePath];
     const extensionsRecord = asRecord(activeConfig?.extensions);
-    const runtimeKernelRecord = normalizeRuntimeKernelConfigRecord(extensionsRecord?.['runtimeKernel']);
+    const runtimeKernelRecord = normalizeRuntimeKernelConfigRecord(
+      extensionsRecord?.['runtimeKernel']
+    );
     const nodeTypes = parseRuntimeKernelNodeTypes(runtimeKernelRecord?.['nodeTypes']) ?? [];
     const resolverIds =
       parseRuntimeKernelCodeObjectResolverIds(runtimeKernelRecord?.['codeObjectResolverIds']) ?? [];
@@ -220,10 +222,8 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
     [pathRuntimeKernelResolverIdsDraft]
   );
   const pathRuntimeKernelSettingsDirty =
-    pathRuntimeKernelDraftNodeTypes.join(',') !==
-      pathRuntimeKernelPersistedNodeTypes.join(',') ||
-    pathRuntimeKernelDraftResolverIds.join(',') !==
-      pathRuntimeKernelPersistedResolverIds.join(',');
+    pathRuntimeKernelDraftNodeTypes.join(',') !== pathRuntimeKernelPersistedNodeTypes.join(',') ||
+    pathRuntimeKernelDraftResolverIds.join(',') !== pathRuntimeKernelPersistedResolverIds.join(',');
 
   const saveRuntimeKernelSettings = React.useCallback(async (): Promise<void> => {
     if (!runtimeKernelSettingsDirty || runtimeKernelSaving) return;
@@ -515,7 +515,9 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                       onClick={() => {
                         void saveRuntimeKernelSettings();
                       }}
-                      disabled={runtimeKernelLoading || runtimeKernelSaving || !runtimeKernelSettingsDirty}
+                      disabled={
+                        runtimeKernelLoading || runtimeKernelSaving || !runtimeKernelSettingsDirty
+                      }
                     >
                       {runtimeKernelSaving ? 'Saving...' : 'Apply'}
                     </Button>

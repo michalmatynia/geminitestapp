@@ -4,7 +4,14 @@ import type { MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } fro
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle, RefreshCw, XCircle } from 'lucide-react';
 
-import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
+import {
+  KangurAccentDot,
+  KangurButton,
+  KangurInfoCard,
+  KangurPanel,
+  KangurStatusChip,
+  KangurSummaryPanel,
+} from '@/features/kangur/ui/design/primitives';
 import { KANGUR_STEP_PILL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import {
   addXp,
@@ -197,12 +204,11 @@ export function buildClockWrongFeedback(
 
   let title = 'Spróbuj jeszcze raz!';
   let tone: 'near' | 'far' = 'far';
-  if (totalMinuteDistance <= 5) {
+  if (totalMinuteDistance < 5) {
     title = 'Bardzo blisko!';
     tone = 'near';
   } else if (totalMinuteDistance <= 15) {
     title = 'Prawie!';
-    tone = 'near';
   }
 
   let hint = 'Sprawdź obie wskazówki.';
@@ -386,13 +392,18 @@ function DraggableClock({
   return (
     <div className='flex flex-col items-center gap-4'>
       <p className='text-sm text-gray-400'>Przeciągnij wskazówki, aby ustawić godzinę:</p>
-      <p
+      <KangurStatusChip
+        accent='indigo'
+        className='px-5 py-2 text-2xl font-extrabold'
         data-testid='clock-time-display'
-        className='text-2xl font-extrabold text-indigo-700 bg-indigo-50 px-5 py-2 rounded-2xl'
       >
         {displayHour}:{pad(displayMinutes)}
-      </p>
-      <div className='inline-flex items-center gap-2 rounded-[26px] border border-white/75 bg-white/86 p-1.5 shadow-[0_14px_34px_-26px_rgba(79,70,229,0.35)]'>
+      </KangurStatusChip>
+      <KangurInfoCard
+        className='inline-flex w-auto items-center gap-2 rounded-[26px] p-1.5'
+        data-testid='clock-snap-mode-switch'
+        padding='sm'
+      >
         <KangurButton
           type='button'
           data-testid='clock-snap-mode-5'
@@ -413,7 +424,7 @@ function DraggableClock({
         >
           Dokładnie co 1 min
         </KangurButton>
-      </div>
+      </KangurInfoCard>
       <p className='text-xs text-gray-500'>
         {activeHand === 'hour'
           ? 'Przestawiasz krótką wskazówkę (godziny).'
@@ -547,14 +558,30 @@ function DraggableClock({
 
       <div className='flex gap-3 text-sm text-gray-500'>
         <span className='flex items-center gap-1'>
-          <span className='w-3 h-3 rounded-full bg-red-500 inline-block' /> Godziny (krótka)
+          <KangurAccentDot
+            accent='rose'
+            aria-hidden='true'
+            data-testid='clock-hour-legend-dot'
+            size='md'
+          />
+          Godziny (krótka)
         </span>
         <span className='flex items-center gap-1'>
-          <span className='w-3 h-3 rounded-full bg-green-600 inline-block' /> Minuty (długa)
+          <KangurAccentDot
+            accent='emerald'
+            aria-hidden='true'
+            data-testid='clock-minute-legend-dot'
+            size='md'
+          />
+          Minuty (długa)
         </span>
       </div>
 
-      <KangurButton onClick={() => onSubmit(displayHour, displayMinutes)} size='xl' variant='primary'>
+      <KangurButton
+        onClick={() => onSubmit(displayHour, displayMinutes)}
+        size='xl'
+        variant='primary'
+      >
         Sprawdź! ✅
       </KangurButton>
     </div>
@@ -746,11 +773,7 @@ export default function ClockTrainingGame({ onFinish }: ClockTrainingGameProps):
 
   if (done) {
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className='py-4'
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className='py-4'>
         <KangurPanel
           className='flex flex-col items-center gap-5 text-center'
           padding='xl'
@@ -764,7 +787,10 @@ export default function ClockTrainingGame({ onFinish }: ClockTrainingGameProps):
             Tryb: {gameMode === 'challenge' ? 'Wyzwanie' : 'Nauka'}
           </p>
           {gameMode === 'challenge' && (
-            <p data-testid='clock-challenge-summary' className='text-xs font-semibold text-amber-600'>
+            <p
+              data-testid='clock-challenge-summary'
+              className='text-xs font-semibold text-amber-600'
+            >
               Najlepsza seria: {challengeBestStreak}
             </p>
           )}
@@ -774,9 +800,9 @@ export default function ClockTrainingGame({ onFinish }: ClockTrainingGameProps):
             </p>
           )}
           {xpEarned > 0 && (
-            <div className='bg-indigo-100 text-indigo-700 font-bold px-4 py-2 rounded-full text-sm'>
+            <KangurStatusChip accent='indigo' className='px-4 py-2 text-sm font-bold'>
               +{xpEarned} XP ✨
-            </div>
+            </KangurStatusChip>
           )}
           <p className='text-gray-500 text-center max-w-xs'>
             {score === tasks.length
@@ -798,9 +824,10 @@ export default function ClockTrainingGame({ onFinish }: ClockTrainingGameProps):
 
   return (
     <div className='flex flex-col items-center gap-4 w-full'>
-      <div
+      <KangurInfoCard
         data-testid='clock-mode-switch'
-        className='inline-flex items-center gap-2 rounded-2xl border border-white/70 bg-white/85 p-1.5 shadow-sm'
+        className='inline-flex w-auto items-center gap-2 rounded-[24px] p-1.5'
+        padding='sm'
       >
         <KangurButton
           data-testid='clock-mode-practice'
@@ -818,16 +845,28 @@ export default function ClockTrainingGame({ onFinish }: ClockTrainingGameProps):
         >
           Tryb Wyzwanie
         </KangurButton>
-      </div>
+      </KangurInfoCard>
       {gameMode === 'challenge' ? (
-        <div className='inline-flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-bold text-amber-700'>
-          <span data-testid='clock-challenge-timer'>⏱ {challengeTimeLeft}s</span>
-          <span data-testid='clock-challenge-streak'>🔥 Seria: {challengeStreak}</span>
+        <div className='inline-flex flex-wrap items-center gap-2'>
+          <KangurStatusChip
+            accent='amber'
+            className='gap-2 text-xs font-bold'
+            data-testid='clock-challenge-timer'
+          >
+            ⏱ {challengeTimeLeft}s
+          </KangurStatusChip>
+          <KangurStatusChip
+            accent='amber'
+            className='gap-2 text-xs font-bold'
+            data-testid='clock-challenge-streak'
+          >
+            🔥 Seria: {challengeStreak}
+          </KangurStatusChip>
         </div>
       ) : retryAddedCount > 0 ? (
-        <p className='text-xs font-semibold text-indigo-600'>
+        <KangurStatusChip accent='indigo' className='text-xs font-semibold' data-testid='clock-retry-count'>
           Powtórki adaptacyjne: {retryAddedCount}
-        </p>
+        </KangurStatusChip>
       ) : null}
 
       <div className='flex gap-2 mb-1'>
@@ -848,15 +887,19 @@ export default function ClockTrainingGame({ onFinish }: ClockTrainingGameProps):
         ))}
       </div>
 
-      <div className='bg-amber-50 border border-amber-200 rounded-2xl px-6 py-3 text-center'>
-        <p className='text-gray-500 text-sm mb-1'>Ustaw zegar na godzinę:</p>
-        <p className='text-3xl font-extrabold text-amber-700'>
-          {task.hours}:{pad(task.minutes)}
-        </p>
+      <KangurSummaryPanel
+        accent='amber'
+        align='center'
+        className='w-full max-w-md'
+        label='Ustaw zegar na godzinę'
+        padding='md'
+        title={`${task.hours}:${pad(task.minutes)}`}
+        tone='accent'
+      >
         <p data-testid='clock-task-prompt' className='text-xs font-semibold text-amber-700/80 mt-1'>
           {buildClockTaskPrompt(task)}
         </p>
-      </div>
+      </KangurSummaryPanel>
 
       <AnimatePresence>
         {feedback && (
@@ -864,25 +907,31 @@ export default function ClockTrainingGame({ onFinish }: ClockTrainingGameProps):
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
-            data-testid='clock-feedback'
-            className={`flex flex-col items-start gap-1 px-5 py-3 rounded-2xl font-bold text-lg w-full max-w-xl ${
-              feedback.kind === 'correct'
-                ? 'bg-green-100 text-green-700'
-                : feedback.tone === 'near'
-                  ? 'bg-amber-100 text-amber-700 border border-amber-200'
-                  : 'bg-red-100 text-red-700'
-            }`}
           >
-            {feedback.kind === 'correct' ? (
-              <div className='flex items-center gap-2'>
-                <CheckCircle className='w-5 h-5' /> {feedback.title}
+            <KangurInfoCard
+              accent={
+                feedback.kind === 'correct'
+                  ? 'emerald'
+                  : feedback.tone === 'near'
+                    ? 'amber'
+                    : 'rose'
+              }
+              className='w-full max-w-xl'
+              data-testid='clock-feedback'
+              padding='md'
+              role='status'
+              tone='accent'
+            >
+              <div className='flex items-center gap-2 text-lg font-bold'>
+                {feedback.kind === 'correct' ? (
+                  <CheckCircle className='h-5 w-5' />
+                ) : (
+                  <XCircle className='h-5 w-5' />
+                )}
+                <span>{feedback.title}</span>
               </div>
-            ) : (
-              <div className='flex items-center gap-2'>
-                <XCircle className='w-5 h-5' /> {feedback.title}
-              </div>
-            )}
-            <p className='text-sm font-semibold leading-relaxed'>{feedback.details}</p>
+              <p className='mt-2 text-sm font-semibold leading-relaxed'>{feedback.details}</p>
+            </KangurInfoCard>
           </motion.div>
         )}
       </AnimatePresence>

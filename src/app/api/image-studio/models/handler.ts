@@ -1,13 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { listBrainModels } from '@/shared/lib/ai-brain/server-model-catalog';
+import type { ImageStudioModelsResponse } from '@/shared/contracts/image-studio';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-
-type ImageStudioModelsResponse = {
-  models: string[];
-  source: 'brain';
-  warning?: string;
-};
 
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const payload = await listBrainModels({ family: 'image_generation' });

@@ -102,10 +102,7 @@ export type {
   PortablePathAuditSinkAutoRemediationNotificationReceipt,
 } from './sinks-auto-remediation-notifications.server';
 
-export type PortablePathAuditSinkAutoRemediationThrottleReason =
-  | 'cooldown'
-  | 'rate_limited'
-  | null;
+export type PortablePathAuditSinkAutoRemediationThrottleReason = 'cooldown' | 'rate_limited' | null;
 
 export type PortablePathAuditSinkAutoRemediationResult = {
   enabled: boolean;
@@ -193,8 +190,7 @@ const REPLAY_PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTERS_DEPS: Replay
     resolveTimeoutMs: resolvePortablePathAuditSinkAutoRemediationNotificationTimeoutMs,
     resolveMaxEntries: resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntries,
     normalizeEndpoint: normalizePortablePathAuditSinkAutoRemediationEndpoint,
-    normalizeEndpointAllowlist:
-      normalizePortablePathAuditSinkAutoRemediationEndpointAllowlist,
+    normalizeEndpointAllowlist: normalizePortablePathAuditSinkAutoRemediationEndpointAllowlist,
     loadDeadLetters: ({ maxEntries, readRaw }) =>
       loadPortablePathAuditSinkAutoRemediationDeadLetters({ maxEntries, readRaw }),
     saveDeadLetters: (entries, { maxEntries, writeRaw }) =>
@@ -231,10 +227,9 @@ export const runPortablePathAuditSinkAutoRemediation = async (
   const cooldownSeconds = resolvePortablePathAuditSinkAutoRemediationCooldownSeconds(
     options.cooldownSeconds
   );
-  const rateLimitWindowSeconds =
-    resolvePortablePathAuditSinkAutoRemediationRateLimitWindowSeconds(
-      options.rateLimitWindowSeconds
-    );
+  const rateLimitWindowSeconds = resolvePortablePathAuditSinkAutoRemediationRateLimitWindowSeconds(
+    options.rateLimitWindowSeconds
+  );
   const rateLimitMaxActions = resolvePortablePathAuditSinkAutoRemediationRateLimitMaxActions(
     options.rateLimitMaxActions
   );

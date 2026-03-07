@@ -9,18 +9,17 @@ import {
   XP_REWARDS,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
-import {
-  KANGUR_ACCENT_STYLES,
-  KANGUR_OPTION_CARD_CLASSNAME,
-  KANGUR_STEP_PILL_CLASSNAME,
-} from '@/features/kangur/ui/design/tokens';
+import { KANGUR_STEP_PILL_CLASSNAME, type KangurAccent } from '@/features/kangur/ui/design/tokens';
+import { useKangurLessonBackAction } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
-import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
+import {
+  KangurButton,
+  KangurDivider,
+  KangurOptionCardButton,
+  KangurPanel,
+  KangurStatusChip,
+} from '@/features/kangur/ui/design/primitives';
 import { cn } from '@/shared/utils';
-
-type ClockLessonProps = {
-  onBack: () => void;
-};
 
 type AnalogClockProps = {
   hours: number;
@@ -46,17 +45,6 @@ type LessonSection = {
 };
 
 const LOCKED_SECTION_HINT = 'Najpierw ukończ poprzednią sekcję, aby odblokować ten etap.';
-
-const getSectionToggleClassName = (isLocked: boolean, isOpen: boolean): string =>
-  cn(
-    KANGUR_OPTION_CARD_CLASSNAME,
-    'flex items-center justify-between gap-4 rounded-[30px] px-5 py-4',
-    isLocked
-      ? 'border-slate-200/80 bg-slate-100/85 text-slate-500 shadow-none hover:translate-y-0'
-      : isOpen
-        ? KANGUR_ACCENT_STYLES.indigo.activeCard
-        : cn('border-slate-200/80', KANGUR_ACCENT_STYLES.slate.hoverCard)
-  );
 
 function AnalogClock({
   hours,
@@ -385,7 +373,8 @@ export const LESSON_SECTIONS: LessonSection[] = [
   },
 ];
 
-export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Element {
+export default function ClockLesson(): React.JSX.Element {
+  const handleBack = useKangurLessonBackAction();
   const [openSection, setOpenSection] = useState<number | null>(0);
   const [sectionSlides, setSectionSlides] = useState<number[]>(() => LESSON_SECTIONS.map(() => 0));
   const [completedSections, setCompletedSections] = useState<boolean[]>(() =>
@@ -452,28 +441,28 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
   );
 
   const getSectionStatus = useCallback(
-    (sectionIndex: number, isOpen: boolean): { label: string; className: string } => {
+    (sectionIndex: number, isOpen: boolean): { label: string; accent: KangurAccent } => {
       if (!unlockedSections[sectionIndex]) {
         return {
           label: 'Zablokowana',
-          className: 'bg-slate-200 text-slate-500',
+          accent: 'slate',
         };
       }
       if (completedSections[sectionIndex]) {
         return {
           label: 'Ukończono',
-          className: 'bg-green-100 text-green-700',
+          accent: 'emerald',
         };
       }
       if (isOpen) {
         return {
           label: 'W trakcie',
-          className: 'bg-indigo-100 text-indigo-700',
+          accent: 'indigo',
         };
       }
       return {
         label: 'Do zrobienia',
-        className: 'bg-slate-100 text-slate-600',
+        accent: 'slate',
       };
     },
     [completedSections, unlockedSections]
@@ -537,11 +526,11 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
       return;
     }
 
-    onBack();
+    handleBack();
   }, [
     activeSection,
     activeSlideIndex,
-    onBack,
+    handleBack,
     openSection,
     openSectionAt,
     setSectionSlideIndex,
@@ -559,9 +548,13 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
         >
           <ArrowLeft className='w-4 h-4' /> Wróć do lekcji
         </KangurButton>
-        <KangurPanel className='w-full flex flex-col items-center gap-5' padding='xl' variant='soft'>
+        <KangurPanel
+          className='w-full flex flex-col items-center gap-5'
+          padding='xl'
+          variant='soft'
+        >
           <h2 className='text-xl font-extrabold text-slate-800'>🕐 Ćwiczenie z zegarem</h2>
-          <ClockTrainingGame onFinish={onBack} />
+          <ClockTrainingGame onFinish={handleBack} />
         </KangurPanel>
       </div>
     );
@@ -571,7 +564,7 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
     return (
       <div className='flex flex-col items-center w-full max-w-lg gap-4'>
         <KangurButton
-          onClick={onBack}
+          onClick={handleBack}
           className='self-start'
           size='sm'
           type='button'
@@ -598,13 +591,18 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
               const status = getSectionStatus(sectionIndex, false);
               const isLocked = !unlockedSections[sectionIndex];
               return (
-                <button
+                <KangurOptionCardButton
+                  accent='indigo'
                   data-testid={`clock-lesson-section-toggle-${section.id}`}
                   onClick={() => openSectionAt(sectionIndex)}
-                  className={getSectionToggleClassName(isLocked, false)}
                   aria-expanded={false}
-                  type='button'
+                  className={cn(
+                    'flex items-center justify-between gap-4 rounded-[30px] px-5 py-4',
+                    isLocked && 'bg-slate-100/85 text-slate-500 shadow-none hover:translate-y-0'
+                  )}
+                  emphasis='neutral'
                   disabled={isLocked}
+                  type='button'
                 >
                   <div>
                     <p className='text-xs font-bold uppercase tracking-wide text-indigo-400'>
@@ -612,12 +610,14 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
                     </p>
                     <h3 className='text-lg font-extrabold text-indigo-700'>{section.title}</h3>
                     <p className='text-sm text-gray-500 mt-1'>{section.subtitle}</p>
-                    <p
+                    <KangurStatusChip
+                      accent={status.accent}
                       data-testid={`clock-lesson-section-status-${section.id}`}
-                      className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[11px] font-bold ${status.className}`}
+                      className='mt-1 uppercase tracking-[0.14em]'
+                      size='sm'
                     >
                       {status.label}
-                    </p>
+                    </KangurStatusChip>
                     {isLocked && (
                       <p
                         data-testid={`clock-lesson-section-locked-hint-${section.id}`}
@@ -632,7 +632,7 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
                   ) : (
                     <ChevronRight className='w-5 h-5 text-indigo-500 flex-shrink-0' />
                   )}
-                </button>
+                </KangurOptionCardButton>
               );
             })()}
           </KangurPanel>
@@ -644,7 +644,7 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
   return (
     <div className='flex flex-col items-center w-full max-w-lg gap-4'>
       <KangurButton
-        onClick={onBack}
+        onClick={handleBack}
         className='self-start'
         size='sm'
         type='button'
@@ -667,13 +667,18 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
             padding='lg'
             variant='soft'
           >
-            <button
+            <KangurOptionCardButton
+              accent='indigo'
               data-testid={`clock-lesson-section-toggle-${section.id}`}
               onClick={() => openSectionAt(sectionIndex)}
-              className={getSectionToggleClassName(isLocked, isOpen)}
               aria-expanded={isOpen}
-              type='button'
+              className={cn(
+                'flex items-center justify-between gap-4 rounded-[30px] px-5 py-4',
+                isLocked && 'bg-slate-100/85 text-slate-500 shadow-none hover:translate-y-0'
+              )}
+              emphasis={isOpen ? 'accent' : 'neutral'}
               disabled={isLocked}
+              type='button'
             >
               <div>
                 <p className='text-xs font-bold uppercase tracking-wide text-indigo-400'>
@@ -681,12 +686,14 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
                 </p>
                 <h3 className='text-lg font-extrabold text-indigo-700'>{section.title}</h3>
                 <p className='text-sm text-gray-500 mt-1'>{section.subtitle}</p>
-                <p
+                <KangurStatusChip
+                  accent={status.accent}
                   data-testid={`clock-lesson-section-status-${section.id}`}
-                  className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[11px] font-bold ${status.className}`}
+                  className='mt-1 uppercase tracking-[0.14em]'
+                  size='sm'
                 >
                   {status.label}
-                </p>
+                </KangurStatusChip>
                 {isLocked && (
                   <p
                     data-testid={`clock-lesson-section-locked-hint-${section.id}`}
@@ -706,10 +713,16 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
               ) : (
                 <ChevronRight className='w-5 h-5 text-indigo-500 flex-shrink-0' />
               )}
-            </button>
+            </KangurOptionCardButton>
 
             {isOpen && (
-              <div className='pt-2 border-t border-indigo-100 flex flex-col gap-4'>
+              <div className='pt-2 flex flex-col gap-4'>
+                <KangurDivider
+                  accent='indigo'
+                  className='w-full'
+                  data-testid={`clock-lesson-section-divider-${section.id}`}
+                  size='sm'
+                />
                 <div className='flex gap-2'>
                   {section.slides.map((_, slideIndex) => (
                     <button
@@ -751,12 +764,7 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
                 </AnimatePresence>
 
                 <div className='flex gap-3 w-full'>
-                  <KangurButton
-                    onClick={goPrev}
-                    size='lg'
-                    type='button'
-                    variant='secondary'
-                  >
+                  <KangurButton onClick={goPrev} size='lg' type='button' variant='secondary'>
                     <ArrowLeft className='w-4 h-4' />
                     {openSection === 0 && activeSlideIndex === 0 ? 'Wróć' : 'Wstecz'}
                   </KangurButton>

@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 import type { EntityModalProps } from '@/shared/contracts/ui';

@@ -41,8 +41,7 @@ const MAX_HTML_LENGTH = 1_500_000;
 
 const getPlaywrightChromium = (): PlaywrightChromium => {
   const requireFn = createRequire(import.meta.url);
-  const packageName = 'play' + 'wright';
-  const moduleRef = requireFn(packageName) as { chromium?: PlaywrightChromium };
+  const moduleRef = requireFn('playwright') as { chromium?: PlaywrightChromium };
   if (!moduleRef.chromium || typeof moduleRef.chromium.launch !== 'function') {
     throw configurationError('Playwright Chromium runtime is not available.');
   }

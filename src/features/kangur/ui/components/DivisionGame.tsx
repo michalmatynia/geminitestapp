@@ -3,12 +3,24 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { RefreshCw } from 'lucide-react';
 
 import {
+  KANGUR_ACCENT_STYLES,
+  type KangurAccent,
+} from '@/features/kangur/ui/design/tokens';
+import {
   addXp,
   createLessonPracticeReward,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
-import { KangurButton } from '@/features/kangur/ui/design/primitives';
+import {
+  KangurButton,
+  KangurInfoCard,
+  KangurOptionCardButton,
+  KangurPanel,
+  KangurProgressBar,
+  KangurStatusChip,
+} from '@/features/kangur/ui/design/primitives';
 import { scheduleKangurRoundFeedback } from '@/features/kangur/ui/services/round-transition';
+import { cn } from '@/shared/utils';
 
 type DivisionQuotientQuestion = {
   type: 'quotient';
@@ -174,60 +186,60 @@ export default function DivisionGame({ onFinish }: DivisionGameProps): React.JSX
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className='flex flex-col items-center gap-4 bg-white rounded-3xl shadow-xl p-8 text-center w-full max-w-sm'
+        className='w-full max-w-sm'
       >
-        <div className='text-6xl'>{percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}</div>
-        <h2 className='text-2xl font-extrabold text-gray-800'>
-          Wynik: {score}/{TOTAL}
-        </h2>
-        {xpEarned > 0 && (
-          <div className='bg-indigo-100 text-indigo-700 font-bold px-4 py-2 rounded-full text-sm'>
-            +{xpEarned} XP ✨
+        <KangurPanel
+          className='flex flex-col items-center gap-4 text-center'
+          data-testid='division-game-summary-shell'
+          padding='xl'
+          variant='elevated'
+        >
+          <div className='text-6xl'>{percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}</div>
+          <h2 className='text-2xl font-extrabold text-gray-800'>
+            Wynik: {score}/{TOTAL}
+          </h2>
+          {xpEarned > 0 && (
+            <KangurStatusChip accent='indigo' className='px-4 py-2 text-sm font-bold'>
+              +{xpEarned} XP ✨
+            </KangurStatusChip>
+          )}
+          <KangurProgressBar accent='teal' animated size='md' value={percent} />
+          <p className='text-gray-500'>
+            {percent === 100
+              ? 'Idealnie! Mistrz dzielenia!'
+              : percent >= 60
+                ? 'Świetna robota!'
+                : 'Ćwicz dalej!'}
+          </p>
+          <div className='flex gap-3 w-full'>
+            <KangurButton
+              onClick={() => {
+                setRoundIndex(0);
+                setScore(0);
+                setDone(false);
+                setXpEarned(0);
+                setQuestion(generateQuestion(0));
+                setSelected(null);
+                setConfirmed(false);
+              }}
+              className='flex-1'
+              size='lg'
+              type='button'
+              variant='secondary'
+            >
+              <RefreshCw className='w-4 h-4' /> Jeszcze raz
+            </KangurButton>
+            <KangurButton
+              onClick={onFinish}
+              className='flex-1'
+              size='lg'
+              type='button'
+              variant='primary'
+            >
+              Wróć do lekcji
+            </KangurButton>
           </div>
-        )}
-        <div className='w-full bg-gray-100 rounded-full h-3'>
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${percent}%` }}
-            transition={{ duration: 0.8 }}
-            className='h-full bg-gradient-to-r from-blue-500 to-teal-400 rounded-full'
-          />
-        </div>
-        <p className='text-gray-500'>
-          {percent === 100
-            ? 'Idealnie! Mistrz dzielenia!'
-            : percent >= 60
-              ? 'Świetna robota!'
-              : 'Ćwicz dalej!'}
-        </p>
-        <div className='flex gap-3 w-full'>
-          <KangurButton
-            onClick={() => {
-              setRoundIndex(0);
-              setScore(0);
-              setDone(false);
-              setXpEarned(0);
-              setQuestion(generateQuestion(0));
-              setSelected(null);
-              setConfirmed(false);
-            }}
-            className='flex-1'
-            size='lg'
-            type='button'
-            variant='secondary'
-          >
-            <RefreshCw className='w-4 h-4' /> Jeszcze raz
-          </KangurButton>
-          <KangurButton
-            onClick={onFinish}
-            className='flex-1'
-            size='lg'
-            type='button'
-            variant='primary'
-          >
-            Wróć do lekcji
-          </KangurButton>
-        </div>
+        </KangurPanel>
       </motion.div>
     );
   }
@@ -235,12 +247,13 @@ export default function DivisionGame({ onFinish }: DivisionGameProps): React.JSX
   return (
     <div className='flex flex-col items-center gap-4 w-full max-w-sm'>
       <div className='flex items-center gap-2 w-full'>
-        <div className='flex-1 h-2 bg-gray-100 rounded-full overflow-hidden'>
-          <div
-            style={{ width: `${(roundIndex / TOTAL) * 100}%` }}
-            className='h-full bg-gradient-to-r from-blue-500 to-teal-400 rounded-full transition-all duration-500'
-          />
-        </div>
+        <KangurProgressBar
+          accent='teal'
+          className='flex-1'
+          data-testid='division-game-progress-bar'
+          size='sm'
+          value={(roundIndex / TOTAL) * 100}
+        />
         <span className='text-xs font-bold text-gray-400'>
           {roundIndex + 1}/{TOTAL}
         </span>
@@ -252,78 +265,112 @@ export default function DivisionGame({ onFinish }: DivisionGameProps): React.JSX
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -20 }}
-          className='bg-white rounded-3xl shadow-xl p-6 w-full flex flex-col items-center gap-4'
+          className='w-full'
         >
-          <p className='text-xs font-bold text-blue-400 uppercase tracking-wide'>
-            {question.type === 'remainder' ? 'Jaka jest reszta?' : 'Ile wynosi iloraz?'}
-          </p>
-          <p className='text-3xl font-extrabold text-blue-600'>{question.label}</p>
+          <KangurPanel
+            className='flex flex-col items-center gap-4'
+            data-testid='division-game-round-shell'
+            padding='xl'
+            variant='elevated'
+          >
+            <p className='text-xs font-bold text-blue-400 uppercase tracking-wide'>
+              {question.type === 'remainder' ? 'Jaka jest reszta?' : 'Ile wynosi iloraz?'}
+            </p>
+            <p className='text-3xl font-extrabold text-blue-600'>{question.label}</p>
 
-          {question.type === 'quotient' && (
-            <ShareVisual a={question.a} b={question.b} quotient={question.correct} />
-          )}
+            {question.type === 'quotient' && (
+              <ShareVisual a={question.a} b={question.b} quotient={question.correct} />
+            )}
 
-          {question.type === 'remainder' && (
-            <div className='bg-teal-50 border border-teal-200 rounded-2xl p-3 text-center text-sm text-teal-700'>
-              <p>
-                {question.a} = {question.b} × {question.quotient} +{' '}
-                <span className='font-extrabold text-lg'>?</span>
-              </p>
-              <p className='text-xs text-gray-400 mt-1'>Ile zostaje po podzieleniu?</p>
-            </div>
-          )}
+            {question.type === 'remainder' && (
+              <KangurInfoCard
+                accent='teal'
+                className='w-full rounded-[24px] text-center text-sm'
+                padding='sm'
+                tone='accent'
+              >
+                <p>
+                  {question.a} = {question.b} × {question.quotient} +{' '}
+                  <span className='font-extrabold text-lg'>?</span>
+                </p>
+                <p className='mt-1 text-xs text-gray-400'>Ile zostaje po podzieleniu?</p>
+              </KangurInfoCard>
+            )}
 
-          <div className='grid grid-cols-2 gap-2 w-full'>
-            {question.choices.map((choice, index) => {
-              let className =
-                'border-2 border-gray-200 text-gray-700 hover:border-blue-400 bg-white';
-              if (confirmed) {
-                if (choice === question.correct) {
-                  className = 'border-2 border-green-400 bg-green-100 text-green-800';
+            <div className='grid grid-cols-2 gap-2 w-full'>
+              {question.choices.map((choice, index) => {
+                let accent: KangurAccent = 'sky';
+                let emphasis: 'neutral' | 'accent' = 'neutral';
+                let state: 'default' | 'muted' = 'default';
+                let className = 'text-slate-700';
+                if (confirmed) {
+                  if (choice === question.correct) {
+                    accent = 'emerald';
+                    emphasis = 'accent';
+                    className = KANGUR_ACCENT_STYLES.emerald.activeText;
+                  } else if (choice === selected) {
+                    accent = 'rose';
+                    emphasis = 'accent';
+                    className = KANGUR_ACCENT_STYLES.rose.activeText;
+                  } else {
+                    accent = 'slate';
+                    state = 'muted';
+                    className = '';
+                  }
                 } else if (choice === selected) {
-                  className = 'border-2 border-red-400 bg-red-100 text-red-700';
-                } else {
-                  className = 'border-2 border-gray-100 text-gray-300 bg-white opacity-50';
+                  accent = 'amber';
+                  emphasis = 'accent';
+                  className = KANGUR_ACCENT_STYLES.amber.activeText;
                 }
-              } else if (choice === selected) {
-                className = 'border-2 border-blue-400 bg-blue-50 text-blue-700';
-              }
 
-              return (
-                <motion.button
-                  key={index}
-                  whileHover={!confirmed ? { scale: 1.04 } : {}}
-                  whileTap={!confirmed ? { scale: 0.96 } : {}}
-                  onClick={() => handleSelect(choice)}
-                  className={`py-3 rounded-2xl font-extrabold text-xl transition-all ${className}`}
-                >
-                  {choice}
-                </motion.button>
-              );
-            })}
-          </div>
+                return (
+                  <motion.div
+                    key={index}
+                    whileHover={!confirmed ? { scale: 1.04 } : {}}
+                    whileTap={!confirmed ? { scale: 0.96 } : {}}
+                  >
+                    <KangurOptionCardButton
+                      accent={accent}
+                      className={cn(
+                        'w-full flex items-center justify-center rounded-[24px] px-4 py-3 text-center text-xl font-extrabold transition-all',
+                        className,
+                        confirmed ? 'cursor-default' : 'cursor-pointer'
+                      )}
+                      data-testid={`division-game-choice-${index}`}
+                      emphasis={emphasis}
+                      onClick={() => handleSelect(choice)}
+                      state={state}
+                      type='button'
+                    >
+                      {choice}
+                    </KangurOptionCardButton>
+                  </motion.div>
+                );
+              })}
+            </div>
 
-          {confirmed && (
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className={`text-lg font-extrabold ${selected === question.correct ? 'text-green-600' : 'text-red-500'}`}
-            >
-              {selected === question.correct ? '🎉 Brawo!' : `❌ Odpowiedź: ${question.correct}`}
-            </motion.div>
-          )}
-          {!confirmed && (
-            <KangurButton
-              onClick={handleConfirm}
-              className='w-full'
-              disabled={selected === null}
-              size='lg'
-              type='button'
-              variant='primary'
-            >
-              Sprawdź ✓
-            </KangurButton>
-          )}
+            {confirmed && (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className={`text-lg font-extrabold ${selected === question.correct ? 'text-green-600' : 'text-red-500'}`}
+              >
+                {selected === question.correct ? '🎉 Brawo!' : `❌ Odpowiedź: ${question.correct}`}
+              </motion.div>
+            )}
+            {!confirmed && (
+              <KangurButton
+                onClick={handleConfirm}
+                className='w-full'
+                disabled={selected === null}
+                size='lg'
+                type='button'
+                variant='primary'
+              >
+                Sprawdź ✓
+              </KangurButton>
+            )}
+          </KangurPanel>
         </motion.div>
       </AnimatePresence>
     </div>

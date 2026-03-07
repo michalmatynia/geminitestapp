@@ -107,9 +107,8 @@ const parseManifest = (value: unknown): PortableNodeCodeObjectManifest | null =>
   };
 };
 
-const formatVerificationError = (
-  warning: PortableNodeCodeObjectManifestWarning
-): string => `Portable node code object verification failed: ${warning.message}`;
+const formatVerificationError = (warning: PortableNodeCodeObjectManifestWarning): string =>
+  `Portable node code object verification failed: ${warning.message}`;
 
 const finalizeVerification = (
   mode: PortableNodeCodeObjectHashVerificationMode,

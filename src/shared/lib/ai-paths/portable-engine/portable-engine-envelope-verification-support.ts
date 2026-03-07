@@ -4,9 +4,7 @@ import type {
 } from './portable-engine-envelope-observability';
 import { recordPortablePathEnvelopeVerificationEvent } from './portable-engine-envelope-observability';
 import type { AiPathPortablePackageEnvelopeVersioned } from './portable-engine-contract';
-import type {
-  PortablePathMigrationWarning,
-} from './portable-engine-migration-types';
+import type { PortablePathMigrationWarning } from './portable-engine-migration-types';
 import type { PortablePathEnvelopeSignatureVerificationMode } from './portable-engine-resolution-types';
 
 export type PortablePathEnvelopeVerificationPhase = 'sync' | 'async';
@@ -15,9 +13,8 @@ export type PortablePathEnvelopeVerificationResult =
   | { ok: true; warnings: PortablePathMigrationWarning[] }
   | { ok: false; error: string; warnings: PortablePathMigrationWarning[] };
 
-const formatEnvelopeVerificationError = (
-  warning: PortablePathMigrationWarning
-): string => `Portable package envelope verification failed: ${warning.message}`;
+const formatEnvelopeVerificationError = (warning: PortablePathMigrationWarning): string =>
+  `Portable package envelope verification failed: ${warning.message}`;
 
 export const recordPortablePathEnvelopeVerificationResult = (
   phase: PortablePathEnvelopeVerificationPhase,

@@ -17,18 +17,23 @@ vi.mock('@/shared/lib/api-client', () => ({
 }));
 
 import { KangurLessonNarrationPanel } from '@/features/kangur/admin/KangurLessonNarrationPanel';
-import type { KangurLessonDocument } from '@/shared/contracts/kangur';
+import { LessonContentEditorProvider } from '@/features/kangur/admin/context/LessonContentEditorContext';
+import type { KangurLesson, KangurLessonDocument } from '@/shared/contracts/kangur';
 
 function StatefulNarrationPanelHarness({
   lesson,
   document,
 }: {
-  lesson: { id: string; title: string; description: string };
+  lesson: Pick<KangurLesson, 'id' | 'title' | 'description'>;
   document: KangurLessonDocument;
 }): React.JSX.Element {
   const [value, setValue] = React.useState(document);
 
-  return <KangurLessonNarrationPanel lesson={lesson} document={value} onChange={setValue} />;
+  return (
+    <LessonContentEditorProvider lesson={lesson as KangurLesson} document={value} onChange={setValue}>
+      <KangurLessonNarrationPanel />
+    </LessonContentEditorProvider>
+  );
 }
 
 describe('KangurLessonNarrationPanel', () => {
@@ -115,9 +120,7 @@ describe('KangurLessonNarrationPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: /generate audio preview/i }));
 
     await waitFor(() =>
-      expect(
-        apiPostMock.mock.calls.some((call) => call[0] === '/api/kangur/tts')
-      ).toBe(true)
+      expect(apiPostMock.mock.calls.some((call) => call[0] === '/api/kangur/tts')).toBe(true)
     );
 
     const generateCall = apiPostMock.mock.calls.find((call) => call[0] === '/api/kangur/tts');
@@ -151,43 +154,45 @@ describe('KangurLessonNarrationPanel', () => {
   });
 
   it('forces regeneration when requested', async () => {
-    apiPostMock.mockImplementation(async (endpoint: string, body?: { forceRegenerate?: boolean }) => {
-      if (endpoint === '/api/kangur/tts/status') {
-        return {
-          state: 'missing',
-          voice: 'coral',
-          latestCreatedAt: null,
-          message: 'Audio has not been generated for this lesson draft yet.',
-          segments: [],
-        };
-      }
-
-      return body?.forceRegenerate
-        ? {
-          mode: 'audio',
-          voice: 'coral',
-          segments: [
-            {
-              id: 'clock-segment-1',
-              text: 'Nauka zegara.',
-              audioUrl: '/uploads/kangur/tts/example-b.mp3',
-              createdAt: '2026-03-06T12:05:00.000Z',
-            },
-          ],
+    apiPostMock.mockImplementation(
+      async (endpoint: string, body?: { forceRegenerate?: boolean }) => {
+        if (endpoint === '/api/kangur/tts/status') {
+          return {
+            state: 'missing',
+            voice: 'coral',
+            latestCreatedAt: null,
+            message: 'Audio has not been generated for this lesson draft yet.',
+            segments: [],
+          };
         }
-        : {
-          mode: 'audio',
-          voice: 'coral',
-          segments: [
-            {
-              id: 'clock-segment-1',
-              text: 'Nauka zegara.',
-              audioUrl: '/uploads/kangur/tts/example-a.mp3',
-              createdAt: '2026-03-06T12:00:00.000Z',
-            },
-          ],
-        };
-    });
+
+        return body?.forceRegenerate
+          ? {
+              mode: 'audio',
+              voice: 'coral',
+              segments: [
+                {
+                  id: 'clock-segment-1',
+                  text: 'Nauka zegara.',
+                  audioUrl: '/uploads/kangur/tts/example-b.mp3',
+                  createdAt: '2026-03-06T12:05:00.000Z',
+                },
+              ],
+            }
+          : {
+              mode: 'audio',
+              voice: 'coral',
+              segments: [
+                {
+                  id: 'clock-segment-1',
+                  text: 'Nauka zegara.',
+                  audioUrl: '/uploads/kangur/tts/example-a.mp3',
+                  createdAt: '2026-03-06T12:00:00.000Z',
+                },
+              ],
+            };
+      }
+    );
 
     render(
       <StatefulNarrationPanelHarness

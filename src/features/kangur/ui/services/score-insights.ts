@@ -68,7 +68,10 @@ const sortScoresByCreatedDateDesc = (left: KangurScoreRecord, right: KangurScore
 
 const buildOperationInsights = (
   scores: KangurScoreRecord[]
-): { strongestOperation: KangurScoreInsightOperation | null; weakestOperation: KangurScoreInsightOperation | null } => {
+): {
+  strongestOperation: KangurScoreInsightOperation | null;
+  weakestOperation: KangurScoreInsightOperation | null;
+} => {
   const buckets = new Map<
     string,
     {
@@ -94,17 +97,19 @@ const buildOperationInsights = (
     buckets.set(score.operation, bucket);
   });
 
-  const entries = Array.from(buckets.entries()).map(([operation, bucket]): KangurScoreInsightOperation => {
-    const operationInfo = OPERATION_LABELS[operation] ?? { label: operation, emoji: '❓' };
-    return {
-      operation,
-      label: operationInfo.label,
-      emoji: operationInfo.emoji,
-      attempts: bucket.attempts,
-      averageAccuracy: toPercent(bucket.accuracySum / bucket.attempts),
-      perfectSessions: bucket.perfectSessions,
-    };
-  });
+  const entries = Array.from(buckets.entries()).map(
+    ([operation, bucket]): KangurScoreInsightOperation => {
+      const operationInfo = OPERATION_LABELS[operation] ?? { label: operation, emoji: '❓' };
+      return {
+        operation,
+        label: operationInfo.label,
+        emoji: operationInfo.emoji,
+        attempts: bucket.attempts,
+        averageAccuracy: toPercent(bucket.accuracySum / bucket.attempts),
+        perfectSessions: bucket.perfectSessions,
+      };
+    }
+  );
 
   if (entries.length === 0) {
     return {
@@ -159,7 +164,11 @@ export const buildKangurScoreInsights = (
   }
 
   const today = startOfLocalDay(now);
-  const recentWindowStart = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (SCORE_INSIGHT_WINDOW_DAYS - 1));
+  const recentWindowStart = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate() - (SCORE_INSIGHT_WINDOW_DAYS - 1)
+  );
   const previousWindowStart = new Date(
     recentWindowStart.getFullYear(),
     recentWindowStart.getMonth(),
@@ -198,8 +207,9 @@ export const buildKangurScoreInsights = (
   return {
     recentGames: recentScores.length,
     recentAverageAccuracy,
-    recentPerfectGames: recentScores.filter((score) => score.correct_answers === score.total_questions)
-      .length,
+    recentPerfectGames: recentScores.filter(
+      (score) => score.correct_answers === score.total_questions
+    ).length,
     lastPlayedAt: normalizedScores[0]?.created_date ?? null,
     trend: {
       direction: trendDirection,

@@ -1,5 +1,6 @@
 import { Prisma } from '@prisma/client';
 
+import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/settings';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
@@ -9,14 +10,6 @@ const CENTRAL_LOG_DEAD_LETTER_STORE_VERSION = 1;
 const DEFAULT_MAX_ENTRIES = 200;
 
 export const CENTRAL_LOG_DEAD_LETTER_SETTINGS_KEY = 'observability_central_log_dead_letters_v1';
-
-type SettingDocument = {
-  _id?: string;
-  key?: string;
-  value?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-};
 
 export type CentralLogDeadLetterStoredEntry = {
   payload: Record<string, unknown>;
@@ -138,7 +131,7 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
   try {
     const mongo = await getMongoDb();
     const doc = await mongo
-      .collection<SettingDocument>(SETTINGS_COLLECTION)
+      .collection<MongoTimestampedStringSettingRecord<string, Date>>(SETTINGS_COLLECTION)
       .findOne({ $or: [{ _id: key }, { key }] }, { projection: { value: 1 } });
     return typeof doc?.value === 'string' ? doc.value : null;
   } catch {
@@ -166,7 +159,9 @@ const writeMongoSetting = async (key: string, value: string): Promise<boolean> =
   try {
     const mongo = await getMongoDb();
     const now = new Date();
-    await mongo.collection<SettingDocument>(SETTINGS_COLLECTION).updateOne(
+    await mongo
+      .collection<MongoTimestampedStringSettingRecord<string, Date>>(SETTINGS_COLLECTION)
+      .updateOne(
       { $or: [{ _id: key }, { key }] },
       {
         $set: {
@@ -180,7 +175,7 @@ const writeMongoSetting = async (key: string, value: string): Promise<boolean> =
         },
       },
       { upsert: true }
-    );
+      );
     return true;
   } catch {
     return false;

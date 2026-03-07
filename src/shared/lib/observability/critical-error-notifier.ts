@@ -4,6 +4,7 @@ import type {
   SystemLogLevelDto as SystemLogLevel,
   SystemLogRecordDto as SystemLogRecord,
 } from '@/shared/contracts/observability';
+import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
@@ -29,8 +30,6 @@ type NotificationConfig = {
   throttleSeconds: number;
 };
 
-type SettingRecord = { _id: string; key?: string; value?: string };
-
 const canUsePrismaSettings = () => Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
 
 const readPrismaSetting = async (key: string): Promise<string | null> => {
@@ -50,7 +49,7 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
   if (!process.env['MONGODB_URI']) return null;
   const mongo = await getMongoDb();
   const doc = await mongo
-    .collection<SettingRecord>(SETTINGS_COLLECTION)
+    .collection<MongoStringSettingRecord>(SETTINGS_COLLECTION)
     .findOne({ $or: [{ _id: key }, { key }] });
   return typeof doc?.value === 'string' ? doc.value : null;
 };

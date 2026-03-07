@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  TERMINAL_AI_PATH_RUN_STATUSES,
-  isTerminalAiPathRunStatus,
-} from '../path-run-status';
+import { TERMINAL_AI_PATH_RUN_STATUSES, isTerminalAiPathRunStatus } from '../path-run-status';
 
 describe('path-run-status', () => {
   it('exposes the canonical terminal run statuses', () => {

@@ -24,6 +24,13 @@ describe('KangurProfileMenu', () => {
 
     await user.click(screen.getByRole('button', { name: 'Profil' }));
 
+    expect(screen.getByRole('menu')).toHaveClass('soft-card', 'border-slate-200/80');
+    expect(screen.getByRole('menuitem', { name: 'Status' })).toHaveClass('rounded-2xl', 'text-sm');
+    expect(screen.getByRole('menuitem', { name: 'Wyloguj' })).toHaveClass(
+      'rounded-2xl',
+      'text-sm'
+    );
+
     const statusLink = screen.getByText('Status').closest('a');
     expect(statusLink).toHaveAttribute('href', '/kangur/profile');
 
@@ -45,6 +52,11 @@ describe('KangurProfileMenu', () => {
     );
 
     await user.click(screen.getByRole('button', { name: 'Profil' }));
+    expect(screen.getByRole('menu')).toHaveClass('soft-card', 'border-slate-200/80');
+    expect(screen.getByRole('menuitem', { name: 'Zaloguj się' })).toHaveClass(
+      'rounded-2xl',
+      'text-sm'
+    );
     await user.click(screen.getByRole('menuitem', { name: 'Zaloguj się' }));
 
     expect(onLogin).toHaveBeenCalledTimes(1);

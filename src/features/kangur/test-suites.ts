@@ -34,7 +34,9 @@ export const createKangurTestSuiteId = (): string =>
   `kts_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
 export const createKangurTestSuite = (
-  overrides: Partial<Pick<KangurTestSuite, 'title' | 'description' | 'year' | 'gradeLevel' | 'category'>>,
+  overrides: Partial<
+    Pick<KangurTestSuite, 'title' | 'description' | 'year' | 'gradeLevel' | 'category'>
+  >,
   sortOrder = 0
 ): KangurTestSuite =>
   kangurTestSuiteSchema.parse({

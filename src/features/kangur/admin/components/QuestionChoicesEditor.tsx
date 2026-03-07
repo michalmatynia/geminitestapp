@@ -3,59 +3,64 @@ import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
 
 import { Button, Input } from '@/shared/ui';
 import { cn } from '@/shared/utils';
-import type { KangurTestChoice } from '@/shared/contracts/kangur-tests';
 import { nextChoiceLabel } from '../../test-questions';
+import { useKangurTestQuestionEditorContext } from '../context/KangurTestQuestionEditorContext';
 import { moveItem } from '../utils';
 
-type Props = {
-  choices: KangurTestChoice[];
-  correctChoiceLabel: string;
-  onChange: (choices: KangurTestChoice[]) => void;
-  onCorrectChange: (label: string) => void;
-};
+export function QuestionChoicesEditor(): React.JSX.Element {
+  const { choices, correctChoiceLabel, setChoices, setCorrectChoiceLabel, updateFormData } =
+    useKangurTestQuestionEditorContext();
 
-export function QuestionChoicesEditor({
-  choices,
-  correctChoiceLabel,
-  onChange,
-  onCorrectChange,
-}: Props): React.JSX.Element {
   const addChoice = (): void => {
     const label = nextChoiceLabel(choices.map((c) => c.label));
-    onChange([...choices, { label, text: '' }]);
+    setChoices([...choices, { label, text: '' }]);
   };
 
   const removeChoice = (index: number): void => {
     const next = choices.filter((_, i) => i !== index);
-    onChange(next);
     if (choices[index]?.label === correctChoiceLabel && next.length > 0) {
-      onCorrectChange(next[0]?.label ?? '');
+      updateFormData({
+        choices: next,
+        correctChoiceLabel: next[0]?.label ?? '',
+      });
+      return;
     }
+    setChoices(next);
   };
 
   const updateText = (index: number, text: string): void => {
-    onChange(choices.map((c, i) => (i === index ? { ...c, text } : c)));
+    setChoices(choices.map((c, i) => (i === index ? { ...c, text } : c)));
   };
 
   const updateLabel = (index: number, label: string): void => {
     const old = choices[index]?.label ?? '';
     const next = choices.map((c, i) => (i === index ? { ...c, label } : c));
-    onChange(next);
-    if (correctChoiceLabel === old) onCorrectChange(label);
+    if (correctChoiceLabel === old) {
+      updateFormData({
+        choices: next,
+        correctChoiceLabel: label,
+      });
+      return;
+    }
+    setChoices(next);
   };
 
   const move = (from: number, to: number): void => {
-    onChange(moveItem(choices, from, to));
+    setChoices(moveItem(choices, from, to));
   };
 
   const autoRelabel = (): void => {
     const labels = 'ABCDEFGHIJ'.split('');
     const next = choices.map((c, i) => ({ ...c, label: labels[i] ?? String.fromCharCode(65 + i) }));
-    onChange(next);
     const oldCorrectIndex = choices.findIndex((c) => c.label === correctChoiceLabel);
     if (oldCorrectIndex >= 0) {
-      onCorrectChange(next[oldCorrectIndex]?.label ?? correctChoiceLabel);
+      updateFormData({
+        choices: next,
+        correctChoiceLabel: next[oldCorrectIndex]?.label ?? correctChoiceLabel,
+      });
+      return;
     }
+    setChoices(next);
   };
 
   return (
@@ -64,7 +69,13 @@ export function QuestionChoicesEditor({
         <div className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
           Choices
         </div>
-        <Button type='button' size='sm' variant='outline' className='h-7 px-2 text-[11px]' onClick={autoRelabel}>
+        <Button
+          type='button'
+          size='sm'
+          variant='outline'
+          className='h-7 px-2 text-[11px]'
+          onClick={autoRelabel}
+        >
           Auto-label A–E
         </Button>
       </div>
@@ -82,7 +93,7 @@ export function QuestionChoicesEditor({
             <button
               type='button'
               title={isCorrect ? 'Correct answer' : 'Mark as correct'}
-              onClick={(): void => onCorrectChange(choice.label)}
+              onClick={(): void => setCorrectChoiceLabel(choice.label)}
               className={cn(
                 'size-5 shrink-0 rounded-full border-2 transition-colors',
                 isCorrect
@@ -147,7 +158,13 @@ export function QuestionChoicesEditor({
       })}
 
       {choices.length < 10 ? (
-        <Button type='button' size='sm' variant='outline' className='h-8 w-full' onClick={addChoice}>
+        <Button
+          type='button'
+          size='sm'
+          variant='outline'
+          className='h-8 w-full'
+          onClick={addChoice}
+        >
           <Plus className='mr-1 size-3.5' />
           Add choice
         </Button>

@@ -1,7 +1,4 @@
-import {
-  createImageStudioRun,
-  getImageStudioRunById,
-} from '@/features/ai/image-studio/server';
+import { createImageStudioRun, getImageStudioRunById } from '@/features/ai/image-studio/server';
 import { listImageStudioSlots } from '@/features/ai/image-studio/server';
 import type {
   ImageStudioSlotRecord,

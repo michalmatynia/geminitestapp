@@ -55,17 +55,14 @@ describe('portable-engine remediation notifications', () => {
       ok: true,
       status: 202,
     });
-    const result = await notifyPortablePathAuditSinkAutoRemediation(
-      createNotificationInput(),
-      {
-        enabled: true,
-        webhookUrl: 'https://example.test/remediation',
-        webhookSecret: 'signing-secret',
-        webhookSignatureKeyId: 'rotation-v2',
-        now: '2026-03-05T00:00:00.000Z',
-        fetchImpl: fetchMock as unknown as typeof fetch,
-      }
-    );
+    const result = await notifyPortablePathAuditSinkAutoRemediation(createNotificationInput(), {
+      enabled: true,
+      webhookUrl: 'https://example.test/remediation',
+      webhookSecret: 'signing-secret',
+      webhookSignatureKeyId: 'rotation-v2',
+      now: '2026-03-05T00:00:00.000Z',
+      fetchImpl: fetchMock as unknown as typeof fetch,
+    });
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
@@ -75,9 +72,7 @@ describe('portable-engine remediation notifications', () => {
       .update(`2026-03-05T00:00:00.000Z.${body}`)
       .digest('hex');
     expect(headers['x-ai-paths-signature']).toBe(`v1=${expectedSignature}`);
-    expect(headers['x-ai-paths-signature-timestamp']).toBe(
-      '2026-03-05T00:00:00.000Z'
-    );
+    expect(headers['x-ai-paths-signature-timestamp']).toBe('2026-03-05T00:00:00.000Z');
     expect(headers['x-ai-paths-signature-algorithm']).toBe('hmac_sha256');
     expect(headers['x-ai-paths-signature-key-id']).toBe('rotation-v2');
     expect(result.webhook.delivered).toBe(true);
@@ -101,21 +96,18 @@ describe('portable-engine remediation notifications', () => {
     });
     let rawStore: string | null = null;
 
-    const result = await notifyPortablePathAuditSinkAutoRemediation(
-      createNotificationInput(),
-      {
-        enabled: true,
-        webhookUrl: 'https://example.test/remediation',
-        webhookSecret: 'signing-secret',
-        now: '2026-03-05T00:00:00.000Z',
-        fetchImpl: fetchMock as unknown as typeof fetch,
-        deadLetterReadRaw: async () => rawStore,
-        deadLetterWriteRaw: async (raw: string): Promise<boolean> => {
-          rawStore = raw;
-          return true;
-        },
-      }
-    );
+    const result = await notifyPortablePathAuditSinkAutoRemediation(createNotificationInput(), {
+      enabled: true,
+      webhookUrl: 'https://example.test/remediation',
+      webhookSecret: 'signing-secret',
+      now: '2026-03-05T00:00:00.000Z',
+      fetchImpl: fetchMock as unknown as typeof fetch,
+      deadLetterReadRaw: async () => rawStore,
+      deadLetterWriteRaw: async (raw: string): Promise<boolean> => {
+        rawStore = raw;
+        return true;
+      },
+    });
 
     expect(result.webhook.delivered).toBe(false);
     expect(result.webhook.statusCode).toBe(502);
@@ -230,11 +222,10 @@ describe('portable-engine remediation notifications', () => {
     );
     expect(enqueueOk).toBe(true);
 
-    const loadedAfterEnqueue =
-      await loadPortablePathAuditSinkAutoRemediationDeadLetters({
-        maxEntries: 2,
-        readRaw,
-      });
+    const loadedAfterEnqueue = await loadPortablePathAuditSinkAutoRemediationDeadLetters({
+      maxEntries: 2,
+      readRaw,
+    });
     expect(loadedAfterEnqueue).toHaveLength(2);
     expect(loadedAfterEnqueue[0]?.queuedAt).toBe('2026-03-05T00:02:00.000Z');
     expect(loadedAfterEnqueue[1]?.queuedAt).toBe('2026-03-05T00:03:00.000Z');

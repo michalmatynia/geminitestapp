@@ -38,8 +38,10 @@ import {
 import { RunningIndicator } from './job-queue-running-indicator';
 import { extractPlaywrightArtifactsFromNode } from './playwright-artifacts';
 import { RunHistoryEntries } from './RunHistoryEntries';
+import { resolveRunHistoryEntryAction } from './run-history-entry-actions';
 import { useJobQueueActions, useJobQueueState } from './JobQueueContext';
 import { buildHistoryNodeOptions } from './run-history-utils';
+import { useRunHistoryActions } from '../context';
 
 type HistoryOption = {
   id: string;
@@ -71,6 +73,7 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
     setRunToDelete,
     setHistorySelection,
   } = useJobQueueActions();
+  const { resumeRun, retryRunNode } = useRunHistoryActions();
 
   const isExpanded = expandedRunIds.has(runId);
   const detail = normalizeRunDetail(runDetails[runId]);
@@ -336,6 +339,14 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
                     entries={historyEntries}
                     emptyMessage='No history recorded for this run.'
                     showNodeLabel
+                    onReplayFromEntry={(entry): void => {
+                      const action = resolveRunHistoryEntryAction(entry);
+                      if (action.kind === 'retry_node') {
+                        void retryRunNode(detailRun.id, entry.nodeId).catch(() => {});
+                        return;
+                      }
+                      void resumeRun(detailRun.id, action.resumeMode ?? 'replay').catch(() => {});
+                    }}
                   />
                 </div>
               </CollapsibleSection>

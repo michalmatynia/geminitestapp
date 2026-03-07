@@ -44,7 +44,11 @@ import {
   parseString,
   resolveAssetKind,
 } from './CaseResolverFolderTree.helpers';
-import { CaseResolverTreeHeader } from './CaseResolverTreeHeader';
+import {
+  CaseResolverTreeHeader,
+  CaseResolverTreeHeaderRuntimeContext,
+  type CaseResolverTreeHeaderRuntimeValue,
+} from './CaseResolverTreeHeader';
 import { CaseResolverTreeNode } from './CaseResolverTreeNode';
 import {
   CaseResolverTreeNodeRuntimeProvider,
@@ -314,17 +318,24 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
     ]
   );
 
+  const treeHeaderRuntimeValue = useMemo(
+    (): CaseResolverTreeHeaderRuntimeValue => ({
+      searchQuery: treeSearchQuery,
+      onSearchChange: setTreeSearchQuery,
+      searchEnabled: capabilities.search.enabled,
+    }),
+    [capabilities.search.enabled, treeSearchQuery]
+  );
+
   return (
     <FolderTreePanel
       className='border-border bg-gray-900'
       bodyClassName='flex min-h-0 flex-1 flex-col'
       masterInstance='case_resolver'
       header={
-        <CaseResolverTreeHeader
-          searchQuery={treeSearchQuery}
-          onSearchChange={setTreeSearchQuery}
-          searchEnabled={capabilities.search.enabled}
-        />
+        <CaseResolverTreeHeaderRuntimeContext.Provider value={treeHeaderRuntimeValue}>
+          <CaseResolverTreeHeader />
+        </CaseResolverTreeHeaderRuntimeContext.Provider>
       }
     >
       <div className='min-h-0 flex-1 overflow-auto p-2'>

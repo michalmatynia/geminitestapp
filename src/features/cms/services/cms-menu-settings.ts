@@ -2,19 +2,18 @@ import 'server-only';
 
 import { ObjectId } from 'mongodb';
 
-import { isDomainZoningEnabled } from '@/features/cms/server';
+import { isDomainZoningEnabled } from './cms-domain';
 import {
   DEFAULT_MENU_SETTINGS,
   getCmsMenuSettingsKey,
   normalizeMenuSettings,
   type MenuSettings,
 } from '@/shared/contracts/cms-menu';
+import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
-
-type SettingRecord = { _id?: string | ObjectId; key?: string; value?: string };
 
 const toMongoId = (id: string): string | ObjectId => {
   if (ObjectId.isValid(id) && id.length === 24) return new ObjectId(id);
@@ -41,7 +40,7 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
   if (!process.env['MONGODB_URI']) return null;
   const mongo = await getMongoDb();
   const doc = await mongo
-    .collection<SettingRecord>('settings')
+    .collection<MongoStringSettingRecord<string | ObjectId>>('settings')
     .findOne({ $or: [{ _id: toMongoId(key) }, { key }] });
   return typeof doc?.value === 'string' ? doc.value : null;
 };

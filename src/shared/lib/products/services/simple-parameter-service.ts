@@ -5,19 +5,12 @@ import { randomUUID } from 'crypto';
 import { PRODUCT_SIMPLE_PARAMETERS_SETTING_KEY } from '@/shared/lib/products/constants';
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import type { ProductSimpleParameter } from '@/shared/contracts/products';
+import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/settings';
 import { conflictError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 
 import type { Filter } from 'mongodb';
-
-type MongoSettingDoc = {
-  _id?: string;
-  key?: string;
-  value?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-};
 
 type SimpleParameterCreateInput = {
   catalogId: string;
@@ -38,7 +31,9 @@ type ListSimpleParametersInput = {
   search?: string;
 };
 
-const toMongoSettingFilter = (key: string): Filter<MongoSettingDoc> => ({
+const toMongoSettingFilter = (
+  key: string
+): Filter<MongoTimestampedStringSettingRecord<string, Date>> => ({
   $or: [{ _id: key }, { key }],
 });
 
@@ -97,7 +92,7 @@ const readSimpleParametersRaw = async (): Promise<string | null> => {
   if (provider === 'mongodb') {
     const mongo = await getMongoDb();
     const doc = await mongo
-      .collection<MongoSettingDoc>('settings')
+      .collection<MongoTimestampedStringSettingRecord<string, Date>>('settings')
       .findOne(toMongoSettingFilter(PRODUCT_SIMPLE_PARAMETERS_SETTING_KEY));
     return typeof doc?.value === 'string' ? doc.value : null;
   }
@@ -113,7 +108,9 @@ const writeSimpleParametersRaw = async (value: string): Promise<void> => {
   const provider = await getProductDataProvider();
   if (provider === 'mongodb') {
     const mongo = await getMongoDb();
-    await mongo.collection<MongoSettingDoc>('settings').updateOne(
+    await mongo
+      .collection<MongoTimestampedStringSettingRecord<string, Date>>('settings')
+      .updateOne(
       toMongoSettingFilter(PRODUCT_SIMPLE_PARAMETERS_SETTING_KEY),
       {
         $set: {
@@ -126,7 +123,7 @@ const writeSimpleParametersRaw = async (value: string): Promise<void> => {
         },
       },
       { upsert: true }
-    );
+      );
     return;
   }
 

@@ -7,6 +7,11 @@ import {
   supportsBrainJsonMode,
 } from '@/shared/lib/ai-brain/server-runtime-client';
 import {
+  imageStudioPromptExtractModeSchema,
+  type ImageStudioPromptExtractResponse,
+  type ImageStudioPromptExtractSource,
+} from '@/shared/contracts/image-studio';
+import {
   IMAGE_STUDIO_SETTINGS_KEY,
   parsePersistedImageStudioSettings,
 } from '@/features/ai/image-studio/server';
@@ -27,11 +32,9 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, badRequestError, internalError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
-const extractionModeSchema = z.enum(['programmatic', 'gpt', 'hybrid']);
-
 const payloadSchema = z.object({
   prompt: z.string().trim().min(1),
-  mode: extractionModeSchema.optional(),
+  mode: imageStudioPromptExtractModeSchema.optional(),
   applyAutofix: z.boolean().optional(),
 });
 
@@ -39,30 +42,10 @@ const responseSchema = z.object({
   params: z.record(z.string(), z.unknown()),
 });
 
-type PromptExtractSource = 'programmatic' | 'programmatic_autofix' | 'gpt';
-
-type PromptExtractResponse = {
-  params: Record<string, unknown>;
-  source: PromptExtractSource;
-  modeRequested: z.infer<typeof extractionModeSchema>;
-  fallbackUsed: boolean;
-  formattedPrompt: string | null;
-  validation: {
-    before: PromptValidationIssue[];
-    after: PromptValidationIssue[];
-  };
-  diagnostics: {
-    programmaticError: string | null;
-    aiError: string | null;
-    model: string | null;
-    autofixApplied: boolean;
-  };
-};
-
 type ProgrammaticAttempt = {
   ok: boolean;
   params: Record<string, unknown> | null;
-  source: 'programmatic' | 'programmatic_autofix' | null;
+  source: ImageStudioPromptExtractSource | null;
   error: string | null;
   formattedPrompt: string | null;
   autofixApplied: boolean;
@@ -214,7 +197,7 @@ async function runAiExtraction(
   return validated.data.params;
 }
 
-function createResponse(payload: PromptExtractResponse): Response {
+function createResponse(payload: ImageStudioPromptExtractResponse): Response {
   return NextResponse.json(payload);
 }
 

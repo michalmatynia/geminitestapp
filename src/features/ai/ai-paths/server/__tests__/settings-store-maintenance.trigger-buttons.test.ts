@@ -13,7 +13,9 @@ import {
 import { serializeAiTriggerButtonsRaw } from '@/features/ai/ai-paths/validations/trigger-buttons';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 
-const createTriggerButton = (overrides: Partial<AiTriggerButtonRecord> = {}): AiTriggerButtonRecord => ({
+const createTriggerButton = (
+  overrides: Partial<AiTriggerButtonRecord> = {}
+): AiTriggerButtonRecord => ({
   id: 'btn-infer',
   name: 'Infer Params',
   iconId: null,

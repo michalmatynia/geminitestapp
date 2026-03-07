@@ -117,8 +117,7 @@ export const createPortablePathEnvelopeVerificationPrismaSink = (
         data: {
           level: getSinkLevel(event),
           message: buildPortablePathEnvelopeVerificationMessage(event),
-          category:
-            options.category ?? PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_CATEGORY,
+          category: options.category ?? PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_CATEGORY,
           source: options.source ?? PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_SOURCE,
           service: options.service ?? PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_SERVICE,
           context: toPrismaJson(
@@ -143,13 +142,9 @@ export const createPortablePathEnvelopeVerificationPrismaSink = (
         await prismaClient.systemLog.create({
           data: {
             level: 'info',
-            message: buildPortablePathEnvelopeVerificationAuditSinkHealthMessage(
-              sinkId,
-              'probe'
-            ),
+            message: buildPortablePathEnvelopeVerificationAuditSinkHealthMessage(sinkId, 'probe'),
             category:
-              options.category ??
-              PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_CATEGORY,
+              options.category ?? PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_CATEGORY,
             source: options.source ?? PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_SOURCE,
             service: options.service ?? PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_SERVICE,
             context: toPrismaJson({
@@ -186,8 +181,7 @@ export const createPortablePathEnvelopeVerificationMongoSink = (
   const sinkId = options.id ?? 'portable-envelope-verification-mongo';
   const getDb = options.getDb ?? (async () => (await getMongoDb()) as MongoDbLike);
   const collectionName =
-    options.collectionName ??
-    PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_MONGO_COLLECTION;
+    options.collectionName ?? PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_MONGO_COLLECTION;
   return {
     id: sinkId,
     write: async (

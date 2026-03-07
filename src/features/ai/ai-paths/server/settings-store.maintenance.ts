@@ -68,7 +68,9 @@ const normalizeTriggerButtonPathId = (value: string | null | undefined): string 
   return normalized.length > 0 ? normalized : null;
 };
 
-const repairTriggerButtonBindings = (records: AiPathsSettingRecord[]): {
+const repairTriggerButtonBindings = (
+  records: AiPathsSettingRecord[]
+): {
   nextRecords: AiPathsSettingRecord[];
   affectedCount: number;
 } => {
@@ -82,9 +84,7 @@ const repairTriggerButtonBindings = (records: AiPathsSettingRecord[]): {
   });
 
   const validIndexedPathIds = new Set<string>(
-    metas
-      .map((meta) => meta.id)
-      .filter((pathId) => pathConfigById.has(pathId))
+    metas.map((meta) => meta.id).filter((pathId) => pathConfigById.has(pathId))
   );
   const triggerEventPathMatches = new Map<string, string[]>();
 
@@ -114,13 +114,14 @@ const repairTriggerButtonBindings = (records: AiPathsSettingRecord[]): {
     if (!currentPathId) return button;
     if (validIndexedPathIds.has(currentPathId)) return button;
 
-    const indexedButMissingConfig = indexedPathIds.has(currentPathId) && !pathConfigById.has(currentPathId);
+    const indexedButMissingConfig =
+      indexedPathIds.has(currentPathId) && !pathConfigById.has(currentPathId);
     if (indexedButMissingConfig) {
       return button;
     }
 
     const matchingPaths = triggerEventPathMatches.get(button.id) ?? [];
-    const nextPathId = matchingPaths.length === 1 ? matchingPaths[0] ?? null : null;
+    const nextPathId = matchingPaths.length === 1 ? (matchingPaths[0] ?? null) : null;
     if (nextPathId === currentPathId) return button;
 
     affectedCount += 1;
@@ -152,9 +153,8 @@ const repairTriggerButtonBindings = (records: AiPathsSettingRecord[]): {
   };
 };
 
-export const countPendingTriggerButtonBindingRepairs = (
-  records: AiPathsSettingRecord[]
-): number => repairTriggerButtonBindings(records).affectedCount;
+export const countPendingTriggerButtonBindingRepairs = (records: AiPathsSettingRecord[]): number =>
+  repairTriggerButtonBindings(records).affectedCount;
 
 const toCanonicalRuntimeKernelListSettingValue = ({
   value,
@@ -227,7 +227,9 @@ const toCanonicalRuntimeKernelPathConfigEntryValue = (
   return JSON.stringify(nextConfig);
 };
 
-const normalizeRuntimeKernelSettingsRecords = (records: AiPathsSettingRecord[]): {
+const normalizeRuntimeKernelSettingsRecords = (
+  records: AiPathsSettingRecord[]
+): {
   nextRecords: AiPathsSettingRecord[];
   affectedCount: number;
   deletedKeys: string[];
@@ -237,8 +239,9 @@ const normalizeRuntimeKernelSettingsRecords = (records: AiPathsSettingRecord[]):
   const canonicalNodeTypesEntry =
     records.find((entry) => entry.key === AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY) ?? null;
   const legacyNodeTypesEntry =
-    records.find((entry) => entry.key === DEPRECATED_AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY) ??
-    null;
+    records.find(
+      (entry) => entry.key === DEPRECATED_AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY
+    ) ?? null;
   const rawNodeTypesValue =
     canonicalNodeTypesEntry?.value ?? legacyNodeTypesEntry?.value ?? undefined;
   const canonicalNodeTypesValue =
@@ -246,10 +249,10 @@ const normalizeRuntimeKernelSettingsRecords = (records: AiPathsSettingRecord[]):
       value: rawNodeTypesValue,
       normalizeToken: normalizeRuntimeKernelNodeTypeToken,
     }) ?? '';
-  const shouldManageNodeTypesEntry = canonicalNodeTypesEntry !== null || legacyNodeTypesEntry !== null;
+  const shouldManageNodeTypesEntry =
+    canonicalNodeTypesEntry !== null || legacyNodeTypesEntry !== null;
   const shouldUpdateCanonicalNodeTypesEntry =
-    shouldManageNodeTypesEntry &&
-    (canonicalNodeTypesEntry?.value !== canonicalNodeTypesValue);
+    shouldManageNodeTypesEntry && canonicalNodeTypesEntry?.value !== canonicalNodeTypesValue;
   const shouldDeleteLegacyNodeTypesEntry = legacyNodeTypesEntry !== null;
   let affectedCount =
     shouldUpdateCanonicalNodeTypesEntry || shouldDeleteLegacyNodeTypesEntry ? 1 : 0;

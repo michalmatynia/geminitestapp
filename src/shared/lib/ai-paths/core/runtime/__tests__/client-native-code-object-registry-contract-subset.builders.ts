@@ -459,7 +459,11 @@ export const buildPlaywrightNode = (): AiNode => ({
   position: { x: 186, y: 0 },
 });
 
-export const buildConstantNode = (input: { id: string; value: unknown; title?: string }): AiNode => ({
+export const buildConstantNode = (input: {
+  id: string;
+  value: unknown;
+  title?: string;
+}): AiNode => ({
   id: input.id,
   type: 'constant',
   title: input.title ?? 'Constant',

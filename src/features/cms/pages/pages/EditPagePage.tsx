@@ -3,7 +3,7 @@
 import { useRouter, useParams } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
 
-import { CmsDomainSelector } from '@/features/cms';
+import { CmsDomainSelector } from '@/features/cms/components/CmsDomainSelector';
 import CmsEditorLayout from '@/features/cms/components/CmsEditorLayout';
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
 import {
@@ -12,7 +12,7 @@ import {
   useCmsSlugs,
   useUpdatePage,
 } from '@/features/cms/hooks/useCmsQueries';
-import { cmsPageUpdateSchema } from '@/features/cms/server';
+import { cmsPageUpdateSchema } from '@/features/cms/validations/api';
 import type { Page, Slug } from '@/shared/contracts/cms';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import {

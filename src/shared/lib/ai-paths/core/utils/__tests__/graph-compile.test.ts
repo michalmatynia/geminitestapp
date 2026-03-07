@@ -307,7 +307,8 @@ describe('compileGraph', () => {
 
     expect(
       report.findings.some(
-        (finding) => finding.code === 'incompatible_wiring' && finding.edgeId === 'edge-mapper-model'
+        (finding) =>
+          finding.code === 'incompatible_wiring' && finding.edgeId === 'edge-mapper-model'
       )
     ).toBe(true);
   });

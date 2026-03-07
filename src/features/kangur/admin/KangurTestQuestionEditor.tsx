@@ -9,6 +9,11 @@ import { hasIllustration } from '../test-questions';
 import { QuestionChoicesEditor } from './components/QuestionChoicesEditor';
 import { QuestionIllustrationEditor } from './components/QuestionIllustrationEditor';
 import { KangurTestQuestionRenderer } from '../ui/components/KangurTestQuestionRenderer';
+import {
+  KangurTestQuestionEditorProvider,
+  useKangurTestQuestionEditorContext,
+} from './context/KangurTestQuestionEditorContext';
+import { useOptionalKangurQuestionsManagerRuntimeContext } from './context/KangurQuestionsManagerRuntimeContext';
 
 const POINT_VALUE_OPTIONS = [
   { value: '1', label: '1 pt' },
@@ -24,11 +29,20 @@ type Props = {
   suiteTitle?: string;
 };
 
-export function KangurTestQuestionEditor({
-  formData,
-  onChange,
-  suiteTitle,
-}: Props): React.JSX.Element {
+export function KangurTestQuestionEditor(props: Props): React.JSX.Element {
+  const runtime = useOptionalKangurQuestionsManagerRuntimeContext();
+  const resolvedSuiteTitle = props.suiteTitle ?? runtime?.suite.title;
+
+  return (
+    <KangurTestQuestionEditorProvider {...props} suiteTitle={resolvedSuiteTitle}>
+      <KangurTestQuestionEditorContent />
+    </KangurTestQuestionEditorProvider>
+  );
+}
+
+function KangurTestQuestionEditorContent(): React.JSX.Element {
+  const { formData, suiteTitle, updateFormData } = useKangurTestQuestionEditorContext();
+
   const previewQuestion: KangurTestQuestion = {
     id: 'preview',
     suiteId: '',
@@ -45,7 +59,6 @@ export function KangurTestQuestionEditor({
     <div className='grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(300px,0.9fr)]'>
       {/* ── Editor column ───────────────────────────────────────────────── */}
       <div className='space-y-5'>
-
         {/* Metadata strip */}
         <div className='flex flex-wrap items-center gap-3 rounded-xl border border-border/50 bg-card/30 px-4 py-2'>
           <div className='flex items-center gap-2'>
@@ -56,7 +69,7 @@ export function KangurTestQuestionEditor({
                 value={String(formData.pointValue)}
                 onValueChange={(v): void => {
                   const n = parseInt(v, 10);
-                  if (Number.isFinite(n)) onChange({ ...formData, pointValue: n });
+                  if (Number.isFinite(n)) updateFormData({ pointValue: n });
                 }}
                 options={POINT_VALUE_OPTIONS}
                 triggerClassName='h-7'
@@ -82,30 +95,21 @@ export function KangurTestQuestionEditor({
           </div>
           <Textarea
             value={formData.prompt}
-            onChange={(e): void => onChange({ ...formData, prompt: e.target.value })}
+            onChange={(e): void => updateFormData({ prompt: e.target.value })}
             placeholder='Enter the question text. You can use $$formula$$ markers for math expressions.'
             className='min-h-[100px]'
           />
         </div>
 
         {/* Choices */}
-        <QuestionChoicesEditor
-          choices={formData.choices}
-          correctChoiceLabel={formData.correctChoiceLabel}
-          onChange={(choices): void => onChange({ ...formData, choices })}
-          onCorrectChange={(label): void => onChange({ ...formData, correctChoiceLabel: label })}
-        />
+        <QuestionChoicesEditor />
 
         {/* Illustration */}
         <div className='space-y-2'>
           <div className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
             Illustration
           </div>
-          <QuestionIllustrationEditor
-            illustration={formData.illustration}
-            choices={formData.choices}
-            onChange={(illustration): void => onChange({ ...formData, illustration })}
-          />
+          <QuestionIllustrationEditor />
         </div>
 
         {/* Explanation */}
@@ -115,7 +119,7 @@ export function KangurTestQuestionEditor({
           </div>
           <Textarea
             value={formData.explanation}
-            onChange={(e): void => onChange({ ...formData, explanation: e.target.value })}
+            onChange={(e): void => updateFormData({ explanation: e.target.value })}
             placeholder='Step-by-step explanation of why the correct answer is correct.'
             className='min-h-[80px]'
           />

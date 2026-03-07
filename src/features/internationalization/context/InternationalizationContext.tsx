@@ -7,11 +7,7 @@ import {
   useDeleteCurrencyMutation,
   useDeleteLanguageMutation,
 } from '@/features/internationalization/hooks/useInternationalizationMutations';
-import {
-  useCountries,
-  useCurrencies,
-  useLanguages,
-} from '@/shared/hooks/use-i18n-queries';
+import { useCountries, useCurrencies, useLanguages } from '@/shared/hooks/use-i18n-queries';
 import type {
   CountryOption,
   CurrencyOption,

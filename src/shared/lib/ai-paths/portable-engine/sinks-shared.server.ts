@@ -27,9 +27,7 @@ export const getSinkLevel = (
   return 'info';
 };
 
-const normalizePortablePathEnvelopeVerificationKeyId = (
-  keyId: string | null
-): string => {
+const normalizePortablePathEnvelopeVerificationKeyId = (keyId: string | null): string => {
   if (typeof keyId !== 'string') return 'none';
   const normalized = keyId.trim();
   return normalized.length > 0 ? normalized : 'none';
@@ -69,9 +67,7 @@ export const toErrorMessage = (error: unknown): string => {
 
 type PortablePathEnvelopeVerificationSnapshotReference = {
   totals: PortablePathEnvelopeVerificationObservabilitySnapshot['totals'];
-  keyIdBucket:
-    | PortablePathEnvelopeVerificationObservabilitySnapshot['byKeyId'][string]
-    | null;
+  keyIdBucket: PortablePathEnvelopeVerificationObservabilitySnapshot['byKeyId'][string] | null;
 };
 
 const createPortablePathEnvelopeVerificationSnapshotReference = (
@@ -171,8 +167,7 @@ export const createPortablePathEnvelopeVerificationAuditSinkHealthSystemLogInput
   service: options?.service ?? PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_SERVICE,
   message: buildPortablePathEnvelopeVerificationAuditSinkHealthMessage(sinkId, 'probe'),
   context: {
-    category:
-      options?.category ?? PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_CATEGORY,
+    category: options?.category ?? PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_CATEGORY,
     kind: PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_KIND,
     sinkId,
     stage: 'probe',

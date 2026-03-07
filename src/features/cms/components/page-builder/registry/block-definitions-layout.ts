@@ -18,6 +18,8 @@ export const COLUMN_ALLOWED_BLOCK_TYPES = [
   'TextAtom',
   'ImageElement',
   'Button',
+  'Input',
+  'Progress',
   'Image',
   'Model3D',
   'Model3DElement',
@@ -32,6 +34,7 @@ export const COLUMN_ALLOWED_BLOCK_TYPES = [
   'Block',
   'Carousel',
   'Slideshow',
+  'KangurWidget',
 ];
 export const BLOCK_SECTION_ALLOWED_BLOCK_TYPES = ['Announcement', ...COLUMN_ALLOWED_BLOCK_TYPES];
 
@@ -42,6 +45,8 @@ export const ROW_ALLOWED_BLOCK_TYPES = [
   'ImageElement',
   'TextAtom',
   'Button',
+  'Input',
+  'Progress',
   'Image',
   'Heading',
   'Text',
@@ -58,6 +63,7 @@ export const ROW_ALLOWED_BLOCK_TYPES = [
   'Model3DElement',
   'Carousel',
   'Slideshow',
+  'KangurWidget',
 ];
 
 export const layoutBlockDefinitions: Record<string, BlockDefinition> = {

@@ -18,13 +18,13 @@ export const MEDIA_FIT_OPTIONS = [
 export const INLINE_BLOCK_TYPE_OPTIONS = [
   { value: 'text', label: 'Text' },
   { value: 'svg', label: 'SVG' },
-  { value: 'image', label: 'Image' },
+  { value: 'image', label: 'SVG Image' },
 ] as const;
 
 export const ROOT_BLOCK_TYPE_OPTIONS = [
   { value: 'text', label: 'Text' },
   { value: 'svg', label: 'SVG' },
-  { value: 'image', label: 'Image' },
+  { value: 'image', label: 'SVG Image' },
   { value: 'activity', label: 'Activity' },
 ] as const;
 
@@ -41,8 +41,8 @@ export const GRID_TEMPLATE_OPTIONS: Array<{
   { id: 'three-column', label: '3 columns' },
   { id: 'hero-left', label: 'Hero left' },
   { id: 'hero-right', label: 'Hero right' },
-  { id: 'image-gallery', label: 'Image gallery' },
-  { id: 'image-mosaic', label: 'Image mosaic' },
+  { id: 'image-gallery', label: 'SVG Image Gallery' },
+  { id: 'image-mosaic', label: 'SVG Image Mosaic' },
   { id: 'svg-duo', label: 'SVG duo' },
   { id: 'svg-trio', label: 'SVG trio' },
   { id: 'svg-gallery', label: 'SVG gallery' },
@@ -55,7 +55,7 @@ export const DOCUMENT_TEMPLATE_OPTIONS: Array<{
 }> = [
   { id: 'article', label: 'Article starter' },
   { id: 'text-with-figure', label: 'Text + figure' },
-  { id: 'image-gallery-page', label: 'Image gallery page' },
+  { id: 'image-gallery-page', label: 'SVG Image Gallery Page' },
   { id: 'svg-gallery-page', label: 'SVG gallery page' },
   { id: 'svg-mosaic-page', label: 'SVG mosaic page' },
 ] as const;

@@ -25,11 +25,9 @@ import {
   getImageStudioSlotLinkBySourceAndRelation,
   upsertImageStudioSlotLink,
 } from '@/features/ai/image-studio/server';
-import {
-  createImageStudioSlots,
-  getImageStudioSlotById,
-} from '@/features/ai/image-studio/server';
+import { createImageStudioSlots, getImageStudioSlotById } from '@/features/ai/image-studio/server';
 import { getImageFileRepository, getDiskPathFromPublicPath } from '@/features/files/server';
+import type { UploadedClientCropImage } from '@/shared/contracts/image-studio';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, isAppError, notFoundError } from '@/shared/errors/app-error';
@@ -41,10 +39,6 @@ const STRICT_SERVER_CROP_ENABLED =
   process.env['IMAGE_STUDIO_CROP_SERVER_AUTHORITATIVE'] !== 'false';
 
 type StudioSlotRecord = NonNullable<Awaited<ReturnType<typeof getImageStudioSlotById>>>;
-type UploadedClientCropImage = {
-  buffer: Buffer;
-  mime: string;
-};
 
 type CropProcessingResult = {
   outputBuffer: Buffer;

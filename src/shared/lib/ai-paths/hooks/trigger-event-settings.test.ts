@@ -114,17 +114,13 @@ describe('loadPathConfigsFromSettings', () => {
   });
 
   it('returns empty result when PATH_INDEX_KEY is absent', async () => {
-    const result = await loadPathConfigsFromSettings([
-      { key: 'some_other_key', value: '{}' },
-    ]);
+    const result = await loadPathConfigsFromSettings([{ key: 'some_other_key', value: '{}' }]);
     expect(result.configs).toEqual({});
     expect(result.settingsPathOrder).toEqual([]);
   });
 
   it('returns empty result when PATH_INDEX_KEY value is whitespace', async () => {
-    const result = await loadPathConfigsFromSettings([
-      { key: PATH_INDEX_KEY, value: '   ' },
-    ]);
+    const result = await loadPathConfigsFromSettings([{ key: PATH_INDEX_KEY, value: '   ' }]);
     expect(result.configs).toEqual({});
     expect(result.settingsPathOrder).toEqual([]);
   });
@@ -156,9 +152,7 @@ describe('loadPathConfigsFromSettings', () => {
       { key: PATH_INDEX_KEY, value: makeIndex([{ id: 'path-missing', name: 'Missing' }]) },
       // intentionally no config entry
     ];
-    await expect(loadPathConfigsFromSettings(data)).rejects.toThrow(
-      /missing config payload/i
-    );
+    await expect(loadPathConfigsFromSettings(data)).rejects.toThrow(/missing config payload/i);
   });
 
   it('throws when a config value is invalid JSON', async () => {
@@ -176,14 +170,15 @@ describe('loadPathConfigsFromSettings', () => {
       { key: PATH_INDEX_KEY, value: makeIndex([{ id: 'path-1', name: 'Path One' }]) },
       { key: `${PATH_CONFIG_PREFIX}path-1`, value: makeConfig('path-WRONG', 'Path One') },
     ];
-    await expect(loadPathConfigsFromSettings(data)).rejects.toThrow(
-      /config id does not match/i
-    );
+    await expect(loadPathConfigsFromSettings(data)).rejects.toThrow(/config id does not match/i);
   });
 
   it('derives a fallback name from the path id when both config and index names are empty', async () => {
     const data: Array<{ key: string; value: string }> = [
-      { key: PATH_INDEX_KEY, value: JSON.stringify([{ id: 'path-1', name: '', createdAt: TS, updatedAt: TS }]) },
+      {
+        key: PATH_INDEX_KEY,
+        value: JSON.stringify([{ id: 'path-1', name: '', createdAt: TS, updatedAt: TS }]),
+      },
       { key: `${PATH_CONFIG_PREFIX}path-1`, value: makeConfig('path-1', '') },
     ];
     const { configs } = await loadPathConfigsFromSettings(data);

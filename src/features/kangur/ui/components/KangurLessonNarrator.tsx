@@ -19,10 +19,11 @@ import {
   normalizeKangurLessonNarrationText,
 } from '@/features/kangur/tts/script';
 import {
-  KangurLessonCallout,
-  KangurLessonChip,
-} from '@/features/kangur/ui/design/lesson-primitives';
-import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
+  KangurButton,
+  KangurPanel,
+  KangurStatusChip,
+  KangurSummaryPanel,
+} from '@/features/kangur/ui/design/primitives';
 import type { KangurLesson, KangurLessonDocument } from '@/shared/contracts/kangur';
 import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -138,7 +139,14 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
       description: lesson.description,
       text: observedText,
     });
-  }, [lesson.contentMode, lesson.description, lesson.id, lesson.title, lessonDocument, observedText]);
+  }, [
+    lesson.contentMode,
+    lesson.description,
+    lesson.id,
+    lesson.title,
+    lessonDocument,
+    observedText,
+  ]);
 
   const scriptCacheKey = useMemo(
     () =>
@@ -280,46 +288,49 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
     };
   }, []);
 
-  const prepareServerNarration = useCallback(async (): Promise<KangurLessonTtsAudioResponse | null> => {
-    if (!hasKangurLessonNarrationContent(script)) {
-      setStatus('error');
-      setErrorMessage('There is not enough visible lesson text to read aloud yet.');
-      return null;
-    }
-
-    const cached = responseCacheRef.current.get(scriptCacheKey);
-    if (cached) {
-      setManifest(cached);
-      return cached;
-    }
-
-    setStatus('loading');
-    setErrorMessage(null);
-
-    try {
-      const response = await api.post<KangurLessonTtsResponse>('/api/kangur/tts', {
-        script,
-        voice,
-        forceRegenerate: false,
-      });
-
-      if (response.mode !== 'audio') {
-        setManifest(null);
+  const prepareServerNarration =
+    useCallback(async (): Promise<KangurLessonTtsAudioResponse | null> => {
+      if (!hasKangurLessonNarrationContent(script)) {
         setStatus('error');
-        setErrorMessage(`${response.message} ${SERVER_MODE_FALLBACK_HINT}`);
+        setErrorMessage('There is not enough visible lesson text to read aloud yet.');
         return null;
       }
 
-      responseCacheRef.current.set(scriptCacheKey, response);
-      setManifest(response);
-      setStatus('idle');
-      return response;
-    } catch (error) {
-      setStatus('error');
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to prepare lesson narration.');
-      return null;
-    }
-  }, [script, scriptCacheKey, voice]);
+      const cached = responseCacheRef.current.get(scriptCacheKey);
+      if (cached) {
+        setManifest(cached);
+        return cached;
+      }
+
+      setStatus('loading');
+      setErrorMessage(null);
+
+      try {
+        const response = await api.post<KangurLessonTtsResponse>('/api/kangur/tts', {
+          script,
+          voice,
+          forceRegenerate: false,
+        });
+
+        if (response.mode !== 'audio') {
+          setManifest(null);
+          setStatus('error');
+          setErrorMessage(`${response.message} ${SERVER_MODE_FALLBACK_HINT}`);
+          return null;
+        }
+
+        responseCacheRef.current.set(scriptCacheKey, response);
+        setManifest(response);
+        setStatus('idle');
+        return response;
+      } catch (error) {
+        setStatus('error');
+        setErrorMessage(
+          error instanceof Error ? error.message : 'Failed to prepare lesson narration.'
+        );
+        return null;
+      }
+    }, [script, scriptCacheKey, voice]);
 
   const handlePlay = useCallback(async () => {
     setErrorMessage(null);
@@ -354,7 +365,15 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
     const response = await prepareServerNarration();
     if (!response) return;
     await playAudioSegments(response.segments, 0);
-  }, [narratorSettings.engine, playAudioSegments, prepareServerNarration, script.segments, speakClientSegments, status, stopPlayback]);
+  }, [
+    narratorSettings.engine,
+    playAudioSegments,
+    prepareServerNarration,
+    script.segments,
+    speakClientSegments,
+    status,
+    stopPlayback,
+  ]);
 
   const handlePause = useCallback(() => {
     const audio = audioRef.current;
@@ -393,24 +412,26 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
   return (
     <KangurPanel
       data-kangur-tts-ignore='true'
-      className={cn(
-        'w-full max-w-5xl border-indigo-200/80 bg-white/92',
-        className
-      )}
+      className={cn('w-full max-w-5xl border-indigo-200/80 bg-white/92', className)}
       padding='lg'
       variant='soft'
     >
       <audio ref={audioRef} preload='none' className='hidden' />
       <div className='flex flex-col gap-4 md:flex-row md:items-start md:justify-between'>
         <div>
-          <KangurLessonChip accent='indigo' className='gap-2 text-[11px] uppercase tracking-[0.16em]'>
+          <KangurStatusChip
+            accent='indigo'
+            className='gap-2 text-[11px] uppercase tracking-[0.16em]'
+            size='sm'
+          >
             <Volume2 className='size-3.5' /> Lesson narrator
-          </KangurLessonChip>
+          </KangurStatusChip>
           <div className='mt-3 text-lg font-semibold text-slate-900'>{lesson.title}</div>
           <div className='mt-1 text-sm text-slate-600'>{statusLabel}</div>
           <div className='mt-2 text-xs text-slate-500'>
-            Reads the currently visible lesson content. Segment {Math.min(currentIndex + 1, totalSegments)} of{' '}
-            {totalSegments}. Narrator mode is managed in Kangur settings.
+            Reads the currently visible lesson content. Segment{' '}
+            {Math.min(currentIndex + 1, totalSegments)} of {totalSegments}. Narrator mode is managed
+            in Kangur settings.
           </div>
         </div>
 
@@ -420,6 +441,7 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
               type='button'
               onClick={handlePause}
               variant='primary'
+              data-doc-id='lessons_narrator'
             >
               <Pause className='size-4' /> Pause
             </KangurButton>
@@ -431,6 +453,7 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
               }}
               disabled={status === 'loading'}
               variant='primary'
+              data-doc-id='lessons_narrator'
             >
               <Play className='size-4' /> {status === 'loading' ? 'Preparing...' : 'Play'}
             </KangurButton>
@@ -440,6 +463,7 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
             onClick={stopPlayback}
             disabled={status === 'loading' || status === 'idle'}
             variant='secondary'
+            data-doc-id='lessons_narrator'
           >
             <Square className='size-4' /> Stop
           </KangurButton>
@@ -447,9 +471,13 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
       </div>
 
       {errorMessage ? (
-        <KangurLessonCallout accent='rose' className='mt-4 text-sm text-rose-700' padding='sm'>
-          {errorMessage}
-        </KangurLessonCallout>
+        <KangurSummaryPanel
+          accent='rose'
+          className='mt-4'
+          description={errorMessage}
+          padding='sm'
+          tone='accent'
+        />
       ) : null}
     </KangurPanel>
   );

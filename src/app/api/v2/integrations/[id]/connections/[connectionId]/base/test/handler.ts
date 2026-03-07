@@ -3,15 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { fetchBaseInventories } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/server';
+import type { TestLogEntry } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { mapStatusToAppError } from '@/shared/errors/error-mapper';
-
-type TestLogEntry = {
-  step: string;
-  status: 'pending' | 'ok' | 'failed';
-  timestamp: string;
-  detail: string;
-};
 
 /**
  * POST /api/v2/integrations/[id]/connections/[connectionId]/base/test

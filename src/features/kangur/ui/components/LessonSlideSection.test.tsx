@@ -6,9 +6,10 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import LessonSlideSection from '@/features/kangur/ui/components/LessonSlideSection';
+import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 
 describe('LessonSlideSection', () => {
-  it('renders slide indicators as clickable Kangur micro pills', () => {
+  it('renders slide indicators as clickable Kangur micro pills', async () => {
     render(
       <LessonSlideSection
         slides={[
@@ -35,6 +36,25 @@ describe('LessonSlideSection', () => {
     expect(firstIndicator).not.toHaveAttribute('aria-current');
     expect(secondIndicator).toHaveClass('bg-orange-400');
     expect(secondIndicator).toHaveAttribute('aria-current', 'step');
-    expect(screen.getByText('Drugi')).toBeInTheDocument();
+    expect(await screen.findByText('Drugi')).toBeInTheDocument();
+  });
+
+  it('uses the lesson navigation context for the menu action', () => {
+    const onBack = vi.fn();
+
+    render(
+      <KangurLessonNavigationProvider onBack={onBack}>
+        <LessonSlideSection
+          slides={[{ title: 'Slajd 1', content: <div>Pierwszy</div> }]}
+          dotActiveClass='bg-orange-400'
+          dotDoneClass='bg-orange-200'
+          gradientClass='from-orange-400 to-yellow-400'
+        />
+      </KangurLessonNavigationProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Menu' }));
+
+    expect(onBack).toHaveBeenCalledTimes(1);
   });
 });

@@ -151,10 +151,8 @@ describe('AI Paths maintenance runtime-kernel settings normalization', () => {
           edges: [],
           extensions: {
             runtimeKernel: {
-              [DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD]:
-                DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS,
-              [DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD]:
-                ' Template Node, parser ',
+              [DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD]: DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS,
+              [DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD]: ' Template Node, parser ',
               [DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD]:
                 ' resolver.primary , resolver.fallback ',
               [DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_ALIAS_FIELD]: ' YES ',
@@ -191,10 +189,8 @@ describe('AI Paths maintenance runtime-kernel settings normalization', () => {
           edges: [],
           extensions: {
             runtimeKernel: {
-              [DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD]:
-                DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS,
-              [DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD]:
-                ' Template Node, parser ',
+              [DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD]: DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS,
+              [DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD]: ' Template Node, parser ',
               [DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD]:
                 ' resolver.primary , resolver.fallback ',
               [DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_ALIAS_FIELD]: ' YES ',
@@ -220,5 +216,4 @@ describe('AI Paths maintenance runtime-kernel settings normalization', () => {
       codeObjectResolverIds: ['resolver.primary', 'resolver.fallback'],
     });
   });
-
 });

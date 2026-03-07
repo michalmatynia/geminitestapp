@@ -2,8 +2,10 @@
 
 import React from 'react';
 
-import { MarkdownToolbar as DocumentMarkdownToolbar } from '@/features/document-editor';
-import { useMarkdownToolbarActions } from '@/features/notesapp/context/MarkdownToolbarActionsContext';
+import {
+  MarkdownToolbar as DocumentMarkdownToolbar,
+  MarkdownToolbarProvider,
+} from '@/features/document-editor';
 import {
   useNoteContentContext,
   useNoteEditorContext,
@@ -11,17 +13,10 @@ import {
 } from '@/features/notesapp/context/NoteFormContext';
 import type { NoteFileRecord } from '@/shared/contracts/notes';
 
-export function NotesMarkdownToolbar(): React.JSX.Element {
-  const {
-    onApplyWrap,
-    onApplyLinePrefix,
-    onInsertAtCursor,
-    onApplyBulletList,
-    onApplyChecklist,
-    onApplySpanStyle,
-  } = useMarkdownToolbarActions();
+import { useMarkdownEditor } from '@/features/notesapp/hooks/useMarkdownEditor';
 
-  const { content, undo, redo, canUndo, canRedo } = useNoteContentContext();
+export function NotesMarkdownToolbar(): React.JSX.Element {
+  const { content, setContent, undo, redo, canUndo, canRedo } = useNoteContentContext();
   const {
     textColor,
     setTextColor,
@@ -35,8 +30,14 @@ export function NotesMarkdownToolbar(): React.JSX.Element {
     isMigrating,
     handleMigrateToWysiwyg,
     handleMigrateToMarkdown,
+    contentRef,
   } = useNoteEditorContext();
   const { noteFiles, insertFileReference } = useNoteFilesContext();
+  const markdownToolbarActions = useMarkdownEditor({
+    content,
+    setContent,
+    contentRef,
+  });
 
   const fileReferenceOptions = React.useMemo(
     () =>
@@ -50,44 +51,67 @@ export function NotesMarkdownToolbar(): React.JSX.Element {
       }),
     [noteFiles]
   );
-
-  return (
-    <DocumentMarkdownToolbar
-      mode={editorMode}
-      onModeChange={setEditorMode}
-      isModeLocked={isEditorModeLocked}
-      isMigrating={isMigrating}
-      onMigrateToWysiwyg={(): void => {
+  const toolbarContextValue = React.useMemo(
+    () => ({
+      mode: editorMode,
+      onModeChange: setEditorMode,
+      isModeLocked: isEditorModeLocked,
+      isMigrating,
+      onMigrateToWysiwyg: (): void => {
         void handleMigrateToWysiwyg(content);
-      }}
-      onMigrateToMarkdown={(): void => {
+      },
+      onMigrateToMarkdown: (): void => {
         void handleMigrateToMarkdown(content);
-      }}
-      showPreview={showPreview}
-      onTogglePreview={(): void => {
+      },
+      showPreview,
+      onTogglePreview: (): void => {
         setShowPreview(!showPreview);
-      }}
-      onUndo={undo}
-      onRedo={redo}
-      canUndo={canUndo}
-      canRedo={canRedo}
-      textColor={textColor}
-      onTextColorChange={setTextColor}
-      fontFamily={fontFamily}
-      onFontFamilyChange={setFontFamily}
-      fileReferenceOptions={fileReferenceOptions}
-      onInsertFileReference={(value: string): void => {
+      },
+      onUndo: undo,
+      onRedo: redo,
+      canUndo,
+      canRedo,
+      textColor,
+      onTextColorChange: setTextColor,
+      fontFamily,
+      onFontFamilyChange: setFontFamily,
+      fileReferenceOptions,
+      onInsertFileReference: (value: string): void => {
         const slotIndex = Number.parseInt(value, 10);
         const targetFile = noteFiles.find((file: NoteFileRecord) => file.slotIndex === slotIndex);
         if (!targetFile) return;
         insertFileReference(targetFile);
-      }}
-      onApplyWrap={onApplyWrap}
-      onApplyLinePrefix={onApplyLinePrefix}
-      onInsertAtCursor={onInsertAtCursor}
-      onApplyBulletList={onApplyBulletList}
-      onApplyChecklist={onApplyChecklist}
-      onApplySpanStyle={onApplySpanStyle}
-    />
+      },
+      ...markdownToolbarActions,
+    }),
+    [
+      canRedo,
+      canUndo,
+      content,
+      editorMode,
+      fileReferenceOptions,
+      fontFamily,
+      handleMigrateToMarkdown,
+      handleMigrateToWysiwyg,
+      insertFileReference,
+      isEditorModeLocked,
+      isMigrating,
+      markdownToolbarActions,
+      noteFiles,
+      redo,
+      setEditorMode,
+      setFontFamily,
+      setShowPreview,
+      setTextColor,
+      showPreview,
+      textColor,
+      undo,
+    ]
+  );
+
+  return (
+    <MarkdownToolbarProvider value={toolbarContextValue}>
+      <DocumentMarkdownToolbar />
+    </MarkdownToolbarProvider>
   );
 }

@@ -1,7 +1,11 @@
 import { useMemo } from 'react';
 
 import KangurAssignmentsList from '@/features/kangur/ui/components/KangurAssignmentsList';
-import { KangurPanel } from '@/features/kangur/ui/design/primitives';
+import {
+  KangurMetricCard,
+  KangurPanel,
+  KangurSummaryPanel,
+} from '@/features/kangur/ui/design/primitives';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { selectKangurPriorityAssignments } from '@/features/kangur/ui/services/delegated-assignments';
 
@@ -40,10 +44,7 @@ export function KangurLearnerAssignmentsPanel({
       assignments
         .filter((assignment) => !assignment.archived && assignment.progress.status === 'completed')
         .sort((left, right) => {
-          const leftTime = getLatestAssignmentTimestamp(
-            left.progress.completedAt,
-            left.updatedAt
-          );
+          const leftTime = getLatestAssignmentTimestamp(left.progress.completedAt, left.updatedAt);
           const rightTime = getLatestAssignmentTimestamp(
             right.progress.completedAt,
             right.updatedAt
@@ -103,51 +104,48 @@ export function KangurLearnerAssignmentsPanel({
         </div>
 
         <div className='mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3'>
-          <div className='rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3'>
-            <div className='text-[11px] font-bold uppercase tracking-wide text-slate-400'>
-              Aktywne
-            </div>
-            <div className='mt-1 text-2xl font-extrabold text-slate-800'>
-              {activeAssignments.length}
-            </div>
-            <div className='mt-1 text-xs text-slate-500'>zadania nadal do wykonania</div>
-          </div>
+          <KangurMetricCard
+            accent='slate'
+            data-testid='learner-assignments-active'
+            description='zadania nadal do wykonania'
+            label='Aktywne'
+            value={activeAssignments.length}
+          />
 
-          <div className='rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3'>
-            <div className='text-[11px] font-bold uppercase tracking-wide text-emerald-500'>
-              Ukonczone
-            </div>
-            <div className='mt-1 text-2xl font-extrabold text-emerald-700'>
-              {completedAssignments.length}
-            </div>
-            <div className='mt-1 text-xs text-emerald-600'>przydzialy juz zakonczone</div>
-          </div>
+          <KangurMetricCard
+            accent='emerald'
+            data-testid='learner-assignments-completed'
+            description='przydzialy juz zakonczone'
+            label='Ukonczone'
+            value={completedAssignments.length}
+          />
 
-          <div className='rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3'>
-            <div className='text-[11px] font-bold uppercase tracking-wide text-amber-500'>
-              Pilne
-            </div>
-            <div className='mt-1 text-2xl font-extrabold text-amber-700'>
-              {highPriorityActiveCount}
-            </div>
-            <div className='mt-1 text-xs text-amber-600'>wysokie priorytety od rodzica</div>
-          </div>
+          <KangurMetricCard
+            accent='amber'
+            data-testid='learner-assignments-high-priority'
+            description='wysokie priorytety od rodzica'
+            label='Pilne'
+            value={highPriorityActiveCount}
+          />
 
-          <div className='rounded-2xl border border-indigo-100 bg-indigo-50 px-4 py-3'>
-            <div className='text-[11px] font-bold uppercase tracking-wide text-indigo-500'>
-              Skutecznosc
-            </div>
-            <div className='mt-1 text-2xl font-extrabold text-indigo-700'>{completionRate}%</div>
-            <div className='mt-1 text-xs text-indigo-600'>wykonanych z wszystkich widocznych zadan</div>
-          </div>
+          <KangurMetricCard
+            accent='indigo'
+            data-testid='learner-assignments-completion-rate'
+            description='wykonanych z wszystkich widocznych zadan'
+            label='Skutecznosc'
+            value={`${completionRate}%`}
+          />
         </div>
 
-        <div className='mt-4 rounded-2xl border border-indigo-100 bg-indigo-50/80 px-4 py-3'>
-          <div className='text-[11px] font-bold uppercase tracking-wide text-indigo-500'>
-            Ostatni sukces
-          </div>
-          <div className='mt-1 text-sm font-semibold text-indigo-700'>{latestCompletedTitle}</div>
-        </div>
+        <KangurSummaryPanel
+          accent='indigo'
+          className='mt-4'
+          description='Najnowsze zakonczone zadanie z historii przydzialow.'
+          label='Ostatni sukces'
+          padding='md'
+          title={latestCompletedTitle}
+          tone='accent'
+        />
       </KangurPanel>
 
       <KangurAssignmentsList

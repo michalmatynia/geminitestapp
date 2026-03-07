@@ -369,9 +369,7 @@ describe('areIssueMapsEquivalent', () => {
       latestProductValues: null,
       validationScope: SCOPE,
     })['name_en']!;
-    expect(
-      areIssueMapsEquivalent({ name_en: issue }, { name_en: [] })
-    ).toBe(false);
+    expect(areIssueMapsEquivalent({ name_en: issue }, { name_en: [] })).toBe(false);
   });
 
   it('returns true for structurally equal maps produced by two separate calls', () => {

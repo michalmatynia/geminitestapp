@@ -8,7 +8,13 @@ import {
 import { logKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurScoreRecord } from '@/features/kangur/services/ports';
-import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
+import {
+  KangurButton,
+  KangurEmptyState,
+  KangurMetricCard,
+  KangurPanel,
+  KangurProgressBar,
+} from '@/features/kangur/ui/design/primitives';
 import { loadScopedKangurScores } from '@/features/kangur/ui/services/learner-profile-scores';
 import {
   SCORE_INSIGHT_WINDOW_DAYS,
@@ -61,7 +67,9 @@ const formatRelativeLastPlayed = (value: string | null): string => {
   const today = new Date();
   const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   const playedMidnight = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
-  const diffDays = Math.round((todayMidnight.getTime() - playedMidnight.getTime()) / (24 * 60 * 60 * 1000));
+  const diffDays = Math.round(
+    (todayMidnight.getTime() - playedMidnight.getTime()) / (24 * 60 * 60 * 1000)
+  );
   if (diffDays <= 0) {
     return 'Dzisiaj';
   }
@@ -81,7 +89,9 @@ const formatTrendValue = (deltaAccuracy: number | null): string => {
   return `${deltaAccuracy} pp`;
 };
 
-const formatTrendContext = (trend: ReturnType<typeof buildKangurScoreInsights>['trend']): string => {
+const formatTrendContext = (
+  trend: ReturnType<typeof buildKangurScoreInsights>['trend']
+): string => {
   if (trend.previousAverageAccuracy === null) {
     return 'Potrzeba starszych wynikow do porownania.';
   }
@@ -95,7 +105,7 @@ const formatTrendContext = (trend: ReturnType<typeof buildKangurScoreInsights>['
 };
 
 const buildLessonFocusHref = (basePath: string, operation: string): string =>
-  appendKangurUrlParams(createPageUrl('Lessons', basePath), { focus: operation });
+  appendKangurUrlParams(createPageUrl('Lessons', basePath), { focus: operation }, basePath);
 
 export default function ScoreHistory({
   learnerId = null,
@@ -162,11 +172,15 @@ export default function ScoreHistory({
       : null;
 
   if (loading) {
-    return <KangurPanel className='py-8 text-center text-gray-400' padding='lg' variant='soft'>Ladowanie wynikow...</KangurPanel>;
+    return (
+      <KangurPanel className='py-8 text-center text-gray-400' padding='lg' variant='soft'>
+        Ladowanie wynikow...
+      </KangurPanel>
+    );
   }
 
   if (scores.length === 0) {
-    return <KangurPanel className='py-8 text-center text-gray-400' padding='lg' variant='soft'>Brak zapisanych wynikow.</KangurPanel>;
+    return <KangurEmptyState description='Brak zapisanych wynikow.' padding='lg' />;
   }
 
   const avgAccuracy = Math.round(
@@ -189,20 +203,27 @@ export default function ScoreHistory({
   return (
     <div className='flex flex-col gap-5'>
       <div className='grid grid-cols-3 gap-3'>
-        <KangurPanel className='bg-blue-50 text-center' padding='md' variant='subtle'>
-          <p className='text-3xl font-extrabold text-blue-600'>{scores.length}</p>
-          <p className='text-xs text-gray-500 mt-0.5'>Gier lacznie</p>
-        </KangurPanel>
-        <KangurPanel className='bg-green-50 text-center' padding='md' variant='subtle'>
-          <p className='text-3xl font-extrabold text-green-600'>{avgAccuracy}%</p>
-          <p className='text-xs text-gray-500 mt-0.5'>Sr. skutecznosc</p>
-        </KangurPanel>
-        <KangurPanel className='bg-amber-50 text-center' padding='md' variant='subtle'>
-          <p className='text-3xl font-extrabold text-amber-600'>
-            {scores.filter((score) => score.correct_answers === score.total_questions).length}
-          </p>
-          <p className='text-xs text-gray-500 mt-0.5'>Idealne wyniki</p>
-        </KangurPanel>
+        <KangurMetricCard
+          accent='sky'
+          align='center'
+          data-testid='score-history-total-games'
+          label='Gier lacznie'
+          value={scores.length}
+        />
+        <KangurMetricCard
+          accent='emerald'
+          align='center'
+          data-testid='score-history-average-accuracy'
+          label='Sr. skutecznosc'
+          value={`${avgAccuracy}%`}
+        />
+        <KangurMetricCard
+          accent='amber'
+          align='center'
+          data-testid='score-history-perfect-games'
+          label='Idealne wyniki'
+          value={scores.filter((score) => score.correct_answers === score.total_questions).length}
+        />
       </div>
 
       <KangurPanel padding='md' variant='soft'>
@@ -210,54 +231,56 @@ export default function ScoreHistory({
           Obraz ostatnich {SCORE_INSIGHT_WINDOW_DAYS} dni
         </p>
         <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3'>
-          <div className='rounded-2xl border border-sky-100 bg-sky-50 p-4'>
-            <p className='text-xs font-bold uppercase tracking-wide text-sky-700'>Sesje tygodnia</p>
-            <p className='mt-2 text-3xl font-extrabold text-sky-700'>{insights.recentGames}</p>
-            <p className='mt-1 text-xs text-sky-800/80'>
+          <KangurMetricCard accent='sky' label='Sesje tygodnia' value={insights.recentGames}>
+            <p className='text-xs text-sky-800/80'>
               Srednia {insights.recentAverageAccuracy}% · idealne {insights.recentPerfectGames}
             </p>
             <p className='mt-2 text-[11px] text-sky-800/70'>
               Ostatnia aktywnosc: {formatRelativeLastPlayed(insights.lastPlayedAt)}
             </p>
-          </div>
+          </KangurMetricCard>
 
-          <div className='rounded-2xl border border-violet-100 bg-violet-50 p-4'>
-            <p className='text-xs font-bold uppercase tracking-wide text-violet-700'>
-              Trend tygodnia
-            </p>
-            <p className='mt-2 text-3xl font-extrabold text-violet-700'>
-              {formatTrendValue(insights.trend.deltaAccuracy)}
-            </p>
-            <p className='mt-1 text-xs text-violet-800/80'>{formatTrendContext(insights.trend)}</p>
-          </div>
+          <KangurMetricCard
+            accent='violet'
+            label='Trend tygodnia'
+            value={formatTrendValue(insights.trend.deltaAccuracy)}
+          >
+            <p className='text-xs text-violet-800/80'>{formatTrendContext(insights.trend)}</p>
+          </KangurMetricCard>
 
-          <div className='rounded-2xl border border-emerald-100 bg-emerald-50 p-4'>
-            <p className='text-xs font-bold uppercase tracking-wide text-emerald-700'>
-              Mocna strona
-            </p>
+          <KangurMetricCard
+            accent='emerald'
+            label='Mocna strona'
+            value={
+              insights.strongestOperation
+                ? `${insights.strongestOperation.emoji} ${insights.strongestOperation.label}`
+                : 'Brak danych'
+            }
+            valueClassName='text-lg leading-tight'
+          >
             {insights.strongestOperation ? (
-              <>
-                <p className='mt-2 text-lg font-extrabold text-emerald-700'>
-                  {insights.strongestOperation.emoji} {insights.strongestOperation.label}
-                </p>
-                <p className='mt-1 text-xs text-emerald-800/80'>
-                  Srednio {insights.strongestOperation.averageAccuracy}% · proby{' '}
-                  {insights.strongestOperation.attempts}
-                </p>
-              </>
+              <p className='text-xs text-emerald-800/80'>
+                Srednio {insights.strongestOperation.averageAccuracy}% · proby{' '}
+                {insights.strongestOperation.attempts}
+              </p>
             ) : (
-              <p className='mt-2 text-sm text-emerald-800/80'>Za malo danych na wskazanie przewagi.</p>
+              <p className='text-sm text-emerald-800/80'>Za malo danych na wskazanie przewagi.</p>
             )}
-          </div>
+          </KangurMetricCard>
 
-          <div className='rounded-2xl border border-rose-100 bg-rose-50 p-4'>
-            <p className='text-xs font-bold uppercase tracking-wide text-rose-700'>Do wsparcia</p>
+          <KangurMetricCard
+            accent='rose'
+            label='Do wsparcia'
+            value={
+              insights.weakestOperation
+                ? `${insights.weakestOperation.emoji} ${insights.weakestOperation.label}`
+                : 'Brak danych'
+            }
+            valueClassName='text-lg leading-tight'
+          >
             {insights.weakestOperation ? (
               <>
-                <p className='mt-2 text-lg font-extrabold text-rose-700'>
-                  {insights.weakestOperation.emoji} {insights.weakestOperation.label}
-                </p>
-                <p className='mt-1 text-xs text-rose-800/80'>
+                <p className='text-xs text-rose-800/80'>
                   Srednio {insights.weakestOperation.averageAccuracy}% · proby{' '}
                   {insights.weakestOperation.attempts}
                 </p>
@@ -268,11 +291,11 @@ export default function ScoreHistory({
                 )}
               </>
             ) : (
-              <p className='mt-2 text-sm text-rose-800/80'>
+              <p className='text-sm text-rose-800/80'>
                 Potrzeba wiecej niz jednego typu zadania, aby wskazac obszar do wsparcia.
               </p>
             )}
-          </div>
+          </KangurMetricCard>
         </div>
       </KangurPanel>
 
@@ -284,6 +307,7 @@ export default function ScoreHistory({
           {Object.entries(opBreakdown).map(([operation, data]) => {
             const percent = Math.round((data.correct / data.total) * 100);
             const info = OP_LABELS[operation] ?? { label: operation, emoji: '❓' };
+            const progressAccent = percent >= 80 ? 'emerald' : percent >= 50 ? 'amber' : 'rose';
             return (
               <div key={operation} className='flex items-center gap-3'>
                 <span className='text-lg w-6 text-center'>{info.emoji}</span>
@@ -294,12 +318,12 @@ export default function ScoreHistory({
                       {data.correct}/{data.total} ({percent}%)
                     </span>
                   </div>
-                  <div className='w-full h-2 bg-gray-100 rounded-full overflow-hidden'>
-                    <div
-                      style={{ width: `${percent}%` }}
-                      className={`h-full rounded-full ${percent >= 80 ? 'bg-green-400' : percent >= 50 ? 'bg-amber-400' : 'bg-red-400'}`}
-                    />
-                  </div>
+                  <KangurProgressBar
+                    accent={progressAccent}
+                    data-testid={`score-history-operation-progress-${operation}`}
+                    size='sm'
+                    value={percent}
+                  />
                 </div>
               </div>
             );

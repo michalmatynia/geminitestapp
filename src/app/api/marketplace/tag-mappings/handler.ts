@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getTagMappingRepository } from '@/features/integrations/server';
+import {
+  tagMappingCreateInputSchema,
+} from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
-
-type CreateTagMappingRequest = {
-  connectionId: string;
-  externalTagId: string;
-  internalTagId: string;
-};
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 /**
  * GET /api/marketplace/tag-mappings
@@ -40,8 +38,13 @@ export async function POST_handler(
   request: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {
-  const body = (await request.json()) as CreateTagMappingRequest;
-  const { connectionId, externalTagId, internalTagId } = body;
+  const parsed = await parseJsonBody(request, tagMappingCreateInputSchema, {
+    logPrefix: 'marketplace.tag-mappings.create',
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+  const { connectionId, externalTagId, internalTagId } = parsed.data;
 
   if (!connectionId || !externalTagId || !internalTagId) {
     throw badRequestError('connectionId, externalTagId, and internalTagId are required');

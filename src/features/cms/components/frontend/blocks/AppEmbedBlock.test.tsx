@@ -37,7 +37,26 @@ vi.mock('@/features/kangur/public', () => ({
 }));
 
 import { AppEmbedBlock } from '@/features/cms/components/frontend/blocks/AppEmbedBlock';
-import { BlockSettingsContext } from '@/features/cms/components/frontend/blocks/BlockContext';
+import {
+  BlockRenderContext,
+  BlockSettingsContext,
+} from '@/features/cms/components/frontend/blocks/BlockContext';
+
+function renderAppEmbedBlock(settings: Record<string, unknown>, blockId = 'app-embed-a') {
+  return render(
+    <BlockRenderContext.Provider
+      value={{
+        block: { id: blockId, type: 'AppEmbed', settings },
+        mediaStyles: null,
+        stretch: false,
+      }}
+    >
+      <BlockSettingsContext.Provider value={settings}>
+        <AppEmbedBlock />
+      </BlockSettingsContext.Provider>
+    </BlockRenderContext.Provider>
+  );
+}
 
 describe('AppEmbedBlock', () => {
   beforeEach(() => {
@@ -46,66 +65,99 @@ describe('AppEmbedBlock', () => {
   });
 
   it('renders iframe embeds for iframe-based app embeds', () => {
-    render(
-      <BlockSettingsContext.Provider
-        value={{
-          appId: 'chatbot',
-          title: 'Chatbot',
-          embedUrl: 'https://example.com/chatbot',
-          height: 480,
-        }}
-      >
-        <AppEmbedBlock />
-      </BlockSettingsContext.Provider>
-    );
+    renderAppEmbedBlock({
+      appId: 'chatbot',
+      title: 'Chatbot',
+      embedUrl: 'https://example.com/chatbot',
+      height: 480,
+    });
 
     expect(screen.getByTitle('Chatbot')).toHaveAttribute('src', 'https://example.com/chatbot');
   });
 
   it('renders Kangur as an internal app mount on the current cms page', () => {
-    useSearchParamsMock.mockReturnValue(new URLSearchParams('preview=1&kangur=parent-dashboard'));
-
-    render(
-      <BlockSettingsContext.Provider
-        value={{
-          appId: 'kangur',
-          title: 'Kangur Home',
-          entryPage: 'Lessons',
-          basePath: '',
-          height: 640,
-        }}
-      >
-        <AppEmbedBlock />
-      </BlockSettingsContext.Provider>
+    useSearchParamsMock.mockReturnValue(
+      new URLSearchParams('preview=1&kangur-app-embed-a=parent-dashboard')
     );
+
+    renderAppEmbedBlock({
+      appId: 'kangur',
+      title: 'Kangur Home',
+      entryPage: 'Lessons',
+      basePath: '',
+      height: 640,
+    });
 
     const mount = screen.getByTestId('kangur-feature-page');
     expect(mount).toHaveAttribute(
       'data-base-path',
-      buildKangurEmbeddedBasePath('/home?preview=1')
+      buildKangurEmbeddedBasePath('/home?preview=1', 'app-embed-a')
     );
     expect(mount).toHaveAttribute('data-embedded', 'true');
     expect(mount).toHaveAttribute('data-slug', '["parent-dashboard"]');
   });
 
   it('keeps a custom host-page override for internal app mounts', () => {
-    render(
-      <BlockSettingsContext.Provider
-        value={{
-          appId: 'kangur',
-          title: 'Kangur Home',
-          entryPage: 'Lessons',
-          basePath: '/landing?preview=1',
-          height: 640,
-        }}
-      >
-        <AppEmbedBlock />
-      </BlockSettingsContext.Provider>
+    renderAppEmbedBlock({
+      appId: 'kangur',
+      title: 'Kangur Home',
+      entryPage: 'Lessons',
+      basePath: '/landing?preview=1',
+      height: 640,
+    });
+
+    expect(screen.getByTestId('kangur-feature-page')).toHaveAttribute(
+      'data-base-path',
+      buildKangurEmbeddedBasePath('/landing?preview=1', 'app-embed-a')
+    );
+  });
+
+  it('preserves other embedded Kangur instances when deriving the current host page', () => {
+    useSearchParamsMock.mockReturnValue(
+      new URLSearchParams(
+        'preview=1&kangur-app-embed-a=lessons&kangur-app-embed-b=parent-dashboard'
+      )
+    );
+
+    renderAppEmbedBlock(
+      {
+        appId: 'kangur',
+        title: 'Kangur Home',
+        entryPage: 'Lessons',
+        basePath: '',
+        height: 640,
+      },
+      'app-embed-a'
     );
 
     expect(screen.getByTestId('kangur-feature-page')).toHaveAttribute(
       'data-base-path',
-      buildKangurEmbeddedBasePath('/landing?preview=1')
+      buildKangurEmbeddedBasePath(
+        '/home?preview=1&kangur-app-embed-b=parent-dashboard',
+        'app-embed-a'
+      )
+    );
+  });
+
+  it('supports legacy unscoped Kangur query params while stripping them from the derived host page', () => {
+    useSearchParamsMock.mockReturnValue(new URLSearchParams('preview=1&kangur=parent-dashboard'));
+
+    renderAppEmbedBlock(
+      {
+        appId: 'kangur',
+        title: 'Kangur Home',
+        entryPage: 'Lessons',
+        basePath: '',
+        height: 640,
+      },
+      'app-embed-a'
+    );
+
+    const mount = screen.getByTestId('kangur-feature-page');
+    expect(mount).toHaveAttribute('data-slug', '["parent-dashboard"]');
+    expect(mount).toHaveAttribute(
+      'data-base-path',
+      buildKangurEmbeddedBasePath('/home?preview=1', 'app-embed-a')
     );
   });
 });

@@ -6,17 +6,18 @@ import { memo, useMemo, type ReactNode } from 'react';
 import { Breadcrumbs, Button, Pagination } from '@/shared/ui';
 import { FolderTreeSearchBar } from '@/features/foldertree/v2/search';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import { useOptionalCaseListPanelControlsContext } from './CaseListPanelControlsContext';
 
 type CaseListHeaderProps = {
   filtersContent: ReactNode;
-  onCreateCase: () => void;
-  totalCount: number;
-  filteredCount: number;
-  page: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-  pageSize: number;
-  onPageSizeChange: (pageSize: number) => void;
+  onCreateCase?: (() => void) | undefined;
+  totalCount?: number | undefined;
+  filteredCount?: number | undefined;
+  page?: number | undefined;
+  totalPages?: number | undefined;
+  onPageChange?: ((page: number) => void) | undefined;
+  pageSize?: number | undefined;
+  onPageSizeChange?: ((pageSize: number) => void) | undefined;
   searchQuery?: string | undefined;
   onSearchChange?: ((q: string) => void) | undefined;
 };
@@ -90,26 +91,53 @@ export const CaseListHeader = memo(function CaseListHeader({
   searchQuery,
   onSearchChange,
 }: CaseListHeaderProps): React.JSX.Element {
+  const panelControls = useOptionalCaseListPanelControlsContext();
+  const resolvedOnCreateCase = onCreateCase ?? panelControls?.onCreateCase;
+  const resolvedTotalCount = totalCount ?? panelControls?.totalCount;
+  const resolvedFilteredCount = filteredCount ?? panelControls?.filteredCount;
+  const resolvedPage = page ?? panelControls?.page;
+  const resolvedTotalPages = totalPages ?? panelControls?.totalPages;
+  const resolvedOnPageChange = onPageChange ?? panelControls?.onPageChange;
+  const resolvedPageSize = pageSize ?? panelControls?.pageSize;
+  const resolvedOnPageSizeChange = onPageSizeChange ?? panelControls?.onPageSizeChange;
+  const resolvedSearchQuery = searchQuery ?? panelControls?.searchQuery ?? '';
+  const resolvedOnSearchChange = onSearchChange ?? panelControls?.onSearchChange;
+
+  if (
+    !resolvedOnCreateCase ||
+    typeof resolvedTotalCount !== 'number' ||
+    typeof resolvedFilteredCount !== 'number' ||
+    typeof resolvedPage !== 'number' ||
+    typeof resolvedTotalPages !== 'number' ||
+    !resolvedOnPageChange ||
+    typeof resolvedPageSize !== 'number' ||
+    !resolvedOnPageSizeChange
+  ) {
+    throw new Error(
+      'CaseListHeader must be used within CaseListPanelControlsProvider or receive explicit props'
+    );
+  }
+
   const runtimeValue = useMemo(
     () => ({
-      onCreateCase,
-      page,
-      totalPages,
-      onPageChange,
-      pageSize,
-      onPageSizeChange,
-      searchQuery: searchQuery ?? '',
-      onSearchChange,
+      onCreateCase: resolvedOnCreateCase,
+      page: resolvedPage,
+      totalPages: resolvedTotalPages,
+      onPageChange: resolvedOnPageChange,
+      pageSize: resolvedPageSize,
+      onPageSizeChange: resolvedOnPageSizeChange,
+      searchQuery: resolvedSearchQuery,
+      onSearchChange: resolvedOnSearchChange,
     }),
     [
-      onCreateCase,
-      onPageChange,
-      onPageSizeChange,
-      onSearchChange,
-      page,
-      pageSize,
-      searchQuery,
-      totalPages,
+      resolvedOnCreateCase,
+      resolvedOnPageChange,
+      resolvedOnPageSizeChange,
+      resolvedOnSearchChange,
+      resolvedPage,
+      resolvedPageSize,
+      resolvedSearchQuery,
+      resolvedTotalPages,
     ]
   );
 
@@ -117,7 +145,7 @@ export const CaseListHeader = memo(function CaseListHeader({
     <div className='flex flex-wrap items-center gap-2'>
       <CaseListHeaderCreateButton />
       <span className='text-xs text-muted-foreground'>
-        {filteredCount} matches / {totalCount} total
+        {resolvedFilteredCount} matches / {resolvedTotalCount} total
       </span>
     </div>
   );

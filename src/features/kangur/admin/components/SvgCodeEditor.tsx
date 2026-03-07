@@ -11,8 +11,7 @@ import { cn, sanitizeSvg } from '@/shared/utils';
 export const SVG_SNIPPETS: Record<string, string> = {
   square:
     '<rect x="5" y="5" width="50" height="50" fill="white" stroke="#374151" stroke-width="1.5"/>',
-  circle:
-    '<circle cx="30" cy="30" r="20" fill="none" stroke="#374151" stroke-width="1.5"/>',
+  circle: '<circle cx="30" cy="30" r="20" fill="none" stroke="#374151" stroke-width="1.5"/>',
   grid4x4: [
     '<!-- 4×4 dashed grid -->',
     ...[1, 2, 3].flatMap((n) => [
@@ -37,8 +36,7 @@ export const extractSvgViewBox = (markup: string): string | null => {
 };
 
 /** Returns true when the markup looks like a valid SVG root element. */
-export const looksLikeSvg = (markup: string): boolean =>
-  /^\s*<svg[\s>]/i.test(markup);
+export const looksLikeSvg = (markup: string): boolean => /^\s*<svg[\s>]/i.test(markup);
 
 /** Insert a snippet just before the closing </svg> tag, or append if absent. */
 export const insertSnippetIntoSvg = (markup: string, snippet: string): string => {

@@ -15,8 +15,10 @@ vi.mock('@/shared/lib/ai-paths/portable-engine/portable-engine-observability', (
 vi.mock('@/shared/lib/ai-paths/portable-engine/server', () => ({
   loadPortablePathAuditSinkAutoRemediationDeadLetters:
     builders.loadPortablePathAuditSinkAutoRemediationDeadLettersMock,
-  loadPortablePathSigningPolicyTrendSnapshots: builders.loadPortablePathSigningPolicyTrendSnapshotsMock,
-  loadPortablePathAuditSinkStartupHealthState: builders.loadPortablePathAuditSinkStartupHealthStateMock,
+  loadPortablePathSigningPolicyTrendSnapshots:
+    builders.loadPortablePathSigningPolicyTrendSnapshotsMock,
+  loadPortablePathAuditSinkStartupHealthState:
+    builders.loadPortablePathAuditSinkStartupHealthStateMock,
   resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironment:
     builders.resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironmentMock,
   resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironment:
@@ -84,7 +86,9 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
       },
       recentEvents: [],
     });
-    builders.loadPortablePathAuditSinkAutoRemediationDeadLettersMock.mockReset().mockResolvedValue([]);
+    builders.loadPortablePathAuditSinkAutoRemediationDeadLettersMock
+      .mockReset()
+      .mockResolvedValue([]);
     builders.loadPortablePathSigningPolicyTrendSnapshotsMock.mockReset().mockResolvedValue([
       {
         at: '2026-03-05T00:00:00.000Z',
@@ -492,7 +496,9 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
   });
 
   it('falls back to default remediation threshold when resolver returns null', async () => {
-    builders.resolvePortablePathAuditSinkAutoRemediationEnabledFromEnvironmentMock.mockReturnValue(null);
+    builders.resolvePortablePathAuditSinkAutoRemediationEnabledFromEnvironmentMock.mockReturnValue(
+      null
+    );
     builders.resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironmentMock.mockReturnValue(
       null
     );
@@ -505,7 +511,9 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
     builders.resolvePortablePathAuditSinkAutoRemediationNotificationsEnabledFromEnvironmentMock.mockReturnValue(
       null
     );
-    builders.resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironmentMock.mockReturnValue(null);
+    builders.resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironmentMock.mockReturnValue(
+      null
+    );
     builders.resolvePortablePathAuditSinkAutoRemediationEmailWebhookUrlFromEnvironmentMock.mockReturnValue(
       null
     );
@@ -518,8 +526,12 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
     builders.resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironmentMock.mockReturnValue(
       null
     );
-    builders.resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironmentMock.mockReturnValue(null);
-    builders.resolvePortablePathAuditSinkAutoRemediationThresholdFromEnvironmentMock.mockReturnValue(null);
+    builders.resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironmentMock.mockReturnValue(
+      null
+    );
+    builders.resolvePortablePathAuditSinkAutoRemediationThresholdFromEnvironmentMock.mockReturnValue(
+      null
+    );
     builders.resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironmentMock.mockReturnValue(
       null
     );
@@ -634,5 +646,4 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
       })
     );
   });
-
 });

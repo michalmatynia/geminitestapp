@@ -17,6 +17,7 @@ import {
 } from '@/features/integrations/services/active-template-preference';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/settings';
 import { getProductDataProvider as _getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import { type ImageRetryPreset } from '@/shared/contracts/integrations/base';
 import { type Template, type TemplateMapping } from '@/shared/contracts/integrations/templates';
@@ -28,14 +29,7 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 
 type ExportTemplateProvider = 'mongodb' | 'prisma';
-
-type SettingDoc = {
-  _id?: string | _ObjectId;
-  key?: string;
-  value?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-};
+type SettingDoc = MongoTimestampedStringSettingRecord<string | _ObjectId, Date>;
 
 const LOG_SOURCE = 'export-template-repository';
 
@@ -153,9 +147,11 @@ const readTemplatesValue = async (): Promise<string | null> => {
   const provider = await getExportTemplateProvider();
   if (provider === 'mongodb') {
     const mongo = await getMongoDb();
-    const doc = await mongo.collection<SettingDoc>('settings').findOne({
-      $or: [{ _id: toMongoId(SETTINGS_KEY) }, { key: SETTINGS_KEY }],
-    });
+    const doc = await mongo
+      .collection<SettingDoc>('settings')
+      .findOne({
+        $or: [{ _id: toMongoId(SETTINGS_KEY) }, { key: SETTINGS_KEY }],
+      });
     const val = typeof doc?.value === 'string' ? doc.value : null;
     await logSystemEvent({
       level: 'info',

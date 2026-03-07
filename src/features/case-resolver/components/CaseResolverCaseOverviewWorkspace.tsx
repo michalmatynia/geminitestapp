@@ -278,9 +278,7 @@ export function CaseResolverCaseOverviewWorkspace(): React.JSX.Element {
         </div>
       </Card>
 
-      {isRelationsVisible ? (
-        <CaseResolverRelationsWorkspace focusCaseId={activeCaseFile.id} />
-      ) : null}
+      {isRelationsVisible ? <CaseResolverRelationsWorkspace /> : null}
     </div>
   );
 }

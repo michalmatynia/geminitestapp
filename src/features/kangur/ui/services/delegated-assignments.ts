@@ -1,6 +1,7 @@
 import {
   appendKangurUrlParams,
   getKangurPageHref as createPageUrl,
+  readKangurUrlParam,
 } from '@/features/kangur/config/routing';
 import { buildKangurAssignments } from '@/features/kangur/ui/services/assignments';
 import type {
@@ -13,7 +14,11 @@ import type {
   KangurAssignmentSnapshot,
   KangurProgressState,
 } from '@/features/kangur/services/ports';
-import type { KangurDifficulty, KangurGameScreen, KangurOperation } from '@/features/kangur/ui/types';
+import type {
+  KangurDifficulty,
+  KangurGameScreen,
+  KangurOperation,
+} from '@/features/kangur/ui/types';
 
 type KangurAssignmentCatalogGroup = 'time' | 'arithmetic' | 'geometry' | 'logic' | 'practice';
 
@@ -400,17 +405,24 @@ export const selectKangurPracticeAssignmentForScreen = (
   screen: KangurGameScreen,
   operation: KangurOperation | null
 ): (KangurAssignmentSnapshot & { target: { type: 'practice' } }) | null => {
-  const practiceAssignments = selectKangurPriorityAssignments(assignments, assignments.length).filter(
+  const practiceAssignments = selectKangurPriorityAssignments(
+    assignments,
+    assignments.length
+  ).filter(
     (assignment): assignment is KangurAssignmentSnapshot & { target: { type: 'practice' } } =>
       assignment.target.type === 'practice'
   );
 
   if (screen === 'training') {
-    return practiceAssignments.find((assignment) => assignment.target.operation === 'mixed') ?? null;
+    return (
+      practiceAssignments.find((assignment) => assignment.target.operation === 'mixed') ?? null
+    );
   }
 
   if (screen === 'operation') {
-    return practiceAssignments.find((assignment) => assignment.target.operation !== 'mixed') ?? null;
+    return (
+      practiceAssignments.find((assignment) => assignment.target.operation !== 'mixed') ?? null
+    );
   }
 
   if ((screen === 'playing' || screen === 'result') && operation) {
@@ -430,15 +442,14 @@ export const mapKangurPracticeAssignmentsByOperation = (
       (assignment): assignment is KangurAssignmentSnapshot & { target: { type: 'practice' } } =>
         assignment.target.type === 'practice'
     )
-    .reduce<Partial<Record<KangurOperation, KangurAssignmentSnapshot & { target: { type: 'practice' } }>>>(
-      (accumulator, assignment) => {
-        if (!accumulator[assignment.target.operation]) {
-          accumulator[assignment.target.operation] = assignment;
-        }
-        return accumulator;
-      },
-      {}
-    );
+    .reduce<
+      Partial<Record<KangurOperation, KangurAssignmentSnapshot & { target: { type: 'practice' } }>>
+    >((accumulator, assignment) => {
+      if (!accumulator[assignment.target.operation]) {
+        accumulator[assignment.target.operation] = assignment;
+      }
+      return accumulator;
+    }, {});
 
 export const selectKangurResultPracticeAssignment = (
   assignments: KangurAssignmentSnapshot[],
@@ -461,7 +472,8 @@ export const selectKangurResultPracticeAssignment = (
         return leftActive - rightActive;
       }
 
-      const priorityDelta = ASSIGNMENT_PRIORITY_ORDER[left.priority] - ASSIGNMENT_PRIORITY_ORDER[right.priority];
+      const priorityDelta =
+        ASSIGNMENT_PRIORITY_ORDER[left.priority] - ASSIGNMENT_PRIORITY_ORDER[right.priority];
       if (priorityDelta !== 0) {
         return priorityDelta;
       }
@@ -501,30 +513,29 @@ export const buildKangurMixedTrainingQuickStartParams = (): URLSearchParams =>
   });
 
 export const parseKangurMixedTrainingQuickStartParams = (
-  searchParams: URLSearchParams
+  searchParams: URLSearchParams,
+  basePath?: string | null
 ): {
   categories: KangurOperation[];
   count: number;
   difficulty: KangurDifficulty;
 } | null => {
-  const rawCategories = searchParams.get('categories');
-  const rawCount = searchParams.get('count');
-  const rawDifficulty = searchParams.get('difficulty');
+  const rawCategories = readKangurUrlParam(searchParams, 'categories', basePath);
+  const rawCount = readKangurUrlParam(searchParams, 'count', basePath);
+  const rawDifficulty = readKangurUrlParam(searchParams, 'difficulty', basePath);
 
   if (!rawCategories || !rawCount || !rawDifficulty) {
     return null;
   }
 
-  if (
-    rawDifficulty !== 'easy' &&
-    rawDifficulty !== 'medium' &&
-    rawDifficulty !== 'hard'
-  ) {
+  if (rawDifficulty !== 'easy' && rawDifficulty !== 'medium' && rawDifficulty !== 'hard') {
     return null;
   }
 
   const count = Number.parseInt(rawCount, 10);
-  if (!MIXED_TRAINING_PRESET_COUNTS.includes(count as (typeof MIXED_TRAINING_PRESET_COUNTS)[number])) {
+  if (
+    !MIXED_TRAINING_PRESET_COUNTS.includes(count as (typeof MIXED_TRAINING_PRESET_COUNTS)[number])
+  ) {
     return null;
   }
 
@@ -551,23 +562,32 @@ export const buildKangurAssignmentHref = (
   assignment: Pick<KangurAssignmentSnapshot, 'target'>
 ): string => {
   if (assignment.target.type === 'lesson') {
-    return appendKangurUrlParams(createPageUrl('Lessons', basePath), {
-      focus: assignment.target.lessonComponentId,
-    });
+    return appendKangurUrlParams(
+      createPageUrl('Lessons', basePath),
+      {
+        focus: assignment.target.lessonComponentId,
+      },
+      basePath
+    );
   }
 
   if (assignment.target.operation === 'mixed') {
     return appendKangurUrlParams(
       createPageUrl('Game', basePath),
-      Object.fromEntries(buildKangurMixedTrainingQuickStartParams())
+      Object.fromEntries(buildKangurMixedTrainingQuickStartParams()),
+      basePath
     );
   }
 
-  return appendKangurUrlParams(createPageUrl('Game', basePath), {
-    quickStart: 'operation',
-    operation: assignment.target.operation,
-    difficulty: 'medium',
-  });
+  return appendKangurUrlParams(
+    createPageUrl('Game', basePath),
+    {
+      quickStart: 'operation',
+      operation: assignment.target.operation,
+      difficulty: 'medium',
+    },
+    basePath
+  );
 };
 
 export const getKangurAssignmentActionLabel = (

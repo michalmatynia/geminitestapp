@@ -15,7 +15,7 @@ import {
   evaluateDisabledNodeTypesPolicy,
   formatDisabledNodeTypesPolicyMessage,
 } from '@/features/ai/ai-paths/services/path-run-policy';
-import { getPathRunRepository } from './path-run-repository';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import {
   getAiPathsRuntimeFingerprint,
   withRuntimeFingerprintMeta,
@@ -62,9 +62,7 @@ const toRecord = (value: unknown): Record<string, unknown> | null =>
     ? (value as Record<string, unknown>)
     : null;
 
-const toSampleStateMap = <T = unknown>(
-  value: unknown
-): Record<string, T> | undefined => {
+const toSampleStateMap = <T = unknown>(value: unknown): Record<string, T> | undefined => {
   const record = toRecord(value);
   if (!record) return undefined;
   return record as Record<string, T>;

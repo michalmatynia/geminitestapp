@@ -4,9 +4,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
-import {
-  listOptimisticAiPathRuns,
-} from '@/shared/lib/ai-paths/optimistic-run-queue';
+import { listOptimisticAiPathRuns } from '@/shared/lib/ai-paths/optimistic-run-queue';
 import { optimisticallyInsertAiPathRunInQueueCache } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
@@ -24,8 +22,7 @@ const buildRun = (overrides?: Partial<AiPathRunRecord>): AiPathRunRecord =>
     ...overrides,
   }) as AiPathRunRecord;
 
-const makeKey = (filters: Record<string, unknown>) =>
-  QUERY_KEYS.ai.aiPaths.jobQueue(filters);
+const makeKey = (filters: Record<string, unknown>) => QUERY_KEYS.ai.aiPaths.jobQueue(filters);
 
 describe('optimisticallyInsertAiPathRunInQueueCache', () => {
   let queryClient: QueryClient;
@@ -81,9 +78,7 @@ describe('optimisticallyInsertAiPathRunInQueueCache', () => {
   });
 
   it('respects pageSize — does not exceed the page limit after prepend', () => {
-    const existing = Array.from({ length: 25 }, (_, i) =>
-      buildRun({ id: `run-existing-${i}` })
-    );
+    const existing = Array.from({ length: 25 }, (_, i) => buildRun({ id: `run-existing-${i}` }));
     const key = makeKey({ status: 'all', page: 1, pageSize: 25 });
     queryClient.setQueryData(key, { runs: existing, total: 25 });
 
@@ -198,10 +193,7 @@ describe('optimisticallyInsertAiPathRunInQueueCache', () => {
     queryClient.setQueryData(key, { runs: [], total: 0 });
 
     optimisticallyInsertAiPathRunInQueueCache(queryClient, null as unknown as AiPathRunRecord);
-    optimisticallyInsertAiPathRunInQueueCache(
-      queryClient,
-      undefined as unknown as AiPathRunRecord
-    );
+    optimisticallyInsertAiPathRunInQueueCache(queryClient, undefined as unknown as AiPathRunRecord);
 
     const cached = queryClient.getQueryData<{ runs: unknown[]; total: number }>(key);
     expect(cached?.runs).toHaveLength(0);

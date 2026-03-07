@@ -14,6 +14,7 @@ import {
   loadSourceBufferFromSlot,
   parseImageDataUrl,
 } from '@/features/ai/image-studio/server/source-image-utils';
+import type { UploadedClientAnalysisImage } from '@/shared/contracts/image-studio';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, isAppError, notFoundError } from '@/shared/errors/app-error';
@@ -25,10 +26,6 @@ const STRICT_SERVER_ANALYSIS_ENABLED =
   process.env['IMAGE_STUDIO_ANALYSIS_SERVER_AUTHORITATIVE'] !== 'false';
 
 type StudioSlotRecord = NonNullable<Awaited<ReturnType<typeof getImageStudioSlotById>>>;
-type UploadedClientAnalysisImage = {
-  buffer: Buffer;
-  mime: string;
-};
 type AnalysisSource = {
   buffer: Buffer;
   sourceKind: 'source_slot' | 'client_upload';

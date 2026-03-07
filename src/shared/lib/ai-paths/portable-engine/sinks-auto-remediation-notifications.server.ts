@@ -166,8 +166,7 @@ export const notifyPortablePathAuditSinkAutoRemediationCore = async (
   const emailWebhookUrl = options.emailWebhookUrl ?? null;
   const emailWebhookSecret = options.emailWebhookSecret ?? null;
   const emailWebhookSignatureKeyId = options.emailWebhookSignatureKeyId ?? null;
-  const enqueueDeadLetter =
-    options.enqueueDeadLetter ?? (async (): Promise<boolean> => false);
+  const enqueueDeadLetter = options.enqueueDeadLetter ?? (async (): Promise<boolean> => false);
   const emailRecipients = (options.emailRecipients ?? []).filter(
     (entry): entry is string => typeof entry === 'string' && entry.trim().length > 0
   );
@@ -237,7 +236,8 @@ export const notifyPortablePathAuditSinkAutoRemediationCore = async (
       result.webhook.delivered = true;
     } catch (error) {
       result.webhook.error = deps.toErrorMessage(error);
-      result.webhook.statusCode = toPortablePathAuditSinkAutoRemediationNotificationStatusCode(error);
+      result.webhook.statusCode =
+        toPortablePathAuditSinkAutoRemediationNotificationStatusCode(error);
       try {
         result.webhook.deadLetterQueued = await enqueueDeadLetter({
           queuedAt: at,

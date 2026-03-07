@@ -5,7 +5,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { buildKangurEmbeddedBasePath } from '@/shared/contracts/kangur';
+import { buildKangurEmbeddedBasePath } from '@/features/kangur/config/routing';
 import type { KangurScoreRecord } from '@/features/kangur/services/ports';
 
 const { scoreFilterMock, logKangurClientErrorMock } = vi.hoisted(() => ({
@@ -103,7 +103,13 @@ describe('ScoreHistory', () => {
     expect(screen.getByText('Obraz ostatnich 7 dni')).toBeInTheDocument();
     expect(screen.getByText('Trend tygodnia')).toBeInTheDocument();
     expect(screen.getByText('Ostatnie gry')).toBeInTheDocument();
-    expect(screen.getByText('Gier lacznie').previousElementSibling).toHaveTextContent('3');
+    expect(screen.getByTestId('score-history-total-games')).toHaveClass('soft-card', 'border-sky-300');
+    expect(screen.getByTestId('score-history-total-games')).toHaveTextContent('3');
+    expect(screen.getByTestId('score-history-average-accuracy')).toHaveClass('soft-card', 'border-emerald-300');
+    expect(screen.getByTestId('score-history-operation-progress-addition')).toHaveAttribute(
+      'aria-valuenow',
+      '80'
+    );
     expect(screen.getAllByText('Dzielenie').length).toBeGreaterThan(0);
   });
 
@@ -121,7 +127,7 @@ describe('ScoreHistory', () => {
 
     await waitFor(() => expect(scoreFilterMock).toHaveBeenCalledWith({}, '-created_date', 30));
     expect(scoreFilterMock).toHaveBeenCalledTimes(1);
-    expect(screen.getByText('Gier lacznie').previousElementSibling).toHaveTextContent('2');
+    expect(screen.getByTestId('score-history-total-games')).toHaveTextContent('2');
   });
 
   it('renders a lesson follow-up link for the weakest tracked operation when a base path is available', async () => {
@@ -217,11 +223,14 @@ describe('ScoreHistory', () => {
       <ScoreHistory
         playerName='Jan'
         createdBy='jan@example.com'
-        basePath={buildKangurEmbeddedBasePath('/home?preview=1')}
+        basePath={buildKangurEmbeddedBasePath('/home?preview=1', 'cms-home-kangur')}
       />
     );
 
     const followUpLink = await screen.findByRole('link', { name: 'Powtorz lekcje' });
-    expect(followUpLink).toHaveAttribute('href', '/home?preview=1&kangur=lessons&focus=division');
+    expect(followUpLink).toHaveAttribute(
+      'href',
+      '/home?preview=1&kangur-cms-home-kangur=lessons&kangur-cms-home-kangur-focus=division'
+    );
   });
 });

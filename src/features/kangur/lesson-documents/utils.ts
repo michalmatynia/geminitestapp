@@ -29,8 +29,7 @@ export const KANGUR_LESSON_DOCUMENT_TEMPLATE_IDS = [
   'svg-gallery-page',
   'svg-mosaic-page',
 ] as const;
-export type KangurLessonDocumentTemplateId =
-  (typeof KANGUR_LESSON_DOCUMENT_TEMPLATE_IDS)[number];
+export type KangurLessonDocumentTemplateId = (typeof KANGUR_LESSON_DOCUMENT_TEMPLATE_IDS)[number];
 
 export const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -98,7 +97,9 @@ export const createRandomId = (prefix: string): string => {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
 };
 
-export const normalizeNarrationVoice = (value: unknown): NonNullable<KangurLessonDocumentNarration>['voice'] => {
+export const normalizeNarrationVoice = (
+  value: unknown
+): NonNullable<KangurLessonDocumentNarration>['voice'] => {
   if (
     value === 'alloy' ||
     value === 'ash' ||
@@ -117,7 +118,9 @@ export const normalizeNarrationVoice = (value: unknown): NonNullable<KangurLesso
   return KANGUR_TTS_DEFAULT_VOICE;
 };
 
-export const normalizeDocumentNarration = (value: unknown): NonNullable<KangurLessonDocumentNarration> => {
+export const normalizeDocumentNarration = (
+  value: unknown
+): NonNullable<KangurLessonDocumentNarration> => {
   const raw = isRecord(value) ? value : {};
 
   return {

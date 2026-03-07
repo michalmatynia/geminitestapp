@@ -354,13 +354,10 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
       sum + (Array.isArray(snapshot.driftAlerts) ? snapshot.driftAlerts.length : 0),
     0
   );
-  const sinkWritesFailedTotal = pageSnapshots.reduce(
-    (sum, snapshot) => {
-      const sinkTotals = snapshot.sinkTotals as { writesFailed?: number };
-      return sum + (sinkTotals?.writesFailed ?? 0);
-    },
-    0
-  );
+  const sinkWritesFailedTotal = pageSnapshots.reduce((sum, snapshot) => {
+    const sinkTotals = snapshot.sinkTotals as { writesFailed?: number };
+    return sum + (sinkTotals?.writesFailed ?? 0);
+  }, 0);
   const lastSnapshot = snapshotCount > 0 ? pageSnapshots[snapshotCount - 1] : null;
   const latestSnapshotAt = lastSnapshot ? lastSnapshot.at : null;
   const firstSnapshot = snapshotCount > 0 ? pageSnapshots[0] : null;
@@ -375,7 +372,8 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
       })
       : null;
   const notificationDeadLetterCount = deadLetters.length;
-  const lastDeadLetter = notificationDeadLetterCount > 0 ? deadLetters[notificationDeadLetterCount - 1] : null;
+  const lastDeadLetter =
+    notificationDeadLetterCount > 0 ? deadLetters[notificationDeadLetterCount - 1] : null;
   const latestNotificationDeadLetterAt = lastDeadLetter?.queuedAt ?? null;
   const deadLetterErrorCounts: Record<string, number> = {};
   const deadLetterReplayPolicySkipCounts: Record<string, number> = {};

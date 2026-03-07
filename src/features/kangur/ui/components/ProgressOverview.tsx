@@ -1,6 +1,10 @@
-import { motion } from 'framer-motion';
-
-import { KangurPanel } from '@/features/kangur/ui/design/primitives';
+import {
+  KangurMetricCard,
+  KangurPanel,
+  KangurProgressBar,
+  KangurStatusChip,
+} from '@/features/kangur/ui/design/primitives';
+import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import LessonMasteryInsights from '@/features/kangur/ui/components/LessonMasteryInsights';
 import { BADGES, getCurrentLevel, getNextLevel } from '@/features/kangur/ui/services/progress';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
@@ -10,10 +14,9 @@ type ProgressOverviewProps = {
 };
 
 type ProgressStat = {
+  accent: KangurAccent;
   label: string;
   value: number;
-  color: string;
-  bg: string;
 };
 
 export default function ProgressOverview({ progress }: ProgressOverviewProps): React.JSX.Element {
@@ -32,22 +35,20 @@ export default function ProgressOverview({ progress }: ProgressOverviewProps): R
   const percent = nextLevel ? Math.min(100, Math.round((xpIntoLevel / xpNeeded) * 100)) : 100;
 
   const stats: ProgressStat[] = [
-    { label: 'Laczne XP', value: totalXp, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-    { label: 'Poziom', value: currentLevel.level, color: 'text-purple-600', bg: 'bg-purple-50' },
-    { label: 'Rozegrane gry', value: gamesPlayed, color: 'text-blue-600', bg: 'bg-blue-50' },
+    { accent: 'indigo', label: 'Laczne XP', value: totalXp },
+    { accent: 'violet', label: 'Poziom', value: currentLevel.level },
+    { accent: 'sky', label: 'Rozegrane gry', value: gamesPlayed },
     {
+      accent: 'amber',
       label: 'Idealne wyniki',
       value: perfectGames || 0,
-      color: 'text-amber-600',
-      bg: 'bg-amber-50',
     },
     {
+      accent: 'emerald',
       label: 'Ukonczone lekcje',
       value: lessonsCompleted,
-      color: 'text-green-600',
-      bg: 'bg-green-50',
     },
-    { label: 'Zdobyte odznaki', value: badges.length, color: 'text-rose-600', bg: 'bg-rose-50' },
+    { accent: 'rose', label: 'Zdobyte odznaki', value: badges.length },
   ];
 
   return (
@@ -59,14 +60,13 @@ export default function ProgressOverview({ progress }: ProgressOverviewProps): R
           <p className='text-sm text-gray-400 mb-2'>
             Poziom {currentLevel.level} · {totalXp} XP lacznie
           </p>
-          <div className='w-full h-3 bg-gray-100 rounded-full overflow-hidden'>
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${percent}%` }}
-              transition={{ duration: 0.8 }}
-              className='h-full rounded-full bg-gradient-to-r from-indigo-400 to-purple-500'
-            />
-          </div>
+          <KangurProgressBar
+            accent='indigo'
+            animated
+            data-testid='progress-overview-level-bar'
+            size='md'
+            value={percent}
+          />
           <p className='text-xs text-gray-400 mt-1'>
             {nextLevel
               ? `Do poziomu ${nextLevel.level}: ${xpNeeded - xpIntoLevel} XP`
@@ -77,10 +77,13 @@ export default function ProgressOverview({ progress }: ProgressOverviewProps): R
 
       <div className='grid grid-cols-2 sm:grid-cols-3 gap-3'>
         {stats.map((stat) => (
-          <KangurPanel key={stat.label} className={`${stat.bg} text-center`} padding='md' variant='subtle'>
-            <p className={`text-3xl font-extrabold ${stat.color}`}>{stat.value}</p>
-            <p className='text-xs text-gray-500 mt-0.5'>{stat.label}</p>
-          </KangurPanel>
+          <KangurMetricCard
+            key={stat.label}
+            accent={stat.accent}
+            align='center'
+            label={stat.label}
+            value={stat.value}
+          />
         ))}
       </div>
 
@@ -93,12 +96,14 @@ export default function ProgressOverview({ progress }: ProgressOverviewProps): R
           </p>
           <div className='flex flex-wrap gap-2'>
             {operationsPlayed.map((operation) => (
-              <span
+              <KangurStatusChip
+                accent='indigo'
                 key={operation}
-                className='bg-indigo-100 text-indigo-700 text-xs font-bold px-3 py-1 rounded-full capitalize'
+                className='capitalize'
+                data-testid={`progress-overview-operation-${operation}`}
               >
                 {operation}
-              </span>
+              </KangurStatusChip>
             ))}
           </div>
         </KangurPanel>
@@ -110,18 +115,16 @@ export default function ProgressOverview({ progress }: ProgressOverviewProps): R
           {BADGES.map((badge) => {
             const unlocked = badges.includes(badge.id);
             return (
-              <div
+              <KangurStatusChip
+                accent={unlocked ? 'amber' : 'slate'}
                 key={badge.id}
+                className={unlocked ? 'gap-1.5' : 'gap-1.5 opacity-70'}
                 title={badge.desc}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${
-                  unlocked
-                    ? 'bg-indigo-100 text-indigo-700'
-                    : 'bg-gray-100 text-gray-300 opacity-50'
-                }`}
+                data-testid={`progress-overview-badge-${badge.id}`}
               >
                 <span className={unlocked ? '' : 'grayscale'}>{badge.emoji}</span>
                 <span>{badge.name}</span>
-              </div>
+              </KangurStatusChip>
             );
           })}
         </div>

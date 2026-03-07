@@ -2,6 +2,7 @@ import { AiNode, Edge, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import {
   NodeHandlerContext,
   RuntimeHistoryEntry,
+  RuntimeTraceResume,
 } from '@/shared/contracts/ai-paths-runtime';
 import { cloneValue } from '../utils';
 import { nowMs, resolveNodeTimeoutMs, withTimeout, withRetries } from '../execution-helpers';
@@ -10,11 +11,7 @@ import {
   type EvaluateGraphOptions,
   type RuntimeNodeResolutionTelemetry,
 } from './engine-types';
-import {
-  buildNodeInputHash,
-  buildNodeHash,
-  resolveCacheScopeFingerprint,
-} from './engine-hashing';
+import { buildNodeInputHash, buildNodeHash, resolveCacheScopeFingerprint } from './engine-hashing';
 import {
   buildInputLinks,
   buildOutputLinks,
@@ -28,16 +25,9 @@ import {
   readRuntimeRetryPolicy,
   resolveRecoverableNodeWaitState,
 } from './engine-runtime-status';
-import {
-  applyValidationBlockedNodeState,
-  runRuntimeValidation,
-} from './engine-validation-helpers';
-import {
-  resolveNodeHandlerOrThrow,
-} from './engine-execution-handlers';
-import {
-  buildRuntimeTelemetryFields,
-} from './engine-execution-telemetry';
+import { applyValidationBlockedNodeState, runRuntimeValidation } from './engine-validation-helpers';
+import { resolveNodeHandlerOrThrow } from './engine-execution-handlers';
+import { buildRuntimeTelemetryFields } from './engine-execution-telemetry';
 import { buildSpanId } from './engine-execution-context';
 
 const EXECUTED_STATE_KEY = '__executed_state__';
@@ -81,10 +71,7 @@ const EFFECT_NODE_TYPES = new Set<string>([
   'playwright',
 ]);
 
-const DEFAULT_SIDE_EFFECT_POLICY_BY_NODE_TYPE = new Map<
-  string,
-  'per_run' | 'per_activation'
->([
+const DEFAULT_SIDE_EFFECT_POLICY_BY_NODE_TYPE = new Map<string, 'per_run' | 'per_activation'>([
   ['agent', 'per_activation'],
   ['api_advanced', 'per_activation'],
   ['database', 'per_activation'],
@@ -95,10 +82,7 @@ const DEFAULT_SIDE_EFFECT_POLICY_BY_NODE_TYPE = new Map<
   ['playwright', 'per_activation'],
 ]);
 
-const EFFECT_EXECUTED_BUCKET_BY_NODE_TYPE = new Map<
-  string,
-  keyof NodeHandlerContext['executed']
->([
+const EFFECT_EXECUTED_BUCKET_BY_NODE_TYPE = new Map<string, keyof NodeHandlerContext['executed']>([
   ['agent', 'ai'],
   ['api_advanced', 'http'],
   ['database', 'updater'],
@@ -129,7 +113,7 @@ const resolveNodeIdempotencyKey = (input: {
   const hasAdvancedApiIdempotency = Boolean(
     String(input.node.type) === 'api_advanced' || String(input.node.type) === 'advanced_api'
       ? input.node.config?.apiAdvanced?.idempotencyEnabled ||
-        (input.node.config?.apiAdvanced?.idempotencyKeyTemplate ?? '').trim().length > 0
+          (input.node.config?.apiAdvanced?.idempotencyKeyTemplate ?? '').trim().length > 0
       : false
   );
   if (
@@ -172,9 +156,22 @@ const resolveSourceSpanId = (input: {
 
   const entries = input.preferSeedHistory
     ? readEntries(input.options['seedHistory'])
-    : input.state.history.get(input.nodeId) ?? [];
+    : (input.state.history.get(input.nodeId) ?? []);
   const matched = findMatch(entries);
   return typeof matched?.spanId === 'string' ? matched.spanId : null;
+};
+
+const resolveNodeResume = (
+  options: EvaluateGraphOptions,
+  nodeId: string
+): RuntimeTraceResume | null => {
+  const resumeByNodeId = options['resumeByNodeId'];
+  if (!resumeByNodeId || typeof resumeByNodeId !== 'object' || Array.isArray(resumeByNodeId)) {
+    return null;
+  }
+  const value = (resumeByNodeId as Record<string, unknown>)[nodeId];
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return value as RuntimeTraceResume;
 };
 
 const appendNodeHistoryEntry = (input: {
@@ -196,6 +193,8 @@ const appendNodeHistoryEntry = (input: {
   sideEffectPolicy?: 'per_run' | 'per_activation';
   sideEffectDecision?: string;
   idempotencyKey?: string | null;
+  effectSourceSpanId?: string | null;
+  resume?: RuntimeTraceResume | null;
   error?: string | null;
   durationMs?: number;
   runtimeTelemetry?: RuntimeNodeResolutionTelemetry | null;
@@ -222,6 +221,14 @@ const appendNodeHistoryEntry = (input: {
     sideEffectPolicy: input.sideEffectPolicy,
     sideEffectDecision: input.sideEffectDecision,
     idempotencyKey: input.idempotencyKey ?? null,
+    effectSourceSpanId: input.effectSourceSpanId ?? null,
+    resumeMode: input.resume?.mode,
+    resumeDecision: input.resume?.decision,
+    resumeReason: input.resume?.reason,
+    resumeSourceTraceId: input.resume?.sourceTraceId ?? null,
+    resumeSourceSpanId: input.resume?.sourceSpanId ?? null,
+    resumeSourceRunStartedAt: input.resume?.sourceRunStartedAt ?? null,
+    resumeSourceStatus: input.resume?.sourceStatus ?? null,
     error: input.error ?? undefined,
     inputsFrom: buildInputLinks(
       input.node.id,
@@ -265,12 +272,13 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
     node,
     rawInputs,
     triggerContext,
-    checkTriggerProvenance: internalCheckTriggerProvenance
+    checkTriggerProvenance: internalCheckTriggerProvenance,
   });
   const runtimeTelemetry = telemetryResolver.resolve(node.type);
   const activationHash = buildNodeInputHash(node, nodeInputs, {
     iteration,
   });
+  const resume = resolveNodeResume(options, node.id);
 
   // --- Cache Check Start ---
   const nodeHash = buildNodeHash(
@@ -316,9 +324,7 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
     }
 
     if (validCacheHit && cacheSource) {
-      const hasData = Object.keys(cacheSource).some(
-        (k) => k !== 'status' && k !== 'context'
-      );
+      const hasData = Object.keys(cacheSource).some((k) => k !== 'status' && k !== 'context');
       const expectsData = (node.outputs ?? []).length > 0;
       if (!hasData && expectsData) {
         validCacheHit = false;
@@ -328,9 +334,19 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
   }
 
   if (validCacheHit && cacheSource) {
-    const attempt = state.getNodeAttempt(node.id);
+    const attempt = state.reserveNodeAttempt(node.id);
     const spanId = buildSpanId(node.id, attempt, iteration);
     const out = cacheSource;
+    const effectSourceSpanId = isEffectNodeType
+      ? resolveSourceSpanId({
+        state,
+        options,
+        nodeId: node.id,
+        nodeHash,
+        activationHash,
+        preferSeedHistory: isSeedMatch,
+      })
+      : null;
     state.outputs[node.id] = cloneValue(out) ?? {};
 
     applyCachedNodeRuntimeStatus(state, node.id, out);
@@ -354,6 +370,8 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
       sideEffectPolicy,
       sideEffectDecision: isEffectNodeType ? 'skipped_duplicate' : undefined,
       idempotencyKey,
+      effectSourceSpanId,
+      resume,
       runtimeTelemetry,
     });
 
@@ -374,8 +392,9 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
         ...buildRuntimeTelemetryFields(runtimeTelemetry),
       });
     }
-    if (options['onNodeFinish'] && typeof options['onNodeFinish'] === 'function') {
-      await (options['onNodeFinish'] as Function)({
+    const onNodeFinish = options.onNodeFinish;
+    if (onNodeFinish) {
+      await onNodeFinish({
         runId: resolvedRunId,
         traceId: resolvedRunId,
         spanId,
@@ -393,16 +412,7 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
         sideEffectDecision: isEffectNodeType ? 'skipped_duplicate' : undefined,
         activationHash,
         idempotencyKey,
-        effectSourceSpanId: isEffectNodeType
-          ? resolveSourceSpanId({
-              state,
-              options,
-              nodeId: node.id,
-              nodeHash,
-              activationHash,
-              preferSeedHistory: isSeedMatch,
-            })
-          : null,
+        effectSourceSpanId,
         ...buildRuntimeTelemetryFields(runtimeTelemetry),
       });
     }
@@ -499,7 +509,10 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
       runId: resolvedRunId,
       runStartedAt: resolvedRunStartedAt,
       timeoutMs: resolveNodeTimeoutMs(node),
-      runMeta: (options['runMeta'] as Record<string, unknown> | undefined) ?? (options['meta'] as Record<string, unknown> | undefined) ?? {},
+      runMeta:
+        (options['runMeta'] as Record<string, unknown> | undefined) ??
+        (options['meta'] as Record<string, unknown> | undefined) ??
+        {},
       activePathId: options.pathId ?? null,
       iteration,
       attempt,
@@ -513,29 +526,35 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
       sideEffectDecision,
       sideEffectControl: sideEffectPolicy
         ? {
-            policy: sideEffectPolicy,
-            decision: sideEffectDecision === 'skipped_policy' ? 'skipped_policy' : 'executed',
-            activationHash,
-            idempotencyKey,
-          }
+          policy: sideEffectPolicy,
+          decision: sideEffectDecision === 'skipped_policy' ? 'skipped_policy' : 'executed',
+          activationHash,
+          idempotencyKey,
+        }
         : undefined,
       now: new Date().toISOString(),
       abortSignal: options.abortSignal,
       allOutputs: state.outputs,
       allInputs: state.inputs,
       fetchEntityCached:
-        options.fetchEntityCached ??
-        options.fetchEntityByType ??
-        (async () => null),
+        options.fetchEntityCached ?? options.fetchEntityByType ?? (async () => null),
       reportAiPathsError: options.reportAiPathsError,
       toast: (message, toastOptions) => {
         options.toast?.(message, toastOptions);
         if (options.onToast) {
-          void options.onToast({ runId: resolvedRunId, nodeId: node.id, message, options: toastOptions });
+          void options.onToast({
+            runId: resolvedRunId,
+            nodeId: node.id,
+            message,
+            options: toastOptions,
+          });
         }
       },
       simulationEntityType: (triggerContext?.['entityType'] as string) ?? null,
-      simulationEntityId: (triggerContext?.['entityId'] as string) ?? (triggerContext?.['productId'] as string) ?? null,
+      simulationEntityId:
+        (triggerContext?.['entityId'] as string) ??
+        (triggerContext?.['productId'] as string) ??
+        null,
       resolvedEntity: null,
       fallbackEntityId: null,
       strictFlowMode: Boolean(options.strictFlowMode),
@@ -564,18 +583,14 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
 
     const nodeResult = await withRetries(
       () =>
-        withTimeout(
-          Promise.resolve(handler(ctx)),
-          ctx.timeoutMs,
-          `Node ${node.title || node.id}`
-        ),
+        withTimeout(Promise.resolve(handler(ctx)), ctx.timeoutMs, `Node ${node.title || node.id}`),
       retryPolicy.enabled ? retryPolicy.attempts : 1,
       retryPolicy.backoffMs,
       `Node ${node.title || node.id}`,
       options.abortSignal
     );
 
-    const nextOutputs = (cloneValue(nodeResult) ?? {});
+    const nextOutputs = cloneValue(nodeResult) ?? {};
     const postExecuteValidation = await runRuntimeValidation({
       stage: 'node_post_execute',
       iteration,
@@ -648,6 +663,7 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
       sideEffectPolicy,
       sideEffectDecision,
       idempotencyKey,
+      resume,
       durationMs: nodeDurationMs,
       runtimeTelemetry,
     });
@@ -670,8 +686,9 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
       });
     }
 
-    if (options['onNodeFinish'] && typeof options['onNodeFinish'] === 'function') {
-      await (options['onNodeFinish'] as Function)({
+    const onNodeFinish = options.onNodeFinish;
+    if (onNodeFinish) {
+      await onNodeFinish({
         runId: resolvedRunId,
         traceId: resolvedRunId,
         spanId,
@@ -692,14 +709,16 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
       });
     }
 
-    if (options['onNodeSuccess'] && typeof options['onNodeSuccess'] === 'function') {
-      await (options['onNodeSuccess'] as Function)({
+    const onNodeSuccess = options.onNodeSuccess;
+    if (onNodeSuccess) {
+      await onNodeSuccess({
         runId: resolvedRunId,
         traceId: resolvedRunId,
         spanId,
         runStartedAt: resolvedRunStartedAt,
         node,
         nodeInputs,
+        prevOutputs,
         outputs: nextOutputs,
         iteration,
         attempt,
@@ -707,6 +726,7 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
         ...buildRuntimeTelemetryFields(runtimeTelemetry),
       });
     }
+
 
     // Dependency Propagation
     const outgoingEdges = outgoingEdgesByNode.get(node.id) ?? [];
@@ -748,8 +768,9 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
         waitingOnPorts: recoverableWaitState.waitingOnPorts,
       };
 
-      if (options['onNodeStatus'] && typeof options['onNodeStatus'] === 'function') {
-        void (options['onNodeStatus'] as Function)({
+      const onNodeStatus = options.onNodeStatus;
+      if (onNodeStatus) {
+        void onNodeStatus({
           runId: resolvedRunId,
           traceId: resolvedRunId,
           spanId,
@@ -829,6 +850,7 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
       sideEffectPolicy,
       sideEffectDecision: sideEffectPolicy ? 'failed' : undefined,
       idempotencyKey,
+      resume,
       error: graphError.message,
       durationMs: nodeDurationMs,
       runtimeTelemetry,
@@ -856,12 +878,9 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
     const shouldNotifyNodeError =
       !(graphError instanceof GraphExecutionError) ||
       !graphError.message.startsWith('No handler found for node type:');
-    if (
-      shouldNotifyNodeError &&
-      options['onNodeError'] &&
-      typeof options['onNodeError'] === 'function'
-    ) {
-      await (options['onNodeError'] as Function)({
+    const onNodeError = options.onNodeError;
+    if (shouldNotifyNodeError && onNodeError) {
+      await onNodeError({
         runId: resolvedRunId,
         traceId: resolvedRunId,
         spanId,

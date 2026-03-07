@@ -3,6 +3,7 @@ import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { useCaseListNodeRuntimeContext } from '@/features/case-resolver/components/list/sections/CaseListNodeRuntimeContext';
+import { useCaseListPanelControlsContext } from '@/features/case-resolver/components/list/CaseListPanelControlsContext';
 import { useCaseListSearchActionsContext } from '@/features/case-resolver/components/list/search';
 import { useCaseResolverTreeNodeRuntimeContext } from '@/features/case-resolver/components/CaseResolverTreeNodeRuntimeContext';
 import {
@@ -30,6 +31,8 @@ import {
   useDocumentRelationSearchActionsContext,
   useDocumentRelationSearchStateContext,
 } from '@/features/case-resolver/relation-search/context/DocumentRelationSearchContext';
+import { useDocumentRelationSearchRuntime } from '@/features/case-resolver/relation-search/components/DocumentRelationSearchRuntimeContext';
+import { useRelationTreeBrowserRuntime } from '@/features/case-resolver/relation-search/components/RelationTreeBrowserRuntimeContext';
 import { useRelationTreeNodeRuntimeContext } from '@/features/case-resolver/relation-search/components/RelationTreeNodeRuntimeContext';
 import { useDocumentRelationSearchUiContext } from '@/features/case-resolver/relation-search/components/DocumentRelationSearchUiContext';
 
@@ -48,13 +51,28 @@ function CaseListSearchActionsConsumer(): React.JSX.Element {
   return <div>ok</div>;
 }
 
+function CaseListPanelControlsConsumer(): React.JSX.Element {
+  useCaseListPanelControlsContext();
+  return <div>ok</div>;
+}
+
 function DocumentRelationSearchUiConsumer(): React.JSX.Element {
   useDocumentRelationSearchUiContext();
   return <div>ok</div>;
 }
 
+function DocumentRelationSearchRuntimeConsumer(): React.JSX.Element {
+  useDocumentRelationSearchRuntime();
+  return <div>ok</div>;
+}
+
 function RelationTreeNodeRuntimeConsumer(): React.JSX.Element {
   useRelationTreeNodeRuntimeContext();
+  return <div>ok</div>;
+}
+
+function RelationTreeBrowserRuntimeConsumer(): React.JSX.Element {
+  useRelationTreeBrowserRuntime();
   return <div>ok</div>;
 }
 
@@ -141,15 +159,33 @@ describe('prop-drilling runtime contexts', () => {
     );
   });
 
+  it('throws when CaseListPanelControls context is missing', () => {
+    expect(() => render(<CaseListPanelControlsConsumer />)).toThrow(
+      'useCaseListPanelControlsContext must be used within CaseListPanelControlsProvider'
+    );
+  });
+
   it('throws when DocumentRelationSearchUi context is missing', () => {
     expect(() => render(<DocumentRelationSearchUiConsumer />)).toThrow(
       'useDocumentRelationSearchUiContext must be used within a DocumentRelationSearchUiProvider'
     );
   });
 
+  it('throws when DocumentRelationSearchRuntime context is missing', () => {
+    expect(() => render(<DocumentRelationSearchRuntimeConsumer />)).toThrow(
+      'useDocumentRelationSearchRuntime must be used within DocumentRelationSearchRuntimeProvider'
+    );
+  });
+
   it('throws when RelationTreeNodeRuntime context is missing', () => {
     expect(() => render(<RelationTreeNodeRuntimeConsumer />)).toThrow(
       'useRelationTreeNodeRuntimeContext must be used within a RelationTreeNodeRuntimeProvider'
+    );
+  });
+
+  it('throws when RelationTreeBrowserRuntime context is missing', () => {
+    expect(() => render(<RelationTreeBrowserRuntimeConsumer />)).toThrow(
+      'useRelationTreeBrowserRuntime must be used within RelationTreeBrowserRuntimeProvider'
     );
   });
 

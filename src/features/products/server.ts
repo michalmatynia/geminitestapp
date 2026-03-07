@@ -9,6 +9,7 @@ export * from '@/shared/lib/products/services/tag-repository';
 export * from '@/shared/lib/products/services/validation-pattern-repository';
 export * from '@/shared/lib/products/services/product-migration';
 export * from '@/shared/lib/products/services/productService';
+export { CachedProductService } from './performance';
 export { ProductsImagesUploadPOST } from './api/routes/images-upload-route';
 
 // Infrastructure
@@ -35,3 +36,7 @@ export * from './performance';
 // Validations & Utils
 export * from '@/shared/lib/products/validations';
 export * from '@/shared/lib/products/utils';
+export {
+  validateAndNormalizeRuntimeConfig,
+  parseRuntimeConfigForEvaluation,
+} from './validations/validator-runtime-config';

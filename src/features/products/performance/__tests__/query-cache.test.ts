@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { QueryCache, stableStringify, withQueryCache } from '@/features/products/performance/query-cache';
+import {
+  QueryCache,
+  stableStringify,
+  withQueryCache,
+} from '@/features/products/performance/query-cache';
 
 // -----------------------------------------------------------------------
 // stableStringify
@@ -169,9 +173,7 @@ describe('withQueryCache — request deduplication', () => {
   });
 
   it('calls queryFn once per distinct key even when concurrent', async () => {
-    const queryFn = vi
-      .fn()
-      .mockImplementation((id: string) => Promise.resolve(`result-${id}`));
+    const queryFn = vi.fn().mockImplementation((id: string) => Promise.resolve(`result-${id}`));
     const cached = withQueryCache(queryFn, {
       keyGenerator: (id: string) => `key-${id}-${Math.random()}`,
       ttl: 60_000,

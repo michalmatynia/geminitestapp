@@ -147,8 +147,10 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
   const data = parsed.data;
   const { nodes, edges, ...rest } = data;
   const triggerContextRecord =
-    rest.triggerContext && typeof rest.triggerContext === 'object' && !Array.isArray(rest.triggerContext)
-      ? (rest.triggerContext)
+    rest.triggerContext &&
+    typeof rest.triggerContext === 'object' &&
+    !Array.isArray(rest.triggerContext)
+      ? rest.triggerContext
       : null;
   const requestContentLength = Number.parseInt(req.headers.get('content-length') ?? '', 10);
   let resolvedPathName = rest.pathName?.trim() || rest.pathId;

@@ -44,8 +44,15 @@ describe('KangurPracticeAssignmentBanner', () => {
     );
 
     expect(screen.getByText('Priorytet rodzica')).toBeInTheDocument();
+    expect(screen.getByText('Priorytet rodzica')).toHaveClass('border-amber-200', 'bg-amber-100');
     expect(screen.getByText('Najbliższy priorytet w praktyce: Dzielenie.')).toBeInTheDocument();
     expect(screen.getByText('Praktyka: Dzielenie')).toBeInTheDocument();
+    expect(screen.getByText('Priorytet wysoki')).toHaveClass('border-amber-200', 'bg-amber-100');
+    expect(screen.getByText('Postęp').parentElement).toHaveClass('soft-card', 'border-amber-300');
+    expect(screen.getByTestId('kangur-practice-assignment-progress-bar')).toHaveAttribute(
+      'aria-valuenow',
+      '0'
+    );
     expect(screen.getByRole('link', { name: 'Trenuj teraz' })).toHaveAttribute(
       'href',
       '/kangur/game?quickStart=operation&operation=division&difficulty=medium'
@@ -91,5 +98,10 @@ describe('KangurPracticeAssignmentBanner', () => {
       screen.getByText('Zadanie od rodzica zostało ukończone w tej sesji.')
     ).toBeInTheDocument();
     expect(screen.getByText('100%')).toBeInTheDocument();
+    expect(screen.getByText('100%')).toHaveClass('border-amber-200', 'bg-amber-100');
+    expect(screen.getByTestId('kangur-practice-assignment-progress-bar')).toHaveAttribute(
+      'aria-valuenow',
+      '100'
+    );
   });
 });

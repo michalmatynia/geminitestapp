@@ -1,5 +1,3 @@
- 
-
 import { Collection, Document, AnyBulkWriteOperation, UpdateFilter, Filter } from 'mongodb';
 import {
   buildProductIdFilter,
@@ -16,7 +14,10 @@ import type { ImageFile } from '@/shared/contracts/files';
 import { ProductDocument } from '../mongo-product-repository-mappers';
 
 export const mongoProductAssociationsImpl = {
-  async getProductImages(productId: string, getCollection: () => Promise<Collection<ProductDocument>>) {
+  async getProductImages(
+    productId: string,
+    getCollection: () => Promise<Collection<ProductDocument>>
+  ) {
     const collection = await getCollection();
     const doc = await collection.findOne(buildProductIdFilter(productId), {
       projection: {
@@ -59,9 +60,7 @@ export const mongoProductAssociationsImpl = {
       });
     });
 
-    const missingImageFileIds = parsedEntries
-      .filter((e) => !e.imageFile)
-      .map((e) => e.imageFileId);
+    const missingImageFileIds = parsedEntries.filter((e) => !e.imageFile).map((e) => e.imageFileId);
 
     if (missingImageFileIds.length > 0) {
       const imageFiles = await mongoImageFileRepository.findImageFilesByIds(missingImageFileIds);
@@ -87,7 +86,9 @@ export const mongoProductAssociationsImpl = {
     const normalizedIds = normalizeImageFileIds(imageFileIds);
     if (normalizedIds.length === 0) return;
 
-    const imageFiles = (await mongoImageFileRepository.findImageFilesByIds(normalizedIds)) as ImageFile[];
+    const imageFiles = (await mongoImageFileRepository.findImageFilesByIds(
+      normalizedIds
+    )) as ImageFile[];
     const now = new Date().toISOString();
 
     const newImages = imageFiles.map((file) => ({
@@ -113,7 +114,9 @@ export const mongoProductAssociationsImpl = {
   ) {
     const collection = await getCollection();
     const normalizedIds = normalizeImageFileIds(imageFileIds);
-    const imageFiles = (await mongoImageFileRepository.findImageFilesByIds(normalizedIds)) as ImageFile[];
+    const imageFiles = (await mongoImageFileRepository.findImageFilesByIds(
+      normalizedIds
+    )) as ImageFile[];
     const now = new Date().toISOString();
 
     const newImages = imageFiles.map((file) => ({
@@ -146,9 +149,14 @@ export const mongoProductAssociationsImpl = {
     } as UpdateFilter<ProductDocument>);
   },
 
-  async countProductsByImageFileId(imageFileId: string, getCollection: () => Promise<Collection<ProductDocument>>) {
+  async countProductsByImageFileId(
+    imageFileId: string,
+    getCollection: () => Promise<Collection<ProductDocument>>
+  ) {
     const collection = await getCollection();
-    return collection.countDocuments({ 'images.imageFileId': imageFileId } as Filter<ProductDocument>);
+    return collection.countDocuments({
+      'images.imageFileId': imageFileId,
+    } as Filter<ProductDocument>);
   },
 
   async replaceProductCatalogs(
@@ -192,7 +200,11 @@ export const mongoProductAssociationsImpl = {
     } as UpdateFilter<ProductDocument>);
   },
 
-  async replaceProductTags(productId: string, tagIds: string[], getCollection: () => Promise<Collection<ProductDocument>>) {
+  async replaceProductTags(
+    productId: string,
+    tagIds: string[],
+    getCollection: () => Promise<Collection<ProductDocument>>
+  ) {
     const collection = await getCollection();
     const db = await getMongoDb();
     const tags = await db

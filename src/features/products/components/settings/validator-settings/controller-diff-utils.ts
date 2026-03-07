@@ -134,8 +134,7 @@ export function buildPatternPayloadDiff(
     diff.replacementAutoApply = next.replacementAutoApply;
   }
   if (
-    (next.skipNoopReplacementProposal ?? true) !==
-    (existing.skipNoopReplacementProposal ?? true)
+    (next.skipNoopReplacementProposal ?? true) !== (existing.skipNoopReplacementProposal ?? true)
   ) {
     diff.skipNoopReplacementProposal = next.skipNoopReplacementProposal;
   }
@@ -181,8 +180,7 @@ export function buildPatternPayloadDiff(
     diff.launchScopeBehavior = next.launchScopeBehavior;
   }
   if (
-    (next.launchSourceMode ?? 'current_field') !==
-    (existing.launchSourceMode ?? 'current_field')
+    (next.launchSourceMode ?? 'current_field') !== (existing.launchSourceMode ?? 'current_field')
   ) {
     diff.launchSourceMode = next.launchSourceMode;
   }

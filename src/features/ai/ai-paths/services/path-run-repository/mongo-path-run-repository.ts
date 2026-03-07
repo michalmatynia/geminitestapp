@@ -860,7 +860,7 @@ export const mongoPathRunRepository: AiPathRunRepository = {
       });
     }
   },
-    
+
   async getRunByRequestId(pathId: string, requestId: string): Promise<AiPathRunRecord | null> {
     await ensureIndexes();
     const db = await getMongoDb();

@@ -1,42 +1,21 @@
 'use client';
 
-import React from 'react';
 import { Eye, XCircle, Trash2 } from 'lucide-react';
 import { Button } from '@/shared/ui';
+
+import { useJobTableActionsRuntime } from '../context/JobTableRuntimeContext';
 
 export interface JobActionsCellProps {
   jobId: string;
   status: string;
-  onViewDetails: (id: string) => void;
-  onCancel: (id: string) => void;
-  onDelete?: ((id: string) => void) | undefined;
-  isCancelling?: boolean | undefined;
-  isDeleting?: boolean | undefined;
 }
 
-export type JobActionsCellRuntimeValue = {
-  onDelete?: ((id: string) => void) | undefined;
-  isDeleting?: ((id: string) => boolean) | undefined;
-};
-
-export const JobActionsCellRuntimeContext = React.createContext<JobActionsCellRuntimeValue | null>(
-  null
-);
-
 export function JobActionsCell(props: JobActionsCellProps): React.JSX.Element {
-  const {
-    jobId,
-    status,
-    onViewDetails,
-    onCancel,
-    onDelete,
-    isCancelling = false,
-    isDeleting,
-  } = props;
-
-  const runtime = React.useContext(JobActionsCellRuntimeContext);
-  const resolvedOnDelete = onDelete ?? runtime?.onDelete;
-  const resolvedIsDeleting = isDeleting ?? runtime?.isDeleting?.(jobId) ?? false;
+  const { jobId, status } = props;
+  const { onViewDetails, onCancel, onDelete, isCancelling, isDeleting } =
+    useJobTableActionsRuntime();
+  const resolvedOnDelete = onDelete;
+  const resolvedIsDeleting = isDeleting?.(jobId) ?? false;
 
   return (
     <div className='flex justify-end gap-2'>
@@ -58,7 +37,7 @@ export function JobActionsCell(props: JobActionsCellProps): React.JSX.Element {
           size='icon'
           className='h-8 w-8 text-yellow-500 hover:text-yellow-400'
           onClick={() => onCancel(jobId)}
-          loading={isCancelling}
+          loading={isCancelling(jobId)}
           aria-label='Cancel job'
         >
           <XCircle className='h-4 w-4' />

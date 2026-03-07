@@ -11,6 +11,7 @@ const {
   useKangurRoutingMock,
   useKangurProgressStateMock,
   useKangurAssignmentsMock,
+  useKangurAuthMock,
   authMeMock,
   redirectToLoginMock,
   logoutMock,
@@ -18,6 +19,7 @@ const {
   useKangurRoutingMock: vi.fn(),
   useKangurProgressStateMock: vi.fn(),
   useKangurAssignmentsMock: vi.fn(),
+  useKangurAuthMock: vi.fn(),
   authMeMock: vi.fn(),
   redirectToLoginMock: vi.fn(),
   logoutMock: vi.fn(),
@@ -25,6 +27,7 @@ const {
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: useKangurRoutingMock,
+  useOptionalKangurRouting: () => null,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurProgressState', () => ({
@@ -33,6 +36,29 @@ vi.mock('@/features/kangur/ui/hooks/useKangurProgressState', () => ({
 
 vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
   useKangurAssignments: useKangurAssignmentsMock,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
+  useKangurAuth: useKangurAuthMock,
+}));
+
+vi.mock('@/features/kangur/docs/tooltips', () => ({
+  KangurDocsTooltipEnhancer: () => null,
+  useKangurDocsTooltips: () => ({
+    enabled: false,
+    helpSettings: {
+      version: 1,
+      docsTooltips: {
+        enabled: false,
+        homeEnabled: false,
+        lessonsEnabled: false,
+        testsEnabled: false,
+        profileEnabled: false,
+        parentDashboardEnabled: false,
+        adminEnabled: false,
+      },
+    },
+  }),
 }));
 
 vi.mock('@/features/kangur/services/kangur-platform', () => ({
@@ -44,6 +70,7 @@ vi.mock('@/features/kangur/services/kangur-platform', () => ({
     },
     score: {
       create: vi.fn().mockResolvedValue(undefined),
+      list: vi.fn().mockResolvedValue([]),
       top: vi.fn().mockResolvedValue([]),
     },
   }),
@@ -104,6 +131,13 @@ describe('Game delegated quick starts', () => {
       createAssignment: vi.fn(),
       updateAssignment: vi.fn(),
       refresh: vi.fn(),
+    });
+    useKangurAuthMock.mockReturnValue({
+      isAuthenticated: false,
+      isLoadingAuth: false,
+      logout: logoutMock,
+      navigateToLogin: redirectToLoginMock,
+      user: null,
     });
     authMeMock.mockResolvedValue(null);
     logoutMock.mockResolvedValue(undefined);

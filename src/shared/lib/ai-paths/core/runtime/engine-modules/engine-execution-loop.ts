@@ -1,21 +1,20 @@
 import { AiNode, Edge } from '@/shared/contracts/ai-paths';
+import type { RuntimeHistoryEntry } from '@/shared/contracts/ai-paths-runtime';
+import { cloneValue } from '../utils';
 import {
+  GraphExecutionError,
   type EvaluateGraphOptions,
   type RuntimeNodeResolutionTelemetry,
 } from './engine-types';
 import { EngineStateManager } from './engine-state-manager';
 import { deriveNodeInputs } from './engine-node-input-deriver';
+import { resolveBlockedNodeStatus, resolveDeclaredNodeStatus } from './engine-runtime-status';
 import {
-  resolveBlockedNodeStatus,
-  resolveDeclaredNodeStatus,
-} from './engine-runtime-status';
-import {
+  buildInputLinks,
   evaluateInputReadiness,
   resolveMissingInputStatus,
 } from './engine-utils';
-import {
-  buildRuntimeTelemetryFields,
-} from './engine-execution-telemetry';
+import { buildRuntimeTelemetryFields } from './engine-execution-telemetry';
 import { runNode } from './engine-execution-node';
 import { buildSpanId } from './engine-execution-context';
 
@@ -101,12 +100,16 @@ export const runExecutionLoop = async (args: RunExecutionLoopArgs): Promise<void
       if (!scopedNodeIds.has(node.id)) return false;
       if (state.finishedNodes.has(node.id) || state.errorNodes.has(node.id)) return false;
 
+      if (state.blockedNodes.has(node.id) && state.outputs[node.id]?.['status'] === 'blocked') {
+        return false;
+      }
+
       const rawInputs = state.inputs[node.id] ?? {};
       const nodeInputs = deriveNodeInputs({
         node,
         rawInputs,
         triggerContext,
-        checkTriggerProvenance: internalCheckTriggerProvenance
+        checkTriggerProvenance: internalCheckTriggerProvenance,
       });
       const runtimeTelemetry = telemetryResolver.resolve(node.type);
 
@@ -182,14 +185,54 @@ export const runExecutionLoop = async (args: RunExecutionLoopArgs): Promise<void
         if (statusChanged || messageChanged || waitingPortsChanged || waitingDetailsChanged) {
           const attempt = state.getNodeAttempt(node.id);
           const spanId = buildSpanId(node.id, attempt, iteration);
-          state.outputs[node.id] = {
-            ...state.outputs[node.id],
+          const blockedOutputs = {
             status: blockedStatus,
+            skipReason: 'missing_inputs',
+            blockedReason: 'missing_inputs',
             message,
+            requiredPorts: readiness.requiredPorts,
+            optionalPorts: readiness.optionalPorts,
             waitingOnPorts: readiness.waitingOnPorts,
             waitingOnDetails: readiness.waitingOnDetails,
           };
+          state.outputs[node.id] = {
+            ...blockedOutputs,
+          };
           state.blockedNodes.add(node.id);
+
+          if (options['recordHistory']) {
+            const entries = state.history.get(node.id) ?? [];
+            entries.push({
+              timestamp: new Date().toISOString(),
+              pathId: options.pathId ?? null,
+              pathName: options.pathName ?? null,
+              traceId: resolvedRunId,
+              spanId,
+              nodeId: node.id,
+              nodeType: node.type,
+              nodeTitle: node.title ?? null,
+              status: blockedStatus,
+              iteration,
+              attempt,
+              inputs: cloneValue(nodeInputs),
+              outputs: cloneValue(state.outputs[node.id] ?? {}),
+              inputHash: null,
+              skipReason: 'missing_inputs',
+              requiredPorts: readiness.requiredPorts,
+              optionalPorts: readiness.optionalPorts,
+              waitingOnPorts: readiness.waitingOnPorts,
+              inputsFrom: buildInputLinks(
+                node.id,
+                sanitizedEdges,
+                nodeById,
+                nodeInputs
+              ),
+              outputsTo: [],
+              durationMs: 0,
+              ...buildRuntimeTelemetryFields(runtimeTelemetry),
+            } as RuntimeHistoryEntry);
+            state.history.set(node.id, entries);
+          }
 
           if (options.profile?.onEvent) {
             options.profile.onEvent({
@@ -202,12 +245,18 @@ export const runExecutionLoop = async (args: RunExecutionLoopArgs): Promise<void
               status: 'skipped',
               durationMs: 0,
               reason: 'missing_inputs',
+              requiredPorts: readiness.requiredPorts,
+              optionalPorts: readiness.optionalPorts,
               waitingOnPorts: readiness.waitingOnPorts,
               ...buildRuntimeTelemetryFields(runtimeTelemetry),
             });
           }
 
-          if (options.onToast && statusChanged && (blockedStatus === 'blocked' || (blockedStatus as string) === 'failed')) {
+          if (
+            options.onToast &&
+            statusChanged &&
+            (blockedStatus === 'blocked' || (blockedStatus as string) === 'failed')
+          ) {
             void options.onToast({
               runId: resolvedRunId,
               nodeId: node.id,
@@ -216,8 +265,9 @@ export const runExecutionLoop = async (args: RunExecutionLoopArgs): Promise<void
             });
           }
 
-          if (options['onNodeStatus'] && typeof options['onNodeStatus'] === 'function') {
-            void (options['onNodeStatus'] as Function)({
+          const onNodeStatus = options.onNodeStatus;
+          if (onNodeStatus) {
+            void onNodeStatus({
               runId: resolvedRunId,
               traceId: resolvedRunId,
               spanId,
@@ -282,5 +332,9 @@ export const runExecutionLoop = async (args: RunExecutionLoopArgs): Promise<void
 
   if (iteration >= maxIterationsLimit) {
     await emitHalt('max_iterations');
+    throw new GraphExecutionError(
+      `Graph execution exceeded maximum iterations (${maxIterationsLimit}).`,
+      state.buildRuntimeStateSnapshot(state.inputs)
+    );
   }
 };

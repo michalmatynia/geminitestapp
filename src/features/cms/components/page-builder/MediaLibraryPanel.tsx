@@ -21,8 +21,10 @@ interface MediaLibraryPanelProps {
   selectionMode?: 'single' | 'multiple';
   autoConfirmSelection?: boolean;
   onFilesSelected?: (files: File[], helpers?: FileUploadHelpers) => void | Promise<void>;
+  title?: string;
   accept?: string;
   supportedFormatsLabel?: string;
+  uploadButtonLabel?: string;
   filepathFilter?: (filepath: string) => boolean;
   filterUploadFiles?: (files: File[]) => File[];
   invalidSelectionMessage?: string;
@@ -37,8 +39,10 @@ export function MediaLibraryPanel(props: MediaLibraryPanelProps): React.JSX.Elem
     selectionMode = 'single',
     autoConfirmSelection,
     onFilesSelected,
+    title = 'Media Library',
     accept = 'image/*',
     supportedFormatsLabel = 'images',
+    uploadButtonLabel = 'Upload images',
     filepathFilter,
     filterUploadFiles,
     invalidSelectionMessage = 'The selected file is not supported here.',
@@ -121,7 +125,7 @@ export function MediaLibraryPanel(props: MediaLibraryPanelProps): React.JSX.Elem
     <DetailModal
       isOpen={open}
       onClose={() => onOpenChange(false)}
-      title='Media Library'
+      title={title}
       size='xl'
       padding='none'
     >
@@ -139,7 +143,7 @@ export function MediaLibraryPanel(props: MediaLibraryPanelProps): React.JSX.Elem
               }
             >
               <Upload className='mr-2 size-4' />
-              {uploadMutation.isPending ? 'Uploading...' : 'Upload images'}
+              {uploadMutation.isPending ? 'Uploading...' : uploadButtonLabel}
             </FileUploadButton>
             <p className='text-xs text-gray-500'>Supported formats: {supportedFormatsLabel}</p>
           </div>

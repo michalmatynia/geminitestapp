@@ -3,11 +3,7 @@
 import { Trash2 } from 'lucide-react';
 import React from 'react';
 
-import {
-  getSectionContainerClass,
-  getSectionStyles,
-  getTextAlign,
-} from '@/features/cms/public';
+import { getSectionContainerClass, getSectionStyles, getTextAlign } from '@/features/cms/public';
 import { useCmsPageContext } from '@/features/cms/components/frontend/CmsPageContext';
 import { useMediaStyles } from '@/features/cms/components/frontend/media-styles-context';
 import { BlockContextProvider } from '@/features/cms/components/page-builder/preview/context/BlockContext';

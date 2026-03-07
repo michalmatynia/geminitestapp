@@ -1,4 +1,3 @@
-
 import { AuthProvider } from '@/features/auth/';
 import { QueryErrorBoundary } from '@/shared/ui/QueryErrorBoundary';
 

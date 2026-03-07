@@ -63,10 +63,7 @@ describe('parseKangurTestSuites', () => {
   });
 
   it('skips entries that fail schema validation', () => {
-    const raw = JSON.stringify([
-      makeSuite({ id: 's1' }),
-      'not-an-object',
-    ]);
+    const raw = JSON.stringify([makeSuite({ id: 's1' }), 'not-an-object']);
     const result = parseKangurTestSuites(raw);
     // kangurTestSuitesSchema uses z.array, so if any item is wrong it fails the whole parse
     // The result could be either 0 (strict parse) or 1 (if zod strips bad items)

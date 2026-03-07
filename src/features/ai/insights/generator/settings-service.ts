@@ -7,8 +7,7 @@
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-
-type SettingDoc = { key?: string; value?: string; _id?: string };
+import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 
 const canUsePrismaSettings = (): boolean =>
   Boolean(process.env['DATABASE_URL']) && 'setting' in (prisma as any);
@@ -26,7 +25,7 @@ const readMongoSettingValue = async (key: string): Promise<string | null> => {
   if (!process.env['MONGODB_URI']) return null;
   const mongo = await getMongoDb();
   const doc = await mongo
-    .collection<SettingDoc>('settings')
+    .collection<MongoStringSettingRecord>('settings')
     .findOne({ $or: [{ _id: key }, { key }] });
   return typeof doc?.value === 'string' ? doc.value : null;
 };

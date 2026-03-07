@@ -1,6 +1,7 @@
 'use client';
 
 import type {
+  ImageStudioModelsResponse,
   ImageStudioProjectRecord,
   StudioProjectsResponse,
   StudioSlotsResponse,
@@ -11,12 +12,6 @@ import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-facto
 import { studioKeys } from '@/shared/lib/query-key-exports';
 
 export { studioKeys };
-
-export type StudioImageModelsResponse = {
-  models?: string[];
-  source?: 'openai' | 'fallback';
-  warning?: string;
-};
 
 const normalizeProjectRecord = (entry: unknown): ImageStudioProjectRecord | null => {
   const normalizeCanvasDimension = (value: unknown): number | null => {
@@ -123,10 +118,10 @@ export function useStudioSlots(projectId: string): SingleQuery<StudioSlotsRespon
   });
 }
 
-export function useStudioImageModels(): SingleQuery<StudioImageModelsResponse> {
+export function useStudioImageModels(): SingleQuery<ImageStudioModelsResponse> {
   const queryKey = studioKeys.models();
-  const queryFn = async (): Promise<StudioImageModelsResponse> =>
-    api.get<StudioImageModelsResponse>('/api/image-studio/models');
+  const queryFn = async (): Promise<ImageStudioModelsResponse> =>
+    api.get<ImageStudioModelsResponse>('/api/image-studio/models');
 
   return createSingleQueryV2({
     id: 'models',

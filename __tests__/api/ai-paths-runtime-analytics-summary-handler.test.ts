@@ -9,9 +9,6 @@ const startAiInsightsQueueMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/features/ai/ai-paths/server', () => ({
   requireAiPathsAccess: requireAiPathsAccessMock,
-}));
-
-vi.mock('@/features/ai/ai-paths/services/runtime-analytics-service', () => ({
   getRuntimeAnalyticsSummary: getRuntimeAnalyticsSummaryMock,
   resolveRuntimeAnalyticsRangeWindow: resolveRuntimeAnalyticsRangeWindowMock,
 }));

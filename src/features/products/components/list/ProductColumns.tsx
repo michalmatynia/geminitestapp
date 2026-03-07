@@ -354,9 +354,7 @@ const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(functio
         location='product_row'
         entityType='product'
         entityId={product.id}
-        getEntityJson={(): Record<string, unknown> =>
-          product as unknown as Record<string, unknown>
-        }
+        getEntityJson={(): Record<string, unknown> => product as unknown as Record<string, unknown>}
         className='[&_button]:h-8 [&_button]:px-2 [&_button]:text-[10px] [&_button]:font-black [&_button]:uppercase [&_button]:tracking-tight'
       />
       {showTraderaBadge && (
@@ -436,9 +434,7 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
         </Button>
       );
     },
-    cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => (
-      <PriceCell row={row} />
-    ),
+    cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => <PriceCell row={row} />,
   },
 
   {
@@ -449,9 +445,7 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
         <ArrowUpDown className='ml-2 size-4' />
       </Button>
     ),
-    cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => (
-      <StockCell row={row} />
-    ),
+    cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => <StockCell row={row} />,
   },
 
   {

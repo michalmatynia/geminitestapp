@@ -335,7 +335,9 @@ export function useAiPathTrigger(): {
                 ? 'enqueue_request_timeout'
                 : null;
           toast(
-            timeoutCode ? `AI Path run request timed out (${timeoutCode}). Please retry.` : errorMsg,
+            timeoutCode
+              ? `AI Path run request timed out (${timeoutCode}). Please retry.`
+              : errorMsg,
             { variant: 'error' }
           );
           logClientError(new Error(errorMsg), {

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 
+import { internalError } from '@/shared/errors/app-error';
 import { Checkbox, FormModal } from '@/shared/ui';
 
 import { useBrain } from '../context/BrainContext';
@@ -10,6 +11,10 @@ import {
   type AiBrainAssignment,
   type AiBrainCapabilityKey,
 } from '../settings';
+import {
+  useOptionalBrainRoutingActionsContext,
+  useOptionalBrainRoutingStateContext,
+} from './BrainRoutingContext';
 import { AssignmentEditor } from './AssignmentEditor';
 
 type BrainRoutingEditModalState = {
@@ -18,13 +23,17 @@ type BrainRoutingEditModalState = {
 };
 
 export interface BrainRoutingEditModalProps {
-  open: boolean;
-  capability: AiBrainCapabilityKey | null;
-  onClose: () => void;
+  open?: boolean;
+  capability?: AiBrainCapabilityKey | null;
+  onClose?: () => void;
 }
 
 export function BrainRoutingEditModal(props: BrainRoutingEditModalProps): React.JSX.Element | null {
-  const { open, capability, onClose } = props;
+  const stateContext = useOptionalBrainRoutingStateContext();
+  const actionsContext = useOptionalBrainRoutingActionsContext();
+  const open = props.open ?? Boolean(stateContext?.editingCapability);
+  const capability = props.capability ?? stateContext?.editingCapability ?? null;
+  const onClose = props.onClose ?? actionsContext?.onCloseEdit;
 
   const {
     settings,
@@ -55,6 +64,11 @@ export function BrainRoutingEditModal(props: BrainRoutingEditModalProps): React.
   }, [capability, effectiveCapabilityAssignments, open, settings.capabilities]);
 
   if (!open || !capability || !capabilityDefinition || !state) return null;
+  if (!onClose) {
+    throw internalError(
+      'BrainRoutingEditModal must be used within BrainRoutingProvider or receive explicit modal props'
+    );
+  }
 
   const sourceLabel = settings.capabilities[capability]
     ? 'Capability override'

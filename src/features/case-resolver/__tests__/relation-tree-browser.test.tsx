@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { NodeFileDocumentSearchRow } from '@/features/case-resolver/components/CaseResolverNodeFileUtils';
 import { RelationTreeBrowser } from '@/features/case-resolver/relation-search/components/RelationTreeBrowser';
+import { RelationTreeBrowserRuntimeContext } from '@/features/case-resolver/relation-search/components/RelationTreeBrowserRuntimeContext';
 import { buildRelationMasterTree } from '@/features/case-resolver/relation-search/tree/relation-master-tree';
 
 const logCaseResolverWorkspaceEventMock = vi.fn();
@@ -249,5 +250,38 @@ describe('RelationTreeBrowser', () => {
     const linkButton = screen.getByLabelText('Link Doc 9');
     fireEvent.click(linkButton);
     expect(onLinkFile).toHaveBeenCalledWith('file-9');
+  });
+
+  it('supports the shared browser runtime context path when explicit props are omitted', () => {
+    const rows = [
+      createRow({ fileId: 'file-8', name: 'Doc 8', caseId: 'case-8', signature: 'SIG/8' }),
+    ];
+    const relationTree = buildRelationMasterTree({ rows });
+    const onToggleFileSelection = vi.fn();
+    const onLinkFile = vi.fn();
+
+    render(
+      <RelationTreeBrowserRuntimeContext.Provider
+        value={{
+          instance: 'case_resolver_document_relations',
+          nodes: relationTree.nodes,
+          lookup: relationTree.lookup,
+          selectedFileIds: new Set<string>(),
+          onToggleFileSelection,
+          onLinkFile,
+          searchQuery: '',
+        }}
+      >
+        <RelationTreeBrowser mode='link_relations' />
+      </RelationTreeBrowserRuntimeContext.Provider>
+    );
+
+    expandVisibleNodes();
+
+    fireEvent.click(screen.getByLabelText('Select Doc 8'));
+    expect(onToggleFileSelection).toHaveBeenCalledWith('file-8');
+
+    fireEvent.click(screen.getByLabelText('Link Doc 8'));
+    expect(onLinkFile).toHaveBeenCalledWith('file-8');
   });
 });

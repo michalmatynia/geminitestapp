@@ -4,8 +4,17 @@ import type { DropResult } from '@hello-pangea/dnd';
 import { AnimatePresence, motion } from 'framer-motion';
 import { RefreshCw } from 'lucide-react';
 
-import { KangurButton } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_ACCENT_STYLES } from '@/features/kangur/ui/design/tokens';
+import {
+  KangurButton,
+  KangurInfoCard,
+  KangurPanel,
+  KangurProgressBar,
+  KangurStatusChip,
+} from '@/features/kangur/ui/design/primitives';
+import {
+  KANGUR_ACCENT_STYLES,
+  type KangurAccent,
+} from '@/features/kangur/ui/design/tokens';
 import {
   addXp,
   createLessonPracticeReward,
@@ -77,6 +86,14 @@ type BallProps = {
   small?: boolean;
 };
 
+type SurfaceTone = 'neutral' | 'accent';
+
+type SurfaceCardState = {
+  accent: KangurAccent;
+  className: string;
+  tone: SurfaceTone;
+};
+
 const BALL_COLORS = [
   'bg-red-400',
   'bg-blue-400',
@@ -93,9 +110,9 @@ const BALL_COLORS = [
 const MODES: RoundMode[] = ['complete_equation', 'group_sum', 'pick_answer'];
 const TOTAL_ROUNDS = 6;
 const BALL_POOL_CLASSNAME =
-  'soft-card flex min-h-[60px] w-full max-w-xs flex-wrap justify-center gap-2 rounded-[24px] border border-slate-200/80 bg-white/92 p-3 shadow-[0_18px_42px_-36px_rgba(15,23,42,0.22)]';
+  'flex min-h-[60px] w-full max-w-xs flex-wrap justify-center gap-2 rounded-[24px] shadow-[0_18px_42px_-36px_rgba(15,23,42,0.22)]';
 
-const getRectDropZoneClassName = ({
+const getRectDropZoneSurface = ({
   isDraggingOver,
   checked,
   correct,
@@ -103,23 +120,34 @@ const getRectDropZoneClassName = ({
   isDraggingOver: boolean;
   checked: boolean;
   correct: boolean;
-}): string =>
-  cn(
-    'soft-card flex flex-wrap gap-1 rounded-[22px] border p-2 transition-all',
-    checked
-      ? correct
-        ? cn(KANGUR_ACCENT_STYLES.emerald.activeCard, KANGUR_ACCENT_STYLES.emerald.activeText)
-        : cn(KANGUR_ACCENT_STYLES.rose.activeCard, KANGUR_ACCENT_STYLES.rose.activeText)
-      : isDraggingOver
-        ? cn(
-            KANGUR_ACCENT_STYLES.amber.activeCard,
-            KANGUR_ACCENT_STYLES.amber.activeText,
-            'scale-[1.02]'
-          )
-        : cn('border-slate-200/80 bg-white/95', KANGUR_ACCENT_STYLES.amber.hoverCard)
-  );
+}): SurfaceCardState => {
+  if (checked) {
+    return {
+      accent: correct ? 'emerald' : 'rose',
+      className: 'flex flex-wrap gap-1 rounded-[22px] p-2 transition-all',
+      tone: 'accent',
+    };
+  }
 
-const getAnswerSlotClassName = ({
+  if (isDraggingOver) {
+    return {
+      accent: 'amber',
+      className: 'flex flex-wrap gap-1 rounded-[22px] p-2 transition-all scale-[1.02]',
+      tone: 'accent',
+    };
+  }
+
+  return {
+    accent: 'amber',
+    className: cn(
+      'flex flex-wrap gap-1 rounded-[22px] p-2 transition-all',
+      KANGUR_ACCENT_STYLES.amber.hoverCard
+    ),
+    tone: 'neutral',
+  };
+};
+
+const getAnswerSlotSurface = ({
   isDraggingOver,
   checked,
   correct,
@@ -127,21 +155,34 @@ const getAnswerSlotClassName = ({
   isDraggingOver: boolean;
   checked: boolean;
   correct: boolean;
-}): string =>
-  cn(
-    'soft-card flex h-24 w-24 items-center justify-center rounded-full border-2 transition-all',
-    checked
-      ? correct
-        ? cn(KANGUR_ACCENT_STYLES.emerald.activeCard, KANGUR_ACCENT_STYLES.emerald.activeText)
-        : cn(KANGUR_ACCENT_STYLES.rose.activeCard, KANGUR_ACCENT_STYLES.rose.activeText)
-      : isDraggingOver
-        ? cn(
-            KANGUR_ACCENT_STYLES.amber.activeCard,
-            KANGUR_ACCENT_STYLES.amber.activeText,
-            'scale-110'
-          )
-        : cn('border-slate-200/80 bg-white/95', KANGUR_ACCENT_STYLES.amber.hoverCard)
-  );
+}): SurfaceCardState => {
+  if (checked) {
+    return {
+      accent: correct ? 'emerald' : 'rose',
+      className:
+        'flex h-24 w-24 items-center justify-center rounded-full border-2 p-0 text-center transition-all',
+      tone: 'accent',
+    };
+  }
+
+  if (isDraggingOver) {
+    return {
+      accent: 'amber',
+      className:
+        'flex h-24 w-24 items-center justify-center rounded-full border-2 p-0 text-center transition-all scale-110',
+      tone: 'accent',
+    };
+  }
+
+  return {
+    accent: 'amber',
+    className: cn(
+      'flex h-24 w-24 items-center justify-center rounded-full border-2 p-0 text-center transition-all',
+      KANGUR_ACCENT_STYLES.amber.hoverCard
+    ),
+    tone: 'neutral',
+  };
+};
 
 function createBalls(count: number): BallItem[] {
   return Array.from({ length: count }, (_, i) => ({
@@ -307,11 +348,14 @@ function CompleteEquation({
 
         <Droppable droppableId='pool' direction='horizontal'>
           {(provided) => (
-            <div
+            <KangurInfoCard
               ref={provided.innerRef}
-              {...provided.droppableProps}
+              accent='slate'
               className={BALL_POOL_CLASSNAME}
               data-testid='adding-ball-pool'
+              padding='sm'
+              tone='neutral'
+              {...provided.droppableProps}
             >
               {state.pool.map((ball, i) => (
                 <Draggable key={ball.id} draggableId={ball.id} index={i} isDragDisabled={checked}>
@@ -327,7 +371,7 @@ function CompleteEquation({
                 </Draggable>
               ))}
               {provided.placeholder}
-            </div>
+            </KangurInfoCard>
           )}
         </Droppable>
 
@@ -358,39 +402,43 @@ function CompleteEquation({
 function SlotZone({ id, items, label, checked, correct }: SlotZoneProps): React.JSX.Element {
   return (
     <Droppable droppableId={id} direction='horizontal'>
-      {(provided, snapshot) => (
-        <div>
-          <p className='text-xs text-gray-400 text-center mb-1'>{label}</p>
-          <div
-            ref={provided.innerRef}
-            {...provided.droppableProps}
-            className={cn(
-              getRectDropZoneClassName({
-                isDraggingOver: snapshot.isDraggingOver,
-                checked,
-                correct,
-              }),
-              'min-h-[52px] min-w-[60px]'
-            )}
-            data-testid={`adding-ball-${id}`}
-          >
-            {items.map((ball, i) => (
-              <Draggable key={ball.id} draggableId={ball.id} index={i} isDragDisabled={checked}>
-                {(draggableProvided) => (
-                  <div
-                    ref={draggableProvided.innerRef}
-                    {...draggableProvided.draggableProps}
-                    {...draggableProvided.dragHandleProps}
-                  >
-                    <Ball ball={ball} small />
-                  </div>
-                )}
-              </Draggable>
-            ))}
-            {provided.placeholder}
+      {(provided, snapshot) => {
+        const surface = getRectDropZoneSurface({
+          isDraggingOver: snapshot.isDraggingOver,
+          checked,
+          correct,
+        });
+
+        return (
+          <div>
+            <p className='text-xs text-gray-400 text-center mb-1'>{label}</p>
+            <KangurInfoCard
+              ref={provided.innerRef}
+              accent={surface.accent}
+              className={cn(surface.className, 'min-h-[52px] min-w-[60px]')}
+              data-testid={`adding-ball-${id}`}
+              padding='sm'
+              tone={surface.tone}
+              {...provided.droppableProps}
+            >
+              {items.map((ball, i) => (
+                <Draggable key={ball.id} draggableId={ball.id} index={i} isDragDisabled={checked}>
+                  {(draggableProvided) => (
+                    <div
+                      ref={draggableProvided.innerRef}
+                      {...draggableProvided.draggableProps}
+                      {...draggableProvided.dragHandleProps}
+                    >
+                      <Ball ball={ball} small />
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
+            </KangurInfoCard>
           </div>
-        </div>
-      )}
+        );
+      }}
     </Droppable>
   );
 }
@@ -474,55 +522,62 @@ function GroupSum({
             ] as const
           ).map((group) => (
             <Droppable key={group.id} droppableId={group.id} direction='horizontal'>
-              {(provided, snapshot) => (
-                <div>
-                  <p className='text-xs text-gray-400 text-center mb-1'>{group.label}</p>
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.droppableProps}
-                    className={cn(
-                      getRectDropZoneClassName({
-                        isDraggingOver: snapshot.isDraggingOver,
-                        checked,
-                        correct,
-                      }),
-                      'min-h-[52px] min-w-[80px]'
-                    )}
-                    data-testid={`adding-ball-${group.id}`}
-                  >
-                    {state[group.id].map((ball, i) => (
-                      <Draggable
-                        key={ball.id}
-                        draggableId={ball.id}
-                        index={i}
-                        isDragDisabled={checked}
-                      >
-                        {(draggableProvided) => (
-                          <div
-                            ref={draggableProvided.innerRef}
-                            {...draggableProvided.draggableProps}
-                            {...draggableProvided.dragHandleProps}
-                          >
-                            <Ball ball={ball} small />
-                          </div>
-                        )}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
+              {(provided, snapshot) => {
+                const surface = getRectDropZoneSurface({
+                  isDraggingOver: snapshot.isDraggingOver,
+                  checked,
+                  correct,
+                });
+
+                return (
+                  <div>
+                    <p className='text-xs text-gray-400 text-center mb-1'>{group.label}</p>
+                    <KangurInfoCard
+                      ref={provided.innerRef}
+                      accent={surface.accent}
+                      className={cn(surface.className, 'min-h-[52px] min-w-[80px]')}
+                      data-testid={`adding-ball-${group.id}`}
+                      padding='sm'
+                      tone={surface.tone}
+                      {...provided.droppableProps}
+                    >
+                      {state[group.id].map((ball, i) => (
+                        <Draggable
+                          key={ball.id}
+                          draggableId={ball.id}
+                          index={i}
+                          isDragDisabled={checked}
+                        >
+                          {(draggableProvided) => (
+                            <div
+                              ref={draggableProvided.innerRef}
+                              {...draggableProvided.draggableProps}
+                              {...draggableProvided.dragHandleProps}
+                            >
+                              <Ball ball={ball} small />
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </KangurInfoCard>
                   </div>
-                </div>
-              )}
+                );
+              }}
             </Droppable>
           ))}
         </div>
 
         <Droppable droppableId='pool' direction='horizontal'>
           {(provided) => (
-            <div
+            <KangurInfoCard
               ref={provided.innerRef}
-              {...provided.droppableProps}
+              accent='slate'
               className={BALL_POOL_CLASSNAME}
               data-testid='adding-ball-pool'
+              padding='sm'
+              tone='neutral'
+              {...provided.droppableProps}
             >
               {state.pool.map((ball, i) => (
                 <Draggable key={ball.id} draggableId={ball.id} index={i} isDragDisabled={checked}>
@@ -538,7 +593,7 @@ function GroupSum({
                 </Draggable>
               ))}
               {provided.placeholder}
-            </div>
+            </KangurInfoCard>
           )}
         </Droppable>
 
@@ -606,29 +661,36 @@ function PickAnswer({
         </p>
 
         <Droppable droppableId='answer-slot'>
-          {(provided, snapshot) => (
-            <div
-              ref={provided.innerRef}
-              {...provided.droppableProps}
-              className={getAnswerSlotClassName({
-                isDraggingOver: snapshot.isDraggingOver,
-                checked,
-                correct: dropped?.num === round.correct,
-              })}
-              data-testid='adding-ball-answer-slot'
-            >
-              {dropped ? (
-                <div
-                  className={`w-16 h-16 rounded-full ${dropped.color} flex items-center justify-center`}
-                >
-                  <span className='text-white font-extrabold text-xl'>{dropped.num}</span>
-                </div>
-              ) : (
-                <span className='text-gray-300 text-3xl'>?</span>
-              )}
-              {provided.placeholder}
-            </div>
-          )}
+          {(provided, snapshot) => {
+            const surface = getAnswerSlotSurface({
+              isDraggingOver: snapshot.isDraggingOver,
+              checked,
+              correct: dropped?.num === round.correct,
+            });
+
+            return (
+              <KangurInfoCard
+                ref={provided.innerRef}
+                accent={surface.accent}
+                className={surface.className}
+                data-testid='adding-ball-answer-slot'
+                padding='sm'
+                tone={surface.tone}
+                {...provided.droppableProps}
+              >
+                {dropped ? (
+                  <div
+                    className={`w-16 h-16 rounded-full ${dropped.color} flex items-center justify-center`}
+                  >
+                    <span className='text-white font-extrabold text-xl'>{dropped.num}</span>
+                  </div>
+                ) : (
+                  <span className='text-gray-300 text-3xl'>?</span>
+                )}
+                {provided.placeholder}
+              </KangurInfoCard>
+            );
+          }}
         </Droppable>
 
         {checked && (
@@ -643,11 +705,14 @@ function PickAnswer({
 
         <Droppable droppableId='balls-pool' direction='horizontal'>
           {(provided) => (
-            <div
+            <KangurInfoCard
               ref={provided.innerRef}
-              {...provided.droppableProps}
+              accent='slate'
               className={cn(BALL_POOL_CLASSNAME, 'gap-3')}
               data-testid='adding-ball-balls-pool'
+              padding='sm'
+              tone='neutral'
+              {...provided.droppableProps}
             >
               {balls.map((ball, i) => (
                 <Draggable key={ball.id} draggableId={ball.id} index={i} isDragDisabled={checked}>
@@ -663,7 +728,7 @@ function PickAnswer({
                 </Draggable>
               ))}
               {provided.placeholder}
-            </div>
+            </KangurInfoCard>
           )}
         </Droppable>
       </div>
@@ -714,51 +779,51 @@ export default function AddingBallGame({ onFinish }: AddingBallGameProps): React
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className='flex flex-col items-center gap-4 bg-white rounded-3xl shadow-xl p-8 text-center w-full max-w-sm'
+        className='w-full max-w-sm'
       >
-        <div className='text-6xl'>{percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}</div>
-        <h2 className='text-2xl font-extrabold text-gray-800'>
-          Wynik: {score}/{TOTAL_ROUNDS}
-        </h2>
-        {xpEarned > 0 && (
-          <div className='bg-indigo-100 text-indigo-700 font-bold px-4 py-2 rounded-full text-sm'>
-            +{xpEarned} XP ✨
+        <KangurPanel
+          className='flex flex-col items-center gap-4 text-center'
+          data-testid='adding-ball-summary-shell'
+          padding='xl'
+          variant='elevated'
+        >
+          <div className='text-6xl'>{percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}</div>
+          <h2 className='text-2xl font-extrabold text-gray-800'>
+            Wynik: {score}/{TOTAL_ROUNDS}
+          </h2>
+          {xpEarned > 0 && (
+            <KangurStatusChip accent='indigo' className='px-4 py-2 text-sm font-bold'>
+              +{xpEarned} XP ✨
+            </KangurStatusChip>
+          )}
+          <KangurProgressBar accent='amber' animated size='md' value={percent} />
+          <p className='text-gray-500'>
+            {percent === 100
+              ? 'Idealnie! Jesteś mistrzem dodawania!'
+              : percent >= 60
+                ? 'Świetna robota!'
+                : 'Nie poddawaj się!'}
+          </p>
+          <div className='flex gap-3 w-full'>
+            <KangurButton
+              className='flex-1'
+              onClick={() => {
+                setRoundIdx(0);
+                setScore(0);
+                setDone(false);
+                setXpEarned(0);
+                setRound(generateRound(MODES[0] ?? 'complete_equation'));
+              }}
+              size='lg'
+              variant='secondary'
+            >
+              <RefreshCw className='w-4 h-4' /> Jeszcze raz
+            </KangurButton>
+            <KangurButton className='flex-1' onClick={onFinish} size='lg' variant='primary'>
+              Wróć do lekcji
+            </KangurButton>
           </div>
-        )}
-        <div className='w-full bg-gray-100 rounded-full h-3'>
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${percent}%` }}
-            transition={{ duration: 0.8 }}
-            className='h-full bg-gradient-to-r from-orange-400 to-yellow-400 rounded-full'
-          />
-        </div>
-        <p className='text-gray-500'>
-          {percent === 100
-            ? 'Idealnie! Jesteś mistrzem dodawania!'
-            : percent >= 60
-              ? 'Świetna robota!'
-              : 'Nie poddawaj się!'}
-        </p>
-        <div className='flex gap-3 w-full'>
-          <KangurButton
-            className='flex-1'
-            onClick={() => {
-              setRoundIdx(0);
-              setScore(0);
-              setDone(false);
-              setXpEarned(0);
-              setRound(generateRound(MODES[0] ?? 'complete_equation'));
-            }}
-            size='lg'
-            variant='secondary'
-          >
-            <RefreshCw className='w-4 h-4' /> Jeszcze raz
-          </KangurButton>
-          <KangurButton className='flex-1' onClick={onFinish} size='lg' variant='primary'>
-            Wróć do lekcji
-          </KangurButton>
-        </div>
+        </KangurPanel>
       </motion.div>
     );
   }
@@ -773,18 +838,24 @@ export default function AddingBallGame({ onFinish }: AddingBallGameProps): React
   return (
     <div className='flex flex-col items-center gap-4 w-full max-w-sm'>
       <div className='flex items-center gap-2 w-full'>
-        <div className='flex-1 h-2 bg-gray-100 rounded-full overflow-hidden'>
-          <div
-            style={{ width: `${(roundIdx / TOTAL_ROUNDS) * 100}%` }}
-            className='h-full bg-gradient-to-r from-orange-400 to-yellow-400 rounded-full transition-all duration-500'
-          />
-        </div>
+        <KangurProgressBar
+          accent='amber'
+          className='flex-1'
+          data-testid='adding-ball-progress-bar'
+          size='sm'
+          value={(roundIdx / TOTAL_ROUNDS) * 100}
+        />
         <span className='text-xs font-bold text-gray-400'>
           {roundIdx + 1}/{TOTAL_ROUNDS}
         </span>
       </div>
 
-      <div className='w-full bg-white rounded-2xl shadow p-5'>
+      <KangurInfoCard
+        className='w-full rounded-[24px]'
+        data-testid='adding-ball-round-shell'
+        padding='lg'
+        tone='neutral'
+      >
         <p className='text-xs font-bold text-orange-500 uppercase tracking-wide mb-3'>
           {modeLabel}
         </p>
@@ -802,7 +873,7 @@ export default function AddingBallGame({ onFinish }: AddingBallGameProps): React
             {round.mode === 'pick_answer' && <PickAnswer round={round} onResult={handleResult} />}
           </motion.div>
         </AnimatePresence>
-      </div>
+      </KangurInfoCard>
     </div>
   );
 }

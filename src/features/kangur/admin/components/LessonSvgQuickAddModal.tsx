@@ -2,33 +2,14 @@
 
 import React, { useEffect, useState } from 'react';
 
-import type { KangurLesson } from '@/shared/contracts/kangur';
+import { useLessonSvgQuickAddRuntimeContext } from '@/features/kangur/admin/context/LessonSvgQuickAddRuntimeContext';
 import { FormModal } from '@/shared/ui';
 
 import { SvgCodeEditor, extractSvgViewBox } from './SvgCodeEditor';
 
-type Props = {
-  lesson: KangurLesson | null;
-  /** Pre-filled SVG markup from the existing first SVG block (empty string if none). */
-  initialMarkup: string;
-  isOpen: boolean;
-  onClose: () => void;
-  /**
-   * Called with the current markup and the auto-detected (or default) viewBox.
-   * The parent is responsible for persisting the change.
-   */
-  onSave: (markup: string, viewBox: string) => void;
-  isSaving: boolean;
-};
-
-export function LessonSvgQuickAddModal({
-  lesson,
-  initialMarkup,
-  isOpen,
-  onClose,
-  onSave,
-  isSaving,
-}: Props): React.JSX.Element {
+export function LessonSvgQuickAddModal(): React.JSX.Element {
+  const { lesson, initialMarkup, isOpen, onClose, onSave, isSaving } =
+    useLessonSvgQuickAddRuntimeContext();
   const [markup, setMarkup] = useState(initialMarkup);
 
   // Reset draft whenever the modal opens for a new (or the same) lesson.

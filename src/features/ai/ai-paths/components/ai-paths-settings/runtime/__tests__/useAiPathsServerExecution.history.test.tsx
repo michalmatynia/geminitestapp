@@ -499,6 +499,10 @@ describe('useAiPathsServerExecution history streaming', () => {
     expect(toast).not.toHaveBeenCalledWith(expect.stringContaining('Failed to enqueue'), {
       variant: 'error',
     });
-    expect(settleTransientNodeStatuses).not.toHaveBeenCalledWith('failed', {}, { settleQueued: true });
+    expect(settleTransientNodeStatuses).not.toHaveBeenCalledWith(
+      'failed',
+      {},
+      { settleQueued: true }
+    );
   });
 });

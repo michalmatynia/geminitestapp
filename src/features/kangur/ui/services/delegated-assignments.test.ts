@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildKangurEmbeddedBasePath } from '@/shared/contracts/kangur';
+import { buildKangurEmbeddedBasePath } from '@/features/kangur/config/routing';
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 
 import {
@@ -213,7 +213,7 @@ describe('delegated assignments helpers', () => {
 
   it('builds embedded lesson assignment links on the cms host page', () => {
     const href = buildKangurAssignmentHref(
-      buildKangurEmbeddedBasePath('/home?preview=1'),
+      buildKangurEmbeddedBasePath('/home?preview=1', 'cms-home-kangur'),
       createAssignment({
         target: {
           type: 'lesson',
@@ -222,7 +222,9 @@ describe('delegated assignments helpers', () => {
       })
     );
 
-    expect(href).toBe('/home?preview=1&kangur=lessons&focus=division');
+    expect(href).toBe(
+      '/home?preview=1&kangur-cms-home-kangur=lessons&kangur-cms-home-kangur-focus=division'
+    );
   });
 
   it('parses delegated mixed training quick-start params into a ready training preset', () => {
@@ -232,6 +234,24 @@ describe('delegated assignments helpers', () => {
         count: '10',
         difficulty: 'medium',
       })
+    );
+
+    expect(preset).toEqual({
+      categories: ['addition', 'division', 'decimals'],
+      count: 10,
+      difficulty: 'medium',
+    });
+  });
+
+  it('parses delegated mixed training params from a scoped embedded cms route', () => {
+    const embeddedBasePath = buildKangurEmbeddedBasePath('/home?preview=1', 'cms-home-kangur');
+    const preset = parseKangurMixedTrainingQuickStartParams(
+      new URLSearchParams({
+        'kangur-cms-home-kangur-categories': 'addition,division,decimals',
+        'kangur-cms-home-kangur-count': '10',
+        'kangur-cms-home-kangur-difficulty': 'medium',
+      }),
+      embeddedBasePath
     );
 
     expect(preset).toEqual({

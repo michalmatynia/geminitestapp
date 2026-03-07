@@ -77,9 +77,7 @@ export const kangurLessonTtsFallbackReasonSchema = z.enum([
   'tts_unavailable',
   'generation_failed',
 ]);
-export type KangurLessonTtsFallbackReason = z.infer<
-  typeof kangurLessonTtsFallbackReasonSchema
->;
+export type KangurLessonTtsFallbackReason = z.infer<typeof kangurLessonTtsFallbackReasonSchema>;
 
 export const kangurLessonTtsFallbackResponseSchema = z.object({
   mode: z.literal('fallback'),
@@ -87,9 +85,7 @@ export const kangurLessonTtsFallbackResponseSchema = z.object({
   message: nonEmptyTrimmedString.max(240),
   segments: z.array(kangurLessonNarrationSegmentSchema).min(1).max(32).default([]),
 });
-export type KangurLessonTtsFallbackResponse = z.infer<
-  typeof kangurLessonTtsFallbackResponseSchema
->;
+export type KangurLessonTtsFallbackResponse = z.infer<typeof kangurLessonTtsFallbackResponseSchema>;
 
 export const kangurLessonTtsResponseSchema = z.union([
   kangurLessonTtsAudioResponseSchema,
@@ -97,11 +93,7 @@ export const kangurLessonTtsResponseSchema = z.union([
 ]);
 export type KangurLessonTtsResponse = z.infer<typeof kangurLessonTtsResponseSchema>;
 
-export const kangurLessonTtsStatusStateSchema = z.enum([
-  'ready',
-  'missing',
-  'tts_unavailable',
-]);
+export const kangurLessonTtsStatusStateSchema = z.enum(['ready', 'missing', 'tts_unavailable']);
 export type KangurLessonTtsStatusState = z.infer<typeof kangurLessonTtsStatusStateSchema>;
 
 export const kangurLessonTtsStatusResponseSchema = z.object({

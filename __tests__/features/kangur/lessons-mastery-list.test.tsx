@@ -23,6 +23,7 @@ const {
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: useKangurRoutingMock,
+  useOptionalKangurRouting: () => null,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({

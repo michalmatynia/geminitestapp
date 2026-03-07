@@ -418,8 +418,8 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
             </div>
             {runtimeKernelCompatibilityEntries > 0 ? (
               <div className='mt-2 text-[10px] text-amber-200/90'>
-                Compatibility traces are historical rollout evidence only. Live execution is
-                strict native.
+                Compatibility traces are historical rollout evidence only. Live execution is strict
+                native.
               </div>
             ) : null}
             <div className='mt-2 text-gray-400'>

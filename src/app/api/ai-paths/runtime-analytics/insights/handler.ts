@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
-import { generateRuntimeAnalyticsInsight } from '@/features/ai/insights/generator';
-import { listAiInsights } from '@/features/ai/insights/repository';
+import { generateRuntimeAnalyticsInsight } from '@/features/ai/insights/server';
+import { listAiInsights } from '@/features/ai/insights/server';
 import { startAiInsightsQueue } from '@/features/jobs/server';
 import type { AiPathRuntimeAnalyticsRange } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

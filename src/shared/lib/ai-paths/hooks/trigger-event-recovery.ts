@@ -1,4 +1,3 @@
-'use client';
 
 import { listAiPathRuns } from '@/shared/lib/ai-paths/api/client';
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';

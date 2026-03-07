@@ -23,7 +23,6 @@ import {
   getKangurAssignmentActionLabel,
 } from '@/features/kangur/ui/services/delegated-assignments';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { cn } from '@/shared/utils';
 
 type KangurAssignmentManagerProps = {
   basePath: string;
@@ -310,19 +309,18 @@ export function KangurAssignmentManager({
 
         <div className='mt-4 flex flex-wrap gap-2'>
           {FILTER_OPTIONS.map((option) => (
-            <button
+            <KangurButton
               key={option.value}
               type='button'
               onClick={() => setActiveFilter(option.value)}
-              className={cn(
-                'rounded-full border px-3.5 py-1.5 text-xs font-semibold transition',
-                activeFilter === option.value
-                  ? 'border-indigo-200 bg-indigo-50 text-indigo-700 shadow-sm'
-                  : 'border-white/80 bg-white/82 text-slate-600 hover:border-slate-200 hover:bg-white'
-              )}
+              aria-pressed={activeFilter === option.value}
+              className='h-10 px-4 text-xs'
+              data-testid={`assignment-manager-filter-${option.value}`}
+              size='sm'
+              variant={activeFilter === option.value ? 'surface' : 'secondary'}
             >
               {option.label}
-            </button>
+            </KangurButton>
           ))}
         </div>
 

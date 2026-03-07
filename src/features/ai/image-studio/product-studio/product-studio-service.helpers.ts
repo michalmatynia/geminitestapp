@@ -4,7 +4,7 @@ import { DEFAULT_IMAGE_SLOT_COUNT } from '@/shared/lib/image-slots';
 import {
   parsePersistedImageStudioSettings,
   type ImageStudioSettings,
-} from '@/features/ai/image-studio/studio-settings';
+} from '@/features/ai/image-studio/server';
 import {
   type ProductStudioSequencingDiagnostics,
   type ProductWithImages,

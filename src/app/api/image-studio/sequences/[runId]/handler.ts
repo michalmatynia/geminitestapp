@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getImageStudioSequenceRunById } from '@/features/ai/image-studio/server/sequence-run-repository';
-import { getImageStudioSlotById } from '@/features/ai/image-studio/server/slot-repository';
+import { getImageStudioSlotById } from '@/features/ai/image-studio/server';
 import {
   resolveStudioSlotIdCandidates,
   slotHasRenderableImage,

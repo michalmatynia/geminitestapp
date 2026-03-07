@@ -654,7 +654,7 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
   if (block.type === 'AppEmbed') {
     const appOption = getAppEmbedOption(
       typeof block.settings['appId'] === 'string'
-        ? (block.settings['appId'] as string)
+        ? (block.settings['appId'])
         : DEFAULT_APP_EMBED_ID
     );
     const title = ((block.settings['title'] as string) || appOption?.label || 'App embed').trim();
@@ -680,7 +680,9 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
           </div>
           <div className='rounded-xl border border-dashed border-border/40 bg-card/20 p-3 text-xs text-gray-400'>
             {renderMode === 'internal-app'
-              ? `Entry page: ${entryPage || 'default'}${basePath ? ` · base path: ${basePath}` : ''}`
+              ? `Entry page: ${entryPage || 'default'}${
+                basePath ? ` · host page override: ${basePath}` : ' · host page: current CMS page'
+              }`
               : 'Preview uses the published iframe URL at runtime.'}
           </div>
         </div>

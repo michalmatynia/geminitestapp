@@ -7,7 +7,7 @@ import {
 import { parseJsonSetting } from '@/shared/utils';
 import { flattenKangurLessonDocumentPages } from './lesson-documents/creators';
 import { normalizeKangurLessonDocument } from './lesson-documents/normalization';
-import { isRecord } from './lesson-documents/utils';
+import { isRecord, isSvgImageSource } from './lesson-documents/utils';
 
 export * from './lesson-documents/utils';
 export * from './lesson-documents/creators';
@@ -125,7 +125,7 @@ export const hasKangurLessonDocumentContent = (
 
       if (block.type === 'image') {
         return (
-          block.src.trim().length > 0 ||
+          isSvgImageSource(block.src) ||
           (block.caption?.trim().length ?? 0) > 0 ||
           block.title.trim().length > 0
         );
@@ -148,7 +148,7 @@ export const hasKangurLessonDocumentContent = (
             return item.block.markup.trim().length > 0;
           }
           return (
-            item.block.src.trim().length > 0 ||
+            isSvgImageSource(item.block.src) ||
             (item.block.caption?.trim().length ?? 0) > 0 ||
             item.block.title.trim().length > 0
           );

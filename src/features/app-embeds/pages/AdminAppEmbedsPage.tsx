@@ -29,7 +29,7 @@ function AdminAppEmbedsContent(): React.ReactNode {
     <div className='container mx-auto max-w-5xl py-10'>
       <SectionHeader
         title='App Embeds'
-        description='Enable internal apps that can be embedded into CMS pages.'
+        description='Enable apps that can be mounted inside CMS pages and composed with CMS zoning.'
         className='mb-6'
       />
 

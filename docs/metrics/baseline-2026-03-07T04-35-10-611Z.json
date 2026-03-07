@@ -1,0 +1,577 @@
+{
+  "generatedAt": "2026-03-07T04:35:10.611Z",
+  "source": {
+    "totalFiles": 4657,
+    "totalLines": 757957,
+    "useClientFiles": 1353,
+    "filesOver800": 63,
+    "filesOver1000": 4,
+    "filesOver1500": 0,
+    "largestFile": {
+      "path": "src/features/ai/ai-paths/services/path-run-executor/index.ts",
+      "lines": 1125
+    }
+  },
+  "api": {
+    "totalRoutes": 324,
+    "routesWithApiHandler": 311,
+    "delegatedServerRoutes": 13,
+    "routesWithoutApiHandler": 0,
+    "forceDynamicRoutes": 84,
+    "revalidateRoutes": 19,
+    "routesWithCacheHeader": 1,
+    "routesWithCacheOption": 27,
+    "routesWithExplicitCachePolicy": 324,
+    "routesWithoutExplicitCachePolicy": 0,
+    "topRouteHotspots": [
+      {
+        "path": "src/app/api/chatbot/agent/[runId]/[action]/route.ts",
+        "lines": 83
+      },
+      {
+        "path": "src/app/api/v2/products/[id]/studio/[action]/route.ts",
+        "lines": 40
+      },
+      {
+        "path": "src/app/api/marketplace/[resource]/route.ts",
+        "lines": 37
+      },
+      {
+        "path": "src/app/api/v2/products/[id]/route.ts",
+        "lines": 36
+      },
+      {
+        "path": "src/app/api/v2/products/sync/profiles/[id]/route.ts",
+        "lines": 28
+      },
+      {
+        "path": "src/app/api/v2/products/categories/[id]/route.ts",
+        "lines": 25
+      },
+      {
+        "path": "src/app/api/v2/products/categories/route.ts",
+        "lines": 24
+      },
+      {
+        "path": "src/app/api/v2/products/parameters/route.ts",
+        "lines": 24
+      },
+      {
+        "path": "src/app/api/auth/users/[id]/route.ts",
+        "lines": 23
+      },
+      {
+        "path": "src/app/api/v2/products/sync/profiles/route.ts",
+        "lines": 23
+      },
+      {
+        "path": "src/app/api/ai/schema/[entity]/route.ts",
+        "lines": 22
+      },
+      {
+        "path": "src/app/api/v2/metadata/[type]/[id]/route.ts",
+        "lines": 22
+      },
+      {
+        "path": "src/app/api/v2/products/entities/[type]/[id]/route.ts",
+        "lines": 22
+      },
+      {
+        "path": "src/app/api/v2/products/metadata/[type]/[id]/route.ts",
+        "lines": 22
+      },
+      {
+        "path": "src/app/api/auth/users/[id]/security/route.ts",
+        "lines": 21
+      },
+      {
+        "path": "src/app/api/drafts/[id]/route.ts",
+        "lines": 21
+      },
+      {
+        "path": "src/app/api/v2/products/validator-patterns/route.ts",
+        "lines": 21
+      },
+      {
+        "path": "src/app/api/v2/products/validator-settings/route.ts",
+        "lines": 21
+      },
+      {
+        "path": "src/app/api/ai/context/related/[id]/route.ts",
+        "lines": 20
+      },
+      {
+        "path": "src/app/api/v2/integrations/imports/base/runs/route.ts",
+        "lines": 20
+      }
+    ]
+  },
+  "imports": {
+    "appFeatureBarrelImports": 0,
+    "appFeatureDeepImports": 153,
+    "sharedToFeaturesStaticImports": 4,
+    "sharedToFeaturesDynamicImports": 7,
+    "sharedToFeaturesTotalImports": 11
+  },
+  "architecture": {
+    "crossFeatureEdgePairs": 71,
+    "topCrossFeatureEdges": [
+      {
+        "edge": "cms -> gsap",
+        "references": 19
+      },
+      {
+        "edge": "case-resolver -> case-resolver-capture",
+        "references": 16
+      },
+      {
+        "edge": "case-resolver -> foldertree",
+        "references": 15
+      },
+      {
+        "edge": "case-resolver -> filemaker",
+        "references": 13
+      },
+      {
+        "edge": "drafter -> products",
+        "references": 13
+      },
+      {
+        "edge": "case-resolver -> document-editor",
+        "references": 12
+      },
+      {
+        "edge": "jobs -> ai",
+        "references": 12
+      },
+      {
+        "edge": "products -> integrations",
+        "references": 12
+      },
+      {
+        "edge": "case-resolver -> ai",
+        "references": 10
+      },
+      {
+        "edge": "cms -> app-embeds",
+        "references": 8
+      },
+      {
+        "edge": "cms -> viewer3d",
+        "references": 8
+      },
+      {
+        "edge": "integrations -> products",
+        "references": 8
+      },
+      {
+        "edge": "kangur -> foldertree",
+        "references": 8
+      },
+      {
+        "edge": "products -> internationalization",
+        "references": 8
+      },
+      {
+        "edge": "ai -> products",
+        "references": 7
+      },
+      {
+        "edge": "integrations -> playwright",
+        "references": 7
+      },
+      {
+        "edge": "products -> foldertree",
+        "references": 7
+      },
+      {
+        "edge": "prompt-exploder -> foldertree",
+        "references": 7
+      },
+      {
+        "edge": "case-resolver -> prompt-exploder",
+        "references": 6
+      },
+      {
+        "edge": "case-resolver-capture -> case-resolver",
+        "references": 6
+      },
+      {
+        "edge": "notesapp -> document-editor",
+        "references": 6
+      },
+      {
+        "edge": "products -> ai",
+        "references": 6
+      },
+      {
+        "edge": "admin -> foldertree",
+        "references": 5
+      },
+      {
+        "edge": "cms -> foldertree",
+        "references": 5
+      },
+      {
+        "edge": "jobs -> integrations",
+        "references": 5
+      }
+    ],
+    "featureSizeByLines": [
+      {
+        "feature": "ai",
+        "files": 862,
+        "lines": 181559
+      },
+      {
+        "feature": "case-resolver",
+        "files": 275,
+        "lines": 61594
+      },
+      {
+        "feature": "cms",
+        "files": 269,
+        "lines": 44397
+      },
+      {
+        "feature": "kangur",
+        "files": 226,
+        "lines": 43355
+      },
+      {
+        "feature": "products",
+        "files": 211,
+        "lines": 39893
+      },
+      {
+        "feature": "integrations",
+        "files": 196,
+        "lines": 29534
+      },
+      {
+        "feature": "prompt-exploder",
+        "files": 142,
+        "lines": 26314
+      },
+      {
+        "feature": "notesapp",
+        "files": 81,
+        "lines": 13393
+      },
+      {
+        "feature": "foldertree",
+        "files": 76,
+        "lines": 9471
+      },
+      {
+        "feature": "filemaker",
+        "files": 53,
+        "lines": 9009
+      },
+      {
+        "feature": "admin",
+        "files": 31,
+        "lines": 6632
+      },
+      {
+        "feature": "database",
+        "files": 29,
+        "lines": 6222
+      },
+      {
+        "feature": "auth",
+        "files": 37,
+        "lines": 5811
+      },
+      {
+        "feature": "data-import-export",
+        "files": 26,
+        "lines": 5544
+      },
+      {
+        "feature": "viewer3d",
+        "files": 30,
+        "lines": 4745
+      },
+      {
+        "feature": "prompt-engine",
+        "files": 30,
+        "lines": 4010
+      },
+      {
+        "feature": "case-resolver-capture",
+        "files": 12,
+        "lines": 3206
+      },
+      {
+        "feature": "drafter",
+        "files": 14,
+        "lines": 2987
+      },
+      {
+        "feature": "product-sync",
+        "files": 9,
+        "lines": 2865
+      },
+      {
+        "feature": "observability",
+        "files": 16,
+        "lines": 2689
+      },
+      {
+        "feature": "document-editor",
+        "files": 16,
+        "lines": 2238
+      },
+      {
+        "feature": "files",
+        "files": 21,
+        "lines": 2110
+      },
+      {
+        "feature": "internationalization",
+        "files": 21,
+        "lines": 1984
+      },
+      {
+        "feature": "playwright",
+        "files": 8,
+        "lines": 795
+      },
+      {
+        "feature": "jobs",
+        "files": 4,
+        "lines": 480
+      },
+      {
+        "feature": "gsap",
+        "files": 4,
+        "lines": 370
+      },
+      {
+        "feature": "tooltip-engine",
+        "files": 6,
+        "lines": 363
+      },
+      {
+        "feature": "app-embeds",
+        "files": 5,
+        "lines": 279
+      }
+    ]
+  },
+  "runtime": {
+    "setIntervalOccurrences": 23
+  },
+  "hotspots": {
+    "topFilesByLines": [
+      {
+        "path": "src/features/ai/ai-paths/services/path-run-executor/index.ts",
+        "lines": 1125
+      },
+      {
+        "path": "src/features/ai/ai-paths/components/__tests__/canvas-connection-preview.test.tsx",
+        "lines": 1055
+      },
+      {
+        "path": "src/shared/utils/folder-tree-profiles-v2/defaults.ts",
+        "lines": 1018
+      },
+      {
+        "path": "src/features/ai/ai-paths/services/path-run-service.ts",
+        "lines": 1001
+      },
+      {
+        "path": "src/shared/contracts/ai-paths.ts",
+        "lines": 992
+      },
+      {
+        "path": "src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts",
+        "lines": 989
+      },
+      {
+        "path": "src/features/ai/ai-paths/components/JobQueueContext.tsx",
+        "lines": 968
+      },
+      {
+        "path": "src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts",
+        "lines": 961
+      },
+      {
+        "path": "src/features/ai/ai-paths/components/ai-paths-settings/runtime/useAiPathsServerExecution.ts",
+        "lines": 957
+      },
+      {
+        "path": "src/shared/contracts/ai-paths-core/nodes.ts",
+        "lines": 953
+      },
+      {
+        "path": "src/features/kangur/admin/KangurLessonDocumentEditor.tsx",
+        "lines": 940
+      },
+      {
+        "path": "src/app/api/image-studio/slots/[slotId]/autoscale/handler.test.ts",
+        "lines": 930
+      },
+      {
+        "path": "src/shared/contracts/image-studio.ts",
+        "lines": 930
+      },
+      {
+        "path": "src/app/api/image-studio/slots/[slotId]/crop/handler.ts",
+        "lines": 929
+      },
+      {
+        "path": "src/shared/lib/ai-paths/core/utils/__tests__/graph-compile.test.ts",
+        "lines": 928
+      },
+      {
+        "path": "src/features/notesapp/context/NoteFormContext.tsx",
+        "lines": 918
+      },
+      {
+        "path": "src/shared/lib/documentation/catalogs/validator-docs.ts",
+        "lines": 909
+      },
+      {
+        "path": "src/features/case-resolver-capture/__tests__/proposals.test.ts",
+        "lines": 901
+      },
+      {
+        "path": "src/features/cms/components/page-builder/registry/block-definitions-media.ts",
+        "lines": 898
+      },
+      {
+        "path": "src/shared/lib/ai-paths/core/utils/data-contract-preflight.ts",
+        "lines": 897
+      },
+      {
+        "path": "src/shared/contracts/cms.ts",
+        "lines": 895
+      },
+      {
+        "path": "src/shared/lib/ai-brain/context/BrainContext.tsx",
+        "lines": 891
+      },
+      {
+        "path": "src/features/kangur/ui/components/ClockTrainingGame.tsx",
+        "lines": 890
+      },
+      {
+        "path": "src/features/ai/ai-paths/components/run-trace-utils.ts",
+        "lines": 889
+      },
+      {
+        "path": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasView.tsx",
+        "lines": 887
+      },
+      {
+        "path": "src/features/products/hooks/useProductFormValidator.ts",
+        "lines": 886
+      },
+      {
+        "path": "src/features/data-import-export/context/ImportExportContext.tsx",
+        "lines": 884
+      },
+      {
+        "path": "src/features/ai/ai-paths/hooks/useAdminAiPathsValidationState.ts",
+        "lines": 883
+      },
+      {
+        "path": "src/shared/lib/observability/system-log-repository.ts",
+        "lines": 883
+      },
+      {
+        "path": "src/features/integrations/services/imports/base-import-item-processor.ts",
+        "lines": 877
+      }
+    ],
+    "topPagesByLines": [
+      {
+        "path": "src/app/(frontend)/preview/foldertree-shell-runtime/page.tsx",
+        "lines": 189
+      },
+      {
+        "path": "src/app/(frontend)/kangur/login/page.tsx",
+        "lines": 148
+      },
+      {
+        "path": "src/app/(frontend)/[...slug]/page.tsx",
+        "lines": 67
+      },
+      {
+        "path": "src/app/(frontend)/preview/[id]/page.tsx",
+        "lines": 67
+      },
+      {
+        "path": "src/app/(admin)/admin/settings/recovery/page.tsx",
+        "lines": 50
+      },
+      {
+        "path": "src/app/(frontend)/page.tsx",
+        "lines": 48
+      },
+      {
+        "path": "src/app/(admin)/admin/agentcreator/teaching/page.tsx",
+        "lines": 46
+      },
+      {
+        "path": "src/app/(admin)/admin/agentcreator/page.tsx",
+        "lines": 43
+      },
+      {
+        "path": "src/app/(admin)/admin/page.tsx",
+        "lines": 40
+      },
+      {
+        "path": "src/app/(admin)/admin/settings/logging/page.tsx",
+        "lines": 32
+      },
+      {
+        "path": "src/app/(frontend)/products/[id]/page.tsx",
+        "lines": 15
+      },
+      {
+        "path": "src/app/(admin)/admin/chatbot/context/page.tsx",
+        "lines": 14
+      },
+      {
+        "path": "src/app/(admin)/admin/chatbot/page.tsx",
+        "lines": 14
+      },
+      {
+        "path": "src/app/(admin)/admin/integrations/marketplaces/page.tsx",
+        "lines": 14
+      },
+      {
+        "path": "src/app/(admin)/admin/integrations/page.tsx",
+        "lines": 14
+      },
+      {
+        "path": "src/app/(admin)/admin/notes/notebooks/page.tsx",
+        "lines": 14
+      },
+      {
+        "path": "src/app/(admin)/admin/settings/playwright/page.tsx",
+        "lines": 14
+      },
+      {
+        "path": "src/app/(admin)/admin/system/logs/page.tsx",
+        "lines": 14
+      },
+      {
+        "path": "src/app/auth/signin/page.tsx",
+        "lines": 14
+      },
+      {
+        "path": "src/app/(admin)/admin/cms/slugs/create/page.tsx",
+        "lines": 13
+      }
+    ]
+  },
+  "propDrilling": {
+    "candidateChains": 34,
+    "depthGte4Chains": 4,
+    "forwardingComponents": 14
+  }
+}

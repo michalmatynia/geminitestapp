@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { CmsPageRenderer } from '@/features/cms/components/frontend/CmsPageRenderer';
+import { CmsPageRenderer } from '@/features/cms/public';
 import type { PageComponentInput } from '@/shared/contracts/cms';
 
 vi.mock('@/features/cms/components/shared/EventEffectsWrapper', () => ({

@@ -1,8 +1,8 @@
 import {
   createImageStudioRun,
   getImageStudioRunById,
-} from '@/features/ai/image-studio/server/run-repository';
-import { listImageStudioSlots } from '@/features/ai/image-studio/server/slot-repository';
+} from '@/features/ai/image-studio/server';
+import { listImageStudioSlots } from '@/features/ai/image-studio/server';
 import type {
   ImageStudioSlotRecord,
   ImageStudioSequenceRunRecord,

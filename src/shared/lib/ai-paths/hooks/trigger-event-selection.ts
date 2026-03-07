@@ -1,4 +1,3 @@
-'use client';
 
 import type { AiNode, PathConfig } from '@/shared/contracts/ai-paths';
 import {

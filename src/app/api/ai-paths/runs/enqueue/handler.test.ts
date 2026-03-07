@@ -25,7 +25,7 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
   getAiPathsSetting: getAiPathsSettingMock,
 }));
 
-vi.mock('@/features/ai/ai-paths/services/path-run-service', () => ({
+vi.mock('@/features/ai/ai-paths/server', () => ({
   enqueuePathRun: enqueuePathRunMock,
 }));
 

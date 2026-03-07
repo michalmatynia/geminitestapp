@@ -5,7 +5,7 @@ import Link from 'next/link';
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
 import { LogIn, LogOut, User } from 'lucide-react';
 
-import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
+import { getKangurPageHref as createPageUrl } from '@/shared/contracts/kangur';
 import {
   KANGUR_TOP_NAV_ITEM_ACTIVE_CLASSNAME,
   KANGUR_TOP_NAV_ITEM_CLASSNAME,

@@ -16,7 +16,7 @@ import {
 } from '@/shared/lib/products/utils/validator-instance-behavior';
 import { validateRegexSafety } from '@/shared/utils/regex-safety';
 import { parseDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
-import { validateAndNormalizeRuntimeConfig } from '@/features/products/validations/validator-runtime-config';
+import { validateAndNormalizeRuntimeConfig } from '@/features/products/server';
 import { createProductValidationPatternSchema as createPatternSchema } from '@/shared/contracts/products';
 export { createPatternSchema };
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

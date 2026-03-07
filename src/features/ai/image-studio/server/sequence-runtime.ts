@@ -10,7 +10,7 @@ import {
   getImageStudioSequenceRunById,
   updateImageStudioSequenceRun,
 } from '@/features/ai/image-studio/server/sequence-run-repository';
-import { getImageStudioSlotById } from '@/features/ai/image-studio/server/slot-repository';
+import { getImageStudioSlotById } from '@/features/ai/image-studio/server';
 import {
   IMAGE_STUDIO_SETTINGS_KEY,
   getImageStudioProjectSettingsKey,

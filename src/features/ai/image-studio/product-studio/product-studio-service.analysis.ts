@@ -1,8 +1,8 @@
-import { listImageStudioSlotLinks } from '@/features/ai/image-studio/server/slot-link-repository';
+import { listImageStudioSlotLinks } from '@/features/ai/image-studio/server';
 import {
   listImageStudioSlots,
   type ImageStudioSlotRecord,
-} from '@/features/ai/image-studio/server/slot-repository';
+} from '@/features/ai/image-studio/server';
 import { trimString } from './product-studio-service.helpers';
 
 export const sortSlotsNewestFirst = (input: ImageStudioSlotRecord[]): ImageStudioSlotRecord[] => {

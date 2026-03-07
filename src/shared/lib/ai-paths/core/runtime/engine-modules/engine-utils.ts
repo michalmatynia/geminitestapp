@@ -555,7 +555,7 @@ export function collectNodeInputs(
     const fromPort = edge.fromPort || 'result';
     const toPort = edge.toPort || 'value';
     const out = outputs[fromId];
-    if (out && out[fromPort] !== undefined) {
+    if (out?.[fromPort] !== undefined) {
       collected[toPort] = out[fromPort];
     }
   });

@@ -1,7 +1,10 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
-import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
+import {
+  appendKangurUrlParams,
+  getKangurPageHref as createPageUrl,
+} from '@/features/kangur/config/routing';
 import { logKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurScoreRecord } from '@/features/kangur/services/ports';
@@ -92,7 +95,7 @@ const formatTrendContext = (trend: ReturnType<typeof buildKangurScoreInsights>['
 };
 
 const buildLessonFocusHref = (basePath: string, operation: string): string =>
-  `${createPageUrl('Lessons', basePath)}?${new URLSearchParams({ focus: operation }).toString()}`;
+  appendKangurUrlParams(createPageUrl('Lessons', basePath), { focus: operation });
 
 export default function ScoreHistory({
   learnerId = null,

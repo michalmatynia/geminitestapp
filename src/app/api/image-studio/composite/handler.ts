@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import sharp from 'sharp';
 import { z } from 'zod';
 
-import { getImageStudioSlotById } from '@/features/ai/image-studio/server/slot-repository';
+import { getImageStudioSlotById } from '@/features/ai/image-studio/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 

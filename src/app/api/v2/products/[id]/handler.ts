@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { parseJsonBody } from '@/features/products/server';
-import { CachedProductService } from '@/features/products/performance/cached-service';
+import { CachedProductService } from '@/features/products/server';
 import { productService } from '@/shared/lib/products/services/productService'; // Direct import
 import { validateProductUpdateMiddleware } from '@/features/products/validations/middleware';
 import type { ProductRecord, ProductWithImages } from '@/shared/contracts/products';

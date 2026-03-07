@@ -85,7 +85,7 @@ export function LessonMetadataForm(props: {
 
       <div className='rounded-md border border-sky-400/20 bg-sky-500/10 p-3 text-xs text-sky-100/90'>
         {formData.contentMode === 'document'
-          ? 'This lesson will render through the custom document editor. Use the document icon on the lesson row to author modular lesson pages with text, SVG blocks, uploaded images, activity widgets, and grid layouts.'
+          ? 'This lesson will render through the custom document editor. Use the document icon on the lesson row to author modular lesson pages with text, SVG blocks, SVG image references, activity widgets, and grid layouts.'
           : 'This lesson will render through the legacy Kangur component selected above. You can still open the document editor and prepare custom content before switching modes, or use the bulk import action to transfer the whole lesson library.'}
       </div>
     </div>

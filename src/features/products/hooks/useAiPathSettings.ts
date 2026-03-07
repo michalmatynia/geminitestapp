@@ -1,4 +1,3 @@
-'use client';
 
 import {
   AI_PATHS_UI_STATE_KEY,

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { linkProductImageToStudio } from '@/features/ai/image-studio/product-studio/product-studio-service';
+import { linkProductImageToStudio } from '@/features/ai/image-studio/server';
 import { productStudioLinkRequestSchema as linkSchema } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';

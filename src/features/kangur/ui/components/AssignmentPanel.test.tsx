@@ -4,7 +4,17 @@
 
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { buildKangurEmbeddedBasePath } from '@/features/kangur/config/routing';
+
+const { buildKangurAssignmentsMock } = vi.hoisted(() => ({
+  buildKangurAssignmentsMock: vi.fn(),
+}));
+
+vi.mock('@/features/kangur/ui/services/assignments', () => ({
+  buildKangurAssignments: buildKangurAssignmentsMock,
+}));
 
 import AssignmentPanel from '@/features/kangur/ui/components/AssignmentPanel';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
@@ -48,6 +58,47 @@ const progress: KangurProgressState = {
 };
 
 describe('AssignmentPanel', () => {
+  beforeEach(() => {
+    buildKangurAssignmentsMock.mockReturnValue([
+      {
+        id: 'lesson-retry-division',
+        title: '➗ Powtorka: Dzielenie',
+        description: 'Powtorz dzielenie.',
+        target: '1 powtorka',
+        priority: 'high',
+        action: {
+          label: 'Otworz lekcje',
+          page: 'Lessons',
+          query: { focus: 'division' },
+        },
+      },
+      {
+        id: 'lesson-retry-adding',
+        title: '➕ Powtorka: Dodawanie',
+        description: 'Powtorz dodawanie.',
+        target: '1 powtorka',
+        priority: 'medium',
+        action: {
+          label: 'Otworz lekcje',
+          page: 'Lessons',
+          query: { focus: 'adding' },
+        },
+      },
+      {
+        id: 'mixed-practice',
+        title: 'Trening mieszany',
+        description: 'Uruchom trening mieszany.',
+        target: '8 pytan',
+        priority: 'low',
+        action: {
+          label: 'Uruchom trening',
+          page: 'Game',
+          query: { quickStart: 'training' },
+        },
+      },
+    ]);
+  });
+
   it('renders dynamic mastery-driven assignments with actionable links', async () => {
     render(<AssignmentPanel basePath='/kangur' progress={progress} />);
 
@@ -68,9 +119,44 @@ describe('AssignmentPanel', () => {
       expect.arrayContaining(['/kangur/lessons?focus=division', '/kangur/lessons?focus=adding'])
     );
 
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Oznacz ➗ Powtorka: Dzielenie jako ukończone' })
+    const completionToggle = screen.getByRole('button', {
+      name: 'Oznacz ➗ Powtorka: Dzielenie jako ukończone',
+    });
+
+    expect(completionToggle).toHaveClass('kangur-cta-pill', 'soft-cta');
+    expect(completionToggle).toHaveAttribute('aria-pressed', 'false');
+
+    await userEvent.click(completionToggle);
+
+    expect(screen.getByTestId('assignment-panel-toggle-lesson-retry-division')).toHaveClass(
+      'kangur-cta-pill',
+      'success-cta'
+    );
+    expect(screen.getByTestId('assignment-panel-toggle-lesson-retry-division')).toHaveAttribute(
+      'aria-pressed',
+      'true'
     );
     expect(screen.getByText('Ukończono 1/3')).toBeInTheDocument();
+  });
+
+  it('builds embedded cms links when rendered inside a host page route', () => {
+    render(
+      <AssignmentPanel basePath={buildKangurEmbeddedBasePath('/home?preview=1')} progress={progress} />
+    );
+
+    expect(screen.getByRole('link', { name: 'Uruchom trening' })).toHaveAttribute(
+      'href',
+      '/home?preview=1&kangur=game&quickStart=training'
+    );
+
+    const lessonLinks = screen
+      .getAllByRole('link', { name: 'Otworz lekcje' })
+      .map((link) => link.getAttribute('href'));
+    expect(lessonLinks).toEqual(
+      expect.arrayContaining([
+        '/home?preview=1&kangur=lessons&focus=division',
+        '/home?preview=1&kangur=lessons&focus=adding',
+      ])
+    );
   });
 });

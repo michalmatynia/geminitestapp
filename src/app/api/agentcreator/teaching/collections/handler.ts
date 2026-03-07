@@ -4,7 +4,7 @@ import { z } from 'zod';
 import {
   listEmbeddingCollections,
   upsertEmbeddingCollection,
-} from '@/features/ai/agentcreator/teaching/server/repository';
+} from '@/features/ai/agentcreator/server';
 import type { AgentTeachingEmbeddingCollectionRecord } from '@/shared/contracts/agent-teaching';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';

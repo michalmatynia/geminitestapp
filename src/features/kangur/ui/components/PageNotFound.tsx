@@ -4,6 +4,11 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Home } from 'lucide-react';
 
+import {
+  getKangurEmbeddedHostPath,
+  getKangurPageHref,
+  KANGUR_EMBED_QUERY_PARAM,
+} from '@/features/kangur/config/routing';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
@@ -21,6 +26,16 @@ export function PageNotFound(): React.JSX.Element {
   const { requestedPath, basePath, embedded } = useKangurRouting();
 
   const pageName = useMemo(() => {
+    const embeddedHostPath = getKangurEmbeddedHostPath(basePath);
+    if (embeddedHostPath) {
+      try {
+        const parsed = new URL(requestedPath || embeddedHostPath, 'https://kangur.local');
+        return parsed.searchParams.get(KANGUR_EMBED_QUERY_PARAM) || 'unknown';
+      } catch {
+        return requestedPath?.replace(/^\/+/, '') || 'unknown';
+      }
+    }
+
     if (!requestedPath || requestedPath.length === 0) {
       return 'unknown';
     }
@@ -84,7 +99,7 @@ export function PageNotFound(): React.JSX.Element {
           <div className='pt-6'>
             <KangurButton
               onClick={() => {
-                window.location.href = basePath;
+                window.location.href = getKangurPageHref('Game', basePath);
               }}
               size='lg'
               type='button'

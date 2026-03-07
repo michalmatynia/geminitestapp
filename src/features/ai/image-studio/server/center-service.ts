@@ -15,7 +15,7 @@ import {
   validateCenterOutputDimensions,
   validateCenterSourceDimensions,
 } from '@/features/ai/image-studio/server/center-utils';
-import { getImageStudioSlotById } from '@/features/ai/image-studio/server/slot-repository';
+import { getImageStudioSlotById } from '@/features/ai/image-studio/server';
 import {
   loadSourceBufferFromSlot,
   parseImageDataUrl,

@@ -1,4 +1,3 @@
-'use client';
 
 import { Mail, Plus } from 'lucide-react';
 import React from 'react';

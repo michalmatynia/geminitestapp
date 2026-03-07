@@ -7,7 +7,7 @@ import React from 'react';
 import {
   getSectionContainerClass,
   getVerticalAlign,
-} from '@/features/cms/components/frontend/theme-styles';
+} from '@/features/cms/public';
 import { useCmsPageContext } from '@/features/cms/components/frontend/CmsPageContext';
 import { useMediaStyles } from '@/features/cms/components/frontend/media-styles-context';
 import {

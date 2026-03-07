@@ -12,22 +12,22 @@ import {
   getImageStudioRunById,
   updateImageStudioRun,
   type ImageStudioRunRecord,
-} from '@/features/ai/image-studio/server/run-repository';
+} from '@/features/ai/image-studio/server';
 import {
   getImageStudioSlotLinkBySourceAndRelation,
   upsertImageStudioSlotLink,
-} from '@/features/ai/image-studio/server/slot-link-repository';
+} from '@/features/ai/image-studio/server';
 import {
   createImageStudioSlots,
   getImageStudioSlotById,
   listImageStudioSlots,
   updateImageStudioSlot,
-} from '@/features/ai/image-studio/server/slot-repository';
+} from '@/features/ai/image-studio/server';
 import {
   estimateGenerationCost,
   type GenerationCostEstimate,
 } from '@/features/ai/image-studio/utils/generation-cost';
-import { parsePersistedImageStudioSettings } from '@/features/ai/image-studio/studio-settings';
+import { parsePersistedImageStudioSettings } from '@/features/ai/image-studio/server';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';

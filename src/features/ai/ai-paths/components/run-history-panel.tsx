@@ -573,8 +573,8 @@ export function RunHistoryPanel(): React.JSX.Element {
                       Slowest span:{' '}
                       {traceSummary?.slowestSpan
                         ? `${traceSummary.slowestSpan.nodeId ?? 'n/a'} · ${formatDurationMs(
-                            traceSummary.slowestSpan.durationMs
-                          )}`
+                          traceSummary.slowestSpan.durationMs
+                        )}`
                         : 'n/a'}
                     </div>
                   </div>

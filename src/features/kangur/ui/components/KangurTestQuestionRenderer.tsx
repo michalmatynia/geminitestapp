@@ -1,6 +1,10 @@
 import React from 'react';
 import { CheckCircle, XCircle } from 'lucide-react';
 
+import {
+  KANGUR_ACCENT_STYLES,
+  KANGUR_OPTION_CARD_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/shared/utils';
 import type { KangurTestQuestion } from '@/shared/contracts/kangur-tests';
 import { KangurQuestionIllustrationRenderer } from './KangurQuestionIllustrationRenderer';
@@ -52,17 +56,34 @@ export function KangurTestQuestionRenderer({
 
       {/* Choices */}
       <div className='space-y-2'>
-        {question.choices.map((choice) => {
+        {question.choices.map((choice, index) => {
           const isSelected = selectedLabel === choice.label;
           const isChoiceCorrect = choice.label === question.correctChoiceLabel;
 
-          let borderClass = 'border-gray-200 bg-white hover:border-indigo-300 hover:bg-indigo-50';
+          let cardClassName = cn(
+            'border-slate-200/80 text-slate-700',
+            KANGUR_ACCENT_STYLES.slate.hoverCard
+          );
+          let badgeClassName = KANGUR_ACCENT_STYLES.slate.badge;
+
           if (isSelected && !showAnswer) {
-            borderClass = 'border-indigo-400 bg-indigo-50';
+            cardClassName = cn(
+              KANGUR_ACCENT_STYLES.amber.activeCard,
+              KANGUR_ACCENT_STYLES.amber.activeText
+            );
+            badgeClassName = KANGUR_ACCENT_STYLES.amber.badge;
           } else if (showAnswer && isChoiceCorrect) {
-            borderClass = 'border-emerald-400 bg-emerald-50';
+            cardClassName = cn(
+              KANGUR_ACCENT_STYLES.emerald.activeCard,
+              KANGUR_ACCENT_STYLES.emerald.activeText
+            );
+            badgeClassName = KANGUR_ACCENT_STYLES.emerald.badge;
           } else if (showAnswer && isSelected && !isChoiceCorrect) {
-            borderClass = 'border-rose-400 bg-rose-50';
+            cardClassName = cn(
+              KANGUR_ACCENT_STYLES.rose.activeCard,
+              KANGUR_ACCENT_STYLES.rose.activeText
+            );
+            badgeClassName = KANGUR_ACCENT_STYLES.rose.badge;
           }
 
           return (
@@ -73,24 +94,23 @@ export function KangurTestQuestionRenderer({
                 if (!showAnswer) onSelect(choice.label);
               }}
               disabled={showAnswer}
+              data-testid={`kangur-test-question-choice-${index}`}
               className={cn(
-                'flex w-full items-center gap-3 rounded-xl border px-3 py-2 text-left text-sm transition-colors',
-                borderClass,
+                KANGUR_OPTION_CARD_CLASSNAME,
+                'flex items-center gap-3 rounded-[24px] px-4 py-3 text-left text-sm font-semibold transition-all',
+                cardClassName,
                 showAnswer ? 'cursor-default' : 'cursor-pointer'
               )}
             >
               <span
                 className={cn(
-                  'flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-bold',
-                  isSelected && !showAnswer ? 'border-indigo-500 bg-indigo-500 text-white' : '',
-                  showAnswer && isChoiceCorrect ? 'border-emerald-500 bg-emerald-500 text-white' : '',
-                  showAnswer && isSelected && !isChoiceCorrect ? 'border-rose-500 bg-rose-500 text-white' : '',
-                  !isSelected && !(showAnswer && isChoiceCorrect) ? 'border-gray-300 text-gray-500' : ''
+                  'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-extrabold',
+                  badgeClassName
                 )}
               >
                 {choice.label}
               </span>
-              <span className='flex-1 text-gray-700'>{choice.text}</span>
+              <span className='flex-1 text-slate-700'>{choice.text}</span>
               {showAnswer && isChoiceCorrect ? (
                 <CheckCircle className='size-4 shrink-0 text-emerald-500' />
               ) : null}

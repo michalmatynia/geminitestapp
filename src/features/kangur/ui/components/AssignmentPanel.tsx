@@ -2,7 +2,10 @@ import { useMemo, useState } from 'react';
 import { CheckCircle2, Circle } from 'lucide-react';
 import Link from 'next/link';
 
-import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
+import {
+  appendKangurUrlParams,
+  getKangurPageHref as createPageUrl,
+} from '@/features/kangur/config/routing';
 import {
   KangurLessonCallout,
   KangurLessonChip,
@@ -24,8 +27,7 @@ const buildAssignmentHref = (
   }
 ): string => {
   const href = createPageUrl(action.page, basePath);
-  const query = action.query ? new URLSearchParams(action.query).toString() : '';
-  return query.length > 0 ? `${href}?${query}` : href;
+  return action.query ? appendKangurUrlParams(href, action.query) : href;
 };
 
 export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): React.JSX.Element {
@@ -80,22 +82,26 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
                 variant='subtle'
               >
                 <div className='flex items-start gap-2'>
-                  <button
+                  <KangurButton
                     type='button'
                     onClick={() => toggleAssignment(assignment.id)}
-                    className='mt-0.5 rounded-full transition hover:scale-105'
                     aria-label={
                       completed
                         ? `Oznacz ${assignment.title} jako nieukończone`
                         : `Oznacz ${assignment.title} jako ukończone`
                     }
+                    aria-pressed={completed}
+                    className='mt-0.5 h-8 w-8 min-w-0 rounded-full px-0'
+                    data-testid={`assignment-panel-toggle-${assignment.id}`}
+                    size='sm'
+                    variant={completed ? 'success' : 'secondary'}
                   >
                     {completed ? (
                       <CheckCircle2 className='h-4 w-4 text-emerald-600' />
                     ) : (
                       <Circle className='h-4 w-4 text-slate-400' />
                     )}
-                  </button>
+                  </KangurButton>
                   <div className='min-w-0'>
                     <div className='flex flex-wrap items-center gap-2'>
                       <p className='text-sm font-semibold text-slate-900'>{assignment.title}</p>

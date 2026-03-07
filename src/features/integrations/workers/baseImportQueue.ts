@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { processBaseImportRun } from '@/features/integrations/services/imports/base-import-service';
+import { processBaseImportRun } from '@/features/integrations/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type { BaseImportItemStatus } from '@/shared/contracts/integrations';
 import { createManagedQueue } from '@/shared/lib/queue';

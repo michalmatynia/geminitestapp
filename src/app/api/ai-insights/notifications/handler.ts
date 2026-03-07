@@ -4,7 +4,7 @@ import { z } from 'zod';
 import {
   clearAiInsightNotifications,
   listAiInsightNotifications,
-} from '@/features/ai/insights/repository';
+} from '@/features/ai/insights/server';
 import { startAiInsightsQueue } from '@/features/jobs/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 

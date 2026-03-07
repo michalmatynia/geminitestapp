@@ -1,12 +1,23 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { MediaLibraryPanel } from '@/features/cms/components/page-builder/MediaLibraryPanel';
 import { DocumentWysiwygEditor } from '@/features/document-editor';
+import {
+  isSvgImageSource,
+  normalizeSvgImageSource,
+} from '@/features/kangur/lesson-documents/utils';
 import type { KangurLessonInlineBlock } from '@/shared/contracts/kangur';
 import { Badge, Button, FormField, Input, SelectSimple, Textarea } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import { ALIGNMENT_OPTIONS, MEDIA_FIT_OPTIONS } from '../constants';
 import { clamp, parseNumberInput } from '../utils';
 import { SvgCodeEditor, extractSvgViewBox } from './SvgCodeEditor';
+
+const SVG_IMAGE_SOURCE_HELPER_TEXT = 'Only SVG files can be used in Kangur lesson image blocks.';
+
+const isSvgUploadFile = (file: File): boolean => {
+  const fileType = file.type.trim().toLowerCase();
+  return fileType === 'image/svg+xml' || file.name.trim().toLowerCase().endsWith('.svg');
+};
 
 export function InlineEditorCard(
   props: {
@@ -18,6 +29,41 @@ export function InlineEditorCard(
 ): React.JSX.Element {
   const { block, onChange, heading, accent = 'text' } = props;
   const [showMediaLibrary, setShowMediaLibrary] = useState(false);
+  const imageSource = block.type === 'image' ? block.src : '';
+  const [imageSourceDraft, setImageSourceDraft] = useState(imageSource);
+  const [imageSourceError, setImageSourceError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setImageSourceDraft(imageSource);
+    setImageSourceError(null);
+  }, [block.id, imageSource]);
+
+  const commitImageSource = (nextValue: string): void => {
+    if (block.type !== 'image') return;
+
+    const trimmed = nextValue.trim();
+    if (!trimmed) {
+      setImageSourceDraft('');
+      setImageSourceError(null);
+      if (block.src) {
+        onChange({ ...block, src: '' });
+      }
+      return;
+    }
+
+    const normalized = normalizeSvgImageSource(trimmed);
+    if (!normalized) {
+      setImageSourceDraft(block.src);
+      setImageSourceError(SVG_IMAGE_SOURCE_HELPER_TEXT);
+      return;
+    }
+
+    setImageSourceDraft(normalized);
+    setImageSourceError(null);
+    if (normalized !== block.src) {
+      onChange({ ...block, src: normalized });
+    }
+  };
 
   return (
     <div
@@ -278,16 +324,21 @@ export function InlineEditorCard(
             />
           </FormField>
 
-          <FormField label='Image Source'>
+          <FormField label='Image Source (SVG only)'>
             <div className='space-y-2'>
               <Input
-                value={block.src}
+                value={imageSourceDraft}
                 onChange={(event): void => {
-                  onChange({ ...block, src: event.target.value });
+                  setImageSourceDraft(event.target.value);
+                  setImageSourceError(null);
                 }}
-                placeholder='/uploads/... or https://...'
+                onBlur={(): void => commitImageSource(imageSourceDraft)}
+                placeholder='/uploads/...svg or https://...svg'
                 className='h-9'
               />
+              <div className='text-xs text-slate-600'>
+                {imageSourceError ?? SVG_IMAGE_SOURCE_HELPER_TEXT}
+              </div>
               <div className='flex flex-wrap gap-2'>
                 <Button
                   type='button'
@@ -304,7 +355,11 @@ export function InlineEditorCard(
                     size='sm'
                     variant='outline'
                     className='h-8 px-3'
-                    onClick={(): void => onChange({ ...block, src: '' })}
+                    onClick={(): void => {
+                      setImageSourceDraft('');
+                      setImageSourceError(null);
+                      onChange({ ...block, src: '' });
+                    }}
                   >
                     Clear source
                   </Button>
@@ -313,7 +368,7 @@ export function InlineEditorCard(
             </div>
           </FormField>
 
-          {block.src.trim() ? (
+          {isSvgImageSource(block.src) ? (
             <div className='overflow-hidden rounded-2xl border border-amber-200 bg-white/80 p-3'>
               <img
                 src={block.src}
@@ -328,10 +383,16 @@ export function InlineEditorCard(
             onOpenChange={setShowMediaLibrary}
             selectionMode='single'
             autoConfirmSelection
+            accept='.svg,image/svg+xml'
+            supportedFormatsLabel='SVG files'
+            filepathFilter={isSvgImageSource}
+            filterUploadFiles={(files): File[] => files.filter((file) => isSvgUploadFile(file))}
+            invalidSelectionMessage={SVG_IMAGE_SOURCE_HELPER_TEXT}
+            invalidUploadMessage={SVG_IMAGE_SOURCE_HELPER_TEXT}
             onSelect={(filepaths): void => {
               const nextSrc = filepaths[0];
               if (!nextSrc) return;
-              onChange({ ...block, src: nextSrc });
+              commitImageSource(nextSrc);
               setShowMediaLibrary(false);
             }}
           />

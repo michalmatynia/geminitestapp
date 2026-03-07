@@ -708,7 +708,7 @@ export const mediaBlockDefinitions: Record<string, BlockDefinition> = {
       },
       {
         key: 'basePath',
-        label: 'Internal app base path',
+        label: 'Host page override',
         type: 'text',
         defaultValue: DEFAULT_APP_EMBED_BASE_PATH,
       },

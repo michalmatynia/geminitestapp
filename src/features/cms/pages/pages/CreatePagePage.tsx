@@ -6,7 +6,7 @@ import { useMemo, useState } from 'react';
 import { CmsDomainSelector } from '@/features/cms/components/CmsDomainSelector';
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
 import { useCmsAllSlugs, useCmsSlugs, useCreatePage } from '@/features/cms/hooks/useCmsQueries';
-import { cmsPageCreateSchema } from '@/features/cms/validations/api';
+import { cmsPageCreateSchema } from '@/features/cms/server';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { Slug } from '@/shared/contracts/cms';
 import {

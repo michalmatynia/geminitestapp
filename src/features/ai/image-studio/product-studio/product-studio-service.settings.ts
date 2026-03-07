@@ -8,7 +8,7 @@ import {
   parsePersistedImageStudioSettings,
   resolveImageStudioSequenceActiveSteps,
   type ImageStudioSettings,
-} from '@/features/ai/image-studio/studio-settings';
+} from '@/features/ai/image-studio/server';
 import { PRODUCT_STUDIO_SEQUENCE_GENERATION_MODE_SETTING_KEY } from '@/shared/lib/products/constants';
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 import { getSettingValue } from '@/shared/lib/ai/server-settings';

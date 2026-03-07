@@ -1,4 +1,7 @@
-import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
+import {
+  appendKangurUrlParams,
+  getKangurPageHref as createPageUrl,
+} from '@/features/kangur/config/routing';
 import { buildKangurAssignments } from '@/features/kangur/ui/services/assignments';
 import type {
   KangurLesson,
@@ -548,25 +551,23 @@ export const buildKangurAssignmentHref = (
   assignment: Pick<KangurAssignmentSnapshot, 'target'>
 ): string => {
   if (assignment.target.type === 'lesson') {
-    const baseHref = createPageUrl('Lessons', basePath);
-    const query = new URLSearchParams({
+    return appendKangurUrlParams(createPageUrl('Lessons', basePath), {
       focus: assignment.target.lessonComponentId,
-    }).toString();
-    return `${baseHref}?${query}`;
+    });
   }
 
   if (assignment.target.operation === 'mixed') {
-    const baseHref = createPageUrl('Game', basePath);
-    return `${baseHref}?${buildKangurMixedTrainingQuickStartParams().toString()}`;
+    return appendKangurUrlParams(
+      createPageUrl('Game', basePath),
+      Object.fromEntries(buildKangurMixedTrainingQuickStartParams())
+    );
   }
 
-  const baseHref = createPageUrl('Game', basePath);
-  const query = new URLSearchParams({
+  return appendKangurUrlParams(createPageUrl('Game', basePath), {
     quickStart: 'operation',
     operation: assignment.target.operation,
     difficulty: 'medium',
-  }).toString();
-  return `${baseHref}?${query}`;
+  });
 };
 
 export const getKangurAssignmentActionLabel = (

@@ -75,12 +75,12 @@ vi.mock('@/features/ai/image-studio/server/center-utils', () => ({
   validateCenterSourceDimensions: validateCenterSourceDimensionsMock,
 }));
 
-vi.mock('@/features/ai/image-studio/server/slot-link-repository', () => ({
+vi.mock('@/features/ai/image-studio/server', () => ({
   getImageStudioSlotLinkBySourceAndRelation: getImageStudioSlotLinkBySourceAndRelationMock,
   upsertImageStudioSlotLink: upsertImageStudioSlotLinkMock,
 }));
 
-vi.mock('@/features/ai/image-studio/server/slot-repository', () => ({
+vi.mock('@/features/ai/image-studio/server', () => ({
   createImageStudioSlots: createImageStudioSlotsMock,
   getImageStudioSlotById: getImageStudioSlotByIdMock,
 }));

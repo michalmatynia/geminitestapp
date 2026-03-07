@@ -225,14 +225,14 @@ export function AdminKangurLessonsManagerPage({
       const nextBlocks =
         svgBlockIndex !== -1
           ? firstPage.blocks.map((b, i) =>
-              i === svgBlockIndex && b.type === 'svg'
-                ? { ...b, markup: sanitized, viewBox }
-                : b
-            )
+            i === svgBlockIndex && b.type === 'svg'
+              ? { ...b, markup: sanitized, viewBox }
+              : b
+          )
           : [
-              { ...createKangurLessonSvgBlock(), markup: sanitized, viewBox },
-              ...firstPage.blocks,
-            ];
+            { ...createKangurLessonSvgBlock(), markup: sanitized, viewBox },
+            ...firstPage.blocks,
+          ];
 
       const nextPages = pages.map((p, i) => (i === 0 ? { ...p, blocks: nextBlocks } : p));
       const nextDoc = updateKangurLessonDocumentPages(existingDoc, nextPages);
@@ -660,7 +660,7 @@ export function AdminKangurLessonsManagerPage({
         }}
         title={editingContentLesson ? `Edit Content: ${editingContentLesson.title}` : 'Edit Lesson Content'}
         titleTestId='mock-doc-editor-title'
-        subtitle='Author lesson pages with text, SVG blocks, uploaded images, activity widgets, and responsive grid layouts. You can also import the current legacy lesson structure into modular pages.'
+        subtitle='Author lesson pages with text, SVG blocks, SVG image references, activity widgets, and responsive grid layouts. You can also import the current legacy lesson structure into modular pages.'
         onSave={handleSaveLessonContent}        isSaving={updateSetting.isPending}
         saveText='Save Content'
         size='xl'

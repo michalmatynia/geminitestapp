@@ -4,6 +4,7 @@ import { Trophy, User, Ghost } from 'lucide-react';
 import { logKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurScoreRecord, KangurUser } from '@/features/kangur/services/ports';
+import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 
 type OperationLabel = {
@@ -105,40 +106,42 @@ export default function Leaderboard(): React.JSX.Element {
       </div>
 
       <div className='flex flex-col gap-2 mb-4'>
-        <div className='flex flex-wrap gap-1'>
+        <div className='flex flex-wrap gap-2'>
           {Object.entries(OPERATION_LABELS).map(([key, info]) => (
-            <button
+            <KangurButton
               key={key}
+              type='button'
               onClick={() => setFilter(key)}
-              className={`px-2 py-1 rounded-xl text-xs font-semibold transition border ${
-                filter === key
-                  ? 'bg-indigo-500 text-white border-indigo-500'
-                  : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-indigo-50'
-              }`}
+              aria-pressed={filter === key}
+              className='h-9 px-3 text-xs'
+              data-testid={`leaderboard-operation-filter-${key}`}
+              size='sm'
+              variant={filter === key ? 'surface' : 'secondary'}
             >
               {info.emoji} {info.label}
-            </button>
+            </KangurButton>
           ))}
         </div>
 
-        <div className='flex gap-1'>
+        <div className='flex flex-wrap gap-2'>
           {[
             { id: 'all' as const, label: 'Wszyscy', icon: null },
             { id: 'registered' as const, label: 'Zalogowani', icon: <User className='w-3 h-3' /> },
             { id: 'anonymous' as const, label: 'Anonimowi', icon: <Ghost className='w-3 h-3' /> },
           ].map((entry) => (
-            <button
+            <KangurButton
               key={entry.id}
+              type='button'
               onClick={() => setUserFilter(entry.id)}
-              className={`flex items-center gap-1 px-2 py-1 rounded-xl text-xs font-semibold transition border ${
-                userFilter === entry.id
-                  ? 'bg-purple-500 text-white border-purple-500'
-                  : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-purple-50'
-              }`}
+              aria-pressed={userFilter === entry.id}
+              className='h-9 px-3 text-xs'
+              data-testid={`leaderboard-user-filter-${entry.id}`}
+              size='sm'
+              variant={userFilter === entry.id ? 'surface' : 'secondary'}
             >
               {entry.icon}
               {entry.label}
-            </button>
+            </KangurButton>
           ))}
         </div>
       </div>

@@ -853,21 +853,21 @@ export const mongoPathRunRepository: AiPathRunRepository = {
 
     await db.collection(RUNS_COLLECTION).bulkWrite(bulkOps);
 
-          if (options?.event) {
-            await this.createRunEvent({
-              ...options.event,
-              runId,
-            });
-          }
-        },
+    if (options?.event) {
+      await this.createRunEvent({
+        ...options.event,
+        runId,
+      });
+    }
+  },
     
-        async getRunByRequestId(pathId: string, requestId: string): Promise<AiPathRunRecord | null> {
-          await ensureIndexes();
-          const db = await getMongoDb();
-          const doc = await db.collection<RunDocument>(RUNS_COLLECTION).findOne({
-            pathId,
-            'meta.requestId': requestId,
-          });
-          return doc ? toRunRecord(doc) : null;
-        },
-      };
+  async getRunByRequestId(pathId: string, requestId: string): Promise<AiPathRunRecord | null> {
+    await ensureIndexes();
+    const db = await getMongoDb();
+    const doc = await db.collection<RunDocument>(RUNS_COLLECTION).findOne({
+      pathId,
+      'meta.requestId': requestId,
+    });
+    return doc ? toRunRecord(doc) : null;
+  },
+};

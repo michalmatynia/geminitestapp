@@ -1,6 +1,6 @@
 import type { AppEmbedId } from '@/shared/contracts/app-embeds';
 import { APP_EMBED_SETTING_KEY as SETTING_KEY } from '@/shared/contracts/app-embeds';
-import { KANGUR_BASE_PATH, KANGUR_MAIN_PAGE_KEY } from '@/shared/contracts/kangur';
+import { KANGUR_MAIN_PAGE_KEY } from '@/features/kangur/config/routing';
 
 export type { AppEmbedId };
 
@@ -18,7 +18,7 @@ export type AppEmbedOption = {
 
 export const DEFAULT_APP_EMBED_HEIGHT = 420;
 export const DEFAULT_APP_EMBED_ID: AppEmbedId = 'chatbot';
-export const DEFAULT_APP_EMBED_BASE_PATH = KANGUR_BASE_PATH;
+export const DEFAULT_APP_EMBED_BASE_PATH = '';
 export const DEFAULT_APP_EMBED_ENTRY_PAGE = KANGUR_MAIN_PAGE_KEY;
 
 export const KANGUR_APP_EMBED_ENTRY_PAGE_OPTIONS = [

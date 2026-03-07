@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { buildKangurEmbeddedBasePath } from '@/shared/contracts/kangur';
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 
 import {
@@ -208,6 +209,20 @@ describe('delegated assignments helpers', () => {
     );
     expect(url.searchParams.get('count')).toBe('10');
     expect(url.searchParams.get('difficulty')).toBe('medium');
+  });
+
+  it('builds embedded lesson assignment links on the cms host page', () => {
+    const href = buildKangurAssignmentHref(
+      buildKangurEmbeddedBasePath('/home?preview=1'),
+      createAssignment({
+        target: {
+          type: 'lesson',
+          lessonComponentId: 'division',
+        },
+      })
+    );
+
+    expect(href).toBe('/home?preview=1&kangur=lessons&focus=division');
   });
 
   it('parses delegated mixed training quick-start params into a ready training preset', () => {

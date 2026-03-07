@@ -102,6 +102,14 @@ describe('KangurAssignmentManager', () => {
   it('renders recommendations, filters catalog items, and creates assignments from the parent panel', async () => {
     render(<KangurAssignmentManager basePath='/kangur' />);
 
+    const allFilter = screen.getByTestId('assignment-manager-filter-all');
+    const practiceFilter = screen.getByTestId('assignment-manager-filter-practice');
+
+    expect(allFilter).toHaveClass('kangur-cta-pill', 'surface-cta');
+    expect(allFilter).toHaveAttribute('aria-pressed', 'true');
+    expect(practiceFilter).toHaveClass('kangur-cta-pill', 'soft-cta');
+    expect(practiceFilter).toHaveAttribute('aria-pressed', 'false');
+
     expect(screen.getByText('Przydziel nowe zadanie')).toBeInTheDocument();
     expect(screen.getByText('Podpowiedzi z postępu ucznia')).toBeInTheDocument();
     expect(screen.getByText('Nauka zegara')).toBeInTheDocument();
@@ -112,6 +120,16 @@ describe('KangurAssignmentManager', () => {
     expect(screen.getByText('Monitorowanie zadań')).toBeInTheDocument();
     expect(screen.getByText('Aktywne zadania')).toBeInTheDocument();
     expect(screen.getAllByText('Praktyka: Dzielenie').length).toBeGreaterThanOrEqual(1);
+
+    await userEvent.click(practiceFilter);
+
+    expect(practiceFilter).toHaveClass('kangur-cta-pill', 'surface-cta');
+    expect(practiceFilter).toHaveAttribute('aria-pressed', 'true');
+    expect(allFilter).toHaveClass('kangur-cta-pill', 'soft-cta');
+    expect(allFilter).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.queryByText('Nauka zegara')).not.toBeInTheDocument();
+    expect(screen.getAllByText('Trening mieszany').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Trening: Dzielenie')).toBeInTheDocument();
 
     await userEvent.type(
       screen.getByPlaceholderText('Szukaj po temacie, typie zadania lub słowie kluczowym...'),

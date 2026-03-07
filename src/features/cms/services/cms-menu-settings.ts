@@ -2,7 +2,7 @@ import 'server-only';
 
 import { ObjectId } from 'mongodb';
 
-import { isDomainZoningEnabled } from '@/features/cms/services/cms-domain';
+import { isDomainZoningEnabled } from '@/features/cms/server';
 import {
   DEFAULT_MENU_SETTINGS,
   getCmsMenuSettingsKey,

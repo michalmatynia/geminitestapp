@@ -2,7 +2,7 @@ import 'server-only';
 
 import { getProductListingRepository } from '@/features/integrations/server';
 import { integrationService } from '@/features/integrations/server';
-import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
+import { resolveBaseConnectionToken } from '@/features/integrations/server';
 import { fetchBaseProductDetails } from '@/features/integrations/services/imports/base-client';
 import { extractBaseImageUrls } from '@/features/integrations/services/imports/base-mapper';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';

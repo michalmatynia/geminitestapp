@@ -25,7 +25,7 @@ vi.mock('@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-c
   hydrateSystemLogRecordRuntimeContext: hydrateSystemLogRecordRuntimeContextMock,
 }));
 
-vi.mock('@/features/ai/insights/generator', () => ({
+vi.mock('@/features/ai/insights/server', () => ({
   generateLogInterpretation: generateLogInterpretationMock,
 }));
 

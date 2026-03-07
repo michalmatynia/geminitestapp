@@ -530,25 +530,32 @@ describe('PathRunExecutor', () => {
     vi.mocked(evaluateGraphWithIteratorAutoContinue).mockImplementation(
       async (options: EvaluateGraphArgs) => {
         const node = options.nodes[0]!;
+        const spanId = `${node.id}:1:1`;
         if (options.onNodeStart) {
           await options.onNodeStart({
             runId: options.runId!,
+            traceId: options.runId!,
+            spanId,
             runStartedAt: new Date().toISOString(),
             node,
             nodeInputs: {},
             prevOutputs: {},
             iteration: 1,
+            attempt: 1,
           });
         }
         if (options.onNodeFinish) {
           await options.onNodeFinish({
             runId: options.runId!,
+            traceId: options.runId!,
+            spanId,
             runStartedAt: new Date().toISOString(),
             node,
             nodeInputs: {},
             prevOutputs: {},
             nextOutputs: { value: 'span-ok' },
             iteration: 1,
+            attempt: 1,
             changed: true,
           });
         }
@@ -577,6 +584,88 @@ describe('PathRunExecutor', () => {
     expect(nodeSpans[0]).toMatchObject({
       nodeId: mockNodes[0]!.id,
       status: 'completed',
+    });
+  });
+
+  it('should persist effect metadata in runtime trace spans', async () => {
+    vi.mocked(evaluateGraphWithIteratorAutoContinue).mockImplementation(
+      async (options: EvaluateGraphArgs) => {
+        const node = {
+          ...options.nodes[0]!,
+          type: 'http',
+          config: {
+            runtime: {
+              sideEffectPolicy: 'per_activation',
+            },
+          },
+        } as AiNode;
+        const spanId = `${node.id}:1:1`;
+        if (options.onNodeStart) {
+          await options.onNodeStart({
+            runId: options.runId!,
+            traceId: options.runId!,
+            spanId,
+            runStartedAt: new Date().toISOString(),
+            node,
+            nodeInputs: { url: 'https://example.test/items' },
+            prevOutputs: {},
+            iteration: 1,
+            attempt: 1,
+          });
+        }
+        if (options.onNodeFinish) {
+          await options.onNodeFinish({
+            runId: options.runId!,
+            traceId: options.runId!,
+            spanId,
+            runStartedAt: new Date().toISOString(),
+            node,
+            nodeInputs: { url: 'https://example.test/items' },
+            prevOutputs: {},
+            nextOutputs: { value: { ok: true } },
+            iteration: 1,
+            attempt: 1,
+            changed: false,
+            cached: true,
+            cacheDecision: 'seed',
+            sideEffectPolicy: 'per_activation',
+            sideEffectDecision: 'skipped_duplicate',
+            activationHash: 'activation-hash-1',
+            idempotencyKey: 'http-node:activation-hash-1',
+            effectSourceSpanId: 'node-111111111111111111111111:1:1',
+          });
+        }
+
+        return {
+          status: 'completed',
+          outputs: { [node.id]: { value: { ok: true } } },
+        } as any;
+      }
+    );
+
+    const run = await mockRepo.createRun({
+      pathId: 'test',
+      graph: { nodes: mockNodes, edges: mockEdges },
+      meta: { aiPathsValidation: { enabled: false } },
+    });
+
+    await executePathRun(run);
+
+    const updateCall = vi
+      .mocked(mockRepo.updateRunIfStatus)
+      .mock.calls.find((c) => (c[2] as any).meta?.runtimeTrace);
+    const runtimeTrace = (updateCall?.[2] as any).meta.runtimeTrace;
+    expect(runtimeTrace?.spans?.[0]).toMatchObject({
+      nodeId: mockNodes[0]!.id,
+      cache: {
+        decision: 'seed',
+      },
+      effect: {
+        policy: 'per_activation',
+        decision: 'skipped_duplicate',
+        sourceSpanId: 'node-111111111111111111111111:1:1',
+      },
+      activationHash: 'activation-hash-1',
     });
   });
 

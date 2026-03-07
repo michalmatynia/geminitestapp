@@ -8,7 +8,7 @@ import {
   normalizeKangurBasePath,
   normalizeKangurRequestedPath,
   resolveKangurPageKeyFromSlug,
-} from '@/features/kangur/config/routing';
+} from '@/shared/contracts/kangur';
 import {
   clearKangurClientObservabilityContext,
   setKangurClientObservabilityContext,

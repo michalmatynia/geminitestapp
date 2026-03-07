@@ -1,4 +1,3 @@
-'use client';
 
 import {
   AI_PATHS_HISTORY_RETENTION_KEY,

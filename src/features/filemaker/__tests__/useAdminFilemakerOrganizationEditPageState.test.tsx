@@ -15,7 +15,7 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mocks.routerPush }),
 }));
 
-vi.mock('@/features/internationalization/hooks/useInternationalizationQueries', () => ({
+vi.mock('@/shared/hooks/use-i18n-queries', () => ({
   useCountries: () => ({ data: [] }),
 }));
 

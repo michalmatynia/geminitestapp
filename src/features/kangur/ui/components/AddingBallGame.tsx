@@ -5,11 +5,13 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { RefreshCw } from 'lucide-react';
 
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_ACCENT_STYLES } from '@/features/kangur/ui/design/tokens';
 import {
   addXp,
   createLessonPracticeReward,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
+import { cn } from '@/shared/utils';
 
 type AddingBallGameProps = {
   onFinish: () => void;
@@ -90,6 +92,56 @@ const BALL_COLORS = [
 
 const MODES: RoundMode[] = ['complete_equation', 'group_sum', 'pick_answer'];
 const TOTAL_ROUNDS = 6;
+const BALL_POOL_CLASSNAME =
+  'soft-card flex min-h-[60px] w-full max-w-xs flex-wrap justify-center gap-2 rounded-[24px] border border-slate-200/80 bg-white/92 p-3 shadow-[0_18px_42px_-36px_rgba(15,23,42,0.22)]';
+
+const getRectDropZoneClassName = ({
+  isDraggingOver,
+  checked,
+  correct,
+}: {
+  isDraggingOver: boolean;
+  checked: boolean;
+  correct: boolean;
+}): string =>
+  cn(
+    'soft-card flex flex-wrap gap-1 rounded-[22px] border p-2 transition-all',
+    checked
+      ? correct
+        ? cn(KANGUR_ACCENT_STYLES.emerald.activeCard, KANGUR_ACCENT_STYLES.emerald.activeText)
+        : cn(KANGUR_ACCENT_STYLES.rose.activeCard, KANGUR_ACCENT_STYLES.rose.activeText)
+      : isDraggingOver
+        ? cn(
+            KANGUR_ACCENT_STYLES.amber.activeCard,
+            KANGUR_ACCENT_STYLES.amber.activeText,
+            'scale-[1.02]'
+          )
+        : cn('border-slate-200/80 bg-white/95', KANGUR_ACCENT_STYLES.amber.hoverCard)
+  );
+
+const getAnswerSlotClassName = ({
+  isDraggingOver,
+  checked,
+  correct,
+}: {
+  isDraggingOver: boolean;
+  checked: boolean;
+  correct: boolean;
+}): string =>
+  cn(
+    'soft-card flex h-24 w-24 items-center justify-center rounded-full border-2 transition-all',
+    checked
+      ? correct
+        ? cn(KANGUR_ACCENT_STYLES.emerald.activeCard, KANGUR_ACCENT_STYLES.emerald.activeText)
+        : cn(KANGUR_ACCENT_STYLES.rose.activeCard, KANGUR_ACCENT_STYLES.rose.activeText)
+      : isDraggingOver
+        ? cn(
+            KANGUR_ACCENT_STYLES.amber.activeCard,
+            KANGUR_ACCENT_STYLES.amber.activeText,
+            'scale-110'
+          )
+        : cn('border-slate-200/80 bg-white/95', KANGUR_ACCENT_STYLES.amber.hoverCard)
+  );
 
 function createBalls(count: number): BallItem[] {
   return Array.from({ length: count }, (_, i) => ({
@@ -258,7 +310,8 @@ function CompleteEquation({
             <div
               ref={provided.innerRef}
               {...provided.droppableProps}
-              className='flex flex-wrap gap-2 bg-gray-100 rounded-2xl p-3 min-h-[60px] w-full max-w-xs justify-center'
+              className={BALL_POOL_CLASSNAME}
+              data-testid='adding-ball-pool'
             >
               {state.pool.map((ball, i) => (
                 <Draggable key={ball.id} draggableId={ball.id} index={i} isDragDisabled={checked}>
@@ -311,15 +364,15 @@ function SlotZone({ id, items, label, checked, correct }: SlotZoneProps): React.
           <div
             ref={provided.innerRef}
             {...provided.droppableProps}
-            className={`flex flex-wrap gap-1 min-w-[60px] min-h-[52px] rounded-xl border-2 p-2 transition-all ${
-              snapshot.isDraggingOver
-                ? 'border-orange-400 bg-orange-50'
-                : checked
-                  ? correct
-                    ? 'border-green-400 bg-green-50'
-                    : 'border-red-400 bg-red-50'
-                  : 'border-dashed border-gray-300 bg-white'
-            }`}
+            className={cn(
+              getRectDropZoneClassName({
+                isDraggingOver: snapshot.isDraggingOver,
+                checked,
+                correct,
+              }),
+              'min-h-[52px] min-w-[60px]'
+            )}
+            data-testid={`adding-ball-${id}`}
           >
             {items.map((ball, i) => (
               <Draggable key={ball.id} draggableId={ball.id} index={i} isDragDisabled={checked}>
@@ -427,15 +480,15 @@ function GroupSum({
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`flex flex-wrap gap-1 min-w-[80px] min-h-[52px] rounded-xl border-2 p-2 transition-all ${
-                      snapshot.isDraggingOver
-                        ? 'border-orange-400 bg-orange-50'
-                        : checked
-                          ? correct
-                            ? 'border-green-400 bg-green-50'
-                            : 'border-red-400 bg-red-50'
-                          : 'border-dashed border-gray-300 bg-white'
-                    }`}
+                    className={cn(
+                      getRectDropZoneClassName({
+                        isDraggingOver: snapshot.isDraggingOver,
+                        checked,
+                        correct,
+                      }),
+                      'min-h-[52px] min-w-[80px]'
+                    )}
+                    data-testid={`adding-ball-${group.id}`}
                   >
                     {state[group.id].map((ball, i) => (
                       <Draggable
@@ -468,7 +521,8 @@ function GroupSum({
             <div
               ref={provided.innerRef}
               {...provided.droppableProps}
-              className='flex flex-wrap gap-2 bg-gray-100 rounded-2xl p-3 min-h-[60px] w-full max-w-xs justify-center'
+              className={BALL_POOL_CLASSNAME}
+              data-testid='adding-ball-pool'
             >
               {state.pool.map((ball, i) => (
                 <Draggable key={ball.id} draggableId={ball.id} index={i} isDragDisabled={checked}>
@@ -556,15 +610,12 @@ function PickAnswer({
             <div
               ref={provided.innerRef}
               {...provided.droppableProps}
-              className={`w-24 h-24 rounded-full border-4 flex items-center justify-center transition-all ${
-                snapshot.isDraggingOver
-                  ? 'border-orange-400 bg-orange-50 scale-110'
-                  : checked
-                    ? dropped?.num === round.correct
-                      ? 'border-green-400 bg-green-50'
-                      : 'border-red-400 bg-red-50'
-                    : 'border-dashed border-gray-300 bg-white'
-              }`}
+              className={getAnswerSlotClassName({
+                isDraggingOver: snapshot.isDraggingOver,
+                checked,
+                correct: dropped?.num === round.correct,
+              })}
+              data-testid='adding-ball-answer-slot'
             >
               {dropped ? (
                 <div
@@ -595,7 +646,8 @@ function PickAnswer({
             <div
               ref={provided.innerRef}
               {...provided.droppableProps}
-              className='flex gap-3 flex-wrap justify-center'
+              className={cn(BALL_POOL_CLASSNAME, 'gap-3')}
+              data-testid='adding-ball-balls-pool'
             >
               {balls.map((ball, i) => (
                 <Draggable key={ball.id} draggableId={ball.id} index={i} isDragDisabled={checked}>

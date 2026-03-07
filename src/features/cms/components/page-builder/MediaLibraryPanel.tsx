@@ -21,6 +21,12 @@ interface MediaLibraryPanelProps {
   selectionMode?: 'single' | 'multiple';
   autoConfirmSelection?: boolean;
   onFilesSelected?: (files: File[], helpers?: FileUploadHelpers) => void | Promise<void>;
+  accept?: string;
+  supportedFormatsLabel?: string;
+  filepathFilter?: (filepath: string) => boolean;
+  filterUploadFiles?: (files: File[]) => File[];
+  invalidSelectionMessage?: string;
+  invalidUploadMessage?: string;
 }
 
 export function MediaLibraryPanel(props: MediaLibraryPanelProps): React.JSX.Element {
@@ -31,6 +37,12 @@ export function MediaLibraryPanel(props: MediaLibraryPanelProps): React.JSX.Elem
     selectionMode = 'single',
     autoConfirmSelection,
     onFilesSelected,
+    accept = 'image/*',
+    supportedFormatsLabel = 'images',
+    filepathFilter,
+    filterUploadFiles,
+    invalidSelectionMessage = 'The selected file is not supported here.',
+    invalidUploadMessage = 'No supported files were selected.',
   } = props;
 
   const { toast } = useToast();
@@ -42,8 +54,12 @@ export function MediaLibraryPanel(props: MediaLibraryPanelProps): React.JSX.Elem
     const filepaths = files
       .map((file: ImageFileSelection) => file.filepath)
       .filter((path): path is string => typeof path === 'string' && path.length > 0);
-    if (filepaths.length === 0) return;
-    onSelect(filepaths);
+    const acceptedFilepaths = filepathFilter ? filepaths.filter(filepathFilter) : filepaths;
+    if (acceptedFilepaths.length === 0) {
+      toast(invalidSelectionMessage, { variant: 'info' });
+      return;
+    }
+    onSelect(acceptedFilepaths);
     if (selectionMode === 'single') {
       onOpenChange(false);
     }
@@ -52,17 +68,26 @@ export function MediaLibraryPanel(props: MediaLibraryPanelProps): React.JSX.Elem
   const handleUpload = async (files: File[], helpers?: FileUploadHelpers): Promise<void> => {
     if (!files || files.length === 0) return;
 
+    const acceptedFiles = filterUploadFiles ? filterUploadFiles(files) : files;
+    if (acceptedFiles.length === 0) {
+      toast(invalidUploadMessage, { variant: 'info' });
+      return;
+    }
+    if (acceptedFiles.length !== files.length) {
+      toast(invalidUploadMessage, { variant: 'info' });
+    }
+
     try {
       const uploaded: ImageFileRecord[] = [];
-      for (let index = 0; index < files.length; index += 1) {
-        const file = files[index]!;
+      for (let index = 0; index < acceptedFiles.length; index += 1) {
+        const file = acceptedFiles[index]!;
         const result = await uploadMutation.mutateAsync({
           file,
           onProgress: (loaded: number, total?: number) => {
             if (!helpers) return;
             if (!total) return;
             const pct = Math.min(100, Math.max(0, Math.round((loaded / total) * 100)));
-            const combined = Math.round(((index + pct / 100) / files.length) * 100);
+            const combined = Math.round(((index + pct / 100) / acceptedFiles.length) * 100);
             helpers.setProgress(combined);
           },
         });
@@ -106,7 +131,7 @@ export function MediaLibraryPanel(props: MediaLibraryPanelProps): React.JSX.Elem
             <FileUploadButton
               variant='outline'
               size='sm'
-              accept='image/*'
+              accept={accept}
               multiple
               disabled={uploadMutation.isPending}
               onFilesSelected={(files: File[], helpers?: FileUploadHelpers) =>
@@ -116,7 +141,7 @@ export function MediaLibraryPanel(props: MediaLibraryPanelProps): React.JSX.Elem
               <Upload className='mr-2 size-4' />
               {uploadMutation.isPending ? 'Uploading...' : 'Upload images'}
             </FileUploadButton>
-            <p className='text-xs text-gray-500'>Supported formats: images</p>
+            <p className='text-xs text-gray-500'>Supported formats: {supportedFormatsLabel}</p>
           </div>
         </div>
 
@@ -129,6 +154,7 @@ export function MediaLibraryPanel(props: MediaLibraryPanelProps): React.JSX.Elem
             defaultFolder='cms'
             showBulkActions={selectionMode === 'multiple'}
             showTagSearch
+            {...(filepathFilter !== undefined ? { filepathFilter } : {})}
           />
         </div>
       </div>

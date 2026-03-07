@@ -6,7 +6,7 @@ import {
   type ImageStudioUpscaleSmoothingQuality,
   type ImageStudioUpscaleRequest,
 } from '@/features/ai/image-studio/contracts/upscale';
-import { getImageStudioSlotLinkBySourceAndRelation } from '@/features/ai/image-studio/server/slot-link-repository';
+import { getImageStudioSlotLinkBySourceAndRelation } from '@/features/ai/image-studio/server';
 import {
   buildUpscaleFingerprint,
   buildUpscaleFingerprintRelationType,

@@ -258,7 +258,7 @@ describe('kangur lesson documents', () => {
             id: 'image-1',
             type: 'image',
             title: '',
-            src: '/uploads/kangur/example.png',
+            src: '/uploads/kangur/example.svg',
             align: 'center',
             fit: 'contain',
             maxWidth: 320,
@@ -266,6 +266,23 @@ describe('kangur lesson documents', () => {
         ],
       })
     ).toBe(true);
+
+    expect(
+      hasKangurLessonDocumentContent({
+        version: 1,
+        blocks: [
+          {
+            id: 'image-2',
+            type: 'image',
+            title: '',
+            src: '/uploads/kangur/example.png',
+            align: 'center',
+            fit: 'contain',
+            maxWidth: 320,
+          },
+        ],
+      })
+    ).toBe(false);
   });
 
   it('builds template-based grid layouts for common lesson distributions', () => {

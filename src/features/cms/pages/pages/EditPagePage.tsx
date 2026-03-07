@@ -12,7 +12,7 @@ import {
   useCmsSlugs,
   useUpdatePage,
 } from '@/features/cms/hooks/useCmsQueries';
-import { cmsPageUpdateSchema } from '@/features/cms/validations/api';
+import { cmsPageUpdateSchema } from '@/features/cms/server';
 import type { Page, Slug } from '@/shared/contracts/cms';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import {

@@ -10,16 +10,16 @@ import {
   getImageStudioRunById,
   updateImageStudioRun,
   type ImageStudioRunRecord,
-} from '@/features/ai/image-studio/server/run-repository';
+} from '@/features/ai/image-studio/server';
 import { startImageStudioSequenceRun } from '@/features/ai/image-studio/server/sequence-runtime';
 import {
   createImageStudioSlots,
   type ImageStudioSlotRecord,
-} from '@/features/ai/image-studio/server/slot-repository';
+} from '@/features/ai/image-studio/server';
 import {
   buildImageStudioSequenceSnapshot,
   resolveImageStudioSequenceActiveSteps,
-} from '@/features/ai/image-studio/studio-settings';
+} from '@/features/ai/image-studio/server';
 import {
   enqueueImageStudioRunJob,
   startImageStudioRunQueue,

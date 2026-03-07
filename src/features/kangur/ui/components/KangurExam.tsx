@@ -19,8 +19,13 @@ import {
 } from '@/features/kangur/ui/components/KangurIllustrations';
 import { useKangurGameContext } from '@/features/kangur/ui/context/KangurGameContext';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
+import {
+  KANGUR_ACCENT_STYLES,
+  KANGUR_OPTION_CARD_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { getKangurQuestions } from '@/features/kangur/ui/services/kangur-questions';
 import type { KangurExamQuestion, KangurQuestionChoice } from '@/features/kangur/ui/types';
+import { cn } from '@/shared/utils';
 
 type IllustrationComponent = () => React.JSX.Element;
 
@@ -121,24 +126,39 @@ function ExamQuestion({
       </div>
 
       <div className='flex flex-col gap-2'>
-        {q.choices.map((choice, index) => (
-          <motion.button
-            key={`${String(choice)}-${index}`}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => onSelect(choice)}
-            className={`w-full text-left px-4 py-3 rounded-xl font-semibold transition-all flex items-center gap-3 ${
-              selected === choice
-                ? 'bg-orange-50 border-2 border-orange-400 text-orange-800'
-                : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-orange-300'
-            }`}
-          >
-            <span className='w-7 h-7 rounded-full bg-orange-100 text-orange-600 font-extrabold text-sm flex items-center justify-center flex-shrink-0'>
-              {String.fromCharCode(65 + index)}
-            </span>
-            <span>{choice}</span>
-          </motion.button>
-        ))}
+        {q.choices.map((choice, index) => {
+          const isSelected = selected === choice;
+
+          return (
+            <motion.button
+              key={`${String(choice)}-${index}`}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => onSelect(choice)}
+              className={cn(
+                KANGUR_OPTION_CARD_CLASSNAME,
+                'w-full rounded-[24px] px-4 py-3 font-semibold transition-all flex items-center gap-3',
+                isSelected
+                  ? cn(
+                      KANGUR_ACCENT_STYLES.amber.activeCard,
+                      KANGUR_ACCENT_STYLES.amber.activeText
+                    )
+                  : cn('border-slate-200/80 text-slate-700', KANGUR_ACCENT_STYLES.slate.hoverCard)
+              )}
+              data-testid={`kangur-exam-choice-${index}`}
+            >
+              <span
+                className={cn(
+                  'flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-sm font-extrabold',
+                  isSelected ? KANGUR_ACCENT_STYLES.amber.badge : KANGUR_ACCENT_STYLES.slate.badge
+                )}
+              >
+                {String.fromCharCode(65 + index)}
+              </span>
+              <span>{choice}</span>
+            </motion.button>
+          );
+        })}
       </div>
     </div>
   );
@@ -223,18 +243,37 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
 
         <div className='flex flex-col gap-2'>
           {question.choices.map((choice, index) => {
-            let style = 'bg-white border-2 border-gray-100 text-gray-400 opacity-60';
+            let style = 'border-slate-200/80 bg-white/92 text-slate-400 opacity-70';
+            let badgeClassName = KANGUR_ACCENT_STYLES.slate.badge;
             if (choice === question.answer) {
-              style = 'bg-green-100 border-2 border-green-500 text-green-800';
+              style = cn(
+                KANGUR_ACCENT_STYLES.emerald.activeCard,
+                KANGUR_ACCENT_STYLES.emerald.activeText
+              );
+              badgeClassName = KANGUR_ACCENT_STYLES.emerald.badge;
             } else if (choice === userAnswer) {
-              style = 'bg-red-100 border-2 border-red-400 text-red-700';
+              style = cn(
+                KANGUR_ACCENT_STYLES.rose.activeCard,
+                KANGUR_ACCENT_STYLES.rose.activeText
+              );
+              badgeClassName = KANGUR_ACCENT_STYLES.rose.badge;
             }
             return (
               <div
                 key={`${String(choice)}-${index}`}
-                className={`w-full text-left px-4 py-3 rounded-xl font-semibold flex items-center gap-3 ${style}`}
+                className={cn(
+                  KANGUR_OPTION_CARD_CLASSNAME,
+                  'w-full rounded-[24px] px-4 py-3 font-semibold flex items-center gap-3',
+                  style
+                )}
+                data-testid={`kangur-exam-review-choice-${index}`}
               >
-                <span className='w-7 h-7 rounded-full bg-white/50 font-extrabold text-sm flex items-center justify-center flex-shrink-0'>
+                <span
+                  className={cn(
+                    'flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-sm font-extrabold',
+                    badgeClassName
+                  )}
+                >
                   {String.fromCharCode(65 + index)}
                 </span>
                 <span>{choice}</span>
@@ -310,13 +349,25 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
               whileHover={{ scale: 1.08 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setReviewing(index)}
-              className={`rounded-xl p-2 flex flex-col items-center gap-1 shadow transition ${
+              className={cn(
+                KANGUR_OPTION_CARD_CLASSNAME,
+                'min-h-[92px] rounded-[22px] p-2 flex flex-col items-center gap-1 transition text-center',
                 skipped
-                  ? 'bg-gray-100 border border-gray-200'
+                  ? cn(
+                      KANGUR_ACCENT_STYLES.slate.activeCard,
+                      KANGUR_ACCENT_STYLES.slate.activeText
+                    )
                   : correct
-                    ? 'bg-green-100 border border-green-300'
-                    : 'bg-red-100 border border-red-300'
-              }`}
+                    ? cn(
+                        KANGUR_ACCENT_STYLES.emerald.activeCard,
+                        KANGUR_ACCENT_STYLES.emerald.activeText
+                      )
+                    : cn(
+                        KANGUR_ACCENT_STYLES.rose.activeCard,
+                        KANGUR_ACCENT_STYLES.rose.activeText
+                      )
+              )}
+              data-testid={`kangur-exam-summary-question-${index}`}
             >
               <span className='text-xs font-bold text-gray-500'>#{index + 1}</span>
               {skipped ? (

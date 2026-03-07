@@ -5,7 +5,7 @@ import type { JSX } from 'react';
 import { PageNotFound } from '@/features/kangur/ui/components/PageNotFound';
 import UserNotRegisteredError from '@/features/kangur/ui/components/UserNotRegisteredError';
 import { KANGUR_MAIN_PAGE, kangurPages } from '@/features/kangur/config/pages';
-import { resolveKangurPageKey } from '@/features/kangur/config/routing';
+import { resolveKangurPageKey } from '@/shared/contracts/kangur';
 import { KangurAuthProvider, useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { KangurProgressSyncProvider } from '@/features/kangur/ui/context/KangurProgressSyncProvider';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';

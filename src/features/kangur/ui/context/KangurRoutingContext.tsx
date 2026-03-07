@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 
-import { KANGUR_BASE_PATH, normalizeKangurBasePath } from '@/features/kangur/config/routing';
+import { KANGUR_BASE_PATH, normalizeKangurBasePath } from '@/shared/contracts/kangur';
 
 type KangurRoutingContextValue = {
   pageKey?: string | null;

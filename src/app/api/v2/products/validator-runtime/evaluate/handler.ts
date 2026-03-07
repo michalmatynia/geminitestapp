@@ -26,7 +26,7 @@ import {
   resolveFieldTargetAndLocale,
   shouldLaunchPattern,
 } from '@/features/products/validation-engine/core';
-import { parseRuntimeConfigForEvaluation } from '@/features/products/validations/validator-runtime-config';
+import { parseRuntimeConfigForEvaluation } from '@/features/products/server';
 import type {
   ProductValidationPattern,
   ProductValidationPostAcceptBehavior,

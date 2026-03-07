@@ -15,6 +15,11 @@ import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { executeMongoWriteWithRetry } from '@/shared/lib/db/mongo-write-retry';
 import prisma from '@/shared/lib/db/prisma';
+import {
+  getPrismaSystemLogMetricsWithMinDuration,
+  matchesMinDurationMs,
+  toPrismaSystemLogRecord,
+} from '@/shared/lib/observability/system-log-prisma-helpers';
 
 type CreateSystemLogInput = Omit<CreateSystemLogInputDto, 'createdAt'> & {
   createdAt?: Date;
@@ -150,6 +155,7 @@ const buildPrismaWhere = (input: ListSystemLogsInput): Prisma.SystemLogWhereInpu
   if (input.statusCode !== undefined && input.statusCode !== null) {
     filters.push({ statusCode: input.statusCode });
   }
+  // Numeric JSON filtering is handled in-memory for Prisma to avoid provider-specific query behavior.
   if (input.requestId) {
     filters.push({ requestId: { contains: input.requestId, mode: 'insensitive' } });
   }
@@ -264,6 +270,23 @@ const buildMongoFilter = (input: ListSystemLogsInput): Filter<MongoSystemLogDoc>
   }
   if (input.statusCode !== undefined && input.statusCode !== null) {
     filter.statusCode = input.statusCode;
+  }
+  if (input.minDurationMs !== undefined && input.minDurationMs !== null) {
+    andFilters.push({
+      $expr: {
+        $gte: [
+          {
+            $convert: {
+              input: '$context.durationMs',
+              to: 'double',
+              onError: -1,
+              onNull: -1,
+            },
+          },
+          input.minDurationMs,
+        ],
+      },
+    });
   }
   if (input.requestId) {
     filter.requestId = { $regex: escapeRegex(input.requestId), $options: 'i' };
@@ -558,13 +581,7 @@ export async function createSystemLog(input: CreateSystemLogInput): Promise<Syst
       },
     });
 
-    return normalizeLogRecord({
-      ...created,
-      level: created.level as SystemLogLevel,
-      context: (created.context as Record<string, unknown> | null) ?? null,
-      createdAt: created.createdAt.toISOString(),
-      updatedAt: null,
-    } as SystemLogRecord);
+    return normalizeLogRecord(toPrismaSystemLogRecord(created));
   } catch (error) {
     if (isMissingPrismaTable(error)) {
       if (process.env['MONGODB_URI']) {
@@ -602,6 +619,21 @@ export async function listSystemLogs(input: ListSystemLogsInput): Promise<ListSy
   const where = buildPrismaWhere(input);
 
   try {
+    if (typeof input.minDurationMs === 'number' && Number.isFinite(input.minDurationMs)) {
+      const rows = await prisma.systemLog.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+      });
+
+      const filteredLogs = rows
+        .map((row: SystemLog) => normalizeLogRecord(toPrismaSystemLogRecord(row)))
+        .filter((log: SystemLogRecord) => matchesMinDurationMs(log.context, input.minDurationMs));
+
+      const total = filteredLogs.length;
+      const logs = filteredLogs.slice((page - 1) * pageSize, page * pageSize);
+      return { logs, total, page, pageSize };
+    }
+
     const [total, rows] = await Promise.all([
       prisma.systemLog.count({ where }),
       prisma.systemLog.findMany({
@@ -612,51 +644,7 @@ export async function listSystemLogs(input: ListSystemLogsInput): Promise<ListSy
       }),
     ]);
 
-    const logs = rows.map((row: SystemLog) =>
-      normalizeLogRecord({
-        ...row,
-        level: row.level as SystemLogLevel,
-        category:
-          typeof row.category === 'string' && row.category.trim().length > 0
-            ? row.category
-            : (((row.context as Record<string, unknown> | null)?.['category'] as
-                | string
-                | undefined) ?? null),
-        service:
-          typeof row.service === 'string' && row.service.trim().length > 0
-            ? row.service
-            : (((row.context as Record<string, unknown> | null)?.['service'] as
-                | string
-                | undefined) ?? null),
-        traceId:
-          typeof row.traceId === 'string' && row.traceId.trim().length > 0
-            ? row.traceId
-            : (((row.context as Record<string, unknown> | null)?.['traceId'] as
-                | string
-                | undefined) ?? null),
-        correlationId:
-          typeof row.correlationId === 'string' && row.correlationId.trim().length > 0
-            ? row.correlationId
-            : (((row.context as Record<string, unknown> | null)?.['correlationId'] as
-                | string
-                | undefined) ?? null),
-        spanId:
-          typeof row.spanId === 'string' && row.spanId.trim().length > 0
-            ? row.spanId
-            : (((row.context as Record<string, unknown> | null)?.['spanId'] as
-                | string
-                | undefined) ?? null),
-        parentSpanId:
-          typeof row.parentSpanId === 'string' && row.parentSpanId.trim().length > 0
-            ? row.parentSpanId
-            : (((row.context as Record<string, unknown> | null)?.['parentSpanId'] as
-                | string
-                | undefined) ?? null),
-        context: (row.context as Record<string, unknown> | null) ?? null,
-        createdAt: row.createdAt.toISOString(),
-        updatedAt: null,
-      })
-    );
+    const logs = rows.map((row: SystemLog) => normalizeLogRecord(toPrismaSystemLogRecord(row)));
     return { logs, total, page, pageSize };
   } catch (error) {
     if (isMissingPrismaTable(error) && process.env['MONGODB_URI']) {
@@ -695,46 +683,7 @@ export async function getSystemLogById(id: string): Promise<SystemLogRecord | nu
       where: { id },
     });
     if (!row) return null;
-    return normalizeLogRecord({
-      ...row,
-      level: row.level as SystemLogLevel,
-      category:
-        typeof row.category === 'string' && row.category.trim().length > 0
-          ? row.category
-          : (((row.context as Record<string, unknown> | null)?.['category'] as
-              | string
-              | undefined) ?? null),
-      service:
-        typeof row.service === 'string' && row.service.trim().length > 0
-          ? row.service
-          : (((row.context as Record<string, unknown> | null)?.['service'] as string | undefined) ??
-            null),
-      traceId:
-        typeof row.traceId === 'string' && row.traceId.trim().length > 0
-          ? row.traceId
-          : (((row.context as Record<string, unknown> | null)?.['traceId'] as string | undefined) ??
-            null),
-      correlationId:
-        typeof row.correlationId === 'string' && row.correlationId.trim().length > 0
-          ? row.correlationId
-          : (((row.context as Record<string, unknown> | null)?.['correlationId'] as
-              | string
-              | undefined) ?? null),
-      spanId:
-        typeof row.spanId === 'string' && row.spanId.trim().length > 0
-          ? row.spanId
-          : (((row.context as Record<string, unknown> | null)?.['spanId'] as string | undefined) ??
-            null),
-      parentSpanId:
-        typeof row.parentSpanId === 'string' && row.parentSpanId.trim().length > 0
-          ? row.parentSpanId
-          : (((row.context as Record<string, unknown> | null)?.['parentSpanId'] as
-              | string
-              | undefined) ?? null),
-      context: (row.context as Record<string, unknown> | null) ?? null,
-      createdAt: row.createdAt.toISOString(),
-      updatedAt: null,
-    } as SystemLogRecord);
+    return normalizeLogRecord(toPrismaSystemLogRecord(row));
   } catch (error) {
     if (isMissingPrismaTable(error) && process.env['MONGODB_URI']) {
       const mongo = await getMongoDb();
@@ -762,6 +711,22 @@ export async function getSystemLogMetrics(input: ListSystemLogsInput): Promise<S
   const last7 = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
   try {
+    if (typeof input.minDurationMs === 'number' && Number.isFinite(input.minDurationMs)) {
+      const rows = await prisma.systemLog.findMany({
+        where,
+        select: {
+          level: true,
+          source: true,
+          service: true,
+          path: true,
+          context: true,
+          createdAt: true,
+        },
+      });
+
+      return getPrismaSystemLogMetricsWithMinDuration(rows, input.minDurationMs, now);
+    }
+
     const [total, last24Hours, last7Days, levelGroups, sourceGroups, serviceGroups, pathGroups] =
       await Promise.all([
         prisma.systemLog.count({ where }),

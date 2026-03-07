@@ -7,7 +7,6 @@ test('admin dashboard exposes shell landmarks and passes the accessibility smoke
   page,
 }) => {
   await ensureAdminSession(page, '/admin');
-  await page.goto('/admin');
 
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
 

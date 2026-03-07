@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { BrainCircuit } from 'lucide-react';
 
@@ -25,6 +25,7 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import { usePlaywrightPersonas } from '@/features/playwright/hooks/usePlaywrightPersonas';
 import { invalidateSettingsCache } from '@/shared/api/settings-client';
+import { agentTeachingKeys } from '@/shared/lib/query-key-exports';
 import { invalidateAllSettings } from '@/shared/lib/query-invalidation';
 import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -65,11 +66,14 @@ function AiTutorConfigPanel(): React.JSX.Element {
   }, [activeLearner?.id, currentSettings]);
   const [isSaving, setIsSaving] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const teachingAgentFieldId = useId();
+  const agentPersonaFieldId = useId();
+  const playwrightPersonaFieldId = useId();
 
   const { data: agentPersonas = [] } = useAgentPersonas();
   const { data: playwrightPersonas = [] } = usePlaywrightPersonas();
   const { data: teachingAgents = [] } = useQuery({
-    queryKey: ['agentcreator', 'teaching', 'agents'],
+    queryKey: agentTeachingKeys.agents(),
     queryFn: getTeachingAgents,
     staleTime: 120_000,
     refetchOnMount: false,
@@ -165,10 +169,14 @@ function AiTutorConfigPanel(): React.JSX.Element {
 
       {/* Teaching agent */}
       <div className='flex flex-col gap-1'>
-        <label className='text-xs font-semibold text-slate-600 uppercase tracking-wide'>
+        <label
+          htmlFor={teachingAgentFieldId}
+          className='text-xs font-semibold text-slate-600 uppercase tracking-wide'
+        >
           Agent nauczający (z bazą wiedzy)
         </label>
         <KangurSelectField
+          id={teachingAgentFieldId}
           value={teachingAgentId}
           onChange={(e) => setTeachingAgentId(e.target.value)}
           accent='indigo'
@@ -186,10 +194,14 @@ function AiTutorConfigPanel(): React.JSX.Element {
 
       {/* Agent persona */}
       <div className='flex flex-col gap-1'>
-        <label className='text-xs font-semibold text-slate-600 uppercase tracking-wide'>
+        <label
+          htmlFor={agentPersonaFieldId}
+          className='text-xs font-semibold text-slate-600 uppercase tracking-wide'
+        >
           Persona (charakter tutora)
         </label>
         <KangurSelectField
+          id={agentPersonaFieldId}
           value={agentPersonaId}
           onChange={(e) => setAgentPersonaId(e.target.value)}
           accent='indigo'
@@ -207,10 +219,14 @@ function AiTutorConfigPanel(): React.JSX.Element {
 
       {/* Playwright persona */}
       <div className='flex flex-col gap-1'>
-        <label className='text-xs font-semibold text-slate-600 uppercase tracking-wide'>
+        <label
+          htmlFor={playwrightPersonaFieldId}
+          className='text-xs font-semibold text-slate-600 uppercase tracking-wide'
+        >
           Persona Playwright (ustawienia urządzenia)
         </label>
         <KangurSelectField
+          id={playwrightPersonaFieldId}
           value={playwrightPersonaId}
           onChange={(e) => setPlaywrightPersonaId(e.target.value)}
           accent='indigo'

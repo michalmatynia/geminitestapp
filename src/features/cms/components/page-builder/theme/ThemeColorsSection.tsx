@@ -83,7 +83,7 @@ export function ThemeColorsSection(): React.JSX.Element {
         </div>
         {schemeView === 'list' ? (
           theme.colorSchemes.length > 0 ? (
-            <div className='mt-3 flex flex-col gap-3'>
+            <div className='mt-3 flex flex-col gap-3' role='radiogroup' aria-label='Color schemes'>
               {theme.colorSchemes.map((scheme: ColorScheme) => {
                 const isActive = scheme.id === theme.activeColorSchemeId;
                 return (
@@ -97,42 +97,24 @@ export function ThemeColorsSection(): React.JSX.Element {
                         : 'bg-gray-900/40 hover:border-border/70'
                     }`}
                   >
-                    <div
-                      role='button'
-                      tabIndex={0}
+                    <button
+                      type='button'
+                      role='radio'
+                      aria-checked={isActive}
+                      aria-label={`${scheme.name}${isActive ? ', active color scheme' : ', select color scheme'}`}
                       onClick={(): void => update('activeColorSchemeId', scheme.id)}
-                      onKeyDown={(event: React.KeyboardEvent): void => {
-                        if (event.key === 'Enter' || event.key === ' ') {
-                          event.preventDefault();
-                          update('activeColorSchemeId', scheme.id);
-                        }
-                      }}
-                      className='w-full text-left'
+                      className='w-full text-left rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background'
                     >
-                      <div className='mb-2 flex items-start justify-between gap-2 text-[11px] text-gray-300'>
+                      <div className='mb-2 flex items-start justify-between gap-2 pr-16 text-[11px] text-gray-300'>
                         <span className='whitespace-normal break-words'>{scheme.name}</span>
-                        <div className='flex items-center gap-2'>
-                          {isActive && (
-                            <Badge
-                              variant='outline'
-                              className='border-blue-500/40 bg-blue-500/20 px-2 py-0 text-[10px] text-blue-200'
-                            >
-                              Active
-                            </Badge>
-                          )}
-                          <Button
-                            type='button'
-                            size='sm'
-                            variant='ghost'
-                            onClick={(event: React.MouseEvent): void => {
-                              event.stopPropagation();
-                              startEditScheme(scheme.id);
-                            }}
-                            className='h-6 px-2 text-[10px] text-gray-400 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-transparent hover:text-gray-200'
+                        {isActive && (
+                          <Badge
+                            variant='outline'
+                            className='border-blue-500/40 bg-blue-500/20 px-2 py-0 text-[10px] text-blue-200'
                           >
-                            Edit
-                          </Button>
-                        </div>
+                            Active
+                          </Badge>
+                        )}
                       </div>
                       <div
                         className='rounded border p-2'
@@ -198,7 +180,17 @@ export function ThemeColorsSection(): React.JSX.Element {
                           </div>
                         </div>
                       </div>
-                    </div>
+                    </button>
+                    <Button
+                      type='button'
+                      size='sm'
+                      variant='ghost'
+                      onClick={() => startEditScheme(scheme.id)}
+                      className='absolute right-2 top-2 h-6 px-2 text-[10px] text-gray-400 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-transparent hover:text-gray-200'
+                      aria-label={`Edit color scheme ${scheme.name}`}
+                    >
+                      Edit
+                    </Button>
                   </Card>
                 );
               })}

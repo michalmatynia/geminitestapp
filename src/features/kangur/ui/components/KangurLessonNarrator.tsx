@@ -12,6 +12,7 @@ import {
   type KangurLessonTtsAudioResponse,
   type KangurLessonTtsResponse,
 } from '@/features/kangur/tts/contracts';
+import { buildInlineVttTrackSrc } from '@/features/kangur/tts/captions';
 import {
   buildKangurLessonDocumentNarrationScript,
   buildKangurLessonNarrationScriptFromText,
@@ -390,6 +391,8 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
   }, []);
 
   const totalSegments = manifest?.segments.length ?? script.segments.length;
+  const activeSegmentText =
+    manifest?.segments[currentIndex]?.text ?? script.segments[currentIndex]?.text ?? lesson.title;
   const engineLabel =
     narratorSettings.engine === 'server' ? 'server narration' : 'browser narration';
   const statusLabel =
@@ -418,7 +421,15 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
       fillHeight
       padding='lg'
     >
-      <audio ref={audioRef} preload='none' className='hidden' />
+      <audio ref={audioRef} preload='none' className='hidden'>
+        <track
+          default
+          kind='captions'
+          label='Lesson narration transcript'
+          src={buildInlineVttTrackSrc(activeSegmentText)}
+          srcLang={script.locale}
+        />
+      </audio>
       <div className='flex flex-col gap-4 md:flex-row md:items-start md:justify-between'>
         <div>
           <KangurStatusChip

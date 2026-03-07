@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { Button } from '@/shared/ui/button';
@@ -90,6 +90,45 @@ describe('shared accessibility primitives', () => {
     expect(screen.getByRole('option', { name: 'Hero' })).toHaveAttribute('aria-selected', 'true');
   });
 
+  it('supports keyboard navigation across GenericPickerDropdown options', async () => {
+    render(
+      <GenericPickerDropdown
+        ariaLabel='Add block'
+        groups={[
+          {
+            label: 'Sections',
+            options: [
+              { key: 'hero', label: 'Hero' },
+              { key: 'grid', label: 'Grid' },
+              { key: 'faq', label: 'FAQ' },
+            ],
+          },
+        ]}
+        onSelect={vi.fn()}
+      />
+    );
+
+    const trigger = screen.getByRole('button', { name: 'Add block' });
+    trigger.focus();
+    fireEvent.keyDown(trigger, { key: 'ArrowDown' });
+
+    const heroOption = screen.getByRole('option', { name: 'Hero' });
+    await waitFor(() => expect(heroOption).toHaveFocus());
+
+    fireEvent.keyDown(heroOption, { key: 'ArrowDown' });
+    expect(screen.getByRole('option', { name: 'Grid' })).toHaveFocus();
+
+    fireEvent.keyDown(screen.getByRole('option', { name: 'Grid' }), { key: 'End' });
+    expect(screen.getByRole('option', { name: 'FAQ' })).toHaveFocus();
+
+    fireEvent.keyDown(screen.getByRole('option', { name: 'FAQ' }), { key: 'Home' });
+    expect(heroOption).toHaveFocus();
+
+    fireEvent.keyDown(heroOption, { key: 'Escape' });
+    await waitFor(() => expect(trigger).toHaveFocus());
+    expect(screen.queryByRole('listbox', { name: 'Add block' })).not.toBeInTheDocument();
+  });
+
   it('renders GenericGridPicker options as selectable buttons', () => {
     render(
       <GenericGridPicker
@@ -118,6 +157,14 @@ describe('shared accessibility primitives', () => {
     render(<FileUploadTrigger onFilesSelected={vi.fn()}>Upload files</FileUploadTrigger>);
 
     expect(screen.getByRole('button', { name: 'Upload files' })).toBeInTheDocument();
+  });
+
+  it('describes FileUploadTrigger drag and paste affordances to assistive tech', () => {
+    render(<FileUploadTrigger onFilesSelected={vi.fn()}>Upload files</FileUploadTrigger>);
+
+    expect(screen.getByRole('button', { name: 'Upload files' })).toHaveAccessibleDescription(
+      'Choose, drag and drop files, or paste files.'
+    );
   });
 
   it('uses the placeholder as a fallback accessible name for SelectSimple triggers', () => {

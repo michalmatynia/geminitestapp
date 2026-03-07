@@ -62,6 +62,43 @@ const composeEventHandler =
       }
     };
 
+const mergeAriaDescribedBy = (...values: Array<string | undefined>): string | undefined => {
+  const merged = values
+    .flatMap((value) => (value ? value.split(/\s+/) : []))
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  if (merged.length === 0) return undefined;
+  return Array.from(new Set(merged)).join(' ');
+};
+
+const getUploadInstructions = (params: {
+  multiple: boolean;
+  enableDrop: boolean;
+  enablePaste: boolean;
+}): string | null => {
+  const itemLabel = params.multiple ? 'files' : 'a file';
+  const actions = ['Choose'];
+
+  if (params.enableDrop) {
+    actions.push(`drag and drop ${itemLabel}`);
+  }
+
+  if (params.enablePaste) {
+    actions.push(`paste ${itemLabel}`);
+  }
+
+  if (actions.length === 1) {
+    return null;
+  }
+
+  if (actions.length === 2) {
+    return `${actions[0]} or ${actions[1]}.`;
+  }
+
+  return `${actions.slice(0, -1).join(', ')}, or ${actions.at(-1)}.`;
+};
+
 export function FileUploadButton(props: FileUploadButtonProps): React.JSX.Element {
   const {
     accept,
@@ -78,11 +115,24 @@ export function FileUploadButton(props: FileUploadButtonProps): React.JSX.Elemen
   const inputRef = React.useRef<HTMLInputElement | null>(null);
   const [isUploading, setIsUploading] = React.useState(false);
   const [progress, setProgress] = React.useState(0);
+  const [statusMessage, setStatusMessage] = React.useState<string | null>(null);
+  const instructionsId = React.useId();
+  const statusId = React.useId();
+  const instructions = React.useMemo(
+    () => getUploadInstructions({ multiple, enableDrop, enablePaste }),
+    [multiple, enableDrop, enablePaste]
+  );
+  const describedBy = mergeAriaDescribedBy(
+    buttonProps['aria-describedby'],
+    instructions ? instructionsId : undefined,
+    statusMessage ? statusId : undefined
+  );
 
   const handleSelectedFiles = async (files: File[]): Promise<void> => {
     if (!files || files.length === 0) return;
     setIsUploading(true);
     setProgress(0);
+    setStatusMessage(`Uploading ${multiple ? 'files' : 'file'}.`);
     const helpers: FileUploadHelpers = {
       setProgress: (value: number): void => {
         const next = Number.isFinite(value) ? Math.min(100, Math.max(0, value)) : 0;
@@ -97,7 +147,9 @@ export function FileUploadButton(props: FileUploadButtonProps): React.JSX.Elemen
     try {
       await onFilesSelected(normalizeFiles(files, multiple), helpers);
       helpers.setProgress(100);
+      setStatusMessage(`${multiple ? 'Files' : 'File'} uploaded.`);
     } catch (error) {
+      setStatusMessage(`Failed to upload ${multiple ? 'files' : 'file'}.`);
       if (onError) {
         onError(error);
       } else {
@@ -147,6 +199,8 @@ export function FileUploadButton(props: FileUploadButtonProps): React.JSX.Elemen
       <Button
         type='button'
         {...buttonProps}
+        aria-describedby={describedBy}
+        aria-busy={isUploading}
         onClick={() => inputRef.current?.click()}
         onDragOver={composeEventHandler(
           buttonProps.onDragOver,
@@ -171,6 +225,16 @@ export function FileUploadButton(props: FileUploadButtonProps): React.JSX.Elemen
       >
         {children}
       </Button>
+      {instructions ? (
+        <span id={instructionsId} className='sr-only'>
+          {instructions}
+        </span>
+      ) : null}
+      {statusMessage ? (
+        <span id={statusId} className='sr-only' role='status' aria-live='polite'>
+          {statusMessage}
+        </span>
+      ) : null}
       {showProgress && isUploading ? (
         <span className='flex items-center gap-2'>
           <span
@@ -180,10 +244,12 @@ export function FileUploadButton(props: FileUploadButtonProps): React.JSX.Elemen
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={Math.round(progress)}
+            aria-valuetext={`${Math.round(progress)}% uploaded`}
           >
             <span
               className='block h-full rounded bg-blue-500/70 transition-[width] duration-150'
               style={{ width: `${Math.max(2, progress)}%` }}
+              aria-hidden='true'
             />
           </span>
           <span className='text-[10px] text-gray-400 tabular-nums'>{Math.round(progress)}%</span>
@@ -225,11 +291,23 @@ export function FileUploadTrigger(props: FileUploadTriggerProps): React.JSX.Elem
   const inputRef = React.useRef<HTMLInputElement | null>(null);
   const [isUploading, setIsUploading] = React.useState(false);
   const [progress, setProgress] = React.useState(0);
+  const [statusMessage, setStatusMessage] = React.useState<string | null>(null);
+  const instructionsId = React.useId();
+  const statusId = React.useId();
+  const instructions = React.useMemo(
+    () => getUploadInstructions({ multiple, enableDrop, enablePaste }),
+    [multiple, enableDrop, enablePaste]
+  );
+  const describedBy = mergeAriaDescribedBy(
+    instructions ? instructionsId : undefined,
+    statusMessage ? statusId : undefined
+  );
 
   const handleSelectedFiles = async (files: File[]): Promise<void> => {
     if (!files || files.length === 0) return;
     setIsUploading(true);
     setProgress(0);
+    setStatusMessage(`Uploading ${multiple ? 'files' : 'file'}.`);
     const helpers: FileUploadHelpers = {
       setProgress: (value: number): void => {
         const next = Number.isFinite(value) ? Math.min(100, Math.max(0, value)) : 0;
@@ -244,7 +322,9 @@ export function FileUploadTrigger(props: FileUploadTriggerProps): React.JSX.Elem
     try {
       await onFilesSelected(normalizeFiles(files, multiple), helpers);
       helpers.setProgress(100);
+      setStatusMessage(`${multiple ? 'Files' : 'File'} uploaded.`);
     } catch (error) {
+      setStatusMessage(`Failed to upload ${multiple ? 'files' : 'file'}.`);
       if (onError) {
         onError(error);
       } else {
@@ -297,6 +377,8 @@ export function FileUploadTrigger(props: FileUploadTriggerProps): React.JSX.Elem
           role='button'
           tabIndex={disabled ? -1 : 0}
           aria-disabled={disabled}
+          aria-describedby={describedBy}
+          aria-busy={isUploading || undefined}
           onClick={() => {
             if (!disabled) inputRef.current?.click();
           }}
@@ -326,6 +408,8 @@ export function FileUploadTrigger(props: FileUploadTriggerProps): React.JSX.Elem
           type='button'
           className={className}
           disabled={disabled}
+          aria-describedby={describedBy}
+          aria-busy={isUploading || undefined}
           onClick={() => {
             if (!disabled) inputRef.current?.click();
           }}
@@ -344,6 +428,16 @@ export function FileUploadTrigger(props: FileUploadTriggerProps): React.JSX.Elem
           {children}
         </button>
       )}
+      {instructions ? (
+        <span id={instructionsId} className='sr-only'>
+          {instructions}
+        </span>
+      ) : null}
+      {statusMessage ? (
+        <span id={statusId} className='sr-only' role='status' aria-live='polite'>
+          {statusMessage}
+        </span>
+      ) : null}
       {showProgress && isUploading ? (
         <span className='flex items-center gap-2'>
           <span
@@ -353,10 +447,12 @@ export function FileUploadTrigger(props: FileUploadTriggerProps): React.JSX.Elem
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={Math.round(progress)}
+            aria-valuetext={`${Math.round(progress)}% uploaded`}
           >
             <span
               className='block h-full rounded bg-blue-500/70 transition-[width] duration-150'
               style={{ width: `${Math.max(2, progress)}%` }}
+              aria-hidden='true'
             />
           </span>
           <span className='text-[10px] text-gray-400 tabular-nums'>{Math.round(progress)}%</span>

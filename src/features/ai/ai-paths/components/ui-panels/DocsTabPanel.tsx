@@ -455,7 +455,9 @@ export function DocsTabPanel(): React.JSX.Element {
             <Button
               type='button'
               className='rounded-md border text-xs text-white hover:bg-muted/60'
-              onClick={handleCopyDocsWiring}
+              onClick={() => {
+                void handleCopyDocsWiring();
+              }}
             >
               Copy Wiring
             </Button>
@@ -473,7 +475,9 @@ export function DocsTabPanel(): React.JSX.Element {
             <Button
               type='button'
               className='rounded-md border text-xs text-white hover:bg-muted/60'
-              onClick={handleCopyDocsDescription}
+              onClick={() => {
+                void handleCopyDocsDescription();
+              }}
             >
               Copy AI Description Wiring
             </Button>
@@ -491,7 +495,9 @@ export function DocsTabPanel(): React.JSX.Element {
             <Button
               type='button'
               className='rounded-md border text-xs text-white hover:bg-muted/60'
-              onClick={handleCopyDocsJobs}
+              onClick={() => {
+                void handleCopyDocsJobs();
+              }}
             >
               Copy Job Wiring
             </Button>

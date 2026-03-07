@@ -92,14 +92,32 @@ export const kangurAnalyticsSnapshotSchema = z.object({
 });
 export type KangurAnalyticsSnapshot = z.infer<typeof kangurAnalyticsSnapshotSchema>;
 
+export const kangurRouteLatencyStatsSchema = z.object({
+  sampleSize: z.number(),
+  avgDurationMs: z.number().nullable(),
+  p95DurationMs: z.number().nullable(),
+  maxDurationMs: z.number().nullable(),
+  slowRequestCount: z.number(),
+  slowRequestRatePercent: z.number().nullable(),
+  slowThresholdMs: z.number(),
+});
+export type KangurRouteLatencyStats = z.infer<typeof kangurRouteLatencyStatsSchema>;
+
+export const kangurRouteHealthSchema = z.object({
+  metrics: systemLogMetricsSchema.nullable(),
+  latency: kangurRouteLatencyStatsSchema.nullable(),
+  investigation: kangurObservabilityInvestigationSchema,
+});
+export type KangurRouteHealth = z.infer<typeof kangurRouteHealthSchema>;
+
 export const kangurRouteMetricsSchema = z.object({
-  authMeGet: systemLogMetricsSchema.nullable(),
-  learnerSignInPost: systemLogMetricsSchema.nullable(),
-  progressPatch: systemLogMetricsSchema.nullable(),
-  scoresPost: systemLogMetricsSchema.nullable(),
-  assignmentsPost: systemLogMetricsSchema.nullable(),
-  learnersPost: systemLogMetricsSchema.nullable(),
-  ttsPost: systemLogMetricsSchema.nullable(),
+  authMeGet: kangurRouteHealthSchema,
+  learnerSignInPost: kangurRouteHealthSchema,
+  progressPatch: kangurRouteHealthSchema,
+  scoresPost: kangurRouteHealthSchema,
+  assignmentsPost: kangurRouteHealthSchema,
+  learnersPost: kangurRouteHealthSchema,
+  ttsPost: kangurRouteHealthSchema,
 });
 export type KangurRouteMetrics = z.infer<typeof kangurRouteMetricsSchema>;
 

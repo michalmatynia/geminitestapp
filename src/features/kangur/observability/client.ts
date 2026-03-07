@@ -157,6 +157,15 @@ export const trackKangurClientEvent = (
   const path = window.location.pathname || currentKangurContext.requestedPath || '/';
   const search = window.location.search || '';
   const scope = path.startsWith('/admin') ? 'admin' : 'public';
+  const navigatorLanguages =
+    typeof navigator !== 'undefined' && Array.isArray(navigator.languages)
+      ? navigator.languages.reduce<string[]>((languages, language) => {
+        if (typeof language === 'string') {
+          languages.push(language);
+        }
+        return languages;
+      }, [])
+      : [];
   const payload = {
     type: 'event',
     name: eventName,
@@ -168,10 +177,7 @@ export const trackKangurClientEvent = (
     visitorId: getOrCreateVisitorId(),
     sessionId: getOrCreateSessionId(),
     language: typeof navigator !== 'undefined' ? navigator.language || null : null,
-    languages:
-      typeof navigator !== 'undefined' && Array.isArray(navigator.languages)
-        ? [...navigator.languages]
-        : null,
+    languages: navigatorLanguages.length > 0 ? navigatorLanguages : null,
     timeZone: getTimeZone(),
     viewport: { width: window.innerWidth, height: window.innerHeight },
     screen: {

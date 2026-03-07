@@ -21,8 +21,8 @@ import type {
   KangurObservabilitySummary,
   KangurPerformanceBaseline,
   KangurRecentAnalyticsEvent,
+  KangurRouteHealth,
   KangurRouteMetrics,
-  SystemLogMetricsDto as SystemLogMetrics,
   SystemLogRecordDto as SystemLogRecord,
 } from '@/shared/contracts';
 import { kangurObservabilityRangeSchema } from '@/shared/contracts';
@@ -162,17 +162,31 @@ function MetricCard({
 function RouteMetricCard({
   label,
   description,
-  metrics,
+  route,
 }: {
   label: string;
   description: string;
-  metrics: SystemLogMetrics | null;
+  route: KangurRouteHealth;
 }): JSX.Element {
+  const metrics = route.metrics;
+  const latency = route.latency;
   const errorCount = metrics?.levels.error ?? 0;
   const totalCount = metrics?.total ?? 0;
   const topPath = metrics?.topPaths[0]?.path ?? '—';
+  const p95DurationMs = latency?.p95DurationMs ?? null;
+  const slowThresholdMs = latency?.slowThresholdMs ?? null;
   const status =
-    metrics === null ? 'insufficient_data' : errorCount > 0 ? 'warning' : totalCount > 0 ? 'ok' : 'insufficient_data';
+    metrics === null && latency === null
+      ? 'insufficient_data'
+      : errorCount > 0
+        ? 'warning'
+        : p95DurationMs !== null && slowThresholdMs !== null && p95DurationMs >= slowThresholdMs * 2
+          ? 'critical'
+          : p95DurationMs !== null && slowThresholdMs !== null && p95DurationMs >= slowThresholdMs
+            ? 'warning'
+            : totalCount > 0 || (latency?.sampleSize ?? 0) > 0
+              ? 'ok'
+              : 'insufficient_data';
 
   return (
     <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
@@ -181,13 +195,42 @@ function RouteMetricCard({
           <div className='text-sm font-semibold text-white'>{label}</div>
           <p className='mt-1 text-xs leading-relaxed text-gray-400'>{description}</p>
         </div>
-        <StatusBadge status={status} />
+        <div className='flex items-center gap-2'>
+          <StatusBadge status={status} />
+          <Button asChild variant='ghost' size='sm'>
+            <Link href={route.investigation.href}>
+              Logs
+              <ArrowUpRightIcon className='size-3.5' />
+            </Link>
+          </Button>
+        </div>
       </div>
 
-      <div className='mt-4 grid gap-3 sm:grid-cols-3'>
+      <div className='mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5'>
         <MetadataItem label='Requests' value={formatNumber(totalCount)} variant='card' />
         <MetadataItem label='Errors' value={formatNumber(errorCount)} variant='card' />
-        <MetadataItem label='Top Path' value={topPath} variant='card' mono />
+        <MetadataItem label='Avg' value={formatDuration(latency?.avgDurationMs)} variant='card' />
+        <MetadataItem label='p95' value={formatDuration(p95DurationMs)} variant='card' />
+        <MetadataItem
+          label='Slow Requests'
+          value={
+            latency
+              ? `${formatNumber(latency.slowRequestCount)} (${formatPercent(
+                latency.slowRequestRatePercent
+              )})`
+              : '—'
+          }
+          variant='card'
+        />
+      </div>
+
+      <div className='mt-3 grid gap-3 sm:grid-cols-2'>
+        <MetadataItem label='Top Path' value={topPath} variant='minimal' mono />
+        <MetadataItem
+          label='Slow Threshold'
+          value={formatDuration(slowThresholdMs)}
+          variant='minimal'
+        />
       </div>
     </Card>
   );
@@ -544,7 +587,7 @@ function SummaryContent({
                 key={entry.key}
                 label={entry.label}
                 description={entry.description}
-                metrics={summary.routes[entry.key]}
+                route={summary.routes[entry.key]}
               />
             ))}
           </div>

@@ -53,13 +53,62 @@ const createSummaryResponse = () => ({
       recent: [],
     },
     routes: {
-      authMeGet: null,
-      learnerSignInPost: null,
-      progressPatch: null,
-      scoresPost: null,
-      assignmentsPost: null,
-      learnersPost: null,
-      ttsPost: null,
+      authMeGet: {
+        metrics: null,
+        latency: null,
+        investigation: {
+          label: 'Inspect route logs',
+          href: '/admin/system/logs?source=kangur.auth.me.GET',
+        },
+      },
+      learnerSignInPost: {
+        metrics: null,
+        latency: null,
+        investigation: {
+          label: 'Inspect route logs',
+          href: '/admin/system/logs?source=kangur.auth.learnerSignIn.POST',
+        },
+      },
+      progressPatch: {
+        metrics: null,
+        latency: null,
+        investigation: {
+          label: 'Inspect route logs',
+          href: '/admin/system/logs?source=kangur.progress.PATCH',
+        },
+      },
+      scoresPost: {
+        metrics: null,
+        latency: null,
+        investigation: {
+          label: 'Inspect route logs',
+          href: '/admin/system/logs?source=kangur.scores.POST',
+        },
+      },
+      assignmentsPost: {
+        metrics: null,
+        latency: null,
+        investigation: {
+          label: 'Inspect route logs',
+          href: '/admin/system/logs?source=kangur.assignments.POST',
+        },
+      },
+      learnersPost: {
+        metrics: null,
+        latency: null,
+        investigation: {
+          label: 'Inspect route logs',
+          href: '/admin/system/logs?source=kangur.learners.POST',
+        },
+      },
+      ttsPost: {
+        metrics: null,
+        latency: null,
+        investigation: {
+          label: 'Inspect route logs',
+          href: '/admin/system/logs?source=kangur.tts.POST',
+        },
+      },
     },
     analytics: {
       totals: { events: 10, pageviews: 4 },

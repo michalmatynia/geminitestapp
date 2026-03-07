@@ -8,17 +8,19 @@ import type {
   KangurAnalyticsEventType,
   KangurAnalyticsSnapshot,
   KangurObservabilityAlert,
-  KangurObservabilityInvestigation,
   KangurObservabilityRange,
   KangurObservabilityStatus,
   KangurObservabilitySummary,
   KangurPerformanceBaseline,
   KangurRecentAnalyticsEvent,
+  KangurRouteHealth,
+  KangurRouteLatencyStats,
   KangurRouteMetrics,
   SystemLogMetricsDto as SystemLogMetrics,
 } from '@/shared/contracts';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { getSystemLogMetrics, listSystemLogs } from '@/shared/lib/observability/system-logger';
+import { SYSTEM_LOG_SLOW_REQUEST_THRESHOLD_MS } from '@/shared/lib/observability/workers/system-log-alerts/config';
 
 type AnalyticsEventMongoDoc = {
   _id?: { toString(): string } | string;
@@ -44,6 +46,38 @@ const KANGUR_ANALYTICS_EVENT_NAMES = [
   'kangur_api_read_failed',
 ] as const;
 
+const SYSTEM_LOGS_COLLECTION_NAME = 'system_logs';
+const KANGUR_ROUTE_DEFINITIONS = {
+  authMeGet: {
+    source: 'kangur.auth.me.GET',
+  },
+  learnerSignInPost: {
+    source: 'kangur.auth.learnerSignIn.POST',
+  },
+  progressPatch: {
+    source: 'kangur.progress.PATCH',
+  },
+  scoresPost: {
+    source: 'kangur.scores.POST',
+  },
+  assignmentsPost: {
+    source: 'kangur.assignments.POST',
+  },
+  learnersPost: {
+    source: 'kangur.learners.POST',
+  },
+  ttsPost: {
+    source: 'kangur.tts.POST',
+  },
+} as const satisfies Record<keyof KangurRouteMetrics, { source: string }>;
+type KangurRouteKey = keyof typeof KANGUR_ROUTE_DEFINITIONS;
+
+type SystemLogLatencyMongoDoc = {
+  source?: string | null;
+  context?: Record<string, unknown> | null;
+  createdAt?: Date;
+};
+
 const emptyAnalyticsSnapshot = (): KangurAnalyticsSnapshot => ({
   totals: {
     events: 0,
@@ -60,14 +94,23 @@ const emptyAnalyticsSnapshot = (): KangurAnalyticsSnapshot => ({
   recent: [],
 });
 
+const buildEmptyRouteHealth = (source: string): KangurRouteHealth => ({
+  metrics: null,
+  latency: null,
+  investigation: {
+    label: 'Inspect route logs',
+    href: `/admin/system/logs?source=${encodeURIComponent(source)}`,
+  },
+});
+
 const emptyRouteMetrics = (): KangurRouteMetrics => ({
-  authMeGet: null,
-  learnerSignInPost: null,
-  progressPatch: null,
-  scoresPost: null,
-  assignmentsPost: null,
-  learnersPost: null,
-  ttsPost: null,
+  authMeGet: buildEmptyRouteHealth(KANGUR_ROUTE_DEFINITIONS.authMeGet.source),
+  learnerSignInPost: buildEmptyRouteHealth(KANGUR_ROUTE_DEFINITIONS.learnerSignInPost.source),
+  progressPatch: buildEmptyRouteHealth(KANGUR_ROUTE_DEFINITIONS.progressPatch.source),
+  scoresPost: buildEmptyRouteHealth(KANGUR_ROUTE_DEFINITIONS.scoresPost.source),
+  assignmentsPost: buildEmptyRouteHealth(KANGUR_ROUTE_DEFINITIONS.assignmentsPost.source),
+  learnersPost: buildEmptyRouteHealth(KANGUR_ROUTE_DEFINITIONS.learnersPost.source),
+  ttsPost: buildEmptyRouteHealth(KANGUR_ROUTE_DEFINITIONS.ttsPost.source),
 });
 
 export const resolveKangurObservabilityRangeWindow = (
@@ -118,7 +161,67 @@ const toPercent = (numerator: number, denominator: number): number | null => {
   return Number(((numerator / denominator) * 100).toFixed(1));
 };
 
+const toFiniteDurationMs = (value: unknown): number | null => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return Math.max(0, Math.round(value));
+  }
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? Math.max(0, Math.round(parsed)) : null;
+  }
+  return null;
+};
+
+const percentile = (values: number[], value: number): number | null => {
+  if (values.length === 0) return null;
+  const sorted = [...values].sort((left: number, right: number) => left - right);
+  const rank = Math.max(0, Math.ceil((value / 100) * sorted.length) - 1);
+  return sorted[Math.min(rank, sorted.length - 1)] ?? null;
+};
+
+const buildRouteLatencyStats = (
+  durations: number[],
+  slowThresholdMs: number = SYSTEM_LOG_SLOW_REQUEST_THRESHOLD_MS
+): KangurRouteLatencyStats | null => {
+  if (durations.length === 0) return null;
+
+  const totalDurationMs = durations.reduce((sum: number, current: number) => sum + current, 0);
+  const maxDurationMs = durations.reduce(
+    (currentMax: number, current: number) => Math.max(currentMax, current),
+    0
+  );
+  const slowRequestCount = durations.filter((durationMs: number) => durationMs >= slowThresholdMs).length;
+
+  return {
+    sampleSize: durations.length,
+    avgDurationMs: Math.round(totalDurationMs / durations.length),
+    p95DurationMs: percentile(durations, 95),
+    maxDurationMs,
+    slowRequestCount,
+    slowRequestRatePercent: toPercent(slowRequestCount, durations.length),
+    slowThresholdMs,
+  };
+};
+
 const rateStatus = (
+  value: number | null,
+  options: {
+    warningThreshold: number;
+    criticalThreshold: number;
+    minSample?: number;
+    sampleSize?: number;
+  }
+): KangurObservabilityStatus => {
+  if (value === null) return 'insufficient_data';
+  if ((options.sampleSize ?? 0) < (options.minSample ?? 0)) {
+    return 'insufficient_data';
+  }
+  if (value >= options.criticalThreshold) return 'critical';
+  if (value >= options.warningThreshold) return 'warning';
+  return 'ok';
+};
+
+const valueStatus = (
   value: number | null,
   options: {
     warningThreshold: number;
@@ -161,6 +264,7 @@ const buildSystemLogsHref = (input: {
   query?: string;
   source?: string;
   level?: 'info' | 'warn' | 'error';
+  minDurationMs?: number;
   from: Date;
   to: Date;
 }): string => {
@@ -169,6 +273,9 @@ const buildSystemLogsHref = (input: {
   if (input.query) params.set('query', input.query);
   if (input.source) params.set('source', input.source);
   if (input.level) params.set('level', input.level);
+  if (typeof input.minDurationMs === 'number' && Number.isFinite(input.minDurationMs)) {
+    params.set('minDurationMs', String(Math.max(0, Math.round(input.minDurationMs))));
+  }
 
   params.set('from', input.from.toISOString());
   params.set('to', input.to.toISOString());
@@ -345,29 +452,87 @@ const loadKangurAnalyticsSnapshot = async (
   };
 };
 
+const loadRouteLatencyStats = async (
+  from: Date,
+  to: Date
+): Promise<Record<KangurRouteKey, KangurRouteLatencyStats | null>> => {
+  const mongo = await getMongoDb();
+  const collection = mongo.collection<SystemLogLatencyMongoDoc>(SYSTEM_LOGS_COLLECTION_NAME);
+  const routeSources = Object.values(KANGUR_ROUTE_DEFINITIONS).map(
+    (definition: { source: string }) => definition.source
+  );
+  const logs = await collection
+    .find(
+      {
+        createdAt: {
+          $gte: from,
+          $lt: to,
+        },
+        source: {
+          $in: routeSources,
+        },
+      },
+      {
+        projection: {
+          source: 1,
+          context: 1,
+        },
+      }
+    )
+    .toArray();
+
+  const durationsBySource = new Map<string, number[]>(
+    routeSources.map((source: string) => [source, []])
+  );
+
+  for (const log of logs) {
+    if (typeof log.source !== 'string') continue;
+    const bucket = durationsBySource.get(log.source);
+    if (!bucket) continue;
+    const durationMs = toFiniteDurationMs(log.context?.['durationMs']);
+    if (durationMs === null) continue;
+    bucket.push(durationMs);
+  }
+
+  return Object.fromEntries(
+    Object.entries(KANGUR_ROUTE_DEFINITIONS).map(([key, definition]) => [
+      key,
+      buildRouteLatencyStats(durationsBySource.get(definition.source) ?? []),
+    ])
+  ) as Record<KangurRouteKey, KangurRouteLatencyStats | null>;
+};
+
 const loadRouteMetrics = async (
   from: Date,
   to: Date
 ): Promise<KangurRouteMetrics> => {
-  const routeMetrics = await Promise.all([
-    getSystemLogMetrics({ source: 'kangur.auth.me.GET', from, to }),
-    getSystemLogMetrics({ source: 'kangur.auth.learnerSignIn.POST', from, to }),
-    getSystemLogMetrics({ source: 'kangur.progress.PATCH', from, to }),
-    getSystemLogMetrics({ source: 'kangur.scores.POST', from, to }),
-    getSystemLogMetrics({ source: 'kangur.assignments.POST', from, to }),
-    getSystemLogMetrics({ source: 'kangur.learners.POST', from, to }),
-    getSystemLogMetrics({ source: 'kangur.tts.POST', from, to }),
+  const routeKeys = Object.keys(KANGUR_ROUTE_DEFINITIONS) as KangurRouteKey[];
+  const [routeMetrics, routeLatency] = await Promise.all([
+    Promise.all(
+      routeKeys.map((key: KangurRouteKey) =>
+        getSystemLogMetrics({ source: KANGUR_ROUTE_DEFINITIONS[key].source, from, to })
+      )
+    ),
+    loadRouteLatencyStats(from, to),
   ]);
 
-  return {
-    authMeGet: routeMetrics[0],
-    learnerSignInPost: routeMetrics[1],
-    progressPatch: routeMetrics[2],
-    scoresPost: routeMetrics[3],
-    assignmentsPost: routeMetrics[4],
-    learnersPost: routeMetrics[5],
-    ttsPost: routeMetrics[6],
-  };
+  return Object.fromEntries(
+    routeKeys.map((key: KangurRouteKey, index: number) => [
+      key,
+      {
+        metrics: routeMetrics[index] ?? null,
+        latency: routeLatency[key] ?? null,
+        investigation: {
+          label: 'Inspect route logs',
+          href: buildSystemLogsHref({
+            source: KANGUR_ROUTE_DEFINITIONS[key].source,
+            from,
+            to,
+          }),
+        },
+      },
+    ])
+  ) as KangurRouteMetrics;
 };
 
 const eventCount = (analytics: KangurAnalyticsSnapshot, name: string): number =>
@@ -378,6 +543,7 @@ const buildKangurObservabilityAlerts = (input: {
   from: Date;
   to: Date;
   serverLogMetrics: SystemLogMetrics | null;
+  routeMetrics: KangurRouteMetrics;
   analytics: KangurAnalyticsSnapshot;
   ttsRequestCount: number;
   ttsFallbackCount: number;
@@ -387,6 +553,7 @@ const buildKangurObservabilityAlerts = (input: {
   const signInFailureCount = eventCount(input.analytics, 'kangur_learner_signin_failed');
   const signInAttemptCount = signInSuccessCount + signInFailureCount;
   const progressSyncFailureCount = eventCount(input.analytics, 'kangur_progress_sync_failed');
+  const progressPatchLatency = input.routeMetrics.progressPatch.latency;
   const serverErrorCount = input.serverLogMetrics?.levels.error ?? 0;
   const serverTotalCount = input.serverLogMetrics?.total ?? 0;
 
@@ -480,6 +647,33 @@ const buildKangurObservabilityAlerts = (input: {
       investigation: {
         label: 'Review sync analytics',
         href: recentAnalyticsHref,
+      },
+    },
+    {
+      id: 'kangur-progress-sync-latency',
+      title: 'Progress Sync Route Latency',
+      status: valueStatus(progressPatchLatency?.p95DurationMs ?? null, {
+        warningThreshold: SYSTEM_LOG_SLOW_REQUEST_THRESHOLD_MS,
+        criticalThreshold: SYSTEM_LOG_SLOW_REQUEST_THRESHOLD_MS * 2,
+        minSample: 10,
+        sampleSize: progressPatchLatency?.sampleSize ?? 0,
+      }),
+      value: progressPatchLatency?.p95DurationMs ?? null,
+      unit: 'ms',
+      warningThreshold: SYSTEM_LOG_SLOW_REQUEST_THRESHOLD_MS,
+      criticalThreshold: SYSTEM_LOG_SLOW_REQUEST_THRESHOLD_MS * 2,
+      summary:
+        (progressPatchLatency?.sampleSize ?? 0) < 10
+          ? 'Insufficient progress sync request samples to evaluate p95 latency.'
+          : `Progress sync p95 latency is ${progressPatchLatency?.p95DurationMs ?? 0} ms across ${progressPatchLatency?.sampleSize ?? 0} requests.`,
+      investigation: {
+        label: 'View slow sync logs',
+        href: buildSystemLogsHref({
+          source: KANGUR_ROUTE_DEFINITIONS.progressPatch.source,
+          minDurationMs: SYSTEM_LOG_SLOW_REQUEST_THRESHOLD_MS,
+          from: input.from,
+          to: input.to,
+        }),
       },
     },
     {
@@ -587,7 +781,7 @@ export const getKangurObservabilitySummary = async (input: {
       }),
     ]);
 
-  const ttsRequestCount = routeMetrics.ttsPost?.total ?? 0;
+  const ttsRequestCount = routeMetrics.ttsPost.metrics?.total ?? 0;
   const ttsFallbackCount =
     (await getSystemLogMetrics({ source: 'kangur.tts.fallback', from, to }).catch(
       (error: unknown) => {
@@ -602,6 +796,7 @@ export const getKangurObservabilitySummary = async (input: {
     from,
     to,
     serverLogMetrics,
+    routeMetrics,
     analytics,
     ttsRequestCount,
     ttsFallbackCount,
@@ -646,5 +841,6 @@ export const getKangurObservabilitySummary = async (input: {
 
 export const __testables = {
   buildKangurObservabilityAlerts,
+  buildRouteLatencyStats,
   loadKangurPerformanceBaseline,
 };

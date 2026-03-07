@@ -16,6 +16,7 @@ const MANAGED_PARAM_KEYS: Array<keyof SystemLogFilterFormValues | 'from' | 'to' 
   'service',
   'method',
   'statusCode',
+  'minDurationMs',
   'requestId',
   'traceId',
   'correlationId',
@@ -47,6 +48,13 @@ const normalizeStatusCode = (value: string): string => {
   return String(parsed);
 };
 
+const normalizePositiveInteger = (value: string): string => {
+  if (!value.trim()) return '';
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed) || parsed < 0) return '';
+  return String(parsed);
+};
+
 const toIsoDateBoundary = (value: string, endOfDay: boolean): string | null => {
   if (!value) return null;
   const suffix = endOfDay ? 'T23:59:59.999' : 'T00:00:00.000';
@@ -70,6 +78,7 @@ export const readSystemLogUrlState = (search: string): SystemLogUrlState => {
     service: params.get('service') ?? '',
     method: params.get('method') ?? '',
     statusCode: normalizeStatusCode(params.get('statusCode') ?? ''),
+    minDurationMs: normalizePositiveInteger(params.get('minDurationMs') ?? ''),
     requestId: params.get('requestId') ?? '',
     traceId: params.get('traceId') ?? '',
     correlationId: params.get('correlationId') ?? '',
@@ -100,6 +109,8 @@ export const writeSystemLogUrlState = (baseSearch: string, state: SystemLogUrlSt
 
   const statusCode = normalizeStatusCode(state.statusCode);
   if (statusCode) params.set('statusCode', statusCode);
+  const minDurationMs = normalizePositiveInteger(state.minDurationMs);
+  if (minDurationMs) params.set('minDurationMs', minDurationMs);
 
   const fromIso = toIsoDateBoundary(state.fromDate, false);
   if (fromIso) params.set('from', fromIso);

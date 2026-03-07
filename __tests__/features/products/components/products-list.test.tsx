@@ -305,6 +305,13 @@ describe('Admin Products List UI', () => {
     expect(screen.getAllByLabelText('Open row actions')).toHaveLength(2);
   });
 
+  it('renders accessible headers for utility columns', async () => {
+    renderProductTable();
+
+    expect(await screen.findByRole('columnheader', { name: 'Integrations' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Actions' })).toBeInTheDocument();
+  });
+
   it('shows row actions menu with Edit, Duplicate, and Remove', async () => {
     const contextValue = renderProductTable();
 

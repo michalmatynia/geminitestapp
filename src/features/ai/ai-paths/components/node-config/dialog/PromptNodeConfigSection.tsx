@@ -225,21 +225,14 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
         {bundleKeys.size > 0 ? (
           <div className='mt-2 flex flex-wrap gap-2'>
             {Array.from(bundleKeys).map((key: string) => (
-              <span
+              <button
                 key={key}
-                role='button'
-                tabIndex={0}
+                type='button'
                 className='cursor-pointer rounded-full border px-2 py-0.5 text-[10px] text-gray-200 transition hover:border-gray-500 hover:bg-muted/50'
                 onClick={() => insertPromptPlaceholder(`{{${key}}}`)}
-                onKeyDown={(event: React.KeyboardEvent<HTMLSpanElement>) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    insertPromptPlaceholder(`{{${key}}}`);
-                  }
-                }}
               >
                 {formatPlaceholderLabel(key)}
-              </span>
+              </button>
             ))}
           </div>
         ) : (
@@ -252,21 +245,14 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
             <div className='text-[11px] text-gray-500'>Direct inputs</div>
             <div className='mt-2 flex flex-wrap gap-2'>
               {directPlaceholders.map((port: string) => (
-                <span
+                <button
                   key={port}
-                  role='button'
-                  tabIndex={0}
+                  type='button'
                   className='cursor-pointer rounded-full border px-2 py-0.5 text-[10px] text-gray-200 transition hover:border-gray-500 hover:bg-muted/50'
                   onClick={() => insertPromptPlaceholder(`{{${port}}}`)}
-                  onKeyDown={(event: React.KeyboardEvent<HTMLSpanElement>) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault();
-                      insertPromptPlaceholder(`{{${port}}}`);
-                    }
-                  }}
                 >
                   {formatPlaceholderLabel(port)}
-                </span>
+                </button>
               ))}
             </div>
           </div>

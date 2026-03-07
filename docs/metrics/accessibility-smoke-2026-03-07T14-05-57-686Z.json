@@ -1,0 +1,198 @@
+{
+  "generatedAt": "2026-03-07T14:05:57.686Z",
+  "strictMode": false,
+  "failOnWarningBudgetExceed": false,
+  "summary": {
+    "total": 13,
+    "passed": 12,
+    "failed": 1,
+    "actWarnings": 0,
+    "warningBudget": 10,
+    "warningBudgetStatus": "ok",
+    "warningBudgetEnforcement": "telemetry-only"
+  },
+  "results": [
+    {
+      "id": "app-shell-a11y",
+      "name": "App Shell Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "src/app/__tests__/shell-accessibility.test.tsx"
+      ],
+      "command": "npx vitest run --project unit src/app/__tests__/shell-accessibility.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 1855,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/app/__tests__/shell-accessibility.test.tsx (2 tests) 109ms\n\n Test Files  1 passed (1)\n      Tests  2 passed (2)\n   Start at  15:02:47\n   Duration  962ms (transform 238ms, setup 171ms, import 313ms, tests 109ms, environment 283ms)"
+    },
+    {
+      "id": "auth-signin-a11y",
+      "name": "Auth Sign-In Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "__tests__/features/auth/pages/signin-page.test.tsx"
+      ],
+      "command": "npx vitest run --project unit __tests__/features/auth/pages/signin-page.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 3960,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/auth/pages/signin-page.test.tsx (10 tests) 708ms\n\n Test Files  1 passed (1)\n      Tests  10 passed (10)\n   Start at  15:02:49\n   Duration  2.62s (transform 932ms, setup 252ms, import 1.26s, tests 708ms, environment 298ms)"
+    },
+    {
+      "id": "products-edit-a11y",
+      "name": "Products Edit Form Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "__tests__/features/products/pages/product-edit-page.test.tsx"
+      ],
+      "command": "npx vitest run --project unit __tests__/features/products/pages/product-edit-page.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 4944,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/products/pages/product-edit-page.test.tsx (7 tests) 1664ms\n     ✓ renders the form with product data in the General tab  333ms\n     ✓ has no obvious accessibility violations in the default edit form view  394ms\n     ✓ enables Update after SKU value changes  300ms\n\n Test Files  1 passed (1)\n      Tests  7 passed (7)\n   Start at  15:02:52\n   Duration  4.20s (transform 1.41s, setup 186ms, import 1.95s, tests 1.66s, environment 310ms)"
+    },
+    {
+      "id": "image-studio-a11y",
+      "name": "Image Studio UI Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx"
+      ],
+      "command": "npx vitest run --project unit src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 3216,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx (7 tests) 519ms\n\n Test Files  1 passed (1)\n      Tests  7 passed (7)\n   Start at  15:02:57\n   Duration  2.49s (transform 1.01s, setup 185ms, import 1.41s, tests 519ms, environment 297ms)"
+    },
+    {
+      "id": "ai-paths-a11y",
+      "name": "AI Paths Canvas Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx"
+      ],
+      "command": "npx vitest run --project unit src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 3894,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx (4 tests) 224ms\n\n Test Files  1 passed (1)\n      Tests  4 passed (4)\n   Start at  15:03:00\n   Duration  3.21s (transform 1.80s, setup 199ms, import 2.40s, tests 224ms, environment 303ms)"
+    },
+    {
+      "id": "case-resolver-a11y",
+      "name": "Case Resolver Header Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx"
+      ],
+      "command": "npx vitest run --project unit src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 2710,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx (10 tests) 293ms\n\n Test Files  1 passed (1)\n      Tests  10 passed (10)\n   Start at  15:03:04\n   Duration  2.02s (transform 857ms, setup 168ms, import 1.18s, tests 293ms, environment 286ms)"
+    },
+    {
+      "id": "kangur-profile-a11y",
+      "name": "Kangur Profile Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "__tests__/features/kangur/kangur-accessibility-smoke.test.tsx"
+      ],
+      "command": "npx vitest run --project unit __tests__/features/kangur/kangur-accessibility-smoke.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 3269,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/kangur/kangur-accessibility-smoke.test.tsx (4 tests) 599ms\n\n Test Files  1 passed (1)\n      Tests  4 passed (4)\n   Start at  15:03:07\n   Duration  2.49s (transform 896ms, setup 193ms, import 1.33s, tests 599ms, environment 286ms)"
+    },
+    {
+      "id": "public-auth-routes-browser-a11y",
+      "name": "Public Auth Route Accessibility",
+      "runner": "playwright",
+      "tests": [
+        "e2e/features/accessibility/public-auth-accessibility.spec.ts"
+      ],
+      "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/public-auth-accessibility.spec.ts",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 43610,
+      "actWarnings": 0,
+      "output": "[WebServer] [system-log-alerts] Error volume spike detected: 38 errors in the last 300 seconds {\n[WebServer]   alertType: 'error_volume_spike',\n[WebServer]   windowSeconds: 300,\n[WebServer]   recentErrorCount: 38,\n[WebServer]   minErrors: 20,\n[WebServer]   alertEvidence: {\n[WebServer]     windowStart: '2026-03-07T13:58:14.857Z',\n[WebServer]     windowEnd: '2026-03-07T14:03:16.298Z',\n[WebServer]     matchedCount: 38,\n[WebServer]     sampleSize: 5,\n[WebServer]     samples: [ [Object], [Object], [Object], [Object], [Object] ]\n[WebServer]   },\n[WebServer]   service: 'system-log-alerts',\n[WebServer]   fingerprint: '17b0147446e1e2d4'\n[WebServer] }\n[WebServer] [system-log-alerts] Error spike for source \"ai-paths-service\": 35 errors in the last 300 seconds {\n[WebServer]   alertType: 'error_volume_spike_per_source',\n[WebServer]   windowSeconds: 300,\n[WebServer]   recentErrorCount: 35,\n[WebServer]   minErrors: 10,\n[WebServer]   source: 'ai-paths-service',\n[WebServer]   alertEvidence: {\n[WebServer]     windowStart: '2026-03-07T13:58:16.298Z',\n[WebServer]     windowEnd: '2026-03-07T14:03:16.549Z',\n[WebServer]     matchedCount: 35,\n[WebServer]     sampleSize: 5,\n[WebServer]     samples: [ [Object], [Object], [Object], [Object], [Object] ]\n[WebServer]   },\n[WebServer]   service: 'system-log-alerts',\n[WebServer]   fingerprint: 'e430d1895b7eca1c'\n[WebServer] }\n[WebServer] [system-log-alerts] Error spike for service \"ai-paths-service\": 35 errors in the last 300 seconds {\n[WebServer]   alertType: 'error_volume_spike_per_service',\n[WebServer]   windowSeconds: 300,\n[WebServer]   recentErrorCount: 35,\n[WebServer]   minErrors: 10,\n[WebServer]   service: 'observability.alerts',\n[WebServer]   alertEvidence: {\n[WebServer]     windowStart: '2026-03-07T13:58:16.550Z',\n[WebServer]     windowEnd: '2026-03-07T14:03:18.114Z',\n[WebServer]     matchedCount: 35,\n[WebServer]     sampleSize: 5,\n[WebServer]     samples: [ [Object], [Object], [Object], [Object], [Object] ]\n[WebServer]   },\n[WebServer]   fingerprint: '313f96872a05f34f'\n[WebServer] }\n\nRunning 2 tests using 1 worker\n\n(node:16042) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:16042) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✓  1 e2e/features/accessibility/public-auth-accessibility.spec.ts:8:3 › /auth/signin exposes skip navigation and passes the accessibility smoke scan (1.0s)\n  ✓  2 e2e/features/accessibility/public-auth-accessibility.spec.ts:8:3 › /auth/register exposes skip navigation and passes the accessibility smoke scan (835ms)\n\n  2 passed (42.5s)"
+    },
+    {
+      "id": "admin-dashboard-browser-a11y",
+      "name": "Admin Dashboard Accessibility",
+      "runner": "playwright",
+      "tests": [
+        "e2e/features/accessibility/admin-dashboard-accessibility.spec.ts"
+      ],
+      "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/admin-dashboard-accessibility.spec.ts",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 21998,
+      "actWarnings": 0,
+      "output": "[WebServer] [system-log-alerts] Error volume spike detected: 33 errors in the last 300 seconds {\n[WebServer]   alertType: 'error_volume_spike',\n[WebServer]   windowSeconds: 300,\n[WebServer]   recentErrorCount: 33,\n[WebServer]   minErrors: 20,\n[WebServer]   alertEvidence: {\n[WebServer]     windowStart: '2026-03-07T13:58:58.061Z',\n[WebServer]     windowEnd: '2026-03-07T14:03:59.443Z',\n[WebServer]     matchedCount: 33,\n[WebServer]     sampleSize: 5,\n[WebServer]     samples: [ [Object], [Object], [Object], [Object], [Object] ]\n[WebServer]   },\n[WebServer]   service: 'system-log-alerts',\n[WebServer]   fingerprint: '0f7a1f59856e859c'\n[WebServer] }\n[WebServer] [system-log-alerts] Error spike for source \"ai-paths-service\": 27 errors in the last 300 seconds {\n[WebServer]   alertType: 'error_volume_spike_per_source',\n[WebServer]   windowSeconds: 300,\n[WebServer]   recentErrorCount: 27,\n[WebServer]   minErrors: 10,\n[WebServer]   source: 'ai-paths-service',\n[WebServer]   alertEvidence: {\n[WebServer]     windowStart: '2026-03-07T13:58:59.443Z',\n[WebServer]     windowEnd: '2026-03-07T14:03:59.725Z',\n[WebServer]     matchedCount: 27,\n[WebServer]     sampleSize: 5,\n[WebServer]     samples: [ [Object], [Object], [Object], [Object], [Object] ]\n[WebServer]   },\n[WebServer]   service: 'system-log-alerts',\n[WebServer]   fingerprint: 'c1fffa23e3cec3df'\n[WebServer] }\n[WebServer] [system-log-alerts] Error spike for service \"ai-paths-service\": 27 errors in the last 300 seconds {\n[WebServer]   alertType: 'error_volume_spike_per_service',\n[WebServer]   windowSeconds: 300,\n[WebServer]   recentErrorCount: 27,\n[WebServer]   minErrors: 10,\n[WebServer]   service: 'observability.alerts',\n[WebServer]   alertEvidence: {\n[WebServer]     windowStart: '2026-03-07T13:58:59.726Z',\n[WebServer]     windowEnd: '2026-03-07T14:04:01.120Z',\n[WebServer]     matchedCount: 27,\n[WebServer]     sampleSize: 5,\n[WebServer]     samples: [ [Object], [Object], [Object], [Object], [Object] ]\n[WebServer]   },\n[WebServer]   fingerprint: '6ba9d36e25b594fa'\n[WebServer] }\n\nRunning 1 test using 1 worker\n\n(node:18657) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:18657) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✓  1 e2e/features/accessibility/admin-dashboard-accessibility.spec.ts:6:1 › admin dashboard exposes shell landmarks and passes the accessibility smoke scan (4.7s)\n\n  1 passed (20.8s)"
+    },
+    {
+      "id": "products-list-browser-a11y",
+      "name": "Products List Accessibility",
+      "runner": "playwright",
+      "tests": [
+        "e2e/features/accessibility/products-list-accessibility.spec.ts"
+      ],
+      "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/products-list-accessibility.spec.ts",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 38119,
+      "actWarnings": 0,
+      "output": "Running 1 test using 1 worker\n\n(node:20177) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:20177) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✓  1 e2e/features/accessibility/products-list-accessibility.spec.ts:6:1 › products list exposes search and actions accessibly and passes the accessibility smoke scan (8.1s)\n\n  1 passed (37.2s)"
+    },
+    {
+      "id": "cms-pages-browser-a11y",
+      "name": "CMS Pages Accessibility",
+      "runner": "playwright",
+      "tests": [
+        "e2e/features/accessibility/cms-pages-accessibility.spec.ts"
+      ],
+      "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/cms-pages-accessibility.spec.ts",
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 17909,
+      "actWarnings": 0,
+      "output": "[WebServer] [system-log-alerts] Error volume spike detected: 40 errors in the last 300 seconds {\n[WebServer]   alertType: 'error_volume_spike',\n[WebServer]   windowSeconds: 300,\n[WebServer]   recentErrorCount: 40,\n[WebServer]   minErrors: 20,\n[WebServer]   alertEvidence: {\n[WebServer]     windowStart: '2026-03-07T13:59:58.548Z',\n[WebServer]     windowEnd: '2026-03-07T14:04:59.897Z',\n[WebServer]     matchedCount: 40,\n[WebServer]     sampleSize: 5,\n[WebServer]     samples: [ [Object], [Object], [Object], [Object], [Object] ]\n[WebServer]   },\n[WebServer]   service: 'system-log-alerts',\n[WebServer]   fingerprint: 'f6ad0a0b40e85839'\n[WebServer] }\n[WebServer] [system-log-alerts] Error spike for source \"system-log-alerts\": 13 errors in the last 300 seconds {\n[WebServer]   alertType: 'error_volume_spike_per_source',\n[WebServer]   windowSeconds: 300,\n[WebServer]   recentErrorCount: 13,\n[WebServer]   minErrors: 10,\n[WebServer]   source: 'system-log-alerts',\n[WebServer]   alertEvidence: {\n[WebServer]     windowStart: '2026-03-07T13:59:59.898Z',\n[WebServer]     windowEnd: '2026-03-07T14:05:00.205Z',\n[WebServer]     matchedCount: 13,\n[WebServer]     sampleSize: 5,\n[WebServer]     samples: [ [Object], [Object], [Object], [Object], [Object] ]\n[WebServer]   },\n[WebServer]   service: 'system-log-alerts',\n[WebServer]   fingerprint: '07e6601945467c6c'\n[WebServer] }\n[WebServer] [system-log-alerts] Error spike for source \"ai-paths-service\": 27 errors in the last 300 seconds {\n[WebServer]   alertType: 'error_volume_spike_per_source',\n[WebServer]   windowSeconds: 300,\n[WebServer]   recentErrorCount: 27,\n[WebServer]   minErrors: 10,\n[WebServer]   source: 'ai-paths-service',\n[WebServer]   alertEvidence: {\n[WebServer]     windowStart: '2026-03-07T13:59:59.898Z',\n[WebServer]     windowEnd: '2026-03-07T14:05:00.405Z',\n[WebServer]     matchedCount: 27,\n[WebServer]     sampleSize: 5,\n[WebServer]     samples: [ [Object], [Object], [Object], [Object], [Object] ]\n[WebServer]   },\n[WebServer]   service: 'system-log-alerts',\n[WebServer]   fingerprint: 'c1fffa23e3cec3df'\n[WebServer] }\n[WebServer] [system-log-alerts] Error spike for service \"ai-paths-service\": 27 errors in the last 300 seconds {\n[WebServer]   alertType: 'error_volume_spike_per_service',\n[WebServer]   windowSeconds: 300,\n[WebServer]   recentErrorCount: 27,\n[WebServer]   minErrors: 10,\n[WebServer]   service: 'observability.alerts',\n[WebServer]   alertEvidence: {\n[WebServer]     windowStart: '2026-03-07T14:00:00.406Z',\n[WebServer]     windowEnd: '2026-03-07T14:05:02.864Z',\n[WebServer]     matchedCount: 27,\n[WebServer]     sampleSize: 5,\n[WebServer]     samples: [ [Object], [Object], [Object], [Object], [Object] ]\n[WebServer]   },\n[WebServer]   fingerprint: '6ba9d36e25b594fa'\n[WebServer] }\n\nRunning 1 test using 1 worker\n\n(node:23288) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:23288) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n[WebServer] [system-log-alerts] Error spike for service \"system-log-alerts\": 12 errors in the last 300 seconds {\n[WebServer]   alertType: 'error_volume_spike_per_service',\n[WebServer]   windowSeconds: 300,\n[WebServer]   recentErrorCount: 12,\n[WebServer]   minErrors: 10,\n[WebServer]   service: 'observability.alerts',\n[WebServer]   alertEvidence: {\n[WebServer]     windowStart: '2026-03-07T14:00:06.666Z',\n[WebServer]     windowEnd: '2026-03-07T14:05:08.201Z',\n[WebServer]     matchedCount: 12,\n[WebServer]     sampleSize: 5,\n[WebServer]     samples: [ [Object], [Object], [Object], [Object], [Object] ]\n[WebServer]   },\n[WebServer]   fingerprint: 'fb5f707c3766be3d'\n[WebServer] }\n  ✘  1 e2e/features/accessibility/cms-pages-accessibility.spec.ts:6:1 › cms pages list exposes filters and actions accessibly and passes the accessibility smoke scan (5.9s)\n\n\n  1) e2e/features/accessibility/cms-pages-accessibility.spec.ts:6:1 › cms pages list exposes filters and actions accessibly and passes the accessibility smoke scan \n\n    Error: page.goto: Target page, context or browser has been closed\n    Call log:\n    \u001b[2m  - navigating to \"http://localhost:3000/admin/cms/pages\", waiting until \"load\"\u001b[22m\n\n\n       8 | }) => {\n       9 |   await ensureAdminSession(page, '/admin/cms/pages');\n    > 10 |   await page.goto('/admin/cms/pages');\n         |              ^\n      11 |\n      12 |   await expect(page.getByRole('heading', { name: 'Content Pages' })).toBeVisible();\n      13 |\n        at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/cms-pages-accessibility.spec.ts:10:14\n\n    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────\n    test-results/features-accessibility-cms-17323-he-accessibility-smoke-scan/trace.zip\n    Usage:\n\n        npx playwright show-trace test-results/features-accessibility-cms-17323-he-accessibility-smoke-scan/trace.zip\n\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n  1 failed\n    e2e/features/accessibility/cms-pages-accessibility.spec.ts:6:1 › cms pages list exposes filters and actions accessibly and passes the accessibility smoke scan"
+    },
+    {
+      "id": "notes-workspace-browser-a11y",
+      "name": "Notes Workspace Accessibility",
+      "runner": "playwright",
+      "tests": [
+        "e2e/features/accessibility/notes-workspace-accessibility.spec.ts"
+      ],
+      "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/notes-workspace-accessibility.spec.ts",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 21879,
+      "actWarnings": 0,
+      "output": "[WebServer] [system-log-alerts] Error volume spike detected: 36 errors in the last 300 seconds {\n[WebServer]   alertType: 'error_volume_spike',\n[WebServer]   windowSeconds: 300,\n[WebServer]   recentErrorCount: 36,\n[WebServer]   minErrors: 20,\n[WebServer]   alertEvidence: {\n[WebServer]     windowStart: '2026-03-07T14:00:17.457Z',\n[WebServer]     windowEnd: '2026-03-07T14:05:18.908Z',\n[WebServer]     matchedCount: 36,\n[WebServer]     sampleSize: 5,\n[WebServer]     samples: [ [Object], [Object], [Object], [Object], [Object] ]\n[WebServer]   },\n[WebServer]   service: 'system-log-alerts',\n[WebServer]   fingerprint: '65a3e20e7d78e225'\n[WebServer] }\n[WebServer] [system-log-alerts] Error spike for source \"system-log-alerts\": 18 errors in the last 300 seconds {\n[WebServer]   alertType: 'error_volume_spike_per_source',\n[WebServer]   windowSeconds: 300,\n[WebServer]   recentErrorCount: 18,\n[WebServer]   minErrors: 10,\n[WebServer]   source: 'system-log-alerts',\n[WebServer]   alertEvidence: {\n[WebServer]     windowStart: '2026-03-07T14:00:18.908Z',\n[WebServer]     windowEnd: '2026-03-07T14:05:19.137Z',\n[WebServer]     matchedCount: 18,\n[WebServer]     sampleSize: 5,\n[WebServer]     samples: [ [Object], [Object], [Object], [Object], [Object] ]\n[WebServer]   },\n[WebServer]   service: 'system-log-alerts',\n[WebServer]   fingerprint: '8861320ef1224495'\n[WebServer] }\n[WebServer] [system-log-alerts] Error spike for source \"ai-paths-service\": 18 errors in the last 300 seconds {\n[WebServer]   alertType: 'error_volume_spike_per_source',\n[WebServer]   windowSeconds: 300,\n[WebServer]   recentErrorCount: 18,\n[WebServer]   minErrors: 10,\n[WebServer]   source: 'ai-paths-service',\n[WebServer]   alertEvidence: {\n[WebServer]     windowStart: '2026-03-07T14:00:18.908Z',\n[WebServer]     windowEnd: '2026-03-07T14:05:19.414Z',\n[WebServer]     matchedCount: 18,\n[WebServer]     sampleSize: 5,\n[WebServer]     samples: [ [Object], [Object], [Object], [Object], [Object] ]\n[WebServer]   },\n[WebServer]   service: 'system-log-alerts',\n[WebServer]   fingerprint: '14d12fe436f0ee3b'\n[WebServer] }\n[WebServer] [system-log-alerts] Error spike for service \"system-log-alerts\": 12 errors in the last 300 seconds {\n[WebServer]   alertType: 'error_volume_spike_per_service',\n[WebServer]   windowSeconds: 300,\n[WebServer]   recentErrorCount: 12,\n[WebServer]   minErrors: 10,\n[WebServer]   service: 'observability.alerts',\n[WebServer]   alertEvidence: {\n[WebServer]     windowStart: '2026-03-07T14:00:19.415Z',\n[WebServer]     windowEnd: '2026-03-07T14:05:20.812Z',\n[WebServer]     matchedCount: 12,\n[WebServer]     sampleSize: 5,\n[WebServer]     samples: [ [Object], [Object], [Object], [Object], [Object] ]\n[WebServer]   },\n[WebServer]   fingerprint: 'fb5f707c3766be3d'\n[WebServer] }\n[WebServer] [system-log-alerts] Error spike for service \"ai-paths-service\": 18 errors in the last 300 seconds {\n[WebServer]   alertType: 'error_volume_spike_per_service',\n[WebServer]   windowSeconds: 300,\n[WebServer]   recentErrorCount: 18,\n[WebServer]   minErrors: 10,\n[WebServer]   service: 'observability.alerts',\n[WebServer]   alertEvidence: {\n[WebServer]     windowStart: '2026-03-07T14:00:19.415Z',\n[WebServer]     windowEnd: '2026-03-07T14:05:21.012Z',\n[WebServer]     matchedCount: 18,\n[WebServer]     sampleSize: 5,\n[WebServer]     samples: [ [Object], [Object], [Object], [Object], [Object] ]\n[WebServer]   },\n[WebServer]   fingerprint: '8fffb9f69f5d3627'\n[WebServer] }\n\nRunning 1 test using 1 worker\n\n(node:25002) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:25002) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✓  1 e2e/features/accessibility/notes-workspace-accessibility.spec.ts:7:1 › notes workspace exposes list controls accessibly and passes the accessibility smoke scan (7.9s)\n\n  1 passed (20.6s)"
+    },
+    {
+      "id": "cms-builder-browser-a11y",
+      "name": "CMS Builder Accessibility",
+      "runner": "playwright",
+      "tests": [
+        "e2e/features/accessibility/cms-builder-accessibility.spec.ts"
+      ],
+      "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/cms-builder-accessibility.spec.ts",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 24083,
+      "actWarnings": 0,
+      "output": "[WebServer] [system-log-alerts] Error volume spike detected: 32 errors in the last 300 seconds {\n[WebServer]   alertType: 'error_volume_spike',\n[WebServer]   windowSeconds: 300,\n[WebServer]   recentErrorCount: 32,\n[WebServer]   minErrors: 20,\n[WebServer]   alertEvidence: {\n[WebServer]     windowStart: '2026-03-07T14:00:39.002Z',\n[WebServer]     windowEnd: '2026-03-07T14:05:40.393Z',\n[WebServer]     matchedCount: 32,\n[WebServer]     sampleSize: 5,\n[WebServer]     samples: [ [Object], [Object], [Object], [Object], [Object] ]\n[WebServer]   },\n[WebServer]   service: 'system-log-alerts',\n[WebServer]   fingerprint: '5bd73e909173d3d9'\n[WebServer] }\n[WebServer] [system-log-alerts] Error spike for source \"system-log-alerts\": 23 errors in the last 300 seconds {\n[WebServer]   alertType: 'error_volume_spike_per_source',\n[WebServer]   windowSeconds: 300,\n[WebServer]   recentErrorCount: 23,\n[WebServer]   minErrors: 10,\n[WebServer]   source: 'system-log-alerts',\n[WebServer]   alertEvidence: {\n[WebServer]     windowStart: '2026-03-07T14:00:40.394Z',\n[WebServer]     windowEnd: '2026-03-07T14:05:40.620Z',\n[WebServer]     matchedCount: 23,\n[WebServer]     sampleSize: 5,\n[WebServer]     samples: [ [Object], [Object], [Object], [Object], [Object] ]\n[WebServer]   },\n[WebServer]   service: 'system-log-alerts',\n[WebServer]   fingerprint: 'd88d45cf1e2fc9fe'\n[WebServer] }\n[WebServer] [system-log-alerts] Error spike for service \"system-log-alerts\": 15 errors in the last 300 seconds {\n[WebServer]   alertType: 'error_volume_spike_per_service',\n[WebServer]   windowSeconds: 300,\n[WebServer]   recentErrorCount: 15,\n[WebServer]   minErrors: 10,\n[WebServer]   service: 'observability.alerts',\n[WebServer]   alertEvidence: {\n[WebServer]     windowStart: '2026-03-07T14:00:40.621Z',\n[WebServer]     windowEnd: '2026-03-07T14:05:42.424Z',\n[WebServer]     matchedCount: 15,\n[WebServer]     sampleSize: 5,\n[WebServer]     samples: [ [Object], [Object], [Object], [Object], [Object] ]\n[WebServer]   },\n[WebServer]   fingerprint: '6dc9e14e460d0ad8'\n[WebServer] }\n\nRunning 1 test using 1 worker\n\n(node:26724) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:26724) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✓  1 e2e/features/accessibility/cms-builder-accessibility.spec.ts:7:1 › cms builder exposes shell controls accessibly and passes the accessibility smoke scan (11.9s)\n\n  1 passed (22.6s)"
+    }
+  ]
+}

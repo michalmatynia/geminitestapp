@@ -165,6 +165,16 @@ export function CaseResolverTreeNode(props: CaseResolverTreeNodeProps): React.JS
   })();
 
   const isLinkDropTarget = isDropTarget && dropPosition === 'inside' && fileId !== null;
+  const nodeTitle =
+    isVirtualSectionNode
+      ? isUnassignedSectionNode
+        ? 'Unassigned ownership'
+        : 'Children cases folder structure'
+      : isNodeFileAsset
+        ? 'Canvas file - click to open'
+        : isCanvasCaseFile
+          ? 'Drag file to canvas'
+          : node.name;
   const stateClassName = isVirtualSectionNode
     ? isSelected
       ? 'bg-cyan-600/30 text-cyan-50 ring-1 ring-inset ring-cyan-400/70'
@@ -223,31 +233,6 @@ export function CaseResolverTreeNode(props: CaseResolverTreeNodeProps): React.JS
         stateClassName
       )}
       style={{ paddingLeft: `${depth * 16 + 8}px` }}
-      role='button'
-      tabIndex={0}
-      title={
-        isVirtualSectionNode
-          ? isUnassignedSectionNode
-            ? 'Unassigned ownership'
-            : 'Children cases folder structure'
-          : isNodeFileAsset
-            ? 'Canvas file — click to open'
-            : isCanvasCaseFile
-              ? 'Drag file to canvas'
-              : node.name
-      }
-      onClick={handleClick}
-      onDoubleClick={(): void => {
-        if (isVirtualSectionNode) return;
-        startRename();
-      }}
-      onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          if (isCaseEntryNode) return;
-          handleClick();
-        }
-      }}
     >
       <button
         type='button'
@@ -308,50 +293,78 @@ export function CaseResolverTreeNode(props: CaseResolverTreeNodeProps): React.JS
           •
         </span>
       )}
-      <Icon className='size-4 shrink-0' />
-      {isFolder && isFolderLocked && !isVirtualSectionNode ? (
-        <Lock className='size-3.5 shrink-0 text-amber-300' aria-hidden='true' />
-      ) : null}
-      {isChildOwnedStructureNode ? (
-        <Badge
-          variant='outline'
-          className='bg-cyan-500/5 text-cyan-200 border-cyan-500/20 size-4 p-0 flex items-center justify-center'
-          title={childStructureHint}
-        >
-          <GitBranch className='size-3' />
-        </Badge>
-      ) : null}
-      <div className='min-w-0 flex flex-1 items-center gap-1'>
-        {isRenaming ? (
-          <Input
-            ref={focusOnMount}
-            value={renameDraft}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-              onUpdateRenameDraft(event.target.value);
-            }}
-            onBlur={(): void => {
-              onCommitRename();
-            }}
-            onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>): void => {
-              event.stopPropagation();
-              if (event.key === 'Enter') {
-                event.preventDefault();
+      {isRenaming ? (
+        <div className='min-w-0 flex flex-1 items-center gap-1'>
+          <Icon className='size-4 shrink-0' />
+          {isFolder && isFolderLocked && !isVirtualSectionNode ? (
+            <Lock className='size-3.5 shrink-0 text-amber-300' aria-hidden='true' />
+          ) : null}
+          {isChildOwnedStructureNode ? (
+            <Badge
+              variant='outline'
+              className='bg-cyan-500/5 text-cyan-200 border-cyan-500/20 size-4 p-0 flex items-center justify-center'
+              title={childStructureHint}
+            >
+              <GitBranch className='size-3' />
+            </Badge>
+          ) : null}
+          <div className='min-w-0 flex flex-1 items-center gap-1'>
+            <Input
+              ref={focusOnMount}
+              value={renameDraft}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                onUpdateRenameDraft(event.target.value);
+              }}
+              onBlur={(): void => {
                 onCommitRename();
-              } else if (event.key === 'Escape') {
-                event.preventDefault();
-                onCancelRename();
-              }
-            }}
-            onClick={(event: React.MouseEvent<HTMLInputElement>): void => {
-              event.stopPropagation();
-            }}
-            onDoubleClick={(event: React.MouseEvent<HTMLInputElement>): void => {
-              event.stopPropagation();
-            }}
-            className='h-7 min-w-0 flex-1 border-blue-500 bg-gray-800 text-sm text-white'
-          />
-        ) : (
-          <>
+              }}
+              onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>): void => {
+                event.stopPropagation();
+                if (event.key === 'Enter') {
+                  event.preventDefault();
+                  onCommitRename();
+                } else if (event.key === 'Escape') {
+                  event.preventDefault();
+                  onCancelRename();
+                }
+              }}
+              onClick={(event: React.MouseEvent<HTMLInputElement>): void => {
+                event.stopPropagation();
+              }}
+              onDoubleClick={(event: React.MouseEvent<HTMLInputElement>): void => {
+                event.stopPropagation();
+              }}
+              className='h-7 min-w-0 flex-1 border-blue-500 bg-gray-800 text-sm text-white'
+            />
+          </div>
+        </div>
+      ) : (
+        <button
+          type='button'
+          className='min-w-0 flex flex-1 items-center gap-1 text-left'
+          aria-current={isSelected ? 'true' : undefined}
+          aria-label={nodeTitle}
+          title={nodeTitle}
+          onClick={handleClick}
+          onDoubleClick={(): void => {
+            if (isVirtualSectionNode) return;
+            startRename();
+          }}
+        >
+          <Icon className='size-4 shrink-0' />
+          {isFolder && isFolderLocked && !isVirtualSectionNode ? (
+            <Lock className='size-3.5 shrink-0 text-amber-300' aria-hidden='true' />
+          ) : null}
+          {isChildOwnedStructureNode ? (
+            <Badge
+              variant='outline'
+              className='bg-cyan-500/5 text-cyan-200 border-cyan-500/20 size-4 p-0 flex items-center justify-center'
+              title={childStructureHint}
+            >
+              <GitBranch className='size-3' />
+            </Badge>
+          ) : null}
+          <div className='min-w-0 flex flex-1 items-center gap-1'>
             <span className='min-w-0 flex-1 truncate'>{node.name}</span>
             {isChildOwnedStructureNode ? (
               <Badge
@@ -369,9 +382,9 @@ export function CaseResolverTreeNode(props: CaseResolverTreeNodeProps): React.JS
                 Link →
               </Badge>
             ) : null}
-          </>
-        )}
-      </div>
+          </div>
+        </button>
+      )}
 
       {!isRenaming && isFolder && folderPath !== null && !isVirtualSectionNode ? (
         <div className={`flex shrink-0 items-center gap-1 transition ${hoverOnlyControlClass}`}>

@@ -28,6 +28,7 @@ Use this runbook when Kangur shows elevated sign-in failures, progress sync issu
   - `Kangur`
   - `Kangur Auth`
   - `Kangur Progress`
+  - `Kangur Slow Sync`
   - `Kangur TTS`
 - Performance artifact:
   - `docs/metrics/kangur-performance-latest.json`
@@ -47,6 +48,10 @@ Use this runbook when Kangur shows elevated sign-in failures, progress sync issu
   - warning at `>= 3` failures per `24h`
   - critical at `>= 10` failures per `24h`
   - the summary API scales these thresholds for `7d` and `30d`
+- Progress sync route latency:
+  - warning when `p95 >= 750 ms`
+  - critical when `p95 >= 1500 ms`
+  - requires at least `10` progress `PATCH` requests in the selected window
 - TTS fallback rate:
   - warning at `>= 10%`
   - critical at `>= 25%`
@@ -66,6 +71,7 @@ Use this runbook when Kangur shows elevated sign-in failures, progress sync issu
 4. If progress is degraded:
    - inspect `analytics.importantEvents` for `kangur_progress_sync_failed`
    - apply the `Kangur Progress` preset
+   - if the issue is latency rather than outright failures, apply the `Kangur Slow Sync` preset
 5. If narration is degraded:
    - inspect `keyMetrics.ttsFallbackRatePercent`
    - apply the `Kangur TTS` preset
@@ -133,8 +139,9 @@ Use this runbook when Kangur shows elevated sign-in failures, progress sync issu
 
 1. Confirm whether the issue is client hydration, client sync, or server `PATCH` failures.
 2. Review `kangur_progress_sync_failed` client events and `kangur.progress.PATCH` route metrics together.
-3. Check learner ownership resolution and progress repository health.
-4. If degradation is isolated to one learner or parent account, use `requestId` and `traceId` to follow the path through server logs.
+3. If route p95 latency is elevated, open the slow-sync logs view or apply the `Kangur Slow Sync` preset.
+4. Check learner ownership resolution and progress repository health.
+5. If degradation is isolated to one learner or parent account, use `requestId` and `traceId` to follow the path through server logs.
 
 ### TTS fallback rate spikes
 

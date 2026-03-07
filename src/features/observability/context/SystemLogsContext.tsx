@@ -45,6 +45,7 @@ const filterFields: FilterField[] = [
   { key: 'service', label: 'Service', type: 'text', placeholder: 'domain.feature' },
   { key: 'method', label: 'Method', type: 'text', placeholder: 'GET, POST, PATCH...' },
   { key: 'statusCode', label: 'Status', type: 'number', placeholder: '500' },
+  { key: 'minDurationMs', label: 'Min Duration', type: 'number', placeholder: '750' },
   { key: 'requestId', label: 'Request ID', type: 'text', placeholder: 'x-request-id' },
   { key: 'traceId', label: 'Trace ID', type: 'text', placeholder: 'x-trace-id' },
   { key: 'correlationId', label: 'Correlation ID', type: 'text', placeholder: 'request scope id' },
@@ -75,6 +76,13 @@ const parseStatusCodeInput = (value: string): number | null => {
   return parsed;
 };
 
+const parseMinDurationInput = (value: string): number | null => {
+  if (!value.trim()) return null;
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed) || parsed < 0) return null;
+  return parsed;
+};
+
 type ToastFn = (
   message: string,
   options?: { variant?: 'success' | 'error' | 'info' | 'warning' }
@@ -87,6 +95,7 @@ type SystemLogsContextValue = {
   service: string;
   method: string;
   statusCode: string;
+  minDurationMs: string;
   requestId: string;
   traceId: string;
   correlationId: string;
@@ -207,6 +216,7 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
   const [service, setService] = useState(() => initialUrlState.service);
   const [method, setMethod] = useState(() => initialUrlState.method);
   const [statusCode, setStatusCode] = useState(() => initialUrlState.statusCode);
+  const [minDurationMs, setMinDurationMs] = useState(() => initialUrlState.minDurationMs);
   const [requestId, setRequestId] = useState(() => initialUrlState.requestId);
   const [traceId, setTraceId] = useState(() => initialUrlState.traceId);
   const [correlationId, setCorrelationId] = useState(() => initialUrlState.correlationId);
@@ -233,6 +243,7 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
       service,
       method,
       statusCode,
+      minDurationMs,
       requestId,
       traceId,
       correlationId,
@@ -263,6 +274,7 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
     service,
     source,
     statusCode,
+    minDurationMs,
     toDate,
     userId,
   ]);
@@ -277,6 +289,7 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
       service,
       method,
       statusCode: parseStatusCodeInput(statusCode),
+      minDurationMs: parseMinDurationInput(minDurationMs),
       requestId,
       traceId,
       correlationId,
@@ -294,6 +307,7 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
       source,
       method,
       statusCode,
+      minDurationMs,
       requestId,
       traceId,
       correlationId,
@@ -314,6 +328,7 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
       service,
       method,
       statusCode: parseStatusCodeInput(statusCode),
+      minDurationMs: parseMinDurationInput(minDurationMs),
       requestId,
       traceId,
       correlationId,
@@ -329,6 +344,7 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
       source,
       method,
       statusCode,
+      minDurationMs,
       requestId,
       traceId,
       correlationId,
@@ -440,6 +456,7 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
     if (key === 'service') setService(value);
     if (key === 'method') setMethod(value);
     if (key === 'statusCode') setStatusCode(value);
+    if (key === 'minDurationMs') setMinDurationMs(value);
     if (key === 'requestId') setRequestId(value);
     if (key === 'traceId') setTraceId(value);
     if (key === 'correlationId') setCorrelationId(value);
@@ -457,6 +474,7 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
     setService('');
     setMethod('');
     setStatusCode('');
+    setMinDurationMs('');
     setRequestId('');
     setTraceId('');
     setCorrelationId('');
@@ -509,6 +527,7 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
     service,
     method,
     statusCode,
+    minDurationMs,
     requestId,
     traceId,
     correlationId,

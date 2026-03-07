@@ -9,6 +9,7 @@ import {
   type KangurLessonTtsResponse,
   type KangurLessonTtsStatusResponse,
 } from '@/features/kangur/tts/contracts';
+import { buildInlineVttTrackSrc } from '@/features/kangur/tts/captions';
 import {
   buildKangurLessonDocumentNarrationScript,
   hasKangurLessonNarrationContent,
@@ -368,7 +369,15 @@ export function KangurLessonNarrationPanel(): React.JSX.Element {
                     </div>
                   </div>
                   <div className='mt-2 text-sm leading-6 text-slate-700'>{segment.text}</div>
-                  <audio controls preload='none' src={segment.audioUrl} className='mt-3 w-full' />
+                  <audio controls preload='none' src={segment.audioUrl} className='mt-3 w-full'>
+                    <track
+                      default
+                      kind='captions'
+                      label={`Narration transcript ${index + 1}`}
+                      src={buildInlineVttTrackSrc(segment.text)}
+                      srcLang={script.locale}
+                    />
+                  </audio>
                 </article>
               ))
             ) : (

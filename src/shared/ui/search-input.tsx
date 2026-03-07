@@ -43,7 +43,7 @@ const SearchInputContent = React.forwardRef<HTMLInputElement>(function SearchInp
   const runtime = useSearchInputRuntime();
   return (
     <div className={cn('relative flex items-center', runtime.containerClassName)}>
-      <Search className='absolute left-3 size-4 text-gray-500' />
+      <Search className='absolute left-3 size-4 text-gray-500' aria-hidden='true' />
       <Input
         ref={ref}
         value={runtime.value}
@@ -61,7 +61,7 @@ const SearchInputContent = React.forwardRef<HTMLInputElement>(function SearchInp
           className='absolute right-1 size-7 text-gray-500 hover:text-gray-300'
           aria-label='Clear search'
         >
-          <X className='size-3.5' />
+          <X className='size-3.5' aria-hidden='true' />
         </Button>
       )}
     </div>

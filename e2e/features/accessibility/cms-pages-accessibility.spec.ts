@@ -7,7 +7,6 @@ test('cms pages list exposes filters and actions accessibly and passes the acces
   page,
 }) => {
   await ensureAdminSession(page, '/admin/cms/pages');
-  await page.goto('/admin/cms/pages');
 
   await expect(page.getByRole('heading', { name: 'Content Pages' })).toBeVisible();
 
@@ -16,7 +15,16 @@ test('cms pages list exposes filters and actions accessibly and passes the acces
   await expect(main).toHaveAttribute('tabindex', '-1');
 
   await expect(page.getByRole('button', { name: 'Create Page' })).toBeVisible();
-  await expect(page.getByRole('combobox', { name: 'Zone selector' })).toBeVisible();
+  const zoneSelector = page.getByRole('combobox', { name: 'Zone selector' });
+  const simpleRoutingIndicator = page.getByText('Simple routing');
+  await expect
+    .poll(async () => (await zoneSelector.count()) > 0 || (await simpleRoutingIndicator.count()) > 0)
+    .toBe(true);
+  if ((await zoneSelector.count()) > 0) {
+    await expect(zoneSelector).toBeVisible();
+  } else {
+    await expect(simpleRoutingIndicator).toBeVisible();
+  }
   await expect(page.getByRole('textbox', { name: 'Search pages by name...' })).toBeVisible();
 
   const skipLink = page.getByRole('link', { name: 'Skip to content' });

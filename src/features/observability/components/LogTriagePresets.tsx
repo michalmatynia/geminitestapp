@@ -30,6 +30,7 @@ const triagePresetIcons: Record<
   'kangur-source-last7d': Monitor,
   'kangur-auth-last3d': Shield,
   'kangur-progress-last3d': Monitor,
+  'kangur-slow-progress-last3d': Server,
   'kangur-tts-last3d': AlertTriangle,
 };
 
@@ -41,6 +42,7 @@ export function LogTriagePresets(): React.JSX.Element {
     service,
     method,
     statusCode,
+    minDurationMs,
     requestId,
     traceId,
     correlationId,
@@ -59,6 +61,7 @@ export function LogTriagePresets(): React.JSX.Element {
     service,
     method,
     statusCode,
+    minDurationMs,
     requestId,
     traceId,
     correlationId,

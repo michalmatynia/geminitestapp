@@ -1,26 +1,25 @@
 # Weekly Quality Report
 
-Generated at: 2026-03-07T13:58:24.316Z
+Generated at: 2026-03-07T14:45:25.530Z
 Node: v24.3.0
 
 ## Quality Check Summary
 
 - Total checks: 12
-- Passed: 5
-- Failed: 3
+- Passed: 7
+- Failed: 2
 - Timed out: 0
-- Skipped: 4
+- Skipped: 3
 
 ## Baseline Status
 
-- Build pass rate: n/a%
-- Build preflight: skip (Skipping build because .next/lock exists and process inspection is unavailable (EPERM).)
+- Build pass rate: 100%
 - Lint pass rate: n/a%
-- Lint-domain pass rate: 100%
+- Lint-domain pass rate: 0%
 - Typecheck pass rate: 100%
 - Critical-flow gate pass rate: 100%
 - Security smoke gate pass rate: 100%
-- Unit-domain gate pass rate: 0%
+- Unit-domain gate pass rate: 100%
 - Full unit pass rate: n/a%
 - E2E test pass rate: n/a%
 - Duration budget alerts: 0
@@ -35,18 +34,18 @@ E2E tests were skipped in this run. Use `--include-e2e` for full end-to-end base
 
 | Check | Status | Duration | Exit | Command |
 | --- | --- | ---: | ---: | --- |
-| Build | SKIPPED | 0ms | - | `npm run build` |
+| Build | PASS | 2.8m | 0 | `npm run build` |
 | Lint | SKIPPED | 0ms | - | `npm run lint` |
-| Lint Domain Gate | PASS | 2.2m | 0 | `node scripts/quality/run-lint-domain-checks.mjs --include-test-tree --strict --ci --no-history` |
-| Typecheck | PASS | 34.2s | 0 | `npm run typecheck` |
-| Critical Flow Gate | PASS | 24.6s | 0 | `npm run test:critical-flows:strict -- --ci --no-history` |
-| Security Smoke Gate | PASS | 9.0s | 0 | `npm run test:security-smoke:strict -- --ci --no-history` |
-| Unit Domain Gate | FAIL | 4.3m | 1 | `npm run test:unit:domains:strict -- --ci --no-history` |
+| Lint Domain Gate | FAIL | 2.0m | 1 | `node scripts/quality/run-lint-domain-checks.mjs --include-test-tree --strict --ci --no-history` |
+| Typecheck | PASS | 32.7s | 0 | `npm run typecheck` |
+| Critical Flow Gate | PASS | 22.3s | 0 | `npm run test:critical-flows:strict -- --ci --no-history` |
+| Security Smoke Gate | PASS | 9.1s | 0 | `npm run test:security-smoke:strict -- --ci --no-history` |
+| Unit Domain Gate | PASS | 4.0m | 0 | `npm run test:unit:domains:strict -- --ci --no-history` |
 | Full Unit Tests | SKIPPED | 0ms | - | `npm run test:unit` |
 | E2E Tests | SKIPPED | 0ms | - | `npm run test:e2e` |
-| Architecture Guardrails | FAIL | 3.8s | 1 | `node scripts/architecture/check-guardrails.mjs` |
-| UI Consolidation Guardrail | FAIL | 3.8s | 1 | `node scripts/architecture/check-ui-consolidation.mjs` |
-| Observability Check | PASS | 1.2s | 0 | `npm run observability:check` |
+| Architecture Guardrails | FAIL | 3.4s | 1 | `node scripts/architecture/check-guardrails.mjs` |
+| UI Consolidation Guardrail | PASS | 3.0s | 0 | `node scripts/architecture/check-ui-consolidation.mjs` |
+| Observability Check | PASS | 1.0s | 0 | `npm run observability:check` |
 
 ## Guardrail Snapshot
 
@@ -68,8 +67,8 @@ E2E tests were skipped in this run. Use `--include-e2e` for full end-to-end base
 
 ## Architecture and Performance Snapshot
 
-- Source files: 4880
-- Source lines: 793876
+- Source files: 4885
+- Source lines: 795545
 - API routes: 326
 - Cross-feature edge pairs: 74
 - Shared->features imports: 11

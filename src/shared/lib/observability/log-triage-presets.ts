@@ -16,6 +16,7 @@ export const SYSTEM_LOG_FILTER_DEFAULTS: SystemLogFilterFormValues = {
   service: '',
   method: '',
   statusCode: '',
+  minDurationMs: '',
   requestId: '',
   traceId: '',
   correlationId: '',
@@ -119,6 +120,17 @@ export const SYSTEM_LOG_TRIAGE_PRESETS: LogTriagePreset[] = [
     description: 'Progress update and sync-related server logs from the last 3 days.',
     resolve: (now: Date) => ({
       source: 'kangur.progress.',
+      fromDate: daysAgo(now, 3),
+      toDate: formatDateInput(now),
+    }),
+  },
+  {
+    id: 'kangur-slow-progress-last3d',
+    label: 'Kangur Slow Sync',
+    description: 'Slow Kangur progress PATCH requests over the last 3 days.',
+    resolve: (now: Date) => ({
+      source: 'kangur.progress.PATCH',
+      minDurationMs: '750',
       fromDate: daysAgo(now, 3),
       toDate: formatDateInput(now),
     }),

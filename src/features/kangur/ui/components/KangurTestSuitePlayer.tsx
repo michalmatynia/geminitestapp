@@ -168,75 +168,75 @@ export function KangurTestSuitePlayer({ suite, questions, learnerId, onFinish }:
 
   return (
     <KangurAiTutorProvider learnerId={learnerId ?? null} lessonContext={suite.title}>
-    <KangurTestSuiteRuntimeProvider totalQuestions={totalQuestions}>
-      <div className='space-y-4'>
-        {/* Progress bar */}
-        <div className='flex items-center gap-3'>
-          <KangurProgressBar
-            accent='indigo'
-            className='flex-1'
-            data-testid='kangur-test-suite-progress-bar'
-            size='sm'
-            value={((currentIndex + 1) / totalQuestions) * 100}
-          />
-          <span className='text-xs font-medium text-slate-500'>
-            {currentIndex + 1}/{totalQuestions}
-          </span>
-        </div>
+      <KangurTestSuiteRuntimeProvider totalQuestions={totalQuestions}>
+        <div className='space-y-4'>
+          {/* Progress bar */}
+          <div className='flex items-center gap-3'>
+            <KangurProgressBar
+              accent='indigo'
+              className='flex-1'
+              data-testid='kangur-test-suite-progress-bar'
+              size='sm'
+              value={((currentIndex + 1) / totalQuestions) * 100}
+            />
+            <span className='text-xs font-medium text-slate-500'>
+              {currentIndex + 1}/{totalQuestions}
+            </span>
+          </div>
 
-        {/* Question */}
-        <AnimatePresence mode='wait'>
-          <motion.div
-            key={currentIndex}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.2 }}
-          >
-            {currentQuestion ? (
-              <KangurTestQuestionRenderer
-                question={currentQuestion}
-                selectedLabel={selectedLabel}
-                onSelect={handleSelect}
-                showAnswer={showAnswer}
-                questionIndex={currentIndex}
-              />
-            ) : null}
-          </motion.div>
-        </AnimatePresence>
+          {/* Question */}
+          <AnimatePresence mode='wait'>
+            <motion.div
+              key={currentIndex}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.2 }}
+            >
+              {currentQuestion ? (
+                <KangurTestQuestionRenderer
+                  question={currentQuestion}
+                  selectedLabel={selectedLabel}
+                  onSelect={handleSelect}
+                  showAnswer={showAnswer}
+                  questionIndex={currentIndex}
+                />
+              ) : null}
+            </motion.div>
+          </AnimatePresence>
 
-        {/* Navigation */}
-        <div className='flex items-center justify-between pt-2'>
-          <KangurButton
-            type='button'
-            onClick={handlePrev}
-            disabled={currentIndex === 0}
-            size='sm'
-            variant='surface'
-            data-doc-id='tests_suite_player'
-          >
-            <ChevronLeft className='size-4' />
-            Previous
-          </KangurButton>
-
-          {isAnswered ? (
+          {/* Navigation */}
+          <div className='flex items-center justify-between pt-2'>
             <KangurButton
               type='button'
-              onClick={handleNext}
+              onClick={handlePrev}
+              disabled={currentIndex === 0}
               size='sm'
-              variant='primary'
+              variant='surface'
               data-doc-id='tests_suite_player'
             >
-              {currentIndex < totalQuestions - 1 ? 'Next' : 'Finish'}
-              <ChevronRight className='size-4' />
+              <ChevronLeft className='size-4' />
+            Previous
             </KangurButton>
-          ) : (
-            <div className='text-xs text-slate-400'>Select an answer to continue</div>
-          )}
+
+            {isAnswered ? (
+              <KangurButton
+                type='button'
+                onClick={handleNext}
+                size='sm'
+                variant='primary'
+                data-doc-id='tests_suite_player'
+              >
+                {currentIndex < totalQuestions - 1 ? 'Next' : 'Finish'}
+                <ChevronRight className='size-4' />
+              </KangurButton>
+            ) : (
+              <div className='text-xs text-slate-400'>Select an answer to continue</div>
+            )}
+          </div>
         </div>
-      </div>
-    </KangurTestSuiteRuntimeProvider>
-    <KangurAiTutorWidget />
+      </KangurTestSuiteRuntimeProvider>
+      <KangurAiTutorWidget />
     </KangurAiTutorProvider>
   );
 }

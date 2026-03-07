@@ -211,9 +211,12 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
           <div className='grid gap-4 md:grid-cols-2'>
             {KANGUR_NARRATOR_ENGINE_OPTIONS.map((option) => {
               const checked = engine === option.value;
+              const optionId = `kangur-narrator-engine-${option.value}`;
               return (
                 <label
                   key={option.value}
+                  htmlFor={optionId}
+                  aria-label={option.label}
                   className={cn(
                     'flex cursor-pointer flex-col gap-3 rounded-2xl border px-4 py-4 transition',
                     checked
@@ -223,6 +226,7 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
                 >
                   <div className='flex items-start gap-3'>
                     <input
+                      id={optionId}
                       type='radio'
                       name='kangur-narrator-engine'
                       value={option.value}

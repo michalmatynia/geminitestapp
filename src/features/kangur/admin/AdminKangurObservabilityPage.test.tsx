@@ -61,6 +61,38 @@ vi.mock('@/features/kangur/docs/tooltips', () => ({
 
 import { AdminKangurObservabilityPage } from './AdminKangurObservabilityPage';
 
+const createRouteHealth = (
+  source: string,
+  overrides?: {
+    metrics?: {
+      total: number;
+      levels: { info: number; warn: number; error: number };
+      last24Hours: number;
+      last7Days: number;
+      topSources: Array<{ source: string; count: number }>;
+      topServices: Array<{ service: string; count: number }>;
+      topPaths: Array<{ path: string; count: number }>;
+      generatedAt: string;
+    } | null;
+    latency?: {
+      sampleSize: number;
+      avgDurationMs: number | null;
+      p95DurationMs: number | null;
+      maxDurationMs: number | null;
+      slowRequestCount: number;
+      slowRequestRatePercent: number | null;
+      slowThresholdMs: number;
+    } | null;
+  }
+) => ({
+  metrics: overrides?.metrics ?? null,
+  latency: overrides?.latency ?? null,
+  investigation: {
+    label: 'Inspect route logs',
+    href: `/admin/system/logs?source=${encodeURIComponent(source)}&from=2026-03-06T12%3A00%3A00.000Z&to=2026-03-07T12%3A00%3A00.000Z`,
+  },
+});
+
 const createSummary = (range: '24h' | '7d' | '30d' = '24h') => ({
   generatedAt: '2026-03-07T12:00:00.000Z',
   range,
@@ -103,7 +135,7 @@ const createSummary = (range: '24h' | '7d' | '30d' = '24h') => ({
       summary: 'Watch learner sign-in failures.',
       investigation: {
         label: 'Review sign-in analytics',
-        href: '/admin/kangur/observability?range=24h#recent-analytics-events',
+        href: `/admin/kangur/observability?range=${range}#recent-analytics-events`,
       },
     },
     {
@@ -117,7 +149,7 @@ const createSummary = (range: '24h' | '7d' | '30d' = '24h') => ({
       summary: 'Progress sync failures detected.',
       investigation: {
         label: 'Review sync analytics',
-        href: '/admin/kangur/observability?range=24h#recent-analytics-events',
+        href: `/admin/kangur/observability?range=${range}#recent-analytics-events`,
       },
     },
     {
@@ -145,7 +177,7 @@ const createSummary = (range: '24h' | '7d' | '30d' = '24h') => ({
       summary: 'Latest baseline is degraded.',
       investigation: {
         label: 'Open baseline details',
-        href: '/admin/kangur/observability?range=24h#performance-baseline',
+        href: `/admin/kangur/observability?range=${range}#performance-baseline`,
       },
     },
   ],
@@ -174,22 +206,33 @@ const createSummary = (range: '24h' | '7d' | '30d' = '24h') => ({
     ],
   },
   routes: {
-    authMeGet: null,
-    learnerSignInPost: null,
-    progressPatch: null,
-    scoresPost: null,
-    assignmentsPost: null,
-    learnersPost: null,
-    ttsPost: {
-      total: 5,
-      levels: { info: 4, warn: 0, error: 1 },
-      last24Hours: 5,
-      last7Days: 5,
-      topSources: [{ source: 'kangur.tts', count: 5 }],
-      topServices: [{ service: 'app', count: 5 }],
-      topPaths: [{ path: '/api/kangur/tts', count: 5 }],
-      generatedAt: '2026-03-07T12:00:00.000Z',
-    },
+    authMeGet: createRouteHealth('kangur.auth.me.GET'),
+    learnerSignInPost: createRouteHealth('kangur.auth.learnerSignIn.POST'),
+    progressPatch: createRouteHealth('kangur.progress.PATCH'),
+    scoresPost: createRouteHealth('kangur.scores.POST'),
+    assignmentsPost: createRouteHealth('kangur.assignments.POST'),
+    learnersPost: createRouteHealth('kangur.learners.POST'),
+    ttsPost: createRouteHealth('kangur.tts.POST', {
+      metrics: {
+        total: 5,
+        levels: { info: 4, warn: 0, error: 1 },
+        last24Hours: 5,
+        last7Days: 5,
+        topSources: [{ source: 'kangur.tts', count: 5 }],
+        topServices: [{ service: 'app', count: 5 }],
+        topPaths: [{ path: '/api/kangur/tts', count: 5 }],
+        generatedAt: '2026-03-07T12:00:00.000Z',
+      },
+      latency: {
+        sampleSize: 5,
+        avgDurationMs: 540,
+        p95DurationMs: 820,
+        maxDurationMs: 910,
+        slowRequestCount: 2,
+        slowRequestRatePercent: 40,
+        slowThresholdMs: 750,
+      },
+    }),
   },
   analytics: {
     totals: { events: 10, pageviews: 4 },
@@ -262,8 +305,27 @@ describe('AdminKangurObservabilityPage', () => {
     );
     expect(screen.getByRole('link', { name: /open baseline details/i })).toHaveAttribute(
       'href',
-      '/admin/kangur/observability?range=24h#performance-baseline'
+      '/admin/kangur/observability?range=30d#performance-baseline'
     );
+    expect(screen.getByText('820 ms')).toBeInTheDocument();
+    expect(
+      screen
+        .getAllByRole('link', { name: /^logs$/i })
+        .some(
+          (link) =>
+            link.getAttribute('href') ===
+            '/admin/system/logs?source=kangur.auth.me.GET&from=2026-03-06T12%3A00%3A00.000Z&to=2026-03-07T12%3A00%3A00.000Z'
+        )
+    ).toBe(true);
+    expect(
+      screen
+        .getAllByRole('link', { name: /^logs$/i })
+        .some(
+          (link) =>
+            link.getAttribute('href') ===
+            '/admin/system/logs?source=kangur.tts.POST&from=2026-03-06T12%3A00%3A00.000Z&to=2026-03-07T12%3A00%3A00.000Z'
+        )
+    ).toBe(true);
   });
 
   it('switches the summary range from the segmented control', async () => {

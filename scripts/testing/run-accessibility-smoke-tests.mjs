@@ -72,6 +72,12 @@ const suites = [
     tests: ['src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx'],
   },
   {
+    id: 'case-resolver-browser-a11y',
+    name: 'Case Resolver Accessibility',
+    runner: 'playwright',
+    tests: ['e2e/features/accessibility/case-resolver-accessibility.spec.ts'],
+  },
+  {
     id: 'kangur-profile-a11y',
     name: 'Kangur Profile Accessibility',
     runner: 'vitest',

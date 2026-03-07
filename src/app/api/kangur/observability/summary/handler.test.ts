@@ -28,6 +28,15 @@ const createRequestContext = (): ApiHandlerContext =>
     getElapsedMs: () => 1,
   }) as ApiHandlerContext;
 
+const createRouteHealth = (source: string) => ({
+  metrics: null,
+  latency: null,
+  investigation: {
+    label: 'Inspect route logs',
+    href: `/admin/system/logs?source=${encodeURIComponent(source)}`,
+  },
+});
+
 describe('kangur observability summary handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -80,13 +89,13 @@ describe('kangur observability summary handler', () => {
         recent: [],
       },
       routes: {
-        authMeGet: null,
-        learnerSignInPost: null,
-        progressPatch: null,
-        scoresPost: null,
-        assignmentsPost: null,
-        learnersPost: null,
-        ttsPost: null,
+        authMeGet: createRouteHealth('kangur.auth.me.GET'),
+        learnerSignInPost: createRouteHealth('kangur.auth.learnerSignIn.POST'),
+        progressPatch: createRouteHealth('kangur.progress.PATCH'),
+        scoresPost: createRouteHealth('kangur.scores.POST'),
+        assignmentsPost: createRouteHealth('kangur.assignments.POST'),
+        learnersPost: createRouteHealth('kangur.learners.POST'),
+        ttsPost: createRouteHealth('kangur.tts.POST'),
       },
       analytics: {
         totals: { events: 10, pageviews: 4 },

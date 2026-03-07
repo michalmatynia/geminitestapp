@@ -79,10 +79,10 @@ describe('AdminKangurSettingsPage', () => {
     render(<AdminKangurSettingsPage />);
 
     const clientRadio = screen.getByRole('radio', {
-      name: /client narrator use the browser speech engine on each learner device\./i,
+      name: /^Client narrator$/i,
     });
     const serverRadio = screen.getByRole('radio', {
-      name: /server narrator use the cached neural narration generated on the server\./i,
+      name: /^Server narrator$/i,
     });
 
     expect(clientRadio).toBeChecked();

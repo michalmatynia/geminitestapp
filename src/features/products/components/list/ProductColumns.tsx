@@ -462,7 +462,7 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
 
   {
     id: 'integrations',
-    header: '',
+    header: () => <span className='sr-only'>Integrations</span>,
     cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => (
       <IntegrationsCell row={row} />
     ),
@@ -470,6 +470,7 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
 
   {
     id: 'actions',
+    header: () => <span className='sr-only'>Actions</span>,
     cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => (
       <ActionsCell row={row} />
     ),

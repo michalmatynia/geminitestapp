@@ -114,6 +114,8 @@ describe('CaseResolverTreeHeader', () => {
   it('shows nested folders/files switch in active case and toggles child scope visibility', () => {
     render(<CaseResolverTreeHeader searchQuery='' onSearchChange={vi.fn()} />);
 
+    expect(screen.getByRole('heading', { name: 'Case Resolver' })).toBeInTheDocument();
+    expect(screen.getByText('Case A')).toBeInTheDocument();
     expect(screen.getByText('Show nested folders and files')).toBeInTheDocument();
     expect(screen.getByText('2 child cases')).toBeInTheDocument();
 

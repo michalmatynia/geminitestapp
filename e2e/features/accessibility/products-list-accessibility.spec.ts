@@ -7,7 +7,6 @@ test('products list exposes search and actions accessibly and passes the accessi
   page,
 }) => {
   await ensureAdminSession(page, '/admin/products');
-  await page.goto('/admin/products');
 
   await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible();
 

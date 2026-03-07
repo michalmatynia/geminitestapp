@@ -9,7 +9,6 @@ test('notes workspace exposes list controls accessibly and passes the accessibil
 }) => {
   await mockNotesWorkspaceApis(page);
   await ensureAdminSession(page, '/admin/notes');
-  await page.goto('/admin/notes');
 
   await expect(page.getByRole('heading', { name: 'Notes' })).toBeVisible();
 

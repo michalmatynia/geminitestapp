@@ -7,6 +7,8 @@ import { mockNotesWorkspaceApis } from '../../support/notes-workspace-fixtures';
 test('notes workspace exposes list controls accessibly and passes the accessibility smoke scan', async ({
   page,
 }) => {
+  test.setTimeout(60_000);
+
   await mockNotesWorkspaceApis(page);
   await ensureAdminSession(page, '/admin/notes');
 

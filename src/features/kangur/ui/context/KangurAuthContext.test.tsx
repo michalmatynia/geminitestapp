@@ -137,7 +137,8 @@ describe('KangurAuthContext', () => {
 
     expect(prepareLoginHrefMock).toHaveBeenCalledWith(window.location.href);
     expect(routerPushMock).toHaveBeenCalledWith(
-      `/kangur/login?callbackUrl=${encodeURIComponent(window.location.href)}`
+      `/kangur/login?callbackUrl=${encodeURIComponent(window.location.href)}`,
+      { scroll: false }
     );
     expect(redirectToLoginMock).not.toHaveBeenCalled();
   });

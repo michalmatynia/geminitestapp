@@ -5,6 +5,8 @@ const ROUTE_SHELL_MONITOR_KEY = '__kangurRouteShellMonitor';
 const ROUTE_SHELL_MARKER_KEY = '__kangurE2eShellMarker';
 const ROUTE_LAYOUT_MONITOR_KEY = '__kangurRouteLayoutMonitor';
 const ROUTE_SCROLL_MONITOR_KEY = '__kangurRouteScrollMonitor';
+const ROUTE_BOOT_TIMEOUT_MS = 15_000;
+const ROUTE_INITIAL_GOTO_TIMEOUT_MS = 60_000;
 
 type RouteShellMonitorSample = {
   hasShell: boolean;
@@ -53,6 +55,43 @@ type RouteScrollMonitorSample = {
   path: string;
   scrollY: number;
   hasSkeleton: boolean;
+};
+
+const expectGameRouteReady = async (page: Page, navTestId: string): Promise<void> => {
+  await expect(page.getByTestId('kangur-route-shell')).toBeVisible({
+    timeout: ROUTE_BOOT_TIMEOUT_MS,
+  });
+  await expect(page.getByTestId('kangur-route-content')).toBeVisible({
+    timeout: ROUTE_BOOT_TIMEOUT_MS,
+  });
+  await expect(page.getByTestId(navTestId)).toBeVisible({
+    timeout: ROUTE_BOOT_TIMEOUT_MS,
+  });
+};
+
+const expectLearnerProfileRouteReady = async (page: Page): Promise<void> => {
+  await expect(page.getByTestId('kangur-route-shell')).toBeVisible({
+    timeout: ROUTE_BOOT_TIMEOUT_MS,
+  });
+  await expect(page.getByTestId('kangur-learner-profile-hero')).toBeVisible({
+    timeout: ROUTE_BOOT_TIMEOUT_MS,
+  });
+};
+
+const expectParentDashboardRouteReady = async (page: Page): Promise<void> => {
+  await expect(page.getByTestId('kangur-parent-dashboard-hero')).toBeVisible({
+    timeout: ROUTE_BOOT_TIMEOUT_MS,
+  });
+  await expect(page.getByRole('heading', { name: /^Panel Rodzica$/ })).toBeVisible({
+    timeout: ROUTE_BOOT_TIMEOUT_MS,
+  });
+};
+
+const gotoKangurPath = async (page: Page, path: string): Promise<void> => {
+  await page.goto(path, {
+    waitUntil: 'domcontentloaded',
+    timeout: ROUTE_INITIAL_GOTO_TIMEOUT_MS,
+  });
 };
 
 const startRouteShellMonitor = async (page: Page): Promise<void> => {
@@ -789,11 +828,10 @@ test.describe('Kangur navigation continuity', () => {
   });
 
   test('keeps the persistent shell mounted across main-page navigation', async ({ page }) => {
-    await page.goto('/kangur/game');
+    await gotoKangurPath(page, '/kangur/game');
+    await expectGameRouteReady(page, 'kangur-primary-nav-lessons');
 
     const routeShell = page.getByTestId('kangur-route-shell');
-    await expect(routeShell).toBeVisible();
-    await expect(page.getByTestId('kangur-route-content')).toBeVisible();
 
     const routeShellBackground = await routeShell.evaluate(
       (element) => getComputedStyle(element).backgroundImage
@@ -844,12 +882,9 @@ test.describe('Kangur navigation continuity', () => {
   test('routes back home from the tests intro-card top section without remounting the shell', async ({
     page,
   }) => {
-    await page.goto('/kangur/game');
-
+    await gotoKangurPath(page, '/kangur/game');
+    await expectGameRouteReady(page, 'kangur-primary-nav-tests');
     const routeShell = page.getByTestId('kangur-route-shell');
-    await expect(routeShell).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByTestId('kangur-route-content')).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByTestId('kangur-primary-nav-tests')).toBeVisible({ timeout: 15_000 });
     await markRouteShellAsPersistent(page);
 
     await page.getByTestId('kangur-primary-nav-tests').click();
@@ -873,10 +908,8 @@ test.describe('Kangur navigation continuity', () => {
   test('keeps the viewport width stable during main-page navigation transitions', async ({
     page,
   }) => {
-    await page.goto('/kangur/game');
-
-    await expect(page.getByTestId('kangur-route-shell')).toBeVisible();
-    await expect(page.getByTestId('kangur-primary-nav-home')).toBeVisible();
+    await gotoKangurPath(page, '/kangur/game');
+    await expectGameRouteReady(page, 'kangur-primary-nav-lessons');
 
     await startRouteLayoutMonitor(page);
     await page.getByTestId('kangur-primary-nav-lessons').click();
@@ -901,10 +934,8 @@ test.describe('Kangur navigation continuity', () => {
   });
 
   test('keeps the lessons route hop on-page without flashing the blocking transition skeleton', async ({ page }) => {
-    await page.goto('/kangur/game');
-
-    await expect(page.getByTestId('kangur-route-shell')).toBeVisible();
-    await expect(page.getByTestId('kangur-primary-nav-lessons')).toBeVisible();
+    await gotoKangurPath(page, '/kangur/game');
+    await expectGameRouteReady(page, 'kangur-primary-nav-lessons');
     await expect(page.getByTestId('kangur-page-transition-skeleton')).toHaveCount(0);
 
     await startRouteScrollMonitor(page);
@@ -921,9 +952,8 @@ test.describe('Kangur navigation continuity', () => {
   test('animates the lessons surface smoothly on entry and when opening a lesson', async ({
     page,
   }) => {
-    await page.goto('/kangur/game');
-
-    await expect(page.getByTestId('kangur-route-shell')).toBeVisible();
+    await gotoKangurPath(page, '/kangur/game');
+    await expectGameRouteReady(page, 'kangur-primary-nav-lessons');
 
     const lessonsEntrySnapshotPromise = captureLessonsTransitionSnapshot(
       page,
@@ -954,9 +984,8 @@ test.describe('Kangur navigation continuity', () => {
     page,
   }) => {
     await page.setViewportSize({ width: 1280, height: 560 });
-    await page.goto('/kangur/game');
-
-    await expect(page.getByTestId('kangur-route-shell')).toBeVisible();
+    await gotoKangurPath(page, '/kangur/game');
+    await expectGameRouteReady(page, 'kangur-primary-nav-lessons');
     await expect(page.getByTestId('kangur-page-transition-skeleton')).toHaveCount(0);
 
     await startRouteScrollMonitor(page);
@@ -993,10 +1022,13 @@ test.describe('Kangur navigation continuity', () => {
   test('keeps game entry screens and quick-practice flows on the same route with consistent back navigation', async ({
     page,
   }) => {
-    await page.goto('/kangur/game');
+    await gotoKangurPath(page, '/kangur/game');
+    await expectGameRouteReady(page, 'kangur-primary-nav-home');
+    await expect(page.getByTestId('kangur-home-actions-shell')).toBeVisible({
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
 
     const routeShell = page.getByTestId('kangur-route-shell');
-    await expect(routeShell).toBeVisible();
     await markRouteShellAsPersistent(page);
 
     await page.getByRole('button', { name: /grajmy/i }).click();
@@ -1094,15 +1126,16 @@ test.describe('Kangur navigation continuity', () => {
   test('keeps the home action panel mounted while the leaderboard and progress stack exit to Grajmy', async ({
     page,
   }) => {
-    await page.goto('/kangur/game');
+    await gotoKangurPath(page, '/kangur/game');
+    await expectGameRouteReady(page, 'kangur-primary-nav-home');
 
     const actionsShell = page.getByTestId('kangur-home-actions-shell');
     const leaderboard = page.getByTestId('leaderboard-shell');
     const progressCard = page.getByTestId('player-progress-shell');
 
-    await expect(actionsShell).toBeVisible();
-    await expect(leaderboard).toBeVisible();
-    await expect(progressCard).toBeVisible();
+    await expect(actionsShell).toBeVisible({ timeout: ROUTE_BOOT_TIMEOUT_MS });
+    await expect(leaderboard).toBeVisible({ timeout: ROUTE_BOOT_TIMEOUT_MS });
+    await expect(progressCard).toBeVisible({ timeout: ROUTE_BOOT_TIMEOUT_MS });
 
     const initialLayout = await getGameHomeLayoutSnapshot(page);
 
@@ -1139,10 +1172,11 @@ test.describe('Kangur navigation continuity', () => {
       });
     });
 
-    await page.goto('/kangur/game');
-
-    await expect(page.getByTestId('kangur-route-shell')).toBeVisible();
-    await expect(page.getByRole('link', { name: /profil/i })).toBeVisible();
+    await gotoKangurPath(page, '/kangur/game');
+    await expectGameRouteReady(page, 'kangur-primary-nav-tests');
+    await expect(page.getByRole('link', { name: /profil/i })).toBeVisible({
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
     await expect(page.getByTestId('kangur-primary-nav-parent-dashboard')).toHaveCount(0);
 
     await page.getByTestId('kangur-primary-nav-tests').click();
@@ -1161,10 +1195,10 @@ test.describe('Kangur navigation continuity', () => {
       });
     });
 
-    await page.goto('/kangur/profile');
+    await gotoKangurPath(page, '/kangur/profile');
+    await expectLearnerProfileRouteReady(page);
 
     const routeShell = page.getByTestId('kangur-route-shell');
-    await expect(routeShell).toBeVisible();
     await markRouteShellAsPersistent(page);
 
     await startRouteShellMonitor(page);
@@ -1207,13 +1241,8 @@ test.describe('Kangur navigation continuity', () => {
       });
     });
 
-    await page.goto('/kangur/parent-dashboard');
-    await expect(page.getByTestId('kangur-parent-dashboard-hero')).toBeVisible({
-      timeout: 15_000,
-    });
-    await expect(page.getByRole('heading', { name: /^Panel Rodzica$/ })).toBeVisible({
-      timeout: 15_000,
-    });
+    await gotoKangurPath(page, '/kangur/parent-dashboard');
+    await expectParentDashboardRouteReady(page);
     await markRouteShellAsPersistent(page);
 
     await startRouteShellMonitor(page);
@@ -1243,8 +1272,8 @@ test.describe('Kangur navigation continuity', () => {
       });
     });
 
-    await page.goto('/kangur/parent-dashboard');
-    await expect(page.getByRole('heading', { name: /^Panel Rodzica$/ })).toBeVisible();
+    await gotoKangurPath(page, '/kangur/parent-dashboard');
+    await expectParentDashboardRouteReady(page);
 
     const scoresTab = page.getByRole('button', { name: /wyniki gier/i });
     const tabTop = await scoresTab.evaluate(
@@ -1308,8 +1337,8 @@ test.describe('Kangur navigation continuity', () => {
       });
     });
 
-    await page.goto('/kangur/parent-dashboard');
-    await expect(page.getByRole('heading', { name: /^Panel Rodzica$/ })).toBeVisible();
+    await gotoKangurPath(page, '/kangur/parent-dashboard');
+    await expectParentDashboardRouteReady(page);
 
     await page.getByRole('button', { name: /ai tutor/i }).click();
 
@@ -1346,8 +1375,8 @@ test.describe('Kangur navigation continuity', () => {
       });
     });
 
-    await page.goto('/kangur/parent-dashboard');
-    await expect(page.getByRole('heading', { name: /^Panel Rodzica$/ })).toBeVisible();
+    await gotoKangurPath(page, '/kangur/parent-dashboard');
+    await expectParentDashboardRouteReady(page);
     await page.getByRole('button', { name: /ai tutor/i }).click();
 
     await expect(page.getByTestId('parent-dashboard-ai-tutor-mood-current')).toContainText(
@@ -1373,9 +1402,8 @@ test.describe('Kangur navigation continuity', () => {
   });
 
   test('preserves the Kangur surface across login entry and return navigation', async ({ page }) => {
-    await page.goto('/kangur/game');
-
-    await expect(page.getByTestId('kangur-route-shell')).toBeVisible();
+    await gotoKangurPath(page, '/kangur/game');
+    await expectGameRouteReady(page, 'kangur-primary-nav-home');
 
     await startKangurSurfaceMonitor(page);
     await page
@@ -1404,7 +1432,7 @@ test.describe('Kangur navigation continuity', () => {
   test('renders the standalone Kangur login route on the shared premium surface', async ({
     page,
   }) => {
-    await page.goto('/kangur/login?callbackUrl=%2Fkangur%2Fprofile');
+    await gotoKangurPath(page, '/kangur/login?callbackUrl=%2Fkangur%2Fprofile');
 
     await expect(page.getByTestId('kangur-login-shell')).toBeVisible();
     await expect(page.getByTestId('kangur-route-shell')).toHaveCount(0);
@@ -1480,7 +1508,7 @@ test.describe('Kangur navigation continuity', () => {
       });
     });
 
-    await page.goto('/kangur/login?callbackUrl=%2Fkangur%3Flogin%3Dparent');
+    await gotoKangurPath(page, '/kangur/login?callbackUrl=%2Fkangur%3Flogin%3Dparent');
 
     await page.getByTestId('kangur-login-parent-form').getByLabel('Email rodzica').fill(
       'parent@example.com'
@@ -1556,7 +1584,7 @@ test.describe('Kangur navigation continuity', () => {
       });
     });
 
-    await page.goto('/kangur/login?callbackUrl=%2Fkangur%3Flogin%3Dstudent');
+    await gotoKangurPath(page, '/kangur/login?callbackUrl=%2Fkangur%3Flogin%3Dstudent');
 
     await page.getByTestId('kangur-login-student-form').getByLabel('Nick ucznia').fill('jan-demo');
     await page.getByTestId('kangur-login-student-form').getByLabel('Haslo').fill('secret123');

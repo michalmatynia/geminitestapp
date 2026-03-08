@@ -111,7 +111,9 @@ describe('KangurLoginPage', () => {
       redirect: false,
     });
     await waitFor(() => {
-      expect(routerPushMock).toHaveBeenCalledWith('/kangur/tests?focus=division');
+      expect(routerPushMock).toHaveBeenCalledWith('/kangur/tests?focus=division', {
+        scroll: false,
+      });
     });
   });
 
@@ -158,7 +160,9 @@ describe('KangurLoginPage', () => {
       })
     );
     await waitFor(() => {
-      expect(routerPushMock).toHaveBeenCalledWith('/kangur/tests?focus=division');
+      expect(routerPushMock).toHaveBeenCalledWith('/kangur/tests?focus=division', {
+        scroll: false,
+      });
     });
   });
 });

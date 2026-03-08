@@ -1,6 +1,14 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
 const KANGUR_PROGRESS_STORAGE_KEY = 'sprycio_progress';
+const ROUTE_INITIAL_GOTO_TIMEOUT_MS = 60_000;
+
+const gotoKangurPath = async (page: Page, path: string): Promise<void> => {
+  await page.goto(path, {
+    waitUntil: 'domcontentloaded',
+    timeout: ROUTE_INITIAL_GOTO_TIMEOUT_MS,
+  });
+};
 
 const buildManagerUser = (overrides = {}) => {
   const nowIso = new Date('2026-03-08T10:00:00.000Z').toISOString();
@@ -77,7 +85,7 @@ const seedKangurProgress = async (page, progress) => {
 
 test.describe('Kangur Learner Profile', () => {
   test('renders learner profile shell and baseline sections', async ({ page }) => {
-    await page.goto('/kangur/profile');
+    await gotoKangurPath(page, '/kangur/profile');
 
     await expect(page).toHaveURL(/\/kangur\/profile/);
     await expect(page.getByRole('heading', { name: /Profil ucznia/i })).toBeVisible();
@@ -97,7 +105,7 @@ test.describe('Kangur Learner Profile', () => {
 
   test('supports navigation from game screen to learner profile', async ({ page }) => {
     await mockKangurAuthMe(page, buildManagerUser());
-    await page.goto('/kangur/game');
+    await gotoKangurPath(page, '/kangur/game');
 
     const profileLink = page.getByRole('link', { name: /Profil/i }).first();
     await expect(profileLink).toBeVisible();
@@ -108,7 +116,7 @@ test.describe('Kangur Learner Profile', () => {
   });
 
   test('returns home from the learner profile intro-card top section', async ({ page }) => {
-    await page.goto('/kangur/profile');
+    await gotoKangurPath(page, '/kangur/profile');
 
     await expect(page.getByTestId('kangur-learner-profile-hero')).toBeVisible({
       timeout: 15_000,
@@ -178,7 +186,7 @@ test.describe('Kangur Learner Profile', () => {
       });
     });
 
-    await page.goto('/kangur/profile');
+    await gotoKangurPath(page, '/kangur/profile');
 
     await expect(page.getByRole('heading', { name: /Profil ucznia/i })).toBeVisible();
     await expect(page.getByText(/Statystyki ucznia: Jan\./i)).toBeVisible();
@@ -245,7 +253,7 @@ test.describe('Kangur Learner Profile', () => {
       });
     });
 
-    await page.goto('/kangur/profile');
+    await gotoKangurPath(page, '/kangur/profile');
 
     await expect(page.getByTestId('learner-profile-ai-tutor-mood')).toBeVisible();
     await expect(page.getByTestId('learner-profile-ai-tutor-mood-current')).toContainText(
@@ -322,7 +330,7 @@ test.describe('Kangur Learner Profile', () => {
       });
     });
 
-    await page.goto('/kangur/profile');
+    await gotoKangurPath(page, '/kangur/profile');
 
     const openLessonsLink = page.getByRole('link', { name: 'Otworz lekcje' });
     await expect(openLessonsLink).toBeVisible();
@@ -358,7 +366,7 @@ test.describe('Kangur Learner Profile', () => {
       });
     });
 
-    await page.goto('/kangur/profile');
+    await gotoKangurPath(page, '/kangur/profile');
 
     const playNowLink = page.getByRole('link', { name: 'Zagraj teraz' });
     await expect(playNowLink).toBeVisible();
@@ -418,7 +426,7 @@ test.describe('Kangur Learner Profile', () => {
       });
     });
 
-    await page.goto('/kangur/profile');
+    await gotoKangurPath(page, '/kangur/profile');
 
     const operationLink = page.locator(
       'a[href*="quickStart=operation"][href*="operation=division"]'

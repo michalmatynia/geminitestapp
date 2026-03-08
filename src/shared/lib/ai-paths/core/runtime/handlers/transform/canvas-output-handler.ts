@@ -4,7 +4,7 @@ import type {
   NodeHandlerContext,
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths-runtime';
-import { coerceInput, getValueAtMappingPath } from '../../../utils';
+import { coerceInput, getValueAtMappingPath } from '@/shared/lib/ai-paths/core/utils';
 
 // ---------------------------------------------------------------------------
 // Helpers (mirrors bounds-normalizer-handler utilities)

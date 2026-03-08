@@ -244,7 +244,7 @@ const projectCaseOnlyRelationGraph = (
     return true;
   });
 
-  const caseEdges = toStrictEdges(graph.edges as unknown as Edge[]).filter((edge): boolean => {
+  const caseEdges = toStrictEdges(graph.edges as Edge[]).filter((edge): boolean => {
     const endpoints = readEdgeEndpoints(edge);
     if (!endpoints) return false;
     return caseNodeIds.has(endpoints.source) && caseNodeIds.has(endpoints.target);
@@ -274,8 +274,8 @@ const projectCaseOnlyRelationGraph = (
   );
 
   return {
-    nodes: caseNodes as unknown as CaseResolverRelationGraph['nodes'],
-    edges: caseEdges as unknown as CaseResolverRelationGraph['edges'],
+    nodes: caseNodes as CaseResolverRelationGraph['nodes'],
+    edges: caseEdges as CaseResolverRelationGraph['edges'],
     nodeMeta: caseNodeMeta,
     edgeMeta: caseEdgeMeta,
   };
@@ -305,15 +305,15 @@ function CaseResolverRelationsWorkspaceInner(): React.JSX.Element {
   );
   const incomingStrictEdges = React.useMemo(
     (): CaseResolverRelationGraph['edges'] =>
-      toStrictEdges(relationGraph.edges as unknown as Edge[]),
+      toStrictEdges(relationGraph.edges as Edge[]),
     [relationGraph.edges]
   );
   const incomingEdges = React.useMemo(
-    (): Edge[] => incomingStrictEdges as unknown as Edge[],
+    (): Edge[] => incomingStrictEdges as Edge[],
     [incomingStrictEdges]
   );
   const strictEdges = React.useMemo(
-    (): CaseResolverRelationGraph['edges'] => toStrictEdges(edges as unknown as Edge[]),
+    (): CaseResolverRelationGraph['edges'] => toStrictEdges(edges as Edge[]),
     [edges]
   );
 
@@ -406,7 +406,7 @@ function CaseResolverRelationsWorkspaceInner(): React.JSX.Element {
     if (!selectedNodeId) return;
     const meta = relationNodeMeta[selectedNodeId];
     if (!meta) return;
-    const metaRecord = meta as unknown as Record<string, unknown>;
+    const metaRecord = meta as Record<string, unknown>;
     const entityType = typeof metaRecord['entityType'] === 'string' ? metaRecord['entityType'] : '';
     const sourceFileId =
       typeof metaRecord['sourceFileId'] === 'string' ? metaRecord['sourceFileId'].trim() : '';
@@ -499,7 +499,7 @@ export function CaseResolverRelationsWorkspace(): React.JSX.Element {
       <AiPathsProvider
         initialSelectedNodeId={initialSelectedNodeId}
         initialNodes={toRuntimeNodes(relationGraph.nodes)}
-        initialEdges={toStrictEdges(relationGraph.edges as unknown as Edge[]) as unknown as Edge[]}
+        initialEdges={toStrictEdges(relationGraph.edges as Edge[]) as Edge[]}
         initialLoading={false}
         initialRuntimeState={EMPTY_RUNTIME_STATE}
       >

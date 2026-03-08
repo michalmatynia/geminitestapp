@@ -5,9 +5,9 @@ import React, { useCallback, useMemo } from 'react';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { BlockPicker } from '../BlockPicker';
 import { SectionPicker as BaseSectionPicker } from '../SectionPicker';
-import { useTreeActions } from '../../../hooks/useTreeActionsContext';
+import { useTreeActions } from '@/features/cms/hooks/useTreeActionsContext';
 
-import type { PageZone } from '../../../types/page-builder';
+import type { PageZone } from '@/features/cms/types/page-builder';
 
 type SectionVariantProps = {
   disabled?: boolean;

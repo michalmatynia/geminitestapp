@@ -3,9 +3,12 @@ import type { WithId } from 'mongodb';
 
 import { toProductResponse, type ProductDocument } from '../mongo-product-repository-mappers';
 
+const asProductDocument = (doc: Record<string, unknown>): WithId<ProductDocument> =>
+  doc as WithId<ProductDocument>;
+
 describe('mongo product repository mappers', () => {
   it('maps canonical scalar localized fields', () => {
-    const result = toProductResponse({
+    const result = toProductResponse(asProductDocument({
       _id: 'product-1',
       id: 'product-1',
       createdAt: new Date('2026-01-01T00:00:00.000Z'),
@@ -19,7 +22,7 @@ describe('mongo product repository mappers', () => {
       categoryId: 'category-1',
       catalogId: 'catalog-1',
       published: false,
-    } as unknown as WithId<ProductDocument>);
+    }));
 
     expect(result.name['en']).toBe('new name');
     expect(result.name['pl']).toBeNull();
@@ -31,7 +34,7 @@ describe('mongo product repository mappers', () => {
   });
 
   it('normalizes duplicate parameter entries without preserving stale earlier values', () => {
-    const result = toProductResponse({
+    const result = toProductResponse(asProductDocument({
       _id: 'product-params-1',
       id: 'product-params-1',
       createdAt: new Date('2026-01-01T00:00:00.000Z'),
@@ -50,7 +53,7 @@ describe('mongo product repository mappers', () => {
           valuesByLanguage: { pl: 'Uzywany' },
         },
       ],
-    } as unknown as WithId<ProductDocument>);
+    }));
 
     expect(result.parameters).toEqual([
       {
@@ -62,7 +65,7 @@ describe('mongo product repository mappers', () => {
   });
 
   it('normalizes duplicate parameter entries and allows explicit localized clears', () => {
-    const result = toProductResponse({
+    const result = toProductResponse(asProductDocument({
       _id: 'product-params-2',
       id: 'product-params-2',
       createdAt: new Date('2026-01-01T00:00:00.000Z'),
@@ -80,7 +83,7 @@ describe('mongo product repository mappers', () => {
           value: '',
         },
       ],
-    } as unknown as WithId<ProductDocument>);
+    }));
 
     expect(result.parameters).toEqual([
       {
@@ -92,7 +95,7 @@ describe('mongo product repository mappers', () => {
 
   it('rejects legacy nested localized objects', () => {
     expect(() =>
-      toProductResponse({
+      toProductResponse(asProductDocument({
         _id: 'product-2',
         id: 'product-2',
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
@@ -103,13 +106,13 @@ describe('mongo product repository mappers', () => {
         description_de: undefined,
         catalogId: 'catalog-1',
         published: false,
-      } as unknown as WithId<ProductDocument>)
+      }))
     ).toThrowError(/Product description payload includes unsupported object shape\./);
   });
 
   it('rejects legacy category relation fallback when categoryId is missing', () => {
     expect(() =>
-      toProductResponse({
+      toProductResponse(asProductDocument({
         _id: 'product-3',
         id: 'product-3',
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
@@ -117,13 +120,13 @@ describe('mongo product repository mappers', () => {
         categories: [{ categoryId: 'category-legacy' }],
         catalogId: 'catalog-1',
         published: false,
-      } as unknown as WithId<ProductDocument>)
+      }))
     ).toThrowError(/Product categories payload includes unsupported fields\./);
   });
 
   it('rejects legacy category relation field even when categoryId is present', () => {
     expect(() =>
-      toProductResponse({
+      toProductResponse(asProductDocument({
         _id: 'product-3b',
         id: 'product-3b',
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
@@ -132,13 +135,13 @@ describe('mongo product repository mappers', () => {
         categories: [{ categoryId: 'category-legacy' }],
         catalogId: 'catalog-1',
         published: false,
-      } as unknown as WithId<ProductDocument>)
+      }))
     ).toThrowError(/Product categories payload includes unsupported fields\./);
   });
 
   it('rejects non-string categoryId payloads', () => {
     expect(() =>
-      toProductResponse({
+      toProductResponse(asProductDocument({
         _id: 'product-3c',
         id: 'product-3c',
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
@@ -146,13 +149,13 @@ describe('mongo product repository mappers', () => {
         categoryId: 123,
         catalogId: 'catalog-1',
         published: false,
-      } as unknown as WithId<ProductDocument>)
+      }))
     ).toThrowError(/Invalid product categoryId payload/);
   });
 
   it('rejects non-string localized scalar payloads', () => {
     expect(() =>
-      toProductResponse({
+      toProductResponse(asProductDocument({
         _id: 'product-3d',
         id: 'product-3d',
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
@@ -161,13 +164,13 @@ describe('mongo product repository mappers', () => {
         categoryId: 'category-1',
         catalogId: 'catalog-1',
         published: false,
-      } as unknown as WithId<ProductDocument>)
+      }))
     ).toThrowError(/Invalid product localized scalar field payload/);
   });
 
   it('rejects legacy producer relation keys instead of reconstructing producer relations', () => {
     expect(() =>
-      toProductResponse({
+      toProductResponse(asProductDocument({
         _id: 'product-4',
         id: 'product-4',
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
@@ -181,13 +184,13 @@ describe('mongo product repository mappers', () => {
             assigned_at: '2026-01-01T00:00:00.000Z',
           },
         ],
-      } as unknown as WithId<ProductDocument>)
+      }))
     ).toThrowError(/Product producer relation payload includes unsupported fields\./);
   });
 
   it('rejects legacy tag relation keys instead of reconstructing tag relations', () => {
     expect(() =>
-      toProductResponse({
+      toProductResponse(asProductDocument({
         _id: 'product-5',
         id: 'product-5',
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
@@ -201,13 +204,13 @@ describe('mongo product repository mappers', () => {
             assigned_at: '2026-01-01T00:00:00.000Z',
           },
         ],
-      } as unknown as WithId<ProductDocument>)
+      }))
     ).toThrowError(/Product tag relation payload includes unsupported fields\./);
   });
 
   it('rejects producer relations missing canonical required fields', () => {
     expect(() =>
-      toProductResponse({
+      toProductResponse(asProductDocument({
         _id: 'product-6',
         id: 'product-6',
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
@@ -219,7 +222,7 @@ describe('mongo product repository mappers', () => {
             producerId: 'producer-1',
           },
         ],
-      } as unknown as WithId<ProductDocument>)
+      }))
     ).toThrowError(/Invalid product producer relation payload/);
   });
 });

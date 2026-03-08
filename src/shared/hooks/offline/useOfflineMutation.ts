@@ -205,7 +205,7 @@ export function useOfflineMutation<
         toast(options.queuedMessage || 'Changes saved offline. Will sync when online.', {
           variant: 'info',
         });
-        return null as unknown as TData;
+        return null as TData;
       }
 
       return mutationFn(variables, { queryClient });

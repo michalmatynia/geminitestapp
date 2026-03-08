@@ -3,7 +3,7 @@
 import React from 'react';
 import { RotateCcw, RotateCw, ExternalLink, Monitor, Check } from 'lucide-react';
 import { Button, StatusBadge, Alert } from '@/shared/ui';
-import { useProductStudioContext } from '../../../context/ProductStudioContext';
+import { useProductStudioContext } from '@/features/products/context/ProductStudioContext';
 
 export function StudioActionsBar(): React.JSX.Element {
   const {

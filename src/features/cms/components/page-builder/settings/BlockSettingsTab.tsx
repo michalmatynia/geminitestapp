@@ -25,7 +25,7 @@ import { getBlockDefinition } from '../section-registry';
 import {
   usePageBuilderSelection,
   usePageBuilderDispatch,
-} from '../../../hooks/usePageBuilderContext';
+} from '@/features/cms/hooks/usePageBuilderContext';
 import { useComponentSettingsActions } from '../context/ComponentSettingsContext';
 
 export function BlockSettingsTab(): React.JSX.Element | null {

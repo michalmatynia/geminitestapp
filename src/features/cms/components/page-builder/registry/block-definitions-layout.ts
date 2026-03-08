@@ -9,7 +9,7 @@ import {
   sectionStyleFields,
 } from './shared-field-helpers';
 
-import type { BlockDefinition } from '../../../types/page-builder';
+import type { BlockDefinition } from '@/features/cms/types/page-builder';
 
 export const COLUMN_ALLOWED_BLOCK_TYPES = [
   'Heading',

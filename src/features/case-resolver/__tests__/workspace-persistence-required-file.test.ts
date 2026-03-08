@@ -20,6 +20,10 @@ const toJsonResponse = (status: number, body: unknown): Response =>
     },
   });
 
+const installFetchMock = (fetchMock: ReturnType<typeof vi.fn>): void => {
+  globalThis.fetch = fetchMock as typeof globalThis.fetch;
+};
+
 describe('case-resolver workspace persistence required file and fallback behavior', () => {
   let originalFetch: typeof globalThis.fetch;
 
@@ -86,7 +90,7 @@ describe('case-resolver workspace persistence required file and fallback behavio
           value: JSON.stringify(detachedHistoryPayload),
         })
       );
-    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    installFetchMock(fetchMock);
 
     const result = await fetchCaseResolverWorkspaceRecordDetailed('test_source', {
       includeDetachedHistory: true,
@@ -134,7 +138,7 @@ describe('case-resolver workspace persistence required file and fallback behavio
           value: JSON.stringify(heavyWorkspace),
         })
       );
-    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    installFetchMock(fetchMock);
 
     const result = await fetchCaseResolverWorkspaceRecord('test_source', {
       requiredFileId: targetCase.id,
@@ -177,7 +181,7 @@ describe('case-resolver workspace persistence required file and fallback behavio
           value: JSON.stringify(workspaceWithoutRequired),
         })
       );
-    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    installFetchMock(fetchMock);
 
     const result = await fetchCaseResolverWorkspaceRecordDetailed('test_source', {
       requiredFileId,
@@ -220,7 +224,7 @@ describe('case-resolver workspace persistence required file and fallback behavio
           value: JSON.stringify(workspaceWithoutRequired),
         })
       );
-    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    installFetchMock(fetchMock);
 
     const result = await fetchCaseResolverWorkspaceRecord('test_source', {
       requiredFileId: requiredFile.id,
@@ -237,7 +241,7 @@ describe('case-resolver workspace persistence required file and fallback behavio
           setTimeout(() => resolve(toJsonResponse(500, { error: 'slow failure' })), 5);
         })
     );
-    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    installFetchMock(fetchMock);
 
     const result = await fetchCaseResolverWorkspaceRecordDetailed('test_source', {
       attemptProfile: 'context_fast',
@@ -261,7 +265,7 @@ describe('case-resolver workspace persistence required file and fallback behavio
         value: JSON.stringify(workspace),
       })
     );
-    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    installFetchMock(fetchMock);
 
     const result = await fetchCaseResolverWorkspaceSnapshot('test_source');
 
@@ -276,7 +280,7 @@ describe('case-resolver workspace persistence required file and fallback behavio
       .mockResolvedValueOnce(toJsonResponse(500, { error: 'cached key failed' }))
       .mockResolvedValueOnce(toJsonResponse(500, { error: 'heavy fresh key failed' }))
       .mockResolvedValueOnce(toJsonResponse(500, { error: 'heavy cached key failed' }));
-    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    installFetchMock(fetchMock);
 
     const result = await fetchCaseResolverWorkspaceSnapshot('test_source');
 

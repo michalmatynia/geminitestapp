@@ -4,14 +4,16 @@ import {
   handleAiDescription,
   handleModel,
 } from '@/shared/lib/ai-paths/core/runtime/handlers/generation';
+import { aiJobsApi } from '@/shared/lib/ai-paths/api';
 import type { AiNode, Edge, ModelConfig } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
 
 import { generateProductAiDescription } from '../../server/description-generator';
-import { aiJobsApi } from '../../../../api';
 
-vi.mock('../../../../api', async () => {
-  const actual = await vi.importActual<typeof import('../../../../api')>('../../../../api');
+vi.mock('@/shared/lib/ai-paths/api', async () => {
+  const actual = await vi.importActual<typeof import('@/shared/lib/ai-paths/api')>(
+    '@/shared/lib/ai-paths/api'
+  );
   return {
     ...actual,
     aiJobsApi: {

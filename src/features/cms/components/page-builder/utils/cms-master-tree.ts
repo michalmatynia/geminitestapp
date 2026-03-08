@@ -1,7 +1,7 @@
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import { buildHierarchyIndexes } from '@/features/cms/hooks/page-builder/section-hierarchy';
 
-import type { PageZone, SectionInstance } from '../../../types/page-builder';
+import type { PageZone, SectionInstance } from '@/features/cms/types/page-builder';
 
 const CMS_ZONE_NODE_PREFIX = 'cms-zone:';
 const CMS_SECTION_NODE_PREFIX = 'cms-section:';

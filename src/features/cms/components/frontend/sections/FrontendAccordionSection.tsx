@@ -9,7 +9,7 @@ import { useSectionBlockData } from './SectionBlockContext';
 import { useCmsPageContext } from '../CmsPageContext';
 import { getSectionContainerClass, getSectionStyles } from '../theme-styles';
 
-import type { BlockInstance } from '../../../types/page-builder';
+import type { BlockInstance } from '@/features/cms/types/page-builder';
 
 export function FrontendAccordionSection(): React.ReactNode {
   const { settings, blocks } = useSectionBlockData();

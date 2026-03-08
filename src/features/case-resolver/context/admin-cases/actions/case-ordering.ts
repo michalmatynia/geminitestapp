@@ -6,7 +6,7 @@ import {
   stampCaseResolverWorkspaceMutation,
   getCaseResolverWorkspaceRevision,
   persistCaseResolverWorkspaceSnapshot,
-} from '../../../workspace-persistence';
+} from '@/features/case-resolver/workspace-persistence';
 import {
   normalizeCaseParentId,
   getSortedSiblingIds,

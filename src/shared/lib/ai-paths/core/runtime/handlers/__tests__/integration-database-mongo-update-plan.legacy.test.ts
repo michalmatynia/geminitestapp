@@ -46,7 +46,7 @@ describe('buildMongoUpdatePlan', () => {
             sourcePath: 'parameters',
           },
         ],
-      } as unknown as DatabaseConfig,
+      } as DatabaseConfig,
       queryConfig: {
         provider: 'auto',
         collection: 'products',
@@ -185,7 +185,7 @@ describe('buildMongoUpdatePlan', () => {
             sourcePath: 'parameters',
           },
         ],
-      } as unknown as DatabaseConfig,
+      } as DatabaseConfig,
       queryConfig: {
         provider: 'auto',
         collection: 'products',
@@ -340,7 +340,7 @@ describe('buildMongoUpdatePlan', () => {
             sourcePath: 'parameters',
           },
         ],
-      } as unknown as DatabaseConfig,
+      } as DatabaseConfig,
       queryConfig: {
         provider: 'auto',
         collection: 'products',
@@ -442,7 +442,7 @@ describe('buildMongoUpdatePlan', () => {
             sourcePath: 'parameters',
           },
         ],
-      } as unknown as DatabaseConfig,
+      } as DatabaseConfig,
       queryConfig: {
         provider: 'auto',
         collection: 'products',
@@ -550,7 +550,7 @@ describe('buildMongoUpdatePlan', () => {
             targetPath: 'parameters',
           },
         ],
-      } as unknown as DatabaseConfig,
+      } as DatabaseConfig,
       queryConfig: {
         provider: 'auto',
         collection: 'products',
@@ -636,7 +636,7 @@ describe('buildMongoUpdatePlan', () => {
             sourcePort: 'result',
           },
         ],
-      } as unknown as DatabaseConfig,
+      } as DatabaseConfig,
       queryConfig: {
         provider: 'auto',
         collection: 'products',

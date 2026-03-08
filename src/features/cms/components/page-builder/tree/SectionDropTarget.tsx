@@ -6,9 +6,9 @@ import {
   useComponentTreePanelActions,
   useComponentTreePanelState,
 } from './ComponentTreePanelContext';
-import { useDragState } from '../../../hooks/useDragStateContext';
-import { useTreeActions } from '../../../hooks/useTreeActionsContext';
-import { usePageBuilder } from '../../../hooks/usePageBuilderContext';
+import { useDragState } from '@/features/cms/hooks/useDragStateContext';
+import { useTreeActions } from '@/features/cms/hooks/useTreeActionsContext';
+import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
 import { readSectionDragData } from '@/features/cms/utils/page-builder-dnd';
 import { isCmsSectionSamePositionDrop } from '@/features/cms/components/page-builder/utils/cms-tree-external-drop';
 

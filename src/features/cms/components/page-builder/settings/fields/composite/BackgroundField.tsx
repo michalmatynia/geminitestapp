@@ -6,7 +6,7 @@ import { useCompositeFieldContext } from '../CompositeFieldContext';
 import { BG_TYPE_OPTIONS, GRADIENT_DIRECTION_OPTIONS } from '../settings-field-constants';
 import type { SettingsFieldOption } from '@/shared/contracts/cms';
 import { isObjectRecord } from '@/shared/utils/object-utils';
-import { ImagePickerField } from '../../../shared-fields';
+import { ImagePickerField } from '@/features/cms/components/page-builder/shared-fields';
 
 export function BackgroundField(): React.ReactNode {
   const { value, onChange, buildAriaLabel } = useCompositeFieldContext();

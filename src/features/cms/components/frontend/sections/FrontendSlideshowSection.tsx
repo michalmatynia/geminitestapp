@@ -8,7 +8,7 @@ import { useSectionBlockData } from './SectionBlockContext';
 import { SectionDataProvider } from './SectionDataContext';
 import { useCmsPageContext } from '../CmsPageContext';
 
-import type { BlockInstance } from '../../../types/page-builder';
+import type { BlockInstance } from '@/features/cms/types/page-builder';
 
 export function FrontendSlideshowSection({
   layout: propLayout,

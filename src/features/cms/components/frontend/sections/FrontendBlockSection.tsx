@@ -8,7 +8,7 @@ import { useCmsPageContext } from '../CmsPageContext';
 import { useSectionBlockData } from './SectionBlockContext';
 import { SectionDataProvider } from './SectionDataContext';
 
-import type { BlockInstance } from '../../../types/page-builder';
+import type { BlockInstance } from '@/features/cms/types/page-builder';
 
 const resolveJustifyContent = (
   value: unknown

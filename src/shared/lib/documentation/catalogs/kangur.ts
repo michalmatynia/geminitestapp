@@ -8,7 +8,7 @@ import {
   KANGUR_TOOLTIP_CATALOG,
   type KangurDocumentationGuide,
   type KangurTooltipDocEntry,
-} from '../../../../../docs/kangur/tooltip-catalog';
+} from '@docs/kangur/tooltip-catalog';
 
 export type { KangurDocumentationGuide, KangurTooltipDocEntry };
 

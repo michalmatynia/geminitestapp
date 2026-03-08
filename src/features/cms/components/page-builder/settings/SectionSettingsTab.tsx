@@ -25,7 +25,7 @@ import { GRID_TEMPLATE_SETTINGS_KEY, normalizeGridTemplates } from '../grid-temp
 import {
   usePageBuilderSelection,
   usePageBuilderDispatch,
-} from '../../../hooks/usePageBuilderContext';
+} from '@/features/cms/hooks/usePageBuilderContext';
 import { useComponentSettingsActions } from '../context/ComponentSettingsContext';
 
 export function SectionSettingsTab(): React.JSX.Element | null {

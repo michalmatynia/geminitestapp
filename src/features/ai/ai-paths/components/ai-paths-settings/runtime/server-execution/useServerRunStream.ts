@@ -12,7 +12,7 @@ import { streamAiPathRun } from '@/shared/lib/ai-paths';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 import { isTerminalAiPathRunStatus } from '@/features/ai/ai-paths/lib/path-run-status';
-import { parseRuntimeState } from '../../../AiPathsSettingsUtils';
+import { parseRuntimeState } from '@/features/ai/ai-paths/components/AiPathsSettingsUtils';
 import {
   mergeRuntimeStateSnapshot,
   mergeRuntimeNodeOutputsForStatus,

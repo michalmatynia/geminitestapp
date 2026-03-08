@@ -11,6 +11,8 @@ import {
 
 const API_ROOT = path.join('src', 'app', 'api');
 const SOURCE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx']);
+const QUERY_VALIDATION_MARKERS = ['querySchema'];
+const PARAM_VALIDATION_MARKERS = ['paramsSchema', 'apiHandlerWithParams<'];
 
 const listSourceFiles = (absoluteDir, acc = []) => {
   if (!fs.existsSync(absoluteDir)) return acc;
@@ -67,6 +69,21 @@ const extractDynamicRouteParams = (relativePath) => {
   return params;
 };
 
+const readCompanionRouteText = (absolutePath) => {
+  if (/route\.(ts|js)$/.test(absolutePath)) {
+    return fs.readFileSync(absolutePath, 'utf8');
+  }
+  if (!/handler\.(ts|js)$/.test(absolutePath)) return null;
+  const routePath = path.join(path.dirname(absolutePath), 'route.ts');
+  if (!fs.existsSync(routePath)) return null;
+  return fs.readFileSync(routePath, 'utf8');
+};
+
+const hasRouteLevelMarker = (text, markers) => {
+  if (!text) return false;
+  return markers.some((marker) => text.includes(marker));
+};
+
 export const analyzeApiInputValidation = ({ root = process.cwd() } = {}) => {
   const issues = [];
   let fileCount = 0;
@@ -79,6 +96,7 @@ export const analyzeApiInputValidation = ({ root = process.cwd() } = {}) => {
   for (const absolutePath of sourceFiles) {
     const relativePath = toRepoRelativePath(root, absolutePath);
     const rawText = fs.readFileSync(absolutePath, 'utf8');
+    const companionRouteText = readCompanionRouteText(absolutePath);
     fileCount++;
 
     const isRouteFile = /route\.(ts|js)$/.test(absolutePath);
@@ -128,7 +146,9 @@ export const analyzeApiInputValidation = ({ root = process.cwd() } = {}) => {
     // Check for unvalidated URL params in dynamic routes
     const routeParams = extractDynamicRouteParams(relativePath);
     if (routeParams.length > 0) {
-      const hasParamValidation = VALIDATION_MARKERS.some((m) => rawText.includes(m));
+      const hasParamValidation =
+        VALIDATION_MARKERS.some((m) => rawText.includes(m)) ||
+        hasRouteLevelMarker(companionRouteText, PARAM_VALIDATION_MARKERS);
       if (!hasParamValidation) {
         for (const param of routeParams) {
           // Check if the param is actually used
@@ -147,9 +167,10 @@ export const analyzeApiInputValidation = ({ root = process.cwd() } = {}) => {
     }
 
     // Check for unvalidated searchParams
+    const hasQuerySchema = hasRouteLevelMarker(companionRouteText, QUERY_VALIDATION_MARKERS);
     const searchParamsRegex = /searchParams\.get\s*\(/g;
     while ((match = searchParamsRegex.exec(rawText)) !== null) {
-      if (!hasNearbyValidation(rawText, match.index, 300)) {
+      if (!hasNearbyValidation(rawText, match.index, 300) && !hasQuerySchema) {
         const line = getLineNumber(rawText, match.index);
         issues.push(
           createIssue({

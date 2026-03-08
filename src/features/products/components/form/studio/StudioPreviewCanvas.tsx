@@ -7,8 +7,8 @@ import { SplitVariantPreview } from '@/features/ai/image-studio/components/cente
 import {
   CenterPreviewProvider,
   useCenterPreviewContext,
-} from '@/features/ai/image-studio/components/center-preview/CenterPreviewContext';
-import { useProductStudioContext } from '../../../context/ProductStudioContext';
+} from '@/shared/lib/image-studio-adapter';
+import { useProductStudioContext } from '@/features/products/context/ProductStudioContext';
 
 function StudioPreviewCanvasInner(): React.JSX.Element {
   const { variantImageSrc, sourceImageSrc, canCompareWithSource } = useProductStudioContext();

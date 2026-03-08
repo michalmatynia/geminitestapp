@@ -5,7 +5,7 @@ import React, { useMemo } from 'react';
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
 import { useSectionBlockData } from './SectionBlockContext';
 
-import type { BlockInstance } from '../../../types/page-builder';
+import type { BlockInstance } from '@/features/cms/types/page-builder';
 
 export function FrontendModel3DElementSection(): React.ReactNode {
   const { settings } = useSectionBlockData();

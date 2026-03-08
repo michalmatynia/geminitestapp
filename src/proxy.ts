@@ -10,14 +10,12 @@ const baseProxy = (request: NextRequest): NextResponse => {
   return response;
 };
 
-type NextRequestHandler = (
-  request: NextRequest,
-  context: Record<string, unknown>
-) => Promise<Response> | Response;
+const handler =
+  typeof auth === 'function'
+    ? auth((request: NextRequest): Response => baseProxy(request))
+    : null;
 
-const handler: NextRequestHandler | null =
-  typeof auth === 'function' ? (auth as unknown as NextRequestHandler) : null;
-
+type NextRequestHandler = NonNullable<typeof handler>;
 type HandlerContext = Parameters<NextRequestHandler>[1];
 
 const shouldBypassAuth = (request: NextRequest): boolean =>

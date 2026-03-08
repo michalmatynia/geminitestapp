@@ -29,15 +29,33 @@ const onCreateImageAssetMock = vi.fn();
 const onCreateNodeFileMock = vi.fn();
 const setShowChildCaseFoldersMock = vi.fn();
 
-const pageStateContext = {
+const asPageStateContextValue = (value: Record<string, unknown>): CaseResolverPageStateValue =>
+  value as CaseResolverPageStateValue;
+const asPageActionsContextValue = (
+  value: Record<string, unknown>
+): CaseResolverPageActionsValue => value as CaseResolverPageActionsValue;
+const asCaseResolverFile = (value: Record<string, unknown>): CaseResolverFile =>
+  value as CaseResolverFile;
+const asFolderTreeDataContextValue = (
+  value: Record<string, unknown>
+): CaseResolverFolderTreeDataContextValue => value as CaseResolverFolderTreeDataContextValue;
+const asFolderTreeUiStateContextValue = (
+  value: Record<string, unknown>
+): CaseResolverFolderTreeUiStateContextValue => value as CaseResolverFolderTreeUiStateContextValue;
+const asFolderTreeUiActionsContextValue = (
+  value: Record<string, unknown>
+): CaseResolverFolderTreeUiActionsContextValue =>
+  value as CaseResolverFolderTreeUiActionsContextValue;
+
+const pageStateContext = asPageStateContextValue({
   activeCaseId: 'case-a',
   requestedCaseStatus: 'ready' as const,
   requestedCaseIssue: null,
   canCreateInActiveCase: true,
   caseResolverIdentifiers: [] as Array<{ id: string; name: string }>,
-} as unknown as CaseResolverPageStateValue;
+});
 
-const pageActionsContext = {
+const pageActionsContext = asPageActionsContextValue({
   onRetryCaseContext: onRetryCaseContextMock,
   onResetCaseContext: onResetCaseContextMock,
   onCreateFolder: onCreateFolderMock,
@@ -45,30 +63,30 @@ const pageActionsContext = {
   onCreateScanFile: onCreateScanFileMock,
   onCreateImageAsset: onCreateImageAssetMock,
   onCreateNodeFile: onCreateNodeFileMock,
-} as unknown as CaseResolverPageActionsValue;
+});
 
-const folderTreeDataContext = {
-  activeCaseFile: {
+const folderTreeDataContext = asFolderTreeDataContextValue({
+  activeCaseFile: asCaseResolverFile({
     id: 'case-a',
     name: 'Case A',
     caseIdentifierId: null,
-  } as unknown as CaseResolverFile,
+  }),
   activeCaseChildCount: 0,
   selectedFolderForFolderCreate: null,
   selectedFolderForCreate: null,
-} as unknown as CaseResolverFolderTreeDataContextValue;
+});
 
-const folderTreeUiStateContext = {
+const folderTreeUiStateContext = asFolderTreeUiStateContextValue({
   showChildCaseFolders: true,
   highlightedNodeFileAssetIds: [],
   highlightedNodeFileAssetIdSet: new Set<string>(),
   highlightedFolderAncestorNodeIds: [],
-} as unknown as CaseResolverFolderTreeUiStateContextValue;
+});
 
-const folderTreeUiActionsContext = {
+const folderTreeUiActionsContext = asFolderTreeUiActionsContextValue({
   setShowChildCaseFolders: setShowChildCaseFoldersMock,
   setHighlightedNodeFileAssetIds: vi.fn(),
-} as unknown as CaseResolverFolderTreeUiActionsContextValue;
+});
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -102,11 +120,11 @@ describe('CaseResolverTreeHeader', () => {
     pageStateContext.requestedCaseIssue = null;
     pageStateContext.canCreateInActiveCase = true;
     pageStateContext.activeCaseId = 'case-a';
-    folderTreeDataContext.activeCaseFile = {
+    folderTreeDataContext.activeCaseFile = asCaseResolverFile({
       id: 'case-a',
       name: 'Case A',
       caseIdentifierId: null,
-    } as unknown as CaseResolverFile;
+    });
     folderTreeDataContext.activeCaseChildCount = 2;
     folderTreeUiStateContext.showChildCaseFolders = true;
   });

@@ -34,7 +34,7 @@ describe('buildMongoUpdatePlan', () => {
       dbConfig: {
         operation: 'update',
         mode: 'replace',
-      } as unknown as DatabaseConfig,
+      } as DatabaseConfig,
       queryConfig: {
         provider: 'auto',
         collection: 'products',
@@ -135,7 +135,7 @@ describe('buildMongoUpdatePlan', () => {
           enforceOptionLabels: false,
           allowUnknownParameterIds: false,
         },
-      } as unknown as DatabaseConfig,
+      } as DatabaseConfig,
       queryConfig: {
         provider: 'auto',
         collection: 'products',
@@ -204,7 +204,7 @@ describe('buildMongoUpdatePlan', () => {
         operation: 'update',
         mode: 'replace',
         updatePayloadMode: 'invalid' as any,
-      } as unknown as DatabaseConfig,
+      } as DatabaseConfig,
       queryConfig: {
         provider: 'auto',
         collection: 'products',
@@ -283,7 +283,7 @@ describe('buildMongoUpdatePlan', () => {
             sourcePath: 'parameters',
           },
         ],
-      } as unknown as DatabaseConfig,
+      } as DatabaseConfig,
       queryConfig: {
         provider: 'auto',
         collection: 'products',
@@ -374,7 +374,7 @@ describe('buildMongoUpdatePlan', () => {
             sourcePath: 'parameters',
           },
         ],
-      } as unknown as DatabaseConfig,
+      } as DatabaseConfig,
       queryConfig: {
         provider: 'auto',
         collection: 'products',
@@ -474,7 +474,7 @@ describe('buildMongoUpdatePlan', () => {
             sourcePath: 'parameters',
           },
         ],
-      } as unknown as DatabaseConfig,
+      } as DatabaseConfig,
       queryConfig: {
         provider: 'auto',
         collection: 'products',

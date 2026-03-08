@@ -29,7 +29,11 @@ const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
     });
     logger.info('System event (fallback)', {
       service: 'shared.retry',
-      ...(params as unknown as Record<string, unknown>),
+      level: params.level,
+      message: params.message,
+      source: params.source,
+      ...(params.error !== undefined ? { error: params.error } : {}),
+      ...(params.context ? { context: params.context } : {}),
     });
   }
 };

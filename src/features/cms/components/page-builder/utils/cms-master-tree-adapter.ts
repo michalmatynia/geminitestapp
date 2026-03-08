@@ -3,7 +3,7 @@ import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract'
 
 import { decodeCmsMasterNodeId, fromCmsSectionNodeId, fromCmsZoneNodeId } from './cms-master-tree';
 
-import type { PageZone } from '../../../types/page-builder';
+import type { PageZone } from '@/features/cms/types/page-builder';
 
 export const createCmsMasterTreeAdapter = (
   applySectionMoveInTree: (

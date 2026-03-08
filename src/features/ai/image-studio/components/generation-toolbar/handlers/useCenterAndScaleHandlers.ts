@@ -15,7 +15,7 @@ import {
   imageStudioCenterResponseSchema,
   type ImageStudioCenterResponse,
   type ImageStudioCenterMode,
-} from '../../../contracts/center';
+} from '@/features/ai/image-studio/contracts/center';
 import {
   type GenerationToolbarState,
   type GenerationToolbarHelpers,

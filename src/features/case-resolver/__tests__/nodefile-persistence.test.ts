@@ -22,6 +22,10 @@ const toJsonResponse = (status: number, body: unknown): Response =>
     },
   });
 
+const installFetchMock = (fetchMock: ReturnType<typeof vi.fn>): void => {
+  globalThis.fetch = fetchMock as typeof globalThis.fetch;
+};
+
 describe('case resolver nodefile persistence', () => {
   let originalFetch: typeof globalThis.fetch;
 
@@ -45,7 +49,7 @@ describe('case resolver nodefile persistence', () => {
           value: JSON.stringify(snapshot),
         })
       );
-    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    installFetchMock(fetchMock);
 
     const didPersist = await persistCaseResolverNodeFileSnapshot({
       assetId: 'asset-1',
@@ -69,7 +73,7 @@ describe('case resolver nodefile persistence', () => {
         value: '',
       })
     );
-    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    installFetchMock(fetchMock);
 
     const resolvedSnapshot = await fetchCaseResolverNodeFileSnapshot('asset-1', 8_000, 'test');
 
@@ -126,7 +130,7 @@ describe('case resolver nodefile persistence', () => {
         }),
       })
     );
-    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    installFetchMock(fetchMock);
 
     await expect(fetchCaseResolverNodeFileSnapshot('asset-legacy', 8_000, 'test')).rejects.toThrow(
       /Case Resolver edge payload includes unsupported fields\./i
@@ -146,7 +150,7 @@ describe('case resolver nodefile persistence', () => {
         }),
       })
     );
-    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    installFetchMock(fetchMock);
 
     await expect(fetchCaseResolverNodeFileSnapshot('asset-1', 8_000, 'test')).rejects.toThrow(
       /Case Resolver node-file snapshot payload includes unsupported fields\./i
@@ -156,7 +160,7 @@ describe('case resolver nodefile persistence', () => {
 
   it('clears keyed nodefile snapshots via blank writes', async () => {
     const fetchMock = vi.fn().mockResolvedValue(toJsonResponse(200, { ok: true }));
-    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    installFetchMock(fetchMock);
 
     const didDelete = await deleteCaseResolverNodeFileSnapshot('asset-1', 'test');
 
@@ -206,7 +210,7 @@ describe('case resolver nodefile persistence', () => {
     };
 
     const fetchMock = vi.fn().mockResolvedValue(toJsonResponse(200, { ok: true }));
-    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    installFetchMock(fetchMock);
 
     const result = await persistCaseResolverWorkspaceSnapshot({
       workspace,

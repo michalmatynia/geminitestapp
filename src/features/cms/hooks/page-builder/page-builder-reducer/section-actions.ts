@@ -10,14 +10,14 @@ import { moveSectionSubtree, removeSectionSubtree } from '../section-hierarchy';
 import {
   getSectionDefinition,
   getBlockDefinition,
-} from '../../../components/page-builder/section-registry';
+} from '@/features/cms/components/page-builder/section-registry';
 import type {
   PageBuilderState,
   PageBuilderAction,
   PageZone,
   SectionInstance,
   BlockInstance,
-} from '../../../types/page-builder';
+} from '@/features/cms/types/page-builder';
 
 export function reduceSectionActions(
   state: PageBuilderState,

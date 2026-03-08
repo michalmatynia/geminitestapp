@@ -12,7 +12,10 @@ import {
 } from '@/shared/lib/ai-paths';
 import { buildCompileWarningMessage } from '@/shared/lib/ai-paths/core/utils/compile-warning-message';
 import { updateAiPathsSettingsBulk } from '@/shared/lib/ai-paths/settings-store-client';
-import { buildPersistedRuntimeState, sanitizePathConfig } from '../../../AiPathsSettingsUtils';
+import {
+  buildPersistedRuntimeState,
+  sanitizePathConfig,
+} from '@/features/ai/ai-paths/components/AiPathsSettingsUtils';
 import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
 import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
 import { useSelectionActions } from '@/features/ai/ai-paths/context/SelectionContext';

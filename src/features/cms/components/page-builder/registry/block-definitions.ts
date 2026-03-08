@@ -2,7 +2,7 @@ import { contentBlockDefinitions } from './block-definitions-content';
 import { layoutBlockDefinitions } from './block-definitions-layout';
 import { mediaBlockDefinitions } from './block-definitions-media';
 
-import type { BlockDefinition } from '../../../types/page-builder';
+import type { BlockDefinition } from '@/features/cms/types/page-builder';
 
 export {
   BLOCK_SECTION_ALLOWED_BLOCK_TYPES,

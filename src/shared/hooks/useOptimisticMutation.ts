@@ -29,7 +29,7 @@ export function useOptimisticMutation<TData, TError, TVariables, TCacheData = TD
       samplingRate: 0.4,
       tags: ['shared-hook', 'optimistic'],
       description: 'Updates optimistic mutation.'},
-  }) as unknown as UseMutationResult<
+  }) as UseMutationResult<
     TData,
     TError,
     TVariables,

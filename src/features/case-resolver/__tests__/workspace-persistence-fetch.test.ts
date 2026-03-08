@@ -33,6 +33,10 @@ const toJsonResponse = (status: number, body: unknown): Response =>
     },
   });
 
+const installFetchMock = (fetchMock: ReturnType<typeof vi.fn>): void => {
+  globalThis.fetch = fetchMock as typeof globalThis.fetch;
+};
+
 describe('case-resolver workspace persistence', () => {
   let originalFetch: typeof globalThis.fetch;
 
@@ -57,7 +61,7 @@ describe('case-resolver workspace persistence', () => {
         },
       ])
     );
-    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    installFetchMock(fetchMock);
 
     const result = await fetchCaseResolverWorkspaceSnapshot('test_source');
 
@@ -86,7 +90,7 @@ describe('case-resolver workspace persistence', () => {
           },
         ])
       );
-    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    installFetchMock(fetchMock);
 
     const result = await fetchCaseResolverWorkspaceSnapshot('test_source');
 
@@ -114,7 +118,7 @@ describe('case-resolver workspace persistence', () => {
           },
         ])
       );
-    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    installFetchMock(fetchMock);
 
     const result = await fetchCaseResolverWorkspaceSnapshot('test_source');
 
@@ -138,7 +142,7 @@ describe('case-resolver workspace persistence', () => {
       .mockResolvedValueOnce(toJsonResponse(200, []))
       .mockResolvedValueOnce(toJsonResponse(200, []))
       .mockResolvedValueOnce(toJsonResponse(200, []));
-    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    installFetchMock(fetchMock);
 
     const result = await fetchCaseResolverWorkspaceRecordDetailed('test_source', {
       requiredFileId: null,
@@ -159,7 +163,7 @@ describe('case-resolver workspace persistence', () => {
           value: JSON.stringify(workspace),
         })
       );
-    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    installFetchMock(fetchMock);
 
     const result = await fetchCaseResolverWorkspaceRecord('test_source', {
       fresh: false,
@@ -191,7 +195,7 @@ describe('case-resolver workspace persistence', () => {
           value: JSON.stringify(workspace),
         })
       );
-    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    installFetchMock(fetchMock);
 
     const result = await fetchCaseResolverWorkspaceRecordDetailed('test_source', {
       attemptProfile: 'context_fast',
@@ -259,7 +263,7 @@ describe('case-resolver workspace persistence', () => {
           value: JSON.stringify(detachedHistoryPayload),
         })
       );
-    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    installFetchMock(fetchMock);
 
     const result = await fetchCaseResolverWorkspaceRecordDetailed('test_source', {
       includeDetachedHistory: true,
@@ -330,7 +334,7 @@ describe('case-resolver workspace persistence', () => {
           value: JSON.stringify(detachedHistoryPayload),
         })
       );
-    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    installFetchMock(fetchMock);
 
     const result = await fetchCaseResolverWorkspaceRecordDetailed('test_source', {
       includeDetachedHistory: true,
@@ -387,7 +391,7 @@ describe('case-resolver workspace persistence', () => {
           value: JSON.stringify(detachedDocumentsPayload),
         })
       );
-    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    installFetchMock(fetchMock);
 
     const result = await fetchCaseResolverWorkspaceRecordDetailed('test_source', {
       includeDetachedDocuments: true,
@@ -449,7 +453,7 @@ describe('case-resolver workspace persistence', () => {
           value: JSON.stringify(detachedDocumentsPayload),
         })
       );
-    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    installFetchMock(fetchMock);
 
     const result = await fetchCaseResolverWorkspaceRecordDetailed('test_source', {
       includeDetachedDocuments: true,
@@ -544,7 +548,7 @@ describe('case-resolver workspace persistence', () => {
           value: JSON.stringify(detachedHistoryPayload),
         })
       );
-    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    installFetchMock(fetchMock);
 
     const result = await fetchCaseResolverWorkspaceRecordDetailed('test_source', {
       includeDetachedDocuments: true,
@@ -634,7 +638,7 @@ describe('case-resolver workspace persistence', () => {
           value: JSON.stringify(detachedHistoryPayload),
         })
       );
-    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    installFetchMock(fetchMock);
 
     const result = await fetchCaseResolverWorkspaceIfStale('test_source', 1, {
       includeDetachedDocuments: true,
@@ -729,7 +733,7 @@ describe('case-resolver workspace persistence', () => {
           value: JSON.stringify(detachedHistoryPayload),
         })
       );
-    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    installFetchMock(fetchMock);
 
     const result = await fetchCaseResolverWorkspaceRecordDetailed('test_source', {
       includeDetachedDocuments: true,
@@ -833,7 +837,7 @@ describe('case-resolver workspace persistence', () => {
           value: JSON.stringify(detachedHistoryPayload),
         })
       );
-    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    installFetchMock(fetchMock);
 
     const result = await fetchCaseResolverWorkspaceIfStale('test_source', 1, {
       includeDetachedDocuments: true,

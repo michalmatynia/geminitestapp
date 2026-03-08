@@ -20,9 +20,9 @@ import { SectionBlockNodeItem } from './SectionBlockNodeItem';
 import { SlideshowFrameNodeItem } from './SlideshowFrameNodeItem';
 import { TreeSectionProvider } from './TreeSectionContext';
 import { toCmsSectionNodeId } from '../utils/cms-master-tree';
-import { useDragStateExtract } from '../../../hooks/useDragStateExtract';
-import { usePageBuilder } from '../../../hooks/usePageBuilderContext';
-import { useTreeActions } from '../../../hooks/useTreeActionsContext';
+import { useDragStateExtract } from '@/features/cms/hooks/useDragStateExtract';
+import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
+import { useTreeActions } from '@/features/cms/hooks/useTreeActionsContext';
 import { TreeSectionPicker } from './TreeSectionPicker';
 import type { SectionNodeItemProps } from './tree-types';
 

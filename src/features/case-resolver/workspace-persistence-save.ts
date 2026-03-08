@@ -139,7 +139,7 @@ export const compactCaseResolverWorkspaceForPersist = (
   type PersistedHistoryEntry = CaseResolverWorkspace['files'][number]['documentHistory'][number];
   const compactedFiles = Array.isArray(workspace.files)
     ? workspace.files.map((file): CaseResolverWorkspace['files'][number] => {
-      const fileRecord = file as unknown as Record<string, unknown>;
+      const fileRecord = file as Record<string, unknown>;
       const isScanFile = file.fileType === 'scanfile';
       const rawHistory = fileRecord['documentHistory'];
       const compactedHistory: PersistedHistoryEntry[] = Array.isArray(rawHistory)
@@ -172,7 +172,7 @@ export const compactCaseResolverWorkspaceForPersist = (
               delete rest['documentContentMarkdown'];
               delete rest['documentContentPlainText'];
             }
-            return rest as unknown as PersistedHistoryEntry;
+            return rest as PersistedHistoryEntry;
           })
         : [];
       if (isScanFile) {
@@ -194,7 +194,7 @@ export const compactCaseResolverWorkspaceForPersist = (
           Array.isArray(compactedFile.documentConversionWarnings) &&
             compactedFile.documentConversionWarnings.length === 0
         ) {
-          delete (compactedFile as unknown as Record<string, unknown>)[
+          delete (compactedFile as Record<string, unknown>)[
             'documentConversionWarnings'
           ];
         }
@@ -210,7 +210,7 @@ export const compactCaseResolverWorkspaceForPersist = (
           file.documentContentHtml.trim().length > 0 &&
           'documentContent' in fileRest
       ) {
-        delete (fileRest as unknown as Record<string, unknown>)['documentContent'];
+        delete (fileRest as Record<string, unknown>)['documentContent'];
       }
       const compactedFile = {
         ...fileRest,
@@ -222,7 +222,7 @@ export const compactCaseResolverWorkspaceForPersist = (
         Array.isArray(compactedFile.documentConversionWarnings) &&
           compactedFile.documentConversionWarnings.length === 0
       ) {
-        delete (compactedFile as unknown as Record<string, unknown>)[
+        delete (compactedFile as Record<string, unknown>)[
           'documentConversionWarnings'
         ];
       }

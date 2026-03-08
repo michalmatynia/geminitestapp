@@ -11,7 +11,7 @@ import {
 } from '@/shared/contracts/cms';
 import { getEventEffectsConfig } from '@/features/cms/utils/event-effects';
 
-import { usePageBuilder } from '../../../hooks/usePageBuilderContext';
+import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
 import { getSectionDefinition, getBlockDefinition } from '../section-registry';
 
 interface ConnectionSettings {

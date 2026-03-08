@@ -5,7 +5,7 @@ import { getSectionTypesForZone } from '../section-registry';
 import { cloneSectionTemplateSection, type SectionTemplateRecord } from '../section-template-store';
 import { getTemplatesByCategory, type SectionTemplate } from '../section-templates';
 
-import type { PageZone, SectionDefinition } from '../../../types/page-builder';
+import type { PageZone, SectionDefinition } from '@/features/cms/types/page-builder';
 
 export function useGroupedTemplates(
   zone: PageZone,

@@ -11,7 +11,7 @@ import {
   sectionStyleFields,
 } from './shared-field-helpers';
 
-import type { BlockDefinition } from '../../../types/page-builder';
+import type { BlockDefinition } from '@/features/cms/types/page-builder';
 
 // Content blocks that can be placed inside a CarouselFrame
 export const CAROUSEL_FRAME_ALLOWED_BLOCK_TYPES = [

@@ -14,7 +14,7 @@ import { useCmsPageContext } from '../CmsPageContext';
 import { CssAnimationWrapper } from '../CssAnimationWrapper';
 import { BlockRenderContext } from '../blocks/BlockContext';
 
-import type { BlockInstance } from '../../../types/page-builder';
+import type { BlockInstance } from '@/features/cms/types/page-builder';
 
 import {
   SECTION_BLOCK_TYPES,

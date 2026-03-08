@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Button, FormSection, Alert, LoadingState } from '@/shared/ui';
-import { useProductStudioContext } from '../../../context/ProductStudioContext';
+import { useProductStudioContext } from '@/features/products/context/ProductStudioContext';
 
 const formatTimestamp = (value: string | null): string => {
   if (!value) return 'n/a';

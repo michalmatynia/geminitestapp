@@ -36,6 +36,11 @@ const isTimeoutMessage = (message: string | null | undefined): boolean => {
   return normalized.includes('timed out') || normalized.includes('timeout');
 };
 
+const readMouseOffset = (
+  event: MouseEvent | undefined,
+  axis: 'offsetX' | 'offsetY'
+): number | undefined => (event ? event[axis] : undefined);
+
 const normalizeNodes = (nodes: AiNode[]): AiNode[] => {
   return nodes.map((node: AiNode) => ({
     ...node,
@@ -61,14 +66,8 @@ function buildTriggerContext(
       pageY: nativeEvent.pageY,
       screenX: nativeEvent.screenX,
       screenY: nativeEvent.screenY,
-      offsetX:
-          'offsetX' in nativeEvent
-            ? (nativeEvent as unknown as { offsetX: number }).offsetX
-            : undefined,
-      offsetY:
-          'offsetY' in nativeEvent
-            ? (nativeEvent as unknown as { offsetY: number }).offsetY
-            : undefined,
+      offsetX: readMouseOffset(nativeEvent, 'offsetX'),
+      offsetY: readMouseOffset(nativeEvent, 'offsetY'),
       button: nativeEvent.button,
       buttons: nativeEvent.buttons,
       altKey: nativeEvent.altKey,

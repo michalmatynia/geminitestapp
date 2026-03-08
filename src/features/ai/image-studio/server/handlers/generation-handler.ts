@@ -58,6 +58,19 @@ const IMAGE_STUDIO_ENABLE_OUTPUT_FORMAT =
   process.env['IMAGE_STUDIO_ENABLE_OUTPUT_FORMAT'] === 'true';
 const MODEL_MUST_BE_DALLE2_REGEX = /Value must be ['"]dall-e-2['"]/i;
 const MAX_UNKNOWN_PARAMETER_RETRIES = 6;
+type MutableImagePayload = Record<string, unknown> & {
+  model: string;
+  prompt: string;
+};
+const isImageEditPayload = (
+  value: unknown
+): value is MutableImagePayload & OpenAI.Images.ImageEditParamsNonStreaming =>
+  typeof value === 'object' && value !== null && 'image' in value;
+
+const isImageGeneratePayload = (
+  value: unknown
+): value is MutableImagePayload & OpenAI.Images.ImageGenerateParamsNonStreaming =>
+  typeof value === 'object' && value !== null && !('image' in value);
 
 export async function executeGenerationOperation(params: {
   request: ImageStudioRunRequest;
@@ -157,9 +170,7 @@ export async function executeGenerationOperation(params: {
   const requestMode: 'edit' | 'generate' = hasSourceAsset && diskPath ? 'edit' : 'generate';
   let dalle2BaseSize: '256x256' | '512x512' | '1024x1024' | null = null;
   let imageFiles: Array<Awaited<ReturnType<typeof toFile>>> = [];
-  let payload:
-    | OpenAI.Images.ImageEditParamsNonStreaming
-    | OpenAI.Images.ImageGenerateParamsNonStreaming;
+  let payload: MutableImagePayload;
 
   if (requestMode === 'edit') {
     if (!diskPath) {
@@ -189,7 +200,7 @@ export async function executeGenerationOperation(params: {
     payload = {
       model: resolvedModel,
       prompt: request.prompt,
-      image: imagePayload as unknown as OpenAI.Images.ImageEditParamsNonStreaming['image'],
+      image: imagePayload,
     };
   } else {
     payload = {
@@ -198,7 +209,7 @@ export async function executeGenerationOperation(params: {
     };
   }
 
-  const payloadRecord = payload as unknown as Record<string, unknown>;
+  const payloadRecord = payload;
   let effectiveFormat: 'png' | 'jpeg' | 'webp' = format;
   if (IMAGE_STUDIO_ENABLE_OUTPUT_FORMAT && modelCapabilities.supportsOutputFormat) {
     payloadRecord['output_format'] = format;
@@ -306,14 +317,17 @@ export async function executeGenerationOperation(params: {
   for (let attempt = 0; attempt < MAX_UNKNOWN_PARAMETER_RETRIES; attempt += 1) {
     try {
       apiAttemptCount += 1;
-      response =
-        requestMode === 'edit'
-          ? ((await client.images.edit(
-              payload as OpenAI.Images.ImageEditParamsNonStreaming
-          )) as OpenAI.ImagesResponse)
-          : ((await client.images.generate(
-              payload as OpenAI.Images.ImageGenerateParamsNonStreaming
-          )) as OpenAI.ImagesResponse);
+      if (requestMode === 'edit') {
+        if (!isImageEditPayload(payload)) {
+          throw operationFailedError('Image edit payload is missing the source image.');
+        }
+        response = (await client.images.edit(payload)) as OpenAI.ImagesResponse;
+      } else {
+        if (!isImageGeneratePayload(payload)) {
+          throw operationFailedError('Image generation payload unexpectedly includes edit fields.');
+        }
+        response = (await client.images.generate(payload)) as OpenAI.ImagesResponse;
+      }
       break;
     } catch (error) {
       const message = extractErrorMessage(error);

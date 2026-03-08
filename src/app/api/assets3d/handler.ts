@@ -1,30 +1,38 @@
 import { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { getAsset3DRepository, uploadAsset3D, validate3DFile } from '@/features/viewer3d/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
-import { getQueryParams } from '@/shared/lib/api/api-handler';
+import {
+  optionalBooleanQuerySchema,
+  optionalCsvQueryStringArray,
+  optionalTrimmedQueryString,
+} from '@/shared/lib/api/query-schema';
 import { logger } from '@/shared/utils/logger';
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 
+export const querySchema = z.object({
+  filename: optionalTrimmedQueryString(),
+  category: optionalTrimmedQueryString(),
+  search: optionalTrimmedQueryString(),
+  isPublic: optionalBooleanQuerySchema(),
+  tags: optionalCsvQueryStringArray(),
+});
+
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const searchParams = getQueryParams(req);
-  const filename = searchParams.get('filename');
-  const category = searchParams.get('category');
-  const search = searchParams.get('search');
-  const isPublicStr = searchParams.get('isPublic');
-  const tagsStr = searchParams.get('tags');
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
 
   try {
     const repository = getAsset3DRepository();
     const assets = await repository.listAssets3D({
-      ...(filename && { filename }),
-      ...(category && { category }),
-      ...(search && { search }),
-      ...(isPublicStr && { isPublic: isPublicStr === 'true' }),
-      ...(tagsStr && { tags: tagsStr.split(',').filter(Boolean) }),
+      ...(query.filename && { filename: query.filename }),
+      ...(query.category && { category: query.category }),
+      ...(query.search && { search: query.search }),
+      ...(query.isPublic !== undefined && { isPublic: query.isPublic }),
+      ...(query.tags && { tags: query.tags }),
     });
 
     return NextResponse.json(assets, {

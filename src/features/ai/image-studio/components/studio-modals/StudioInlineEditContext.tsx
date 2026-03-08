@@ -1,165 +1,46 @@
 'use client';
 
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useMemo,
-  useCallback,
-  useRef,
-  useEffect,
-} from 'react';
+import React, { createContext, useCallback, useContext, useMemo } from 'react';
 
 import type { ProductImageManagerController } from '@/features/products';
-import {
-  DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
-  PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
-} from '@/shared/lib/products/constants';
 import type { ManagedImageSlot } from '@/shared/contracts/image-slots';
-import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
-import type { ListQuery } from '@/shared/contracts/ui';
-import { api } from '@/shared/lib/api-client';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
 
 import {
-  buildPromptDiffLines,
-  type PromptDiffLine,
-  type PromptExtractHistoryEntry,
-} from './prompt-extract-utils';
-import {
-  EMPTY_ENVIRONMENT_REFERENCE_DRAFT,
   INLINE_CARD_IMAGE_SLOT_INDEX,
   isCardImageRemovalLocked,
-  mapActiveCompositeInputImages,
-  mapLinkedGeneratedVariants,
-  mapLinkedMaskSlots,
-  mapSavedCompositeInputImages,
-  mapSourceCompositeImage,
-  readEnvironmentReferenceDraft,
-  resolveCompositeTabInputSourceLabel,
-  resolveDimensionLabel,
-  resolveEnvironmentPreviewSource,
-  resolveInlinePreviewMimeType,
-  resolveInlinePreviewSource,
-  resolveSelectedGenerationPreview,
-  estimateBase64Bytes,
 } from './slot-inline-edit-utils';
 import { createInlineSlotHandlers } from './studio-modals-inline-slot-handlers';
 import {
   copyCardIdToClipboard,
   createPromptExtractionHandlers,
 } from './studio-modals-prompt-handlers';
+import type { LinkedGeneratedVariantViewModel as LinkedGeneratedVariant } from './slot-inline-edit-tab-types';
+import type {
+  LocalUploadMode,
+  StudioInlineEditActionsContextValue,
+  StudioInlineEditContextValue,
+  StudioInlineEditStateContextValue,
+} from './StudioInlineEditContext.types';
+import { useStudioInlineEditRuntimeState } from './useStudioInlineEditRuntimeState';
 import { useProjectsState } from '../../context/ProjectsContext';
 import { usePromptActions, usePromptState } from '../../context/PromptContext';
 import { useSettingsState } from '../../context/SettingsContext';
 import { useSlotsActions, useSlotsState } from '../../context/SlotsContext';
-import { studioKeys } from '../../hooks/useImageStudioQueries';
-import { type ParamUiControl } from '@/features/ai/image-studio/utils/param-ui';
-import { flattenParams } from '@/shared/utils/prompt-params';
-import type { ParamSpec, PromptValidationIssue } from '@/shared/contracts/prompt-engine';
-
-import type {
-  CompositeTabImageViewModel as CompositeTabImage,
-  EnvironmentReferenceDraftViewModel as EnvironmentReferenceDraft,
-  LinkedGeneratedRunsResponse,
-  LinkedGeneratedVariantViewModel as LinkedGeneratedVariant,
-  InlinePreviewSourceViewModel,
-  LinkedMaskSlotViewModel,
-} from './slot-inline-edit-tab-types';
-import type { ImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
 import { internalError } from '@/shared/errors/app-error';
 
-export type EditCardTab = 'card' | 'generations' | 'environment' | 'masks' | 'composites';
-
-export interface StudioInlineEditStateContextValue {
-  selectedSlot: ImageStudioSlotRecord | null;
-  slotInlineEditOpen: boolean;
-  slotImageUrlDraft: string;
-  slotBase64Draft: string;
-  slotUpdateBusy: boolean;
-  editCardTab: EditCardTab;
-  slotNameDraft: string;
-  slotFolderDraft: string;
-  extractBusy: 'none' | 'programmatic' | 'smart' | 'ai' | 'ui';
-  extractDraftPrompt: string;
-  extractError: string | null;
-  extractReviewOpen: boolean;
-  previewParams: Record<string, unknown> | null;
-  previewValidation: {
-    before: PromptValidationIssue[];
-    after: PromptValidationIssue[];
-  } | null;
-  previewLeaves: Array<{ path: string; value: unknown }>;
-  previewControls: Record<string, ParamUiControl>;
-  extractHistory: PromptExtractHistoryEntry[];
-  selectedExtractHistory: PromptExtractHistoryEntry | null;
-  selectedExtractDiffLines: PromptDiffLine[];
-  selectedExtractChanged: boolean;
-  environmentReferenceDraft: EnvironmentReferenceDraft;
-  environmentPreviewSource: InlinePreviewSourceViewModel;
-  environmentPreviewDimensions: string;
-  linkedGeneratedVariants: LinkedGeneratedVariant[];
-  selectedGenerationPreview: LinkedGeneratedVariant | null;
-  selectedGenerationPreviewDimensions: string;
-  generationPreviewModalOpen: boolean;
-  selectedGenerationModalDimensions: string;
-  linkedVariantApplyBusyKey: string | null;
-  inlinePreviewSource: InlinePreviewSourceViewModel;
-  inlinePreviewDimensions: string;
-  inlinePreviewMimeType: string;
-  inlinePreviewBase64Bytes: number | null;
-  compositeTabInputImages: CompositeTabImage[];
-  compositeTabInputSourceLabel: string;
-  linkedMaskSlots: LinkedMaskSlotViewModel[];
-  sourceCompositeImage?: CompositeTabImage;
-  studioSettings: ImageStudioSettings;
-  uploadPending: boolean;
-  inlineCardImageManagerController: ProductImageManagerController;
-  linkedRunsQuery: ListQuery<LinkedGeneratedVariant, LinkedGeneratedRunsResponse>;
-}
-
-export interface StudioInlineEditActionsContextValue {
-  setEditCardTab: (tab: EditCardTab) => void;
-  setSlotNameDraft: (name: string) => void;
-  setSlotFolderDraft: (folder: string) => void;
-  setGenerationPreviewModalOpen: (open: boolean) => void;
-  onSaveInlineSlot: () => Promise<void>;
-  onClearSlotImage: () => Promise<void>;
-  onCopyCardId: (id: string) => Promise<void>;
-  onRefreshLinkedRuns: () => void;
-  onOpenGenerationPreviewModal: (variant: LinkedGeneratedVariant) => void;
-  onApplyLinkedVariantToCard: (variant: LinkedGeneratedVariant) => Promise<void>;
-  setInlinePreviewNaturalSize: (size: { width: number; height: number } | null) => void;
-  setEnvironmentPreviewNaturalSize: (size: { width: number; height: number } | null) => void;
-  setGenerationPreviewNaturalSize: (size: { width: number; height: number } | null) => void;
-  setGenerationModalPreviewNaturalSize: (size: { width: number; height: number } | null) => void;
-  setExtractDraftPrompt: (prompt: string) => void;
-  setExtractHistory: (history: PromptExtractHistoryEntry[]) => void;
-  setSelectedExtractHistoryId: (id: string | null) => void;
-  setExtractReviewOpen: (open: boolean) => void;
-  setSlotInlineEditOpen: (open: boolean) => void;
-  setEnvironmentReferenceDraft: React.Dispatch<React.SetStateAction<EnvironmentReferenceDraft>>;
-  handleAiExtraction: () => Promise<void>;
-  handleApplyExtraction: () => void;
-  handleProgrammaticExtraction: () => Promise<void>;
-  handleSmartExtraction: () => Promise<void>;
-  handleSuggestUiControls: () => Promise<void>;
-  onReplaceFromDrive: () => void;
-  onReplaceFromLocal: () => void;
-  onUploadEnvironmentFromDrive: () => void;
-  onUploadEnvironmentFromLocal: () => void;
-}
-
-export type StudioInlineEditContextValue = StudioInlineEditStateContextValue &
-  StudioInlineEditActionsContextValue;
+export type {
+  EditCardTab,
+  LocalUploadMode,
+  StudioInlineEditActionsContextValue,
+  StudioInlineEditContextValue,
+  StudioInlineEditStateContextValue,
+} from './StudioInlineEditContext.types';
 
 const StudioInlineEditStateContext = createContext<StudioInlineEditStateContextValue | null>(null);
 const StudioInlineEditActionsContext =
   createContext<StudioInlineEditActionsContextValue | null>(null);
-
-type LocalUploadMode = 'create' | 'replace' | 'temporary-object' | 'environment';
 
 export function StudioInlineEditProvider({
   children,
@@ -204,287 +85,53 @@ export function StudioInlineEditProvider({
   } = usePromptActions();
   const { studioSettings } = useSettingsState();
 
-  // Local state
-  const [slotNameDraft, setSlotNameDraft] = useState('');
-  const [slotFolderDraft, setSlotFolderDraft] = useState('');
-  const [extractBusy, setExtractBusy] = useState<'none' | 'programmatic' | 'smart' | 'ai' | 'ui'>(
-    'none'
-  );
-  const [extractError, setExtractError] = useState<string | null>(null);
-  const [previewParams, setPreviewParams] = useState<Record<string, unknown> | null>(null);
-  const [previewSpecs, setPreviewSpecs] = useState<Record<string, ParamSpec> | null>(null);
-  const [previewControls, setPreviewControls] = useState<Record<string, ParamUiControl>>({});
-  const [previewValidation, setPreviewValidation] = useState<{
-    before: PromptValidationIssue[];
-    after: PromptValidationIssue[];
-  } | null>(null);
-  const [extractHistory, setExtractHistory] = useState<PromptExtractHistoryEntry[]>([]);
-  const [selectedExtractHistoryId, setSelectedExtractHistoryId] = useState<string | null>(null);
-  const [editCardTab, setEditCardTab] = useState<EditCardTab>('card');
-  const [environmentReferenceDraft, setEnvironmentReferenceDraft] =
-    useState<EnvironmentReferenceDraft>(EMPTY_ENVIRONMENT_REFERENCE_DRAFT);
-  const [environmentPreviewNaturalSize, setEnvironmentPreviewNaturalSize] = useState<{
-    width: number;
-    height: number;
-  } | null>(null);
-  const [linkedVariantApplyBusyKey, setLinkedVariantApplyBusyKey] = useState<string | null>(null);
-  const [inlinePreviewNaturalSize, setInlinePreviewNaturalSize] = useState<{
-    width: number;
-    height: number;
-  } | null>(null);
-  const [generationPreviewKey, setGenerationPreviewKey] = useState<string | null>(null);
-  const [generationPreviewNaturalSize, setGenerationPreviewNaturalSize] = useState<{
-    width: number;
-    height: number;
-  } | null>(null);
-  const [generationPreviewModalOpen, setGenerationPreviewModalOpen] = useState(false);
-  const [generationModalPreviewNaturalSize, setGenerationModalPreviewNaturalSize] = useState<{
-    width: number;
-    height: number;
-  } | null>(null);
+  const runtime = useStudioInlineEditRuntimeState({
+    projectId,
+    settingsStore,
+    slots,
+    compositeAssets,
+    selectedFolder,
+    selectedSlot,
+    slotInlineEditOpen,
+    slotImageUrlDraft,
+    slotBase64Draft,
+    extractDraftPrompt,
+  });
   const inlineSlotUploadError = null;
 
-  const inlineSlotLinkSyncTimeoutRef = useRef<number | null>(null);
-  const inlineSlotBase64SyncTimeoutRef = useRef<number | null>(null);
-  const suppressNextInlineDraftPersistenceOpsRef = useRef<number>(0);
-
-  const productImagesExternalBaseUrl = useMemo(
-    () =>
-      settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
-      DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
-    [settingsStore]
-  );
-
-  const linkedRunsQuery = createListQueryV2<
-    LinkedGeneratedRunsResponse,
-    LinkedGeneratedRunsResponse
-  >({
-    queryKey: studioKeys.runs({
-      projectId: projectId ?? null,
-      sourceSlotId: selectedSlot?.id ?? null,
-      status: 'completed',
-      scope: 'slot-inline-edit',
-    }),
-    queryFn: async () => {
-      if (!projectId || !selectedSlot?.id) return { runs: [], total: 0 };
-      return await api.get<LinkedGeneratedRunsResponse>('/api/image-studio/runs', {
-        params: {
-          projectId,
-          sourceSlotId: selectedSlot.id,
-          status: 'completed',
-          limit: 100,
-          offset: 0,
-        },
-      });
-    },
-    enabled: Boolean(projectId && slotInlineEditOpen && selectedSlot?.id),
-    staleTime: 5_000,
-    meta: {
-      source: 'image-studio.modals.linked-runs',
-      operation: 'list',
-      resource: 'image-studio.runs',
-      domain: 'image_studio',
-      tags: ['image-studio', 'runs', 'linked-variants'],
-      description: 'Loads image studio runs.'},
-  });
-
-  const linkedGeneratedVariants = useMemo(
-    () => mapLinkedGeneratedVariants(linkedRunsQuery.data?.runs, productImagesExternalBaseUrl),
-    [linkedRunsQuery.data?.runs, productImagesExternalBaseUrl]
-  );
-
-  const selectedGenerationPreview = useMemo(
-    () => resolveSelectedGenerationPreview(linkedGeneratedVariants, generationPreviewKey),
-    [generationPreviewKey, linkedGeneratedVariants]
-  );
-
-  const selectedGenerationPreviewDimensions = useMemo(
-    () =>
-      resolveDimensionLabel(
-        selectedGenerationPreview?.output.width,
-        selectedGenerationPreview?.output.height,
-        generationPreviewNaturalSize?.width,
-        generationPreviewNaturalSize?.height
-      ),
-    [generationPreviewNaturalSize, selectedGenerationPreview]
-  );
-
-  const selectedGenerationModalDimensions = useMemo(
-    () =>
-      resolveDimensionLabel(
-        selectedGenerationPreview?.output.width,
-        selectedGenerationPreview?.output.height,
-        generationModalPreviewNaturalSize?.width,
-        generationModalPreviewNaturalSize?.height
-      ),
-    [generationModalPreviewNaturalSize, selectedGenerationPreview]
-  );
-
-  const linkedMaskSlots = useMemo(
-    () => mapLinkedMaskSlots(slots, selectedSlot?.id, productImagesExternalBaseUrl),
-    [productImagesExternalBaseUrl, selectedSlot?.id, slots]
-  );
-
-  const inlinePreviewSource = useMemo(
-    () =>
-      resolveInlinePreviewSource(
-        slotBase64Draft,
-        slotImageUrlDraft,
-        selectedSlot,
-        productImagesExternalBaseUrl
-      ),
-    [selectedSlot, slotBase64Draft, slotImageUrlDraft, productImagesExternalBaseUrl]
-  );
-
-  const inlinePreviewBase64Bytes = useMemo(
-    () => estimateBase64Bytes(slotBase64Draft),
-    [slotBase64Draft]
-  );
-  const inlinePreviewMimeType = useMemo(
-    () => resolveInlinePreviewMimeType(selectedSlot?.imageFile?.mimetype, slotBase64Draft),
-    [selectedSlot, slotBase64Draft]
-  );
-
-  const inlinePreviewDimensions = useMemo(
-    () =>
-      resolveDimensionLabel(
-        selectedSlot?.imageFile?.width,
-        selectedSlot?.imageFile?.height,
-        inlinePreviewNaturalSize?.width,
-        inlinePreviewNaturalSize?.height
-      ),
-    [selectedSlot, inlinePreviewNaturalSize]
-  );
-
-  const environmentPreviewSource = useMemo(
-    () => resolveEnvironmentPreviewSource(environmentReferenceDraft, productImagesExternalBaseUrl),
-    [environmentReferenceDraft, productImagesExternalBaseUrl]
-  );
-
-  const environmentPreviewDimensions = useMemo(
-    () =>
-      resolveDimensionLabel(
-        environmentReferenceDraft.width,
-        environmentReferenceDraft.height,
-        environmentPreviewNaturalSize?.width,
-        environmentPreviewNaturalSize?.height
-      ),
-    [environmentReferenceDraft, environmentPreviewNaturalSize]
-  );
-
-  const sourceCompositeImage = useMemo(
-    () =>
-      mapSourceCompositeImage({
-        selectedSlot,
-        inlinePreviewNaturalSize,
-        inlinePreviewSource,
-        inlinePreviewBase64Bytes,
-        slotNameDraft,
-      }),
-    [
-      selectedSlot,
-      inlinePreviewNaturalSize,
-      inlinePreviewSource,
-      inlinePreviewBase64Bytes,
-      slotNameDraft,
-    ]
-  );
-
-  const savedCompositeInputImages = useMemo(
-    () => mapSavedCompositeInputImages({ selectedSlot, slots, productImagesExternalBaseUrl }),
-    [productImagesExternalBaseUrl, selectedSlot, slots]
-  );
-
-  const activeCompositeInputImages = useMemo(
-    () => mapActiveCompositeInputImages(compositeAssets, productImagesExternalBaseUrl),
-    [compositeAssets, productImagesExternalBaseUrl]
-  );
-
-  const compositeTabInputImages = useMemo(
-    () =>
-      savedCompositeInputImages.length > 0 ? savedCompositeInputImages : activeCompositeInputImages,
-    [activeCompositeInputImages, savedCompositeInputImages]
-  );
-  const compositeTabInputSourceLabel = useMemo(
-    () =>
-      resolveCompositeTabInputSourceLabel(
-        savedCompositeInputImages.length,
-        activeCompositeInputImages.length
-      ),
-    [activeCompositeInputImages.length, savedCompositeInputImages.length]
-  );
-
-  const previewLeaves = useMemo(
-    () => (previewParams ? flattenParams(previewParams).filter((leaf) => Boolean(leaf.path)) : []),
-    [previewParams]
-  );
-
-  const selectedExtractHistory = useMemo(() => {
-    if (extractHistory.length === 0) return null;
-    if (!selectedExtractHistoryId) return extractHistory[0] ?? null;
-    return (
-      extractHistory.find((entry) => entry.id === selectedExtractHistoryId) ??
-      extractHistory[0] ??
-      null
-    );
-  }, [extractHistory, selectedExtractHistoryId]);
-
-  const selectedExtractDiffLines = useMemo(() => {
-    if (!selectedExtractHistory) return [];
-    return buildPromptDiffLines(
-      selectedExtractHistory.promptBefore,
-      selectedExtractHistory.promptAfter
-    );
-  }, [selectedExtractHistory]);
-
-  const selectedExtractChanged = useMemo(
-    () =>
-      selectedExtractHistory
-        ? selectedExtractHistory.promptBefore !== selectedExtractHistory.promptAfter
-        : false,
-    [selectedExtractHistory]
-  );
-
-  // Sync effect for open modal
-  useEffect(() => {
-    if (!slotInlineEditOpen || !selectedSlot) return;
-    setGenerationPreviewKey(null);
-    setEditCardTab('card');
-    setSlotNameDraft(selectedSlot.name ?? '');
-    setSlotFolderDraft(selectedSlot.folderPath ?? selectedFolder ?? '');
-    setEnvironmentReferenceDraft(readEnvironmentReferenceDraft(selectedSlot));
-  }, [slotInlineEditOpen, selectedSlot, selectedFolder]);
-
-  // Handlers
   const clearInlineSlotSyncTimeouts = useCallback(() => {
-    if (inlineSlotLinkSyncTimeoutRef.current)
-      window.clearTimeout(inlineSlotLinkSyncTimeoutRef.current);
-    if (inlineSlotBase64SyncTimeoutRef.current)
-      window.clearTimeout(inlineSlotBase64SyncTimeoutRef.current);
-    inlineSlotLinkSyncTimeoutRef.current = null;
-    inlineSlotBase64SyncTimeoutRef.current = null;
-  }, []);
+    if (runtime.inlineSlotLinkSyncTimeoutRef.current) {
+      window.clearTimeout(runtime.inlineSlotLinkSyncTimeoutRef.current);
+    }
+    if (runtime.inlineSlotBase64SyncTimeoutRef.current) {
+      window.clearTimeout(runtime.inlineSlotBase64SyncTimeoutRef.current);
+    }
+    runtime.inlineSlotLinkSyncTimeoutRef.current = null;
+    runtime.inlineSlotBase64SyncTimeoutRef.current = null;
+  }, [runtime.inlineSlotBase64SyncTimeoutRef, runtime.inlineSlotLinkSyncTimeoutRef]);
 
   const scheduleInlineSlotLinkPersistence = useCallback(
     (slotId: string, nextValue: string) => {
-      if (inlineSlotLinkSyncTimeoutRef.current)
-        window.clearTimeout(inlineSlotLinkSyncTimeoutRef.current);
-      inlineSlotLinkSyncTimeoutRef.current = window.setTimeout(() => {
-        inlineSlotLinkSyncTimeoutRef.current = null;
+      if (runtime.inlineSlotLinkSyncTimeoutRef.current) {
+        window.clearTimeout(runtime.inlineSlotLinkSyncTimeoutRef.current);
+      }
+      runtime.inlineSlotLinkSyncTimeoutRef.current = window.setTimeout(() => {
+        runtime.inlineSlotLinkSyncTimeoutRef.current = null;
         void updateSlotMutation
           .mutateAsync({ id: slotId, data: { imageUrl: nextValue.trim() || null } })
           .catch(() => {});
       }, 450);
     },
-    [updateSlotMutation]
+    [runtime.inlineSlotLinkSyncTimeoutRef, updateSlotMutation]
   );
 
   const scheduleInlineSlotBase64Persistence = useCallback(
     (slotId: string, nextValue: string) => {
-      if (inlineSlotBase64SyncTimeoutRef.current)
-        window.clearTimeout(inlineSlotBase64SyncTimeoutRef.current);
-      inlineSlotBase64SyncTimeoutRef.current = window.setTimeout(() => {
-        inlineSlotBase64SyncTimeoutRef.current = null;
+      if (runtime.inlineSlotBase64SyncTimeoutRef.current) {
+        window.clearTimeout(runtime.inlineSlotBase64SyncTimeoutRef.current);
+      }
+      runtime.inlineSlotBase64SyncTimeoutRef.current = window.setTimeout(() => {
+        runtime.inlineSlotBase64SyncTimeoutRef.current = null;
         const trimmed = nextValue.trim();
         void updateSlotMutation
           .mutateAsync({
@@ -494,112 +141,136 @@ export function StudioInlineEditProvider({
           .catch(() => {});
       }, 450);
     },
-    [updateSlotMutation]
+    [runtime.inlineSlotBase64SyncTimeoutRef, updateSlotMutation]
   );
 
   const flushInlineSlotDraftSync = useCallback(async () => {
-    if (!selectedSlot?.id) return;
+    if (!selectedSlot?.id) {
+      return;
+    }
     // Implementation simplified for brevity, similar to StudioModals.tsx
   }, [selectedSlot?.id]);
 
   const setInlineCardImageLinkAt = useCallback(
     (index: number, value: string) => {
-      if (index !== INLINE_CARD_IMAGE_SLOT_INDEX) return;
-      setSlotImageUrlDraft(value);
-      if (suppressNextInlineDraftPersistenceOpsRef.current > 0) {
-        suppressNextInlineDraftPersistenceOpsRef.current -= 1;
+      if (index !== INLINE_CARD_IMAGE_SLOT_INDEX) {
         return;
       }
-      if (selectedSlot?.id) scheduleInlineSlotLinkPersistence(selectedSlot.id, value);
+      setSlotImageUrlDraft(value);
+      if (runtime.suppressNextInlineDraftPersistenceOpsRef.current > 0) {
+        runtime.suppressNextInlineDraftPersistenceOpsRef.current -= 1;
+        return;
+      }
+      if (selectedSlot?.id) {
+        scheduleInlineSlotLinkPersistence(selectedSlot.id, value);
+      }
     },
-    [scheduleInlineSlotLinkPersistence, selectedSlot?.id, setSlotImageUrlDraft]
+    [
+      runtime.suppressNextInlineDraftPersistenceOpsRef,
+      scheduleInlineSlotLinkPersistence,
+      selectedSlot?.id,
+      setSlotImageUrlDraft,
+    ]
   );
 
   const setInlineCardImageBase64At = useCallback(
     (index: number, value: string) => {
-      if (index !== INLINE_CARD_IMAGE_SLOT_INDEX) return;
-      setSlotBase64Draft(value);
-      if (suppressNextInlineDraftPersistenceOpsRef.current > 0) {
-        suppressNextInlineDraftPersistenceOpsRef.current -= 1;
+      if (index !== INLINE_CARD_IMAGE_SLOT_INDEX) {
         return;
       }
-      if (selectedSlot?.id) scheduleInlineSlotBase64Persistence(selectedSlot.id, value);
+      setSlotBase64Draft(value);
+      if (runtime.suppressNextInlineDraftPersistenceOpsRef.current > 0) {
+        runtime.suppressNextInlineDraftPersistenceOpsRef.current -= 1;
+        return;
+      }
+      if (selectedSlot?.id) {
+        scheduleInlineSlotBase64Persistence(selectedSlot.id, value);
+      }
     },
-    [scheduleInlineSlotBase64Persistence, selectedSlot?.id, setSlotBase64Draft]
+    [
+      runtime.suppressNextInlineDraftPersistenceOpsRef,
+      scheduleInlineSlotBase64Persistence,
+      selectedSlot?.id,
+      setSlotBase64Draft,
+    ]
   );
 
-  // Extraction handlers
   const extractionHandlers = createPromptExtractionHandlers({
     extractDraftPrompt,
-    previewControls,
-    previewParams,
-    previewSpecs,
-    setExtractBusy,
+    previewControls: runtime.previewControls,
+    previewParams: runtime.previewParams,
+    previewSpecs: runtime.previewSpecs,
+    setExtractBusy: runtime.setExtractBusy,
     setExtractDraftPrompt,
-    setExtractError,
-    setExtractHistory,
+    setExtractError: runtime.setExtractError,
+    setExtractHistory: runtime.setExtractHistory,
     setExtractPreviewUiOverrides,
     setExtractReviewOpen,
     setParamSpecs,
     setParamUiOverrides,
     setParamsState,
-    setPreviewControls,
-    setPreviewParams,
-    setPreviewSpecs,
-    setPreviewValidation,
+    setPreviewControls: runtime.setPreviewControls,
+    setPreviewParams: runtime.setPreviewParams,
+    setPreviewSpecs: runtime.setPreviewSpecs,
+    setPreviewValidation: runtime.setPreviewValidation,
     setPromptText,
-    setSelectedExtractHistoryId,
+    setSelectedExtractHistoryId: runtime.setSelectedExtractHistoryId,
     studioSettings,
     toast,
   });
 
-  // Inline slot handlers
   const inlineHandlers = createInlineSlotHandlers({
     clearInlineSlotSyncTimeouts,
-    environmentReferenceDraft,
+    environmentReferenceDraft: runtime.environmentReferenceDraft,
     flushInlineSlotDraftSync,
     isCardImageRemovalLocked,
-    setLinkedVariantApplyBusyKey,
+    setLinkedVariantApplyBusyKey: runtime.setLinkedVariantApplyBusyKey,
     setSlotBase64Draft,
     setSlotImageUrlDraft,
     setSlotInlineEditOpen,
     setSlotUpdateBusy,
     selectedSlot,
-    slotFolderDraft,
-    slotNameDraft,
+    slotFolderDraft: runtime.slotFolderDraft,
+    slotNameDraft: runtime.slotNameDraft,
     slotsCount: slots.length,
     toast,
     updateSlotMutation,
   });
+
   const onOpenGenerationPreviewModal = useCallback((variant: LinkedGeneratedVariant) => {
-    setGenerationPreviewKey(variant.key);
-    setGenerationPreviewNaturalSize(null);
-    setGenerationModalPreviewNaturalSize(null);
-    setGenerationPreviewModalOpen(true);
-  }, []);
+    runtime.setGenerationPreviewKey(variant.key);
+    runtime.setGenerationPreviewNaturalSize(null);
+    runtime.setGenerationModalPreviewNaturalSize(null);
+    runtime.setGenerationPreviewModalOpen(true);
+  }, [runtime]);
+
   const onCopyCardId = useCallback(
     async (id: string) => {
       await copyCardIdToClipboard(id, toast);
     },
     [toast]
   );
+
   const onRefreshLinkedRuns = useCallback(() => {
-    void linkedRunsQuery.refetch();
-  }, [linkedRunsQuery]);
+    void runtime.linkedRunsQuery.refetch();
+  }, [runtime.linkedRunsQuery]);
+
   const onReplaceFromDrive = useCallback(() => {
     setDriveImportOpen(true);
     setDriveImportMode('replace');
     setDriveImportTargetId(selectedSlot?.id ?? null);
   }, [selectedSlot?.id, setDriveImportMode, setDriveImportOpen, setDriveImportTargetId]);
+
   const onReplaceFromLocal = useCallback(() => {
-    // Trigger native file picker via hidden input if needed,
-    // or just assume standard ProductImageManager behavior
+    // Trigger native file picker via hidden input if needed.
   }, []);
+
   const onUploadEnvironmentFromDrive = useCallback(() => {
     setDriveImportOpen(true);
     setDriveImportMode('environment');
     setDriveImportTargetId(selectedSlot?.id ?? null);
   }, [selectedSlot?.id, setDriveImportMode, setDriveImportOpen, setDriveImportTargetId]);
+
   const onUploadEnvironmentFromLocal = useCallback(() => {
     triggerLocalUpload('environment', selectedSlot?.id ?? null);
   }, [selectedSlot?.id, triggerLocalUpload]);
@@ -609,14 +280,14 @@ export function StudioInlineEditProvider({
     const managedInlineSlot =
       selectedSlot?.imageFileId && previewPath
         ? {
-          type: 'existing' as const,
-          data: {
-            id: selectedSlot.imageFileId,
-            filepath: previewPath,
-          },
-          previewUrl: previewPath,
-          slotId: selectedSlot.id,
-        }
+            type: 'existing' as const,
+            data: {
+              id: selectedSlot.imageFileId,
+              filepath: previewPath,
+            },
+            previewUrl: previewPath,
+            slotId: selectedSlot.id,
+          }
         : null;
 
     return {
@@ -626,13 +297,16 @@ export function StudioInlineEditProvider({
       setImageLinkAt: setInlineCardImageLinkAt,
       setImageBase64At: setInlineCardImageBase64At,
       handleSlotImageChange: async (_file: File | null, _index: number) => {
-        if (!selectedSlot?.id) return;
+        if (!selectedSlot?.id) {
+          return;
+        }
         setSlotUpdateBusy(true);
         try {
-          const file = _file;
-          if (!file) return;
+          if (!_file) {
+            return;
+          }
           await uploadMutation.mutateAsync({
-            files: [file],
+            files: [_file],
             folder: selectedSlot.folderPath ?? '',
           });
         } finally {
@@ -659,18 +333,18 @@ export function StudioInlineEditProvider({
       uploadError: inlineSlotUploadError,
     };
   }, [
-    slotImageUrlDraft,
-    slotBase64Draft,
-    setInlineCardImageLinkAt,
-    setInlineCardImageBase64At,
     inlineHandlers.handleClearSlotImage,
-    selectedSlot,
     inlineSlotUploadError,
-    setSlotUpdateBusy,
-    uploadMutation,
-    setDriveImportOpen,
+    selectedSlot,
     setDriveImportMode,
+    setDriveImportOpen,
     setDriveImportTargetId,
+    setInlineCardImageBase64At,
+    setInlineCardImageLinkAt,
+    setSlotUpdateBusy,
+    slotBase64Draft,
+    slotImageUrlDraft,
+    uploadMutation,
   ]);
 
   const stateValue = useMemo(
@@ -680,109 +354,80 @@ export function StudioInlineEditProvider({
       slotImageUrlDraft,
       slotBase64Draft,
       slotUpdateBusy,
-      editCardTab,
-      slotNameDraft,
-      slotFolderDraft,
-      extractBusy,
-      extractError,
-      previewParams,
-      previewValidation,
-      previewLeaves,
-      previewControls,
-      extractHistory,
-      selectedExtractHistory,
-      selectedExtractDiffLines,
-      selectedExtractChanged,
+      editCardTab: runtime.editCardTab,
+      slotNameDraft: runtime.slotNameDraft,
+      slotFolderDraft: runtime.slotFolderDraft,
+      extractBusy: runtime.extractBusy,
+      extractError: runtime.extractError,
+      previewParams: runtime.previewParams,
+      previewValidation: runtime.previewValidation,
+      previewLeaves: runtime.previewLeaves,
+      previewControls: runtime.previewControls,
+      extractHistory: runtime.extractHistory,
+      selectedExtractHistory: runtime.selectedExtractHistory,
+      selectedExtractDiffLines: runtime.selectedExtractDiffLines,
+      selectedExtractChanged: runtime.selectedExtractChanged,
       extractDraftPrompt,
       extractReviewOpen,
-      environmentReferenceDraft,
-      environmentPreviewSource,
-      environmentPreviewDimensions,
-      linkedGeneratedVariants,
-      selectedGenerationPreview,
-      selectedGenerationPreviewDimensions,
-      generationPreviewModalOpen,
-      selectedGenerationModalDimensions,
-      linkedVariantApplyBusyKey,
-      inlinePreviewSource,
-      inlinePreviewDimensions,
-      inlinePreviewMimeType,
-      inlinePreviewBase64Bytes,
-      compositeTabInputImages,
-      compositeTabInputSourceLabel,
-      linkedMaskSlots,
-      sourceCompositeImage,
+      environmentReferenceDraft: runtime.environmentReferenceDraft,
+      environmentPreviewSource: runtime.environmentPreviewSource,
+      environmentPreviewDimensions: runtime.environmentPreviewDimensions,
+      linkedGeneratedVariants: runtime.linkedGeneratedVariants,
+      selectedGenerationPreview: runtime.selectedGenerationPreview,
+      selectedGenerationPreviewDimensions: runtime.selectedGenerationPreviewDimensions,
+      generationPreviewModalOpen: runtime.generationPreviewModalOpen,
+      selectedGenerationModalDimensions: runtime.selectedGenerationModalDimensions,
+      linkedVariantApplyBusyKey: runtime.linkedVariantApplyBusyKey,
+      inlinePreviewSource: runtime.inlinePreviewSource,
+      inlinePreviewDimensions: runtime.inlinePreviewDimensions,
+      inlinePreviewMimeType: runtime.inlinePreviewMimeType,
+      inlinePreviewBase64Bytes: runtime.inlinePreviewBase64Bytes,
+      compositeTabInputImages: runtime.compositeTabInputImages,
+      compositeTabInputSourceLabel: runtime.compositeTabInputSourceLabel,
+      linkedMaskSlots: runtime.linkedMaskSlots,
+      sourceCompositeImage: runtime.sourceCompositeImage,
       studioSettings,
       uploadPending: uploadMutation.isPending,
       inlineCardImageManagerController,
-      linkedRunsQuery,
+      linkedRunsQuery: runtime.linkedRunsQuery,
     }),
     [
       extractDraftPrompt,
       extractReviewOpen,
-      compositeTabInputImages,
-      compositeTabInputSourceLabel,
-      editCardTab,
-      environmentPreviewDimensions,
-      environmentPreviewSource,
-      environmentReferenceDraft,
-      extractBusy,
-      extractError,
-      extractHistory,
-      generationPreviewModalOpen,
       inlineCardImageManagerController,
-      inlinePreviewBase64Bytes,
-      inlinePreviewDimensions,
-      inlinePreviewMimeType,
-      inlinePreviewSource,
-      linkedGeneratedVariants,
-      linkedMaskSlots,
-      linkedRunsQuery,
-      linkedVariantApplyBusyKey,
-      previewControls,
-      previewLeaves,
-      previewParams,
-      previewValidation,
-      selectedExtractChanged,
-      selectedExtractDiffLines,
-      selectedExtractHistory,
-      selectedGenerationModalDimensions,
-      selectedGenerationPreview,
-      selectedGenerationPreviewDimensions,
+      runtime,
       selectedSlot,
       slotBase64Draft,
-      slotFolderDraft,
       slotImageUrlDraft,
       slotInlineEditOpen,
-      slotNameDraft,
       slotUpdateBusy,
-      sourceCompositeImage,
       studioSettings,
       uploadMutation.isPending,
     ]
   );
+
   const actionsValue = useMemo(
     (): StudioInlineEditActionsContextValue => ({
-      setEditCardTab,
-      setSlotNameDraft,
-      setSlotFolderDraft,
-      setGenerationPreviewModalOpen,
+      setEditCardTab: runtime.setEditCardTab,
+      setSlotNameDraft: runtime.setSlotNameDraft,
+      setSlotFolderDraft: runtime.setSlotFolderDraft,
+      setGenerationPreviewModalOpen: runtime.setGenerationPreviewModalOpen,
       onSaveInlineSlot: inlineHandlers.handleSaveInlineSlot,
       onClearSlotImage: inlineHandlers.handleClearSlotImage,
       onCopyCardId,
       onRefreshLinkedRuns,
       onOpenGenerationPreviewModal,
       onApplyLinkedVariantToCard: inlineHandlers.handleApplyLinkedVariantToCard,
-      setInlinePreviewNaturalSize,
-      setEnvironmentPreviewNaturalSize,
-      setGenerationPreviewNaturalSize,
-      setGenerationModalPreviewNaturalSize,
+      setInlinePreviewNaturalSize: runtime.setInlinePreviewNaturalSize,
+      setEnvironmentPreviewNaturalSize: runtime.setEnvironmentPreviewNaturalSize,
+      setGenerationPreviewNaturalSize: runtime.setGenerationPreviewNaturalSize,
+      setGenerationModalPreviewNaturalSize: runtime.setGenerationModalPreviewNaturalSize,
       setExtractDraftPrompt,
-      setExtractHistory,
-      setSelectedExtractHistoryId,
+      setExtractHistory: runtime.setExtractHistory,
+      setSelectedExtractHistoryId: runtime.setSelectedExtractHistoryId,
       setExtractReviewOpen,
       setSlotInlineEditOpen,
-      setEnvironmentReferenceDraft,
+      setEnvironmentReferenceDraft: runtime.setEnvironmentReferenceDraft,
       handleAiExtraction: extractionHandlers.handleAiExtraction,
       handleApplyExtraction: extractionHandlers.handleApplyExtraction,
       handleProgrammaticExtraction: extractionHandlers.handleProgrammaticExtraction,
@@ -803,9 +448,9 @@ export function StudioInlineEditProvider({
       onReplaceFromLocal,
       onUploadEnvironmentFromDrive,
       onUploadEnvironmentFromLocal,
+      runtime,
       setExtractDraftPrompt,
       setExtractReviewOpen,
-      setGenerationPreviewModalOpen,
       setSlotInlineEditOpen,
     ]
   );
@@ -840,5 +485,5 @@ export function useStudioInlineEditActions(): StudioInlineEditActionsContextValu
 export function useStudioInlineEdit(): StudioInlineEditContextValue {
   const state = useStudioInlineEditState();
   const actions = useStudioInlineEditActions();
-  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
+  return useMemo(() => ({ ...state, ...actions }), [actions, state]);
 }

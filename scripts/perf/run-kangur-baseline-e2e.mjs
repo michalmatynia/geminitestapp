@@ -6,7 +6,6 @@ const root = process.cwd();
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
 
-const DEFAULT_BASE_URL = 'http://localhost:3000';
 const baselineScript = path.join('scripts', 'perf', 'kangur-performance-baseline.mjs');
 const passthroughArgs = args.filter((arg) => arg !== '--dry-run');
 
@@ -48,7 +47,7 @@ const run = async () => {
     );
   }
 
-  const baseUrl = process.env['PLAYWRIGHT_BASE_URL'] || DEFAULT_BASE_URL;
+  const baseUrl = process.env['PLAYWRIGHT_BASE_URL']?.trim() || null;
   const chromiumExecutablePath = await resolveChromiumExecutablePath();
 
   const command = process.execPath;
@@ -63,14 +62,18 @@ const run = async () => {
 
   const env = {
     ...process.env,
-    PLAYWRIGHT_BASE_URL: baseUrl,
+    PLAYWRIGHT_RUNTIME_KEEP_ALIVE: process.env['PLAYWRIGHT_RUNTIME_KEEP_ALIVE'] || 'false',
   };
+
+  if (baseUrl) {
+    env['PLAYWRIGHT_BASE_URL'] = baseUrl;
+  }
 
   if (chromiumExecutablePath) {
     env['PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH'] = chromiumExecutablePath;
   }
 
-  console.log(`[kangur-perf] baseURL=${baseUrl}`);
+  console.log(`[kangur-perf] baseURL=${baseUrl ?? 'broker-managed'}`);
   if (chromiumExecutablePath) {
     console.log(`[kangur-perf] browser=${chromiumExecutablePath}`);
   } else {

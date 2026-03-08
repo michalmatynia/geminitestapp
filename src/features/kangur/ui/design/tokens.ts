@@ -134,3 +134,5 @@ export const KANGUR_OPTION_CARD_CLASSNAME = `${KANGUR_SURFACE_CARD_CLASSNAME} gr
 
 export const KANGUR_STEP_PILL_CLASSNAME =
   'kangur-cta-pill inline-flex items-center justify-center rounded-full border border-transparent transition-all duration-200';
+
+export const KANGUR_PENDING_STEP_PILL_CLASSNAME = 'kangur-step-pill-pending w-[14px]';

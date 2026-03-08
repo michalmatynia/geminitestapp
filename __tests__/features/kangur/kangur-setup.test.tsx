@@ -33,9 +33,9 @@ describe('KangurSetup', () => {
   it('uses shared option-card and summary surfaces across the setup flow', () => {
     const onStart = vi.fn();
 
-    render(<KangurSetup onBack={vi.fn()} onStart={onStart} />);
+    render(<KangurSetup onStart={onStart} />);
 
-    expect(screen.getByRole('list', { name: 'Kangur Matematyczny' })).toBeInTheDocument();
+    expect(screen.getByRole('list', { name: 'Wybierz edycje konkursu' })).toBeInTheDocument();
     expect(screen.getByTestId('kangur-setup-editions-shell')).toHaveClass(
       'glass-panel',
       'border-white/88',
@@ -46,10 +46,6 @@ describe('KangurSetup', () => {
     expect(within(editionsHeading).getByText('🦘')).toHaveClass(
       'bg-amber-100',
       'text-amber-700'
-    );
-    expect(screen.getByRole('button', { name: /wroc do poprzedniego widoku/i })).toHaveClass(
-      'kangur-cta-pill',
-      'surface-cta'
     );
     expect(screen.getByText('O konkursie Kangur')).toHaveClass('border-amber-200', 'bg-amber-100');
 

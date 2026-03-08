@@ -47,7 +47,7 @@ export default function DifficultySelector({
         data-testid='difficulty-selector-heading'
         description='Ten sam uklad, tylko rosnacy poziom wyzwania.'
         descriptionId={descriptionId}
-        headingAs='h2'
+        headingAs='h3'
         headingSize='sm'
         title='Wybierz poziom trudnosci'
         titleId={headingId}

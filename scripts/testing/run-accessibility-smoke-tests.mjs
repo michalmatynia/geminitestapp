@@ -2,7 +2,14 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 
-import { buildPlaywrightSuiteRuntime } from './lib/playwright-suite-runtime.mjs';
+import {
+  acquireRuntimeLease,
+  buildBrokeredPlaywrightEnv,
+  resolveNpxExecutable,
+  resolvePlaywrightRunArtifacts,
+  resolveRuntimeAgentId,
+  stopBrokerRuntimeLease,
+} from './lib/runtime-broker.mjs';
 
 const args = new Set(process.argv.slice(2));
 const strictMode = args.has('--strict');
@@ -16,6 +23,8 @@ const outDir = path.join(root, 'docs', 'metrics');
 const MAX_OUTPUT_BYTES = 100_000;
 const playwrightHost = process.env['HOST'] || '127.0.0.1';
 const playwrightBaseUrl = process.env['PLAYWRIGHT_BASE_URL'] || `http://${playwrightHost}:3000`;
+const playwrightAgentId = resolveRuntimeAgentId({ env: process.env });
+const shouldStopPlaywrightRuntime = process.env['PLAYWRIGHT_RUNTIME_KEEP_ALIVE'] !== 'true';
 
 const suites = [
   {
@@ -116,13 +125,28 @@ const countActWarnings = (value) => (value.match(/not wrapped in act\(\.\.\.\)/g
 
 const resolveSuiteCommand = (suite, playwrightRuntime) => {
   if (suite.runner === 'playwright') {
-    const command = playwrightRuntime.preferredBrowserNodeBinDir
-      ? path.join(playwrightRuntime.preferredBrowserNodeBinDir, 'npx')
-      : 'npx';
+    const artifacts = resolvePlaywrightRunArtifacts({
+      rootDir: root,
+      appId: 'web',
+      agentId: playwrightRuntime.agentId ?? playwrightAgentId,
+      runId: `${process.env['TEST_RUN_ID'] ?? 'accessibility-smoke'}-${suite.id}`,
+      env: process.env,
+    });
     return {
-      command,
+      command: resolveNpxExecutable({
+        preferredBrowserNodeBinDir: playwrightRuntime.preferredBrowserNodeBinDir,
+      }),
       args: ['playwright', 'test', ...suite.tests],
-      env: playwrightRuntime.env,
+      env: buildBrokeredPlaywrightEnv({
+        env: process.env,
+        host: playwrightRuntime.host,
+        baseUrl: playwrightRuntime.baseUrl,
+        artifacts,
+        preferredBrowserNodeBinDir: playwrightRuntime.preferredBrowserNodeBinDir,
+        agentId: playwrightRuntime.agentId ?? playwrightAgentId,
+        leaseKey: playwrightRuntime.leaseKey,
+        distDir: playwrightRuntime.distDir,
+      }),
     };
   }
 
@@ -242,76 +266,97 @@ const toMarkdown = (payload) => {
 };
 
 const run = async () => {
-  const playwrightRuntime = await buildPlaywrightSuiteRuntime({
-    baseUrl: playwrightBaseUrl,
-    host: playwrightHost,
-    env: process.env,
-  });
-  if (playwrightRuntime.reuseExistingServer) {
-    console.log(`[a11y-smoke] reusing existing server at ${playwrightBaseUrl}`);
-  }
+  let playwrightRuntime = null;
 
-  const results = [];
-  for (const suite of suites) {
-    const result = await runSuite(suite, playwrightRuntime);
-    results.push(result);
+  try {
+    playwrightRuntime = await acquireRuntimeLease({
+      rootDir: root,
+      appId: 'web',
+      mode: 'dev',
+      agentId: playwrightAgentId,
+      host: playwrightHost,
+      env: process.env,
+    });
     console.log(
-      `[a11y-smoke] ${suite.name.padEnd(38, ' ')} ${result.status.toUpperCase().padEnd(4, ' ')} ${formatDuration(result.durationMs)}`
+      `[a11y-smoke] runtime=${playwrightRuntime.source}${playwrightRuntime.reused ? ':reused' : ':started'} baseUrl=${playwrightRuntime.baseUrl} agent=${playwrightRuntime.agentId}`
     );
-  }
 
-  const summary = {
-    total: results.length,
-    passed: results.filter((result) => result.status === 'pass').length,
-    failed: results.filter((result) => result.status === 'fail').length,
-    actWarnings: results.reduce((acc, result) => acc + (result.actWarnings ?? 0), 0),
-    warningBudget: Number.isFinite(warningBudget) ? warningBudget : 10,
-    warningBudgetStatus: 'ok',
-    warningBudgetEnforcement: failOnWarningBudgetExceed ? 'fail-on-exceed' : 'telemetry-only',
-  };
-  summary.warningBudgetStatus =
-    summary.actWarnings <= summary.warningBudget ? 'ok' : 'exceeded';
+    const results = [];
+    for (const suite of suites) {
+      const result = await runSuite(suite, playwrightRuntime);
+      results.push(result);
+      console.log(
+        `[a11y-smoke] ${suite.name.padEnd(38, ' ')} ${result.status.toUpperCase().padEnd(4, ' ')} ${formatDuration(result.durationMs)}`
+      );
+    }
 
-  const payload = {
-    generatedAt: new Date().toISOString(),
-    strictMode,
-    failOnWarningBudgetExceed,
-    summary,
-    results,
-  };
+    const summary = {
+      total: results.length,
+      passed: results.filter((result) => result.status === 'pass').length,
+      failed: results.filter((result) => result.status === 'fail').length,
+      actWarnings: results.reduce((acc, result) => acc + (result.actWarnings ?? 0), 0),
+      warningBudget: Number.isFinite(warningBudget) ? warningBudget : 10,
+      warningBudgetStatus: 'ok',
+      warningBudgetEnforcement: failOnWarningBudgetExceed ? 'fail-on-exceed' : 'telemetry-only',
+    };
+    summary.warningBudgetStatus =
+      summary.actWarnings <= summary.warningBudget ? 'ok' : 'exceeded';
 
-  await fs.mkdir(outDir, { recursive: true });
-  const stamp = payload.generatedAt.replace(/[:.]/g, '-');
+    const payload = {
+      generatedAt: new Date().toISOString(),
+      strictMode,
+      failOnWarningBudgetExceed,
+      runtime: {
+        source: playwrightRuntime.source,
+        reused: playwrightRuntime.reused,
+        baseUrl: playwrightRuntime.baseUrl,
+        agentId: playwrightRuntime.agentId,
+        leaseKey: playwrightRuntime.leaseKey ?? null,
+      },
+      summary,
+      results,
+    };
 
-  const latestJsonPath = path.join(outDir, 'accessibility-smoke-latest.json');
-  const latestMdPath = path.join(outDir, 'accessibility-smoke-latest.md');
-  const historicalJsonPath = path.join(outDir, `accessibility-smoke-${stamp}.json`);
-  const historicalMdPath = path.join(outDir, `accessibility-smoke-${stamp}.md`);
+    await fs.mkdir(outDir, { recursive: true });
+    const stamp = payload.generatedAt.replace(/[:.]/g, '-');
 
-  await fs.writeFile(latestJsonPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
-  await fs.writeFile(latestMdPath, toMarkdown(payload), 'utf8');
+    const latestJsonPath = path.join(outDir, 'accessibility-smoke-latest.json');
+    const latestMdPath = path.join(outDir, 'accessibility-smoke-latest.md');
+    const historicalJsonPath = path.join(outDir, `accessibility-smoke-${stamp}.json`);
+    const historicalMdPath = path.join(outDir, `accessibility-smoke-${stamp}.md`);
 
-  if (shouldWriteHistory) {
-    await fs.writeFile(historicalJsonPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
-    await fs.writeFile(historicalMdPath, toMarkdown(payload), 'utf8');
-  }
+    await fs.writeFile(latestJsonPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+    await fs.writeFile(latestMdPath, toMarkdown(payload), 'utf8');
 
-  console.log(
-    `[a11y-smoke] summary pass=${summary.passed} fail=${summary.failed} total=${summary.total} actWarnings=${summary.actWarnings} budget=${summary.warningBudget} status=${summary.warningBudgetStatus}`
-  );
-  console.log(`Wrote ${path.relative(root, latestJsonPath)}`);
-  console.log(`Wrote ${path.relative(root, latestMdPath)}`);
-  if (shouldWriteHistory) {
-    console.log(`Wrote ${path.relative(root, historicalJsonPath)}`);
-    console.log(`Wrote ${path.relative(root, historicalMdPath)}`);
-  }
+    if (shouldWriteHistory) {
+      await fs.writeFile(historicalJsonPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+      await fs.writeFile(historicalMdPath, toMarkdown(payload), 'utf8');
+    }
 
-  if (strictMode && summary.failed > 0) {
-    process.exit(1);
-  }
+    console.log(
+      `[a11y-smoke] summary pass=${summary.passed} fail=${summary.failed} total=${summary.total} actWarnings=${summary.actWarnings} budget=${summary.warningBudget} status=${summary.warningBudgetStatus}`
+    );
+    console.log(`Wrote ${path.relative(root, latestJsonPath)}`);
+    console.log(`Wrote ${path.relative(root, latestMdPath)}`);
+    if (shouldWriteHistory) {
+      console.log(`Wrote ${path.relative(root, historicalJsonPath)}`);
+      console.log(`Wrote ${path.relative(root, historicalMdPath)}`);
+    }
 
-  if (strictMode && failOnWarningBudgetExceed && summary.warningBudgetStatus === 'exceeded') {
-    process.exit(1);
+    if (strictMode && summary.failed > 0) {
+      process.exitCode = 1;
+    }
+
+    if (strictMode && failOnWarningBudgetExceed && summary.warningBudgetStatus === 'exceeded') {
+      process.exitCode = 1;
+    }
+  } finally {
+    if (shouldStopPlaywrightRuntime && playwrightRuntime?.managed && playwrightRuntime.leaseFilePath) {
+      await stopBrokerRuntimeLease({
+        lease: playwrightRuntime,
+        leaseFilePath: playwrightRuntime.leaseFilePath,
+      });
+    }
   }
 };
 

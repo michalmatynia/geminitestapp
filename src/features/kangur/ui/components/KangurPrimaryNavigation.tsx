@@ -50,6 +50,8 @@ type KangurPrimaryNavigationProps = {
   showTests?: boolean;
 };
 
+export type { KangurPrimaryNavigationProps };
+
 const ICON_CLASSNAME = 'h-[18px] w-[18px] sm:h-5 sm:w-5';
 
 const NavAction = ({

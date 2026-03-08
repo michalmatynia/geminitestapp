@@ -9,7 +9,11 @@ import {
   XP_REWARDS,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
-import { KANGUR_STEP_PILL_CLASSNAME, type KangurAccent } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_PENDING_STEP_PILL_CLASSNAME,
+  KANGUR_STEP_PILL_CLASSNAME,
+  type KangurAccent,
+} from '@/features/kangur/ui/design/tokens';
 import { useKangurLessonBackAction } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
 import {
@@ -751,12 +755,12 @@ export default function ClockLesson(): React.JSX.Element {
                       aria-current={slideIndex === sectionSlideIndex ? 'step' : undefined}
                       className={cn(
                         KANGUR_STEP_PILL_CLASSNAME,
-                        'h-[14px] min-w-[14px]',
+                        'h-[14px] min-w-[14px] cursor-pointer',
                         slideIndex === sectionSlideIndex
                           ? 'w-8 scale-[1.04] bg-indigo-500'
                           : slideIndex < sectionSlideIndex
                             ? 'w-6 bg-indigo-200'
-                            : 'w-[14px] soft-cta opacity-80 hover:opacity-100'
+                            : KANGUR_PENDING_STEP_PILL_CLASSNAME
                       )}
                       data-testid={`clock-lesson-section-slide-${section.id}-${slideIndex}`}
                     />

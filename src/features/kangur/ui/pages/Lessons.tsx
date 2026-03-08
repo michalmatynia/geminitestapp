@@ -31,7 +31,8 @@ import { KANGUR_LESSONS_SETTING_KEY, parseKangurLessons } from '@/features/kangu
 import { KangurLessonNarrator } from '@/features/kangur/ui/components/KangurLessonNarrator';
 import { KangurLessonDocumentRenderer } from '@/features/kangur/ui/components/KangurLessonDocumentRenderer';
 import { KangurLessonsWordmark } from '@/features/kangur/ui/components/KangurLessonsWordmark';
-import { KangurPrimaryNavigation } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
+import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
+import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 import { useOptionalKangurRouteTransition } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
@@ -248,12 +249,12 @@ export default function Lessons() {
       return;
     }
 
-    const gameHref = getKangurHomeHref(basePath);
+    const homeHref = getKangurHomeHref(basePath);
     routeTransition?.startRouteTransition({
-      href: gameHref,
+      href: homeHref,
       pageKey: 'Game',
     });
-    router.push(gameHref);
+    router.push(homeHref);
   };
 
   const learnerId = user?.activeLearner?.id ?? user?.id ?? null;
@@ -302,21 +303,25 @@ export default function Lessons() {
     }),
     [activeLesson?.id, activeLessonAssignment?.id, completedActiveLessonAssignment?.id]
   );
+  const navigation = useMemo(
+    () => ({
+      basePath,
+      canManageLearners: Boolean(user?.canManageLearners),
+      contentClassName: 'justify-center',
+      currentPage: 'Lessons' as const,
+      isAuthenticated: Boolean(user),
+      onLogin: navigateToLogin,
+      onLogout: () => logout(false),
+    }),
+    [basePath, logout, navigateToLogin, user]
+  );
 
   return (
     <>
       <KangurAiTutorSessionSync learnerId={learnerId} sessionContext={lessonTutorContext} />
       <KangurPageShell tone='learn' id='kangur-lessons-page' skipLinkTargetId='kangur-lessons-main'>
         <KangurDocsTooltipEnhancer enabled={docsTooltipsEnabled} rootId='kangur-lessons-page' />
-        <KangurPrimaryNavigation
-          basePath={basePath}
-          canManageLearners={Boolean(user?.canManageLearners)}
-          contentClassName='justify-center'
-          currentPage='Lessons'
-          isAuthenticated={Boolean(user)}
-          onLogin={navigateToLogin}
-          onLogout={() => logout(false)}
-        />
+        <KangurTopNavigationController navigation={navigation} />
 
         <KangurPageContainer id='kangur-lessons-main' className='flex flex-col items-center'>
           <AnimatePresence mode='wait'>
@@ -328,32 +333,19 @@ export default function Lessons() {
                 exit={{ opacity: 0, y: -20 }}
                 className='flex flex-col items-center gap-4 w-full max-w-md'
               >
-                <KangurGlassPanel
-                  className='w-full text-center'
-                  padding='lg'
-                  surface='mistStrong'
-                  variant='soft'
-                >
-                  <h1 className='flex justify-center' data-testid='kangur-lessons-list-heading'>
-                    <span className='sr-only'>Lekcje</span>
+                <KangurPageIntroCard
+                  description='Wybierz temat i przejdz od razu do praktyki lub powtorki.'
+                  headingAs='h1'
+                  headingTestId='kangur-lessons-list-heading'
+                  onBack={handleGoBack}
+                  title='Lekcje'
+                  visualTitle={
                     <KangurLessonsWordmark
                       className='mx-auto'
                       data-testid='kangur-lessons-heading-art'
                     />
-                  </h1>
-                  <p className='mt-3 text-sm text-slate-500'>
-                    Wybierz temat i przejdz od razu do praktyki lub powtorki.
-                  </p>
-                  <KangurButton
-                    className='mt-4'
-                    data-doc-id='lessons_back_button'
-                    onClick={handleGoBack}
-                    size='sm'
-                    variant='surface'
-                  >
-                    Wróć do poprzedniej strony
-                  </KangurButton>
-                </KangurGlassPanel>
+                  }
+                />
 
                 {orderedLessons.length === 0 ? (
                   <KangurEmptyState

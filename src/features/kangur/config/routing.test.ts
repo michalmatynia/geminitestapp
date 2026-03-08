@@ -3,12 +3,15 @@ import { describe, expect, it } from 'vitest';
 import {
   appendKangurUrlParams,
   buildKangurEmbeddedBasePath,
+  getKangurCanonicalPublicHref,
   getKangurHomeHref,
+  getKangurLoginHref,
   getKangurPageHref,
   getKangurInternalQueryParamKeys,
   getKangurInternalQueryParamName,
   normalizeKangurRequestedPath,
   readKangurUrlParam,
+  resolveKangurPublicBasePathFromHref,
   resolveKangurPageKeyFromSlug,
 } from '@/features/kangur/config/routing';
 
@@ -28,8 +31,44 @@ describe('kangur routing config', () => {
   it('uses the canonical Kangur home path for home navigation', () => {
     const embeddedBasePath = buildKangurEmbeddedBasePath('/home?preview=1');
 
+    expect(getKangurHomeHref('/')).toBe('/');
     expect(getKangurHomeHref('/kangur')).toBe('/kangur');
     expect(getKangurHomeHref(embeddedBasePath)).toBe('/home?preview=1');
+  });
+
+  it('builds login hrefs for both root-owned and /kangur-owned public mounts', () => {
+    expect(getKangurLoginHref('/', 'https://example.com/tests?focus=division')).toBe(
+      `/login?callbackUrl=${encodeURIComponent('https://example.com/tests?focus=division')}`
+    );
+    expect(getKangurLoginHref('/kangur', 'https://example.com/kangur/tests?focus=division')).toBe(
+      `/kangur/login?callbackUrl=${encodeURIComponent(
+        'https://example.com/kangur/tests?focus=division'
+      )}`
+    );
+  });
+
+  it('builds canonical root-owned hrefs for legacy /kangur alias routes', () => {
+    expect(
+      getKangurCanonicalPublicHref(['tests'], {
+        focus: 'division',
+        categories: ['warmup', 'speed'],
+      })
+    ).toBe('/tests?focus=division&categories=warmup&categories=speed');
+    expect(getKangurCanonicalPublicHref(['login'], 'callbackUrl=%2Fkangur%2Ftests')).toBe(
+      '/login?callbackUrl=%2Fkangur%2Ftests'
+    );
+  });
+
+  it('resolves the public kangur base path from a return href', () => {
+    expect(resolveKangurPublicBasePathFromHref('/tests?focus=division', 'https://example.com')).toBe(
+      '/'
+    );
+    expect(
+      resolveKangurPublicBasePathFromHref(
+        'https://example.com/kangur/tests?focus=division',
+        'https://example.com'
+      )
+    ).toBe('/kangur');
   });
 
   it('builds embedded host-page links for cms-mounted kangur routes', () => {

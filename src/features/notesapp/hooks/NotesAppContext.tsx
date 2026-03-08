@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
+import React, { createContext, useState, useCallback, useMemo, useEffect } from 'react';
 
 import {
   useNoteSettingsActions,
@@ -16,54 +16,21 @@ import { useNoteFilters } from '@/features/notesapp/hooks/useNoteFilters';
 import { useNoteOperations } from '@/features/notesapp/hooks/useNoteOperations';
 import { useNoteTheme } from '@/features/notesapp/hooks/useNoteTheme';
 import type { UndoAction } from '@/shared/contracts/notes';
-import type { NotesAppContextValue } from '@/shared/contracts/notes';
 import type {
   NoteWithRelations,
-  TagRecord,
-  NoteRelationWithSource,
-  NoteRelationWithTarget,
-  NoteTagWithDetails,
 } from '@/shared/contracts/notes';
-import { internalError } from '@/shared/errors/app-error';
-import { api } from '@/shared/lib/api-client';
-import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
-import { useQueryClient } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast } from '@/shared/ui';
 import { ConfirmModal, PromptModal } from '@/shared/ui/templates/modals';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { useQueryClient } from '@tanstack/react-query';
 
-type NotesAppActionKey =
-  | 'updateSettings'
-  | 'setSelectedNote'
-  | 'setIsEditing'
-  | 'setIsCreating'
-  | 'setIsFolderTreeCollapsed'
-  | 'setDraggedNoteId'
-  | 'handleThemeChange'
-  | 'fetchTags'
-  | 'setSelectedFolderId'
-  | 'handleSelectNoteFromTree'
-  | 'handleToggleFavorite'
-  | 'handleDeleteNote'
-  | 'handleUpdateSuccess'
-  | 'handleCreateSuccess'
-  | 'handleUnlinkRelatedNote'
-  | 'handleFilterByTag'
-  | 'setConfirmation'
-  | 'confirmAction'
-  | 'setPrompt'
-  | 'promptAction'
-  | 'operations'
-  | 'handleUndoFolderTree'
-  | 'handleUndoAtIndex'
-  | 'fetchFolderTree';
+import type { NotesAppActionsValue, NotesAppStateValue } from './NotesAppContext.types';
+import { useNotesAppDialogs } from './useNotesAppDialogs';
+import { useNotesAppDerivedState } from './useNotesAppDerivedState';
+import { useNotesAppEntityHandlers } from './useNotesAppEntityHandlers';
 
-export type NotesAppActionsValue = Pick<NotesAppContextValue, NotesAppActionKey>;
-export type NotesAppStateValue = Omit<NotesAppContextValue, NotesAppActionKey>;
-
-const NotesAppStateContext = createContext<NotesAppStateValue | null>(null);
-const NotesAppActionsContext = createContext<NotesAppActionsValue | null>(null);
+export const NotesAppStateContext = createContext<NotesAppStateValue | null>(null);
+export const NotesAppActionsContext = createContext<NotesAppActionsValue | null>(null);
 
 export function NotesAppProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const { settings } = useNoteSettingsState();
@@ -87,50 +54,8 @@ export function NotesAppProvider({ children }: { children: React.ReactNode }): R
   useEffect(() => {
     updateSettings({ selectedNoteId: selectedNote?.id ?? null });
   }, [selectedNote?.id, updateSettings]);
-  const [confirmation, setConfirmation] = useState<{
-    title: string;
-    message: string;
-    onConfirm: () => void | Promise<void>;
-    confirmText?: string;
-    isDangerous?: boolean;
-      } | null>(null);
-  const [prompt, setPrompt] = useState<{
-    title: string;
-    message?: string;
-    label?: string;
-    defaultValue?: string;
-    placeholder?: string;
-    onConfirm: (value: string) => void | Promise<void>;
-    required?: boolean;
-      } | null>(null);
-
-  const confirmAction = useCallback(
-    (config: {
-      title: string;
-      message: string;
-      onConfirm: () => void | Promise<void>;
-      confirmText?: string;
-      isDangerous?: boolean;
-    }): void => {
-      setConfirmation(config);
-    },
-    []
-  );
-
-  const promptAction = useCallback(
-    (config: {
-      title: string;
-      message?: string;
-      label?: string;
-      defaultValue?: string;
-      placeholder?: string;
-      onConfirm: (value: string) => void | Promise<void>;
-      required?: boolean;
-    }): void => {
-      setPrompt(config);
-    },
-    []
-  );
+  const { confirmation, setConfirmation, confirmAction, prompt, setPrompt, promptAction } =
+    useNotesAppDialogs();
 
   // Settings helpers
 
@@ -203,222 +128,49 @@ export function NotesAppProvider({ children }: { children: React.ReactNode }): R
     setNotebook,
   });
 
-  // Derived Logic (Sorting & Pagination)
-  const notesInScope: NoteWithRelations[] = useMemo((): NoteWithRelations[] => {
-    return notes;
-  }, [notes]);
+  const {
+    sortedNotes,
+    pagedNotes,
+    totalPages,
+    noteLayoutClassName,
+    availableTagsInScope,
+    undoHistory,
+  } = useNotesAppDerivedState({
+    filters,
+    notes,
+    settings,
+    undoStack,
+  });
 
-  const sortedNotes: NoteWithRelations[] = useMemo((): NoteWithRelations[] => {
-    const sorted: NoteWithRelations[] = [...notesInScope].sort(
-      (a: NoteWithRelations, b: NoteWithRelations): number => {
-        if (settings.sortBy === 'name') {
-          return a.title.localeCompare(b.title);
-        }
-        if (settings.sortBy === 'updated') {
-          const aTime = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
-          const bTime = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
-          return aTime - bTime;
-        }
-        return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
-      }
-    );
-    return settings.sortOrder === 'desc' ? sorted.reverse() : sorted;
-  }, [notesInScope, settings.sortBy, settings.sortOrder]);
-
-  const totalPages: number = useMemo((): number => {
-    return Math.max(1, Math.ceil(sortedNotes.length / (filters.pageSize || 1)));
-  }, [sortedNotes.length, filters.pageSize]);
-
-  const pagedNotes: NoteWithRelations[] = useMemo((): NoteWithRelations[] => {
-    const clampedPage: number = Math.min(filters.page, totalPages);
-    const start: number = (clampedPage - 1) * filters.pageSize;
-    return sortedNotes.slice(start, start + filters.pageSize);
-  }, [sortedNotes, filters.page, filters.pageSize, totalPages]);
-
-  const noteLayoutClassName: string = useMemo((): string => {
-    if (settings.viewMode === 'list') {
-      return 'grid grid-cols-1 gap-3';
-    }
-    if (settings.gridDensity === 8) {
-      return 'grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8';
-    }
-    return 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4';
-  }, [settings.viewMode, settings.gridDensity]);
-
-  const availableTagsInScope: TagRecord[] = useMemo((): TagRecord[] => {
-    const tagMap: Map<string, TagRecord> = new Map<string, TagRecord>();
-    notesInScope.forEach((note: NoteWithRelations): void => {
-      (note.tags as NoteTagWithDetails[]).forEach((noteTag: NoteTagWithDetails): void => {
-        tagMap.set(noteTag.tagId, noteTag.tag);
-      });
-    });
-    return Array.from(tagMap.values()).sort((a: TagRecord, b: TagRecord): number =>
-      (a.name || '').localeCompare(b.name || '')
-    );
-  }, [notesInScope]);
-
-  // Handlers
-  const handleSelectNoteFromTree = useCallback(
-    async (noteId: string): Promise<void> => {
-      try {
-        const note = await fetchQueryV2<NoteWithRelations>(queryClient, {
-          queryKey: QUERY_KEYS.notes.detail(noteId),
-          queryFn: () => api.get<NoteWithRelations>(`/api/notes/${noteId}`),
-          staleTime: 10_000,
-          meta: {
-            source: 'notes.context.handleSelectNoteFromTree',
-            operation: 'detail',
-            resource: 'notes.detail',
-            domain: 'notes',
-            queryKey: QUERY_KEYS.notes.detail(noteId),
-            tags: ['notes', 'detail', 'fetch'],
-            description: 'Loads notes detail.'},
-        })();
-        setSelectedNote(note);
-        updateSettings({ selectedNoteId: noteId });
-        setIsEditing(false);
-      } catch (error: unknown) {
-        logClientError(error, {
-          context: { source: 'NotesAppProvider', action: 'fetchNote', noteId },
-        });
-      }
-    },
-    [queryClient, updateSettings]
-  );
-
-  const handleCreateSuccess = useCallback((): void => {
-    setIsCreating(false);
-    void fetchNotes();
-    void fetchFolderTree();
-  }, [fetchNotes, fetchFolderTree]);
-
-  const handleFilterByTag = useCallback(
-    (tagId: string): void => {
-      filters.handleFilterByTag(tagId, setSelectedFolderId, setSelectedNote, setIsEditing);
-    },
-    [filters, setSelectedFolderId]
-  );
-
-  const handleUpdateSuccess = useCallback((): void => {
-    setIsEditing(false);
-    void fetchNotes();
-    void fetchFolderTree();
-    if (selectedNote) {
-      void handleSelectNoteFromTree(selectedNote.id);
-    }
-  }, [fetchNotes, fetchFolderTree, selectedNote, handleSelectNoteFromTree]);
-
-  const handleToggleFavorite = useCallback(
-    async (note: NoteWithRelations): Promise<void> => {
-      const nextFavorite: boolean = !note.isFavorite;
-      try {
-        await updateNoteMutation.mutateAsync({
-          id: note.id,
-          isFavorite: nextFavorite,
-        });
-
-        setNotes((prev: NoteWithRelations[] | undefined): NoteWithRelations[] =>
-          (prev || []).map(
-            (item: NoteWithRelations): NoteWithRelations =>
-              item.id === note.id ? { ...item, isFavorite: nextFavorite } : item
-          )
-        );
-
-        setSelectedNote((prev: NoteWithRelations | null): NoteWithRelations | null =>
-          prev?.id === note.id ? { ...prev, isFavorite: nextFavorite } : prev
-        );
-      } catch (error: unknown) {
-        logClientError(error, {
-          context: {
-            source: 'NotesAppProvider',
-            action: 'toggleFavorite',
-            noteId: note.id,
-          },
-        });
-        toast('Failed to update favorite', { variant: 'error' });
-      }
-    },
-    [toast, setNotes, updateNoteMutation]
-  );
-
-  const handleUnlinkRelatedNote = useCallback(
-    async (relatedId: string): Promise<void> => {
-      if (!selectedNote) return;
-      try {
-        const sourceRelations: string[] =
-          selectedNote.relations?.map((rel: { id: string }): string => rel.id) ||
-          [
-            ...(selectedNote.relationsFrom ?? [])
-              .map((rel: NoteRelationWithTarget) => rel.targetNote?.id)
-              .filter((rid: string | undefined): rid is string => !!rid),
-            ...(selectedNote.relationsTo ?? [])
-              .map((rel: NoteRelationWithSource) => rel.sourceNote?.id)
-              .filter((rid: string | undefined): rid is string => !!rid),
-          ].filter(
-            (id: string, index: number, array: string[]): boolean => array.indexOf(id) === index
-          );
-
-        const nextSourceIds: string[] = sourceRelations.filter(
-          (id: string): boolean => id !== relatedId
-        );
-
-        await updateNoteMutation.mutateAsync({
-          id: selectedNote.id,
-          relatedNoteIds: nextSourceIds,
-        });
-
-        toast('Note unlinked');
-        await fetchNotes();
-        void handleSelectNoteFromTree(selectedNote.id);
-      } catch (error: unknown) {
-        logClientError(error, {
-          context: {
-            source: 'NotesAppProvider',
-            action: 'unlinkNote',
-            noteId: selectedNote.id,
-            relatedId,
-          },
-        });
-        toast('Failed to unlink note', { variant: 'error' });
-      }
-    },
-    [selectedNote, fetchNotes, handleSelectNoteFromTree, toast, updateNoteMutation]
-  );
-
-  const handleDeleteNote = useCallback(async (): Promise<void> => {
-    if (!selectedNote) return;
-    confirmAction({
-      title: 'Delete Note?',
-      message: 'Are you sure you want to delete this note?',
-      confirmText: 'Delete',
-      isDangerous: true,
-      onConfirm: async () => {
-        try {
-          await deleteNoteMutation.mutateAsync(selectedNote.id);
-          setSelectedNote(null);
-          setIsEditing(false);
-        } catch (error: unknown) {
-          logClientError(error, {
-            context: {
-              source: 'NotesAppProvider',
-              action: 'deleteNote',
-              noteId: selectedNote.id,
-            },
-          });
-          toast('Failed to delete note', { variant: 'error' });
-        }
-      },
-    });
-  }, [selectedNote, deleteNoteMutation, toast, confirmAction]);
+  const {
+    handleSelectNoteFromTree,
+    handleCreateSuccess,
+    handleFilterByTag,
+    handleUpdateSuccess,
+    handleToggleFavorite,
+    handleUnlinkRelatedNote,
+    handleDeleteNote,
+    fetchTagsAction,
+  } = useNotesAppEntityHandlers({
+    confirmAction,
+    deleteNote: deleteNoteMutation.mutateAsync,
+    fetchFolderTree,
+    fetchNotes,
+    fetchTags,
+    filters,
+    queryClient,
+    selectedNote,
+    setIsCreating,
+    setIsEditing,
+    setNotes,
+    setSelectedFolderId,
+    setSelectedNote,
+    toast,
+    updateNote: updateNoteMutation.mutateAsync,
+    updateSettings,
+  });
 
   // Undo Logic
-  const formatUndoLabel = useCallback((action: UndoAction): string => {
-    if (action.type === 'moveNote') return 'Moved note';
-    if (action.type === 'moveFolder') return 'Moved folder';
-    if (action.type === 'renameFolder') return `Renamed folder to "${action.toName}"`;
-    return `Renamed note to "${action.toTitle}"`;
-  }, []);
-
   const applyUndoAction = useCallback(
     async (action: UndoAction): Promise<void> => {
       if (action.type === 'moveNote') {
@@ -482,18 +234,6 @@ export function NotesAppProvider({ children }: { children: React.ReactNode }): R
     },
     [handleUndoFolderTree]
   );
-
-  const undoHistory: { label: string }[] = useMemo(
-    (): { label: string }[] =>
-      undoStack.map((action: UndoAction): { label: string } => ({
-        label: formatUndoLabel(action),
-      })),
-    [undoStack, formatUndoLabel]
-  );
-
-  const fetchTagsAction = useCallback((): void => {
-    void fetchTags();
-  }, [fetchTags]);
 
   const stateValue: NotesAppStateValue = useMemo(
     () => ({
@@ -657,19 +397,4 @@ export function NotesAppProvider({ children }: { children: React.ReactNode }): R
     </NotesAppStateContext.Provider>
   );
 }
-
-export function useNotesAppState(): NotesAppStateValue {
-  const context = useContext(NotesAppStateContext);
-  if (!context) {
-    throw internalError('useNotesAppState must be used within NotesAppProvider');
-  }
-  return context;
-}
-
-export function useNotesAppActions(): NotesAppActionsValue {
-  const context = useContext(NotesAppActionsContext);
-  if (!context) {
-    throw internalError('useNotesAppActions must be used within NotesAppProvider');
-  }
-  return context;
-}
+export { useNotesAppState, useNotesAppActions } from './useNotesAppContextHooks';

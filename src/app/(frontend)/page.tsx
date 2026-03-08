@@ -4,7 +4,8 @@ import { JSX } from 'react';
 
 import { getCmsRepository } from '@/features/cms/server';
 import { getSlugsForDomain, resolveCmsDomainFromHeaders } from '@/features/cms/server';
-import { getFrontPageRedirectPath } from '@/shared/lib/front-page-app';
+import { KangurPublicApp } from '@/features/kangur/ui/KangurPublicApp';
+import { getFrontPagePublicOwner, getFrontPageRedirectPath } from '@/shared/lib/front-page-app';
 
 import { HomeContent } from './HomeContent';
 import { getFrontPageSetting, shouldUseFrontPageAppRedirect } from './home-helpers';
@@ -20,11 +21,17 @@ export default async function Home(): Promise<JSX.Element> {
   const frontPageSetting = frontPageRedirectEnabled
     ? await withTiming('frontPageSetting', getFrontPageSetting)
     : null;
+  const publicOwner = getFrontPagePublicOwner(frontPageSetting);
   const redirectPath = getFrontPageRedirectPath(frontPageSetting);
 
   if (frontPageRedirectEnabled && redirectPath) {
     await flush();
     redirect(redirectPath);
+  }
+
+  if (frontPageRedirectEnabled && publicOwner === 'kangur') {
+    await flush();
+    return <KangurPublicApp basePath='/' />;
   }
 
   const cmsRepository = await withTiming('cmsRepository', getCmsRepository);

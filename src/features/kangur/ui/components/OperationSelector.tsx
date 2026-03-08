@@ -44,7 +44,7 @@ export default function OperationSelector({
         data-testid='operation-selector-heading'
         description='Kazda kategoria ma ten sam uklad. Kolor tylko podpowiada temat.'
         descriptionId={descriptionId}
-        headingAs='h2'
+        headingAs='h3'
         headingSize='md'
         title='Wybierz swoje wyzwanie'
         titleId={headingId}

@@ -8,6 +8,7 @@ import { KangurPageTransitionSkeleton } from '@/features/kangur/ui/components/Ka
 import { PageNotFound } from '@/features/kangur/ui/components/PageNotFound';
 import UserNotRegisteredError from '@/features/kangur/ui/components/UserNotRegisteredError';
 import { KangurAiTutorWidget } from '@/features/kangur/ui/components/KangurAiTutorWidget';
+import { KangurRouteAccessibilityAnnouncer } from '@/features/kangur/ui/components/KangurRouteAccessibilityAnnouncer';
 import { KANGUR_MAIN_PAGE, kangurPages } from '@/features/kangur/config/pages';
 import { resolveKangurPageKey } from '@/features/kangur/config/routing';
 import { KangurCmsRuntimeScreen } from '@/features/kangur/cms-builder/KangurCmsRuntimeScreen';
@@ -20,6 +21,10 @@ import {
   useKangurRouteTransition,
 } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
+import {
+  KangurTopNavigationHost,
+  KangurTopNavigationProvider,
+} from '@/features/kangur/ui/context/KangurTopNavigationContext';
 import { KangurTutorAnchorProvider } from '@/features/kangur/ui/context/KangurTutorAnchorContext';
 import { cn } from '@/shared/utils';
 
@@ -86,6 +91,8 @@ const AuthenticatedApp = (): JSX.Element | null => {
 
   return (
     <>
+      <KangurRouteAccessibilityAnnouncer />
+      <KangurTopNavigationHost />
       <div
         aria-busy={isRoutePending}
         className={cn(
@@ -105,18 +112,20 @@ const AuthenticatedApp = (): JSX.Element | null => {
 export function KangurFeatureApp(): JSX.Element {
   return (
     <KangurRouteTransitionProvider>
-      <KangurAuthProvider>
-        <KangurProgressSyncProvider>
-          <KangurScoreSyncProvider>
-            <KangurAiTutorProvider>
-              <KangurTutorAnchorProvider>
-                <AuthenticatedApp />
-                <KangurAiTutorWidget />
-              </KangurTutorAnchorProvider>
-            </KangurAiTutorProvider>
-          </KangurScoreSyncProvider>
-        </KangurProgressSyncProvider>
-      </KangurAuthProvider>
+      <KangurTopNavigationProvider>
+        <KangurAuthProvider>
+          <KangurProgressSyncProvider>
+            <KangurScoreSyncProvider>
+              <KangurAiTutorProvider>
+                <KangurTutorAnchorProvider>
+                  <AuthenticatedApp />
+                  <KangurAiTutorWidget />
+                </KangurTutorAnchorProvider>
+              </KangurAiTutorProvider>
+            </KangurScoreSyncProvider>
+          </KangurProgressSyncProvider>
+        </KangurAuthProvider>
+      </KangurTopNavigationProvider>
     </KangurRouteTransitionProvider>
   );
 }

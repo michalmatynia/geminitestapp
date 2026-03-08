@@ -1,0 +1,6 @@
+<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="0" time="14.463977000000002">
+<testsuite name="features/accessibility/case-resolver-accessibility.spec.ts" timestamp="2026-03-08T14:15:08.063Z" hostname="" tests="1" failures="0" skipped="0" time="13.286" errors="0">
+<testcase name="case resolver exposes tree controls accessibly and passes the accessibility smoke scan" classname="features/accessibility/case-resolver-accessibility.spec.ts" time="13.286">
+</testcase>
+</testsuite>
+</testsuites>

@@ -1,22 +1,26 @@
 'use client';
 
-import { KangurPrimaryNavigation } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
+import { useMemo } from 'react';
+
+import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 
 export function KangurGameNavigationWidget(): React.JSX.Element {
   const { basePath, handleHome, logout, navigateToLogin, screen, user } = useKangurGameRuntime();
-
-  return (
-    <KangurPrimaryNavigation
-      basePath={basePath}
-      canManageLearners={Boolean(user?.canManageLearners)}
-      contentClassName='justify-center'
-      currentPage='Game'
-      homeActive={screen === 'home'}
-      isAuthenticated={Boolean(user)}
-      onHomeClick={handleHome}
-      onLogin={navigateToLogin}
-      onLogout={() => logout(false)}
-    />
+  const navigation = useMemo(
+    () => ({
+      basePath,
+      canManageLearners: Boolean(user?.canManageLearners),
+      contentClassName: 'justify-center',
+      currentPage: 'Game' as const,
+      homeActive: screen === 'home',
+      isAuthenticated: Boolean(user),
+      onHomeClick: handleHome,
+      onLogin: navigateToLogin,
+      onLogout: () => logout(false),
+    }),
+    [basePath, handleHome, logout, navigateToLogin, screen, user]
   );
+
+  return <KangurTopNavigationController navigation={navigation} />;
 }

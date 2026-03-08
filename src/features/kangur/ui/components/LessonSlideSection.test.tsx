@@ -51,8 +51,13 @@ describe('LessonSlideSection', () => {
       'bg-white/94'
     );
     expect(firstIndicator).toHaveClass('kangur-cta-pill', 'bg-orange-400');
+    expect(firstIndicator).toHaveClass('cursor-pointer');
     expect(firstIndicator).toHaveAttribute('aria-current', 'step');
-    expect(secondIndicator).toHaveClass('kangur-cta-pill', 'soft-cta');
+    expect(secondIndicator).toHaveClass(
+      'kangur-cta-pill',
+      'kangur-step-pill-pending',
+      'cursor-pointer'
+    );
 
     fireEvent.click(secondIndicator);
 

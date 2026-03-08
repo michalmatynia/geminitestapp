@@ -1,0 +1,168 @@
+<testsuites id="" name="" tests="9" failures="3" skipped="0" errors="0" time="66.09109899999999">
+<testsuite name="features/kangur/kangur-game-quickstart.spec.ts" timestamp="2026-03-08T14:28:58.076Z" hostname="" tests="2" failures="1" skipped="0" time="22.527" errors="0">
+<testcase name="Kangur Game Quick Start › opens training setup from quickStart=training and clears query params" classname="features/kangur/kangur-game-quickstart.spec.ts" time="19.877">
+<failure message="kangur-game-quickstart.spec.ts:14:3 opens training setup from quickStart=training and clears query params" type="FAILURE">
+<![CDATA[  features/kangur/kangur-game-quickstart.spec.ts:14:3 › Kangur Game Quick Start › opens training setup from quickStart=training and clears query params 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText(/Tryb treningowy/i)
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for getByText(/Tryb treningowy/i)
+
+
+      17 |     await expect(page).toHaveURL(/\/kangur\/game/);
+      18 |     await expect(page).not.toHaveURL(/quickStart=/);
+    > 19 |     await expect(page.getByText(/Tryb treningowy/i)).toBeVisible();
+         |                                                      ^
+      20 |   });
+      21 |
+      22 |   test('starts operation run from quickStart=operation and clears query params', async ({ page }) => {
+        at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/kangur/kangur-game-quickstart.spec.ts:19:54
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../tmp/playwright-runs/web/perf-validation/kangur-perf-e2e/test-results/features-kangur-kangur-gam-02cad-ing-and-clears-query-params/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../tmp/playwright-runs/web/perf-validation/kangur-perf-e2e/test-results/features-kangur-kangur-gam-02cad-ing-and-clears-query-params/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../tmp/playwright-runs/web/perf-validation/kangur-perf-e2e/test-results/features-kangur-kangur-gam-02cad-ing-and-clears-query-params/trace.zip
+    Usage:
+
+        npx playwright show-trace ../tmp/playwright-runs/web/perf-validation/kangur-perf-e2e/test-results/features-kangur-kangur-gam-02cad-ing-and-clears-query-params/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/features-kangur-kangur-gam-02cad-ing-and-clears-query-params/test-failed-1.png]]
+
+[[ATTACHMENT|test-results/features-kangur-kangur-gam-02cad-ing-and-clears-query-params/error-context.md]]
+
+[[ATTACHMENT|test-results/features-kangur-kangur-gam-02cad-ing-and-clears-query-params/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Kangur Game Quick Start › starts operation run from quickStart=operation and clears query params" classname="features/kangur/kangur-game-quickstart.spec.ts" time="2.65">
+</testcase>
+</testsuite>
+<testsuite name="features/kangur/kangur-profile.spec.ts" timestamp="2026-03-08T14:28:58.076Z" hostname="" tests="7" failures="2" skipped="0" time="30.983" errors="0">
+<testcase name="Kangur Learner Profile › renders learner profile shell and baseline sections" classname="features/kangur/kangur-profile.spec.ts" time="1.883">
+</testcase>
+<testcase name="Kangur Learner Profile › supports navigation from game screen to learner profile" classname="features/kangur/kangur-profile.spec.ts" time="3.717">
+</testcase>
+<testcase name="Kangur Learner Profile › renders deterministic learner metrics from mocked auth, progress, and scores" classname="features/kangur/kangur-profile.spec.ts" time="7.96">
+<failure message="kangur-profile.spec.ts:110:3 renders deterministic learner metrics from mocked auth, progress, and scores" type="FAILURE">
+<![CDATA[  features/kangur/kangur-profile.spec.ts:110:3 › Kangur Learner Profile › renders deterministic learner metrics from mocked auth, progress, and scores 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText(/Tryb treningowy/i)
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for getByText(/Tryb treningowy/i)
+
+
+      185 |     await playNowLink.click();
+      186 |     await expect(page).toHaveURL(/\/kangur\/game/);
+    > 187 |     await expect(page.getByText(/Tryb treningowy/i)).toBeVisible();
+          |                                                      ^
+      188 |   });
+      189 |
+      190 |   test('shows the persisted AI tutor mood on the learner profile', async ({ page }) => {
+        at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/kangur/kangur-profile.spec.ts:187:54
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../tmp/playwright-runs/web/perf-validation/kangur-perf-e2e/test-results/features-kangur-kangur-pro-8bf8c-ed-auth-progress-and-scores/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../tmp/playwright-runs/web/perf-validation/kangur-perf-e2e/test-results/features-kangur-kangur-pro-8bf8c-ed-auth-progress-and-scores/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../tmp/playwright-runs/web/perf-validation/kangur-perf-e2e/test-results/features-kangur-kangur-pro-8bf8c-ed-auth-progress-and-scores/trace.zip
+    Usage:
+
+        npx playwright show-trace ../tmp/playwright-runs/web/perf-validation/kangur-perf-e2e/test-results/features-kangur-kangur-pro-8bf8c-ed-auth-progress-and-scores/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/features-kangur-kangur-pro-8bf8c-ed-auth-progress-and-scores/test-failed-1.png]]
+
+[[ATTACHMENT|test-results/features-kangur-kangur-pro-8bf8c-ed-auth-progress-and-scores/error-context.md]]
+
+[[ATTACHMENT|test-results/features-kangur-kangur-pro-8bf8c-ed-auth-progress-and-scores/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Kangur Learner Profile › shows the persisted AI tutor mood on the learner profile" classname="features/kangur/kangur-profile.spec.ts" time="2.007">
+</testcase>
+<testcase name="Kangur Learner Profile › opens focused lesson from recommendation deep link" classname="features/kangur/kangur-profile.spec.ts" time="4.847">
+</testcase>
+<testcase name="Kangur Learner Profile › quick-start training works from profile in local mode" classname="features/kangur/kangur-profile.spec.ts" time="7.674">
+<failure message="kangur-profile.spec.ts:317:3 quick-start training works from profile in local mode" type="FAILURE">
+<![CDATA[  features/kangur/kangur-profile.spec.ts:317:3 › Kangur Learner Profile › quick-start training works from profile in local mode 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText(/Tryb treningowy/i)
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for getByText(/Tryb treningowy/i)
+
+
+      343 |
+      344 |     await expect(page).toHaveURL(/\/kangur\/game/);
+    > 345 |     await expect(page.getByText(/Tryb treningowy/i)).toBeVisible();
+          |                                                      ^
+      346 |   });
+      347 |
+      348 |   test('quick-start operation works from operation performance links', async ({ page }) => {
+        at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/kangur/kangur-profile.spec.ts:345:54
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../tmp/playwright-runs/web/perf-validation/kangur-perf-e2e/test-results/features-kangur-kangur-pro-d172f--from-profile-in-local-mode/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../tmp/playwright-runs/web/perf-validation/kangur-perf-e2e/test-results/features-kangur-kangur-pro-d172f--from-profile-in-local-mode/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../tmp/playwright-runs/web/perf-validation/kangur-perf-e2e/test-results/features-kangur-kangur-pro-d172f--from-profile-in-local-mode/trace.zip
+    Usage:
+
+        npx playwright show-trace ../tmp/playwright-runs/web/perf-validation/kangur-perf-e2e/test-results/features-kangur-kangur-pro-d172f--from-profile-in-local-mode/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/features-kangur-kangur-pro-d172f--from-profile-in-local-mode/test-failed-1.png]]
+
+[[ATTACHMENT|test-results/features-kangur-kangur-pro-d172f--from-profile-in-local-mode/error-context.md]]
+
+[[ATTACHMENT|test-results/features-kangur-kangur-pro-d172f--from-profile-in-local-mode/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Kangur Learner Profile › quick-start operation works from operation performance links" classname="features/kangur/kangur-profile.spec.ts" time="2.895">
+</testcase>
+</testsuite>
+</testsuites>

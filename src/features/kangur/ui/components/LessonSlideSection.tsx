@@ -8,7 +8,10 @@ import {
   KangurGlassPanel,
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurLessonBackAction } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
-import { KANGUR_STEP_PILL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_PENDING_STEP_PILL_CLASSNAME,
+  KANGUR_STEP_PILL_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/shared/utils';
 
 export type LessonSlide = {
@@ -68,12 +71,12 @@ export default function LessonSlideSection({
               aria-current={i === slide ? 'step' : undefined}
               className={cn(
                 KANGUR_STEP_PILL_CLASSNAME,
-                'h-[14px] min-w-[14px]',
+                'h-[14px] min-w-[14px] cursor-pointer',
                 i === slide
                   ? ['w-8 scale-[1.04]', dotActiveClass]
                   : i < slide
                     ? ['w-6', dotDoneClass]
-                    : 'w-[14px] soft-cta opacity-80 hover:opacity-100'
+                    : KANGUR_PENDING_STEP_PILL_CLASSNAME
               )}
               data-testid={`lesson-slide-indicator-${i}`}
             />

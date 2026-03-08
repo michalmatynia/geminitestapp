@@ -13,6 +13,8 @@ import {
 import { sortScores } from '@/features/kangur/services/kangur-score-repository/shared';
 
 const KANGUR_GUEST_SCORES_STORAGE_KEY = 'kangur_guest_scores_v1';
+export const KANGUR_GUEST_SCORES_SESSION_STORAGE_KEY = 'kangur_guest_scores_session_v1';
+const KANGUR_GUEST_SCORES_OWNER_STORAGE_KEY = 'kangur_guest_scores_owner_v1';
 const guestScoreListSchema = z.array(kangurScoreSchema);
 
 let guestScoreSyncInFlight: Promise<GuestKangurScoreSyncResult> | null = null;
@@ -32,6 +34,53 @@ const generateGuestScoreMutationId = (): string => {
   return `guest-score:${Date.now().toString(36)}:${Math.random().toString(36).slice(2, 10)}`;
 };
 
+const generateGuestScoreSessionKey = (): string => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return `guest-session:${crypto.randomUUID()}`;
+  }
+
+  return `guest-session:${Date.now().toString(36)}:${Math.random().toString(36).slice(2, 10)}`;
+};
+
+const readGuestScoreSessionKey = (): string | null => {
+  if (!canUseStorage()) {
+    return null;
+  }
+
+  const raw = window.localStorage
+    .getItem(KANGUR_GUEST_SCORES_SESSION_STORAGE_KEY)
+    ?.trim();
+  return raw && raw.length > 0 ? raw : null;
+};
+
+export const getGuestKangurScoreSessionKey = (): string | null => {
+  if (!canUseStorage()) {
+    return null;
+  }
+
+  const existing = readGuestScoreSessionKey();
+  if (existing) {
+    return existing;
+  }
+
+  const nextKey = generateGuestScoreSessionKey();
+  window.localStorage.setItem(KANGUR_GUEST_SCORES_SESSION_STORAGE_KEY, nextKey);
+  return nextKey;
+};
+
+export const resetGuestKangurScoreSession = (): string | null => {
+  if (!canUseStorage()) {
+    return null;
+  }
+
+  window.localStorage.removeItem(KANGUR_GUEST_SCORES_STORAGE_KEY);
+  window.localStorage.removeItem(KANGUR_GUEST_SCORES_OWNER_STORAGE_KEY);
+
+  const nextKey = generateGuestScoreSessionKey();
+  window.localStorage.setItem(KANGUR_GUEST_SCORES_SESSION_STORAGE_KEY, nextKey);
+  return nextKey;
+};
+
 const dedupeScores = (scores: KangurScore[]): KangurScore[] => {
   const unique = new Map<string, KangurScore>();
   scores.forEach((score) => {
@@ -43,6 +92,14 @@ const dedupeScores = (scores: KangurScore[]): KangurScore[] => {
 
 const readStoredGuestScores = (): KangurScore[] => {
   if (!canUseStorage()) {
+    return [];
+  }
+
+  const sessionKey = getGuestKangurScoreSessionKey();
+  const ownerKey = window.localStorage
+    .getItem(KANGUR_GUEST_SCORES_OWNER_STORAGE_KEY)
+    ?.trim();
+  if (ownerKey && ownerKey.length > 0 && ownerKey !== sessionKey) {
     return [];
   }
 
@@ -71,10 +128,15 @@ const writeStoredGuestScores = (scores: KangurScore[]): void => {
   const normalized = dedupeScores(scores);
   if (normalized.length === 0) {
     window.localStorage.removeItem(KANGUR_GUEST_SCORES_STORAGE_KEY);
+    window.localStorage.removeItem(KANGUR_GUEST_SCORES_OWNER_STORAGE_KEY);
     return;
   }
 
+  const sessionKey = getGuestKangurScoreSessionKey();
   window.localStorage.setItem(KANGUR_GUEST_SCORES_STORAGE_KEY, JSON.stringify(normalized));
+  if (sessionKey) {
+    window.localStorage.setItem(KANGUR_GUEST_SCORES_OWNER_STORAGE_KEY, sessionKey);
+  }
 };
 
 const matchesGuestScoreFilters = (

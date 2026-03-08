@@ -9,11 +9,9 @@ import { useKangurTrainingSetupState } from '@/features/kangur/ui/hooks/useKangu
 
 describe('useKangurTrainingSetupState', () => {
   it('tracks training selections and emits the current payload on start', () => {
-    const onBack = vi.fn();
     const onStart = vi.fn();
     const { result } = renderHook(() =>
       useKangurTrainingSetupState({
-        onBack,
         onStart,
       })
     );
@@ -38,7 +36,6 @@ describe('useKangurTrainingSetupState', () => {
 
     act(() => {
       result.current.startTraining();
-      result.current.goBack();
     });
 
     expect(onStart).toHaveBeenCalledWith({
@@ -46,6 +43,5 @@ describe('useKangurTrainingSetupState', () => {
       count: 20,
       difficulty: 'hard',
     });
-    expect(onBack).toHaveBeenCalledTimes(1);
   });
 });

@@ -27,8 +27,13 @@ describe('CalendarLesson', () => {
     const secondIndicator = screen.getByTestId('calendar-lesson-slide-miesiace-1');
 
     expect(firstIndicator).toHaveClass('kangur-cta-pill', 'bg-emerald-500');
+    expect(firstIndicator).toHaveClass('cursor-pointer');
     expect(firstIndicator).toHaveAttribute('aria-current', 'step');
-    expect(secondIndicator).toHaveClass('kangur-cta-pill', 'soft-cta');
+    expect(secondIndicator).toHaveClass(
+      'kangur-cta-pill',
+      'kangur-step-pill-pending',
+      'cursor-pointer'
+    );
 
     fireEvent.click(secondIndicator);
 

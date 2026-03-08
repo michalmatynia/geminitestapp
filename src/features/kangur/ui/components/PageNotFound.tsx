@@ -123,12 +123,12 @@ export function PageNotFound(): React.JSX.Element {
           <div className='pt-6'>
             <KangurButton
               onClick={() => {
-                const gameHref = getKangurHomeHref(basePath);
+                const homeHref = getKangurHomeHref(basePath);
                 routeTransition?.startRouteTransition({
-                  href: gameHref,
+                  href: homeHref,
                   pageKey: 'Game',
                 });
-                router.push(gameHref);
+                router.push(homeHref);
               }}
               size='lg'
               type='button'

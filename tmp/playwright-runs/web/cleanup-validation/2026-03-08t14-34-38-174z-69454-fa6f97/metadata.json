@@ -1,0 +1,33 @@
+{
+  "generatedAt": "2026-03-08T14:34:50.923Z",
+  "runtime": {
+    "source": "broker",
+    "managed": true,
+    "reused": false,
+    "rootDir": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp",
+    "appId": "web",
+    "mode": "dev",
+    "agentId": "cleanup-validation",
+    "host": "127.0.0.1",
+    "port": 60409,
+    "baseUrl": "http://127.0.0.1:60409",
+    "pid": 69455,
+    "distDir": ".next-dev-web-dev-cleanup-validation",
+    "leaseKey": "web-dev-cleanup-validation-ed58ad7e",
+    "leaseFilePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/tmp/playwright-runtime-broker/leases/web-dev-cleanup-validation-ed58ad7e.json",
+    "logFilePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/tmp/playwright-runtime-broker/logs/web-dev-cleanup-validation-ed58ad7e.log",
+    "startedAt": "2026-03-08T14:34:38.183Z",
+    "preferredBrowserNodeBinDir": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin"
+  },
+  "playwrightArgs": [
+    "test",
+    "e2e/features/kangur/kangur-profile.spec.ts",
+    "--workers=1",
+    "--grep",
+    "renders learner profile shell and baseline sections"
+  ],
+  "runId": "2026-03-08t14-34-38-174z-69454-fa6f97",
+  "outputDir": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/tmp/playwright-runs/web/cleanup-validation/2026-03-08t14-34-38-174z-69454-fa6f97/test-results",
+  "htmlReportDir": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/tmp/playwright-runs/web/cleanup-validation/2026-03-08t14-34-38-174z-69454-fa6f97/html-report",
+  "junitOutputFile": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/tmp/playwright-runs/web/cleanup-validation/2026-03-08t14-34-38-174z-69454-fa6f97/junit.xml"
+}

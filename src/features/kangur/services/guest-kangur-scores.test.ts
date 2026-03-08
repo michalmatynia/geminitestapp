@@ -6,9 +6,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   createGuestKangurScore,
+  getGuestKangurScoreSessionKey,
   hasGuestKangurScores,
   listGuestKangurScores,
   loadGuestKangurScores,
+  resetGuestKangurScoreSession,
   syncGuestKangurScores,
 } from '@/features/kangur/services/guest-kangur-scores';
 
@@ -87,5 +89,25 @@ describe('guest Kangur scores', () => {
     ).rejects.toThrow('sync failed');
 
     expect(loadGuestKangurScores()).toEqual([localScore]);
+  });
+
+  it('starts a fresh guest score session without exposing the previous session rows', () => {
+    createGuestKangurScore({
+      player_name: 'Gracz',
+      score: 5,
+      operation: 'subtraction',
+      total_questions: 10,
+      correct_answers: 5,
+      time_taken: 40,
+    });
+    const previousSessionKey = getGuestKangurScoreSessionKey();
+
+    const nextSessionKey = resetGuestKangurScoreSession();
+
+    expect(nextSessionKey).toMatch(/^guest-session:/);
+    expect(nextSessionKey).not.toBe(previousSessionKey);
+    expect(hasGuestKangurScores()).toBe(false);
+    expect(loadGuestKangurScores()).toEqual([]);
+    expect(listGuestKangurScores()).toEqual([]);
   });
 });

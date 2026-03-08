@@ -87,6 +87,17 @@ describe('KangurFeaturePage', () => {
     });
   });
 
+  it('supports direct root-mounted Kangur page mounts', () => {
+    render(<KangurFeaturePage slug={['tests']} basePath='/' />);
+
+    expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
+      pageKey: 'Tests',
+      requestedPath: '/tests',
+      basePath: '/',
+      embedded: false,
+    });
+  });
+
   it('keeps the embedded shell node mounted when the requested embedded page changes', () => {
     const embeddedBasePath = buildKangurEmbeddedBasePath('/home?preview=1', 'app-embed-a');
     const { rerender } = render(

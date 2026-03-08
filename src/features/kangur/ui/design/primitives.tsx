@@ -1454,6 +1454,7 @@ export const KangurPageContainer = ({
   return (
     <ResolvedComp
       className={cn(KANGUR_PAGE_CONTAINER_CLASSNAME, className)}
+      data-kangur-route-main={Comp === 'main' ? 'true' : undefined}
       tabIndex={tabIndex ?? -1}
       {...props}
     >

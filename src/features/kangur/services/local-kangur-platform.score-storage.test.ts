@@ -173,4 +173,70 @@ describe('createLocalKangurPlatform score storage', () => {
       })
     );
   });
+
+  it('does not expose the previous guest session scores after logout resets the anonymous sandbox', async () => {
+    signOutMock.mockResolvedValue(undefined);
+    const fetchMock = vi.fn(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url =
+          typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+        const method = init?.method ?? 'GET';
+
+        if (url.endsWith('/api/kangur/auth/me')) {
+          return {
+            ok: false,
+            status: 401,
+          };
+        }
+
+        if (url.endsWith('/api/kangur/auth/learner-signout') && method === 'POST') {
+          return {
+            ok: true,
+            status: 200,
+          };
+        }
+
+        if (url.includes('/api/kangur/scores') && method === 'GET') {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => [],
+          };
+        }
+
+        throw new Error(`Unexpected fetch request: ${method} ${url}`);
+      }
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { createLocalKangurPlatform } =
+      await import('@/features/kangur/services/local-kangur-platform');
+    const platform = createLocalKangurPlatform();
+
+    const previousGuestScore = await platform.score.create({
+      player_name: 'Pierwszy gracz',
+      score: 6,
+      operation: 'subtraction',
+      total_questions: 10,
+      correct_answers: 6,
+      time_taken: 33,
+    });
+
+    await platform.auth.logout();
+
+    const currentGuestScore = await platform.score.create({
+      player_name: 'Nowy gracz',
+      score: 9,
+      operation: 'division',
+      total_questions: 10,
+      correct_answers: 9,
+      time_taken: 26,
+    });
+    const rows = await platform.score.list('-created_date', 10);
+
+    expect(rows).toEqual([currentGuestScore]);
+    expect(rows).not.toContainEqual(previousGuestScore);
+    expect(loadGuestKangurScores()).toEqual([currentGuestScore]);
+    expect(signOutMock).toHaveBeenCalledWith({ redirect: false });
+  });
 });

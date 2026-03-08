@@ -15,22 +15,19 @@ import { cn } from '@/shared/utils';
 
 export type TrainingSetupProps = {
   onStart: (selection: KangurTrainingSelection) => void;
-  onBack: () => void;
 };
 
-export default function TrainingSetup({ onStart, onBack }: TrainingSetupProps): React.JSX.Element {
+export default function TrainingSetup({ onStart }: TrainingSetupProps): React.JSX.Element {
   const {
     categoryOptions,
     countOptions,
     difficulty,
-    goBack,
     setDifficulty,
     startTraining,
     summaryLabel,
     toggleAllCategories,
     toggleAllLabel,
   } = useKangurTrainingSetupState({
-    onBack,
     onStart,
   });
   const categoryHeadingId = useId();
@@ -57,13 +54,13 @@ export default function TrainingSetup({ onStart, onBack }: TrainingSetupProps): 
           className='w-full'
           data-testid='training-setup-heading'
           description='Dobierz poziom, kategorie i liczbe pytan do jednej sesji.'
-          headingAs='h2'
+          headingAs='h3'
           headingSize='md'
           icon={<Dumbbell className='h-6 w-6' />}
           iconAccent='indigo'
           iconSize='lg'
           layout='inline'
-          title='Tryb treningowy'
+          title='Dobierz trening'
         />
 
         <div id={summaryId} aria-live='polite' aria-atomic='true' className='sr-only'>
@@ -137,11 +134,8 @@ export default function TrainingSetup({ onStart, onBack }: TrainingSetupProps): 
           </div>
         </section>
 
-        <div className='flex flex-col gap-3 sm:flex-row'>
-          <KangurButton className='flex-1' onClick={goBack} size='lg' type='button' variant='surface'>
-            ← Wroc
-          </KangurButton>
-          <KangurButton className='flex-grow-[2]' onClick={startTraining} size='lg' type='button' variant='primary'>
+        <div className='flex justify-end'>
+          <KangurButton className='w-full sm:w-auto' onClick={startTraining} size='lg' type='button' variant='primary'>
             Start! 🚀
           </KangurButton>
         </div>

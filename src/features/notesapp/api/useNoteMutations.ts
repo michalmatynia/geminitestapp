@@ -39,7 +39,7 @@ export function useCreateNote(): CreateMutation<NoteWithRelations, NoteCreateInp
       domain: 'notes',
       mutationKey,
       tags: ['notes', 'create'],
-    },
+      description: 'Creates notes.'},
     invalidateKeys: [QUERY_KEYS.notes.all],
   });
 }
@@ -60,7 +60,7 @@ export function useUpdateNote(): UpdateMutation<
       domain: 'notes',
       mutationKey,
       tags: ['notes', 'update'],
-    },
+      description: 'Updates notes.'},
     invalidateKeys: (_data, variables) => [
       QUERY_KEYS.notes.all,
       QUERY_KEYS.notes.detail(variables.id),
@@ -80,7 +80,7 @@ export function useDeleteNote(): DeleteMutation<DeleteResponse> {
       domain: 'notes',
       mutationKey,
       tags: ['notes', 'delete'],
-    },
+      description: 'Deletes notes.'},
     invalidateKeys: [QUERY_KEYS.notes.all],
   });
 }
@@ -98,7 +98,7 @@ export function useCreateNoteFolder(): CreateMutation<CategoryRecord, CategoryCr
       domain: 'notes',
       mutationKey,
       tags: ['notes', 'folders', 'create'],
-    },
+      description: 'Creates notes categories.'},
     invalidateKeys: [QUERY_KEYS.notes.all],
   });
 }
@@ -119,7 +119,7 @@ export function useUpdateNoteFolder(): UpdateMutation<
       domain: 'notes',
       mutationKey,
       tags: ['notes', 'folders', 'update'],
-    },
+      description: 'Updates notes categories.'},
     invalidateKeys: [QUERY_KEYS.notes.all],
   });
 }
@@ -137,7 +137,7 @@ export function useDeleteNoteFolder(): DeleteMutation<DeleteResponse> {
       domain: 'notes',
       mutationKey,
       tags: ['notes', 'folders', 'delete'],
-    },
+      description: 'Deletes notes categories.'},
     invalidateKeys: [QUERY_KEYS.notes.all],
   });
 }
@@ -155,7 +155,7 @@ export function useCreateNotebook(): CreateMutation<NotebookRecord, NotebookCrea
       domain: 'notes',
       mutationKey,
       tags: ['notes', 'notebooks', 'create'],
-    },
+      description: 'Creates notes notebooks.'},
     invalidateKeys: [QUERY_KEYS.notes.notebooks()],
   });
 }
@@ -176,7 +176,7 @@ export function useUpdateNotebook(): UpdateMutation<
       domain: 'notes',
       mutationKey,
       tags: ['notes', 'notebooks', 'update'],
-    },
+      description: 'Updates notes notebooks.'},
     invalidateKeys: (_data, variables) => [
       QUERY_KEYS.notes.notebooks(),
       QUERY_KEYS.notes.detail(variables.id),
@@ -196,7 +196,7 @@ export function useDeleteNotebook(): DeleteMutation<DeleteResponse> {
       domain: 'notes',
       mutationKey,
       tags: ['notes', 'notebooks', 'delete'],
-    },
+      description: 'Deletes notes notebooks.'},
     invalidateKeys: [QUERY_KEYS.notes.all],
   });
 }
@@ -213,7 +213,7 @@ export function useCreateNoteTag(): CreateMutation<TagRecord, TagCreateInput> {
       domain: 'notes',
       mutationKey,
       tags: ['notes', 'tags', 'create'],
-    },
+      description: 'Creates notes tags.'},
     invalidateKeys: (_data, variables) => [
       QUERY_KEYS.notes.tags(),
       QUERY_KEYS.notes.tags(variables.notebookId ?? undefined),
@@ -234,7 +234,7 @@ export function useUpdateNoteTag(): UpdateMutation<TagRecord, TagUpdateInput & {
       domain: 'notes',
       mutationKey,
       tags: ['notes', 'tags', 'update'],
-    },
+      description: 'Updates notes tags.'},
     invalidateKeys: [QUERY_KEYS.notes.tags()],
   });
 }
@@ -251,7 +251,7 @@ export function useDeleteNoteTag(): DeleteMutation<DeleteResponse> {
       domain: 'notes',
       mutationKey,
       tags: ['notes', 'tags', 'delete'],
-    },
+      description: 'Deletes notes tags.'},
     invalidateKeys: [QUERY_KEYS.notes.tags()],
   });
 }
@@ -268,7 +268,7 @@ export function useCreateNoteTheme(): CreateMutation<ThemeRecord, ThemeCreateInp
       domain: 'notes',
       mutationKey,
       tags: ['notes', 'themes', 'create'],
-    },
+      description: 'Creates notes themes.'},
     invalidateKeys: (_data, variables) => [
       QUERY_KEYS.notes.themes(),
       QUERY_KEYS.notes.themes(variables.notebookId ?? undefined),
@@ -292,7 +292,7 @@ export function useUpdateNoteTheme(): UpdateMutation<
       domain: 'notes',
       mutationKey,
       tags: ['notes', 'themes', 'update'],
-    },
+      description: 'Updates notes themes.'},
     invalidateKeys: [QUERY_KEYS.notes.themes()],
   });
 }
@@ -309,7 +309,7 @@ export function useDeleteNoteTheme(): DeleteMutation<DeleteResponse> {
       domain: 'notes',
       mutationKey,
       tags: ['notes', 'themes', 'delete'],
-    },
+      description: 'Deletes notes themes.'},
     invalidateKeys: [QUERY_KEYS.notes.themes()],
   });
 }

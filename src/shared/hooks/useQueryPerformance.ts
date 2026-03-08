@@ -120,7 +120,7 @@ export function useQueryWithPerformance<TData>(
       resource: 'query-performance',
       domain: 'global',
       tags: ['performance', 'query'],
-    },
+      description: 'Loads query performance.'},
     ...options,
   });
 }

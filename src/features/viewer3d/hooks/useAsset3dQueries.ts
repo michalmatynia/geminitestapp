@@ -82,7 +82,7 @@ export function useAssets3D(filters: Asset3DListFilters): ListQuery<Asset3DRecor
       domain: 'viewer3d',
 
       tags: ['viewer3d', 'assets'],
-    },
+      description: 'Loads viewer3d assets.'},
   });
 }
 
@@ -102,7 +102,7 @@ export function useAsset3DCategories(): ListQuery<string> {
       domain: 'viewer3d',
 
       tags: ['viewer3d', 'categories'],
-    },
+      description: 'Loads viewer3d categories.'},
   });
 }
 
@@ -122,7 +122,7 @@ export function useAsset3DTags(): ListQuery<string> {
       domain: 'viewer3d',
 
       tags: ['viewer3d', 'tags'],
-    },
+      description: 'Loads viewer3d tags.'},
   });
 }
 
@@ -144,7 +144,7 @@ export function useAsset3DById(id: string | null): SingleQuery<Asset3DRecord> {
       domain: 'viewer3d',
 
       tags: ['viewer3d', 'asset', 'detail'],
-    },
+      description: 'Loads viewer3d asset.'},
   });
 }
 
@@ -159,7 +159,7 @@ export function useDeleteAsset3DMutation(): DeleteMutation {
       domain: 'viewer3d',
 
       tags: ['viewer3d', 'asset', 'delete'],
-    },
+      description: 'Deletes viewer3d asset.'},
     invalidate: (queryClient) => invalidateAsset3d(queryClient),
   });
 }
@@ -185,7 +185,7 @@ export function useReindexAssets3DMutation(): UpdateMutation<
       domain: 'viewer3d',
 
       tags: ['viewer3d', 'assets', 'reindex'],
-    },
+      description: 'Updates viewer3d assets reindex.'},
     invalidate: (queryClient) => invalidateAsset3d(queryClient),
   });
 }

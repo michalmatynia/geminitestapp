@@ -25,7 +25,7 @@ export function usePlaywrightPersonas(options?: {
       domain: 'playwright',
       queryKey,
       tags: ['playwright', 'personas'],
-    },
+      description: 'Loads playwright personas.'},
   });
 }
 
@@ -49,7 +49,7 @@ export function useSavePlaywrightPersonasMutation(): VoidMutation<{
       domain: 'playwright',
       mutationKey,
       tags: ['playwright', 'personas', 'save'],
-    },
+      description: 'Updates playwright personas.'},
     invalidateKeys: [playwrightKeys.personas()],
   });
 }

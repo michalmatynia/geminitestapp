@@ -29,7 +29,7 @@ export function useProductListIntegrations() {
         resource: 'integrations.connections',
         domain: 'integrations',
         tags: ['integrations', 'connections', 'prefetch'],
-      },
+        description: 'Loads integrations connections.'},
     })();
     void prefetchQueryV2(queryClient, {
       queryKey: normalizeQueryKey(integrationSelectionQueryKeys.defaultConnection),
@@ -41,7 +41,7 @@ export function useProductListIntegrations() {
         resource: 'integrations.default-connection',
         domain: 'integrations',
         tags: ['integrations', 'default-connection', 'prefetch'],
-      },
+        description: 'Loads integrations default connection.'},
     })();
   }, [queryClient]);
 
@@ -58,7 +58,7 @@ export function useProductListIntegrations() {
           resource: 'integrations.listings',
           domain: 'integrations',
           tags: ['integrations', 'listings', 'prefetch'],
-        },
+          description: 'Loads integrations listings.'},
       })();
     },
     [queryClient]
@@ -77,7 +77,7 @@ export function useProductListIntegrations() {
           resource: 'integrations.listings',
           domain: 'integrations',
           tags: ['integrations', 'listings', 'fetch'],
-        },
+          description: 'Loads integrations listings.'},
       })();
     },
     [queryClient]

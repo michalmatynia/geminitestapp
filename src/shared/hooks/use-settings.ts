@@ -69,6 +69,7 @@ export function useSettings(options?: {
       resource: 'settings',
       domain: 'observability',
       tags: ['settings', scope],
+      description: 'Loads settings for the requested scope.',
     },
   });
 }
@@ -96,6 +97,7 @@ export function useSettingsMap(options?: {
       resource: 'settings',
       domain: 'observability',
       tags: ['settings', 'map', scope],
+      description: 'Loads the requested settings scope as a key-value map.',
     },
   });
 }
@@ -120,6 +122,7 @@ export function useLiteSettingsMap(options?: {
       resource: 'settings',
       domain: 'observability',
       tags: ['settings', 'map', 'lite'],
+      description: 'Loads the lite settings scope as a key-value map.',
     },
   });
 }
@@ -139,6 +142,7 @@ export function useUpdateSetting(): MutationResult<SystemSetting, { key: string;
       resource: 'settings',
       domain: 'observability',
       tags: ['settings', 'update'],
+      description: 'Updates a single system setting.',
     },
   });
 }
@@ -172,6 +176,7 @@ export function useUpdateSettingsBulk(): MutationResult<
       resource: 'settings',
       domain: 'observability',
       tags: ['settings', 'bulk-update'],
+      description: 'Updates multiple system settings in sequence.',
     },
   });
 }

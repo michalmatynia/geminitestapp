@@ -31,6 +31,6 @@ export function useChatbotMemory(params: string = ''): ListQuery<ChatbotMemoryIt
       domain: 'chatbot',
       queryKey,
       tags: ['chatbot', 'memory'],
-    },
+      description: 'Loads chatbot memory.'},
   });
 }

@@ -37,6 +37,6 @@ export function useProductCategoryTree(catalogId?: string): ListQuery<ProductCat
       domain: 'products',
       queryKey,
       tags: ['products', 'categories', 'tree'],
-    },
+      description: 'Loads products settings categories tree.'},
   });
 }

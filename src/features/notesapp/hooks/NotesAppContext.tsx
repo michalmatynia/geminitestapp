@@ -272,7 +272,7 @@ export function NotesAppProvider({ children }: { children: React.ReactNode }): R
             domain: 'notes',
             queryKey: QUERY_KEYS.notes.detail(noteId),
             tags: ['notes', 'detail', 'fetch'],
-          },
+            description: 'Loads notes detail.'},
         })();
         setSelectedNote(note);
         updateSettings({ selectedNoteId: noteId });

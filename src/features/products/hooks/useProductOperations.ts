@@ -83,7 +83,7 @@ export function useProductOperations(
           domain: 'products',
           queryKey,
           tags: ['products', 'validate', 'sku'],
-        },
+          description: 'Loads products validate sku.'},
       })();
 
       if (products.some((p: ProductWithImages) => p.sku === sku)) {

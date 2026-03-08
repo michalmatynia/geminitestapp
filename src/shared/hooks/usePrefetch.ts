@@ -35,7 +35,7 @@ export function useSmartPrefetch(options?: {
             resource: 'smart-prefetch',
             domain,
             tags: ['prefetch', 'hover'],
-          },
+            description: 'Loads smart prefetch.'},
         })();
       },
     };
@@ -56,7 +56,7 @@ export function useSmartPrefetch(options?: {
             resource: 'smart-prefetch',
             domain,
             tags: ['prefetch', 'focus'],
-          },
+            description: 'Loads smart prefetch.'},
         })();
       },
     };

@@ -58,6 +58,7 @@ export function useProducts(
       domain: 'products',
       queryKey,
       tags: ['products', 'list'],
+      description: 'Loads products for the current filters.',
     },
   });
 }
@@ -86,6 +87,7 @@ export function useProductsCount(
       domain: 'products',
       queryKey,
       tags: ['products', 'count'],
+      description: 'Loads the product count for the current filters.',
     },
   });
 }
@@ -128,6 +130,7 @@ export function useProductsWithCount(
       domain: 'products',
       queryKey,
       tags: ['products', 'list', 'count'],
+      description: 'Loads paginated products and total count for the current filters.',
     },
   });
 
@@ -167,6 +170,7 @@ export function useProductsWithCount(
         domain: 'products',
         queryKey: nextQueryKey,
         tags: ['products', 'list', 'prefetch'],
+        description: 'Prefetches the next product page and count.',
       },
     })();
   }, [enabled, filters, query.data, queryClient]);

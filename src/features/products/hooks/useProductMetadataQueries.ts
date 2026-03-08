@@ -60,7 +60,7 @@ export function useCatalogs(): ListQuery<CatalogRecord> {
       domain: 'products',
       queryKey,
       tags: ['products', 'metadata', 'catalogs'],
-    },
+      description: 'Loads products metadata catalogs.'},
   });
 }
 
@@ -83,7 +83,7 @@ export function useCategories(catalogId?: string): ListQuery<ProductCategory> {
       domain: 'products',
       queryKey,
       tags: ['products', 'metadata', 'categories'],
-    },
+      description: 'Loads products metadata categories.'},
   });
 }
 
@@ -105,7 +105,7 @@ export function useTags(catalogId?: string): ListQuery<ProductTag> {
       domain: 'products',
       queryKey,
       tags: ['products', 'metadata', 'tags'],
-    },
+      description: 'Loads products metadata tags.'},
   });
 }
 
@@ -123,6 +123,7 @@ export function useMultiTags(catalogIds: string[]): UseQueryResult<ProductTag[]>
           source: 'products.hooks.useMultiTags',
           operation: 'list',
           resource: 'products.metadata.tags',
+          description: 'Loads products metadata tags.',
           domain: 'products',
           queryKey,
           tags: ['products', 'metadata', 'tags', 'multi'],
@@ -145,7 +146,7 @@ export function useProducers(): ListQuery<Producer> {
       domain: 'products',
       queryKey,
       tags: ['products', 'metadata', 'producers'],
-    },
+      description: 'Loads products metadata producers.'},
   });
 }
 
@@ -167,7 +168,7 @@ export function useSaveProducerMutation(): SaveMutation<
       domain: 'products',
       mutationKey,
       tags: ['products', 'metadata', 'producers', 'save'],
-    },
+      description: 'Runs products metadata producers.'},
     invalidate: async (queryClient) => {
       await invalidateProductMetadata(queryClient);
     },
@@ -186,7 +187,7 @@ export function useDeleteProducerMutation(): DeleteMutation {
       domain: 'products',
       mutationKey,
       tags: ['products', 'metadata', 'producers', 'delete'],
-    },
+      description: 'Deletes products metadata producers.'},
     invalidate: async (queryClient) => {
       await invalidateProductMetadata(queryClient);
     },
@@ -214,7 +215,7 @@ export function useParameters(catalogId?: string): ListQuery<ProductParameter> {
       domain: 'products',
       queryKey,
       tags: ['products', 'metadata', 'parameters'],
-    },
+      description: 'Loads products metadata parameters.'},
   });
 }
 
@@ -236,7 +237,7 @@ export function useSimpleParameters(catalogId?: string): ListQuery<ProductSimple
       domain: 'products',
       queryKey,
       tags: ['products', 'metadata', 'simple-parameters'],
-    },
+      description: 'Loads products metadata simple parameters.'},
   });
 }
 
@@ -252,7 +253,7 @@ export function useLanguages(): ListQuery<Language> {
       domain: 'products',
       queryKey,
       tags: ['products', 'metadata', 'languages'],
-    },
+      description: 'Loads products metadata languages.'},
   });
 }
 
@@ -269,6 +270,6 @@ export function usePriceGroups(): ListQuery<PriceGroupWithDetails> {
       domain: 'products',
       queryKey,
       tags: ['products', 'metadata', 'price-groups'],
-    },
+      description: 'Loads products metadata price groups.'},
   });
 }

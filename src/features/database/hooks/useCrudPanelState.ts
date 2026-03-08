@@ -158,7 +158,7 @@ export function useCrudPanelState(props: {
       resource: 'database.crud-rows',
       domain: 'database',
       tags: ['database', 'crud', dbType],
-    },
+      description: 'Loads database crud rows.'},
   });
 
   const fetchRows = useCallback(() => {

@@ -111,7 +111,7 @@ export function useProductImages(
       domain: 'products',
       mutationKey: QUERY_KEYS.products.all,
       tags: ['products', 'images', 'disconnect'],
-    },
+      description: 'Deletes products images.'},
     invalidate: (queryClient) => invalidateProducts(queryClient),
   });
 

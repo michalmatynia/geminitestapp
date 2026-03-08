@@ -120,6 +120,7 @@ export function useCreateStudioProject(): CreateMutation<
       domain: 'image_studio',
       mutationKey: QUERY_KEYS.imageStudio.all,
       tags: ['image-studio', 'project', 'create'],
+      description: 'Creates an image studio project.',
     },
     invalidate: (queryClient) => invalidateImageStudioProjects(queryClient),
   });
@@ -143,6 +144,7 @@ export function useRenameStudioProject(): UpdateMutation<
       domain: 'image_studio',
       mutationKey: QUERY_KEYS.imageStudio.all,
       tags: ['image-studio', 'project', 'rename'],
+      description: 'Renames an image studio project.',
     },
     invalidate: (queryClient) => invalidateImageStudioProjects(queryClient),
   });
@@ -199,6 +201,7 @@ export function useResizeStudioProjectCanvas(): UpdateMutation<
       domain: 'image_studio',
       mutationKey: QUERY_KEYS.imageStudio.all,
       tags: ['image-studio', 'project', 'resize-canvas'],
+      description: 'Resizes an image studio project canvas.',
     },
     invalidate: (queryClient, result, variables) => {
       const normalizedProjectId = result.projectId?.trim() || variables.projectId.trim();
@@ -227,6 +230,7 @@ export function useDeleteStudioProject(): DeleteMutation<string, string> {
       domain: 'image_studio',
       mutationKey: QUERY_KEYS.imageStudio.all,
       tags: ['image-studio', 'project', 'delete'],
+      description: 'Deletes an image studio project.',
     },
     invalidate: (queryClient, id) => {
       void invalidateImageStudioProjects(queryClient);
@@ -252,6 +256,7 @@ export function useCreateStudioSlots(
       domain: 'image_studio',
       mutationKey: QUERY_KEYS.imageStudio.slots(projectId),
       tags: ['image-studio', 'slots', 'create'],
+      description: 'Creates slots in an image studio project.',
     },
     invalidate: (queryClient) => invalidateImageStudioSlots(queryClient, projectId),
   });
@@ -356,6 +361,7 @@ export function useUpdateStudioSlot(
       domain: 'image_studio',
       mutationKey: QUERY_KEYS.imageStudio.slots(projectId),
       tags: ['image-studio', 'slots', 'update'],
+      description: 'Updates an image studio slot.',
     },
     invalidate: (queryClient) => {
       void invalidateImageStudioSlots(queryClient, projectId);
@@ -520,6 +526,7 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
       domain: 'image_studio',
       mutationKey: slotsQueryKey,
       tags: ['image-studio', 'slots', 'delete'],
+      description: 'Deletes an image studio slot.',
     },
     onMutate: async (deletedSlotRawId: string) => {
       const normalizedDeletedSlotId = normalizeStudioSlotId(deletedSlotRawId);
@@ -620,6 +627,7 @@ export function useUploadStudioAssets(
       domain: 'image_studio',
       mutationKey: QUERY_KEYS.imageStudio.slots(projectId),
       tags: ['image-studio', 'assets', 'upload'],
+      description: 'Uploads local assets into an image studio project.',
     },
     invalidate: (queryClient) => invalidateImageStudioSlots(queryClient, projectId),
   });
@@ -642,6 +650,7 @@ export function useImportStudioAssetsFromDrive(
       domain: 'image_studio',
       mutationKey: QUERY_KEYS.imageStudio.slots(projectId),
       tags: ['image-studio', 'assets', 'import'],
+      description: 'Imports drive assets into an image studio project.',
     },
     invalidate: (queryClient) => invalidateImageStudioSlots(queryClient, projectId),
   });
@@ -662,6 +671,7 @@ export function useRunStudio(): CreateMutation<RunStudioEnqueueResult, RunStudio
       domain: 'image_studio',
       mutationKey: QUERY_KEYS.imageStudio.all,
       tags: ['image-studio', 'run'],
+      description: 'Starts an image studio generation run.',
     },
   });
 }

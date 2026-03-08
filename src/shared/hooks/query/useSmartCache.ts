@@ -140,7 +140,7 @@ export function useSmartCache(options?: { domain?: TanstackFactoryDomain }): {
             resource: 'critical-data',
             domain,
             tags: ['cache', 'preload'],
-          },
+            description: 'Loads critical data.'},
         })()
       );
 
@@ -193,7 +193,7 @@ export function useCacheWarming(options?: { domain?: TanstackFactoryDomain }): {
               resource,
               domain,
               tags: ['cache', 'warming', 'user'],
-            },
+              description: 'Loads warm user specific data.'},
           })()
         )
       );
@@ -221,7 +221,7 @@ export function useCacheWarming(options?: { domain?: TanstackFactoryDomain }): {
               resource: 'navigation',
               domain,
               tags: ['cache', 'warming', 'navigation'],
-            },
+              description: 'Loads navigation.'},
           })()
         )
       );
@@ -250,7 +250,7 @@ export function useCacheWarming(options?: { domain?: TanstackFactoryDomain }): {
             resource: 'settings.lite',
             domain,
             tags: ['cache', 'warming', 'frequent'],
-          },
+            description: 'Loads settings lite.'},
         })()
       )
     );
@@ -292,6 +292,6 @@ export function useAdaptiveQuery<T>(
       resource: 'adaptive-query',
       domain,
       tags: ['cache', 'adaptive'],
-    },
+      description: 'Loads adaptive query.'},
   });
 }

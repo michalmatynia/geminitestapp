@@ -58,7 +58,7 @@ export function useChatbotSessions(options?: {
       domain: 'chatbot',
       queryKey,
       tags: ['chatbot', 'sessions'],
-    },
+      description: 'Loads chatbot sessions.'},
   });
 }
 
@@ -87,7 +87,7 @@ export function useChatbotSession(
       domain: 'chatbot',
       queryKey,
       tags: ['chatbot', 'sessions', 'detail'],
-    },
+      description: 'Loads chatbot sessions detail.'},
   });
 }
 
@@ -112,7 +112,7 @@ export function useChatbotSettings(
       domain: 'chatbot',
       queryKey,
       tags: ['chatbot', 'settings'],
-    },
+      description: 'Loads chatbot settings.'},
   });
 }
 
@@ -144,7 +144,7 @@ export function useChatbotModels(options?: {
       domain: 'chatbot',
       queryKey,
       tags: ['brain', 'models'],
-    },
+      description: 'Loads brain models.'},
   });
 }
 
@@ -168,6 +168,6 @@ export function useChatbotMemory(
       domain: 'chatbot',
       queryKey,
       tags: ['chatbot', 'memory'],
-    },
+      description: 'Loads chatbot memory.'},
   });
 }

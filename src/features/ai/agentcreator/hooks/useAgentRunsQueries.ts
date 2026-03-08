@@ -20,7 +20,7 @@ export function useAgentRuns(): ListQuery<AiPathRunRecord> {
       domain: 'agent_creator',
       queryKey,
       tags: ['agent-runs', 'list'],
-    },
+      description: 'Loads agent runs.'},
   });
 }
 
@@ -37,7 +37,7 @@ export function useAgentSnapshots(runId: string | null): ListQuery<AgentSnapshot
       domain: 'agent_creator',
       queryKey,
       tags: ['agent-runs', 'snapshots'],
-    },
+      description: 'Loads agent runs snapshots.'},
   });
 }
 
@@ -58,7 +58,7 @@ export function useAgentLogs(
       domain: 'agent_creator',
       queryKey,
       tags: ['agent-runs', 'logs'],
-    },
+      description: 'Polls agent runs logs.'},
   });
 }
 
@@ -79,6 +79,6 @@ export function useAgentAudits(
       domain: 'agent_creator',
       queryKey,
       tags: ['agent-runs', 'audits'],
-    },
+      description: 'Polls agent runs audits.'},
   });
 }

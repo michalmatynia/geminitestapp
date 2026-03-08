@@ -23,7 +23,7 @@ export function useAnalyticsInsightsQuery(): ListQuery<AiInsightRecord, InsightR
       domain: 'analytics',
       queryKey,
       tags: ['ai', 'insights', 'analytics'],
-    },
+      description: 'Loads ai insights analytics.'},
   });
 }
 
@@ -42,7 +42,7 @@ export function useLogInsightsQuery(): ListQuery<AiInsightRecord, InsightRespons
       domain: 'analytics',
       queryKey,
       tags: ['ai', 'insights', 'logs'],
-    },
+      description: 'Loads ai insights logs.'},
   });
 }
 
@@ -61,7 +61,7 @@ export function useRuntimeAnalyticsInsightsQuery(): ListQuery<AiInsightRecord, I
       domain: 'analytics',
       queryKey,
       tags: ['ai', 'insights', 'runtime-analytics'],
-    },
+      description: 'Loads ai insights runtime analytics.'},
   });
 }
 
@@ -80,7 +80,7 @@ export function useRunAnalyticsInsightMutation(): MutationResult<AiInsightRecord
       domain: 'analytics',
       mutationKey,
       tags: ['ai', 'insights', 'analytics', 'run'],
-    },
+      description: 'Creates ai insights analytics.'},
     invalidateKeys: [QUERY_KEYS.ai.insights.analytics()],
   });
 }
@@ -100,7 +100,7 @@ export function useRunLogInsightMutation(): MutationResult<AiInsightRecord | nul
       domain: 'analytics',
       mutationKey,
       tags: ['ai', 'insights', 'logs', 'run'],
-    },
+      description: 'Creates ai insights logs.'},
     invalidateKeys: [QUERY_KEYS.ai.insights.logs()],
   });
 }
@@ -126,7 +126,7 @@ export function useRunRuntimeAnalyticsInsightMutation(): MutationResult<
       domain: 'analytics',
       mutationKey,
       tags: ['ai', 'insights', 'runtime-analytics', 'run'],
-    },
+      description: 'Creates ai insights runtime analytics.'},
     invalidateKeys: [QUERY_KEYS.ai.insights.runtimeAnalytics()],
   });
 }

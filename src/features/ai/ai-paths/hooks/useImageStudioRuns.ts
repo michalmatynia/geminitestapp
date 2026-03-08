@@ -40,7 +40,7 @@ export function useImageStudioRuns() {
       resource: 'image-studio.runs',
       domain: 'image_studio',
       tags: ['image-studio', 'runs'],
-    },
+      description: 'Loads image studio runs.'},
   });
 
   const runs = useMemo(() => runsQuery.data?.items ?? [], [runsQuery.data]);

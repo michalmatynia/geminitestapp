@@ -50,7 +50,7 @@ export function useIntegrationJobs(): ListQuery<ProductJob> {
       domain: 'jobs',
       queryKey,
       tags: ['jobs', 'integrations'],
-    },
+      description: 'Loads jobs integrations.'},
   });
 }
 
@@ -69,7 +69,7 @@ export function useChatbotJobs(scope: string = 'all'): SingleQuery<{ jobs: unkno
       domain: 'jobs',
       queryKey,
       tags: ['jobs', 'chatbot'],
-    },
+      description: 'Loads jobs chatbot.'},
   });
 }
 
@@ -88,6 +88,6 @@ export function useTraderaQueueHealth(): SingleQuery<TraderaQueueHealthResponse>
       domain: 'jobs',
       queryKey,
       tags: ['jobs', 'tradera'],
-    },
+      description: 'Loads jobs tradera health.'},
   });
 }

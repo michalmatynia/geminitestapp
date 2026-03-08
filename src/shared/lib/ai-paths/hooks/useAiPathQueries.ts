@@ -29,7 +29,7 @@ export function useAiPathsSettingsQuery(): ListQuery<{ key: string; value: strin
       domain: 'ai_paths',
       queryKey,
       tags: ['ai-paths', 'settings'],
-    },
+      description: 'Loads ai paths settings.'},
   });
 }
 
@@ -48,7 +48,7 @@ export function useUpdateAiPathsSettingMutation(): VoidMutation<{ key: string; v
       domain: 'ai_paths',
       mutationKey,
       tags: ['ai-paths', 'settings', 'update'],
-    },
+      description: 'Updates ai paths settings.'},
     invalidateKeys: [QUERY_KEYS.ai.aiPaths.settings()],
   });
 }
@@ -70,7 +70,7 @@ export function useAiPathsTriggerButtonsQuery(): SingleQuery<AiTriggerButtonReco
       domain: 'ai_paths',
       queryKey,
       tags: ['ai-paths', 'trigger-buttons'],
-    },
+      description: 'Loads ai paths trigger buttons.'},
   });
 }
 
@@ -100,6 +100,6 @@ export function useAiPathRuntimeAnalytics(
       domain: 'ai_paths',
       queryKey,
       tags: ['ai-paths', 'runtime-analytics'],
-    },
+      description: 'Loads ai paths runtime analytics.'},
   });
 }

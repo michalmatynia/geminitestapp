@@ -311,7 +311,7 @@ export function useResilientQuery<TData>(
       resource: 'resilient-query',
       domain,
       tags: ['error-handling', 'resilient'],
-    },
+      description: 'Loads resilient query.'},
   });
 
   useEffect((): void => {
@@ -406,7 +406,7 @@ export function useCircuitBreakerQuery<TData>(
       resource: 'circuit-breaker-query',
       domain,
       tags: ['error-handling', 'circuit-breaker'],
-    },
+      description: 'Loads circuit breaker query.'},
   });
 }
 

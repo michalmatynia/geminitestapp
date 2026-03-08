@@ -72,6 +72,7 @@ export function useCreateProduct(): CreateMutation<ProductWithImages, FormData> 
       domain: 'products',
       mutationKey: QUERY_KEYS.products.all,
       tags: ['products', 'create'],
+      description: 'Creates a product.',
     },
     invalidate: async (queryClient) => {
       // Small delay to ensure DB consistency before refetch
@@ -94,6 +95,7 @@ export function useUpdateProduct(): UpdateMutation<ProductWithImages, UpdateProd
       domain: 'products',
       mutationKey: QUERY_KEYS.products.all,
       tags: ['products', 'update'],
+      description: 'Updates a product.',
     },
     invalidate: async (queryClient) => {
       await invalidateProductsAndCounts(queryClient);
@@ -112,6 +114,7 @@ export function useDeleteProduct(): DeleteMutation<{ success: boolean }, string>
       domain: 'products',
       mutationKey: QUERY_KEYS.products.all,
       tags: ['products', 'delete'],
+      description: 'Deletes a product.',
     },
     invalidate: async (queryClient) => {
       await invalidateProductsAndCounts(queryClient);
@@ -135,6 +138,7 @@ export function useBulkDeleteProducts(): DeleteMutation<void, string[]> {
       domain: 'products',
       mutationKey: QUERY_KEYS.products.all,
       tags: ['products', 'bulk-delete'],
+      description: 'Deletes products in bulk.',
     },
     invalidate: async (queryClient) => {
       await invalidateProductsAndCounts(queryClient);
@@ -156,6 +160,7 @@ export function useBulkConvertImagesToBase64(): UpdateMutation<{ ok: boolean }, 
       domain: 'products',
       mutationKey: QUERY_KEYS.products.all,
       tags: ['products', 'images', 'base64', 'bulk'],
+      description: 'Converts product images to base64 in bulk.',
     },
     invalidateKeys: [QUERY_KEYS.products.all],
   });
@@ -173,6 +178,7 @@ export function useDuplicateProduct(): CreateMutation<{ id: string }, { id: stri
       domain: 'products',
       mutationKey: QUERY_KEYS.products.all,
       tags: ['products', 'duplicate'],
+      description: 'Duplicates a product.',
     },
     invalidate: async (queryClient) => {
       await invalidateProductsAndCounts(queryClient);
@@ -249,6 +255,7 @@ export function useUpdateProductField(): UpdateMutation<
       domain: 'products',
       mutationKey: QUERY_KEYS.products.all,
       tags: ['products', 'field-update'],
+      description: 'Updates a single product field with optimistic cache sync.',
     },
     invalidate: async (queryClient, _, variables) => {
       await invalidateProductsAndDetail(queryClient, variables.id);

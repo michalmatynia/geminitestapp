@@ -33,7 +33,7 @@ export function useCreateIntegration(): MutationResult<
       domain: 'integrations',
       mutationKey,
       tags: ['integrations', 'create'],
-    },
+      description: 'Creates integrations.'},
     invalidate: (queryClient) => invalidateIntegrations(queryClient),
   });
 }
@@ -67,7 +67,7 @@ export function useUpsertConnection() {
       domain: 'integrations',
       mutationKey,
       tags: ['integrations', 'connections', 'upsert'],
-    },
+      description: 'Runs integrations connections.'},
     invalidate: (queryClient, _data, variables) => {
       void invalidateIntegrationConnections(queryClient, variables.integrationId);
     },
@@ -106,7 +106,7 @@ export function useDeleteConnection() {
       domain: 'integrations',
       mutationKey,
       tags: ['integrations', 'connections', 'delete'],
-    },
+      description: 'Deletes integrations connections.'},
     invalidate: (queryClient, _data, variables) => {
       void invalidateIntegrationConnections(queryClient, variables.integrationId);
     },
@@ -143,7 +143,7 @@ export function useTestConnection() {
       domain: 'integrations',
       mutationKey,
       tags: ['integrations', 'connections', 'test'],
-    },
+      description: 'Runs integrations connections test.'},
   });
 }
 
@@ -164,7 +164,7 @@ export function useDisconnectAllegro() {
         domain: 'integrations',
         mutationKey,
         tags: ['integrations', 'connections', 'allegro', 'disconnect'],
-      },
+        description: 'Runs integrations connections allegro disconnect.'},
       invalidate: (queryClient, _data, variables) => {
         void invalidateIntegrationConnections(queryClient, variables.integrationId);
       },
@@ -191,7 +191,7 @@ export function useBaseApiRequest() {
       domain: 'integrations',
       mutationKey,
       tags: ['integrations', 'connections', 'base', 'request'],
-    },
+      description: 'Runs integrations connections base request.'},
   });
 }
 
@@ -220,7 +220,7 @@ export function useAllegroApiRequest() {
       domain: 'integrations',
       mutationKey,
       tags: ['integrations', 'connections', 'allegro', 'request'],
-    },
+      description: 'Runs integrations connections allegro request.'},
   });
 }
 
@@ -237,7 +237,7 @@ export function useUpdatePreferredTemplate() {
       domain: 'integrations',
       mutationKey,
       tags: ['integrations', 'exports', 'base', 'preferred-template'],
-    },
+      description: 'Updates integrations exports base preferred template.'},
   });
 }
 
@@ -254,7 +254,7 @@ export function useSyncAllBaseImagesMutation() {
       domain: 'integrations',
       mutationKey,
       tags: ['integrations', 'images', 'sync-base'],
-    },
+      description: 'Runs integrations images sync base all.'},
   });
 }
 
@@ -271,7 +271,7 @@ export function useUpdatePreferredInventory() {
       domain: 'integrations',
       mutationKey,
       tags: ['integrations', 'exports', 'base', 'preferred-inventory'],
-    },
+      description: 'Updates integrations exports base preferred inventory.'},
   });
 }
 
@@ -286,7 +286,7 @@ export function useUpdateDefaultExportConnection() {
       resource: 'integrations.exports.base.default-connection',
       domain: 'integrations',
       tags: ['integrations', 'exports', 'base', 'default-connection'],
-    },
+      description: 'Updates integrations exports base default connection.'},
     invalidateKeys: [
       QUERY_KEYS.integrations.selection.defaultConnection(),
       QUERY_KEYS.integrations.importExport.pref('default-connection'),

@@ -48,7 +48,7 @@ export function useSystemLogs(filters: LogFilters): SingleQuery<SystemLogsRespon
       domain: 'observability',
       queryKey,
       tags: ['observability', 'logs'],
-    },
+      description: 'Loads system logs.'},
   });
 }
 
@@ -71,7 +71,7 @@ export function useSystemActivity(
       domain: 'observability',
       queryKey,
       tags: ['observability', 'activity'],
-    },
+      description: 'Loads system activity.'},
   });
 }
 
@@ -109,7 +109,7 @@ export function useSystemLogMetrics(
       domain: 'observability',
       queryKey,
       tags: ['observability', 'logs', 'metrics'],
-    },
+      description: 'Loads system logs metrics.'},
   });
 }
 
@@ -126,7 +126,7 @@ export function useMongoDiagnostics(): SingleQuery<unknown> {
       domain: 'observability',
       queryKey,
       tags: ['observability', 'diagnostics', 'mongo'],
-    },
+      description: 'Loads system diagnostics mongo indexes.'},
   });
 }
 
@@ -149,6 +149,6 @@ export function useLogInsights(
       domain: 'observability',
       queryKey,
       tags: ['observability', 'logs', 'insights'],
-    },
+      description: 'Loads system logs insights.'},
   });
 }

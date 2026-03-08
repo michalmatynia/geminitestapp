@@ -240,7 +240,7 @@ export const useUpdateNoteRelationsMutation = (noteId: string) => {
       domain: 'notes',
       mutationKey,
       tags: ['notes', 'relations', 'update'],
-    },
+      description: 'Updates notes relations.'},
     invalidate: (queryClient) => invalidateNoteDetail(queryClient, noteId),
   });
 };
@@ -291,7 +291,7 @@ export const useCreateNoteFileMutation = (noteId?: string) => {
             domain: 'notes',
             mutationKey,
             tags: ['notes', 'files', 'upload'],
-          },
+            description: 'Uploads notes files.'},
           invalidate: async (queryClient) => {
             if (noteId) {
               await invalidateNoteDetail(queryClient, noteId);
@@ -315,7 +315,7 @@ export const useDeleteNoteFileMutation = (noteId?: string) => {
       domain: 'notes',
       mutationKey,
       tags: ['notes', 'files', 'delete'],
-    },
+      description: 'Deletes notes files.'},
     invalidate: async (queryClient) => {
       if (noteId) {
         await invalidateNoteDetail(queryClient, noteId);

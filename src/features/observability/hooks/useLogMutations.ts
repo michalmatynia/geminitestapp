@@ -19,7 +19,7 @@ export function useClearLogsMutation(): UpdateMutation<ClearLogsResponse, void> 
       domain: 'observability',
 
       tags: ['observability', 'logs', 'delete'],
-    },
+      description: 'Deletes system logs.'},
     invalidate: (queryClient) => invalidateSystemLogs(queryClient),
   });
 }
@@ -35,7 +35,7 @@ export function useRebuildIndexesMutation(): UpdateMutation<unknown, void> {
       domain: 'observability',
 
       tags: ['observability', 'diagnostics', 'mongo'],
-    },
+      description: 'Creates system diagnostics mongo indexes.'},
     invalidate: (queryClient) => invalidateSystemDiagnostics(queryClient),
   });
 }
@@ -51,7 +51,7 @@ export function useRunLogInsight(): UpdateMutation<{ insight: AiInsightRecord },
       domain: 'observability',
 
       tags: ['observability', 'logs', 'insights'],
-    },
+      description: 'Creates system logs insights.'},
     invalidate: (queryClient) => invalidateSystemLogs(queryClient),
   });
 }
@@ -68,6 +68,6 @@ export function useInterpretLog(): UpdateMutation<{ insight: AiInsightRecord }, 
       domain: 'observability',
 
       tags: ['observability', 'logs', 'interpret'],
-    },
+      description: 'Creates system logs interpret.'},
   });
 }

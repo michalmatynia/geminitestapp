@@ -22,6 +22,6 @@ export function useCatalogs(): ListQuery<CatalogOption, CatalogOption[]> {
       resource: 'catalogs',
       domain: 'products',
       tags: ['products', 'catalogs'],
-    },
+      description: 'Loads catalogs.'},
   });
 }

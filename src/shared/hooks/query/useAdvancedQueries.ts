@@ -33,7 +33,7 @@ export function useDependentQueries<T1, T2, T3>(
       resource: 'dependent-query',
       domain,
       tags: ['dependent', 'first'],
-    },
+      description: 'Loads dependent query.'},
   });
 
   const second = createListQueryV2<T2, T2>({
@@ -46,7 +46,7 @@ export function useDependentQueries<T1, T2, T3>(
       resource: 'dependent-query',
       domain,
       tags: ['dependent', 'second'],
-    },
+      description: 'Loads dependent query.'},
   });
 
   const third = createListQueryV2<T3, T3>({
@@ -63,7 +63,7 @@ export function useDependentQueries<T1, T2, T3>(
       resource: 'dependent-query',
       domain,
       tags: ['dependent', 'third'],
-    },
+      description: 'Loads dependent query.'},
   });
 
   return {
@@ -109,6 +109,7 @@ export function useParallelQueries<T extends Record<string, unknown>>(
         source: `shared.hooks.query.useParallelQueries.${String(key)}`,
         operation: 'list',
         resource: 'parallel-query',
+        description: 'Loads parallel query.',
         domain,
         tags: ['parallel', String(key)],
       },
@@ -197,6 +198,6 @@ export function useConditionalQuery<T>(
       resource: 'conditional-query',
       domain,
       tags: ['conditional'],
-    },
+      description: 'Loads conditional query.'},
   });
 }

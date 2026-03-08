@@ -85,7 +85,7 @@ export function useProductEditHydration({
       resource: 'products.detail',
       domain: 'products',
       tags: ['products', 'detail', 'editing'],
-    },
+      description: 'Loads products detail.'},
   });
 
   const prefetchProductDetail = useCallback(
@@ -130,7 +130,7 @@ export function useProductEditHydration({
             domain: 'products',
             queryKey,
             tags: ['products', 'detail', 'prefetch'],
-          },
+            description: 'Loads products detail.'},
         })();
       }, PRODUCT_DETAIL_PREFETCH_DEBOUNCE_MS);
     },
@@ -172,7 +172,7 @@ export function useProductEditHydration({
           domain: 'products',
           queryKey,
           tags: ['products', 'detail', 'fetch'],
-        },
+          description: 'Loads products detail.'},
       })()
         .then((freshProduct: ProductWithImages) => {
           if (editOpenRequestTokenRef.current !== requestToken) return;
@@ -264,7 +264,7 @@ export function useProductEditHydration({
         domain: 'products',
         queryKey,
         tags: ['products', 'detail', 'fetch'],
-      },
+        description: 'Loads products detail.'},
     })()
       .then((freshProduct: ProductWithImages) => {
         if (editOpenRequestTokenRef.current !== requestToken) return;

@@ -36,7 +36,7 @@ export function useProductSyncProfiles(): ListQuery<ProductSyncProfile> {
       domain: 'products',
       queryKey,
       tags: ['products', 'settings', 'sync', 'profiles'],
-    },
+      description: 'Loads products settings sync profiles.'},
   });
 }
 
@@ -70,7 +70,7 @@ export function useProductSyncRuns(
       domain: 'products',
       queryKey,
       tags: ['products', 'settings', 'sync', 'runs'],
-    },
+      description: 'Loads products settings sync runs.'},
   });
 }
 
@@ -90,7 +90,7 @@ export function useCreateProductSyncProfileMutation(): CreateMutation<
       domain: 'products',
       mutationKey,
       tags: ['products', 'settings', 'sync', 'profiles', 'create'],
-    },
+      description: 'Creates products settings sync profiles.'},
     invalidateKeys: [productSettingsKeys.syncProfiles()],
   });
 }
@@ -111,7 +111,7 @@ export function useUpdateProductSyncProfileMutation(): UpdateMutation<
       domain: 'products',
       mutationKey,
       tags: ['products', 'settings', 'sync', 'profiles', 'update'],
-    },
+      description: 'Updates products settings sync profiles.'},
     invalidateKeys: [productSettingsKeys.syncProfiles(), productSettingsKeys.syncRuns(null)],
   });
 }
@@ -129,7 +129,7 @@ export function useDeleteProductSyncProfileMutation(): DeleteMutation {
       domain: 'products',
       mutationKey,
       tags: ['products', 'settings', 'sync', 'profiles', 'delete'],
-    },
+      description: 'Deletes products settings sync profiles.'},
     invalidateKeys: [productSettingsKeys.syncProfiles(), productSettingsKeys.syncRuns(null)],
   });
 }
@@ -153,7 +153,7 @@ export function useRunProductSyncProfileMutation(): MutationResult<
       domain: 'products',
       mutationKey,
       tags: ['products', 'settings', 'sync', 'runs', 'run-now'],
-    },
+      description: 'Runs products settings sync runs.'},
     invalidateKeys: (_data, variables) => [
       productSettingsKeys.syncRuns(null),
       productSettingsKeys.syncRuns(variables.profileId),
@@ -178,6 +178,6 @@ export function useRelinkBaseProductsMutation(): MutationResult<
       domain: 'products',
       mutationKey,
       tags: ['products', 'settings', 'sync', 'relink'],
-    },
+      description: 'Runs products settings sync relink.'},
   });
 }

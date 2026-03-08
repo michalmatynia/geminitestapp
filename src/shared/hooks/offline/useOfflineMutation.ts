@@ -180,6 +180,7 @@ export function useOfflineMutation<
       operation: 'action',
       domain: 'global',
       queryKey: options.queryKey,
+      description: 'Queues offline-capable mutations and replays them when connectivity returns.',
     },
     mutationFn: async (variables: TVariables): Promise<TData> => {
       const isOnline = typeof navigator === 'undefined' ? true : navigator.onLine;

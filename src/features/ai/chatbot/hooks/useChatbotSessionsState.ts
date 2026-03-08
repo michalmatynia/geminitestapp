@@ -73,7 +73,7 @@ export function useChatbotSessionsState(): UseChatbotSessionsStateReturn {
       resource: 'chatbot.sessions.ids',
       domain: 'global',
       tags: ['chatbot', 'sessions', 'selection'],
-    },
+      description: 'Runs chatbot sessions ids.'},
   });
 
   const sessions = sessionsQuery.data ?? [];

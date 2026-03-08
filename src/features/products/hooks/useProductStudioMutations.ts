@@ -26,7 +26,7 @@ export function useSendToStudioMutation() {
       resource: 'products.studio.send',
       domain: 'products',
       tags: ['products', 'studio', 'send'],
-    },
+      description: 'Creates products studio send.'},
     invalidate: async (queryClient, _data, { projectId }) => {
       void invalidateImageStudioSlots(queryClient, projectId);
     },
@@ -50,7 +50,7 @@ export function useAcceptVariantMutation() {
       resource: 'products.studio.accept',
       domain: 'products',
       tags: ['products', 'studio', 'accept'],
-    },
+      description: 'Updates products studio accept.'},
     invalidate: async (queryClient) => {
       void invalidateProductsAndCounts(queryClient);
     },
@@ -73,7 +73,7 @@ export function useRotateImageSlotMutation() {
       resource: 'products.studio.rotate',
       domain: 'products',
       tags: ['products', 'studio', 'rotate'],
-    },
+      description: 'Updates products studio rotate.'},
     invalidate: async (queryClient) => {
       void invalidateProductsAndCounts(queryClient);
     },

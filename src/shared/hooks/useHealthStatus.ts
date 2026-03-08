@@ -22,6 +22,6 @@ export function useHealthStatus(): SingleQuery<HealthStatus> {
       resource: 'health-status',
       domain: 'global',
       tags: ['health', 'polling'],
-    },
+      description: 'Polls health status.'},
   });
 }

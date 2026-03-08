@@ -34,6 +34,7 @@ export function useSearchQuery<T>(
       resource: 'search',
       domain,
       tags: ['search'],
+      description: 'Loads search results for the current term.',
     },
   });
 }
@@ -144,6 +145,7 @@ export function usePaginatedSearch<T>(
       resource: 'search',
       domain,
       tags: ['search', 'paginated'],
+      description: 'Loads paginated search results for the current term.',
     },
   });
 }
@@ -167,6 +169,7 @@ export function useSearchSuggestions(
       resource: 'search-suggestions',
       domain,
       tags: ['search', 'suggestions'],
+      description: 'Loads search suggestions for the current term.',
     },
   });
 }

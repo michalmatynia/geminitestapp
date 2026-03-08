@@ -22,7 +22,7 @@ export function useCurrencies(): ListQuery<CurrencyOption> {
       resource: 'internationalization.currencies',
       domain: 'internationalization',
       tags: ['internationalization', 'currencies'],
-    },
+      description: 'Loads internationalization currencies.'},
   });
 }
 
@@ -37,7 +37,7 @@ export function useCountries(): ListQuery<CountryOption> {
       resource: 'internationalization.countries',
       domain: 'internationalization',
       tags: ['internationalization', 'countries'],
-    },
+      description: 'Loads internationalization countries.'},
   });
 }
 
@@ -52,6 +52,6 @@ export function useLanguages(): ListQuery<Language> {
       resource: 'internationalization.languages',
       domain: 'internationalization',
       tags: ['internationalization', 'languages'],
-    },
+      description: 'Loads internationalization languages.'},
   });
 }

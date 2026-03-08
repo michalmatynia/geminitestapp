@@ -25,7 +25,7 @@ export function useFileQueries(params: string = ''): ListQuery<ExpandedImageFile
       domain: 'files',
       queryKey,
       tags: ['files', 'list'],
-    },
+      description: 'Loads files.'},
   });
 }
 
@@ -42,7 +42,7 @@ export function useDeleteFile(): DeleteMutation {
       domain: 'files',
       mutationKey: fileKeys.all,
       tags: ['files', 'delete'],
-    },
+      description: 'Deletes files.'},
     invalidate: (queryClient) => invalidateFiles(queryClient),
   });
 }
@@ -62,7 +62,7 @@ export function useUpdateFileTags(): UpdateMutation<
       domain: 'files',
       mutationKey: fileKeys.all,
       tags: ['files', 'tags', 'update'],
-    },
+      description: 'Updates files tags.'},
     invalidate: (queryClient) => invalidateFiles(queryClient),
   });
 }

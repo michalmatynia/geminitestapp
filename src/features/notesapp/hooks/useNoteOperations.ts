@@ -179,7 +179,7 @@ export function useNoteOperations({
             domain: 'notes',
             queryKey: QUERY_KEYS.notes.detail(noteId),
             tags: ['notes', 'detail', 'fetch'],
-          },
+            description: 'Loads notes detail.'},
         })();
 
         const baseTitle = note.title.replace(/\s*\(\d+\)$/, '');
@@ -455,7 +455,7 @@ export function useNoteOperations({
               domain: 'notes',
               queryKey: QUERY_KEYS.notes.detail(sourceNoteId),
               tags: ['notes', 'detail', 'fetch'],
-            },
+              description: 'Loads notes detail.'},
           })(),
           fetchQueryV2<NoteWithRelations>(queryClient, {
             queryKey: QUERY_KEYS.notes.detail(targetNoteId),
@@ -472,7 +472,7 @@ export function useNoteOperations({
               domain: 'notes',
               queryKey: QUERY_KEYS.notes.detail(targetNoteId),
               tags: ['notes', 'detail', 'fetch'],
-            },
+              description: 'Loads notes detail.'},
           })(),
         ]);
 

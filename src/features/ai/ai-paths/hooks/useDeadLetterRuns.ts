@@ -126,7 +126,7 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
       resource: 'ai-paths.dead-letter-runs',
       domain: 'global',
       tags: ['ai-paths', 'dead-letter'],
-    },
+      description: 'Loads ai paths dead letter runs.'},
   });
 
   const loading = runsQuery.isLoading;
@@ -333,7 +333,7 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
       resource: 'ai-paths.dead-letter-requeue',
       domain: 'global',
       tags: ['ai-paths', 'dead-letter', 'requeue'],
-    },
+      description: 'Runs ai paths dead letter requeue.'},
     onSuccess: (data: {
       requeued: number;
       errors?: Array<{ runId: string; error: string }>;
@@ -385,7 +385,7 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
       resource: 'ai-paths.dead-letter-requeue',
       domain: 'global',
       tags: ['ai-paths', 'dead-letter', 'requeue'],
-    },
+      description: 'Runs ai paths dead letter requeue.'},
     onSuccess: (data: {
       requeued: number;
       errors?: Array<{ runId: string; error: string }>;
@@ -490,7 +490,7 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
       resource: 'ai-paths.dead-letter-node-retry',
       domain: 'global',
       tags: ['ai-paths', 'dead-letter', 'retry'],
-    },
+      description: 'Runs ai paths dead letter node retry.'},
     onSuccess: (_data: { run: unknown }, variables: { runId: string; nodeId: string }): void => {
       toast(`Node ${variables.nodeId} retry queued.`, { variant: 'success' });
       void runsQuery.refetch();

@@ -82,7 +82,7 @@ export function useDatabaseBackups(dbType: DatabaseType): ListQuery<DatabaseInfo
       domain: 'database',
 
       tags: ['database', 'backups'],
-    },
+      description: 'Loads system databases backups.'},
   });
 }
 
@@ -101,7 +101,7 @@ export function useCreateBackupMutation(): MutationResult<
       domain: 'database',
       mutationKey,
       tags: ['database', 'backups', 'create'],
-    },
+      description: 'Creates system databases backups.'},
     invalidateKeys: (_result, dbType) => [dbKeys.backups(dbType)],
   });
 }
@@ -129,7 +129,7 @@ export function useRestoreBackupMutation(): MutationResult<
       domain: 'database',
       mutationKey,
       tags: ['database', 'backups', 'restore'],
-    },
+      description: 'Updates system databases backups restore.'},
   });
 }
 
@@ -152,7 +152,7 @@ export function useUploadBackupMutation(): MutationResult<
       domain: 'database',
       mutationKey,
       tags: ['database', 'backups', 'upload'],
-    },
+      description: 'Uploads system databases backups.'},
     invalidateKeys: (_result, variables) => [dbKeys.backups(variables.dbType)],
   });
 }
@@ -173,7 +173,7 @@ export function useDeleteBackupMutation(): MutationResult<
       domain: 'database',
       mutationKey,
       tags: ['database', 'backups', 'delete'],
-    },
+      description: 'Deletes system databases backups.'},
     invalidateKeys: (_result, variables) => [dbKeys.backups(variables.dbType)],
   });
 }
@@ -223,7 +223,7 @@ export function useDatabasePreview(input: {
       domain: 'database',
 
       tags: ['database', 'preview'],
-    },
+      description: 'Loads system databases preview.'},
   });
 }
 
@@ -251,7 +251,7 @@ export function useSqlQueryMutation(): MutationResult<
       domain: 'database',
       mutationKey,
       tags: ['database', 'sql', 'query'],
-    },
+      description: 'Runs system databases sql query.'},
   });
 }
 
@@ -267,7 +267,7 @@ export function useCrudMutation(): MutationResult<CrudResult, CrudRequest> {
       domain: 'database',
       mutationKey,
       tags: ['database', 'crud'],
-    },
+      description: 'Runs system databases crud.'},
   });
 }
 
@@ -287,7 +287,7 @@ export function useAllCollectionsSchema(): SingleQuery<MultiSchemaResponse> {
       domain: 'database',
 
       tags: ['database', 'schema'],
-    },
+      description: 'Loads system databases schema.'},
   });
 }
 
@@ -305,7 +305,7 @@ export function useRedisOverview(limit = 200): SingleQuery<RedisOverviewResponse
       domain: 'database',
 
       tags: ['database', 'redis', 'overview'],
-    },
+      description: 'Loads system databases redis overview.'},
   });
 }
 
@@ -324,7 +324,7 @@ export function useDatabaseEngineStatus(): SingleQuery<DatabaseEngineStatusRespo
       domain: 'database',
 
       tags: ['database', 'engine', 'status'],
-    },
+      description: 'Polls system databases engine status.'},
   });
 }
 
@@ -343,7 +343,7 @@ export function useDatabaseBackupSchedulerStatus(): SingleQuery<DatabaseEngineBa
       domain: 'database',
 
       tags: ['database', 'engine', 'backup-scheduler'],
-    },
+      description: 'Polls system databases backup scheduler status.'},
   });
 }
 
@@ -364,7 +364,7 @@ export function useDatabaseEngineOperationsJobs(
       domain: 'database',
 
       tags: ['database', 'engine', 'operations-jobs'],
-    },
+      description: 'Polls system databases engine operations jobs.'},
   });
 }
 
@@ -387,7 +387,7 @@ export function useDatabaseEngineProviderPreview(
       domain: 'database',
 
       tags: ['database', 'engine', 'provider-preview'],
-    },
+      description: 'Polls system databases engine provider preview.'},
   });
 }
 
@@ -415,7 +415,7 @@ export function useCopyCollectionMutation(): MutationResult<
       domain: 'database',
       mutationKey,
       tags: ['database', 'copy-collection'],
-    },
+      description: 'Creates system databases copy collection.'},
     invalidateKeys: [dbKeys.schema({ provider: 'all', includeCounts: true })],
   });
 }
@@ -435,7 +435,7 @@ export function useCreateJsonBackupMutation(): UpdateMutation<DatabaseBackupResp
       domain: 'database',
       mutationKey,
       tags: ['database', 'json-backups', 'create'],
-    },
+      description: 'Creates system databases json backups.'},
     invalidateKeys: [dbKeys.jsonBackups()],
   });
 }
@@ -455,7 +455,7 @@ export function useRestoreJsonBackupMutation(): UpdateMutation<DatabaseRestoreRe
       domain: 'database',
       mutationKey,
       tags: ['database', 'json-backups', 'restore'],
-    },
+      description: 'Updates system databases json backups restore.'},
   });
 }
 
@@ -472,6 +472,6 @@ export function useJsonBackups(): SingleQuery<{ backups: string[] }> {
       domain: 'database',
 
       tags: ['database', 'json-backups'],
-    },
+      description: 'Loads system databases json backups.'},
   });
 }

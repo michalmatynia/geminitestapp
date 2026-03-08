@@ -38,7 +38,7 @@ export function useRealtimeQuery<TData>(
       resource: 'realtime-query',
       domain,
       tags: ['realtime', 'polling'],
-    },
+      description: 'Polls realtime query.'},
   });
 
   useEffect((): (() => void) => {

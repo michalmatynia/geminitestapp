@@ -63,7 +63,7 @@ export function useQueryScheduler(): {
               domain: 'global',
               queryKey,
               tags: ['scheduler', 'scheduled'],
-            },
+              description: 'Loads scheduled query.'},
           })();
         }
         scheduledQueries.current.delete(id);

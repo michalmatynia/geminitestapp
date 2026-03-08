@@ -33,7 +33,7 @@ export function useAnalyticsSummary(input?: {
       domain: 'analytics',
 
       tags: ['analytics', 'summary'],
-    },
+      description: 'Loads analytics summary.'},
   });
 }
 
@@ -59,7 +59,7 @@ export function useAnalyticsInsights(
       domain: 'analytics',
 
       tags: ['analytics', 'insights'],
-    },
+      description: 'Loads analytics insights.'},
   });
 }
 
@@ -73,7 +73,7 @@ export function useRunAnalyticsInsight(): MutationResult<{ insight: AiInsightRec
       resource: 'analytics.insights',
       domain: 'analytics',
       tags: ['analytics', 'insights', 'create'],
-    },
+      description: 'Creates analytics insights.'},
     invalidateKeys: [analyticsKeys.all],
   });
 }
@@ -107,6 +107,6 @@ export function useTrackEventMutation(): MutationResult<void, Record<string, unk
       domain: 'analytics',
 
       tags: ['analytics', 'events'],
-    },
+      description: 'Creates analytics events.'},
   });
 }

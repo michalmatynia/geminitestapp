@@ -12,6 +12,7 @@ import {
   readKangurUrlParam,
 } from '@/features/kangur/config/routing';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
+import { useOptionalKangurRouteTransition } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import {
   KangurAccentDot,
@@ -30,6 +31,7 @@ type PageNotFoundAuthState = {
 
 export function PageNotFound(): React.JSX.Element {
   const router = useRouter();
+  const routeTransition = useOptionalKangurRouteTransition();
   const { requestedPath, basePath, embedded } = useKangurRouting();
 
   const pageName = useMemo(() => {
@@ -121,7 +123,12 @@ export function PageNotFound(): React.JSX.Element {
           <div className='pt-6'>
             <KangurButton
               onClick={() => {
-                router.push(getKangurPageHref('Game', basePath));
+                const gameHref = getKangurPageHref('Game', basePath);
+                routeTransition?.startRouteTransition({
+                  href: gameHref,
+                  pageKey: 'Game',
+                });
+                router.push(gameHref);
               }}
               size='lg'
               type='button'

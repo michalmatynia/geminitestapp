@@ -1,11 +1,11 @@
 'use client';
 
 import { BookOpen, LayoutGrid, LogIn, LogOut, Trophy } from 'lucide-react';
-import Link from 'next/link';
 
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
 import { KangurHomeLogo } from '@/features/kangur/ui/components/KangurHomeLogo';
 import { KangurProfileMenu } from '@/features/kangur/ui/components/KangurProfileMenu';
+import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
   KangurButton,
   KangurPageTopBar,
@@ -26,6 +26,7 @@ type NavActionProps = {
   docId: string;
   href?: string;
   onClick?: () => void;
+  targetPageKey?: KangurPrimaryNavigationPage;
   testId?: string;
 };
 
@@ -55,6 +56,7 @@ const NavAction = ({
   docId,
   href,
   onClick,
+  targetPageKey,
   testId,
 }: NavActionProps): React.JSX.Element => {
   const variant = active ? 'navigationActive' : 'navigation';
@@ -70,7 +72,9 @@ const NavAction = ({
         size='md'
         variant={variant}
       >
-        <Link href={href}>{children}</Link>
+        <Link href={href} targetPageKey={targetPageKey}>
+          {children}
+        </Link>
       </KangurButton>
     );
   }
@@ -131,6 +135,7 @@ export function KangurPrimaryNavigation({
             docId='top_nav_home'
             href={onHomeClick ? undefined : createPageUrl('Game', basePath)}
             onClick={onHomeClick}
+            targetPageKey='Game'
             testId='kangur-primary-nav-home'
           >
             <span
@@ -146,6 +151,7 @@ export function KangurPrimaryNavigation({
             active={currentPage === 'Lessons'}
             docId='top_nav_lessons'
             href={createPageUrl('Lessons', basePath)}
+            targetPageKey='Lessons'
             testId='kangur-primary-nav-lessons'
           >
             <BookOpen className={ICON_CLASSNAME} strokeWidth={2.15} />
@@ -157,6 +163,7 @@ export function KangurPrimaryNavigation({
               active={currentPage === 'Tests'}
               docId='top_nav_tests'
               href={createPageUrl('Tests', basePath)}
+              targetPageKey='Tests'
               testId='kangur-primary-nav-tests'
             >
               <Trophy className={ICON_CLASSNAME} strokeWidth={2.15} />
@@ -174,6 +181,7 @@ export function KangurPrimaryNavigation({
               active={currentPage === 'ParentDashboard'}
               docId='top_nav_parent_dashboard'
               href={createPageUrl('ParentDashboard', basePath)}
+              targetPageKey='ParentDashboard'
               testId='kangur-primary-nav-parent-dashboard'
             >
               <LayoutGrid className={ICON_CLASSNAME} strokeWidth={2.15} />

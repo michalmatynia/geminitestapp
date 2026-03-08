@@ -1,0 +1,109 @@
+{
+  "generatedAt": "2026-03-08T11:34:25.519Z",
+  "status": "warn",
+  "summary": {
+    "total": 8,
+    "errorCount": 0,
+    "warningCount": 8,
+    "infoCount": 0,
+    "status": "warn",
+    "fileCount": 673,
+    "totalHandlers": 648,
+    "validatedHandlers": 648,
+    "coveragePercent": 100
+  },
+  "scope": {
+    "root": "src/app/api"
+  },
+  "issues": [
+    {
+      "severity": "warn",
+      "ruleId": "query-param-unvalidated",
+      "message": "searchParams.get() used without Zod schema validation.",
+      "file": "src/app/api/marketplace/categories/handler.ts",
+      "line": 19,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "query-param-unvalidated",
+      "message": "searchParams.get() used without Zod schema validation.",
+      "file": "src/app/api/marketplace/categories/handler.ts",
+      "line": 20,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "query-param-unvalidated",
+      "message": "searchParams.get() used without Zod schema validation.",
+      "file": "src/app/api/marketplace/mappings/handler.ts",
+      "line": 23,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "query-param-unvalidated",
+      "message": "searchParams.get() used without Zod schema validation.",
+      "file": "src/app/api/marketplace/mappings/handler.ts",
+      "line": 24,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "query-param-unvalidated",
+      "message": "searchParams.get() used without Zod schema validation.",
+      "file": "src/app/api/marketplace/producer-mappings/handler.ts",
+      "line": 22,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "query-param-unvalidated",
+      "message": "searchParams.get() used without Zod schema validation.",
+      "file": "src/app/api/marketplace/producers/handler.ts",
+      "line": 18,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "query-param-unvalidated",
+      "message": "searchParams.get() used without Zod schema validation.",
+      "file": "src/app/api/marketplace/tag-mappings/handler.ts",
+      "line": 22,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "query-param-unvalidated",
+      "message": "searchParams.get() used without Zod schema validation.",
+      "file": "src/app/api/marketplace/tags/handler.ts",
+      "line": 18,
+      "column": null,
+      "snippet": null,
+      "context": null
+    }
+  ],
+  "rules": [
+    {
+      "ruleId": "query-param-unvalidated",
+      "errorCount": 0,
+      "warningCount": 8,
+      "infoCount": 0
+    }
+  ],
+  "durationMs": 147
+}

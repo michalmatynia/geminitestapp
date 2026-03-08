@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { authError, badRequestError, serviceUnavailableError } from '@/shared/errors/app-error';
+import { authError, serviceUnavailableError } from '@/shared/errors/app-error';
 import {
   normalizeOptionalQueryString,
   optionalIntegerQuerySchema,
@@ -39,28 +39,6 @@ const pruneReplayGuardStore = (nowMs: number): void => {
 
 export const resetPortablePathAutoRemediationWebhookReplayGuard = (): void => {
   replayGuardStore.clear();
-};
-
-const parseChannel = (value: string | null): 'webhook' | 'email' => {
-  if (!value) return 'webhook';
-  const normalized = value.trim().toLowerCase();
-  if (normalized === 'webhook' || normalized === 'email') return normalized;
-  throw badRequestError('Portable remediation webhook "channel" must be one of: webhook, email.');
-};
-
-const parseMaxSkewSeconds = (value: string | null): number => {
-  if (!value) return DEFAULT_MAX_SKEW_SECONDS;
-  const numeric = Number(value);
-  if (!Number.isFinite(numeric)) {
-    throw badRequestError('Portable remediation webhook "maxSkewSeconds" must be numeric.');
-  }
-  const normalized = Math.floor(numeric);
-  if (normalized <= 0 || normalized > MAX_MAX_SKEW_SECONDS) {
-    throw badRequestError(
-      `Portable remediation webhook "maxSkewSeconds" must be between 1 and ${MAX_MAX_SKEW_SECONDS}.`
-    );
-  }
-  return normalized;
 };
 
 const toParsedJsonPayload = (rawBody: string): unknown => {

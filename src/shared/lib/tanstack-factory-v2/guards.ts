@@ -1,4 +1,4 @@
-import { type QueryKey } from '@tanstack/react-query';
+import type { QueryKey } from '@tanstack/react-query';
 import {
   QueryOptionsWithoutCore,
   InfiniteQueryOptionsWithoutCore,
@@ -13,13 +13,6 @@ export type AnyRefetchIntervalOption<TQuery = unknown> =
   | number
   | false
   | ((query: TQuery) => number | false | undefined);
-
-type RefetchIntervalQuery<TOption> =
-  Extract<TOption, (query: never) => number | false | undefined> extends (
-    query: infer TQuery
-  ) => number | false | undefined
-    ? TQuery
-    : unknown;
 
 type QueryLikeWithEnabledOption = {
   options?: {
@@ -52,14 +45,14 @@ export const isRefetchEnabledForQuery = (query: unknown): boolean => {
   return enabled !== false;
 };
 
-export const guardRefetchInterval = <
-  TOption extends AnyRefetchIntervalOption | undefined,
->(option: TOption): TOption => {
+export const guardRefetchInterval = <TQuery>(
+  option: AnyRefetchIntervalOption<TQuery> | undefined
+): AnyRefetchIntervalOption<TQuery> | undefined => {
   if (option === undefined) return option;
 
   if (typeof option === 'function') {
-    const callback = option as (query: RefetchIntervalQuery<TOption>) => number | false | undefined;
-    const wrapped = ((query: RefetchIntervalQuery<TOption>): number | false | undefined => {
+    const callback = option as (query: TQuery) => number | false | undefined;
+    const wrapped = ((query: TQuery): number | false | undefined => {
       if (!isRefetchEnabledForQuery(query)) return false;
 
       let nextValue: number | false | undefined;
@@ -70,11 +63,11 @@ export const guardRefetchInterval = <
       }
 
       return sanitizeRefetchIntervalValue(nextValue);
-    }) as TOption;
+    }) as AnyRefetchIntervalOption<TQuery>;
     return wrapped;
   }
 
-  return sanitizeRefetchIntervalValue(option) as TOption;
+  return sanitizeRefetchIntervalValue(option);
 };
 
 export function applyQueryRuntimeGuards<TQueryFnData, TError, TData, TQueryKey extends QueryKey>(

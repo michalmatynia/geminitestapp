@@ -1,6 +1,5 @@
-import Link from 'next/link';
-
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
+import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
   KangurButton,
   KangurDivider,

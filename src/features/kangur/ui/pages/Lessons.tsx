@@ -34,6 +34,7 @@ import { KangurLessonsWordmark } from '@/features/kangur/ui/components/KangurLes
 import { KangurPrimaryNavigation } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
+import { useOptionalKangurRouteTransition } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
@@ -148,6 +149,7 @@ const LESSON_COMPONENTS: Record<KangurLessonComponentId, ComponentType<LessonPro
 export default function Lessons() {
   const router = useRouter();
   const { basePath } = useKangurRouting();
+  const routeTransition = useOptionalKangurRouteTransition();
   const { user, navigateToLogin, logout } = useKangurAuth();
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('lessons');
   const settingsStore = useSettingsStore();
@@ -243,7 +245,12 @@ export default function Lessons() {
       return;
     }
 
-    router.push(createPageUrl('Game', basePath));
+    const gameHref = createPageUrl('Game', basePath);
+    routeTransition?.startRouteTransition({
+      href: gameHref,
+      pageKey: 'Game',
+    });
+    router.push(gameHref);
   };
 
   const learnerId = user?.activeLearner?.id ?? user?.id ?? null;

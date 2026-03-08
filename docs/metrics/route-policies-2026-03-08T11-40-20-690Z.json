@@ -1,0 +1,1824 @@
+{
+  "generatedAt": "2026-03-08T11:40:20.690Z",
+  "status": "warn",
+  "summary": {
+    "total": 136,
+    "errorCount": 0,
+    "warningCount": 136,
+    "infoCount": 0,
+    "status": "warn",
+    "routeCount": 339,
+    "methodCount": 479,
+    "csrfExemptionCount": 67,
+    "csrfExemptionsByPolicy": {
+      "webhook-ingest": 1,
+      "telemetry-ingest": 3,
+      "auth-bootstrap": 13,
+      "draft-autosave": 1,
+      "external-integrations": 49
+    }
+  },
+  "routeRoots": [
+    "src/app/api",
+    "src/features/ai/agentcreator/api"
+  ],
+  "issues": [
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"ai-paths.db-action\" but expected \"ai-paths.db-action.POST\".",
+      "file": "src/app/api/ai-paths/db-action/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"ai-paths.playwright.artifacts.file\" but expected \"ai-paths.playwright.[runId].artifacts.[file].GET\".",
+      "file": "src/app/api/ai-paths/playwright/[runId]/artifacts/[file]/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"ai-paths.playwright.poll\" but expected \"ai-paths.playwright.[runId].GET\".",
+      "file": "src/app/api/ai-paths/playwright/[runId]/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"ai-paths.playwright.enqueue\" but expected \"ai-paths.playwright.POST\".",
+      "file": "src/app/api/ai-paths/playwright/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"ai-paths.runs.cancel\" but expected \"ai-paths.runs.[runId].cancel.POST\".",
+      "file": "src/app/api/ai-paths/runs/[runId]/cancel/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"ai-paths.runs.resume\" but expected \"ai-paths.runs.[runId].resume.POST\".",
+      "file": "src/app/api/ai-paths/runs/[runId]/resume/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"ai-paths.runs.retry-node\" but expected \"ai-paths.runs.[runId].retry-node.POST\".",
+      "file": "src/app/api/ai-paths/runs/[runId]/retry-node/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"ai-paths.runs.detail\" but expected \"ai-paths.runs.[runId].GET\".",
+      "file": "src/app/api/ai-paths/runs/[runId]/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export DELETE uses source \"ai-paths.runs.delete\" but expected \"ai-paths.runs.[runId].DELETE\".",
+      "file": "src/app/api/ai-paths/runs/[runId]/route.ts",
+      "line": 10,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"ai-paths.runs.dead-letter.requeue\" but expected \"ai-paths.runs.dead-letter.requeue.POST\".",
+      "file": "src/app/api/ai-paths/runs/dead-letter/requeue/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"ai-paths.runs.enqueue\" but expected \"ai-paths.runs.enqueue.POST\".",
+      "file": "src/app/api/ai-paths/runs/enqueue/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"ai-paths.runs.queue-status\" but expected \"ai-paths.runs.queue-status.GET\".",
+      "file": "src/app/api/ai-paths/runs/queue-status/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"ai-paths.runs.list\" but expected \"ai-paths.runs.GET\".",
+      "file": "src/app/api/ai-paths/runs/route.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export DELETE uses source \"ai-paths.runs.clear\" but expected \"ai-paths.runs.DELETE\".",
+      "file": "src/app/api/ai-paths/runs/route.ts",
+      "line": 13,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export PATCH uses source \"ai-paths.trigger-buttons.PATCH\" but expected \"ai-paths.trigger-buttons.[id].PATCH\".",
+      "file": "src/app/api/ai-paths/trigger-buttons/[id]/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export DELETE uses source \"ai-paths.trigger-buttons.DELETE\" but expected \"ai-paths.trigger-buttons.[id].DELETE\".",
+      "file": "src/app/api/ai-paths/trigger-buttons/[id]/route.ts",
+      "line": 11,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"ai-paths.update\" but expected \"ai-paths.update.POST\".",
+      "file": "src/app/api/ai-paths/update/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"assets3d.file.GET\" but expected \"assets3d.[id].file.GET\".",
+      "file": "src/app/api/assets3d/[id]/file/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"assets3d/[id].GET\" but expected \"assets3d.[id].GET\".",
+      "file": "src/app/api/assets3d/[id]/route.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export PATCH uses source \"assets3d/[id].PATCH\" but expected \"assets3d.[id].PATCH\".",
+      "file": "src/app/api/assets3d/[id]/route.ts",
+      "line": 12,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export DELETE uses source \"assets3d/[id].DELETE\" but expected \"assets3d.[id].DELETE\".",
+      "file": "src/app/api/assets3d/[id]/route.ts",
+      "line": 16,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"assets3d/categories.GET\" but expected \"assets3d.categories.GET\".",
+      "file": "src/app/api/assets3d/categories/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"assets3d/reindex.POST\" but expected \"assets3d.reindex.POST\".",
+      "file": "src/app/api/assets3d/reindex/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"assets3d/tags.GET\" but expected \"assets3d.tags.GET\".",
+      "file": "src/app/api/assets3d/tags/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-csrf-optout-safe-method",
+      "message": "GET explicitly disables CSRF even though safe methods already skip CSRF checks.",
+      "file": "src/app/api/auth/[...nextauth]/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-dynamic-wrapper-mismatch",
+      "message": "Dynamic route exports must use apiHandlerWithParams.",
+      "file": "src/app/api/auth/[...nextauth]/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-dynamic-wrapper-mismatch",
+      "message": "Dynamic route exports must use apiHandlerWithParams.",
+      "file": "src/app/api/auth/[...nextauth]/route.ts",
+      "line": 11,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-csrf-optout-safe-method",
+      "message": "GET explicitly disables CSRF even though safe methods already skip CSRF checks.",
+      "file": "src/app/api/auth/users/[id]/security/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-csrf-optout-safe-method",
+      "message": "GET explicitly disables CSRF even though safe methods already skip CSRF checks.",
+      "file": "src/app/api/auth/users/route.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"brain.operationsOverview.GET\" but expected \"brain.operations.overview.GET\".",
+      "file": "src/app/api/brain/operations/overview/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-export-none-detected",
+      "message": "Route file did not expose any HTTP method exports.",
+      "file": "src/app/api/chatbot/agent/[runId]/assets/[file]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-export-none-detected",
+      "message": "Route file did not expose any HTTP method exports.",
+      "file": "src/app/api/chatbot/agent/[runId]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-export-none-detected",
+      "message": "Route file did not expose any HTTP method exports.",
+      "file": "src/app/api/chatbot/agent/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"database.schema.GET\" but expected \"databases.schema.GET\".",
+      "file": "src/app/api/databases/schema/route.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-csrf-optout-safe-method",
+      "message": "GET explicitly disables CSRF even though safe methods already skip CSRF checks.",
+      "file": "src/app/api/drafts/[id]/route.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"api.health\" but expected \"health.GET\".",
+      "file": "src/app/api/health/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export DELETE uses source \"image-studio.projects.DELETE\" but expected \"image-studio.projects.[projectId].DELETE\".",
+      "file": "src/app/api/image-studio/projects/[projectId]/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"image-studio.runs.stream.GET\" but expected \"image-studio.runs.[runId].stream.GET\".",
+      "file": "src/app/api/image-studio/runs/[runId]/stream/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export PATCH uses source \"kangur.assignments.PATCH\" but expected \"kangur.assignments.[id].PATCH\".",
+      "file": "src/app/api/kangur/assignments/[id]/route.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"kangur.auth.learnerSignIn.POST\" but expected \"kangur.auth.learner-signin.POST\".",
+      "file": "src/app/api/kangur/auth/learner-signin/route.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"kangur.auth.learnerSignOut.POST\" but expected \"kangur.auth.learner-signout.POST\".",
+      "file": "src/app/api/kangur/auth/learner-signout/route.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export PATCH uses source \"kangur.learners.PATCH\" but expected \"kangur.learners.[id].PATCH\".",
+      "file": "src/app/api/kangur/learners/[id]/route.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"marketplace.resource.GET\" but expected \"marketplace.[resource].GET\".",
+      "file": "src/app/api/marketplace/[resource]/route.ts",
+      "line": 29,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"settings.GET.heavy\" but expected \"settings.heavy.GET\".",
+      "file": "src/app/api/settings/heavy/route.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"settings.GET.lite\" but expected \"settings.lite.GET\".",
+      "file": "src/app/api/settings/lite/route.ts",
+      "line": 10,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"system.diagnostics.mongo-indexes\" but expected \"system.diagnostics.mongo-indexes.GET\".",
+      "file": "src/app/api/system/diagnostics/mongo-indexes/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"system.diagnostics.mongo-indexes.rebuild\" but expected \"system.diagnostics.mongo-indexes.POST\".",
+      "file": "src/app/api/system/diagnostics/mongo-indexes/route.ts",
+      "line": 12,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-csrf-optout-safe-method",
+      "message": "GET explicitly disables CSRF even though safe methods already skip CSRF checks.",
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/allegro/authorize/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"integrations.[id].connections.[connectionId].allegro.authorize.GET\" but expected \"v2.integrations.[id].connections.[connectionId].allegro.authorize.GET\".",
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/allegro/authorize/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-csrf-optout-safe-method",
+      "message": "GET explicitly disables CSRF even though safe methods already skip CSRF checks.",
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/allegro/callback/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"integrations.[id].connections.[connectionId].allegro.callback.GET\" but expected \"v2.integrations.[id].connections.[connectionId].allegro.callback.GET\".",
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/allegro/callback/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"integrations.[id].connections.[connectionId].allegro.disconnect.POST\" but expected \"v2.integrations.[id].connections.[connectionId].allegro.disconnect.POST\".",
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/allegro/disconnect/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"integrations.[id].connections.[connectionId].allegro.request.POST\" but expected \"v2.integrations.[id].connections.[connectionId].allegro.request.POST\".",
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/allegro/request/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"integrations.[id].connections.[connectionId].allegro.test.POST\" but expected \"v2.integrations.[id].connections.[connectionId].allegro.test.POST\".",
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/allegro/test/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-csrf-optout-safe-method",
+      "message": "GET explicitly disables CSRF even though safe methods already skip CSRF checks.",
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/base/inventories/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"integrations.[id].connections.[connectionId].base.inventories.GET\" but expected \"v2.integrations.[id].connections.[connectionId].base.inventories.GET\".",
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/base/inventories/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"integrations.[id].connections.[connectionId].base.products.POST\" but expected \"v2.integrations.[id].connections.[connectionId].base.products.POST\".",
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/base/products/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"integrations.[id].connections.[connectionId].base.request.POST\" but expected \"v2.integrations.[id].connections.[connectionId].base.request.POST\".",
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/base/request/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"integrations.[id].connections.[connectionId].base.test.POST\" but expected \"v2.integrations.[id].connections.[connectionId].base.test.POST\".",
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/base/test/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"integrations.[id].connections.[connectionId].test.POST\" but expected \"v2.integrations.[id].connections.[connectionId].test.POST\".",
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/test/route.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-csrf-optout-safe-method",
+      "message": "GET explicitly disables CSRF even though safe methods already skip CSRF checks.",
+      "file": "src/app/api/v2/integrations/[id]/connections/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"integrations.[id].connections.GET\" but expected \"v2.integrations.[id].connections.GET\".",
+      "file": "src/app/api/v2/integrations/[id]/connections/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"integrations.[id].connections.POST\" but expected \"v2.integrations.[id].connections.POST\".",
+      "file": "src/app/api/v2/integrations/[id]/connections/route.ts",
+      "line": 12,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-csrf-optout-safe-method",
+      "message": "GET explicitly disables CSRF even though safe methods already skip CSRF checks.",
+      "file": "src/app/api/v2/integrations/connections/[id]/session/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"integrations.connections.[id].session.GET\" but expected \"v2.integrations.connections.[id].session.GET\".",
+      "file": "src/app/api/v2/integrations/connections/[id]/session/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-csrf-optout-safe-method",
+      "message": "GET explicitly disables CSRF even though safe methods already skip CSRF checks.",
+      "file": "src/app/api/v2/integrations/exports/base/[setting]/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"products.exports.base.setting.GET\" but expected \"v2.integrations.exports.base.[setting].GET\".",
+      "file": "src/app/api/v2/integrations/exports/base/[setting]/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"products.exports.base.setting.POST\" but expected \"v2.integrations.exports.base.[setting].POST\".",
+      "file": "src/app/api/v2/integrations/exports/base/[setting]/route.ts",
+      "line": 12,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"integrations.images.sync-base.all.POST\" but expected \"v2.integrations.images.sync-base.all.POST\".",
+      "file": "src/app/api/v2/integrations/images/sync-base/all/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-csrf-optout-safe-method",
+      "message": "GET explicitly disables CSRF even though safe methods already skip CSRF checks.",
+      "file": "src/app/api/v2/integrations/imports/base/[setting]/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"products.imports.base.setting.GET\" but expected \"v2.integrations.imports.base.[setting].GET\".",
+      "file": "src/app/api/v2/integrations/imports/base/[setting]/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"products.imports.base.setting.POST\" but expected \"v2.integrations.imports.base.[setting].POST\".",
+      "file": "src/app/api/v2/integrations/imports/base/[setting]/route.ts",
+      "line": 12,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"products.imports.base.parameters.POST\" but expected \"v2.integrations.imports.base.parameters.POST\".",
+      "file": "src/app/api/v2/integrations/imports/base/parameters/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-csrf-optout-safe-method",
+      "message": "GET explicitly disables CSRF even though safe methods already skip CSRF checks.",
+      "file": "src/app/api/v2/integrations/imports/base/parameters/route.ts",
+      "line": 12,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"products.imports.base.parameters.GET\" but expected \"v2.integrations.imports.base.parameters.GET\".",
+      "file": "src/app/api/v2/integrations/imports/base/parameters/route.ts",
+      "line": 12,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"integrations.imports.base.POST\" but expected \"v2.integrations.imports.base.POST\".",
+      "file": "src/app/api/v2/integrations/imports/base/route.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"integrations.imports.base.runs.[runId].cancel.POST\" but expected \"v2.integrations.imports.base.runs.[runId].cancel.POST\".",
+      "file": "src/app/api/v2/integrations/imports/base/runs/[runId]/cancel/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-csrf-optout-safe-method",
+      "message": "GET explicitly disables CSRF even though safe methods already skip CSRF checks.",
+      "file": "src/app/api/v2/integrations/imports/base/runs/[runId]/report/route.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"integrations.imports.base.runs.[runId].report.GET\" but expected \"v2.integrations.imports.base.runs.[runId].report.GET\".",
+      "file": "src/app/api/v2/integrations/imports/base/runs/[runId]/report/route.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"integrations.imports.base.runs.[runId].resume.POST\" but expected \"v2.integrations.imports.base.runs.[runId].resume.POST\".",
+      "file": "src/app/api/v2/integrations/imports/base/runs/[runId]/resume/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-csrf-optout-safe-method",
+      "message": "GET explicitly disables CSRF even though safe methods already skip CSRF checks.",
+      "file": "src/app/api/v2/integrations/imports/base/runs/[runId]/route.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"integrations.imports.base.runs.[runId].GET\" but expected \"v2.integrations.imports.base.runs.[runId].GET\".",
+      "file": "src/app/api/v2/integrations/imports/base/runs/[runId]/route.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-csrf-optout-safe-method",
+      "message": "GET explicitly disables CSRF even though safe methods already skip CSRF checks.",
+      "file": "src/app/api/v2/integrations/imports/base/runs/route.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"integrations.imports.base.runs.GET\" but expected \"v2.integrations.imports.base.runs.GET\".",
+      "file": "src/app/api/v2/integrations/imports/base/runs/route.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"integrations.imports.base.runs.POST\" but expected \"v2.integrations.imports.base.runs.POST\".",
+      "file": "src/app/api/v2/integrations/imports/base/runs/route.ts",
+      "line": 14,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-csrf-optout-safe-method",
+      "message": "GET explicitly disables CSRF even though safe methods already skip CSRF checks.",
+      "file": "src/app/api/v2/integrations/imports/base/sample-product/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"products.imports.base.sample-product.GET\" but expected \"v2.integrations.imports.base.sample-product.GET\".",
+      "file": "src/app/api/v2/integrations/imports/base/sample-product/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"products.imports.base.sample-product.POST\" but expected \"v2.integrations.imports.base.sample-product.POST\".",
+      "file": "src/app/api/v2/integrations/imports/base/sample-product/route.ts",
+      "line": 12,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-csrf-optout-safe-method",
+      "message": "GET explicitly disables CSRF even though safe methods already skip CSRF checks.",
+      "file": "src/app/api/v2/integrations/jobs/route.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"integrations.jobs.GET\" but expected \"v2.integrations.jobs.GET\".",
+      "file": "src/app/api/v2/integrations/jobs/route.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-csrf-optout-safe-method",
+      "message": "GET explicitly disables CSRF even though safe methods already skip CSRF checks.",
+      "file": "src/app/api/v2/integrations/product-listings/route.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"products.listings.GET\" but expected \"v2.integrations.product-listings.GET\".",
+      "file": "src/app/api/v2/integrations/product-listings/route.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"products.listings.POST\" but expected \"v2.integrations.product-listings.POST\".",
+      "file": "src/app/api/v2/integrations/product-listings/route.ts",
+      "line": 15,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"integrations.products.[id].base.link-existing.POST\" but expected \"v2.integrations.products.[id].base.link-existing.POST\".",
+      "file": "src/app/api/v2/integrations/products/[id]/base/link-existing/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"integrations.products.[id].base.sku-check.POST\" but expected \"v2.integrations.products.[id].base.sku-check.POST\".",
+      "file": "src/app/api/v2/integrations/products/[id]/base/sku-check/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"integrations.products.[id].export-to-base.POST\" but expected \"v2.integrations.products.[id].export-to-base.POST\".",
+      "file": "src/app/api/v2/integrations/products/[id]/export-to-base/route.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"integrations.products.[id].listings.[listingId].delete-from-base.POST\" but expected \"v2.integrations.products.[id].listings.[listingId].delete-from-base.POST\".",
+      "file": "src/app/api/v2/integrations/products/[id]/listings/[listingId]/delete-from-base/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export DELETE uses source \"integrations.products.[id].listings.[listingId].purge.DELETE\" but expected \"v2.integrations.products.[id].listings.[listingId].purge.DELETE\".",
+      "file": "src/app/api/v2/integrations/products/[id]/listings/[listingId]/purge/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"integrations.products.[id].listings.[listingId].relist.POST\" but expected \"v2.integrations.products.[id].listings.[listingId].relist.POST\".",
+      "file": "src/app/api/v2/integrations/products/[id]/listings/[listingId]/relist/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export DELETE uses source \"integrations.products.[id].listings.[listingId].DELETE\" but expected \"v2.integrations.products.[id].listings.[listingId].DELETE\".",
+      "file": "src/app/api/v2/integrations/products/[id]/listings/[listingId]/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export PATCH uses source \"integrations.products.[id].listings.[listingId].PATCH\" but expected \"v2.integrations.products.[id].listings.[listingId].PATCH\".",
+      "file": "src/app/api/v2/integrations/products/[id]/listings/[listingId]/route.ts",
+      "line": 12,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"integrations.products.[id].listings.[listingId].sync-base-images.POST\" but expected \"v2.integrations.products.[id].listings.[listingId].sync-base-images.POST\".",
+      "file": "src/app/api/v2/integrations/products/[id]/listings/[listingId]/sync-base-images/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-csrf-optout-safe-method",
+      "message": "GET explicitly disables CSRF even though safe methods already skip CSRF checks.",
+      "file": "src/app/api/v2/integrations/products/[id]/listings/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"integrations.products.[id].listings.GET\" but expected \"v2.integrations.products.[id].listings.GET\".",
+      "file": "src/app/api/v2/integrations/products/[id]/listings/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"integrations.products.[id].listings.POST\" but expected \"v2.integrations.products.[id].listings.POST\".",
+      "file": "src/app/api/v2/integrations/products/[id]/listings/route.ts",
+      "line": 12,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-csrf-optout-safe-method",
+      "message": "GET explicitly disables CSRF even though safe methods already skip CSRF checks.",
+      "file": "src/app/api/v2/integrations/queues/tradera/route.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"integrations.queues.tradera.GET\" but expected \"v2.integrations.queues.tradera.GET\".",
+      "file": "src/app/api/v2/integrations/queues/tradera/route.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-csrf-optout-safe-method",
+      "message": "GET explicitly disables CSRF even though safe methods already skip CSRF checks.",
+      "file": "src/app/api/v2/integrations/route.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"integrations.GET\" but expected \"v2.integrations.GET\".",
+      "file": "src/app/api/v2/integrations/route.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"integrations.POST\" but expected \"v2.integrations.POST\".",
+      "file": "src/app/api/v2/integrations/route.ts",
+      "line": 13,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-csrf-optout-safe-method",
+      "message": "GET explicitly disables CSRF even though safe methods already skip CSRF checks.",
+      "file": "src/app/api/v2/integrations/with-connections/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"integrations.with-connections.GET\" but expected \"v2.integrations.with-connections.GET\".",
+      "file": "src/app/api/v2/integrations/with-connections/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-dynamic-params-type-missing",
+      "message": "Dynamic route export is missing explicit params type arguments.",
+      "file": "src/app/api/v2/metadata/[type]/[id]/route.ts",
+      "line": 11,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"metadata-id.GET\" but expected \"v2.metadata.[type].[id].GET\".",
+      "file": "src/app/api/v2/metadata/[type]/[id]/route.ts",
+      "line": 11,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-dynamic-params-type-missing",
+      "message": "Dynamic route export is missing explicit params type arguments.",
+      "file": "src/app/api/v2/metadata/[type]/[id]/route.ts",
+      "line": 15,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export PUT uses source \"metadata-id.PUT\" but expected \"v2.metadata.[type].[id].PUT\".",
+      "file": "src/app/api/v2/metadata/[type]/[id]/route.ts",
+      "line": 15,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-dynamic-params-type-missing",
+      "message": "Dynamic route export is missing explicit params type arguments.",
+      "file": "src/app/api/v2/metadata/[type]/[id]/route.ts",
+      "line": 19,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export DELETE uses source \"metadata-id.DELETE\" but expected \"v2.metadata.[type].[id].DELETE\".",
+      "file": "src/app/api/v2/metadata/[type]/[id]/route.ts",
+      "line": 19,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-dynamic-params-type-missing",
+      "message": "Dynamic route export is missing explicit params type arguments.",
+      "file": "src/app/api/v2/metadata/[type]/route.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"metadata.GET\" but expected \"v2.metadata.[type].GET\".",
+      "file": "src/app/api/v2/metadata/[type]/route.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-dynamic-params-type-missing",
+      "message": "Dynamic route export is missing explicit params type arguments.",
+      "file": "src/app/api/v2/metadata/[type]/route.ts",
+      "line": 13,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"metadata.POST\" but expected \"v2.metadata.[type].POST\".",
+      "file": "src/app/api/v2/metadata/[type]/route.ts",
+      "line": 13,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-dynamic-params-type-missing",
+      "message": "Dynamic route export is missing explicit params type arguments.",
+      "file": "src/app/api/v2/products/entities/[type]/[id]/route.ts",
+      "line": 11,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-dynamic-params-type-missing",
+      "message": "Dynamic route export is missing explicit params type arguments.",
+      "file": "src/app/api/v2/products/entities/[type]/[id]/route.ts",
+      "line": 15,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-dynamic-params-type-missing",
+      "message": "Dynamic route export is missing explicit params type arguments.",
+      "file": "src/app/api/v2/products/entities/[type]/[id]/route.ts",
+      "line": 19,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-dynamic-params-type-missing",
+      "message": "Dynamic route export is missing explicit params type arguments.",
+      "file": "src/app/api/v2/products/entities/[type]/route.ts",
+      "line": 10,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-dynamic-params-type-missing",
+      "message": "Dynamic route export is missing explicit params type arguments.",
+      "file": "src/app/api/v2/products/entities/[type]/route.ts",
+      "line": 14,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-export-none-detected",
+      "message": "Route file did not expose any HTTP method exports.",
+      "file": "src/app/api/v2/products/images/upload/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-dynamic-params-type-missing",
+      "message": "Dynamic route export is missing explicit params type arguments.",
+      "file": "src/app/api/v2/templates/[type]/[id]/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export PUT uses source \"templates.item.PUT\" but expected \"v2.templates.[type].[id].PUT\".",
+      "file": "src/app/api/v2/templates/[type]/[id]/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-dynamic-params-type-missing",
+      "message": "Dynamic route export is missing explicit params type arguments.",
+      "file": "src/app/api/v2/templates/[type]/[id]/route.ts",
+      "line": 11,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export DELETE uses source \"templates.item.DELETE\" but expected \"v2.templates.[type].[id].DELETE\".",
+      "file": "src/app/api/v2/templates/[type]/[id]/route.ts",
+      "line": 11,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-dynamic-params-type-missing",
+      "message": "Dynamic route export is missing explicit params type arguments.",
+      "file": "src/app/api/v2/templates/[type]/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export GET uses source \"templates.GET\" but expected \"v2.templates.[type].GET\".",
+      "file": "src/app/api/v2/templates/[type]/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-dynamic-params-type-missing",
+      "message": "Dynamic route export is missing explicit params type arguments.",
+      "file": "src/app/api/v2/templates/[type]/route.ts",
+      "line": 11,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"templates.POST\" but expected \"v2.templates.[type].POST\".",
+      "file": "src/app/api/v2/templates/[type]/route.ts",
+      "line": 11,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    }
+  ],
+  "rules": [
+    {
+      "ruleId": "route-source-mismatch",
+      "errorCount": 0,
+      "warningCount": 94,
+      "infoCount": 0
+    },
+    {
+      "ruleId": "route-csrf-optout-safe-method",
+      "errorCount": 0,
+      "warningCount": 22,
+      "infoCount": 0
+    },
+    {
+      "ruleId": "route-dynamic-params-type-missing",
+      "errorCount": 0,
+      "warningCount": 14,
+      "infoCount": 0
+    },
+    {
+      "ruleId": "route-export-none-detected",
+      "errorCount": 0,
+      "warningCount": 4,
+      "infoCount": 0
+    },
+    {
+      "ruleId": "route-dynamic-wrapper-mismatch",
+      "errorCount": 0,
+      "warningCount": 2,
+      "infoCount": 0
+    }
+  ],
+  "csrfExemptions": [
+    {
+      "routePath": "ai-paths/portable-engine/remediation-webhook",
+      "method": "POST",
+      "policy": "webhook-ingest",
+      "reason": "Webhook-style endpoints must accept third-party callbacks."
+    },
+    {
+      "routePath": "analytics/events",
+      "method": "POST",
+      "policy": "telemetry-ingest",
+      "reason": "Telemetry and client error endpoints ingest browser-originated reports."
+    },
+    {
+      "routePath": "auth/[...nextauth]",
+      "method": "GET",
+      "policy": "auth-bootstrap",
+      "reason": "Auth bootstrap flows need to accept requests before app CSRF is established."
+    },
+    {
+      "routePath": "auth/[...nextauth]",
+      "method": "POST",
+      "policy": "auth-bootstrap",
+      "reason": "Auth bootstrap flows need to accept requests before app CSRF is established."
+    },
+    {
+      "routePath": "auth/mfa/disable",
+      "method": "POST",
+      "policy": "auth-bootstrap",
+      "reason": "Auth bootstrap flows need to accept requests before app CSRF is established."
+    },
+    {
+      "routePath": "auth/mfa/setup",
+      "method": "POST",
+      "policy": "auth-bootstrap",
+      "reason": "Auth bootstrap flows need to accept requests before app CSRF is established."
+    },
+    {
+      "routePath": "auth/mfa/verify",
+      "method": "POST",
+      "policy": "auth-bootstrap",
+      "reason": "Auth bootstrap flows need to accept requests before app CSRF is established."
+    },
+    {
+      "routePath": "auth/mock-signin",
+      "method": "POST",
+      "policy": "auth-bootstrap",
+      "reason": "Auth bootstrap flows need to accept requests before app CSRF is established."
+    },
+    {
+      "routePath": "auth/register",
+      "method": "POST",
+      "policy": "auth-bootstrap",
+      "reason": "Auth bootstrap flows need to accept requests before app CSRF is established."
+    },
+    {
+      "routePath": "auth/users/[id]",
+      "method": "PATCH",
+      "policy": "auth-bootstrap",
+      "reason": "Auth bootstrap flows need to accept requests before app CSRF is established."
+    },
+    {
+      "routePath": "auth/users/[id]",
+      "method": "DELETE",
+      "policy": "auth-bootstrap",
+      "reason": "Auth bootstrap flows need to accept requests before app CSRF is established."
+    },
+    {
+      "routePath": "auth/users/[id]/security",
+      "method": "GET",
+      "policy": "auth-bootstrap",
+      "reason": "Auth bootstrap flows need to accept requests before app CSRF is established."
+    },
+    {
+      "routePath": "auth/users/[id]/security",
+      "method": "PATCH",
+      "policy": "auth-bootstrap",
+      "reason": "Auth bootstrap flows need to accept requests before app CSRF is established."
+    },
+    {
+      "routePath": "auth/users",
+      "method": "GET",
+      "policy": "auth-bootstrap",
+      "reason": "Auth bootstrap flows need to accept requests before app CSRF is established."
+    },
+    {
+      "routePath": "auth/verify-credentials",
+      "method": "POST",
+      "policy": "auth-bootstrap",
+      "reason": "Auth bootstrap flows need to accept requests before app CSRF is established."
+    },
+    {
+      "routePath": "client-errors",
+      "method": "POST",
+      "policy": "telemetry-ingest",
+      "reason": "Telemetry and client error endpoints ingest browser-originated reports."
+    },
+    {
+      "routePath": "drafts/[id]",
+      "method": "GET",
+      "policy": "draft-autosave",
+      "reason": "Draft autosave routes support editor flows that may bypass standard fetch wrappers."
+    },
+    {
+      "routePath": "query-telemetry",
+      "method": "POST",
+      "policy": "telemetry-ingest",
+      "reason": "Telemetry and client error endpoints ingest browser-originated reports."
+    },
+    {
+      "routePath": "v2/integrations/[id]/connections/[connectionId]/allegro/authorize",
+      "method": "GET",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/[id]/connections/[connectionId]/allegro/callback",
+      "method": "GET",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/[id]/connections/[connectionId]/allegro/disconnect",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/[id]/connections/[connectionId]/allegro/request",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/[id]/connections/[connectionId]/allegro/test",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/[id]/connections/[connectionId]/base/inventories",
+      "method": "GET",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/[id]/connections/[connectionId]/base/products",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/[id]/connections/[connectionId]/base/request",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/[id]/connections/[connectionId]/base/test",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/[id]/connections/[connectionId]/test",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/[id]/connections",
+      "method": "GET",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/[id]/connections",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/connections/[id]",
+      "method": "PUT",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/connections/[id]",
+      "method": "DELETE",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/connections/[id]/session",
+      "method": "GET",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/exports/base/[setting]",
+      "method": "GET",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/exports/base/[setting]",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/images/sync-base/all",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/imports/base/[setting]",
+      "method": "GET",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/imports/base/[setting]",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/imports/base/parameters",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/imports/base/parameters",
+      "method": "GET",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/imports/base",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/imports/base/runs/[runId]/cancel",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/imports/base/runs/[runId]/report",
+      "method": "GET",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/imports/base/runs/[runId]/resume",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/imports/base/runs/[runId]",
+      "method": "GET",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/imports/base/runs",
+      "method": "GET",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/imports/base/runs",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/imports/base/sample-product",
+      "method": "GET",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/imports/base/sample-product",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/jobs",
+      "method": "GET",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/product-listings",
+      "method": "GET",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/product-listings",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/products/[id]/base/link-existing",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/products/[id]/base/sku-check",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/products/[id]/export-to-base",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/products/[id]/listings/[listingId]/delete-from-base",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/products/[id]/listings/[listingId]/purge",
+      "method": "DELETE",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/products/[id]/listings/[listingId]/relist",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/products/[id]/listings/[listingId]",
+      "method": "DELETE",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/products/[id]/listings/[listingId]",
+      "method": "PATCH",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/products/[id]/listings/[listingId]/sync-base-images",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/products/[id]/listings",
+      "method": "GET",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/products/[id]/listings",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/queues/tradera",
+      "method": "GET",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations",
+      "method": "GET",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/with-connections",
+      "method": "GET",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    }
+  ],
+  "durationMs": 90
+}

@@ -1,9 +1,9 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import Link from 'next/link';
 
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
+import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import { KangurGlassPanel } from '@/features/kangur/ui/design/primitives';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import { cn } from '@/shared/utils';
@@ -17,6 +17,7 @@ type HomeAction = {
   trailingSymbol?: string;
   tone: HomeActionTone;
   href?: string;
+  targetPageKey?: string;
   onClick?: () => void;
   disabled?: boolean;
 };
@@ -141,7 +142,12 @@ function KangurHomeActionCard({
     >
       <div className='home-action-featured-underlay' />
       {action.href ? (
-        <Link href={action.href} className={sharedClassName} data-doc-id={docId}>
+        <Link
+          href={action.href}
+          className={sharedClassName}
+          data-doc-id={docId}
+          targetPageKey={action.targetPageKey}
+        >
           {content}
         </Link>
       ) : (
@@ -174,6 +180,7 @@ export function KangurGameHomeActionsWidget(): React.JSX.Element | null {
       symbol: '📚',
       tone: 'neutral',
       href: createPageUrl('Lessons', basePath),
+      targetPageKey: 'Lessons',
     },
     {
       id: 'play',

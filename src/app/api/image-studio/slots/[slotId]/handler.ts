@@ -7,6 +7,7 @@ import {
 } from '@/features/ai/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { optionalBooleanQuerySchema } from '@/shared/lib/api/query-schema';
 
 const sanitizeFolderPath = (value: string): string => {
   const normalized = value.replace(/\\/g, '/').trim();
@@ -26,6 +27,10 @@ const patchSchema = z.object({
   asset3dId: z.string().trim().optional().nullable(),
   screenshotFileId: z.string().trim().optional().nullable(),
   metadata: z.record(z.string(), z.unknown()).optional().nullable(),
+});
+
+export const deleteQuerySchema = z.object({
+  debug: optionalBooleanQuerySchema(),
 });
 
 const resolveSlotIdCandidates = (slotIdRaw: string): string[] => {
@@ -95,14 +100,14 @@ export async function PATCH_handler(
 }
 
 export async function DELETE_handler(
-  req: NextRequest,
+  _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { slotId: string }
 ): Promise<Response> {
   const slotIdCandidates = resolveSlotIdCandidates(params.slotId ?? '');
   if (slotIdCandidates.length === 0) throw badRequestError('Slot id is required');
-  const debugRaw = req.nextUrl.searchParams.get('debug') ?? '';
-  const includeDebug = ['1', 'true', 'yes', 'on'].includes(debugRaw.toLowerCase());
+  const query = (_ctx.query ?? {}) as z.infer<typeof deleteQuerySchema>;
+  const includeDebug = query.debug === true;
 
   let deleted = false;
   let deletedSlotIds: string[] = [];

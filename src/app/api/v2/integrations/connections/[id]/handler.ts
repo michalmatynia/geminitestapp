@@ -8,6 +8,7 @@ import { encryptSecret } from '@/features/integrations/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, badRequestError } from '@/shared/errors/app-error';
+import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 
 const connectionSchema = z.object({
   name: z.string().trim().min(1),
@@ -49,6 +50,10 @@ const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
 
 const deleteConnectionSchema = z.object({
   userPassword: z.string().trim().min(1),
+});
+
+export const deleteQuerySchema = z.object({
+  replacementConnectionId: optionalTrimmedQueryString(),
 });
 
 /**
@@ -294,9 +299,8 @@ export async function DELETE_handler(
     throw authError('Invalid password.');
   }
 
-  const replacementConnectionIdRaw =
-    req.nextUrl.searchParams.get('replacementConnectionId') ?? null;
-  const replacementConnectionId = replacementConnectionIdRaw?.trim() || undefined;
+  const query = (_ctx.query ?? {}) as z.infer<typeof deleteQuerySchema>;
+  const replacementConnectionId = query.replacementConnectionId ?? undefined;
 
   const repo = await getIntegrationRepository();
   await repo.deleteConnection(id, {

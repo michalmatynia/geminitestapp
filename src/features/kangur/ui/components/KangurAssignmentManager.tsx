@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import Link from 'next/link';
 
 import {
   KANGUR_LESSONS_SETTING_KEY,
@@ -28,6 +27,7 @@ import {
   filterKangurAssignmentCatalog,
   getKangurAssignmentActionLabel,
 } from '@/features/kangur/ui/services/delegated-assignments';
+import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
 type KangurAssignmentManagerProps = {

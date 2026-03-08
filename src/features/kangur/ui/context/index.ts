@@ -5,5 +5,6 @@ export * from './KangurLearnerProfileRuntimeContext';
 export * from './KangurLessonNavigationContext';
 export * from './KangurLessonsRuntimeContext';
 export * from './KangurParentDashboardRuntimeContext';
+export * from './KangurRouteTransitionContext';
 export * from './KangurRoutingContext';
 export * from './KangurTestSuiteRuntimeContext';

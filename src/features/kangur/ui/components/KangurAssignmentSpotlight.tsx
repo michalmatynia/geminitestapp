@@ -1,6 +1,6 @@
-import Link from 'next/link';
 import { useMemo } from 'react';
 
+import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import {
   KangurButton,

@@ -1,9 +1,12 @@
 export const runtime = 'nodejs';
 
-import { apiHandler } from '@/shared/lib/api/api-handler';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 
 import { POST_handler } from './handler';
 
-export const POST = apiHandler(POST_handler, {
-  source: 'agentcreator.teaching.collections.search.POST',
-});
+export const POST = apiHandlerWithParams<{ collectionId: string }>(
+  async (request, ctx, params) => POST_handler(request, { ...ctx, params }),
+  {
+    source: 'agentcreator.teaching.collections.[collectionId].search.POST',
+  }
+);

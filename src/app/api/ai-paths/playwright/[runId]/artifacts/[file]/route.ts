@@ -5,5 +5,5 @@ import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import { GET_handler } from './handler';
 
 export const GET = apiHandlerWithParams<{ runId: string; file: string }>(GET_handler, {
-  source: 'ai-paths.playwright.artifacts.file',
+  source: 'ai-paths.playwright.[runId].artifacts.[file].GET',
 });

@@ -5,12 +5,17 @@ import { chatbotJobRepository } from '@/features/ai/chatbot/services/chatbot-job
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { optionalBooleanQuerySchema } from '@/shared/lib/api/query-schema';
 import { logger } from '@/shared/utils/logger';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
 const jobActionSchema = z.object({
   action: z.string().trim().optional(),
+});
+
+export const deleteQuerySchema = z.object({
+  force: optionalBooleanQuerySchema(),
 });
 
 export async function GET_handler(
@@ -64,7 +69,7 @@ export async function POST_handler(
 }
 
 export async function DELETE_handler(
-  req: NextRequest,
+  _req: NextRequest,
   ctx: ApiHandlerContext,
   params: { jobId: string }
 ): Promise<Response> {
@@ -73,7 +78,8 @@ export async function DELETE_handler(
   if (!job) {
     throw notFoundError('Job not found.');
   }
-  const force = req.nextUrl.searchParams.get('force') === 'true';
+  const query = (ctx.query ?? {}) as z.infer<typeof deleteQuerySchema>;
+  const force = query.force === true;
   if (job.status === 'running' && !force) {
     throw conflictError('Job is running. Cancel it before deleting.');
   }

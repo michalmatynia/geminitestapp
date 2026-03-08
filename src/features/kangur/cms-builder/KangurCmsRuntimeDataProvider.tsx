@@ -23,6 +23,7 @@ import {
   useOptionalKangurParentDashboardRuntime,
 } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 import { useOptionalKangurLessonsRuntime } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
+import { useOptionalKangurRouteTransition } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurLeaderboardState } from '@/features/kangur/ui/hooks/useKangurLeaderboardState';
@@ -85,6 +86,7 @@ export function KangurCmsRuntimeDataProvider({
   children: React.ReactNode;
 }): React.ReactNode {
   const router = useRouter();
+  const routeTransition = useOptionalKangurRouteTransition();
   const auth = useKangurAuth();
   const routing = useOptionalKangurRouting();
   const progress = useKangurProgressState();
@@ -112,6 +114,16 @@ export function KangurCmsRuntimeDataProvider({
         includeArchived: false,
       },
     });
+  const pushKangurRoute = useCallback(
+    (href: string, pageKey?: string): void => {
+      routeTransition?.startRouteTransition({
+        href,
+        pageKey,
+      });
+      router.push(href);
+    },
+    [routeTransition, router]
+  );
   const progressRuntime = useMemo(() => {
     const currentLevel = getCurrentLevel(progress.totalXp);
     const nextLevel = getNextLevel(progress.totalXp);
@@ -158,36 +170,36 @@ export function KangurCmsRuntimeDataProvider({
         description: assignment.description,
         id: assignment.id,
         openAssignment: (): void => {
-          router.push(buildKangurAssignmentHref(routing?.basePath ?? '', assignment));
+          pushKangurRoute(buildKangurAssignmentHref(routing?.basePath ?? '', assignment));
         },
         priorityLabel: resolveAssignmentPriorityLabel(assignment.priority),
         progressLabel: assignment.progress.summary,
         progressPercent: assignment.progress.percent,
         title: assignment.title,
       })),
-    [priorityAssignments, router, routing?.basePath]
+    [priorityAssignments, pushKangurRoute, routing?.basePath]
   );
   const openHomeSpotlightAssignment = useCallback((): void => {
     if (!homeSpotlightAssignment) {
       return;
     }
 
-    router.push(buildKangurAssignmentHref(routing?.basePath ?? '', homeSpotlightAssignment));
-  }, [homeSpotlightAssignment, router, routing?.basePath]);
+    pushKangurRoute(buildKangurAssignmentHref(routing?.basePath ?? '', homeSpotlightAssignment));
+  }, [homeSpotlightAssignment, pushKangurRoute, routing?.basePath]);
   const openResultAssignment = useCallback((): void => {
     if (!game?.resultPracticeAssignment) {
       return;
     }
 
-    router.push(buildKangurAssignmentHref(routing?.basePath ?? '', game.resultPracticeAssignment));
-  }, [game?.resultPracticeAssignment, router, routing?.basePath]);
+    pushKangurRoute(buildKangurAssignmentHref(routing?.basePath ?? '', game.resultPracticeAssignment));
+  }, [game?.resultPracticeAssignment, pushKangurRoute, routing?.basePath]);
   const openActivePracticeAssignment = useCallback((): void => {
     if (!game?.activePracticeAssignment) {
       return;
     }
 
-    router.push(buildKangurAssignmentHref(routing?.basePath ?? '', game.activePracticeAssignment));
-  }, [game?.activePracticeAssignment, router, routing?.basePath]);
+    pushKangurRoute(buildKangurAssignmentHref(routing?.basePath ?? '', game.activePracticeAssignment));
+  }, [game?.activePracticeAssignment, pushKangurRoute, routing?.basePath]);
   const gameRuntime = useMemo(() => {
     if (!game) {
       return null;
@@ -387,9 +399,9 @@ export function KangurCmsRuntimeDataProvider({
         return;
       }
 
-      router.push(getKangurPageHref(pageKey.trim(), routing?.basePath));
+      pushKangurRoute(getKangurPageHref(pageKey.trim(), routing?.basePath), pageKey.trim());
     },
-    [router, routing?.basePath]
+    [pushKangurRoute, routing?.basePath]
   );
 
   const page = useMemo(

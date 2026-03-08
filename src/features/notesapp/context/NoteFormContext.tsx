@@ -318,6 +318,7 @@ export function NoteFormProvider({
           source: 'notes.context.NoteFormContext.relatedNotes',
           operation: 'detail',
           resource: 'notes',
+          description: 'Loads notes.',
           domain: 'global',
           queryKey,
           tags: ['notes', 'detail', 'related'],
@@ -376,7 +377,7 @@ export function NoteFormProvider({
       resource: 'notes.search',
       domain: 'global',
       tags: ['notes', 'search', 'related'],
-    },
+      description: 'Loads notes search.'},
   });
 
   const { data: relatedNoteResults = [], isFetching: isRelatedLoading } = relatedNoteSearchQuery;

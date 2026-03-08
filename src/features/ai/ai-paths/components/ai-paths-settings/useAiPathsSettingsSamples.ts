@@ -94,7 +94,7 @@ export function useAiPathsSettingsSamples({
             domain: 'ai_paths',
             queryKey: getProductDetailQueryKey(entityId),
             tags: ['ai-paths', 'samples', 'fetch'],
-          },
+            description: 'Loads products detail.'},
         })();
       } else if (resolvedType === 'note') {
         sample = await fetchQueryV2<Record<string, unknown> | null>(queryClient, {
@@ -111,7 +111,7 @@ export function useAiPathsSettingsSamples({
             domain: 'ai_paths',
             queryKey: QUERY_KEYS.notes.detail(entityId),
             tags: ['ai-paths', 'samples', 'fetch'],
-          },
+            description: 'Loads notes detail.'},
         })();
       }
       if (!sample) {
@@ -125,7 +125,7 @@ export function useAiPathsSettingsSamples({
       resource: 'ai-paths.samples.parser',
       domain: 'ai_paths',
       tags: ['ai-paths', 'settings', 'samples'],
-    },
+      description: 'Runs ai paths samples parser.'},
     onSuccess: ({
       nodeId,
       entityType,
@@ -249,7 +249,7 @@ export function useAiPathsSettingsSamples({
               domain: 'ai_paths',
               queryKey: getProductDetailQueryKey(entityId),
               tags: ['ai-paths', 'samples', 'fetch'],
-            },
+              description: 'Loads products detail.'},
           })();
         } else if (normalized === 'note') {
           sample = await fetchQueryV2<unknown>(queryClient, {
@@ -266,7 +266,7 @@ export function useAiPathsSettingsSamples({
               domain: 'ai_paths',
               queryKey: QUERY_KEYS.notes.detail(entityId),
               tags: ['ai-paths', 'samples', 'fetch'],
-            },
+              description: 'Loads notes detail.'},
           })();
         } else {
           const fetched = await fetchViaDbQuery(entityType, entityId);
@@ -293,7 +293,7 @@ export function useAiPathsSettingsSamples({
       resource: 'ai-paths.samples.updater',
       domain: 'ai_paths',
       tags: ['ai-paths', 'settings', 'samples'],
-    },
+      description: 'Runs ai paths samples updater.'},
     onSuccess: ({
       nodeId,
       entityType,

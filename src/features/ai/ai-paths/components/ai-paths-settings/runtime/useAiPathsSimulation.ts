@@ -121,7 +121,7 @@ export function useAiPathsSimulation(args: SimulationArgs) {
             domain: 'ai_paths',
             queryKey,
             tags: ['ai-paths', 'simulation', 'fetch'],
-          },
+            description: 'Loads products detail.'},
         })();
       } catch (error) {
         args.reportAiPathsError(
@@ -153,7 +153,7 @@ export function useAiPathsSimulation(args: SimulationArgs) {
             domain: 'ai_paths',
             queryKey,
             tags: ['ai-paths', 'simulation', 'fetch'],
-          },
+            description: 'Loads notes detail.'},
         })();
       } catch (error) {
         args.reportAiPathsError(error, { action: 'fetchNote', noteId }, 'Failed to fetch note:');

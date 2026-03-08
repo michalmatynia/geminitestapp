@@ -293,7 +293,7 @@ export function StudioInlineEditProvider({
       resource: 'image-studio.runs',
       domain: 'image_studio',
       tags: ['image-studio', 'runs', 'linked-variants'],
-    },
+      description: 'Loads image studio runs.'},
   });
 
   const linkedGeneratedVariants = useMemo(

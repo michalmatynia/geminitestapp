@@ -339,7 +339,7 @@ ${schemeContext}`;
       resource: 'cms.page-builder.ai.theme-colors',
       domain: 'global',
       tags: ['cms', 'page-builder', 'theme', 'ai'],
-    },
+      description: 'Runs cms page builder ai theme colors.'},
   });
   const schemeAiLoading = generateSchemeMutation.isPending;
 

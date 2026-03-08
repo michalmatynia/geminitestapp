@@ -34,7 +34,7 @@ export function useGenerationToolbarHandlers(
           domain: 'image_studio',
           queryKey: normalizeQueryKey(studioKeys.slots(id)),
           tags: ['image-studio', 'slots', 'fetch'],
-        },
+          description: 'Loads image studio slots.'},
       })();
       return data?.slots ?? [];
     },

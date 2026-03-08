@@ -32,7 +32,7 @@ function useNotesSearch(query: string): { notes: NoteWithRelations[]; loading: b
       resource: 'notes.search',
       domain: 'global',
       tags: ['products', 'notes', 'search'],
-    },
+      description: 'Loads notes search.'},
   });
 
   return { notes: res.data ?? [], loading: res.isLoading };
@@ -56,7 +56,7 @@ function useNotesLookup(noteIds: string[]): { notes: NotesLookupResult; loading:
       resource: 'notes.lookup',
       domain: 'global',
       tags: ['products', 'notes', 'lookup'],
-    },
+      description: 'Loads notes lookup.'},
   });
 
   return { notes: res.data ?? [], loading: res.isLoading };

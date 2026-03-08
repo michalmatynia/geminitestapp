@@ -198,14 +198,14 @@ const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCe
           |
         </span>
         <Tooltip content={categoryLabel}>
-          <span
-            tabIndex={0}
-            className='max-w-[14rem] truncate rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
+          <button
+            type='button'
+            className='max-w-[14rem] truncate rounded-sm border-0 bg-transparent p-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
             aria-label={categoryLabel}
             title={categoryLabel}
           >
             {categoryLabel}
-          </span>
+          </button>
         </Tooltip>
         {isImported && (
           <Tooltip
@@ -216,14 +216,14 @@ const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCe
               ) ?? 'Imported product'
             }
           >
-            <span
-              tabIndex={0}
+            <button
+              type='button'
               aria-label='Imported product'
               title='Imported product'
-              className='inline-flex rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
+              className='inline-flex rounded-sm border-0 bg-transparent p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
             >
               <Download className='size-3 text-blue-400' aria-hidden='true' />
-            </span>
+            </button>
           </Tooltip>
         )}
         {isQueued && (
@@ -282,14 +282,14 @@ const PriceCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function Price
       />
       {showCurrencyIndicator && displayPrice !== product.price && (
         <Tooltip content={`Converted: ${displayPrice?.toFixed(2)} ${actualCurrency}`}>
-          <span
-            tabIndex={0}
-            className='rounded-sm text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
+          <button
+            type='button'
+            className='rounded-sm border-0 bg-transparent p-0 text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
             aria-label={`Converted price: ${displayPrice?.toFixed(2)} ${actualCurrency}`}
             title={`Converted: ${displayPrice?.toFixed(2)} ${actualCurrency}`}
           >
             →{displayPrice?.toFixed(2)}
-          </span>
+          </button>
         </Tooltip>
       )}
     </div>
@@ -345,7 +345,7 @@ const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(functio
         domain: 'integrations',
         queryKey: productListingsQueryKey(product.id),
         tags: ['integrations', 'listings', 'prefetch'],
-      },
+        description: 'Loads integrations listings.'},
     })();
   };
   return (

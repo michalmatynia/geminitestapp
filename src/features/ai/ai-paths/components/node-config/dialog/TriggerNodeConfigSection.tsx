@@ -33,7 +33,7 @@ const useTriggerButtonsQuery = (): UseQueryResult<AiTriggerButtonRecord[], Error
       resource: 'ai-paths.trigger-buttons',
       domain: 'ai_paths',
       tags: ['ai-paths', 'node-config', 'trigger-buttons'],
-    },
+      description: 'Loads ai paths trigger buttons.'},
   });
 };
 

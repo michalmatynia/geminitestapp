@@ -40,6 +40,7 @@ export function useKangurObservabilitySummary(
       domain: 'observability',
       queryKey,
       tags: ['kangur', 'observability', 'summary'],
+      description: 'Loads the Kangur observability summary for the selected range.',
     },
   });
 }

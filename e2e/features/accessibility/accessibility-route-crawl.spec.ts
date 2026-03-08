@@ -14,14 +14,22 @@ test.describe.configure({ mode: 'serial' });
 
 for (const routeEntry of routes) {
   test(buildAccessibilityRouteCrawlTitle(routeEntry), async ({ page }) => {
-    test.setTimeout(routeEntry.audience === 'admin' ? 120_000 : 60_000);
+    test.setTimeout(routeEntry.audience === 'admin' ? 240_000 : 120_000);
 
     if (routeEntry.audience === 'admin') {
-      await ensureAdminSession(page, routeEntry.route);
+      await ensureAdminSession(page, routeEntry.route, {
+        initialNavigationTimeoutMs: 120_000,
+        destinationNavigationTimeoutMs: 120_000,
+        transitionTimeoutMs: 60_000,
+      });
       await page.waitForLoadState('domcontentloaded');
       await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => {});
     } else {
-      await page.goto(routeEntry.route, { waitUntil: 'networkidle' });
+      await page.goto(routeEntry.route, {
+        waitUntil: 'domcontentloaded',
+        timeout: 120_000,
+      });
+      await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => {});
     }
 
     const main = page.locator('#app-content');

@@ -13,6 +13,7 @@ import {
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import {
   getFolderTreeInstanceSettingsHref,
+  getMotionSafeScrollBehavior,
   type MasterTreeDropPosition,
   type MasterTreeId,
   type MasterTreeNode,
@@ -257,7 +258,10 @@ export function SlotTree({
         `button[data-slot-id="${revealRequest.slotId}"]`
       );
       if (!row) return;
-      row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      row.scrollIntoView({
+        behavior: getMotionSafeScrollBehavior('smooth'),
+        block: 'nearest',
+      });
       row.focus({ preventScroll: true });
     });
   }, [controller.nodes, controller.expandNode, panelCollapsed, revealRequest, setPanelCollapsed]);
@@ -321,7 +325,7 @@ export function SlotTree({
         <div
           ref={treeRef}
           className='h-full overflow-y-auto overflow-x-hidden rounded border border-border bg-card/40 p-2'
-          role='region'
+          role='tree'
           tabIndex={0}
           aria-label='Image card folders and cards'
           onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {

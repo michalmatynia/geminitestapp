@@ -16,6 +16,7 @@ import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurUser } from '@/features/kangur/services/ports';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { logKangurClientError } from '@/features/kangur/observability/client';
+import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import { internalError } from '@/shared/errors/app-error';
 
 type KangurAuthError = {
@@ -71,6 +72,7 @@ const resolveErrorMessage = (value: unknown): string => {
 
 export const KangurAuthProvider = ({ children }: { children: ReactNode }): React.JSX.Element => {
   const router = useRouter();
+  const { openLoginModal } = useKangurLoginModal();
   const authRequestVersionRef = useRef(0);
   const [user, setUser] = useState<KangurUser | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -154,9 +156,8 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
   }, [checkAppState, router]);
 
   const navigateToLogin = useCallback((): void => {
-    const loginHref = kangurPlatform.auth.prepareLoginHref(window.location.href);
-    router.push(loginHref, { scroll: false });
-  }, [router]);
+    openLoginModal(window.location.href);
+  }, [openLoginModal]);
 
   const selectLearner = useCallback(async (learnerId: string): Promise<void> => {
     const nextUser = await kangurPlatform.learners.select(learnerId);

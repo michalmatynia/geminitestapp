@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-03-08T14:48:24.640Z",
+  "generatedAt": "2026-03-08T19:09:02.883Z",
   "source": {
-    "totalFiles": 5084,
-    "totalLines": 827589,
-    "useClientFiles": 1479,
-    "filesOver800": 72,
-    "filesOver1000": 10,
+    "totalFiles": 5120,
+    "totalLines": 833021,
+    "useClientFiles": 1496,
+    "filesOver800": 69,
+    "filesOver1000": 9,
     "filesOver1500": 3,
     "largestFile": {
       "path": "src/features/kangur/cms-builder/project.ts",
@@ -114,7 +114,7 @@
     "sharedToFeaturesTotalImports": 75
   },
   "architecture": {
-    "crossFeatureEdgePairs": 56,
+    "crossFeatureEdgePairs": 55,
     "topCrossFeatureEdges": [
       {
         "edge": "cms -> gsap",
@@ -220,28 +220,28 @@
     "featureSizeByLines": [
       {
         "feature": "ai",
-        "files": 958,
-        "lines": 193834
+        "files": 962,
+        "lines": 194164
       },
       {
         "feature": "kangur",
-        "files": 406,
-        "lines": 83150
+        "files": 426,
+        "lines": 86914
       },
       {
         "feature": "case-resolver",
         "files": 288,
-        "lines": 62663
+        "lines": 62686
       },
       {
         "feature": "cms",
         "files": 297,
-        "lines": 48184
+        "lines": 48249
       },
       {
         "feature": "products",
         "files": 214,
-        "lines": 40459
+        "lines": 40460
       },
       {
         "feature": "integrations",
@@ -279,14 +279,14 @@
         "lines": 6236
       },
       {
+        "feature": "data-import-export",
+        "files": 30,
+        "lines": 6119
+      },
+      {
         "feature": "auth",
         "files": 38,
         "lines": 5922
-      },
-      {
-        "feature": "data-import-export",
-        "files": 26,
-        "lines": 5578
       },
       {
         "feature": "viewer3d",
@@ -364,14 +364,8 @@
     "setIntervalOccurrences": 22
   },
   "codeHealth": {
-    "deepRelativeImportCount": 5,
-    "circularFeatureDeps": [
-      [
-        "cms",
-        "kangur",
-        "cms"
-      ]
-    ],
+    "deepRelativeImportCount": 0,
+    "circularFeatureDeps": [],
     "hookComplexity": [
       {
         "path": "src/features/ai/ai-paths/hooks/useAdminAiPathsValidationState.ts",
@@ -441,6 +435,13 @@
         "useEffectCount": 1,
         "useCallbackCount": 0,
         "useMemoCount": 19,
+        "total": 20
+      },
+      {
+        "path": "src/features/ai/ai-paths/components/useJobQueueRuntime.ts",
+        "useEffectCount": 4,
+        "useCallbackCount": 14,
+        "useMemoCount": 2,
         "total": 20
       },
       {
@@ -540,13 +541,6 @@
         "useCallbackCount": 8,
         "useMemoCount": 1,
         "total": 14
-      },
-      {
-        "path": "src/features/foldertree/v2/hooks/useFolderTreeInstanceV2.ts",
-        "useEffectCount": 3,
-        "useCallbackCount": 5,
-        "useMemoCount": 6,
-        "total": 14
       }
     ]
   },
@@ -558,11 +552,11 @@
       },
       {
         "path": "src/features/kangur/ui/components/KangurAiTutorWidget.tsx",
-        "lines": 2039
+        "lines": 2243
       },
       {
         "path": "src/features/kangur/ui/components/KangurAiTutorWidget.test.tsx",
-        "lines": 1501
+        "lines": 1596
       },
       {
         "path": "src/features/kangur/ui/design/primitives.tsx",
@@ -575,10 +569,6 @@
       {
         "path": "src/features/kangur/ui/context/KangurAiTutorContext.test.tsx",
         "lines": 1097
-      },
-      {
-        "path": "src/features/ai/ai-paths/components/JobQueueContext.tsx",
-        "lines": 1069
       },
       {
         "path": "src/features/ai/ai-paths/components/__tests__/canvas-connection-preview.test.tsx",
@@ -605,6 +595,10 @@
         "lines": 989
       },
       {
+        "path": "src/app/api/kangur/ai-tutor/chat/handler.test.ts",
+        "lines": 980
+      },
+      {
         "path": "src/features/kangur/ui/components/ClockTrainingGame.tsx",
         "lines": 969
       },
@@ -618,10 +612,6 @@
       },
       {
         "path": "src/features/cms/components/page-builder/registry/block-definitions-media.ts",
-        "lines": 957
-      },
-      {
-        "path": "src/shared/lib/ai-brain/context/BrainContext.tsx",
         "lines": 957
       },
       {
@@ -669,7 +659,11 @@
         "lines": 901
       },
       {
-        "path": "src/app/api/kangur/ai-tutor/chat/handler.test.ts",
+        "path": "src/features/kangur/server/context-registry.ts",
+        "lines": 900
+      },
+      {
+        "path": "src/features/kangur/observability/summary.ts",
         "lines": 898
       }
     ],
@@ -711,11 +705,11 @@
         "lines": 32
       },
       {
-        "path": "src/app/(frontend)/kangur/(app)/[[...slug]]/page.tsx",
-        "lines": 29
+        "path": "src/app/(frontend)/kangur/login/page.tsx",
+        "lines": 32
       },
       {
-        "path": "src/app/(frontend)/kangur/login/page.tsx",
+        "path": "src/app/(frontend)/kangur/(app)/[[...slug]]/page.tsx",
         "lines": 28
       },
       {
@@ -757,8 +751,8 @@
     ]
   },
   "propDrilling": {
-    "candidateChains": 22,
+    "candidateChains": 24,
     "depthGte4Chains": 0,
-    "forwardingComponents": 38
+    "forwardingComponents": 42
   }
 }

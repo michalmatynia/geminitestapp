@@ -7,6 +7,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
+  openLoginModalMock,
   useRouterMock,
   routerPushMock,
   routerRefreshMock,
@@ -17,6 +18,7 @@ const {
   selectLearnerMock,
   logKangurClientErrorMock,
 } = vi.hoisted(() => ({
+  openLoginModalMock: vi.fn(),
   useRouterMock: vi.fn(),
   routerPushMock: vi.fn(),
   routerRefreshMock: vi.fn(),
@@ -43,6 +45,12 @@ vi.mock('@/features/kangur/services/kangur-platform', () => ({
     learners: {
       select: selectLearnerMock,
     },
+  }),
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
+  useKangurLoginModal: () => ({
+    openLoginModal: openLoginModalMock,
   }),
 }));
 
@@ -119,7 +127,7 @@ describe('KangurAuthContext', () => {
     });
   });
 
-  it('routes login navigation through the Next router using the prepared Kangur login href', async () => {
+  it('opens the Kangur login modal in place using the current location as callback target', async () => {
     const user = userEvent.setup();
 
     render(
@@ -135,11 +143,9 @@ describe('KangurAuthContext', () => {
 
     await user.click(screen.getByRole('button', { name: 'Open login' }));
 
-    expect(prepareLoginHrefMock).toHaveBeenCalledWith(window.location.href);
-    expect(routerPushMock).toHaveBeenCalledWith(
-      `/kangur/login?callbackUrl=${encodeURIComponent(window.location.href)}`,
-      { scroll: false }
-    );
+    expect(openLoginModalMock).toHaveBeenCalledWith(window.location.href);
+    expect(prepareLoginHrefMock).not.toHaveBeenCalled();
+    expect(routerPushMock).not.toHaveBeenCalled();
     expect(redirectToLoginMock).not.toHaveBeenCalled();
   });
 

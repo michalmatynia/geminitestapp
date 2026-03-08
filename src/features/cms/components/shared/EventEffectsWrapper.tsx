@@ -10,7 +10,7 @@ import {
   isEventClickEnabled,
 } from '@/features/cms/utils/event-effects';
 import type { CmsEventEffectsConfig } from '@/shared/contracts/cms';
-import { cn } from '@/shared/utils';
+import { cn, getMotionSafeScrollBehavior } from '@/shared/utils';
 
 import { BlockRenderContext, BlockSettingsContext } from '../frontend/blocks/BlockContext';
 
@@ -98,7 +98,10 @@ export function EventEffectsWrapper({
         event.stopPropagation();
         const el = document.querySelector(target);
         if (el) {
-          el.scrollIntoView({ behavior: config.clickScrollBehavior, block: 'start' });
+          el.scrollIntoView({
+            behavior: getMotionSafeScrollBehavior(config.clickScrollBehavior),
+            block: 'start',
+          });
         }
       }
     },

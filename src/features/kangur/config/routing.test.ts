@@ -28,6 +28,11 @@ describe('kangur routing config', () => {
     expect(resolveKangurPageKeyFromSlug('TESTS')).toBe('Tests');
   });
 
+  it('uses the main Kangur page behind the compatibility login slug', () => {
+    expect(resolveKangurPageKeyFromSlug('login')).toBe('Game');
+    expect(resolveKangurPageKeyFromSlug('LOGIN')).toBe('Game');
+  });
+
   it('uses the canonical Kangur home path for home navigation', () => {
     const embeddedBasePath = buildKangurEmbeddedBasePath('/home?preview=1');
 

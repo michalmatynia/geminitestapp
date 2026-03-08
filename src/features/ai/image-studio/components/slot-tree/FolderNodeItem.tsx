@@ -104,6 +104,11 @@ export function FolderNodeItem(props: FolderNodeItemProps): React.JSX.Element | 
           baseIndent={8}
           indent={12}
           tone='subtle'
+          role='treeitem'
+          aria-level={depth + 1}
+          aria-selected={isSelected}
+          aria-expanded={hasChildren ? isExpanded : undefined}
+          aria-label={node.name}
           selected={isSelected}
           selectedClassName='bg-muted text-white hover:bg-muted'
           className='relative h-8 text-xs'
@@ -166,6 +171,11 @@ export function FolderNodeItem(props: FolderNodeItemProps): React.JSX.Element | 
           baseIndent={8}
           indent={12}
           tone='subtle'
+          role='treeitem'
+          aria-level={depth + 1}
+          aria-selected={isSelected}
+          aria-expanded={hasChildren ? isExpanded : undefined}
+          aria-label={node.name}
           selected={isSelected}
           selectedClassName='bg-muted text-white hover:bg-muted'
           dragOver={showInlineDrop}

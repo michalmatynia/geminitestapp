@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-08T17:42:49.032Z",
+  "generatedAt": "2026-03-08T19:02:22.775Z",
   "status": "passed",
   "summary": {
     "total": 19,
@@ -10,7 +10,7 @@
     "featureCount": 28,
     "featuresWithTestCount": 28,
     "featuresWithoutTestCount": 0,
-    "totalTestFiles": 1159,
+    "totalTestFiles": 1161,
     "onlyCount": 0,
     "skipCount": 19
   },
@@ -29,7 +29,7 @@
     },
     {
       "feature": "kangur",
-      "testCount": 169
+      "testCount": 171
     },
     {
       "feature": "case-resolver",
@@ -337,5 +337,5 @@
       "infoCount": 19
     }
   ],
-  "durationMs": 153
+  "durationMs": 572
 }

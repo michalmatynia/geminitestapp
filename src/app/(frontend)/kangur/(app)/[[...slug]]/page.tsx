@@ -1,9 +1,8 @@
 import { redirect } from 'next/navigation';
 
+import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '@/app/(frontend)/home-helpers';
 import { getKangurCanonicalPublicHref } from '@/features/kangur/config/routing';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
-
-import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '../../../home-helpers';
 
 type KangurAliasPageProps = {
   params: Promise<{ slug?: string[] }>;

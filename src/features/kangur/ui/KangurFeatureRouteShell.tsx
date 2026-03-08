@@ -64,8 +64,9 @@ export function KangurFeatureRouteShell({
     [normalizedBasePath, pathname]
   );
   const activeSlug = slug[0] ?? null;
+  const effectiveSlug = activeSlug?.trim().toLowerCase() === 'login' ? [] : slug;
   const pageKey = resolveKangurPageKeyFromSlug(activeSlug);
-  const requestedPath = normalizeKangurRequestedPath(slug, normalizedBasePath);
+  const requestedPath = normalizeKangurRequestedPath(effectiveSlug, normalizedBasePath);
 
   useEffect(() => {
     setKangurClientObservabilityContext({

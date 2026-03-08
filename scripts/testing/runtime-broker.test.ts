@@ -89,6 +89,18 @@ describe('buildRuntimeLeaseKey', () => {
 
     expect(left).not.toBe(right);
   });
+
+  it('includes the resolved bundler when provided', () => {
+    const leaseKey = buildRuntimeLeaseKey({
+      rootDir: '/tmp/worktrees/feature-a',
+      appId: 'web',
+      mode: 'dev',
+      bundler: 'turbopack',
+      agentId: 'agent-2',
+    });
+
+    expect(leaseKey).toMatch(/^web-dev-turbopack-agent-2-[a-f0-9]{8}$/);
+  });
 });
 
 describe('resolveBrokerManagedDistDir', () => {
@@ -100,6 +112,17 @@ describe('resolveBrokerManagedDistDir', () => {
         agentId: 'Agent 4',
       })
     ).toBe('.next-dev-web-dev-agent-4');
+  });
+
+  it('includes the resolved bundler in managed dev dist dirs', () => {
+    expect(
+      resolveBrokerManagedDistDir({
+        appId: 'web',
+        mode: 'dev',
+        bundler: 'turbopack',
+        agentId: 'Agent 4',
+      })
+    ).toBe('.next-dev-web-dev-turbopack-agent-4');
   });
 });
 
@@ -236,13 +259,72 @@ describe('acquireRuntimeLease', () => {
     expect(spawnCount).toBe(1);
     expect(left.baseUrl).toBe(right.baseUrl);
     expect([left.reused, right.reused].filter(Boolean)).toHaveLength(1);
+    expect(left.bundler).toBeNull();
+    expect(right.bundler).toBeNull();
     expect(left.runtimeTmpDir).toBe(resolveBrokerManagedRuntimeTmpDir({ leaseKey: left.leaseKey }));
     expect(right.runtimeTmpDir).toBe(resolveBrokerManagedRuntimeTmpDir({ leaseKey: right.leaseKey }));
     expect(spawnedEnvs).toHaveLength(1);
+    expect(spawnedEnvs[0]?.NEXT_DEV_BUNDLER).toBeUndefined();
     expect(spawnedEnvs[0]?.TMPDIR).toBe(path.join(rootDir, left.runtimeTmpDir));
     expect(spawnedEnvs[0]?.TMP).toBe(path.join(rootDir, left.runtimeTmpDir));
     expect(spawnedEnvs[0]?.TEMP).toBe(path.join(rootDir, left.runtimeTmpDir));
     await expect(fs.stat(path.join(rootDir, left.runtimeTmpDir))).resolves.toBeTruthy();
+  });
+
+  it('scopes broker-managed runtimes by bundler and passes it to the dev server env', async () => {
+    const rootDir = await fs.mkdtemp(path.join(os.tmpdir(), 'runtime-broker-bundler-'));
+    cleanupTargets.push(rootDir);
+    const env = {
+      PLAYWRIGHT_BASE_URL: 'http://127.0.0.1:43174',
+      NEXT_DEV_BUNDLER: 'turbopack',
+    };
+
+    const healthyBaseUrls = new Set<string>();
+    const spawnedEnvs: Array<Record<string, string>> = [];
+
+    const spawnImpl = (_command: string, _args: string[], options: { env: Record<string, string> }) => {
+      spawnedEnvs.push(options.env);
+      const child = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], {
+        detached: true,
+        stdio: 'ignore',
+      });
+      child.unref();
+
+      const baseUrl = `http://${options.env.HOST}:${options.env.PORT}`;
+      setTimeout(() => {
+        healthyBaseUrls.add(baseUrl);
+      }, 50);
+
+      return child;
+    };
+
+    const fetchImpl = async (candidate: string) => {
+      const url = new URL(candidate);
+      const baseUrl = `${url.protocol}//${url.host}`;
+      if (healthyBaseUrls.has(baseUrl)) {
+        return { status: 200 };
+      }
+
+      throw new Error('runtime not ready');
+    };
+
+    const lease = await acquireRuntimeLease({
+      rootDir,
+      appId: 'web',
+      mode: 'dev',
+      agentId: 'agent-bundler',
+      env,
+      spawnImpl,
+      fetchImpl,
+      startupTimeoutMs: 3_000,
+      reuseTimeoutMs: 500,
+    });
+
+    expect(lease.bundler).toBe('turbopack');
+    expect(lease.leaseKey).toMatch(/^web-dev-turbopack-agent-bundler-[a-f0-9]{8}$/);
+    expect(lease.distDir).toBe('.next-dev-web-dev-turbopack-agent-bundler');
+    expect(spawnedEnvs).toHaveLength(1);
+    expect(spawnedEnvs[0]?.NEXT_DEV_BUNDLER).toBe('turbopack');
   });
 });
 

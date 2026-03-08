@@ -1,6 +1,6 @@
 # Accessibility Route Crawl Report
 
-Generated at: 2026-03-08T17:59:51.409Z
+Generated at: 2026-03-08T19:10:15.636Z
 
 ## Summary
 
@@ -17,23 +17,23 @@ Generated at: 2026-03-08T17:59:51.409Z
 
 | Route | Audience | Status | Duration | Errors |
 | --- | --- | --- | ---: | ---: |
-| / | public | PASS | 16.2s | 0 |
-| /auth/signin | public | PASS | 1.7s | 0 |
-| /auth/register | public | PASS | 2.5s | 0 |
-| /admin | admin | PASS | 8.5s | 0 |
-| /admin/products | admin | PASS | 9.7s | 0 |
-| /admin/notes | admin | PASS | 6.0s | 0 |
-| /admin/integrations | admin | PASS | 6.6s | 0 |
-| /admin/case-resolver | admin | PASS | 9.7s | 0 |
-| /admin/cms | admin | PASS | 35.1s | 0 |
-| /admin/ai-paths | admin | PASS | 17.9s | 0 |
-| /admin/image-studio | admin | PASS | 36.9s | 0 |
-| /admin/chatbot | admin | PASS | 6.5s | 0 |
-| /admin/agentcreator | admin | PASS | 3.4s | 0 |
+| / | public | PASS | 18.8s | 0 |
+| /auth/signin | public | PASS | 1.4s | 0 |
+| /auth/register | public | PASS | 1.9s | 0 |
+| /admin | admin | PASS | 9.5s | 0 |
+| /admin/products | admin | PASS | 9.0s | 0 |
+| /admin/notes | admin | PASS | 7.3s | 0 |
+| /admin/integrations | admin | PASS | 4.4s | 0 |
+| /admin/case-resolver | admin | PASS | 10.6s | 0 |
+| /admin/cms | admin | PASS | 3.3s | 0 |
+| /admin/ai-paths | admin | PASS | 15.2s | 0 |
+| /admin/image-studio | admin | PASS | 14.5s | 0 |
+| /admin/chatbot | admin | PASS | 4.6s | 0 |
+| /admin/agentcreator | admin | PASS | 3.5s | 0 |
 | /admin/prompt-engine/validation | admin | PASS | 3.3s | 0 |
-| /admin/kangur | admin | PASS | 6.0s | 0 |
-| /admin/databases/engine | admin | PASS | 13.2s | 0 |
-| /admin/brain?tab=routing | admin | PASS | 8.1s | 0 |
+| /admin/kangur | admin | PASS | 6.6s | 0 |
+| /admin/databases/engine | admin | PASS | 13.8s | 0 |
+| /admin/brain?tab=routing | admin | PASS | 9.6s | 0 |
 
 ## Errors
 

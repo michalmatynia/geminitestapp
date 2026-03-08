@@ -1,23 +1,26 @@
 # Context Health Check
 
-Generated at: 2026-03-08T17:42:47.700Z
+Generated at: 2026-03-08T19:02:21.402Z
 
 ## Summary
 
 - Status: PASSED
-- Context files scanned: 237
+- Context files scanned: 238
 - Errors: 0
 - Warnings: 0
-- Info: 0
+- Info: 1
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
+| context-missing-split | 0 | 0 | 1 |
 
 ## Issues
 
-All contexts are healthy.
+| Severity | Rule | Location | Message |
+| --- | --- | --- | --- |
+| INFO | context-missing-split | src/features/kangur/ui/context/KangurLoginModalContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
 
 ## Notes
 

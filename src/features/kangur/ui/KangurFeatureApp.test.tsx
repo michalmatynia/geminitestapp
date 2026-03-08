@@ -34,6 +34,10 @@ vi.mock('@/features/kangur/ui/components/KangurAiTutorWidget', () => ({
   KangurAiTutorWidget: () => <div data-testid='kangur-ai-tutor-widget' />,
 }));
 
+vi.mock('@/features/kangur/ui/components/KangurLoginModal', () => ({
+  KangurLoginModal: () => <div data-testid='kangur-login-modal' />,
+}));
+
 vi.mock('@/features/kangur/ui/components/KangurRouteAccessibilityAnnouncer', () => ({
   KangurRouteAccessibilityAnnouncer: () => null,
 }));
@@ -45,6 +49,10 @@ vi.mock('@/features/kangur/ui/context/KangurTopNavigationContext', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurTutorAnchorContext', () => ({
   KangurTutorAnchorProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
+  KangurLoginModalProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({

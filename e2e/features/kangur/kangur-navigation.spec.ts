@@ -87,27 +87,18 @@ const expectParentDashboardRouteReady = async (page: Page): Promise<void> => {
   });
 };
 
-const expectKangurLoginReady = async (
-  page: Page,
-  loginMode: 'parent' | 'student' = 'parent'
-): Promise<void> => {
-  await expect(page.getByTestId('kangur-login-shell')).toBeVisible({
+const expectKangurLoginReady = async (page: Page): Promise<void> => {
+  await expect(page.getByTestId('kangur-login-modal')).toBeVisible({
     timeout: ROUTE_BOOT_TIMEOUT_MS,
   });
   await expect(page.getByTestId('kangur-login-form')).toHaveAttribute('data-hydrated', 'true', {
     timeout: ROUTE_BOOT_TIMEOUT_MS,
   });
-  await expect(page.getByTestId('kangur-login-form')).toHaveAttribute(
-    'data-login-mode',
-    loginMode,
-    {
-      timeout: ROUTE_BOOT_TIMEOUT_MS,
-    }
-  );
+  await expect(page.getByTestId('kangur-login-form')).toHaveAttribute('data-login-kind', 'unknown', {
+    timeout: ROUTE_BOOT_TIMEOUT_MS,
+  });
   await expect(
-    page
-      .getByTestId('kangur-login-form')
-      .getByLabel(loginMode === 'parent' ? 'Email rodzica' : 'Nick ucznia')
+    page.getByTestId('kangur-login-form').getByLabel('Email rodzica lub nick ucznia')
   ).toBeVisible({
     timeout: ROUTE_BOOT_TIMEOUT_MS,
   });
@@ -297,15 +288,6 @@ const expectKangurSurfaceContinuity = (
           sample.featurePageShellBackgroundImage.includes('radial-gradient'))
     ),
     `${stepLabel}: visible feature-page shell lost the premium background`
-  ).toBe(true);
-  expect(
-    samples.every(
-      (sample) =>
-        !sample.hasLoginShell ||
-        (sample.loginShellBackgroundImage !== null &&
-          sample.loginShellBackgroundImage.includes('radial-gradient'))
-    ),
-    `${stepLabel}: visible Kangur shell lost the premium background`
   ).toBe(true);
   expect(
     samples.every(
@@ -1441,17 +1423,17 @@ test.describe('Kangur navigation continuity', () => {
       .getByLabel('Glowna nawigacja Kangur')
       .getByRole('button', { name: 'Zaloguj się' })
       .click();
-    await expect(page).toHaveURL(/\/(?:kangur\/)?login\?callbackUrl=/);
+    await expect(page).toHaveURL(/\/kangur\/game$/);
     await expectKangurLoginReady(page);
     await page.waitForTimeout(250);
-    expectKangurSurfaceContinuity(await stopKangurSurfaceMonitor(page), 'game -> login');
+    expectKangurSurfaceContinuity(await stopKangurSurfaceMonitor(page), 'game -> login modal');
 
     await startKangurSurfaceMonitor(page);
-    await page.getByRole('link', { name: 'Wroc do Kangura' }).click();
-    await expect(page).toHaveURL(/\/(?:kangur)?$/, { timeout: ROUTE_BOOT_TIMEOUT_MS });
-    await expectKangurAppShellVisible(page, ROUTE_BOOT_TIMEOUT_MS);
+    await page.getByTestId('kangur-login-modal-close').click();
+    await expect(page).toHaveURL(/\/kangur\/game$/, { timeout: ROUTE_BOOT_TIMEOUT_MS });
+    await expectGameRouteReady(page, 'kangur-primary-nav-home');
     await page.waitForTimeout(250);
-    expectKangurSurfaceContinuity(await stopKangurSurfaceMonitor(page), 'login -> kangur');
+    expectKangurSurfaceContinuity(await stopKangurSurfaceMonitor(page), 'login modal -> game');
 
     const documentLoadCount = await page.evaluate(
       (storageKey) => window.localStorage.getItem(storageKey),
@@ -1468,22 +1450,9 @@ test.describe('Kangur navigation continuity', () => {
     await gotoKangurPath(page, '/kangur/login?callbackUrl=%2Fkangur%2Fprofile');
 
     await expectKangurLoginReady(page);
-    await expect(page.getByTestId('kangur-route-shell')).toHaveCount(0);
-    await expect(page.getByRole('tab', { name: 'Rodzic' })).toHaveAttribute(
-      'aria-selected',
-      'true'
-    );
-    await expect(page.getByRole('tab', { name: 'Uczen' })).toHaveAttribute(
-      'aria-selected',
-      'false'
-    );
-    await expect(page.getByTestId('kangur-login-form').getByLabel('Email rodzica')).toBeVisible();
-    await expect(page.getByLabel('Nick ucznia')).toHaveCount(0);
-    await expect(page.getByRole('link', { name: /Przejdz do logowania rodzica/i })).toHaveCount(0);
-
-    await page.getByRole('tab', { name: 'Uczen' }).click();
-    await expectKangurLoginReady(page, 'student');
-    await expect(page.getByLabel('Email rodzica')).toHaveCount(0);
+    await expectKangurAppShellVisible(page, ROUTE_BOOT_TIMEOUT_MS);
+    await expect(page.getByTestId('kangur-primary-nav-home')).toBeVisible();
+    await expect(page.getByLabel('Email rodzica lub nick ucznia')).toBeVisible();
 
     const [bodyBackgroundImage, appContentBackgroundImage] = await page.evaluate(() => {
       const bodyStyles = window.getComputedStyle(document.body);
@@ -1496,11 +1465,11 @@ test.describe('Kangur navigation continuity', () => {
     expect(appContentBackgroundImage).toContain('radial-gradient');
 
     await startKangurSurfaceMonitor(page);
-    await page.getByRole('link', { name: 'Wroc do Kangura' }).click();
+    await page.getByTestId('kangur-login-modal-close').click();
     await expect(page).toHaveURL(/\/(?:kangur)?$/, { timeout: ROUTE_BOOT_TIMEOUT_MS });
     await expectKangurAppShellVisible(page, ROUTE_BOOT_TIMEOUT_MS);
     await page.waitForTimeout(250);
-    expectKangurSurfaceContinuity(await stopKangurSurfaceMonitor(page), 'direct login -> kangur');
+    expectKangurSurfaceContinuity(await stopKangurSurfaceMonitor(page), 'direct login modal -> kangur');
 
     const documentLoadCount = await page.evaluate(
       (storageKey) => window.localStorage.getItem(storageKey),
@@ -1552,14 +1521,17 @@ test.describe('Kangur navigation continuity', () => {
     await gotoKangurPath(page, '/kangur/login?callbackUrl=%2Fkangur%3Flogin%3Dparent');
     await expectKangurLoginReady(page);
 
-    const parentEmailField = page.getByTestId('kangur-login-form').getByLabel('Email rodzica');
+    const identifierField = page
+      .getByTestId('kangur-login-form')
+      .getByLabel('Email rodzica lub nick ucznia');
     const parentPasswordField = page.getByTestId('kangur-login-form').getByLabel('Haslo');
 
-    await parentEmailField.fill('parent@example.com');
+    await identifierField.fill('parent@example.com');
     await parentPasswordField.fill('secret123');
-    await expect(parentEmailField).toHaveValue('parent@example.com');
+    await expect(identifierField).toHaveValue('parent@example.com');
     await expect(parentPasswordField).toHaveValue('secret123');
-    await page.getByRole('button', { name: 'Zaloguj rodzica' }).click();
+    await expect(page.getByTestId('kangur-login-form')).toHaveAttribute('data-login-kind', 'parent');
+    await page.getByRole('button', { name: 'Zaloguj sie' }).click();
 
     await expect(page).toHaveURL(/\/kangur\?login=parent$/);
     await expect(page.getByTestId('kangur-home-actions-shell')).toBeVisible();
@@ -1632,17 +1604,20 @@ test.describe('Kangur navigation continuity', () => {
     await gotoKangurPath(page, '/kangur/login?callbackUrl=%2Fkangur%3Flogin%3Dstudent');
     await expectKangurLoginReady(page);
 
-    await page.getByRole('tab', { name: 'Uczen' }).click();
-    await expectKangurLoginReady(page, 'student');
-
-    const studentNicknameField = page.getByTestId('kangur-login-form').getByLabel('Nick ucznia');
+    const studentNicknameField = page
+      .getByTestId('kangur-login-form')
+      .getByLabel('Email rodzica lub nick ucznia');
     const studentPasswordField = page.getByTestId('kangur-login-form').getByLabel('Haslo');
 
-    await studentNicknameField.fill('jan-demo');
+    await studentNicknameField.fill('janek123');
     await studentPasswordField.fill('secret123');
-    await expect(studentNicknameField).toHaveValue('jan-demo');
+    await expect(studentNicknameField).toHaveValue('janek123');
     await expect(studentPasswordField).toHaveValue('secret123');
-    await page.getByRole('button', { name: 'Zaloguj ucznia' }).click();
+    await expect(page.getByTestId('kangur-login-form')).toHaveAttribute(
+      'data-login-kind',
+      'student'
+    );
+    await page.getByRole('button', { name: 'Zaloguj sie' }).click();
 
     await expect(page).toHaveURL(/\/kangur\?login=student$/);
     await expect(page.getByTestId('kangur-home-actions-shell')).toBeVisible();
@@ -1652,7 +1627,7 @@ test.describe('Kangur navigation continuity', () => {
       )
       .toBe('learner-001');
     expect(learnerSignInPayload).toEqual({
-      loginName: 'jan-demo',
+      loginName: 'janek123',
       password: 'secret123',
     });
   });

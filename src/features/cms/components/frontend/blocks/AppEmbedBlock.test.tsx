@@ -7,7 +7,76 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { buildKangurEmbeddedBasePath } from '@/shared/lib/kangur-cms-adapter';
 
-const { usePathnameMock, useSearchParamsMock } = vi.hoisted(() => ({
+const { kangurAdapterTestDouble, usePathnameMock, useSearchParamsMock } = vi.hoisted(() => ({
+  kangurAdapterTestDouble: {
+    KANGUR_EMBED_QUERY_PARAM: 'kangur',
+    KANGUR_MAIN_PAGE_KEY: 'Game',
+    KANGUR_PAGE_TO_SLUG: Object.freeze({
+      Game: 'game',
+      LearnerProfile: 'profile',
+      Lessons: 'lessons',
+      Tests: 'tests',
+      ParentDashboard: 'parent-dashboard',
+    }),
+    buildKangurEmbeddedBasePath: (hostPath: string, scopeKey?: string): string => {
+      const normalizedHostPath = hostPath.startsWith('/') ? hostPath : `/${hostPath}`;
+      return scopeKey
+        ? `__kangur_embed__:${scopeKey}::${normalizedHostPath}`
+        : `__kangur_embed__:${normalizedHostPath}`;
+    },
+    getKangurInternalQueryParamKeys: (basePath?: string): string[] => {
+      const scopeMatch = basePath?.match(/^__kangur_embed__:([^:]+)::/);
+      const scopedBaseKey = scopeMatch ? `kangur-${scopeMatch[1]}` : 'kangur';
+
+      if (!scopeMatch) {
+        return [
+          scopedBaseKey,
+          'focus',
+          'quickStart',
+          'operation',
+          'difficulty',
+          'categories',
+          'count',
+        ];
+      }
+
+      return [
+        scopedBaseKey,
+        `${scopedBaseKey}-focus`,
+        `${scopedBaseKey}-quickStart`,
+        `${scopedBaseKey}-operation`,
+        `${scopedBaseKey}-difficulty`,
+        `${scopedBaseKey}-categories`,
+        `${scopedBaseKey}-count`,
+      ];
+    },
+    getKangurPageSlug: (pageName: string): string => {
+      return (
+        {
+          Game: 'game',
+          LearnerProfile: 'profile',
+          Lessons: 'lessons',
+          Tests: 'tests',
+          ParentDashboard: 'parent-dashboard',
+        }[pageName] ?? pageName
+      );
+    },
+    readKangurUrlParam: (
+      searchParams: URLSearchParams,
+      key: string,
+      basePath?: string
+    ): string | null => {
+      const scopeMatch = basePath?.match(/^__kangur_embed__:([^:]+)::/);
+      const scopedKey = scopeMatch
+        ? `kangur-${scopeMatch[1]}${key === 'kangur' ? '' : `-${key}`}`
+        : key;
+      const scopedValue = searchParams.get(scopedKey);
+      if (scopedValue !== null) {
+        return scopedValue;
+      }
+      return scopeMatch ? searchParams.get(key) : null;
+    },
+  },
   usePathnameMock: vi.fn(),
   useSearchParamsMock: vi.fn(),
 }));
@@ -18,18 +87,14 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('@/shared/lib/kangur-cms-adapter', async () => {
-  const routing = await vi.importActual<typeof import('@/features/kangur/config/routing')>(
-    '@/features/kangur/config/routing'
-  );
-
   return {
-    buildKangurEmbeddedBasePath: routing.buildKangurEmbeddedBasePath,
-    getKangurPageSlug: routing.getKangurPageSlug,
-    getKangurInternalQueryParamKeys: routing.getKangurInternalQueryParamKeys,
-    KANGUR_MAIN_PAGE_KEY: routing.KANGUR_MAIN_PAGE_KEY,
-    KANGUR_PAGE_TO_SLUG: routing.KANGUR_PAGE_TO_SLUG,
-    readKangurUrlParam: routing.readKangurUrlParam,
-    KANGUR_EMBED_QUERY_PARAM: routing.KANGUR_EMBED_QUERY_PARAM,
+    buildKangurEmbeddedBasePath: kangurAdapterTestDouble.buildKangurEmbeddedBasePath,
+    getKangurPageSlug: kangurAdapterTestDouble.getKangurPageSlug,
+    getKangurInternalQueryParamKeys: kangurAdapterTestDouble.getKangurInternalQueryParamKeys,
+    KANGUR_MAIN_PAGE_KEY: kangurAdapterTestDouble.KANGUR_MAIN_PAGE_KEY,
+    KANGUR_PAGE_TO_SLUG: kangurAdapterTestDouble.KANGUR_PAGE_TO_SLUG,
+    readKangurUrlParam: kangurAdapterTestDouble.readKangurUrlParam,
+    KANGUR_EMBED_QUERY_PARAM: kangurAdapterTestDouble.KANGUR_EMBED_QUERY_PARAM,
     KangurFeaturePage: ({
       slug,
       basePath,

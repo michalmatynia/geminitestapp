@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 
 import { FileUploadEventsPanel } from '@/features/files';
 import ProductListingJobsPanel from '@/shared/lib/jobs/components/ProductListingJobsPanel';
+import { getMotionSafeScrollBehavior } from '@/shared/utils';
 import { Badge, Button, ListPanel, Breadcrumbs, Hint } from '@/shared/ui';
 
 import { ImageStudioRunsQueuePanel } from '../components/ImageStudioRunsQueuePanel';
@@ -54,7 +55,10 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
   const scrollToSection = (sectionId: string): void => {
     const section = document.getElementById(sectionId);
     if (!section) return;
-    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    section.scrollIntoView({
+      behavior: getMotionSafeScrollBehavior('smooth'),
+      block: 'start',
+    });
   };
 
   return (

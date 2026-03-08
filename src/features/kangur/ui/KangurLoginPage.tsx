@@ -1,20 +1,21 @@
 'use client';
 
 import { signOut } from 'next-auth/react';
-import { Suspense, useEffect, useState, type FormEvent, type JSX } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useMemo, useState, type FormEvent, type JSX } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
-import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
   clearStoredActiveLearnerId,
   setStoredActiveLearnerId,
 } from '@/features/kangur/services/kangur-active-learner';
+import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 
 type KangurLoginPageProps = {
+  callbackUrl?: string;
   defaultCallbackUrl: string;
-  backHref: string;
+  onClose?: () => void;
 };
 
 type KangurCredentialsCallbackPayload = {
@@ -22,14 +23,18 @@ type KangurCredentialsCallbackPayload = {
   url?: string;
 };
 
-type KangurLoginMode = 'parent' | 'student';
+type KangurLoginKind = 'parent' | 'student' | 'unknown';
+
+const KANGUR_LEARNER_LOGIN_PATTERN = /^[a-zA-Z0-9]+$/;
 
 export const resolveKangurLoginCallbackNavigation = (
   callbackUrl: string,
   currentOrigin: string
 ): { kind: 'router' | 'location'; href: string } | null => {
   const trimmed = callbackUrl.trim();
-  if (!trimmed) return null;
+  if (!trimmed) {
+    return null;
+  }
   if (trimmed.startsWith('/')) {
     return { kind: 'router', href: trimmed };
   }
@@ -46,20 +51,23 @@ export const resolveKangurLoginCallbackNavigation = (
   return { kind: 'location', href: trimmed };
 };
 
-const navigateToCallback = (callbackUrl: string): void => {
-  const navigationTarget = resolveKangurLoginCallbackNavigation(callbackUrl, window.location.origin);
-  window.location.assign(navigationTarget?.href ?? callbackUrl);
+export const resolveKangurLoginKind = (identifier: string): KangurLoginKind => {
+  const trimmed = identifier.trim();
+  if (!trimmed) {
+    return 'unknown';
+  }
+  return trimmed.includes('@') ? 'parent' : 'student';
 };
 
 const signInParentWithCredentials = async ({
+  callbackUrl,
   email,
   password,
-  callbackUrl,
 }: {
+  callbackUrl: string;
   email: string;
   password: string;
-  callbackUrl: string;
-}): Promise<{ ok: boolean; error?: string; url?: string }> => {
+}): Promise<{ error?: string; ok: boolean; url?: string }> => {
   const csrfResponse = await fetch('/api/auth/csrf', {
     credentials: 'same-origin',
   });
@@ -67,7 +75,7 @@ const signInParentWithCredentials = async ({
   const csrfToken = csrfPayload?.csrfToken?.trim();
 
   if (!csrfResponse.ok || !csrfToken) {
-    return { ok: false, error: 'csrf_unavailable' };
+    return { error: 'csrf_unavailable', ok: false };
   }
 
   const response = await fetch('/api/auth/callback/credentials', {
@@ -77,19 +85,19 @@ const signInParentWithCredentials = async ({
     },
     credentials: 'same-origin',
     body: new URLSearchParams({
-      email,
-      password,
       callbackUrl,
       csrfToken,
+      email,
       json: 'true',
+      password,
     }),
   });
 
   const payload = (await response.json().catch(() => null)) as KangurCredentialsCallbackPayload | null;
   if (!response.ok || payload?.error) {
     return {
-      ok: false,
       error: payload?.error ?? 'credentials_callback_failed',
+      ok: false,
       url: payload?.url,
     };
   }
@@ -101,26 +109,32 @@ const signInParentWithCredentials = async ({
 };
 
 function KangurLoginPageContent({
+  callbackUrl: callbackUrlProp,
   defaultCallbackUrl,
-  backHref,
+  onClose,
 }: KangurLoginPageProps): JSX.Element {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') || defaultCallbackUrl;
+  const auth = useOptionalKangurAuth();
+  const callbackUrl = useMemo(() => {
+    const explicitCallbackUrl = callbackUrlProp?.trim();
+    if (explicitCallbackUrl) {
+      return explicitCallbackUrl;
+    }
+
+    const searchCallbackUrl = searchParams.get('callbackUrl')?.trim();
+    if (searchCallbackUrl) {
+      return searchCallbackUrl;
+    }
+
+    return defaultCallbackUrl;
+  }, [callbackUrlProp, defaultCallbackUrl, searchParams]);
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
-  const [loginMode, setLoginMode] = useState<KangurLoginMode>('parent');
-  const [parentEmail, setParentEmail] = useState('');
-  const [parentPassword, setParentPassword] = useState('');
-  const [parentError, setParentError] = useState<string | null>(null);
-  const [isParentSubmitting, setIsParentSubmitting] = useState(false);
-  const [studentNickname, setStudentNickname] = useState('');
-  const [studentPassword, setStudentPassword] = useState('');
-  const [studentError, setStudentError] = useState<string | null>(null);
-  const [isStudentSubmitting, setIsStudentSubmitting] = useState(false);
-  const isParentMode = loginMode === 'parent';
-  const isSubmitting = isParentMode ? isParentSubmitting : isStudentSubmitting;
-  const isAnySubmitting = isParentSubmitting || isStudentSubmitting;
-  const areControlsDisabled = !isHydrated || isAnySubmitting;
-  const activeError = isParentMode ? parentError : studentError;
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const loginKind = resolveKangurLoginKind(identifier);
 
   useEffect(() => {
     setIsHydrated(true);
@@ -139,46 +153,78 @@ function KangurLoginPageContent({
     await signOut({ redirect: false }).catch(() => {});
   };
 
-  const handleParentSignIn = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
-    setIsParentSubmitting(true);
-    setParentError(null);
+  const finishLogin = async (targetUrl: string): Promise<void> => {
+    const navigationTarget = resolveKangurLoginCallbackNavigation(targetUrl, window.location.origin);
+    if (!navigationTarget) {
+      router.refresh();
+      await auth?.checkAppState?.();
+      onClose?.();
+      return;
+    }
+
+    const currentHref = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (navigationTarget.kind === 'router' && navigationTarget.href === currentHref) {
+      router.refresh();
+      await auth?.checkAppState?.();
+      onClose?.();
+      return;
+    }
+
+    if (navigationTarget.kind === 'router') {
+      onClose?.();
+      router.push(navigationTarget.href, { scroll: false });
+      return;
+    }
+
+    onClose?.();
+    window.location.assign(navigationTarget.href);
+  };
+
+  const handleParentSignIn = async (email: string): Promise<void> => {
+    setIsSubmitting(true);
+    setError(null);
 
     try {
       await clearLearnerSession();
 
       const result = await signInParentWithCredentials({
-        email: parentEmail,
-        password: parentPassword,
         callbackUrl,
+        email,
+        password,
       });
 
       if (result.error || !result.ok) {
         trackKangurClientEvent('kangur_parent_signin_failed', {
-          statusCode: 401,
           callbackUrl,
+          statusCode: 401,
         });
-        setParentError('Nie udalo sie zalogowac rodzica. Sprawdz email i haslo.');
+        setError('Nie udalo sie zalogowac rodzica. Sprawdz email i haslo.');
         return;
       }
 
       trackKangurClientEvent('kangur_parent_signin_succeeded', {
         callbackUrl,
       });
-      navigateToCallback(result.url ?? callbackUrl);
+      await finishLogin(result.url ?? callbackUrl);
     } catch {
       trackKangurClientEvent('kangur_parent_signin_failed', {
         callbackUrl,
         reason: 'network_error',
       });
-      setParentError('Nie udalo sie zalogowac rodzica. Sprobuj ponownie.');
+      setError('Nie udalo sie zalogowac rodzica. Sprobuj ponownie.');
     } finally {
-      setIsParentSubmitting(false);
+      setIsSubmitting(false);
     }
   };
 
-  const handleStudentSignIn = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
-    setIsStudentSubmitting(true);
-    setStudentError(null);
+  const handleStudentSignIn = async (loginName: string): Promise<void> => {
+    if (!KANGUR_LEARNER_LOGIN_PATTERN.test(loginName)) {
+      setError('Nick ucznia moze zawierac tylko litery i cyfry.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
 
     try {
       await Promise.allSettled([clearParentSession(), clearLearnerSession()]);
@@ -190,8 +236,8 @@ function KangurLoginPageContent({
         }),
         credentials: 'same-origin',
         body: JSON.stringify({
-          loginName: studentNickname,
-          password: studentPassword,
+          loginName,
+          password,
         }),
       });
 
@@ -200,250 +246,130 @@ function KangurLoginPageContent({
           error?: { message?: string };
         } | null;
         trackKangurClientEvent('kangur_learner_signin_failed', {
-          statusCode: response.status,
           callbackUrl,
+          statusCode: response.status,
         });
-        setStudentError(
-          payload?.error?.message || 'Nie udalo sie zalogowac ucznia. Sprawdz login i haslo.'
-        );
+        setError(payload?.error?.message || 'Nie udalo sie zalogowac ucznia. Sprawdz login i haslo.');
         return;
       }
 
       const payload = (await response.json()) as { learnerId?: string };
       setStoredActiveLearnerId(payload.learnerId ?? null);
       trackKangurClientEvent('kangur_learner_signin_succeeded', {
-        learnerId: payload.learnerId ?? null,
         callbackUrl,
+        learnerId: payload.learnerId ?? null,
       });
-      navigateToCallback(callbackUrl);
+      await finishLogin(callbackUrl);
     } catch {
       trackKangurClientEvent('kangur_learner_signin_failed', {
         callbackUrl,
         reason: 'network_error',
       });
-      setStudentError('Nie udalo sie zalogowac ucznia. Sprobuj ponownie.');
+      setError('Nie udalo sie zalogowac ucznia. Sprobuj ponownie.');
     } finally {
-      setIsStudentSubmitting(false);
+      setIsSubmitting(false);
     }
-  };
-
-  const handleLoginModeChange = (nextMode: KangurLoginMode): void => {
-    if (nextMode === loginMode || isAnySubmitting) {
-      return;
-    }
-
-    setParentError(null);
-    setStudentError(null);
-    setLoginMode(nextMode);
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
 
-    if (isParentMode) {
-      void handleParentSignIn(event);
+    const normalizedIdentifier = identifier.trim();
+    if (!normalizedIdentifier) {
+      setError('Wpisz email rodzica albo nick ucznia.');
       return;
     }
 
-    void handleStudentSignIn(event);
+    if (loginKind === 'parent') {
+      void handleParentSignIn(normalizedIdentifier);
+      return;
+    }
+
+    void handleStudentSignIn(normalizedIdentifier);
   };
 
+  const helperCopy =
+    loginKind === 'parent'
+      ? 'Wykryto email rodzica. Zalogujemy konto wlasciciela i odswiezymy biezacy widok.'
+      : loginKind === 'student'
+        ? 'Wykryto nick ucznia. Nick moze zawierac tylko litery i cyfry.'
+        : 'Wpisz email rodzica albo alfanumeryczny nick ucznia. Haslo jest wspolne dla wybranego konta.';
+
   return (
-    <div className='kangur-premium-bg min-h-screen px-4 py-10' data-testid='kangur-login-shell'>
-      <div className='mx-auto mb-8 max-w-3xl text-center text-slate-800'>
-        <p className='text-sm font-bold uppercase tracking-[0.24em] text-indigo-500'>
-          Kangur
-        </p>
-        <h1 className='mt-3 text-4xl font-extrabold'>Jedno logowanie dla rodzica i ucznia</h1>
-        <p className='mt-3 text-sm text-slate-600'>
-          Rodzic loguje sie emailem i haslem. Uczen loguje sie nickiem i haslem nadanym przez
-          rodzica.
+    <div
+      className='overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/97 shadow-[0_30px_120px_rgba(15,23,42,0.22)] backdrop-blur'
+      data-testid='kangur-login-shell'
+    >
+      <div className='border-b border-slate-200 bg-slate-50/90 px-6 py-6 sm:px-8'>
+        <p className='text-sm font-bold uppercase tracking-[0.24em] text-indigo-500'>Kangur</p>
+        <h1 className='mt-3 pr-20 text-3xl font-extrabold text-slate-900 sm:text-[2rem]'>
+          Zaloguj sie przez jeden wspolny formularz
+        </h1>
+        <p className='mt-3 max-w-2xl text-sm leading-6 text-slate-600'>
+          Rodzic loguje sie emailem. Uczen loguje sie swoim nickiem bez znakow specjalnych.
+          Formularz sam rozpoznaje, ktore konto sprawdzic.
         </p>
       </div>
 
-      <section className='mx-auto max-w-3xl overflow-hidden rounded-[2rem] bg-white/95 shadow-2xl ring-1 ring-slate-200/80 backdrop-blur'>
-        <div className='border-b border-slate-200 bg-slate-50/90 p-4 sm:p-5'>
-          <div
-            role='tablist'
-            aria-label='Typ logowania'
-            className='grid grid-cols-2 gap-3 rounded-2xl bg-white p-2 shadow-inner shadow-slate-200/60'
-          >
-            <button
-              id='kangur-login-tab-parent'
-              type='button'
-              role='tab'
-              aria-selected={isParentMode}
-              aria-controls='kangur-login-panel'
-              disabled={areControlsDisabled}
-              onClick={() => handleLoginModeChange('parent')}
-              className={`rounded-2xl px-4 py-3 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-60 ${
-                isParentMode
-                  ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-200'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-              }`}
-            >
-              Rodzic
-            </button>
-            <button
-              id='kangur-login-tab-student'
-              type='button'
-              role='tab'
-              aria-selected={!isParentMode}
-              aria-controls='kangur-login-panel'
-              disabled={areControlsDisabled}
-              onClick={() => handleLoginModeChange('student')}
-              className={`rounded-2xl px-4 py-3 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-60 ${
-                isParentMode
-                  ? 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                  : 'bg-sky-400 text-slate-900 shadow-lg shadow-sky-100'
-              }`}
-            >
-              Uczen
-            </button>
-          </div>
+      <div className='p-6 sm:p-8'>
+        <div className='mb-6 rounded-3xl border border-indigo-100 bg-indigo-50/85 px-4 py-4'>
+          <p className='text-sm font-bold text-slate-900'>Jedno logowanie, dwa typy kont</p>
+          <p className='mt-1 text-sm leading-6 text-slate-600'>{helperCopy}</p>
         </div>
 
-        <div
-          id='kangur-login-panel'
-          role='tabpanel'
-          aria-labelledby={isParentMode ? 'kangur-login-tab-parent' : 'kangur-login-tab-student'}
-          className='p-6 sm:p-8'
+        <form
+          className='flex flex-col gap-4'
+          data-hydrated={isHydrated ? 'true' : 'false'}
+          data-login-kind={loginKind}
+          data-testid='kangur-login-form'
+          onSubmit={handleSubmit}
         >
-          <div className='mb-6'>
-            <div
-              className={`text-sm font-bold uppercase tracking-[0.2em] ${
-                isParentMode ? 'text-indigo-500' : 'text-sky-500'
-              }`}
-            >
-              {isParentMode ? 'Rodzic' : 'Uczen'}
-            </div>
-            <h2 className='mt-2 text-3xl font-extrabold text-slate-900'>
-              {isParentMode ? 'Zaloguj konto rodzica' : 'Zaloguj profil ucznia'}
-            </h2>
-            <p className='mt-2 text-sm text-slate-500'>
-              {isParentMode
-                ? 'Uzyj emaila i hasla konta wlasciciela, aby przejsc do panelu i zarzadzac profilami uczniow.'
-                : 'Uczen loguje sie nickiem i haslem nadanym przez rodzica. Nie uzywa emaila.'}
-            </p>
-          </div>
-
-          <div
-            className={`mb-6 rounded-3xl border px-4 py-4 ${
-              isParentMode
-                ? 'border-indigo-100 bg-indigo-50/80'
-                : 'border-sky-100 bg-sky-50/80'
-            }`}
-          >
-            <p className='text-sm font-bold text-slate-900'>
-              {isParentMode ? 'Logowanie wlasciciela konta' : 'Logowanie profilu ucznia'}
-            </p>
-            <p className='mt-1 text-sm text-slate-600'>
-              {isParentMode
-                ? 'To konto zarzadza uczniami, ich nickami i haslami oraz widzi cala historie nauki.'
-                : 'To logowanie prowadzi bezposrednio do profilu ucznia i korzysta z danych nadanych przez rodzica.'}
-            </p>
-          </div>
-
-          <form
-            className='flex flex-col gap-4'
-            data-testid='kangur-login-form'
-            data-hydrated={isHydrated ? 'true' : 'false'}
-            data-login-mode={loginMode}
-            onSubmit={handleSubmit}
-          >
-            {isParentMode ? (
-              <>
-                <label className='flex flex-col gap-2 text-sm font-semibold text-slate-700'>
-                  Email rodzica
-                  <input
-                    value={parentEmail}
-                    onChange={(event) => setParentEmail(event.target.value)}
-                    placeholder='rodzic@example.com'
-                    autoComplete='email'
-                    type='email'
-                    required
-                    disabled={!isHydrated || isSubmitting}
-                    className='rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:opacity-60'
-                  />
-                </label>
-                <label className='flex flex-col gap-2 text-sm font-semibold text-slate-700'>
-                  Haslo
-                  <input
-                    type='password'
-                    value={parentPassword}
-                    onChange={(event) => setParentPassword(event.target.value)}
-                    placeholder='Haslo rodzica'
-                    autoComplete='current-password'
-                    required
-                    disabled={!isHydrated || isSubmitting}
-                    className='rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:opacity-60'
-                  />
-                </label>
-              </>
-            ) : (
-              <>
-                <label className='flex flex-col gap-2 text-sm font-semibold text-slate-700'>
-                  Nick ucznia
-                  <input
-                    value={studentNickname}
-                    onChange={(event) => setStudentNickname(event.target.value)}
-                    placeholder='nick-ucznia'
-                    autoComplete='username'
-                    required
-                    disabled={!isHydrated || isSubmitting}
-                    className='rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:opacity-60'
-                  />
-                </label>
-                <label className='flex flex-col gap-2 text-sm font-semibold text-slate-700'>
-                  Haslo
-                  <input
-                    type='password'
-                    value={studentPassword}
-                    onChange={(event) => setStudentPassword(event.target.value)}
-                    placeholder='Haslo ucznia'
-                    autoComplete='current-password'
-                    required
-                    disabled={!isHydrated || isSubmitting}
-                    className='rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:opacity-60'
-                  />
-                </label>
-              </>
-            )}
-
-            {activeError && <div className='text-sm text-rose-500'>{activeError}</div>}
-
-            <button
-              type='submit'
+          <label className='flex flex-col gap-2 text-sm font-semibold text-slate-700'>
+            Email rodzica lub nick ucznia
+            <input
+              autoComplete='username'
+              className='rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:opacity-60'
               disabled={!isHydrated || isSubmitting}
-              className={`inline-flex items-center justify-center rounded-2xl px-4 py-3 text-sm font-bold shadow transition disabled:cursor-not-allowed disabled:opacity-60 ${
-                isParentMode
-                  ? 'bg-indigo-500 text-white hover:bg-indigo-600'
-                  : 'bg-sky-400 text-slate-900 hover:bg-sky-300'
-              }`}
-            >
-              {isSubmitting
-                ? 'Logowanie...'
-                : isParentMode
-                  ? 'Zaloguj rodzica'
-                  : 'Zaloguj ucznia'}
-            </button>
+              name='identifier'
+              onChange={(event) => setIdentifier(event.target.value)}
+              placeholder='rodzic@example.com lub janek123'
+              required
+              type='text'
+              value={identifier}
+            />
+          </label>
 
-            <p className='text-xs text-slate-500'>
-              {isParentMode
-                ? 'Po zalogowaniu rodzic moze tworzyc uczniow, nadawac im nicki i hasla, a konto email pozostaje wlascicielem wszystkich profili.'
-                : 'Uczen korzysta z jednego profilu przypisanego do rodzica. Jesli nie zna danych, musi poprosic rodzica o nick i haslo.'}
-            </p>
-          </form>
+          <label className='flex flex-col gap-2 text-sm font-semibold text-slate-700'>
+            Haslo
+            <input
+              autoComplete='current-password'
+              className='rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:opacity-60'
+              disabled={!isHydrated || isSubmitting}
+              name='password'
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder='Haslo'
+              required
+              type='password'
+              value={password}
+            />
+          </label>
 
-          <Link
-            href={backHref}
-            className='mt-6 inline-flex text-sm text-slate-500 hover:text-slate-900'
-            targetPageKey='Game'
+          {error ? <div className='text-sm text-rose-500'>{error}</div> : null}
+
+          <button
+            className='inline-flex items-center justify-center rounded-2xl bg-indigo-500 px-4 py-3 text-sm font-bold text-white shadow transition hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-60'
+            disabled={!isHydrated || isSubmitting}
+            type='submit'
           >
-            Wroc do Kangura
-          </Link>
-        </div>
-      </section>
+            {isSubmitting ? 'Logowanie...' : 'Zaloguj sie'}
+          </button>
+
+          <p className='text-xs leading-5 text-slate-500'>
+            Email z symbolem @ uruchamia logowanie rodzica. Kazdy inny identyfikator traktujemy
+            jako nick ucznia i sprawdzamy, czy sklada sie tylko z liter i cyfr.
+          </p>
+        </form>
+      </div>
     </div>
   );
 }

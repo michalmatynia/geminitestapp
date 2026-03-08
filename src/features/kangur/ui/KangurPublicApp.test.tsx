@@ -4,11 +4,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   kangurFeaturePageMock,
-  kangurLoginPageMock,
   logKangurClientErrorMock,
 } = vi.hoisted(() => ({
   kangurFeaturePageMock: vi.fn(),
-  kangurLoginPageMock: vi.fn(),
   logKangurClientErrorMock: vi.fn(),
 }));
 
@@ -35,13 +33,6 @@ vi.mock('@/features/kangur/ui/KangurFeaturePage', () => ({
   },
 }));
 
-vi.mock('@/features/kangur/ui/KangurLoginPage', () => ({
-  KangurLoginPage: (props: { defaultCallbackUrl: string; backHref: string }) => {
-    kangurLoginPageMock(props);
-    return <div data-testid='kangur-login-page' />;
-  },
-}));
-
 vi.mock('@/features/kangur/ui/KangurSurfaceClassSync', () => ({
   KangurSurfaceClassSync: ({ children }: { children: ReactNode }) => (
     <div data-testid='kangur-surface-sync'>{children}</div>
@@ -59,14 +50,15 @@ describe('KangurPublicApp', () => {
     vi.clearAllMocks();
   });
 
-  it('renders the public Kangur login page at /login when mounted at root', () => {
+  it('renders the Kangur feature shell for the public login slug so the modal can open in place', () => {
     render(<KangurPublicApp slug={['login']} basePath='/' />);
 
     expect(screen.getByTestId('kangur-surface-sync')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-login-page')).toBeInTheDocument();
-    expect(kangurLoginPageMock).toHaveBeenCalledWith({
-      defaultCallbackUrl: '/',
-      backHref: '/',
+    expect(screen.getByTestId('kangur-feature-page')).toBeInTheDocument();
+    expect(kangurFeaturePageMock).toHaveBeenCalledWith({
+      slug: ['login'],
+      basePath: '/',
+      embedded: false,
     });
   });
 

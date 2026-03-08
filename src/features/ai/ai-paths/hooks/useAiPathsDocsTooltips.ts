@@ -1,4 +1,4 @@
-import { readDocsTooltipsEnabled, useDocsTooltipsSetting } from '@/features/tooltip-engine';
+import { readDocsTooltipsEnabled, useDocsTooltipsSetting } from '@/shared/lib/documentation';
 
 export const AI_PATHS_DOCS_TOOLTIP_KEY = 'ai_paths:docs_tooltips_enabled';
 

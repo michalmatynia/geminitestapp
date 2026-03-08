@@ -11,6 +11,7 @@ import {
   resolveRuntimeAgentId,
   stopBrokerRuntimeLease,
 } from './lib/runtime-broker.mjs';
+import { buildAccessibilityPlaywrightRuntimeEnv } from './lib/accessibility-playwright-runtime-env.mjs';
 import {
   normalizeAccessibilityRouteEntries,
   resolveAccessibilityRouteCrawlAgentId,
@@ -28,6 +29,9 @@ const playwrightAgentId = resolveAccessibilityRouteCrawlAgentId({
   defaultAgentId: defaultPlaywrightAgentId,
 });
 const shouldStopPlaywrightRuntime = process.env['PLAYWRIGHT_RUNTIME_KEEP_ALIVE'] !== 'true';
+const playwrightRuntimeEnv = buildAccessibilityPlaywrightRuntimeEnv({
+  env: process.env,
+});
 
 const toMarkdown = (payload) => {
   const lines = [];
@@ -178,7 +182,7 @@ const run = async () => {
       mode: 'dev',
       agentId: playwrightAgentId,
       host: playwrightHost,
-      env: process.env,
+      env: playwrightRuntimeEnv,
     });
     console.log(
       `[accessibility-route-crawl] runtime=${playwrightRuntime.source}${playwrightRuntime.reused ? ':reused' : ':started'} baseUrl=${playwrightRuntime.baseUrl} agent=${playwrightRuntime.agentId}`

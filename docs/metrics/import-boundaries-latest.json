@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-03-08T19:02:20.230Z",
-  "status": "warn",
+  "generatedAt": "2026-03-08T19:27:15.223Z",
+  "status": "passed",
   "summary": {
-    "total": 1,
+    "total": 0,
     "errorCount": 0,
-    "warningCount": 1,
+    "warningCount": 0,
     "infoCount": 0,
-    "status": "warn",
-    "fileCount": 4410,
+    "status": "passed",
+    "fileCount": 4415,
     "featureCount": 15,
     "circularDependencyCount": 0
   },
@@ -56,7 +56,6 @@
     ],
     "cms": [
       "admin",
-      "app-embeds",
       "files",
       "foldertree",
       "gsap",
@@ -110,25 +109,7 @@
     ]
   },
   "circularDependencies": [],
-  "issues": [
-    {
-      "severity": "warn",
-      "ruleId": "deep-relative-import",
-      "message": "Deep relative import (3 levels up). Consider using path aliases.",
-      "file": "src/app/(frontend)/kangur/(app)/[[...slug]]/page.tsx",
-      "line": 6,
-      "column": null,
-      "snippet": null,
-      "context": null
-    }
-  ],
-  "rules": [
-    {
-      "ruleId": "deep-relative-import",
-      "errorCount": 0,
-      "warningCount": 1,
-      "infoCount": 0
-    }
-  ],
-  "durationMs": 857
+  "issues": [],
+  "rules": [],
+  "durationMs": 337
 }

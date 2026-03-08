@@ -46,6 +46,7 @@ const credentialsProvider = Credentials({
     otp: { label: 'One-time code', type: 'text' },
     recoveryCode: { label: 'Recovery code', type: 'text' },
     challengeId: { label: 'Challenge', type: 'text' },
+    authFlow: { label: 'Auth flow', type: 'text' },
   },
   async authorize(credentials: Record<string, unknown> | null, request: Request) {
     try {
@@ -54,10 +55,12 @@ const credentialsProvider = Credentials({
       const otp = credentials?.['otp']?.toString() ?? '';
       const recoveryCode = credentials?.['recoveryCode']?.toString() ?? '';
       const challengeId = credentials?.['challengeId']?.toString() ?? '';
+      const authFlow = credentials?.['authFlow']?.toString().trim() ?? '';
+      const allowUnverifiedEmail = authFlow === 'kangur_parent';
 
-      if (!email || !password) {
+      if (!email || (!password && !challengeId)) {
         // Log non-critical info without awaiting
-        void ErrorSystem.logInfo('[AUTH] Missing email or password', { service: 'auth' });
+        void ErrorSystem.logInfo('[AUTH] Missing email or primary auth factor', { service: 'auth' });
         return null;
       }
 
@@ -102,7 +105,7 @@ const credentialsProvider = Credentials({
         void recordLoginFailure({ email, ip, request });
         return null;
       }
-      if (settings.requireEmailVerification && !user.emailVerified) {
+      if (settings.requireEmailVerification && !user.emailVerified && !allowUnverifiedEmail) {
         void recordLoginFailure({ email, ip, request });
         return null;
       }

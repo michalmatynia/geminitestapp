@@ -10,6 +10,7 @@ import {
   resolveRuntimeAgentId,
   stopBrokerRuntimeLease,
 } from './lib/runtime-broker.mjs';
+import { buildAccessibilityPlaywrightRuntimeEnv } from './lib/accessibility-playwright-runtime-env.mjs';
 
 const args = new Set(process.argv.slice(2));
 const strictMode = args.has('--strict');
@@ -25,6 +26,9 @@ const playwrightHost = process.env['HOST'] || '127.0.0.1';
 const playwrightBaseUrl = process.env['PLAYWRIGHT_BASE_URL'] || `http://${playwrightHost}:3000`;
 const playwrightAgentId = resolveRuntimeAgentId({ env: process.env });
 const shouldStopPlaywrightRuntime = process.env['PLAYWRIGHT_RUNTIME_KEEP_ALIVE'] !== 'true';
+const playwrightRuntimeEnv = buildAccessibilityPlaywrightRuntimeEnv({
+  env: process.env,
+});
 
 const suites = [
   {
@@ -275,7 +279,7 @@ const run = async () => {
       mode: 'dev',
       agentId: playwrightAgentId,
       host: playwrightHost,
-      env: process.env,
+      env: playwrightRuntimeEnv,
     });
     console.log(
       `[a11y-smoke] runtime=${playwrightRuntime.source}${playwrightRuntime.reused ? ':reused' : ':started'} baseUrl=${playwrightRuntime.baseUrl} agent=${playwrightRuntime.agentId}`

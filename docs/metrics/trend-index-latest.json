@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-05T04:29:37.055Z",
+  "generatedAt": "2026-03-08T19:33:00.171Z",
   "entries": [
     {
       "id": "weekly-lane",
@@ -27,9 +27,9 @@
       "latestJson": "lint-domain-checks-trend-latest.json",
       "latestMd": "lint-domain-checks-trend-latest.md",
       "status": "ready",
-      "latestRun": "2026-03-05T04:06:33.027Z",
-      "runCount": 2,
-      "deltaText": "+1.6m"
+      "latestRun": "2026-03-05T04:36:38.577Z",
+      "runCount": 4,
+      "deltaText": "+31.5s"
     }
   ]
 }

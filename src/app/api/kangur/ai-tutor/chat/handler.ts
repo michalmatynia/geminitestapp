@@ -85,6 +85,7 @@ const INTERACTION_INTENT_INSTRUCTIONS: Record<KangurAiTutorInteractionIntent, st
 
 const AVAILABILITY_ERROR_MESSAGES: Record<KangurAiTutorAvailabilityReason, string> = {
   disabled: 'AI tutor is not enabled for this learner.',
+  email_unverified: 'Verify your parent email to unlock AI Tutor.',
   missing_context: 'AI tutor context is required for Kangur tutoring sessions.',
   lessons_disabled: 'AI tutor is disabled for lessons for this learner.',
   tests_disabled: 'AI tutor is disabled for tests for this learner.',
@@ -326,9 +327,14 @@ export async function postKangurAiTutorChatHandler(
 
   try {
     const availability = resolveKangurAiTutorAvailability(tutorSettings, context);
-    if (!availability.allowed) {
-      throw badRequestError(AVAILABILITY_ERROR_MESSAGES[availability.reason], {
-        reason: availability.reason,
+    const emailAwareAvailability = availability.allowed
+      ? resolveKangurAiTutorAvailability(tutorSettings, context, {
+        ownerEmailVerified: actor.ownerEmailVerified,
+      })
+      : availability;
+    if (!emailAwareAvailability.allowed) {
+      throw badRequestError(AVAILABILITY_ERROR_MESSAGES[emailAwareAvailability.reason], {
+        reason: emailAwareAvailability.reason,
       });
     }
 

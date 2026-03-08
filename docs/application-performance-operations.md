@@ -1,6 +1,6 @@
 # Application Performance Operations
 
-Last reviewed: 2026-03-07
+Last reviewed: 2026-03-08
 
 ## Purpose
 
@@ -90,4 +90,4 @@ Feature-specific runbooks can define stricter SLOs. Example:
 ## Current Gaps
 
 - No dedicated load-test harness is wired into this repo yet for sustained throughput or concurrency testing.
-- As of 2026-03-07, a local `npm run build` still fails on a TypeScript prop mismatch in `src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx`.
+- The default weekly strict lane still skips full-repo lint, full unit coverage, and end-to-end coverage unless you opt in with `--include-full-lint`, `--include-full-unit`, and `--include-e2e`.

@@ -2,8 +2,12 @@
 
 import React from 'react';
 
-import { DOCUMENTATION_MODULE_IDS, getDocumentationEntry } from '@/shared/lib/documentation';
-import { DocumentationTooltip, useDocsTooltipsSetting } from '@/features/tooltip-engine';
+import {
+  DOCUMENTATION_MODULE_IDS,
+  DocumentationTooltip,
+  getDocumentationEntry,
+  useDocsTooltipsSetting,
+} from '@/shared/lib/documentation';
 
 import type { ValidatorUiDoc } from './validator-docs-catalog';
 

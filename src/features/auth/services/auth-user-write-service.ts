@@ -1,0 +1,156 @@
+import 'server-only';
+
+import { getAuthDataProvider, requireAuthProvider } from '@/shared/lib/auth/services/auth-provider';
+import type { AuthUserRecord } from '@/shared/contracts/auth';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
+
+import { findAuthUserByEmail, findAuthUserById, normalizeAuthEmail } from './auth-user-repository';
+
+type MongoUserDoc = {
+  email: string;
+  name?: string | null;
+  passwordHash?: string | null;
+  emailVerified?: Date | null;
+  image?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+const normalizeOptionalName = (value: string | null | undefined): string | null => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+export const createAuthUserWithEmail = async (input: {
+  email: string;
+  name?: string | null;
+  passwordHash?: string | null;
+  emailVerified?: Date | null;
+}): Promise<AuthUserRecord> => {
+  const email = normalizeAuthEmail(input.email);
+  const provider = requireAuthProvider(await getAuthDataProvider());
+  const normalizedName = normalizeOptionalName(input.name);
+  const passwordHash = input.passwordHash ?? null;
+  const emailVerified = input.emailVerified ?? null;
+
+  if (provider === 'prisma') {
+    const created = await prisma.user.create({
+      data: {
+        email,
+        name: normalizedName,
+        passwordHash,
+        emailVerified,
+        image: null,
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        passwordHash: true,
+        image: true,
+        emailVerified: true,
+      },
+    });
+
+    return {
+      id: created.id,
+      email: created.email ?? email,
+      name: created.name ?? null,
+      passwordHash: created.passwordHash ?? null,
+      image: created.image ?? null,
+      emailVerified: created.emailVerified ?? null,
+    };
+  }
+
+  if (!process.env['MONGODB_URI']) {
+    throw new Error('MongoDB is not configured.');
+  }
+
+  const now = new Date();
+  const mongo = await getMongoDb();
+  const result = await mongo.collection<MongoUserDoc>('users').insertOne({
+    email,
+    name: normalizedName,
+    passwordHash,
+    emailVerified,
+    image: null,
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  return {
+    id: result.insertedId.toString(),
+    email,
+    name: normalizedName,
+    passwordHash,
+    image: null,
+    emailVerified,
+  };
+};
+
+export const ensureAuthUserWithEmail = async (input: {
+  email: string;
+  name?: string | null;
+}): Promise<{ user: AuthUserRecord; created: boolean }> => {
+  const existing = await findAuthUserByEmail(input.email);
+  if (existing) {
+    return {
+      user: existing,
+      created: false,
+    };
+  }
+
+  const created = await createAuthUserWithEmail({
+    email: input.email,
+    name: input.name,
+    passwordHash: null,
+    emailVerified: null,
+  });
+
+  return {
+    user: created,
+    created: true,
+  };
+};
+
+export const markAuthUserEmailVerified = async (userId: string): Promise<AuthUserRecord | null> => {
+  const provider = requireAuthProvider(await getAuthDataProvider());
+  const verifiedAt = new Date();
+
+  if (provider === 'prisma') {
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        emailVerified: verifiedAt,
+      },
+    });
+    return findAuthUserById(userId);
+  }
+
+  if (!process.env['MONGODB_URI']) {
+    return null;
+  }
+
+  const mongo = await getMongoDb();
+  const { ObjectId } = await import('mongodb');
+  if (!ObjectId.isValid(userId)) {
+    return null;
+  }
+
+  await mongo.collection<MongoUserDoc>('users').updateOne(
+    { _id: new ObjectId(userId) },
+    {
+      $set: {
+        emailVerified: verifiedAt,
+        updatedAt: verifiedAt,
+      },
+    }
+  );
+
+  return findAuthUserById(userId);
+};

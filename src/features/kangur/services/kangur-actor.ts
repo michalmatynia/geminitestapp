@@ -19,6 +19,7 @@ type KangurActorBase = {
   ownerUserId: string;
   ownerEmail: string | null;
   ownerName: string | null;
+  ownerEmailVerified: boolean;
   role: 'admin' | 'user';
   activeLearner: KangurLearnerProfile;
   learners: KangurLearnerProfile[];
@@ -78,6 +79,7 @@ const mapActorToAuthUser = (actor: KangurActor): KangurAuthUser => ({
   actorType: actor.actorType,
   canManageLearners: actor.canManageLearners,
   ownerUserId: actor.ownerUserId,
+  ownerEmailVerified: actor.ownerEmailVerified,
   activeLearner: actor.activeLearner,
   learners: actor.learners,
 });
@@ -90,8 +92,10 @@ export const resolveKangurActor = async (request?: NextRequest): Promise<KangurA
 
   if (session?.user?.id) {
     const ownerUserId = session.user.id;
+    const ownerRecord = await findAuthUserById(ownerUserId);
     const ownerEmail =
-      typeof session.user.email === 'string' ? session.user.email.trim().toLowerCase() : null;
+      ownerRecord?.email ??
+      (typeof session.user.email === 'string' ? session.user.email.trim().toLowerCase() : null);
     const ownerName = typeof session.user.name === 'string' ? session.user.name.trim() : null;
     let learners = await listKangurLearnersByOwner(ownerUserId);
 
@@ -114,6 +118,7 @@ export const resolveKangurActor = async (request?: NextRequest): Promise<KangurA
       ownerUserId,
       ownerEmail,
       ownerName,
+      ownerEmailVerified: Boolean(ownerRecord?.emailVerified),
       role: mapRole((session.user as { role?: unknown }).role),
       activeLearner,
       learners,
@@ -143,6 +148,7 @@ export const resolveKangurActor = async (request?: NextRequest): Promise<KangurA
     ownerUserId: activeLearner.ownerUserId,
     ownerEmail: owner?.email ?? null,
     ownerName: owner?.name ?? null,
+    ownerEmailVerified: Boolean(owner?.emailVerified),
     role: 'user',
     activeLearner,
     learners: [activeLearner],

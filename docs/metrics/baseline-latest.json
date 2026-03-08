@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-03-08T19:09:02.883Z",
+  "generatedAt": "2026-03-08T19:28:39.239Z",
   "source": {
-    "totalFiles": 5120,
-    "totalLines": 833021,
+    "totalFiles": 5127,
+    "totalLines": 833109,
     "useClientFiles": 1496,
     "filesOver800": 69,
     "filesOver1000": 9,
@@ -114,7 +114,7 @@
     "sharedToFeaturesTotalImports": 75
   },
   "architecture": {
-    "crossFeatureEdgePairs": 55,
+    "crossFeatureEdgePairs": 50,
     "topCrossFeatureEdges": [
       {
         "edge": "cms -> gsap",
@@ -154,10 +154,6 @@
       },
       {
         "edge": "ai -> products",
-        "references": 8
-      },
-      {
-        "edge": "cms -> app-embeds",
         "references": 8
       },
       {
@@ -215,18 +211,22 @@
       {
         "edge": "notesapp -> document-editor",
         "references": 5
+      },
+      {
+        "edge": "ai -> auth",
+        "references": 4
       }
     ],
     "featureSizeByLines": [
       {
         "feature": "ai",
         "files": 962,
-        "lines": 194164
+        "lines": 194174
       },
       {
         "feature": "kangur",
         "files": 426,
-        "lines": 86914
+        "lines": 86894
       },
       {
         "feature": "case-resolver",
@@ -236,12 +236,12 @@
       {
         "feature": "cms",
         "files": 297,
-        "lines": 48249
+        "lines": 48259
       },
       {
         "feature": "products",
         "files": 214,
-        "lines": 40460
+        "lines": 40464
       },
       {
         "feature": "integrations",
@@ -251,7 +251,7 @@
       {
         "feature": "prompt-exploder",
         "files": 152,
-        "lines": 26790
+        "lines": 26789
       },
       {
         "feature": "notesapp",
@@ -276,7 +276,7 @@
       {
         "feature": "database",
         "files": 29,
-        "lines": 6236
+        "lines": 6245
       },
       {
         "feature": "data-import-export",
@@ -351,12 +351,12 @@
       {
         "feature": "tooltip-engine",
         "files": 6,
-        "lines": 363
+        "lines": 152
       },
       {
         "feature": "app-embeds",
         "files": 5,
-        "lines": 282
+        "lines": 107
       }
     ]
   },
@@ -552,7 +552,7 @@
       },
       {
         "path": "src/features/kangur/ui/components/KangurAiTutorWidget.tsx",
-        "lines": 2243
+        "lines": 2245
       },
       {
         "path": "src/features/kangur/ui/components/KangurAiTutorWidget.test.tsx",

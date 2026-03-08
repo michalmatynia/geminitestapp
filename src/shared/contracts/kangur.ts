@@ -384,6 +384,7 @@ export const kangurAuthUserSchema = z.object({
   actorType: kangurUserActorTypeSchema,
   canManageLearners: z.boolean(),
   ownerUserId: z.string().trim().max(120).nullable(),
+  ownerEmailVerified: z.boolean(),
   activeLearner: kangurLearnerProfileSchema.nullable(),
   learners: kangurLearnerProfilesSchema,
 });

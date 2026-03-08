@@ -1,7 +1,7 @@
 'use client';
 
 import { signOut } from 'next-auth/react';
-import { Suspense, useEffect, useMemo, useState, type FormEvent, type JSX } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState, type FormEvent, type JSX } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
@@ -21,6 +21,41 @@ type KangurLoginPageProps = {
 type KangurCredentialsCallbackPayload = {
   error?: string;
   url?: string;
+};
+
+type KangurApiErrorPayload = {
+  error?: {
+    message?: string;
+  };
+};
+
+type KangurParentMagicLinkRequestPayload = {
+  created?: boolean;
+  debug?: {
+    magicLinkUrl?: string;
+    verificationUrl?: string | null;
+  } | null;
+  email?: string;
+  emailVerified?: boolean;
+  hasPassword?: boolean;
+  message?: string;
+  ok?: boolean;
+};
+
+type KangurParentMagicLinkExchangePayload = {
+  callbackUrl?: string | null;
+  challengeId?: string;
+  email?: string;
+  emailVerified?: boolean;
+  ok?: boolean;
+};
+
+type KangurParentEmailVerifyPayload = {
+  callbackUrl?: string | null;
+  email?: string;
+  emailVerified?: boolean;
+  message?: string;
+  ok?: boolean;
 };
 
 type KangurLoginKind = 'parent' | 'student' | 'unknown';
@@ -60,13 +95,17 @@ export const resolveKangurLoginKind = (identifier: string): KangurLoginKind => {
 };
 
 const signInParentWithCredentials = async ({
+  authFlow,
   callbackUrl,
+  challengeId,
   email,
   password,
 }: {
+  authFlow?: string;
   callbackUrl: string;
+  challengeId?: string;
   email: string;
-  password: string;
+  password?: string;
 }): Promise<{ error?: string; ok: boolean; url?: string }> => {
   const csrfResponse = await fetch('/api/auth/csrf', {
     credentials: 'same-origin',
@@ -84,13 +123,22 @@ const signInParentWithCredentials = async ({
       'Content-Type': 'application/x-www-form-urlencoded',
     },
     credentials: 'same-origin',
-    body: new URLSearchParams({
-      callbackUrl,
-      csrfToken,
-      email,
-      json: 'true',
-      password,
-    }),
+    body: new URLSearchParams(
+      Object.entries({
+        authFlow: authFlow ?? 'kangur_parent',
+        callbackUrl,
+        challengeId,
+        csrfToken,
+        email,
+        json: 'true',
+        password,
+      }).reduce<Record<string, string>>((acc, [key, value]) => {
+        if (typeof value === 'string' && value.length > 0) {
+          acc[key] = value;
+        }
+        return acc;
+      }, {})
+    ),
   });
 
   const payload = (await response.json().catch(() => null)) as KangurCredentialsCallbackPayload | null;
@@ -106,6 +154,12 @@ const signInParentWithCredentials = async ({
     ok: true,
     url: payload?.url,
   };
+};
+
+const readApiErrorMessage = async (response: Response): Promise<string | null> => {
+  const payload = (await response.json().catch(() => null)) as KangurApiErrorPayload | null;
+  const message = payload?.error?.message?.trim();
+  return message && message.length > 0 ? message : null;
 };
 
 function KangurLoginPageContent({
@@ -129,11 +183,16 @@ function KangurLoginPageContent({
 
     return defaultCallbackUrl;
   }, [callbackUrlProp, defaultCallbackUrl, searchParams]);
+  const magicLinkToken = searchParams.get('magicLinkToken')?.trim() ?? '';
+  const verifyEmailToken = searchParams.get('verifyEmailToken')?.trim() ?? '';
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const processedMagicLinkTokenRef = useRef<string | null>(null);
+  const processedVerificationTokenRef = useRef<string | null>(null);
   const loginKind = resolveKangurLoginKind(identifier);
 
   useEffect(() => {
@@ -183,6 +242,7 @@ function KangurLoginPageContent({
   const handleParentSignIn = async (email: string): Promise<void> => {
     setIsSubmitting(true);
     setError(null);
+    setNotice(null);
 
     try {
       await clearLearnerSession();
@@ -212,6 +272,189 @@ function KangurLoginPageContent({
         reason: 'network_error',
       });
       setError('Nie udalo sie zalogowac rodzica. Sprobuj ponownie.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleParentMagicLinkRequest = async (email: string): Promise<void> => {
+    setIsSubmitting(true);
+    setError(null);
+    setNotice(null);
+
+    try {
+      const response = await fetch('/api/kangur/auth/parent-magic-link/request', {
+        method: 'POST',
+        headers: withCsrfHeaders({
+          'Content-Type': 'application/json',
+        }),
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          email,
+          callbackUrl,
+        }),
+      });
+
+      if (!response.ok) {
+        const message = await readApiErrorMessage(response);
+        trackKangurClientEvent('kangur_parent_magic_link_request_failed', {
+          callbackUrl,
+          statusCode: response.status,
+        });
+        setError(message ?? 'Nie udalo sie wyslac magicznego linku. Sprobuj ponownie.');
+        return;
+      }
+
+      const payload =
+        (await response.json().catch(() => null)) as KangurParentMagicLinkRequestPayload | null;
+      trackKangurClientEvent('kangur_parent_magic_link_requested', {
+        callbackUrl,
+        created: payload?.created === true,
+        emailVerified: payload?.emailVerified === true,
+        hasPassword: payload?.hasPassword === true,
+      });
+      setPassword('');
+      setNotice(
+        payload?.message?.trim() ||
+          'Wyslalismy link do logowania. Sprawdz skrzynke email.'
+      );
+    } catch {
+      trackKangurClientEvent('kangur_parent_magic_link_request_failed', {
+        callbackUrl,
+        reason: 'network_error',
+      });
+      setError('Nie udalo sie wyslac magicznego linku. Sprobuj ponownie.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleMagicLinkSignIn = async (token: string): Promise<void> => {
+    if (!token) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+    setNotice('Trwa logowanie magicznym linkiem...');
+
+    try {
+      await clearLearnerSession();
+
+      const exchangeResponse = await fetch('/api/kangur/auth/parent-magic-link/exchange', {
+        method: 'POST',
+        headers: withCsrfHeaders({
+          'Content-Type': 'application/json',
+        }),
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          token,
+        }),
+      });
+
+      if (!exchangeResponse.ok) {
+        const message = await readApiErrorMessage(exchangeResponse);
+        trackKangurClientEvent('kangur_parent_magic_link_exchange_failed', {
+          callbackUrl,
+          statusCode: exchangeResponse.status,
+        });
+        setError(message ?? 'Ten magiczny link jest niewazny albo wygasl.');
+        setNotice(null);
+        return;
+      }
+
+      const payload =
+        (await exchangeResponse.json().catch(() => null)) as KangurParentMagicLinkExchangePayload | null;
+
+      if (!payload?.email || !payload.challengeId) {
+        setError('Ten magiczny link jest niewazny albo wygasl.');
+        setNotice(null);
+        return;
+      }
+
+      const result = await signInParentWithCredentials({
+        authFlow: 'kangur_parent',
+        callbackUrl: payload.callbackUrl?.trim() || callbackUrl,
+        challengeId: payload.challengeId,
+        email: payload.email,
+      });
+
+      if (result.error || !result.ok) {
+        trackKangurClientEvent('kangur_parent_magic_link_signin_failed', {
+          callbackUrl,
+          statusCode: 401,
+        });
+        setError('Nie udalo sie zalogowac magicznym linkiem. Sprobuj poprosic o nowy link.');
+        setNotice(null);
+        return;
+      }
+
+      trackKangurClientEvent('kangur_parent_magic_link_signin_succeeded', {
+        callbackUrl,
+      });
+      await finishLogin(result.url ?? payload.callbackUrl?.trim() ?? callbackUrl);
+    } catch {
+      trackKangurClientEvent('kangur_parent_magic_link_exchange_failed', {
+        callbackUrl,
+        reason: 'network_error',
+      });
+      setError('Nie udalo sie zalogowac magicznym linkiem. Sprobuj ponownie.');
+      setNotice(null);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleEmailVerification = async (token: string): Promise<void> => {
+    if (!token) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+    setNotice('Trwa weryfikacja emaila...');
+
+    try {
+      const response = await fetch('/api/kangur/auth/parent-email/verify', {
+        method: 'POST',
+        headers: withCsrfHeaders({
+          'Content-Type': 'application/json',
+        }),
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          token,
+        }),
+      });
+
+      if (!response.ok) {
+        const message = await readApiErrorMessage(response);
+        trackKangurClientEvent('kangur_parent_email_verify_failed', {
+          callbackUrl,
+          statusCode: response.status,
+        });
+        setError(message ?? 'Ten link weryfikacyjny jest niewazny albo wygasl.');
+        setNotice(null);
+        return;
+      }
+
+      const payload =
+        (await response.json().catch(() => null)) as KangurParentEmailVerifyPayload | null;
+      trackKangurClientEvent('kangur_parent_email_verified', {
+        callbackUrl,
+      });
+      setNotice(payload?.message?.trim() || 'Email zostal zweryfikowany.');
+      await auth?.checkAppState?.();
+
+      if (auth?.isAuthenticated) {
+        await finishLogin(payload?.callbackUrl?.trim() || callbackUrl);
+      }
+    } catch {
+      trackKangurClientEvent('kangur_parent_email_verify_failed', {
+        callbackUrl,
+        reason: 'network_error',
+      });
+      setError('Nie udalo sie zweryfikowac emaila. Sprobuj ponownie.');
+      setNotice(null);
     } finally {
       setIsSubmitting(false);
     }
@@ -281,6 +524,11 @@ function KangurLoginPageContent({
     }
 
     if (loginKind === 'parent') {
+      if (!password.trim()) {
+        setError('Wpisz haslo rodzica albo wybierz magiczny link.');
+        setNotice(null);
+        return;
+      }
       void handleParentSignIn(normalizedIdentifier);
       return;
     }
@@ -288,35 +536,38 @@ function KangurLoginPageContent({
     void handleStudentSignIn(normalizedIdentifier);
   };
 
-  const helperCopy =
-    loginKind === 'parent'
-      ? 'Wykryto email rodzica. Zalogujemy konto wlasciciela i odswiezymy biezacy widok.'
-      : loginKind === 'student'
-        ? 'Wykryto nick ucznia. Nick moze zawierac tylko litery i cyfry.'
-        : 'Wpisz email rodzica albo alfanumeryczny nick ucznia. Haslo jest wspolne dla wybranego konta.';
+  useEffect(() => {
+    if (!isHydrated || !magicLinkToken) {
+      return;
+    }
+
+    if (processedMagicLinkTokenRef.current === magicLinkToken) {
+      return;
+    }
+
+    processedMagicLinkTokenRef.current = magicLinkToken;
+    void handleMagicLinkSignIn(magicLinkToken);
+  }, [callbackUrl, isHydrated, magicLinkToken]);
+
+  useEffect(() => {
+    if (!isHydrated || !verifyEmailToken) {
+      return;
+    }
+
+    if (processedVerificationTokenRef.current === verifyEmailToken) {
+      return;
+    }
+
+    processedVerificationTokenRef.current = verifyEmailToken;
+    void handleEmailVerification(verifyEmailToken);
+  }, [auth?.isAuthenticated, callbackUrl, isHydrated, verifyEmailToken]);
 
   return (
     <div
       className='overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/97 shadow-[0_30px_120px_rgba(15,23,42,0.22)] backdrop-blur'
       data-testid='kangur-login-shell'
     >
-      <div className='border-b border-slate-200 bg-slate-50/90 px-6 py-6 sm:px-8'>
-        <p className='text-sm font-bold uppercase tracking-[0.24em] text-indigo-500'>Kangur</p>
-        <h1 className='mt-3 pr-20 text-3xl font-extrabold text-slate-900 sm:text-[2rem]'>
-          Zaloguj sie przez jeden wspolny formularz
-        </h1>
-        <p className='mt-3 max-w-2xl text-sm leading-6 text-slate-600'>
-          Rodzic loguje sie emailem. Uczen loguje sie swoim nickiem bez znakow specjalnych.
-          Formularz sam rozpoznaje, ktore konto sprawdzic.
-        </p>
-      </div>
-
       <div className='p-6 sm:p-8'>
-        <div className='mb-6 rounded-3xl border border-indigo-100 bg-indigo-50/85 px-4 py-4'>
-          <p className='text-sm font-bold text-slate-900'>Jedno logowanie, dwa typy kont</p>
-          <p className='mt-1 text-sm leading-6 text-slate-600'>{helperCopy}</p>
-        </div>
-
         <form
           className='flex flex-col gap-4'
           data-hydrated={isHydrated ? 'true' : 'false'}
@@ -347,26 +598,56 @@ function KangurLoginPageContent({
               disabled={!isHydrated || isSubmitting}
               name='password'
               onChange={(event) => setPassword(event.target.value)}
-              placeholder='Haslo'
-              required
+              placeholder={loginKind === 'parent' ? 'Haslo rodzica (opcjonalne przy magicznym linku)' : 'Haslo'}
+              required={loginKind !== 'parent'}
               type='password'
               value={password}
             />
           </label>
 
+          {notice ? <div className='text-sm text-emerald-600'>{notice}</div> : null}
           {error ? <div className='text-sm text-rose-500'>{error}</div> : null}
 
-          <button
-            className='inline-flex items-center justify-center rounded-2xl bg-indigo-500 px-4 py-3 text-sm font-bold text-white shadow transition hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-60'
-            disabled={!isHydrated || isSubmitting}
-            type='submit'
-          >
-            {isSubmitting ? 'Logowanie...' : 'Zaloguj sie'}
-          </button>
+          {loginKind === 'parent' ? (
+            <div className='grid gap-3 sm:grid-cols-2'>
+              <button
+                className='inline-flex items-center justify-center rounded-2xl bg-indigo-500 px-4 py-3 text-sm font-bold text-white shadow transition hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-60'
+                disabled={!isHydrated || isSubmitting}
+                type='submit'
+              >
+                {isSubmitting ? 'Logowanie...' : 'Zaloguj haslem'}
+              </button>
+              <button
+                className='inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:border-slate-400 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60'
+                disabled={!isHydrated || isSubmitting}
+                onClick={() => {
+                  const normalizedIdentifier = identifier.trim();
+                  if (!normalizedIdentifier) {
+                    setError('Wpisz email rodzica, aby wyslac magiczny link.');
+                    setNotice(null);
+                    return;
+                  }
+                  void handleParentMagicLinkRequest(normalizedIdentifier);
+                }}
+                type='button'
+              >
+                {isSubmitting ? 'Wysylanie...' : 'Wyslij magiczny link'}
+              </button>
+            </div>
+          ) : (
+            <button
+              className='inline-flex items-center justify-center rounded-2xl bg-indigo-500 px-4 py-3 text-sm font-bold text-white shadow transition hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-60'
+              disabled={!isHydrated || isSubmitting}
+              type='submit'
+            >
+              {isSubmitting ? 'Logowanie...' : 'Zaloguj sie'}
+            </button>
+          )}
 
           <p className='text-xs leading-5 text-slate-500'>
-            Email z symbolem @ uruchamia logowanie rodzica. Kazdy inny identyfikator traktujemy
-            jako nick ucznia i sprawdzamy, czy sklada sie tylko z liter i cyfr.
+            Email z symbolem @ uruchamia logowanie rodzica. Rodzic moze zalogowac sie haslem albo
+            poprosic o magiczny link na email. Kazdy inny identyfikator traktujemy jako nick ucznia
+            i sprawdzamy, czy sklada sie tylko z liter i cyfr.
           </p>
         </form>
       </div>

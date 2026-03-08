@@ -9,7 +9,7 @@ import {
   DEFAULT_APP_EMBED_HEIGHT,
   DEFAULT_APP_EMBED_ID,
   getAppEmbedOption,
-} from '@/features/app-embeds';
+} from '@/shared/lib/app-embeds';
 import {
   buildKangurEmbeddedBasePath,
   getKangurPageSlug,

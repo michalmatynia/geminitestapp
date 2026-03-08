@@ -102,6 +102,17 @@ describe('KangurLoginPage', () => {
           };
         }
 
+        if (url === '/api/kangur/auth/parent-magic-link/request') {
+          return {
+            json: vi.fn().mockResolvedValue({
+              ok: true,
+              message: 'Wyslalismy link do logowania. Sprawdz skrzynke email.',
+            }),
+            ok: true,
+            status: 200,
+          };
+        }
+
         if (url === '/api/kangur/auth/learner-signin') {
           return {
             json: vi.fn().mockResolvedValue({ learnerId: 'learner-7' }),
@@ -142,7 +153,7 @@ describe('KangurLoginPage', () => {
 
     await user.type(screen.getByLabelText('Email rodzica lub nick ucznia'), 'parent@example.com');
     await user.type(screen.getByLabelText('Haslo'), 'secret123');
-    await user.click(screen.getByRole('button', { name: 'Zaloguj sie' }));
+    await user.click(screen.getByRole('button', { name: 'Zaloguj haslem' }));
 
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/kangur/auth/learner-signout',
@@ -224,7 +235,7 @@ describe('KangurLoginPage', () => {
 
     await user.type(screen.getByLabelText('Email rodzica lub nick ucznia'), 'parent@example.com');
     await user.type(screen.getByLabelText('Haslo'), 'secret123');
-    await user.click(screen.getByRole('button', { name: 'Zaloguj sie' }));
+    await user.click(screen.getByRole('button', { name: 'Zaloguj haslem' }));
 
     await waitFor(() => {
       expect(routerRefreshMock).toHaveBeenCalledTimes(1);
@@ -233,6 +244,26 @@ describe('KangurLoginPage', () => {
     });
     expect(routerPushMock).not.toHaveBeenCalled();
     expect(locationAssignMock).not.toHaveBeenCalled();
+  });
+
+  it('requests a parent magic link and shows confirmation in the shared form', async () => {
+    const user = userEvent.setup();
+
+    render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
+
+    await user.type(screen.getByLabelText('Email rodzica lub nick ucznia'), 'parent@example.com');
+    await user.click(screen.getByRole('button', { name: 'Wyslij magiczny link' }));
+
+    expect(fetch).toHaveBeenCalledWith(
+      '/api/kangur/auth/parent-magic-link/request',
+      expect.objectContaining({
+        credentials: 'same-origin',
+        method: 'POST',
+      })
+    );
+    expect(
+      await screen.findByText('Wyslalismy link do logowania. Sprawdz skrzynke email.')
+    ).toBeVisible();
   });
 
   it('submits student nick credentials after clearing any parent session', async () => {

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getImportLastTemplateId, setImportLastTemplateId } from '@/features/integrations/server';
-import { parseJsonBody } from '@/features/products/server';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const requestSchema = z.object({

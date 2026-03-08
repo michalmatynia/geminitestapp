@@ -3,7 +3,6 @@
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import React, { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 
-import { useAdminLayoutActions } from '@/features/admin';
 import {
   ClientOnly,
   Tabs,
@@ -14,6 +13,7 @@ import {
   CopyButton,
   Button,
 } from '@/shared/ui';
+import { useAdminLayoutActions } from '@/shared/providers/AdminLayoutProvider';
 
 import { AdminImageStudioPromptsPage } from './AdminImageStudioPromptsPage';
 import { AdminImageStudioSettingsPage } from './AdminImageStudioSettingsPage';

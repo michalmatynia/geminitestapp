@@ -22,6 +22,7 @@ import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/datab
 import { assertDatabaseEngineOperationEnabled } from '@/shared/lib/db/services/database-engine-operation-guards';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
+import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 
@@ -48,7 +49,14 @@ export async function postDatabasesRestoreHandler(
   const { searchParams } = new URL(req.url);
   const type = searchParams.get('type') || 'postgresql';
 
-  const body = (await req.json()) as {
+  const parsed = await parseObjectJsonBody(req, {
+    logPrefix: 'databases.restore',
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+
+  const body = parsed.data as {
     backupName: string;
     truncateBeforeRestore?: boolean;
   };

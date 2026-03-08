@@ -5,7 +5,7 @@ import {
   getExportDefaultInventoryId,
   setExportDefaultInventoryId,
 } from '@/features/integrations/server';
-import { parseJsonBody } from '@/features/products/server';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 

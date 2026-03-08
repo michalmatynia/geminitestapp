@@ -2,6 +2,12 @@ import { defineConfig, configDefaults } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 
+const nextServerExportPath = path.resolve(
+  __dirname,
+  './node_modules/next/dist/server/web/exports/index.js'
+);
+const nextServerAbsoluteImportPath = path.resolve(__dirname, './node_modules/next/server');
+
 const prismaIntegrationTestFiles = [
   '__tests__/features/ai/ai-paths/services/path-run-repository.test.ts',
   '__tests__/features/ai/ai-paths/services/path-run-service.test.ts',
@@ -38,9 +44,36 @@ const mongoIntegrationTestFiles = [
   'src/shared/lib/products/services/product-repository/__tests__/mongo-product-repository-mappers.test.ts',
 ];
 
+const generatedWorkspaceExcludeGlobs = [
+  '.next/**',
+  '.cache/**',
+  'bazel-bin/**',
+  'bazel-out/**',
+  'bazel-testlogs/**',
+  'bazel-*/**',
+];
+
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: {
+      '@/__tests__': path.resolve(__dirname, './__tests__'),
+      '@': path.resolve(__dirname, './src'),
+      'server-only': path.resolve(__dirname, './__tests__/mocks/server-only.js'),
+      'next/navigation': path.resolve(
+        __dirname,
+        './node_modules/next/dist/client/components/navigation.js'
+      ),
+      'next/server': nextServerExportPath,
+      [nextServerAbsoluteImportPath]: nextServerExportPath,
+    },
+  },
   test: {
+    server: {
+      deps: {
+        inline: ['next', 'next-auth', 'next-intl'],
+      },
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
@@ -59,7 +92,7 @@ export default defineConfig({
           exclude: [
             ...configDefaults.exclude,
             'e2e/**',
-            '.next/**',
+            ...generatedWorkspaceExcludeGlobs,
             ...prismaIntegrationTestFiles,
             ...mongoIntegrationTestFiles,
           ],
@@ -74,7 +107,7 @@ export default defineConfig({
           setupFiles: ['./vitest.setup.prisma.ts'],
           fileParallelism: false,
           include: prismaIntegrationTestFiles,
-          exclude: [...configDefaults.exclude, 'e2e/**', '.next/**'],
+          exclude: [...configDefaults.exclude, 'e2e/**', ...generatedWorkspaceExcludeGlobs],
           pool: 'forks',
           testTimeout: 30_000,
           hookTimeout: 30_000,
@@ -89,17 +122,10 @@ export default defineConfig({
           setupFiles: ['./vitest.setup.mongo.ts'],
           fileParallelism: false,
           include: mongoIntegrationTestFiles,
-          exclude: [...configDefaults.exclude, 'e2e/**', '.next/**'],
+          exclude: [...configDefaults.exclude, 'e2e/**', ...generatedWorkspaceExcludeGlobs],
           pool: 'forks',
         },
       },
     ],
-  },
-  resolve: {
-    alias: {
-      '@/__tests__': path.resolve(__dirname, './__tests__'),
-      '@': path.resolve(__dirname, './src'),
-      'server-only': path.resolve(__dirname, './__tests__/mocks/server-only.js'),
-    },
   },
 });

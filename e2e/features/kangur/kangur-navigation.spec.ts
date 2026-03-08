@@ -258,6 +258,13 @@ const buildManagerUser = () => {
       loginName: 'jan-demo',
       status: 'active',
       legacyUserKey: null,
+      aiTutor: {
+        currentMoodId: 'supportive',
+        baselineMoodId: 'calm',
+        confidence: 0.67,
+        lastComputedAt: nowIso,
+        lastReasonCode: 'steady_progress',
+      },
       createdAt: nowIso,
       updatedAt: nowIso,
     },
@@ -269,10 +276,72 @@ const buildManagerUser = () => {
         loginName: 'jan-demo',
         status: 'active',
         legacyUserKey: null,
+        aiTutor: {
+          currentMoodId: 'supportive',
+          baselineMoodId: 'calm',
+          confidence: 0.67,
+          lastComputedAt: nowIso,
+          lastReasonCode: 'steady_progress',
+        },
         createdAt: nowIso,
         updatedAt: nowIso,
       },
     ],
+  };
+};
+
+const buildManagerUserWithLearnerMood = (
+  learnerId: 'learner-001' | 'learner-002'
+) => {
+  const nowIso = new Date('2026-03-08T10:00:00.000Z').toISOString();
+  const learners = [
+    {
+      id: 'learner-001',
+      ownerUserId: 'parent-001',
+      displayName: 'Jan',
+      loginName: 'jan-demo',
+      status: 'active',
+      legacyUserKey: null,
+      aiTutor: {
+        currentMoodId: 'supportive',
+        baselineMoodId: 'calm',
+        confidence: 0.67,
+        lastComputedAt: nowIso,
+        lastReasonCode: 'steady_progress',
+      },
+      createdAt: nowIso,
+      updatedAt: nowIso,
+    },
+    {
+      id: 'learner-002',
+      ownerUserId: 'parent-001',
+      displayName: 'Ola',
+      loginName: 'ola-demo',
+      status: 'active',
+      legacyUserKey: null,
+      aiTutor: {
+        currentMoodId: 'reflective',
+        baselineMoodId: 'patient',
+        confidence: 0.58,
+        lastComputedAt: nowIso,
+        lastReasonCode: 'post_answer_review',
+      },
+      createdAt: nowIso,
+      updatedAt: nowIso,
+    },
+  ];
+  const activeLearner = learners.find((learner) => learner.id === learnerId) ?? learners[0]!;
+
+  return {
+    id: 'parent-001',
+    full_name: 'Parent Demo',
+    email: 'parent@example.com',
+    role: 'user',
+    actorType: 'parent',
+    canManageLearners: true,
+    ownerUserId: 'parent-001',
+    activeLearner,
+    learners,
   };
 };
 
@@ -468,6 +537,83 @@ test.describe('Kangur navigation continuity', () => {
 
     const afterProgressScrollY = await page.evaluate(() => window.scrollY);
     expect(Math.abs(afterProgressScrollY - beforeProgressScrollY)).toBeLessThan(48);
+  });
+
+  test('shows the learner-specific tutor mood in the parent-dashboard AI Tutor tab', async ({
+    page,
+  }) => {
+    test.setTimeout(45_000);
+
+    await page.route('**/api/kangur/auth/me', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(buildManagerUser()),
+      });
+    });
+
+    await page.goto('/kangur/parent-dashboard');
+    await expect(page.getByRole('heading', { name: /^Panel Rodzica$/ })).toBeVisible();
+
+    await page.getByRole('button', { name: /ai tutor/i }).click();
+
+    await expect(page.getByTestId('parent-dashboard-ai-tutor-mood')).toBeVisible();
+    await expect(page.getByTestId('parent-dashboard-ai-tutor-mood-current')).toContainText(
+      'Wspierajacy'
+    );
+    await expect(page.getByTestId('parent-dashboard-ai-tutor-mood-current')).toHaveAttribute(
+      'data-mood-id',
+      'supportive'
+    );
+    await expect(page.getByTestId('parent-dashboard-ai-tutor-mood-baseline')).toContainText(
+      'Spokojny'
+    );
+    await expect(page.getByTestId('parent-dashboard-ai-tutor-mood-confidence')).toContainText(
+      '67%'
+    );
+  });
+
+  test('switches the parent-dashboard tutor mood summary with the active learner', async ({
+    page,
+  }) => {
+    test.setTimeout(45_000);
+
+    await page.route('**/api/kangur/auth/me', async (route) => {
+      const activeLearnerId = route.request().headers()['x-kangur-learner-id'];
+      const user = buildManagerUserWithLearnerMood(
+        activeLearnerId === 'learner-002' ? 'learner-002' : 'learner-001'
+      );
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(user),
+      });
+    });
+
+    await page.goto('/kangur/parent-dashboard');
+    await expect(page.getByRole('heading', { name: /^Panel Rodzica$/ })).toBeVisible();
+    await page.getByRole('button', { name: /ai tutor/i }).click();
+
+    await expect(page.getByTestId('parent-dashboard-ai-tutor-mood-current')).toContainText(
+      'Wspierajacy'
+    );
+
+    await page.getByTestId('parent-dashboard-learner-card-learner-002').click();
+
+    await expect(page.getByText('AI Tutor dla Ola')).toBeVisible();
+    await expect(page.getByTestId('parent-dashboard-ai-tutor-mood-current')).toContainText(
+      'Refleksyjny'
+    );
+    await expect(page.getByTestId('parent-dashboard-ai-tutor-mood-current')).toHaveAttribute(
+      'data-mood-id',
+      'reflective'
+    );
+    await expect(page.getByTestId('parent-dashboard-ai-tutor-mood-baseline')).toContainText(
+      'Cierpliwy'
+    );
+    await expect(page.getByTestId('parent-dashboard-ai-tutor-mood-confidence')).toContainText(
+      '58%'
+    );
   });
 
   test('preserves the Kangur surface across login entry and return navigation', async ({ page }) => {

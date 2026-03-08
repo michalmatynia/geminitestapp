@@ -13,12 +13,20 @@ import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/datab
 import { assertDatabaseEngineOperationEnabled } from '@/shared/lib/db/services/database-engine-operation-guards';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
+import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertDatabaseEngineManageAccess();
   await assertDatabaseEngineOperationEnabled('allowManualBackupMaintenance');
 
-  const { backupName, type } = (await req.json()) as {
+  const parsed = await parseObjectJsonBody(req, {
+    logPrefix: 'databases.delete',
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+
+  const { backupName, type } = parsed.data as {
     backupName: string;
     type?: 'postgresql' | 'mongodb';
   };

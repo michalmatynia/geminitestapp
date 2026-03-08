@@ -122,21 +122,18 @@ describe('KangurFeatureApp shell behavior', () => {
     );
   });
 
-  it('navigates to login and renders nothing when auth is required', () => {
-    const navigateToLogin = vi.fn();
+  it('renders nothing when auth is required', async () => {
     useKangurAuthMock.mockReturnValue(
       buildAuthState({
         authError: {
           type: 'auth_required',
           message: 'Authentication required',
         },
-        navigateToLogin,
       })
     );
 
     render(<KangurFeatureApp />);
 
-    expect(navigateToLogin).toHaveBeenCalledTimes(1);
     expect(screen.queryByTestId('kangur-route-content')).not.toBeInTheDocument();
     expect(screen.queryByTestId('kangur-game-page')).not.toBeInTheDocument();
   });

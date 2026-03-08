@@ -9,7 +9,7 @@ import {
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { retryPathRunNode } from '@/features/ai/ai-paths/server';
 import { assertAiPathRunQueueReady } from '@/features/jobs/server';
-import { parseJsonBody } from '@/features/products/server';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
 

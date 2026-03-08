@@ -83,7 +83,7 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
   const [fallbackMessage, setFallbackMessage] = useState<string | null>(null);
   const [manifest, setManifest] = useState<KangurLessonTtsAudioResponse | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [playbackTransport, setPlaybackTransport] = useState<PlaybackTransport>(null);
+  const [, setPlaybackTransport] = useState<PlaybackTransport>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioQueueRef = useRef<KangurLessonTtsAudioResponse['segments']>([]);
   const fallbackSegmentsRef = useRef<Array<{ id: string; text: string }>>([]);

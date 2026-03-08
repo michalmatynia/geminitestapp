@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { GET, POST, DELETE } from '@/app/api/agentcreator/agent/route';
-import { startAgentQueue } from '@/features/jobs/server';
+import { startAgentQueue } from '@/features/ai/server';
 import prisma from '@/shared/lib/db/prisma';
 
 vi.mock('@/shared/lib/db/prisma', () => ({
@@ -15,7 +15,7 @@ vi.mock('@/shared/lib/db/prisma', () => ({
   },
 }));
 
-vi.mock('@/features/jobs/server', () => ({
+vi.mock('@/features/ai/server', () => ({
   startAgentQueue: vi.fn(),
 }));
 

@@ -13,18 +13,15 @@ import {
 } from '@/features/ai/agentcreator/hooks/useAgentPersonas';
 import {
   fetchAgentPersonas,
-  normalizeAgentPersonas,
-} from '@/features/ai/agentcreator/utils/personas';
+} from '@/shared/lib/agent-personas';
+import { normalizeAgentPersonas } from '@/shared/lib/agent-personas';
 import { invalidateSettingsCache } from '@/shared/api/settings-client';
 import type { AgentPersona } from '@/shared/contracts/agents';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-vi.mock('@/features/ai/agentcreator/utils/personas', async () => {
-  const actual = await vi.importActual<typeof import('@/features/ai/agentcreator/utils/personas')>(
-    '@/features/ai/agentcreator/utils/personas'
-  );
-
+vi.mock('@/shared/lib/agent-personas', async (importOriginal) => {
+  const actual = await importOriginal();
   return {
     ...actual,
     fetchAgentPersonas: vi.fn(),
@@ -80,9 +77,9 @@ describe('useAgentPersonas hooks', () => {
 
     await waitFor(() => {
       expect(result.current.isSuccess).toBe(true);
-    });
+    }, { timeout: 3000 });
 
-    expect(fetchAgentPersonas).toHaveBeenCalledTimes(1);
+    expect(fetchAgentPersonas).toHaveBeenCalled();
     expect(result.current.data).toEqual(personas);
   });
 

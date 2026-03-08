@@ -82,3 +82,11 @@ docker.md
 /tests/e2e/.env
 /test-results/
 .aider*
+
+# Bazel cache
+.cache/
+
+# Metrics documents
+/docs/metrics
+
+/tmp

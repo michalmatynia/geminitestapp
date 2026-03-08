@@ -72,7 +72,7 @@ const buildUnauthSessionResponse = (
   requestStart: number,
   cacheDurationMs: number
 ): Response => {
-  const response = new Response(body, {
+  const response = new NextResponse(body, {
     status,
     headers: {
       'Content-Type': 'application/json',

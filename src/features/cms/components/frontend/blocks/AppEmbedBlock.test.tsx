@@ -5,7 +5,7 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { buildKangurEmbeddedBasePath } from '@/features/kangur/public';
+import { buildKangurEmbeddedBasePath } from '@/shared/lib/kangur-cms-adapter';
 
 const { usePathnameMock, useSearchParamsMock } = vi.hoisted(() => ({
   usePathnameMock: vi.fn(),
@@ -17,24 +17,37 @@ vi.mock('next/navigation', () => ({
   useSearchParams: useSearchParamsMock,
 }));
 
-vi.mock('@/features/kangur/public', () => ({
-  KangurFeaturePage: ({
-    slug,
-    basePath,
-    embedded,
-  }: {
-    slug?: string[];
-    basePath?: string;
-    embedded?: boolean;
-  }) => (
-    <div
-      data-testid='kangur-feature-page'
-      data-base-path={basePath ?? ''}
-      data-embedded={String(Boolean(embedded))}
-      data-slug={JSON.stringify(slug ?? [])}
-    />
-  ),
-}));
+vi.mock('@/shared/lib/kangur-cms-adapter', async () => {
+  const routing = await vi.importActual<typeof import('@/features/kangur/config/routing')>(
+    '@/features/kangur/config/routing'
+  );
+
+  return {
+    buildKangurEmbeddedBasePath: routing.buildKangurEmbeddedBasePath,
+    getKangurPageSlug: routing.getKangurPageSlug,
+    getKangurInternalQueryParamKeys: routing.getKangurInternalQueryParamKeys,
+    KANGUR_MAIN_PAGE_KEY: routing.KANGUR_MAIN_PAGE_KEY,
+    KANGUR_PAGE_TO_SLUG: routing.KANGUR_PAGE_TO_SLUG,
+    readKangurUrlParam: routing.readKangurUrlParam,
+    KANGUR_EMBED_QUERY_PARAM: routing.KANGUR_EMBED_QUERY_PARAM,
+    KangurFeaturePage: ({
+      slug,
+      basePath,
+      embedded,
+    }: {
+      slug?: string[];
+      basePath?: string;
+      embedded?: boolean;
+    }) => (
+      <div
+        data-testid='kangur-feature-page'
+        data-base-path={basePath ?? ''}
+        data-embedded={String(Boolean(embedded))}
+        data-slug={JSON.stringify(slug ?? [])}
+      />
+    ),
+  };
+});
 
 import { AppEmbedBlock } from '@/features/cms/components/frontend/blocks/AppEmbedBlock';
 import {

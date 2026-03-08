@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { enqueueProductAiJob } from '@/features/jobs/server';
 import { startProductAiJobQueue, processProductAiJob } from '@/features/jobs/server';
-import { parseJsonBody } from '@/features/products/server';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { productAiJobTypeSchema } from '@/shared/contracts/jobs';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';

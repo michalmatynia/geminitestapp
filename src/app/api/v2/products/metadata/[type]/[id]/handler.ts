@@ -11,6 +11,7 @@ import {
 import { deleteSimpleParameter } from '@/shared/lib/products/services/simple-parameter-service';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import type {
@@ -20,11 +21,10 @@ import type {
 } from '@/shared/lib/db/services/database-sync-types';
 import type { UpdateFilter } from 'mongodb';
 
-const parseObjectPayload = async (req: NextRequest): Promise<Record<string, unknown>> => {
-  const value: unknown = await req.json();
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
-  return value as Record<string, unknown>;
-};
+const parseObjectPayload = async (req: NextRequest) =>
+  await parseObjectJsonBody(req, {
+    logPrefix: 'products.metadata.[type].[id]',
+  });
 
 const readString = (record: Record<string, unknown>, key: string): string | null => {
   const raw = record[key];
@@ -241,7 +241,11 @@ export async function PUT_products_metadata_id_handler(
   params: { type: string; id: string }
 ): Promise<Response> {
   const { type, id } = params;
-  const data = await parseObjectPayload(req);
+  const parsed = await parseObjectPayload(req);
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+  const data = parsed.data;
 
   if (type === 'producers') {
     const repo = await getProducerRepository();
@@ -400,12 +404,13 @@ export async function DELETE_products_metadata_id_handler(
       await mongo.collection<MongoPriceGroupDoc>('price_groups').deleteOne({
         $or: [{ id: resolvedId }, { groupId: resolvedId }],
       });
+      const catalogPriceGroupPullUpdate: UpdateFilter<MongoCatalogDoc> = {
+        $pull: { priceGroupIds: resolvedId },
+        $set: { updatedAt: now },
+      };
       await mongo
         .collection<MongoCatalogDoc>('catalogs')
-        .updateMany({ priceGroupIds: resolvedId }, {
-          $pull: { priceGroupIds: resolvedId },
-          $set: { updatedAt: now },
-        } as unknown as UpdateFilter<MongoCatalogDoc>);
+        .updateMany({ priceGroupIds: resolvedId }, catalogPriceGroupPullUpdate);
       await mongo
         .collection('catalogs')
         .updateMany(

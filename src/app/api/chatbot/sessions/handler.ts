@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { chatbotSessionRepository } from '@/features/ai/chatbot/server';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-import { parseJsonBody } from '@/features/products/server';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type {
   ChatbotSessionDto as ChatSession,
   UpdateChatSessionDto as UpdateSessionInput,

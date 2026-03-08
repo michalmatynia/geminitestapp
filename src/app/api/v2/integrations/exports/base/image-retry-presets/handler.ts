@@ -6,7 +6,7 @@ import {
   getExportImageRetryPresets,
   setExportImageRetryPresets,
 } from '@/features/integrations/server';
-import { parseJsonBody } from '@/features/products/server';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { imageRetryPresetSchema, type ImageRetryPreset } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 

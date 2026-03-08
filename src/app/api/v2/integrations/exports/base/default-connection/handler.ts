@@ -5,7 +5,7 @@ import {
   getExportDefaultConnectionId,
   setExportDefaultConnectionId,
 } from '@/features/integrations/server';
-import { parseJsonBody } from '@/features/products/server';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 

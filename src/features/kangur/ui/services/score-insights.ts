@@ -7,6 +7,7 @@ const OPERATION_LABELS: Record<string, { label: string; emoji: string }> = {
   subtraction: { label: 'Odejmowanie', emoji: '➖' },
   multiplication: { label: 'Mnozenie', emoji: '✖️' },
   division: { label: 'Dzielenie', emoji: '➗' },
+  calendar: { label: 'Kalendarz', emoji: '📅' },
   decimals: { label: 'Ulamki', emoji: '🔢' },
   powers: { label: 'Potegi', emoji: '⚡' },
   roots: { label: 'Pierwiastki', emoji: '√' },

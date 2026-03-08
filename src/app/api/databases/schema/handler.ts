@@ -42,6 +42,30 @@ const PRISMA_ROOT_DIR = path.join(PROJECT_ROOT, 'prisma');
 const PRISMA_SCHEMA_ENV_PATH = process.env['PRISMA_SCHEMA_PATH'];
 const PRISMA_SCHEMA_DEFAULT_PATH = path.join(PRISMA_ROOT_DIR, 'schema.prisma');
 
+const asRecord = (value: unknown): Record<string, unknown> | null =>
+  value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+
+const isDmmfDatamodel = (value: unknown): value is DmmfDatamodel => {
+  const record = asRecord(value);
+  return record !== null && Array.isArray(record['models']);
+};
+
+const getPrismaCountFn = (value: unknown): ((args?: unknown) => Promise<number>) | null => {
+  const record = asRecord(value);
+  const count = record?.['count'];
+  return typeof count === 'function'
+    ? (count as (args?: unknown) => Promise<number>)
+    : null;
+};
+
+const toSchemaSource = (schema: SchemaResponse): Record<string, unknown> => ({
+  provider: schema.provider,
+  collections: schema.collections,
+  ...(schema.sources ? { sources: schema.sources } : {}),
+});
+
 const resolvePrismaSchemaPath = (candidate: string): string => {
   if (path.isAbsolute(candidate)) {
     return candidate;
@@ -168,9 +192,10 @@ const parsePrismaSchemaModels = (schemaText: string): CollectionSchema[] => {
 const getPrismaDmmf = (): DmmfDatamodel | null => {
   if (!process.env['DATABASE_URL']) return null;
   try {
-    return (
-      (prisma as unknown as { _dmmf?: { datamodel?: DmmfDatamodel } })._dmmf?.datamodel ?? null
-    );
+    const prismaRecord = asRecord(prisma);
+    const dmmfRecord = prismaRecord ? asRecord(prismaRecord['_dmmf']) : null;
+    const datamodel = dmmfRecord?.['datamodel'];
+    return isDmmfDatamodel(datamodel) ? datamodel : null;
   } catch {
     return null;
   }
@@ -278,12 +303,10 @@ async function getPrismaSchema(includeCounts = false): Promise<SchemaResponse> {
 
         if (includeCounts) {
           const key = model.name.charAt(0).toLowerCase() + model.name.slice(1);
-          const prismaModel = (
-            prisma as unknown as Record<string, { count?: (args?: unknown) => Promise<number> }>
-          )[key];
-          if (prismaModel?.count) {
+          const countFn = getPrismaCountFn(Reflect.get(prisma, key));
+          if (countFn) {
             try {
-              entry.documentCount = await prismaModel.count();
+              entry.documentCount = await countFn();
             } catch {
               // Best-effort count
             }
@@ -346,7 +369,7 @@ export async function getDatabasesSchemaHandler(
     ]);
 
     if (mongoResult.status === 'fulfilled') {
-      sources['mongodb'] = mongoResult.value as unknown as Record<string, unknown>;
+      sources['mongodb'] = toSchemaSource(mongoResult.value);
       collections.push(...enrichCollections(mongoResult.value, 'mongodb'));
     } else {
       const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
@@ -357,7 +380,7 @@ export async function getDatabasesSchemaHandler(
     }
 
     if (prismaResult.status === 'fulfilled') {
-      sources['prisma'] = prismaResult.value as unknown as Record<string, unknown>;
+      sources['prisma'] = toSchemaSource(prismaResult.value);
       collections.push(...enrichCollections(prismaResult.value, 'prisma'));
     } else {
       const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');

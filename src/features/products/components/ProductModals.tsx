@@ -3,15 +3,17 @@
 import dynamic from 'next/dynamic';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import { ListProductModal } from '@/features/integrations';
-import { MassListProductModal } from '@/features/integrations';
-import { ProductListingsModal } from '@/features/integrations';
 import { ProductFormProvider } from '@/features/products/context/ProductFormContext';
 import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
 import { useProductFormImages } from '@/features/products/context/ProductFormImageContext';
 import { useProductListModalsContext } from '@/features/products/context/ProductListContext';
 import { isEditingProductHydrated } from '@/features/products/hooks/editingProductHydration';
 import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
+import {
+  ListProductModal,
+  MassListProductModal,
+  ProductListingsModal,
+} from '@/features/integrations';
 import type { ProductDraft, ProductWithImages } from '@/shared/contracts/products';
 import { FormModal, Skeleton } from '@/shared/ui';
 

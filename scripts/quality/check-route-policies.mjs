@@ -49,6 +49,7 @@ const toMarkdown = (payload) => {
   lines.push('## Notes');
   lines.push('');
   lines.push('- App API routes should use apiHandler/apiHandlerWithParams consistently.');
+  lines.push('- Source naming mismatches and dynamic wrapper mismatches are reported as warnings while legacy route conventions remain in place.');
   lines.push('- Strict mode fails on route policy errors. Add --fail-on-warnings to promote warnings into a gate.');
   return `${lines.join('\n')}\n`;
 };

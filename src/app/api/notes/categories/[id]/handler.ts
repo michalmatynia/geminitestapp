@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { categoryUpdateSchema } from '@/features/notesapp';
 import { noteService } from '@/features/notesapp/server';
-import { parseJsonBody } from '@/features/products/server';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { CategoryUpdateInput } from '@/shared/contracts/notes';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { removeUndefined } from '@/shared/utils';

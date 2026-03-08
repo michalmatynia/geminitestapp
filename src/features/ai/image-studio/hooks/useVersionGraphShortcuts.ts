@@ -22,6 +22,8 @@ export interface UseVersionGraphShortcutsParams {
   focusNode: (id: string) => void;
 }
 
+type VersionGraphShortcutEvent = Pick<KeyboardEvent, 'key' | 'preventDefault' | 'target'>;
+
 // ── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useVersionGraphShortcuts({
@@ -40,11 +42,11 @@ export function useVersionGraphShortcuts({
   setAnnotationDraft,
   fitToView,
   focusNode,
-}: UseVersionGraphShortcutsParams): React.KeyboardEventHandler {
+}: UseVersionGraphShortcutsParams): (event: React.KeyboardEvent | VersionGraphShortcutEvent) => void {
   return useCallback(
-    (e: React.KeyboardEvent) => {
+    (e: React.KeyboardEvent | VersionGraphShortcutEvent) => {
       // Don't capture when typing in inputs
-      const tag = (e.target as HTMLElement).tagName;
+      const tag = e.target instanceof HTMLElement ? e.target.tagName : '';
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
 
       switch (e.key) {

@@ -70,17 +70,8 @@ vi.mock('@/features/products/components/ProductForm', () => ({
 
 vi.mock('@/features/integrations', () => ({
   ListProductModal: () => null,
-}));
-
-vi.mock('@/features/integrations', () => ({
   MassListProductModal: () => null,
-}));
-
-vi.mock('@/features/integrations', () => ({
   ProductListingsModal: () => null,
-}));
-
-vi.mock('@/features/integrations', () => ({
   __esModule: true,
   default: () => null,
 }));

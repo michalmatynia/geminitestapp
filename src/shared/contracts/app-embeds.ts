@@ -30,3 +30,4 @@ export type CreateAppEmbed = z.infer<typeof createAppEmbedSchema>;
 export type UpdateAppEmbed = Partial<CreateAppEmbed>;
 
 export const APP_EMBED_SETTING_KEY = 'cms_app_embeds';
+export const DEFAULT_KANGUR_APP_EMBED_ENTRY_PAGE = 'Game';

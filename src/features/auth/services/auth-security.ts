@@ -133,6 +133,51 @@ const clearMemoryAttempt = (key: string): void => {
   memoryAttempts.delete(key);
 };
 
+const toDate = (value: unknown): Date | null => {
+  if (value instanceof Date) return value;
+  if (typeof value === 'string' || typeof value === 'number') {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+  return null;
+};
+
+const parseAttemptRecord = (value: unknown): AttemptRecord | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const record = value as Record<string, unknown>;
+  const firstAttemptAt = toDate(record['firstAttemptAt']);
+  const lastAttemptAt = toDate(record['lastAttemptAt']);
+  const lockedUntilRaw = record['lockedUntil'];
+  const expiresAtRaw = record['expiresAt'];
+  const lockedUntil =
+    lockedUntilRaw === null || lockedUntilRaw === undefined ? null : toDate(lockedUntilRaw);
+  const expiresAt =
+    expiresAtRaw === null || expiresAtRaw === undefined ? null : toDate(expiresAtRaw);
+  if (
+    typeof record['_id'] !== 'string' ||
+    (record['scope'] !== 'email' && record['scope'] !== 'ip') ||
+    typeof record['value'] !== 'string' ||
+    typeof record['count'] !== 'number' ||
+    !Number.isFinite(record['count']) ||
+    !firstAttemptAt ||
+    !lastAttemptAt ||
+    (lockedUntilRaw !== null && lockedUntilRaw !== undefined && !lockedUntil) ||
+    (expiresAtRaw !== null && expiresAtRaw !== undefined && !expiresAt)
+  ) {
+    return null;
+  }
+  return {
+    _id: record['_id'],
+    scope: record['scope'],
+    value: record['value'],
+    count: record['count'],
+    firstAttemptAt,
+    lastAttemptAt,
+    lockedUntil,
+    expiresAt,
+  };
+};
+
 const getMongoAttempt = async (key: string): Promise<AttemptRecord | null> => {
   if (!process.env['MONGODB_URI']) return null;
   const mongo = await getMongoDb();
@@ -143,10 +188,7 @@ const getMongoAttempt = async (key: string): Promise<AttemptRecord | null> => {
 const getPrismaAttempt = async (key: string): Promise<AttemptRecord | null> => {
   const row = await prisma.authSecurityAttempt.findUnique({ where: { id: key } });
   if (!row) return null;
-  if (row.data && typeof row.data === 'object') {
-    return row.data as unknown as AttemptRecord;
-  }
-  return null;
+  return parseAttemptRecord(row.data);
 };
 
 const setMongoAttempt = async (record: AttemptRecord): Promise<void> => {

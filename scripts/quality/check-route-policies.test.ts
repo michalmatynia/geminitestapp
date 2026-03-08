@@ -28,7 +28,7 @@ describe('analyzeRoutePolicies', () => {
     }
   });
 
-  it('fails app routes with mismatched source metadata', () => {
+  it('warns on app routes with mismatched source metadata', () => {
     const root = createTempRoot();
     writeSource(
       root,
@@ -38,10 +38,12 @@ describe('analyzeRoutePolicies', () => {
 
     const report = analyzeRoutePolicies({ root });
 
-    expect(report.summary.errorCount).toBe(1);
+    expect(report.summary.errorCount).toBe(0);
+    expect(report.summary.warningCount).toBe(1);
     expect(report.issues[0]).toMatchObject({
       ruleId: 'route-source-mismatch',
       file: 'src/app/api/products/route.ts',
+      severity: 'warn',
     });
   });
 

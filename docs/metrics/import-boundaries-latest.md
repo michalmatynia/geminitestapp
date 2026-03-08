@@ -1,275 +1,186 @@
 # Import Boundaries Check
 
-Generated at: 2026-03-08T08:18:59.934Z
+Generated at: 2026-03-08T10:32:34.972Z
 
 ## Summary
 
-- Status: FAILED
-- Files scanned: 4286
-- Features tracked: 16
-- Circular dependencies: 19
-- Errors: 390
+- Status: WARN
+- Files scanned: 4311
+- Features tracked: 15
+- Circular dependencies: 0
+- Errors: 0
 - Warnings: 139
 - Info: 0
-
-## Circular Dependencies
-
-- products -> files -> products
-- products -> integrations -> products
-- integrations -> data-import-export -> integrations
-- products -> integrations -> data-import-export -> products
-- integrations -> product-sync -> integrations
-- ai -> jobs -> products -> ai
-- admin -> ai -> jobs -> products -> admin
-- products -> drafter -> products
-- ai -> jobs -> ai
-- ai -> jobs -> case-resolver -> ai
-- case-resolver -> case-resolver-capture -> case-resolver
-- admin -> ai -> jobs -> case-resolver -> admin
-- ai -> kangur -> ai
-- admin -> ai -> kangur -> admin
-- admin -> ai -> kangur -> cms -> admin
-- kangur -> cms -> app-embeds -> kangur
-- kangur -> cms -> kangur
-- admin -> ai -> admin
-- admin -> ai -> notesapp -> admin
 
 ## Feature Dependency Graph
 
 | Feature | Dependencies | Count |
 | --- | --- | ---: |
-| ai | admin, auth, files, foldertree, jobs, kangur, notesapp, playwright, products, prompt-engine, prompt-exploder, tooltip-engine, viewer3d | 13 |
-| products | admin, ai, drafter, files, foldertree, integrations, internationalization, product-sync, tooltip-engine | 9 |
+| ai | auth, files, foldertree, notesapp, playwright, products, prompt-engine, prompt-exploder, tooltip-engine, viewer3d | 10 |
 | case-resolver | admin, ai, auth, case-resolver-capture, document-editor, filemaker, foldertree, prompt-exploder | 8 |
-| cms | admin, app-embeds, files, foldertree, gsap, kangur, products, viewer3d | 8 |
-| kangur | admin, ai, auth, cms, document-editor, foldertree, tooltip-engine | 7 |
-| admin | ai, auth, foldertree, notesapp, products, prompt-engine | 6 |
+| cms | admin, app-embeds, files, foldertree, gsap, products, viewer3d | 7 |
 | jobs | ai, case-resolver, integrations, product-sync, products | 5 |
-| integrations | data-import-export, playwright, product-sync, products | 4 |
-| notesapp | admin, document-editor, foldertree | 3 |
-| case-resolver-capture | case-resolver, filemaker | 2 |
+| kangur | auth, cms, document-editor, foldertree, tooltip-engine | 5 |
+| admin | auth, foldertree, notesapp, prompt-engine | 4 |
+| products | files, foldertree, internationalization, tooltip-engine | 4 |
 | data-import-export | integrations, products | 2 |
-| files | products, viewer3d | 2 |
+| integrations | playwright, products | 2 |
+| notesapp | document-editor, foldertree | 2 |
 | prompt-exploder | foldertree, tooltip-engine | 2 |
-| app-embeds | kangur | 1 |
+| case-resolver-capture | filemaker | 1 |
 | drafter | products | 1 |
+| files | viewer3d | 1 |
 | product-sync | integrations | 1 |
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| cross-feature-internal-import | 322 | 0 | 0 |
-| prisma-outside-server | 49 | 0 | 0 |
-| circular-feature-dep | 19 | 0 | 0 |
 | deep-relative-import | 0 | 139 | 0 |
 
 ## Issues
 
 | Severity | Rule | Location | Message |
 | --- | --- | --- | --- |
-| ERROR | circular-feature-dep | - | Circular dependency between features: products -> files -> products |
-| ERROR | circular-feature-dep | - | Circular dependency between features: products -> integrations -> products |
-| ERROR | circular-feature-dep | - | Circular dependency between features: integrations -> data-import-export -> integrations |
-| ERROR | circular-feature-dep | - | Circular dependency between features: products -> integrations -> data-import-export -> products |
-| ERROR | circular-feature-dep | - | Circular dependency between features: integrations -> product-sync -> integrations |
-| ERROR | circular-feature-dep | - | Circular dependency between features: ai -> jobs -> products -> ai |
-| ERROR | circular-feature-dep | - | Circular dependency between features: admin -> ai -> jobs -> products -> admin |
-| ERROR | circular-feature-dep | - | Circular dependency between features: products -> drafter -> products |
-| ERROR | circular-feature-dep | - | Circular dependency between features: ai -> jobs -> ai |
-| ERROR | circular-feature-dep | - | Circular dependency between features: ai -> jobs -> case-resolver -> ai |
-| ERROR | circular-feature-dep | - | Circular dependency between features: case-resolver -> case-resolver-capture -> case-resolver |
-| ERROR | circular-feature-dep | - | Circular dependency between features: admin -> ai -> jobs -> case-resolver -> admin |
-| ERROR | circular-feature-dep | - | Circular dependency between features: ai -> kangur -> ai |
-| ERROR | circular-feature-dep | - | Circular dependency between features: admin -> ai -> kangur -> admin |
-| ERROR | circular-feature-dep | - | Circular dependency between features: admin -> ai -> kangur -> cms -> admin |
-| ERROR | circular-feature-dep | - | Circular dependency between features: kangur -> cms -> app-embeds -> kangur |
-| ERROR | circular-feature-dep | - | Circular dependency between features: kangur -> cms -> kangur |
-| ERROR | circular-feature-dep | - | Circular dependency between features: admin -> ai -> admin |
-| ERROR | circular-feature-dep | - | Circular dependency between features: admin -> ai -> notesapp -> admin |
-| ERROR | cross-feature-internal-import | src/features/admin/components/Menu.tsx:19 | Imports internal path from feature "ai": @/features/ai/chatbot/hooks/useChatbotMutations. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/admin/components/Menu.tsx:20 | Imports internal path from feature "ai": @/features/ai/chatbot/public. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/admin/layout/AdminLayout.tsx:17 | Imports internal path from feature "auth": @/features/auth/hooks/useUserPreferences. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/admin/layout/AdminLayout.tsx:21 | Imports internal path from feature "notesapp": @/features/notesapp/hooks/NoteSettingsContext. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/admin/pages/AdminGlobalValidatorPage.tsx:7 | Imports internal path from feature "ai": @/features/ai/image-studio. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/admin/pages/AdminGlobalValidatorPage.tsx:8 | Imports internal path from feature "products": @/features/products/components/settings/ValidatorSettings. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/admin/pages/AdminGlobalValidatorPage.tsx:9 | Imports internal path from feature "products": @/features/products/components/settings/validator-settings/ValidatorDocsTooltips. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/admin/pages/AdminMenuSettingsPage.tsx:16 | Imports internal path from feature "foldertree": @/features/foldertree/v2. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/admin/pages/validator-lists/ValidatorListNodeItem.tsx:7 | Imports internal path from feature "foldertree": @/features/foldertree/v2. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/admin/pages/validator-lists/ValidatorListTree.tsx:5 | Imports internal path from feature "foldertree": @/features/foldertree/v2. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/admin/pages/validator-lists/ValidatorListTree.tsx:10 | Imports internal path from feature "foldertree": @/features/foldertree/v2. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/admin/pages/validator-lists/ValidatorListTreeContext.tsx:5 | Imports internal path from feature "foldertree": @/features/foldertree/v2. Use the barrel export instead. |
-| ERROR | prisma-outside-server | src/features/ai/agent-runtime/audit/server.ts:8 | Direct @prisma/client import outside of allowed server directories. Use the db provider abstraction. |
-| ERROR | prisma-outside-server | src/features/ai/agent-runtime/core/engine.ts:7 | Direct @prisma/client import outside of allowed server directories. Use the db provider abstraction. |
-| ERROR | prisma-outside-server | src/features/ai/agent-runtime/memory/index.ts:12 | Direct @prisma/client import outside of allowed server directories. Use the db provider abstraction. |
-| ERROR | prisma-outside-server | src/features/ai/agent-runtime/tools/run-agent-browser-control.ts:7 | Direct @prisma/client import outside of allowed server directories. Use the db provider abstraction. |
-| ERROR | prisma-outside-server | src/features/ai/agent-runtime/tools/segments/tool-logging.ts:1 | Direct @prisma/client import outside of allowed server directories. Use the db provider abstraction. |
-| ERROR | prisma-outside-server | src/features/ai/agentcreator/api/agent/[runId]/route.ts:20 | Direct @prisma/client import outside of allowed server directories. Use the db provider abstraction. |
-| ERROR | prisma-outside-server | src/features/ai/agentcreator/server/persona-memory.ts:3 | Direct @prisma/client import outside of allowed server directories. Use the db provider abstraction. |
-| ERROR | cross-feature-internal-import | src/features/ai/ai-context-registry/services/runtime-providers/kangur.ts:6 | Imports internal path from feature "kangur": @/features/kangur/context-registry/refs. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/ai/ai-context-registry/services/runtime-providers/kangur.ts:11 | Imports internal path from feature "kangur": @/features/kangur/server/context-registry. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/ai/ai-paths/components/ai-paths-settings/runtime/useAiPathsSimulation.ts:15 | Imports internal path from feature "products": @/features/products/hooks/productCache. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsSamples.ts:6 | Imports internal path from feature "products": @/features/products/hooks/productCache. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/ai/ai-paths/components/node-config/dialog/PlaywrightNodeConfigSection.tsx:17 | Imports internal path from feature "playwright": @/features/playwright/hooks/usePlaywrightPersonas. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/ai/ai-paths/pages/AdminAiPathsPage.tsx:5 | Imports internal path from feature "admin": @/features/admin/context/AdminLayoutContext. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/ai/ai-paths/pages/AdminAiPathsQueuePage.tsx:7 | Imports internal path from feature "files": @/features/files/components/FileUploadEventsPanel. Use the barrel export instead. |
-| ERROR | prisma-outside-server | src/features/ai/ai-paths/services/path-run-repository/prisma-path-run-repository.ts:3 | Direct @prisma/client import outside of allowed server directories. Use the db provider abstraction. |
-| ERROR | cross-feature-internal-import | src/features/ai/ai-paths/services/playwright-node-runner.ts:9 | Imports internal path from feature "playwright": @/features/playwright/constants/playwright. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/ai/chatbot/components/SettingsTab.tsx:58 | Imports internal path from feature "playwright": @/features/playwright/utils/personas. Use the barrel export instead. |
-| ERROR | prisma-outside-server | src/features/ai/chatbot/services/chatbot-session-repository.ts:12 | Direct @prisma/client import outside of allowed server directories. Use the db provider abstraction. |
-| ERROR | cross-feature-internal-import | src/features/ai/image-studio/components/center-preview/sections/CenterPreviewCanvas.tsx:6 | Imports internal path from feature "viewer3d": @/features/viewer3d/components/Viewer3D. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/ai/image-studio/components/ImageStudioSingleSlotManager.tsx:14 | Imports internal path from feature "products": @/features/products/components/ProductImageManager. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/ai/image-studio/components/ImageStudioSingleSlotManager.tsx:15 | Imports internal path from feature "products": @/features/products/components/ProductImageManagerControllerContext. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/ai/image-studio/components/modals/DriveImportModal.tsx:6 | Imports internal path from feature "files": @/features/files/components/FileManager. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/ai/image-studio/components/right-sidebar/ControlPromptModalImpl.tsx:38 | Imports internal path from feature "prompt-exploder": @/features/prompt-exploder/bridge. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/ai/image-studio/components/SlotTree.tsx:6 | Imports internal path from feature "foldertree": @/features/foldertree/v2. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/ai/image-studio/components/studio-modals/SlotInlineEditCardTab.tsx:4 | Imports internal path from feature "products": @/features/products/components/ProductImageManager. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/ai/image-studio/components/studio-modals/SlotInlineEditCardTab.tsx:5 | Imports internal path from feature "products": @/features/products/components/ProductImageManagerControllerContext. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/ai/image-studio/components/studio-modals/StudioInlineEditContext.tsx:13 | Imports internal path from feature "products": @/features/products/components/ProductImageManager. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/ai/image-studio/context/ImageStudioSettingsContext.tsx:12 | Imports internal path from feature "auth": @/features/auth/hooks/useUserPreferences. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/ai/image-studio/context/ProjectsContext.tsx:27 | Imports internal path from feature "auth": @/features/auth/hooks/useUserPreferences. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/ai/image-studio/context/PromptContext.tsx:20 | Imports internal path from feature "prompt-exploder": @/features/prompt-exploder/bridge. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/ai/image-studio/context/SettingsContext.tsx:13 | Imports internal path from feature "auth": @/features/auth/hooks/useUserPreferences. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/ai/image-studio/pages/AdminImageStudioPage.tsx:6 | Imports internal path from feature "admin": @/features/admin/context/AdminLayoutContext. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/ai/image-studio/utils/studio-master-tree-adapter.ts:1 | Imports internal path from feature "foldertree": @/features/foldertree/v2. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/app-embeds/lib/constants.ts:3 | Imports internal path from feature "kangur": @/features/kangur/config/routing. Use the barrel export instead. |
-| ERROR | prisma-outside-server | src/features/auth/services/auth-security-profile.ts:3 | Direct @prisma/client import outside of allowed server directories. Use the db provider abstraction. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver-capture/filemaker-upsert.ts:1 | Imports internal path from feature "case-resolver": @/features/case-resolver/party-matching. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver-capture/filemaker-upsert.ts:7 | Imports internal path from feature "case-resolver": @/features/case-resolver/utils/caseResolverUtils. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver-capture/filemaker-upsert.ts:8 | Imports internal path from feature "filemaker": @/features/filemaker/settings. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver-capture/proposals/cleanup.ts:1 | Imports internal path from feature "case-resolver": @/features/case-resolver/party-matching. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver-capture/proposals/cleanup.ts:5 | Imports internal path from feature "case-resolver": @/features/case-resolver/settings. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver-capture/proposals/inference.ts:1 | Imports internal path from feature "case-resolver": @/features/case-resolver/party-matching. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver-capture/proposals/inference.ts:7 | Imports internal path from feature "case-resolver": @/features/case-resolver/settings. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/adapter.ts:1 | Imports internal path from feature "foldertree": @/features/foldertree/v2. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/components/case-resolver-party-select.ts:1 | Imports internal path from feature "filemaker": @/features/filemaker/settings. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/components/CaseListPanel.tsx:15 | Imports internal path from feature "foldertree": @/features/foldertree/v2. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/components/CaseResolverCanvasWorkspace.tsx:6 | Imports internal path from feature "ai": @/features/ai/ai-paths/components/canvas-board. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/components/CaseResolverCanvasWorkspace.tsx:7 | Imports internal path from feature "ai": @/features/ai/ai-paths/context/AiPathsProvider. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/components/CaseResolverCanvasWorkspace.tsx:15 | Imports internal path from feature "ai": @/features/ai/ai-paths/context/hooks/useGraph. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/components/CaseResolverCanvasWorkspace.tsx:16 | Imports internal path from feature "ai": @/features/ai/ai-paths/context/hooks/useSelection. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/components/CaseResolverFolderTree.tsx:6 | Imports internal path from feature "foldertree": @/features/foldertree/v2. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/components/CaseResolverFolderTree.tsx:13 | Imports internal path from feature "foldertree": @/features/foldertree/v2/search. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/components/CaseResolverFolderTree.tsx:14 | Imports internal path from feature "foldertree": @/features/foldertree/v2/operations/drop. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/components/CaseResolverNodeFileWorkspace.tsx:6 | Imports internal path from feature "ai": @/features/ai/ai-paths/components/canvas-board. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/components/CaseResolverNodeFileWorkspace.tsx:7 | Imports internal path from feature "ai": @/features/ai/ai-paths/context. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/components/CaseResolverRelationsWorkspace.tsx:7 | Imports internal path from feature "ai": @/features/ai/ai-paths/components/canvas-board. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/components/CaseResolverRelationsWorkspace.tsx:8 | Imports internal path from feature "ai": @/features/ai/ai-paths/context. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/components/CaseResolverTreeHeader.tsx:8 | Imports internal path from feature "foldertree": @/features/foldertree/v2/search. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/components/CaseResolverTreeNode.tsx:6 | Imports internal path from feature "foldertree": @/features/foldertree/v2. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/components/CaseResolverViewContext.tsx:16 | Imports internal path from feature "case-resolver-capture": @/features/case-resolver-capture/proposals. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/components/CaseResolverViewContext.tsx:20 | Imports internal path from feature "case-resolver-capture": @/features/case-resolver-capture/settings. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/components/list/CaseListHeader.tsx:7 | Imports internal path from feature "foldertree": @/features/foldertree/v2/search. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/components/list/search/CaseListSearchPanel.tsx:15 | Imports internal path from feature "foldertree": @/features/foldertree/v2/operations/search. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/components/NodeFileDocumentSearchPanel.tsx:6 | Imports internal path from feature "foldertree": @/features/foldertree/v2/search. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/components/page/CaseResolverDocumentEditor.tsx:23 | Imports internal path from feature "filemaker": @/features/filemaker/settings. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/components/page/CaseResolverScanFileEditor.tsx:18 | Imports internal path from feature "filemaker": @/features/filemaker/settings. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/components/PromptExploderCaptureMappingModal.tsx:3 | Imports internal path from feature "case-resolver-capture": @/features/case-resolver-capture/proposals. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/components/PromptExploderCaptureMappingModal.tsx:7 | Imports internal path from feature "case-resolver-capture": @/features/case-resolver-capture/settings. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/components/PromptExploderCaptureMappingModal.tsx:8 | Imports internal path from feature "filemaker": @/features/filemaker/settings. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/components/PromptExploderCaptureMappingModalRuntimeContext.tsx:5 | Imports internal path from feature "case-resolver-capture": @/features/case-resolver-capture/proposals. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/components/PromptExploderCaptureMappingModalRuntimeContext.tsx:9 | Imports internal path from feature "case-resolver-capture": @/features/case-resolver-capture/settings. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/context/AdminCaseResolverCasesContext.tsx:4 | Imports internal path from feature "auth": @/features/auth/hooks/useUserPreferences. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/context/CaseResolverFolderTreeContext.tsx:32 | Imports internal path from feature "foldertree": @/features/foldertree/v2. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/hooks/capture-actions/useApplyCaptureProposal.ts:5 | Imports internal path from feature "case-resolver-capture": @/features/case-resolver-capture/proposals. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/hooks/capture-actions/useApplyCaptureProposal.ts:9 | Imports internal path from feature "case-resolver-capture": @/features/case-resolver-capture/proposals. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/hooks/capture-actions/useApplyCaptureProposal.ts:12 | Imports internal path from feature "filemaker": @/features/filemaker/settings. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/hooks/capture-actions/useApplyCaptureProposal.ts:29 | Imports internal path from feature "case-resolver-capture": @/features/case-resolver-capture/filemaker-upsert. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/hooks/capture-actions/useCaptureProposalState.ts:4 | Imports internal path from feature "case-resolver-capture": @/features/case-resolver-capture/proposals. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/hooks/capture-actions/useCaptureProposalState.ts:9 | Imports internal path from feature "case-resolver-capture": @/features/case-resolver-capture/settings. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/hooks/capture-actions/useCaptureProposalState.ts:11 | Imports internal path from feature "filemaker": @/features/filemaker/settings. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/hooks/useAdminCaseResolverCaptureActions.ts:3 | Imports internal path from feature "case-resolver-capture": @/features/case-resolver-capture/proposals. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/hooks/useAdminCaseResolverDocumentActions.ts:25 | Imports internal path from feature "prompt-exploder": @/features/prompt-exploder/bridge. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/hooks/useAdminCaseResolverMetadataActions.ts:10 | Imports internal path from feature "filemaker": @/features/filemaker/settings. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/hooks/useAdminCaseResolverPageState.ts:8 | Imports internal path from feature "filemaker": @/features/filemaker/settings. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/hooks/useCaseResolverState.editor-actions.ts:19 | Imports internal path from feature "document-editor": @/features/document-editor/content-format. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/hooks/useCaseResolverState.helpers.canonical.ts:1 | Imports internal path from feature "document-editor": @/features/document-editor/content-format. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/hooks/useCaseResolverState.helpers.ts:36 | Imports internal path from feature "document-editor": @/features/document-editor/content-format. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/hooks/useCaseResolverState.ocr-actions.ts:19 | Imports internal path from feature "document-editor": @/features/document-editor/content-format. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/hooks/useCaseResolverState.prompt-exploder-actions.ts:7 | Imports internal path from feature "case-resolver-capture": @/features/case-resolver-capture/proposals. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/hooks/useCaseResolverState.prompt-exploder-actions.ts:17 | Imports internal path from feature "prompt-exploder": @/features/prompt-exploder/bridge. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/hooks/useCaseResolverState.prompt-exploder-sync.ts:1 | Imports internal path from feature "case-resolver-capture": @/features/case-resolver-capture/proposals. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/hooks/useCaseResolverState.prompt-exploder-sync.ts:5 | Imports internal path from feature "document-editor": @/features/document-editor/content-format. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/hooks/useCaseResolverState.prompt-exploder-sync.ts:10 | Imports internal path from feature "prompt-exploder": @/features/prompt-exploder/bridge. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/hooks/useCaseResolverState.ts:6 | Imports internal path from feature "admin": @/features/admin/context/AdminLayoutContext. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/hooks/useCaseResolverState.ts:10 | Imports internal path from feature "case-resolver-capture": @/features/case-resolver-capture/settings. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/hooks/useCaseResolverState.ts:15 | Imports internal path from feature "filemaker": @/features/filemaker/settings. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/hooks/useNodeFileWorkspaceState.ts:8 | Imports internal path from feature "ai": @/features/ai/ai-paths/context. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/pages/AdminCaseResolverPreferencesPage.tsx:6 | Imports internal path from feature "auth": @/features/auth/hooks/useUserPreferences. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/party-matching.ts:1 | Imports internal path from feature "prompt-exploder": @/features/prompt-exploder/bridge. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/relation-search/components/RelationTreeBrowser.tsx:5 | Imports internal path from feature "foldertree": @/features/foldertree/v2. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/relation-search/components/RelationTreeBrowser.tsx:11 | Imports internal path from feature "foldertree": @/features/foldertree/v2/search. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/relation-search/components/RelationTreeNodeItem.tsx:16 | Imports internal path from feature "foldertree": @/features/foldertree/v2. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/relation-search/components/sections/SearchBar.tsx:4 | Imports internal path from feature "foldertree": @/features/foldertree/v2/search. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/settings.files.ts:1 | Imports internal path from feature "document-editor": @/features/document-editor/content-format. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/types.ts:1 | Imports internal path from feature "case-resolver-capture": @/features/case-resolver-capture/proposals. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/utils/case-resolver/history.ts:1 | Imports internal path from feature "document-editor": @/features/document-editor/content-format. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/case-resolver/utils/caseResolverUtils.ts:1 | Imports internal path from feature "document-editor": @/features/document-editor/content-format. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/CmsEditorLayout.tsx:5 | Imports internal path from feature "admin": @/features/admin/layout/AdminLayout. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/AppEmbedBlock.tsx:6 | Imports internal path from feature "app-embeds": @/features/app-embeds/lib/constants. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/AppEmbedBlock.tsx:13 | Imports internal path from feature "kangur": @/features/kangur/config/routing. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:5 | Imports internal path from feature "kangur": @/features/kangur/cms-builder/project. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:6 | Imports internal path from feature "kangur": @/features/kangur/ui/components/KangurAssignmentSpotlight. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:7 | Imports internal path from feature "kangur": @/features/kangur/ui/components/KangurActiveLessonPanelWidget. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:8 | Imports internal path from feature "kangur": @/features/kangur/ui/components/KangurGameCalendarTrainingWidget. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:9 | Imports internal path from feature "kangur": @/features/kangur/ui/components/KangurGameGeometryTrainingWidget. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:10 | Imports internal path from feature "kangur": @/features/kangur/ui/components/KangurGameHomeActionsWidget. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:11 | Imports internal path from feature "kangur": @/features/kangur/ui/components/KangurGameHomeHeroWidget. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:12 | Imports internal path from feature "kangur": @/features/kangur/ui/components/KangurGameKangurSessionWidget. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:13 | Imports internal path from feature "kangur": @/features/kangur/ui/components/KangurGameKangurSetupWidget. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:14 | Imports internal path from feature "kangur": @/features/kangur/ui/components/KangurGameNavigationWidget. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:15 | Imports internal path from feature "kangur": @/features/kangur/ui/components/KangurGameOperationSelectorWidget. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:16 | Imports internal path from feature "kangur": @/features/kangur/ui/components/KangurGameQuestionWidget. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:17 | Imports internal path from feature "kangur": @/features/kangur/ui/components/KangurGameResultWidget. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:18 | Imports internal path from feature "kangur": @/features/kangur/ui/components/KangurGameTrainingSetupWidget. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:19 | Imports internal path from feature "kangur": @/features/kangur/ui/components/KangurGameXpToastWidget. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:20 | Imports internal path from feature "kangur": @/features/kangur/ui/components/KangurLessonNavigationWidget. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:21 | Imports internal path from feature "kangur": @/features/kangur/ui/components/KangurLearnerProfileAssignmentsWidget. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:22 | Imports internal path from feature "kangur": @/features/kangur/ui/components/KangurLearnerProfileHeroWidget. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:23 | Imports internal path from feature "kangur": @/features/kangur/ui/components/KangurLearnerProfileLevelProgressWidget. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:24 | Imports internal path from feature "kangur": @/features/kangur/ui/components/KangurLearnerProfileMasteryWidget. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:25 | Imports internal path from feature "kangur": @/features/kangur/ui/components/KangurLearnerProfileOverviewWidget. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:26 | Imports internal path from feature "kangur": @/features/kangur/ui/components/KangurLearnerProfilePerformanceWidget. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:27 | Imports internal path from feature "kangur": @/features/kangur/ui/components/KangurLearnerProfileRecommendationsWidget. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:28 | Imports internal path from feature "kangur": @/features/kangur/ui/components/KangurLearnerProfileSessionsWidget. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:29 | Imports internal path from feature "kangur": @/features/kangur/ui/components/KangurParentDashboardAssignmentsWidget. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:30 | Imports internal path from feature "kangur": @/features/kangur/ui/components/KangurParentDashboardHeroWidget. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:31 | Imports internal path from feature "kangur": @/features/kangur/ui/components/KangurParentDashboardLearnerManagementWidget. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:32 | Imports internal path from feature "kangur": @/features/kangur/ui/components/KangurParentDashboardProgressWidget. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:33 | Imports internal path from feature "kangur": @/features/kangur/ui/components/KangurParentDashboardScoresWidget. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:34 | Imports internal path from feature "kangur": @/features/kangur/ui/components/KangurParentDashboardTabsWidget. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:35 | Imports internal path from feature "kangur": @/features/kangur/ui/components/Leaderboard. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:36 | Imports internal path from feature "kangur": @/features/kangur/ui/components/KangurLessonsCatalogWidget. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:37 | Imports internal path from feature "kangur": @/features/kangur/ui/components/PlayerProgressCard. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:38 | Imports internal path from feature "kangur": @/features/kangur/ui/components/KangurPriorityAssignments. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:39 | Imports internal path from feature "kangur": @/features/kangur/ui/context/KangurGameRuntimeContext. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:43 | Imports internal path from feature "kangur": @/features/kangur/ui/context/KangurLearnerProfileRuntimeContext. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:44 | Imports internal path from feature "kangur": @/features/kangur/ui/context/KangurParentDashboardRuntimeContext. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:45 | Imports internal path from feature "kangur": @/features/kangur/ui/context/KangurLessonsRuntimeContext. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:46 | Imports internal path from feature "kangur": @/features/kangur/ui/hooks/useKangurProgressState. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:47 | Imports internal path from feature "kangur": @/features/kangur/ui/context/KangurRoutingContext. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:48 | Imports internal path from feature "kangur": @/features/kangur/ui/pages/Game. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:49 | Imports internal path from feature "kangur": @/features/kangur/ui/pages/LearnerProfile. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:50 | Imports internal path from feature "kangur": @/features/kangur/ui/pages/Lessons. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/KangurWidgetBlock.tsx:51 | Imports internal path from feature "kangur": @/features/kangur/ui/pages/ParentDashboard. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/CmsMenu.tsx:8 | Imports internal path from feature "gsap": @/features/gsap/utils/presets. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/GsapAnimationWrapper.tsx:7 | Imports internal path from feature "gsap": @/features/gsap/utils/presets. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/page-builder/AppEmbedsPanel.tsx:6 | Imports internal path from feature "app-embeds": @/features/app-embeds/lib/constants. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/page-builder/AppEmbedsPanel.tsx:7 | Imports internal path from feature "app-embeds": @/features/app-embeds/providers/AppEmbedsProvider. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/page-builder/Asset3DPickerModal.tsx:7 | Imports internal path from feature "viewer3d": @/features/viewer3d/hooks/useAsset3dQueries. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/page-builder/BlockPicker.tsx:5 | Imports internal path from feature "app-embeds": @/features/app-embeds/lib/constants. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/page-builder/ColumnBlockPicker.tsx:5 | Imports internal path from feature "app-embeds": @/features/app-embeds/lib/constants. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/page-builder/ComponentTreePanel.tsx:5 | Imports internal path from feature "foldertree": @/features/foldertree/v2. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/page-builder/MediaLibraryPanel.tsx:12 | Imports internal path from feature "files": @/features/files/components/FileManager. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/page-builder/PageBuilderLayout.tsx:6 | Imports internal path from feature "admin": @/features/admin/context/AdminLayoutContext. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/page-builder/PreviewBlock.tsx:9 | Imports internal path from feature "app-embeds": @/features/app-embeds/lib/constants. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/page-builder/PreviewBlock.tsx:16 | Imports internal path from feature "kangur": @/features/kangur/cms-builder/project. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/page-builder/registry/block-definitions-media.ts:1 | Imports internal path from feature "app-embeds": @/features/app-embeds/lib/constants. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/page-builder/registry/block-definitions-media.ts:8 | Imports internal path from feature "kangur": @/features/kangur/cms-builder/project. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/page-builder/settings/BlockSettingsTab.tsx:8 | Imports internal path from feature "app-embeds": @/features/app-embeds/lib/constants. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/page-builder/shared-fields.tsx:5 | Imports internal path from feature "products": @/features/products/components/ProductImageManager. Use the barrel export instead. |
-
-> Showing first 200 of 529 issues.
+| WARN | deep-relative-import | src/app/api/ai-paths/playwright/[runId]/artifacts/[file]/handler.ts:14 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/ai/ai-paths/components/ai-paths-settings/hooks/persistence/usePathPersistence.ts:15 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/ai/ai-paths/components/ai-paths-settings/panels/AiPathsRuntimeLog.tsx:4 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/ai/ai-paths/components/ai-paths-settings/runtime/server-execution/useServerRunStream.ts:15 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasView.tsx:23 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/ai/ai-paths/components/node-config/dialog/NodeHistoryTab.tsx:11 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/ai/image-studio/components/analysis/sections/AiPathAnalysisTriggerSectionImpl.tsx:9 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/ai/image-studio/components/center-preview/sections/CenterPreviewCanvas.tsx:11 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/ai/image-studio/components/center-preview/sections/CenterPreviewCanvas.tsx:12 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/ai/image-studio/components/center-preview/sections/CenterPreviewCanvas.tsx:13 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/ai/image-studio/components/center-preview/sections/CenterPreviewCanvas.tsx:14 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/ai/image-studio/components/center-preview/sections/CenterPreviewCanvasContext.tsx:7 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/ai/image-studio/components/center-preview/sections/CenterPreviewHeader.tsx:7 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/ai/image-studio/components/generation-toolbar/handlers/useAnalysisHandlers.ts:5 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/ai/image-studio/components/generation-toolbar/handlers/useCenterAndScaleHandlers.ts:13 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/case-resolver/context/admin-cases/actions/case-availability.ts:3 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/case-resolver/context/admin-cases/actions/case-crud.ts:4 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/case-resolver/context/admin-cases/actions/case-crud.ts:10 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/case-resolver/context/admin-cases/actions/case-ordering.ts:4 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/frontend/blocks/TextAtomBlock.tsx:9 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/frontend/sections/FrontendAccordionSection.tsx:12 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/frontend/sections/FrontendBlockRenderer.tsx:42 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/frontend/sections/FrontendBlockSection.tsx:11 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/frontend/sections/FrontendBlocksSection.tsx:3 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/frontend/sections/FrontendButtonElementSection.tsx:8 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/frontend/sections/FrontendCarousel.tsx:10 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/frontend/sections/FrontendGridSection.tsx:17 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/frontend/sections/FrontendHeroBlock.tsx:7 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/frontend/sections/FrontendHeroSection.tsx:12 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/frontend/sections/FrontendImageElementSection.tsx:8 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/frontend/sections/FrontendImageWithTextBlock.tsx:10 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/frontend/sections/FrontendImageWithTextSection.tsx:12 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/frontend/sections/FrontendModel3DElementSection.tsx:8 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/frontend/sections/FrontendNewsletterSection.tsx:8 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/frontend/sections/FrontendSlideshowSection.tsx:11 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/frontend/sections/FrontendTestimonialsSection.tsx:10 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/frontend/sections/FrontendTextAtomSection.tsx:4 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/frontend/sections/SectionBlockContext.tsx:5 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/animation/advanced/AdvancedMotionPathSection.tsx:10 | Deep relative import (4 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/animation/advanced/AdvancedSvgEffectsSection.tsx:10 | Deep relative import (4 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/animation/AnimationConfigContext.tsx:8 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/context/ComponentSettingsContext.tsx:14 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/context/InspectorAiContext.tsx:21 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/hooks/useGroupedTemplates.ts:8 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/preview/context/BlockContext.tsx:5 | Deep relative import (4 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/preview/context/PreviewEditorContext.tsx:5 | Deep relative import (4 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/preview/PreviewSectionBlocks.tsx:21 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/registry/block-definitions-content.ts:14 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/registry/block-definitions-layout.ts:12 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/registry/block-definitions-media.ts:12 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/registry/block-definitions.ts:5 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/registry/section-definitions.ts:14 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/registry/shared-field-helpers.ts:1 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/settings/BlockSettingsTab.tsx:25 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/settings/ColumnSettingsTab.tsx:11 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/settings/field-group-helpers.tsx:9 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/settings/fields/composite/BackgroundField.tsx:9 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/settings/fields/LinkField.tsx:7 | Deep relative import (4 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/settings/InspectorHeader.tsx:8 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/settings/InspectorHeader.tsx:9 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/settings/InspectorOptions.tsx:5 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/settings/page-settings/PageSeoTabContent.tsx:6 | Deep relative import (4 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/settings/page-settings/PageSettingsTabContent.tsx:5 | Deep relative import (4 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/settings/page-settings/PageSettingsTabContent.tsx:6 | Deep relative import (4 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/settings/page-settings/PageSettingsTabContent.tsx:7 | Deep relative import (4 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/settings/page-settings/PageSettingsTabContent.tsx:9 | Deep relative import (4 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/settings/page-settings/PageSettingsTabContent.tsx:10 | Deep relative import (4 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/settings/page-settings/usePageAiAssistant.ts:13 | Deep relative import (4 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/settings/PageSettingsTab.tsx:8 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/settings/PageSettingsTab.tsx:9 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/settings/PageSettingsTab.tsx:12 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/settings/SectionSettingsTab.tsx:25 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/tree/BlockNodeItem.tsx:20 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/tree/BlockNodeItem.tsx:21 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/tree/BlockNodeItem.tsx:22 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/tree/ColumnNodeItem.tsx:16 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/tree/ColumnNodeItem.tsx:17 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/tree/ColumnNodeItem.tsx:18 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/tree/ColumnNodeItem.tsx:29 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/tree/ComponentTreePanelContext.tsx:8 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/tree/RowNodeItem.tsx:22 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/tree/RowNodeItem.tsx:23 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/tree/RowNodeItem.tsx:24 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/tree/RowNodeItem.tsx:28 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/tree/SectionBlockNodeItem.tsx:17 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/tree/SectionBlockNodeItem.tsx:18 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/tree/SectionBlockNodeItem.tsx:19 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/tree/SectionBlockNodeItem.tsx:28 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/tree/SectionDropTarget.tsx:9 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/tree/SectionDropTarget.tsx:10 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/tree/SectionDropTarget.tsx:11 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/tree/SectionNodeItem.tsx:23 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/tree/SectionNodeItem.tsx:24 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/tree/SectionNodeItem.tsx:25 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/tree/SlideshowFrameNodeItem.tsx:16 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/tree/SlideshowFrameNodeItem.tsx:17 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/tree/SlideshowFrameNodeItem.tsx:18 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/tree/SlideshowFrameNodeItem.tsx:32 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/tree/tree-constants.ts:31 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/tree/tree-types.ts:1 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/tree/TreeSectionPicker.tsx:8 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/tree/TreeSectionPicker.tsx:10 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/tree/ZoneFooterNode.tsx:9 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/utils/cms-master-tree-adapter.ts:6 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/utils/cms-master-tree.ts:4 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/components/page-builder/utils/cms-tree-external-drop.ts:1 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/hooks/page-builder/page-builder-reducer/block-actions.ts:7 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/hooks/page-builder/page-builder-reducer/complex-actions.ts:14 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/hooks/page-builder/page-builder-reducer/grid-actions.ts:2 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/hooks/page-builder/page-builder-reducer/page-actions.ts:2 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/hooks/page-builder/page-builder-reducer/section-actions.ts:10 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/cms/hooks/page-builder/page-builder-reducer/section-actions.ts:14 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/products/components/form/studio/StudioActionsBar.tsx:6 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/products/components/form/studio/StudioAuditHistory.tsx:5 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/products/components/form/studio/StudioPreviewCanvas.tsx:11 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/products/components/form/studio/StudioProjectField.tsx:5 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/products/components/form/studio/StudioSourceImageSelector.tsx:7 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/features/products/components/form/studio/StudioVariantsGrid.tsx:8 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/shared/lib/ai-paths/core/runtime/handlers/integration-database-handler.ts:22 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/shared/lib/ai-paths/core/runtime/handlers/integration-database-template-context.ts:14 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/shared/lib/ai-paths/core/runtime/handlers/integration-schema-handler.ts:12 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/shared/lib/ai-paths/core/runtime/handlers/transform/bounds-normalizer-handler.ts:10 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/shared/lib/ai-paths/core/runtime/handlers/transform/canvas-output-handler.ts:7 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/shared/lib/ai-paths/core/runtime/handlers/transform/context.ts:6 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/shared/lib/ai-paths/core/runtime/handlers/transform/iterator.ts:6 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/shared/lib/ai-paths/core/runtime/handlers/transform/mapper.ts:6 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/shared/lib/ai-paths/core/runtime/handlers/transform/mutator.ts:7 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/shared/lib/ai-paths/core/runtime/handlers/transform/parser.ts:6 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/shared/lib/ai-paths/core/runtime/handlers/transform/regex.ts:7 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/shared/lib/ai-paths/core/runtime/handlers/transform/validator.ts:17 | Deep relative import (3 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/shared/lib/ai-paths/core/runtime/node-code-object-v3-legacy-bridge.ts:1 | Deep relative import (6 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/shared/lib/ai-paths/portable-engine/node-code-objects-v2-contracts.ts:1 | Deep relative import (5 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/shared/lib/documentation/catalogs/ai-paths.ts:6 | Deep relative import (5 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/shared/lib/documentation/catalogs/kangur.ts:6 | Deep relative import (5 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/shared/lib/documentation/catalogs/prompt-exploder.ts:6 | Deep relative import (5 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/shared/lib/documentation/catalogs/validator-semantic-grammar.ts:1 | Deep relative import (5 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/shared/lib/documentation/catalogs/validator-semantic-grammar.ts:2 | Deep relative import (5 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/shared/lib/documentation/catalogs/validator-semantic-grammar.ts:3 | Deep relative import (5 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/shared/lib/documentation/catalogs/validator-semantic-grammar.ts:4 | Deep relative import (5 levels up). Consider using path aliases. |
 
 ## Notes
 

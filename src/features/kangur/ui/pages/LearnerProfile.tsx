@@ -3,6 +3,7 @@
 import { KangurDocsTooltipEnhancer, useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
 import { KangurPrimaryNavigation } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
 import { KangurLearnerProfileAssignmentsWidget } from '@/features/kangur/ui/components/KangurLearnerProfileAssignmentsWidget';
+import { KangurLearnerProfileAiTutorMoodWidget } from '@/features/kangur/ui/components/KangurLearnerProfileAiTutorMoodWidget';
 import { KangurLearnerProfileHeroWidget } from '@/features/kangur/ui/components/KangurLearnerProfileHeroWidget';
 import { KangurLearnerProfileLevelProgressWidget } from '@/features/kangur/ui/components/KangurLearnerProfileLevelProgressWidget';
 import { KangurLearnerProfileMasteryWidget } from '@/features/kangur/ui/components/KangurLearnerProfileMasteryWidget';
@@ -47,6 +48,7 @@ export default function LearnerProfile(): React.JSX.Element {
         <KangurPageContainer id='kangur-learner-profile-main' className='flex flex-col gap-6'>
           <h2 className='sr-only'>Statystyki ucznia</h2>
           <KangurLearnerProfileHeroWidget />
+          <KangurLearnerProfileAiTutorMoodWidget />
           <KangurLearnerProfileLevelProgressWidget />
           <KangurLearnerProfileOverviewWidget />
           <KangurLearnerProfileRecommendationsWidget />

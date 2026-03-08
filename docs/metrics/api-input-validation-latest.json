@@ -1,231 +1,21 @@
 {
-  "generatedAt": "2026-03-08T04:48:36.911Z",
-  "status": "failed",
+  "generatedAt": "2026-03-08T10:29:53.784Z",
+  "status": "warn",
   "summary": {
-    "total": 218,
-    "errorCount": 21,
+    "total": 197,
+    "errorCount": 0,
     "warningCount": 197,
     "infoCount": 0,
-    "status": "failed",
-    "fileCount": 671,
-    "totalHandlers": 646,
-    "validatedHandlers": 625,
-    "coveragePercent": 97
+    "status": "warn",
+    "fileCount": 673,
+    "totalHandlers": 648,
+    "validatedHandlers": 648,
+    "coveragePercent": 100
   },
   "scope": {
     "root": "src/app/api"
   },
   "issues": [
-    {
-      "severity": "error",
-      "ruleId": "req-json-no-schema",
-      "message": "req.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema.",
-      "file": "src/app/api/assets3d/[id]/handler.ts",
-      "line": 30,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "req-json-no-schema",
-      "message": "req.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema.",
-      "file": "src/app/api/chatbot/handler.ts",
-      "line": 223,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "req-json-no-schema",
-      "message": "req.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema.",
-      "file": "src/app/api/cms/css-ai/stream/handler.ts",
-      "line": 21,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "req-json-no-schema",
-      "message": "req.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema.",
-      "file": "src/app/api/databases/copy-collection/handler.ts",
-      "line": 25,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "req-json-no-schema",
-      "message": "req.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema.",
-      "file": "src/app/api/databases/crud/handler.ts",
-      "line": 18,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "req-json-no-schema",
-      "message": "req.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema.",
-      "file": "src/app/api/databases/delete/handler.ts",
-      "line": 21,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "req-json-no-schema",
-      "message": "req.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema.",
-      "file": "src/app/api/databases/execute/handler.ts",
-      "line": 16,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "req-json-no-schema",
-      "message": "req.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema.",
-      "file": "src/app/api/databases/json-restore/handler.ts",
-      "line": 13,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "req-json-no-schema",
-      "message": "req.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema.",
-      "file": "src/app/api/databases/preview/handler.ts",
-      "line": 36,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "req-json-no-schema",
-      "message": "req.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema.",
-      "file": "src/app/api/databases/restore/handler.ts",
-      "line": 51,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "req-json-no-schema",
-      "message": "req.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema.",
-      "file": "src/app/api/image-studio/slots/[slotId]/crop/handler.ts",
-      "line": 103,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "req-json-no-schema",
-      "message": "request.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema.",
-      "file": "src/app/api/marketplace/categories/fetch/handler.ts",
-      "line": 24,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "req-json-no-schema",
-      "message": "request.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema.",
-      "file": "src/app/api/marketplace/producers/fetch/handler.ts",
-      "line": 24,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "req-json-no-schema",
-      "message": "request.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema.",
-      "file": "src/app/api/marketplace/tags/fetch/handler.ts",
-      "line": 24,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "req-json-no-schema",
-      "message": "req.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema.",
-      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.ts",
-      "line": 55,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "req-json-no-schema",
-      "message": "req.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema.",
-      "file": "src/app/api/v2/metadata/[type]/[id]/handler.ts",
-      "line": 215,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "req-json-no-schema",
-      "message": "req.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema.",
-      "file": "src/app/api/v2/metadata/handler.ts",
-      "line": 229,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "req-json-no-schema",
-      "message": "req.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema.",
-      "file": "src/app/api/v2/products/entities/handler.ts",
-      "line": 64,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "req-json-no-schema",
-      "message": "req.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema.",
-      "file": "src/app/api/v2/products/metadata/[type]/[id]/handler.ts",
-      "line": 24,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "req-json-no-schema",
-      "message": "req.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema.",
-      "file": "src/app/api/v2/products/metadata/handler.ts",
-      "line": 21,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "req-json-no-schema",
-      "message": "req.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema.",
-      "file": "src/app/api/v2/products/validation/handler.ts",
-      "line": 9,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
     {
       "severity": "warn",
       "ruleId": "query-param-unvalidated",
@@ -261,7 +51,7 @@
       "ruleId": "query-param-unvalidated",
       "message": "searchParams.get() used without Zod schema validation.",
       "file": "src/app/api/agentcreator/teaching/collections/[collectionId]/documents/handler.ts",
-      "line": 32,
+      "line": 31,
       "column": null,
       "snippet": null,
       "context": null
@@ -271,7 +61,7 @@
       "ruleId": "query-param-unvalidated",
       "message": "searchParams.get() used without Zod schema validation.",
       "file": "src/app/api/agentcreator/teaching/collections/[collectionId]/documents/handler.ts",
-      "line": 33,
+      "line": 32,
       "column": null,
       "snippet": null,
       "context": null
@@ -961,7 +751,7 @@
       "ruleId": "query-param-unvalidated",
       "message": "searchParams.get() used without Zod schema validation.",
       "file": "src/app/api/chatbot/settings/handler.ts",
-      "line": 26,
+      "line": 47,
       "column": null,
       "snippet": null,
       "context": null
@@ -1011,7 +801,7 @@
       "ruleId": "query-param-unvalidated",
       "message": "searchParams.get() used without Zod schema validation.",
       "file": "src/app/api/databases/browse/handler.ts",
-      "line": 156,
+      "line": 169,
       "column": null,
       "snippet": null,
       "context": null
@@ -1021,7 +811,7 @@
       "ruleId": "query-param-unvalidated",
       "message": "searchParams.get() used without Zod schema validation.",
       "file": "src/app/api/databases/browse/handler.ts",
-      "line": 157,
+      "line": 170,
       "column": null,
       "snippet": null,
       "context": null
@@ -1031,7 +821,7 @@
       "ruleId": "query-param-unvalidated",
       "message": "searchParams.get() used without Zod schema validation.",
       "file": "src/app/api/databases/browse/handler.ts",
-      "line": 158,
+      "line": 171,
       "column": null,
       "snippet": null,
       "context": null
@@ -1041,7 +831,7 @@
       "ruleId": "query-param-unvalidated",
       "message": "searchParams.get() used without Zod schema validation.",
       "file": "src/app/api/databases/browse/handler.ts",
-      "line": 159,
+      "line": 172,
       "column": null,
       "snippet": null,
       "context": null
@@ -1051,7 +841,7 @@
       "ruleId": "query-param-unvalidated",
       "message": "searchParams.get() used without Zod schema validation.",
       "file": "src/app/api/databases/browse/handler.ts",
-      "line": 160,
+      "line": 173,
       "column": null,
       "snippet": null,
       "context": null
@@ -1101,7 +891,7 @@
       "ruleId": "query-param-unvalidated",
       "message": "searchParams.get() used without Zod schema validation.",
       "file": "src/app/api/databases/restore/handler.ts",
-      "line": 49,
+      "line": 50,
       "column": null,
       "snippet": null,
       "context": null
@@ -1111,7 +901,7 @@
       "ruleId": "query-param-unvalidated",
       "message": "searchParams.get() used without Zod schema validation.",
       "file": "src/app/api/databases/schema/handler.ts",
-      "line": 328,
+      "line": 351,
       "column": null,
       "snippet": null,
       "context": null
@@ -1121,7 +911,7 @@
       "ruleId": "query-param-unvalidated",
       "message": "searchParams.get() used without Zod schema validation.",
       "file": "src/app/api/databases/schema/handler.ts",
-      "line": 329,
+      "line": 352,
       "column": null,
       "snippet": null,
       "context": null
@@ -2111,7 +1901,7 @@
       "ruleId": "query-param-unvalidated",
       "message": "searchParams.get() used without Zod schema validation.",
       "file": "src/app/api/v2/products/metadata/handler.ts",
-      "line": 198,
+      "line": 199,
       "column": null,
       "snippet": null,
       "context": null
@@ -2199,12 +1989,6 @@
   ],
   "rules": [
     {
-      "ruleId": "req-json-no-schema",
-      "errorCount": 21,
-      "warningCount": 0,
-      "infoCount": 0
-    },
-    {
       "ruleId": "query-param-unvalidated",
       "errorCount": 0,
       "warningCount": 171,
@@ -2217,5 +2001,5 @@
       "infoCount": 0
     }
   ],
-  "durationMs": 46
+  "durationMs": 72
 }

@@ -2,6 +2,13 @@
 
 'use client';
 
+import {
+  buildActiveKangurLessonAssignmentsByComponent,
+  buildCompletedKangurLessonAssignmentsByComponent,
+  getKangurLessonMasteryPresentation,
+  orderKangurLessonsByAssignmentPriority,
+  resolveFocusedKangurLessonId,
+} from '@kangur/core';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -43,7 +50,6 @@ import {
   KangurStatusChip,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
-import { type KangurAccent } from '@/features/kangur/ui/design/tokens';
 import type { KangurLesson, KangurLessonComponentId } from '@/shared/contracts/kangur';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
@@ -139,106 +145,6 @@ const LESSON_COMPONENTS: Record<KangurLessonComponentId, ComponentType<LessonPro
   logical_analogies: LogicalAnalogiesLesson,
 };
 
-const FOCUS_TO_COMPONENT: Record<string, KangurLessonComponentId> = {
-  adding: 'adding',
-  addition: 'adding',
-  subtracting: 'subtracting',
-  subtraction: 'subtracting',
-  multiplication: 'multiplication',
-  division: 'division',
-  clock: 'clock',
-  calendar: 'calendar',
-  geometry: 'geometry_shapes',
-  geometry_basics: 'geometry_basics',
-  geometry_shapes: 'geometry_shapes',
-  geometry_symmetry: 'geometry_symmetry',
-  geometry_perimeter: 'geometry_perimeter',
-  logical_thinking: 'logical_thinking',
-  thinking: 'logical_thinking',
-  logical_patterns: 'logical_patterns',
-  patterns: 'logical_patterns',
-  logical_classification: 'logical_classification',
-  classification: 'logical_classification',
-  logical_reasoning: 'logical_reasoning',
-  reasoning: 'logical_reasoning',
-  logical_analogies: 'logical_analogies',
-  analogies: 'logical_analogies',
-  logic: 'logical_thinking',
-};
-
-const resolveFocusedLessonId = (focusToken: string, lessons: KangurLesson[]): string | null => {
-  const mappedComponent = FOCUS_TO_COMPONENT[focusToken];
-  if (mappedComponent) {
-    const byComponent = lessons.find((lesson) => lesson.componentId === mappedComponent);
-    if (byComponent) return byComponent.id;
-  }
-
-  const byId = lessons.find((lesson) => lesson.id.toLowerCase() === focusToken);
-  if (byId) return byId.id;
-
-  const byTitle = lessons.find((lesson) => lesson.title.toLowerCase().includes(focusToken));
-  return byTitle?.id ?? null;
-};
-
-const getLessonMasteryPresentation = (
-  lesson: KangurLesson,
-  progress: ReturnType<typeof useKangurProgressState>
-): {
-  statusLabel: string;
-  summaryLabel: string;
-  badgeAccent: KangurAccent;
-} => {
-  const mastery = progress.lessonMastery[lesson.componentId];
-  if (!mastery) {
-    return {
-      statusLabel: 'Nowa',
-      summaryLabel: 'Brak zapisanej praktyki',
-      badgeAccent: 'slate',
-    };
-  }
-
-  if (mastery.masteryPercent >= 85) {
-    return {
-      statusLabel: `Opanowane ${mastery.masteryPercent}%`,
-      summaryLabel: `Ukończono ${mastery.completions}× · najlepszy wynik ${mastery.bestScorePercent}%`,
-      badgeAccent: 'emerald',
-    };
-  }
-
-  if (mastery.masteryPercent >= 60) {
-    return {
-      statusLabel: `W trakcie ${mastery.masteryPercent}%`,
-      summaryLabel: `Ukończono ${mastery.completions}× · ostatni wynik ${mastery.lastScorePercent}%`,
-      badgeAccent: 'amber',
-    };
-  }
-
-  return {
-    statusLabel: `Powtórz ${mastery.masteryPercent}%`,
-    summaryLabel: `Ukończono ${mastery.completions}× · ostatni wynik ${mastery.lastScorePercent}%`,
-    badgeAccent: 'rose',
-  };
-};
-
-const LESSON_ASSIGNMENT_PRIORITY_ORDER = {
-  high: 0,
-  medium: 1,
-  low: 2,
-} as const;
-
-const getLessonAssignmentTimestamp = (
-  primaryValue: string | null,
-  fallbackValue: string
-): number => {
-  const primaryTimestamp = primaryValue ? Date.parse(primaryValue) : Number.NaN;
-  if (!Number.isNaN(primaryTimestamp)) {
-    return primaryTimestamp;
-  }
-
-  const fallbackTimestamp = Date.parse(fallbackValue);
-  return Number.isNaN(fallbackTimestamp) ? 0 : fallbackTimestamp;
-};
-
 export default function Lessons() {
   const router = useRouter();
   const { basePath } = useKangurRouting();
@@ -263,86 +169,18 @@ export default function Lessons() {
     () => parseKangurLessonDocumentStore(rawLessonDocuments),
     [rawLessonDocuments]
   );
-  const lessonAssignmentsByComponent = useMemo(() => {
-    const nextMap = new Map<KangurLessonComponentId, (typeof assignments)[number]>();
-    assignments
-      .filter((assignment) => !assignment.archived)
-      .filter((assignment) => assignment.progress.status !== 'completed')
-      .filter(
-        (assignment): assignment is (typeof assignments)[number] & { target: { type: 'lesson' } } =>
-          assignment.target.type === 'lesson'
-      )
-      .forEach((assignment) => {
-        const componentId = assignment.target.lessonComponentId;
-        const existing = nextMap.get(componentId);
-        if (!existing) {
-          nextMap.set(componentId, assignment);
-          return;
-        }
-
-        if (
-          LESSON_ASSIGNMENT_PRIORITY_ORDER[assignment.priority] <
-          LESSON_ASSIGNMENT_PRIORITY_ORDER[existing.priority]
-        ) {
-          nextMap.set(componentId, assignment);
-        }
-      });
-
-    return nextMap;
-  }, [assignments]);
-  const completedLessonAssignmentsByComponent = useMemo(() => {
-    const nextMap = new Map<KangurLessonComponentId, (typeof assignments)[number]>();
-
-    assignments
-      .filter((assignment) => !assignment.archived)
-      .filter((assignment) => assignment.progress.status === 'completed')
-      .filter(
-        (assignment): assignment is (typeof assignments)[number] & { target: { type: 'lesson' } } =>
-          assignment.target.type === 'lesson'
-      )
-      .forEach((assignment) => {
-        const componentId = assignment.target.lessonComponentId;
-        const existing = nextMap.get(componentId);
-        if (!existing) {
-          nextMap.set(componentId, assignment);
-          return;
-        }
-
-        const assignmentTimestamp = getLessonAssignmentTimestamp(
-          assignment.progress.completedAt,
-          assignment.updatedAt
-        );
-        const existingTimestamp = getLessonAssignmentTimestamp(
-          existing.progress.completedAt,
-          existing.updatedAt
-        );
-
-        if (assignmentTimestamp > existingTimestamp) {
-          nextMap.set(componentId, assignment);
-        }
-      });
-
-    return nextMap;
-  }, [assignments]);
-  const orderedLessons = useMemo(() => {
-    return [...lessons].sort((left, right) => {
-      const leftAssignment = lessonAssignmentsByComponent.get(left.componentId);
-      const rightAssignment = lessonAssignmentsByComponent.get(right.componentId);
-
-      if (leftAssignment && !rightAssignment) return -1;
-      if (!leftAssignment && rightAssignment) return 1;
-      if (leftAssignment && rightAssignment) {
-        const priorityDelta =
-          LESSON_ASSIGNMENT_PRIORITY_ORDER[leftAssignment.priority] -
-          LESSON_ASSIGNMENT_PRIORITY_ORDER[rightAssignment.priority];
-        if (priorityDelta !== 0) {
-          return priorityDelta;
-        }
-      }
-
-      return left.sortOrder - right.sortOrder;
-    });
-  }, [lessonAssignmentsByComponent, lessons]);
+  const lessonAssignmentsByComponent = useMemo(
+    () => buildActiveKangurLessonAssignmentsByComponent(assignments),
+    [assignments]
+  );
+  const completedLessonAssignmentsByComponent = useMemo(
+    () => buildCompletedKangurLessonAssignmentsByComponent(assignments),
+    [assignments]
+  );
+  const orderedLessons = useMemo(
+    () => orderKangurLessonsByAssignmentPriority(lessons, lessonAssignmentsByComponent),
+    [lessonAssignmentsByComponent, lessons]
+  );
 
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
 
@@ -367,7 +205,7 @@ export default function Lessons() {
       return;
     }
 
-    const focusedLessonId = resolveFocusedLessonId(focusToken, lessons);
+    const focusedLessonId = resolveFocusedKangurLessonId(focusToken, lessons);
     if (!focusedLessonId) {
       return;
     }
@@ -517,7 +355,10 @@ export default function Lessons() {
                   />
                 ) : (
                   orderedLessons.map((lesson, index) => {
-                    const masteryPresentation = getLessonMasteryPresentation(lesson, progress);
+                    const masteryPresentation = getKangurLessonMasteryPresentation(
+                      lesson,
+                      progress
+                    );
                     const lessonAssignment =
                       lessonAssignmentsByComponent.get(lesson.componentId) ?? null;
                     const completedLessonAssignment = !lessonAssignment

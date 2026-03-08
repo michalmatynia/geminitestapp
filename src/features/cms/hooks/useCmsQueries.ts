@@ -120,8 +120,7 @@ export function useUpdatePage(): UpdateMutation<
     mutationFn: ({ id, input }: { id: string; input: Page & { slugIds?: string[] } }) =>
       updatePage(id, input).then(({ ok, payload }) => {
         if (!ok) {
-          const message =
-            (payload as unknown as { error?: string }).error ?? 'Failed to update page';
+          const message = (payload as { error?: string }).error ?? 'Failed to update page';
           throw new Error(message);
         }
         return payload;
@@ -464,9 +463,9 @@ export function useCmsTheme(id?: string): SingleQuery<CmsTheme> {
 export function useCreateTheme(): CreateMutation<CmsTheme, CmsThemeCreateInput> {
   return createCreateMutationV2({
     mutationFn: (input: CmsThemeCreateInput) =>
-      createTheme(input).then(({ ok, payload }) => {
-        if (!ok) throw new Error('Failed to create theme');
-        return payload;
+      createTheme(input).then((result) => {
+        if (!result.ok) throw new Error(result.error || 'Failed to create theme');
+        return result.payload;
       }),
     mutationKey: cmsKeys.themes.lists(),
     meta: {
@@ -489,9 +488,9 @@ export function useUpdateTheme(): UpdateMutation<
   > {
   return createUpdateMutationV2({
     mutationFn: ({ id, input }: { id: string; input: CmsThemeUpdateInput }) =>
-      updateTheme(id, input).then(({ ok, payload }) => {
-        if (!ok) throw new Error('Failed to update theme');
-        return payload;
+      updateTheme(id, input).then((result) => {
+        if (!result.ok) throw new Error(result.error || 'Failed to update theme');
+        return result.payload;
       }),
     mutationKey: cmsKeys.themes.lists(),
     meta: {

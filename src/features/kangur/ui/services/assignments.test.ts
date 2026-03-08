@@ -43,7 +43,7 @@ const progressWithMastery: KangurProgressState = {
 };
 
 describe('buildKangurAssignments', () => {
-  it('prioritizes weakest lessons before generic mixed practice', () => {
+  it('prioritizes weakest lessons before targeted practice', () => {
     const assignments = buildKangurAssignments(progressWithMastery);
 
     expect(assignments).toHaveLength(3);
@@ -68,9 +68,11 @@ describe('buildKangurAssignments', () => {
     });
     expect(assignments[2]).toMatchObject({
       id: 'mixed-practice',
+      title: 'Trening celowany',
       action: {
         page: 'Game',
         query: {
+          operation: 'division',
           quickStart: 'training',
         },
       },
@@ -91,6 +93,15 @@ describe('buildKangurAssignments', () => {
     expect(assignments[0]).toMatchObject({
       action: {
         page: 'Lessons',
+      },
+    });
+    expect(assignments[1]).toMatchObject({
+      action: {
+        page: 'Game',
+        query: {
+          operation: 'mixed',
+          quickStart: 'training',
+        },
       },
     });
   });

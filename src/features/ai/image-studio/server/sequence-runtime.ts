@@ -119,7 +119,7 @@ const resolveProjectScopedSettings = async (params: {
     !Array.isArray(params.studioSettings)
   ) {
     const parsed = parsePersistedImageStudioSettings(JSON.stringify(params.studioSettings));
-    return parsed as unknown as Record<string, unknown>;
+    return parsed as Record<string, unknown>;
   }
 
   const projectSettingsKey = getImageStudioProjectSettingsKey(params.projectId);
@@ -129,7 +129,7 @@ const resolveProjectScopedSettings = async (params: {
   ]);
 
   const parsed = parsePersistedImageStudioSettings(projectSettingsRaw ?? globalSettingsRaw);
-  return parsed as unknown as Record<string, unknown>;
+  return parsed as Record<string, unknown>;
 };
 
 const resolveSequenceSteps = (params: {

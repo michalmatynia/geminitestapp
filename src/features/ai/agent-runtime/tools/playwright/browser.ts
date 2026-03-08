@@ -10,18 +10,42 @@ import { toDataUrl } from '../utils';
 
 import type { Browser, BrowserContext, Page, Cookie } from 'playwright';
 
-const getPlaywright = (): {
+type PlaywrightModule = {
   chromium: { launch: (opts: { headless: boolean }) => Promise<Browser> };
   firefox: { launch: (opts: { headless: boolean }) => Promise<Browser> };
   webkit: { launch: (opts: { headless: boolean }) => Promise<Browser> };
-} => {
+};
+
+const asRecord = (value: unknown): Record<string, unknown> | null =>
+  value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+
+const isBrowserType = (
+  value: unknown
+): value is { launch: (opts: { headless: boolean }) => Promise<Browser> } => {
+  const record = asRecord(value);
+  return record !== null && typeof record['launch'] === 'function';
+};
+
+const isPlaywrightModule = (value: unknown): value is PlaywrightModule => {
+  const record = asRecord(value);
+  return (
+    record !== null &&
+    isBrowserType(record['chromium']) &&
+    isBrowserType(record['firefox']) &&
+    isBrowserType(record['webkit'])
+  );
+};
+
+const getPlaywright = (): PlaywrightModule => {
   // Keep Playwright as a runtime require so server bundles don't try to inline its assets.
   const requireFn = createRequire(import.meta.url);
-  return requireFn('playwright') as unknown as {
-    chromium: { launch: (opts: { headless: boolean }) => Promise<Browser> };
-    firefox: { launch: (opts: { headless: boolean }) => Promise<Browser> };
-    webkit: { launch: (opts: { headless: boolean }) => Promise<Browser> };
-  };
+  const playwrightModule = requireFn('playwright');
+  if (!isPlaywrightModule(playwrightModule)) {
+    throw new Error('Playwright runtime is unavailable.');
+  }
+  return playwrightModule;
 };
 
 export const launchBrowser = async (

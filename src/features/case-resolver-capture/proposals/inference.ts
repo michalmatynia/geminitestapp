@@ -3,8 +3,8 @@ import {
   findExistingFilemakerAddressId,
   findExistingFilemakerPartyReference,
   normalizeCaseResolverComparable,
-} from '@/features/case-resolver';
-import { extractCaseResolverDocumentDate } from '@/features/case-resolver';
+  extractCaseResolverDocumentDate,
+} from '@/shared/lib/case-resolver-capture-adapter';
 
 import type { FilemakerDatabaseDto as FilemakerDatabase } from '@/shared/contracts/filemaker';
 import type {

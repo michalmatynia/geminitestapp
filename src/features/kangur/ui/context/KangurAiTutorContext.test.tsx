@@ -41,13 +41,9 @@ vi.mock('@/shared/lib/api-client', async (importOriginal) => {
   };
 });
 
-vi.mock('@/features/ai', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/features/ai')>();
-  return {
-    ...actual,
-    useAgentPersonas: useAgentPersonasMock,
-  };
-});
+vi.mock('@/shared/hooks/useAgentPersonas', () => ({
+  useAgentPersonas: useAgentPersonasMock,
+}));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useOptionalKangurAuth: useOptionalKangurAuthMock,

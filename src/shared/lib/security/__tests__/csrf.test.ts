@@ -117,4 +117,18 @@ describe('csrf same-origin matching', () => {
 
     expect(csrf.isSameOriginRequest(request as never)).toBe(false);
   });
+
+  it('accepts explicitly trusted mobile-web origins when provided', () => {
+    const request = makeRequest({
+      url: 'http://localhost:3000/api/test',
+      headers: {
+        origin: 'http://localhost:8081',
+      },
+    });
+
+    expect(
+      csrf.isTrustedOriginRequest(request as never, ['http://localhost:8081'])
+    ).toBe(true);
+    expect(csrf.isTrustedOriginRequest(request as never, ['http://localhost:9090'])).toBe(false);
+  });
 });

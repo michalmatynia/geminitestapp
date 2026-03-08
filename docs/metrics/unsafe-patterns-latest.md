@@ -1,22 +1,22 @@
 # Unsafe Patterns Check
 
-Generated at: 2026-03-08T04:48:36.345Z
+Generated at: 2026-03-08T10:33:03.260Z
 
 ## Summary
 
 - Status: FAILED
-- Files scanned: 4278
-- Errors: 264
+- Files scanned: 4311
+- Errors: 100
 - Warnings: 0
-- Info: 189
+- Info: 186
 
 ## Trend Counters
 
 | Metric | Count |
 | --- | ---: |
-| doubleAssertionCount | 264 |
-| anyCount | 67 |
-| eslintDisableCount | 101 |
+| doubleAssertionCount | 100 |
+| anyCount | 66 |
+| eslintDisableCount | 99 |
 | nonNullAssertionCount | 21 |
 | tsIgnoreCount | 0 |
 | tsExpectErrorCount | 0 |
@@ -25,8 +25,8 @@ Generated at: 2026-03-08T04:48:36.345Z
 
 | Rule | Count |
 | --- | ---: |
-| @typescript-eslint/no-explicit-any | 33 |
-| @typescript-eslint/no-unsafe-assignment | 21 |
+| @typescript-eslint/no-explicit-any | 32 |
+| @typescript-eslint/no-unsafe-assignment | 20 |
 | @next/next/no-img-element | 18 |
 | @typescript-eslint/no-unsafe-member-access | 12 |
 | no-restricted-syntax | 8 |
@@ -40,70 +40,17 @@ Generated at: 2026-03-08T04:48:36.345Z
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| double-assertion | 264 | 0 | 0 |
-| eslint-disable | 0 | 0 | 101 |
-| explicit-any | 0 | 0 | 67 |
+| double-assertion | 100 | 0 | 0 |
+| eslint-disable | 0 | 0 | 99 |
+| explicit-any | 0 | 0 | 66 |
 | non-null-assertion | 0 | 0 | 21 |
 
 ## Issues
 
 | Severity | Rule | Location | Message |
 | --- | --- | --- | --- |
-| ERROR | double-assertion | src/app/api/agentcreator/teaching/collections/[collectionId]/documents/[documentId]/handler.ts:10 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/app/api/agentcreator/teaching/collections/[collectionId]/documents/handler.ts:28 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/app/api/agentcreator/teaching/collections/[collectionId]/documents/handler.ts:39 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/app/api/agentcreator/teaching/collections/[collectionId]/handler.ts:23 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/app/api/agentcreator/teaching/collections/[collectionId]/handler.ts:46 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/app/api/agentcreator/teaching/collections/[collectionId]/search/handler.ts:22 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/app/api/ai-paths/db-action/handler.ts:202 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/app/api/ai-paths/health/handler.ts:146 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/app/api/ai-paths/update/handler.ts:118 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/app/api/ai-paths/update/handler.ts:156 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/app/api/case-resolver/assets/extract-pdf/handler.ts:59 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/app/api/chatbot/context/handler.ts:33 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/app/api/chatbot/settings/handler.ts:66 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/app/api/databases/browse/handler.ts:83 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/app/api/databases/copy-collection/handler.ts:45 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/app/api/databases/engine/operations/jobs/[jobId]/cancel/handler.ts:40 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/app/api/databases/schema/handler.ts:172 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/app/api/databases/schema/handler.ts:282 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/app/api/databases/schema/handler.ts:349 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/app/api/databases/schema/handler.ts:360 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/app/api/v2/integrations/[id]/connections/[connectionId]/base/request/handler.ts:133 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/app/api/v2/integrations/imports/base/parameters/handler.ts:173 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/app/api/v2/integrations/products/[id]/export-to-base/segments/preparation.ts:125 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/app/api/v2/metadata/[type]/[id]/handler.ts:329 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/app/api/v2/metadata/[type]/[id]/handler.ts:422 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/app/api/v2/metadata/[type]/[id]/handler.ts:444 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/app/api/v2/metadata/handler.ts:267 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/app/api/v2/metadata/handler.ts:309 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/app/api/v2/products/[id]/images/base64/handler.ts:28 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/app/api/v2/products/entities/handler.ts:69 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/app/api/v2/products/import/csv/handler.ts:83 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/app/api/v2/products/metadata/[type]/[id]/handler.ts:408 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/app/api/v2/products/metadata/handler.ts:333 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/ai/agent-runtime/tools/playwright/browser.ts:20 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/ai/chatbot/services/chatbot-session-repository.ts:105 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/ai/chatbot/services/chatbot-session-repository.ts:136 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/ai/chatbot/services/chatbot-session-repository.ts:182 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/ai/image-studio/components/ImageStudioAnalysisTab.tsx:615 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/ai/image-studio/components/right-sidebar/useRightSidebarSequence.ts:170 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/ai/image-studio/components/right-sidebar/useRightSidebarSequence.ts:287 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/ai/image-studio/components/SequencingPanel.tsx:620 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/ai/image-studio/components/VersionNodeMapPanel.tsx:472 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/ai/image-studio/product-studio/product-studio-service.settings.ts:131 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/ai/image-studio/server/card-link-backfill.ts:99 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/ai/image-studio/server/card-link-backfill.ts:105 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/ai/image-studio/server/handlers/generation-handler.ts:203 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/ai/image-studio/server/handlers/generation-handler.ts:212 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/ai/image-studio/server/sequence-runtime.ts:122 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/ai/image-studio/server/sequence-runtime.ts:132 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/ai/image-studio/utils/run-request-preview.ts:273 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/auth/services/auth-login-challenge.ts:37 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/auth/services/auth-security-profile.ts:164 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/auth/services/auth-security-profile.ts:189 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/auth/services/auth-security.ts:147 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/auth/services/user-preferences-repository.ts:320 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
+| ERROR | double-assertion | src/features/ai/image-studio/server/handlers/generation-handler.ts:192 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
+| ERROR | double-assertion | src/features/ai/image-studio/server/handlers/generation-handler.ts:201 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
 | ERROR | double-assertion | src/features/case-resolver/components/CaseResolverCanvasWorkspace.tsx:424 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
 | ERROR | double-assertion | src/features/case-resolver/components/CaseResolverCanvasWorkspace.tsx:442 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
 | ERROR | double-assertion | src/features/case-resolver/components/CaseResolverRelationsWorkspace.tsx:247 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
@@ -122,8 +69,6 @@ Generated at: 2026-03-08T04:48:36.345Z
 | ERROR | double-assertion | src/features/case-resolver/settings-relation-graph.ts:709 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
 | ERROR | double-assertion | src/features/case-resolver/settings.workspace.ts:134 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
 | ERROR | double-assertion | src/features/case-resolver/settings.workspace.ts:155 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/case-resolver/workers/case-resolver-ocr/processors/openai.ts:56 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/case-resolver/workers/case-resolver-ocr/processors/openai.ts:71 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
 | ERROR | double-assertion | src/features/case-resolver/workspace-persistence-detached-documents.ts:246 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
 | ERROR | double-assertion | src/features/case-resolver/workspace-persistence-detached-documents.ts:336 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
 | ERROR | double-assertion | src/features/case-resolver/workspace-persistence-detached-history.ts:122 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
@@ -132,20 +77,6 @@ Generated at: 2026-03-08T04:48:36.345Z
 | ERROR | double-assertion | src/features/case-resolver/workspace-persistence-save.ts:197 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
 | ERROR | double-assertion | src/features/case-resolver/workspace-persistence-save.ts:213 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
 | ERROR | double-assertion | src/features/case-resolver/workspace-persistence-save.ts:225 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/cms/api/themes.ts:23 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/cms/api/themes.ts:40 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/cms/components/shared/EventEffectsWrapper.tsx:109 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/cms/hooks/useCmsQueries.ts:124 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/cms/services/cms-repository/prisma-cms-repository.ts:63 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/cms/services/cms-repository/prisma-cms-repository.ts:64 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/cms/services/cms-repository/prisma-cms-repository.ts:65 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/cms/services/cms-repository/prisma-cms-repository.ts:77 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/cms/services/cms-repository/prisma-cms-repository.ts:378 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/cms/services/cms-repository/prisma-cms-repository.ts:379 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/cms/services/cms-repository/prisma-cms-repository.ts:380 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/cms/services/cms-repository/prisma-cms-repository.ts:390 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/cms/services/cms-repository/prisma-cms-repository.ts:391 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/cms/services/cms-repository/prisma-cms-repository.ts:392 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
 | ERROR | double-assertion | src/features/drafter/services/draft-repository.ts:352 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
 | ERROR | double-assertion | src/features/foldertree/v2/shell/useFolderTreeProfileConfig.ts:13 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
 | ERROR | double-assertion | src/features/integrations/services/base-image-sync.ts:89 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
@@ -156,20 +87,7 @@ Generated at: 2026-03-08T04:48:36.345Z
 | ERROR | double-assertion | src/features/integrations/services/imports/base-import-run-repository.ts:288 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
 | ERROR | double-assertion | src/features/integrations/services/integration-repository/prisma-impl.ts:271 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
 | ERROR | double-assertion | src/features/integrations/services/integration-repository/prisma-impl.ts:286 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/integrations/services/product-listing-repository.ts:133 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/integrations/services/product-listing-repository.ts:136 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/integrations/services/product-listing-repository.ts:144 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/integrations/services/product-listing-repository.ts:169 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
 | ERROR | double-assertion | src/features/integrations/services/product-listing-repository.ts:206 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/integrations/services/product-listing-repository.ts:240 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/integrations/services/product-listing-repository.ts:316 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/integrations/services/product-listing-repository.ts:332 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/integrations/services/product-listing-repository.ts:423 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/integrations/services/product-listing-repository.ts:431 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/integrations/services/product-listing-repository.ts:494 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/integrations/services/product-listing-repository.ts:509 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/integrations/services/product-listing-repository.ts:552 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/integrations/services/product-listing-repository.ts:583 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
 | ERROR | double-assertion | src/features/internationalization/services/currency-repository/mongo-currency-repository.ts:105 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
 | ERROR | double-assertion | src/features/notesapp/api/useNoteQueries.ts:116 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
 | ERROR | double-assertion | src/features/notesapp/api/useNoteQueries.ts:123 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
@@ -183,8 +101,8 @@ Generated at: 2026-03-08T04:48:36.345Z
 | ERROR | double-assertion | src/features/notesapp/services/notes/note-repository/prisma/theme-impl.ts:77 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
 | ERROR | double-assertion | src/features/notesapp/services/notes/note-repository/prisma/theme-impl.ts:129 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
 | ERROR | double-assertion | src/features/products/components/list/ProductColumns.tsx:378 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/products/components/ProductModals.tsx:67 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/features/products/components/ProductModals.tsx:68 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
+| ERROR | double-assertion | src/features/products/components/ProductModals.tsx:69 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
+| ERROR | double-assertion | src/features/products/components/ProductModals.tsx:70 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
 | ERROR | double-assertion | src/features/products/hooks/useAiPathTrigger.ts:66 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
 | ERROR | double-assertion | src/features/products/hooks/useAiPathTrigger.ts:70 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
 | ERROR | double-assertion | src/features/products/hooks/useProductFormValidator.ts:453 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
@@ -193,7 +111,7 @@ Generated at: 2026-03-08T04:48:36.345Z
 | ERROR | double-assertion | src/features/products/workers/productAiQueue.ts:208 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
 | ERROR | double-assertion | src/features/viewer3d/components/Viewer3D.tsx:503 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
 | ERROR | double-assertion | src/proxy.ts:19 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/hooks/offline/useOfflineMutation.ts:207 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
+| ERROR | double-assertion | src/shared/hooks/offline/useOfflineMutation.ts:208 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
 | ERROR | double-assertion | src/shared/hooks/query/useAdvancedQueries.ts:58 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
 | ERROR | double-assertion | src/shared/hooks/query/useQueryDiagnostics.ts:38 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
 | ERROR | double-assertion | src/shared/hooks/query/useQueryDiagnostics.ts:39 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
@@ -212,45 +130,127 @@ Generated at: 2026-03-08T04:48:36.345Z
 | ERROR | double-assertion | src/shared/lib/db/services/database-json-backup.ts:214 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
 | ERROR | double-assertion | src/shared/lib/db/services/database-sync.ts:289 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
 | ERROR | double-assertion | src/shared/lib/db/services/database-sync.ts:315 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/ai-sync.ts:14 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/ai-sync.ts:47 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/ai-sync.ts:96 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/ai-sync.ts:133 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/auth-sync.ts:16 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/auth-sync.ts:43 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/auth-sync.ts:73 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/auth-sync.ts:76 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/auth-sync.ts:100 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/auth-sync.ts:125 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/catalog-sync.ts:22 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/catalog-sync.ts:25 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/catalog-sync.ts:30 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/catalog-sync.ts:90 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/catalog-sync.ts:93 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/catalog-sync.ts:174 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/catalog-sync.ts:177 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/catalog-sync.ts:200 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/catalog-sync.ts:203 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/catalog-sync.ts:224 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/catalog-sync.ts:229 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/catalog-sync.ts:263 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/catalog-sync.ts:266 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/chatbot-sync.ts:13 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/chatbot-sync.ts:19 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/chatbot-sync.ts:81 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/cms-sync.ts:9 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/cms-sync.ts:29 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/cms-sync.ts:52 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/cms-sync.ts:127 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/geo-sync.ts:12 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/geo-sync.ts:46 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/geo-sync.ts:99 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/image-sync.ts:9 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/image-sync.ts:12 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/image-sync.ts:53 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
-| ERROR | double-assertion | src/shared/lib/db/services/sync/image-sync.ts:57 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
+| ERROR | double-assertion | src/shared/lib/env.ts:105 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
+| ERROR | double-assertion | src/shared/lib/observability/system-log-repository.ts:84 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
+| ERROR | double-assertion | src/shared/lib/offline-support.ts:37 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
+| ERROR | double-assertion | src/shared/lib/products/services/parameter-repository/prisma-parameter-repository.ts:52 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
+| ERROR | double-assertion | src/shared/lib/products/services/parameter-repository/prisma-parameter-repository.ts:55 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
+| ERROR | double-assertion | src/shared/lib/products/services/validation-pattern-repository/prisma-validation-pattern-repository.ts:177 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
+| ERROR | double-assertion | src/shared/lib/products/services/validation-pattern-repository/prisma-validation-pattern-repository.ts:308 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
+| ERROR | double-assertion | src/shared/lib/products/services/validation-pattern-repository/prisma-validation-pattern-repository.ts:309 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
+| ERROR | double-assertion | src/shared/lib/query-factories-v2.ts:183 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
+| ERROR | double-assertion | src/shared/lib/query-factories-v2.ts:245 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
+| ERROR | double-assertion | src/shared/lib/redis.ts:37 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
+| ERROR | double-assertion | src/shared/lib/tanstack-factory-v2/guards.ts:72 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
+| ERROR | double-assertion | src/shared/lib/tanstack-factory-v2/guards.ts:113 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
+| ERROR | double-assertion | src/shared/lib/vector-drawing/components/VectorDrawingCanvas.tsx:114 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
+| ERROR | double-assertion | src/shared/ui/badge.tsx:65 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
+| ERROR | double-assertion | src/shared/ui/badge.tsx:70 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
+| ERROR | double-assertion | src/shared/ui/badge.tsx:153 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
+| ERROR | double-assertion | src/shared/utils/retry.ts:32 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
+| ERROR | double-assertion | src/shared/validations/kangur.ts:51 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
+| INFO | eslint-disable | src/app/api/image-studio/slots/[slotId]/upscale/handler.ts:1 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any |
+| INFO | explicit-any | src/app/api/image-studio/slots/[slotId]/upscale/handler.ts:411 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
+| INFO | eslint-disable | src/features/ai/agent-runtime/planning/llm.ts:3 | eslint-disable comment disabling: @typescript-eslint/no-explicit-any |
+| INFO | eslint-disable | src/features/ai/agent-runtime/planning/llm.ts:4 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment |
+| INFO | eslint-disable | src/features/ai/agent-runtime/planning/llm.ts:5 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-argument |
+| INFO | eslint-disable | src/features/ai/agent-runtime/planning/llm.ts:6 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-call |
+| INFO | eslint-disable | src/features/ai/agent-runtime/planning/llm.ts:8 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-member-access |
+| INFO | explicit-any | src/features/ai/agent-runtime/planning/llm.ts:236 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
+| INFO | explicit-any | src/features/ai/agent-runtime/planning/llm.ts:351 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
+| INFO | non-null-assertion | src/features/ai/agent-runtime/tools/playwright/actions.ts:102 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
+| INFO | non-null-assertion | src/features/ai/agent-runtime/tools/playwright/inventory.ts:38 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
+| INFO | eslint-disable | src/features/ai/ai-paths/components/CanvasControlPanel.tsx:57 | eslint-disable comment disabling: no-restricted-syntax |
+| INFO | eslint-disable | src/features/ai/ai-paths/components/CanvasControlPanel.tsx:72 | eslint-disable comment disabling: no-restricted-syntax |
+| INFO | eslint-disable | src/features/ai/ai-paths/components/CanvasControlPanel.tsx:89 | eslint-disable comment disabling: no-restricted-syntax |
+| INFO | eslint-disable | src/features/ai/ai-paths/components/CanvasControlPanel.tsx:101 | eslint-disable comment disabling: no-restricted-syntax |
+| INFO | eslint-disable | src/features/ai/ai-paths/components/CanvasControlPanel.tsx:113 | eslint-disable comment disabling: no-restricted-syntax |
+| INFO | eslint-disable | src/features/ai/ai-paths/workers/ai-path-run-queue/status.ts:89 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment |
+| INFO | explicit-any | src/features/ai/ai-paths/workers/ai-path-run-queue/status.ts:89 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
+| INFO | eslint-disable | src/features/ai/image-studio/components/center-preview/SplitVariantPreview.tsx:234 | eslint-disable comment disabling: @next/next/no-img-element |
+| INFO | eslint-disable | src/features/ai/image-studio/components/center-preview/SplitVariantPreview.tsx:304 | eslint-disable comment disabling: @next/next/no-img-element |
+| INFO | eslint-disable | src/features/ai/image-studio/components/right-sidebar/__tests__/rightSidebarRuntimeMockComponents.tsx:103 | eslint-disable comment disabling: @next/next/no-img-element |
+| INFO | eslint-disable | src/features/ai/image-studio/components/studio-modals/__tests__/studioInlineEditRuntimeMockComponents.tsx:262 | eslint-disable comment disabling: @next/next/no-img-element |
+| INFO | eslint-disable | src/features/ai/image-studio/components/studio-modals/InlineImagePreviewCanvas.tsx:198 | eslint-disable comment disabling: @next/next/no-img-element |
+| INFO | eslint-disable | src/features/ai/image-studio/components/studio-modals/SlotInlineEditCardTab.tsx:201 | eslint-disable comment disabling: @next/next/no-img-element |
+| INFO | eslint-disable | src/features/ai/image-studio/components/studio-modals/SlotInlineEditCompositesTab.tsx:29 | eslint-disable comment disabling: @next/next/no-img-element |
+| INFO | eslint-disable | src/features/ai/image-studio/components/studio-modals/SlotInlineEditCompositesTab.tsx:100 | eslint-disable comment disabling: @next/next/no-img-element |
+| INFO | eslint-disable | src/features/ai/image-studio/components/studio-modals/SlotInlineEditMasksTab.tsx:35 | eslint-disable comment disabling: @next/next/no-img-element |
+| INFO | eslint-disable | src/features/ai/image-studio/components/VersionGraphComparePanel.tsx:60 | eslint-disable comment disabling: @next/next/no-img-element |
+| INFO | eslint-disable | src/features/ai/image-studio/components/VersionGraphInspector.tsx:81 | eslint-disable comment disabling: @next/next/no-img-element |
+| INFO | eslint-disable | src/features/ai/image-studio/components/VersionNodeDetailsModal.tsx:323 | eslint-disable comment disabling: @next/next/no-img-element |
+| INFO | eslint-disable | src/features/ai/image-studio/server/run-repository.ts:277 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment |
+| INFO | eslint-disable | src/features/ai/image-studio/server/run-repository.ts:282 | eslint-disable comment disabling: @typescript-eslint/no-explicit-any |
+| INFO | explicit-any | src/features/ai/image-studio/server/run-repository.ts:283 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
+| INFO | eslint-disable | src/features/ai/image-studio/server/run-repository.ts:355 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment |
+| INFO | eslint-disable | src/features/ai/image-studio/server/run-repository.ts:360 | eslint-disable comment disabling: @typescript-eslint/no-explicit-any |
+| INFO | explicit-any | src/features/ai/image-studio/server/run-repository.ts:361 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
+| INFO | eslint-disable | src/features/ai/insights/generator/settings-service.ts:1 | eslint-disable comment disabling: @typescript-eslint/no-explicit-any |
+| INFO | eslint-disable | src/features/ai/insights/generator/settings-service.ts:2 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment |
+| INFO | eslint-disable | src/features/ai/insights/generator/settings-service.ts:3 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-call |
+| INFO | eslint-disable | src/features/ai/insights/generator/settings-service.ts:4 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-member-access |
+| INFO | eslint-disable | src/features/ai/insights/generator/settings-service.ts:5 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-return |
+| INFO | explicit-any | src/features/ai/insights/generator/settings-service.ts:13 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
+| INFO | explicit-any | src/features/ai/insights/generator/settings-service.ts:17 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
+| INFO | eslint-disable | src/features/case-resolver/components/CaseResolverFileViewer.tsx:186 | eslint-disable comment disabling: @next/next/no-img-element |
+| INFO | eslint-disable | src/features/case-resolver/components/page/CaseResolverScanFileEditor.tsx:338 | eslint-disable comment disabling: @next/next/no-img-element |
+| INFO | non-null-assertion | src/features/case-resolver/hooks/capture-actions/useApplyCaptureProposal.ts:112 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
+| INFO | non-null-assertion | src/features/case-resolver/hooks/capture-actions/useApplyCaptureProposal.ts:143 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
+| INFO | non-null-assertion | src/features/case-resolver/hooks/capture-actions/useApplyCaptureProposal.ts:179 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
+| INFO | non-null-assertion | src/features/case-resolver/hooks/capture-actions/useApplyCaptureProposal.ts:181 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
+| INFO | non-null-assertion | src/features/case-resolver/hooks/capture-actions/useApplyCaptureProposal.ts:182 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
+| INFO | non-null-assertion | src/features/case-resolver/hooks/capture-actions/useApplyCaptureProposal.ts:183 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
+| INFO | non-null-assertion | src/features/case-resolver/hooks/capture-actions/useApplyCaptureProposal.ts:188 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
+| INFO | non-null-assertion | src/features/case-resolver/hooks/capture-actions/useApplyCaptureProposal.ts:190 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
+| INFO | non-null-assertion | src/features/case-resolver/hooks/capture-actions/useApplyCaptureProposal.ts:191 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
+| INFO | non-null-assertion | src/features/case-resolver/hooks/capture-actions/useApplyCaptureProposal.ts:192 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
+| INFO | non-null-assertion | src/features/case-resolver/hooks/capture-actions/useApplyCaptureProposal.ts:197 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
+| INFO | non-null-assertion | src/features/case-resolver/hooks/capture-actions/useApplyCaptureProposal.ts:199 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
+| INFO | non-null-assertion | src/features/cms/hooks/page-builder/page-builder-reducer-move-actions.ts:121 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
+| INFO | non-null-assertion | src/features/cms/hooks/page-builder/page-builder-reducer-move-actions.ts:511 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
+| INFO | non-null-assertion | src/features/cms/hooks/page-builder/page-builder-reducer-move-actions.ts:526 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
+| INFO | eslint-disable | src/features/foldertree/v2/hooks/folder-tree-instance/useFolderTreeEngineActions.ts:62 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any |
+| INFO | explicit-any | src/features/foldertree/v2/hooks/folder-tree-instance/useFolderTreeEngineActions.ts:75 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
+| INFO | eslint-disable | src/features/foldertree/v2/hooks/folder-tree-instance/useFolderTreeEngineActions.ts:99 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any |
+| INFO | explicit-any | src/features/foldertree/v2/hooks/folder-tree-instance/useFolderTreeEngineActions.ts:112 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
+| INFO | eslint-disable | src/features/foldertree/v2/hooks/folder-tree-instance/useFolderTreeEngineActions.ts:131 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any |
+| INFO | explicit-any | src/features/foldertree/v2/hooks/folder-tree-instance/useFolderTreeEngineActions.ts:144 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
+| INFO | eslint-disable | src/features/foldertree/v2/hooks/folder-tree-instance/useFolderTreeEngineActions.ts:207 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any |
+| INFO | explicit-any | src/features/foldertree/v2/hooks/folder-tree-instance/useFolderTreeEngineActions.ts:219 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
+| INFO | non-null-assertion | src/features/integrations/components/marketplaces/category-mapper/category-table/utils.ts:30 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
+| INFO | eslint-disable | src/features/integrations/context/integrations/useIntegrationsActionsImpl.ts:3 | eslint-disable comment disabling: @typescript-eslint/no-explicit-any |
+| INFO | eslint-disable | src/features/integrations/context/integrations/useIntegrationsActionsImpl.ts:4 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment |
+| INFO | eslint-disable | src/features/integrations/context/integrations/useIntegrationsActionsImpl.ts:6 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-member-access |
+| INFO | explicit-any | src/features/integrations/context/integrations/useIntegrationsActionsImpl.ts:167 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
+| INFO | explicit-any | src/features/integrations/context/integrations/useIntegrationsActionsImpl.ts:286 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
+| INFO | explicit-any | src/features/integrations/context/integrations/useIntegrationsActionsImpl.ts:300 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
+| INFO | eslint-disable | src/features/integrations/services/category-mapping/prisma-impl.ts:1 | eslint-disable comment disabling: @typescript-eslint/no-explicit-any |
+| INFO | eslint-disable | src/features/integrations/services/category-mapping/prisma-impl.ts:2 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment |
+| INFO | explicit-any | src/features/integrations/services/category-mapping/prisma-impl.ts:184 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
+| INFO | explicit-any | src/features/integrations/services/category-mapping/prisma-impl.ts:200 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
+| INFO | eslint-disable | src/features/integrations/services/imports/base-import-service.ts:3 | eslint-disable comment disabling: @typescript-eslint/no-explicit-any |
+| INFO | eslint-disable | src/features/integrations/services/imports/base-import-service.ts:4 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment |
+| INFO | eslint-disable | src/features/integrations/services/imports/base-import-service.ts:5 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-member-access |
+| INFO | explicit-any | src/features/integrations/services/imports/base-import-service.ts:424 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
+| INFO | eslint-disable | src/features/integrations/services/tradera-listing-service.ts:3 | eslint-disable comment disabling: @typescript-eslint/no-explicit-any |
+| INFO | eslint-disable | src/features/integrations/services/tradera-listing-service.ts:4 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment |
+| INFO | eslint-disable | src/features/integrations/services/tradera-listing-service.ts:5 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-argument |
+| INFO | eslint-disable | src/features/integrations/services/tradera-listing-service.ts:7 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-member-access |
+| INFO | explicit-any | src/features/integrations/services/tradera-listing-service.ts:80 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
+| INFO | explicit-any | src/features/integrations/services/tradera-listing-service.ts:110 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
+| INFO | explicit-any | src/features/integrations/services/tradera-listing-service.ts:111 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
+| INFO | explicit-any | src/features/integrations/services/tradera-listing-service.ts:135 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
+| INFO | explicit-any | src/features/integrations/services/tradera-listing-service.ts:142 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
+| INFO | explicit-any | src/features/integrations/services/tradera-listing-service.ts:159 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
+| INFO | non-null-assertion | src/features/kangur/config/routing.ts:67 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
+| INFO | eslint-disable | src/features/kangur/ui/components/KangurLessonDocumentRenderer.tsx:240 | eslint-disable comment disabling: @next/next/no-img-element |
+| INFO | eslint-disable | src/features/notesapp/services/notes/note-repository/mongo/notes.ts:1 | eslint-disable comment disabling: @typescript-eslint/no-explicit-any |
+| INFO | eslint-disable | src/features/notesapp/services/notes/note-repository/mongo/notes.ts:2 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment |
+| INFO | eslint-disable | src/features/notesapp/services/notes/note-repository/mongo/notes.ts:4 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-member-access |
+| INFO | eslint-disable | src/features/products/components/form/studio/StudioPreviewCanvas.tsx:36 | eslint-disable comment disabling: @next/next/no-img-element |
+| INFO | eslint-disable | src/features/products/components/ProductImageSlot.tsx:183 | eslint-disable comment disabling: @next/next/no-img-element |
 
-> Showing first 200 of 453 issues.
+> Showing first 200 of 286 issues.
 
 ## Notes
 

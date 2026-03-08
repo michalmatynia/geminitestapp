@@ -34,7 +34,7 @@ vi.mock('@/features/jobs/server', () => ({
   assertAiPathRunQueueReadyForEnqueue: assertAiPathRunQueueReadyMock,
 }));
 
-vi.mock('@/features/products/server', () => ({
+vi.mock('@/shared/lib/api/parse-json', () => ({
   parseJsonBody: parseJsonBodyMock,
 }));
 

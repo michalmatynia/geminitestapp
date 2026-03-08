@@ -13,7 +13,7 @@ import {
 } from '@/features/cms/server';
 import { getCmsRepository } from '@/features/cms/server';
 import { cmsSlugUpdateSchema } from '@/features/cms/server';
-import { parseJsonBody } from '@/features/products/server';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
 

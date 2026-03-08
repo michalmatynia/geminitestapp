@@ -1,0 +1,1766 @@
+{
+  "generatedAt": "2026-03-08T10:10:13.624Z",
+  "status": "failed",
+  "summary": {
+    "total": 154,
+    "errorCount": 15,
+    "warningCount": 139,
+    "infoCount": 0,
+    "status": "failed",
+    "fileCount": 4303,
+    "featureCount": 15,
+    "circularDependencyCount": 15
+  },
+  "scope": {
+    "root": "src",
+    "prismaAllowedPatterns": [
+      "^src\\/app\\/api\\/",
+      "^src\\/features\\/[^/]+\\/server\\/",
+      "^src\\/shared\\/lib\\/db\\/",
+      "^prisma\\/",
+      "^scripts\\/"
+    ],
+    "internalImportAllowlist": []
+  },
+  "featureGraph": {
+    "admin": [
+      "auth",
+      "foldertree",
+      "notesapp",
+      "products",
+      "prompt-engine"
+    ],
+    "ai": [
+      "admin",
+      "auth",
+      "files",
+      "foldertree",
+      "jobs",
+      "notesapp",
+      "playwright",
+      "products",
+      "prompt-engine",
+      "prompt-exploder",
+      "tooltip-engine",
+      "viewer3d"
+    ],
+    "case-resolver": [
+      "admin",
+      "ai",
+      "auth",
+      "case-resolver-capture",
+      "document-editor",
+      "filemaker",
+      "foldertree",
+      "prompt-exploder"
+    ],
+    "case-resolver-capture": [
+      "case-resolver",
+      "filemaker"
+    ],
+    "cms": [
+      "admin",
+      "app-embeds",
+      "files",
+      "foldertree",
+      "gsap",
+      "products",
+      "viewer3d"
+    ],
+    "data-import-export": [
+      "integrations",
+      "products"
+    ],
+    "drafter": [
+      "products"
+    ],
+    "files": [
+      "products",
+      "viewer3d"
+    ],
+    "integrations": [
+      "data-import-export",
+      "playwright",
+      "product-sync",
+      "products"
+    ],
+    "jobs": [
+      "ai",
+      "case-resolver",
+      "integrations",
+      "product-sync",
+      "products"
+    ],
+    "kangur": [
+      "auth",
+      "cms",
+      "document-editor",
+      "foldertree",
+      "tooltip-engine"
+    ],
+    "notesapp": [
+      "admin",
+      "document-editor",
+      "foldertree"
+    ],
+    "product-sync": [
+      "integrations"
+    ],
+    "products": [
+      "admin",
+      "ai",
+      "drafter",
+      "files",
+      "foldertree",
+      "integrations",
+      "internationalization",
+      "product-sync",
+      "tooltip-engine"
+    ],
+    "prompt-exploder": [
+      "foldertree",
+      "tooltip-engine"
+    ]
+  },
+  "circularDependencies": [
+    [
+      "admin",
+      "notesapp",
+      "admin"
+    ],
+    [
+      "products",
+      "files",
+      "products"
+    ],
+    [
+      "products",
+      "integrations",
+      "products"
+    ],
+    [
+      "integrations",
+      "data-import-export",
+      "integrations"
+    ],
+    [
+      "products",
+      "integrations",
+      "data-import-export",
+      "products"
+    ],
+    [
+      "integrations",
+      "product-sync",
+      "integrations"
+    ],
+    [
+      "products",
+      "ai",
+      "jobs",
+      "products"
+    ],
+    [
+      "ai",
+      "jobs",
+      "ai"
+    ],
+    [
+      "ai",
+      "jobs",
+      "case-resolver",
+      "ai"
+    ],
+    [
+      "case-resolver",
+      "case-resolver-capture",
+      "case-resolver"
+    ],
+    [
+      "admin",
+      "products",
+      "ai",
+      "jobs",
+      "case-resolver",
+      "admin"
+    ],
+    [
+      "products",
+      "ai",
+      "products"
+    ],
+    [
+      "admin",
+      "products",
+      "ai",
+      "admin"
+    ],
+    [
+      "admin",
+      "products",
+      "admin"
+    ],
+    [
+      "products",
+      "drafter",
+      "products"
+    ]
+  ],
+  "issues": [
+    {
+      "severity": "error",
+      "ruleId": "circular-feature-dep",
+      "message": "Circular dependency between features: admin -> notesapp -> admin",
+      "file": null,
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "circular-feature-dep",
+      "message": "Circular dependency between features: products -> files -> products",
+      "file": null,
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "circular-feature-dep",
+      "message": "Circular dependency between features: products -> integrations -> products",
+      "file": null,
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "circular-feature-dep",
+      "message": "Circular dependency between features: integrations -> data-import-export -> integrations",
+      "file": null,
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "circular-feature-dep",
+      "message": "Circular dependency between features: products -> integrations -> data-import-export -> products",
+      "file": null,
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "circular-feature-dep",
+      "message": "Circular dependency between features: integrations -> product-sync -> integrations",
+      "file": null,
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "circular-feature-dep",
+      "message": "Circular dependency between features: products -> ai -> jobs -> products",
+      "file": null,
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "circular-feature-dep",
+      "message": "Circular dependency between features: ai -> jobs -> ai",
+      "file": null,
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "circular-feature-dep",
+      "message": "Circular dependency between features: ai -> jobs -> case-resolver -> ai",
+      "file": null,
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "circular-feature-dep",
+      "message": "Circular dependency between features: case-resolver -> case-resolver-capture -> case-resolver",
+      "file": null,
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "circular-feature-dep",
+      "message": "Circular dependency between features: admin -> products -> ai -> jobs -> case-resolver -> admin",
+      "file": null,
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "circular-feature-dep",
+      "message": "Circular dependency between features: products -> ai -> products",
+      "file": null,
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "circular-feature-dep",
+      "message": "Circular dependency between features: admin -> products -> ai -> admin",
+      "file": null,
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "circular-feature-dep",
+      "message": "Circular dependency between features: admin -> products -> admin",
+      "file": null,
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "circular-feature-dep",
+      "message": "Circular dependency between features: products -> drafter -> products",
+      "file": null,
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/app/api/ai-paths/playwright/[runId]/artifacts/[file]/handler.ts",
+      "line": 14,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/ai/ai-paths/components/ai-paths-settings/hooks/persistence/usePathPersistence.ts",
+      "line": 15,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/ai/ai-paths/components/ai-paths-settings/panels/AiPathsRuntimeLog.tsx",
+      "line": 4,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/ai/ai-paths/components/ai-paths-settings/runtime/server-execution/useServerRunStream.ts",
+      "line": 15,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasView.tsx",
+      "line": 23,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/ai/ai-paths/components/node-config/dialog/NodeHistoryTab.tsx",
+      "line": 11,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/ai/image-studio/components/analysis/sections/AiPathAnalysisTriggerSectionImpl.tsx",
+      "line": 9,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/ai/image-studio/components/center-preview/sections/CenterPreviewCanvas.tsx",
+      "line": 11,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/ai/image-studio/components/center-preview/sections/CenterPreviewCanvas.tsx",
+      "line": 12,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/ai/image-studio/components/center-preview/sections/CenterPreviewCanvas.tsx",
+      "line": 13,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/ai/image-studio/components/center-preview/sections/CenterPreviewCanvas.tsx",
+      "line": 14,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/ai/image-studio/components/center-preview/sections/CenterPreviewCanvasContext.tsx",
+      "line": 7,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/ai/image-studio/components/center-preview/sections/CenterPreviewHeader.tsx",
+      "line": 7,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/ai/image-studio/components/generation-toolbar/handlers/useAnalysisHandlers.ts",
+      "line": 5,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/ai/image-studio/components/generation-toolbar/handlers/useCenterAndScaleHandlers.ts",
+      "line": 13,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/case-resolver/context/admin-cases/actions/case-availability.ts",
+      "line": 3,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/case-resolver/context/admin-cases/actions/case-crud.ts",
+      "line": 4,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/case-resolver/context/admin-cases/actions/case-crud.ts",
+      "line": 10,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/case-resolver/context/admin-cases/actions/case-ordering.ts",
+      "line": 4,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/frontend/blocks/TextAtomBlock.tsx",
+      "line": 9,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/frontend/sections/FrontendAccordionSection.tsx",
+      "line": 12,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/frontend/sections/FrontendBlockRenderer.tsx",
+      "line": 42,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/frontend/sections/FrontendBlockSection.tsx",
+      "line": 11,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/frontend/sections/FrontendBlocksSection.tsx",
+      "line": 3,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/frontend/sections/FrontendButtonElementSection.tsx",
+      "line": 8,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/frontend/sections/FrontendCarousel.tsx",
+      "line": 10,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/frontend/sections/FrontendGridSection.tsx",
+      "line": 17,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/frontend/sections/FrontendHeroBlock.tsx",
+      "line": 7,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/frontend/sections/FrontendHeroSection.tsx",
+      "line": 12,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/frontend/sections/FrontendImageElementSection.tsx",
+      "line": 8,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/frontend/sections/FrontendImageWithTextBlock.tsx",
+      "line": 10,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/frontend/sections/FrontendImageWithTextSection.tsx",
+      "line": 12,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/frontend/sections/FrontendModel3DElementSection.tsx",
+      "line": 8,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/frontend/sections/FrontendNewsletterSection.tsx",
+      "line": 8,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/frontend/sections/FrontendSlideshowSection.tsx",
+      "line": 11,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/frontend/sections/FrontendTestimonialsSection.tsx",
+      "line": 10,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/frontend/sections/FrontendTextAtomSection.tsx",
+      "line": 4,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/frontend/sections/SectionBlockContext.tsx",
+      "line": 5,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (4 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/animation/advanced/AdvancedMotionPathSection.tsx",
+      "line": 10,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (4 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/animation/advanced/AdvancedSvgEffectsSection.tsx",
+      "line": 10,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/animation/AnimationConfigContext.tsx",
+      "line": 8,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/context/ComponentSettingsContext.tsx",
+      "line": 14,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/context/InspectorAiContext.tsx",
+      "line": 21,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/hooks/useGroupedTemplates.ts",
+      "line": 8,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (4 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/preview/context/BlockContext.tsx",
+      "line": 5,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (4 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/preview/context/PreviewEditorContext.tsx",
+      "line": 5,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/preview/PreviewSectionBlocks.tsx",
+      "line": 21,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/registry/block-definitions-content.ts",
+      "line": 14,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/registry/block-definitions-layout.ts",
+      "line": 12,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/registry/block-definitions-media.ts",
+      "line": 12,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/registry/block-definitions.ts",
+      "line": 5,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/registry/section-definitions.ts",
+      "line": 14,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/registry/shared-field-helpers.ts",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/settings/BlockSettingsTab.tsx",
+      "line": 25,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/settings/ColumnSettingsTab.tsx",
+      "line": 11,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/settings/field-group-helpers.tsx",
+      "line": 9,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/settings/fields/composite/BackgroundField.tsx",
+      "line": 9,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (4 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/settings/fields/LinkField.tsx",
+      "line": 7,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/settings/InspectorHeader.tsx",
+      "line": 8,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/settings/InspectorHeader.tsx",
+      "line": 9,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/settings/InspectorOptions.tsx",
+      "line": 5,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (4 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/settings/page-settings/PageSeoTabContent.tsx",
+      "line": 6,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (4 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/settings/page-settings/PageSettingsTabContent.tsx",
+      "line": 5,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (4 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/settings/page-settings/PageSettingsTabContent.tsx",
+      "line": 6,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (4 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/settings/page-settings/PageSettingsTabContent.tsx",
+      "line": 7,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (4 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/settings/page-settings/PageSettingsTabContent.tsx",
+      "line": 9,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (4 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/settings/page-settings/PageSettingsTabContent.tsx",
+      "line": 10,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (4 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/settings/page-settings/usePageAiAssistant.ts",
+      "line": 13,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/settings/PageSettingsTab.tsx",
+      "line": 8,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/settings/PageSettingsTab.tsx",
+      "line": 9,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/settings/PageSettingsTab.tsx",
+      "line": 12,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/settings/SectionSettingsTab.tsx",
+      "line": 25,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/tree/BlockNodeItem.tsx",
+      "line": 20,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/tree/BlockNodeItem.tsx",
+      "line": 21,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/tree/BlockNodeItem.tsx",
+      "line": 22,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/tree/ColumnNodeItem.tsx",
+      "line": 16,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/tree/ColumnNodeItem.tsx",
+      "line": 17,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/tree/ColumnNodeItem.tsx",
+      "line": 18,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/tree/ColumnNodeItem.tsx",
+      "line": 29,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/tree/ComponentTreePanelContext.tsx",
+      "line": 8,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/tree/RowNodeItem.tsx",
+      "line": 22,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/tree/RowNodeItem.tsx",
+      "line": 23,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/tree/RowNodeItem.tsx",
+      "line": 24,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/tree/RowNodeItem.tsx",
+      "line": 28,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/tree/SectionBlockNodeItem.tsx",
+      "line": 17,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/tree/SectionBlockNodeItem.tsx",
+      "line": 18,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/tree/SectionBlockNodeItem.tsx",
+      "line": 19,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/tree/SectionBlockNodeItem.tsx",
+      "line": 28,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/tree/SectionDropTarget.tsx",
+      "line": 9,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/tree/SectionDropTarget.tsx",
+      "line": 10,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/tree/SectionDropTarget.tsx",
+      "line": 11,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/tree/SectionNodeItem.tsx",
+      "line": 23,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/tree/SectionNodeItem.tsx",
+      "line": 24,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/tree/SectionNodeItem.tsx",
+      "line": 25,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/tree/SlideshowFrameNodeItem.tsx",
+      "line": 16,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/tree/SlideshowFrameNodeItem.tsx",
+      "line": 17,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/tree/SlideshowFrameNodeItem.tsx",
+      "line": 18,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/tree/SlideshowFrameNodeItem.tsx",
+      "line": 32,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/tree/tree-constants.ts",
+      "line": 31,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/tree/tree-types.ts",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/tree/TreeSectionPicker.tsx",
+      "line": 8,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/tree/TreeSectionPicker.tsx",
+      "line": 10,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/tree/ZoneFooterNode.tsx",
+      "line": 9,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/utils/cms-master-tree-adapter.ts",
+      "line": 6,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/utils/cms-master-tree.ts",
+      "line": 4,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/components/page-builder/utils/cms-tree-external-drop.ts",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/hooks/page-builder/page-builder-reducer/block-actions.ts",
+      "line": 7,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/hooks/page-builder/page-builder-reducer/complex-actions.ts",
+      "line": 14,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/hooks/page-builder/page-builder-reducer/grid-actions.ts",
+      "line": 2,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/hooks/page-builder/page-builder-reducer/page-actions.ts",
+      "line": 2,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/hooks/page-builder/page-builder-reducer/section-actions.ts",
+      "line": 10,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/cms/hooks/page-builder/page-builder-reducer/section-actions.ts",
+      "line": 14,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/products/components/form/studio/StudioActionsBar.tsx",
+      "line": 6,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/products/components/form/studio/StudioAuditHistory.tsx",
+      "line": 5,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/products/components/form/studio/StudioPreviewCanvas.tsx",
+      "line": 11,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/products/components/form/studio/StudioProjectField.tsx",
+      "line": 5,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/products/components/form/studio/StudioSourceImageSelector.tsx",
+      "line": 7,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/products/components/form/studio/StudioVariantsGrid.tsx",
+      "line": 8,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/shared/lib/ai-paths/core/runtime/handlers/integration-database-handler.ts",
+      "line": 22,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/shared/lib/ai-paths/core/runtime/handlers/integration-database-template-context.ts",
+      "line": 14,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/shared/lib/ai-paths/core/runtime/handlers/integration-schema-handler.ts",
+      "line": 12,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/shared/lib/ai-paths/core/runtime/handlers/transform/bounds-normalizer-handler.ts",
+      "line": 10,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/shared/lib/ai-paths/core/runtime/handlers/transform/canvas-output-handler.ts",
+      "line": 7,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/shared/lib/ai-paths/core/runtime/handlers/transform/context.ts",
+      "line": 6,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/shared/lib/ai-paths/core/runtime/handlers/transform/iterator.ts",
+      "line": 6,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/shared/lib/ai-paths/core/runtime/handlers/transform/mapper.ts",
+      "line": 6,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/shared/lib/ai-paths/core/runtime/handlers/transform/mutator.ts",
+      "line": 7,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/shared/lib/ai-paths/core/runtime/handlers/transform/parser.ts",
+      "line": 6,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/shared/lib/ai-paths/core/runtime/handlers/transform/regex.ts",
+      "line": 7,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/shared/lib/ai-paths/core/runtime/handlers/transform/validator.ts",
+      "line": 17,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (6 levels up). Consider using path aliases.",
+      "file": "src/shared/lib/ai-paths/core/runtime/node-code-object-v3-legacy-bridge.ts",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (5 levels up). Consider using path aliases.",
+      "file": "src/shared/lib/ai-paths/portable-engine/node-code-objects-v2-contracts.ts",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (5 levels up). Consider using path aliases.",
+      "file": "src/shared/lib/documentation/catalogs/ai-paths.ts",
+      "line": 6,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (5 levels up). Consider using path aliases.",
+      "file": "src/shared/lib/documentation/catalogs/kangur.ts",
+      "line": 6,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (5 levels up). Consider using path aliases.",
+      "file": "src/shared/lib/documentation/catalogs/prompt-exploder.ts",
+      "line": 6,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (5 levels up). Consider using path aliases.",
+      "file": "src/shared/lib/documentation/catalogs/validator-semantic-grammar.ts",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (5 levels up). Consider using path aliases.",
+      "file": "src/shared/lib/documentation/catalogs/validator-semantic-grammar.ts",
+      "line": 2,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (5 levels up). Consider using path aliases.",
+      "file": "src/shared/lib/documentation/catalogs/validator-semantic-grammar.ts",
+      "line": 3,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (5 levels up). Consider using path aliases.",
+      "file": "src/shared/lib/documentation/catalogs/validator-semantic-grammar.ts",
+      "line": 4,
+      "column": null,
+      "snippet": null,
+      "context": null
+    }
+  ],
+  "rules": [
+    {
+      "ruleId": "circular-feature-dep",
+      "errorCount": 15,
+      "warningCount": 0,
+      "infoCount": 0
+    },
+    {
+      "ruleId": "deep-relative-import",
+      "errorCount": 0,
+      "warningCount": 139,
+      "infoCount": 0
+    }
+  ],
+  "durationMs": 399
+}

@@ -34,22 +34,22 @@ vi.mock('@/features/foldertree', async (importOriginal) => {
   return {
     ...actual,
     createMasterFolderTreeTransactionAdapter: vi.fn(() => ({ apply: vi.fn() })),
+    FolderTreeSearchBar: (props: {
+      placeholder?: string;
+      value?: string;
+      onChange?: (value: string) => void;
+    }) => {
+      folderTreeSearchBarMock(props);
+      return <div data-testid='folder-tree-search'>{props.placeholder}</div>;
+    },
     FolderTreeViewportV2: (props: unknown) => {
       folderTreeViewportMock(props);
       return <div data-testid='folder-tree-viewport' />;
     },
     useMasterFolderTreeShell: (...args: unknown[]) => useMasterFolderTreeShellMock(...args),
+    useMasterFolderTreeSearch: () => searchStateMock,
   };
 });
-
-vi.mock('@/features/foldertree', () => ({
-  FolderTreeSearchBar: (props: { placeholder?: string }) => {
-    console.log('FolderTreeSearchBar props:', props);
-    folderTreeSearchBarMock(props);
-    return <div data-testid='folder-tree-search'>{props.placeholder}</div>;
-  },
-  useMasterFolderTreeSearch: () => searchStateMock,
-}));
 
 vi.mock('@/shared/hooks/use-settings', () => ({
   useUpdateSetting: () => ({

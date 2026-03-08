@@ -1,6 +1,5 @@
 import type {
   OllamaChatPayload,
-  OpenAiChatCompletionPayload,
   AnthropicMessageResponse,
   GeminiResponse,
 } from './types';
@@ -15,8 +14,10 @@ export const parseOllamaResponseText = (payload: OllamaChatPayload): string => {
   return message.trim();
 };
 
-export const parseOpenAiResponseText = (payload: OpenAiChatCompletionPayload): string => {
-  const content = payload.choices?.[0]?.message?.content;
+export const parseOpenAiResponseText = (payload: unknown): string => {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return '';
+  const content = (payload as { choices?: Array<{ message?: { content?: unknown } }> }).choices?.[0]
+    ?.message?.content;
   if (typeof content === 'string') return content.trim();
   if (Array.isArray(content)) {
     return content

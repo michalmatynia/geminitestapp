@@ -22,12 +22,11 @@ const createDocumentSchema = z.object({
   tags: z.array(z.string().trim().min(1)).optional().default([]),
 });
 
-type Params = { collectionId: string };
-
 export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  const params = ctx.params as unknown as Params | undefined;
-  const collectionId = params?.collectionId;
-  if (!collectionId) throw badRequestError('Missing collectionId.');
+  const collectionId = ctx.params?.['collectionId'];
+  if (typeof collectionId !== 'string' || !collectionId.trim()) {
+    throw badRequestError('Missing collectionId.');
+  }
   const url = new URL(req.url);
   const limit = Number(url.searchParams.get('limit') ?? '50');
   const skip = Number(url.searchParams.get('skip') ?? '0');
@@ -36,9 +35,10 @@ export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Pro
 }
 
 export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  const params = ctx.params as unknown as Params | undefined;
-  const collectionId = params?.collectionId;
-  if (!collectionId) throw badRequestError('Missing collectionId.');
+  const collectionId = ctx.params?.['collectionId'];
+  if (typeof collectionId !== 'string' || !collectionId.trim()) {
+    throw badRequestError('Missing collectionId.');
+  }
   const collection = await getEmbeddingCollectionById(collectionId);
   if (!collection) {
     throw notFoundError('Collection not found');

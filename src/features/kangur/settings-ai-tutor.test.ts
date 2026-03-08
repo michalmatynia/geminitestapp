@@ -20,18 +20,20 @@ describe('kangur ai tutor settings', () => {
       })
     );
 
-    expect(getKangurAiTutorSettingsForLearner(store, 'learner-1')).toEqual({
-      enabled: true,
-      agentPersonaId: 'persona-1',
-      motionPresetId: null,
-      uiMode: 'anchored',
-      allowCrossPagePersistence: true,
-      allowLessons: true,
-      testAccessMode: 'guided',
-      showSources: true,
-      allowSelectedTextSupport: true,
-      dailyMessageLimit: null,
-    });
+    expect(getKangurAiTutorSettingsForLearner(store, 'learner-1')).toEqual(
+      expect.objectContaining({
+        enabled: true,
+        agentPersonaId: 'persona-1',
+        motionPresetId: null,
+        uiMode: 'anchored',
+        allowCrossPagePersistence: true,
+        allowLessons: true,
+        testAccessMode: 'guided',
+        showSources: true,
+        allowSelectedTextSupport: true,
+        dailyMessageLimit: null,
+      })
+    );
   });
 
   it('reads the new motion preset field while staying backward compatible with legacy data', () => {

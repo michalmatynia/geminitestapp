@@ -48,6 +48,24 @@ const parsePositiveInt = (value: string | undefined, fallback: number): number =
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 };
 
+const asRecord = (value: unknown): Record<string, unknown> | null =>
+  value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+
+const toOptionalString = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const resolveRecordId = (record: Record<string, unknown>): string | null => {
+  const directId = toOptionalString(record['id']);
+  if (directId) return directId;
+  const fallback = record['_id'];
+  return fallback === undefined || fallback === null ? null : String(fallback);
+};
+
 const toIso = (value?: Date | string | null): string | null => {
   if (!value) return null;
   const date = value instanceof Date ? value : new Date(value);
@@ -140,16 +158,18 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
           provider,
           total,
           byStatus: Object.fromEntries(totals) as Record<ProductAiJobStatus, number>,
-          latest: latest
-            ? {
-              id:
-                  (latest as unknown as { id?: string; _id?: string }).id ?? String(latest['_id']),
-              status: latest['status'] as ProductAiJobStatus,
-              createdAt: toIso(latest['createdAt'] as Date | string | null),
-              productId: latest['productId'] as string | null,
-              type: latest['type'] as string | null,
-            }
-            : null,
+          latest: (() => {
+            const latestRecord = asRecord(latest);
+            const latestId = latestRecord ? resolveRecordId(latestRecord) : null;
+            if (!latestRecord || !latestId) return null;
+            return {
+              id: latestId,
+              status: latestRecord['status'] as ProductAiJobStatus,
+              createdAt: toIso(latestRecord['createdAt'] as Date | string | null),
+              productId: toOptionalString(latestRecord['productId']),
+              type: toOptionalString(latestRecord['type']),
+            };
+          })(),
         };
       }
 

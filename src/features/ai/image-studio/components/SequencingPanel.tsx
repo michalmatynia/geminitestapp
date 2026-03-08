@@ -617,7 +617,7 @@ export function SequencingPanel(): React.JSX.Element {
               feather: maskFeather,
             }
             : null,
-        studioSettings: studioSettings as unknown as Record<string, unknown>,
+        studioSettings: studioSettings as Record<string, unknown>,
         steps: resolvedSteps,
         metadata: {
           source: 'sequencing-panel',

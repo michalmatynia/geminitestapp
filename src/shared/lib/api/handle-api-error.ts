@@ -80,6 +80,19 @@ type ApiErrorOptions = {
 
 const MAX_QUERY_KEYS = 20;
 
+const getRequestHeader = (request: Request | undefined, name: string): string | null => {
+  const headers = request?.headers;
+  if (!headers || typeof headers.get !== 'function') {
+    return null;
+  }
+
+  try {
+    return headers.get(name);
+  } catch {
+    return null;
+  }
+};
+
 const resolveServiceFromSource = (source: string | undefined): string => {
   const trimmed = source?.trim() ?? '';
   if (!trimmed) return 'api.error';
@@ -143,10 +156,12 @@ export const createErrorResponse = async (
   });
 
   const requestId =
-    options?.requestId ?? options?.request?.headers.get('x-request-id') ?? randomUUID();
-  const traceId = options?.traceId ?? options?.request?.headers.get('x-trace-id') ?? randomUUID();
+    options?.requestId ?? getRequestHeader(options?.request, 'x-request-id') ?? randomUUID();
+  const traceId = options?.traceId ?? getRequestHeader(options?.request, 'x-trace-id') ?? randomUUID();
   const correlationId =
-    options?.correlationId ?? options?.request?.headers.get('x-correlation-id') ?? requestId;
+    options?.correlationId ??
+    getRequestHeader(options?.request, 'x-correlation-id') ??
+    requestId;
   const service = options?.service ?? resolveServiceFromSource(options?.source);
 
   const fingerprint = await getErrorFingerprint({

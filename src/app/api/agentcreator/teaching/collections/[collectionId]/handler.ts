@@ -17,12 +17,11 @@ const updateCollectionSchema = z.object({
   embeddingModel: z.string().trim().min(1).optional(),
 });
 
-type Params = { collectionId: string };
-
 export async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  const params = ctx.params as unknown as Params | undefined;
-  const collectionId = params?.collectionId;
-  if (!collectionId) throw badRequestError('Missing collectionId.');
+  const collectionId = ctx.params?.['collectionId'];
+  if (typeof collectionId !== 'string' || !collectionId.trim()) {
+    throw badRequestError('Missing collectionId.');
+  }
   const existing = await getEmbeddingCollectionById(collectionId);
   if (!existing) {
     throw notFoundError('Not found');
@@ -43,9 +42,10 @@ export async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext): P
 }
 
 export async function DELETE_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  const params = ctx.params as unknown as Params | undefined;
-  const collectionId = params?.collectionId;
-  if (!collectionId) throw badRequestError('Missing collectionId.');
+  const collectionId = ctx.params?.['collectionId'];
+  if (typeof collectionId !== 'string' || !collectionId.trim()) {
+    throw badRequestError('Missing collectionId.');
+  }
   const result = await deleteEmbeddingCollection(collectionId);
   return NextResponse.json({ ok: true, ...result });
 }

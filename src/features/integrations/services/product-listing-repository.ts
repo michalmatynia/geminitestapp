@@ -130,10 +130,10 @@ const buildLookupFilter = (
 ): Filter<ProductListingDocument> => {
   const candidates = buildLookupCandidates([value]);
   if (candidates.length > 1) {
-    return { [field]: { $in: candidates } } as unknown as Filter<ProductListingDocument>;
+    return { [field]: { $in: candidates } } as Filter<ProductListingDocument>;
   }
   const normalized = value.trim();
-  return { [field]: candidates[0] ?? normalized } as unknown as Filter<ProductListingDocument>;
+  return { [field]: candidates[0] ?? normalized } as Filter<ProductListingDocument>;
 };
 
 const buildLookupFilterForIds = (
@@ -141,7 +141,7 @@ const buildLookupFilterForIds = (
   values: string[]
 ): Filter<ProductListingDocument> => {
   const candidates = buildLookupCandidates(values);
-  return { [field]: { $in: candidates } } as unknown as Filter<ProductListingDocument>;
+  return { [field]: { $in: candidates } } as Filter<ProductListingDocument>;
 };
 
 const normalizeIsoDate = (value: string | Date | null | undefined): string | null => {
@@ -166,12 +166,12 @@ const toListingRecord = (doc: ProductListingDocument): ProductListing => ({
   lastStatusCheckAt: normalizeIsoDate(doc.lastStatusCheckAt),
   marketplaceData: doc.marketplaceData ?? null,
   failureReason: doc.failureReason ?? null,
-  exportHistory: ((doc.exportHistory as unknown as Record<string, unknown>[]) ?? []).map(
+  exportHistory: (doc.exportHistory ?? []).map(
     (event) => ({
       ...event,
       exportedAt:
-        normalizeIsoDate(event?.['exportedAt'] as string | Date) ?? new Date().toISOString(),
-      expiresAt: normalizeIsoDate(event?.['expiresAt'] as string | Date) ?? null,
+        normalizeIsoDate(event.exportedAt as string | Date) ?? new Date().toISOString(),
+      expiresAt: normalizeIsoDate(event.expiresAt as string | Date) ?? null,
     })
   ),
   createdAt: doc.createdAt.toISOString(),
@@ -237,7 +237,7 @@ const prismaRepository: ProductListingRepository = {
   getListingById: async (id: string): Promise<ProductListing | null> => {
     const listing = await prisma.productListing.findUnique({ where: { id } });
     if (!listing) return null;
-    return toListingRecord({ ...listing, _id: listing.id } as unknown as ProductListingDocument);
+    return toListingRecord({ ...listing, _id: listing.id } as ProductListingDocument);
   },
 
   createListing: async (input: CreateProductListingInput): Promise<ProductListingWithDetails> => {
@@ -313,7 +313,7 @@ const prismaRepository: ProductListingRepository = {
         ...(input.exportHistory !== undefined
           ? { exportHistory: toPrismaNullableJson(input.exportHistory) }
           : {}),
-      } as unknown as Prisma.ProductListingUpdateInput,
+      } as Prisma.ProductListingUpdateInput,
     });
   },
   updateListingInventoryId: async (id: string, inventoryId: string | null): Promise<void> => {
@@ -329,7 +329,7 @@ const prismaRepository: ProductListingRepository = {
   ): Promise<void> => {
     const listing = await prisma.productListing.findUnique({ where: { id } });
     if (!listing) return;
-    const history = (listing.exportHistory as unknown as ProductListingExportEvent[] | null) ?? [];
+    const history = (listing.exportHistory as ProductListingExportEvent[] | null) ?? [];
 
     const normalizedEvent: ProductListingExportEvent = {
       ...event,
@@ -420,7 +420,7 @@ const mongoRepository: ProductListingRepository = {
       integrationLookup.length > 0
         ? await db
           .collection('integrations')
-          .find({ _id: { $in: integrationLookup } } as unknown as Filter<Document>)
+          .find({ _id: { $in: integrationLookup } } as Filter<Document>)
           .toArray()
         : [];
 
@@ -428,7 +428,7 @@ const mongoRepository: ProductListingRepository = {
       connectionLookup.length > 0
         ? await db
           .collection('integration_connections')
-          .find({ _id: { $in: connectionLookup } } as unknown as Filter<Document>)
+          .find({ _id: { $in: connectionLookup } } as Filter<Document>)
           .toArray()
         : [];
     const integrationMap = new Map(integrations.map((i) => [i._id.toString(), i]));
@@ -490,8 +490,7 @@ const mongoRepository: ProductListingRepository = {
           : input.nextRelistAt
             ? new Date(input.nextRelistAt)
             : null,
-      relistPolicy: (input.relistPolicy ??
-        null) as unknown as ProductListingDocument['relistPolicy'],
+      relistPolicy: (input.relistPolicy ?? null) as ProductListingDocument['relistPolicy'],
       relistAttempts: input.relistAttempts ?? 0,
       lastRelistedAt:
         input.lastRelistedAt instanceof Date
@@ -505,8 +504,7 @@ const mongoRepository: ProductListingRepository = {
           : input.lastStatusCheckAt
             ? new Date(input.lastStatusCheckAt)
             : null,
-      marketplaceData: (input.marketplaceData ??
-        null) as unknown as ProductListingDocument['marketplaceData'],
+      marketplaceData: (input.marketplaceData ?? null) as ProductListingDocument['marketplaceData'],
       failureReason: input.failureReason ?? null,
       exportHistory: input.exportHistory ?? [],
       createdAt: now,
@@ -549,7 +547,7 @@ const mongoRepository: ProductListingRepository = {
       updateData['lastStatusCheckAt'] = new Date(input.lastStatusCheckAt);
 
     await collection.updateOne(buildLookupFilter('_id', id), {
-      $set: updateData as unknown as UpdateFilter<ProductListingDocument>,
+      $set: updateData as UpdateFilter<ProductListingDocument>,
     });
   },
   updateListingInventoryId: async (id: string, inventoryId: string | null): Promise<void> => {
@@ -580,7 +578,7 @@ const mongoRepository: ProductListingRepository = {
         },
       },
       $set: { updatedAt: new Date() },
-    } as unknown as UpdateFilter<ProductListingDocument>);
+    } as UpdateFilter<ProductListingDocument>);
   },
   deleteListing: async (id: string): Promise<void> => {
     const collection = await getListingCollection();

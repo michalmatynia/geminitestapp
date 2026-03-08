@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { logCmsActivity } from '@/features/cms/services/cms-activity';
 import { getCmsRepository } from '@/features/cms/server';
 import { cmsPageUpdateSchema } from '@/features/cms/server';
-import { parseJsonBody } from '@/features/products/server';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError, validationError } from '@/shared/errors/app-error';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';

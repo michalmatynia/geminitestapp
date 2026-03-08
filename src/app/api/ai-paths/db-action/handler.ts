@@ -196,11 +196,32 @@ type PrismaDelegate = {
   deleteMany: (args: Record<string, unknown>) => Promise<{ count: number }>;
 };
 
+const asRecord = (value: unknown): Record<string, unknown> | null =>
+  value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+
+const isPrismaDelegate = (value: unknown): value is PrismaDelegate => {
+  const record = asRecord(value);
+  if (!record) return false;
+  return (
+    typeof record['findMany'] === 'function' &&
+    typeof record['findFirst'] === 'function' &&
+    typeof record['count'] === 'function' &&
+    typeof record['create'] === 'function' &&
+    typeof record['createMany'] === 'function' &&
+    typeof record['update'] === 'function' &&
+    typeof record['updateMany'] === 'function' &&
+    typeof record['delete'] === 'function' &&
+    typeof record['deleteMany'] === 'function'
+  );
+};
+
 const getPrismaDelegate = (collection: string): PrismaDelegate | null => {
   const delegateName = PRISMA_COLLECTION_DELEGATES[collection];
   if (!delegateName) return null;
-  const delegate = (prisma as unknown as Record<string, PrismaDelegate>)[delegateName];
-  return delegate ?? null;
+  const delegate = Reflect.get(prisma, delegateName);
+  return isPrismaDelegate(delegate) ? delegate : null;
 };
 
 const normalizePrismaSelect = (

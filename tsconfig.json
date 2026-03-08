@@ -46,6 +46,18 @@
       "@/__tests__/*": [
         "./__tests__/*"
       ],
+      "@kangur/contracts": [
+        "./packages/kangur-contracts/src/index.ts"
+      ],
+      "@kangur/core": [
+        "./packages/kangur-core/src/index.ts"
+      ],
+      "@kangur/platform": [
+        "./packages/kangur-platform/src/index.ts"
+      ],
+      "@kangur/api-client": [
+        "./packages/kangur-api-client/src/index.ts"
+      ],
       "gsap/ScrollTrigger": [
         "./node_modules/gsap/types/scroll-trigger.d.ts"
       ],

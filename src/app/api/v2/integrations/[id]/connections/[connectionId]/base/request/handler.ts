@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { callBaseApi, fetchBaseProducts } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/server';
-import { parseJsonBody } from '@/features/products/server';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
@@ -13,6 +13,11 @@ const normalizeParameters = (value: unknown): Record<string, unknown> => {
     return {};
   }
   return value as Record<string, unknown>;
+};
+
+const normalizeNumericObjectKey = (value: string): string | null => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? String(parsed) : null;
 };
 
 const requestSchema = z
@@ -128,9 +133,10 @@ export async function POST_handler(
         }) ?? rawProducts[0];
     } else if (rawProducts && typeof rawProducts === 'object') {
       const recordMap = rawProducts as Record<string, unknown>;
+      const numericProductIdKey = normalizeNumericObjectKey(productId);
       product =
         recordMap[productId] ??
-        recordMap[Number(productId) as unknown as keyof typeof recordMap] ??
+        (numericProductIdKey ? recordMap[numericProductIdKey] : undefined) ??
         Object.values(recordMap)[0] ??
         null;
     }

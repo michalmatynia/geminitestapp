@@ -222,6 +222,17 @@ const sanitizeUserPreferencesUpdateData = (
   return sanitized;
 };
 
+const isUserPreferencesDocument = (value: unknown): value is UserPreferencesDocument => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const record = value as Record<string, unknown>;
+  return (
+    '_id' in record &&
+    typeof record['userId'] === 'string' &&
+    record['createdAt'] instanceof Date &&
+    record['updatedAt'] instanceof Date
+  );
+};
+
 /**
  * Get user preferences by user ID
  * Creates default preferences if they don't exist
@@ -311,13 +322,13 @@ export async function updateUserPreferences(
     returnDocument: 'after',
   });
 
-  if (result && 'value' in result && result.value) {
-    const normalized = toUserPreferences(result.value as UserPreferencesDocument);
-    setCachedUserPreferences(cacheKey, normalized);
-    return normalized;
-  }
-  if (result && !('value' in result) && result) {
-    const normalized = toUserPreferences(result as unknown as UserPreferencesDocument);
+  const updatedDocument =
+    result && typeof result === 'object' && 'value' in result
+      ? result.value
+      : result;
+
+  if (isUserPreferencesDocument(updatedDocument)) {
+    const normalized = toUserPreferences(updatedDocument);
     setCachedUserPreferences(cacheKey, normalized);
     return normalized;
   }

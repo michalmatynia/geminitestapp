@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { parseJsonBody } from '@/features/products/server';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { CachedProductService } from '@/features/products/server';
 import { productService } from '@/shared/lib/products/services/productService'; // Direct import
 import type { ProductWithImages } from '@/shared/contracts/products';

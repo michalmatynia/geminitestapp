@@ -7,7 +7,7 @@ import { findProductListingByIdAcrossProviders } from '@/features/integrations/s
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { deleteBaseProduct } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/server';
-import { parseJsonBody } from '@/features/products/server';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 

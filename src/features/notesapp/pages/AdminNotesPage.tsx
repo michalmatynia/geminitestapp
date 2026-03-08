@@ -1,7 +1,6 @@
 'use client';
 import React from 'react';
 
-import { useAdminLayoutState } from '@/features/admin';
 import { CreateNoteModal } from '@/features/notesapp/components/CreateNoteModal';
 import { NoteDetailView } from '@/features/notesapp/components/NoteDetailView';
 import { NoteListView } from '@/features/notesapp/components/NoteListView';
@@ -11,6 +10,7 @@ import {
   useNotesAppActions,
   useNotesAppState,
 } from '@/features/notesapp/hooks/NotesAppContext';
+import { useAdminLayoutState } from '@/shared/providers/AdminLayoutProvider';
 import { Card } from '@/shared/ui';
 
 function AdminNotesPageContent(): React.JSX.Element {

@@ -60,9 +60,9 @@ function mapPrismaTheme(t: PrismaCmsTheme): CmsTheme {
   return {
     id: t.id,
     name: t.name,
-    colors: t.colors as unknown as CmsTheme['colors'],
-    typography: t.typography as unknown as CmsTheme['typography'],
-    spacing: t.spacing as unknown as CmsTheme['spacing'],
+    colors: t.colors as CmsTheme['colors'],
+    typography: t.typography as CmsTheme['typography'],
+    spacing: t.spacing as CmsTheme['spacing'],
     customCss: t.customCss ?? undefined,
     isDefault: t.isDefault,
     createdAt: t.createdAt.toISOString(),
@@ -74,7 +74,7 @@ function mapPrismaPageComponent(c: PrismaPageComponent): PageComponentInput {
   return {
     type: c.type,
     order: c.order,
-    content: c.content as unknown as PageComponentInput['content'],
+    content: c.content as PageComponentInput['content'],
   };
 }
 
@@ -375,9 +375,9 @@ export const prismaCmsRepository: CmsRepository = {
     const theme = await prisma.cmsTheme.create({
       data: {
         name: data.name,
-        colors: data.colors as unknown as Prisma.InputJsonValue,
-        typography: data.typography as unknown as Prisma.InputJsonValue,
-        spacing: data.spacing as unknown as Prisma.InputJsonValue,
+        colors: data.colors as Prisma.InputJsonValue,
+        typography: data.typography as Prisma.InputJsonValue,
+        spacing: data.spacing as Prisma.InputJsonValue,
         customCss: data.customCss ?? null,
       },
     });
@@ -387,9 +387,9 @@ export const prismaCmsRepository: CmsRepository = {
   async updateTheme(id: string, data: CmsThemeUpdateInput): Promise<CmsTheme | null> {
     const cleanData = removeUndefined({
       name: data.name,
-      colors: data.colors as unknown as Prisma.InputJsonValue | undefined,
-      typography: data.typography as unknown as Prisma.InputJsonValue | undefined,
-      spacing: data.spacing as unknown as Prisma.InputJsonValue | undefined,
+      colors: data.colors as Prisma.InputJsonValue | undefined,
+      typography: data.typography as Prisma.InputJsonValue | undefined,
+      spacing: data.spacing as Prisma.InputJsonValue | undefined,
       customCss: data.customCss,
     });
     const theme = await prisma.cmsTheme.update({

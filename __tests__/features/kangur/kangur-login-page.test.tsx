@@ -51,7 +51,7 @@ vi.mock('@/shared/lib/security/csrf-client', () => ({
 }));
 
 import KangurLoginPage from '@/app/(frontend)/kangur/login/page';
-import { resolveKangurLoginCallbackNavigation } from '@/app/(frontend)/kangur/login/page';
+import { resolveKangurLoginCallbackNavigation } from '@/app/(frontend)/kangur/login/callback-navigation';
 
 describe('KangurLoginPage', () => {
   const originalLocation = window.location;

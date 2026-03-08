@@ -96,13 +96,13 @@ function parseMaskRelation(relationType: string | null): { variant?: string; inv
 }
 
 function getSlotTimestamp(slot: SlotRecord): number {
-  const createdAtRaw = (slot as unknown as { createdAt?: unknown }).createdAt;
+  const createdAtRaw = (slot as { createdAt?: unknown }).createdAt;
   const createdAt = asString(createdAtRaw);
   if (createdAt) {
     const parsed = Date.parse(createdAt);
     if (Number.isFinite(parsed)) return parsed;
   }
-  const updatedAtRaw = (slot as unknown as { updatedAt?: unknown }).updatedAt;
+  const updatedAtRaw = (slot as { updatedAt?: unknown }).updatedAt;
   const updatedAt = asString(updatedAtRaw);
   if (updatedAt) {
     const parsed = Date.parse(updatedAt);

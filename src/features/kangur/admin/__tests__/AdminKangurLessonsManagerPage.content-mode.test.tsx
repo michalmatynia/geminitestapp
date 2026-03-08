@@ -34,6 +34,7 @@ vi.mock('@/features/foldertree', async (importOriginal) => {
   return {
     ...actual,
     createMasterFolderTreeTransactionAdapter: vi.fn(() => ({ apply: vi.fn() })),
+    FolderTreeSearchBar: () => <div data-testid='folder-tree-search' />,
     FolderTreeViewportV2: (props: {
       renderNode: (input: any) => React.ReactNode;
     }) => (
@@ -61,16 +62,12 @@ vi.mock('@/features/foldertree', async (importOriginal) => {
       latestNodesState.value = Array.isArray(options?.nodes) ? [...options.nodes] : [];
       return useMasterFolderTreeShellMock(...args);
     },
+    useMasterFolderTreeSearch: () => ({
+      isActive: false,
+      results: [],
+    }),
   };
 });
-
-vi.mock('@/features/foldertree', () => ({
-  FolderTreeSearchBar: () => <div data-testid='folder-tree-search' />,
-  useMasterFolderTreeSearch: () => ({
-    isActive: false,
-    results: [],
-  }),
-}));
 
 vi.mock('@/shared/hooks/use-settings', () => ({
   useUpdateSetting: () => ({

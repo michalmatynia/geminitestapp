@@ -160,6 +160,7 @@ export interface ApiHandlerOptions {
   requireAuth?: boolean;
   resolveSessionUser?: boolean;
   allowedMethods?: string[];
+  corsOrigins?: string[];
   source: string;
   service?: string;
   logSuccess?: boolean;

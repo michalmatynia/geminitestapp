@@ -142,6 +142,7 @@ describe('buildKangurLearnerProfileSnapshot', () => {
         label: 'Zagraj teraz',
         page: 'Game',
         query: {
+          operation: 'division',
           quickStart: 'training',
         },
       },

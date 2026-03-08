@@ -76,21 +76,56 @@ const getRequestOrigin = (request: NextRequest): string => {
   return request.nextUrl.origin;
 };
 
-export const isSameOriginRequest = (request: NextRequest): boolean => {
-  const origin = request.headers.get('origin');
-  const referer = request.headers.get('referer');
-  const requestOrigin = getRequestOrigin(request);
-  if (origin) {
-    return isAllowedOrigin(origin, requestOrigin);
+const normalizeOrigin = (value: string): string | null => {
+  try {
+    return new URL(value).origin;
+  } catch {
+    return null;
   }
-  if (referer) {
-    try {
-      return isAllowedOrigin(new URL(referer).origin, requestOrigin);
-    } catch {
-      return false;
-    }
+};
+
+const resolveCandidateOrigin = (request: NextRequest): string | null => {
+  const origin = request.headers.get('origin');
+  if (origin) {
+    return normalizeOrigin(origin);
+  }
+
+  const referer = request.headers.get('referer');
+  if (!referer) {
+    return null;
+  }
+
+  return normalizeOrigin(referer);
+};
+
+export const isSameOriginRequest = (request: NextRequest): boolean => {
+  const requestOrigin = getRequestOrigin(request);
+  const candidateOrigin = resolveCandidateOrigin(request);
+  if (candidateOrigin) {
+    return isAllowedOrigin(candidateOrigin, requestOrigin);
   }
   return true;
+};
+
+export const isTrustedOriginRequest = (
+  request: NextRequest,
+  allowedOrigins?: readonly string[] | null
+): boolean => {
+  if (!allowedOrigins || allowedOrigins.length === 0) {
+    return false;
+  }
+
+  const candidateOrigin = resolveCandidateOrigin(request);
+  if (!candidateOrigin) {
+    return false;
+  }
+
+  return allowedOrigins.some((allowedOrigin) => {
+    const normalizedAllowedOrigin = normalizeOrigin(allowedOrigin);
+    return normalizedAllowedOrigin
+      ? isAllowedOrigin(candidateOrigin, normalizedAllowedOrigin)
+      : false;
+  });
 };
 
 export const ensureCsrfCookie = (response: NextResponse, existingToken?: string | null): string => {

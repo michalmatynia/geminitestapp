@@ -1,7 +1,6 @@
 import 'server-only';
 
 import { Prisma } from '@/shared/lib/db/prisma-client';
-import { type UpdateFilter } from 'mongodb';
 
 import { getAuthDataProvider, requireAuthProvider } from '@/shared/lib/auth/services/auth-provider';
 import type { AuthSecurityProfile } from '@/shared/contracts/auth';
@@ -135,41 +134,58 @@ export const updateAuthSecurityProfile = async (
   updates: Partial<AuthSecurityProfile>
 ): Promise<AuthSecurityProfile> => {
   const now = new Date();
-  const payload: Record<string, unknown> = {
+  const mongoPayload: Partial<MongoProfileDoc> & {
+    updatedAt: Date;
+  } = {
     updatedAt: now,
   };
   if (typeof updates.mfaEnabled === 'boolean') {
-    payload['mfaEnabled'] = updates.mfaEnabled;
+    mongoPayload.mfaEnabled = updates.mfaEnabled;
   }
   if (updates.mfaSecret !== undefined) {
-    payload['mfaSecret'] = updates.mfaSecret;
+    mongoPayload.mfaSecret = updates.mfaSecret;
   }
   if (updates.recoveryCodes !== undefined) {
-    payload['recoveryCodes'] = updates.recoveryCodes;
+    mongoPayload.recoveryCodes = updates.recoveryCodes;
   }
   if (updates.allowedIps !== undefined) {
-    payload['allowedIps'] = updates.allowedIps;
+    mongoPayload.allowedIps = updates.allowedIps;
   }
   if (updates.disabledAt !== undefined) {
-    payload['disabledAt'] = updates.disabledAt ? new Date(updates.disabledAt) : null;
+    mongoPayload.disabledAt = updates.disabledAt ? new Date(updates.disabledAt) : null;
   }
   if (updates.bannedAt !== undefined) {
-    payload['bannedAt'] = updates.bannedAt ? new Date(updates.bannedAt) : null;
+    mongoPayload.bannedAt = updates.bannedAt ? new Date(updates.bannedAt) : null;
   }
 
   const provider = requireAuthProvider(await getAuthDataProvider());
   if (provider === 'prisma') {
+    const prismaUpdate: Prisma.AuthSecurityProfileUpdateInput = {
+      updatedAt: now,
+      ...(typeof updates.mfaEnabled === 'boolean' ? { mfaEnabled: updates.mfaEnabled } : {}),
+      ...(updates.mfaSecret !== undefined ? { mfaSecret: updates.mfaSecret } : {}),
+      ...(updates.recoveryCodes !== undefined
+        ? { recoveryCodes: { set: updates.recoveryCodes } }
+        : {}),
+      ...(updates.allowedIps !== undefined ? { allowedIps: { set: updates.allowedIps } } : {}),
+      ...(updates.disabledAt !== undefined
+        ? { disabledAt: updates.disabledAt ? new Date(updates.disabledAt) : null }
+        : {}),
+      ...(updates.bannedAt !== undefined
+        ? { bannedAt: updates.bannedAt ? new Date(updates.bannedAt) : null }
+        : {}),
+    };
     await prisma.authSecurityProfile.upsert({
       where: { userId },
-      update: payload as unknown as Prisma.AuthSecurityProfileUpdateInput,
+      update: prismaUpdate,
       create: {
         userId,
-        mfaEnabled: (payload['mfaEnabled'] as boolean) ?? false,
-        mfaSecret: (payload['mfaSecret'] as string | null) ?? null,
-        recoveryCodes: (payload['recoveryCodes'] as string[]) ?? [],
-        allowedIps: (payload['allowedIps'] as string[]) ?? [],
-        disabledAt: (payload['disabledAt'] as Date | null) ?? null,
-        bannedAt: (payload['bannedAt'] as Date | null) ?? null,
+        mfaEnabled: mongoPayload.mfaEnabled ?? false,
+        mfaSecret: mongoPayload.mfaSecret ?? null,
+        recoveryCodes: mongoPayload.recoveryCodes ?? [],
+        allowedIps: mongoPayload.allowedIps ?? [],
+        disabledAt: mongoPayload.disabledAt ?? null,
+        bannedAt: mongoPayload.bannedAt ?? null,
         createdAt: now,
         updatedAt: now,
       },
@@ -179,14 +195,15 @@ export const updateAuthSecurityProfile = async (
   }
   if (!process.env['MONGODB_URI']) return buildDefaultProfile(userId);
   const mongo = await getMongoDb();
+  const mongoSet: Partial<MongoProfileDoc> & { _id: string; userId: string; updatedAt: Date } = {
+    _id: userId,
+    userId,
+    ...mongoPayload,
+  };
   await mongo.collection<MongoProfileDoc>(PROFILES_COLLECTION).updateOne(
     { _id: userId },
     {
-      $set: {
-        _id: userId,
-        userId,
-        ...payload,
-      } as unknown as UpdateFilter<MongoProfileDoc>,
+      $set: mongoSet,
       $setOnInsert: { createdAt: now },
     },
     { upsert: true }

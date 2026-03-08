@@ -30,8 +30,11 @@ vi.mock('@/features/products/validations/middleware', () => ({
   validateProductUpdateMiddleware: validateProductUpdateMiddlewareMock,
 }));
 
-vi.mock('@/features/products/server', () => ({
+vi.mock('@/shared/lib/api/parse-json', () => ({
   parseJsonBody: parseJsonBodyMock,
+}));
+
+vi.mock('@/features/products/server', () => ({
   CachedProductService: {
     invalidateProduct: invalidateProductMock,
   },

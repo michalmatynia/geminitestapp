@@ -4,18 +4,18 @@ import React, { createContext, useContext, useState, useMemo, useCallback, useEf
 
 import { useToast } from '@/shared/ui';
 import { api } from '@/shared/lib/api-client';
+import { useStudioProjects } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
+import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/utils/image-src';
 import { useProductSettings } from '@/features/products/hooks/useProductSettings';
 import { useProductFormCore } from './ProductFormCoreContext';
 import { useProductFormImages } from './ProductFormImageContext';
 import { useProductFormStudio } from './ProductFormStudioContext';
 import { resolveProductImageUrl } from '@/shared/utils/image-routing';
-import { useStudioProjects } from '@/features/ai';
 import {
   useSendToStudioMutation,
   useAcceptVariantMutation,
   useRotateImageSlotMutation,
 } from '../hooks/useProductStudioMutations';
-import { getImageStudioSlotImageSrc } from '@/features/ai';
 
 import type { ImageStudioSlotDto as ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type {

@@ -270,7 +270,7 @@ export function buildRunRequestPreview(input: BuildRunRequestPayloadInput): RunR
     ...(hasSourceAsset && referenceAssets.length > 0 ? { referenceAssets } : {}),
     prompt: resolvedPrompt,
     ...(hasSourceAsset ? { mask } : {}),
-    studioSettings: studioSettings as unknown as Record<string, unknown>,
+    studioSettings: studioSettings as Record<string, unknown>,
   };
 
   return {

@@ -51,9 +51,6 @@ vi.mock('@/features/case-resolver/workspace-persistence', () => ({
 
 vi.mock('@/features/ai', () => ({
   AiPathsProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
-
-vi.mock('@/features/ai', () => ({
   CanvasBoard: () => <div data-testid='canvas-board'>Canvas</div>,
 }));
 

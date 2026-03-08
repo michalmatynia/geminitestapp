@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { enqueueProductAiJob } from '@/features/jobs/server';
 import { startProductAiJobQueue } from '@/features/jobs/server';
 import { getProductRepository } from '@/features/products/server';
-import { parseJsonBody } from '@/features/products/server';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { bulkAiJobRequestSchema as bulkJobSchema } from '@/shared/contracts/jobs';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

@@ -7,7 +7,7 @@ import {
 } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/server';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
-import { parseJsonBody } from '@/features/products/server';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import type { ProductListingExportEvent } from '@/shared/contracts/integrations/listings';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

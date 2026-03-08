@@ -1,22 +1,21 @@
 # API Input Validation Check
 
-Generated at: 2026-03-08T04:48:36.911Z
+Generated at: 2026-03-08T10:29:53.784Z
 
 ## Summary
 
-- Status: FAILED
-- Files scanned: 671
-- Total handlers: 646
-- Validated handlers: 625
-- **Coverage: 97%**
-- Errors: 21
+- Status: WARN
+- Files scanned: 673
+- Total handlers: 648
+- Validated handlers: 648
+- **Coverage: 100%**
+- Errors: 0
 - Warnings: 197
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| req-json-no-schema | 21 | 0 | 0 |
 | query-param-unvalidated | 0 | 171 | 0 |
 | url-param-unvalidated | 0 | 26 | 0 |
 
@@ -24,32 +23,11 @@ Generated at: 2026-03-08T04:48:36.911Z
 
 | Severity | Rule | Location | Message |
 | --- | --- | --- | --- |
-| ERROR | req-json-no-schema | src/app/api/assets3d/[id]/handler.ts:30 | req.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema. |
-| ERROR | req-json-no-schema | src/app/api/chatbot/handler.ts:223 | req.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema. |
-| ERROR | req-json-no-schema | src/app/api/cms/css-ai/stream/handler.ts:21 | req.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema. |
-| ERROR | req-json-no-schema | src/app/api/databases/copy-collection/handler.ts:25 | req.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema. |
-| ERROR | req-json-no-schema | src/app/api/databases/crud/handler.ts:18 | req.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema. |
-| ERROR | req-json-no-schema | src/app/api/databases/delete/handler.ts:21 | req.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema. |
-| ERROR | req-json-no-schema | src/app/api/databases/execute/handler.ts:16 | req.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema. |
-| ERROR | req-json-no-schema | src/app/api/databases/json-restore/handler.ts:13 | req.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema. |
-| ERROR | req-json-no-schema | src/app/api/databases/preview/handler.ts:36 | req.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema. |
-| ERROR | req-json-no-schema | src/app/api/databases/restore/handler.ts:51 | req.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema. |
-| ERROR | req-json-no-schema | src/app/api/image-studio/slots/[slotId]/crop/handler.ts:103 | req.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema. |
-| ERROR | req-json-no-schema | src/app/api/marketplace/categories/fetch/handler.ts:24 | request.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema. |
-| ERROR | req-json-no-schema | src/app/api/marketplace/producers/fetch/handler.ts:24 | request.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema. |
-| ERROR | req-json-no-schema | src/app/api/marketplace/tags/fetch/handler.ts:24 | request.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema. |
-| ERROR | req-json-no-schema | src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.ts:55 | req.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema. |
-| ERROR | req-json-no-schema | src/app/api/v2/metadata/[type]/[id]/handler.ts:215 | req.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema. |
-| ERROR | req-json-no-schema | src/app/api/v2/metadata/handler.ts:229 | req.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema. |
-| ERROR | req-json-no-schema | src/app/api/v2/products/entities/handler.ts:64 | req.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema. |
-| ERROR | req-json-no-schema | src/app/api/v2/products/metadata/[type]/[id]/handler.ts:24 | req.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema. |
-| ERROR | req-json-no-schema | src/app/api/v2/products/metadata/handler.ts:21 | req.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema. |
-| ERROR | req-json-no-schema | src/app/api/v2/products/validation/handler.ts:9 | req.json() called without Zod schema validation. Use parseJsonBody() with a Zod schema. |
 | WARN | query-param-unvalidated | src/app/api/agentcreator/personas/[personaId]/memory/handler.ts:25 | searchParams.get() used without Zod schema validation. |
 | WARN | query-param-unvalidated | src/app/api/agentcreator/personas/[personaId]/memory/handler.ts:26 | searchParams.get() used without Zod schema validation. |
 | WARN | query-param-unvalidated | src/app/api/agentcreator/personas/[personaId]/memory/handler.ts:43 | searchParams.get() used without Zod schema validation. |
+| WARN | query-param-unvalidated | src/app/api/agentcreator/teaching/collections/[collectionId]/documents/handler.ts:31 | searchParams.get() used without Zod schema validation. |
 | WARN | query-param-unvalidated | src/app/api/agentcreator/teaching/collections/[collectionId]/documents/handler.ts:32 | searchParams.get() used without Zod schema validation. |
-| WARN | query-param-unvalidated | src/app/api/agentcreator/teaching/collections/[collectionId]/documents/handler.ts:33 | searchParams.get() used without Zod schema validation. |
 | WARN | url-param-unvalidated | src/app/api/ai-paths/playwright/[runId]/artifacts/[file]/handler.ts | Dynamic route param "runId" is used without Zod validation. |
 | WARN | url-param-unvalidated | src/app/api/ai-paths/playwright/[runId]/artifacts/[file]/handler.ts | Dynamic route param "file" is used without Zod validation. |
 | WARN | url-param-unvalidated | src/app/api/ai-paths/playwright/[runId]/handler.ts | Dynamic route param "runId" is used without Zod validation. |
@@ -118,23 +96,23 @@ Generated at: 2026-03-08T04:48:36.911Z
 | WARN | query-param-unvalidated | src/app/api/chatbot/memory/handler.ts:18 | searchParams.get() used without Zod schema validation. |
 | WARN | query-param-unvalidated | src/app/api/chatbot/memory/handler.ts:19 | searchParams.get() used without Zod schema validation. |
 | WARN | url-param-unvalidated | src/app/api/chatbot/sessions/[sessionId]/handler.ts | Dynamic route param "sessionId" is used without Zod validation. |
-| WARN | query-param-unvalidated | src/app/api/chatbot/settings/handler.ts:26 | searchParams.get() used without Zod schema validation. |
+| WARN | query-param-unvalidated | src/app/api/chatbot/settings/handler.ts:47 | searchParams.get() used without Zod schema validation. |
 | WARN | query-param-unvalidated | src/app/api/cms/slugs/handler.ts:21 | searchParams.get() used without Zod schema validation. |
 | WARN | query-param-unvalidated | src/app/api/cms/slugs/handler.ts:64 | searchParams.get() used without Zod schema validation. |
 | WARN | query-param-unvalidated | src/app/api/cms/slugs/handler.ts:64 | searchParams.get() used without Zod schema validation. |
 | WARN | query-param-unvalidated | src/app/api/databases/backups/handler.ts:64 | searchParams.get() used without Zod schema validation. |
-| WARN | query-param-unvalidated | src/app/api/databases/browse/handler.ts:156 | searchParams.get() used without Zod schema validation. |
-| WARN | query-param-unvalidated | src/app/api/databases/browse/handler.ts:157 | searchParams.get() used without Zod schema validation. |
-| WARN | query-param-unvalidated | src/app/api/databases/browse/handler.ts:158 | searchParams.get() used without Zod schema validation. |
-| WARN | query-param-unvalidated | src/app/api/databases/browse/handler.ts:159 | searchParams.get() used without Zod schema validation. |
-| WARN | query-param-unvalidated | src/app/api/databases/browse/handler.ts:160 | searchParams.get() used without Zod schema validation. |
+| WARN | query-param-unvalidated | src/app/api/databases/browse/handler.ts:169 | searchParams.get() used without Zod schema validation. |
+| WARN | query-param-unvalidated | src/app/api/databases/browse/handler.ts:170 | searchParams.get() used without Zod schema validation. |
+| WARN | query-param-unvalidated | src/app/api/databases/browse/handler.ts:171 | searchParams.get() used without Zod schema validation. |
+| WARN | query-param-unvalidated | src/app/api/databases/browse/handler.ts:172 | searchParams.get() used without Zod schema validation. |
+| WARN | query-param-unvalidated | src/app/api/databases/browse/handler.ts:173 | searchParams.get() used without Zod schema validation. |
 | WARN | query-param-unvalidated | src/app/api/databases/engine/operations/jobs/handler.ts:87 | searchParams.get() used without Zod schema validation. |
 | WARN | query-param-unvalidated | src/app/api/databases/engine/provider-preview/handler.ts:17 | searchParams.get() used without Zod schema validation. |
 | WARN | query-param-unvalidated | src/app/api/databases/redis/handler.ts:58 | searchParams.get() used without Zod schema validation. |
 | WARN | query-param-unvalidated | src/app/api/databases/redis/handler.ts:59 | searchParams.get() used without Zod schema validation. |
-| WARN | query-param-unvalidated | src/app/api/databases/restore/handler.ts:49 | searchParams.get() used without Zod schema validation. |
-| WARN | query-param-unvalidated | src/app/api/databases/schema/handler.ts:328 | searchParams.get() used without Zod schema validation. |
-| WARN | query-param-unvalidated | src/app/api/databases/schema/handler.ts:329 | searchParams.get() used without Zod schema validation. |
+| WARN | query-param-unvalidated | src/app/api/databases/restore/handler.ts:50 | searchParams.get() used without Zod schema validation. |
+| WARN | query-param-unvalidated | src/app/api/databases/schema/handler.ts:351 | searchParams.get() used without Zod schema validation. |
+| WARN | query-param-unvalidated | src/app/api/databases/schema/handler.ts:352 | searchParams.get() used without Zod schema validation. |
 | WARN | query-param-unvalidated | src/app/api/files/handler.ts:12 | searchParams.get() used without Zod schema validation. |
 | WARN | query-param-unvalidated | src/app/api/files/handler.ts:13 | searchParams.get() used without Zod schema validation. |
 | WARN | query-param-unvalidated | src/app/api/files/handler.ts:14 | searchParams.get() used without Zod schema validation. |
@@ -233,7 +211,7 @@ Generated at: 2026-03-08T04:48:36.911Z
 | WARN | query-param-unvalidated | src/app/api/v2/products/categories/tree/handler.ts:16 | searchParams.get() used without Zod schema validation. |
 | WARN | query-param-unvalidated | src/app/api/v2/products/categories/tree/handler.ts:22 | searchParams.get() used without Zod schema validation. |
 | WARN | query-param-unvalidated | src/app/api/v2/products/handler.ts:53 | searchParams.get() used without Zod schema validation. |
-| WARN | query-param-unvalidated | src/app/api/v2/products/metadata/handler.ts:198 | searchParams.get() used without Zod schema validation. |
+| WARN | query-param-unvalidated | src/app/api/v2/products/metadata/handler.ts:199 | searchParams.get() used without Zod schema validation. |
 | WARN | query-param-unvalidated | src/app/api/v2/products/paged/handler.ts:40 | searchParams.get() used without Zod schema validation. |
 | WARN | query-param-unvalidated | src/app/api/v2/products/parameters/handler.ts:73 | searchParams.get() used without Zod schema validation. |
 | WARN | query-param-unvalidated | src/app/api/v2/products/parameters/handler.ts:79 | searchParams.get() used without Zod schema validation. |

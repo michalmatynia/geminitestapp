@@ -19,7 +19,7 @@ import {
 } from '@/features/ai/ai-paths/server';
 import { enqueuePathRun } from '@/features/ai/ai-paths/server';
 import { assertAiPathRunQueueReadyForEnqueue } from '@/features/jobs/server';
-import { parseJsonBody } from '@/features/products/server';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import {
   aiNodeSchema,
   aiPathRunEnqueueResponseSchema,

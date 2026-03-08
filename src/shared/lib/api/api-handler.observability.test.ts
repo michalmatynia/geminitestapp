@@ -14,8 +14,8 @@ const loadApiHandler = async () => {
     logSystemEvent: mockedLogSystemEvent,
     getErrorFingerprint: vi.fn(() => 'test-fingerprint'),
   }));
-  const { apiHandler } = await import('@/shared/lib/api/api-handler');
-  return { apiHandler, mockedLogSystemEvent };
+  const { apiHandler, apiOptionsHandler } = await import('@/shared/lib/api/api-handler');
+  return { apiHandler, apiOptionsHandler, mockedLogSystemEvent };
 };
 
 describe('apiHandler observability propagation', () => {
@@ -123,5 +123,107 @@ describe('apiHandler observability propagation', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(mockedLogSystemEvent).not.toHaveBeenCalled();
+  });
+
+  it('clones immutable responses before attaching observability headers', async () => {
+    const { apiHandler } = await loadApiHandler();
+    const handler = apiHandler(
+      async () => fetch('data:application/json,%7B%22ok%22%3Atrue%7D'),
+      {
+        source: 'immutable.response.GET',
+      }
+    );
+
+    const response = await handler(new NextRequest('/api/test', { method: 'GET' }));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('x-request-id')).toBeTruthy();
+    expect(response.headers.get('x-trace-id')).toBeTruthy();
+    expect(response.headers.get('x-correlation-id')).toBeTruthy();
+    await expect(response.json()).resolves.toEqual({ ok: true });
+  });
+
+  it('adds trusted-origin cors headers when configured', async () => {
+    vi.doMock('@/shared/lib/security/csrf', async () => {
+      const actual = await vi.importActual<typeof import('@/shared/lib/security/csrf')>(
+        '@/shared/lib/security/csrf'
+      );
+      return {
+        ...actual,
+        isTrustedOriginRequest: vi.fn(() => true),
+      };
+    });
+
+    const { apiHandler, apiOptionsHandler } = await loadApiHandler();
+    const handler = apiHandler(async () => NextResponse.json({ ok: true }, { status: 200 }), {
+      source: 'cors.allowed.GET',
+      corsOrigins: ['http://localhost:8081'],
+    });
+    const optionsHandler = apiOptionsHandler({
+      source: 'cors.allowed.OPTIONS',
+      corsOrigins: ['http://localhost:8081'],
+    });
+
+    const response = await handler(
+      new NextRequest('http://localhost:3000/api/test', {
+        method: 'GET',
+        headers: new Headers({
+          origin: 'http://localhost:8081',
+        }),
+      })
+    );
+    const preflightResponse = await optionsHandler(
+      new NextRequest('http://localhost:3000/api/test', {
+        method: 'OPTIONS',
+        headers: new Headers({
+          origin: 'http://localhost:8081',
+          'access-control-request-method': 'POST',
+        }),
+      })
+    );
+
+    expect(response.headers.get('access-control-allow-origin')).toContain('http://localhost');
+    expect(response.headers.get('access-control-allow-credentials')).toBe('true');
+    expect(response.headers.get('access-control-expose-headers')).toContain('x-csrf-token');
+    expect(response.headers.get('vary')).toContain('Origin');
+    expect(preflightResponse.status).toBe(204);
+    expect(preflightResponse.headers.get('access-control-allow-origin')).toContain(
+      'http://localhost'
+    );
+    expect(preflightResponse.headers.get('access-control-allow-methods')).toContain('POST');
+    expect(preflightResponse.headers.get('access-control-expose-headers')).toContain(
+      'x-csrf-token'
+    );
+  });
+
+  it('bootstraps a csrf cookie for trusted-origin requests when none exists', async () => {
+    vi.doMock('@/shared/lib/security/csrf', async () => {
+      const actual = await vi.importActual<typeof import('@/shared/lib/security/csrf')>(
+        '@/shared/lib/security/csrf'
+      );
+      return {
+        ...actual,
+        isTrustedOriginRequest: vi.fn(() => true),
+      };
+    });
+
+    const { apiHandler } = await loadApiHandler();
+    const handler = apiHandler(async () => NextResponse.json({ ok: true }, { status: 200 }), {
+      source: 'csrf.bootstrap.GET',
+      corsOrigins: ['http://localhost:8081'],
+    });
+
+    const response = await handler(
+      new NextRequest('http://localhost:3000/api/test', {
+        method: 'GET',
+        headers: new Headers({
+          origin: 'http://localhost:8081',
+        }),
+      })
+    );
+
+    expect(response.headers.get('set-cookie')).toContain('csrf-token=');
+    expect(response.headers.get('x-csrf-token')).toBeTruthy();
+    expect(response.headers.get('access-control-allow-origin')).toContain('http://localhost');
   });
 });

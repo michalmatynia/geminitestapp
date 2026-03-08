@@ -1,5 +1,6 @@
 export * from './alert-dialog';
 export * from './alert';
+export * from './AgentPersonaMoodAvatar';
 export * from './app-modal';
 export * from './avatar';
 export * from './button';

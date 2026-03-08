@@ -14,10 +14,6 @@ import {
 } from 'react';
 
 import {
-  resolveAgentPersonaMood,
-  useAgentPersonas,
-} from '@/features/ai';
-import {
   DEFAULT_AGENT_PERSONA_MOOD_ID,
   agentPersonaMoodIdSchema,
   type AgentPersona,
@@ -55,7 +51,9 @@ import {
   type KangurTutorMoodId,
 } from '@/shared/contracts/kangur-ai-tutor-mood';
 import { kangurAiTutorUsageSummarySchema } from '@/shared/contracts/kangur-ai-tutor';
+import { useAgentPersonas } from '@/shared/hooks/useAgentPersonas';
 import { ApiError, api } from '@/shared/lib/api-client';
+import { resolveAgentPersonaMood } from '@/shared/lib/agent-personas';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
 type ChatMessage = {

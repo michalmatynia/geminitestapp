@@ -39,6 +39,11 @@ export const getProducerRefId = (value: unknown): string => {
   return '';
 };
 
+const asRecord = (value: unknown): Record<string, unknown> | null =>
+  value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+
 const toBaseFieldMappings = (value: unknown): BaseFieldMapping[] => {
   if (!Array.isArray(value)) return [];
   return (value as unknown[]).filter(
@@ -122,11 +127,8 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
           }
         );
       } else {
-        const templateRecord = template as unknown as {
-          mappings?: unknown;
-          exportImagesAsBase64?: unknown;
-        };
-        mappings = toBaseFieldMappings(templateRecord.mappings);
+        const templateRecord = asRecord(template);
+        mappings = toBaseFieldMappings(templateRecord?.['mappings']);
         const unsupportedParameterSourceMappings = mappings.filter((mapping) =>
           String(mapping.sourceKey ?? '')
             .trim()
@@ -144,8 +146,8 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
         }
         resolvedTemplateId = template.id;
         const templateExportImagesAsBase64 =
-          typeof templateRecord.exportImagesAsBase64 === 'boolean'
-            ? templateRecord.exportImagesAsBase64
+          typeof templateRecord?.['exportImagesAsBase64'] === 'boolean'
+            ? templateRecord['exportImagesAsBase64']
             : undefined;
         if (
           !hasImageOverrides &&

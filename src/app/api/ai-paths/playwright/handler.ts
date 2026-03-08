@@ -9,7 +9,7 @@ import {
   enqueuePlaywrightNodeRun,
   type PlaywrightNodeRunRecord,
 } from '@/features/ai/ai-paths/services/playwright-node-runner';
-import { parseJsonBody } from '@/features/products/server';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const captureSchema = z.object({

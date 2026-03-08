@@ -6,7 +6,7 @@ import { callBaseApi } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/server';
 import { getImportParameterCache, setImportParameterCache } from '@/features/integrations/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { parseJsonBody } from '@/features/products/server';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
@@ -40,6 +40,11 @@ const extractProductIdFromRecord = (record: Record<string, unknown>): string | n
   toStringId(record['base_product_id']);
 
 const normalizeProductId = (value: unknown): string => toStringId(value)?.trim() ?? '';
+
+const normalizeNumericObjectKey = (value: string): string | null => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? String(parsed) : null;
+};
 
 const extractProductIdsFromListPayload = (payload: unknown, limit: number): string[] => {
   const ids: string[] = [];
@@ -169,8 +174,9 @@ const extractProductRecord = (
   }
   if (products && typeof products === 'object') {
     const recordMap = products as Record<string, unknown>;
+    const numericProductIdKey = normalizeNumericObjectKey(productId);
     return (recordMap[productId] ??
-      recordMap[Number(productId) as unknown as keyof typeof recordMap] ??
+      (numericProductIdKey ? recordMap[numericProductIdKey] : undefined) ??
       Object.values(recordMap)[0]) as Record<string, unknown> | null;
   }
   return null;

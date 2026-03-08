@@ -21,9 +21,15 @@ import {
 } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 import type { KangurAiTutorUsageResponse } from '@/shared/contracts/kangur-ai-tutor';
 import {
+  createDefaultKangurAiTutorLearnerMood,
+  getKangurTutorMoodPreset,
+  type KangurTutorMoodId,
+} from '@/shared/contracts/kangur-ai-tutor-mood';
+import {
   KangurButton,
   KangurGlassPanel,
   KangurSelectField,
+  KangurStatusChip,
   KangurSurfacePanel,
 } from '@/features/kangur/ui/design/primitives';
 import { invalidateSettingsCache } from '@/shared/api/settings-client';
@@ -32,6 +38,45 @@ import { invalidateAllSettings } from '@/shared/lib/query-invalidation';
 import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { serializeSetting } from '@/shared/utils/settings-json';
+
+const KANGUR_PARENT_TUTOR_MOOD_ACCENTS: Record<KangurTutorMoodId, 'slate' | 'indigo' | 'sky' | 'violet' | 'amber' | 'teal' | 'emerald' | 'rose'> = {
+  neutral: 'slate',
+  thinking: 'slate',
+  focused: 'indigo',
+  careful: 'sky',
+  curious: 'violet',
+  encouraging: 'amber',
+  motivating: 'amber',
+  playful: 'violet',
+  calm: 'teal',
+  patient: 'teal',
+  gentle: 'teal',
+  reassuring: 'sky',
+  empathetic: 'emerald',
+  supportive: 'emerald',
+  reflective: 'sky',
+  determined: 'indigo',
+  confident: 'indigo',
+  proud: 'rose',
+  happy: 'amber',
+  celebrating: 'rose',
+};
+
+const formatTutorMoodTimestamp = (value: string | null): string => {
+  if (!value) {
+    return 'Jeszcze nie obliczono';
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return 'Jeszcze nie obliczono';
+  }
+
+  return parsed.toLocaleString('pl-PL', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+};
 
 function TutorToggleField({
   checked,
@@ -165,6 +210,12 @@ function AiTutorConfigPanel(): React.JSX.Element {
     refetchOnWindowFocus: true,
   });
   const usageSummary = tutorUsageResponse?.usage ?? null;
+  const learnerMood = activeLearner?.aiTutor ?? createDefaultKangurAiTutorLearnerMood();
+  const currentMoodPreset = getKangurTutorMoodPreset(learnerMood.currentMoodId);
+  const baselineMoodPreset = getKangurTutorMoodPreset(learnerMood.baselineMoodId);
+  const currentMoodAccent = KANGUR_PARENT_TUTOR_MOOD_ACCENTS[learnerMood.currentMoodId];
+  const moodConfidence = `${Math.round(learnerMood.confidence * 100)}%`;
+  const moodUpdatedAt = formatTutorMoodTimestamp(learnerMood.lastComputedAt);
 
   const handleSave = useCallback(async (): Promise<void> => {
     if (!activeLearner || !canAccessDashboard) return;
@@ -239,6 +290,63 @@ function AiTutorConfigPanel(): React.JSX.Element {
           <div className='text-sm font-bold text-slate-800'>AI Tutor dla {activeLearner.displayName}</div>
           <div className='text-xs text-slate-500'>
             Ustaw dostępność i guardrails pomocy AI dla tego ucznia
+          </div>
+        </div>
+      </div>
+
+      <div
+        className='rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-3'
+        data-testid='parent-dashboard-ai-tutor-mood'
+      >
+        <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
+          <div className='min-w-0'>
+            <div className='text-xs font-semibold uppercase tracking-wide text-emerald-700'>
+              Aktualny nastroj ucznia
+            </div>
+            <p
+              className='mt-1 text-sm leading-relaxed text-slate-600'
+              data-testid='parent-dashboard-ai-tutor-mood-description'
+            >
+              {currentMoodPreset.description}
+            </p>
+          </div>
+          <KangurStatusChip
+            accent={currentMoodAccent}
+            className='w-fit'
+            data-mood-id={learnerMood.currentMoodId}
+            data-testid='parent-dashboard-ai-tutor-mood-current'
+          >
+            {currentMoodPreset.label}
+          </KangurStatusChip>
+        </div>
+
+        <div className='mt-3 grid gap-3 text-xs text-slate-600 sm:grid-cols-3'>
+          <div>
+            <div className='font-semibold uppercase tracking-wide text-slate-500'>Ton bazowy</div>
+            <div
+              className='mt-1 text-sm font-semibold text-slate-800'
+              data-testid='parent-dashboard-ai-tutor-mood-baseline'
+            >
+              {baselineMoodPreset.label}
+            </div>
+          </div>
+          <div>
+            <div className='font-semibold uppercase tracking-wide text-slate-500'>Pewność</div>
+            <div
+              className='mt-1 text-sm font-semibold text-slate-800'
+              data-testid='parent-dashboard-ai-tutor-mood-confidence'
+            >
+              {moodConfidence}
+            </div>
+          </div>
+          <div>
+            <div className='font-semibold uppercase tracking-wide text-slate-500'>Aktualizacja</div>
+            <div
+              className='mt-1 text-sm font-semibold text-slate-800'
+              data-testid='parent-dashboard-ai-tutor-mood-updated'
+            >
+              {moodUpdatedAt}
+            </div>
           </div>
         </div>
       </div>

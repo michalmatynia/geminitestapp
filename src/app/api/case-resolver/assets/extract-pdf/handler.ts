@@ -28,6 +28,17 @@ const normalizePublicFilepath = (value: unknown): string | null => {
   return withoutQuery.startsWith('/') ? withoutQuery : `/${withoutQuery}`;
 };
 
+type PdfParseResult = {
+  text?: unknown;
+  numpages?: unknown;
+};
+
+type PdfParseFn = (buffer: Buffer) => Promise<PdfParseResult>;
+
+const isPdfParseFn = (value: unknown): value is PdfParseFn => typeof value === 'function';
+const normalizePdfParseResult = (value: unknown): PdfParseResult =>
+  value && typeof value === 'object' ? (value as PdfParseResult) : {};
+
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   let rawPayload: unknown;
   try {
@@ -55,12 +66,12 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
 
   const fileBuffer = await fs.readFile(diskPath);
   const pdfModule = await import('pdf-parse');
-  const pdfParse = (
-    pdfModule as unknown as {
-      default: (buffer: Buffer) => Promise<{ text: string; numpages: number }>;
-    }
-  ).default;
-  const parsed = await pdfParse(fileBuffer);
+  const pdfParseCandidate = Reflect.get(pdfModule, 'default') ?? pdfModule;
+  if (!isPdfParseFn(pdfParseCandidate)) {
+    throw badRequestError('PDF parser is unavailable');
+  }
+  const pdfParse = pdfParseCandidate;
+  const parsed = normalizePdfParseResult(await pdfParse(fileBuffer));
   const text = typeof parsed.text === 'string' ? parsed.text.trim() : '';
   const response: CaseResolverPdfExtractResponse = {
     filepath,

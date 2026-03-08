@@ -469,7 +469,7 @@ export function VersionNodeMapPanel(): React.JSX.Element {
 
   useEffect(() => {
     const handleWindowKeyDown = (event: KeyboardEvent) => {
-      handleKeyDown(event as unknown as React.KeyboardEvent);
+      handleKeyDown(event);
     };
 
     window.addEventListener('keydown', handleWindowKeyDown);

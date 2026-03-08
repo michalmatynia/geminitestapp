@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Papa from 'papaparse';
 
-import type { CreateProduct } from '@/shared/contracts/products';
+import type { CreateProductInput } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -31,7 +31,7 @@ export async function postProductsImportCsvHandler(
   let successful = 0;
   let failed = 0;
   const errors: Array<{ sku: string; error: string }> = [];
-  const pendingBatch: CreateProduct[] = [];
+  const pendingBatch: CreateProductInput[] = [];
 
   const flushBatch = async (): Promise<void> => {
     if (pendingBatch.length === 0) return;
@@ -57,18 +57,8 @@ export async function postProductsImportCsvHandler(
     const sku = row['SKU'];
     if (!sku) continue;
 
-    const productData = {
+    const productData: CreateProductInput = {
       sku,
-      name: {
-        pl: (row['Name PL'] ?? '').toString().trim(),
-        en: (row['Name EN'] ?? '').toString().trim(),
-        de: (row['Name DE'] ?? '').toString().trim(),
-      },
-      description: {
-        en: `${row['EN']}`,
-        de: `${row['DE']}`,
-        pl: `${row['PL']}`,
-      },
       name_pl: (row['Name PL'] ?? '').toString().trim(),
       name_en: (row['Name EN'] ?? '').toString().trim(),
       name_de: (row['Name DE'] ?? '').toString().trim(),
@@ -78,9 +68,7 @@ export async function postProductsImportCsvHandler(
       description_en: `${row['EN']}`,
       description_de: `${row['DE']}`,
       description_pl: `${row['PL']}`,
-      catalogId: 'default',
-      published: true,
-    } as unknown as CreateProduct;
+    };
 
     pendingBatch.push(productData);
     if (pendingBatch.length >= CHUNK_SIZE) {

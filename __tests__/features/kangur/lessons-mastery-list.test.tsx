@@ -198,7 +198,7 @@ describe('Lessons page mastery list', () => {
     expect(topBar?.className).toContain('sticky');
     expect(topBar?.className).toContain('top-0');
     expect(screen.getByText('Opanowane 92%')).toBeInTheDocument();
-    expect(screen.getByText('Powtórz 45%')).toBeInTheDocument();
+    expect(screen.getByText('Powtorz 45%')).toBeInTheDocument();
     expect(screen.getByText('Nowa')).toBeInTheDocument();
     expect(screen.getByText('Priorytet rodzica')).toBeInTheDocument();
     expect(screen.getByText('Priorytet wysoki')).toBeInTheDocument();
@@ -208,8 +208,8 @@ describe('Lessons page mastery list', () => {
     expect(
       screen.getByText('Zadanie od rodzica zostalo juz wykonane. Powtorki po przydziale: 1/1.')
     ).toBeInTheDocument();
-    expect(screen.getByText('Ukończono 2× · najlepszy wynik 100%')).toBeInTheDocument();
-    expect(screen.getByText('Ukończono 1× · ostatni wynik 45%')).toBeInTheDocument();
+    expect(screen.getByText('Ukonczono 2× · najlepszy wynik 100%')).toBeInTheDocument();
+    expect(screen.getByText('Ukonczono 1× · ostatni wynik 45%')).toBeInTheDocument();
     expect(screen.getByText('Brak zapisanej praktyki')).toBeInTheDocument();
     const lessonCards = screen
       .getAllByRole('button')

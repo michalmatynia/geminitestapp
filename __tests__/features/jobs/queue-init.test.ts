@@ -77,16 +77,18 @@ describe('queue-init', () => {
 
     it('should start workers if Redis is available', async () => {
       vi.mocked(redisConnection.isRedisAvailable).mockReturnValue(true);
+      redisPingMock.mockResolvedValue('PONG');
 
       initializeQueues();
 
       await vi.waitFor(() => {
         expect(registry.startAllWorkers).toHaveBeenCalled();
-      });
+      }, { timeout: 2000 });
     });
 
     it('should only initialize once', async () => {
       vi.mocked(redisConnection.isRedisAvailable).mockReturnValue(true);
+      redisPingMock.mockResolvedValue('PONG');
 
       initializeQueues();
       initializeQueues();
@@ -94,7 +96,7 @@ describe('queue-init', () => {
 
       await vi.waitFor(() => {
         expect(registry.startAllWorkers).toHaveBeenCalledTimes(1);
-      });
+      }, { timeout: 2000 });
     });
   });
 });

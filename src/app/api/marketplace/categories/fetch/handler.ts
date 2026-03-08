@@ -8,6 +8,7 @@ import { resolveBaseConnectionToken } from '@/features/integrations/server';
 import type { FetchMarketplaceCategoriesRequest as FetchCategoriesRequest } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 
 const BASE_MARKETPLACE_SLUGS = new Set(['baselinker', 'base', 'base-com']);
 const TRADERA_MARKETPLACE_SLUGS = new Set(['tradera']);
@@ -21,7 +22,14 @@ export async function POST_handler(
   request: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {
-  const body = (await request.json()) as FetchCategoriesRequest;
+  const parsed = await parseObjectJsonBody(request, {
+    logPrefix: 'marketplace.categories.fetch',
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+
+  const body = parsed.data as FetchCategoriesRequest;
   const { connectionId } = body;
 
   if (!connectionId) {

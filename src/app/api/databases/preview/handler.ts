@@ -20,6 +20,7 @@ import {
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
+import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 import { getMongoClient } from '@/shared/lib/db/mongo-client';
 
 export async function postDatabasesPreviewHandler(
@@ -33,7 +34,14 @@ export async function postDatabasesPreviewHandler(
   let safePageSize = 20;
   const dbUrl = process.env['DATABASE_URL'] ?? '';
 
-  const body = (await req.json()) as {
+  const parsed = await parseObjectJsonBody(req, {
+    logPrefix: 'databases.preview',
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+
+  const body = parsed.data as {
     backupName?: string;
     mode?: 'backup' | 'current';
     type?: 'postgresql' | 'mongodb';

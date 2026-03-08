@@ -24,9 +24,13 @@ import { getActiveOtelContextAttributes } from '@/shared/lib/observability/otel-
 import { runWithContext } from '@/shared/lib/observability/request-context';
 import {
   CSRF_COOKIE_NAME,
+  CSRF_HEADER_NAME,
   CSRF_SAFE_METHODS,
+  generateCsrfToken,
   getCsrfTokenFromHeaders,
+  getCsrfTokenFromRequest,
   isSameOriginRequest,
+  isTrustedOriginRequest,
 } from '@/shared/lib/security/csrf';
 import { logger } from '@/shared/utils/logger';
 
@@ -76,6 +80,17 @@ type ErrorFingerprintParams = {
 };
 
 const DEFAULT_SLOW_SUCCESS_THRESHOLD_MS = 750;
+const CORS_ALLOW_METHODS = 'GET,HEAD,POST,PATCH,DELETE,OPTIONS';
+const CORS_ALLOW_HEADERS = [
+  'Content-Type',
+  'X-CSRF-Token',
+  'Authorization',
+  'X-Kangur-Learner-Id',
+  'X-Request-Id',
+  'X-Trace-Id',
+  'X-Correlation-Id',
+].join(', ');
+const CORS_MAX_AGE_SECONDS = '600';
 
 const readHeaderTrimmed = (request: NextRequest, key: string): string | null => {
   const value = request.headers.get(key);
@@ -175,7 +190,9 @@ const enforceCsrf = (request: NextRequest, options: ApiHandlerOptions): void => 
   const shouldRequire = options.requireCsrf !== false;
   if (!shouldRequire) return;
   if (shouldSkipCsrfInTestEnv(request)) return;
-  if (!isSameOriginRequest(request)) {
+  const isAllowedRequestOrigin =
+    isSameOriginRequest(request) || isTrustedOriginRequest(request, options.corsOrigins);
+  if (!isAllowedRequestOrigin) {
     throw forbiddenError('Invalid request origin.');
   }
   const headerToken = getCsrfTokenFromHeaders(request)?.trim() || null;
@@ -193,6 +210,117 @@ const enforceCsrf = (request: NextRequest, options: ApiHandlerOptions): void => 
   if (cookieTokens.length > 0 && !cookieTokens.includes(headerToken)) {
     throw forbiddenError('Invalid CSRF token.');
   }
+};
+
+const appendVaryHeader = (response: Response, value: string): void => {
+  const current = response.headers.get('Vary');
+  if (!current) {
+    response.headers.set('Vary', value);
+    return;
+  }
+
+  const values = current
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+  if (!values.includes(value)) {
+    values.push(value);
+  }
+  response.headers.set('Vary', values.join(', '));
+};
+
+const appendUniqueHeaderValue = (response: Response, header: string, value: string): void => {
+  const current = response.headers.get(header);
+  if (!current) {
+    response.headers.set(header, value);
+    return;
+  }
+
+  const values = current
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+  if (!values.includes(value)) {
+    values.push(value);
+  }
+  response.headers.set(header, values.join(', '));
+};
+
+const resolveAllowedCorsOrigin = (
+  request: NextRequest,
+  options: ApiHandlerOptions
+): string | null => {
+  const origin = request.headers.get('origin');
+  if (!origin) {
+    return null;
+  }
+
+  if (!isTrustedOriginRequest(request, options.corsOrigins)) {
+    return null;
+  }
+
+  try {
+    return new URL(origin).origin;
+  } catch {
+    return null;
+  }
+};
+
+const applyCorsHeaders = (
+  response: Response,
+  request: NextRequest,
+  options: ApiHandlerOptions
+): void => {
+  const allowedOrigin = resolveAllowedCorsOrigin(request, options);
+  if (!allowedOrigin) {
+    return;
+  }
+
+  response.headers.set('Access-Control-Allow-Origin', allowedOrigin);
+  response.headers.set('Access-Control-Allow-Credentials', 'true');
+  response.headers.set('Access-Control-Allow-Methods', CORS_ALLOW_METHODS);
+  response.headers.set('Access-Control-Allow-Headers', CORS_ALLOW_HEADERS);
+  response.headers.set('Access-Control-Max-Age', CORS_MAX_AGE_SECONDS);
+  appendUniqueHeaderValue(response, 'Access-Control-Expose-Headers', CSRF_HEADER_NAME);
+  appendVaryHeader(response, 'Origin');
+  appendVaryHeader(response, 'Access-Control-Request-Method');
+  appendVaryHeader(response, 'Access-Control-Request-Headers');
+};
+
+const ensureCsrfBootstrapCookie = (
+  response: Response,
+  request: NextRequest,
+  options: ApiHandlerOptions
+): Response => {
+  const shouldBootstrap =
+    isSameOriginRequest(request) || isTrustedOriginRequest(request, options.corsOrigins);
+
+  const existingCsrfToken =
+    typeof request.cookies?.get === 'function'
+      ? getCsrfTokenFromRequest(request)
+      : null;
+
+  if (!shouldBootstrap) {
+    return response;
+  }
+
+  const mutableResponse = ensureMutableResponse(response);
+  const token =
+    existingCsrfToken && existingCsrfToken.length > 0
+      ? existingCsrfToken
+      : generateCsrfToken();
+
+  mutableResponse.headers.set(CSRF_HEADER_NAME, token);
+
+  if (!existingCsrfToken) {
+    const secure = process.env['NODE_ENV'] === 'production' ? '; Secure' : '';
+    mutableResponse.headers.append(
+      'Set-Cookie',
+      `${CSRF_COOKIE_NAME}=${encodeURIComponent(token)}; Path=/; SameSite=Lax; Max-Age=${60 * 60 * 12}${secure}`
+    );
+  }
+
+  return mutableResponse;
 };
 
 const isJsonRequest = (request: NextRequest): boolean => {
@@ -246,6 +374,21 @@ const applySecurityHeaders = (response: Response): void => {
   response.headers.set('X-Frame-Options', 'DENY');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+};
+
+const ensureMutableResponse = (response: Response): Response => {
+  try {
+    response.headers.has('x-request-id');
+    response.headers.set('x-codex-mutable-probe', '1');
+    response.headers.delete('x-codex-mutable-probe');
+    return response;
+  } catch {
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: new Headers(response.headers),
+    });
+  }
 };
 
 /**
@@ -365,32 +508,44 @@ export function apiHandler(
             });
           }
 
+          const mutableResponse = ensureCsrfBootstrapCookie(
+            ensureMutableResponse(response),
+            request,
+            options
+          );
+
           // Add request ID to response headers for client-side tracking
-          if (!response.headers.has('x-request-id')) {
-            response.headers.set('x-request-id', requestId);
+          if (!mutableResponse.headers.has('x-request-id')) {
+            mutableResponse.headers.set('x-request-id', requestId);
           }
-          if (!response.headers.has('x-trace-id')) {
-            response.headers.set('x-trace-id', traceId);
+          if (!mutableResponse.headers.has('x-trace-id')) {
+            mutableResponse.headers.set('x-trace-id', traceId);
           }
-          if (!response.headers.has('x-correlation-id')) {
-            response.headers.set('x-correlation-id', correlationId);
+          if (!mutableResponse.headers.has('x-correlation-id')) {
+            mutableResponse.headers.set('x-correlation-id', correlationId);
           }
           if (context.rateLimitHeaders) {
             Object.entries(context.rateLimitHeaders).forEach(([key, value]: [string, string]) => {
-              response.headers.set(key, value);
+              mutableResponse.headers.set(key, value);
             });
           }
-          applySecurityHeaders(response);
-          applyDefaultCacheHeaders(response, request.method, options.cacheControl);
-          return response;
+          applySecurityHeaders(mutableResponse);
+          applyDefaultCacheHeaders(mutableResponse, request.method, options.cacheControl);
+          applyCorsHeaders(mutableResponse, request, options);
+          return mutableResponse;
         } catch (error) {
-          const response = await createErrorResponseWithTiming(error, request, context, options);
+          const response = ensureCsrfBootstrapCookie(
+            await createErrorResponseWithTiming(error, request, context, options),
+            request,
+            options
+          );
           if (context.rateLimitHeaders) {
             Object.entries(context.rateLimitHeaders).forEach(([key, value]: [string, string]) => {
               response.headers.set(key, value);
             });
           }
           applySecurityHeaders(response);
+          applyCorsHeaders(response, request, options);
           return response;
         }
       }
@@ -520,30 +675,41 @@ export function apiHandlerWithParams<P extends Record<string, string | string[]>
             });
           }
 
-          if (!response.headers.has('x-request-id')) {
-            response.headers.set('x-request-id', requestId);
+          const mutableResponse = ensureCsrfBootstrapCookie(
+            ensureMutableResponse(response),
+            request,
+            options
+          );
+
+          if (!mutableResponse.headers.has('x-request-id')) {
+            mutableResponse.headers.set('x-request-id', requestId);
           }
-          if (!response.headers.has('x-trace-id')) {
-            response.headers.set('x-trace-id', traceId);
+          if (!mutableResponse.headers.has('x-trace-id')) {
+            mutableResponse.headers.set('x-trace-id', traceId);
           }
-          if (!response.headers.has('x-correlation-id')) {
-            response.headers.set('x-correlation-id', correlationId);
+          if (!mutableResponse.headers.has('x-correlation-id')) {
+            mutableResponse.headers.set('x-correlation-id', correlationId);
           }
           if (handlerContext.rateLimitHeaders) {
             Object.entries(handlerContext.rateLimitHeaders).forEach(
               ([key, value]: [string, string]) => {
-                response.headers.set(key, value);
+                mutableResponse.headers.set(key, value);
               }
             );
           }
-          applySecurityHeaders(response);
-          applyDefaultCacheHeaders(response, request.method, options.cacheControl);
-          return response;
+          applySecurityHeaders(mutableResponse);
+          applyDefaultCacheHeaders(mutableResponse, request.method, options.cacheControl);
+          applyCorsHeaders(mutableResponse, request, options);
+          return mutableResponse;
         } catch (error) {
-          const response = await createErrorResponseWithTiming(
-            error,
+          const response = ensureCsrfBootstrapCookie(
+            await createErrorResponseWithTiming(
+              error,
+              request,
+              handlerContext,
+              options
+            ),
             request,
-            handlerContext,
             options
           );
           if (handlerContext.rateLimitHeaders) {
@@ -554,10 +720,26 @@ export function apiHandlerWithParams<P extends Record<string, string | string[]>
             );
           }
           applySecurityHeaders(response);
+          applyCorsHeaders(response, request, options);
           return response;
         }
       }
     );
+  };
+}
+
+export function apiOptionsHandler(
+  options: ApiHandlerOptions
+): (request: NextRequest) => Promise<Response> {
+  return async (request: NextRequest) => {
+    const response = new NextResponse(null, { status: 204 });
+    applySecurityHeaders(response);
+    applyDefaultCacheHeaders(response, request.method, 'no-store');
+    applyCorsHeaders(response, request, {
+      ...options,
+      requireCsrf: false,
+    });
+    return response;
   };
 }
 

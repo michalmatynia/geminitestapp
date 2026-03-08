@@ -24,6 +24,41 @@ let challengeIndexesReady: Promise<void> | null = null;
 
 const nowPlusMinutes = (minutes: number): Date => new Date(Date.now() + minutes * 60 * 1000);
 
+const toDate = (value: unknown): Date | null => {
+  if (value instanceof Date) return value;
+  if (typeof value === 'string' || typeof value === 'number') {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+  return null;
+};
+
+const parseChallengeRecord = (value: unknown): ChallengeRecord | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const record = value as Record<string, unknown>;
+  const expiresAt = toDate(record['expiresAt']);
+  const createdAt = toDate(record['createdAt']);
+  if (
+    typeof record['_id'] !== 'string' ||
+    typeof record['userId'] !== 'string' ||
+    typeof record['email'] !== 'string' ||
+    typeof record['mfaRequired'] !== 'boolean' ||
+    !expiresAt ||
+    !createdAt
+  ) {
+    return null;
+  }
+  return {
+    _id: record['_id'],
+    userId: record['userId'],
+    email: record['email'],
+    ip: typeof record['ip'] === 'string' ? record['ip'] : null,
+    mfaRequired: record['mfaRequired'],
+    expiresAt,
+    createdAt,
+  };
+};
+
 const getMongoChallenge = async (id: string): Promise<ChallengeRecord | null> => {
   if (!process.env['MONGODB_URI']) return null;
   const mongo = await getMongoDb();
@@ -33,10 +68,7 @@ const getMongoChallenge = async (id: string): Promise<ChallengeRecord | null> =>
 const getPrismaChallenge = async (id: string): Promise<ChallengeRecord | null> => {
   const row = await prisma.authLoginChallenge.findUnique({ where: { id } });
   if (!row) return null;
-  if (row.data && typeof row.data === 'object') {
-    return row.data as unknown as ChallengeRecord;
-  }
-  return null;
+  return parseChallengeRecord(row.data);
 };
 
 const setMongoChallenge = async (record: ChallengeRecord): Promise<void> => {

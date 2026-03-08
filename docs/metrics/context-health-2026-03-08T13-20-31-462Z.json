@@ -1,0 +1,503 @@
+{
+  "generatedAt": "2026-03-08T13:20:31.462Z",
+  "status": "warn",
+  "summary": {
+    "total": 46,
+    "errorCount": 0,
+    "warningCount": 26,
+    "infoCount": 20,
+    "status": "warn",
+    "contextFileCount": 235
+  },
+  "scope": {
+    "sourceDirs": [
+      "src/features",
+      "src/shared"
+    ],
+    "providerValueFieldThreshold": 15,
+    "oversizedLocThreshold": 500
+  },
+  "issues": [
+    {
+      "severity": "warn",
+      "ruleId": "context-monolith",
+      "message": "Context provider value has ~36 fields (threshold: 15). Consider splitting into domain-specific contexts.",
+      "file": "src/features/admin/context/AdminMenuSettingsContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 773 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/admin/context/AdminMenuSettingsContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 1069 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/ai/ai-paths/components/JobQueueContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 712 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/ai/ai-paths/context/RuntimeContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-monolith",
+      "message": "Context provider value has ~70 fields (threshold: 15). Consider splitting into domain-specific contexts.",
+      "file": "src/features/ai/image-studio/components/studio-modals/StudioInlineEditContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 814 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/ai/image-studio/components/studio-modals/StudioInlineEditContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 857 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/ai/image-studio/context/GenerationContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-monolith",
+      "message": "Context provider value has ~41 fields (threshold: 15). Consider splitting into domain-specific contexts.",
+      "file": "src/features/ai/image-studio/context/ImageStudioSettingsContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 793 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/ai/image-studio/context/MaskingContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 865 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/ai/image-studio/context/VersionGraphContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 865 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/case-resolver/context/AdminCaseResolverCasesContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 851 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/case-resolver/context/CaseResolverFolderTreeContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 868 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/cms/components/page-builder/context/InspectorAiContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 619 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/cms/hooks/useTreeActionsContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 885 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/data-import-export/context/ImportExportContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 645 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/integrations/context/ProductListingsContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 1012 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/kangur/ui/context/KangurAiTutorContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 536 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/kangur/ui/context/KangurLessonsRuntimeContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 919 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/notesapp/context/NoteFormContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 676 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/notesapp/hooks/NotesAppContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 568 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/prompt-exploder/context/BenchmarkContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 746 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/prompt-exploder/context/DocumentContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 556 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/prompt-exploder/context/LibraryContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 548 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/prompt-exploder/context/SegmentEditorContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-monolith",
+      "message": "Context provider value has ~58 fields (threshold: 15). Consider splitting into domain-specific contexts.",
+      "file": "src/shared/lib/ai-brain/context/BrainContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 895 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/shared/lib/ai-brain/context/BrainContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "context-missing-split",
+      "message": "Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization.",
+      "file": "src/features/admin/context/AdminMenuSettingsContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "context-missing-split",
+      "message": "Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization.",
+      "file": "src/features/ai/agentcreator/context/AgentRunsContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "context-missing-split",
+      "message": "Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization.",
+      "file": "src/features/ai/agentcreator/teaching/context/AgentTeachingContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "context-missing-split",
+      "message": "Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization.",
+      "file": "src/features/ai/ai-paths/components/CanvasBoardUIContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "context-missing-split",
+      "message": "Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization.",
+      "file": "src/features/ai/image-studio/components/analysis/sections/ImageStudioAnalysisRuntimeContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "context-missing-split",
+      "message": "Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization.",
+      "file": "src/features/ai/image-studio/components/studio-modals/StudioInlineEditContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "context-missing-split",
+      "message": "Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization.",
+      "file": "src/features/ai/image-studio/context/ImageStudioSettingsContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "context-missing-split",
+      "message": "Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization.",
+      "file": "src/features/cms/hooks/useDragStateContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "context-missing-split",
+      "message": "Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization.",
+      "file": "src/features/cms/hooks/useTreeActionsContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "context-missing-split",
+      "message": "Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization.",
+      "file": "src/features/kangur/admin/context/KangurTestQuestionEditorContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "context-missing-split",
+      "message": "Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization.",
+      "file": "src/features/kangur/admin/context/LessonContentEditorRuntimeContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "context-missing-split",
+      "message": "Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization.",
+      "file": "src/features/kangur/admin/context/LessonSvgQuickAddRuntimeContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "context-missing-split",
+      "message": "Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization.",
+      "file": "src/features/kangur/cms-builder/KangurCmsBuilderRuntimeContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "context-missing-split",
+      "message": "Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization.",
+      "file": "src/features/kangur/ui/context/KangurAuthContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "context-missing-split",
+      "message": "Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization.",
+      "file": "src/features/kangur/ui/context/KangurLearnerProfileRuntimeContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "context-missing-split",
+      "message": "Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization.",
+      "file": "src/features/kangur/ui/context/KangurRouteTransitionContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "context-missing-split",
+      "message": "Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization.",
+      "file": "src/features/kangur/ui/context/KangurRoutingContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "context-missing-split",
+      "message": "Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization.",
+      "file": "src/features/kangur/ui/context/KangurTutorAnchorContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "context-missing-split",
+      "message": "Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization.",
+      "file": "src/features/prompt-engine/components/context/RuleItemContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "context-missing-split",
+      "message": "Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization.",
+      "file": "src/shared/lib/ai-brain/context/BrainContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    }
+  ],
+  "rules": [
+    {
+      "ruleId": "context-oversized",
+      "errorCount": 0,
+      "warningCount": 22,
+      "infoCount": 0
+    },
+    {
+      "ruleId": "context-monolith",
+      "errorCount": 0,
+      "warningCount": 4,
+      "infoCount": 0
+    },
+    {
+      "ruleId": "context-missing-split",
+      "errorCount": 0,
+      "warningCount": 0,
+      "infoCount": 20
+    }
+  ],
+  "durationMs": 648
+}

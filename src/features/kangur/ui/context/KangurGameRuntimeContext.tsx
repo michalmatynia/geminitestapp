@@ -19,7 +19,6 @@ import {
 } from '@/features/kangur/config/routing';
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
-import type { KangurAssignmentSnapshot, KangurUser } from '@/features/kangur/services/ports';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
@@ -41,72 +40,28 @@ import type {
   KangurGameScreen,
   KangurMode,
   KangurOperation,
-  KangurProgressState,
   KangurQuestion,
   KangurTrainingSelection,
   KangurXpToastState,
 } from '@/features/kangur/ui/types';
-
-type KangurPracticeAssignment = KangurAssignmentSnapshot & { target: { type: 'practice' } };
-
-type KangurGameRuntimeContextValue = {
-  basePath: string;
-  user: KangurUser | null;
-  isAuthenticated: boolean;
-  canAccessParentAssignments: boolean;
-  isLoadingAuth: boolean;
-  progress: KangurProgressState;
-  screen: KangurGameScreen;
-  playerName: string;
-  operation: KangurOperation | null;
-  difficulty: KangurDifficulty;
-  currentQuestionIndex: number;
-  currentQuestion: KangurQuestion | null;
-  totalQuestions: number;
-  score: number;
-  timeTaken: number;
-  kangurMode: KangurMode | null;
-  xpToast: KangurXpToastState;
-  canStartFromHome: boolean;
-  questionTimeLimit: number;
-  practiceAssignmentsByOperation: Partial<Record<KangurOperation, KangurPracticeAssignment>>;
-  activePracticeAssignment: KangurPracticeAssignment | null;
-  resultPracticeAssignment: KangurPracticeAssignment | null;
-  navigateToLogin: () => void;
-  logout: (shouldRedirect?: boolean) => void;
-  setPlayerName: (value: string) => void;
-  setScreen: (screen: KangurGameScreen) => void;
-  handleStartGame: () => void;
-  handleStartTraining: (selection: KangurTrainingSelection) => void;
-  handleSelectOperation: (operation: KangurOperation, difficulty: KangurDifficulty) => void;
-  handleAnswer: (correct: boolean) => void;
-  handleStartKangur: (mode: KangurMode) => void;
-  handleRestart: () => void;
-  handleHome: () => void;
-};
+import type {
+  KangurGameRuntimeActionsContextValue,
+  KangurGameRuntimeContextValue,
+  KangurGameRuntimeStateContextValue,
+} from './KangurGameRuntimeContext.shared';
+import {
+  isKangurDifficulty,
+  isKangurOperation,
+  TOTAL_QUESTIONS,
+} from './KangurGameRuntimeContext.shared';
 
 const kangurPlatform = getKangurPlatform();
-const TOTAL_QUESTIONS = 10;
-const KANGUR_OPERATIONS: KangurOperation[] = [
-  'addition',
-  'subtraction',
-  'multiplication',
-  'division',
-  'decimals',
-  'powers',
-  'roots',
-  'clock',
-  'mixed',
-];
-const KANGUR_DIFFICULTIES: KangurDifficulty[] = ['easy', 'medium', 'hard'];
 
-const isKangurOperation = (value: string | null): value is KangurOperation =>
-  Boolean(value && KANGUR_OPERATIONS.includes(value as KangurOperation));
-
-const isKangurDifficulty = (value: string | null): value is KangurDifficulty =>
-  Boolean(value && KANGUR_DIFFICULTIES.includes(value as KangurDifficulty));
-
-const KangurGameRuntimeContext = createContext<KangurGameRuntimeContextValue | null>(null);
+const KangurGameRuntimeStateContext = createContext<KangurGameRuntimeStateContextValue | null>(
+  null
+);
+const KangurGameRuntimeActionsContext =
+  createContext<KangurGameRuntimeActionsContextValue | null>(null);
 
 export function KangurGameRuntimeProvider({
   children,
@@ -173,11 +128,20 @@ export function KangurGameRuntimeProvider({
     }, 2800);
   };
 
+  const ensureSessionPlayerName = (): string => {
+    const nextPlayerName = playerName.trim() || user?.full_name?.trim() || 'Gracz';
+    if (playerName !== nextPlayerName) {
+      setPlayerName(nextPlayerName);
+    }
+    return nextPlayerName;
+  };
+
   const handleStartTraining = ({
     categories,
     count,
     difficulty: nextDifficulty,
   }: KangurTrainingSelection): void => {
+    ensureSessionPlayerName();
     const nextQuestions = generateTrainingQuestions(categories, nextDifficulty, count);
     setOperation('mixed');
     setDifficulty(nextDifficulty);
@@ -193,6 +157,7 @@ export function KangurGameRuntimeProvider({
     nextOperation: KangurOperation,
     nextDifficulty: KangurDifficulty
   ): void => {
+    ensureSessionPlayerName();
     const nextQuestions = generateQuestions(nextOperation, nextDifficulty, TOTAL_QUESTIONS);
     setOperation(nextOperation);
     setDifficulty(nextDifficulty);
@@ -279,6 +244,7 @@ export function KangurGameRuntimeProvider({
     }
 
     if (currentQuestionIndex + 1 >= totalQuestions) {
+      const nextPlayerName = ensureSessionPlayerName();
       const taken = Math.round((Date.now() - (startTime ?? Date.now())) / 1000);
       const selectedOperation = operation ?? 'mixed';
       const greatThreshold = Math.max(1, Math.ceil(totalQuestions * 0.8));
@@ -287,7 +253,7 @@ export function KangurGameRuntimeProvider({
 
       void kangurPlatform.score
         .create({
-          player_name: playerName,
+          player_name: nextPlayerName,
           score: nextScore,
           operation: selectedOperation,
           total_questions: totalQuestions,
@@ -324,7 +290,7 @@ export function KangurGameRuntimeProvider({
         accuracyPercent: Math.round((nextScore / totalQuestions) * 100),
         isPerfect,
         xpAwarded: xp,
-        playerNamePresent: playerName.trim().length > 0,
+        playerNamePresent: nextPlayerName.length > 0,
       });
       showXpToast(xp, newBadges);
 
@@ -338,10 +304,12 @@ export function KangurGameRuntimeProvider({
   };
 
   const handleStartGame = (): void => {
+    ensureSessionPlayerName();
     setScreen('operation');
   };
 
   const handleStartKangur = (mode: KangurMode): void => {
+    ensureSessionPlayerName();
     setKangurMode(mode);
     setScreen('kangur');
   };
@@ -372,48 +340,91 @@ export function KangurGameRuntimeProvider({
         : null,
     [delegatedAssignments, operation, screen]
   );
-  const canStartFromHome = Boolean(user || playerName.trim().length > 0);
+  const canStartFromHome = true;
 
-  const value: KangurGameRuntimeContextValue = {
-    basePath,
-    user,
-    isAuthenticated,
-    canAccessParentAssignments,
-    isLoadingAuth,
-    progress,
-    screen,
-    playerName,
-    operation,
-    difficulty,
-    currentQuestionIndex,
-    currentQuestion,
-    totalQuestions,
-    score,
-    timeTaken,
-    kangurMode,
-    xpToast,
-    canStartFromHome,
-    questionTimeLimit,
-    practiceAssignmentsByOperation,
-    activePracticeAssignment,
-    resultPracticeAssignment,
-    navigateToLogin,
-    logout,
-    setPlayerName,
-    setScreen,
-    handleStartGame,
-    handleStartTraining,
-    handleSelectOperation,
-    handleAnswer,
-    handleStartKangur,
-    handleRestart,
-    handleHome,
-  };
+  const stateValue = useMemo<KangurGameRuntimeStateContextValue>(
+    () => ({
+      basePath,
+      user,
+      isAuthenticated,
+      canAccessParentAssignments,
+      isLoadingAuth,
+      progress,
+      screen,
+      playerName,
+      operation,
+      difficulty,
+      currentQuestionIndex,
+      currentQuestion,
+      totalQuestions,
+      score,
+      timeTaken,
+      kangurMode,
+      xpToast,
+      canStartFromHome,
+      questionTimeLimit,
+      practiceAssignmentsByOperation,
+      activePracticeAssignment,
+      resultPracticeAssignment,
+    }),
+    [
+      activePracticeAssignment,
+      basePath,
+      canAccessParentAssignments,
+      canStartFromHome,
+      currentQuestion,
+      currentQuestionIndex,
+      difficulty,
+      isAuthenticated,
+      isLoadingAuth,
+      kangurMode,
+      operation,
+      playerName,
+      practiceAssignmentsByOperation,
+      progress,
+      questionTimeLimit,
+      resultPracticeAssignment,
+      score,
+      screen,
+      timeTaken,
+      totalQuestions,
+      user,
+      xpToast,
+    ]
+  );
+  const actionsValue = useMemo<KangurGameRuntimeActionsContextValue>(
+    () => ({
+      navigateToLogin,
+      logout,
+      setPlayerName,
+      setScreen,
+      handleStartGame,
+      handleStartTraining,
+      handleSelectOperation,
+      handleAnswer,
+      handleStartKangur,
+      handleRestart,
+      handleHome,
+    }),
+    [
+      handleAnswer,
+      handleHome,
+      handleRestart,
+      handleSelectOperation,
+      handleStartGame,
+      handleStartKangur,
+      handleStartTraining,
+      logout,
+      navigateToLogin,
+    ]
+  );
 
   return (
-    <KangurGameRuntimeContext.Provider value={value}>
-      {children}
-    </KangurGameRuntimeContext.Provider>
+    <KangurGameRuntimeActionsContext.Provider value={actionsValue}>
+      <KangurGameRuntimeStateContext.Provider value={stateValue}>
+        {children}
+      </KangurGameRuntimeStateContext.Provider>
+    </KangurGameRuntimeActionsContext.Provider>
   );
 }
 
@@ -424,8 +435,9 @@ export function KangurGameRuntimeBoundary({
   enabled: boolean;
   children: ReactNode;
 }): JSX.Element {
-  const existingContext = useContext(KangurGameRuntimeContext);
-  if (!enabled || existingContext) {
+  const existingStateContext = useContext(KangurGameRuntimeStateContext);
+  const existingActionsContext = useContext(KangurGameRuntimeActionsContext);
+  if (!enabled || existingStateContext || existingActionsContext) {
     return <>{children}</>;
   }
 
@@ -433,16 +445,37 @@ export function KangurGameRuntimeBoundary({
 }
 
 export const useKangurGameRuntime = (): KangurGameRuntimeContextValue => {
-  const context = useContext(KangurGameRuntimeContext);
-  if (!context) {
-    throw internalError('useKangurGameRuntime must be used within a KangurGameRuntimeProvider');
-  }
+  const state = useKangurGameRuntimeState();
+  const actions = useKangurGameRuntimeActions();
+  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
+};
 
+export const useKangurGameRuntimeState = (): KangurGameRuntimeStateContextValue => {
+  const context = useContext(KangurGameRuntimeStateContext);
+  if (!context) {
+    throw internalError('useKangurGameRuntimeState must be used within a KangurGameRuntimeProvider');
+  }
   return context;
 };
 
-export const useOptionalKangurGameRuntime = (): KangurGameRuntimeContextValue | null =>
-  useContext(KangurGameRuntimeContext);
+export const useKangurGameRuntimeActions = (): KangurGameRuntimeActionsContextValue => {
+  const context = useContext(KangurGameRuntimeActionsContext);
+  if (!context) {
+    throw internalError(
+      'useKangurGameRuntimeActions must be used within a KangurGameRuntimeProvider'
+    );
+  }
+  return context;
+};
+
+export const useOptionalKangurGameRuntime = (): KangurGameRuntimeContextValue | null => {
+  const state = useContext(KangurGameRuntimeStateContext);
+  const actions = useContext(KangurGameRuntimeActionsContext);
+  return useMemo(() => {
+    if (!state && !actions) return null;
+    return { ...(state ?? {}), ...(actions ?? {}) } as KangurGameRuntimeContextValue;
+  }, [state, actions]);
+};
 
 export const isKangurGameScreen = (value: string | null | undefined): value is KangurGameScreen =>
   value === 'home' ||

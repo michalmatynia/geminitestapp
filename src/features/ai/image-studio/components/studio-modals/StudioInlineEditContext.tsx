@@ -73,23 +73,15 @@ import { internalError } from '@/shared/errors/app-error';
 
 export type EditCardTab = 'card' | 'generations' | 'environment' | 'masks' | 'composites';
 
-export interface StudioInlineEditContextValue {
-  // State from SlotsContext
+export interface StudioInlineEditStateContextValue {
   selectedSlot: ImageStudioSlotRecord | null;
   slotInlineEditOpen: boolean;
   slotImageUrlDraft: string;
   slotBase64Draft: string;
   slotUpdateBusy: boolean;
-
-  // Local UI State
   editCardTab: EditCardTab;
-  setEditCardTab: (tab: EditCardTab) => void;
   slotNameDraft: string;
-  setSlotNameDraft: (name: string) => void;
   slotFolderDraft: string;
-  setSlotFolderDraft: (folder: string) => void;
-
-  // Extraction State
   extractBusy: 'none' | 'programmatic' | 'smart' | 'ai' | 'ui';
   extractDraftPrompt: string;
   extractError: string | null;
@@ -105,22 +97,15 @@ export interface StudioInlineEditContextValue {
   selectedExtractHistory: PromptExtractHistoryEntry | null;
   selectedExtractDiffLines: PromptDiffLine[];
   selectedExtractChanged: boolean;
-
-  // Environment State
   environmentReferenceDraft: EnvironmentReferenceDraft;
   environmentPreviewSource: InlinePreviewSourceViewModel;
   environmentPreviewDimensions: string;
-
-  // Generations State
   linkedGeneratedVariants: LinkedGeneratedVariant[];
   selectedGenerationPreview: LinkedGeneratedVariant | null;
   selectedGenerationPreviewDimensions: string;
   generationPreviewModalOpen: boolean;
-  setGenerationPreviewModalOpen: (open: boolean) => void;
   selectedGenerationModalDimensions: string;
   linkedVariantApplyBusyKey: string | null;
-
-  // Derived / Utils
   inlinePreviewSource: InlinePreviewSourceViewModel;
   inlinePreviewDimensions: string;
   inlinePreviewMimeType: string;
@@ -132,8 +117,14 @@ export interface StudioInlineEditContextValue {
   studioSettings: ImageStudioSettings;
   uploadPending: boolean;
   inlineCardImageManagerController: ProductImageManagerController;
+  linkedRunsQuery: ListQuery<LinkedGeneratedVariant, LinkedGeneratedRunsResponse>;
+}
 
-  // Handlers
+export interface StudioInlineEditActionsContextValue {
+  setEditCardTab: (tab: EditCardTab) => void;
+  setSlotNameDraft: (name: string) => void;
+  setSlotFolderDraft: (folder: string) => void;
+  setGenerationPreviewModalOpen: (open: boolean) => void;
   onSaveInlineSlot: () => Promise<void>;
   onClearSlotImage: () => Promise<void>;
   onCopyCardId: (id: string) => Promise<void>;
@@ -150,8 +141,6 @@ export interface StudioInlineEditContextValue {
   setExtractReviewOpen: (open: boolean) => void;
   setSlotInlineEditOpen: (open: boolean) => void;
   setEnvironmentReferenceDraft: React.Dispatch<React.SetStateAction<EnvironmentReferenceDraft>>;
-
-  // Action Handlers
   handleAiExtraction: () => Promise<void>;
   handleApplyExtraction: () => void;
   handleProgrammaticExtraction: () => Promise<void>;
@@ -161,12 +150,14 @@ export interface StudioInlineEditContextValue {
   onReplaceFromLocal: () => void;
   onUploadEnvironmentFromDrive: () => void;
   onUploadEnvironmentFromLocal: () => void;
-
-  // Query state
-  linkedRunsQuery: ListQuery<LinkedGeneratedVariant, LinkedGeneratedRunsResponse>;
 }
 
-const StudioInlineEditContext = createContext<StudioInlineEditContextValue | null>(null);
+export type StudioInlineEditContextValue = StudioInlineEditStateContextValue &
+  StudioInlineEditActionsContextValue;
+
+const StudioInlineEditStateContext = createContext<StudioInlineEditStateContextValue | null>(null);
+const StudioInlineEditActionsContext =
+  createContext<StudioInlineEditActionsContextValue | null>(null);
 
 type LocalUploadMode = 'create' | 'replace' | 'temporary-object' | 'environment';
 
@@ -586,6 +577,32 @@ export function StudioInlineEditProvider({
     setGenerationModalPreviewNaturalSize(null);
     setGenerationPreviewModalOpen(true);
   }, []);
+  const onCopyCardId = useCallback(
+    async (id: string) => {
+      await copyCardIdToClipboard(id, toast);
+    },
+    [toast]
+  );
+  const onRefreshLinkedRuns = useCallback(() => {
+    void linkedRunsQuery.refetch();
+  }, [linkedRunsQuery]);
+  const onReplaceFromDrive = useCallback(() => {
+    setDriveImportOpen(true);
+    setDriveImportMode('replace');
+    setDriveImportTargetId(selectedSlot?.id ?? null);
+  }, [selectedSlot?.id, setDriveImportMode, setDriveImportOpen, setDriveImportTargetId]);
+  const onReplaceFromLocal = useCallback(() => {
+    // Trigger native file picker via hidden input if needed,
+    // or just assume standard ProductImageManager behavior
+  }, []);
+  const onUploadEnvironmentFromDrive = useCallback(() => {
+    setDriveImportOpen(true);
+    setDriveImportMode('environment');
+    setDriveImportTargetId(selectedSlot?.id ?? null);
+  }, [selectedSlot?.id, setDriveImportMode, setDriveImportOpen, setDriveImportTargetId]);
+  const onUploadEnvironmentFromLocal = useCallback(() => {
+    triggerLocalUpload('environment', selectedSlot?.id ?? null);
+  }, [selectedSlot?.id, triggerLocalUpload]);
 
   const inlineCardImageManagerController: ProductImageManagerController = useMemo(() => {
     const previewPath = selectedSlot?.imageFile?.url || selectedSlot?.imageUrl || null;
@@ -656,19 +673,16 @@ export function StudioInlineEditProvider({
     setDriveImportTargetId,
   ]);
 
-  const value: StudioInlineEditContextValue = useMemo(
-    () => ({
+  const stateValue = useMemo(
+    (): StudioInlineEditStateContextValue => ({
       selectedSlot,
       slotInlineEditOpen,
       slotImageUrlDraft,
       slotBase64Draft,
       slotUpdateBusy,
       editCardTab,
-      setEditCardTab,
       slotNameDraft,
-      setSlotNameDraft,
       slotFolderDraft,
-      setSlotFolderDraft,
       extractBusy,
       extractError,
       previewParams,
@@ -688,7 +702,6 @@ export function StudioInlineEditProvider({
       selectedGenerationPreview,
       selectedGenerationPreviewDimensions,
       generationPreviewModalOpen,
-      setGenerationPreviewModalOpen,
       selectedGenerationModalDimensions,
       linkedVariantApplyBusyKey,
       inlinePreviewSource,
@@ -702,14 +715,62 @@ export function StudioInlineEditProvider({
       studioSettings,
       uploadPending: uploadMutation.isPending,
       inlineCardImageManagerController,
+      linkedRunsQuery,
+    }),
+    [
+      extractDraftPrompt,
+      extractReviewOpen,
+      compositeTabInputImages,
+      compositeTabInputSourceLabel,
+      editCardTab,
+      environmentPreviewDimensions,
+      environmentPreviewSource,
+      environmentReferenceDraft,
+      extractBusy,
+      extractError,
+      extractHistory,
+      generationPreviewModalOpen,
+      inlineCardImageManagerController,
+      inlinePreviewBase64Bytes,
+      inlinePreviewDimensions,
+      inlinePreviewMimeType,
+      inlinePreviewSource,
+      linkedGeneratedVariants,
+      linkedMaskSlots,
+      linkedRunsQuery,
+      linkedVariantApplyBusyKey,
+      previewControls,
+      previewLeaves,
+      previewParams,
+      previewValidation,
+      selectedExtractChanged,
+      selectedExtractDiffLines,
+      selectedExtractHistory,
+      selectedGenerationModalDimensions,
+      selectedGenerationPreview,
+      selectedGenerationPreviewDimensions,
+      selectedSlot,
+      slotBase64Draft,
+      slotFolderDraft,
+      slotImageUrlDraft,
+      slotInlineEditOpen,
+      slotNameDraft,
+      slotUpdateBusy,
+      sourceCompositeImage,
+      studioSettings,
+      uploadMutation.isPending,
+    ]
+  );
+  const actionsValue = useMemo(
+    (): StudioInlineEditActionsContextValue => ({
+      setEditCardTab,
+      setSlotNameDraft,
+      setSlotFolderDraft,
+      setGenerationPreviewModalOpen,
       onSaveInlineSlot: inlineHandlers.handleSaveInlineSlot,
       onClearSlotImage: inlineHandlers.handleClearSlotImage,
-      onCopyCardId: async (id) => {
-        await copyCardIdToClipboard(id, toast);
-      },
-      onRefreshLinkedRuns: () => {
-        void linkedRunsQuery.refetch();
-      },
+      onCopyCardId,
+      onRefreshLinkedRuns,
       onOpenGenerationPreviewModal,
       onApplyLinkedVariantToCard: inlineHandlers.handleApplyLinkedVariantToCard,
       setInlinePreviewNaturalSize,
@@ -727,87 +788,57 @@ export function StudioInlineEditProvider({
       handleProgrammaticExtraction: extractionHandlers.handleProgrammaticExtraction,
       handleSmartExtraction: extractionHandlers.handleSmartExtraction,
       handleSuggestUiControls: extractionHandlers.handleSuggestUiControls,
-      onReplaceFromDrive: () => {
-        setDriveImportOpen(true);
-        setDriveImportMode('replace');
-        setDriveImportTargetId(selectedSlot?.id ?? null);
-      },
-      onReplaceFromLocal: () => {
-        // Trigger native file picker via hidden input if needed,
-        // or just assume standard ProductImageManager behavior
-      },
-      onUploadEnvironmentFromDrive: () => {
-        setDriveImportOpen(true);
-        setDriveImportMode('environment');
-        setDriveImportTargetId(selectedSlot?.id ?? null);
-      },
-      onUploadEnvironmentFromLocal: () => {
-        triggerLocalUpload('environment', selectedSlot?.id ?? null);
-      },
-      linkedRunsQuery,
+      onReplaceFromDrive,
+      onReplaceFromLocal,
+      onUploadEnvironmentFromDrive,
+      onUploadEnvironmentFromLocal,
     }),
     [
-      selectedSlot,
-      slotInlineEditOpen,
-      slotImageUrlDraft,
-      slotBase64Draft,
-      slotUpdateBusy,
-      editCardTab,
-      slotNameDraft,
-      slotFolderDraft,
-      extractBusy,
-      extractError,
-      previewParams,
-      previewValidation,
-      previewLeaves,
-      previewControls,
-      extractHistory,
-      selectedExtractHistory,
-      selectedExtractDiffLines,
-      selectedExtractChanged,
-      environmentReferenceDraft,
-      extractDraftPrompt,
-      extractReviewOpen,
-      linkedVariantApplyBusyKey,
-      environmentPreviewSource,
-      environmentPreviewDimensions,
-      linkedGeneratedVariants,
-      selectedGenerationPreview,
-      selectedGenerationPreviewDimensions,
-      generationPreviewModalOpen,
-      selectedGenerationModalDimensions,
-      inlinePreviewSource,
-      inlinePreviewDimensions,
-      inlinePreviewMimeType,
-      inlinePreviewBase64Bytes,
-      compositeTabInputImages,
-      compositeTabInputSourceLabel,
-      linkedMaskSlots,
-      sourceCompositeImage,
-      studioSettings,
-      uploadMutation.isPending,
-      inlineCardImageManagerController,
-      inlineHandlers,
-      toast,
-      linkedRunsQuery,
-      onOpenGenerationPreviewModal,
       extractionHandlers,
-      setDriveImportOpen,
-      setDriveImportMode,
-      setDriveImportTargetId,
-      triggerLocalUpload,
+      inlineHandlers,
+      onCopyCardId,
+      onOpenGenerationPreviewModal,
+      onRefreshLinkedRuns,
+      onReplaceFromDrive,
+      onReplaceFromLocal,
+      onUploadEnvironmentFromDrive,
+      onUploadEnvironmentFromLocal,
+      setExtractDraftPrompt,
+      setExtractReviewOpen,
+      setGenerationPreviewModalOpen,
+      setSlotInlineEditOpen,
     ]
   );
 
   return (
-    <StudioInlineEditContext.Provider value={value}>{children}</StudioInlineEditContext.Provider>
+    <StudioInlineEditActionsContext.Provider value={actionsValue}>
+      <StudioInlineEditStateContext.Provider value={stateValue}>
+        {children}
+      </StudioInlineEditStateContext.Provider>
+    </StudioInlineEditActionsContext.Provider>
   );
 }
 
-export function useStudioInlineEdit() {
-  const context = useContext(StudioInlineEditContext);
+export function useStudioInlineEditState(): StudioInlineEditStateContextValue {
+  const context = useContext(StudioInlineEditStateContext);
   if (!context) {
-    throw internalError('useStudioInlineEdit must be used within StudioInlineEditProvider');
+    throw internalError('useStudioInlineEditState must be used within StudioInlineEditProvider');
   }
   return context;
+}
+
+export function useStudioInlineEditActions(): StudioInlineEditActionsContextValue {
+  const context = useContext(StudioInlineEditActionsContext);
+  if (!context) {
+    throw internalError(
+      'useStudioInlineEditActions must be used within StudioInlineEditProvider'
+    );
+  }
+  return context;
+}
+
+export function useStudioInlineEdit(): StudioInlineEditContextValue {
+  const state = useStudioInlineEditState();
+  const actions = useStudioInlineEditActions();
+  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
 }

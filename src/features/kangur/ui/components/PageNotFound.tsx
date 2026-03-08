@@ -6,8 +6,8 @@ import { Home } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import {
+  getKangurHomeHref,
   getKangurEmbeddedHostPath,
-  getKangurPageHref,
   KANGUR_EMBED_QUERY_PARAM,
   readKangurUrlParam,
 } from '@/features/kangur/config/routing';
@@ -123,7 +123,7 @@ export function PageNotFound(): React.JSX.Element {
           <div className='pt-6'>
             <KangurButton
               onClick={() => {
-                const gameHref = getKangurPageHref('Game', basePath);
+                const gameHref = getKangurHomeHref(basePath);
                 routeTransition?.startRouteTransition({
                   href: gameHref,
                   pageKey: 'Game',

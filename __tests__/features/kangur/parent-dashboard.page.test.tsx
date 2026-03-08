@@ -108,7 +108,7 @@ describe('ParentDashboard page', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Zaloguj sie' }));
     expect(navigateToLoginMock).toHaveBeenCalledTimes(1);
-    expect(screen.getByRole('link', { name: /Wroc do gry/i })).toHaveAttribute('href', '/kangur/game');
+    expect(screen.getByRole('link', { name: /Wroc do gry/i })).toHaveAttribute('href', '/kangur');
   });
 
   it('renders the authenticated dashboard and supports tab switching and logout', async () => {

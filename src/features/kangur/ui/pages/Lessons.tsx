@@ -17,8 +17,8 @@ import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 
 import {
+  getKangurHomeHref,
   getKangurInternalQueryParamName,
-  getKangurPageHref as createPageUrl,
   readKangurUrlParam,
 } from '@/features/kangur/config/routing';
 import { KangurDocsTooltipEnhancer, useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
@@ -248,7 +248,7 @@ export default function Lessons() {
       return;
     }
 
-    const gameHref = createPageUrl('Game', basePath);
+    const gameHref = getKangurHomeHref(basePath);
     routeTransition?.startRouteTransition({
       href: gameHref,
       pageKey: 'Game',

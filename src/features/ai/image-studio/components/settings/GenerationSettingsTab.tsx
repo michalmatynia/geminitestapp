@@ -7,12 +7,14 @@ import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignme
 import { FormField, FormSection, Input, SelectSimple, Textarea, Hint } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import { useImageStudioSettingsContext } from '../../context/ImageStudioSettingsContext';
+import {
+  useImageStudioSettingsActions,
+  useImageStudioSettingsState,
+} from '../../context/ImageStudioSettingsContext';
 
 export function GenerationSettingsTab(): React.JSX.Element {
   const {
     studioSettings,
-    setStudioSettings,
     modelCapabilities,
     modelAwareSizeValue,
     modelAwareQualityValue,
@@ -22,8 +24,8 @@ export function GenerationSettingsTab(): React.JSX.Element {
     modelAwareFormatOptions,
     advancedOverridesText,
     advancedOverridesError,
-    handleAdvancedOverridesChange,
-  } = useImageStudioSettingsContext();
+  } = useImageStudioSettingsState();
+  const { setStudioSettings, handleAdvancedOverridesChange } = useImageStudioSettingsActions();
   const brainGenerationModel = useBrainAssignment({
     capability: 'image_studio.general',
   });

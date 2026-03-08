@@ -38,6 +38,13 @@ import {
   getStoredActiveLearnerId,
   setStoredActiveLearnerId,
 } from '@/features/kangur/services/kangur-active-learner';
+import {
+  createGuestKangurScore,
+  hasGuestKangurScores,
+  listGuestKangurScores,
+  syncGuestKangurScores,
+} from '@/features/kangur/services/guest-kangur-scores';
+import { sortScores } from '@/features/kangur/services/kangur-score-repository/shared';
 
 const KANGUR_AUTH_ME_ENDPOINT = '/api/kangur/auth/me';
 const KANGUR_LEARNER_SIGNOUT_ENDPOINT = '/api/kangur/auth/learner-signout';
@@ -237,6 +244,95 @@ const buildScoresUrl = (params: {
 
   const query = search.toString();
   return query ? `${KANGUR_SCORES_ENDPOINT}?${query}` : KANGUR_SCORES_ENDPOINT;
+};
+
+const getScoreDedupKey = (score: KangurScoreRecord): string =>
+  score.client_mutation_id?.trim() || score.id;
+
+const mergeScoreRows = (input: {
+  localRows: KangurScoreRecord[];
+  remoteRows: KangurScoreRecord[];
+  sort?: string;
+  limit?: number;
+}): KangurScoreRecord[] => {
+  const mergedRows = new Map<string, KangurScoreRecord>();
+
+  input.localRows.forEach((score) => {
+    mergedRows.set(getScoreDedupKey(score), score);
+  });
+  input.remoteRows.forEach((score) => {
+    mergedRows.set(getScoreDedupKey(score), score);
+  });
+
+  const limit = typeof input.limit === 'number' ? input.limit : DEFAULT_SCORE_LIMIT;
+  return sortScores(Array.from(mergedRows.values()), input.sort).slice(0, limit);
+};
+
+const syncGuestScoresToApiIfAuthenticated = async (): Promise<void> => {
+  if (!hasGuestKangurScores()) {
+    return;
+  }
+
+  try {
+    await resolveSessionUser();
+  } catch (error: unknown) {
+    if (isKangurAuthStatusError(error)) {
+      return;
+    }
+    throw error;
+  }
+
+  const result = await syncGuestKangurScores({
+    persistScore: (payload) => createScoreViaApi(payload),
+  });
+  if (result.syncedCount > 0) {
+    clearScoreQueryCache();
+  }
+};
+
+const requestMergedScores = async (params: {
+  sort?: string;
+  limit?: number;
+  player_name?: string;
+  operation?: string;
+  created_by?: string;
+  learner_id?: string;
+}): Promise<KangurScoreRecord[]> => {
+  let syncError: unknown = null;
+  if (hasGuestKangurScores()) {
+    try {
+      await syncGuestScoresToApiIfAuthenticated();
+    } catch (error: unknown) {
+      syncError = error;
+    }
+  }
+
+  const localRows = listGuestKangurScores({
+    sort: params.sort,
+    limit: typeof params.limit === 'number' ? params.limit : DEFAULT_SCORE_LIMIT,
+    filters: {
+      player_name: params.player_name,
+      operation: params.operation,
+      created_by: params.created_by,
+      learner_id: params.learner_id,
+    },
+  });
+  const url = buildScoresUrl(params);
+
+  try {
+    const remoteRows = await requestScoresFromApi(url);
+    return mergeScoreRows({
+      localRows,
+      remoteRows,
+      sort: params.sort,
+      limit: params.limit,
+    });
+  } catch (error: unknown) {
+    if (localRows.length > 0) {
+      return localRows;
+    }
+    throw syncError ?? error;
+  }
 };
 
 const requestScoresFromApi = async (url: string): Promise<KangurScoreRecord[]> => {
@@ -785,25 +881,32 @@ export const createLocalKangurPlatform = (): KangurPlatform => {
       select: async (id: string) => selectLearner(id),
     },
     score: {
-      create: async (input: KangurScoreCreateInput) => createScoreViaApi(input),
+      create: async (input: KangurScoreCreateInput) => {
+        try {
+          await resolveSessionUser();
+          return await createScoreViaApi(input);
+        } catch (error: unknown) {
+          if (!isKangurAuthStatusError(error)) {
+            throw error;
+          }
+
+          return createGuestKangurScore(input);
+        }
+      },
       list: async (sort?: string, limit?: number) =>
-        requestScoresFromApi(
-          buildScoresUrl({
-            sort,
-            limit: typeof limit === 'number' ? limit : DEFAULT_SCORE_LIMIT,
-          })
-        ),
+        requestMergedScores({
+          sort,
+          limit: typeof limit === 'number' ? limit : DEFAULT_SCORE_LIMIT,
+        }),
       filter: async (criteria: Partial<KangurScoreRecord>, sort?: string, limit?: number) =>
-        requestScoresFromApi(
-          buildScoresUrl({
-            sort,
-            limit: typeof limit === 'number' ? limit : DEFAULT_SCORE_LIMIT,
-            player_name: criteria.player_name,
-            operation: criteria.operation,
-            created_by: criteria.created_by ?? undefined,
-            learner_id: typeof criteria.learner_id === 'string' ? criteria.learner_id : undefined,
-          })
-        ),
+        requestMergedScores({
+          sort,
+          limit: typeof limit === 'number' ? limit : DEFAULT_SCORE_LIMIT,
+          player_name: criteria.player_name,
+          operation: criteria.operation,
+          created_by: criteria.created_by ?? undefined,
+          learner_id: typeof criteria.learner_id === 'string' ? criteria.learner_id : undefined,
+        }),
     },
     progress: {
       get: async () => requestProgressFromApi(),

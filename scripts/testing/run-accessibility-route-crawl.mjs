@@ -1,34 +1,15 @@
-import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 
 import { parseCommonCheckArgs, formatDuration, writeCheckArtifacts } from '../quality/lib/check-runner.mjs';
 import { accessibilityRouteCrawlRoutes } from './config/accessibility-route-crawl.config.mjs';
+import { buildPlaywrightSuiteRuntime } from './lib/playwright-suite-runtime.mjs';
 import {
   normalizeAccessibilityRouteEntries,
   summarizeAccessibilityRouteCrawlReport,
 } from './lib/accessibility-route-crawl.mjs';
 
 const root = process.cwd();
-const preferredBrowserNodeBinDir = (() => {
-  const explicitBinDir = process.env['A11Y_SMOKE_BROWSER_NODE_BIN'];
-  if (explicitBinDir && fs.existsSync(path.join(explicitBinDir, 'node'))) {
-    return explicitBinDir;
-  }
-
-  const nvmVersionsDir = path.join(os.homedir(), '.nvm', 'versions', 'node');
-  if (!fs.existsSync(nvmVersionsDir)) {
-    return null;
-  }
-
-  const node22Dirs = fs
-    .readdirSync(nvmVersionsDir)
-    .filter((entry) => /^v22\./.test(entry))
-    .sort((left, right) => left.localeCompare(right, undefined, { numeric: true }));
-  const latestNode22Dir = node22Dirs.at(-1);
-  return latestNode22Dir ? path.join(nvmVersionsDir, latestNode22Dir, 'bin') : null;
-})();
 
 const routeEntries = normalizeAccessibilityRouteEntries(accessibilityRouteCrawlRoutes);
 const playwrightHost = process.env['HOST'] || '127.0.0.1';
@@ -94,9 +75,17 @@ const toMarkdown = (payload) => {
   return `${lines.join('\n')}\n`;
 };
 
-const runPlaywrightRouteCrawl = () =>
-  new Promise((resolve) => {
-    const command = preferredBrowserNodeBinDir ? path.join(preferredBrowserNodeBinDir, 'npx') : 'npx';
+const runPlaywrightRouteCrawl = async () => {
+  const playwrightRuntime = await buildPlaywrightSuiteRuntime({
+    baseUrl: playwrightBaseUrl,
+    host: playwrightHost,
+    env: process.env,
+  });
+
+  return await new Promise((resolve) => {
+    const command = playwrightRuntime.preferredBrowserNodeBinDir
+      ? path.join(playwrightRuntime.preferredBrowserNodeBinDir, 'npx')
+      : 'npx';
     const args = [
       'playwright',
       'test',
@@ -109,13 +98,7 @@ const runPlaywrightRouteCrawl = () =>
       env: {
         ...process.env,
         FORCE_COLOR: '0',
-        HOST: playwrightHost,
-        PLAYWRIGHT_BASE_URL: playwrightBaseUrl,
-        ...(preferredBrowserNodeBinDir
-          ? {
-              PATH: `${preferredBrowserNodeBinDir}${path.delimiter}${process.env['PATH'] ?? ''}`,
-            }
-          : {}),
+        ...playwrightRuntime.env,
       },
       stdio: ['ignore', 'pipe', 'pipe'],
     });
@@ -145,9 +128,11 @@ const runPlaywrightRouteCrawl = () =>
         stdout,
         stderr: stderr.trim(),
         command: [command, ...args].join(' '),
+        reuseExistingServer: playwrightRuntime.reuseExistingServer,
       });
     });
   });
+};
 
 const run = async () => {
   const startedAt = Date.now();
@@ -155,6 +140,9 @@ const run = async () => {
   void failOnWarnings;
 
   const execution = await runPlaywrightRouteCrawl();
+  if (execution.reuseExistingServer) {
+    console.log(`[accessibility-route-crawl] reusing existing server at ${playwrightBaseUrl}`);
+  }
 
   let playwrightReport = null;
   try {

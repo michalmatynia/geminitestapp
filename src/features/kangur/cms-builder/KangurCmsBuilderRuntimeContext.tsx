@@ -16,9 +16,20 @@ type KangurCmsBuilderRuntimeContextValue = {
   isSaving: boolean;
 };
 
-const KangurCmsBuilderRuntimeContext = createContext<KangurCmsBuilderRuntimeContextValue | null>(
-  null
-);
+type KangurCmsBuilderRuntimeStateContextValue = Pick<
+  KangurCmsBuilderRuntimeContextValue,
+  'draftProject' | 'savedProject' | 'activeScreenKey' | 'isSaving'
+>;
+
+type KangurCmsBuilderRuntimeActionsContextValue = Pick<
+  KangurCmsBuilderRuntimeContextValue,
+  'onSwitchScreen' | 'onSave'
+>;
+
+const KangurCmsBuilderRuntimeStateContext =
+  createContext<KangurCmsBuilderRuntimeStateContextValue | null>(null);
+const KangurCmsBuilderRuntimeActionsContext =
+  createContext<KangurCmsBuilderRuntimeActionsContextValue | null>(null);
 
 export function KangurCmsBuilderRuntimeProvider({
   children,
@@ -31,33 +42,64 @@ export function KangurCmsBuilderRuntimeProvider({
 }: KangurCmsBuilderRuntimeContextValue & {
   children: ReactNode;
 }): React.JSX.Element {
-  const value = useMemo<KangurCmsBuilderRuntimeContextValue>(
+  const stateValue = useMemo<KangurCmsBuilderRuntimeStateContextValue>(
     () => ({
       draftProject,
       savedProject,
       activeScreenKey,
-      onSwitchScreen,
-      onSave,
       isSaving,
     }),
-    [activeScreenKey, draftProject, isSaving, onSave, onSwitchScreen, savedProject]
+    [activeScreenKey, draftProject, isSaving, savedProject]
+  );
+  const actionsValue = useMemo<KangurCmsBuilderRuntimeActionsContextValue>(
+    () => ({
+      onSwitchScreen,
+      onSave,
+    }),
+    [onSave, onSwitchScreen]
   );
 
   return (
-    <KangurCmsBuilderRuntimeContext.Provider value={value}>
-      {children}
-    </KangurCmsBuilderRuntimeContext.Provider>
+    <KangurCmsBuilderRuntimeActionsContext.Provider value={actionsValue}>
+      <KangurCmsBuilderRuntimeStateContext.Provider value={stateValue}>
+        {children}
+      </KangurCmsBuilderRuntimeStateContext.Provider>
+    </KangurCmsBuilderRuntimeActionsContext.Provider>
   );
 }
 
-export const useKangurCmsBuilderRuntime = (): KangurCmsBuilderRuntimeContextValue => {
-  const context = useContext(KangurCmsBuilderRuntimeContext);
+export const useKangurCmsBuilderRuntimeState = (): KangurCmsBuilderRuntimeStateContextValue => {
+  const context = useContext(KangurCmsBuilderRuntimeStateContext);
 
   if (!context) {
     throw internalError(
-      'useKangurCmsBuilderRuntime must be used within a KangurCmsBuilderRuntimeProvider'
+      'useKangurCmsBuilderRuntimeState must be used within a KangurCmsBuilderRuntimeProvider'
     );
   }
 
   return context;
+};
+
+export const useKangurCmsBuilderRuntimeActions =
+  (): KangurCmsBuilderRuntimeActionsContextValue => {
+  const context = useContext(KangurCmsBuilderRuntimeActionsContext);
+
+  if (!context) {
+    throw internalError(
+      'useKangurCmsBuilderRuntimeActions must be used within a KangurCmsBuilderRuntimeProvider'
+    );
+  }
+
+  return context;
+};
+
+export const useKangurCmsBuilderRuntime = (): KangurCmsBuilderRuntimeContextValue => {
+  const state = useContext(KangurCmsBuilderRuntimeStateContext);
+  const actions = useContext(KangurCmsBuilderRuntimeActionsContext);
+  if (!state || !actions) {
+    throw internalError(
+      'useKangurCmsBuilderRuntime must be used within a KangurCmsBuilderRuntimeProvider'
+    );
+  }
+  return useMemo(() => ({ ...state, ...actions }), [actions, state]);
 };

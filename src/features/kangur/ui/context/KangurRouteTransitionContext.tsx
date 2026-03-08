@@ -3,6 +3,7 @@
 import {
   createContext,
   startTransition,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -24,9 +25,22 @@ type KangurRouteTransitionContextValue = {
   startRouteTransition: (input?: { href?: string | null; pageKey?: string | null }) => void;
 };
 
+type KangurRouteTransitionStateContextValue = Pick<
+  KangurRouteTransitionContextValue,
+  'isRoutePending' | 'pendingPageKey'
+>;
+
+type KangurRouteTransitionActionsContextValue = Pick<
+  KangurRouteTransitionContextValue,
+  'startRouteTransition'
+>;
+
 const ROUTE_TRANSITION_TIMEOUT_MS = 4_000;
 
-const KangurRouteTransitionContext = createContext<KangurRouteTransitionContextValue | null>(null);
+const KangurRouteTransitionStateContext =
+  createContext<KangurRouteTransitionStateContextValue | null>(null);
+const KangurRouteTransitionActionsContext =
+  createContext<KangurRouteTransitionActionsContextValue | null>(null);
 
 export function KangurRouteTransitionProvider({
   children,
@@ -65,49 +79,91 @@ export function KangurRouteTransitionProvider({
     };
   }, [transitionState]);
 
-  const value = useMemo<KangurRouteTransitionContextValue>(
+  const startRouteTransition = useCallback(
+    (input: { href?: string | null; pageKey?: string | null } = {}): void => {
+      const normalizedHref =
+        typeof input.href === 'string' && input.href.trim().length > 0 ? input.href.trim() : null;
+      const nextPageKey = input.pageKey?.trim() || null;
+
+      if (
+        (normalizedHref && normalizedHref === requestedPath) ||
+        (!normalizedHref && nextPageKey !== null && nextPageKey === pageKey)
+      ) {
+        return;
+      }
+
+      startTransition(() => {
+        setTransitionState({
+          href: normalizedHref,
+          pageKey: nextPageKey,
+        });
+      });
+    },
+    [pageKey, requestedPath]
+  );
+
+  const stateValue = useMemo<KangurRouteTransitionStateContextValue>(
     () => ({
       isRoutePending: transitionState !== null,
       pendingPageKey: transitionState?.pageKey ?? null,
-      startRouteTransition: (input = {}): void => {
-        const normalizedHref =
-          typeof input.href === 'string' && input.href.trim().length > 0 ? input.href.trim() : null;
-        const nextPageKey = input.pageKey?.trim() || null;
-
-        if (
-          (normalizedHref && normalizedHref === requestedPath) ||
-          (!normalizedHref && nextPageKey !== null && nextPageKey === pageKey)
-        ) {
-          return;
-        }
-
-        startTransition(() => {
-          setTransitionState({
-            href: normalizedHref,
-            pageKey: nextPageKey,
-          });
-        });
-      },
     }),
-    [pageKey, requestedPath, transitionState]
+    [transitionState]
+  );
+  const actionsValue = useMemo<KangurRouteTransitionActionsContextValue>(
+    () => ({
+      startRouteTransition,
+    }),
+    [startRouteTransition]
   );
 
   return (
-    <KangurRouteTransitionContext.Provider value={value}>
-      {children}
-    </KangurRouteTransitionContext.Provider>
+    <KangurRouteTransitionActionsContext.Provider value={actionsValue}>
+      <KangurRouteTransitionStateContext.Provider value={stateValue}>
+        {children}
+      </KangurRouteTransitionStateContext.Provider>
+    </KangurRouteTransitionActionsContext.Provider>
   );
 }
 
-export const useKangurRouteTransition = (): KangurRouteTransitionContextValue => {
-  const context = useContext(KangurRouteTransitionContext);
+export const useKangurRouteTransitionState = (): KangurRouteTransitionStateContextValue => {
+  const context = useContext(KangurRouteTransitionStateContext);
   if (!context) {
     throw internalError(
-      'useKangurRouteTransition must be used within a KangurRouteTransitionProvider'
+      'useKangurRouteTransitionState must be used within a KangurRouteTransitionProvider'
     );
   }
   return context;
 };
 
-export const useOptionalKangurRouteTransition = (): KangurRouteTransitionContextValue | null =>
-  useContext(KangurRouteTransitionContext);
+export const useKangurRouteTransitionActions =
+  (): KangurRouteTransitionActionsContextValue => {
+  const context = useContext(KangurRouteTransitionActionsContext);
+  if (!context) {
+    throw internalError(
+      'useKangurRouteTransitionActions must be used within a KangurRouteTransitionProvider'
+    );
+  }
+  return context;
+};
+
+export const useKangurRouteTransition = (): KangurRouteTransitionContextValue => {
+  const state = useContext(KangurRouteTransitionStateContext);
+  const actions = useContext(KangurRouteTransitionActionsContext);
+  if (!state || !actions) {
+    throw internalError(
+      'useKangurRouteTransition must be used within a KangurRouteTransitionProvider'
+    );
+  }
+  return useMemo(() => ({ ...state, ...actions }), [actions, state]);
+};
+
+export const useOptionalKangurRouteTransition = (): KangurRouteTransitionContextValue | null => {
+  const state = useContext(KangurRouteTransitionStateContext);
+  const actions = useContext(KangurRouteTransitionActionsContext);
+  return useMemo(() => {
+    if (!state || !actions) {
+      return null;
+    }
+    return { ...state, ...actions };
+  }, [actions, state]);
+};

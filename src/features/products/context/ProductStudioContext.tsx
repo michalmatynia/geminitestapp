@@ -22,20 +22,25 @@ import { internalError } from '@/shared/errors/app-error';
 import type {
   ProductImageSlotPreview,
   ProductStudioAuditEntry,
+  ProductStudioActionsContextValue,
   ProductStudioContextValue,
   ProductStudioRunStatus,
+  ProductStudioStateContextValue,
   ProductStudioVariantsResponse,
 } from './ProductStudioContext.types';
 
 export type {
   ProductImageSlotPreview,
   ProductStudioAuditEntry,
+  ProductStudioActionsContextValue,
   ProductStudioContextValue,
   ProductStudioRunStatus,
+  ProductStudioStateContextValue,
   ProductStudioVariantsResponse,
 } from './ProductStudioContext.types';
 
-const ProductStudioContext = createContext<ProductStudioContextValue | null>(null);
+const ProductStudioStateContext = createContext<ProductStudioStateContextValue | null>(null);
+const ProductStudioActionsContext = createContext<ProductStudioActionsContextValue | null>(null);
 
 const STUDIO_PROJECT_NOT_CONNECTED = '__product_studio_not_connected__';
 const PRODUCT_STUDIO_RUN_STATUSES: ProductStudioRunStatus[] = [
@@ -351,61 +356,128 @@ export function ProductStudioProvider({
     [activeRunBaselineVariantIdSet, variants]
   );
 
-  const contextValue: ProductStudioContextValue = {
-    studioProjectId,
-    setStudioProjectId,
-    studioProjectOptions,
-    isStudioLoading: studioProjectsQuery.isLoading || studioConfigLoading,
-    imageSlotPreviews,
-    selectedImageIndex,
-    setSelectedImageIndex,
-    selectedSourcePreview,
-    variants,
-    variantsLoading,
-    selectedVariantSlotId,
-    setSelectedVariantSlotId,
-    selectedVariant,
-    pendingVariantPlaceholderCount:
-      activeRunId && (runStatus === 'queued' || runStatus === 'running')
-        ? Math.max(0, pendingExpectedOutputs - variantsProducedForActiveRun)
-        : 0,
-    sourceImageSrc,
-    variantImageSrc,
-    canCompareWithSource,
-    variantsData,
-    sequenceReadinessMessage,
-    blockSendForSequenceReadiness,
-    auditEntries,
-    auditLoading,
-    auditError,
-    refreshAudit,
-    activeRunId,
-    runStatus,
-    handleSendToStudio,
-    handleOpenInImageStudio,
-    handleAcceptVariant,
-    handleDeleteVariant,
-    handleRotateImageSlot,
-    refreshVariants,
-    sending: sendToStudioMutation.isPending,
-    accepting: acceptVariantMutation.isPending,
-    openingInImageStudio,
-    rotatingDirection: rotateImageSlotMutation.isPending
-      ? (rotateImageSlotMutation.variables?.direction ?? null)
-      : null,
-    deletingVariantId,
-    studioActionError,
-  };
+  const stateValue = useMemo(
+    (): ProductStudioStateContextValue => ({
+      studioProjectId,
+      studioProjectOptions,
+      isStudioLoading: studioProjectsQuery.isLoading || studioConfigLoading,
+      imageSlotPreviews,
+      selectedImageIndex,
+      selectedSourcePreview,
+      variants,
+      variantsLoading,
+      selectedVariantSlotId,
+      selectedVariant,
+      pendingVariantPlaceholderCount:
+        activeRunId && (runStatus === 'queued' || runStatus === 'running')
+          ? Math.max(0, pendingExpectedOutputs - variantsProducedForActiveRun)
+          : 0,
+      sourceImageSrc,
+      variantImageSrc,
+      canCompareWithSource,
+      variantsData,
+      sequenceReadinessMessage,
+      blockSendForSequenceReadiness,
+      auditEntries,
+      auditLoading,
+      auditError,
+      activeRunId,
+      runStatus,
+      sending: sendToStudioMutation.isPending,
+      accepting: acceptVariantMutation.isPending,
+      openingInImageStudio,
+      rotatingDirection: rotateImageSlotMutation.isPending
+        ? (rotateImageSlotMutation.variables?.direction ?? null)
+        : null,
+      deletingVariantId,
+      studioActionError,
+    }),
+    [
+      acceptVariantMutation.isPending,
+      activeRunId,
+      auditEntries,
+      auditError,
+      auditLoading,
+      blockSendForSequenceReadiness,
+      canCompareWithSource,
+      deletingVariantId,
+      imageSlotPreviews,
+      openingInImageStudio,
+      pendingExpectedOutputs,
+      rotateImageSlotMutation.isPending,
+      rotateImageSlotMutation.variables?.direction,
+      runStatus,
+      selectedImageIndex,
+      selectedSourcePreview,
+      selectedVariant,
+      selectedVariantSlotId,
+      sendToStudioMutation.isPending,
+      sequenceReadinessMessage,
+      sourceImageSrc,
+      studioActionError,
+      studioConfigLoading,
+      studioProjectId,
+      studioProjectOptions,
+      studioProjectsQuery.isLoading,
+      variantImageSrc,
+      variants,
+      variantsData,
+      variantsLoading,
+      variantsProducedForActiveRun,
+    ]
+  );
+  const actionsValue = useMemo(
+    (): ProductStudioActionsContextValue => ({
+      setStudioProjectId,
+      setSelectedImageIndex,
+      setSelectedVariantSlotId,
+      refreshAudit,
+      handleSendToStudio,
+      handleOpenInImageStudio,
+      handleAcceptVariant,
+      handleDeleteVariant,
+      handleRotateImageSlot,
+      refreshVariants,
+    }),
+    [
+      handleAcceptVariant,
+      handleDeleteVariant,
+      handleOpenInImageStudio,
+      handleRotateImageSlot,
+      handleSendToStudio,
+      refreshAudit,
+      refreshVariants,
+      setStudioProjectId,
+    ]
+  );
 
   return (
-    <ProductStudioContext.Provider value={contextValue}>{children}</ProductStudioContext.Provider>
+    <ProductStudioActionsContext.Provider value={actionsValue}>
+      <ProductStudioStateContext.Provider value={stateValue}>
+        {children}
+      </ProductStudioStateContext.Provider>
+    </ProductStudioActionsContext.Provider>
   );
 }
 
-export function useProductStudioContext(): ProductStudioContextValue {
-  const context = useContext(ProductStudioContext);
+export function useProductStudioState(): ProductStudioStateContextValue {
+  const context = useContext(ProductStudioStateContext);
   if (!context) {
-    throw internalError('useProductStudioContext must be used within ProductStudioProvider');
+    throw internalError('useProductStudioState must be used within ProductStudioProvider');
   }
   return context;
+}
+
+export function useProductStudioActions(): ProductStudioActionsContextValue {
+  const context = useContext(ProductStudioActionsContext);
+  if (!context) {
+    throw internalError('useProductStudioActions must be used within ProductStudioProvider');
+  }
+  return context;
+}
+
+export function useProductStudioContext(): ProductStudioContextValue {
+  const state = useProductStudioState();
+  const actions = useProductStudioActions();
+  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
 }

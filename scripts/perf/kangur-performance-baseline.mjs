@@ -2,6 +2,11 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 
+import {
+  buildPlaywrightSuiteRuntime,
+  detectExistingPlaywrightServer,
+} from '../testing/lib/playwright-suite-runtime.mjs';
+
 const args = new Set(process.argv.slice(2));
 const strictMode = args.has('--strict');
 const includeE2E = args.has('--include-e2e');
@@ -12,8 +17,14 @@ const root = process.cwd();
 const outDir = path.join(root, 'docs', 'metrics');
 const MAX_OUTPUT_BYTES = 100_000;
 const PLAYWRIGHT_BASE_URL = process.env['PLAYWRIGHT_BASE_URL'] || 'http://localhost:3000';
-const NEXT_DEV_LOCK_PATH = path.join(root, '.next-dev', 'dev', 'lock');
-const SERVER_CHECK_TIMEOUT_MS = 4_000;
+const PLAYWRIGHT_HOST =
+  process.env['HOST'] || (() => {
+    try {
+      return new URL(PLAYWRIGHT_BASE_URL).hostname;
+    } catch {
+      return 'localhost';
+    }
+  })();
 
 const KANGUR_UNIT_TESTS = [
   '__tests__/features/kangur/learner-profile.page.test.tsx',
@@ -34,7 +45,7 @@ const BASELINE_FILE_SET = [
   'src/features/kangur/ui/pages/Lessons.tsx',
   'src/features/kangur/ui/pages/LearnerProfile.tsx',
   'src/features/kangur/ui/components/KangurGame.tsx',
-  'src/features/kangur/ui/components/KangurIllustrations.jsx',
+  'src/features/kangur/ui/components/KangurIllustrations.ts',
   'src/features/kangur/ui/services/kangur-questions-data.js',
 ];
 
@@ -66,42 +77,6 @@ const isInfraE2EFailure = (output) => {
 };
 
 const commandToText = (command, commandArgs) => [command, ...commandArgs].join(' ');
-
-const fileExists = async (targetPath) => {
-  try {
-    await fs.access(targetPath);
-    return true;
-  } catch {
-    return false;
-  }
-};
-
-const checkServerAvailability = async (baseUrl) => {
-  const startedAt = Date.now();
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), SERVER_CHECK_TIMEOUT_MS);
-
-  try {
-    const response = await fetch(baseUrl, {
-      method: 'GET',
-      redirect: 'manual',
-      signal: controller.signal,
-    });
-    return {
-      ok: true,
-      status: response.status,
-      durationMs: Date.now() - startedAt,
-    };
-  } catch (error) {
-    return {
-      ok: false,
-      error: error instanceof Error ? error.message : String(error),
-      durationMs: Date.now() - startedAt,
-    };
-  } finally {
-    clearTimeout(timeout);
-  }
-};
 
 const runCommand = ({ command, commandArgs, label, env = {} }) =>
   new Promise((resolve) => {
@@ -214,33 +189,40 @@ const run = async () => {
   let e2e = null;
   if (includeE2E) {
     const e2eArgs = ['playwright', 'test', ...KANGUR_E2E_TESTS, '--workers=1'];
-    const e2eCommand = commandToText('npx', e2eArgs);
-    const lockExists = await fileExists(NEXT_DEV_LOCK_PATH);
-    const useExistingServer =
-      process.env['PLAYWRIGHT_USE_EXISTING_SERVER'] === 'true' ||
-      (!process.env['PLAYWRIGHT_USE_EXISTING_SERVER'] && lockExists);
+    const playwrightRuntime = await buildPlaywrightSuiteRuntime({
+      baseUrl: PLAYWRIGHT_BASE_URL,
+      host: PLAYWRIGHT_HOST,
+      env: process.env,
+    });
+    const e2eCommand = commandToText(
+      playwrightRuntime.preferredBrowserNodeBinDir
+        ? path.join(playwrightRuntime.preferredBrowserNodeBinDir, 'npx')
+        : 'npx',
+      e2eArgs
+    );
 
     const e2eEnv = {
       ALLOW_UNSUPPORTED_NODE_DEV: '1',
       SKIP_PORTABLE_PATH_BOOTSTRAP: '1',
-      PLAYWRIGHT_BASE_URL: PLAYWRIGHT_BASE_URL,
-      ...(useExistingServer ? { PLAYWRIGHT_USE_EXISTING_SERVER: 'true' } : {}),
+      ...playwrightRuntime.env,
     };
 
     console.log(
-      `[kangur-perf] e2e-config existingServer=${String(useExistingServer)} env=${String(process.env['PLAYWRIGHT_USE_EXISTING_SERVER'] ?? '')} lock=${String(lockExists)} baseURL=${PLAYWRIGHT_BASE_URL}`
+      `[kangur-perf] e2e-config existingServer=${String(playwrightRuntime.reuseExistingServer)} env=${String(process.env['PLAYWRIGHT_USE_EXISTING_SERVER'] ?? '')} host=${PLAYWRIGHT_HOST} baseURL=${PLAYWRIGHT_BASE_URL}`
     );
 
     let existingServerWarning = '';
-    if (useExistingServer) {
-      const serverCheck = await checkServerAvailability(PLAYWRIGHT_BASE_URL);
-      if (!serverCheck.ok) {
-        existingServerWarning = `[kangur-perf] PLAYWRIGHT_USE_EXISTING_SERVER=true and preflight to ${PLAYWRIGHT_BASE_URL} failed. Proceeding with Playwright run. ${serverCheck.error}`;
-      }
+    if (
+      process.env['PLAYWRIGHT_USE_EXISTING_SERVER'] === 'true' &&
+      !(await detectExistingPlaywrightServer({ baseUrl: PLAYWRIGHT_BASE_URL }))
+    ) {
+      existingServerWarning = `[kangur-perf] PLAYWRIGHT_USE_EXISTING_SERVER=true but preflight to ${PLAYWRIGHT_BASE_URL} failed. Proceeding with Playwright run.`;
     }
 
     e2e = await runCommand({
-      command: 'npx',
+      command: playwrightRuntime.preferredBrowserNodeBinDir
+        ? path.join(playwrightRuntime.preferredBrowserNodeBinDir, 'npx')
+        : 'npx',
       commandArgs: e2eArgs,
       label: 'kangur-e2e',
       env: e2eEnv,

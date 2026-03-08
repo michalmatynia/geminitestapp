@@ -513,12 +513,18 @@ export const KangurOptionCardButton = React.forwardRef<
   KangurOptionCardButtonProps
 >(({ accent = 'slate', className, disabled, emphasis, state, type, ...props }, ref) => {
   const accentStyles = KANGUR_ACCENT_STYLES[accent];
+  const cursorClassName = disabled
+    ? 'cursor-not-allowed'
+    : state === 'muted'
+      ? null
+      : 'cursor-pointer';
 
   return (
     <button
       ref={ref}
       className={cn(
         kangurOptionCardButtonVariants({ emphasis, state }),
+        cursorClassName,
         disabled
           ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 opacity-70'
           : state === 'muted'

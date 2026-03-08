@@ -4,20 +4,25 @@ import React from 'react';
 
 import { Button, FormField, FormSection, Input, Label, ToggleRow } from '@/shared/ui';
 
-import { useImageStudioSettingsContext } from '../../context/ImageStudioSettingsContext';
+import {
+  useImageStudioSettingsActions,
+  useImageStudioSettingsState,
+} from '../../context/ImageStudioSettingsContext';
 
 export function MaintenanceSettingsTab(): React.JSX.Element {
   const {
     backfillProjectId,
-    setBackfillProjectId,
     backfillDryRun,
-    setBackfillDryRun,
     backfillIncludeHeuristicGenerationLinks,
-    setBackfillIncludeHeuristicGenerationLinks,
-    runCardBackfill,
     backfillRunning,
     backfillResultText,
-  } = useImageStudioSettingsContext();
+  } = useImageStudioSettingsState();
+  const {
+    setBackfillProjectId,
+    setBackfillDryRun,
+    setBackfillIncludeHeuristicGenerationLinks,
+    runCardBackfill,
+  } = useImageStudioSettingsActions();
 
   return (
     <div className='space-y-6'>

@@ -130,3 +130,11 @@ export function useCanvasBoardUI() {
   }
   return context;
 }
+
+export function useCanvasBoardUIState(): CanvasBoardUIContextValue {
+  return useCanvasBoardUI();
+}
+
+export function useCanvasBoardUIActions(): CanvasBoardUIContextValue {
+  return useCanvasBoardUI();
+}

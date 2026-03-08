@@ -143,6 +143,24 @@ describe('KangurPrimaryNavigation', () => {
     });
   });
 
+  it('uses the canonical Kangur home route when returning from another page', () => {
+    render(
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        currentPage='Lessons'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('link', { name: /strona glowna/i }));
+
+    expect(startRouteTransitionMock).toHaveBeenCalledWith({
+      href: '/kangur',
+      pageKey: 'Game',
+    });
+  });
+
   it('renders the toolbar nav group at full width', () => {
     render(
       <KangurPrimaryNavigation
@@ -191,5 +209,6 @@ describe('KangurPrimaryNavigation', () => {
     fireEvent.click(screen.getByRole('button', { name: /zaloguj się/i }));
 
     expect(onLogin).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('link', { name: /profil/i })).toBeNull();
   });
 });

@@ -1,0 +1,16 @@
+{
+  "generatedAt": "2026-03-08T13:06:28.935Z",
+  "durationMs": 1066,
+  "status": "passed",
+  "summary": {
+    "fileCount": 67,
+    "dialogCount": 4,
+    "alertDialogCount": 1,
+    "tabsListCount": 31,
+    "tooltipCount": 73,
+    "errorCount": 0,
+    "warningCount": 0
+  },
+  "issues": [],
+  "rules": []
+}

@@ -17,9 +17,20 @@ type KangurTestQuestionEditorContextValue = {
   setIllustration: (illustration: KangurQuestionIllustration) => void;
 };
 
-const KangurTestQuestionEditorContext = createContext<KangurTestQuestionEditorContextValue | null>(
-  null
-);
+type KangurTestQuestionEditorStateContextValue = Pick<
+  KangurTestQuestionEditorContextValue,
+  'formData' | 'suiteTitle' | 'choices' | 'correctChoiceLabel'
+>;
+
+type KangurTestQuestionEditorActionsContextValue = Pick<
+  KangurTestQuestionEditorContextValue,
+  'onChange' | 'updateFormData' | 'setChoices' | 'setCorrectChoiceLabel' | 'setIllustration'
+>;
+
+const KangurTestQuestionEditorStateContext =
+  createContext<KangurTestQuestionEditorStateContextValue | null>(null);
+const KangurTestQuestionEditorActionsContext =
+  createContext<KangurTestQuestionEditorActionsContextValue | null>(null);
 
 type Props = {
   formData: QuestionFormData;
@@ -64,43 +75,62 @@ export function KangurTestQuestionEditorProvider({
     [updateFormData]
   );
 
-  const value = useMemo(
+  const stateValue = useMemo<KangurTestQuestionEditorStateContextValue>(
     () => ({
       formData,
-      onChange,
       suiteTitle,
       choices: formData.choices,
       correctChoiceLabel,
+    }),
+    [correctChoiceLabel, formData, suiteTitle]
+  );
+  const actionsValue = useMemo<KangurTestQuestionEditorActionsContextValue>(
+    () => ({
+      onChange,
       updateFormData,
       setChoices,
       setCorrectChoiceLabel,
       setIllustration,
     }),
-    [
-      correctChoiceLabel,
-      formData,
-      onChange,
-      setChoices,
-      setCorrectChoiceLabel,
-      setIllustration,
-      suiteTitle,
-      updateFormData,
-    ]
+    [onChange, setChoices, setCorrectChoiceLabel, setIllustration, updateFormData]
   );
 
   return (
-    <KangurTestQuestionEditorContext.Provider value={value}>
-      {children}
-    </KangurTestQuestionEditorContext.Provider>
+    <KangurTestQuestionEditorActionsContext.Provider value={actionsValue}>
+      <KangurTestQuestionEditorStateContext.Provider value={stateValue}>
+        {children}
+      </KangurTestQuestionEditorStateContext.Provider>
+    </KangurTestQuestionEditorActionsContext.Provider>
   );
 }
 
-export function useKangurTestQuestionEditorContext(): KangurTestQuestionEditorContextValue {
-  const context = useContext(KangurTestQuestionEditorContext);
+export function useKangurTestQuestionEditorState(): KangurTestQuestionEditorStateContextValue {
+  const context = useContext(KangurTestQuestionEditorStateContext);
   if (!context) {
+    throw internalError(
+      'useKangurTestQuestionEditorState must be used within a KangurTestQuestionEditorProvider'
+    );
+  }
+  return context;
+}
+
+export function useKangurTestQuestionEditorActions(): KangurTestQuestionEditorActionsContextValue {
+  const context = useContext(KangurTestQuestionEditorActionsContext);
+  if (!context) {
+    throw internalError(
+      'useKangurTestQuestionEditorActions must be used within a KangurTestQuestionEditorProvider'
+    );
+  }
+  return context;
+}
+
+export function useKangurTestQuestionEditorContext(): KangurTestQuestionEditorContextValue {
+  const state = useContext(KangurTestQuestionEditorStateContext);
+  const actions = useContext(KangurTestQuestionEditorActionsContext);
+  if (!state || !actions) {
     throw internalError(
       'useKangurTestQuestionEditorContext must be used within a KangurTestQuestionEditorProvider'
     );
   }
-  return context;
+  return useMemo(() => ({ ...state, ...actions }), [actions, state]);
 }

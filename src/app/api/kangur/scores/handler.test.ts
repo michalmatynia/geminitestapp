@@ -46,6 +46,7 @@ const createScoreRow = () => ({
   correct_answers: 9,
   time_taken: 33,
   created_date: '2026-03-05T10:00:00.000Z',
+  client_mutation_id: 'guest-score:1',
   created_by: 'teacher@example.com',
 });
 
@@ -146,6 +147,7 @@ describe('kangur scores handler', () => {
           total_questions: 10,
           correct_answers: 9,
           time_taken: 33,
+          client_mutation_id: 'guest-score:1',
         })
       ),
       createRequestContext()
@@ -158,6 +160,7 @@ describe('kangur scores handler', () => {
       total_questions: 10,
       correct_answers: 9,
       time_taken: 33,
+      client_mutation_id: 'guest-score:1',
       created_by: 'teacher@example.com',
       learner_id: 'learner-1',
       owner_user_id: 'parent-1',

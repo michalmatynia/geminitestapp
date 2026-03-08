@@ -8,7 +8,6 @@ import { internalError } from '@/shared/errors/app-error';
 type Pane = 'left' | 'right';
 
 export interface CenterPreviewContextValue {
-  // State
   screenshotBusy: boolean;
   singleVariantView: 'variant' | 'source';
   splitVariantView: boolean;
@@ -17,8 +16,9 @@ export interface CenterPreviewContextValue {
   variantLoadingId: string | null;
   variantTooltip: VariantTooltipState | null;
   detailsSlotId: string | null;
+}
 
-  // Setters/Actions
+export interface CenterPreviewActionsContextValue {
   setScreenshotBusy: React.Dispatch<React.SetStateAction<boolean>>;
   setSingleVariantView: React.Dispatch<React.SetStateAction<'variant' | 'source'>>;
   setSplitVariantView: React.Dispatch<React.SetStateAction<boolean>>;
@@ -27,13 +27,14 @@ export interface CenterPreviewContextValue {
   setVariantLoadingId: React.Dispatch<React.SetStateAction<string | null>>;
   setVariantTooltip: React.Dispatch<React.SetStateAction<VariantTooltipState | null>>;
   setDetailsSlotId: React.Dispatch<React.SetStateAction<string | null>>;
-
-  // Combined handlers
   adjustSplitZoom: (pane: Pane, delta: number) => void;
   resetSplitZoom: (pane: Pane) => void;
 }
 
-const CenterPreviewContext = createContext<CenterPreviewContextValue | null>(null);
+type CenterPreviewCombinedContextValue = CenterPreviewContextValue & CenterPreviewActionsContextValue;
+
+const CenterPreviewStateContext = createContext<CenterPreviewContextValue | null>(null);
+const CenterPreviewActionsContext = createContext<CenterPreviewActionsContextValue | null>(null);
 
 export function CenterPreviewProvider({
   children,
@@ -63,7 +64,7 @@ export function CenterPreviewProvider({
     else setRightSplitZoom(1);
   }, []);
 
-  const value = useMemo(
+  const stateValue = useMemo(
     (): CenterPreviewContextValue => ({
       screenshotBusy,
       singleVariantView,
@@ -73,6 +74,20 @@ export function CenterPreviewProvider({
       variantLoadingId,
       variantTooltip,
       detailsSlotId,
+    }),
+    [
+      screenshotBusy,
+      singleVariantView,
+      splitVariantView,
+      leftSplitZoom,
+      rightSplitZoom,
+      variantLoadingId,
+      variantTooltip,
+      detailsSlotId,
+    ]
+  );
+  const actionsValue = useMemo(
+    (): CenterPreviewActionsContextValue => ({
       setScreenshotBusy,
       setSingleVariantView,
       setSplitVariantView,
@@ -85,26 +100,38 @@ export function CenterPreviewProvider({
       resetSplitZoom,
     }),
     [
-      screenshotBusy,
-      singleVariantView,
-      splitVariantView,
-      leftSplitZoom,
-      rightSplitZoom,
-      variantLoadingId,
-      variantTooltip,
-      detailsSlotId,
       adjustSplitZoom,
       resetSplitZoom,
     ]
   );
 
-  return <CenterPreviewContext.Provider value={value}>{children}</CenterPreviewContext.Provider>;
+  return (
+    <CenterPreviewActionsContext.Provider value={actionsValue}>
+      <CenterPreviewStateContext.Provider value={stateValue}>
+        {children}
+      </CenterPreviewStateContext.Provider>
+    </CenterPreviewActionsContext.Provider>
+  );
 }
 
-export function useCenterPreviewContext(): CenterPreviewContextValue {
-  const context = useContext(CenterPreviewContext);
+export function useCenterPreviewState(): CenterPreviewContextValue {
+  const context = useContext(CenterPreviewStateContext);
   if (!context) {
-    throw internalError('useCenterPreviewContext must be used within a CenterPreviewProvider');
+    throw internalError('useCenterPreviewState must be used within a CenterPreviewProvider');
   }
   return context;
+}
+
+export function useCenterPreviewActions(): CenterPreviewActionsContextValue {
+  const context = useContext(CenterPreviewActionsContext);
+  if (!context) {
+    throw internalError('useCenterPreviewActions must be used within a CenterPreviewProvider');
+  }
+  return context;
+}
+
+export function useCenterPreviewContext(): CenterPreviewCombinedContextValue {
+  const state = useCenterPreviewState();
+  const actions = useCenterPreviewActions();
+  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
 }

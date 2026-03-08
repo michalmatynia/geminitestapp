@@ -4,10 +4,14 @@ import type { JSX } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
-import { useKangurLessonsRuntime } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
+import {
+  useKangurLessonsRuntimeActions,
+  useKangurLessonsRuntimeState,
+} from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
 
 export function KangurLessonNavigationWidget(): JSX.Element | null {
-  const { prevLesson, nextLesson, selectLesson } = useKangurLessonsRuntime();
+  const { prevLesson, nextLesson } = useKangurLessonsRuntimeState();
+  const { selectLesson } = useKangurLessonsRuntimeActions();
 
   if (!prevLesson && !nextLesson) {
     return null;

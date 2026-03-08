@@ -22,29 +22,20 @@ export type ModelCapabilities = {
   formatOptions: readonly string[];
 };
 
-export interface ImageStudioSettingsContextValue {
-  // State
+export interface ImageStudioSettingsStateContextValue {
   settingsLoaded: boolean;
   activeSettingsTab: StudioSettingsTab;
-  setActiveSettingsTab: React.Dispatch<React.SetStateAction<StudioSettingsTab>>;
   studioSettings: ImageStudioSettings;
-  setStudioSettings: React.Dispatch<React.SetStateAction<ImageStudioSettings>>;
   advancedOverridesText: string;
   advancedOverridesError: string | null;
   promptValidationEnabled: boolean;
-  setPromptValidationEnabled: React.Dispatch<React.SetStateAction<boolean>>;
   promptValidationRulesText: string;
   promptValidationRulesError: string | null;
   backfillProjectId: string;
-  setBackfillProjectId: React.Dispatch<React.SetStateAction<string>>;
   backfillDryRun: boolean;
-  setBackfillDryRun: React.Dispatch<React.SetStateAction<boolean>>;
   backfillIncludeHeuristicGenerationLinks: boolean;
-  setBackfillIncludeHeuristicGenerationLinks: React.Dispatch<React.SetStateAction<boolean>>;
   backfillRunning: boolean;
   backfillResultText: string;
-
-  // Derived
   settingsSource: string;
   isGpt52Model: boolean;
   modelCapabilities: ModelCapabilities;
@@ -56,8 +47,6 @@ export interface ImageStudioSettingsContextValue {
   modelAwareQualityOptions: SelectOption[];
   modelAwareBackgroundOptions: SelectOption[];
   modelAwareFormatOptions: SelectOption[];
-
-  // Queries/Stores
   settingsStore: {
     isFetching: boolean;
     isLoading: boolean;
@@ -69,8 +58,15 @@ export interface ImageStudioSettingsContextValue {
   updateSetting: {
     isPending: boolean;
   };
+}
 
-  // Actions
+export interface ImageStudioSettingsActionsContextValue {
+  setActiveSettingsTab: React.Dispatch<React.SetStateAction<StudioSettingsTab>>;
+  setStudioSettings: React.Dispatch<React.SetStateAction<ImageStudioSettings>>;
+  setPromptValidationEnabled: React.Dispatch<React.SetStateAction<boolean>>;
+  setBackfillProjectId: React.Dispatch<React.SetStateAction<string>>;
+  setBackfillDryRun: React.Dispatch<React.SetStateAction<boolean>>;
+  setBackfillIncludeHeuristicGenerationLinks: React.Dispatch<React.SetStateAction<boolean>>;
   handleRefresh: () => Promise<void>;
   handleAdvancedOverridesChange: (raw: string) => void;
   handlePromptValidationRulesChange: (raw: string) => void;
@@ -86,3 +82,6 @@ export interface ImageStudioSettingsContextValue {
     direction: -1 | 1
   ) => void;
 }
+
+export type ImageStudioSettingsContextValue = ImageStudioSettingsStateContextValue &
+  ImageStudioSettingsActionsContextValue;

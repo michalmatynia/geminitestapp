@@ -174,10 +174,12 @@ export function KangurPrimaryNavigation({
             </NavAction>
           ) : null}
 
-          <KangurProfileMenu
-            basePath={basePath}
-            isActive={currentPage === 'LearnerProfile'}
-          />
+          {isAuthenticated ? (
+            <KangurProfileMenu
+              basePath={basePath}
+              isActive={currentPage === 'LearnerProfile'}
+            />
+          ) : null}
 
           {showParentDashboard ? (
             <NavAction

@@ -102,6 +102,12 @@ export {
   useOptionalImageStudioAnalysisRuntime,
 };
 
+export const useImageStudioAnalysisRuntimeState = (): ImageStudioAnalysisRuntimeValue =>
+  useImageStudioAnalysisRuntime();
+
+export const useImageStudioAnalysisRuntimeActions = (): ImageStudioAnalysisRuntimeValue =>
+  useImageStudioAnalysisRuntime();
+
 export function ImageStudioAnalysisRuntimeProvider({
   value,
   children,

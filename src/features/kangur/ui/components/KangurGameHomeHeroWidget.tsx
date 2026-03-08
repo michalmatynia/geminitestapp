@@ -1,13 +1,7 @@
 'use client';
 
-import { LogIn } from 'lucide-react';
-
 import KangurAssignmentSpotlight from '@/features/kangur/ui/components/KangurAssignmentSpotlight';
-import {
-  KangurButton,
-  KangurGlassPanel,
-  KangurTextField,
-} from '@/features/kangur/ui/design/primitives';
+import { KangurGlassPanel, KangurTextField } from '@/features/kangur/ui/design/primitives';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 
 export function KangurGameHomeHeroWidget(): React.JSX.Element | null {
@@ -15,7 +9,6 @@ export function KangurGameHomeHeroWidget(): React.JSX.Element | null {
   const {
     basePath,
     handleStartGame,
-    navigateToLogin,
     playerName,
     screen,
     setPlayerName,
@@ -34,7 +27,6 @@ export function KangurGameHomeHeroWidget(): React.JSX.Element | null {
 
   const playerNameInputId = 'kangur-home-player-name';
   const playerNameLabelId = 'kangur-home-player-name-label';
-  const playerNameHintId = 'kangur-home-player-name-hint';
 
   return (
     <KangurGlassPanel
@@ -53,7 +45,6 @@ export function KangurGameHomeHeroWidget(): React.JSX.Element | null {
           Imie gracza
         </label>
         <KangurTextField
-          aria-describedby={playerNameHintId}
           accent='indigo'
           className='mt-4 h-[58px] text-[18px]'
           data-doc-id='home_player_name_input'
@@ -70,17 +61,6 @@ export function KangurGameHomeHeroWidget(): React.JSX.Element | null {
           type='text'
           value={playerName}
         />
-        <div className='mt-4 flex flex-wrap items-center justify-between gap-3 text-[15px] text-slate-500'>
-          <p id={playerNameHintId}>Zaloguj się, aby Twój wynik pojawił się na tablicy.</p>
-          <KangurButton
-            onClick={navigateToLogin}
-            size='sm'
-            variant='surface'
-            data-doc-id='profile_login'
-          >
-            <LogIn className='h-4 w-4' /> Zaloguj się
-          </KangurButton>
-        </div>
       </div>
     </KangurGlassPanel>
   );

@@ -3,8 +3,8 @@ export { PromptExploderProvider } from './PromptExploderProvider';
 export type { SettingsState, SettingsActions, LearningDraft } from './SettingsContext';
 export type { DocumentState, DocumentActions } from './DocumentContext';
 export type { BenchmarkState, BenchmarkActions } from './BenchmarkContext';
-export type { LibraryState, LibraryActions } from './LibraryContext';
-export type { SegmentEditorState, SegmentEditorActions } from './SegmentEditorContext';
+export type { LibraryState, LibraryActions } from './LibraryContext.types';
+export type { SegmentEditorState, SegmentEditorActions } from './SegmentEditorContext.types';
 export type { BindingsState, BindingsActions, BindingDraft } from './BindingsContext';
 
 export {

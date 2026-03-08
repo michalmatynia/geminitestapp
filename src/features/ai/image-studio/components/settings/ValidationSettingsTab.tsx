@@ -5,18 +5,23 @@ import React from 'react';
 import { FormField, FormSection, SelectSimple, Textarea, ToggleRow } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import { useImageStudioSettingsContext } from '../../context/ImageStudioSettingsContext';
+import {
+  useImageStudioSettingsActions,
+  useImageStudioSettingsState,
+} from '../../context/ImageStudioSettingsContext';
 
 export function ValidationSettingsTab(): React.JSX.Element {
   const {
     studioSettings,
-    setStudioSettings,
     promptValidationEnabled,
-    setPromptValidationEnabled,
     promptValidationRulesText,
     promptValidationRulesError,
+  } = useImageStudioSettingsState();
+  const {
+    setStudioSettings,
+    setPromptValidationEnabled,
     handlePromptValidationRulesChange,
-  } = useImageStudioSettingsContext();
+  } = useImageStudioSettingsActions();
 
   const handleModerationChange = (val: string): void => {
     setStudioSettings((prev) => ({

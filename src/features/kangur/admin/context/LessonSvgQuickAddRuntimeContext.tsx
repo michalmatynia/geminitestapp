@@ -14,8 +14,20 @@ type LessonSvgQuickAddRuntimeContextValue = {
   onSave: (markup: string, viewBox: string) => void;
 };
 
-const LessonSvgQuickAddRuntimeContext =
-  createContext<LessonSvgQuickAddRuntimeContextValue | null>(null);
+type LessonSvgQuickAddRuntimeStateContextValue = Pick<
+  LessonSvgQuickAddRuntimeContextValue,
+  'lesson' | 'initialMarkup' | 'isOpen' | 'isSaving'
+>;
+
+type LessonSvgQuickAddRuntimeActionsContextValue = Pick<
+  LessonSvgQuickAddRuntimeContextValue,
+  'onClose' | 'onSave'
+>;
+
+const LessonSvgQuickAddRuntimeStateContext =
+  createContext<LessonSvgQuickAddRuntimeStateContextValue | null>(null);
+const LessonSvgQuickAddRuntimeActionsContext =
+  createContext<LessonSvgQuickAddRuntimeActionsContextValue | null>(null);
 
 type LessonSvgQuickAddRuntimeProviderProps = LessonSvgQuickAddRuntimeContextValue & {
   children: ReactNode;
@@ -30,31 +42,59 @@ export function LessonSvgQuickAddRuntimeProvider({
   onSave,
   children,
 }: LessonSvgQuickAddRuntimeProviderProps): React.JSX.Element {
-  const value = useMemo(
+  const stateValue = useMemo<LessonSvgQuickAddRuntimeStateContextValue>(
     () => ({
       lesson,
       initialMarkup,
       isOpen,
       isSaving,
+    }),
+    [initialMarkup, isOpen, isSaving, lesson]
+  );
+  const actionsValue = useMemo<LessonSvgQuickAddRuntimeActionsContextValue>(
+    () => ({
       onClose,
       onSave,
     }),
-    [initialMarkup, isOpen, isSaving, lesson, onClose, onSave]
+    [onClose, onSave]
   );
 
   return (
-    <LessonSvgQuickAddRuntimeContext.Provider value={value}>
-      {children}
-    </LessonSvgQuickAddRuntimeContext.Provider>
+    <LessonSvgQuickAddRuntimeActionsContext.Provider value={actionsValue}>
+      <LessonSvgQuickAddRuntimeStateContext.Provider value={stateValue}>
+        {children}
+      </LessonSvgQuickAddRuntimeStateContext.Provider>
+    </LessonSvgQuickAddRuntimeActionsContext.Provider>
   );
 }
 
-export function useLessonSvgQuickAddRuntimeContext(): LessonSvgQuickAddRuntimeContextValue {
-  const context = useContext(LessonSvgQuickAddRuntimeContext);
+export function useLessonSvgQuickAddRuntimeState(): LessonSvgQuickAddRuntimeStateContextValue {
+  const context = useContext(LessonSvgQuickAddRuntimeStateContext);
   if (!context) {
+    throw internalError(
+      'useLessonSvgQuickAddRuntimeState must be used within a LessonSvgQuickAddRuntimeProvider'
+    );
+  }
+  return context;
+}
+
+export function useLessonSvgQuickAddRuntimeActions(): LessonSvgQuickAddRuntimeActionsContextValue {
+  const context = useContext(LessonSvgQuickAddRuntimeActionsContext);
+  if (!context) {
+    throw internalError(
+      'useLessonSvgQuickAddRuntimeActions must be used within a LessonSvgQuickAddRuntimeProvider'
+    );
+  }
+  return context;
+}
+
+export function useLessonSvgQuickAddRuntimeContext(): LessonSvgQuickAddRuntimeContextValue {
+  const state = useContext(LessonSvgQuickAddRuntimeStateContext);
+  const actions = useContext(LessonSvgQuickAddRuntimeActionsContext);
+  if (!state || !actions) {
     throw internalError(
       'useLessonSvgQuickAddRuntimeContext must be used within a LessonSvgQuickAddRuntimeProvider'
     );
   }
-  return context;
+  return useMemo(() => ({ ...state, ...actions }), [actions, state]);
 }

@@ -81,19 +81,16 @@ export type ProductImageSlotPreview = {
   src: string;
 };
 
-export interface ProductStudioContextValue {
+export interface ProductStudioStateContextValue {
   studioProjectId: string | null;
-  setStudioProjectId: (id: string | null) => void;
   studioProjectOptions: Array<{ value: string; label: string }>;
   isStudioLoading: boolean;
   imageSlotPreviews: ProductImageSlotPreview[];
   selectedImageIndex: number | null;
-  setSelectedImageIndex: (index: number | null) => void;
   selectedSourcePreview: ProductImageSlotPreview | null;
   variants: ImageStudioSlotRecord[];
   variantsLoading: boolean;
   selectedVariantSlotId: string | null;
-  setSelectedVariantSlotId: (id: string | null) => void;
   selectedVariant: ImageStudioSlotRecord | null;
   pendingVariantPlaceholderCount: number;
   sourceImageSrc: string | null;
@@ -105,15 +102,8 @@ export interface ProductStudioContextValue {
   auditEntries: ProductStudioAuditEntry[];
   auditLoading: boolean;
   auditError: string | null;
-  refreshAudit: () => Promise<void>;
   activeRunId: string | null;
   runStatus: ProductStudioRunStatus | null;
-  handleSendToStudio: () => Promise<void>;
-  handleOpenInImageStudio: () => Promise<void>;
-  handleAcceptVariant: () => Promise<void>;
-  handleDeleteVariant: (slot: ImageStudioSlotRecord) => Promise<void>;
-  handleRotateImageSlot: (direction: 'left' | 'right') => Promise<void>;
-  refreshVariants: () => Promise<ProductStudioVariantsResponse | null>;
   sending: boolean;
   accepting: boolean;
   openingInImageStudio: boolean;
@@ -121,3 +111,19 @@ export interface ProductStudioContextValue {
   deletingVariantId: string | null;
   studioActionError: string | null;
 }
+
+export interface ProductStudioActionsContextValue {
+  setStudioProjectId: (id: string | null) => void;
+  setSelectedImageIndex: (index: number | null) => void;
+  setSelectedVariantSlotId: (id: string | null) => void;
+  refreshAudit: () => Promise<void>;
+  handleSendToStudio: () => Promise<void>;
+  handleOpenInImageStudio: () => Promise<void>;
+  handleAcceptVariant: () => Promise<void>;
+  handleDeleteVariant: (slot: ImageStudioSlotRecord) => Promise<void>;
+  handleRotateImageSlot: (direction: 'left' | 'right') => Promise<void>;
+  refreshVariants: () => Promise<ProductStudioVariantsResponse | null>;
+}
+
+export type ProductStudioContextValue = ProductStudioStateContextValue &
+  ProductStudioActionsContextValue;

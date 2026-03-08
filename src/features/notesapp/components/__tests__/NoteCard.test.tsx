@@ -32,7 +32,10 @@ vi.mock('@/features/notesapp/components/list/NoteCardHeader', async () => {
   const ReactModule = await import('react');
 
   const NoteCardHeaderRuntimeContext =
-    ReactModule.createContext<{ note: NoteWithRelations } | null>(null);
+    ReactModule.createContext<{
+      note: NoteWithRelations;
+      onSelectNote: (note: NoteWithRelations) => void;
+    } | null>(null);
 
   function NoteCardHeader(): React.JSX.Element | null {
     const value = ReactModule.useContext(NoteCardHeaderRuntimeContext);
@@ -43,6 +46,9 @@ vi.mock('@/features/notesapp/components/list/NoteCardHeader', async () => {
 
     return (
       <div>
+        <button type='button' onClick={() => value.onSelectNote(value.note)}>
+          Open note {value.note.title}
+        </button>
         <button type='button' onClick={nestedActionMock}>
           Nested action
         </button>
@@ -96,23 +102,21 @@ describe('NoteCard', () => {
     setSelectedNoteMock.mockReset();
   });
 
-  it('selects the note from the card wrapper via click and keyboard', () => {
-    render(<NoteCard note={note} />);
+  it('selects the note from the card wrapper and dedicated open control', () => {
+    const { container } = render(<NoteCard note={note} />);
 
-    const card = screen.getByRole('button', { name: 'Open note Test note' });
+    const card = container.firstElementChild as HTMLElement;
+    const openButton = screen.getByRole('button', { name: 'Open note Test note' });
 
     fireEvent.click(card);
-    fireEvent.keyDown(card, { key: 'Enter' });
-    fireEvent.keyDown(card, { key: ' ' });
+    fireEvent.click(openButton);
 
-    expect(setSelectedNoteMock).toHaveBeenCalledTimes(3);
+    expect(setSelectedNoteMock).toHaveBeenCalledTimes(2);
     expect(setSelectedNoteMock).toHaveBeenNthCalledWith(1, note);
     expect(setSelectedNoteMock).toHaveBeenNthCalledWith(2, note);
-    expect(setSelectedNoteMock).toHaveBeenNthCalledWith(3, note);
-    expect(setIsEditingMock).toHaveBeenCalledTimes(3);
+    expect(setIsEditingMock).toHaveBeenCalledTimes(2);
     expect(setIsEditingMock).toHaveBeenNthCalledWith(1, false);
     expect(setIsEditingMock).toHaveBeenNthCalledWith(2, false);
-    expect(setIsEditingMock).toHaveBeenNthCalledWith(3, false);
   });
 
   it('ignores nested interactive controls when handling card selection', () => {

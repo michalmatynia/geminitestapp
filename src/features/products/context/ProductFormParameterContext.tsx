@@ -24,6 +24,20 @@ export interface ProductFormParameterContextType {
   removeParameterValue: (index: number) => void;
 }
 
+export type ProductFormParameterStateContextType = Pick<
+  ProductFormParameterContextType,
+  'parameters' | 'parametersLoading' | 'parameterValues'
+>;
+
+export type ProductFormParameterActionsContextType = Pick<
+  ProductFormParameterContextType,
+  | 'addParameterValue'
+  | 'updateParameterId'
+  | 'updateParameterValue'
+  | 'updateParameterValueByLanguage'
+  | 'removeParameterValue'
+>;
+
 export const ProductFormParameterContext = createContext<ProductFormParameterContextType | null>(
   null
 );
@@ -179,7 +193,7 @@ export function ProductFormParameterProvider({
   );
 }
 
-export const useProductFormParameters = (): ProductFormParameterContextType => {
+const useRequiredProductFormParameterContext = (): ProductFormParameterContextType => {
   const context = useContext(ProductFormParameterContext);
   if (!context) {
     throw internalError(
@@ -188,3 +202,32 @@ export const useProductFormParameters = (): ProductFormParameterContextType => {
   }
   return context;
 };
+
+export const useProductFormParameterState = (): ProductFormParameterStateContextType => {
+  const { parameters, parametersLoading, parameterValues } = useRequiredProductFormParameterContext();
+  return {
+    parameters,
+    parametersLoading,
+    parameterValues,
+  };
+};
+
+export const useProductFormParameterActions = (): ProductFormParameterActionsContextType => {
+  const {
+    addParameterValue,
+    updateParameterId,
+    updateParameterValue,
+    updateParameterValueByLanguage,
+    removeParameterValue,
+  } = useRequiredProductFormParameterContext();
+  return {
+    addParameterValue,
+    updateParameterId,
+    updateParameterValue,
+    updateParameterValueByLanguage,
+    removeParameterValue,
+  };
+};
+
+export const useProductFormParameters = (): ProductFormParameterContextType =>
+  useRequiredProductFormParameterContext();

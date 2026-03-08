@@ -63,7 +63,6 @@ const run = async () => {
 
   const env = {
     ...process.env,
-    PLAYWRIGHT_USE_EXISTING_SERVER: 'true',
     PLAYWRIGHT_BASE_URL: baseUrl,
   };
 

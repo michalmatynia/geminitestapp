@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
 
-import { ProductFormCoreContext } from '@/features/products/context/ProductFormCoreContext';
+import { ProductFormCoreStateContext } from '@/features/products/context/ProductFormCoreContext';
 import { ProductFormImageContext } from '@/features/products/context/ProductFormImageContext';
 import { ImageFileSelection } from '@/shared/contracts/files';
 import { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
@@ -45,7 +45,7 @@ export function ProductImageManagerUIProvider({
 }) {
   const formImagesContext = useContext(ProductFormImageContext);
   const formImagesController = formImagesContext as ProductImageManagerController | null;
-  const formCore = useContext(ProductFormCoreContext);
+  const formCore = useContext(ProductFormCoreStateContext);
   const controllerContext = useOptionalProductImageManagerController();
   const controller: ProductImageManagerController | null =
     explicitController ?? controllerContext ?? formImagesController ?? null;

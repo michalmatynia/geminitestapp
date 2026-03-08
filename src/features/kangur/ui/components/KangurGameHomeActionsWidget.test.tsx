@@ -80,6 +80,22 @@ describe('KangurGameHomeActionsWidget', () => {
     );
   });
 
+  it('keeps guest play actions enabled on the home surface', () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      basePath: '/kangur',
+      canStartFromHome: true,
+      handleStartGame: vi.fn(),
+      screen: 'home',
+      setScreen: vi.fn(),
+    });
+
+    render(<KangurGameHomeActionsWidget />);
+
+    expect(screen.getByRole('button', { name: /grajmy!/i })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /trening mieszany/i })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /kangur matematyczny/i })).toBeEnabled();
+  });
+
   it('adds extra spacing between the front-page action pills', () => {
     useKangurGameRuntimeMock.mockReturnValue({
       basePath: '/kangur',

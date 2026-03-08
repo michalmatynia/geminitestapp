@@ -2,18 +2,24 @@
 
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
-import { ProductWithImages } from '@/shared/contracts/products';
-import { api } from '@/shared/lib/api-client';
-import { internalError } from '@/shared/errors/app-error';
 import { useProductSettings } from '@/features/products/hooks/useProductSettings';
+import { ProductWithImages } from '@/shared/contracts/products';
+import { internalError } from '@/shared/errors/app-error';
+import { api } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
 
-export interface ProductFormStudioContextType {
+export interface ProductFormStudioStateContextType {
   studioProjectId: string | null;
-  setStudioProjectId: (projectId: string | null) => void;
   studioConfigLoading: boolean;
   studioConfigSaving: boolean;
 }
+
+export interface ProductFormStudioActionsContextType {
+  setStudioProjectId: (projectId: string | null) => void;
+}
+
+export type ProductFormStudioContextType = ProductFormStudioStateContextType &
+  ProductFormStudioActionsContextType;
 
 const PRODUCT_STUDIO_CONFIG_CACHE_TTL_MS = 30_000;
 
@@ -74,7 +80,11 @@ const loadStudioProjectId = async (productId: string): Promise<string | null> =>
   return request;
 };
 
-export const ProductFormStudioContext = createContext<ProductFormStudioContextType | null>(null);
+export const ProductFormStudioStateContext = createContext<ProductFormStudioStateContextType | null>(
+  null
+);
+export const ProductFormStudioActionsContext =
+  createContext<ProductFormStudioActionsContextType | null>(null);
 
 export function ProductFormStudioProvider({
   children,
@@ -184,25 +194,52 @@ export function ProductFormStudioProvider({
     persistStudioConfig(nextProjectId);
   };
 
-  const value = useMemo(
-    () => ({
+  const stateValue = useMemo(
+    (): ProductFormStudioStateContextType => ({
       studioProjectId,
-      setStudioProjectId,
       studioConfigLoading,
       studioConfigSaving,
     }),
     [studioProjectId, studioConfigLoading, studioConfigSaving]
   );
+  const actionsValue = useMemo(
+    (): ProductFormStudioActionsContextType => ({
+      setStudioProjectId,
+    }),
+    []
+  );
 
   return (
-    <ProductFormStudioContext.Provider value={value}>{children}</ProductFormStudioContext.Provider>
+    <ProductFormStudioActionsContext.Provider value={actionsValue}>
+      <ProductFormStudioStateContext.Provider value={stateValue}>
+        {children}
+      </ProductFormStudioStateContext.Provider>
+    </ProductFormStudioActionsContext.Provider>
   );
 }
 
-export const useProductFormStudio = (): ProductFormStudioContextType => {
-  const context = useContext(ProductFormStudioContext);
+export const useProductFormStudioState = (): ProductFormStudioStateContextType => {
+  const context = useContext(ProductFormStudioStateContext);
   if (!context) {
-    throw internalError('useProductFormStudio must be used within a ProductFormStudioProvider');
+    throw internalError(
+      'useProductFormStudioState must be used within a ProductFormStudioProvider'
+    );
   }
   return context;
+};
+
+export const useProductFormStudioActions = (): ProductFormStudioActionsContextType => {
+  const context = useContext(ProductFormStudioActionsContext);
+  if (!context) {
+    throw internalError(
+      'useProductFormStudioActions must be used within a ProductFormStudioProvider'
+    );
+  }
+  return context;
+};
+
+export const useProductFormStudio = (): ProductFormStudioContextType => {
+  const state = useProductFormStudioState();
+  const actions = useProductFormStudioActions();
+  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
 };

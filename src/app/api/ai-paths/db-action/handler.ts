@@ -204,17 +204,7 @@ const asRecord = (value: unknown): Record<string, unknown> | null =>
 const isPrismaDelegate = (value: unknown): value is PrismaDelegate => {
   const record = asRecord(value);
   if (!record) return false;
-  return (
-    typeof record['findMany'] === 'function' &&
-    typeof record['findFirst'] === 'function' &&
-    typeof record['count'] === 'function' &&
-    typeof record['create'] === 'function' &&
-    typeof record['createMany'] === 'function' &&
-    typeof record['update'] === 'function' &&
-    typeof record['updateMany'] === 'function' &&
-    typeof record['delete'] === 'function' &&
-    typeof record['deleteMany'] === 'function'
-  );
+  return Object.values(record).some((entry) => typeof entry === 'function');
 };
 
 const getPrismaDelegate = (collection: string): PrismaDelegate | null => {

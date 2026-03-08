@@ -1,6 +1,14 @@
 'use client';
 
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 import { useRouter } from 'next/navigation';
 
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
@@ -28,7 +36,24 @@ type KangurAuthContextValue = {
   selectLearner: (learnerId: string) => Promise<void>;
 };
 
-const KangurAuthContext = createContext<KangurAuthContextValue | null>(null);
+type KangurAuthStateContextValue = Pick<
+  KangurAuthContextValue,
+  | 'user'
+  | 'isAuthenticated'
+  | 'canAccessParentAssignments'
+  | 'isLoadingAuth'
+  | 'isLoadingPublicSettings'
+  | 'authError'
+  | 'appPublicSettings'
+>;
+
+type KangurAuthActionsContextValue = Pick<
+  KangurAuthContextValue,
+  'logout' | 'navigateToLogin' | 'checkAppState' | 'selectLearner'
+>;
+
+const KangurAuthStateContext = createContext<KangurAuthStateContextValue | null>(null);
+const KangurAuthActionsContext = createContext<KangurAuthActionsContextValue | null>(null);
 const kangurPlatform = getKangurPlatform();
 
 const resolveCanAccessParentAssignments = (
@@ -53,7 +78,7 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
   const [appPublicSettings] = useState<null>(null);
   const canAccessParentAssignments = resolveCanAccessParentAssignments(user, isAuthenticated);
 
-  const checkAppState = async (): Promise<void> => {
+  const checkAppState = useCallback(async (): Promise<void> => {
     setAuthError(null);
     setIsLoadingAuth(true);
 
@@ -82,13 +107,13 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
     } finally {
       setIsLoadingAuth(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     void checkAppState();
-  }, []);
+  }, [checkAppState]);
 
-  const logout = (shouldRedirect = true): void => {
+  const logout = useCallback((shouldRedirect = true): void => {
     setUser(null);
     setIsAuthenticated(false);
 
@@ -109,21 +134,21 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
         shouldRedirect: false,
       });
     });
-  };
+  }, []);
 
-  const navigateToLogin = (): void => {
+  const navigateToLogin = useCallback((): void => {
     const loginHref = kangurPlatform.auth.prepareLoginHref(window.location.href);
     router.push(loginHref);
-  };
+  }, [router]);
 
-  const selectLearner = async (learnerId: string): Promise<void> => {
+  const selectLearner = useCallback(async (learnerId: string): Promise<void> => {
     const nextUser = await kangurPlatform.learners.select(learnerId);
     setUser(nextUser);
     setIsAuthenticated(true);
     setAuthError(null);
-  };
+  }, []);
 
-  const value = useMemo<KangurAuthContextValue>(
+  const stateValue = useMemo<KangurAuthStateContextValue>(
     () => ({
       user,
       isAuthenticated,
@@ -132,34 +157,70 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
       isLoadingPublicSettings,
       authError,
       appPublicSettings,
+    }),
+    [
+      appPublicSettings,
+      authError,
+      canAccessParentAssignments,
+      isAuthenticated,
+      isLoadingAuth,
+      isLoadingPublicSettings,
+      user,
+    ]
+  );
+  const actionsValue = useMemo<KangurAuthActionsContextValue>(
+    () => ({
       logout,
       navigateToLogin,
       checkAppState,
       selectLearner,
     }),
-    [
-      user,
-      isAuthenticated,
-      canAccessParentAssignments,
-      isLoadingAuth,
-      isLoadingPublicSettings,
-      authError,
-      appPublicSettings,
-    ]
+    [checkAppState, logout, navigateToLogin, selectLearner]
   );
 
-  return <KangurAuthContext.Provider value={value}>{children}</KangurAuthContext.Provider>;
+  return (
+    <KangurAuthActionsContext.Provider value={actionsValue}>
+      <KangurAuthStateContext.Provider value={stateValue}>
+        {children}
+      </KangurAuthStateContext.Provider>
+    </KangurAuthActionsContext.Provider>
+  );
 };
 
-export const useKangurAuth = (): KangurAuthContextValue => {
-  const context = useContext(KangurAuthContext);
+export const useKangurAuthState = (): KangurAuthStateContextValue => {
+  const context = useContext(KangurAuthStateContext);
   if (!context) {
-    throw internalError('useKangurAuth must be used within a KangurAuthProvider');
+    throw internalError('useKangurAuthState must be used within a KangurAuthProvider');
   }
   return context;
 };
 
-export const useOptionalKangurAuth = (): KangurAuthContextValue | null =>
-  useContext(KangurAuthContext);
+export const useKangurAuthActions = (): KangurAuthActionsContextValue => {
+  const context = useContext(KangurAuthActionsContext);
+  if (!context) {
+    throw internalError('useKangurAuthActions must be used within a KangurAuthProvider');
+  }
+  return context;
+};
+
+export const useKangurAuth = (): KangurAuthContextValue => {
+  const state = useContext(KangurAuthStateContext);
+  const actions = useContext(KangurAuthActionsContext);
+  if (!state || !actions) {
+    throw internalError('useKangurAuth must be used within a KangurAuthProvider');
+  }
+  return useMemo(() => ({ ...state, ...actions }), [actions, state]);
+};
+
+export const useOptionalKangurAuth = (): KangurAuthContextValue | null => {
+  const state = useContext(KangurAuthStateContext);
+  const actions = useContext(KangurAuthActionsContext);
+  return useMemo(() => {
+    if (!state || !actions) {
+      return null;
+    }
+    return { ...state, ...actions };
+  }, [actions, state]);
+};
 
 export type { KangurAuthContextValue, KangurAuthError };

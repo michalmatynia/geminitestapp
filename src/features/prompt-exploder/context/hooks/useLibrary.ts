@@ -3,9 +3,8 @@ import { useContext } from 'react';
 import {
   LibraryStateContext,
   LibraryActionsContext,
-  type LibraryState,
-  type LibraryActions,
 } from '../LibraryContext';
+import type { LibraryState, LibraryActions } from '../LibraryContext.types';
 
 export const useLibraryState = (): LibraryState => {
   const ctx = useContext(LibraryStateContext);

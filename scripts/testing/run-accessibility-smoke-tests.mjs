@@ -1,8 +1,8 @@
-import fsSync from 'node:fs';
 import fs from 'node:fs/promises';
-import os from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
+
+import { buildPlaywrightSuiteRuntime } from './lib/playwright-suite-runtime.mjs';
 
 const args = new Set(process.argv.slice(2));
 const strictMode = args.has('--strict');
@@ -14,25 +14,6 @@ const warningBudget = Number.parseInt(warningBudgetArg?.split('=')[1] ?? '10', 1
 const root = process.cwd();
 const outDir = path.join(root, 'docs', 'metrics');
 const MAX_OUTPUT_BYTES = 100_000;
-const preferredBrowserNodeBinDir = (() => {
-  const explicitBinDir = process.env['A11Y_SMOKE_BROWSER_NODE_BIN'];
-  if (explicitBinDir && fsSync.existsSync(path.join(explicitBinDir, 'node'))) {
-    return explicitBinDir;
-  }
-
-  const nvmVersionsDir = path.join(os.homedir(), '.nvm', 'versions', 'node');
-  if (!fsSync.existsSync(nvmVersionsDir)) {
-    return null;
-  }
-
-  const node22Dirs = fsSync
-    .readdirSync(nvmVersionsDir)
-    .filter((entry) => /^v22\./.test(entry))
-    .sort((left, right) => left.localeCompare(right, undefined, { numeric: true }));
-  const latestNode22Dir = node22Dirs.at(-1);
-
-  return latestNode22Dir ? path.join(nvmVersionsDir, latestNode22Dir, 'bin') : null;
-})();
 const playwrightHost = process.env['HOST'] || '127.0.0.1';
 const playwrightBaseUrl = process.env['PLAYWRIGHT_BASE_URL'] || `http://${playwrightHost}:3000`;
 
@@ -133,25 +114,15 @@ const formatDuration = (ms) => {
 
 const countActWarnings = (value) => (value.match(/not wrapped in act\(\.\.\.\)/g) ?? []).length;
 
-const resolveSuiteCommand = (suite) => {
+const resolveSuiteCommand = (suite, playwrightRuntime) => {
   if (suite.runner === 'playwright') {
-    const command = preferredBrowserNodeBinDir
-      ? path.join(preferredBrowserNodeBinDir, 'npx')
+    const command = playwrightRuntime.preferredBrowserNodeBinDir
+      ? path.join(playwrightRuntime.preferredBrowserNodeBinDir, 'npx')
       : 'npx';
     return {
       command,
       args: ['playwright', 'test', ...suite.tests],
-      env:
-        preferredBrowserNodeBinDir !== null
-          ? {
-              HOST: playwrightHost,
-              PLAYWRIGHT_BASE_URL: playwrightBaseUrl,
-              PATH: `${preferredBrowserNodeBinDir}${path.delimiter}${process.env['PATH'] ?? ''}`,
-            }
-          : {
-              HOST: playwrightHost,
-              PLAYWRIGHT_BASE_URL: playwrightBaseUrl,
-            },
+      env: playwrightRuntime.env,
     };
   }
 
@@ -162,66 +133,70 @@ const resolveSuiteCommand = (suite) => {
   };
 };
 
-const runSuite = (suite) =>
-  new Promise((resolve) => {
+const runSuite = async (suite, playwrightRuntime) => {
     const startedAt = Date.now();
-    const { command, args: commandArgs, env: suiteEnv } = resolveSuiteCommand(suite);
+    const { command, args: commandArgs, env: suiteEnv } = resolveSuiteCommand(
+      suite,
+      playwrightRuntime
+    );
 
-    const child = spawn(command, commandArgs, {
-      cwd: root,
-      env: {
-        ...process.env,
-        ...(suiteEnv ?? {}),
-        FORCE_COLOR: '0',
-      },
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
+    return await new Promise((resolve) => {
+      const child = spawn(command, commandArgs, {
+        cwd: root,
+        env: {
+          ...process.env,
+          ...(suiteEnv ?? {}),
+          FORCE_COLOR: '0',
+        },
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
 
-    let output = '';
+      let output = '';
 
-    const append = (chunk) => {
-      output += chunk.toString();
-      if (output.length > MAX_OUTPUT_BYTES) {
-        output = output.slice(-MAX_OUTPUT_BYTES);
-      }
-    };
+      const append = (chunk) => {
+        output += chunk.toString();
+        if (output.length > MAX_OUTPUT_BYTES) {
+          output = output.slice(-MAX_OUTPUT_BYTES);
+        }
+      };
 
-    child.stdout?.on('data', append);
-    child.stderr?.on('data', append);
+      child.stdout?.on('data', append);
+      child.stderr?.on('data', append);
 
-    child.on('error', (error) => {
-      const durationMs = Date.now() - startedAt;
-      const resolvedOutput = `${output}\n${error.stack ?? String(error)}`.trim();
-      resolve({
-        id: suite.id,
-        name: suite.name,
-        runner: suite.runner ?? 'vitest',
-        tests: suite.tests,
-        command: [command, ...commandArgs].join(' '),
-        status: 'fail',
-        exitCode: null,
-        durationMs,
-        actWarnings: countActWarnings(resolvedOutput),
-        output: resolvedOutput,
+      child.on('error', (error) => {
+        const durationMs = Date.now() - startedAt;
+        const resolvedOutput = `${output}\n${error.stack ?? String(error)}`.trim();
+        resolve({
+          id: suite.id,
+          name: suite.name,
+          runner: suite.runner ?? 'vitest',
+          tests: suite.tests,
+          command: [command, ...commandArgs].join(' '),
+          status: 'fail',
+          exitCode: null,
+          durationMs,
+          actWarnings: countActWarnings(resolvedOutput),
+          output: resolvedOutput,
+        });
+      });
+
+      child.on('close', (exitCode) => {
+        const durationMs = Date.now() - startedAt;
+        resolve({
+          id: suite.id,
+          name: suite.name,
+          runner: suite.runner ?? 'vitest',
+          tests: suite.tests,
+          command: [command, ...commandArgs].join(' '),
+          status: exitCode === 0 ? 'pass' : 'fail',
+          exitCode,
+          durationMs,
+          actWarnings: countActWarnings(output),
+          output: output.trim(),
+        });
       });
     });
-
-    child.on('close', (exitCode) => {
-      const durationMs = Date.now() - startedAt;
-      resolve({
-        id: suite.id,
-        name: suite.name,
-        runner: suite.runner ?? 'vitest',
-        tests: suite.tests,
-        command: [command, ...commandArgs].join(' '),
-        status: exitCode === 0 ? 'pass' : 'fail',
-        exitCode,
-        durationMs,
-        actWarnings: countActWarnings(output),
-        output: output.trim(),
-      });
-    });
-  });
+};
 
 const toMarkdown = (payload) => {
   const lines = [];
@@ -267,9 +242,18 @@ const toMarkdown = (payload) => {
 };
 
 const run = async () => {
+  const playwrightRuntime = await buildPlaywrightSuiteRuntime({
+    baseUrl: playwrightBaseUrl,
+    host: playwrightHost,
+    env: process.env,
+  });
+  if (playwrightRuntime.reuseExistingServer) {
+    console.log(`[a11y-smoke] reusing existing server at ${playwrightBaseUrl}`);
+  }
+
   const results = [];
   for (const suite of suites) {
-    const result = await runSuite(suite);
+    const result = await runSuite(suite, playwrightRuntime);
     results.push(result);
     console.log(
       `[a11y-smoke] ${suite.name.padEnd(38, ' ')} ${result.status.toUpperCase().padEnd(4, ' ')} ${formatDuration(result.durationMs)}`

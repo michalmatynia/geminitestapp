@@ -142,59 +142,31 @@ const parsePlaywrightPersonaIds = (raw: string | null | undefined): string[] => 
   return ids;
 };
 
-interface BrainContextType {
-  // State
+interface BrainStateContextType {
   activeTab: BrainTab;
-  setActiveTab: (tab: BrainTab) => void;
   settings: AiBrainSettings;
-  setSettings: React.Dispatch<React.SetStateAction<AiBrainSettings>>;
   overridesEnabled: Record<AiBrainFeature, boolean>;
   providerCatalog: AiBrainProviderCatalog;
-  setProviderCatalog: React.Dispatch<React.SetStateAction<AiBrainProviderCatalog>>;
-
-  // API Keys
   openaiApiKey: string;
-  setOpenaiApiKey: (key: string) => void;
   anthropicApiKey: string;
-  setAnthropicApiKey: (key: string) => void;
   geminiApiKey: string;
-  setGeminiApiKey: (key: string) => void;
-
-  // Schedules
   analyticsScheduleEnabled: boolean;
-  setAnalyticsScheduleEnabled: (enabled: boolean) => void;
   analyticsScheduleMinutes: number;
-  setAnalyticsScheduleMinutes: (min: number) => void;
   runtimeAnalyticsScheduleEnabled: boolean;
-  setRuntimeAnalyticsScheduleEnabled: (enabled: boolean) => void;
   runtimeAnalyticsScheduleMinutes: number;
-  setRuntimeAnalyticsScheduleMinutes: (min: number) => void;
   logsScheduleEnabled: boolean;
-  setLogsScheduleEnabled: (enabled: boolean) => void;
   logsScheduleMinutes: number;
-  setLogsScheduleMinutes: (min: number) => void;
   logsAutoOnError: boolean;
-  setLogsAutoOnError: (auto: boolean) => void;
-
-  // Prompts
   analyticsPromptSystem: string;
-  setAnalyticsPromptSystem: (prompt: string) => void;
   runtimeAnalyticsPromptSystem: string;
-  setRuntimeAnalyticsPromptSystem: (prompt: string) => void;
   logsPromptSystem: string;
-  setLogsPromptSystem: (prompt: string) => void;
-
-  // Queries
   ollamaModelsQuery: SingleQuery<BrainModelsResponse>;
   operationsRange: BrainOperationsRange;
-  setOperationsRange: (range: BrainOperationsRange) => void;
   operationsOverviewQuery: SingleQuery<BrainOperationsOverviewResponse>;
   analyticsSummaryQuery: SingleQuery<AnalyticsSummary>;
   logMetricsQuery: SingleQuery<SystemLogMetrics>;
   insightsQuery: SingleQuery<InsightsSnapshot>;
   runtimeAnalyticsQuery: SingleQuery<AiPathRuntimeAnalyticsSummary>;
-
-  // Computed
   modelQuickPicks: SelectSimpleOption[];
   agentQuickPicks: SelectSimpleOption[];
   effectiveAssignments: Record<AiBrainFeature, AiBrainAssignment>;
@@ -202,8 +174,26 @@ interface BrainContextType {
   runtimeAnalyticsLiveEnabled: boolean;
   saving: boolean;
   liveOllamaModels: string[];
+}
 
-  // Handlers
+interface BrainActionsContextType {
+  setActiveTab: (tab: BrainTab) => void;
+  setSettings: React.Dispatch<React.SetStateAction<AiBrainSettings>>;
+  setProviderCatalog: React.Dispatch<React.SetStateAction<AiBrainProviderCatalog>>;
+  setOpenaiApiKey: (key: string) => void;
+  setAnthropicApiKey: (key: string) => void;
+  setGeminiApiKey: (key: string) => void;
+  setAnalyticsScheduleEnabled: (enabled: boolean) => void;
+  setAnalyticsScheduleMinutes: (min: number) => void;
+  setRuntimeAnalyticsScheduleEnabled: (enabled: boolean) => void;
+  setRuntimeAnalyticsScheduleMinutes: (min: number) => void;
+  setLogsScheduleEnabled: (enabled: boolean) => void;
+  setLogsScheduleMinutes: (min: number) => void;
+  setLogsAutoOnError: (auto: boolean) => void;
+  setAnalyticsPromptSystem: (prompt: string) => void;
+  setRuntimeAnalyticsPromptSystem: (prompt: string) => void;
+  setLogsPromptSystem: (prompt: string) => void;
+  setOperationsRange: (range: BrainOperationsRange) => void;
   handleSave: () => Promise<void>;
   handleReset: () => void;
   handleDefaultChange: (next: AiBrainAssignment) => void;
@@ -216,14 +206,31 @@ interface BrainContextType {
   syncPlaywrightPersonas: () => void;
 }
 
-const BrainContext = createContext<BrainContextType | undefined>(undefined);
+type BrainContextType = BrainStateContextType & BrainActionsContextType;
 
-export function useBrain(): BrainContextType {
-  const context = useContext(BrainContext);
+const BrainStateContext = createContext<BrainStateContextType | undefined>(undefined);
+const BrainActionsContext = createContext<BrainActionsContextType | undefined>(undefined);
+
+export function useBrainState(): BrainStateContextType {
+  const context = useContext(BrainStateContext);
   if (!context) {
-    throw internalError('useBrain must be used within a BrainProvider');
+    throw internalError('useBrainState must be used within a BrainProvider');
   }
   return context;
+}
+
+export function useBrainActions(): BrainActionsContextType {
+  const context = useContext(BrainActionsContext);
+  if (!context) {
+    throw internalError('useBrainActions must be used within a BrainProvider');
+  }
+  return context;
+}
+
+export function useBrain(): BrainContextType {
+  const state = useBrainState();
+  const actions = useBrainActions();
+  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
 }
 
 export function BrainProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
@@ -829,66 +836,121 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
 
   const saving = updateSetting.isPending || updateSettingsBulk.isPending;
 
-  const value = {
-    activeTab,
-    setActiveTab,
-    settings,
-    setSettings,
-    overridesEnabled,
-    providerCatalog,
-    setProviderCatalog,
-    openaiApiKey,
-    setOpenaiApiKey,
-    anthropicApiKey,
-    setAnthropicApiKey,
-    geminiApiKey,
-    setGeminiApiKey,
-    analyticsScheduleEnabled,
-    setAnalyticsScheduleEnabled,
-    analyticsScheduleMinutes,
-    setAnalyticsScheduleMinutes,
-    runtimeAnalyticsScheduleEnabled,
-    setRuntimeAnalyticsScheduleEnabled,
-    runtimeAnalyticsScheduleMinutes,
-    setRuntimeAnalyticsScheduleMinutes,
-    logsScheduleEnabled,
-    setLogsScheduleEnabled,
-    logsScheduleMinutes,
-    setLogsScheduleMinutes,
-    logsAutoOnError,
-    setLogsAutoOnError,
-    analyticsPromptSystem,
-    setAnalyticsPromptSystem,
-    runtimeAnalyticsPromptSystem,
-    setRuntimeAnalyticsPromptSystem,
-    logsPromptSystem,
-    setLogsPromptSystem,
-    ollamaModelsQuery,
-    operationsRange,
-    setOperationsRange,
-    operationsOverviewQuery,
-    analyticsSummaryQuery,
-    logMetricsQuery,
-    insightsQuery,
-    runtimeAnalyticsQuery,
-    modelQuickPicks,
-    agentQuickPicks,
-    effectiveAssignments,
-    effectiveCapabilityAssignments,
-    runtimeAnalyticsLiveEnabled,
-    saving,
-    liveOllamaModels,
-    handleSave,
-    handleReset,
-    handleDefaultChange,
-    handleOverrideChange,
-    handleCapabilityChange,
-    setCapabilityEnabled,
-    clearCapabilityOverride,
-    toggleOverride,
-    toggleCapabilityOverride,
-    syncPlaywrightPersonas,
-  };
+  const stateValue = useMemo(
+    (): BrainStateContextType => ({
+      activeTab,
+      settings,
+      overridesEnabled,
+      providerCatalog,
+      openaiApiKey,
+      anthropicApiKey,
+      geminiApiKey,
+      analyticsScheduleEnabled,
+      analyticsScheduleMinutes,
+      runtimeAnalyticsScheduleEnabled,
+      runtimeAnalyticsScheduleMinutes,
+      logsScheduleEnabled,
+      logsScheduleMinutes,
+      logsAutoOnError,
+      analyticsPromptSystem,
+      runtimeAnalyticsPromptSystem,
+      logsPromptSystem,
+      ollamaModelsQuery,
+      operationsRange,
+      operationsOverviewQuery,
+      analyticsSummaryQuery,
+      logMetricsQuery,
+      insightsQuery,
+      runtimeAnalyticsQuery,
+      modelQuickPicks,
+      agentQuickPicks,
+      effectiveAssignments,
+      effectiveCapabilityAssignments,
+      runtimeAnalyticsLiveEnabled,
+      saving,
+      liveOllamaModels,
+    }),
+    [
+      activeTab,
+      agentQuickPicks,
+      analyticsPromptSystem,
+      analyticsScheduleEnabled,
+      analyticsScheduleMinutes,
+      analyticsSummaryQuery,
+      anthropicApiKey,
+      effectiveAssignments,
+      effectiveCapabilityAssignments,
+      geminiApiKey,
+      insightsQuery,
+      liveOllamaModels,
+      logMetricsQuery,
+      logsAutoOnError,
+      logsPromptSystem,
+      logsScheduleEnabled,
+      logsScheduleMinutes,
+      modelQuickPicks,
+      ollamaModelsQuery,
+      openaiApiKey,
+      operationsOverviewQuery,
+      operationsRange,
+      overridesEnabled,
+      providerCatalog,
+      runtimeAnalyticsLiveEnabled,
+      runtimeAnalyticsPromptSystem,
+      runtimeAnalyticsQuery,
+      runtimeAnalyticsScheduleEnabled,
+      runtimeAnalyticsScheduleMinutes,
+      saving,
+      settings,
+    ]
+  );
+  const actionsValue = useMemo(
+    (): BrainActionsContextType => ({
+      setActiveTab,
+      setSettings,
+      setProviderCatalog,
+      setOpenaiApiKey,
+      setAnthropicApiKey,
+      setGeminiApiKey,
+      setAnalyticsScheduleEnabled,
+      setAnalyticsScheduleMinutes,
+      setRuntimeAnalyticsScheduleEnabled,
+      setRuntimeAnalyticsScheduleMinutes,
+      setLogsScheduleEnabled,
+      setLogsScheduleMinutes,
+      setLogsAutoOnError,
+      setAnalyticsPromptSystem,
+      setRuntimeAnalyticsPromptSystem,
+      setLogsPromptSystem,
+      setOperationsRange,
+      handleSave,
+      handleReset,
+      handleDefaultChange,
+      handleOverrideChange,
+      handleCapabilityChange,
+      setCapabilityEnabled,
+      clearCapabilityOverride,
+      toggleOverride,
+      toggleCapabilityOverride,
+      syncPlaywrightPersonas,
+    }),
+    [
+      clearCapabilityOverride,
+      handleCapabilityChange,
+      handleDefaultChange,
+      handleOverrideChange,
+      handleReset,
+      handleSave,
+      setCapabilityEnabled,
+      syncPlaywrightPersonas,
+      toggleCapabilityOverride,
+      toggleOverride,
+    ]
+  );
 
-  return <BrainContext.Provider value={value}>{children}</BrainContext.Provider>;
+  return (
+    <BrainActionsContext.Provider value={actionsValue}>
+      <BrainStateContext.Provider value={stateValue}>{children}</BrainStateContext.Provider>
+    </BrainActionsContext.Provider>
+  );
 }

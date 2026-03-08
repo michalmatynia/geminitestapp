@@ -1,24 +1,15 @@
 'use client';
 
 import {
-  buildActiveKangurLessonAssignmentsByComponent,
-  buildCompletedKangurLessonAssignmentsByComponent,
-  getKangurLessonMasteryPresentation,
-  orderKangurLessonsByAssignmentPriority,
-  resolveFocusedKangurLessonId,
-} from '@kangur/core';
-import dynamic from 'next/dynamic';
-import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
   useRef,
   useState,
-  type ComponentType,
-  type JSX,
   type ReactNode,
-  type RefObject,
+  type JSX,
 } from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
@@ -39,117 +30,22 @@ import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingCont
 import type { KangurLesson, KangurLessonComponentId } from '@/shared/contracts/kangur';
 import { KANGUR_LESSON_DOCUMENTS_SETTING_KEY } from '@/shared/contracts/kangur';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import {
+  getLessonAssignmentTimestamp,
+  LESSON_ASSIGNMENT_PRIORITY_ORDER,
+  LESSON_COMPONENTS,
+  resolveFocusedLessonId,
+} from './KangurLessonsRuntimeContext.shared';
+import type {
+  KangurLessonsRuntimeActionsContextValue,
+  KangurLessonsRuntimeContextValue,
+  KangurLessonsRuntimeStateContextValue,
+} from './KangurLessonsRuntimeContext.shared';
 
-type LessonProps = {
-  onBack?: () => void;
-};
-
-const LessonLoadingFallback = (): JSX.Element => (
-  <div className='w-full rounded-3xl border border-indigo-200/70 bg-white/90 p-6 text-center text-sm text-indigo-500 shadow-lg'>
-    Ladowanie lekcji...
-  </div>
-);
-
-const loadLessonComponent = (
-  loader: () => Promise<unknown>
-): ComponentType<LessonProps> =>
-  dynamic<LessonProps>(
-    async () => {
-      const module = (await loader()) as { default: ComponentType<LessonProps> };
-      return module.default;
-    },
-    {
-      ssr: false,
-      loading: LessonLoadingFallback,
-    }
-  );
-
-const ClockLesson = loadLessonComponent(() => import('@/features/kangur/ui/components/ClockLesson'));
-const CalendarLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/CalendarLesson')
-);
-const AddingLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/AddingLesson')
-);
-const SubtractingLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/SubtractingLesson')
-);
-const MultiplicationLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/MultiplicationLesson')
-);
-const DivisionLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/DivisionLesson')
-);
-const GeometryBasicsLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/GeometryBasicsLesson')
-);
-const GeometryShapesLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/GeometryShapesLesson')
-);
-const GeometrySymmetryLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/GeometrySymmetryLesson')
-);
-const GeometryPerimeterLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/GeometryPerimeterLesson')
-);
-const LogicalThinkingLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/LogicalThinkingLesson')
-);
-const LogicalPatternsLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/LogicalPatternsLesson')
-);
-const LogicalClassificationLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/LogicalClassificationLesson')
-);
-const LogicalReasoningLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/LogicalReasoningLesson')
-);
-const LogicalAnalogiesLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/LogicalAnalogiesLesson')
-);
-
-const LESSON_COMPONENTS: Record<KangurLessonComponentId, ComponentType<LessonProps>> = {
-  clock: ClockLesson,
-  calendar: CalendarLesson,
-  adding: AddingLesson,
-  subtracting: SubtractingLesson,
-  multiplication: MultiplicationLesson,
-  division: DivisionLesson,
-  geometry_basics: GeometryBasicsLesson,
-  geometry_shapes: GeometryShapesLesson,
-  geometry_symmetry: GeometrySymmetryLesson,
-  geometry_perimeter: GeometryPerimeterLesson,
-  logical_thinking: LogicalThinkingLesson,
-  logical_patterns: LogicalPatternsLesson,
-  logical_classification: LogicalClassificationLesson,
-  logical_reasoning: LogicalReasoningLesson,
-  logical_analogies: LogicalAnalogiesLesson,
-};
-
-export const getLessonMasteryPresentation = getKangurLessonMasteryPresentation;
-
-type KangurLessonsRuntimeContextValue = {
-  orderedLessons: KangurLesson[];
-  lessonDocuments: ReturnType<typeof parseKangurLessonDocumentStore>;
-  progress: ReturnType<typeof useKangurProgressState>;
-  activeLessonId: string | null;
-  activeLesson: KangurLesson | null;
-  prevLesson: KangurLesson | null;
-  nextLesson: KangurLesson | null;
-  activeLessonDocument: ReturnType<typeof parseKangurLessonDocumentStore>[string] | null;
-  ActiveLessonComponent: ComponentType<LessonProps> | null;
-  shouldRenderLessonDocument: boolean;
-  hasActiveLessonDocumentContent: boolean;
-  lessonAssignmentsByComponent: Map<KangurLessonComponentId, KangurAssignmentSnapshot>;
-  completedLessonAssignmentsByComponent: Map<KangurLessonComponentId, KangurAssignmentSnapshot>;
-  activeLessonAssignment: KangurAssignmentSnapshot | null;
-  completedActiveLessonAssignment: KangurAssignmentSnapshot | null;
-  activeLessonContentRef: RefObject<HTMLDivElement | null>;
-  selectLesson: (lessonId: string) => void;
-  clearActiveLesson: () => void;
-};
-
-const KangurLessonsRuntimeContext = createContext<KangurLessonsRuntimeContextValue | null>(null);
+const KangurLessonsRuntimeStateContext =
+  createContext<KangurLessonsRuntimeStateContextValue | null>(null);
+const KangurLessonsRuntimeActionsContext =
+  createContext<KangurLessonsRuntimeActionsContextValue | null>(null);
 
 export function KangurLessonsRuntimeProvider({
   children,
@@ -194,6 +90,12 @@ export function KangurLessonsRuntimeProvider({
 
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
   const activeLessonContentRef = useRef<HTMLDivElement | null>(null);
+  const selectLesson = useCallback((lessonId: string): void => {
+    setActiveLessonId(lessonId);
+  }, []);
+  const clearActiveLesson = useCallback((): void => {
+    setActiveLessonId(null);
+  }, []);
 
   useEffect((): void => {
     if (!activeLessonId) return;
@@ -247,7 +149,7 @@ export function KangurLessonsRuntimeProvider({
       ? completedLessonAssignmentsByComponent.get(activeLesson.componentId) ?? null
       : null;
 
-  const value = useMemo<KangurLessonsRuntimeContextValue>(
+  const stateValue = useMemo<KangurLessonsRuntimeStateContextValue>(
     () => ({
       orderedLessons,
       lessonDocuments,
@@ -265,12 +167,6 @@ export function KangurLessonsRuntimeProvider({
       activeLessonAssignment,
       completedActiveLessonAssignment,
       activeLessonContentRef,
-      selectLesson: (lessonId: string): void => {
-        setActiveLessonId(lessonId);
-      },
-      clearActiveLesson: (): void => {
-        setActiveLessonId(null);
-      },
     }),
     [
       ActiveLessonComponent,
@@ -290,11 +186,20 @@ export function KangurLessonsRuntimeProvider({
       shouldRenderLessonDocument,
     ]
   );
+  const actionsValue = useMemo<KangurLessonsRuntimeActionsContextValue>(
+    () => ({
+      selectLesson,
+      clearActiveLesson,
+    }),
+    [clearActiveLesson, selectLesson]
+  );
 
   return (
-    <KangurLessonsRuntimeContext.Provider value={value}>
-      {children}
-    </KangurLessonsRuntimeContext.Provider>
+    <KangurLessonsRuntimeActionsContext.Provider value={actionsValue}>
+      <KangurLessonsRuntimeStateContext.Provider value={stateValue}>
+        {children}
+      </KangurLessonsRuntimeStateContext.Provider>
+    </KangurLessonsRuntimeActionsContext.Provider>
   );
 }
 
@@ -305,22 +210,50 @@ export function KangurLessonsRuntimeBoundary({
   enabled: boolean;
   children: ReactNode;
 }): JSX.Element {
-  if (!enabled) {
+  const existingStateContext = useContext(KangurLessonsRuntimeStateContext);
+  const existingActionsContext = useContext(KangurLessonsRuntimeActionsContext);
+  if (!enabled || existingStateContext || existingActionsContext) {
     return <>{children}</>;
   }
 
   return <KangurLessonsRuntimeProvider>{children}</KangurLessonsRuntimeProvider>;
 }
 
-export const useKangurLessonsRuntime = (): KangurLessonsRuntimeContextValue => {
-  const context = useContext(KangurLessonsRuntimeContext);
+export const useKangurLessonsRuntimeState = (): KangurLessonsRuntimeStateContextValue => {
+  const context = useContext(KangurLessonsRuntimeStateContext);
   if (!context) {
     throw internalError(
-      'useKangurLessonsRuntime must be used within a KangurLessonsRuntimeProvider'
+      'useKangurLessonsRuntimeState must be used within a KangurLessonsRuntimeProvider'
     );
   }
   return context;
 };
 
-export const useOptionalKangurLessonsRuntime = (): KangurLessonsRuntimeContextValue | null =>
-  useContext(KangurLessonsRuntimeContext);
+export const useKangurLessonsRuntimeActions = (): KangurLessonsRuntimeActionsContextValue => {
+  const context = useContext(KangurLessonsRuntimeActionsContext);
+  if (!context) {
+    throw internalError(
+      'useKangurLessonsRuntimeActions must be used within a KangurLessonsRuntimeProvider'
+    );
+  }
+  return context;
+};
+
+export const useKangurLessonsRuntime = (): KangurLessonsRuntimeContextValue => {
+  const state = useKangurLessonsRuntimeState();
+  const actions = useKangurLessonsRuntimeActions();
+  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
+};
+
+export const useOptionalKangurLessonsRuntime = (): KangurLessonsRuntimeContextValue | null => {
+  const state = useContext(KangurLessonsRuntimeStateContext);
+  const actions = useContext(KangurLessonsRuntimeActionsContext);
+
+  return useMemo(() => {
+    if (!state || !actions) {
+      return null;
+    }
+
+    return { ...state, ...actions };
+  }, [actions, state]);
+};

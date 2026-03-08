@@ -1,13 +1,6 @@
 'use client';
 
-import React, {
-  createContext,
-  useContext,
-  useReducer,
-  useMemo,
-  useCallback,
-  type ReactNode,
-} from 'react';
+import { createContext, useContext, useReducer, useMemo, useCallback, type ReactNode } from 'react';
 
 import type { PageZone } from '@/shared/contracts/cms';
 import type { BlockDragPayload } from '../types/drag-drop';
@@ -103,12 +96,22 @@ function dragReducer(state: DragState, action: DragAction): DragState {
 // Context
 // ---------------------------------------------------------------------------
 
-interface DragStateContextValue {
+interface DragStateStateContextValue {
   state: DragState;
-  dispatch: React.Dispatch<DragAction>;
+  isDraggingBlock: boolean;
+  isDraggingSection: boolean;
 }
 
-const DragStateContext = createContext<DragStateContextValue | null>(null);
+interface DragStateActionsContextValue {
+  startBlockDrag: (payload: BlockDragState) => void;
+  endBlockDrag: () => void;
+  startSectionDrag: (payload: SectionDragState) => void;
+  endSectionDrag: () => void;
+  clearAll: () => void;
+}
+
+const DragStateStateContext = createContext<DragStateStateContextValue | null>(null);
+const DragStateActionsContext = createContext<DragStateActionsContextValue | null>(null);
 
 // ---------------------------------------------------------------------------
 // Provider
@@ -120,61 +123,73 @@ interface DragStateProviderProps {
 
 export function DragStateProvider({ children }: DragStateProviderProps) {
   const [state, dispatch] = useReducer(dragReducer, initialDragState);
+  const isDraggingBlock = state.block.id !== null;
+  const isDraggingSection = state.section.id !== null;
 
-  const value = useMemo(() => ({ state, dispatch }), [state]);
+  const startBlockDrag = useCallback((payload: BlockDragState) => {
+    dispatch({ type: 'START_BLOCK_DRAG', payload });
+  }, []);
+  const endBlockDrag = useCallback(() => {
+    dispatch({ type: 'END_BLOCK_DRAG' });
+  }, []);
+  const startSectionDrag = useCallback((payload: SectionDragState) => {
+    dispatch({ type: 'START_SECTION_DRAG', payload });
+  }, []);
+  const endSectionDrag = useCallback(() => {
+    dispatch({ type: 'END_SECTION_DRAG' });
+  }, []);
+  const clearAll = useCallback(() => {
+    dispatch({ type: 'CLEAR_ALL' });
+  }, []);
 
-  return <DragStateContext.Provider value={value}>{children}</DragStateContext.Provider>;
+  const stateValue = useMemo(
+    (): DragStateStateContextValue => ({
+      state,
+      isDraggingBlock,
+      isDraggingSection,
+    }),
+    [isDraggingBlock, isDraggingSection, state]
+  );
+  const actionsValue = useMemo(
+    (): DragStateActionsContextValue => ({
+      startBlockDrag,
+      endBlockDrag,
+      startSectionDrag,
+      endSectionDrag,
+      clearAll,
+    }),
+    [clearAll, endBlockDrag, endSectionDrag, startBlockDrag, startSectionDrag]
+  );
+
+  return (
+    <DragStateActionsContext.Provider value={actionsValue}>
+      <DragStateStateContext.Provider value={stateValue}>{children}</DragStateStateContext.Provider>
+    </DragStateActionsContext.Provider>
+  );
 }
 
 // ---------------------------------------------------------------------------
 // Hook
 // ---------------------------------------------------------------------------
 
-export function useDragState() {
-  const context = useContext(DragStateContext);
+export function useDragStateState(): DragStateStateContextValue {
+  const context = useContext(DragStateStateContext);
   if (!context) {
-    throw internalError('useDragState must be used within a DragStateProvider');
+    throw internalError('useDragStateState must be used within a DragStateProvider');
   }
+  return context;
+}
 
-  const { state, dispatch } = context;
+export function useDragStateActions(): DragStateActionsContextValue {
+  const context = useContext(DragStateActionsContext);
+  if (!context) {
+    throw internalError('useDragStateActions must be used within a DragStateProvider');
+  }
+  return context;
+}
 
-  const startBlockDrag = useCallback(
-    (payload: BlockDragState) => {
-      dispatch({ type: 'START_BLOCK_DRAG', payload });
-    },
-    [dispatch]
-  );
-
-  const endBlockDrag = useCallback(() => {
-    dispatch({ type: 'END_BLOCK_DRAG' });
-  }, [dispatch]);
-
-  const startSectionDrag = useCallback(
-    (payload: SectionDragState) => {
-      dispatch({ type: 'START_SECTION_DRAG', payload });
-    },
-    [dispatch]
-  );
-
-  const endSectionDrag = useCallback(() => {
-    dispatch({ type: 'END_SECTION_DRAG' });
-  }, [dispatch]);
-
-  const clearAll = useCallback(() => {
-    dispatch({ type: 'CLEAR_ALL' });
-  }, [dispatch]);
-
-  const isDraggingBlock = state.block.id !== null;
-  const isDraggingSection = state.section.id !== null;
-
-  return {
-    state,
-    isDraggingBlock,
-    isDraggingSection,
-    startBlockDrag,
-    endBlockDrag,
-    startSectionDrag,
-    endSectionDrag,
-    clearAll,
-  };
+export function useDragState(): DragStateStateContextValue & DragStateActionsContextValue {
+  const state = useDragStateState();
+  const actions = useDragStateActions();
+  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
 }

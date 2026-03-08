@@ -14,9 +14,9 @@ import type { ProductWithImages, ProductDraft } from '@/shared/contracts/product
 import { internalError } from '@/shared/errors/app-error';
 
 import {
-  ProductFormCoreContextType,
   ProductFormCoreProvider,
-  useProductFormCore,
+  useProductFormCoreActions,
+  useProductFormCoreState,
 } from './ProductFormCoreContext';
 import { ProductFormImageProvider, useProductFormImages } from './ProductFormImageContext';
 import { ProductFormMetadataProvider, useProductFormMetadata } from './ProductFormMetadataContext';
@@ -133,10 +133,10 @@ const toComparableImageSlot = (slot: unknown): string => {
 
 const serializeComparableState = (value: NonFormComparableState): string => JSON.stringify(value);
 
-export type ProductFormSubmitContextType = Pick<
-  ProductFormCoreContextType,
-  'handleSubmit' | 'ConfirmationModal'
->;
+export type ProductFormSubmitContextType = {
+  handleSubmit: (e?: React.BaseSyntheticEvent) => Promise<void>;
+  ConfirmationModal: React.ComponentType;
+};
 
 type ProductFormProviderConfigContextType = {
   product?: ProductWithImages;
@@ -187,22 +187,30 @@ function ProductFormSubmitController(props: { children: React.ReactNode }) {
     useProductFormProviderConfigContext();
   const {
     methods,
+    product,
+    selectedNoteIds,
+  } = useProductFormCoreState();
+  const {
     setHasUnsavedChanges,
     setHandleSubmit,
     setConfirmationModal,
-    product,
-    selectedNoteIds,
     setUploading,
     setUploadError,
     setUploadSuccess,
-  } = useProductFormCore();
+  } = useProductFormCoreActions();
   const { selectedCatalogIds, selectedCategoryId, selectedTagIds, selectedProducerIds } =
     useProductFormMetadata();
   const { imageSlots, imageLinks, imageBase64s, refreshImagesFromProduct } = useProductFormImages();
   const { parameterValues } = useProductFormParameters();
   const { studioProjectId } = useProductFormStudio();
 
-  const { handleSubmit, uploading, uploadError, uploadSuccess, ConfirmationModal } =
+  const {
+    handleSubmit: submitHandleSubmit,
+    uploading,
+    uploadError,
+    uploadSuccess,
+    ConfirmationModal: submitConfirmationModal,
+  } =
     useProductFormSubmit({
       product,
       methods,
@@ -235,20 +243,20 @@ function ProductFormSubmitController(props: { children: React.ReactNode }) {
   }, [uploadSuccess, setUploadSuccess]);
 
   useEffect(() => {
-    setHandleSubmit(handleSubmit);
+    setHandleSubmit(submitHandleSubmit);
 
     return (): void => {
       setHandleSubmit(async () => {});
     };
-  }, [handleSubmit, setHandleSubmit]);
+  }, [submitHandleSubmit, setHandleSubmit]);
 
   useEffect(() => {
-    setConfirmationModal(ConfirmationModal);
+    setConfirmationModal(submitConfirmationModal);
 
     return (): void => {
       setConfirmationModal(() => null);
     };
-  }, [ConfirmationModal, setConfirmationModal]);
+  }, [submitConfirmationModal, setConfirmationModal]);
 
   // Dirty tracking
   const lastEntityIdentityRef = useRef<string>('');
@@ -317,10 +325,10 @@ function ProductFormSubmitController(props: { children: React.ReactNode }) {
 
   const submitContextValue = useMemo(
     () => ({
-      handleSubmit,
-      ConfirmationModal,
+      handleSubmit: submitHandleSubmit,
+      ConfirmationModal: submitConfirmationModal,
     }),
-    [handleSubmit, ConfirmationModal]
+    [submitHandleSubmit, submitConfirmationModal]
   );
 
   return (
@@ -420,9 +428,6 @@ function ProductFormSubProviders(props: { children: React.ReactNode }) {
     nonFormDirtyTrackingLockedRef.current = true;
   };
 
-  // Provider-level hydration guard: fires once on mount when a non-hydrated product
-  // reaches this provider with requireHydratedEditProduct=true.
-  // The ref prevents duplicate logs on re-renders.
   const hydratedWarnedRef = useRef(false);
   useEffect(() => {
     if (!requireHydratedEditProduct) return;
@@ -445,7 +450,7 @@ function ProductFormSubProvidersInner(props: { children: React.ReactNode }) {
 
   const { product, draft, initialCatalogId } = useProductFormProviderConfigContext();
   const onInteraction = useProductFormInteraction() || (() => {});
-  const { uploading, uploadError, uploadSuccess } = useProductFormCore();
+  const { uploading, uploadError, uploadSuccess } = useProductFormCoreState();
 
   return (
     <ProductFormMetadataProvider

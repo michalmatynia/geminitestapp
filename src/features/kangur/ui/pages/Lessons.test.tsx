@@ -263,9 +263,13 @@ describe('Lessons', () => {
 
     await waitFor(() =>
       expect(screen.getByRole('link', { name: 'Strona glowna' })).toHaveAttribute(
-        'title',
-        'Home Navigation: Returns to the main Kangur practice hub and quick-start home screen.'
+        'href',
+        '/kangur'
       )
+    );
+    expect(screen.getByRole('link', { name: 'Strona glowna' })).toHaveAttribute(
+      'title',
+      'Home Navigation: Returns to the main Kangur practice hub and quick-start home screen.'
     );
     expect(screen.getByRole('button', { name: /nauka zegara/i })).toHaveAttribute(
       'title',
@@ -291,7 +295,7 @@ describe('Lessons', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
 
       expect(historyBackSpy).not.toHaveBeenCalled();
-      expect(routerPushMock).toHaveBeenCalledWith('/kangur/game');
+      expect(routerPushMock).toHaveBeenCalledWith('/kangur');
     } finally {
       Object.defineProperty(window.history, 'length', {
         configurable: true,

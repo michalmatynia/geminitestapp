@@ -22,7 +22,15 @@ type KangurTutorAnchorContextValue = {
   registerAnchor: (anchor: KangurTutorAnchorRegistration) => () => void;
 };
 
-const KangurTutorAnchorContext = createContext<KangurTutorAnchorContextValue | null>(null);
+type KangurTutorAnchorStateContextValue = Pick<KangurTutorAnchorContextValue, 'anchors'>;
+type KangurTutorAnchorActionsContextValue = Pick<KangurTutorAnchorContextValue, 'registerAnchor'>;
+
+const KangurTutorAnchorStateContext = createContext<KangurTutorAnchorStateContextValue | null>(
+  null
+);
+const KangurTutorAnchorActionsContext = createContext<KangurTutorAnchorActionsContextValue | null>(
+  null
+);
 
 export function KangurTutorAnchorProvider({ children }: { children: ReactNode }): JSX.Element {
   const [anchors, setAnchors] = useState<KangurTutorAnchorRegistration[]>([]);
@@ -39,31 +47,66 @@ export function KangurTutorAnchorProvider({ children }: { children: ReactNode })
     };
   }, []);
 
-  const value = useMemo(
+  const stateValue = useMemo<KangurTutorAnchorStateContextValue>(
     () => ({
       anchors,
+    }),
+    [anchors]
+  );
+  const actionsValue = useMemo<KangurTutorAnchorActionsContextValue>(
+    () => ({
       registerAnchor,
     }),
-    [anchors, registerAnchor]
+    [registerAnchor]
   );
 
   return (
-    <KangurTutorAnchorContext.Provider value={value}>
-      {children}
-    </KangurTutorAnchorContext.Provider>
+    <KangurTutorAnchorActionsContext.Provider value={actionsValue}>
+      <KangurTutorAnchorStateContext.Provider value={stateValue}>
+        {children}
+      </KangurTutorAnchorStateContext.Provider>
+    </KangurTutorAnchorActionsContext.Provider>
   );
 }
 
-export function useKangurTutorAnchors(): KangurTutorAnchorContextValue {
-  const context = useContext(KangurTutorAnchorContext);
+export function useKangurTutorAnchorState(): KangurTutorAnchorStateContextValue {
+  const context = useContext(KangurTutorAnchorStateContext);
   if (!context) {
-    throw internalError('useKangurTutorAnchors must be used within a KangurTutorAnchorProvider');
+    throw internalError(
+      'useKangurTutorAnchorState must be used within a KangurTutorAnchorProvider'
+    );
   }
   return context;
 }
 
+export function useKangurTutorAnchorActions(): KangurTutorAnchorActionsContextValue {
+  const context = useContext(KangurTutorAnchorActionsContext);
+  if (!context) {
+    throw internalError(
+      'useKangurTutorAnchorActions must be used within a KangurTutorAnchorProvider'
+    );
+  }
+  return context;
+}
+
+export function useKangurTutorAnchors(): KangurTutorAnchorContextValue {
+  const state = useContext(KangurTutorAnchorStateContext);
+  const actions = useContext(KangurTutorAnchorActionsContext);
+  if (!state || !actions) {
+    throw internalError('useKangurTutorAnchors must be used within a KangurTutorAnchorProvider');
+  }
+  return useMemo(() => ({ ...state, ...actions }), [actions, state]);
+}
+
 export function useOptionalKangurTutorAnchors(): KangurTutorAnchorContextValue | null {
-  return useContext(KangurTutorAnchorContext);
+  const state = useContext(KangurTutorAnchorStateContext);
+  const actions = useContext(KangurTutorAnchorActionsContext);
+  return useMemo(() => {
+    if (!state || !actions) {
+      return null;
+    }
+    return { ...state, ...actions };
+  }, [actions, state]);
 }
 
 const kindMatches = (

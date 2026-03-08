@@ -19,6 +19,7 @@ import { cn } from '@/shared/utils';
 type DifficultySelectorProps = {
   selected: KangurDifficulty;
   onSelect: (difficulty: KangurDifficulty) => void;
+  showHeading?: boolean;
 };
 
 const DIFFICULTIES: Array<{
@@ -33,27 +34,33 @@ const DIFFICULTIES: Array<{
 export default function DifficultySelector({
   selected,
   onSelect,
+  showHeading = true,
 }: DifficultySelectorProps): React.JSX.Element {
   const headingId = useId();
   const descriptionId = useId();
+  const groupLabelId = showHeading ? headingId : undefined;
+  const groupAriaLabel = showHeading ? undefined : 'Poziom trudnosci';
 
   return (
     <section
-      aria-describedby={descriptionId}
-      aria-labelledby={headingId}
+      aria-describedby={showHeading ? descriptionId : undefined}
+      aria-labelledby={showHeading ? headingId : undefined}
       className='flex w-full flex-col items-center gap-4'
     >
-      <KangurSectionHeading
-        data-testid='difficulty-selector-heading'
-        description='Ten sam uklad, tylko rosnacy poziom wyzwania.'
-        descriptionId={descriptionId}
-        headingAs='h3'
-        headingSize='sm'
-        title='Wybierz poziom trudnosci'
-        titleId={headingId}
-      />
+      {showHeading ? (
+        <KangurSectionHeading
+          data-testid='difficulty-selector-heading'
+          description='Ten sam uklad, tylko rosnacy poziom wyzwania.'
+          descriptionId={descriptionId}
+          headingAs='h3'
+          headingSize='sm'
+          title='Wybierz poziom trudnosci'
+          titleId={headingId}
+        />
+      ) : null}
       <div
-        aria-labelledby={headingId}
+        aria-label={groupAriaLabel}
+        aria-labelledby={groupLabelId}
         className='grid w-full max-w-3xl gap-3 md:grid-cols-3'
         role='group'
       >

@@ -1,0 +1,1818 @@
+
+> libapp2@0.1.0 predev
+> node scripts/runtime/check-node-version.cjs
+
+
+> libapp2@0.1.0 dev
+> node --max-old-space-size=8192 server.cjs
+
+○ Compiling instrumentation Node.js ...
+
+  We detected TypeScript in your project and reconfigured your tsconfig.json file for you.
+  The following suggested values were added to your tsconfig.json. These values can be changed to fit your project's needs:
+
+  	- include was updated to add '.next-dev-web-dev-smoke-final/types/**/*.ts'
+  	- include was updated to add '.next-dev-web-dev-smoke-final/dev/types/**/*.ts'
+
+[ai-paths.portable-engine.envelope-verification] Portable envelope verification audit sink health probe sinkId=portable-envelope-verification-log-forwarding {
+  category: 'ai_path_portable_envelope_verification_audit_sink_health',
+  kind: 'ai-paths.portable-envelope-verification-audit-sink-health.v1',
+  sinkId: 'portable-envelope-verification-log-forwarding',
+  stage: 'probe',
+  service: 'ai-paths.portable-engine'
+}
+[ai-paths.portable-engine.envelope-verification.sink-bootstrap] Portable envelope verification audit sink startup health summary sinkId=all {
+  category: 'ai_path_portable_envelope_verification_audit_sink_health',
+  kind: 'ai-paths.portable-envelope-verification-audit-sink-health.v1',
+  profile: 'dev',
+  policy: 'warn',
+  timeoutMs: 3000,
+  status: 'healthy',
+  failedSinkIds: [],
+  diagnostics: [
+    {
+      sinkId: 'portable-envelope-verification-log-forwarding',
+      status: 'healthy',
+      checkedAt: '2026-03-08T17:18:40.908Z',
+      durationMs: 771,
+      message: 'Health check passed.',
+      error: null
+    }
+  ],
+  service: 'ai-paths.portable-engine'
+}
+[queue-factory] [queue-factory:database-backup-scheduler] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:product-sync-scheduler] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:system-log-alerts] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-init] Starting BullMQ workers... { service: 'queue-init' }
+[queue-registry] [queue-registry] Starting queue worker: base-import { queueName: 'base-import', service: 'queue-registry' }
+[queue-factory] [queue-factory:base-import] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: database-backup-scheduler { queueName: 'database-backup-scheduler', service: 'queue-registry' }
+[queue-registry] [queue-registry] Starting queue worker: system-log-alerts { queueName: 'system-log-alerts', service: 'queue-registry' }
+[queue-registry] [queue-registry] Starting queue worker: tradera-listings { queueName: 'tradera-listings', service: 'queue-registry' }
+[queue-factory] [queue-factory:tradera-listings] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-ai { queueName: 'product-ai', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-ai] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync { queueName: 'product-sync', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-sync] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync-backfill { queueName: 'product-sync-backfill', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-sync-backfill] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync-scheduler { queueName: 'product-sync-scheduler', service: 'queue-registry' }
+[queue-factory] [queue-factory:case-resolver-ocr] BullMQ worker started (concurrency: 2) { concurrency: 2, service: 'queue-factory' }
+[queue-factory] [queue-factory:ai-path-run] BullMQ worker started (concurrency: 3) { concurrency: 3, service: 'queue-factory' }
+[queue-factory] [queue-factory:chatbot] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:agent] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:tradera-relist-scheduler] Worker stopped { service: 'queue-factory' }
+Ready on http://localhost:57719 { port: 57719, host: '127.0.0.1' }
+[queue-factory] [queue-factory:image-studio-run] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:image-studio-sequence] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+○ Compiling /api/health ...
+[health.GET] health.GET completed successfully {
+  durationMs: 972,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '347bf2b45981c63f40e7305a7e2a82ce',
+  otelSpanId: '9f7d58b467e063c1',
+  otelTraceFlags: '01',
+  service: 'health',
+  traceId: '86272bf7-c634-4a78-8b59-b3ac0b9fb946',
+  correlationId: '44473edc-a585-485b-98c1-ca915be345a9'
+}
+ GET /api/health 200 in 1497ms (compile: 28ms, proxy.ts: 6ms, render: 1463ms)
+[health.GET] health.GET completed successfully {
+  durationMs: 2676,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '209bfc07192f30336bc348a457abf44a',
+  otelSpanId: '33b67cae586ec6a7',
+  otelTraceFlags: '01',
+  service: 'health',
+  traceId: '4542118f-d5fc-4e15-b73a-85343b2b3087',
+  correlationId: '1f721818-c025-464e-85d9-2a81006c2b4e'
+}
+ GET /api/health 200 in 718ms (compile: 8ms, proxy.ts: 11ms, render: 699ms)
+[health.GET] health.GET completed successfully {
+  durationMs: 753,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '5dd9db93f3b88ca14d0155c6feb5a480',
+  otelSpanId: '75ef2b2abee8724d',
+  otelTraceFlags: '01',
+  service: 'health',
+  traceId: '7c4a19cd-478e-4293-ac77-ee0b76477f5f',
+  correlationId: '8067c74f-5cd4-47f3-aa2b-ff55723ef8fb'
+}
+ GET /api/health 200 in 823ms (compile: 14ms, proxy.ts: 22ms, render: 787ms)
+[health.GET] health.GET completed successfully {
+  durationMs: 908,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: 'a322959391ef0fd59c1fcd5d7c5b02e3',
+  otelSpanId: 'fa3676ebf65f3aea',
+  otelTraceFlags: '01',
+  service: 'health',
+  traceId: '2c49c762-806e-4d12-baa0-18f9474701bd',
+  correlationId: 'b059eed8-8668-4510-8136-e3d4fa1a022e'
+}
+ GET /api/health 200 in 1010ms (compile: 27ms, proxy.ts: 37ms, render: 946ms)
+ GET /api/health 200 in 1545ms (compile: 30ms, proxy.ts: 198ms, render: 1317ms)
+[health.GET] health.GET completed successfully {
+  durationMs: 1420,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: 'a9ddf3af477ea282d6e26c70090ac131',
+  otelSpanId: 'ec0ff017b542495d',
+  otelTraceFlags: '01',
+  service: 'health',
+  traceId: '99f802ba-c06a-40c8-aee9-9e45aec3071f',
+  correlationId: '793a7924-f0d1-4b61-9b27-b6c243e29894'
+}
+ GET /api/health 200 in 731ms (compile: 8ms, proxy.ts: 23ms, render: 700ms)
+[health.GET] health.GET completed successfully {
+  durationMs: 828,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '3dd7439936d8ed4a08a8440765b7ecb7',
+  otelSpanId: '018e7e4bb13b1f25',
+  otelTraceFlags: '01',
+  service: 'health',
+  traceId: 'a83a41d3-0cff-4f31-a039-9cb2ab46dee8',
+  correlationId: 'cd4f2e5c-10ac-4eff-9766-66ab25a611e4'
+}
+ GET /api/health 200 in 970ms (compile: 80ms, proxy.ts: 37ms, render: 852ms)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app-paths-manifest.json',
+  page: '/api/health'
+}
+ GET /api/health 500 in 1500ms (proxy.ts: 6ms)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/static/development/_buildManifest.js.tmp.ylpom4al5yd'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/static/development/_buildManifest.js.tmp.ylpom4al5yd'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app-paths-manifest.json',
+  page: '/api/health'
+}
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 745ms (compile: 727ms, proxy.ts: 7ms, render: 10ms)
+ GET /api/health 500 in 745ms (compile: 727ms, proxy.ts: 7ms, render: 10ms)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 45ms (compile: 30ms, proxy.ts: 14ms, render: 1481µs)
+ GET /api/health 500 in 46ms (compile: 30ms, proxy.ts: 14ms, render: 1527µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET / 500 in 1407ms (compile: 1405ms, render: 1961µs)
+ GET / 500 in 1407ms (compile: 1405ms, render: 2ms)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 14ms (compile: 10ms, proxy.ts: 3ms, render: 1013µs)
+ GET /api/health 500 in 14ms (compile: 10ms, proxy.ts: 3ms, render: 1042µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET / 500 in 15ms (compile: 14ms, render: 1089µs)
+ GET / 500 in 15ms (compile: 14ms, render: 1114µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 17ms (compile: 13ms, proxy.ts: 3ms, render: 1555µs)
+ GET /api/health 500 in 17ms (compile: 13ms, proxy.ts: 3ms, render: 1662µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET / 500 in 14ms (compile: 13ms, render: 1075µs)
+ GET / 500 in 14ms (compile: 13ms, render: 1104µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 22ms (compile: 19ms, proxy.ts: 2ms, render: 1190µs)
+ GET /api/health 500 in 22ms (compile: 19ms, proxy.ts: 2ms, render: 1218µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET / 500 in 24ms (compile: 23ms, render: 1443µs)
+ GET / 500 in 24ms (compile: 23ms, render: 1574µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 16ms (compile: 12ms, proxy.ts: 2ms, render: 1090µs)
+ GET /api/health 500 in 16ms (compile: 12ms, proxy.ts: 2ms, render: 1118µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET / 500 in 17ms (compile: 14ms, render: 3ms)
+ GET / 500 in 17ms (compile: 14ms, render: 3ms)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 13ms (compile: 10ms, proxy.ts: 1908µs, render: 980µs)
+ GET /api/health 500 in 13ms (compile: 10ms, proxy.ts: 1908µs, render: 1010µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET / 500 in 13ms (compile: 12ms, render: 873µs)
+ GET / 500 in 13ms (compile: 12ms, render: 898µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 18ms (compile: 11ms, proxy.ts: 5ms, render: 1220µs)
+ GET /api/health 500 in 18ms (compile: 11ms, proxy.ts: 5ms, render: 1265µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET / 500 in 13ms (compile: 12ms, render: 1033µs)
+ GET / 500 in 13ms (compile: 12ms, render: 1090µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 14ms (compile: 10ms, proxy.ts: 2ms, render: 1004µs)
+ GET /api/health 500 in 14ms (compile: 10ms, proxy.ts: 2ms, render: 1115µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET / 500 in 14ms (compile: 13ms, render: 1176µs)
+ GET / 500 in 14ms (compile: 13ms, render: 1199µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 17ms (compile: 14ms, proxy.ts: 2ms, render: 901µs)
+ GET /api/health 500 in 17ms (compile: 14ms, proxy.ts: 2ms, render: 927µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET / 500 in 14ms (compile: 13ms, render: 999µs)
+ GET / 500 in 14ms (compile: 13ms, render: 1025µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 13ms (compile: 10ms, proxy.ts: 2ms, render: 947µs)
+ GET /api/health 500 in 13ms (compile: 10ms, proxy.ts: 2ms, render: 974µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET / 500 in 13ms (compile: 12ms, render: 998µs)
+ GET / 500 in 13ms (compile: 12ms, render: 1062µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 19ms (compile: 15ms, proxy.ts: 2ms, render: 1135µs)
+ GET /api/health 500 in 19ms (compile: 15ms, proxy.ts: 2ms, render: 1165µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET / 500 in 16ms (compile: 14ms, render: 1103µs)
+ GET / 500 in 16ms (compile: 14ms, render: 1126µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 13ms (compile: 10ms, proxy.ts: 1887µs, render: 863µs)
+ GET /api/health 500 in 13ms (compile: 10ms, proxy.ts: 1887µs, render: 889µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET / 500 in 14ms (compile: 13ms, render: 906µs)
+ GET / 500 in 14ms (compile: 13ms, render: 930µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 18ms (compile: 14ms, proxy.ts: 2ms, render: 1064µs)
+ GET /api/health 500 in 18ms (compile: 14ms, proxy.ts: 2ms, render: 1091µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET / 500 in 14ms (compile: 13ms, render: 990µs)
+ GET / 500 in 14ms (compile: 13ms, render: 1017µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 13ms (compile: 10ms, proxy.ts: 1993µs, render: 1164µs)
+ GET /api/health 500 in 13ms (compile: 10ms, proxy.ts: 1993µs, render: 1196µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET / 500 in 14ms (compile: 13ms, render: 971µs)
+ GET / 500 in 14ms (compile: 13ms, render: 1013µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 24ms (compile: 20ms, proxy.ts: 2ms, render: 1762µs)
+ GET /api/health 500 in 24ms (compile: 20ms, proxy.ts: 2ms, render: 1812µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET / 500 in 19ms (compile: 18ms, render: 981µs)
+ GET / 500 in 19ms (compile: 18ms, render: 1006µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 14ms (compile: 11ms, proxy.ts: 1940µs, render: 977µs)
+ GET /api/health 500 in 14ms (compile: 11ms, proxy.ts: 1940µs, render: 1008µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET / 500 in 13ms (compile: 12ms, render: 854µs)
+ GET / 500 in 13ms (compile: 12ms, render: 879µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 29ms (compile: 26ms, proxy.ts: 2ms, render: 1272µs)
+ GET /api/health 500 in 29ms (compile: 26ms, proxy.ts: 2ms, render: 1305µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET / 500 in 28ms (compile: 27ms, render: 1006µs)
+ GET / 500 in 28ms (compile: 27ms, render: 1036µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 695ms (compile: 467ms, proxy.ts: 226ms, render: 1780µs)
+ GET /api/health 500 in 695ms (compile: 467ms, proxy.ts: 226ms, render: 1817µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+✓ Compiled in 2.5s
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET / 500 in 1102ms (compile: 1098ms, render: 3ms)
+ GET / 500 in 1102ms (compile: 1098ms, render: 3ms)
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 1,
+  reason: 'idle',
+  address: 'cluster0-shard-00-02.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 1,
+  reason: 'idle',
+  address: 'cluster0-shard-00-00.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 27ms (compile: 16ms, proxy.ts: 10ms, render: 907µs)
+ GET /api/health 500 in 27ms (compile: 16ms, proxy.ts: 10ms, render: 939µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET / 500 in 19ms (compile: 18ms, render: 942µs)
+ GET / 500 in 19ms (compile: 18ms, render: 970µs)
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 3,
+  reason: 'idle',
+  address: 'cluster0-shard-00-01.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 19ms (compile: 17ms, proxy.ts: 2ms, render: 908µs)
+ GET /api/health 500 in 19ms (compile: 17ms, proxy.ts: 2ms, render: 934µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET / 500 in 18ms (compile: 16ms, render: 1535µs)
+ GET / 500 in 18ms (compile: 16ms, render: 1688µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 15ms (compile: 11ms, proxy.ts: 3ms, render: 1029µs)
+ GET /api/health 500 in 15ms (compile: 11ms, proxy.ts: 3ms, render: 1059µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET / 500 in 15ms (compile: 14ms, render: 1101µs)
+ GET / 500 in 15ms (compile: 14ms, render: 1132µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 26ms (compile: 23ms, proxy.ts: 1783µs, render: 916µs)
+ GET /api/health 500 in 26ms (compile: 23ms, proxy.ts: 1783µs, render: 943µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET / 500 in 12ms (compile: 12ms, render: 876µs)
+ GET / 500 in 12ms (compile: 12ms, render: 906µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 14ms (compile: 11ms, proxy.ts: 1709µs, render: 1010µs)
+ GET /api/health 500 in 14ms (compile: 11ms, proxy.ts: 1709µs, render: 1038µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET / 500 in 14ms (compile: 13ms, render: 1053µs)
+ GET / 500 in 14ms (compile: 13ms, render: 1099µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 16ms (compile: 13ms, proxy.ts: 2ms, render: 1034µs)
+ GET /api/health 500 in 16ms (compile: 13ms, proxy.ts: 2ms, render: 1068µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET / 500 in 13ms (compile: 12ms, render: 859µs)
+ GET / 500 in 13ms (compile: 12ms, render: 883µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 16ms (compile: 13ms, proxy.ts: 1683µs, render: 1101µs)
+ GET /api/health 500 in 16ms (compile: 13ms, proxy.ts: 1683µs, render: 1135µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET / 500 in 13ms (compile: 12ms, render: 977µs)
+ GET / 500 in 13ms (compile: 12ms, render: 1012µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 15ms (compile: 12ms, proxy.ts: 2ms, render: 992µs)
+ GET /api/health 500 in 15ms (compile: 12ms, proxy.ts: 2ms, render: 1023µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET / 500 in 16ms (compile: 15ms, render: 942µs)
+ GET / 500 in 16ms (compile: 15ms, render: 1001µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 14ms (compile: 12ms, proxy.ts: 1711µs, render: 1049µs)
+ GET /api/health 500 in 14ms (compile: 12ms, proxy.ts: 1711µs, render: 1081µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET / 500 in 16ms (compile: 15ms, render: 923µs)
+ GET / 500 in 16ms (compile: 15ms, render: 952µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 13ms (compile: 10ms, proxy.ts: 1960µs, render: 1017µs)
+ GET /api/health 500 in 13ms (compile: 10ms, proxy.ts: 1960µs, render: 1047µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET / 500 in 14ms (compile: 14ms, render: 831µs)
+ GET / 500 in 14ms (compile: 14ms, render: 855µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 13ms (compile: 10ms, proxy.ts: 2ms, render: 976µs)
+ GET /api/health 500 in 13ms (compile: 10ms, proxy.ts: 2ms, render: 1007µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-smoke-final/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-smoke-final/dev/routes-manifest.json'
+}
+ GET / 500 in 12ms (compile: 11ms, render: 781µs)
+ GET / 500 in 12ms (compile: 11ms, render: 807µs)
+Persisting failed: Unable to write SST file 00000029.sst
+
+Caused by:
+    No such file or directory (os error 2)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+
+-----
+[1m[31mFATAL[39m[0m: An unexpected Turbopack error occurred. A panic log has been written to /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/tmp/vitest-tmp/next-panic-a3d3a6f81f49906c7695c0e381375976.log.
+
+To help make Turbopack better, report this error by ]8;;https://github.com/vercel/next.js/discussions/new?category=turbopack-error-report&title=Turbopack%20Error%3A%20%5Bproject%5D%2Fsrc%2Fapp%2Fglobals.css%20%5Bapp-client%5D%20%28css%29&body=Turbopack%20version%3A%20%6023c464985%60%0ANext.js%20version%3A%20%600.0.0%60%0A%0AError%20message%3A%0A%60%60%60%0A%5Bproject%5D%2Fsrc%2Fapp%2Fglobals.css%20%5Bapp-client%5D%20%28css%29%0A%0ACaused%20by%3A%0A-%20failed%20to%20receive%20message%0A-%20reading%20packet%20length%0A-%20unexpected%20end%20of%20file%0A%0ADebug%20info%3A%0A-%20Execution%20of%20subscribe_issues_and_diags_operation%20failed%0A-%20Execution%20of%20%3CAppEndpoint%20as%20Endpoint%3E%3A%3Aserver_changed%20failed%0A-%20Execution%20of%20%2AProject%3A%3Aserver_changed%20failed%0A-%20Execution%20of%20%2AAppEndpointOutput%3A%3Aserver_assets%20failed%0A-%20Execution%20of%20AppEndpoint%3A%3Aoutput%20failed%0A-%20Execution%20of%20AppProject%3A%3Aapp_module_graphs%20failed%0A-%20Execution%20of%20%2A%3CAppEndpoint%20as%20Endpoint%3E%3A%3Aadditional_entries%20failed%0A-%20Execution%20of%20%2AModuleGraph%3A%3Afrom_graphs%20failed%0A-%20Execution%20of%20SingleModuleGraph%3A%3Anew_with_entries_visited_intern%20failed%0A-%20%5Bproject%5D%2Fsrc%2Fapp%2Fglobals.css%20%5Bapp-client%5D%20%28css%29%0A-%20Execution%20of%20primary_chunkable_referenced_modules%20failed%0A-%20Execution%20of%20%3CCssModuleAsset%20as%20Module%3E%3A%3Areferences%20failed%0A-%20Execution%20of%20parse_css%20failed%0A-%20Execution%20of%20%3CPostCssTransformedAsset%20as%20Asset%3E%3A%3Acontent%20failed%0A-%20Execution%20of%20PostCssTransformedAsset%3A%3Aprocess%20failed%0A-%20Execution%20of%20evaluate_webpack_loader%20failed%0A-%20failed%20to%20receive%20message%0A-%20reading%20packet%20length%0A-%20unexpected%20end%20of%20file%0A%60%60%60&labels=Turbopack,Turbopack%20Panic%20Backtrace\clicking here.]8;;\
+-----
+

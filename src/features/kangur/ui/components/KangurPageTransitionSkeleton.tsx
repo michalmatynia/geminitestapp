@@ -1,5 +1,6 @@
 'use client';
 
+import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KangurPageContainer, KangurPageShell } from '@/features/kangur/ui/design/primitives';
 import { cn } from '@/shared/utils';
 
@@ -235,11 +236,15 @@ export function KangurPageTransitionSkeleton({
   pageKey?: string | null;
   reason?: 'boot' | 'navigation';
 }): React.JSX.Element {
+  const embedded = useOptionalKangurRouting()?.embedded ?? false;
   const resolvedPageKey = isKangurSkeletonPageKey(pageKey) ? pageKey : 'Game';
 
   return (
     <div
-      className='absolute inset-0 z-30 cursor-progress overflow-hidden bg-white/44 backdrop-blur-[10px]'
+      className={cn(
+        embedded ? 'absolute' : 'fixed',
+        'inset-0 z-30 cursor-progress overflow-hidden bg-white/44 backdrop-blur-[10px]'
+      )}
       data-testid='kangur-page-transition-skeleton'
     >
       <div className='sr-only' role='status' aria-live='polite'>

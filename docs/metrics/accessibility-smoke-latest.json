@@ -1,18 +1,18 @@
 {
-  "generatedAt": "2026-03-08T15:11:23.199Z",
+  "generatedAt": "2026-03-08T17:14:14.089Z",
   "strictMode": true,
   "failOnWarningBudgetExceed": false,
   "runtime": {
     "source": "broker",
     "reused": false,
-    "baseUrl": "http://127.0.0.1:63964",
-    "agentId": "accessibility-final",
-    "leaseKey": "web-dev-accessibility-final-ed58ad7e"
+    "baseUrl": "http://127.0.0.1:54651",
+    "agentId": "michalmatynia",
+    "leaseKey": "web-dev-michalmatynia-ed58ad7e"
   },
   "summary": {
     "total": 14,
-    "passed": 14,
-    "failed": 0,
+    "passed": 7,
+    "failed": 7,
     "actWarnings": 0,
     "warningBudget": 10,
     "warningBudgetStatus": "ok",
@@ -29,9 +29,9 @@
       "command": "npx vitest run --project unit src/app/__tests__/shell-accessibility.test.tsx",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 2480,
+      "durationMs": 18637,
       "actWarnings": 0,
-      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/app/__tests__/shell-accessibility.test.tsx (2 tests) 123ms\n\n Test Files  1 passed (1)\n      Tests  2 passed (2)\n   Start at  16:10:02\n   Duration  1.13s (transform 345ms, setup 196ms, import 385ms, tests 123ms, environment 317ms)"
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/app/__tests__/shell-accessibility.test.tsx (2 tests) 470ms\n     ✓ renders a focusable main landmark in the frontend shell  444ms\n\n Test Files  1 passed (1)\n      Tests  2 passed (2)\n   Start at  18:11:34\n   Duration  10.17s (transform 1.12s, setup 1.85s, import 1.96s, tests 470ms, environment 3.93s)"
     },
     {
       "id": "auth-signin-a11y",
@@ -43,9 +43,9 @@
       "command": "npx vitest run --project unit __tests__/features/auth/pages/signin-page.test.tsx",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 3732,
+      "durationMs": 18696,
       "actWarnings": 0,
-      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/auth/pages/signin-page.test.tsx (10 tests) 678ms\n\n Test Files  1 passed (1)\n      Tests  10 passed (10)\n   Start at  16:10:04\n   Duration  2.79s (transform 1.19s, setup 199ms, import 1.56s, tests 678ms, environment 260ms)"
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/auth/pages/signin-page.test.tsx (10 tests) 2810ms\n     ✓ renders correctly  491ms\n     ✓ has no obvious accessibility violations in the sign-in form shell  477ms\n     ✓ handles successful sign in  328ms\n     ✓ routes same-origin absolute callback URLs through the Next router  436ms\n     ✓ shows error message when sign in returns an error result  375ms\n     ✓ shows a generic error message when sign in throws unexpectedly  607ms\n\n Test Files  1 passed (1)\n      Tests  10 passed (10)\n   Start at  18:11:48\n   Duration  15.05s (transform 5.95s, setup 1.20s, import 8.31s, tests 2.81s, environment 2.35s)"
     },
     {
       "id": "products-edit-a11y",
@@ -57,9 +57,9 @@
       "command": "npx vitest run --project unit __tests__/features/products/pages/product-edit-page.test.tsx",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 4884,
+      "durationMs": 39764,
       "actWarnings": 0,
-      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/products/pages/product-edit-page.test.tsx (7 tests) 1749ms\n     ✓ renders the form with product data in the General tab  307ms\n     ✓ has no obvious accessibility violations in the default edit form view  509ms\n     ✓ submits the updated product when Update is clicked  320ms\n\n Test Files  1 passed (1)\n      Tests  7 passed (7)\n   Start at  16:10:08\n   Duration  3.96s (transform 1.26s, setup 153ms, import 1.69s, tests 1.75s, environment 267ms)"
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/products/pages/product-edit-page.test.tsx (7 tests) 20608ms\n     ✓ renders the form with product data in the General tab  1833ms\n     ✓ has no obvious accessibility violations in the default edit form view  3677ms\n     ✓ renders the price in the Other tab  2158ms\n     ✓ renders other tabs navigation  1222ms\n     ✓ enables Update after SKU value changes  5878ms\n     ✓ submits the updated product when Update is clicked  4787ms\n     ✓ exposes linked tab and panel semantics for keyboard users  1044ms\n\n Test Files  1 passed (1)\n      Tests  7 passed (7)\n   Start at  18:12:06\n   Duration  35.75s (transform 9.60s, setup 1.18s, import 12.64s, tests 20.61s, environment 1.07s)"
     },
     {
       "id": "image-studio-a11y",
@@ -71,9 +71,9 @@
       "command": "npx vitest run --project unit src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 3268,
+      "durationMs": 19511,
       "actWarnings": 0,
-      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx (7 tests) 461ms\n\n Test Files  1 passed (1)\n      Tests  7 passed (7)\n   Start at  16:10:12\n   Duration  2.41s (transform 1.09s, setup 146ms, import 1.45s, tests 461ms, environment 261ms)"
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx (7 tests) 802ms\n     ✓ saves intent, pre-switches slot, and switches to controls when analyzed slot is valid  376ms\n\n Test Files  1 passed (1)\n      Tests  7 passed (7)\n   Start at  18:12:51\n   Duration  11.39s (transform 5.59s, setup 977ms, import 7.14s, tests 802ms, environment 1.90s)"
     },
     {
       "id": "ai-paths-a11y",
@@ -85,9 +85,9 @@
       "command": "npx vitest run --project unit src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 3440,
+      "durationMs": 9893,
       "actWarnings": 0,
-      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx (4 tests) 168ms\n\n Test Files  1 passed (1)\n      Tests  4 passed (4)\n   Start at  16:10:16\n   Duration  2.62s (transform 1.49s, setup 141ms, import 1.97s, tests 168ms, environment 255ms)"
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx (4 tests) 540ms\n\n Test Files  1 passed (1)\n      Tests  4 passed (4)\n   Start at  18:13:04\n   Duration  8.25s (transform 4.87s, setup 679ms, import 6.19s, tests 540ms, environment 703ms)"
     },
     {
       "id": "case-resolver-a11y",
@@ -99,9 +99,9 @@
       "command": "npx vitest run --project unit src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 2707,
+      "durationMs": 11638,
       "actWarnings": 0,
-      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx (10 tests) 261ms\n\n Test Files  1 passed (1)\n      Tests  10 passed (10)\n   Start at  16:10:19\n   Duration  1.93s (transform 859ms, setup 141ms, import 1.19s, tests 261ms, environment 253ms)"
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx (10 tests) 1503ms\n     ✓ shows nested folders/files switch in active case and toggles child scope visibility  435ms\n     ✓ has no obvious accessibility violations in the default tree header state  580ms\n\n Test Files  1 passed (1)\n      Tests  10 passed (10)\n   Start at  18:13:14\n   Duration  10.04s (transform 4.96s, setup 740ms, import 6.90s, tests 1.50s, environment 722ms)"
     },
     {
       "id": "case-resolver-browser-a11y",
@@ -111,11 +111,11 @@
         "e2e/features/accessibility/case-resolver-accessibility.spec.ts"
       ],
       "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/case-resolver-accessibility.spec.ts",
-      "status": "pass",
-      "exitCode": 0,
-      "durationMs": 14128,
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 4684,
       "actWarnings": 0,
-      "output": "Running 1 test using 1 worker\n\n(node:19348) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:19348) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✓  1 e2e/features/accessibility/case-resolver-accessibility.spec.ts:7:1 › case resolver exposes tree controls accessibly and passes the accessibility smoke scan (11.8s)\n\n  1 passed (13.2s)"
+      "output": "Running 1 test using 1 worker\n\n(node:11583) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:11583) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✘  1 e2e/features/accessibility/case-resolver-accessibility.spec.ts:7:1 › case resolver exposes tree controls accessibly and passes the accessibility smoke scan (489ms)\n\n\n  1) e2e/features/accessibility/case-resolver-accessibility.spec.ts:7:1 › case resolver exposes tree controls accessibly and passes the accessibility smoke scan \n\n    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:54651/auth/signin?callbackUrl=%2Fadmin%2Fcase-resolver\n    Call log:\n    \u001b[2m  - navigating to \"http://127.0.0.1:54651/auth/signin?callbackUrl=%2Fadmin%2Fcase-resolver\", waiting until \"domcontentloaded\"\u001b[22m\n\n\n       at support/admin-auth.ts:35\n\n      33 |   const destinationUrl = new URL(destination, 'http://localhost');\n      34 |\n    > 35 |   await page.goto(`/auth/signin?callbackUrl=${encodeURIComponent(destination)}`, {\n         |              ^\n      36 |     waitUntil: 'domcontentloaded',\n      37 |     timeout: 60_000,\n      38 |   });\n        at ensureAdminSession (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/support/admin-auth.ts:35:14)\n        at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/case-resolver-accessibility.spec.ts:13:9\n\n    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────\n    tmp/playwright-runs/web/michalmatynia/accessibility-smoke-case-resolver-browser-a11y/test-results/features-accessibility-cas-b74c5-he-accessibility-smoke-scan/test-failed-1.png\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────\n    tmp/playwright-runs/web/michalmatynia/accessibility-smoke-case-resolver-browser-a11y/test-results/features-accessibility-cas-b74c5-he-accessibility-smoke-scan/trace.zip\n    Usage:\n\n        npx playwright show-trace tmp/playwright-runs/web/michalmatynia/accessibility-smoke-case-resolver-browser-a11y/test-results/features-accessibility-cas-b74c5-he-accessibility-smoke-scan/trace.zip\n\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n  1 failed\n    e2e/features/accessibility/case-resolver-accessibility.spec.ts:7:1 › case resolver exposes tree controls accessibly and passes the accessibility smoke scan"
     },
     {
       "id": "kangur-profile-a11y",
@@ -127,9 +127,9 @@
       "command": "npx vitest run --project unit __tests__/features/kangur/kangur-accessibility-smoke.test.tsx",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 7240,
+      "durationMs": 12765,
       "actWarnings": 0,
-      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/kangur/kangur-accessibility-smoke.test.tsx (5 tests) 2731ms\n     ✓ keeps entry-screen back navigation discoverable by accessible name on the game page  2195ms\n\n Test Files  1 passed (1)\n      Tests  5 passed (5)\n   Start at  16:10:36\n   Duration  6.01s (transform 1.90s, setup 205ms, import 2.58s, tests 2.73s, environment 399ms)"
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/kangur/kangur-accessibility-smoke.test.tsx (5 tests) 3120ms\n     ✓ has no obvious accessibility violations in the learner profile shell  328ms\n     ✓ keeps entry-screen back navigation discoverable by accessible name on the game page  2277ms\n\n Test Files  1 passed (1)\n      Tests  5 passed (5)\n   Start at  18:13:30\n   Duration  10.88s (transform 4.78s, setup 548ms, import 6.49s, tests 3.12s, environment 599ms)"
     },
     {
       "id": "public-auth-routes-browser-a11y",
@@ -139,11 +139,11 @@
         "e2e/features/accessibility/public-auth-accessibility.spec.ts"
       ],
       "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/public-auth-accessibility.spec.ts",
-      "status": "pass",
-      "exitCode": 0,
-      "durationMs": 4469,
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 7754,
       "actWarnings": 0,
-      "output": "Running 2 tests using 1 worker\n\n(node:19637) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:19637) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✓  1 e2e/features/accessibility/public-auth-accessibility.spec.ts:8:3 › /auth/signin exposes skip navigation and passes the accessibility smoke scan (738ms)\n  ✓  2 e2e/features/accessibility/public-auth-accessibility.spec.ts:8:3 › /auth/register exposes skip navigation and passes the accessibility smoke scan (1.4s)\n\n  2 passed (3.4s)"
+      "output": "Running 2 tests using 1 worker\n\n(node:12185) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:12185) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✘  1 e2e/features/accessibility/public-auth-accessibility.spec.ts:8:3 › /auth/signin exposes skip navigation and passes the accessibility smoke scan (397ms)\n(node:12202) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:12202) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✘  2 e2e/features/accessibility/public-auth-accessibility.spec.ts:8:3 › /auth/register exposes skip navigation and passes the accessibility smoke scan (480ms)\n\n\n  1) e2e/features/accessibility/public-auth-accessibility.spec.ts:8:3 › /auth/signin exposes skip navigation and passes the accessibility smoke scan \n\n    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:54651/auth/signin\n    Call log:\n    \u001b[2m  - navigating to \"http://127.0.0.1:54651/auth/signin\", waiting until \"load\"\u001b[22m\n\n\n       9 |     page,\n      10 |   }) => {\n    > 11 |     await page.goto(route);\n         |                ^\n      12 |\n      13 |     const main = page.locator('#app-content');\n      14 |     await expect(main).toBeVisible();\n        at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/public-auth-accessibility.spec.ts:11:16\n\n    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────\n    tmp/playwright-runs/web/michalmatynia/accessibility-smoke-public-auth-routes-browser-a/test-results/features-accessibility-pub-17aac-he-accessibility-smoke-scan/test-failed-1.png\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────\n    tmp/playwright-runs/web/michalmatynia/accessibility-smoke-public-auth-routes-browser-a/test-results/features-accessibility-pub-17aac-he-accessibility-smoke-scan/trace.zip\n    Usage:\n\n        npx playwright show-trace tmp/playwright-runs/web/michalmatynia/accessibility-smoke-public-auth-routes-browser-a/test-results/features-accessibility-pub-17aac-he-accessibility-smoke-scan/trace.zip\n\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n  2) e2e/features/accessibility/public-auth-accessibility.spec.ts:8:3 › /auth/register exposes skip navigation and passes the accessibility smoke scan \n\n    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:54651/auth/register\n    Call log:\n    \u001b[2m  - navigating to \"http://127.0.0.1:54651/auth/register\", waiting until \"load\"\u001b[22m\n\n\n       9 |     page,\n      10 |   }) => {\n    > 11 |     await page.goto(route);\n         |                ^\n      12 |\n      13 |     const main = page.locator('#app-content');\n      14 |     await expect(main).toBeVisible();\n        at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/public-auth-accessibility.spec.ts:11:16\n\n    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────\n    tmp/playwright-runs/web/michalmatynia/accessibility-smoke-public-auth-routes-browser-a/test-results/features-accessibility-pub-64d98-he-accessibility-smoke-scan/test-failed-1.png\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────\n    tmp/playwright-runs/web/michalmatynia/accessibility-smoke-public-auth-routes-browser-a/test-results/features-accessibility-pub-64d98-he-accessibility-smoke-scan/trace.zip\n    Usage:\n\n        npx playwright show-trace tmp/playwright-runs/web/michalmatynia/accessibility-smoke-public-auth-routes-browser-a/test-results/features-accessibility-pub-64d98-he-accessibility-smoke-scan/trace.zip\n\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n  2 failed\n    e2e/features/accessibility/public-auth-accessibility.spec.ts:8:3 › /auth/signin exposes skip navigation and passes the accessibility smoke scan \n    e2e/features/accessibility/public-auth-accessibility.spec.ts:8:3 › /auth/register exposes skip navigation and passes the accessibility smoke scan"
     },
     {
       "id": "admin-dashboard-browser-a11y",
@@ -153,11 +153,11 @@
         "e2e/features/accessibility/admin-dashboard-accessibility.spec.ts"
       ],
       "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/admin-dashboard-accessibility.spec.ts",
-      "status": "pass",
-      "exitCode": 0,
-      "durationMs": 5996,
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 4211,
       "actWarnings": 0,
-      "output": "Running 1 test using 1 worker\n\n(node:19731) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:19731) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✓  1 e2e/features/accessibility/admin-dashboard-accessibility.spec.ts:6:1 › admin dashboard exposes shell landmarks and passes the accessibility smoke scan (3.0s)\n\n  1 passed (4.5s)"
+      "output": "Running 1 test using 1 worker\n\n(node:12408) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:12408) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✘  1 e2e/features/accessibility/admin-dashboard-accessibility.spec.ts:6:1 › admin dashboard exposes shell landmarks and passes the accessibility smoke scan (536ms)\n\n\n  1) e2e/features/accessibility/admin-dashboard-accessibility.spec.ts:6:1 › admin dashboard exposes shell landmarks and passes the accessibility smoke scan \n\n    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:54651/auth/signin?callbackUrl=%2Fadmin\n    Call log:\n    \u001b[2m  - navigating to \"http://127.0.0.1:54651/auth/signin?callbackUrl=%2Fadmin\", waiting until \"domcontentloaded\"\u001b[22m\n\n\n       at support/admin-auth.ts:35\n\n      33 |   const destinationUrl = new URL(destination, 'http://localhost');\n      34 |\n    > 35 |   await page.goto(`/auth/signin?callbackUrl=${encodeURIComponent(destination)}`, {\n         |              ^\n      36 |     waitUntil: 'domcontentloaded',\n      37 |     timeout: 60_000,\n      38 |   });\n        at ensureAdminSession (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/support/admin-auth.ts:35:14)\n        at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/admin-dashboard-accessibility.spec.ts:11:9\n\n    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────\n    tmp/playwright-runs/web/michalmatynia/accessibility-smoke-admin-dashboard-browser-a11y/test-results/features-accessibility-adm-38087-he-accessibility-smoke-scan/test-failed-1.png\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────\n    tmp/playwright-runs/web/michalmatynia/accessibility-smoke-admin-dashboard-browser-a11y/test-results/features-accessibility-adm-38087-he-accessibility-smoke-scan/trace.zip\n    Usage:\n\n        npx playwright show-trace tmp/playwright-runs/web/michalmatynia/accessibility-smoke-admin-dashboard-browser-a11y/test-results/features-accessibility-adm-38087-he-accessibility-smoke-scan/trace.zip\n\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n  1 failed\n    e2e/features/accessibility/admin-dashboard-accessibility.spec.ts:6:1 › admin dashboard exposes shell landmarks and passes the accessibility smoke scan"
     },
     {
       "id": "products-list-browser-a11y",
@@ -167,11 +167,11 @@
         "e2e/features/accessibility/products-list-accessibility.spec.ts"
       ],
       "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/products-list-accessibility.spec.ts",
-      "status": "pass",
-      "exitCode": 0,
-      "durationMs": 7477,
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 4742,
       "actWarnings": 0,
-      "output": "Running 1 test using 1 worker\n\n(node:19859) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:19859) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✓  1 e2e/features/accessibility/products-list-accessibility.spec.ts:6:1 › products list exposes search and actions accessibly and passes the accessibility smoke scan (4.0s)\n\n  1 passed (5.6s)"
+      "output": "Running 1 test using 1 worker\n\n(node:12493) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:12493) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✘  1 e2e/features/accessibility/products-list-accessibility.spec.ts:6:1 › products list exposes search and actions accessibly and passes the accessibility smoke scan (370ms)\n\n\n  1) e2e/features/accessibility/products-list-accessibility.spec.ts:6:1 › products list exposes search and actions accessibly and passes the accessibility smoke scan \n\n    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:54651/auth/signin?callbackUrl=%2Fadmin%2Fproducts\n    Call log:\n    \u001b[2m  - navigating to \"http://127.0.0.1:54651/auth/signin?callbackUrl=%2Fadmin%2Fproducts\", waiting until \"domcontentloaded\"\u001b[22m\n\n\n       at support/admin-auth.ts:35\n\n      33 |   const destinationUrl = new URL(destination, 'http://localhost');\n      34 |\n    > 35 |   await page.goto(`/auth/signin?callbackUrl=${encodeURIComponent(destination)}`, {\n         |              ^\n      36 |     waitUntil: 'domcontentloaded',\n      37 |     timeout: 60_000,\n      38 |   });\n        at ensureAdminSession (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/support/admin-auth.ts:35:14)\n        at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/products-list-accessibility.spec.ts:9:9\n\n    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────\n    tmp/playwright-runs/web/michalmatynia/accessibility-smoke-products-list-browser-a11y/test-results/features-accessibility-pro-9e388-he-accessibility-smoke-scan/test-failed-1.png\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────\n    tmp/playwright-runs/web/michalmatynia/accessibility-smoke-products-list-browser-a11y/test-results/features-accessibility-pro-9e388-he-accessibility-smoke-scan/trace.zip\n    Usage:\n\n        npx playwright show-trace tmp/playwright-runs/web/michalmatynia/accessibility-smoke-products-list-browser-a11y/test-results/features-accessibility-pro-9e388-he-accessibility-smoke-scan/trace.zip\n\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n  1 failed\n    e2e/features/accessibility/products-list-accessibility.spec.ts:6:1 › products list exposes search and actions accessibly and passes the accessibility smoke scan"
     },
     {
       "id": "cms-pages-browser-a11y",
@@ -181,11 +181,11 @@
         "e2e/features/accessibility/cms-pages-accessibility.spec.ts"
       ],
       "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/cms-pages-accessibility.spec.ts",
-      "status": "pass",
-      "exitCode": 0,
-      "durationMs": 6724,
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 5107,
       "actWarnings": 0,
-      "output": "Running 1 test using 1 worker\n\n(node:19994) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:19994) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✓  1 e2e/features/accessibility/cms-pages-accessibility.spec.ts:6:1 › cms pages list exposes filters and actions accessibly and passes the accessibility smoke scan (3.2s)\n\n  1 passed (5.3s)"
+      "output": "Running 1 test using 1 worker\n\n(node:12658) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:12658) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✘  1 e2e/features/accessibility/cms-pages-accessibility.spec.ts:6:1 › cms pages list exposes filters and actions accessibly and passes the accessibility smoke scan (264ms)\n\n\n  1) e2e/features/accessibility/cms-pages-accessibility.spec.ts:6:1 › cms pages list exposes filters and actions accessibly and passes the accessibility smoke scan \n\n    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:54651/auth/signin?callbackUrl=%2Fadmin%2Fcms%2Fpages\n    Call log:\n    \u001b[2m  - navigating to \"http://127.0.0.1:54651/auth/signin?callbackUrl=%2Fadmin%2Fcms%2Fpages\", waiting until \"domcontentloaded\"\u001b[22m\n\n\n       at support/admin-auth.ts:35\n\n      33 |   const destinationUrl = new URL(destination, 'http://localhost');\n      34 |\n    > 35 |   await page.goto(`/auth/signin?callbackUrl=${encodeURIComponent(destination)}`, {\n         |              ^\n      36 |     waitUntil: 'domcontentloaded',\n      37 |     timeout: 60_000,\n      38 |   });\n        at ensureAdminSession (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/support/admin-auth.ts:35:14)\n        at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/cms-pages-accessibility.spec.ts:9:9\n\n    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────\n    tmp/playwright-runs/web/michalmatynia/accessibility-smoke-cms-pages-browser-a11y/test-results/features-accessibility-cms-17323-he-accessibility-smoke-scan/test-failed-1.png\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────\n    tmp/playwright-runs/web/michalmatynia/accessibility-smoke-cms-pages-browser-a11y/test-results/features-accessibility-cms-17323-he-accessibility-smoke-scan/trace.zip\n    Usage:\n\n        npx playwright show-trace tmp/playwright-runs/web/michalmatynia/accessibility-smoke-cms-pages-browser-a11y/test-results/features-accessibility-cms-17323-he-accessibility-smoke-scan/trace.zip\n\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n  1 failed\n    e2e/features/accessibility/cms-pages-accessibility.spec.ts:6:1 › cms pages list exposes filters and actions accessibly and passes the accessibility smoke scan"
     },
     {
       "id": "notes-workspace-browser-a11y",
@@ -195,11 +195,11 @@
         "e2e/features/accessibility/notes-workspace-accessibility.spec.ts"
       ],
       "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/notes-workspace-accessibility.spec.ts",
-      "status": "pass",
-      "exitCode": 0,
-      "durationMs": 5848,
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 6706,
       "actWarnings": 0,
-      "output": "Running 1 test using 1 worker\n\n(node:20158) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:20158) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✓  1 e2e/features/accessibility/notes-workspace-accessibility.spec.ts:7:1 › notes workspace exposes list controls accessibly and passes the accessibility smoke scan (3.2s)\n\n  1 passed (4.7s)"
+      "output": "Running 1 test using 1 worker\n\n(node:12899) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:12899) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✘  1 e2e/features/accessibility/notes-workspace-accessibility.spec.ts:7:1 › notes workspace exposes list controls accessibly and passes the accessibility smoke scan (322ms)\n\n\n  1) e2e/features/accessibility/notes-workspace-accessibility.spec.ts:7:1 › notes workspace exposes list controls accessibly and passes the accessibility smoke scan \n\n    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:54651/auth/signin?callbackUrl=%2Fadmin%2Fnotes\n    Call log:\n    \u001b[2m  - navigating to \"http://127.0.0.1:54651/auth/signin?callbackUrl=%2Fadmin%2Fnotes\", waiting until \"domcontentloaded\"\u001b[22m\n\n\n       at support/admin-auth.ts:35\n\n      33 |   const destinationUrl = new URL(destination, 'http://localhost');\n      34 |\n    > 35 |   await page.goto(`/auth/signin?callbackUrl=${encodeURIComponent(destination)}`, {\n         |              ^\n      36 |     waitUntil: 'domcontentloaded',\n      37 |     timeout: 60_000,\n      38 |   });\n        at ensureAdminSession (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/support/admin-auth.ts:35:14)\n        at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/notes-workspace-accessibility.spec.ts:11:9\n\n    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────\n    tmp/playwright-runs/web/michalmatynia/accessibility-smoke-notes-workspace-browser-a11y/test-results/features-accessibility-not-89389-he-accessibility-smoke-scan/test-failed-1.png\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────\n    tmp/playwright-runs/web/michalmatynia/accessibility-smoke-notes-workspace-browser-a11y/test-results/features-accessibility-not-89389-he-accessibility-smoke-scan/trace.zip\n    Usage:\n\n        npx playwright show-trace tmp/playwright-runs/web/michalmatynia/accessibility-smoke-notes-workspace-browser-a11y/test-results/features-accessibility-not-89389-he-accessibility-smoke-scan/trace.zip\n\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n  1 failed\n    e2e/features/accessibility/notes-workspace-accessibility.spec.ts:7:1 › notes workspace exposes list controls accessibly and passes the accessibility smoke scan"
     },
     {
       "id": "cms-builder-browser-a11y",
@@ -209,11 +209,11 @@
         "e2e/features/accessibility/cms-builder-accessibility.spec.ts"
       ],
       "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/cms-builder-accessibility.spec.ts",
-      "status": "pass",
-      "exitCode": 0,
-      "durationMs": 9825,
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 3746,
       "actWarnings": 0,
-      "output": "Running 1 test using 1 worker\n\n(node:20241) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:20241) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✓  1 e2e/features/accessibility/cms-builder-accessibility.spec.ts:7:1 › cms builder exposes shell controls accessibly and passes the accessibility smoke scan (7.3s)\n\n  1 passed (8.8s)"
+      "output": "Running 1 test using 1 worker\n\n(node:13066) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:13066) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✘  1 e2e/features/accessibility/cms-builder-accessibility.spec.ts:7:1 › cms builder exposes shell controls accessibly and passes the accessibility smoke scan (428ms)\n\n\n  1) e2e/features/accessibility/cms-builder-accessibility.spec.ts:7:1 › cms builder exposes shell controls accessibly and passes the accessibility smoke scan \n\n    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:54651/auth/signin?callbackUrl=%2Fadmin%2Fcms%2Fbuilder\n    Call log:\n    \u001b[2m  - navigating to \"http://127.0.0.1:54651/auth/signin?callbackUrl=%2Fadmin%2Fcms%2Fbuilder\", waiting until \"domcontentloaded\"\u001b[22m\n\n\n       at support/admin-auth.ts:35\n\n      33 |   const destinationUrl = new URL(destination, 'http://localhost');\n      34 |\n    > 35 |   await page.goto(`/auth/signin?callbackUrl=${encodeURIComponent(destination)}`, {\n         |              ^\n      36 |     waitUntil: 'domcontentloaded',\n      37 |     timeout: 60_000,\n      38 |   });\n        at ensureAdminSession (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/support/admin-auth.ts:35:14)\n        at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/cms-builder-accessibility.spec.ts:11:9\n\n    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────\n    tmp/playwright-runs/web/michalmatynia/accessibility-smoke-cms-builder-browser-a11y/test-results/features-accessibility-cms-91769-he-accessibility-smoke-scan/test-failed-1.png\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────\n    tmp/playwright-runs/web/michalmatynia/accessibility-smoke-cms-builder-browser-a11y/test-results/features-accessibility-cms-91769-he-accessibility-smoke-scan/trace.zip\n    Usage:\n\n        npx playwright show-trace tmp/playwright-runs/web/michalmatynia/accessibility-smoke-cms-builder-browser-a11y/test-results/features-accessibility-cms-91769-he-accessibility-smoke-scan/trace.zip\n\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n  1 failed\n    e2e/features/accessibility/cms-builder-accessibility.spec.ts:7:1 › cms builder exposes shell controls accessibly and passes the accessibility smoke scan"
     }
   ]
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import NextLink from 'next/link';
+import { useRouter } from 'next/navigation';
 import type { MouseEvent } from 'react';
 
 import { useOptionalKangurRouteTransition } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
@@ -36,15 +37,20 @@ const shouldStartTransition = (
 export function KangurTransitionLink({
   href,
   onClick,
+  scroll,
   target,
   targetPageKey,
   ...props
 }: KangurTransitionLinkProps): React.JSX.Element {
+  const router = useRouter();
   const routeTransition = useOptionalKangurRouteTransition();
+  const shouldUseManagedScroll = typeof href === 'string' && href.startsWith('/') && target !== '_blank';
+  const resolvedScroll = scroll ?? (shouldUseManagedScroll ? false : undefined);
 
   return (
     <NextLink
       href={href}
+      scroll={resolvedScroll}
       target={target}
       onClick={(event) => {
         onClick?.(event);
@@ -53,13 +59,14 @@ export function KangurTransitionLink({
           return;
         }
 
+        event.preventDefault();
         routeTransition.startRouteTransition({
           href,
           pageKey: targetPageKey ?? null,
         });
+        router.push(href, { scroll: resolvedScroll ?? false });
       }}
       {...props}
     />
   );
 }
-

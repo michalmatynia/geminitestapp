@@ -15,8 +15,10 @@ type KangurPageIntroCardProps = {
   backButtonLabel?: string;
   backButtonTestId?: string;
   className?: string;
+  children?: ReactNode;
   description?: ReactNode;
   headingAs?: 'h1' | 'h2' | 'h3';
+  headingSize?: 'xs' | 'sm' | 'md' | 'lg';
   headingTestId?: string;
   testId?: string;
   title: string;
@@ -30,8 +32,10 @@ export function KangurPageIntroCard({
   backButtonLabel = 'Wróć do poprzedniej strony',
   backButtonTestId,
   className,
+  children,
   description,
   headingAs = 'h2',
+  headingSize = 'lg',
   headingTestId,
   testId,
   title,
@@ -53,7 +57,7 @@ export function KangurPageIntroCard({
         className={visualTitle ? 'flex justify-center' : undefined}
         data-testid={headingTestId}
         id={titleId}
-        size='md'
+        size={headingSize}
       >
         {visualTitle ? (
           <>
@@ -75,6 +79,7 @@ export function KangurPageIntroCard({
       >
         {backButtonLabel}
       </KangurButton>
+      {children ? <div className='mt-3'>{children}</div> : null}
     </KangurGlassPanel>
   );
 }

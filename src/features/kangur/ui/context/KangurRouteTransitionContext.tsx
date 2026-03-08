@@ -36,6 +36,7 @@ type KangurRouteTransitionActionsContextValue = Pick<
 >;
 
 const ROUTE_TRANSITION_TIMEOUT_MS = 4_000;
+const ROUTE_TRANSITION_SCROLL_RESET_FRAME_COUNT = 2;
 
 const KangurRouteTransitionStateContext =
   createContext<KangurRouteTransitionStateContextValue | null>(null);
@@ -50,19 +51,44 @@ export function KangurRouteTransitionProvider({
   const { pageKey, requestedPath } = useKangurRouting();
   const [transitionState, setTransitionState] = useState<KangurRouteTransitionState | null>(null);
   const previousRequestedPathRef = useRef<string | undefined>(requestedPath);
+  const shouldResetScrollOnCommitRef = useRef(false);
 
   useEffect(() => {
     const previousRequestedPath = previousRequestedPathRef.current;
+    let animationFrameId: number | null = null;
+    let remainingFrameCount = ROUTE_TRANSITION_SCROLL_RESET_FRAME_COUNT;
 
     if (
       transitionState &&
       previousRequestedPath !== undefined &&
       requestedPath !== previousRequestedPath
     ) {
+      if (shouldResetScrollOnCommitRef.current && typeof window !== 'undefined') {
+        const resetScrollPosition = (): void => {
+          window.scrollTo({ left: 0, top: 0, behavior: 'auto' });
+          remainingFrameCount -= 1;
+          if (remainingFrameCount > 0) {
+            animationFrameId = window.requestAnimationFrame(resetScrollPosition);
+            return;
+          }
+
+          animationFrameId = null;
+        };
+
+        animationFrameId = window.requestAnimationFrame(resetScrollPosition);
+      }
+
+      shouldResetScrollOnCommitRef.current = false;
       setTransitionState(null);
     }
 
     previousRequestedPathRef.current = requestedPath;
+
+    return () => {
+      if (animationFrameId !== null && typeof window !== 'undefined') {
+        window.cancelAnimationFrame(animationFrameId);
+      }
+    };
   }, [requestedPath, transitionState]);
 
   useEffect(() => {
@@ -71,6 +97,7 @@ export function KangurRouteTransitionProvider({
     }
 
     const timeoutId = window.setTimeout(() => {
+      shouldResetScrollOnCommitRef.current = false;
       setTransitionState(null);
     }, ROUTE_TRANSITION_TIMEOUT_MS);
 
@@ -91,6 +118,8 @@ export function KangurRouteTransitionProvider({
       ) {
         return;
       }
+
+      shouldResetScrollOnCommitRef.current = true;
 
       startTransition(() => {
         setTransitionState({

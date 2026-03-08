@@ -107,6 +107,21 @@ test.describe('Kangur Learner Profile', () => {
     await expect(page.getByRole('heading', { name: /Profil ucznia/i })).toBeVisible();
   });
 
+  test('returns home from the learner profile intro-card top section', async ({ page }) => {
+    await page.goto('/kangur/profile');
+
+    await expect(page.getByTestId('kangur-learner-profile-hero')).toBeVisible({
+      timeout: 15_000,
+    });
+    await page
+      .getByTestId('kangur-learner-profile-hero')
+      .getByRole('button', { name: 'Wróć do poprzedniej strony' })
+      .click();
+
+    await expect(page).toHaveURL(/\/kangur$/);
+    await expect(page.getByTestId('kangur-home-actions-shell')).toBeVisible();
+  });
+
   test('renders deterministic learner metrics from mocked auth, progress, and scores', async ({ page }) => {
     const now = new Date();
     const nowIso = now.toISOString();

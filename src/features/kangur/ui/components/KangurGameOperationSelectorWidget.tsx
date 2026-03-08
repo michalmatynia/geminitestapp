@@ -12,7 +12,6 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
     basePath,
     handleHome,
     handleSelectOperation,
-    playerName,
     practiceAssignmentsByOperation,
     screen,
     setScreen,
@@ -28,13 +27,11 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
         accent='violet'
         className='max-w-md'
         description='Wybierz rodzaj gry i przejdz od razu do matematycznej zabawy.'
+        headingSize='lg'
         onBack={handleHome}
         testId='kangur-game-operation-top-section'
         title='Grajmy!'
       />
-      <p className='text-lg text-slate-500'>
-        Cześć, <span className='font-bold text-indigo-500'>{playerName}</span>! 👋
-      </p>
       {activePracticeAssignment ? (
         <div className='flex w-full justify-center px-4'>
           <KangurPracticeAssignmentBanner

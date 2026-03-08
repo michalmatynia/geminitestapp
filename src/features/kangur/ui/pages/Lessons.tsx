@@ -10,7 +10,7 @@ import {
   resolveFocusedKangurLessonId,
 } from '@kangur/core';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { ComponentType } from 'react';
 import dynamic from 'next/dynamic';
@@ -59,17 +59,53 @@ type LessonProps = {
   onBack?: () => void;
 };
 
+const LESSONS_PAGE_EASE = [0.22, 1, 0.36, 1] as const;
+const LESSONS_PAGE_TRANSITION = {
+  duration: 0.32,
+  ease: LESSONS_PAGE_EASE,
+} as const;
+const LESSONS_CARD_TRANSITION = {
+  duration: 0.26,
+  ease: LESSONS_PAGE_EASE,
+} as const;
+const LESSONS_CARD_STAGGER_DELAY = 0.06;
+
 const LessonLoadingFallback = (): React.JSX.Element => (
-  <KangurGlassPanel
-    className='w-full max-w-2xl text-center text-sm text-indigo-500'
-    data-testid='lessons-loading-fallback'
-    padding='lg'
-    surface='solid'
-    variant='soft'
-  >
-    Ladowanie lekcji...
-  </KangurGlassPanel>
+  <LessonLoadingFallbackCard />
 );
+
+const LessonLoadingFallbackCard = (): React.JSX.Element => {
+  const prefersReducedMotion = useReducedMotion();
+  const loadingTransition = prefersReducedMotion
+    ? { duration: 0 }
+    : LESSONS_PAGE_TRANSITION;
+
+  return (
+    <motion.div
+      initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: -10 }}
+      transition={loadingTransition}
+      className='w-full max-w-5xl'
+      data-testid='lessons-loading-fallback'
+    >
+      <KangurGlassPanel
+        className='flex min-h-[280px] w-full flex-col items-center justify-center gap-3 text-center'
+        padding='xl'
+        surface='solid'
+        variant='soft'
+      >
+        <KangurStatusChip accent='indigo' className='uppercase tracking-[0.18em]' size='sm'>
+          Lekcja
+        </KangurStatusChip>
+        <div className='text-base font-semibold text-slate-700'>Ladowanie lekcji...</div>
+        <p className='max-w-lg text-sm text-slate-500'>
+          Przygotowujemy material, aby przejscie do aktywnej sekcji bylo plynniejsze.
+        </p>
+      </KangurGlassPanel>
+    </motion.div>
+  );
+};
 
 const loadLessonComponent = (loader: () => Promise<unknown>): ComponentType<LessonProps> =>
   dynamic<LessonProps>(
@@ -156,6 +192,7 @@ export default function Lessons() {
   const canAccessParentAssignments =
     auth.canAccessParentAssignments ?? Boolean(user?.activeLearner?.id);
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('lessons');
+  const prefersReducedMotion = useReducedMotion();
   const settingsStore = useSettingsStore();
   const progress = useKangurProgressState();
   const { assignments } = useKangurAssignments({
@@ -315,6 +352,26 @@ export default function Lessons() {
     }),
     [basePath, logout, navigateToLogin, user]
   );
+  const lessonPageMotionProps = useMemo(
+    () => ({
+      initial: prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 18 },
+      animate: { opacity: 1, y: 0 },
+      exit: prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: -14 },
+      transition: prefersReducedMotion
+        ? { duration: 0 }
+        : LESSONS_PAGE_TRANSITION,
+    }),
+    [prefersReducedMotion]
+  );
+  const lessonCardMotionProps = useMemo(
+    () => ({
+      initial: prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 },
+      animate: { opacity: 1, y: 0 },
+      whileHover: prefersReducedMotion ? undefined : { scale: 1.02 },
+      whileTap: prefersReducedMotion ? undefined : { scale: 0.98 },
+    }),
+    [prefersReducedMotion]
+  );
 
   return (
     <>
@@ -328,10 +385,9 @@ export default function Lessons() {
             {!activeLesson ? (
               <motion.div
                 key='list'
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
+                {...lessonPageMotionProps}
                 className='flex flex-col items-center gap-4 w-full max-w-md'
+                data-testid='lessons-list-transition'
               >
                 <KangurPageIntroCard
                   description='Wybierz temat i przejdz od razu do praktyki lub powtorki.'
@@ -370,11 +426,12 @@ export default function Lessons() {
                     return (
                       <motion.div
                         key={lesson.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.97 }}
+                        {...lessonCardMotionProps}
+                        transition={{
+                          ...(prefersReducedMotion ? { duration: 0 } : LESSONS_CARD_TRANSITION),
+                          delay: prefersReducedMotion ? 0 : index * LESSONS_CARD_STAGGER_DELAY,
+                        }}
+                        data-testid={`lesson-library-motion-${lesson.id}`}
                       >
                         <KangurOptionCardButton
                           accent='indigo'
@@ -482,10 +539,9 @@ export default function Lessons() {
             ) : (
               <motion.div
                 key={activeLesson.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
+                {...lessonPageMotionProps}
                 className='w-full flex flex-col items-center gap-4'
+                data-testid='lessons-active-transition'
               >
                 <div ref={activeLessonHeaderRef} className='w-full max-w-5xl'>
                   <KangurActiveLessonHeader

@@ -78,6 +78,7 @@ function ToggleRowControl(): React.JSX.Element {
 }
 
 export function ToggleRow(props: ToggleRowProps): React.JSX.Element {
+  const generatedId = React.useId();
   const {
     label,
     description,
@@ -97,6 +98,7 @@ export function ToggleRow(props: ToggleRowProps): React.JSX.Element {
     showBorder = true,
     controlWrapper,
   } = props;
+  const controlId = id ?? generatedId;
 
   const contextValue = useMemo(
     () => ({
@@ -109,7 +111,7 @@ export function ToggleRow(props: ToggleRowProps): React.JSX.Element {
       className,
       labelClassName,
       descriptionClassName,
-      id,
+      id: controlId,
       icon,
       loading,
       error,
@@ -128,7 +130,7 @@ export function ToggleRow(props: ToggleRowProps): React.JSX.Element {
       className,
       labelClassName,
       descriptionClassName,
-      id,
+      controlId,
       icon,
       loading,
       error,
@@ -158,7 +160,7 @@ export function ToggleRow(props: ToggleRowProps): React.JSX.Element {
           {icon && <div className='mt-0.5 shrink-0 text-muted-foreground'>{icon}</div>}
           <div className='min-w-0 flex-1 space-y-0.5'>
             <label
-              htmlFor={id}
+              htmlFor={controlId}
               className={cn(
                 'block cursor-pointer text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
                 labelClassName

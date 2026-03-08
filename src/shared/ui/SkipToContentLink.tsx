@@ -15,7 +15,7 @@ export function SkipToContentLink({
   className,
   children = 'Skip to content',
 }: SkipToContentLinkProps): React.JSX.Element {
-  const handleClick = React.useCallback((event: React.MouseEvent<HTMLAnchorElement>): void => {
+  const focusTarget = React.useCallback((event: { preventDefault: () => void }): void => {
     if (typeof document === 'undefined') return;
     const target = document.getElementById(targetId);
     if (!(target instanceof HTMLElement)) return;
@@ -25,8 +25,23 @@ export function SkipToContentLink({
     target.focus();
   }, [targetId]);
 
+  const handleClick = React.useCallback((event: React.MouseEvent<HTMLAnchorElement>): void => {
+    focusTarget(event);
+  }, [focusTarget]);
+
+  const handleKeyDown = React.useCallback((event: React.KeyboardEvent<HTMLAnchorElement>): void => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.stopPropagation();
+    focusTarget(event);
+  }, [focusTarget]);
+
   return (
-    <a href={`#${targetId}`} className={cn('app-skip-link', className)} onClick={handleClick}>
+    <a
+      href={`#${targetId}`}
+      className={cn('app-skip-link', className)}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
+    >
       {children}
     </a>
   );

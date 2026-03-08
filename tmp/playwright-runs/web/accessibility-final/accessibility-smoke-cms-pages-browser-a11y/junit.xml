@@ -1,6 +1,0 @@
-<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="0" time="5.301518">
-<testsuite name="features/accessibility/cms-pages-accessibility.spec.ts" timestamp="2026-03-08T15:11:02.233Z" hostname="" tests="1" failures="0" skipped="0" time="3.231" errors="0">
-<testcase name="cms pages list exposes filters and actions accessibly and passes the accessibility smoke scan" classname="features/accessibility/cms-pages-accessibility.spec.ts" time="3.231">
-</testcase>
-</testsuite>
-</testsuites>

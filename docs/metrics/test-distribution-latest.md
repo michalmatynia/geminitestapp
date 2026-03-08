@@ -1,6 +1,6 @@
 # Test Distribution Check
 
-Generated at: 2026-03-08T14:42:04.572Z
+Generated at: 2026-03-08T17:04:52.784Z
 
 ## Summary
 
@@ -8,7 +8,7 @@ Generated at: 2026-03-08T14:42:04.572Z
 - Total features: 28
 - Features with tests: 28
 - Features without tests: 0
-- Total test files: 1146
+- Total test files: 1159
 - .only() occurrences: 0
 - .skip() occurrences: 19
 
@@ -16,8 +16,8 @@ Generated at: 2026-03-08T14:42:04.572Z
 
 | Feature | Test Files |
 | --- | ---: |
-| ai | 187 |
-| kangur | 159 |
+| ai | 188 |
+| kangur | 169 |
 | case-resolver | 78 |
 | products | 71 |
 | cms | 58 |

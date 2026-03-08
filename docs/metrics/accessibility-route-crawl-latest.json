@@ -1,22 +1,22 @@
 {
-  "generatedAt": "2026-03-08T15:36:35.054Z",
+  "generatedAt": "2026-03-08T17:16:23.830Z",
   "status": "failed",
   "runtime": {
     "source": "broker",
     "reused": false,
-    "baseUrl": "http://127.0.0.1:51536",
-    "agentId": "route-crawl-final-2",
-    "leaseKey": "web-dev-route-crawl-final-2-ed58ad7e"
+    "baseUrl": "http://127.0.0.1:54673",
+    "agentId": "route-crawl-isolated-3",
+    "leaseKey": "web-dev-route-crawl-isolated-3-ed58ad7e"
   },
   "summary": {
     "total": 17,
-    "passed": 3,
-    "failed": 14,
-    "durationMs": 64834.405,
+    "passed": 10,
+    "failed": 7,
+    "durationMs": 278956.988,
     "unexpected": 1,
     "flaky": 0,
-    "skipped": 13,
-    "errorCount": 2
+    "skipped": 6,
+    "errorCount": 1
   },
   "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/accessibility-route-crawl.spec.ts --reporter=json",
   "externalErrors": [],
@@ -30,7 +30,7 @@
       "contextSelector": null,
       "title": "[public-home] / passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 15822,
+      "durationMs": 21201,
       "errors": []
     },
     {
@@ -42,7 +42,7 @@
       "contextSelector": null,
       "title": "[auth-signin] /auth/signin passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 10063,
+      "durationMs": 16200,
       "errors": []
     },
     {
@@ -54,7 +54,7 @@
       "contextSelector": null,
       "title": "[auth-register] /auth/register passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 4826,
+      "durationMs": 14268,
       "errors": []
     },
     {
@@ -65,12 +65,9 @@
       "readySelector": null,
       "contextSelector": null,
       "title": "[admin-dashboard] /admin passes the route-crawl accessibility scan",
-      "status": "fail",
-      "durationMs": 30840,
-      "errors": [
-        "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
-        "Error: locator.waitFor: Target page, context or browser has been closed\n\n   at support/admin-auth.ts:45\n\n  43 |\n  44 |   for (const candidate of credentialCandidates) {\n> 45 |     await page.getByRole('textbox', { name: /email/i }).waitFor({ state: 'visible', timeout: 20_000 });\n     |                                                         ^\n  46 |     await page.getByRole('textbox', { name: /email/i }).fill(candidate.email);\n  47 |     await page.getByRole('textbox', { name: /password/i }).fill(candidate.password);\n  48 |     await page.getByRole('button', { name: /sign in/i }).click();\n    at ensureAdminSession (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/support/admin-auth.ts:45:57)\n    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/accessibility-route-crawl.spec.ts:18:7"
-      ]
+      "status": "pass",
+      "durationMs": 41376,
+      "errors": []
     },
     {
       "id": "admin-products",
@@ -80,8 +77,8 @@
       "readySelector": null,
       "contextSelector": null,
       "title": "[admin-products] /admin/products passes the route-crawl accessibility scan",
-      "status": "fail",
-      "durationMs": 0,
+      "status": "pass",
+      "durationMs": 46181,
       "errors": []
     },
     {
@@ -92,8 +89,8 @@
       "readySelector": null,
       "contextSelector": null,
       "title": "[admin-notes] /admin/notes passes the route-crawl accessibility scan",
-      "status": "fail",
-      "durationMs": 0,
+      "status": "pass",
+      "durationMs": 38354,
       "errors": []
     },
     {
@@ -104,8 +101,8 @@
       "readySelector": null,
       "contextSelector": null,
       "title": "[admin-integrations] /admin/integrations passes the route-crawl accessibility scan",
-      "status": "fail",
-      "durationMs": 0,
+      "status": "pass",
+      "durationMs": 3602,
       "errors": []
     },
     {
@@ -116,8 +113,8 @@
       "readySelector": null,
       "contextSelector": null,
       "title": "[admin-case-resolver] /admin/case-resolver passes the route-crawl accessibility scan",
-      "status": "fail",
-      "durationMs": 0,
+      "status": "pass",
+      "durationMs": 10667,
       "errors": []
     },
     {
@@ -128,8 +125,8 @@
       "readySelector": null,
       "contextSelector": null,
       "title": "[admin-cms] /admin/cms passes the route-crawl accessibility scan",
-      "status": "fail",
-      "durationMs": 0,
+      "status": "pass",
+      "durationMs": 6305,
       "errors": []
     },
     {
@@ -140,8 +137,8 @@
       "readySelector": null,
       "contextSelector": null,
       "title": "[admin-ai-paths] /admin/ai-paths passes the route-crawl accessibility scan",
-      "status": "fail",
-      "durationMs": 0,
+      "status": "pass",
+      "durationMs": 19735,
       "errors": []
     },
     {
@@ -153,8 +150,10 @@
       "contextSelector": null,
       "title": "[admin-image-studio] /admin/image-studio passes the route-crawl accessibility scan",
       "status": "fail",
-      "durationMs": 0,
-      "errors": []
+      "durationMs": 56144,
+      "errors": [
+        "Error: Accessibility violations detected:\n\n[critical] aria-required-children: Certain ARIA roles must contain particular children\nEnsure elements with an ARIA role that require child roles contain them\n- div[role=\"tree\"]\nFix any of the following:\n  Element has children which are not allowed: button[aria-label], button[tabindex]\nhttps://dequeuniversity.com/rules/axe/4.11/aria-required-children?application=axeAPI\n\n   at support/accessibility.ts:100\n\n   98 |   if (violations.length === 0) return;\n   99 |\n> 100 |   throw new Error(`Accessibility violations detected:\\n\\n${formatViolations(violations)}`);\n      |         ^\n  101 | }\n  102 |\n    at expectPageToHaveNoAxeViolations (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/support/accessibility.ts:100:9)\n    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/accessibility-route-crawl.spec.ts:42:5"
+      ]
     },
     {
       "id": "admin-chatbot",
@@ -230,6 +229,6 @@
     }
   ],
   "stderr": "",
-  "durationMs": 79462,
+  "durationMs": 354843,
   "exitCode": 1
 }

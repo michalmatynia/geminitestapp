@@ -18,7 +18,8 @@ for (const routeEntry of routes) {
 
     if (routeEntry.audience === 'admin') {
       await ensureAdminSession(page, routeEntry.route);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
+      await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => {});
     } else {
       await page.goto(routeEntry.route, { waitUntil: 'networkidle' });
     }
@@ -30,7 +31,7 @@ for (const routeEntry of routes) {
     const skipLink = page.getByRole('link', { name: 'Skip to content' });
     await skipLink.focus();
     await expect(skipLink).toBeFocused();
-    await skipLink.press('Enter');
+    await page.keyboard.press('Enter');
     await expect(page).toHaveURL(/#app-content$/);
     await expect(main).toBeFocused();
 

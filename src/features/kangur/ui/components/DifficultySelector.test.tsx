@@ -69,4 +69,14 @@ describe('DifficultySelector', () => {
 
     expect(onSelect).toHaveBeenCalledWith('hard');
   });
+
+  it('can render in compact mode without the stacked heading copy', () => {
+    const onSelect = vi.fn();
+
+    render(<DifficultySelector onSelect={onSelect} selected='easy' showHeading={false} />);
+
+    expect(screen.queryByTestId('difficulty-selector-heading')).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Wybierz poziom trudnosci' })).not.toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Poziom trudnosci' })).toBeInTheDocument();
+  });
 });

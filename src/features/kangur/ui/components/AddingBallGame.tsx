@@ -24,6 +24,7 @@ import {
 import { cn } from '@/shared/utils';
 
 type AddingBallGameProps = {
+  finishLabel?: string;
   onFinish: () => void;
 };
 
@@ -749,7 +750,10 @@ function Ball({ ball, small = false }: BallProps): React.JSX.Element {
   );
 }
 
-export default function AddingBallGame({ onFinish }: AddingBallGameProps): React.JSX.Element {
+export default function AddingBallGame({
+  finishLabel = 'Wróć do lekcji',
+  onFinish,
+}: AddingBallGameProps): React.JSX.Element {
   const [roundIdx, setRoundIdx] = useState(0);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
@@ -824,7 +828,7 @@ export default function AddingBallGame({ onFinish }: AddingBallGameProps): React
               <RefreshCw className='w-4 h-4' /> Jeszcze raz
             </KangurButton>
             <KangurButton className='flex-1' onClick={onFinish} size='lg' variant='primary'>
-              Wróć do lekcji
+              {finishLabel}
             </KangurButton>
           </div>
         </KangurGlassPanel>

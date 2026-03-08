@@ -67,7 +67,7 @@ export default function TrainingSetup({ onStart }: TrainingSetupProps): React.JS
           {summaryLabel}
         </div>
 
-        <DifficultySelector selected={difficulty} onSelect={setDifficulty} />
+        <DifficultySelector selected={difficulty} onSelect={setDifficulty} showHeading={false} />
 
         <section aria-labelledby={categoryHeadingId}>
           <div className='mb-2 flex items-center justify-between'>

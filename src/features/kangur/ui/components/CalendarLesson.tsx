@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 
 import CalendarInteractiveGame from './CalendarInteractiveGame';
 import {
@@ -233,17 +233,14 @@ export const SECTION_SLIDES: Record<Exclude<SectionId, 'game'>, Slide[]> = {
 function SectionView({
   sectionId,
   onBack,
-  onGameStart,
   onProgressChange,
 }: {
   sectionId: Exclude<SectionId, 'game'>;
   onBack: () => void;
-  onGameStart: () => void;
   onProgressChange?: (viewedCount: number, totalCount: number) => void;
 }): React.JSX.Element {
   const slides = SECTION_SLIDES[sectionId];
   const [slide, setSlide] = useState(0);
-  const isLast = slide === slides.length - 1;
   const activeSlide = slides[slide];
 
   if (!activeSlide) return <div />;
@@ -252,23 +249,13 @@ function SectionView({
     onProgressChange?.(slide + 1, slides.length);
   }, [onProgressChange, slide, slides.length]);
 
-  const handleNext = (): void => {
-    if (isLast) {
-      onGameStart();
-      return;
-    }
-    setSlide(slide + 1);
-  };
-
   return (
     <div className='flex flex-col items-center w-full max-w-lg gap-4'>
-      <KangurGlassPanel
-        className='flex w-full flex-col items-center gap-5'
-        data-testid={`calendar-lesson-section-shell-${sectionId}`}
-        padding='xl'
-        surface='solid'
-      >
-        {slides.length > 1 && (
+      <div className='flex w-full flex-wrap items-center justify-between gap-3'>
+        <KangurButton onClick={onBack} size='sm' type='button' variant='surface'>
+          <ArrowLeft className='w-4 h-4' /> Wróć do tematów
+        </KangurButton>
+        {slides.length > 1 ? (
           <div className='flex gap-2'>
             {slides.map((_, i) => (
               <button
@@ -290,7 +277,15 @@ function SectionView({
               />
             ))}
           </div>
-        )}
+        ) : null}
+      </div>
+
+      <KangurGlassPanel
+        className='flex w-full flex-col items-center gap-5'
+        data-testid={`calendar-lesson-section-shell-${sectionId}`}
+        padding='xl'
+        surface='solid'
+      >
         <KangurHeadline
           accent='slate'
           as='h2'
@@ -311,32 +306,6 @@ function SectionView({
             {activeSlide.content}
           </motion.div>
         </AnimatePresence>
-        <div className='flex gap-3 w-full'>
-          <KangurButton
-            onClick={slide === 0 ? onBack : () => setSlide(slide - 1)}
-            size='lg'
-            type='button'
-            variant='surface'
-          >
-            <ArrowLeft className='w-4 h-4' /> {slide === 0 ? 'Menu' : 'Wstecz'}
-          </KangurButton>
-          <KangurButton
-            onClick={handleNext}
-            className='flex-1'
-            size='lg'
-            type='button'
-            variant='primary'
-          >
-            {isLast ? (
-              'Ćwiczenia z Kalendarzem 📅'
-            ) : (
-              <>
-                <span>Dalej</span>
-                <ArrowRight className='w-4 h-4' />
-              </>
-            )}
-          </KangurButton>
-        </div>
       </KangurGlassPanel>
     </div>
   );
@@ -385,7 +354,7 @@ export default function CalendarLesson(): React.JSX.Element {
           type='button'
           variant='surface'
         >
-          <ArrowLeft className='w-4 h-4' /> Wróć do menu
+          <ArrowLeft className='w-4 h-4' /> Wróć do tematów
         </KangurButton>
         <KangurGlassPanel
           className='flex w-full flex-col items-center gap-5'
@@ -409,13 +378,12 @@ export default function CalendarLesson(): React.JSX.Element {
 
   if (activeSection) {
     return (
-      <SectionView
-        sectionId={activeSection}
-        onBack={() => setActiveSection(null)}
-        onGameStart={handleGameStart}
-        onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
-      />
-    );
+        <SectionView
+          sectionId={activeSection}
+          onBack={() => setActiveSection(null)}
+          onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
+        />
+      );
   }
 
   return (

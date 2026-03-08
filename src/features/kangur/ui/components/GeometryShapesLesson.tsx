@@ -120,7 +120,7 @@ export default function GeometryShapesLesson(): React.JSX.Element {
           type='button'
           variant='surface'
         >
-          Wróć do menu
+          Wróć do tematów
         </KangurButton>
         <KangurGlassPanel data-testid='geometry-shapes-game-shell' className='w-full' padding='xl' surface='solid'>
           <h2 className='mb-4 text-center text-xl font-extrabold text-slate-800'>

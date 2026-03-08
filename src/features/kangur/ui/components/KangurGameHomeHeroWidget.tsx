@@ -4,7 +4,13 @@ import KangurAssignmentSpotlight from '@/features/kangur/ui/components/KangurAss
 import { KangurGlassPanel, KangurTextField } from '@/features/kangur/ui/design/primitives';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 
-export function KangurGameHomeHeroWidget(): React.JSX.Element | null {
+type KangurGameHomeHeroWidgetProps = {
+  hideWhenScreenMismatch?: boolean;
+};
+
+export function KangurGameHomeHeroWidget({
+  hideWhenScreenMismatch = true,
+}: KangurGameHomeHeroWidgetProps = {}): React.JSX.Element | null {
   const runtime = useKangurGameRuntime();
   const {
     basePath,
@@ -17,7 +23,7 @@ export function KangurGameHomeHeroWidget(): React.JSX.Element | null {
   const canAccessParentAssignments =
     runtime.canAccessParentAssignments ?? Boolean(user?.activeLearner?.id);
 
-  if (screen !== 'home') {
+  if (hideWhenScreenMismatch && screen !== 'home') {
     return null;
   }
 

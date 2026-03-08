@@ -23,6 +23,8 @@ describe('TrainingSetup', () => {
       'text-2xl',
       'text-indigo-700'
     );
+    expect(screen.queryByRole('heading', { name: 'Wybierz poziom trudnosci' })).not.toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Poziom trudnosci' })).toBeInTheDocument();
 
     const additionButton = screen.getByRole('button', { name: 'Dodawanie' });
     const tenQuestionsButton = screen.getByRole('button', { name: '10 pytan' });

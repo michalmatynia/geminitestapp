@@ -131,7 +131,7 @@ const contentMatches = (
 
 export function selectBestTutorAnchor(input: {
   anchors: KangurTutorAnchorRegistration[];
-  surface: 'lesson' | 'test' | null | undefined;
+  surface: 'lesson' | 'test' | 'game' | null | undefined;
   contentId?: string | null;
   kinds?: KangurTutorAnchorKind[];
 }): KangurTutorAnchorRegistration | null {

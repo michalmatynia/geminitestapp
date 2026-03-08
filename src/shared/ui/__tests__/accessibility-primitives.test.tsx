@@ -5,6 +5,7 @@ import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { Drawer } from '@/shared/ui/Drawer';
 import { LoadingState } from '@/shared/ui/LoadingState';
+import { JsonViewer } from '@/shared/ui/JsonViewer';
 import { SkipToContentLink } from '@/shared/ui/SkipToContentLink';
 import { FileUploadTrigger } from '@/shared/ui/file-upload';
 import { SelectSimple } from '@/shared/ui/select-simple';
@@ -39,6 +40,41 @@ describe('shared accessibility primitives', () => {
     fireEvent.click(link);
 
     expect(screen.getByRole('main')).toHaveFocus();
+  });
+
+  it('moves focus to the target content region when activated from the keyboard', () => {
+    const windowKeyDown = vi.fn();
+    window.addEventListener('keydown', windowKeyDown);
+
+    render(
+      <>
+        <SkipToContentLink />
+        <main id='app-content' tabIndex={-1}>
+          Content
+        </main>
+      </>
+    );
+
+    const link = screen.getByRole('link', { name: 'Skip to content' });
+    link.focus();
+    fireEvent.keyDown(link, { key: 'Enter' });
+
+    expect(screen.getByRole('main')).toHaveFocus();
+    expect(window.location.hash).toBe('#app-content');
+    expect(windowKeyDown).not.toHaveBeenCalled();
+
+    window.removeEventListener('keydown', windowKeyDown);
+  });
+
+  it('renders JsonViewer with a labeled scroll region instead of labeling the preformatted text', () => {
+    render(<JsonViewer title='Last Request' data={{ ok: true }} />);
+
+    const region = screen.getByRole('region', { name: 'Last Request JSON' });
+    expect(region).toHaveAttribute('tabindex', '0');
+
+    const jsonText = region.querySelector('pre');
+    expect(jsonText).not.toBeNull();
+    expect(jsonText).not.toHaveAttribute('aria-label');
   });
 
   it('renders TreeCaret as a native button with expanded state', () => {

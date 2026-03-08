@@ -19,6 +19,7 @@ export function KangurGameTrainingSetupWidget(): React.JSX.Element | null {
         accent='sky'
         className='max-w-md'
         description='Dobierz poziom, kategorie i liczbe pytan do jednej sesji.'
+        headingSize='lg'
         onBack={handleHome}
         testId='kangur-game-training-top-section'
         title='Trening mieszany'

@@ -22,12 +22,20 @@ describe('KangurSurfaceClassSync', () => {
       </KangurSurfaceClassSync>
     );
 
+    expect(document.documentElement).toHaveClass('kangur-surface-active');
     expect(document.body).toHaveClass('kangur-surface-active');
     expect(appContent).toHaveClass('kangur-surface-active');
+    expect(document.documentElement).toHaveStyle({ scrollbarGutter: 'stable' });
+    expect(document.body).toHaveStyle({ scrollbarGutter: 'stable' });
+    expect(appContent).toHaveStyle({ scrollbarGutter: 'stable' });
 
     unmount();
 
+    expect(document.documentElement).not.toHaveClass('kangur-surface-active');
     expect(document.body).not.toHaveClass('kangur-surface-active');
     expect(appContent).not.toHaveClass('kangur-surface-active');
+    expect(document.documentElement.style.getPropertyValue('scrollbar-gutter')).toBe('');
+    expect(document.body.style.getPropertyValue('scrollbar-gutter')).toBe('');
+    expect(appContent?.style.getPropertyValue('scrollbar-gutter')).toBe('');
   });
 });

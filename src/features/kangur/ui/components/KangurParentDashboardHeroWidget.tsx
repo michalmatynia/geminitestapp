@@ -1,7 +1,6 @@
 'use client';
 
 import {
-  ArrowLeft,
   BookOpen,
   Home,
   LayoutGrid,
@@ -9,17 +8,16 @@ import {
   LogOut,
   UserRound,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 import {
   getKangurHomeHref,
   getKangurPageHref as createPageUrl,
 } from '@/features/kangur/config/routing';
+import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
   KangurButton,
-  KangurGlassPanel,
-  KangurIconBadge,
-  KangurStatusChip,
   KangurTopNavGroup,
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurParentDashboardRuntime } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
@@ -29,6 +27,7 @@ export function KangurParentDashboardHeroWidget({
 }: {
   showActions?: boolean;
 }): React.JSX.Element {
+  const router = useRouter();
   const {
     activeLearner,
     basePath,
@@ -39,31 +38,26 @@ export function KangurParentDashboardHeroWidget({
     viewerName,
     viewerRoleLabel,
   } = useKangurParentDashboardRuntime();
+  const handleGoHome = (): void => {
+    router.push(getKangurHomeHref(basePath));
+  };
+  const handleGoToProfile = (): void => {
+    router.push(createPageUrl('LearnerProfile', basePath));
+  };
 
   if (!isAuthenticated) {
     return (
-      <KangurGlassPanel
-        className='flex w-full flex-col items-center gap-5 text-center'
-        padding='xl'
-        surface='solid'
-        variant='soft'
+      <KangurPageIntroCard
+        accent='indigo'
+        className='mx-auto w-full max-w-2xl'
+        description='Ten widok pokazuje prywatne postepy ucznia, wiec dostep wymaga zalogowanego konta.'
+        headingAs='h1'
+        onBack={handleGoHome}
+        testId='kangur-parent-dashboard-hero'
+        title='Panel Rodzica / Nauczyciela'
       >
-        <KangurIconBadge
-          accent='indigo'
-          data-testid='parent-dashboard-auth-icon'
-          size='3xl'
-        >
-          🪪
-        </KangurIconBadge>
-        <h1 className='text-center text-2xl font-extrabold text-slate-800'>
-          Panel Rodzica / Nauczyciela
-        </h1>
-        <p className='text-center text-sm text-slate-500'>
-          Ten widok pokazuje prywatne postepy ucznia, wiec dostep wymaga zalogowanego konta.
-        </p>
-
         <KangurButton
-          className='w-full'
+          className='w-full sm:w-auto'
           onClick={navigateToLogin}
           size='lg'
           variant='primary'
@@ -72,66 +66,57 @@ export function KangurParentDashboardHeroWidget({
           <LogIn className='h-5 w-5' />
           Zaloguj sie
         </KangurButton>
-
-        <KangurButton asChild size='sm' variant='ghost' data-doc-id='top_nav_home'>
-          <Link href={getKangurHomeHref(basePath)} targetPageKey='Game'>
-            <ArrowLeft className='h-4 w-4' /> Wroc do gry
-          </Link>
-        </KangurButton>
-      </KangurGlassPanel>
+      </KangurPageIntroCard>
     );
   }
 
   if (!canManageLearners) {
     return (
-      <KangurGlassPanel
-        className='flex w-full flex-col items-center gap-5 text-center'
-        padding='xl'
-        surface='solid'
-        variant='soft'
+      <KangurPageIntroCard
+        accent='slate'
+        className='mx-auto w-full max-w-2xl'
+        description='Ten widok jest dostepny tylko dla konta rodzica, ktore zarzadza profilami uczniow.'
+        headingAs='h1'
+        onBack={handleGoToProfile}
+        testId='kangur-parent-dashboard-hero'
+        title='Panel Rodzica'
       >
-        <KangurIconBadge
-          accent='slate'
-          data-testid='parent-dashboard-locked-icon'
-          size='3xl'
+        <KangurButton
+          className='w-full sm:w-auto'
+          onClick={handleGoToProfile}
+          size='lg'
+          variant='primary'
+          data-doc-id='top_nav_profile'
         >
-          🔒
-        </KangurIconBadge>
-        <h1 className='text-center text-2xl font-extrabold text-slate-800'>Panel Rodzica</h1>
-        <p className='text-center text-sm text-slate-500'>
-          Ten widok jest dostepny tylko dla konta rodzica, ktore zarzadza profilami uczniow.
-        </p>
-        <KangurButton asChild size='lg' variant='primary' data-doc-id='top_nav_profile'>
-          <Link href={createPageUrl('LearnerProfile', basePath)} targetPageKey='LearnerProfile'>
-            Wroc do profilu ucznia
-          </Link>
+          Wroc do profilu ucznia
         </KangurButton>
-      </KangurGlassPanel>
+      </KangurPageIntroCard>
     );
   }
 
   return (
-    <KangurGlassPanel className='flex flex-col gap-4' padding='lg' surface='mistStrong' variant='soft'>
-      <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
-        <div className='max-w-2xl'>
-          {showActions ? (
-            <KangurStatusChip accent='indigo' className='uppercase tracking-wide' size='sm'>
-              Rola: {viewerRoleLabel}
-            </KangurStatusChip>
-          ) : null}
-          <h1 className='text-3xl font-extrabold text-slate-800'>Panel Rodzica</h1>
-          <p className='mt-1 text-slate-500'>
-            Konto wlasciciela: <span className='font-semibold text-slate-700'>{viewerName}</span>.
-            Wybrany uczen:{' '}
-            <span className='font-semibold text-slate-700'>
-              {activeLearner?.displayName ?? 'Brak profilu'}
-            </span>
-            .
-          </p>
-        </div>
-
-        {showActions ? (
-          <div className='flex w-full flex-col items-stretch gap-2 sm:w-auto sm:items-end'>
+    <KangurPageIntroCard
+      accent='indigo'
+      className='mx-auto w-full max-w-2xl'
+      description={
+        <>
+          Rola: <span className='font-semibold text-slate-700'>{viewerRoleLabel}</span>. Konto
+          wlasciciela: <span className='font-semibold text-slate-700'>{viewerName}</span>. Wybrany
+          uczen:{' '}
+          <span className='font-semibold text-slate-700'>
+            {activeLearner?.displayName ?? 'Brak profilu'}
+          </span>
+          .
+        </>
+      }
+      headingAs='h1'
+      onBack={handleGoToProfile}
+      testId='kangur-parent-dashboard-hero'
+      title='Panel Rodzica'
+    >
+      {showActions ? (
+        <div className='flex flex-col items-center gap-2'>
+          <div className='flex w-full justify-center'>
             <KangurTopNavGroup label='Szybkie akcje rodzica' className='w-full sm:w-auto'>
               <KangurButton asChild size='sm' variant='navigation'>
                 <Link href={getKangurHomeHref(basePath)} targetPageKey='Game'>
@@ -157,18 +142,18 @@ export function KangurParentDashboardHeroWidget({
                 </Link>
               </KangurButton>
             </KangurTopNavGroup>
-            <KangurButton
-              onClick={() => logout(false)}
-              size='sm'
-              type='button'
-              variant='ghost'
-              data-doc-id='profile_logout'
-            >
-              <LogOut className='h-4 w-4' /> Wyloguj
-            </KangurButton>
           </div>
-        ) : null}
-      </div>
-    </KangurGlassPanel>
+          <KangurButton
+            onClick={() => logout(false)}
+            size='sm'
+            type='button'
+            variant='ghost'
+            data-doc-id='profile_logout'
+          >
+            <LogOut className='h-4 w-4' /> Wyloguj
+          </KangurButton>
+        </div>
+      ) : null}
+    </KangurPageIntroCard>
   );
 }

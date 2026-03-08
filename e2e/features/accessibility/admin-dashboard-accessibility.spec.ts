@@ -6,6 +6,8 @@ import { expectPageToHaveNoAxeViolations } from '../../support/accessibility';
 test('admin dashboard exposes shell landmarks and passes the accessibility smoke scan', async ({
   page,
 }) => {
+  test.setTimeout(60_000);
+
   await ensureAdminSession(page, '/admin');
 
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();

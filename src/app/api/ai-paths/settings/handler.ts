@@ -7,6 +7,7 @@ import {
   upsertAiPathsSetting,
   upsertAiPathsSettingsBulk,
 } from '@/features/ai/ai-paths/server';
+import { AI_PATHS_CONFIG_KEY_PREFIX } from '@/features/ai/ai-paths/server/settings-store.constants';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
@@ -40,6 +41,7 @@ const MAX_SETTINGS_QUERY_KEY_LENGTH = 200;
 const VERSIONED_AI_PATHS_KEY_PATTERN = /^ai_paths_.*_v\d+$/;
 
 const assertCanonicalAiPathsKey = (key: string): void => {
+  if (key.startsWith(AI_PATHS_CONFIG_KEY_PREFIX)) return;
   if (!VERSIONED_AI_PATHS_KEY_PATTERN.test(key)) return;
   throw badRequestError(
     `Versioned AI Paths key "${key}" is disabled. Use canonical unversioned keys.`

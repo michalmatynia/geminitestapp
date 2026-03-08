@@ -153,6 +153,8 @@ export function VectorDrawingToolbar({
             variant={tool === option.key ? 'default' : 'outline'}
             size='icon'
             aria-pressed={tool === option.key}
+            aria-label={option.label}
+            title={option.label}
             onClick={() => onSelectTool(option.key)}
             className={cn(
               tool === option.key
@@ -173,6 +175,8 @@ export function VectorDrawingToolbar({
             size='icon'
             onClick={onUndo}
             disabled={disableUndo}
+            aria-label='Undo'
+            title='Undo'
           >
             <RotateCcw className='size-4' />
           </Button>
@@ -186,6 +190,8 @@ export function VectorDrawingToolbar({
             size='icon'
             onClick={onRedo}
             disabled={disableRedo}
+            aria-label='Redo'
+            title='Redo'
           >
             <Redo2 className='size-4' />
           </Button>
@@ -199,6 +205,8 @@ export function VectorDrawingToolbar({
             size='icon'
             onClick={onClose}
             disabled={disableClose}
+            aria-label='Close polygon'
+            title='Close polygon'
           >
             <Check className='size-4' />
           </Button>
@@ -212,6 +220,8 @@ export function VectorDrawingToolbar({
             size='icon'
             onClick={onDetach}
             disabled={disableDetach}
+            aria-label='Detach polygon'
+            title='Detach polygon'
           >
             <Unlink className='size-4' />
           </Button>
@@ -225,6 +235,8 @@ export function VectorDrawingToolbar({
             size='icon'
             onClick={onClear}
             disabled={disableClear}
+            aria-label='Clear shapes'
+            title='Clear shapes'
           >
             <Trash2 className='size-4' />
           </Button>
@@ -238,6 +250,8 @@ export function VectorDrawingToolbar({
             size='icon'
             onClick={onSmooth}
             disabled={disableSmooth}
+            aria-label='Smooth path'
+            title='Smooth path'
           >
             <Sparkles className='size-4' />
           </Button>
@@ -251,6 +265,8 @@ export function VectorDrawingToolbar({
             size='icon'
             onClick={onSimplify}
             disabled={disableSimplify}
+            aria-label='Simplify path'
+            title='Simplify path'
           >
             <Filter className='size-4' />
           </Button>

@@ -42,7 +42,7 @@ const toggleRouteTransitionClass = (
 const AuthenticatedApp = (): JSX.Element | null => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useKangurAuth();
   const { pageKey, embedded, requestedPath } = useKangurRouting();
-  const { isRoutePending, pendingPageKey } = useKangurRouteTransition();
+  const { isRoutePending } = useKangurRouteTransition();
   const authErrorType = authError?.type;
   const [routeTransitionClass, setRouteTransitionClass] =
     useState<KangurRouteTransitionClass>('kangur-route-content-enter-a');
@@ -87,8 +87,6 @@ const AuthenticatedApp = (): JSX.Element | null => {
     return <PageNotFound />;
   }
 
-  const activeSkeletonPageKey = pendingPageKey ?? resolvedPageKey;
-
   return (
     <>
       <KangurRouteAccessibilityAnnouncer />
@@ -104,7 +102,6 @@ const AuthenticatedApp = (): JSX.Element | null => {
       >
         <KangurCmsRuntimeScreen pageKey={resolvedPageKey} fallback={<ResolvedPage />} />
       </div>
-      {isRoutePending ? <KangurPageTransitionSkeleton pageKey={activeSkeletonPageKey} /> : null}
     </>
   );
 };

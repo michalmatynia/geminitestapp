@@ -187,4 +187,30 @@ describe('kangur ai tutor settings', () => {
       reason: 'review_after_answer_only',
     });
   });
+
+  it('allows the tutor on the game surface when learner tutoring is enabled', () => {
+    const availability = resolveKangurAiTutorAvailability(
+      {
+        enabled: true,
+        agentPersonaId: null,
+        motionPresetId: null,
+        uiMode: 'anchored',
+        allowCrossPagePersistence: true,
+        allowLessons: true,
+        testAccessMode: 'guided',
+        showSources: true,
+        allowSelectedTextSupport: true,
+        dailyMessageLimit: 12,
+      },
+      {
+        surface: 'game',
+        contentId: 'game',
+        title: 'Pytanie do rozwiazania',
+        currentQuestion: 'Ile to 8 + 5?',
+        questionProgressLabel: 'Pytanie 2/10',
+      }
+    );
+
+    expect(availability).toEqual({ allowed: true });
+  });
 });

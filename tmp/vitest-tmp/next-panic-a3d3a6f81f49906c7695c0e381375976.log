@@ -1,0 +1,28 @@
+---------------------------
+[project]/src/app/globals.css [app-client] (css)
+
+Caused by:
+- failed to receive message
+- reading packet length
+- unexpected end of file
+
+Debug info:
+- Execution of subscribe_issues_and_diags_operation failed
+- Execution of <AppEndpoint as Endpoint>::server_changed failed
+- Execution of *Project::server_changed failed
+- Execution of *AppEndpointOutput::server_assets failed
+- Execution of AppEndpoint::output failed
+- Execution of AppProject::app_module_graphs failed
+- Execution of *<AppEndpoint as Endpoint>::additional_entries failed
+- Execution of *ModuleGraph::from_graphs failed
+- Execution of SingleModuleGraph::new_with_entries_visited_intern failed
+- [project]/src/app/globals.css [app-client] (css)
+- Execution of primary_chunkable_referenced_modules failed
+- Execution of <CssModuleAsset as Module>::references failed
+- Execution of parse_css failed
+- Execution of <PostCssTransformedAsset as Asset>::content failed
+- Execution of PostCssTransformedAsset::process failed
+- Execution of evaluate_webpack_loader failed
+- failed to receive message
+- reading packet length
+- unexpected end of file

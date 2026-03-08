@@ -158,12 +158,42 @@ const SelectValue = (props: React.ComponentPropsWithoutRef<typeof SelectPrimitiv
   return null;
 };
 
+type SelectTriggerProps = React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>;
+
+const getNativeSelectTriggerProps = (
+  props: SelectTriggerProps
+): React.SelectHTMLAttributes<HTMLSelectElement> => {
+  const rawProps = props as Record<string, unknown>;
+  const nativeProps: React.SelectHTMLAttributes<HTMLSelectElement> = {};
+  const passthroughProps: Record<string, unknown> = {};
+
+  if (typeof rawProps['id'] === 'string') nativeProps.id = rawProps['id'];
+  if (typeof rawProps['name'] === 'string') nativeProps.name = rawProps['name'];
+  if (typeof rawProps['autoComplete'] === 'string')
+    nativeProps.autoComplete = rawProps['autoComplete'];
+  if (typeof rawProps['form'] === 'string') nativeProps.form = rawProps['form'];
+  if (typeof rawProps['title'] === 'string') nativeProps.title = rawProps['title'];
+  if (typeof rawProps['tabIndex'] === 'number') nativeProps.tabIndex = rawProps['tabIndex'];
+  if (typeof rawProps['autoFocus'] === 'boolean') nativeProps.autoFocus = rawProps['autoFocus'];
+  if (typeof rawProps['required'] === 'boolean') nativeProps.required = rawProps['required'];
+  if (typeof rawProps['disabled'] === 'boolean') nativeProps.disabled = rawProps['disabled'];
+
+  for (const [key, value] of Object.entries(rawProps)) {
+    if ((key.startsWith('aria-') || key.startsWith('data-')) && value !== undefined) {
+      passthroughProps[key] = value;
+    }
+  }
+
+  return { ...nativeProps, ...passthroughProps } as React.SelectHTMLAttributes<HTMLSelectElement>;
+};
+
 const SelectTrigger = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Trigger>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
->(({ className, ...props }, ref) => {
+  SelectTriggerProps
+>(({ className, children, ...props }, ref) => {
   const useNativeSelect = useNativeSelectMode();
   const context = React.useContext(NativeSelectContext);
+  const nativeTriggerProps = React.useMemo(() => getNativeSelectTriggerProps(props), [props]);
 
   if (!useNativeSelect) {
     return (
@@ -176,7 +206,7 @@ const SelectTrigger = React.forwardRef<
         {...props}
         ref={ref}
       >
-        {props.children}
+        {children}
         <SelectPrimitive.Icon asChild>
           <ChevronDown className='size-4 opacity-50' />
         </SelectPrimitive.Icon>
@@ -187,11 +217,12 @@ const SelectTrigger = React.forwardRef<
   if (!context) {
     return (
       <select
+        {...nativeTriggerProps}
         className={cn(
           'h-10 w-full rounded-md border border-foreground/10 bg-transparent px-3 py-2 text-sm text-foreground/90 focus:outline-none focus:ring-2 focus:ring-ring/40 focus:ring-offset-2 focus:border-foreground/30 disabled:cursor-not-allowed disabled:opacity-50',
           className
         )}
-        disabled
+        disabled={props.disabled ?? true}
       />
     );
   }
@@ -201,6 +232,7 @@ const SelectTrigger = React.forwardRef<
 
   return (
     <select
+      {...nativeTriggerProps}
       className={cn(
         'h-10 w-full rounded-md border border-foreground/10 bg-transparent px-3 py-2 text-sm text-foreground/90 focus:outline-none focus:ring-2 focus:ring-ring/40 focus:ring-offset-2 focus:border-foreground/30 disabled:cursor-not-allowed disabled:opacity-50',
         className

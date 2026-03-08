@@ -191,6 +191,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
 
   return (
     <div className='mx-auto box-border flex h-[calc((100dvh-4rem)*1.035)] w-full min-h-0 min-w-0 max-w-none flex-col gap-2 overflow-hidden px-0.5 pb-0 pt-2'>
+      <h1 className='sr-only'>Image Studio</h1>
       <ClientOnly
         fallback={
           <div className='flex min-h-0 flex-1'>

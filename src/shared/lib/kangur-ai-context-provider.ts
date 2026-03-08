@@ -59,7 +59,7 @@ const readKangurRuntimeInput = (
       ? raw['questionId'].trim()
       : undefined;
 
-  if (!learnerId || (surface !== 'lesson' && surface !== 'test')) {
+  if (!learnerId || (surface !== 'lesson' && surface !== 'test' && surface !== 'game')) {
     return null;
   }
 

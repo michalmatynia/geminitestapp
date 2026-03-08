@@ -6,7 +6,7 @@ import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { CanvasBoard } from '@/features/ai';
 import { AiPathsProvider } from '@/features/ai';
 import { AI_PATHS_UI_STATE_KEY, EMPTY_RUNTIME_STATE } from '@/shared/lib/ai-paths/core/constants';
-import type { AiNode, Edge as AiEdge } from '@/shared/contracts/case-resolver';
+import type { AiNode, Edge as CaseResolverEdge } from '@/shared/contracts/case-resolver';
 import {
   fetchAiPathsSettingsCached,
   invalidateAiPathsSettingsCache,
@@ -82,7 +82,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     [nodes, selectedNodeId]
   );
 
-  const selectedEdge = useMemo((): unknown | null => {
+  const selectedEdge = useMemo((): CaseResolverEdge | null => {
     const edges = activeFile?.graph?.edges;
     if (!selectedEdgeId || !Array.isArray(edges)) return null;
     return edges.find((e) => e.id === selectedEdgeId) ?? null;
@@ -270,7 +270,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       selectedPromptSecondaryOutputHint: undefined,
       updateSelectedPromptTemplate,
       updateSelectedNodeMeta,
-      selectedEdge: selectedEdge as AiEdge | null,
+      selectedEdge,
       selectedEdgeJoinMode,
       updateSelectedEdgeMeta,
       hasPendingSnapshotChanges: false,
@@ -421,7 +421,7 @@ export function CaseResolverCanvasWorkspace(): React.JSX.Element {
   return (
     <AiPathsProvider
       initialNodes={normalizeNodes(activeFile.graph?.nodes || [])}
-      initialEdges={(activeFile.graph?.edges || []) as AiEdge[]}
+      initialEdges={activeFile.graph?.edges || []}
       initialLoading={false}
       initialRuntimeState={EMPTY_RUNTIME_STATE}
     >

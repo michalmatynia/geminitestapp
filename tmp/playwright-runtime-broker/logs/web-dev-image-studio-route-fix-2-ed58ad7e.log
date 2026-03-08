@@ -1,0 +1,477 @@
+
+> libapp2@0.1.0 predev
+> node scripts/runtime/check-node-version.cjs
+
+
+> libapp2@0.1.0 dev
+> node --max-old-space-size=8192 server.cjs
+
+○ Compiling instrumentation Node.js ...
+
+  We detected TypeScript in your project and reconfigured your tsconfig.json file for you.
+  The following suggested values were added to your tsconfig.json. These values can be changed to fit your project's needs:
+
+  	- include was updated to add '.next-dev-web-dev-image-studio-route-fix-2/types/**/*.ts'
+  	- include was updated to add '.next-dev-web-dev-image-studio-route-fix-2/dev/types/**/*.ts'
+
+[ai-paths.portable-engine.envelope-verification] Portable envelope verification audit sink health probe sinkId=portable-envelope-verification-log-forwarding {
+  category: 'ai_path_portable_envelope_verification_audit_sink_health',
+  kind: 'ai-paths.portable-envelope-verification-audit-sink-health.v1',
+  sinkId: 'portable-envelope-verification-log-forwarding',
+  stage: 'probe',
+  service: 'ai-paths.portable-engine'
+}
+[ai-paths.portable-engine.envelope-verification.sink-bootstrap] Portable envelope verification audit sink startup health summary sinkId=all {
+  category: 'ai_path_portable_envelope_verification_audit_sink_health',
+  kind: 'ai-paths.portable-envelope-verification-audit-sink-health.v1',
+  profile: 'dev',
+  policy: 'warn',
+  timeoutMs: 3000,
+  status: 'healthy',
+  failedSinkIds: [],
+  diagnostics: [
+    {
+      sinkId: 'portable-envelope-verification-log-forwarding',
+      status: 'healthy',
+      checkedAt: '2026-03-08T16:08:37.548Z',
+      durationMs: 95,
+      message: 'Health check passed.',
+      error: null
+    }
+  ],
+  service: 'ai-paths.portable-engine'
+}
+[queue-factory] [queue-factory:database-backup-scheduler] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:product-sync-scheduler] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:system-log-alerts] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-init] Starting BullMQ workers... { service: 'queue-init' }
+[queue-registry] [queue-registry] Starting queue worker: base-import { queueName: 'base-import', service: 'queue-registry' }
+[queue-factory] [queue-factory:base-import] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: database-backup-scheduler { queueName: 'database-backup-scheduler', service: 'queue-registry' }
+[queue-registry] [queue-registry] Starting queue worker: system-log-alerts { queueName: 'system-log-alerts', service: 'queue-registry' }
+[queue-registry] [queue-registry] Starting queue worker: tradera-listings { queueName: 'tradera-listings', service: 'queue-registry' }
+[queue-factory] [queue-factory:tradera-listings] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-ai { queueName: 'product-ai', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-ai] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync { queueName: 'product-sync', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-sync] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync-backfill { queueName: 'product-sync-backfill', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-sync-backfill] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync-scheduler { queueName: 'product-sync-scheduler', service: 'queue-registry' }
+[queue-factory] [queue-factory:case-resolver-ocr] BullMQ worker started (concurrency: 2) { concurrency: 2, service: 'queue-factory' }
+[queue-factory] [queue-factory:ai-path-run] BullMQ worker started (concurrency: 3) { concurrency: 3, service: 'queue-factory' }
+[queue-factory] [queue-factory:chatbot] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:agent] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:image-studio-run] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:tradera-relist-scheduler] Worker stopped { service: 'queue-factory' }
+Ready on http://localhost:59147 { port: 59147, host: '127.0.0.1' }
+[queue-factory] [queue-factory:image-studio-sequence] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+ GET /api/health 200 in 1494ms (compile: 707ms, proxy.ts: 38ms, render: 748ms)
+[health.GET] health.GET completed successfully {
+  durationMs: 823,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '756ee650ff5abb13e313aad2787c60c8',
+  otelSpanId: '76792d15ee3cad78',
+  otelTraceFlags: '01',
+  service: 'health',
+  traceId: '3aec3b8d-0f61-4d11-b6c2-cd0f1114ef18',
+  correlationId: 'f9bfa9ab-7965-4eb7-ae54-2d22e718bdf0'
+}
+○ Compiling / ...
+ GET /api/health 200 in 761ms (compile: 6ms, proxy.ts: 4ms, render: 751ms)
+ GET /auth/signin?callbackUrl=%2Fadmin%2Fimage-studio 200 in 2.7s (compile: 2.3s, render: 354ms)
+ GET /api/settings/lite 200 in 993ms (compile: 632ms, proxy.ts: 9ms, render: 351ms)
+ GET /api/auth/session 200 in 1580ms (compile: 1563ms, proxy.ts: 9ms, render: 8ms)
+ GET /api/auth/providers 200 in 1462ms (compile: 1445ms, proxy.ts: 7ms, render: 10ms)
+ GET /api/auth/session 200 in 14ms (compile: 6ms, proxy.ts: 3ms, render: 6ms)
+ GET /api/auth/csrf 200 in 16ms (compile: 8ms, proxy.ts: 3ms, render: 5ms)
+[system] [AUTH-REPO] Finding user admin@example.com using mongodb {
+  email: 'admin@example.com',
+  provider: 'mongodb',
+  otelTraceId: '13b528e68a5ca79b95c67418d4286997',
+  otelSpanId: 'dbfadaf6e868594e',
+  otelTraceFlags: '01'
+}
+[system] [timing] home {
+  frontPageSetting: 425.4861669999991,
+  total: 425.69916600000215,
+  otelTraceId: '47dcdc5381d6091b6d971d5780b91cd9',
+  otelSpanId: 'a7b7b8b039ce1d38',
+  otelTraceFlags: '01'
+}
+[auth.[...nextauth].POST] auth.[...nextauth].POST completed successfully {
+  durationMs: 1014,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  params: { nextauth: [ 'callback', 'credentials' ] },
+  otelTraceId: '13b528e68a5ca79b95c67418d4286997',
+  otelSpanId: 'dbfadaf6e868594e',
+  otelTraceFlags: '01',
+  service: 'auth.[',
+  traceId: '3e6baf07-a5b1-44c5-9083-488cbc534eff',
+  correlationId: '9f43a44f-a51d-41c8-9faf-4a439c20a6b2'
+}
+ POST /api/auth/callback/credentials 200 in 1023ms (compile: 3ms, proxy.ts: 3ms, render: 1017ms)
+[auth.security] User signed in successfully {
+  email: 'admin@example.com',
+  ip: '127.0.0.1',
+  service: 'auth.security',
+  otelTraceId: '13b528e68a5ca79b95c67418d4286997',
+  otelSpanId: 'dbfadaf6e868594e',
+  otelTraceFlags: '01'
+}
+ GET /api/auth/session 200 in 33ms (compile: 5ms, proxy.ts: 14ms, render: 14ms)
+[user] Activity: auth.login - User logged in: admin@example.com {
+  activityId: '69ad9f150d183c13bfe435a1',
+  activityType: 'auth.login',
+  userId: '6973e8e16e457862e8b1ba21',
+  entityId: '6973e8e16e457862e8b1ba21',
+  entityType: 'user',
+  metadata: null,
+  service: 'user',
+  otelTraceId: '13b528e68a5ca79b95c67418d4286997',
+  otelSpanId: 'dbfadaf6e868594e',
+  otelTraceFlags: '01'
+}
+○ Compiling /admin/image-studio ...
+ GET /admin/image-studio 200 in 4.2s (compile: 4.0s, proxy.ts: 15ms, render: 157ms)
+ GET /api/auth/session 200 in 106ms (compile: 8ms, proxy.ts: 4ms, render: 94ms)
+ GET /api/auth/session 200 in 60ms (compile: 7ms, proxy.ts: 8ms, render: 46ms)
+ GET /api/auth/session 200 in 47ms (compile: 6ms, proxy.ts: 4ms, render: 38ms)
+[system] [timing] user.preferences.GET {
+  auth: 5.880417000000307,
+  cache: 0.10949999999866122,
+  repository: 59.798500000000786,
+  total: 66.16804100000081,
+  databaseConfigured: true,
+  otelTraceId: 'fe75cdd762e1ee06d305e29fd4d3bcca',
+  otelSpanId: 'e9cf55699c044add',
+  otelTraceFlags: '01'
+}
+[system] [timing] user.preferences.GET {
+  auth: 4.573625000000902,
+  cache: 0.01599999999962165,
+  repository: 58.26270899999872,
+  total: 63.4050419999985,
+  databaseConfigured: true,
+  otelTraceId: '2a22c3b63506055d0867ec2ee2de3bbf',
+  otelSpanId: 'cc74438340f66d5f',
+  otelTraceFlags: '01'
+}
+ GET /api/user/preferences 200 in 1001ms (compile: 875ms, proxy.ts: 47ms, render: 79ms)
+ GET /api/image-studio/projects 200 in 2.2s (compile: 2.1s, proxy.ts: 6ms, render: 117ms)
+ GET /api/image-studio/runs?projectId=TrzynaDwa&limit=25 200 in 913ms (compile: 509ms, proxy.ts: 3ms, render: 401ms)
+ GET /api/image-studio/projects/TrzynaDwa/slots 200 in 1926ms (compile: 1377ms, proxy.ts: 3ms, render: 546ms)
+[api/settings] [api/settings] [settings] cache fallback {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'timeout-prisma-fallback',
+  reason: '[settings] cache miss fetch timed out after 3000ms',
+  category: 'SYSTEM',
+  otelTraceId: '11703c79af4b6b7f1622dd5098ba2643',
+  otelSpanId: 'afd52a101ec904ff',
+  otelTraceFlags: '01',
+  fingerprint: '772884b32ff22fd8'
+}
+[settings.GET] settings.GET completed successfully {
+  durationMs: 3170,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '11703c79af4b6b7f1622dd5098ba2643',
+  otelSpanId: 'afd52a101ec904ff',
+  otelTraceFlags: '01',
+  service: 'settings',
+  traceId: '60364711-6379-47b2-aa28-c4b439191239',
+  correlationId: 'd75e91bd-c059-4c3e-82e0-959a4c7a6dbe'
+}
+ GET /api/settings?scope=heavy 200 in 5.4s (compile: 2.2s, proxy.ts: 7ms, render: 3.2s)
+[api/settings] [api/settings] [timing] settings.fetch {
+  service: 'api/settings',
+  scope: 'light',
+  provider: 0.011750000001484295,
+  mongo: 3566.5813340000022,
+  total: 3566.638417000002,
+  category: 'NETWORK',
+  otelTraceId: '9e75414cac36e0d2cf1145fa6c662ef1',
+  otelSpanId: '29b9feb6c5bce87f',
+  otelTraceFlags: '01'
+}
+[system] [settings] cache {
+  scope: 'light',
+  status: 'miss',
+  otelTraceId: '9e75414cac36e0d2cf1145fa6c662ef1',
+  otelSpanId: '29b9feb6c5bce87f',
+  otelTraceFlags: '01'
+}
+[settings.GET] settings.GET completed successfully {
+  durationMs: 3579,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '9e75414cac36e0d2cf1145fa6c662ef1',
+  otelSpanId: '29b9feb6c5bce87f',
+  otelTraceFlags: '01',
+  service: 'settings',
+  traceId: '257d1858-b36b-4018-b3f7-452a909580ac',
+  correlationId: 'b2fc3e5a-d361-4bc3-9524-b0763052f6fb'
+}
+ GET /api/settings?scope=light 200 in 5.8s (compile: 2.2s, proxy.ts: 5ms, render: 3.6s)
+ POST /api/settings 200 in 77ms (compile: 1879µs, proxy.ts: 2ms, render: 73ms)
+Persisting failed: Unable to write SST file 00000039.sst
+
+Caused by:
+    0: Failed to write value blocks
+    1: Failed to write small value block
+    2: Failed to write compressed block
+    3: No space left on device (os error 28)
+[api/settings] [api/settings] [settings] cache fallback {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'timeout-prisma-fallback',
+  reason: '[settings] cache miss fetch timed out after 3000ms',
+  category: 'SYSTEM',
+  otelTraceId: '99f998684dd7bec1169c818519de5485',
+  otelSpanId: '30cfa3502746f290',
+  otelTraceFlags: '01',
+  fingerprint: '772884b32ff22fd8'
+}
+[settings.GET] settings.GET completed successfully {
+  durationMs: 3033,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '99f998684dd7bec1169c818519de5485',
+  otelSpanId: '30cfa3502746f290',
+  otelTraceFlags: '01',
+  service: 'settings',
+  traceId: '50c7e5e0-b17c-4560-b5c5-640e96470f53',
+  correlationId: 'c75f3a55-e444-42f2-9f51-63accb42fc35'
+}
+ GET /api/settings?scope=heavy 200 in 3.0s (compile: 3ms, proxy.ts: 5ms, render: 3.0s)
+[api/settings] [api/settings] [timing] settings.fetch {
+  service: 'api/settings',
+  scope: 'light',
+  provider: 0.11079099999915343,
+  mongo: 3557.1334579999966,
+  total: 3557.289208000002,
+  category: 'NETWORK',
+  otelTraceId: '28c39eefe8ce77880f82bd9f8a1bbeda',
+  otelSpanId: '6ba018a661171018',
+  otelTraceFlags: '01'
+}
+ GET /api/settings?scope=light 200 in 3.6s (compile: 13ms, proxy.ts: 4ms, render: 3.6s)
+ POST /api/settings 200 in 71ms (compile: 1684µs, proxy.ts: 2ms, render: 67ms)
+[api/settings] [api/settings] [settings] cache fallback {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'timeout-prisma-fallback',
+  reason: '[settings] cache miss fetch timed out after 3000ms',
+  category: 'SYSTEM',
+  otelTraceId: 'bc9cb4c6ff6a8c1efe26697be6bb85cf',
+  otelSpanId: '63b75c5cbcc5e154',
+  otelTraceFlags: '01',
+  fingerprint: '772884b32ff22fd8'
+}
+[settings.GET] settings.GET completed successfully {
+  durationMs: 3012,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: 'bc9cb4c6ff6a8c1efe26697be6bb85cf',
+  otelSpanId: '63b75c5cbcc5e154',
+  otelTraceFlags: '01',
+  service: 'settings',
+  traceId: '1418ca4a-e264-45b8-bae7-5a6bbca33d80',
+  correlationId: 'cd3dd387-f64d-4dc0-99fb-9cc81e6becba'
+}
+ GET /api/settings?scope=heavy 200 in 3.0s (compile: 5ms, proxy.ts: 3ms, render: 3.0s)
+[api/settings] [api/settings] [timing] settings.fetch {
+  service: 'api/settings',
+  scope: 'light',
+  provider: 0.013791999997920357,
+  mongo: 3472.107541999998,
+  total: 3472.152209,
+  category: 'NETWORK',
+  otelTraceId: '62664056919e0aa79f2058d9883a730d',
+  otelSpanId: '5527619ef3d19d88',
+  otelTraceFlags: '01'
+}
+[system] [settings] cache {
+  scope: 'light',
+  status: 'miss',
+  otelTraceId: '62664056919e0aa79f2058d9883a730d',
+  otelSpanId: '5527619ef3d19d88',
+  otelTraceFlags: '01'
+}
+[settings.GET] settings.GET completed successfully {
+  durationMs: 3479,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '62664056919e0aa79f2058d9883a730d',
+  otelSpanId: '5527619ef3d19d88',
+  otelTraceFlags: '01',
+  service: 'settings',
+  traceId: '357fc3fc-5f65-4c8f-b35f-be4af0b6cafe',
+  correlationId: '1aa14408-7aa4-4e71-b28f-b6d7bf3e6e4f'
+}
+ GET /api/settings?scope=light 200 in 3.5s (compile: 2ms, proxy.ts: 5ms, render: 3.5s)
+[api/settings] [api/settings] [timing] settings.fetch {
+  service: 'api/settings',
+  scope: 'heavy',
+  provider: 0.6120829999999842,
+  mongo: 12299.991000000002,
+  total: 12300.714083000003,
+  category: 'NETWORK',
+  otelTraceId: '11703c79af4b6b7f1622dd5098ba2643',
+  otelSpanId: 'afd52a101ec904ff',
+  otelTraceFlags: '01'
+}
+[api/settings] [api/settings] [timing] settings.fetch {
+  service: 'api/settings',
+  scope: 'heavy',
+  provider: 0.09329199999774573,
+  mongo: 12152.545833,
+  total: 12152.669167,
+  category: 'NETWORK',
+  otelTraceId: '99f998684dd7bec1169c818519de5485',
+  otelSpanId: '30cfa3502746f290',
+  otelTraceFlags: '01'
+}
+[client-error-reporter] [client-error-reporter] Request timeout after 15000ms {
+  featureFlags: null,
+  tags: null,
+  app: {
+    version: 'unknown',
+    buildId: null,
+    releaseChannel: null,
+    environment: 'development'
+  },
+  route: '/admin/image-studio',
+  query: '',
+  referrer: '',
+  locale: 'en-US',
+  timezone: 'Europe/Warsaw',
+  device: { platform: 'MacIntel', deviceMemory: 8, hardwareConcurrency: 10 },
+  network: { online: true, effectiveType: '4g', downlink: 9.7, rtt: 0 },
+  viewport: { width: 1280, height: 720 },
+  user: {
+    id: '6973e8e16e457862e8b1ba21',
+    email: 'admin@example.com',
+    role: 'super_admin'
+  },
+  endpoint: '/api/ai-paths/settings',
+  method: 'GET',
+  traceId: 'af6c4e20-a20f-427d-8cf7-8b29ae9d8a52',
+  category: 'NETWORK',
+  lastAction: {
+    type: 'submit',
+    target: 'form.space-y-5',
+    timestamp: '2026-03-08T16:08:51.179Z'
+  },
+  url: 'http://127.0.0.1:59147/admin/image-studio',
+  clientTimestamp: '2026-03-08T16:09:19.002Z',
+  clientUserAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36',
+  source: 'client.error.reporter',
+  service: 'client-error-reporter',
+  jobId: undefined,
+  runId: undefined,
+  productId: undefined,
+  error: {
+    message: 'Request timeout after 15000ms',
+    stack: 'Error: Request timeout after 15000ms\n' +
+      '    at apiClient (http://127.0.0.1:59147/_next/static/chunks/src_shared_lib_6d97322c._.js:237:30)',
+    name: 'Error'
+  },
+  errorName: 'Error',
+  otelTraceId: '433bc525516748ec933c99024044e504',
+  otelSpanId: 'ced102a1721c8660',
+  otelTraceFlags: '01',
+  fingerprint: '82e3dd63c66b24e3'
+}
+ POST /api/client-errors 200 in 194ms (compile: 181ms, proxy.ts: 2ms, render: 11ms)
+[client-error-reporter] [client-error-reporter] Request timeout after 15000ms {
+  featureFlags: null,
+  tags: null,
+  app: {
+    version: 'unknown',
+    buildId: null,
+    releaseChannel: null,
+    environment: 'development'
+  },
+  route: '/admin/image-studio',
+  query: '',
+  referrer: '',
+  locale: 'en-US',
+  timezone: 'Europe/Warsaw',
+  device: { platform: 'MacIntel', deviceMemory: 8, hardwareConcurrency: 10 },
+  network: { online: true, effectiveType: '4g', downlink: 9.7, rtt: 0 },
+  viewport: { width: 1280, height: 720 },
+  user: {
+    id: '6973e8e16e457862e8b1ba21',
+    email: 'admin@example.com',
+    role: 'super_admin'
+  },
+  endpoint: '/api/ai-paths/settings',
+  method: 'GET',
+  traceId: 'af6c4e20-a20f-427d-8cf7-8b29ae9d8a52',
+  category: 'NETWORK',
+  lastAction: {
+    type: 'submit',
+    target: 'form.space-y-5',
+    timestamp: '2026-03-08T16:08:51.179Z'
+  },
+  url: 'http://127.0.0.1:59147/admin/image-studio',
+  clientTimestamp: '2026-03-08T16:09:19.004Z',
+  clientUserAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36',
+  source: 'client.error.reporter',
+  service: 'client-error-reporter',
+  jobId: undefined,
+  runId: undefined,
+  productId: undefined,
+  error: {
+    message: 'Request timeout after 15000ms',
+    stack: 'Error: Request timeout after 15000ms\n' +
+      '    at apiClient (http://127.0.0.1:59147/_next/static/chunks/src_shared_lib_6d97322c._.js:237:30)',
+    name: 'Error'
+  },
+  errorName: 'Error',
+  otelTraceId: '15ed5fde7ffa6ac5a709739a00d051b0',
+  otelSpanId: '2785371f1435715e',
+  otelTraceFlags: '01',
+  fingerprint: '82e3dd63c66b24e3'
+}
+ POST /api/client-errors 200 in 196ms (compile: 183ms, proxy.ts: 3ms, render: 10ms)
+[ai-paths-settings-api] [ai-paths-settings-api] GET /api/ai-paths/settings {
+  durationMs: 14699,
+  recordCount: 20,
+  payloadBytes: 1216310,
+  requestedKeys: 0,
+  service: 'ai-paths-settings-api',
+  otelTraceId: 'c1c41ef2e5052c92443f6ac10c000f5a',
+  otelSpanId: '23563d65f18345b5',
+  otelTraceFlags: '01'
+}
+[ai-paths.settings.GET] ai-paths.settings.GET completed successfully {
+  durationMs: 14713,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: 'c1c41ef2e5052c92443f6ac10c000f5a',
+  otelSpanId: '23563d65f18345b5',
+  otelTraceFlags: '01',
+  service: 'ai-paths.settings',
+  traceId: 'af6c4e20-a20f-427d-8cf7-8b29ae9d8a52',
+  correlationId: 'ee97598f-f18f-4e6f-b129-c07e6fbbae0e'
+}
+ GET /api/ai-paths/settings 200 in 16.2s (compile: 1442ms, proxy.ts: 18ms, render: 14.7s)
+ GET /api/ai-paths/settings 200 in 18ms (compile: 2ms, proxy.ts: 2ms, render: 13ms)
+[api/settings] [api/settings] [timing] settings.fetch {
+  service: 'api/settings',
+  scope: 'heavy',
+  provider: 0.09675000000424916,
+  mongo: 12206.994999999995,
+  total: 12208.347542000003,
+  category: 'NETWORK',
+  otelTraceId: 'bc9cb4c6ff6a8c1efe26697be6bb85cf',
+  otelSpanId: '63b75c5cbcc5e154',
+  otelTraceFlags: '01'
+}
+Received SIGTERM, shutting down gracefully... { signal: 'SIGTERM' }
+Server closed undefined

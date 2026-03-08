@@ -94,4 +94,22 @@ describe('KangurGameHomeHeroWidget', () => {
     expect(screen.queryByText('spotlight:/kangur')).toBeNull();
     expect(screen.getByPlaceholderText('Wpisz swoje imie...')).toBeInTheDocument();
   });
+
+  it('stays mounted outside the home screen when the transition override is disabled', () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      basePath: '/kangur',
+      canAccessParentAssignments: false,
+      handleStartGame: vi.fn(),
+      navigateToLogin: vi.fn(),
+      playerName: 'Ala',
+      screen: 'operation',
+      setPlayerName: vi.fn(),
+      user: null,
+    });
+
+    render(<KangurGameHomeHeroWidget hideWhenScreenMismatch={false} />);
+
+    expect(screen.getByTestId('kangur-home-hero-shell')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Wpisz swoje imie...')).toBeInTheDocument();
+  });
 });

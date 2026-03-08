@@ -9,6 +9,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   useRouterMock,
   routerPushMock,
+  routerRefreshMock,
   meMock,
   prepareLoginHrefMock,
   redirectToLoginMock,
@@ -18,6 +19,7 @@ const {
 } = vi.hoisted(() => ({
   useRouterMock: vi.fn(),
   routerPushMock: vi.fn(),
+  routerRefreshMock: vi.fn(),
   meMock: vi.fn(),
   prepareLoginHrefMock: vi.fn(),
   redirectToLoginMock: vi.fn(),
@@ -95,6 +97,7 @@ describe('KangurAuthContext', () => {
     vi.clearAllMocks();
     useRouterMock.mockReturnValue({
       push: routerPushMock,
+      refresh: routerRefreshMock,
     });
     meMock.mockResolvedValue(AUTHENTICATED_USER);
     logoutMock.mockResolvedValue(undefined);
@@ -156,6 +159,8 @@ describe('KangurAuthContext', () => {
 
   it('drops parent-assignment access immediately after logout', async () => {
     const user = userEvent.setup();
+    meMock.mockResolvedValueOnce(AUTHENTICATED_USER);
+    meMock.mockRejectedValueOnce({ status: 401 });
 
     render(
       <KangurAuthProvider>
@@ -174,5 +179,37 @@ describe('KangurAuthContext', () => {
     });
     expect(logoutMock).toHaveBeenCalledTimes(1);
     expect(logoutMock).toHaveBeenCalledWith();
+  });
+
+  it('does not restore the previous session when logout races with an earlier auth check', async () => {
+    const user = userEvent.setup();
+    let resolveInitialAuth: ((value: typeof AUTHENTICATED_USER) => void) | null = null;
+
+    meMock.mockImplementationOnce(
+      () =>
+        new Promise<typeof AUTHENTICATED_USER>((resolve) => {
+          resolveInitialAuth = resolve;
+        })
+    );
+    meMock.mockRejectedValueOnce({ status: 401 });
+
+    render(
+      <KangurAuthProvider>
+        <AuthProbe />
+      </KangurAuthProvider>
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Logout' }));
+
+    resolveInitialAuth?.(AUTHENTICATED_USER);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
+      expect(screen.getByTestId('kangur-parent-assignment-access')).toHaveTextContent('false');
+    });
+
+    expect(logoutMock).toHaveBeenCalledTimes(1);
+    expect(meMock).toHaveBeenCalledTimes(2);
+    expect(routerRefreshMock).toHaveBeenCalledTimes(1);
   });
 });

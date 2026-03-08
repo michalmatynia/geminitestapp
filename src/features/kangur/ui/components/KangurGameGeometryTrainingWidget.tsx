@@ -17,6 +17,7 @@ export function KangurGameGeometryTrainingWidget(): React.JSX.Element | null {
         accent='violet'
         className='max-w-md'
         description='Przejdz przez szybkie zadania z rozpoznawania i rysowania figur.'
+        headingSize='lg'
         onBack={() => setScreen('operation')}
         testId='kangur-geometry-training-top-section'
         title='Ćwiczenia z Figurami'

@@ -10,12 +10,12 @@ const credentialCandidates = [
     password: process.env['E2E_ADMIN_PASSWORD'],
   },
   {
-    email: 'admin@example.com',
-    password: 'admin123',
-  },
-  {
     email: 'e2e.admin@example.com',
     password: 'E2eAdmin!123',
+  },
+  {
+    email: 'admin@example.com',
+    password: 'admin123',
   },
 ].filter(
   (

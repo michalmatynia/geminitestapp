@@ -25,6 +25,7 @@ export function JsonViewer({
   className,
   showCopy = true,
 }: JsonViewerProps): React.JSX.Element {
+  const accessibleLabel = title ? `${title} JSON` : 'JSON content';
   const formattedJson = useMemo(() => {
     const seen = new WeakSet();
     const circularReplacer = (_key: string, value: unknown): unknown => {
@@ -54,9 +55,9 @@ export function JsonViewer({
       {(title || showCopy) && (
         <div className='flex items-center justify-between gap-2 mb-1'>
           {title ? (
-            <h4 className='text-xs font-semibold text-gray-300 uppercase tracking-wider'>
+            <div className='text-xs font-semibold text-gray-300 uppercase tracking-wider'>
               {title}
-            </h4>
+            </div>
           ) : (
             <div />
           )}
@@ -71,12 +72,15 @@ export function JsonViewer({
           )}
         </div>
       )}
-      <pre
-        className='overflow-auto rounded bg-black/40 p-2 font-mono text-[11px] text-gray-300'
+      <div
+        role='region'
+        aria-label={accessibleLabel}
+        tabIndex={0}
+        className='overflow-auto rounded bg-black/40'
         style={{ maxHeight }}
       >
-        {formattedJson}
-      </pre>
+        <pre className='min-w-full p-2 font-mono text-[11px] text-gray-300'>{formattedJson}</pre>
+      </div>
     </div>
   );
 }

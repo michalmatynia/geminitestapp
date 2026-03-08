@@ -1,32 +1,31 @@
-<testsuites id="" name="" tests="1" failures="1" skipped="0" errors="0" time="39.065915000000004">
-<testsuite name="features/accessibility/case-resolver-accessibility.spec.ts" timestamp="2026-03-08T14:55:53.141Z" hostname="" tests="1" failures="1" skipped="0" time="35.114" errors="0">
-<testcase name="case resolver exposes tree controls accessibly and passes the accessibility smoke scan" classname="features/accessibility/case-resolver-accessibility.spec.ts" time="35.114">
+<testsuites id="" name="" tests="1" failures="1" skipped="0" errors="0" time="2.7523980000000003">
+<testsuite name="features/accessibility/case-resolver-accessibility.spec.ts" timestamp="2026-03-08T17:13:26.369Z" hostname="" tests="1" failures="1" skipped="0" time="0.489" errors="0">
+<testcase name="case resolver exposes tree controls accessibly and passes the accessibility smoke scan" classname="features/accessibility/case-resolver-accessibility.spec.ts" time="0.489">
 <failure message="case-resolver-accessibility.spec.ts:7:1 case resolver exposes tree controls accessibly and passes the accessibility smoke scan" type="FAILURE">
 <![CDATA[  features/accessibility/case-resolver-accessibility.spec.ts:7:1 › case resolver exposes tree controls accessibly and passes the accessibility smoke scan 
 
-    Test timeout of 30000ms exceeded.
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:54651/auth/signin?callbackUrl=%2Fadmin%2Fcase-resolver
+    Call log:
+      - navigating to "http://127.0.0.1:54651/auth/signin?callbackUrl=%2Fadmin%2Fcase-resolver", waiting until "domcontentloaded"
 
-    Error: locator.fill: Target page, context or browser has been closed
 
-       at support/admin-auth.ts:44
+       at support/admin-auth.ts:35
 
-      42 |
-      43 |   for (const candidate of credentialCandidates) {
-    > 44 |     await page.getByRole('textbox', { name: /email/i }).fill(candidate.email);
-         |                                                         ^
-      45 |     await page.getByRole('textbox', { name: /password/i }).fill(candidate.password);
-      46 |     await page.getByRole('button', { name: /sign in/i }).click();
-      47 |
-        at ensureAdminSession (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/support/admin-auth.ts:44:57)
-        at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/case-resolver-accessibility.spec.ts:11:3
+      33 |   const destinationUrl = new URL(destination, 'http://localhost');
+      34 |
+    > 35 |   await page.goto(`/auth/signin?callbackUrl=${encodeURIComponent(destination)}`, {
+         |              ^
+      36 |     waitUntil: 'domcontentloaded',
+      37 |     timeout: 60_000,
+      38 |   });
+        at ensureAdminSession (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/support/admin-auth.ts:35:14)
+        at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/case-resolver-accessibility.spec.ts:13:9
 
     attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
     ../tmp/playwright-runs/web/michalmatynia/accessibility-smoke-case-resolver-browser-a11y/test-results/features-accessibility-cas-b74c5-he-accessibility-smoke-scan/test-failed-1.png
     ────────────────────────────────────────────────────────────────────────────────────────────────
 
-    Error Context: ../tmp/playwright-runs/web/michalmatynia/accessibility-smoke-case-resolver-browser-a11y/test-results/features-accessibility-cas-b74c5-he-accessibility-smoke-scan/error-context.md
-
-    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
     ../tmp/playwright-runs/web/michalmatynia/accessibility-smoke-case-resolver-browser-a11y/test-results/features-accessibility-cas-b74c5-he-accessibility-smoke-scan/trace.zip
     Usage:
 
@@ -38,8 +37,6 @@
 <system-out>
 <![CDATA[
 [[ATTACHMENT|test-results/features-accessibility-cas-b74c5-he-accessibility-smoke-scan/test-failed-1.png]]
-
-[[ATTACHMENT|test-results/features-accessibility-cas-b74c5-he-accessibility-smoke-scan/error-context.md]]
 
 [[ATTACHMENT|test-results/features-accessibility-cas-b74c5-he-accessibility-smoke-scan/trace.zip]]
 ]]>

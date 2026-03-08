@@ -316,6 +316,12 @@ export function resolveKangurAiTutorAvailability(
       : { allowed: false, reason: 'lessons_disabled' };
   }
 
+  if (context.surface === 'game') {
+    return settings.allowLessons
+      ? { allowed: true }
+      : { allowed: false, reason: 'lessons_disabled' };
+  }
+
   if (settings.testAccessMode === 'disabled') {
     return { allowed: false, reason: 'tests_disabled' };
   }

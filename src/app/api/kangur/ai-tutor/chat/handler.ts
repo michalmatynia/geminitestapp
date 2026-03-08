@@ -163,6 +163,9 @@ const readStringFact = (
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
 };
 
+const readContextString = (value: string | null | undefined): string | null =>
+  typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+
 const buildRegistryPolicyInstructions = (
   bundle: ContextRegistryResolutionBundle | null | undefined
 ): string[] =>
@@ -184,18 +187,25 @@ const buildContextInstructions = (input: {
   }
 
   const { learnerSnapshot, surfaceContext, assignmentContext } =
-    resolveKangurAiTutorRuntimeDocuments(registryBundle);
+    resolveKangurAiTutorRuntimeDocuments(registryBundle, context);
   const policyInstructions = buildRegistryPolicyInstructions(registryBundle);
+  const surfaceLabel =
+    context.surface === 'test'
+      ? 'test practice'
+      : context.surface === 'game'
+        ? 'game practice'
+        : 'lesson learning';
   const lines: string[] = [
-    `Current Kangur surface: ${context.surface === 'test' ? 'test practice' : 'lesson learning'}.`,
+    `Current Kangur surface: ${surfaceLabel}.`,
   ];
 
-  const title = readStringFact(surfaceContext, 'title');
+  const title = readStringFact(surfaceContext, 'title') ?? readContextString(context.title);
   if (title) {
     lines.push(`Current title: ${title}`);
   }
 
-  const description = readStringFact(surfaceContext, 'description');
+  const description =
+    readStringFact(surfaceContext, 'description') ?? readContextString(context.description);
   if (description) {
     lines.push(`Current description: ${description}`);
   }
@@ -205,14 +215,16 @@ const buildContextInstructions = (input: {
     lines.push(`Learner snapshot: ${learnerSummary}`);
   }
 
-  const masterySummary = readStringFact(surfaceContext, 'masterySummary');
+  const masterySummary =
+    readStringFact(surfaceContext, 'masterySummary') ?? readContextString(context.masterySummary);
   if (masterySummary) {
     lines.push(`Learner mastery snapshot: ${masterySummary}`);
   }
 
   const assignmentSummary =
     readStringFact(assignmentContext, 'assignmentSummary') ??
-    readStringFact(surfaceContext, 'assignmentSummary');
+    readStringFact(surfaceContext, 'assignmentSummary') ??
+    readContextString(context.assignmentSummary);
   if (assignmentSummary) {
     lines.push(`Active assignment or focus: ${assignmentSummary}`);
   }
@@ -226,12 +238,15 @@ const buildContextInstructions = (input: {
     lines.push(`Assignment id in focus: ${context.assignmentId}`);
   }
 
-  const currentQuestion = readStringFact(surfaceContext, 'currentQuestion');
+  const currentQuestion =
+    readStringFact(surfaceContext, 'currentQuestion') ?? readContextString(context.currentQuestion);
   if (currentQuestion) {
     lines.push(`Current question: ${currentQuestion}`);
   }
 
-  const questionProgressLabel = readStringFact(surfaceContext, 'questionProgressLabel');
+  const questionProgressLabel =
+    readStringFact(surfaceContext, 'questionProgressLabel') ??
+    readContextString(context.questionProgressLabel);
   if (questionProgressLabel) {
     lines.push(`Question progress: ${questionProgressLabel}`);
   }
@@ -262,6 +277,14 @@ const buildContextInstructions = (input: {
       context.answerRevealed
         ? 'The learner has already answered or revealed this question. You may explain the reasoning, but still avoid doing the whole test for them.'
         : 'The learner is in an active test question. Do not reveal the final answer, the correct option label, or solve the problem outright.'
+    );
+  }
+
+  if (context.surface === 'game' && currentQuestion) {
+    lines.push(
+      context.answerRevealed
+        ? 'The learner has already seen the practice outcome. You may review the reasoning and next step, but avoid doing future problems for them.'
+        : 'The learner is in an active practice question. Do not reveal the final answer or solve the problem outright.'
     );
   }
 
@@ -497,7 +520,9 @@ export async function postKangurAiTutorChatHandler(
           sourceLabel:
             context?.surface === 'test'
               ? `Kangur test${context?.contentId ? ` · ${context.contentId}` : ''}`
-              : `Kangur lesson${context?.contentId ? ` · ${context.contentId}` : ''}`,
+              : context?.surface === 'game'
+                ? `Kangur game${context?.contentId ? ` · ${context.contentId}` : ''}`
+                : `Kangur lesson${context?.contentId ? ` · ${context.contentId}` : ''}`,
           sourceCreatedAt: new Date().toISOString(),
           sessionId: personaMemorySessionId,
           userMessage: latestUserMessage,

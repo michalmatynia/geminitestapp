@@ -41,6 +41,17 @@ describe('ClockLesson sectioned structure', () => {
       </KangurLessonNavigationProvider>
     );
 
+  const openMinutesSection = (): void => {
+    fireEvent.click(screen.getByTestId('clock-lesson-section-slide-hours-2'));
+    fireEvent.click(screen.getByTestId('clock-lesson-section-toggle-minutes'));
+  };
+
+  const openCombinedSection = (): void => {
+    openMinutesSection();
+    fireEvent.click(screen.getByTestId('clock-lesson-section-slide-minutes-2'));
+    fireEvent.click(screen.getByTestId('clock-lesson-section-toggle-combined'));
+  };
+
   it('renders three collapsible sections and opens the hours section by default', () => {
     renderClockLesson();
 
@@ -90,6 +101,12 @@ describe('ClockLesson sectioned structure', () => {
     expect(screen.queryByText('Co pokazuje długa wskazówka?')).toBeNull();
     expect(screen.queryAllByTestId('clock-lesson-hour-hand').length).toBeGreaterThan(0);
     expect(screen.queryAllByTestId('clock-lesson-minute-hand')).toHaveLength(0);
+    expect(screen.getByRole('button', { name: 'Wróć do tematów' })).toHaveClass(
+      'kangur-cta-pill',
+      'surface-cta'
+    );
+    expect(screen.queryByRole('button', { name: /dalej/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /wstecz/i })).toBeNull();
     expect(screen.queryByRole('button', { name: /czytaj/i })).toBeNull();
     expect(screen.getByTestId('clock-lesson-section-status-hours')).toHaveTextContent('W trakcie');
     expect(screen.getByTestId('clock-lesson-section-status-minutes')).toHaveTextContent(
@@ -113,9 +130,7 @@ describe('ClockLesson sectioned structure', () => {
   it('opens the minutes section after completing the hours section', async () => {
     renderClockLesson();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Dalej' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Dalej' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Następna sekcja' }));
+    openMinutesSection();
 
     await waitFor(() => {
       expect(screen.getByText('Co pokazuje długa wskazówka?')).toBeInTheDocument();
@@ -150,17 +165,7 @@ describe('ClockLesson sectioned structure', () => {
   it('shows training CTA only on the last slide of the combined section', async () => {
     renderClockLesson();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Dalej' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Dalej' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Następna sekcja' }));
-
-    await waitFor(() => {
-      expect(screen.getByText('Co pokazuje długa wskazówka?')).toBeInTheDocument();
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Dalej' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Dalej' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Następna sekcja' }));
+    openCombinedSection();
 
     await waitFor(() => {
       expect(screen.getByText('Jak łączyć obie wskazówki?')).toBeInTheDocument();
@@ -168,12 +173,12 @@ describe('ClockLesson sectioned structure', () => {
 
     expect(screen.queryByRole('button', { name: 'Ćwiczenie z zegarem 🕐' })).toBeNull();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Dalej' }));
+    fireEvent.click(screen.getByTestId('clock-lesson-section-slide-combined-1'));
     await waitFor(() => {
       expect(screen.getByText('Kwadrans po i kwadrans do')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Dalej' }));
+    fireEvent.click(screen.getByTestId('clock-lesson-section-slide-combined-2'));
     await waitFor(() => {
       expect(screen.getByText('Gotowy/a na ćwiczenie')).toBeInTheDocument();
     });
@@ -210,9 +215,7 @@ describe('ClockLesson sectioned structure', () => {
   it('marks previous section as completed when moving to next section', async () => {
     renderClockLesson();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Dalej' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Dalej' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Następna sekcja' }));
+    openMinutesSection();
 
     await waitFor(() => {
       expect(screen.getByText('Co pokazuje długa wskazówka?')).toBeInTheDocument();
@@ -230,9 +233,7 @@ describe('ClockLesson sectioned structure', () => {
       'Zablokowana'
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Dalej' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Dalej' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Następna sekcja' }));
+    openMinutesSection();
 
     await waitFor(() => {
       expect(screen.getByText('Co pokazuje długa wskazówka?')).toBeInTheDocument();
@@ -244,9 +245,8 @@ describe('ClockLesson sectioned structure', () => {
     expect(screen.queryByTestId('clock-lesson-section-locked-hint-minutes')).toBeNull();
     expect(screen.getByTestId('clock-lesson-section-locked-hint-combined')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Dalej' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Dalej' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Następna sekcja' }));
+    fireEvent.click(screen.getByTestId('clock-lesson-section-slide-minutes-2'));
+    fireEvent.click(screen.getByTestId('clock-lesson-section-toggle-combined'));
 
     await waitFor(() => {
       expect(screen.getByText('Jak łączyć obie wskazówki?')).toBeInTheDocument();

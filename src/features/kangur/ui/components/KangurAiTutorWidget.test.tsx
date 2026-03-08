@@ -101,8 +101,9 @@ vi.mock('next/link', () => ({
   default: ({
     href,
     children,
+    scroll: _scroll,
     ...props
-  }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
+  }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; scroll?: boolean }) => (
     <a href={href} {...props}>
       {children}
     </a>
@@ -767,12 +768,14 @@ describe('KangurAiTutorWidget', () => {
       'data-avatar-placement',
       'hidden'
     );
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute('data-has-pointer', 'false');
     expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute(
       'data-open-animation',
       'fade'
     );
     expect(screen.getByTestId('kangur-ai-tutor-focus-chip')).toHaveTextContent('Fragment lekcji');
     expect(screen.getByRole('button', { name: 'Ten fragment' })).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-pointer')).not.toBeInTheDocument();
   });
 
   it('attaches the anchored tutor launcher to the open panel instead of rendering it as a separate floater', () => {
@@ -786,10 +789,15 @@ describe('KangurAiTutorWidget', () => {
       'data-avatar-attachment-side',
       'left'
     );
+    expect(screen.getByTestId('kangur-ai-tutor-pointer')).toHaveAttribute(
+      'data-pointer-side',
+      'left'
+    );
     expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute(
       'data-avatar-placement',
       'attached'
     );
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute('data-has-pointer', 'true');
   });
 
   it('launches the anchored tutor from the dock and prefers empty space beside the highlighted lesson block', () => {
@@ -811,6 +819,14 @@ describe('KangurAiTutorWidget', () => {
       'data-avatar-attachment-side',
       'left'
     );
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute(
+      'data-pointer-side',
+      'left'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-pointer')).toHaveAttribute(
+      'data-pointer-side',
+      'left'
+    );
   });
 
   it('switches the anchored tutor to the left side when the highlighted block occupies the right edge', () => {
@@ -829,6 +845,14 @@ describe('KangurAiTutorWidget', () => {
     );
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
       'data-avatar-attachment-side',
+      'right'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute(
+      'data-pointer-side',
+      'right'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-pointer')).toHaveAttribute(
+      'data-pointer-side',
       'right'
     );
   });
@@ -926,10 +950,12 @@ describe('KangurAiTutorWidget', () => {
       'data-open-animation',
       'sheet'
     );
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute('data-has-pointer', 'false');
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
       'data-avatar-placement',
       'attached'
     );
+    expect(screen.queryByTestId('kangur-ai-tutor-pointer')).not.toBeInTheDocument();
   });
 
   it('uses the outside-dismiss path for the mobile backdrop', () => {
@@ -1367,6 +1393,75 @@ describe('KangurAiTutorWidget', () => {
         title: 'Kangur Mini',
         action: 'review',
         promptMode: 'explain',
+      })
+    );
+  });
+
+  it('uses question-oriented actions on the game surface', async () => {
+    useKangurAiTutorMock.mockReturnValue({
+      enabled: true,
+      tutorSettings: {
+        enabled: true,
+        agentPersonaId: null,
+        motionPresetId: null,
+        uiMode: 'anchored',
+        allowCrossPagePersistence: true,
+        allowLessons: true,
+        testAccessMode: 'guided',
+        showSources: true,
+        allowSelectedTextSupport: true,
+        dailyMessageLimit: null,
+      },
+      tutorName: 'Pomocnik',
+      sessionContext: {
+        surface: 'game',
+        contentId: 'game',
+        title: 'Pytanie do rozwiazania',
+        currentQuestion: 'Ile to 8 + 5?',
+        questionProgressLabel: 'Pytanie 2/10',
+      },
+      isOpen: true,
+      messages: [],
+      isLoading: false,
+      isUsageLoading: false,
+      highlightedText: null,
+      usageSummary: null,
+      openChat: openChatMock,
+      closeChat: closeChatMock,
+      sendMessage: sendMessageMock,
+      setHighlightedText: setHighlightedTextMock,
+    });
+
+    useKangurTextHighlightMock.mockReturnValue({
+      selectedText: null,
+      selectionRect: null,
+      clearSelection: clearSelectionMock,
+    });
+
+    render(<KangurAiTutorWidget />);
+
+    expect(screen.getByRole('button', { name: 'Podpowiedz' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Jak myslec?' })).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Popros o wskazowke do pytania')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Podpowiedz' }));
+
+    await waitFor(() =>
+      expect(sendMessageMock).toHaveBeenCalledWith(
+        'Daj mi małą podpowiedź, ale bez gotowej odpowiedzi.',
+        expect.objectContaining({
+          promptMode: 'hint',
+          interactionIntent: 'hint',
+        })
+      )
+    );
+    expect(trackKangurClientEventMock).toHaveBeenCalledWith(
+      'kangur_ai_tutor_quick_action_clicked',
+      expect.objectContaining({
+        surface: 'game',
+        title: 'Pytanie do rozwiazania',
+        action: 'hint',
+        promptMode: 'hint',
       })
     );
   });

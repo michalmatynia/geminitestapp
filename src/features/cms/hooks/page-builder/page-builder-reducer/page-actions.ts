@@ -3,7 +3,7 @@ import type {
   PageBuilderState,
   PageBuilderAction,
   SectionInstance,
-} from '../../../types/page-builder';
+} from '@/features/cms/types/page-builder';
 
 export function reducePageActions(
   state: PageBuilderState,

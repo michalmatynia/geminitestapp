@@ -17,9 +17,9 @@ import { useOptionalTreeColumnId } from './TreeColumnContext';
 import { useOptionalTreeParentBlockId } from './TreeParentBlockContext';
 import { useOptionalTreeRowId } from './TreeRowContext';
 import { useTreeSectionId } from './TreeSectionContext';
-import { useDragStateExtract } from '../../../hooks/useDragStateExtract';
-import { usePageBuilder } from '../../../hooks/usePageBuilderContext';
-import { useTreeActions } from '../../../hooks/useTreeActionsContext';
+import { useDragStateExtract } from '@/features/cms/hooks/useDragStateExtract';
+import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
+import { useTreeActions } from '@/features/cms/hooks/useTreeActionsContext';
 import { readBlockDragData, setBlockDragData } from '@/features/cms/utils/page-builder-dnd';
 
 import type { BlockNodeItemProps } from './tree-types';

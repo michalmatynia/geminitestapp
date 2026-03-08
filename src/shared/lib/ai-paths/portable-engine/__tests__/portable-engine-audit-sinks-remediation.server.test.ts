@@ -9,6 +9,8 @@ import {
   savePortablePathAuditSinkAutoRemediationDeadLetters,
 } from '../sinks.server';
 
+const asFetch = (value: ReturnType<typeof vi.fn>): typeof fetch => value as typeof fetch;
+
 const createNotificationInput = () => ({
   summary: {
     profile: 'prod' as const,
@@ -61,7 +63,7 @@ describe('portable-engine remediation notifications', () => {
       webhookSecret: 'signing-secret',
       webhookSignatureKeyId: 'rotation-v2',
       now: '2026-03-05T00:00:00.000Z',
-      fetchImpl: fetchMock as unknown as typeof fetch,
+      fetchImpl: asFetch(fetchMock),
     });
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -101,7 +103,7 @@ describe('portable-engine remediation notifications', () => {
       webhookUrl: 'https://example.test/remediation',
       webhookSecret: 'signing-secret',
       now: '2026-03-05T00:00:00.000Z',
-      fetchImpl: fetchMock as unknown as typeof fetch,
+      fetchImpl: asFetch(fetchMock),
       deadLetterReadRaw: async () => rawStore,
       deadLetterWriteRaw: async (raw: string): Promise<boolean> => {
         rawStore = raw;
@@ -279,7 +281,7 @@ describe('portable-engine remediation notifications', () => {
       maxEntries: 10,
       now: '2026-03-05T00:10:00.000Z',
       webhookSecret: 'replay-secret',
-      fetchImpl: fetchMock as unknown as typeof fetch,
+      fetchImpl: asFetch(fetchMock),
       writeLog: async () => {},
       readRaw,
       writeRaw,
@@ -339,7 +341,7 @@ describe('portable-engine remediation notifications', () => {
       maxEntries: 10,
       now: '2026-03-05T00:20:00.000Z',
       webhookSecret: 'replay-secret',
-      fetchImpl: fetchMock as unknown as typeof fetch,
+      fetchImpl: asFetch(fetchMock),
       writeLog: async () => {},
       readRaw,
       writeRaw,
@@ -406,7 +408,7 @@ describe('portable-engine remediation notifications', () => {
       replayWindowSeconds: 300,
       endpointAllowlist: ['https://example.test/remediation'],
       webhookSecret: 'replay-secret',
-      fetchImpl: fetchMock as unknown as typeof fetch,
+      fetchImpl: asFetch(fetchMock),
       writeLog: async () => {},
       readRaw,
       writeRaw,
@@ -467,7 +469,7 @@ describe('portable-engine remediation notifications', () => {
       now: '2026-03-05T00:20:00.000Z',
       endpointAllowlist: ['https://example.test/other'],
       webhookSecret: 'replay-secret',
-      fetchImpl: fetchMock as unknown as typeof fetch,
+      fetchImpl: asFetch(fetchMock),
       writeLog: async () => {},
       readRaw,
       writeRaw,

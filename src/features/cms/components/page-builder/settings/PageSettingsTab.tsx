@@ -5,11 +5,11 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input } from '@/shared/ui';
 
-import { useCmsAllSlugs } from '../../../hooks/useCmsQueries';
-import { usePageBuilder } from '../../../hooks/usePageBuilderContext';
+import { useCmsAllSlugs } from '@/features/cms/hooks/useCmsQueries';
+import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
 import { CmsDomainSelector } from '../../CmsDomainSelector';
 
-import type { Slug } from '../../../types';
+import type { Slug } from '@/features/cms/types';
 import { PageSettingsTabContent } from './page-settings/PageSettingsTabContent';
 import { PageSeoTabContent } from './page-settings/PageSeoTabContent';
 import { PageAiTabContent } from './page-settings/PageAiTabContent';

@@ -84,7 +84,7 @@ const envSchema = z.object({
  * Validated environment variables.
  * In development, missing vars will throw a clear error.
  */
-function getEnv() {
+function getEnv(): z.infer<typeof envSchema> {
   const result = envSchema.safeParse(process.env);
 
   if (!result.success) {
@@ -102,7 +102,12 @@ function getEnv() {
     }
 
     // In dev, we return partially valid env to allow starting
-    return process.env as unknown as z.infer<typeof envSchema>;
+    const fallbackEnv = envSchema.parse({});
+    const partialEnv = envSchema.partial().parse(process.env);
+    return {
+      ...fallbackEnv,
+      ...partialEnv,
+    };
   }
 
   return result.data;

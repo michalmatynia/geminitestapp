@@ -9,7 +9,7 @@ import { KANGUR_WIDGET_OPTIONS } from '@/shared/lib/kangur-cms-adapter';
 
 import { colorSchemeField, paddingFields } from './shared-field-helpers';
 
-import type { BlockDefinition } from '../../../types/page-builder';
+import type { BlockDefinition } from '@/features/cms/types/page-builder';
 
 export const mediaBlockDefinitions: Record<string, BlockDefinition> = {
   ImageElement: {

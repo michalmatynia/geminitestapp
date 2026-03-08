@@ -3,7 +3,7 @@ import type {
   NodeHandlerContext,
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths-runtime';
-import { coerceInput, hashRuntimeValue, parseJsonSafe } from '../../../utils';
+import { coerceInput, hashRuntimeValue, parseJsonSafe } from '@/shared/lib/ai-paths/core/utils';
 
 const coerceIteratorItems = (value: unknown): unknown[] => {
   if (value === undefined || value === null) return [];

@@ -2,7 +2,7 @@
 
 import React, { useCallback } from 'react';
 import { ToggleRow } from '@/shared/ui';
-import { usePageBuilderState, usePageBuilderDispatch } from '../../../hooks/usePageBuilderContext';
+import { usePageBuilderState, usePageBuilderDispatch } from '@/features/cms/hooks/usePageBuilderContext';
 import type { InspectorSettings } from '@/shared/contracts/cms';
 
 export function InspectorOptions(): React.JSX.Element | null {

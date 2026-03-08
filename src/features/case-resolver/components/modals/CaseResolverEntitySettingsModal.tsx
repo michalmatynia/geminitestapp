@@ -47,7 +47,7 @@ export function CaseResolverEntitySettingsModalProvider<TItem, TForm extends obj
 }: CaseResolverEntitySettingsModalProviderProps<TItem, TForm>): React.JSX.Element {
   return (
     <CaseResolverEntitySettingsModalRuntimeContext.Provider
-      value={value as unknown as CaseResolverEntitySettingsModalRuntimeAny}
+      value={value as CaseResolverEntitySettingsModalRuntimeAny}
     >
       {children}
     </CaseResolverEntitySettingsModalRuntimeContext.Provider>

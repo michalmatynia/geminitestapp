@@ -11,7 +11,7 @@ import {
   sectionStyleFields,
 } from './shared-field-helpers';
 
-import type { SectionDefinition } from '../../../types/page-builder';
+import type { SectionDefinition } from '@/features/cms/types/page-builder';
 
 // ---------------------------------------------------------------------------
 // Section definitions

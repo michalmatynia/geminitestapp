@@ -11,7 +11,7 @@ import {
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
-import { assertPlaywrightRunAccess } from '../../../access';
+import { assertPlaywrightRunAccess } from '@/app/api/ai-paths/playwright/access';
 
 const guessContentType = (fileName: string): string => {
   const normalized = fileName.toLowerCase();

@@ -6,8 +6,8 @@ import {
   stampCaseResolverWorkspaceMutation,
   getCaseResolverWorkspaceRevision,
   persistCaseResolverWorkspaceSnapshot,
-} from '../../../workspace-persistence';
-import { createCaseResolverFile } from '../../../settings';
+} from '@/features/case-resolver/workspace-persistence';
+import { createCaseResolverFile } from '@/features/case-resolver/settings';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { isDescendantCaseId } from '../utils';
 import { waitForCaseAvailability } from './case-availability';

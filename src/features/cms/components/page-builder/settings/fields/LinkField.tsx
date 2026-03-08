@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { Link2 } from 'lucide-react';
 import { Button, Input } from '@/shared/ui';
 import { SelectModal, type SelectOption } from '@/shared/ui/templates/modals/SelectModal';
-import { useCmsSlugs } from '../../../../hooks/useCmsQueries';
+import { useCmsSlugs } from '@/features/cms/hooks/useCmsQueries';
 
 export function LinkField(props: {
   value: string;

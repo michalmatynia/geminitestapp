@@ -28,7 +28,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
-import type { BlockInstance } from '../../../types/page-builder';
+import type { BlockInstance } from '@/features/cms/types/page-builder';
 
 // ---------------------------------------------------------------------------
 // Icon Mappings

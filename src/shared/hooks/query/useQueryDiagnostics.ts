@@ -34,9 +34,10 @@ const buildSnapshot = (queryClient: QueryClient): QueryDiagnosticsItem[] => {
         const errorUpdatedAt = query.state.errorUpdatedAt;
         const observers = query.getObserversCount();
         const isInvalidated = Boolean(query.state.isInvalidated);
+        const queryWithStale = query as Query & { isStale?: () => boolean };
         const isStale =
-          typeof (query as unknown as { isStale: () => boolean }).isStale === 'function'
-            ? (query as unknown as { isStale: () => boolean }).isStale()
+          typeof queryWithStale.isStale === 'function'
+            ? queryWithStale.isStale()
             : isInvalidated;
         let dataSize: number | null = null;
         if (query.state.data !== undefined) {

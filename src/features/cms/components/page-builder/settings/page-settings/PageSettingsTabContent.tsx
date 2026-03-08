@@ -2,12 +2,12 @@
 
 import React, { useMemo, useState } from 'react';
 import { Button, Input, Label, Checkbox, Badge, ToggleRow, SegmentedControl } from '@/shared/ui';
-import { usePageBuilder } from '../../../../hooks/usePageBuilderContext';
-import { useCmsDomainSelection } from '../../../../hooks/useCmsDomainSelection';
-import { useCmsSlugs, useUpdateSlug } from '../../../../hooks/useCmsQueries';
+import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
+import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
+import { useCmsSlugs, useUpdateSlug } from '@/features/cms/hooks/useCmsQueries';
 import { useUserPreferences, useUpdateUserPreferences } from '@/shared/hooks/useUserPreferences';
-import type { PageStatus, Slug } from '../../../../types';
-import { normalizePageSlugValues } from '../../../../utils/slug-utils';
+import type { PageStatus, Slug } from '@/features/cms/types';
+import { normalizePageSlugValues } from '@/features/cms/utils/slug-utils';
 
 const STATUS_OPTIONS: { label: string; value: PageStatus }[] = [
   { label: 'Draft', value: 'draft' },

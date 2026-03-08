@@ -235,8 +235,8 @@ export const compileCaseResolverPrompt = (
   options: CaseResolverCompileOptions = {}
 ): CaseResolverCompileResult => {
   try {
-    const graphNodes = graph.nodes as unknown as AiNode[];
-    const graphEdges = graph.edges as unknown as Edge[];
+    const graphNodes = graph.nodes as AiNode[];
+    const graphEdges = graph.edges as Edge[];
     const nodeById = new Map<string, AiNode>(
       graphNodes.map((node: AiNode): [string, AiNode] => [node.id, node])
     );

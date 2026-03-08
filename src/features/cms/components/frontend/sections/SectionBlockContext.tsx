@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext } from 'react';
 
-import type { BlockInstance } from '../../../types/page-builder';
+import type { BlockInstance } from '@/features/cms/types/page-builder';
 
 type SectionBlockData = {
   sectionId?: string | undefined;

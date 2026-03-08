@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { Trash2 } from 'lucide-react';
 import { Button, FormSection, LoadingState, StatusBadge } from '@/shared/ui';
 import { cn } from '@/shared/utils';
-import { useProductStudioContext } from '../../../context/ProductStudioContext';
+import { useProductStudioContext } from '@/features/products/context/ProductStudioContext';
 import { getImageStudioSlotImageSrc } from '@/shared/lib/image-studio-adapter';
 import { useProductSettings } from '@/features/products/hooks/useProductSettings';
 

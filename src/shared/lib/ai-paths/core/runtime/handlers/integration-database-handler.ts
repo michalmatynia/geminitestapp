@@ -19,7 +19,7 @@ import {
   withAiPathsCollectionMapInput,
 } from '@/shared/lib/ai-paths/core/utils/collection-mapping';
 
-import type { SchemaResponse } from '../../../api/client';
+import type { SchemaResponse } from '@/shared/lib/ai-paths/api/client';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 const WRITE_ACTION_CATEGORIES = new Set<string>(['create', 'update', 'delete']);

@@ -421,7 +421,7 @@ export function CaseResolverCanvasWorkspace(): React.JSX.Element {
   return (
     <AiPathsProvider
       initialNodes={normalizeNodes(activeFile.graph?.nodes || [])}
-      initialEdges={(activeFile.graph?.edges || []) as unknown as AiEdge[]}
+      initialEdges={(activeFile.graph?.edges || []) as AiEdge[]}
       initialLoading={false}
       initialRuntimeState={EMPTY_RUNTIME_STATE}
     >
@@ -439,6 +439,6 @@ function normalizeNodes(nodes: unknown[]): AiNode[] {
       position: (n['position'] as { x: number; y: number }) || { x: 0, y: 0 },
       createdAt: (n['createdAt'] as string) || new Date().toISOString(),
       updatedAt: (n['updatedAt'] as string) || new Date().toISOString(),
-    } as unknown as AiNode;
+    } as AiNode;
   });
 }

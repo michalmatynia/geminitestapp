@@ -39,7 +39,7 @@ import {
 import { TextAtomBlock, TextAtomLetterBlock } from '../blocks/TextAtomBlock';
 import { TextBlock, TextElementBlock } from '../blocks/TextBlock';
 
-import type { BlockInstance } from '../../../types/page-builder';
+import type { BlockInstance } from '@/features/cms/types/page-builder';
 
 export { BlockSettingsContext };
 export const useBlockSettings = useBlockSettingsFromBlockContext;

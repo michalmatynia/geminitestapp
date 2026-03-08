@@ -31,7 +31,7 @@ vi.mock('../AiPathsSettingsPageContext', () => ({
   useAiPathsSettingsPageContext: () => pageContextMock,
 }));
 
-vi.mock('../../../context', () => ({
+vi.mock('@/features/ai/ai-paths/context', () => ({
   useSelectionState: () => ({
     selectionToolMode: 'pan',
     selectedNodeIds: ['node-a'],

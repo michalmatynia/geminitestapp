@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { useRuntimeState } from '../../../context';
+import { useRuntimeState } from '@/features/ai/ai-paths/context';
 import { StatusBadge, EmptyState } from '@/shared/ui';
 
 export function AiPathsRuntimeLog(): React.JSX.Element {

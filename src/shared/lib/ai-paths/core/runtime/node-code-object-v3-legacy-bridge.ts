@@ -1,4 +1,4 @@
-import nodeCodeObjectV3ContractsJson from '../../../../../../docs/ai-paths/node-code-objects-v3/contracts.json';
+import nodeCodeObjectV3ContractsJson from '@docs/ai-paths/node-code-objects-v3/contracts.json';
 
 import type { NodeHandler } from '@/shared/contracts/ai-paths-runtime';
 

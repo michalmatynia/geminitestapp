@@ -7,7 +7,7 @@ import type { VectorShape } from '@/shared/contracts/vector';
 import type {
   PreviewCanvasCropRect,
   PreviewCanvasImageContentFrame,
-} from '../../../context/UiContext';
+} from '@/features/ai/image-studio/context/UiContext';
 
 export interface CenterPreviewCanvasContextValue {
   vectorContextValue: VectorDrawingContextValue;

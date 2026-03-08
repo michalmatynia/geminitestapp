@@ -4,7 +4,7 @@ import { FrontendBlockRenderer } from './FrontendBlockRenderer';
 import { useSectionBlockData } from './SectionBlockContext';
 import { useMediaStyles } from '../media-styles-context';
 
-import type { BlockInstance } from '../../../types/page-builder';
+import type { BlockInstance } from '@/features/cms/types/page-builder';
 
 export function FrontendHeroBlock(): React.ReactNode {
   const { settings, blocks } = useSectionBlockData();

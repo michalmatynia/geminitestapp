@@ -6,7 +6,7 @@ import {
   useComponentTreePanelActions,
   useComponentTreePanelState,
 } from './ComponentTreePanelContext';
-import { useDragState } from '../../../hooks/useDragStateContext';
+import { useDragState } from '@/features/cms/hooks/useDragStateContext';
 import { TreeSectionPicker } from './TreeSectionPicker';
 import { Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';

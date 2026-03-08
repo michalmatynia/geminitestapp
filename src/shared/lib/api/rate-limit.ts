@@ -144,7 +144,10 @@ const getClientIp = (req: NextRequest): string => {
   }
   const realIp = req.headers.get('x-real-ip');
   if (realIp) return realIp;
-  return (req as unknown as { ip?: string }).ip || 'unknown';
+  if ('ip' in req && typeof req.ip === 'string' && req.ip) {
+    return req.ip;
+  }
+  return 'unknown';
 };
 
 export const rateLimiters = {

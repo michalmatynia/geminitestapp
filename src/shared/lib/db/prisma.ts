@@ -5,9 +5,9 @@ import { Pool } from 'pg';
 const databaseUrl = process.env['DATABASE_URL'];
 const isTestEnv = process.env['NODE_ENV'] === 'test';
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined;
-  pgPool: Pool | undefined;
+const globalForPrisma = globalThis as typeof globalThis & {
+  prisma?: PrismaClient;
+  pgPool?: Pool;
 };
 
 const createPrismaClient = () => {
@@ -27,7 +27,7 @@ const createPrismaClient = () => {
           return false;
         },
       }
-    ) as unknown as PrismaClient;
+    ) as PrismaClient;
   }
 
   const pool = new Pool({ connectionString: databaseUrl });

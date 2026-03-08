@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { FormField, SelectSimple } from '@/shared/ui';
-import { useProductStudioContext } from '../../../context/ProductStudioContext';
+import { useProductStudioContext } from '@/features/products/context/ProductStudioContext';
 
 export function StudioProjectField(): React.JSX.Element {
   const { studioProjectId, setStudioProjectId, studioProjectOptions, isStudioLoading } =

@@ -33,6 +33,10 @@ const toJsonResponse = (status: number, body: unknown): Response =>
     },
   });
 
+const installFetchMock = (fetchMock: ReturnType<typeof vi.fn>): void => {
+  globalThis.fetch = fetchMock as typeof globalThis.fetch;
+};
+
 describe('case-resolver workspace persistence', () => {
   let originalFetch: typeof globalThis.fetch;
 
@@ -86,7 +90,7 @@ describe('case-resolver workspace persistence', () => {
         currentRevision: serverWorkspace.workspaceRevision,
       })
     );
-    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    installFetchMock(fetchMock);
 
     const result = await persistCaseResolverWorkspaceSnapshot({
       workspace: localWorkspace,
@@ -115,7 +119,7 @@ describe('case-resolver workspace persistence', () => {
         idempotent: true,
       })
     );
-    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    installFetchMock(fetchMock);
 
     const result = await persistCaseResolverWorkspaceSnapshot({
       workspace: localWorkspace,
@@ -173,7 +177,7 @@ describe('case-resolver workspace persistence', () => {
           value: body.value,
         });
       });
-    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    installFetchMock(fetchMock);
 
     const result = await persistCaseResolverWorkspaceSnapshot({
       workspace: workspaceWithHistory,
@@ -261,7 +265,7 @@ describe('case-resolver workspace persistence', () => {
           value: body.value,
         });
       });
-    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    installFetchMock(fetchMock);
 
     const result = await persistCaseResolverWorkspaceSnapshot({
       workspace: lightweightWorkspace,
@@ -292,7 +296,7 @@ describe('case-resolver workspace persistence', () => {
       ],
     };
     const fetchMock = vi.fn().mockResolvedValue(toJsonResponse(200, { ok: true }));
-    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    installFetchMock(fetchMock);
 
     const result = await persistCaseResolverWorkspaceSnapshot({
       workspace,

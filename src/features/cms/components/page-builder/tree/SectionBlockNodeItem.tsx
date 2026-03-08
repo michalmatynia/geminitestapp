@@ -14,9 +14,9 @@ import {
 import { DRAG_KEYS, hasDragType } from '@/shared/utils/drag-drop';
 
 import { BLOCK_ICONS, CONVERTIBLE_SECTION_TYPES, resolveBlockLabel } from './tree-constants';
-import { useDragStateExtract } from '../../../hooks/useDragStateExtract';
-import { usePageBuilder } from '../../../hooks/usePageBuilderContext';
-import { useTreeActions } from '../../../hooks/useTreeActionsContext';
+import { useDragStateExtract } from '@/features/cms/hooks/useDragStateExtract';
+import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
+import { useTreeActions } from '@/features/cms/hooks/useTreeActionsContext';
 import { readBlockDragData, setBlockDragData } from '@/features/cms/utils/page-builder-dnd';
 import { ColumnBlockPicker } from '../ColumnBlockPicker';
 import { BlockNodeItem } from './BlockNodeItem';
@@ -25,7 +25,7 @@ import { TreeParentBlockProvider } from './TreeParentBlockContext';
 import { useTreeSectionId } from './TreeSectionContext';
 
 import type { SectionBlockNodeItemProps } from './tree-types';
-import type { BlockInstance } from '../../../types/page-builder';
+import type { BlockInstance } from '@/features/cms/types/page-builder';
 
 export function SectionBlockNodeItem(props: SectionBlockNodeItemProps): React.ReactNode {
   const { block, index } = props;

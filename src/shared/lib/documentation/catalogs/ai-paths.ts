@@ -6,7 +6,7 @@ import {
 import {
   AI_PATHS_TOOLTIP_CATALOG,
   type AiPathsTooltipDocEntry,
-} from '../../../../../docs/ai-paths/tooltip-catalog';
+} from '@docs/ai-paths/tooltip-catalog';
 
 export type AiPathsDocEntry = AiPathsTooltipDocEntry;
 

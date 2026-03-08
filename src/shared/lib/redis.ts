@@ -34,8 +34,8 @@ const captureException = async (
   }
 };
 
-const globalForRedis = global as unknown as {
-  redis: Redis | undefined;
+const globalForRedis = global as typeof global & {
+  redis?: Redis;
   redisInitializedAtMs?: number;
 };
 

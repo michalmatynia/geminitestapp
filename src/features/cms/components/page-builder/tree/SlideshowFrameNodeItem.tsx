@@ -13,9 +13,9 @@ import {
 } from '@/shared/ui';
 import { DRAG_KEYS, hasDragType } from '@/shared/utils/drag-drop';
 
-import { useDragStateExtract } from '../../../hooks/useDragStateExtract';
-import { usePageBuilder } from '../../../hooks/usePageBuilderContext';
-import { useTreeActions } from '../../../hooks/useTreeActionsContext';
+import { useDragStateExtract } from '@/features/cms/hooks/useDragStateExtract';
+import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
+import { useTreeActions } from '@/features/cms/hooks/useTreeActionsContext';
 import {
   readBlockDragData,
   readSectionDragData,
@@ -29,7 +29,7 @@ import { TreeParentBlockProvider } from './TreeParentBlockContext';
 import { useTreeSectionId } from './TreeSectionContext';
 
 import type { SlideshowFrameNodeItemProps } from './tree-types';
-import type { BlockInstance } from '../../../types/page-builder';
+import type { BlockInstance } from '@/features/cms/types/page-builder';
 
 export function SlideshowFrameNodeItem(props: SlideshowFrameNodeItemProps): React.ReactNode {
   const { frame, index } = props;

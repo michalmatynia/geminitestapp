@@ -1,4 +1,4 @@
-import nodeCodeObjectContractsJson from '../../../../../docs/ai-paths/node-code-objects-v2/contracts.json';
+import nodeCodeObjectContractsJson from '@docs/ai-paths/node-code-objects-v2/contracts.json';
 
 export type PortableNodeCodeObjectContractEntry = {
   objectId: string;

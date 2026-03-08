@@ -19,6 +19,7 @@ const csp = [
   "object-src 'none'",
   "worker-src 'self' blob:",
 ].join('; ');
+const distPackageJsonAsset = '{"type":"commonjs"}';
 
 const nextConfig = {
   reactStrictMode: true,
@@ -95,13 +96,15 @@ const nextConfig = {
   turbopack: {
     root: __dirname,
     resolveAlias: {
+      '@docs': path.resolve(__dirname, 'docs'),
       // Force a single three.js runtime even when transitive deps (e.g. stats-gl) ship nested copies.
       'stats-gl/node_modules/three': path.resolve(__dirname, 'node_modules/three'),
     },
   },
-  webpack: (config) => {
+  webpack: (config, { isServer, webpack }) => {
     config.resolve ??= {};
     config.resolve.alias ??= {};
+    config.resolve.alias['@docs'] = path.resolve(__dirname, 'docs');
     config.resolve.alias['stats-gl/node_modules/three'] = path.resolve(
       __dirname,
       'node_modules/three'
@@ -114,6 +117,27 @@ const nextConfig = {
         message: /Critical dependency: the request of a dependency is an expression/,
       },
     ];
+    if (!isServer) {
+      config.plugins ??= [];
+      config.plugins.push({
+        apply(compiler) {
+          compiler.hooks.thisCompilation.tap('CommonJsDistPackageJsonPlugin', (compilation) => {
+            compilation.hooks.processAssets.tap(
+              {
+                name: 'CommonJsDistPackageJsonPlugin',
+                stage: webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONS,
+              },
+              () => {
+                compilation.emitAsset(
+                  'package.json',
+                  new webpack.sources.RawSource(distPackageJsonAsset)
+                );
+              }
+            );
+          });
+        },
+      });
+    }
     return config;
   },
   images: {

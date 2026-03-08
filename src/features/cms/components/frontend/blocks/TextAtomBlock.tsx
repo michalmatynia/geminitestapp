@@ -6,7 +6,7 @@ import { FrontendBlockRenderer } from '../sections/FrontendBlockRenderer';
 import { getBlockTypographyStyles } from '../theme-styles';
 import { useRequiredBlockRenderContext, useRequiredBlockSettings } from './BlockContext';
 
-import type { BlockInstance } from '../../../types/page-builder';
+import type { BlockInstance } from '@/features/cms/types/page-builder';
 
 export function TextAtomBlock(): React.ReactNode {
   const { block } = useRequiredBlockRenderContext();

@@ -18,7 +18,7 @@ import { usePreviewEditorState } from './context/PreviewEditorContext';
 import { getSpacingValue, resolveJustifyContent, resolveAlignItems } from './preview-utils';
 import { getSectionStyles, getTextAlign } from '../../frontend/theme-styles';
 
-import type { BlockInstance } from '../../../types/page-builder';
+import type { BlockInstance } from '@/features/cms/types/page-builder';
 
 const CONTAINED_BLOCK_CONTEXT_VALUE = { contained: true };
 

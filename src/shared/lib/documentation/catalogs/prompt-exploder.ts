@@ -6,7 +6,7 @@ import {
 import {
   PROMPT_EXPLODER_TOOLTIP_CATALOG,
   type PromptExploderTooltipDocEntry,
-} from '../../../../../docs/prompt-exploder/tooltip-catalog';
+} from '@docs/prompt-exploder/tooltip-catalog';
 
 export type PromptExploderDocEntry = PromptExploderTooltipDocEntry;
 

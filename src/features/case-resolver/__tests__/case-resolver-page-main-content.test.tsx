@@ -39,6 +39,9 @@ vi.mock('@/features/case-resolver/components/CaseResolverCanvasWorkspace', () =>
   CaseResolverCanvasWorkspace: () => <div data-testid='canvas-workspace' />,
 }));
 
+const asCaseResolverViewStateValue = (value: Record<string, unknown>): CaseResolverViewStateValue =>
+  value as CaseResolverViewStateValue;
+
 const createContextMock = ({
   workspaceView = 'document',
   stateOverrides = {},
@@ -58,15 +61,15 @@ const createContextMock = ({
     editingDocumentDraft: null,
     activeFile: null,
     selectedAsset: null,
-  } as unknown as CaseResolverStateValue;
+  } as CaseResolverStateValue;
 
-  return {
+  return asCaseResolverViewStateValue({
     state: {
       ...baseState,
       ...stateOverrides,
     } as CaseResolverStateValue,
     workspaceView,
-  } as unknown as CaseResolverViewStateValue;
+  });
 };
 
 describe('CaseResolverPageMainContent routing', () => {
@@ -91,7 +94,7 @@ describe('CaseResolverPageMainContent routing', () => {
           id: 'workspace-1',
           files: [caseFile, staleDocumentFile],
           assets: [],
-        } as unknown as CaseResolverStateValue['workspace'],
+        } as CaseResolverStateValue['workspace'],
         activeCaseId: 'case-1',
         selectedFileId: 'case-1',
         activeFile: staleDocumentFile as CaseResolverStateValue['activeFile'],
@@ -129,7 +132,7 @@ describe('CaseResolverPageMainContent routing', () => {
           id: 'workspace-1',
           files: [caseFile, staleDocumentFile],
           assets: [],
-        } as unknown as CaseResolverStateValue['workspace'],
+        } as CaseResolverStateValue['workspace'],
         activeCaseId: 'case-2',
         selectedFileId: null,
         activeFile: staleDocumentFile as CaseResolverStateValue['activeFile'],
@@ -167,7 +170,7 @@ describe('CaseResolverPageMainContent routing', () => {
           id: 'workspace-1',
           files: [caseFile, documentFile],
           assets: [],
-        } as unknown as CaseResolverStateValue['workspace'],
+        } as CaseResolverStateValue['workspace'],
         activeCaseId: 'case-3',
         selectedFileId: 'doc-3',
         activeFile: documentFile as CaseResolverStateValue['activeFile'],

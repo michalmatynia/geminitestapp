@@ -4,7 +4,7 @@ import React from 'react';
 import { Camera } from 'lucide-react';
 import { Button } from '@/shared/ui';
 import { ToggleButtonGroup } from '../../ToggleButtonGroup';
-import { useSlotsState, useSlotsActions } from '../../../context/SlotsContext';
+import { useSlotsState, useSlotsActions } from '@/features/ai/image-studio/context/SlotsContext';
 import { useCenterPreviewContext } from '../CenterPreviewContext';
 import { useCenterPreviewHeaderContext } from './CenterPreviewHeaderContext';
 

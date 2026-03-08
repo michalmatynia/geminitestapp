@@ -13,9 +13,9 @@ import {
 } from '@/shared/ui';
 import { DRAG_KEYS, hasDragType } from '@/shared/utils/drag-drop';
 
-import { useDragStateExtract } from '../../../hooks/useDragStateExtract';
-import { usePageBuilder } from '../../../hooks/usePageBuilderContext';
-import { useTreeActions } from '../../../hooks/useTreeActionsContext';
+import { useDragStateExtract } from '@/features/cms/hooks/useDragStateExtract';
+import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
+import { useTreeActions } from '@/features/cms/hooks/useTreeActionsContext';
 import { readBlockDragData, readSectionDragData } from '@/features/cms/utils/page-builder-dnd';
 import { ColumnBlockPicker } from '../ColumnBlockPicker';
 import { BlockNodeItem } from './BlockNodeItem';
@@ -26,7 +26,7 @@ import { useOptionalTreeRowId } from './TreeRowContext';
 import { useTreeSectionId } from './TreeSectionContext';
 
 import type { ColumnNodeItemProps } from './tree-types';
-import type { BlockInstance } from '../../../types/page-builder';
+import type { BlockInstance } from '@/features/cms/types/page-builder';
 
 export function ColumnNodeItem(props: ColumnNodeItemProps): React.ReactNode {
   const { column, columnIndex, rowColumnCount } = props;

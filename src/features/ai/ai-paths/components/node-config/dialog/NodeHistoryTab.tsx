@@ -8,7 +8,7 @@ import {
   useAiPathRuntime,
   useAiPathSelection,
 } from '../../AiPathConfigContext';
-import { useRunHistoryActions } from '../../../context';
+import { useRunHistoryActions } from '@/features/ai/ai-paths/context';
 
 export function NodeHistoryTab(): React.JSX.Element | null {
   const { selectedNode } = useAiPathSelection();

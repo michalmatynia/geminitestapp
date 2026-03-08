@@ -1,4 +1,4 @@
-import type { SettingsField } from '../../../types/page-builder';
+import type { SettingsField } from '@/features/cms/types/page-builder';
 
 // ---------------------------------------------------------------------------
 // Shared field helpers

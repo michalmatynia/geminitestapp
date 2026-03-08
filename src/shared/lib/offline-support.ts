@@ -10,31 +10,46 @@ const shouldPersistQuery = (queryKey: unknown, status: unknown): boolean =>
 const isOfflineQueryKey = (queryKey: unknown): boolean =>
   Array.isArray(queryKey) && isOfflineQuery(queryKey as readonly unknown[]);
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
 export function setupOfflineSupport(queryClient: QueryClient): void {
   if (typeof window === 'undefined') return;
 
   const persister = createSyncStoragePersister({
     storage: window.localStorage,
     deserialize: (cachedString: string): PersistedClient => {
-      const parsed = JSON.parse(cachedString) as {
-        clientState?: { queries?: Array<Record<string, unknown>> };
+      const parsed = JSON.parse(cachedString) as Partial<PersistedClient>;
+      const parsedClientState = (isRecord(parsed.clientState) ? parsed.clientState : {}) as
+        Partial<PersistedClient['clientState']> & Record<string, unknown>;
+      const queries = Array.isArray(parsedClientState.queries)
+        ? (parsedClientState.queries as Array<Record<string, unknown>>)
+        : [];
+      const mutations = Array.isArray(parsedClientState.mutations)
+        ? parsedClientState.mutations
+        : [];
+      const filteredQueries = queries
+        .filter((query: Record<string, unknown>) => {
+          const state = query?.['state'] as { status?: unknown } | undefined;
+          return shouldPersistQuery(query?.['queryKey'], state?.status);
+        })
+        .map((query: Record<string, unknown>) => {
+          if (query && typeof query === 'object' && 'promise' in query) {
+            const { promise: _ignored, ...rest } = query;
+            return rest;
+          }
+          return query;
+        });
+
+      return {
+        timestamp: typeof parsed.timestamp === 'number' ? parsed.timestamp : Date.now(),
+        buster: typeof parsed.buster === 'string' ? parsed.buster : '',
+        clientState: {
+          ...parsedClientState,
+          queries: filteredQueries,
+          mutations,
+        } as PersistedClient['clientState'],
       };
-      const queries = parsed?.clientState?.queries;
-      if (Array.isArray(queries)) {
-        parsed.clientState!.queries = queries
-          .filter((query: Record<string, unknown>) => {
-            const state = query?.['state'] as { status?: unknown } | undefined;
-            return shouldPersistQuery(query?.['queryKey'], state?.status);
-          })
-          .map((query: Record<string, unknown>) => {
-            if (query && typeof query === 'object' && 'promise' in query) {
-              const { promise: _ignored, ...rest } = query;
-              return rest;
-            }
-            return query;
-          });
-      }
-      return parsed as unknown as PersistedClient;
     },
   });
 

@@ -99,7 +99,10 @@ export class RateLimiter {
     }
 
     // Fallback if req.ip is not available or is undefined
-    return (req as unknown as { ip?: string }).ip || 'unknown';
+    if ('ip' in req && typeof req.ip === 'string' && req.ip) {
+      return req.ip;
+    }
+    return 'unknown';
   }
 
   cleanup(): void {

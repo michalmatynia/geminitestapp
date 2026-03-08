@@ -1,0 +1,144 @@
+{
+  "generatedAt": "2026-03-08T10:39:15.008Z",
+  "status": "warn",
+  "summary": {
+    "total": 2,
+    "errorCount": 0,
+    "warningCount": 2,
+    "infoCount": 0,
+    "status": "warn",
+    "fileCount": 4311,
+    "featureCount": 15,
+    "circularDependencyCount": 0
+  },
+  "scope": {
+    "root": "src",
+    "prismaAllowedPatterns": [
+      "^src\\/app\\/api\\/",
+      "^src\\/features\\/[^/]+\\/server\\/",
+      "^src\\/shared\\/lib\\/db\\/",
+      "^prisma\\/",
+      "^scripts\\/"
+    ],
+    "internalImportAllowlist": []
+  },
+  "featureGraph": {
+    "admin": [
+      "auth",
+      "foldertree",
+      "notesapp",
+      "prompt-engine"
+    ],
+    "ai": [
+      "auth",
+      "files",
+      "foldertree",
+      "notesapp",
+      "playwright",
+      "products",
+      "prompt-engine",
+      "prompt-exploder",
+      "tooltip-engine",
+      "viewer3d"
+    ],
+    "case-resolver": [
+      "admin",
+      "ai",
+      "auth",
+      "case-resolver-capture",
+      "document-editor",
+      "filemaker",
+      "foldertree",
+      "prompt-exploder"
+    ],
+    "case-resolver-capture": [
+      "filemaker"
+    ],
+    "cms": [
+      "admin",
+      "app-embeds",
+      "files",
+      "foldertree",
+      "gsap",
+      "products",
+      "viewer3d"
+    ],
+    "data-import-export": [
+      "integrations",
+      "products"
+    ],
+    "drafter": [
+      "products"
+    ],
+    "files": [
+      "viewer3d"
+    ],
+    "integrations": [
+      "playwright",
+      "products"
+    ],
+    "jobs": [
+      "ai",
+      "case-resolver",
+      "integrations",
+      "product-sync",
+      "products"
+    ],
+    "kangur": [
+      "auth",
+      "cms",
+      "document-editor",
+      "foldertree",
+      "tooltip-engine"
+    ],
+    "notesapp": [
+      "document-editor",
+      "foldertree"
+    ],
+    "product-sync": [
+      "integrations"
+    ],
+    "products": [
+      "files",
+      "foldertree",
+      "internationalization",
+      "tooltip-engine"
+    ],
+    "prompt-exploder": [
+      "foldertree",
+      "tooltip-engine"
+    ]
+  },
+  "circularDependencies": [],
+  "issues": [
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/ai/ai-paths/components/node-config/dialog/NodeHistoryTab.tsx",
+      "line": 11,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/features/ai/image-studio/components/analysis/sections/AiPathAnalysisTriggerSectionImpl.tsx",
+      "line": 9,
+      "column": null,
+      "snippet": null,
+      "context": null
+    }
+  ],
+  "rules": [
+    {
+      "ruleId": "deep-relative-import",
+      "errorCount": 0,
+      "warningCount": 2,
+      "infoCount": 0
+    }
+  ],
+  "durationMs": 584
+}

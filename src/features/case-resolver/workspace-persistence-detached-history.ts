@@ -119,7 +119,7 @@ export const stripCaseResolverWorkspaceDetachedHistory = (
     files: workspace.files.map((file): CaseResolverWorkspace['files'][number] => {
       const fileRecord = { ...file } as Record<string, unknown>;
       delete fileRecord['documentHistory'];
-      return fileRecord as unknown as CaseResolverWorkspace['files'][number];
+      return fileRecord as CaseResolverWorkspace['files'][number];
     }),
   };
 };

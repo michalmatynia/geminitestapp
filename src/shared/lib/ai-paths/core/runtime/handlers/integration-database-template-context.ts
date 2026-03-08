@@ -11,7 +11,7 @@ import {
 import { DB_PROVIDER_PLACEHOLDERS } from '../../constants';
 import { coerceInput, renderTemplate } from '../../utils';
 
-import type { SchemaResponse } from '../../../api/client';
+import type { SchemaResponse } from '@/shared/lib/ai-paths/api/client';
 
 const toTitleCase = (value: string): string =>
   value

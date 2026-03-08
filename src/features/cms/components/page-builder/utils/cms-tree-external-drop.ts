@@ -1,4 +1,4 @@
-import type { PageZone } from '../../../types/page-builder';
+import type { PageZone } from '@/features/cms/types/page-builder';
 
 export type CmsSectionDropPosition = 'above' | 'below';
 

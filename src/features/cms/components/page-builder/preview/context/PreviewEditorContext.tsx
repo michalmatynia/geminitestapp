@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useMemo } from 'react';
 
-import type { InspectorSettings } from '../../../../types/page-builder';
+import type { InspectorSettings } from '@/features/cms/types/page-builder';
 import type { MediaReplaceTarget } from '../preview-utils';
 
 export interface PreviewEditorContextValue {

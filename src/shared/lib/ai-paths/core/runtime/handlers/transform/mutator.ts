@@ -12,7 +12,7 @@ import {
   renderTemplate,
   setValueAtMappingPath,
   safeStringify,
-} from '../../../utils';
+} from '@/shared/lib/ai-paths/core/utils';
 
 export const handleMutator: NodeHandler = ({
   node,

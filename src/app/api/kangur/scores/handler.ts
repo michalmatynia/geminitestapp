@@ -1,14 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import { getKangurScoreRepository, resolveKangurActor } from '@/features/kangur/server';
 import { badRequestError } from '@/shared/errors/app-error';
 import {
+  normalizeKangurSort,
   parseKangurScoreCreatePayload,
-  parseKangurScoreListQuery,
 } from '@/shared/validations/kangur';
+import {
+  kangurScoreLimitSchema,
+  kangurScoreSortSchema,
+} from '@/shared/contracts/kangur';
+import {
+  optionalIntegerQuerySchema,
+  optionalTrimmedQueryString,
+} from '@/shared/lib/api/query-schema';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+
+export const querySchema = z.object({
+  sort: optionalTrimmedQueryString(kangurScoreSortSchema),
+  limit: optionalIntegerQuerySchema(kangurScoreLimitSchema),
+  player_name: optionalTrimmedQueryString(),
+  operation: optionalTrimmedQueryString(),
+  created_by: optionalTrimmedQueryString(),
+  learner_id: optionalTrimmedQueryString(),
+});
 
 const readBodyJson = async (request: NextRequest): Promise<unknown> => {
   const rawBody = await request.text();
@@ -25,20 +43,13 @@ const readBodyJson = async (request: NextRequest): Promise<unknown> => {
 
 export async function getKangurScoresHandler(
   req: NextRequest,
-  _ctx: ApiHandlerContext
+  ctx: ApiHandlerContext
 ): Promise<Response> {
-  const query = parseKangurScoreListQuery({
-    sort: req.nextUrl.searchParams.get('sort') ?? undefined,
-    limit: req.nextUrl.searchParams.get('limit') ?? undefined,
-    player_name: req.nextUrl.searchParams.get('player_name') ?? undefined,
-    operation: req.nextUrl.searchParams.get('operation') ?? undefined,
-    created_by: req.nextUrl.searchParams.get('created_by') ?? undefined,
-    learner_id: req.nextUrl.searchParams.get('learner_id') ?? undefined,
-  });
+  const query = (ctx.query ?? {}) as z.infer<typeof querySchema>;
 
   const repository = await getKangurScoreRepository();
   const rows = await repository.listScores({
-    sort: query.sort,
+    sort: normalizeKangurSort(query.sort),
     limit: query.limit,
     filters: {
       player_name: query.player_name,

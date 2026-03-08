@@ -9,7 +9,7 @@ import { Button, Card, SelectSimple } from '@/shared/ui';
 import {
   type UseAiPathsObjectAnalysisReturn,
   type AiPathsObjectAnalysisStatus,
-} from '../../../hooks/useAiPathsObjectAnalysis';
+} from '@/features/ai/image-studio/hooks/useAiPathsObjectAnalysis';
 import type { AiPathsObjectAnalysisAutoApplyTarget } from '@/features/ai/image-studio/utils/ai-paths-object-analysis';
 
 // ---------------------------------------------------------------------------

@@ -20,7 +20,7 @@ import {
 import { Button, StatusBadge, SelectSimple } from '@/shared/ui';
 import { focusOnMount } from '@/shared/utils/focus-on-mount';
 import { useAiPathsSettingsPageContext } from '../AiPathsSettingsPageContext';
-import { useGraphActions, useSelectionActions, useSelectionState } from '../../../context';
+import { useGraphActions, useSelectionActions, useSelectionState } from '@/features/ai/ai-paths/context';
 import { CanvasBoard } from '../../canvas-board';
 import { CanvasSidebar } from '../../canvas-sidebar';
 import { ClusterPresetsPanel } from '../../cluster-presets-panel';

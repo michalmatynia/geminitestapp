@@ -66,8 +66,8 @@ function ProductFormModalBody(props: {
   const formInstanceKey = product?.id?.trim() || draft?.id?.trim() || 'product-form';
 
   const getEntityJson = useCallback((): Record<string, unknown> => {
-    const values = getValues() as unknown as Record<string, unknown>;
-    const base = (product ?? draft ?? {}) as unknown as Record<string, unknown>;
+    const values = getValues();
+    const base = product ?? draft ?? {};
     return { ...base, ...values, ...(product?.id ? { id: product.id } : {}) };
   }, [getValues, product, draft]);
 

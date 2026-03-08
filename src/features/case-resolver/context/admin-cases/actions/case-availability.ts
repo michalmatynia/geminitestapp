@@ -4,7 +4,7 @@ import {
   fetchCaseResolverWorkspaceSnapshot,
   getCaseResolverWorkspaceRevision,
   logCaseResolverWorkspaceEvent,
-} from '../../../workspace-persistence';
+} from '@/features/case-resolver/workspace-persistence';
 import {
   CASE_RESOLVER_CASE_READY_MAX_ATTEMPTS,
   CASE_RESOLVER_CASE_READY_INTERVAL_MS,

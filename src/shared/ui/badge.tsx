@@ -36,7 +36,7 @@ const badgeVariants = cva(
 );
 
 export interface BadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof badgeVariants> {
+  extends React.HTMLAttributes<HTMLElement>, VariantProps<typeof badgeVariants> {
   icon?: React.ReactNode;
   onRemove?: () => void;
   removeLabel?: string;
@@ -60,16 +60,8 @@ function Badge({
   const isClickable = !!onClick;
   const isNativeButton = isClickable && !onRemove;
   const isSplitInteractive = isClickable && !!onRemove;
-  const handleButtonClick: React.MouseEventHandler<HTMLButtonElement> | undefined = onClick
-    ? (event) => {
-      onClick(event as unknown as React.MouseEvent<HTMLDivElement>);
-    }
-    : undefined;
-  const handleButtonKeyDown: React.KeyboardEventHandler<HTMLButtonElement> | undefined = onKeyDown
-    ? (event) => {
-      onKeyDown(event as unknown as React.KeyboardEvent<HTMLDivElement>);
-    }
-    : undefined;
+  const handleButtonClick = onClick;
+  const handleButtonKeyDown = onKeyDown;
   const sharedClassName = cn(
     badgeVariants({ variant }),
     isClickable && 'cursor-pointer hover:brightness-110 active:opacity-80 transition-all',
@@ -150,7 +142,7 @@ function Badge({
         }
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
-          onClick?.(event as unknown as React.MouseEvent<HTMLDivElement>);
+          event.currentTarget.click();
         }
       }}
       {...props}

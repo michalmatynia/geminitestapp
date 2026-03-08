@@ -13,7 +13,7 @@ import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
 import {
   usePageBuilderState,
   usePageBuilderDispatch,
-} from '../../../../hooks/usePageBuilderContext';
+} from '@/features/cms/hooks/usePageBuilderContext';
 
 export function usePageAiAssistant() {
   const state = usePageBuilderState();

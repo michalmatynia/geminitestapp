@@ -43,6 +43,9 @@
       "@/*": [
         "./src/*"
       ],
+      "@docs/*": [
+        "./docs/*"
+      ],
       "@/__tests__/*": [
         "./__tests__/*"
       ],
@@ -90,7 +93,9 @@
     ".next-codex-build/types/**/*.ts",
     ".next-codex-build/dev/types/**/*.ts",
     ".next-debug-frontend/types/**/*.ts",
-    ".next-debug-frontend/dev/types/**/*.ts"
+    ".next-debug-frontend/dev/types/**/*.ts",
+    ".next-debug-api/types/**/*.ts",
+    ".next-debug-api/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

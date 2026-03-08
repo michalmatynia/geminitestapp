@@ -1,4 +1,4 @@
-import type { SectionInstance, BlockInstance } from '../../../types/page-builder';
+import type { SectionInstance, BlockInstance } from '@/features/cms/types/page-builder';
 
 // ---------------------------------------------------------------------------
 // Component Props Interfaces

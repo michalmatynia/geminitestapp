@@ -7,7 +7,7 @@ import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import { getDocumentationTooltip } from '@/shared/lib/documentation';
 import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap';
 import { useAnimationConfigActions, useAnimationConfigState } from '../AnimationConfigContext';
-import type { VectorOverlayResult } from '../../../../hooks/usePageBuilderContext';
+import type { VectorOverlayResult } from '@/features/cms/hooks/usePageBuilderContext';
 import { type VectorShape } from '@/shared/contracts/vector';
 
 const EMPTY_SHAPES: VectorShape[] = [];

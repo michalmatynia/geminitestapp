@@ -243,7 +243,7 @@ export const stripCaseResolverWorkspaceDetachedDocuments = (
           delete fileRecord['documentContentPlainText'];
         }
       }
-      return fileRecord as unknown as CaseResolverWorkspace['files'][number];
+      return fileRecord as CaseResolverWorkspace['files'][number];
     }),
   };
 };
@@ -333,7 +333,7 @@ export const applyCaseResolverWorkspaceDetachedDocumentsPayload = ({
     if (Array.isArray(payload.scanSlots)) {
       fileRecord['scanSlots'] = payload.scanSlots;
     }
-    return fileRecord as unknown as CaseResolverWorkspace['files'][number];
+    return fileRecord as CaseResolverWorkspace['files'][number];
   });
   return updated ? { ...workspace, files } : workspace;
 };

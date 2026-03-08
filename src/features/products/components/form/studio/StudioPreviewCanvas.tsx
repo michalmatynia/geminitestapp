@@ -8,7 +8,7 @@ import {
   CenterPreviewProvider,
   useCenterPreviewContext,
 } from '@/shared/lib/image-studio-adapter';
-import { useProductStudioContext } from '../../../context/ProductStudioContext';
+import { useProductStudioContext } from '@/features/products/context/ProductStudioContext';
 
 function StudioPreviewCanvasInner(): React.JSX.Element {
   const { variantImageSrc, sourceImageSrc, canCompareWithSource } = useProductStudioContext();

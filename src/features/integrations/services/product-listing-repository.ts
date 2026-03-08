@@ -149,6 +149,16 @@ const normalizeIsoDate = (value: string | Date | null | undefined): string | nul
   return value instanceof Date ? value.toISOString() : value;
 };
 
+const toExportHistoryRecords = (
+  value: unknown
+): ProductListingExportEventRecord[] => {
+  if (!Array.isArray(value)) return [];
+  return value.filter(
+    (event: unknown): event is ProductListingExportEventRecord =>
+      typeof event === 'object' && event !== null
+  );
+};
+
 const toListingRecord = (doc: ProductListingDocument): ProductListing => ({
   id: normalizeLookupIdOrFallback(doc._id),
   productId: normalizeLookupIdOrFallback(doc.productId),
@@ -203,12 +213,11 @@ const toDetailsRecord = (listing: EnrichedPrismaListing): ProductListingWithDeta
   marketplaceData: (listing.marketplaceData ??
     null) as ProductListingWithDetails['marketplaceData'],
   failureReason: listing.failureReason ?? null,
-  exportHistory: ((listing.exportHistory as unknown as Record<string, unknown>[] | null) ?? []).map(
-    (event: Record<string, unknown>) => ({
+  exportHistory: toExportHistoryRecords(listing.exportHistory).map(
+    (event: ProductListingExportEventRecord) => ({
       ...event,
-      exportedAt:
-        normalizeIsoDate(event?.['exportedAt'] as string | Date) ?? new Date().toISOString(),
-      expiresAt: normalizeIsoDate(event?.['expiresAt'] as string | Date) ?? null,
+      exportedAt: normalizeIsoDate(event.exportedAt) ?? new Date().toISOString(),
+      expiresAt: normalizeIsoDate(event.expiresAt) ?? null,
     })
   ),
   createdAt: listing.createdAt.toISOString(),

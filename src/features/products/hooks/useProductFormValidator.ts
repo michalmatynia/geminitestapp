@@ -450,7 +450,7 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
     if (list.length === 0) return null;
     const preferred =
       list.find((item: ProductWithImages) => item.id !== product?.id) ?? list[0] ?? null;
-    return preferred as unknown as Record<string, unknown>;
+    return preferred ? { ...preferred } : null;
   }, [latestProductsQuery.data, product?.id]);
 
   useEffect(() => {

@@ -3,12 +3,13 @@ export const dynamic = 'force-dynamic';
 
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
-import { getKangurScoresHandler, postKangurScoresHandler } from './handler';
+import { getKangurScoresHandler, postKangurScoresHandler, querySchema } from './handler';
 
 export const GET = apiHandler(getKangurScoresHandler, {
   source: 'kangur.scores.GET',
   service: 'kangur.api',
   successLogging: 'all',
+  querySchema,
 });
 
 export const POST = apiHandler(postKangurScoresHandler, {

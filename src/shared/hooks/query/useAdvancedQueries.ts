@@ -55,7 +55,7 @@ export function useDependentQueries<T1, T2, T3>(
     ),
     queryFn: thirdQuery
       ? () => thirdQuery.queryFn(second.data!)
-      : () => Promise.resolve(null as unknown as T3),
+      : () => Promise.resolve(null as T3),
     enabled: !!thirdQuery && !!second.data && second.isSuccess,
     meta: {
       source: 'shared.hooks.query.useDependentQueries.third',

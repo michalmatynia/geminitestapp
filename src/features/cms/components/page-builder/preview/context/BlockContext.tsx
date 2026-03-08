@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext } from 'react';
 
-import type { PageZone } from '../../../../types/page-builder';
+import type { PageZone } from '@/features/cms/types/page-builder';
 
 export interface BlockContextValue {
   sectionId?: string;

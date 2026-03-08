@@ -19,7 +19,7 @@ import {
   getValueAtMappingPath,
   normalizeMappingPath,
   safeStringify,
-} from '../../../utils';
+} from '@/shared/lib/ai-paths/core/utils';
 
 export const handleValidator: NodeHandler = ({
   node,

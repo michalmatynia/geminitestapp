@@ -101,41 +101,23 @@ const buildState = (): CanvasBoardState =>
     selectEdge: noop,
     clearNodeSelection: noop,
     setConfigOpen: noop,
-    setEdgeRoutingMode: noop as unknown as React.Dispatch<
-      React.SetStateAction<'bezier' | 'orthogonal'>
-    >,
+    setEdgeRoutingMode: noop,
     handlePointerDownNode: noop,
     handlePointerMoveNode: noop,
     handlePointerUpNode: noop,
     consumeSuppressedNodeClick: () => false,
-    handlePanStart: noop as unknown as (event: React.PointerEvent) => void,
-    handlePanMove: noop as unknown as (event: React.PointerEvent) => void,
-    handlePanEnd: noop as unknown as (event: React.PointerEvent) => void,
-    handleWheel: noop as unknown as (event: React.WheelEvent) => void,
+    handlePanStart: noop,
+    handlePanMove: noop,
+    handlePanEnd: noop,
+    handleWheel: noop,
     handleRemoveEdge: noop,
-    handleDisconnectPort: noop as unknown as (
-      direction: 'input' | 'output',
-      nodeId: string,
-      port: string
-    ) => void,
-    handleStartConnection: noop as unknown as (
-      event: React.PointerEvent<Element>,
-      node: AiNode,
-      port: string
-    ) => void,
-    handleCompleteConnection: noop as unknown as (
-      event: React.PointerEvent<Element>,
-      node: AiNode,
-      port: string
-    ) => void,
-    handleReconnectInput: noop as unknown as (
-      event: React.PointerEvent<Element>,
-      nodeId: string,
-      port: string
-    ) => void,
+    handleDisconnectPort: noop,
+    handleStartConnection: noop,
+    handleCompleteConnection: noop,
+    handleReconnectInput: noop,
     handleSelectNode: noop,
-    handleDrop: noop as unknown as (event: React.DragEvent<HTMLDivElement>) => void,
-    handleDragOver: noop as unknown as (event: React.DragEvent<HTMLDivElement>) => void,
+    handleDrop: noop,
+    handleDragOver: noop,
     zoomTo: noop,
     fitToNodes: noop,
     fitToSelection: noop,
@@ -145,20 +127,16 @@ const buildState = (): CanvasBoardState =>
     touchLongPressIndicator: null,
     ConfirmationModal: () => null,
     hoveredConnectorKey: null,
-    setHoveredConnectorKey: noop as unknown as React.Dispatch<React.SetStateAction<string | null>>,
+    setHoveredConnectorKey: noop,
     pinnedConnectorKey: null,
-    setPinnedConnectorKey: noop as unknown as React.Dispatch<React.SetStateAction<string | null>>,
+    setPinnedConnectorKey: noop,
     svgConnectorTooltip: null,
-    setSvgConnectorTooltip: noop as unknown as React.Dispatch<
-      React.SetStateAction<SvgConnectorTooltipState | null>
-    >,
+    setSvgConnectorTooltip: noop,
     svgNodeDiagnosticsTooltip: null,
-    setSvgNodeDiagnosticsTooltip: noop as unknown as React.Dispatch<
-      React.SetStateAction<SvgNodeDiagnosticsTooltipState | null>
-    >,
+    setSvgNodeDiagnosticsTooltip: noop,
     rendererMode: 'svg',
     showMinimap: false,
-    setShowMinimap: noop as unknown as React.Dispatch<React.SetStateAction<boolean>>,
+    setShowMinimap: noop,
     viewportSize: { width: 1200, height: 800 },
     prefersReducedMotion: false,
     svgPerf: { fps: 60, avgFrameMs: 16.6, slowFrameRatio: 0 },

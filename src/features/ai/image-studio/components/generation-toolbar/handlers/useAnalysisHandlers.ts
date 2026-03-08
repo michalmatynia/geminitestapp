@@ -6,7 +6,7 @@ import {
   imageStudioAnalysisResponseSchema,
   type ImageStudioCenterLayoutConfig,
   type ImageStudioAnalysisResponse,
-} from '../../../contracts/analysis';
+} from '@/features/ai/image-studio/contracts/analysis';
 import type { AnalysisResult } from '../../analysis/analysis-types';
 import { analyzeCanvasImageObject } from '../GenerationToolbarImageUtils';
 import {

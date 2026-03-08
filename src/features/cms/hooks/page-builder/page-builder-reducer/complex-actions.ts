@@ -16,7 +16,7 @@ import type {
   PageBuilderAction,
   SectionInstance,
   BlockInstance,
-} from '../../../types/page-builder';
+} from '@/features/cms/types/page-builder';
 
 export function reduceComplexActions(
   state: PageBuilderState,

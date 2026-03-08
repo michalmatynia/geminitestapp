@@ -10,6 +10,8 @@ export const CTA_WIDTH = 124;
 export const CTA_HEIGHT = 40;
 export const DESKTOP_BUBBLE_WIDTH = 384;
 export const MOBILE_BUBBLE_WIDTH = 320;
+export const ATTACHED_AVATAR_EDGE_INSET = 18;
+export const ATTACHED_AVATAR_OVERLAP = 12;
 export const KANGUR_AI_TUTOR_WIDGET_STORAGE_KEY = 'kangur-ai-tutor-widget-v1';
 
 export type TutorMotionPosition = {
@@ -18,6 +20,8 @@ export type TutorMotionPosition = {
   right?: number | string;
   bottom?: number | string;
 };
+
+export type TutorAvatarAttachmentSide = 'left' | 'right';
 
 export type ActiveTutorFocus = {
   rect: DOMRect | null;

@@ -14,6 +14,27 @@ async function clickSelectionTutorCta(page: Page): Promise<void> {
   });
 }
 
+async function expectTutorAvatarAttachedToPanel(page: Page): Promise<void> {
+  const tutorAvatar = page.getByTestId('kangur-ai-tutor-avatar');
+  const tutorPanel = page.getByTestId('kangur-ai-tutor-panel');
+  const [avatarBox, panelBox] = await Promise.all([tutorAvatar.boundingBox(), tutorPanel.boundingBox()]);
+
+  expect(avatarBox).not.toBeNull();
+  expect(panelBox).not.toBeNull();
+
+  if (!avatarBox || !panelBox) {
+    return;
+  }
+
+  const overlapsHorizontally =
+    avatarBox.x < panelBox.x + panelBox.width && avatarBox.x + avatarBox.width > panelBox.x;
+  const overlapsVertically =
+    avatarBox.y < panelBox.y + panelBox.height && avatarBox.y + avatarBox.height > panelBox.y;
+
+  expect(overlapsHorizontally).toBeTruthy();
+  expect(overlapsVertically).toBeTruthy();
+}
+
 test.describe('Kangur AI Tutor', () => {
   test('anchors to selected lesson text and sends selected-text context', async ({ page }) => {
     const {
@@ -30,15 +51,17 @@ test.describe('Kangur AI Tutor', () => {
     await expect(lessonTextBlock).toContainText(lessonSelectedText);
 
     await selectTextInElement(page, '[data-testid^="lesson-text-block-"]', lessonSelectedText);
+    await clickSelectionTutorCta(page);
 
     const tutorAvatar = page.getByTestId('kangur-ai-tutor-avatar');
-    await tutorAvatar.click();
-
     const tutorPanel = page.getByTestId('kangur-ai-tutor-panel');
 
     await expect(tutorPanel).toBeVisible();
     await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'selection');
+    await expect(tutorAvatar).toHaveAttribute('data-avatar-placement', 'attached');
+    await expect(tutorPanel).toHaveAttribute('data-avatar-placement', 'attached');
     await expect(tutorPanel).toContainText(lessonSelectedText);
+    await expectTutorAvatarAttachedToPanel(page);
 
     await page.getByTestId('kangur-ai-tutor-quick-action-selected-text').evaluate((button) => {
       if (!(button instanceof HTMLButtonElement)) {
@@ -51,6 +74,43 @@ test.describe('Kangur AI Tutor', () => {
     expect(chatRequests[0]?.context?.selectedText).toBe(lessonSelectedText);
     expect(chatRequests[0]?.context?.focusKind).toBe('selection');
     await expect(tutorPanel).toContainText(lessonResponse);
+  });
+
+  test('closes the lesson tutor on outside click and re-docks the avatar', async ({ page }) => {
+    const {
+      chatRequests,
+      lessonTitle,
+      lessonSelectedText,
+      lessonResponse,
+    } = await mockKangurTutorEnvironment(page);
+
+    await page.goto('/kangur/lessons');
+    await page.getByRole('button', { name: lessonTitle }).click();
+
+    await selectTextInElement(page, '[data-testid^="lesson-text-block-"]', lessonSelectedText);
+    await clickSelectionTutorCta(page);
+
+    const tutorAvatar = page.getByTestId('kangur-ai-tutor-avatar');
+    const tutorPanel = page.getByTestId('kangur-ai-tutor-panel');
+
+    await expect(tutorPanel).toBeVisible();
+    await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'selection');
+
+    await page.getByTestId('kangur-ai-tutor-quick-action-selected-text').evaluate((button) => {
+      if (!(button instanceof HTMLButtonElement)) {
+        throw new Error('Missing selected-text quick action button.');
+      }
+      button.click();
+    });
+
+    await expect.poll(() => chatRequests.length).toBe(1);
+    await expect(tutorPanel).toContainText(lessonResponse);
+
+    await page.mouse.click(24, 24);
+
+    await expect(page.getByTestId('kangur-ai-tutor-panel')).toHaveCount(0);
+    await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'dock');
+    await expect(page.getByTestId('kangur-ai-tutor-selection-action')).toHaveCount(0);
   });
 
   test('keeps the tutor docked in static mode while still using selected-text context', async ({
@@ -78,7 +138,9 @@ test.describe('Kangur AI Tutor', () => {
     await expect(tutorPanel).toBeVisible();
     await expect(tutorAvatar).toHaveAttribute('data-ui-mode', 'static');
     await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'dock');
+    await expect(tutorAvatar).toHaveAttribute('data-avatar-placement', 'floating');
     await expect(tutorPanel).toHaveAttribute('data-ui-mode', 'static');
+    await expect(tutorPanel).toHaveAttribute('data-avatar-placement', 'independent');
     await expect(tutorPanel).toContainText(lessonSelectedText);
 
     await page.getByTestId('kangur-ai-tutor-quick-action-selected-text').evaluate((button) => {
@@ -111,8 +173,11 @@ test.describe('Kangur AI Tutor', () => {
     const tutorPanel = page.getByTestId('kangur-ai-tutor-panel');
     await expect(tutorPanel).toBeVisible();
     await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'question');
+    await expect(tutorAvatar).toHaveAttribute('data-avatar-placement', 'attached');
+    await expect(tutorPanel).toHaveAttribute('data-avatar-placement', 'attached');
     await expect(page.getByText(questionPrompt)).toBeVisible();
     await expect(page.getByTestId('kangur-ai-tutor-focus-chip')).toContainText('Aktualne pytanie');
+    await expectTutorAvatarAttachedToPanel(page);
 
     await tutorPanel.getByRole('button', { name: 'Podpowiedz' }).click();
 
@@ -122,7 +187,27 @@ test.describe('Kangur AI Tutor', () => {
     await expect(tutorPanel).toContainText(hintResponse);
   });
 
-  test('restores the lesson thread after client-side navigation to tests and back', async ({
+  test('closes the test tutor on outside click and re-docks the avatar', async ({ page }) => {
+    const {
+      suiteTitle,
+    } = await mockKangurTutorEnvironment(page);
+
+    await page.goto('/kangur/tests');
+    await page.getByRole('button', { name: suiteTitle }).click();
+
+    const tutorAvatar = page.getByTestId('kangur-ai-tutor-avatar');
+    await tutorAvatar.click();
+
+    await expect(page.getByTestId('kangur-ai-tutor-panel')).toBeVisible();
+    await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'question');
+
+    await page.mouse.click(24, 24);
+
+    await expect(page.getByTestId('kangur-ai-tutor-panel')).toHaveCount(0);
+    await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'dock');
+  });
+
+  test('restores the lesson thread after client-side navigation when reopened', async ({
     page,
   }) => {
     const {
@@ -154,22 +239,28 @@ test.describe('Kangur AI Tutor', () => {
 
     await page.getByTestId('kangur-primary-nav-tests').click({ force: true });
     await expect(page).toHaveURL(/\/kangur\/tests/);
+    await expect(page.getByTestId('kangur-ai-tutor-panel')).toHaveCount(0);
 
     await page.getByRole('button', { name: suiteTitle }).click();
+    await expect(page.getByTestId('kangur-ai-tutor-panel')).toHaveCount(0);
+    await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'dock');
+    await tutorAvatar.click();
     await expect(tutorPanel).toBeVisible();
     await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'question');
-    await expect(page.getByTestId('kangur-ai-tutor-context-switch')).toContainText(
-      'Nowe miejsce pomocy'
-    );
+    await expect(tutorPanel).not.toContainText(lessonResponse);
+    await expect(page.getByTestId('kangur-ai-tutor-context-switch')).toHaveCount(0);
 
     await page.getByTestId('kangur-primary-nav-lessons').click({ force: true });
     await expect(page).toHaveURL(/\/kangur\/lessons/);
+    await expect(page.getByTestId('kangur-ai-tutor-panel')).toHaveCount(0);
 
     await page.getByRole('button', { name: lessonTitle }).click();
+    await expect(page.getByTestId('kangur-ai-tutor-panel')).toHaveCount(0);
+    await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'dock');
+    await tutorAvatar.click();
     await expect(tutorPanel).toBeVisible();
-    await expect(page.getByTestId('kangur-ai-tutor-context-switch')).toContainText(
-      'Nowe miejsce pomocy'
-    );
+    await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'dock');
+    await expect(page.getByTestId('kangur-ai-tutor-context-switch')).toHaveCount(0);
     await expect(tutorPanel).toContainText(lessonResponse);
     expect(chatRequests).toHaveLength(1);
   });

@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { createPortal } from 'react-dom';
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -39,6 +40,8 @@ import type {
 import { cn, sanitizeSvg } from '@/shared/utils';
 
 import {
+  ATTACHED_AVATAR_EDGE_INSET,
+  ATTACHED_AVATAR_OVERLAP,
   AVATAR_SIZE,
   CTA_HEIGHT,
   CTA_WIDTH,
@@ -47,6 +50,7 @@ import {
   KANGUR_AI_TUTOR_WIDGET_STORAGE_KEY,
   MOBILE_BUBBLE_WIDTH,
   type ActiveTutorFocus,
+  type TutorAvatarAttachmentSide,
   type TutorMoodAvatarProps,
   type TutorMotionPosition,
   type TutorMotionProfile,
@@ -212,6 +216,28 @@ const getAnchorAvatarStyle = (rect: DOMRect): TutorMotionPosition => {
     top,
   };
 };
+
+const getAttachedAvatarSide = (input: {
+  rect: DOMRect | null;
+  viewport: { width: number; height: number };
+  mode: 'bubble' | 'sheet';
+}): TutorAvatarAttachmentSide => {
+  if (input.mode === 'sheet' || !input.rect) {
+    return 'left';
+  }
+
+  return input.rect.left + input.rect.width / 2 > input.viewport.width / 2 ? 'right' : 'left';
+};
+
+const getAttachedAvatarStyle = (
+  side: TutorAvatarAttachmentSide
+): CSSProperties => ({
+  position: 'absolute',
+  top: ATTACHED_AVATAR_EDGE_INSET,
+  ...(side === 'left'
+    ? { left: -ATTACHED_AVATAR_OVERLAP }
+    : { right: -ATTACHED_AVATAR_OVERLAP }),
+});
 
 const getSelectionActionStyle = (rect: DOMRect): CSSProperties => {
   const viewport = getViewport();
@@ -661,6 +687,18 @@ const getFocusTelemetryKey = (
   return `${sessionKey}:${focus.kind}:${focus.id ?? 'none'}`;
 };
 
+const isTargetWithinTutorUi = (target: EventTarget | null): boolean => {
+  if (!(target instanceof Element)) {
+    return false;
+  }
+
+  return (
+    target.closest('[data-testid="kangur-ai-tutor-panel"]') !== null ||
+    target.closest('[data-testid="kangur-ai-tutor-avatar"]') !== null ||
+    target.closest('[data-testid="kangur-ai-tutor-selection-action"]') !== null
+  );
+};
+
 export function KangurAiTutorWidget(): React.JSX.Element | null {
   const prefersReducedMotion = useReducedMotion();
   const tutorRuntime = useKangurAiTutor();
@@ -947,8 +985,6 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
   const focusChipLabel = getFocusChipLabel(activeFocus, activeSelectedText);
   const selectionActionStyle = selectionRect ? getSelectionActionStyle(selectionRect) : null;
   const displayFocusRect = isAnchoredUiMode ? activeFocus.rect : null;
-  const avatarStyle =
-    isOpen && displayFocusRect ? getAnchorAvatarStyle(displayFocusRect) : getDockAvatarStyle();
   const isMobileSheet = viewport.width < motionProfile.sheetBreakpoint;
   const bubblePlacement = getBubblePlacement(
     isOpen && !isMobileSheet ? displayFocusRect : null,
@@ -959,6 +995,20 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
       mobile: motionProfile.mobileBubbleWidth,
     }
   );
+  const showAttachedAvatarShell = isOpen && isAnchoredUiMode;
+  const avatarAttachmentSide = getAttachedAvatarSide({
+    rect: displayFocusRect,
+    viewport,
+    mode: bubblePlacement.mode,
+  });
+  const attachedAvatarStyle = getAttachedAvatarStyle(avatarAttachmentSide);
+  const avatarStyle =
+    showAttachedAvatarShell || (isOpen && bubblePlacement.mode === 'sheet')
+      ? getDockAvatarStyle()
+      : isOpen && displayFocusRect
+        ? getAnchorAvatarStyle(displayFocusRect)
+        : getDockAvatarStyle();
+  const avatarAnchorKind = isOpen && isAnchoredUiMode ? activeFocus.kind ?? 'dock' : 'dock';
   const focusTelemetryKey = useMemo(
     () => (isOpen ? getFocusTelemetryKey(tutorSessionKey, activeFocus) : null),
     [activeFocus, isOpen, tutorSessionKey]
@@ -993,6 +1043,12 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     hasAssignmentSummary,
     hasSelectedText: Boolean(activeSelectedText),
   });
+  const avatarButtonClassName = cn(
+    'flex h-14 w-14 items-center justify-center rounded-full',
+    'border-2 border-amber-900 bg-gradient-to-br from-amber-300 via-orange-400 to-orange-500',
+    'shadow-[0_14px_28px_-16px_rgba(154,82,24,0.26)] hover:brightness-[1.03]',
+    'focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2'
+  );
 
   useEffect(() => {
     if (!isOpen || !focusTelemetryKey || !activeFocus.kind) {
@@ -1055,26 +1111,69 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     sessionContext?.title,
   ]);
 
+  const handleOpenChat = useCallback(
+    (reason: 'toggle' | 'selection'): void => {
+      trackKangurClientEvent('kangur_ai_tutor_opened', {
+        ...telemetryContext,
+        reason,
+        hasSelectedText: Boolean(activeSelectedText),
+        messageCount: messages.length,
+      });
+      openChat();
+    },
+    [
+      activeSelectedText,
+      messages.length,
+      openChat,
+      telemetryContext,
+    ]
+  );
+
+  const handleCloseChat = useCallback(
+    (reason: 'toggle' | 'header' | 'outside'): void => {
+      trackKangurClientEvent('kangur_ai_tutor_closed', {
+        ...telemetryContext,
+        reason,
+        messageCount: messages.length,
+      });
+      if (reason === 'outside' && activeFocus.kind === 'selection') {
+        clearSelection();
+        setHighlightedText(null);
+        setPersistedSelectionRect(null);
+      }
+      closeChat();
+    },
+    [
+      activeFocus.kind,
+      clearSelection,
+      closeChat,
+      messages.length,
+      setHighlightedText,
+      telemetryContext,
+    ]
+  );
+
+  useEffect(() => {
+    if (!isOpen || bubblePlacement.mode !== 'bubble') {
+      return;
+    }
+
+    const handlePointerDown = (event: PointerEvent): void => {
+      if (isTargetWithinTutorUi(event.target)) {
+        return;
+      }
+
+      handleCloseChat('outside');
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown, true);
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown, true);
+    };
+  }, [bubblePlacement.mode, handleCloseChat, isOpen]);
+
   if (!enabled || !mounted) return null;
-
-  const handleOpenChat = (reason: 'toggle' | 'selection'): void => {
-    trackKangurClientEvent('kangur_ai_tutor_opened', {
-      ...telemetryContext,
-      reason,
-      hasSelectedText: Boolean(activeSelectedText),
-      messageCount: messages.length,
-    });
-    openChat();
-  };
-
-  const handleCloseChat = (reason: 'toggle' | 'header'): void => {
-    trackKangurClientEvent('kangur_ai_tutor_closed', {
-      ...telemetryContext,
-      reason,
-      messageCount: messages.length,
-    });
-    closeChat();
-  };
 
   const handleAskAbout = (): void => {
     if (!allowSelectedTextSupport || !selectedText) return;
@@ -1203,7 +1302,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
               type='button'
               onMouseDown={handleSelectionActionMouseDown}
               onClick={handleAskAbout}
-              className='border-2 border-slate-900 shadow-[4px_4px_0_rgba(15,23,42,0.18)]'
+              className='border-2 border-slate-900 shadow-[0_12px_24px_-18px_rgba(15,23,42,0.14)]'
             >
               <BrainCircuit className='h-3.5 w-3.5' />
               Zapytaj o to
@@ -1212,39 +1311,37 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
         ) : null}
       </AnimatePresence>
 
-      <motion.button
-        data-testid='kangur-ai-tutor-avatar'
-        data-anchor-kind={isOpen && isAnchoredUiMode ? activeFocus.kind ?? 'dock' : 'dock'}
-        data-motion-preset={motionProfile.kind}
-        data-motion-behavior={prefersReducedMotion ? 'reduced' : 'animated'}
-        data-ui-mode={uiMode}
-        type='button'
-        onClick={(): void => (isOpen ? handleCloseChat('toggle') : handleOpenChat('toggle'))}
-        initial={false}
-        animate={avatarStyle}
-        transition={prefersReducedMotion ? reducedMotionTransitions.instant : motionProfile.avatarTransition}
-        whileHover={prefersReducedMotion ? undefined : { scale: motionProfile.hoverScale }}
-        whileTap={prefersReducedMotion ? undefined : { scale: motionProfile.tapScale }}
-        className={cn(
-          'fixed z-[60] flex h-14 w-14 items-center justify-center rounded-full',
-          'border-2 border-amber-900 bg-gradient-to-br from-amber-300 via-orange-400 to-orange-500',
-          'shadow-[6px_6px_0_rgba(154,82,24,0.18)] hover:brightness-[1.03]',
-          'focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2'
-        )}
-        aria-label={isOpen ? 'Zamknij pomocnika' : 'Otwórz pomocnika AI'}
-      >
-        <TutorMoodAvatar
-          svgContent={tutorAvatarSvg}
-          avatarImageUrl={tutorAvatarImageUrl}
-          label={`${tutorName} avatar (${tutorMoodId})`}
-          className='h-12 w-12 border border-white/25 bg-white/12 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]'
-          svgClassName='[&_svg]:drop-shadow-[0_1px_1px_rgba(15,23,42,0.1)]'
-          data-testid='kangur-ai-tutor-avatar-image'
-        />
-        {hasNewMessage && !isOpen && (
-          <span className='absolute top-1 right-1 h-3 w-3 rounded-full bg-rose-500 ring-2 ring-white animate-pulse' />
-        )}
-      </motion.button>
+      {!showAttachedAvatarShell ? (
+        <motion.button
+          data-testid='kangur-ai-tutor-avatar'
+          data-anchor-kind={avatarAnchorKind}
+          data-avatar-placement='floating'
+          data-motion-preset={motionProfile.kind}
+          data-motion-behavior={prefersReducedMotion ? 'reduced' : 'animated'}
+          data-ui-mode={uiMode}
+          type='button'
+          onClick={(): void => (isOpen ? handleCloseChat('toggle') : handleOpenChat('toggle'))}
+          initial={false}
+          animate={avatarStyle}
+          transition={prefersReducedMotion ? reducedMotionTransitions.instant : motionProfile.avatarTransition}
+          whileHover={prefersReducedMotion ? undefined : { scale: motionProfile.hoverScale }}
+          whileTap={prefersReducedMotion ? undefined : { scale: motionProfile.tapScale }}
+          className={cn('fixed z-[60]', avatarButtonClassName)}
+          aria-label={isOpen ? 'Zamknij pomocnika' : 'Otwórz pomocnika AI'}
+        >
+          <TutorMoodAvatar
+            svgContent={tutorAvatarSvg}
+            avatarImageUrl={tutorAvatarImageUrl}
+            label={`${tutorName} avatar (${tutorMoodId})`}
+            className='h-12 w-12 border border-white/25 bg-white/12 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]'
+            svgClassName='[&_svg]:drop-shadow-[0_1px_1px_rgba(15,23,42,0.1)]'
+            data-testid='kangur-ai-tutor-avatar-image'
+          />
+          {hasNewMessage && !isOpen && (
+            <span className='absolute top-1 right-1 h-3 w-3 rounded-full bg-rose-500 ring-2 ring-white animate-pulse' />
+          )}
+        </motion.button>
+      ) : null}
 
       <AnimatePresence>
         {isOpen && (
@@ -1252,6 +1349,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
             {bubblePlacement.mode === 'sheet' ? (
               <motion.button
                 key='chat-backdrop'
+                data-testid='kangur-ai-tutor-backdrop'
                 type='button'
                 aria-label='Zamknij pomocnika'
                 initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
@@ -1259,13 +1357,14 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
                 exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
                 transition={prefersReducedMotion ? reducedMotionTransitions.instant : { duration: 0.18 }}
                 className='fixed inset-0 z-[62] bg-slate-900/18'
-                onClick={(): void => handleCloseChat('toggle')}
+                onClick={(): void => handleCloseChat('outside')}
               />
             ) : null}
             <motion.div
               key='chat-panel'
               data-testid='kangur-ai-tutor-panel'
               data-layout={bubblePlacement.mode}
+              data-avatar-placement={showAttachedAvatarShell ? 'attached' : 'independent'}
               data-motion-behavior={prefersReducedMotion ? 'reduced' : 'animated'}
               data-motion-preset={motionProfile.kind}
               data-ui-mode={uiMode}
@@ -1297,11 +1396,38 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
               className='fixed z-[65]'
               style={bubblePlacement.width ? { width: bubblePlacement.width } : undefined}
             >
+              {showAttachedAvatarShell ? (
+                <motion.button
+                  data-testid='kangur-ai-tutor-avatar'
+                  data-anchor-kind={avatarAnchorKind}
+                  data-avatar-placement='attached'
+                  data-avatar-attachment-side={avatarAttachmentSide}
+                  data-motion-preset={motionProfile.kind}
+                  data-motion-behavior={prefersReducedMotion ? 'reduced' : 'animated'}
+                  data-ui-mode={uiMode}
+                  type='button'
+                  onClick={(): void => handleCloseChat('toggle')}
+                  whileHover={prefersReducedMotion ? undefined : { scale: motionProfile.hoverScale }}
+                  whileTap={prefersReducedMotion ? undefined : { scale: motionProfile.tapScale }}
+                  className={cn('absolute z-10', avatarButtonClassName)}
+                  style={attachedAvatarStyle}
+                  aria-label='Zamknij pomocnika'
+                >
+                  <TutorMoodAvatar
+                    svgContent={tutorAvatarSvg}
+                    avatarImageUrl={tutorAvatarImageUrl}
+                    label={`${tutorName} avatar (${tutorMoodId})`}
+                    className='h-12 w-12 border border-white/25 bg-white/12 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]'
+                    svgClassName='[&_svg]:drop-shadow-[0_1px_1px_rgba(15,23,42,0.1)]'
+                    data-testid='kangur-ai-tutor-avatar-image'
+                  />
+                </motion.button>
+              ) : null}
               <KangurGlassPanel
                 surface='solid'
                 variant='soft'
                 className={cn(
-                  'relative flex flex-col overflow-hidden border-2 border-slate-900 bg-[#fffdf4]/95 shadow-[8px_8px_0_rgba(15,23,42,0.18)]',
+                  'relative flex flex-col overflow-hidden border-2 border-slate-900 bg-[#fffdf4]/95 shadow-[0_24px_48px_-28px_rgba(15,23,42,0.16)]',
                   bubblePlacement.mode === 'sheet'
                     ? 'rounded-[28px] rounded-b-[24px]'
                     : 'rounded-[28px]'
@@ -1365,7 +1491,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
                   {contextSwitchNotice ? (
                     <div
                       data-testid='kangur-ai-tutor-context-switch'
-                      className='mb-3 rounded-[20px] border-2 border-slate-900 bg-white px-3 py-2 shadow-[4px_4px_0_rgba(15,23,42,0.12)]'
+                      className='mb-3 rounded-[20px] border-2 border-slate-900 bg-white px-3 py-2 shadow-[0_12px_24px_-18px_rgba(15,23,42,0.1)]'
                     >
                       <div className='text-[10px] font-black uppercase tracking-[0.16em] text-rose-600'>
                         {contextSwitchNotice.title}

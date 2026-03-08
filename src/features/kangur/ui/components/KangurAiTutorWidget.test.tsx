@@ -487,6 +487,33 @@ describe('KangurAiTutorWidget', () => {
     );
   });
 
+  it('closes the tutor when the user clicks outside the desktop bubble', () => {
+    render(<KangurAiTutorWidget />);
+
+    fireEvent.pointerDown(document.body);
+
+    expect(closeChatMock).toHaveBeenCalledTimes(1);
+    expect(clearSelectionMock).toHaveBeenCalledTimes(1);
+    expect(setHighlightedTextMock).toHaveBeenLastCalledWith(null);
+    expect(trackKangurClientEventMock).toHaveBeenCalledWith(
+      'kangur_ai_tutor_closed',
+      expect.objectContaining({
+        surface: 'lesson',
+        title: 'Dodawanie',
+        reason: 'outside',
+        messageCount: 0,
+      })
+    );
+  });
+
+  it('keeps the tutor open when the user interacts inside the tutor bubble', () => {
+    render(<KangurAiTutorWidget />);
+
+    fireEvent.pointerDown(screen.getByTestId('kangur-ai-tutor-panel'));
+
+    expect(closeChatMock).not.toHaveBeenCalled();
+  });
+
   it('keeps the tutor docked in static ui mode while preserving selection context', () => {
     useKangurAiTutorMock.mockReturnValue({
       enabled: true,
@@ -534,10 +561,35 @@ describe('KangurAiTutorWidget', () => {
 
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute('data-ui-mode', 'static');
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute('data-anchor-kind', 'dock');
+    expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
+      'data-avatar-placement',
+      'floating'
+    );
     expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute('data-ui-mode', 'static');
     expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute('data-layout', 'bubble');
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute(
+      'data-avatar-placement',
+      'independent'
+    );
     expect(screen.getByTestId('kangur-ai-tutor-focus-chip')).toHaveTextContent('Fragment lekcji');
     expect(screen.getByRole('button', { name: 'Ten fragment' })).toBeInTheDocument();
+  });
+
+  it('attaches the anchored tutor launcher to the open panel instead of rendering it as a separate floater', () => {
+    render(<KangurAiTutorWidget />);
+
+    expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
+      'data-avatar-placement',
+      'attached'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
+      'data-avatar-attachment-side',
+      'left'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute(
+      'data-avatar-placement',
+      'attached'
+    );
   });
 
   it('switches the tutor chrome into reduced-motion behavior when the user prefers less motion', () => {
@@ -629,6 +681,36 @@ describe('KangurAiTutorWidget', () => {
     render(<KangurAiTutorWidget />);
 
     expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute('data-layout', 'sheet');
+    expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
+      'data-avatar-placement',
+      'attached'
+    );
+  });
+
+  it('uses the outside-dismiss path for the mobile backdrop', () => {
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      writable: true,
+      value: 390,
+    });
+    Object.defineProperty(window, 'innerHeight', {
+      configurable: true,
+      writable: true,
+      value: 844,
+    });
+
+    render(<KangurAiTutorWidget />);
+
+    fireEvent.click(screen.getByTestId('kangur-ai-tutor-backdrop'));
+
+    expect(closeChatMock).toHaveBeenCalledTimes(1);
+    expect(clearSelectionMock).toHaveBeenCalledTimes(1);
+    expect(trackKangurClientEventMock).toHaveBeenCalledWith(
+      'kangur_ai_tutor_closed',
+      expect.objectContaining({
+        reason: 'outside',
+      })
+    );
   });
 
   it('uses the selected local motion preset to widen the sheet breakpoint', () => {

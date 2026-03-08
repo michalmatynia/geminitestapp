@@ -21,6 +21,8 @@ import type {
 import type {
   KangurAiTutorConversationContext,
   KangurAiTutorActionPage,
+  KangurAiTutorCoachingFrame,
+  KangurAiTutorCoachingMode,
   KangurAiTutorFollowUpAction,
 } from '@/shared/contracts/kangur-ai-tutor';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -52,6 +54,106 @@ const ASSIGNMENT_STATUS_ORDER: Record<KangurAssignmentProgressStatus, number> = 
 export type KangurAiTutorAdaptiveGuidance = {
   instructions: string;
   followUpActions: KangurAiTutorFollowUpAction[];
+  coachingFrame: KangurAiTutorCoachingFrame | null;
+};
+
+const COACHING_MODE_INSTRUCTIONS: Record<KangurAiTutorCoachingMode, string> = {
+  hint_ladder:
+    'Use a hint ladder: give one small next step or one checkpoint question, then stop.',
+  misconception_check:
+    'Diagnose the misunderstanding first: explain the concept simply before asking for the next attempt.',
+  review_reflection:
+    'Use review reflection: explain what happened, name one improvement, and finish with one retry idea.',
+  next_best_action:
+    'Recommend exactly one concrete Kangur action that best matches the learner context.',
+};
+
+const buildKangurAiTutorCoachingFrame = (input: {
+  context: KangurAiTutorConversationContext | undefined;
+  averageAccuracy: number;
+  weakMasteryPercent: number;
+}): KangurAiTutorCoachingFrame => {
+  const { context, averageAccuracy, weakMasteryPercent } = input;
+  const hasSelectedExcerpt =
+    Boolean(context?.selectedText) ||
+    context?.focusKind === 'selection' ||
+    context?.promptMode === 'selected_text';
+
+  if (context?.interactionIntent === 'review' || context?.answerRevealed) {
+    return {
+      mode: 'review_reflection',
+      label: 'Omow po probie',
+      description:
+        'Podsumuj probe, nazwij jedna poprawke i zakoncz sugestia ponownej proby.',
+      rationale: context?.answerRevealed
+        ? 'Odpowiedz jest juz odslonieta, wiec tutor powinien skupic sie na spokojnym omowieniu.'
+        : 'To dobry moment na refleksje po probie i jedna konkretna poprawke.',
+    };
+  }
+
+  if (context?.interactionIntent === 'next_step') {
+    return {
+      mode: 'next_best_action',
+      label: 'Nastepny krok',
+      description: 'Wskaz jedna konkretna aktywnosc Kangur jako najlepszy dalszy ruch.',
+      rationale: 'Najwiecej wartosci da teraz jedna jasna aktywnosc, a nie kilka opcji naraz.',
+    };
+  }
+
+  if (
+    hasSelectedExcerpt ||
+    context?.promptMode === 'explain' ||
+    context?.interactionIntent === 'explain'
+  ) {
+    return {
+      mode: 'misconception_check',
+      label: 'Sprawdz rozumienie',
+      description: 'Najpierw wyjasnij pojecie i sprawdz, co uczen rozumie blednie.',
+      rationale: hasSelectedExcerpt
+        ? 'Uczen wskazal konkretny fragment, wiec trzeba najpierw sprawdzic rozumienie.'
+        : 'Najpierw trzeba uchwycic blad w rozumieniu pojecia, zanim padnie kolejna wskazowka.',
+    };
+  }
+
+  if (
+    context?.promptMode === 'hint' ||
+    context?.interactionIntent === 'hint' ||
+    context?.surface === 'test' ||
+    context?.surface === 'game' ||
+    context?.focusKind === 'question' ||
+    averageAccuracy < 70 ||
+    weakMasteryPercent < 60
+  ) {
+    return {
+      mode: 'hint_ladder',
+      label: 'Jeden trop',
+      description: 'Daj tylko jeden maly krok albo pytanie kontrolne, bez pelnego rozwiazania.',
+      rationale:
+        context?.surface === 'test' || context?.surface === 'game'
+          ? 'Uczen jest w trakcie proby, wiec tutor powinien prowadzic bardzo malymi krokami.'
+          : 'Nizsza skutecznosc sugeruje prace malymi krokami zamiast pelnego wyjasnienia naraz.',
+    };
+  }
+
+  return {
+    mode: 'misconception_check',
+    label: 'Sprawdz rozumienie',
+    description: 'Najpierw wyjasnij pojecie i sprawdz, co uczen rozumie blednie.',
+    rationale: 'Krotka diagnoza rozumienia daje lepszy kolejny krok niz szybka odpowiedz.',
+  };
+};
+
+const appendCoachingFrameInstructions = (
+  lines: string[],
+  coachingFrame: KangurAiTutorCoachingFrame
+): void => {
+  lines.push(
+    `Structured coaching mode: ${coachingFrame.mode}. ${COACHING_MODE_INSTRUCTIONS[coachingFrame.mode]}`
+  );
+
+  if (coachingFrame.rationale) {
+    lines.push(`Mode rationale: ${coachingFrame.rationale}`);
+  }
 };
 
 const normalizeComparableValue = (value: string | null | undefined): string | null => {
@@ -516,6 +618,11 @@ const buildAdaptiveGuidanceFromRegistry = (input: {
     typeof relevantWeakLesson?.['masteryPercent'] === 'number'
       ? relevantWeakLesson['masteryPercent']
       : 100;
+  const coachingFrame = buildKangurAiTutorCoachingFrame({
+    context: input.context,
+    averageAccuracy,
+    weakMasteryPercent,
+  });
   if (averageAccuracy < 70 || weakMasteryPercent < 60) {
     lines.push(
       'Adaptive tutoring stance: use smaller reasoning steps, ask one checkpoint question at a time, and confirm understanding before moving on.'
@@ -525,6 +632,7 @@ const buildAdaptiveGuidanceFromRegistry = (input: {
       'Adaptive tutoring stance: keep hints concise, let the learner do more of the work, and use challenge-style follow-up questions.'
     );
   }
+  appendCoachingFrameInstructions(lines, coachingFrame);
 
   if (input.context?.interactionIntent === 'next_step') {
     lines.push(
@@ -548,6 +656,7 @@ const buildAdaptiveGuidanceFromRegistry = (input: {
   return {
     instructions: lines.join('\n'),
     followUpActions,
+    coachingFrame,
   };
 };
 
@@ -617,6 +726,12 @@ export async function buildKangurAiTutorAdaptiveGuidance({
       topRecommendation,
       averageAccuracy: snapshot.averageAccuracy,
     });
+    const weakMasteryPercent = relevantWeakLesson?.masteryPercent ?? 100;
+    const coachingFrame = buildKangurAiTutorCoachingFrame({
+      context,
+      averageAccuracy: snapshot.averageAccuracy,
+      weakMasteryPercent,
+    });
 
     lines.push(
       `Adaptive learner snapshot: average accuracy ${snapshot.averageAccuracy}%, daily goal ${snapshot.todayGames}/${snapshot.dailyGoalGames}, streak ${snapshot.currentStreakDays} days.`
@@ -646,7 +761,7 @@ export async function buildKangurAiTutorAdaptiveGuidance({
 
     if (
       snapshot.averageAccuracy < 70 ||
-      (relevantWeakLesson?.masteryPercent ?? 100) < 60
+      weakMasteryPercent < 60
     ) {
       lines.push(
         'Adaptive tutoring stance: use smaller reasoning steps, ask one checkpoint question at a time, and confirm understanding before moving on.'
@@ -656,6 +771,7 @@ export async function buildKangurAiTutorAdaptiveGuidance({
         'Adaptive tutoring stance: keep hints concise, let the learner do more of the work, and use challenge-style follow-up questions.'
       );
     }
+    appendCoachingFrameInstructions(lines, coachingFrame);
 
     if (context?.interactionIntent === 'next_step') {
       lines.push(
@@ -676,6 +792,7 @@ export async function buildKangurAiTutorAdaptiveGuidance({
     return {
       instructions: lines.join('\n'),
       followUpActions,
+      coachingFrame,
     };
   } catch (error) {
     await ErrorSystem.captureException(error, {
@@ -689,6 +806,7 @@ export async function buildKangurAiTutorAdaptiveGuidance({
     return {
       instructions: '',
       followUpActions: [],
+      coachingFrame: null,
     };
   }
 }

@@ -36,6 +36,7 @@ import {
 import {
   kangurAiTutorChatRequestSchema,
   type KangurAiTutorChatResponse,
+  type KangurAiTutorCoachingMode,
   type KangurAiTutorConversationContext,
   type KangurAiTutorInteractionIntent,
   type KangurAiTutorPromptMode,
@@ -322,6 +323,7 @@ export async function postKangurAiTutorChatHandler(
     timestamp: baseTimestamp,
   }));
   let adaptiveGuidanceApplied = false;
+  let adaptiveCoachingMode: KangurAiTutorCoachingMode | null = null;
   const latestUserMessage =
     [...messages].reverse().find((message) => message.role === 'user')?.content ?? null;
 
@@ -450,6 +452,7 @@ export async function postKangurAiTutorChatHandler(
       registryBundle: contextRegistryBundle,
     });
     const adaptiveInstructions = adaptiveGuidance.instructions;
+    adaptiveCoachingMode = adaptiveGuidance.coachingFrame?.mode ?? null;
     if (adaptiveInstructions) {
       systemParts.push(adaptiveInstructions);
       adaptiveGuidanceApplied = true;
@@ -626,6 +629,7 @@ export async function postKangurAiTutorChatHandler(
         contextRegistryRefCount: contextRegistryBundle?.refs.length ?? 0,
         contextRegistryDocumentCount: contextRegistryBundle?.documents.length ?? 0,
         followUpActionCount: adaptiveGuidance.followUpActions.length,
+        coachingMode: adaptiveCoachingMode,
         personaId: tutorSettings.agentPersonaId,
         suggestedPersonaMoodId,
         personaMemorySessionId,
@@ -645,6 +649,9 @@ export async function postKangurAiTutorChatHandler(
       message: res.text.trim(),
       sources: [],
       followUpActions: adaptiveGuidance.followUpActions,
+      ...(adaptiveGuidance.coachingFrame
+        ? { coachingFrame: adaptiveGuidance.coachingFrame }
+        : {}),
       ...(suggestedPersonaMoodId ? { suggestedMoodId: suggestedPersonaMoodId } : {}),
       tutorMood,
       usage,
@@ -673,6 +680,7 @@ export async function postKangurAiTutorChatHandler(
         testAccessMode: tutorSettings.testAccessMode,
         adaptiveGuidanceApplied,
         contextRegistryRefCount: context ? buildKangurAiTutorContextRegistryRefs({ learnerId, context }).length : 0,
+        coachingMode: adaptiveCoachingMode,
         personaId: tutorSettings.agentPersonaId,
         dailyMessageLimit: tutorSettings.dailyMessageLimit,
         messageCount: messages.length,

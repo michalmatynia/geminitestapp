@@ -47,6 +47,7 @@ type KangurParentMagicLinkExchangePayload = {
   challengeId?: string;
   email?: string;
   emailVerified?: boolean;
+  hasPassword?: boolean;
   ok?: boolean;
 };
 
@@ -54,6 +55,13 @@ type KangurParentEmailVerifyPayload = {
   callbackUrl?: string | null;
   email?: string;
   emailVerified?: boolean;
+  message?: string;
+  ok?: boolean;
+};
+
+type KangurParentPasswordSetPayload = {
+  email?: string;
+  hasPassword?: boolean;
   message?: string;
   ok?: boolean;
 };
@@ -162,6 +170,29 @@ const readApiErrorMessage = async (response: Response): Promise<string | null> =
   return message && message.length > 0 ? message : null;
 };
 
+const clearOneTimeAuthParams = (): void => {
+  const url = new URL(window.location.href);
+  let changed = false;
+
+  for (const param of ['magicLinkToken', 'verifyEmailToken']) {
+    if (url.searchParams.has(param)) {
+      url.searchParams.delete(param);
+      changed = true;
+    }
+  }
+
+  if (!changed) {
+    return;
+  }
+
+  const nextUrl = `${url.pathname}${url.search}${url.hash}`;
+  try {
+    window.history.replaceState(window.history.state, '', nextUrl);
+  } catch {
+    // Ignore history rewrite failures; the tokens are still single-use server-side.
+  }
+};
+
 function KangurLoginPageContent({
   callbackUrl: callbackUrlProp,
   defaultCallbackUrl,
@@ -191,6 +222,12 @@ function KangurLoginPageContent({
   const [notice, setNotice] = useState<string | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pendingParentPasswordSetup, setPendingParentPasswordSetup] = useState<{
+    callbackUrl: string;
+    email: string;
+  } | null>(null);
+  const [newParentPassword, setNewParentPassword] = useState('');
+  const [newParentPasswordConfirm, setNewParentPasswordConfirm] = useState('');
   const processedMagicLinkTokenRef = useRef<string | null>(null);
   const processedVerificationTokenRef = useRef<string | null>(null);
   const loginKind = resolveKangurLoginKind(identifier);
@@ -372,9 +409,10 @@ function KangurLoginPageContent({
         return;
       }
 
+      const targetCallbackUrl = payload.callbackUrl?.trim() || callbackUrl;
       const result = await signInParentWithCredentials({
         authFlow: 'kangur_parent',
-        callbackUrl: payload.callbackUrl?.trim() || callbackUrl,
+        callbackUrl: targetCallbackUrl,
         challengeId: payload.challengeId,
         email: payload.email,
       });
@@ -392,7 +430,23 @@ function KangurLoginPageContent({
       trackKangurClientEvent('kangur_parent_magic_link_signin_succeeded', {
         callbackUrl,
       });
-      await finishLogin(result.url ?? payload.callbackUrl?.trim() ?? callbackUrl);
+      clearOneTimeAuthParams();
+
+      if (payload.hasPassword === false) {
+        setIdentifier(payload.email);
+        setPassword('');
+        setPendingParentPasswordSetup({
+          callbackUrl: targetCallbackUrl,
+          email: payload.email,
+        });
+        setNotice(
+          'Konto rodzica zostalo utworzone magicznym linkiem. Ustaw teraz haslo, aby pozniej logowac sie tez emailem i haslem.'
+        );
+        await auth?.checkAppState?.();
+        return;
+      }
+
+      await finishLogin(result.url ?? targetCallbackUrl);
     } catch {
       trackKangurClientEvent('kangur_parent_magic_link_exchange_failed', {
         callbackUrl,
@@ -442,6 +496,7 @@ function KangurLoginPageContent({
       trackKangurClientEvent('kangur_parent_email_verified', {
         callbackUrl,
       });
+      clearOneTimeAuthParams();
       setNotice(payload?.message?.trim() || 'Email zostal zweryfikowany.');
       await auth?.checkAppState?.();
 
@@ -455,6 +510,74 @@ function KangurLoginPageContent({
       });
       setError('Nie udalo sie zweryfikowac emaila. Sprobuj ponownie.');
       setNotice(null);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleParentPasswordSetup = async (): Promise<void> => {
+    if (!pendingParentPasswordSetup) {
+      return;
+    }
+
+    if (newParentPassword.length === 0) {
+      setError('Wpisz haslo rodzica.');
+      setNotice(null);
+      return;
+    }
+
+    if (newParentPassword !== newParentPasswordConfirm) {
+      setError('Hasla musza byc identyczne.');
+      setNotice(null);
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+    setNotice(null);
+
+    try {
+      const response = await fetch('/api/kangur/auth/parent-password', {
+        method: 'POST',
+        headers: withCsrfHeaders({
+          'Content-Type': 'application/json',
+        }),
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          password: newParentPassword,
+        }),
+      });
+
+      if (!response.ok) {
+        const message = await readApiErrorMessage(response);
+        trackKangurClientEvent('kangur_parent_password_setup_failed', {
+          callbackUrl: pendingParentPasswordSetup.callbackUrl,
+          statusCode: response.status,
+        });
+        setError(message ?? 'Nie udalo sie ustawic hasla rodzica. Sprobuj ponownie.');
+        return;
+      }
+
+      const payload =
+        (await response.json().catch(() => null)) as KangurParentPasswordSetPayload | null;
+      trackKangurClientEvent('kangur_parent_password_setup_succeeded', {
+        callbackUrl: pendingParentPasswordSetup.callbackUrl,
+      });
+      setPendingParentPasswordSetup(null);
+      setNewParentPassword('');
+      setNewParentPasswordConfirm('');
+      setNotice(
+        payload?.message?.trim() ||
+          'Haslo rodzica zostalo ustawione. Od teraz mozesz logowac sie emailem i haslem.'
+      );
+      await auth?.checkAppState?.();
+      await finishLogin(pendingParentPasswordSetup.callbackUrl);
+    } catch {
+      trackKangurClientEvent('kangur_parent_password_setup_failed', {
+        callbackUrl: pendingParentPasswordSetup.callbackUrl,
+        reason: 'network_error',
+      });
+      setError('Nie udalo sie ustawic hasla rodzica. Sprobuj ponownie.');
     } finally {
       setIsSubmitting(false);
     }
@@ -517,6 +640,11 @@ function KangurLoginPageContent({
   const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
 
+    if (pendingParentPasswordSetup) {
+      void handleParentPasswordSetup();
+      return;
+    }
+
     const normalizedIdentifier = identifier.trim();
     if (!normalizedIdentifier) {
       setError('Wpisz email rodzica albo nick ucznia.');
@@ -575,40 +703,93 @@ function KangurLoginPageContent({
           data-testid='kangur-login-form'
           onSubmit={handleSubmit}
         >
-          <label className='flex flex-col gap-2 text-sm font-semibold text-slate-700'>
-            Email rodzica lub nick ucznia
-            <input
-              autoComplete='username'
-              className='rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:opacity-60'
-              disabled={!isHydrated || isSubmitting}
-              name='identifier'
-              onChange={(event) => setIdentifier(event.target.value)}
-              placeholder='rodzic@example.com lub janek123'
-              required
-              type='text'
-              value={identifier}
-            />
-          </label>
+          {pendingParentPasswordSetup ? (
+            <div className='flex flex-col gap-4 rounded-[1.5rem] border border-indigo-200 bg-indigo-50/70 p-4 text-sm text-slate-700'>
+              <div className='space-y-1'>
+                <p className='text-base font-bold text-slate-900'>Ustaw haslo rodzica</p>
+                <p>
+                  Konto <span className='font-semibold text-slate-900'>{pendingParentPasswordSetup.email}</span>{' '}
+                  jest juz zalogowane magicznym linkiem. Ustaw haslo, aby przy kolejnym logowaniu
+                  moc uzyc takze emaila i hasla.
+                </p>
+              </div>
 
-          <label className='flex flex-col gap-2 text-sm font-semibold text-slate-700'>
-            Haslo
-            <input
-              autoComplete='current-password'
-              className='rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:opacity-60'
-              disabled={!isHydrated || isSubmitting}
-              name='password'
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder={loginKind === 'parent' ? 'Haslo rodzica (opcjonalne przy magicznym linku)' : 'Haslo'}
-              required={loginKind !== 'parent'}
-              type='password'
-              value={password}
-            />
-          </label>
+              <label className='flex flex-col gap-2 font-semibold text-slate-700'>
+                Nowe haslo
+                <input
+                  autoComplete='new-password'
+                  className='rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:opacity-60'
+                  disabled={!isHydrated || isSubmitting}
+                  name='newParentPassword'
+                  onChange={(event) => setNewParentPassword(event.target.value)}
+                  placeholder='Ustaw haslo rodzica'
+                  required
+                  type='password'
+                  value={newParentPassword}
+                />
+              </label>
+
+              <label className='flex flex-col gap-2 font-semibold text-slate-700'>
+                Powtorz haslo
+                <input
+                  autoComplete='new-password'
+                  className='rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:opacity-60'
+                  disabled={!isHydrated || isSubmitting}
+                  name='newParentPasswordConfirm'
+                  onChange={(event) => setNewParentPasswordConfirm(event.target.value)}
+                  placeholder='Powtorz haslo'
+                  required
+                  type='password'
+                  value={newParentPasswordConfirm}
+                />
+              </label>
+            </div>
+          ) : (
+            <>
+              <label className='flex flex-col gap-2 text-sm font-semibold text-slate-700'>
+                Email rodzica lub nick ucznia
+                <input
+                  autoComplete='username'
+                  className='rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:opacity-60'
+                  disabled={!isHydrated || isSubmitting}
+                  name='identifier'
+                  onChange={(event) => setIdentifier(event.target.value)}
+                  placeholder='rodzic@example.com lub janek123'
+                  required
+                  type='text'
+                  value={identifier}
+                />
+              </label>
+
+              <label className='flex flex-col gap-2 text-sm font-semibold text-slate-700'>
+                Haslo
+                <input
+                  autoComplete='current-password'
+                  className='rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:opacity-60'
+                  disabled={!isHydrated || isSubmitting}
+                  name='password'
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder={loginKind === 'parent' ? 'Haslo rodzica (opcjonalne przy magicznym linku)' : 'Haslo'}
+                  required={loginKind !== 'parent'}
+                  type='password'
+                  value={password}
+                />
+              </label>
+            </>
+          )}
 
           {notice ? <div className='text-sm text-emerald-600'>{notice}</div> : null}
           {error ? <div className='text-sm text-rose-500'>{error}</div> : null}
 
-          {loginKind === 'parent' ? (
+          {pendingParentPasswordSetup ? (
+            <button
+              className='inline-flex items-center justify-center rounded-2xl bg-indigo-500 px-4 py-3 text-sm font-bold text-white shadow transition hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-60'
+              disabled={!isHydrated || isSubmitting}
+              type='submit'
+            >
+              {isSubmitting ? 'Zapisywanie...' : 'Ustaw haslo i przejdz dalej'}
+            </button>
+          ) : loginKind === 'parent' ? (
             <div className='grid gap-3 sm:grid-cols-2'>
               <button
                 className='inline-flex items-center justify-center rounded-2xl bg-indigo-500 px-4 py-3 text-sm font-bold text-white shadow transition hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-60'
@@ -645,9 +826,9 @@ function KangurLoginPageContent({
           )}
 
           <p className='text-xs leading-5 text-slate-500'>
-            Email z symbolem @ uruchamia logowanie rodzica. Rodzic moze zalogowac sie haslem albo
-            poprosic o magiczny link na email. Kazdy inny identyfikator traktujemy jako nick ucznia
-            i sprawdzamy, czy sklada sie tylko z liter i cyfr.
+            {pendingParentPasswordSetup
+              ? 'Nowe konto rodzica powstaje po samym emailu. Po pierwszym zalogowaniu magicznym linkiem ustawiasz haslo, aby miec oba sposoby logowania.'
+              : 'Email z symbolem @ uruchamia logowanie rodzica. Rodzic moze zalogowac sie haslem albo poprosic o magiczny link na email. Kazdy inny identyfikator traktujemy jako nick ucznia i sprawdzamy, czy sklada sie tylko z liter i cyfr.'}
           </p>
         </form>
       </div>

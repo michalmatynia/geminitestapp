@@ -35,8 +35,9 @@ export async function postKangurParentMagicLinkRequestHandler(
     created: result.created,
     emailVerified: result.emailVerified,
     hasPassword: result.hasPassword,
-    message:
-      'Wyslalismy link do logowania. Jesli email nie jest jeszcze zweryfikowany, w tej samej wiadomosci znajdziesz tez link do weryfikacji.',
+    message: result.hasPassword
+      ? 'Wyslalismy link do logowania. Jesli email nie jest jeszcze zweryfikowany, w tej samej wiadomosci znajdziesz tez link do weryfikacji.'
+      : 'Wyslalismy link do logowania. Po pierwszym zalogowaniu magicznym linkiem ustawisz tez haslo rodzica.',
     debug: buildKangurParentMagicLinkDebugPayload(result),
   });
 }

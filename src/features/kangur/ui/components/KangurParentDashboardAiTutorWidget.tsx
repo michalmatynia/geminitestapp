@@ -10,7 +10,9 @@ import {
   getKangurAiTutorSettingsForLearner,
   parseKangurAiTutorSettings,
   resolveKangurAiTutorAppSettings,
+  type KangurAiTutorHintDepth,
   type KangurAiTutorLearnerStoredSettings,
+  type KangurAiTutorProactiveNudges,
   type KangurAiTutorTestAccessMode,
   type KangurAiTutorUiMode,
 } from '@/features/kangur/settings-ai-tutor';
@@ -165,6 +167,9 @@ function AiTutorConfigPanel(): React.JSX.Element {
   const [allowCrossPagePersistence, setAllowCrossPagePersistence] = useState(
     currentSettings?.allowCrossPagePersistence ?? true
   );
+  const [rememberTutorContext, setRememberTutorContext] = useState(
+    currentSettings?.rememberTutorContext ?? true
+  );
   const [allowLessons, setAllowLessons] = useState(currentSettings?.allowLessons ?? true);
   const [testAccessMode, setTestAccessMode] = useState<KangurAiTutorTestAccessMode>(
     currentSettings?.testAccessMode ?? 'guided'
@@ -173,20 +178,31 @@ function AiTutorConfigPanel(): React.JSX.Element {
   const [allowSelectedTextSupport, setAllowSelectedTextSupport] = useState(
     currentSettings?.allowSelectedTextSupport ?? true
   );
+  const [hintDepth, setHintDepth] = useState<KangurAiTutorHintDepth>(
+    currentSettings?.hintDepth ?? 'guided'
+  );
+  const [proactiveNudges, setProactiveNudges] = useState<KangurAiTutorProactiveNudges>(
+    currentSettings?.proactiveNudges ?? 'gentle'
+  );
 
   useEffect(() => {
     setEnabled(currentSettings?.enabled ?? false);
     setUiMode(currentSettings?.uiMode ?? 'anchored');
     setAllowCrossPagePersistence(currentSettings?.allowCrossPagePersistence ?? true);
+    setRememberTutorContext(currentSettings?.rememberTutorContext ?? true);
     setAllowLessons(currentSettings?.allowLessons ?? true);
     setTestAccessMode(currentSettings?.testAccessMode ?? 'guided');
     setShowSources(currentSettings?.showSources ?? true);
     setAllowSelectedTextSupport(currentSettings?.allowSelectedTextSupport ?? true);
+    setHintDepth(currentSettings?.hintDepth ?? 'guided');
+    setProactiveNudges(currentSettings?.proactiveNudges ?? 'gentle');
   }, [activeLearner?.id, currentSettings]);
   const [isSaving, setIsSaving] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const uiModeFieldId = useId();
   const testAccessModeFieldId = useId();
+  const hintDepthFieldId = useId();
+  const proactiveNudgesFieldId = useId();
   const {
     data: tutorUsageResponse,
     isLoading: isUsageLoading,
@@ -227,10 +243,13 @@ function AiTutorConfigPanel(): React.JSX.Element {
       enabled,
       uiMode,
       allowCrossPagePersistence,
+      rememberTutorContext,
       allowLessons,
       testAccessMode,
       showSources,
       allowSelectedTextSupport,
+      hintDepth,
+      proactiveNudges,
     };
 
     const nextStore = {
@@ -262,10 +281,13 @@ function AiTutorConfigPanel(): React.JSX.Element {
     enabled,
     uiMode,
     allowCrossPagePersistence,
+    rememberTutorContext,
     allowLessons,
     testAccessMode,
     showSources,
     allowSelectedTextSupport,
+    hintDepth,
+    proactiveNudges,
     settingsStoreMap,
     queryClient,
   ]);
@@ -449,6 +471,55 @@ function AiTutorConfigPanel(): React.JSX.Element {
             żądaniem.
           </p>
         </div>
+        <div className='grid gap-3 md:grid-cols-2'>
+          <div className='flex flex-col gap-1'>
+            <label
+              htmlFor={hintDepthFieldId}
+              className='text-xs font-semibold text-slate-600 uppercase tracking-wide'
+            >
+              Glebokosc wskazowek
+            </label>
+            <KangurSelectField
+              id={hintDepthFieldId}
+              value={hintDepth}
+              onChange={(event) => setHintDepth(event.target.value as KangurAiTutorHintDepth)}
+              accent='amber'
+              size='md'
+              disabled={!enabled}
+            >
+              <option value='brief'>Jedno krotkie naprowadzenie</option>
+              <option value='guided'>Jedna wskazowka i pytanie kontrolne</option>
+              <option value='step_by_step'>Prowadz krok po kroku bez podawania odpowiedzi</option>
+            </KangurSelectField>
+            <p className='text-xs leading-relaxed text-slate-500'>
+              Okresla, jak szczegolowe maja byc podpowiedzi w jednej odpowiedzi tutora.
+            </p>
+          </div>
+          <div className='flex flex-col gap-1'>
+            <label
+              htmlFor={proactiveNudgesFieldId}
+              className='text-xs font-semibold text-slate-600 uppercase tracking-wide'
+            >
+              Aktywnosc tutora
+            </label>
+            <KangurSelectField
+              id={proactiveNudgesFieldId}
+              value={proactiveNudges}
+              onChange={(event) =>
+                setProactiveNudges(event.target.value as KangurAiTutorProactiveNudges)}
+              accent='amber'
+              size='md'
+              disabled={!enabled}
+            >
+              <option value='off'>Bez aktywnych podpowiedzi</option>
+              <option value='gentle'>Delikatnie sugeruj kolejny krok</option>
+              <option value='coach'>Wyraznie proponuj dalsze cwiczenie</option>
+            </KangurSelectField>
+            <p className='text-xs leading-relaxed text-slate-500'>
+              Steruje, jak stanowczo tutor moze proponowac kolejny ruch lub powtorke.
+            </p>
+          </div>
+        </div>
         <TutorToggleField
           checked={showSources}
           disabled={!enabled}
@@ -468,7 +539,19 @@ function AiTutorConfigPanel(): React.JSX.Element {
           disabled={!enabled}
           label='Zachowuj rozmowę po zmianie miejsca'
           description='Tutor może pozostać otwarty i wrócić do poprzedniego wątku po przejściu między lekcjami, testami i podsumowaniami.'
-          onChange={setAllowCrossPagePersistence}
+          onChange={(checked) => {
+            setAllowCrossPagePersistence(checked);
+            if (!checked) {
+              setRememberTutorContext(false);
+            }
+          }}
+        />
+        <TutorToggleField
+          checked={rememberTutorContext}
+          disabled={!enabled || !allowCrossPagePersistence}
+          label='Zapamietuj ostatnie wskazowki'
+          description='Pozwala tutorowi przenosic krotka pamiec o ostatniej blokadzie i zalecanym kroku miedzy sesjami ucznia.'
+          onChange={setRememberTutorContext}
         />
       </div>
 

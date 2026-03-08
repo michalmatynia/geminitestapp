@@ -20,8 +20,10 @@ import {
 } from '@/shared/contracts/agents';
 import type { AgentTeachingChatSource } from '@/shared/contracts/agent-teaching';
 import {
+  kangurAiTutorCoachingFrameSchema,
   kangurAiTutorUsageSummarySchema,
   type KangurAiTutorChatResponse,
+  type KangurAiTutorCoachingFrame,
   type KangurAiTutorConversationContext,
   type KangurAiTutorFocusKind,
   type KangurAiTutorFollowUpAction,
@@ -60,6 +62,7 @@ export type ChatMessage = {
   content: string;
   sources?: AgentTeachingChatSource[];
   followUpActions?: KangurAiTutorFollowUpAction[];
+  coachingFrame?: KangurAiTutorCoachingFrame;
 };
 
 export type KangurAiTutorSessionState = {
@@ -170,6 +173,8 @@ const normalizePersistedMessage = (value: unknown): ChatMessage | null => {
     return null;
   }
 
+  const coachingFrame = kangurAiTutorCoachingFrameSchema.safeParse(input['coachingFrame']).data;
+
   return {
     role,
     content,
@@ -177,6 +182,7 @@ const normalizePersistedMessage = (value: unknown): ChatMessage | null => {
     ...(Array.isArray(input['followUpActions'])
       ? { followUpActions: input['followUpActions'] as KangurAiTutorFollowUpAction[] }
       : {}),
+    ...(coachingFrame ? { coachingFrame } : {}),
   };
 };
 
@@ -831,11 +837,14 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
         const followUpActions = Array.isArray(result.followUpActions)
           ? result.followUpActions
           : [];
+        const coachingFrame =
+          kangurAiTutorCoachingFrameSchema.safeParse(result.coachingFrame).data ?? null;
         trackKangurClientEvent('kangur_ai_tutor_message_succeeded', {
           ...telemetryContext,
           sourcesCount: sources.length,
           hasSources: sources.length > 0,
           followUpActionCount: followUpActions.length,
+          coachingMode: coachingFrame?.mode ?? null,
         });
         if (result.tutorMood && activeLearnerId) {
           setLearnerMoodById((current) => ({
@@ -852,6 +861,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
               content: result.message,
               sources,
               followUpActions,
+              ...(coachingFrame ? { coachingFrame } : {}),
             },
           ],
           suggestedMoodId: result.suggestedMoodId ?? null,

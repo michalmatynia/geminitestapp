@@ -18,8 +18,8 @@ import {
   useUserPreferences,
   useUpdateUserPreferencesMutation,
 } from '@/features/auth';
-import { NoteSettingsProvider } from '@/features/notesapp';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { NoteSettingsProvider } from '@/shared/providers/NoteSettingsProvider';
 import { QueryProvider } from '@/shared/providers/QueryProvider';
 import { Button, ToastProvider } from '@/shared/ui';
 import { QueryErrorBoundary } from '@/shared/ui/QueryErrorBoundary';

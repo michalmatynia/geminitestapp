@@ -27,5 +27,6 @@ export async function postKangurParentMagicLinkExchangeHandler(
     challengeId: result.challengeId,
     callbackUrl: result.callbackUrl,
     emailVerified: result.emailVerified,
+    hasPassword: result.hasPassword,
   });
 }

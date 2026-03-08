@@ -4,10 +4,6 @@ import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
-  useAdminLayoutActions,
-  useAdminLayoutState,
-} from '@/features/admin';
-import {
   CASE_RESOLVER_CAPTURE_SETTINGS_KEY,
   parseCaseResolverCaptureSettings,
   type CaseResolverCaptureSettings as CaseResolverCaptureSettingsType,
@@ -29,6 +25,10 @@ import type {
 } from '@/shared/contracts/case-resolver';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { usePrompt } from '@/shared/hooks/ui/usePrompt';
+import {
+  useAdminLayoutActions,
+  useAdminLayoutState,
+} from '@/shared/providers/AdminLayoutProvider';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
 

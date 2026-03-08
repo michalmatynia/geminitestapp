@@ -175,8 +175,17 @@ describe('buildKangurAiTutorAdaptiveGuidance', () => {
       'Adaptive tutoring stance: use smaller reasoning steps, ask one checkpoint question at a time, and confirm understanding before moving on.'
     );
     expect(guidance.instructions).toContain(
+      'Structured coaching mode: next_best_action. Recommend exactly one concrete Kangur action that best matches the learner context.'
+    );
+    expect(guidance.instructions).toContain(
       'When suggesting the next step, anchor it to this assignment and give exactly one concrete Kangur action: Powtórka dodawania.'
     );
+    expect(guidance.coachingFrame).toEqual({
+      mode: 'next_best_action',
+      label: 'Nastepny krok',
+      description: 'Wskaz jedna konkretna aktywnosc Kangur jako najlepszy dalszy ruch.',
+      rationale: 'Najwiecej wartosci da teraz jedna jasna aktywnosc, a nie kilka opcji naraz.',
+    });
     expect(guidance.followUpActions).toEqual([
       {
         id: 'assignment:assignment-1',
@@ -220,6 +229,16 @@ describe('buildKangurAiTutorAdaptiveGuidance', () => {
     expect(guidance.instructions).toContain(
       'Relevant active assignment: Trening: dodawanie do 20.'
     );
+    expect(guidance.instructions).toContain(
+      'Structured coaching mode: review_reflection. Use review reflection: explain what happened, name one improvement, and finish with one retry idea.'
+    );
+    expect(guidance.coachingFrame).toEqual({
+      mode: 'review_reflection',
+      label: 'Omow po probie',
+      description:
+        'Podsumuj probe, nazwij jedna poprawke i zakoncz sugestia ponownej proby.',
+      rationale: 'To dobry moment na refleksje po probie i jedna konkretna poprawke.',
+    });
     expect(guidance.followUpActions).toEqual([]);
     expect(getKangurProgressRepositoryMock).not.toHaveBeenCalled();
     expect(getKangurScoreRepositoryMock).not.toHaveBeenCalled();
@@ -241,6 +260,7 @@ describe('buildKangurAiTutorAdaptiveGuidance', () => {
     ).resolves.toEqual({
       instructions: '',
       followUpActions: [],
+      coachingFrame: null,
     });
 
     expect(captureExceptionMock).toHaveBeenCalledWith(

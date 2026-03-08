@@ -7,6 +7,8 @@ export const KANGUR_AI_TUTOR_APP_SETTINGS_KEY = 'kangur_ai_tutor_app_settings_v1
 export type KangurAiTutorTestAccessMode = 'disabled' | 'guided' | 'review_after_answer';
 export type KangurAiTutorUiMode = 'anchored' | 'static';
 export type KangurAiTutorMotionPresetKind = 'default' | 'desktop' | 'tablet' | 'mobile';
+export type KangurAiTutorHintDepth = 'brief' | 'guided' | 'step_by_step';
+export type KangurAiTutorProactiveNudges = 'off' | 'gentle' | 'coach';
 
 export const KANGUR_AI_TUTOR_MOTION_PRESET_OPTIONS: Array<{
   id: Exclude<KangurAiTutorMotionPresetKind, 'default'>;
@@ -40,10 +42,13 @@ export type KangurAiTutorLearnerGuardrails = {
   enabled: boolean;
   uiMode: KangurAiTutorUiMode;
   allowCrossPagePersistence: boolean;
+  rememberTutorContext: boolean;
   allowLessons: boolean;
   testAccessMode: KangurAiTutorTestAccessMode;
   showSources: boolean;
   allowSelectedTextSupport: boolean;
+  hintDepth: KangurAiTutorHintDepth;
+  proactiveNudges: KangurAiTutorProactiveNudges;
 };
 
 export type KangurAiTutorLearnerSettings = KangurAiTutorLearnerGuardrails &
@@ -64,10 +69,13 @@ export const DEFAULT_KANGUR_AI_TUTOR_LEARNER_GUARDRAILS: KangurAiTutorLearnerGua
   enabled: false,
   uiMode: 'anchored',
   allowCrossPagePersistence: true,
+  rememberTutorContext: true,
   allowLessons: true,
   testAccessMode: 'guided',
   showSources: true,
   allowSelectedTextSupport: true,
+  hintDepth: 'guided',
+  proactiveNudges: 'gentle',
 };
 
 export const DEFAULT_KANGUR_AI_TUTOR_LEARNER_SETTINGS: KangurAiTutorLearnerSettings = {
@@ -107,6 +115,28 @@ const normalizeUiMode = (value: unknown): KangurAiTutorUiMode => {
       return value;
     default:
       return DEFAULT_KANGUR_AI_TUTOR_LEARNER_SETTINGS.uiMode;
+  }
+};
+
+const normalizeHintDepth = (value: unknown): KangurAiTutorHintDepth => {
+  switch (value) {
+    case 'brief':
+    case 'guided':
+    case 'step_by_step':
+      return value;
+    default:
+      return DEFAULT_KANGUR_AI_TUTOR_LEARNER_SETTINGS.hintDepth;
+  }
+};
+
+const normalizeProactiveNudges = (value: unknown): KangurAiTutorProactiveNudges => {
+  switch (value) {
+    case 'off':
+    case 'gentle':
+    case 'coach':
+      return value;
+    default:
+      return DEFAULT_KANGUR_AI_TUTOR_LEARNER_SETTINGS.proactiveNudges;
   }
 };
 
@@ -249,6 +279,10 @@ export function normalizeKangurAiTutorLearnerSettings(
       typeof input['allowCrossPagePersistence'] === 'boolean'
         ? input['allowCrossPagePersistence']
         : DEFAULT_KANGUR_AI_TUTOR_LEARNER_GUARDRAILS.allowCrossPagePersistence,
+    rememberTutorContext:
+      typeof input['rememberTutorContext'] === 'boolean'
+        ? input['rememberTutorContext']
+        : DEFAULT_KANGUR_AI_TUTOR_LEARNER_GUARDRAILS.rememberTutorContext,
     allowLessons:
       typeof input['allowLessons'] === 'boolean'
         ? input['allowLessons']
@@ -262,6 +296,8 @@ export function normalizeKangurAiTutorLearnerSettings(
       typeof input['allowSelectedTextSupport'] === 'boolean'
         ? input['allowSelectedTextSupport']
         : DEFAULT_KANGUR_AI_TUTOR_LEARNER_GUARDRAILS.allowSelectedTextSupport,
+    hintDepth: normalizeHintDepth(input['hintDepth']),
+    proactiveNudges: normalizeProactiveNudges(input['proactiveNudges']),
     ...normalizeKangurAiTutorAppSettingsFields(input),
   };
 }

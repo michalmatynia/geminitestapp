@@ -84,6 +84,13 @@ function Harness(): React.JSX.Element {
       (message.followUpActions ?? []).map((action) => `${action.reason ?? action.id}:${action.label}`)
     )
     .join(' | ');
+  const coachingSummary = messages
+    .flatMap((message) =>
+      message.coachingFrame
+        ? [`${message.coachingFrame.mode}:${message.coachingFrame.label}`]
+        : []
+    )
+    .join(' | ');
 
   return (
     <div>
@@ -118,6 +125,7 @@ function Harness(): React.JSX.Element {
       </button>
       <div data-testid='messages'>{messages.map((message) => message.content).join(' | ')}</div>
       <div data-testid='follow-up-actions'>{followUpSummary || 'none'}</div>
+      <div data-testid='coaching-summary'>{coachingSummary || 'none'}</div>
     </div>
   );
 }
@@ -269,6 +277,13 @@ describe('KangurAiTutorContext', () => {
           reason: 'Powtorz lekcje: Dodawanie',
         },
       ],
+      coachingFrame: {
+        mode: 'hint_ladder',
+        label: 'Jeden trop',
+        description:
+          'Daj tylko jeden maly krok albo pytanie kontrolne, bez pelnego rozwiazania.',
+        rationale: 'Uczen jest w trakcie proby, wiec tutor powinien prowadzic bardzo malymi krokami.',
+      },
       usage: {
         dateKey: '2026-03-07',
         messageCount: 2,
@@ -343,6 +358,7 @@ describe('KangurAiTutorContext', () => {
         hasSources: true,
         sourcesCount: 1,
         followUpActionCount: 1,
+        coachingMode: 'hint_ladder',
       })
     );
     expect(logKangurClientErrorMock).not.toHaveBeenCalled();
@@ -353,6 +369,9 @@ describe('KangurAiTutorContext', () => {
     );
     expect(screen.getByTestId('follow-up-actions')).toHaveTextContent(
       'Powtorz lekcje: Dodawanie:Otworz lekcje'
+    );
+    expect(screen.getByTestId('coaching-summary')).toHaveTextContent(
+      'hint_ladder:Jeden trop'
     );
     expect(screen.getByTestId('usage-summary')).toHaveTextContent('2/3/1');
   });

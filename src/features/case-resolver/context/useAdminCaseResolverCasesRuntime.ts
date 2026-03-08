@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import {
-  useUpdateUserPreferencesMutation,
+  useUpdateUserPreferences,
   useUserPreferences,
-} from '@/features/auth';
+} from '@/shared/hooks/useUserPreferences';
 import type {
   CaseResolverCategory,
   CaseResolverIdentifier,
@@ -58,7 +58,7 @@ const normalizeToastVariant = (value: string | undefined): ToastVariant | undefi
 
 export function useAdminCaseResolverCasesRuntime(): AdminCaseResolverCasesRuntimeResult {
   const preferencesQuery = useUserPreferences();
-  const updatePreferencesMutation = useUpdateUserPreferencesMutation();
+  const updatePreferencesMutation = useUpdateUserPreferences();
   const settingsStore = useSettingsStore();
   const { toast } = useToast();
 

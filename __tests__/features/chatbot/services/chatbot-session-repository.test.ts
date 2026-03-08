@@ -1,113 +1,133 @@
-import { ObjectId } from 'mongodb';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { chatbotSessionRepository } from '@/features/ai/chatbot/services/chatbot-session-repository';
-
-// Hoist mocks
-const { mockCollection, mockDb } = vi.hoisted(() => {
-  const mockCollection = {
-    find: vi.fn().mockReturnThis(),
-    sort: vi.fn().mockReturnThis(),
-    toArray: vi.fn(),
-    findOne: vi.fn(),
-    insertOne: vi.fn(),
-    findOneAndUpdate: vi.fn(),
-    deleteOne: vi.fn(),
-  };
-  const mockDb = {
-    collection: vi.fn(() => mockCollection),
-  };
-  return { mockCollection, mockDb };
-});
-
-vi.mock('@/shared/lib/db/mongo-client', () => ({
-  getMongoDb: vi.fn().mockResolvedValue(mockDb),
+const { mockPrisma } = vi.hoisted(() => ({
+  mockPrisma: {
+    chatbotSession: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      deleteMany: vi.fn(),
+    },
+    chatbotMessage: {
+      create: vi.fn(),
+    },
+    $transaction: vi.fn(),
+  },
 }));
 
-vi.mock('mongodb', async (importOriginal) => {
-  const actual = (await importOriginal());
-  class MockObjectId {
+const createMessageRow = (
+  overrides: Partial<{
     id: string;
-    constructor(id: string) {
-      this.id = id;
-    }
-    toString() {
-      return this.id;
-    }
-    equals(other: unknown) {
-      return other && (other as { toString: () => string }).toString() === this.id;
-    }
-  }
-  const MockObjectIdCtor = function (id: string) {
-    return new MockObjectId(id);
-  } as unknown as typeof actual.ObjectId;
+    sessionId: string;
+    role: 'system' | 'user' | 'assistant' | 'tool' | 'error' | 'info' | 'audit';
+    content: string;
+    model: string | null;
+    images: string[];
+    metadata: Record<string, unknown> | null;
+    createdAt: Date;
+  }> = {}
+) => ({
+  id: 'message-1',
+  sessionId: 'session-1',
+  role: 'user' as const,
+  content: 'Hello',
+  model: null,
+  images: [],
+  metadata: null,
+  createdAt: new Date('2024-01-02T10:00:00.000Z'),
+  ...overrides,
+});
 
-  (MockObjectIdCtor as unknown as { isValid: (id: string) => boolean }).isValid =
-    actual.ObjectId.isValid;
-  return {
-    ...actual,
-    ObjectId: MockObjectIdCtor,
-  };
+const createSessionRow = (
+  overrides: Partial<{
+    id: string;
+    title: string | null;
+    personaId: string | null;
+    settings: Record<string, unknown> | null;
+    createdAt: Date;
+    updatedAt: Date;
+    messages: Array<ReturnType<typeof createMessageRow>>;
+  }> = {}
+) => ({
+  id: 'session-1',
+  title: 'Session 1',
+  personaId: null,
+  settings: null,
+  createdAt: new Date('2024-01-01T10:00:00.000Z'),
+  updatedAt: new Date('2024-01-02T10:00:00.000Z'),
+  messages: [],
+  ...overrides,
 });
 
 describe('Chatbot Session Repository', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockCollection.find.mockReturnThis();
-    mockCollection.sort.mockReturnThis();
+    vi.resetModules();
+    vi.doMock('@/shared/lib/db/prisma', () => ({
+      default: mockPrisma,
+    }));
+    mockPrisma.$transaction.mockResolvedValue([]);
   });
+
+  const loadRepository = async () =>
+    (await import('@/features/ai/chatbot/services/chatbot-session-repository'))
+      .chatbotSessionRepository;
 
   describe('findAll', () => {
     it('returns all sessions sorted by updatedAt', async () => {
-      const mockDocs = [
-        {
-          _id: new ObjectId('507f1f77bcf86cd799439011'),
-          title: 'Session 1',
-          messages: [],
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        {
-          _id: new ObjectId('507f1f77bcf86cd799439012'),
-          title: 'Session 2',
-          messages: [],
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
+      const sessions = [
+        createSessionRow({ id: 'session-1' }),
+        createSessionRow({ id: 'session-2', title: 'Session 2' }),
       ];
-      mockCollection.toArray.mockResolvedValue(mockDocs);
+      mockPrisma.chatbotSession.findMany.mockResolvedValue(sessions);
 
-      const result = await chatbotSessionRepository.findAll();
+      const repository = await loadRepository();
+      const result = await repository.findAll();
 
-      expect(mockDb.collection).toHaveBeenCalledWith('chatbot_sessions');
-      expect(mockCollection.find).toHaveBeenCalledWith({});
-      expect(mockCollection.sort).toHaveBeenCalledWith({ updatedAt: -1 });
+      expect(mockPrisma.chatbotSession.findMany).toHaveBeenCalledWith({
+        orderBy: { updatedAt: 'desc' },
+        include: {
+          messages: {
+            orderBy: { createdAt: 'asc' },
+          },
+        },
+      });
       expect(result).toHaveLength(2);
-      expect(result[0]?.id).toBe('507f1f77bcf86cd799439011');
+      expect(result[0]).toMatchObject({
+        id: 'session-1',
+        title: 'Session 1',
+        messageCount: 0,
+      });
     });
   });
 
   describe('findById', () => {
     it('returns session by id', async () => {
-      const id = '507f1f77bcf86cd799439011';
-      const mockDoc = {
-        _id: new ObjectId(id),
-        title: 'Session 1',
-        messages: [],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      mockCollection.findOne.mockResolvedValue(mockDoc);
+      mockPrisma.chatbotSession.findUnique.mockResolvedValue(
+        createSessionRow({ id: 'session-1' })
+      );
 
-      const result = await chatbotSessionRepository.findById(id);
+      const repository = await loadRepository();
+      const result = await repository.findById('session-1');
 
-      expect(mockCollection.findOne).toHaveBeenCalled();
-      expect(result?.id).toBe(id);
+      expect(mockPrisma.chatbotSession.findUnique).toHaveBeenCalledWith({
+        where: { id: 'session-1' },
+        include: {
+          messages: {
+            orderBy: { createdAt: 'asc' },
+          },
+        },
+      });
+      expect(result?.id).toBe('session-1');
     });
 
     it('returns null if session not found', async () => {
-      mockCollection.findOne.mockResolvedValue(null);
-      const result = await chatbotSessionRepository.findById('507f1f77bcf86cd799439011');
+      mockPrisma.chatbotSession.findUnique.mockResolvedValue(null);
+
+      const repository = await loadRepository();
+      const result = await repository.findById('session-1');
+
       expect(result).toBeNull();
     });
   });
@@ -121,97 +141,179 @@ describe('Chatbot Session Repository', () => {
         messageCount: 0,
         settings: { model: 'gpt-4' },
       };
-      const newId = new ObjectId('507f1f77bcf86cd799439013');
-      mockCollection.insertOne.mockResolvedValue({ insertedId: newId });
+      mockPrisma.chatbotSession.create.mockResolvedValue(
+        createSessionRow({
+          id: 'session-new',
+          title: 'New Session',
+          settings: { model: 'gpt-4' },
+        })
+      );
 
-      const result = await chatbotSessionRepository.create(input);
+      const repository = await loadRepository();
+      const result = await repository.create(input);
 
-      expect(mockCollection.insertOne).toHaveBeenCalled();
-      expect(result.id).toBe(newId.toString());
-      expect(result.title).toBe('New Session');
+      expect(mockPrisma.chatbotSession.create).toHaveBeenCalledWith({
+        data: {
+          title: 'New Session',
+          personaId: null,
+          settings: { model: 'gpt-4' },
+        },
+        include: {
+          messages: true,
+        },
+      });
+      expect(result).toMatchObject({
+        id: 'session-new',
+        title: 'New Session',
+      });
+      expect(result.settings?.model).toBe('gpt-4');
     });
   });
 
   describe('update', () => {
     it('updates an existing session', async () => {
-      const id = '507f1f77bcf86cd799439011';
-      const mockDoc = {
-        _id: new ObjectId(id),
+      mockPrisma.chatbotSession.findUnique.mockResolvedValue(
+        createSessionRow({ id: 'session-1' })
+      );
+      mockPrisma.chatbotSession.update.mockResolvedValue(
+        createSessionRow({ id: 'session-1', title: 'Updated Title' })
+      );
+
+      const repository = await loadRepository();
+      const result = await repository.update('session-1', {
         title: 'Updated Title',
-        messages: [],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      mockCollection.findOneAndUpdate.mockResolvedValue(mockDoc);
+      });
 
-      const result = await chatbotSessionRepository.update(id, { title: 'Updated Title' });
-
-      expect(mockCollection.findOneAndUpdate).toHaveBeenCalled();
+      expect(mockPrisma.chatbotSession.findUnique).toHaveBeenCalledWith({
+        where: { id: 'session-1' },
+        include: {
+          messages: {
+            orderBy: { createdAt: 'asc' },
+          },
+        },
+      });
+      expect(mockPrisma.chatbotSession.update).toHaveBeenCalledWith({
+        where: { id: 'session-1' },
+        data: {
+          title: 'Updated Title',
+        },
+        include: {
+          messages: {
+            orderBy: { createdAt: 'asc' },
+          },
+        },
+      });
       expect(result?.title).toBe('Updated Title');
     });
   });
 
   describe('delete', () => {
     it('deletes a session', async () => {
-      mockCollection.deleteOne.mockResolvedValue({ deletedCount: 1 });
-      const result = await chatbotSessionRepository.delete('507f1f77bcf86cd799439011');
+      mockPrisma.chatbotSession.deleteMany.mockResolvedValue({ count: 1 });
+
+      const repository = await loadRepository();
+      const result = await repository.delete('session-1');
+
+      expect(mockPrisma.chatbotSession.deleteMany).toHaveBeenCalledWith({
+        where: { id: 'session-1' },
+      });
       expect(result).toBe(true);
     });
 
     it('returns false if session not deleted', async () => {
-      mockCollection.deleteOne.mockResolvedValue({ deletedCount: 0 });
-      const result = await chatbotSessionRepository.delete('507f1f77bcf86cd799439011');
+      mockPrisma.chatbotSession.deleteMany.mockResolvedValue({ count: 0 });
+
+      const repository = await loadRepository();
+      const result = await repository.delete('session-1');
+
       expect(result).toBe(false);
     });
   });
 
   describe('addMessage', () => {
     it('adds a message to a session', async () => {
-      const id = '507f1f77bcf86cd799439011';
       const message = { role: 'user' as const, content: 'Hello' };
-      const mockDoc = {
-        _id: new ObjectId(id),
-        title: 'Session 1',
-        messages: [message],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      mockCollection.findOneAndUpdate.mockResolvedValue(mockDoc);
+      const createdAt = new Date('2024-01-03T10:00:00.000Z');
+      mockPrisma.chatbotSession.findUnique
+        .mockResolvedValueOnce({ id: 'session-1' })
+        .mockResolvedValueOnce(
+          createSessionRow({
+            id: 'session-1',
+            messages: [
+              createMessageRow({
+                sessionId: 'session-1',
+                role: 'user',
+                content: 'Hello',
+                createdAt,
+              }),
+            ],
+            updatedAt: createdAt,
+          })
+        );
+      mockPrisma.chatbotMessage.create.mockReturnValue({ kind: 'create-message' });
+      mockPrisma.chatbotSession.update.mockReturnValue({ kind: 'touch-session' });
 
-      const result = await chatbotSessionRepository.addMessage(id, message);
+      const repository = await loadRepository();
+      const result = await repository.addMessage('session-1', message);
 
-      expect(mockCollection.findOneAndUpdate).toHaveBeenCalledWith(
-        { _id: expect.anything() },
-        {
-          $push: { messages: expect.objectContaining(message) },
-          $set: { updatedAt: expect.any(Date) },
+      expect(mockPrisma.chatbotSession.findUnique).toHaveBeenNthCalledWith(1, {
+        where: { id: 'session-1' },
+        select: {
+          id: true,
         },
-        { returnDocument: 'after' }
-      );
-      expect(result?.messages).toContain(message);
+      });
+      expect(mockPrisma.chatbotMessage.create).toHaveBeenCalledWith({
+        data: {
+          sessionId: 'session-1',
+          role: 'user',
+          content: 'Hello',
+        },
+      });
+      expect(mockPrisma.chatbotSession.update).toHaveBeenCalledWith({
+        where: { id: 'session-1' },
+        data: {
+          updatedAt: expect.any(Date),
+        },
+      });
+      expect(mockPrisma.$transaction).toHaveBeenCalledWith([
+        { kind: 'create-message' },
+        { kind: 'touch-session' },
+      ]);
+      expect(result?.messages).toHaveLength(1);
+      expect(result?.messages[0]).toMatchObject({
+        role: 'user',
+        content: 'Hello',
+      });
     });
 
     it('updates timestamps when adding a message', async () => {
-      const id = '507f1f77bcf86cd799439011';
+      const beforeDate = new Date('2020-01-01T00:00:00.000Z');
+      const updatedAt = new Date('2024-01-03T10:00:00.000Z');
       const message = { role: 'user' as const, content: 'New message' };
 
-      const beforeDate = new Date('2020-01-01');
-      const mockDoc = {
-        _id: new ObjectId(id),
-        title: 'Session 1',
-        messages: [message],
-        createdAt: beforeDate,
-        updatedAt: new Date(), // updated
-      };
+      mockPrisma.chatbotSession.findUnique
+        .mockResolvedValueOnce({ id: 'session-1' })
+        .mockResolvedValueOnce(
+          createSessionRow({
+            id: 'session-1',
+            updatedAt,
+            createdAt: beforeDate,
+            messages: [
+              createMessageRow({
+                sessionId: 'session-1',
+                content: 'New message',
+                createdAt: updatedAt,
+              }),
+            ],
+          })
+        );
+      mockPrisma.chatbotMessage.create.mockReturnValue({ kind: 'create-message' });
+      mockPrisma.chatbotSession.update.mockReturnValue({ kind: 'touch-session' });
 
-      mockCollection.findOneAndUpdate.mockResolvedValue(mockDoc);
+      const repository = await loadRepository();
+      const result = await repository.addMessage('session-1', message);
 
-      const result = await chatbotSessionRepository.addMessage(id, message);
-
-      // We can't strictly assert the date instance passed to $set because it's created inside the function,
-      // but we verified it is passed in the previous test.
-      // Here we just verify the returned object reflects an update.
-      expect(result?.updatedAt).toBeDefined();
+      expect(result?.updatedAt).toBe(updatedAt.toISOString());
       expect(new Date(result!.updatedAt!).getTime()).toBeGreaterThan(beforeDate.getTime());
     });
   });

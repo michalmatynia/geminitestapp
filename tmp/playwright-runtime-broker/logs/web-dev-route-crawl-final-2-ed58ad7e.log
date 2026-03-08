@@ -224,3 +224,27 @@ Ready on http://localhost:51536 { port: 51536, host: '127.0.0.1' }
  GET /api/settings/lite 200 in 181ms (compile: 49ms, proxy.ts: 66ms, render: 66ms)
  GET /api/auth/session 200 in 223ms (compile: 127ms, proxy.ts: 90ms, render: 6ms)
  GET /api/auth/session 200 in 242ms (compile: 212ms, proxy.ts: 17ms, render: 13ms)
+✓ Compiled in 10.6s
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 1,
+  reason: 'idle',
+  address: 'cluster0-shard-00-02.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 1,
+  reason: 'idle',
+  address: 'cluster0-shard-00-00.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 3,
+  reason: 'idle',
+  address: 'cluster0-shard-00-01.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+Received SIGTERM, shutting down gracefully... { signal: 'SIGTERM' }
+Server closed undefined

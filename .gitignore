@@ -82,3 +82,7 @@ docker.md
 /tests/e2e/.env
 /test-results/
 .aider*
+
+# Testing
+/docs/metrics
+/tmp/playwright-runs/

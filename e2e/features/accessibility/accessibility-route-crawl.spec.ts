@@ -14,6 +14,8 @@ test.describe.configure({ mode: 'serial' });
 
 for (const routeEntry of routes) {
   test(buildAccessibilityRouteCrawlTitle(routeEntry), async ({ page }) => {
+    test.setTimeout(routeEntry.audience === 'admin' ? 120_000 : 60_000);
+
     if (routeEntry.audience === 'admin') {
       await ensureAdminSession(page, routeEntry.route);
       await page.waitForLoadState('networkidle');

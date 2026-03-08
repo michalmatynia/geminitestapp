@@ -4,9 +4,9 @@ import { useRouter } from 'next/navigation';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import {
-  useUpdateUserPreferencesMutation,
+  useUpdateUserPreferences,
   useUserPreferences,
-} from '@/features/auth';
+} from '@/shared/hooks/useUserPreferences';
 import type { UserPreferences } from '@/shared/contracts/auth';
 import {
   Button,
@@ -83,7 +83,7 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
   const router = useRouter();
   const { toast } = useToast();
   const preferencesQuery = useUserPreferences();
-  const updatePreferencesMutation = useUpdateUserPreferencesMutation();
+  const updatePreferencesMutation = useUpdateUserPreferences();
 
   const savedPreferences = useMemo(
     () => normalizeCaseResolverCaseListPreferences(preferencesQuery.data),

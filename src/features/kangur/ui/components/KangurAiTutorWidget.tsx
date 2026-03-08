@@ -919,7 +919,7 @@ const getContextSwitchNotice = (input: {
         ? 'Nowe pytanie testowe'
         : input.surface === 'game'
           ? 'Nowy etap gry'
-        : 'Nowy fragment lekcji';
+          : 'Nowy fragment lekcji';
   const detail = input.questionProgressLabel?.trim()
     ? input.questionProgressLabel.trim()
     : input.questionId?.trim()
@@ -1383,24 +1383,24 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     typeof bubblePlacement.style.left === 'number' &&
     typeof bubblePlacement.style.top === 'number'
       ? getTutorPointerGeometry({
-          focusRect: displayFocusRect,
-          panelLeft: bubblePlacement.style.left,
-          panelTop: bubblePlacement.style.top,
-          panelWidth: bubblePlacement.width ?? motionProfile.desktopBubbleWidth,
-          side: avatarAttachmentSide,
-        })
+        focusRect: displayFocusRect,
+        panelLeft: bubblePlacement.style.left,
+        panelTop: bubblePlacement.style.top,
+        panelWidth: bubblePlacement.width ?? motionProfile.desktopBubbleWidth,
+        side: avatarAttachmentSide,
+      })
       : null;
   const attachedLaunchOffset =
     bubblePlacement.mode === 'bubble' &&
     typeof bubblePlacement.style.left === 'number' &&
     typeof bubblePlacement.style.top === 'number'
       ? getDockLaunchOffset({
-          finalLeft: bubblePlacement.style.left,
-          finalTop: bubblePlacement.style.top,
-          width: bubblePlacement.width ?? motionProfile.desktopBubbleWidth,
-          side: avatarAttachmentSide,
-          viewport,
-        })
+        finalLeft: bubblePlacement.style.left,
+        finalTop: bubblePlacement.style.top,
+        width: bubblePlacement.width ?? motionProfile.desktopBubbleWidth,
+        side: avatarAttachmentSide,
+        viewport,
+      })
       : { x: 0, y: 0 };
   const avatarStyle =
     showAttachedAvatarShell || (isOpen && bubblePlacement.mode === 'sheet')
@@ -1848,7 +1848,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
                     ? { opacity: 0, y: 28 }
                     : panelOpenAnimation === 'fade'
                       ? { opacity: 0 }
-                    : {
+                      : {
                         opacity: 0,
                         x: attachedLaunchOffset.x,
                         y: attachedLaunchOffset.y,
@@ -1871,7 +1871,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
                     ? { opacity: 0, y: 28 }
                     : panelOpenAnimation === 'fade'
                       ? { opacity: 0 }
-                    : {
+                      : {
                         opacity: 0,
                         x: attachedLaunchOffset.x * 0.18,
                         y: attachedLaunchOffset.y * 0.18,
@@ -2130,6 +2130,25 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
                       ) : (
                         <div key={index} className='flex justify-start'>
                           <div className='w-full max-w-[90%] space-y-2'>
+                            {msg.coachingFrame ? (
+                              <div
+                                className='rounded-2xl border border-sky-100 bg-sky-50/80 px-3 py-2 text-left shadow-sm'
+                                data-testid='kangur-ai-tutor-coaching-frame'
+                                data-coaching-mode={msg.coachingFrame.mode}
+                              >
+                                <div className='text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-600'>
+                                  {msg.coachingFrame.label}
+                                </div>
+                                <div className='mt-1 text-xs font-medium leading-relaxed text-slate-700'>
+                                  {msg.coachingFrame.description}
+                                </div>
+                                {msg.coachingFrame.rationale ? (
+                                  <div className='mt-1 text-[11px] leading-relaxed text-slate-500'>
+                                    {msg.coachingFrame.rationale}
+                                  </div>
+                                ) : null}
+                              </div>
+                            ) : null}
                             <div className='rounded-[22px] border border-slate-200 bg-white px-3 py-2 text-sm leading-relaxed text-slate-800 shadow-sm'>
                               {msg.content}
                             </div>

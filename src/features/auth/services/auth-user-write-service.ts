@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { hash } from 'bcryptjs';
+
 import { getAuthDataProvider, requireAuthProvider } from '@/shared/lib/auth/services/auth-provider';
 import type { AuthUserRecord } from '@/shared/contracts/auth';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -148,6 +150,46 @@ export const markAuthUserEmailVerified = async (userId: string): Promise<AuthUse
       $set: {
         emailVerified: verifiedAt,
         updatedAt: verifiedAt,
+      },
+    }
+  );
+
+  return findAuthUserById(userId);
+};
+
+export const setAuthUserPassword = async (
+  userId: string,
+  password: string
+): Promise<AuthUserRecord | null> => {
+  const provider = requireAuthProvider(await getAuthDataProvider());
+  const passwordHash = await hash(password, 12);
+
+  if (provider === 'prisma') {
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        passwordHash,
+      },
+    });
+    return findAuthUserById(userId);
+  }
+
+  if (!process.env['MONGODB_URI']) {
+    return null;
+  }
+
+  const mongo = await getMongoDb();
+  const { ObjectId } = await import('mongodb');
+  if (!ObjectId.isValid(userId)) {
+    return null;
+  }
+
+  await mongo.collection<MongoUserDoc>('users').updateOne(
+    { _id: new ObjectId(userId) },
+    {
+      $set: {
+        passwordHash,
+        updatedAt: new Date(),
       },
     }
   );

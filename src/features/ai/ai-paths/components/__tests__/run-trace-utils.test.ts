@@ -1,12 +1,10 @@
 import { describe, expect, it } from 'vitest';
-
 import {
   buildRunTraceComparison,
   buildRuntimeTimelineItems,
   readRuntimeTraceSummary,
   runTraceComparisonRowHasResumeChange,
 } from '../run-trace-utils';
-
 describe('run-trace-utils', () => {
   it('prefers V1 runtimeTrace.spans over legacy profile.nodeSpans', () => {
     const summary = readRuntimeTraceSummary({
@@ -87,7 +85,6 @@ describe('run-trace-utils', () => {
       resumeSourceStatus: 'completed',
     });
   });
-
   it('counts re-executed resume spans separately from reused spans', () => {
     const summary = readRuntimeTraceSummary({
       runtimeTrace: {
@@ -139,7 +136,6 @@ describe('run-trace-utils', () => {
     expect(summary?.resumeReuseCount).toBe(1);
     expect(summary?.resumeReexecutionCount).toBe(1);
   });
-
   it('falls back to legacy profile.nodeSpans when V1 spans are absent', () => {
     const summary = readRuntimeTraceSummary({
       runtimeTrace: {

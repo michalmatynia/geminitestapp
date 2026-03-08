@@ -131,7 +131,9 @@
     ".next-dev-web-dev-codex-kangur-navigation-full/types/**/*.ts",
     ".next-dev-web-dev-codex-kangur-navigation-full/dev/types/**/*.ts",
     ".next-dev-web-dev-michalmatynia-route-crawl/types/**/*.ts",
-    ".next-dev-web-dev-michalmatynia-route-crawl/dev/types/**/*.ts"
+    ".next-dev-web-dev-michalmatynia-route-crawl/dev/types/**/*.ts",
+    ".next-dev-web-dev-codex-kangur-parent-auth/types/**/*.ts",
+    ".next-dev-web-dev-codex-kangur-parent-auth/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

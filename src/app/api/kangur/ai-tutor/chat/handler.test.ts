@@ -294,6 +294,7 @@ describe('kangur ai tutor chat handler', () => {
     buildKangurAiTutorAdaptiveGuidanceMock.mockResolvedValue({
       instructions: '',
       followUpActions: [],
+      coachingFrame: null,
     });
 
     readStoredSettingValueMock.mockImplementation(async (key: string) => {
@@ -343,8 +344,16 @@ describe('kangur ai tutor chat handler', () => {
 
   it('routes tutor chat through Brain with persona instructions and structured Kangur context', async () => {
     buildKangurAiTutorAdaptiveGuidanceMock.mockResolvedValue({
-      instructions: 'Adaptive learner guidance:\nTop recommendation: Powtorz lekcje: Dodawanie.',
+      instructions:
+        'Adaptive learner guidance:\nTop recommendation: Powtorz lekcje: Dodawanie.\nStructured coaching mode: hint_ladder. Use a hint ladder: give one small next step or one checkpoint question, then stop.',
       followUpActions: [],
+      coachingFrame: {
+        mode: 'hint_ladder',
+        label: 'Jeden trop',
+        description:
+          'Daj tylko jeden maly krok albo pytanie kontrolne, bez pelnego rozwiazania.',
+        rationale: 'Uczen jest w trakcie proby, wiec tutor powinien prowadzic bardzo malymi krokami.',
+      },
     });
     contextRegistryResolveRefsMock.mockResolvedValue(
       createContextRegistryBundle({
@@ -451,7 +460,7 @@ describe('kangur ai tutor chat handler', () => {
       'Do not reveal the final answer, the correct option label, or solve the problem outright.'
     );
     expect(brainInput.messages[0].content).toContain(
-      'Adaptive learner guidance:\nTop recommendation: Powtorz lekcje: Dodawanie.'
+      'Adaptive learner guidance:\nTop recommendation: Powtorz lekcje: Dodawanie.\nStructured coaching mode: hint_ladder. Use a hint ladder: give one small next step or one checkpoint question, then stop.'
     );
     expect(brainInput.messages[0].content).toContain(
       'Learner-specific tutor mood: supportive.'
@@ -472,6 +481,7 @@ describe('kangur ai tutor chat handler', () => {
           adaptiveGuidanceApplied: true,
           contextRegistryRefCount: 2,
           contextRegistryDocumentCount: 2,
+          coachingMode: 'hint_ladder',
           personaId: 'persona-1',
           suggestedPersonaMoodId: 'encouraging',
           personaMemorySessionId: 'kangur-persona-session-1',
@@ -561,6 +571,13 @@ describe('kangur ai tutor chat handler', () => {
       message: 'Spójrz najpierw na to, co oznacza znak plus.',
       sources: [],
       followUpActions: [],
+      coachingFrame: {
+        mode: 'hint_ladder',
+        label: 'Jeden trop',
+        description:
+          'Daj tylko jeden maly krok albo pytanie kontrolne, bez pelnego rozwiazania.',
+        rationale: 'Uczen jest w trakcie proby, wiec tutor powinien prowadzic bardzo malymi krokami.',
+      },
       suggestedMoodId: 'encouraging',
       tutorMood: {
         currentMoodId: 'supportive',
@@ -675,6 +692,12 @@ describe('kangur ai tutor chat handler', () => {
           reason: 'Powtorz lekcje: Dodawanie',
         },
       ],
+      coachingFrame: {
+        mode: 'next_best_action',
+        label: 'Nastepny krok',
+        description: 'Wskaz jedna konkretna aktywnosc Kangur jako najlepszy dalszy ruch.',
+        rationale: 'Najwiecej wartosci da teraz jedna jasna aktywnosc, a nie kilka opcji naraz.',
+      },
     });
     contextRegistryResolveRefsMock.mockResolvedValue(
       createContextRegistryBundle({
@@ -712,6 +735,7 @@ describe('kangur ai tutor chat handler', () => {
         context: expect.objectContaining({
           interactionIntent: 'next_step',
           followUpActionCount: 1,
+          coachingMode: 'next_best_action',
         }),
       })
     );
@@ -729,6 +753,12 @@ describe('kangur ai tutor chat handler', () => {
           reason: 'Powtorz lekcje: Dodawanie',
         },
       ],
+      coachingFrame: {
+        mode: 'next_best_action',
+        label: 'Nastepny krok',
+        description: 'Wskaz jedna konkretna aktywnosc Kangur jako najlepszy dalszy ruch.',
+        rationale: 'Najwiecej wartosci da teraz jedna jasna aktywnosc, a nie kilka opcji naraz.',
+      },
       suggestedMoodId: 'encouraging',
       tutorMood: {
         currentMoodId: 'supportive',
@@ -747,6 +777,11 @@ describe('kangur ai tutor chat handler', () => {
   });
 
   it('ignores legacy teaching-agent ids and still uses the direct Brain runtime', async () => {
+    buildKangurAiTutorAdaptiveGuidanceMock.mockResolvedValue({
+      instructions: '',
+      followUpActions: [],
+      coachingFrame: null,
+    });
     runBrainChatCompletionMock.mockResolvedValue({
       text: 'Skup sie na zaznaczonym fragmencie i policz krok po kroku.',
     });

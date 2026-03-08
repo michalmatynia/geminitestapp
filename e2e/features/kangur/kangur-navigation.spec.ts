@@ -650,6 +650,7 @@ const buildManagerUser = () => {
     actorType: 'parent',
     canManageLearners: true,
     ownerUserId: 'parent-001',
+    ownerEmailVerified: true,
     activeLearner: {
       id: 'learner-001',
       ownerUserId: 'parent-001',
@@ -700,6 +701,7 @@ const buildLearnerUser = () => {
     actorType: 'learner',
     canManageLearners: false,
     ownerUserId: 'parent-001',
+    ownerEmailVerified: true,
     activeLearner: {
       id: 'learner-001',
       ownerUserId: 'parent-001',
@@ -789,6 +791,7 @@ const buildManagerUserWithLearnerMood = (
     actorType: 'parent',
     canManageLearners: true,
     ownerUserId: 'parent-001',
+    ownerEmailVerified: true,
     activeLearner,
     learners,
   };
@@ -1531,13 +1534,135 @@ test.describe('Kangur navigation continuity', () => {
     await expect(identifierField).toHaveValue('parent@example.com');
     await expect(parentPasswordField).toHaveValue('secret123');
     await expect(page.getByTestId('kangur-login-form')).toHaveAttribute('data-login-kind', 'parent');
-    await page.getByRole('button', { name: 'Zaloguj sie' }).click();
+    await page.getByRole('button', { name: 'Zaloguj haslem' }).click();
 
     await expect(page).toHaveURL(/\/kangur\?login=parent$/);
     await expect(page.getByTestId('kangur-home-actions-shell')).toBeVisible();
     expect(callbackPayload?.get('email')).toBe('parent@example.com');
     expect(callbackPayload?.get('password')).toBe('secret123');
     expect(callbackPayload?.get('callbackUrl')).toBe('/kangur?login=parent');
+  });
+
+  test('prompts a magic-link-created parent to set a password before completing login', async ({
+    page,
+  }) => {
+    let exchangePayload: { token?: string } | null = null;
+    let callbackPayload: URLSearchParams | null = null;
+    let parentPasswordPayload: { password?: string } | null = null;
+    let parentSignedIn = false;
+
+    await page.route('**/api/auth/providers**', async (route) => {
+      const origin = new URL(route.request().url()).origin;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(buildCredentialsProviderResponse(origin)),
+      });
+    });
+
+    await page.route('**/api/auth/csrf**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ csrfToken: 'kangur-magic-parent-csrf' }),
+      });
+    });
+
+    await page.route('**/api/kangur/auth/learner-signout**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true }),
+      });
+    });
+
+    await page.route('**/api/kangur/auth/parent-magic-link/exchange**', async (route) => {
+      exchangePayload = JSON.parse(route.request().postData() ?? '{}') as { token?: string };
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ok: true,
+          email: 'parent@example.com',
+          challengeId: 'magic-challenge-1',
+          callbackUrl: '/kangur?login=magic-parent',
+          emailVerified: false,
+          hasPassword: false,
+        }),
+      });
+    });
+
+    await page.route('**/api/auth/callback/credentials**', async (route) => {
+      callbackPayload = new URLSearchParams(route.request().postData() ?? '');
+      parentSignedIn = true;
+      const origin = new URL(route.request().url()).origin;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ url: `${origin}/kangur?login=magic-parent` }),
+      });
+    });
+
+    await page.route('**/api/kangur/auth/parent-password**', async (route) => {
+      parentPasswordPayload = JSON.parse(route.request().postData() ?? '{}') as {
+        password?: string;
+      };
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ok: true,
+          email: 'parent@example.com',
+          hasPassword: true,
+          message:
+            'Haslo rodzica zostalo ustawione. Od teraz mozesz logowac sie emailem i haslem.',
+        }),
+      });
+    });
+
+    await page.route('**/api/kangur/auth/me**', async (route) => {
+      if (!parentSignedIn) {
+        await route.fulfill({
+          status: 401,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            error: {
+              message: 'Authentication required.',
+            },
+          }),
+        });
+        return;
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(buildManagerUserWithLearnerMood('learner-001')),
+      });
+    });
+
+    await gotoKangurPath(
+      page,
+      '/kangur/login?callbackUrl=%2Fkangur%3Flogin%3Dmagic-parent&magicLinkToken=magic-link-1'
+    );
+
+    await expect(page.getByTestId('kangur-login-modal')).toBeVisible();
+    await expect(page.getByText('Ustaw haslo rodzica')).toBeVisible();
+    await expect(page.getByText('parent@example.com')).toBeVisible();
+
+    await page.getByLabel('Nowe haslo').fill('Magic123!');
+    await page.getByLabel('Powtorz haslo').fill('Magic123!');
+    await page.getByRole('button', { name: 'Ustaw haslo i przejdz dalej' }).click();
+
+    await expect(page).toHaveURL(/\/kangur\?login=magic-parent$/);
+    await expect(page.getByTestId('kangur-home-actions-shell')).toBeVisible();
+    expect(exchangePayload?.token).toBe('magic-link-1');
+    expect(callbackPayload?.get('challengeId')).toBe('magic-challenge-1');
+    expect(callbackPayload?.get('email')).toBe('parent@example.com');
+    expect(callbackPayload?.get('callbackUrl')).toBe('/kangur?login=magic-parent');
+    expect(parentPasswordPayload).toEqual({
+      password: 'Magic123!',
+    });
   });
 
   test('submits student nickname credentials from the unified Kangur login page and returns to the callback route', async ({

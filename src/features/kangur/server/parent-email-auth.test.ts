@@ -10,8 +10,11 @@ const {
   createMagicEmailLinkChallengeMock,
   createMagicLoginChallengeMock,
   ensureAuthUserWithEmailMock,
+  getAuthSecurityPolicyMock,
   markAuthUserEmailVerifiedMock,
   findAuthUserByIdMock,
+  setAuthUserPasswordMock,
+  validatePasswordStrengthMock,
 } = vi.hoisted(() => ({
   getAuthSecurityProfileMock: vi.fn(),
   sendAuthEmailMock: vi.fn(),
@@ -22,8 +25,11 @@ const {
   createMagicEmailLinkChallengeMock: vi.fn(),
   createMagicLoginChallengeMock: vi.fn(),
   ensureAuthUserWithEmailMock: vi.fn(),
+  getAuthSecurityPolicyMock: vi.fn(),
   markAuthUserEmailVerifiedMock: vi.fn(),
   findAuthUserByIdMock: vi.fn(),
+  setAuthUserPasswordMock: vi.fn(),
+  validatePasswordStrengthMock: vi.fn(),
 }));
 
 vi.mock('@/features/auth/services/auth-security-profile', () => ({
@@ -46,17 +52,21 @@ vi.mock('@/features/auth/services/auth-login-challenge', () => ({
 vi.mock('@/features/auth/services/auth-user-write-service', () => ({
   ensureAuthUserWithEmail: ensureAuthUserWithEmailMock,
   markAuthUserEmailVerified: markAuthUserEmailVerifiedMock,
+  setAuthUserPassword: setAuthUserPasswordMock,
 }));
 
 vi.mock('@/features/auth/server', () => ({
   findAuthUserById: findAuthUserByIdMock,
+  getAuthSecurityPolicy: getAuthSecurityPolicyMock,
   normalizeAuthEmail: (value: string) => value.trim().toLowerCase(),
+  validatePasswordStrength: validatePasswordStrengthMock,
 }));
 
 import {
   buildKangurParentMagicLinkDebugPayload,
   exchangeKangurParentMagicLink,
   requestKangurParentMagicLink,
+  setKangurParentPassword,
   verifyKangurParentEmail,
 } from './parent-email-auth';
 
@@ -67,6 +77,18 @@ describe('parent email auth service', () => {
     getAuthSecurityProfileMock.mockResolvedValue({
       bannedAt: null,
       disabledAt: null,
+    });
+    getAuthSecurityPolicyMock.mockResolvedValue({
+      minPasswordLength: 8,
+      requireStrongPassword: true,
+      requireUppercase: true,
+      requireLowercase: true,
+      requireNumber: true,
+      requireSymbol: true,
+    });
+    validatePasswordStrengthMock.mockReturnValue({
+      ok: true,
+      errors: [],
     });
   });
 
@@ -158,6 +180,7 @@ describe('parent email auth service', () => {
       challengeId: 'challenge-1',
       callbackUrl: '/kangur/game',
       emailVerified: false,
+      hasPassword: false,
     });
     expect(createMagicLoginChallengeMock).toHaveBeenCalledWith({
       userId: 'parent-1',
@@ -184,5 +207,37 @@ describe('parent email auth service', () => {
       emailVerified: true,
     });
     expect(markAuthUserEmailVerifiedMock).toHaveBeenCalledWith('parent-1');
+  });
+
+  it('stores a password for a parent account that was created with magic-link-only login', async () => {
+    findAuthUserByIdMock.mockResolvedValue({
+      id: 'parent-1',
+      email: 'parent@example.com',
+      passwordHash: null,
+      emailVerified: null,
+    });
+    setAuthUserPasswordMock.mockResolvedValue({
+      id: 'parent-1',
+      email: 'parent@example.com',
+      passwordHash: 'hashed-password',
+      emailVerified: null,
+    });
+
+    await expect(
+      setKangurParentPassword({
+        userId: 'parent-1',
+        password: 'Magic123!',
+      })
+    ).resolves.toEqual({
+      email: 'parent@example.com',
+      hasPassword: true,
+    });
+    expect(validatePasswordStrengthMock).toHaveBeenCalledWith(
+      'Magic123!',
+      expect.objectContaining({
+        minPasswordLength: 8,
+      })
+    );
+    expect(setAuthUserPasswordMock).toHaveBeenCalledWith('parent-1', 'Magic123!');
   });
 });

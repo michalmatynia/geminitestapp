@@ -215,6 +215,13 @@ describe('KangurAiTutorWidget', () => {
         {
           role: 'assistant',
           content: 'Policz najpierw pierwszą parę.',
+          coachingFrame: {
+            mode: 'hint_ladder',
+            label: 'Jeden trop',
+            description:
+              'Daj tylko jeden maly krok albo pytanie kontrolne, bez pelnego rozwiazania.',
+            rationale: 'Uczen jest w trakcie proby, wiec tutor powinien prowadzic bardzo malymi krokami.',
+          },
           followUpActions: [
             {
               id: 'recommendation:strengthen_lesson_mastery',
@@ -264,6 +271,16 @@ describe('KangurAiTutorWidget', () => {
       'to-orange-500'
     );
     expect(screen.getByText('Lekcja: Dodawanie')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-coaching-frame')).toHaveAttribute(
+      'data-coaching-mode',
+      'hint_ladder'
+    );
+    expect(screen.getByText('Jeden trop')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Daj tylko jeden maly krok albo pytanie kontrolne, bez pelnego rozwiazania.'
+      )
+    ).toBeInTheDocument();
     expect(screen.getByText('Policz najpierw pierwszą parę.')).toBeInTheDocument();
     expect(screen.getByText('Kolejny krok')).toBeInTheDocument();
     expect(screen.getByText('Powtorz lekcje: Dodawanie')).toBeInTheDocument();

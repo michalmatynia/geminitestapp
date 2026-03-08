@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { getAuthSecurityPolicy, validatePasswordStrength } from '@/features/auth/server';
 import { getAuthSecurityProfile } from '@/features/auth/services/auth-security-profile';
 import { shouldExposeAuthEmailDebug, sendAuthEmail } from '@/features/auth/services/auth-email-delivery';
 import {
@@ -12,6 +13,7 @@ import {
 import {
   ensureAuthUserWithEmail,
   markAuthUserEmailVerified,
+  setAuthUserPassword,
 } from '@/features/auth/services/auth-user-write-service';
 import { findAuthUserById, normalizeAuthEmail } from '@/features/auth/server';
 import {
@@ -19,7 +21,7 @@ import {
   KANGUR_BASE_PATH,
   resolveKangurPublicBasePathFromHref,
 } from '@/features/kangur/config/routing';
-import { forbiddenError } from '@/shared/errors/app-error';
+import { conflictError, forbiddenError, internalError, validationError } from '@/shared/errors/app-error';
 
 type KangurParentEmailRequestResult = {
   email: string;
@@ -216,6 +218,7 @@ export const exchangeKangurParentMagicLink = async (tokenId: string): Promise<{
   challengeId: string;
   callbackUrl: string | null;
   emailVerified: boolean;
+  hasPassword: boolean;
 }> => {
   const token = await consumeMagicEmailLinkChallenge(tokenId);
   if (!token) {
@@ -240,6 +243,7 @@ export const exchangeKangurParentMagicLink = async (tokenId: string): Promise<{
     challengeId: challenge.id,
     callbackUrl: token.callbackUrl,
     emailVerified: Boolean(user.emailVerified),
+    hasPassword: Boolean(user.passwordHash),
   };
 };
 
@@ -260,6 +264,46 @@ export const verifyKangurParentEmail = async (tokenId: string): Promise<{
     email,
     callbackUrl: token.callbackUrl,
     emailVerified: true,
+  };
+};
+
+export const setKangurParentPassword = async (input: {
+  userId: string;
+  password: string;
+}): Promise<{
+  email: string;
+  hasPassword: boolean;
+}> => {
+  const user = await findAuthUserById(input.userId);
+  if (!user?.email) {
+    throw forbiddenError('This parent account is no longer available.');
+  }
+
+  if (typeof user.passwordHash === 'string' && user.passwordHash.trim().length > 0) {
+    throw conflictError(
+      'Haslo dla tego konta jest juz ustawione. Mozesz logowac sie emailem i haslem.'
+    );
+  }
+
+  const policy = await getAuthSecurityPolicy();
+  const passwordCheck = validatePasswordStrength(input.password, policy);
+  if (!passwordCheck.ok) {
+    throw validationError(
+      passwordCheck.errors[0] ?? 'Haslo nie spelnia wymagan bezpieczenstwa.',
+      {
+        issues: passwordCheck.errors,
+      }
+    );
+  }
+
+  const updatedUser = await setAuthUserPassword(user.id, input.password);
+  if (!updatedUser?.email) {
+    throw internalError('Nie udalo sie zapisac hasla rodzica.');
+  }
+
+  return {
+    email: updatedUser.email,
+    hasPassword: Boolean(updatedUser.passwordHash),
   };
 };
 

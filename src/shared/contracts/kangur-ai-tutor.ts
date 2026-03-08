@@ -75,9 +75,28 @@ export type KangurAiTutorConversationContext = z.infer<
   typeof kangurAiTutorConversationContextSchema
 >;
 
+export const kangurAiTutorCoachingModeSchema = z.enum([
+  'hint_ladder',
+  'misconception_check',
+  'review_reflection',
+  'next_best_action',
+]);
+export type KangurAiTutorCoachingMode = z.infer<typeof kangurAiTutorCoachingModeSchema>;
+
+export const kangurAiTutorLearnerMemorySchema = z.object({
+  lastSurface: kangurAiTutorSurfaceSchema.optional(),
+  lastFocusLabel: z.string().trim().max(160).optional(),
+  lastUnresolvedBlocker: z.string().trim().max(200).optional(),
+  lastRecommendedAction: z.string().trim().max(160).optional(),
+  lastSuccessfulIntervention: z.string().trim().max(200).optional(),
+  lastCoachingMode: kangurAiTutorCoachingModeSchema.optional(),
+});
+export type KangurAiTutorLearnerMemory = z.infer<typeof kangurAiTutorLearnerMemorySchema>;
+
 export const kangurAiTutorChatRequestSchema = z.object({
   messages: z.array(kangurAiTutorChatMessageSchema).min(1),
   context: kangurAiTutorConversationContextSchema.optional(),
+  memory: kangurAiTutorLearnerMemorySchema.optional(),
 });
 export type KangurAiTutorChatRequest = z.infer<typeof kangurAiTutorChatRequestSchema>;
 
@@ -98,10 +117,19 @@ export const kangurAiTutorFollowUpActionSchema = z.object({
 });
 export type KangurAiTutorFollowUpAction = z.infer<typeof kangurAiTutorFollowUpActionSchema>;
 
+export const kangurAiTutorCoachingFrameSchema = z.object({
+  mode: kangurAiTutorCoachingModeSchema,
+  label: nonEmptyTrimmedString.max(80),
+  description: nonEmptyTrimmedString.max(240),
+  rationale: z.string().trim().max(240).optional(),
+});
+export type KangurAiTutorCoachingFrame = z.infer<typeof kangurAiTutorCoachingFrameSchema>;
+
 export const kangurAiTutorChatResponseSchema = z.object({
   message: z.string(),
   sources: z.array(agentTeachingChatSourceSchema).default([]),
   followUpActions: z.array(kangurAiTutorFollowUpActionSchema).default([]),
+  coachingFrame: kangurAiTutorCoachingFrameSchema.optional(),
   suggestedMoodId: agentPersonaMoodIdSchema.nullable().optional(),
   tutorMood: kangurAiTutorLearnerMoodSchema.optional(),
   usage: kangurAiTutorUsageSummarySchema.optional(),

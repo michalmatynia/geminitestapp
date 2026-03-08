@@ -266,6 +266,100 @@ describe('KangurLoginPage', () => {
     ).toBeVisible();
   });
 
+  it('requires a one-time parent password setup after magic-link account creation', async () => {
+    const user = userEvent.setup();
+
+    useSearchParamsMock.mockReturnValue(
+      new URLSearchParams(
+        'callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&magicLinkToken=magic-link-1'
+      )
+    );
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation(async (input: RequestInfo | URL) => {
+        const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+        if (url === '/api/kangur/auth/learner-signout') {
+          return {
+            json: vi.fn().mockResolvedValue({ ok: true }),
+            ok: true,
+            status: 200,
+          };
+        }
+        if (url === '/api/kangur/auth/parent-magic-link/exchange') {
+          return {
+            json: vi.fn().mockResolvedValue({
+              ok: true,
+              email: 'parent@example.com',
+              challengeId: 'challenge-1',
+              callbackUrl: '/kangur/tests?focus=division',
+              emailVerified: false,
+              hasPassword: false,
+            }),
+            ok: true,
+            status: 200,
+          };
+        }
+        if (url === '/api/auth/csrf') {
+          return {
+            json: vi.fn().mockResolvedValue({ csrfToken: 'kangur-parent-csrf' }),
+            ok: true,
+            status: 200,
+          };
+        }
+        if (url === '/api/auth/callback/credentials') {
+          return {
+            json: vi.fn().mockResolvedValue({ url: '/kangur/tests?focus=division' }),
+            ok: true,
+            status: 200,
+          };
+        }
+        if (url === '/api/kangur/auth/parent-password') {
+          return {
+            json: vi.fn().mockResolvedValue({
+              ok: true,
+              email: 'parent@example.com',
+              hasPassword: true,
+              message:
+                'Haslo rodzica zostalo ustawione. Od teraz mozesz logowac sie emailem i haslem.',
+            }),
+            ok: true,
+            status: 200,
+          };
+        }
+
+        throw new Error(`Unexpected fetch: ${url}`);
+      })
+    );
+
+    render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
+
+    expect(await screen.findByText('Ustaw haslo rodzica')).toBeVisible();
+    expect(screen.getByText('parent@example.com')).toBeVisible();
+    expect(screen.getByText(/jest juz zalogowane magicznym linkiem\./)).toBeVisible();
+    expect(checkAppStateMock).toHaveBeenCalledTimes(1);
+
+    await user.type(screen.getByLabelText('Nowe haslo'), 'Magic123!');
+    await user.type(screen.getByLabelText('Powtorz haslo'), 'Magic123!');
+    await user.click(screen.getByRole('button', { name: 'Ustaw haslo i przejdz dalej' }));
+
+    expect(fetch).toHaveBeenCalledWith(
+      '/api/kangur/auth/parent-password',
+      expect.objectContaining({
+        body: JSON.stringify({
+          password: 'Magic123!',
+        }),
+        credentials: 'same-origin',
+        method: 'POST',
+      })
+    );
+    await waitFor(() => {
+      expect(routerPushMock).toHaveBeenCalledWith('/kangur/tests?focus=division', {
+        scroll: false,
+      });
+    });
+    expect(checkAppStateMock).toHaveBeenCalledTimes(2);
+  });
+
   it('submits student nick credentials after clearing any parent session', async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn().mockImplementation(async (input: RequestInfo | URL) => {

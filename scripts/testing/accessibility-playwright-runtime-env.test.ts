@@ -14,12 +14,12 @@ describe('buildAccessibilityPlaywrightRuntimeEnv', () => {
       buildAccessibilityPlaywrightRuntimeEnv({
         env: {
           DISABLE_QUEUE_WORKERS: 'true',
-          PLAYWRIGHT_RUNTIME_DISABLE_QUEUE_WORKERS: 'false',
+          PLAYWRIGHT_RUNTIME_DISABLE_QUEUE_WORKERS: ' FALSE ',
         },
       })
     ).toEqual({
       DISABLE_QUEUE_WORKERS: 'false',
-      PLAYWRIGHT_RUNTIME_DISABLE_QUEUE_WORKERS: 'false',
+      PLAYWRIGHT_RUNTIME_DISABLE_QUEUE_WORKERS: ' FALSE ',
     });
   });
 
@@ -34,6 +34,20 @@ describe('buildAccessibilityPlaywrightRuntimeEnv', () => {
     ).toEqual({
       DISABLE_QUEUE_WORKERS: 'false',
       PATH: '/usr/bin',
+    });
+  });
+
+  it('treats blank overrides as unset and keeps the default worker suppression', () => {
+    expect(
+      buildAccessibilityPlaywrightRuntimeEnv({
+        env: {
+          DISABLE_QUEUE_WORKERS: '   ',
+          PLAYWRIGHT_RUNTIME_DISABLE_QUEUE_WORKERS: '',
+        },
+      })
+    ).toEqual({
+      DISABLE_QUEUE_WORKERS: 'true',
+      PLAYWRIGHT_RUNTIME_DISABLE_QUEUE_WORKERS: '',
     });
   });
 });

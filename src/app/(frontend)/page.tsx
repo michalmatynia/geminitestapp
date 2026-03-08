@@ -23,6 +23,7 @@ export default async function Home(): Promise<JSX.Element> {
   const redirectPath = getFrontPageRedirectPath(frontPageSetting);
 
   if (frontPageRedirectEnabled && redirectPath) {
+    await flush();
     redirect(redirectPath);
   }
 

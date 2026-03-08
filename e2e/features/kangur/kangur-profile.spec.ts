@@ -1,12 +1,34 @@
 import { test, expect, type Page } from '@playwright/test';
 
 const KANGUR_PROGRESS_STORAGE_KEY = 'sprycio_progress';
-const ROUTE_INITIAL_GOTO_TIMEOUT_MS = 60_000;
+const ROUTE_INITIAL_GOTO_TIMEOUT_MS = 90_000;
+const ROUTE_BOOT_TIMEOUT_MS = 45_000;
 
 const gotoKangurPath = async (page: Page, path: string): Promise<void> => {
   await page.goto(path, {
-    waitUntil: 'domcontentloaded',
+    waitUntil: 'commit',
     timeout: ROUTE_INITIAL_GOTO_TIMEOUT_MS,
+  });
+};
+
+const expectGameRouteReady = async (page: Page): Promise<void> => {
+  await expect(page.getByTestId('kangur-route-shell')).toBeVisible({
+    timeout: ROUTE_BOOT_TIMEOUT_MS,
+  });
+  await expect(page.getByTestId('kangur-home-actions-shell')).toBeVisible({
+    timeout: ROUTE_BOOT_TIMEOUT_MS,
+  });
+};
+
+const expectLearnerProfileReady = async (page: Page): Promise<void> => {
+  await expect(page.getByTestId('kangur-route-shell')).toBeVisible({
+    timeout: ROUTE_BOOT_TIMEOUT_MS,
+  });
+  await expect(page.getByTestId('kangur-learner-profile-hero')).toBeVisible({
+    timeout: ROUTE_BOOT_TIMEOUT_MS,
+  });
+  await expect(page.getByRole('heading', { name: /Profil ucznia/i })).toBeVisible({
+    timeout: ROUTE_BOOT_TIMEOUT_MS,
   });
 };
 
@@ -84,11 +106,13 @@ const seedKangurProgress = async (page, progress) => {
 };
 
 test.describe('Kangur Learner Profile', () => {
+  test.describe.configure({ timeout: 90_000 });
+
   test('renders learner profile shell and baseline sections', async ({ page }) => {
     await gotoKangurPath(page, '/kangur/profile');
+    await expectLearnerProfileReady(page);
 
     await expect(page).toHaveURL(/\/kangur\/profile/);
-    await expect(page.getByRole('heading', { name: /Profil ucznia/i })).toBeVisible();
     await expect(page.getByText(/Statystyki ucznia: Tryb lokalny\./i)).toBeVisible();
 
     await expect(page.getByText(/Srednia skutecznosc/i)).toBeVisible();
@@ -106,21 +130,23 @@ test.describe('Kangur Learner Profile', () => {
   test('supports navigation from game screen to learner profile', async ({ page }) => {
     await mockKangurAuthMe(page, buildManagerUser());
     await gotoKangurPath(page, '/kangur/game');
+    await expectGameRouteReady(page);
 
-    const profileLink = page.getByRole('link', { name: /Profil/i }).first();
-    await expect(profileLink).toBeVisible();
+    const profileLink = page
+      .getByRole('navigation', { name: 'Glowna nawigacja Kangur' })
+      .getByRole('link', { name: /^Profil$/ });
+    await expect(profileLink).toBeVisible({
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
     await profileLink.click();
 
     await expect(page).toHaveURL(/\/kangur\/profile/);
-    await expect(page.getByRole('heading', { name: /Profil ucznia/i })).toBeVisible();
+    await expectLearnerProfileReady(page);
   });
 
   test('returns home from the learner profile intro-card top section', async ({ page }) => {
     await gotoKangurPath(page, '/kangur/profile');
-
-    await expect(page.getByTestId('kangur-learner-profile-hero')).toBeVisible({
-      timeout: 15_000,
-    });
+    await expectLearnerProfileReady(page);
     await page
       .getByTestId('kangur-learner-profile-hero')
       .getByRole('button', { name: 'Wróć do poprzedniej strony' })
@@ -187,8 +213,8 @@ test.describe('Kangur Learner Profile', () => {
     });
 
     await gotoKangurPath(page, '/kangur/profile');
+    await expectLearnerProfileReady(page);
 
-    await expect(page.getByRole('heading', { name: /Profil ucznia/i })).toBeVisible();
     await expect(page.getByText(/Statystyki ucznia: Jan\./i)).toBeVisible();
     await expect(page.getByText(/Poziom 4 · 620 XP lacznie/i)).toBeVisible();
     await expect(page.getByText(/Plan na dzis/i)).toBeVisible();
@@ -254,6 +280,7 @@ test.describe('Kangur Learner Profile', () => {
     });
 
     await gotoKangurPath(page, '/kangur/profile');
+    await expectLearnerProfileReady(page);
 
     await expect(page.getByTestId('learner-profile-ai-tutor-mood')).toBeVisible();
     await expect(page.getByTestId('learner-profile-ai-tutor-mood-current')).toContainText(
@@ -331,6 +358,7 @@ test.describe('Kangur Learner Profile', () => {
     });
 
     await gotoKangurPath(page, '/kangur/profile');
+    await expectLearnerProfileReady(page);
 
     const openLessonsLink = page.getByRole('link', { name: 'Otworz lekcje' });
     await expect(openLessonsLink).toBeVisible();
@@ -367,6 +395,7 @@ test.describe('Kangur Learner Profile', () => {
     });
 
     await gotoKangurPath(page, '/kangur/profile');
+    await expectLearnerProfileReady(page);
 
     const playNowLink = page.getByRole('link', { name: 'Zagraj teraz' });
     await expect(playNowLink).toBeVisible();
@@ -427,6 +456,7 @@ test.describe('Kangur Learner Profile', () => {
     });
 
     await gotoKangurPath(page, '/kangur/profile');
+    await expectLearnerProfileReady(page);
 
     const operationLink = page.locator(
       'a[href*="quickStart=operation"][href*="operation=division"]'

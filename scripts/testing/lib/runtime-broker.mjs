@@ -206,6 +206,37 @@ const resolveManagedLeaseDistDirPath = (lease) => {
   return resolvedDistDir;
 };
 
+const resolveManagedLeaseRuntimeTmpDirPath = (lease) => {
+  if (!lease || typeof lease.rootDir !== 'string' || typeof lease.runtimeTmpDir !== 'string') {
+    return null;
+  }
+
+  const expectedManagedRuntimeTmpDir =
+    typeof lease.leaseKey === 'string' && lease.leaseKey.length > 0
+      ? resolveBrokerManagedRuntimeTmpDir({ leaseKey: lease.leaseKey })
+      : null;
+  const usesManagedRuntimeTmpDir =
+    lease.managedRuntimeTmpDir === true ||
+    (lease.managedRuntimeTmpDir == null &&
+      expectedManagedRuntimeTmpDir !== null &&
+      lease.runtimeTmpDir === expectedManagedRuntimeTmpDir);
+
+  if (!usesManagedRuntimeTmpDir || path.isAbsolute(lease.runtimeTmpDir)) {
+    return null;
+  }
+
+  const resolvedRootDir = path.resolve(lease.rootDir);
+  const resolvedRuntimeTmpDir = path.resolve(resolvedRootDir, lease.runtimeTmpDir);
+  if (
+    resolvedRuntimeTmpDir !== resolvedRootDir &&
+    !resolvedRuntimeTmpDir.startsWith(`${resolvedRootDir}${path.sep}`)
+  ) {
+    return null;
+  }
+
+  return resolvedRuntimeTmpDir;
+};
+
 const resolveLeaseDirectory = (leaseFilePath) => {
   if (typeof leaseFilePath !== 'string' || leaseFilePath.length === 0) {
     return null;
@@ -261,6 +292,52 @@ const hasSiblingLeaseForManagedDistDir = async ({
   return false;
 };
 
+const leaseReferencesManagedRuntimeTmpDir = (candidateLease, lease) =>
+  Boolean(
+    candidateLease &&
+      lease &&
+      typeof candidateLease.rootDir === 'string' &&
+      typeof candidateLease.runtimeTmpDir === 'string' &&
+      candidateLease.rootDir === lease.rootDir &&
+      candidateLease.runtimeTmpDir === lease.runtimeTmpDir
+  );
+
+const hasSiblingLeaseForManagedRuntimeTmpDir = async ({
+  lease,
+  leaseFilePath,
+} = {}) => {
+  const leaseDir = resolveLeaseDirectory(leaseFilePath);
+  if (!leaseDir) {
+    return false;
+  }
+
+  let files = [];
+  try {
+    files = await fsPromises.readdir(leaseDir);
+  } catch (error) {
+    if (error?.code === 'ENOENT') {
+      return false;
+    }
+
+    throw error;
+  }
+
+  const currentLeaseFileName = path.basename(leaseFilePath);
+
+  for (const file of files) {
+    if (!file.endsWith('.json') || file === currentLeaseFileName) {
+      continue;
+    }
+
+    const candidateLease = await readLeaseRecord(path.join(leaseDir, file));
+    if (leaseReferencesManagedRuntimeTmpDir(candidateLease, lease)) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
 const cleanupLeaseManagedDistDir = async ({
   lease,
   leaseFilePath = null,
@@ -275,6 +352,22 @@ const cleanupLeaseManagedDistDir = async ({
   }
 
   await removeDirectoryIfPresent(managedDistDirPath);
+};
+
+const cleanupLeaseManagedRuntimeTmpDir = async ({
+  lease,
+  leaseFilePath = null,
+} = {}) => {
+  const managedRuntimeTmpDirPath = resolveManagedLeaseRuntimeTmpDirPath(lease);
+  if (!managedRuntimeTmpDirPath) {
+    return;
+  }
+
+  if (await hasSiblingLeaseForManagedRuntimeTmpDir({ lease, leaseFilePath })) {
+    return;
+  }
+
+  await removeDirectoryIfPresent(managedRuntimeTmpDirPath);
 };
 
 const signalProcess = async (pid, signal) => {
@@ -526,6 +619,14 @@ export const resolveBrokerManagedDistDir = ({
 } = {}) =>
   `.next-dev-${sanitizeRuntimeToken(appId, DEFAULT_APP_ID)}-${sanitizeRuntimeToken(mode, DEFAULT_MODE)}-${sanitizeRuntimeToken(agentId, 'local')}`;
 
+export const resolveBrokerManagedRuntimeTmpDir = ({ leaseKey } = {}) =>
+  path.join(
+    'tmp',
+    'playwright-runtime-broker',
+    'runtime-tmp',
+    sanitizeRuntimeToken(leaseKey, 'runtime')
+  );
+
 export const resolvePlaywrightRunArtifacts = ({
   rootDir,
   appId = DEFAULT_APP_ID,
@@ -600,6 +701,7 @@ const buildBrokerServerEnv = ({
   host,
   port,
   distDir,
+  runtimeTmpDir,
   agentId,
   leaseKey,
   preferredBrowserNodeBinDir,
@@ -610,6 +712,9 @@ const buildBrokerServerEnv = ({
   NEXT_DIST_DIR: distDir,
   PLAYWRIGHT_RUNTIME_AGENT_ID: agentId,
   PLAYWRIGHT_RUNTIME_LEASE_KEY: leaseKey,
+  TMPDIR: runtimeTmpDir,
+  TMP: runtimeTmpDir,
+  TEMP: runtimeTmpDir,
   PATH: prependBinToPath(preferredBrowserNodeBinDir, env['PATH']),
 });
 
@@ -644,6 +749,8 @@ export const resolveExplicitPlaywrightRuntime = async ({
     pid: null,
     distDir: env['NEXT_DIST_DIR'] ?? null,
     managedDistDir: false,
+    runtimeTmpDir: null,
+    managedRuntimeTmpDir: false,
     leaseKey: null,
     leaseFilePath: null,
     logFilePath: null,
@@ -683,6 +790,7 @@ export const stopBrokerRuntimeLease = async ({
   }
 
   await cleanupLeaseManagedDistDir({ lease, leaseFilePath });
+  await cleanupLeaseManagedRuntimeTmpDir({ lease, leaseFilePath });
 };
 
 export const acquireRuntimeLease = async ({
@@ -761,7 +869,7 @@ export const acquireRuntimeLease = async ({
     const configuredBaseUrl = parseBaseUrl(env['PLAYWRIGHT_BASE_URL']);
     const port = configuredBaseUrl?.port ? Number(configuredBaseUrl.port) : await allocatePort({ host });
     const baseUrl = configuredBaseUrl?.toString() ?? `http://${host}:${port}`;
-  const distDir =
+    const distDir =
       env['NEXT_DIST_DIR']?.trim() ||
       resolveBrokerManagedDistDir({
         appId: resolvedAppId,
@@ -769,8 +877,11 @@ export const acquireRuntimeLease = async ({
         agentId: resolvedAgentId,
       });
     const managedDistDir = !(env['NEXT_DIST_DIR']?.trim());
+    const runtimeTmpDir = resolveBrokerManagedRuntimeTmpDir({ leaseKey });
+    const resolvedRuntimeTmpDir = path.join(resolvedRootDir, runtimeTmpDir);
 
     await fsPromises.mkdir(path.dirname(logFilePath), { recursive: true });
+    await fsPromises.mkdir(resolvedRuntimeTmpDir, { recursive: true });
     const logFd = fs.openSync(logFilePath, 'a');
     const child = spawnImpl(
       resolveNpmExecutable({ preferredBrowserNodeBinDir }),
@@ -782,6 +893,7 @@ export const acquireRuntimeLease = async ({
           host,
           port,
           distDir,
+          runtimeTmpDir: resolvedRuntimeTmpDir,
           agentId: resolvedAgentId,
           leaseKey,
           preferredBrowserNodeBinDir,
@@ -807,6 +919,8 @@ export const acquireRuntimeLease = async ({
       pid: child.pid ?? null,
       distDir,
       managedDistDir,
+      runtimeTmpDir,
+      managedRuntimeTmpDir: true,
       leaseKey,
       leaseFilePath,
       logFilePath,

@@ -39,6 +39,10 @@ async function waitForTutorPanelToSettle(panel: Locator): Promise<void> {
   await expect(panel).toHaveAttribute('data-motion-state', 'settled');
 }
 
+async function gotoTutorRoute(page: Page, href: string): Promise<void> {
+  await page.goto(href, { waitUntil: 'domcontentloaded' });
+}
+
 async function expectTutorPanelWithinViewport(page: Page): Promise<void> {
   const viewportSize = page.viewportSize();
   const panelBox = await page.getByTestId('kangur-ai-tutor-panel').boundingBox();
@@ -86,7 +90,7 @@ test.describe('Kangur AI Tutor', () => {
       lessonResponse,
     } = await mockKangurTutorEnvironment(page);
 
-    await page.goto('/kangur/lessons');
+    await gotoTutorRoute(page, '/kangur/lessons');
     await page.getByRole('button', { name: lessonTitle }).click();
 
     const selectedLessonBlock = page
@@ -146,7 +150,7 @@ test.describe('Kangur AI Tutor', () => {
       chatResponseDelayMs: 1_000,
     });
 
-    await page.goto('/kangur/lessons');
+    await gotoTutorRoute(page, '/kangur/lessons');
     await page.getByRole('button', { name: lessonTitle }).click();
 
     await expect(
@@ -185,7 +189,7 @@ test.describe('Kangur AI Tutor', () => {
       tutorLearnerMoodId: 'calm',
     });
 
-    await page.goto('/kangur/lessons');
+    await gotoTutorRoute(page, '/kangur/lessons');
     await page.getByRole('button', { name: lessonTitle }).click();
 
     await selectTextInElement(page, '[data-testid^="lesson-text-block-"]', lessonSelectedText);
@@ -211,7 +215,7 @@ test.describe('Kangur AI Tutor', () => {
       lessonResponse,
     } = await mockKangurTutorEnvironment(page);
 
-    await page.goto('/kangur/lessons');
+    await gotoTutorRoute(page, '/kangur/lessons');
     await page.getByRole('button', { name: lessonTitle }).click();
 
     await selectTextInElement(page, '[data-testid^="lesson-text-block-"]', lessonSelectedText);
@@ -252,7 +256,7 @@ test.describe('Kangur AI Tutor', () => {
       uiMode: 'static',
     });
 
-    await page.goto('/kangur/lessons');
+    await gotoTutorRoute(page, '/kangur/lessons');
     await page.getByRole('button', { name: lessonTitle }).click();
 
     await selectTextInElement(page, '[data-testid^="lesson-text-block-"]', lessonSelectedText);
@@ -289,7 +293,7 @@ test.describe('Kangur AI Tutor', () => {
       hintResponse,
     } = await mockKangurTutorEnvironment(page);
 
-    await page.goto('/kangur/tests');
+    await gotoTutorRoute(page, '/kangur/tests');
     await page.getByRole('button', { name: suiteTitle }).click();
 
     const tutorAvatar = page.getByTestId('kangur-ai-tutor-avatar');
@@ -323,7 +327,10 @@ test.describe('Kangur AI Tutor', () => {
       hintResponse,
     } = await mockKangurTutorEnvironment(page);
 
-    await page.goto('/kangur/game?quickStart=operation&operation=division&difficulty=easy');
+    await gotoTutorRoute(
+      page,
+      '/kangur/game?quickStart=operation&operation=division&difficulty=easy'
+    );
 
     const tutorAvatar = page.getByTestId('kangur-ai-tutor-avatar');
     const tutorPanel = page.getByTestId('kangur-ai-tutor-panel');
@@ -351,7 +358,7 @@ test.describe('Kangur AI Tutor', () => {
       suiteTitle,
     } = await mockKangurTutorEnvironment(page);
 
-    await page.goto('/kangur/tests');
+    await gotoTutorRoute(page, '/kangur/tests');
     await page.getByRole('button', { name: suiteTitle }).click();
 
     const tutorAvatar = page.getByTestId('kangur-ai-tutor-avatar');
@@ -377,7 +384,7 @@ test.describe('Kangur AI Tutor', () => {
       suiteTitle,
     } = await mockKangurTutorEnvironment(page);
 
-    await page.goto('/kangur/lessons');
+    await gotoTutorRoute(page, '/kangur/lessons');
     await page.getByRole('button', { name: lessonTitle }).click();
     await selectTextInElement(page, '[data-testid^="lesson-text-block-"]', lessonSelectedText);
 
@@ -437,7 +444,7 @@ test.describe('Kangur AI Tutor', () => {
       allowCrossPagePersistence: false,
     });
 
-    await page.goto('/kangur/lessons');
+    await gotoTutorRoute(page, '/kangur/lessons');
     await page.getByRole('button', { name: lessonTitle }).click();
     await selectTextInElement(page, '[data-testid^="lesson-text-block-"]', lessonSelectedText);
 

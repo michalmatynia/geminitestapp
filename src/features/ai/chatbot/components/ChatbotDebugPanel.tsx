@@ -52,7 +52,7 @@ export function ChatbotDebugPanel({
 
   return (
     <div className='h-full overflow-y-auto bg-card p-4 text-xs text-gray-300'>
-      <h3 className='mb-2 font-semibold text-white'>Debug Information</h3>
+      <h2 className='mb-2 text-sm font-semibold text-white'>Debug Information</h2>
       <div className='space-y-4'>
         <JsonViewer
           title='Last Request'
@@ -67,7 +67,7 @@ export function ChatbotDebugPanel({
           className='bg-black/40'
         />
         <div>
-          <h4 className='mb-1 font-medium text-gray-400'>Agent Logs</h4>
+          <h3 className='mb-1 text-xs font-medium text-gray-400'>Agent Logs</h3>
           <ChatbotDebugLogsContext.Provider value={contextValue}>
             <ChatbotDebugAgentLogs />
           </ChatbotDebugLogsContext.Provider>

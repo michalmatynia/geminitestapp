@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-08T17:17:47.914Z",
+  "generatedAt": "2026-03-08T18:00:10.054Z",
   "strictMode": true,
   "summary": {
     "total": 6,
@@ -17,8 +17,8 @@
       "command": "npx vitest run --project unit __tests__/features/auth/pages/signin-page.test.tsx",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 3704,
-      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/auth/pages/signin-page.test.tsx (10 tests) 613ms\n\n Test Files  1 passed (1)\n      Tests  10 passed (10)\n   Start at  18:17:25\n   Duration  2.47s (transform 739ms, setup 223ms, import 1.09s, tests 613ms, environment 446ms)"
+      "durationMs": 5121,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/auth/pages/signin-page.test.tsx (10 tests) 626ms\n\n Test Files  1 passed (1)\n      Tests  10 passed (10)\n   Start at  18:59:42\n   Duration  2.44s (transform 748ms, setup 203ms, import 1.12s, tests 626ms, environment 402ms)"
     },
     {
       "id": "products-core-crud",
@@ -30,8 +30,8 @@
       "command": "npx vitest run --project unit __tests__/features/products/services/getSettingValue.test.ts",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 1633,
-      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/products/services/getSettingValue.test.ts (5 tests) 6ms\n\n Test Files  1 passed (1)\n      Tests  5 passed (5)\n   Start at  18:17:28\n   Duration  592ms (transform 109ms, setup 149ms, import 89ms, tests 6ms, environment 263ms)"
+      "durationMs": 2381,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/products/services/getSettingValue.test.ts (5 tests) 5ms\n\n Test Files  1 passed (1)\n      Tests  5 passed (5)\n   Start at  18:59:46\n   Duration  711ms (transform 114ms, setup 176ms, import 88ms, tests 5ms, environment 351ms)"
     },
     {
       "id": "image-studio-generate",
@@ -43,8 +43,8 @@
       "command": "npx vitest run --project unit src/features/ai/image-studio/utils/__tests__/studio-settings.test.ts",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 1620,
-      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/ai/image-studio/utils/__tests__/studio-settings.test.ts (11 tests) 16ms\n\n Test Files  1 passed (1)\n      Tests  11 passed (11)\n   Start at  18:17:30\n   Duration  604ms (transform 92ms, setup 154ms, import 58ms, tests 16ms, environment 285ms)"
+      "durationMs": 1821,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/ai/image-studio/utils/__tests__/studio-settings.test.ts (11 tests) 16ms\n\n Test Files  1 passed (1)\n      Tests  11 passed (11)\n   Start at  18:59:48\n   Duration  551ms (transform 87ms, setup 143ms, import 57ms, tests 16ms, environment 253ms)"
     },
     {
       "id": "ai-paths-runtime",
@@ -56,8 +56,8 @@
       "command": "npx vitest run --project unit __tests__/features/ai/ai-paths/services/path-run-executor.test.ts",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 3548,
-      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/ai/ai-paths/services/path-run-executor.test.ts (20 tests) 131ms\n\n Test Files  1 passed (1)\n      Tests  20 passed (20)\n   Start at  18:17:31\n   Duration  2.54s (transform 1.38s, setup 145ms, import 1.92s, tests 131ms, environment 261ms)"
+      "durationMs": 5880,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/ai/ai-paths/services/path-run-executor.test.ts (20 tests) 132ms\n\n Test Files  1 passed (1)\n      Tests  20 passed (20)\n   Start at  18:59:50\n   Duration  4.02s (transform 2.67s, setup 164ms, import 3.37s, tests 132ms, environment 259ms)"
     },
     {
       "id": "case-resolver-capture",
@@ -69,8 +69,8 @@
       "command": "npx vitest run --project unit src/features/case-resolver/__tests__/workspace-persistence.test.ts",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 2830,
-      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/case-resolver/__tests__/workspace-persistence.test.ts (13 tests) 19ms\n\n Test Files  1 passed (1)\n      Tests  13 passed (13)\n   Start at  18:17:35\n   Duration  1.83s (transform 1.01s, setup 142ms, import 1.32s, tests 19ms, environment 258ms)"
+      "durationMs": 3646,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/case-resolver/__tests__/workspace-persistence.test.ts (13 tests) 15ms\n\n Test Files  1 passed (1)\n      Tests  13 passed (13)\n   Start at  18:59:56\n   Duration  1.63s (transform 847ms, setup 159ms, import 1.10s, tests 15ms, environment 274ms)"
     },
     {
       "id": "products-trigger-queue-integration",
@@ -96,8 +96,8 @@
       "command": "npx vitest run --project unit src/features/ai/ai-paths/components/__tests__/job-queue-context.enqueue-events.test.tsx src/shared/contracts/__tests__/ai-paths-run-enqueued-event.contract-runtime.test.ts src/shared/lib/__tests__/query-invalidation.notify-ai-path-run-enqueued.test.ts src/shared/lib/__tests__/query-invalidation.optimistically-insert-run.test.ts src/shared/lib/ai-paths/__tests__/optimistic-run-queue.test.ts src/shared/lib/ai-paths/api/__tests__/enqueue-client-contract.test.ts src/features/products/hooks/useProductAiPathsRunSync.test.tsx src/features/products/state/queued-product-ops.test.ts src/shared/lib/ai-paths/hooks/trigger-event-selection.test.ts src/shared/lib/ai-paths/hooks/trigger-event-sanitization.test.ts src/shared/lib/ai-paths/hooks/trigger-event-utils.test.ts src/shared/lib/ai-paths/hooks/trigger-event-recovery.test.ts src/shared/lib/ai-paths/hooks/trigger-event-context.test.ts src/shared/lib/ai-paths/hooks/trigger-event-invalidation.test.ts src/shared/lib/ai-paths/hooks/trigger-event-settings.test.ts",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 10617,
-      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/products/state/queued-product-ops.test.ts (15 tests) 61ms\n ✓ |unit| src/features/ai/ai-paths/components/__tests__/job-queue-context.enqueue-events.test.tsx (4 tests) 24ms\n ✓ |unit| src/shared/lib/ai-paths/hooks/trigger-event-context.test.ts (13 tests) 21ms\n ✓ |unit| src/features/products/hooks/useProductAiPathsRunSync.test.tsx (5 tests) 22ms\n ✓ |unit| src/shared/lib/ai-paths/hooks/trigger-event-settings.test.ts (18 tests) 18ms\n ✓ |unit| src/shared/lib/ai-paths/__tests__/optimistic-run-queue.test.ts (14 tests) 16ms\n ✓ |unit| src/shared/lib/__tests__/query-invalidation.optimistically-insert-run.test.ts (12 tests) 9ms\n ✓ |unit| src/shared/lib/__tests__/query-invalidation.notify-ai-path-run-enqueued.test.ts (4 tests) 9ms\n ✓ |unit| src/shared/lib/ai-paths/hooks/trigger-event-invalidation.test.ts (7 tests) 6ms\n ✓ |unit| src/shared/contracts/__tests__/ai-paths-run-enqueued-event.contract-runtime.test.ts (3 tests) 7ms\n ✓ |unit| src/shared/lib/ai-paths/hooks/trigger-event-sanitization.test.ts (15 tests) 7ms\n ✓ |unit| src/shared/lib/ai-paths/api/__tests__/enqueue-client-contract.test.ts (6 tests) 8ms\n ✓ |unit| src/shared/lib/ai-paths/hooks/trigger-event-utils.test.ts (20 tests) 10ms\n ✓ |unit| src/shared/lib/ai-paths/hooks/trigger-event-recovery.test.ts (14 tests) 7ms\n ✓ |unit| src/shared/lib/ai-paths/hooks/trigger-event-selection.test.ts (10 tests) 7ms\n\n Test Files  15 passed (15)\n      Tests  160 passed (160)\n   Start at  18:17:38\n   Duration  9.56s (transform 1.09s, setup 1.51s, import 2.12s, tests 232ms, environment 4.28s)"
+      "durationMs": 11775,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/shared/lib/ai-paths/hooks/trigger-event-context.test.ts (13 tests) 36ms\n ✓ |unit| src/features/products/state/queued-product-ops.test.ts (15 tests) 66ms\n ✓ |unit| src/features/ai/ai-paths/components/__tests__/job-queue-context.enqueue-events.test.tsx (4 tests) 29ms\n ✓ |unit| src/features/products/hooks/useProductAiPathsRunSync.test.tsx (5 tests) 24ms\n ✓ |unit| src/shared/lib/ai-paths/hooks/trigger-event-settings.test.ts (18 tests) 16ms\n ✓ |unit| src/shared/lib/ai-paths/__tests__/optimistic-run-queue.test.ts (14 tests) 16ms\n ✓ |unit| src/shared/lib/ai-paths/api/__tests__/enqueue-client-contract.test.ts (6 tests) 7ms\n ✓ |unit| src/shared/lib/ai-paths/hooks/trigger-event-utils.test.ts (20 tests) 7ms\n ✓ |unit| src/shared/lib/__tests__/query-invalidation.optimistically-insert-run.test.ts (12 tests) 17ms\n ✓ |unit| src/shared/lib/__tests__/query-invalidation.notify-ai-path-run-enqueued.test.ts (4 tests) 9ms\n ✓ |unit| src/shared/contracts/__tests__/ai-paths-run-enqueued-event.contract-runtime.test.ts (3 tests) 6ms\n ✓ |unit| src/shared/lib/ai-paths/hooks/trigger-event-selection.test.ts (10 tests) 6ms\n ✓ |unit| src/shared/lib/ai-paths/hooks/trigger-event-sanitization.test.ts (15 tests) 6ms\n ✓ |unit| src/shared/lib/ai-paths/hooks/trigger-event-recovery.test.ts (14 tests) 6ms\n ✓ |unit| src/shared/lib/ai-paths/hooks/trigger-event-invalidation.test.ts (7 tests) 6ms\n\n Test Files  15 passed (15)\n      Tests  160 passed (160)\n   Start at  18:59:59\n   Duration  10.05s (transform 1.84s, setup 1.44s, import 2.93s, tests 257ms, environment 4.04s)"
     }
   ]
 }

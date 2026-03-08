@@ -121,7 +121,21 @@
     ".next-dev-web-dev-smoke-final-2/types/**/*.ts",
     ".next-dev-web-dev-smoke-final-2/dev/types/**/*.ts",
     ".next-dev-web-dev-smoke-final-3/types/**/*.ts",
-    ".next-dev-web-dev-smoke-final-3/dev/types/**/*.ts"
+    ".next-dev-web-dev-smoke-final-3/dev/types/**/*.ts",
+    ".next-dev-web-dev-smoke-cms-pages-solo/types/**/*.ts",
+    ".next-dev-web-dev-smoke-cms-pages-solo/dev/types/**/*.ts",
+    ".next-dev-web-dev-smoke-final-4/types/**/*.ts",
+    ".next-dev-web-dev-smoke-final-4/dev/types/**/*.ts",
+    ".next-dev-web-dev-smoke-final-5/types/**/*.ts",
+    ".next-dev-web-dev-smoke-final-5/dev/types/**/*.ts",
+    ".next-dev-web-dev-smoke-final-6/types/**/*.ts",
+    ".next-dev-web-dev-smoke-final-6/dev/types/**/*.ts",
+    ".next-dev-brain-debug/types/**/*.ts",
+    ".next-dev-brain-debug/dev/types/**/*.ts",
+    ".next-dev-web-dev-smoke-final-7/types/**/*.ts",
+    ".next-dev-web-dev-smoke-final-7/dev/types/**/*.ts",
+    ".next-dev-web-dev-route-crawl-final-6/types/**/*.ts",
+    ".next-dev-web-dev-route-crawl-final-6/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import { validationError } from '@/shared/errors/app-error';
-export { IMAGE_STUDIO_OPENAI_API_KEY_KEY } from '@/shared/contracts/image-studio';
 
 import {
   IMAGE_STUDIO_SEQUENCE_OPERATIONS,

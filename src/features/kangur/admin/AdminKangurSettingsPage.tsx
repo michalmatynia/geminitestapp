@@ -3,11 +3,6 @@
 import Link from 'next/link';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 
-import {
-  AgentPersonaMoodAvatar,
-  resolveAgentPersonaMood,
-  useAgentPersonas,
-} from '@/features/ai';
 import { KangurDocsTooltipEnhancer } from '@/features/kangur/docs/tooltips';
 import {
   KANGUR_HELP_SETTINGS_KEY,
@@ -35,10 +30,12 @@ import {
   type KangurLessonTtsProbeResponse,
   type KangurLessonTtsVoice,
 } from '@/features/kangur/tts/contracts';
+import { useAgentPersonas } from '@/shared/hooks/useAgentPersonas';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { api } from '@/shared/lib/api-client';
+import { resolveAgentPersonaMood } from '@/shared/lib/agent-personas';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Button, FormSection, Switch, useToast } from '@/shared/ui';
+import { AgentPersonaMoodAvatar, Button, FormSection, Switch, useToast } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import { serializeSetting } from '@/shared/utils/settings-json';
 

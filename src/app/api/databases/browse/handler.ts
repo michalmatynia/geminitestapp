@@ -12,6 +12,27 @@ import { resolveCollectionProviderForRequest } from '@/shared/lib/db/collection-
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 
+type PrismaBrowseModel = {
+  findMany: (args: unknown) => Promise<unknown[]>;
+  count: (args: unknown) => Promise<number>;
+};
+
+const asRecord = (value: unknown): Record<string, unknown> | null =>
+  value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+
+const isPrismaBrowseModel = (value: unknown): value is PrismaBrowseModel => {
+  const record = asRecord(value);
+  return (
+    record !== null &&
+    typeof record['findMany'] === 'function' &&
+    typeof record['count'] === 'function'
+  );
+};
+
+const toBrowseDocument = (value: unknown): Record<string, unknown> => asRecord(value) ?? { value };
+
 async function browseMongoCollection(params: BrowseParams): Promise<BrowseResponse> {
   const db = await getMongoDb();
   const { collection, limit = 20, skip = 0, query } = params;
@@ -79,17 +100,9 @@ async function browsePrismaCollection(params: BrowseParams): Promise<BrowseRespo
 
   // Get the Prisma model dynamically
   const modelName = collection.charAt(0).toLowerCase() + collection.slice(1);
-  const model = (
-    prisma as unknown as Record<
-      string,
-      {
-        findMany: (args: unknown) => Promise<unknown[]>;
-        count: (args: unknown) => Promise<number>;
-      }
-    >
-  )[modelName];
+  const model = Reflect.get(prisma, modelName);
 
-  if (!model) {
+  if (!isPrismaBrowseModel(model)) {
     return {
       provider: 'prisma',
       collection,
@@ -130,7 +143,7 @@ async function browsePrismaCollection(params: BrowseParams): Promise<BrowseRespo
     return {
       provider: 'prisma',
       collection,
-      documents: documents as Record<string, unknown>[],
+      documents: documents.map(toBrowseDocument),
       total,
       limit,
       skip,

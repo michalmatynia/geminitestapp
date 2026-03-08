@@ -23,6 +23,15 @@ const asRecord = (value: Prisma.JsonValue | null | undefined): Record<string, un
     ? (value as Record<string, unknown>)
     : undefined;
 
+const toPrismaJson = (value: unknown): Prisma.InputJsonValue | undefined => {
+  if (value === undefined) return undefined;
+  const jsonString = JSON.stringify(value, (_key: string, entry: unknown) =>
+    typeof entry === 'bigint' ? entry.toString() : entry
+  );
+  if (!jsonString) return undefined;
+  return JSON.parse(jsonString) as Prisma.InputJsonValue;
+};
+
 const toChatMessage = (message: ChatMessageRow): ChatMessage => ({
   id: message.id,
   sessionId: message.sessionId,
@@ -96,15 +105,12 @@ export const chatbotSessionRepository: ChatbotSessionRepository = {
   },
 
   async create(input: CreateSessionInput): Promise<ChatSession> {
+    const settings = toPrismaJson(input.settings);
     const session = await prisma.chatbotSession.create({
       data: {
         title: input.title ?? null,
         personaId: input.settings?.personaId?.trim() || null,
-        ...(input.settings !== undefined
-          ? {
-              settings: input.settings as unknown as Prisma.InputJsonValue,
-            }
-          : {}),
+        ...(settings !== undefined ? { settings } : {}),
       },
       include: {
         messages: true,
@@ -127,13 +133,14 @@ export const chatbotSessionRepository: ChatbotSessionRepository = {
       return null;
     }
 
+    const settings = toPrismaJson(input.settings);
     const session = await prisma.chatbotSession.update({
       where: { id },
       data: {
         ...(input.title !== undefined ? { title: input.title ?? null } : {}),
-        ...(input.settings !== undefined
+        ...(settings !== undefined
           ? {
-              settings: input.settings as unknown as Prisma.InputJsonValue,
+              settings,
               personaId: input.settings?.personaId?.trim() || null,
             }
           : {}),
@@ -170,6 +177,7 @@ export const chatbotSessionRepository: ChatbotSessionRepository = {
       return null;
     }
 
+    const metadata = toPrismaJson(message.metadata);
     await prisma.$transaction([
       prisma.chatbotMessage.create({
         data: {
@@ -178,9 +186,7 @@ export const chatbotSessionRepository: ChatbotSessionRepository = {
           content: message.content,
           ...(message.model ? { model: message.model } : {}),
           ...(Array.isArray(message.images) ? { images: message.images } : {}),
-          ...(message.metadata
-            ? { metadata: message.metadata as unknown as Prisma.InputJsonValue }
-            : {}),
+          ...(metadata !== undefined ? { metadata } : {}),
         },
       }),
       prisma.chatbotSession.update({

@@ -29,7 +29,17 @@ const {
   invalidateAllSettingsMock: vi.fn(),
   runtimeState: {
     value: {
-      activeLearner: { id: 'learner-1', displayName: 'Ada' },
+      activeLearner: {
+        id: 'learner-1',
+        displayName: 'Ada',
+        aiTutor: {
+          currentMoodId: 'supportive',
+          baselineMoodId: 'calm',
+          confidence: 0.67,
+          lastComputedAt: '2026-03-08T08:00:00.000Z',
+          lastReasonCode: 'steady_progress',
+        },
+      },
       activeTab: 'ai-tutor',
       canAccessDashboard: true,
     },
@@ -86,6 +96,21 @@ import { KangurParentDashboardAiTutorWidget } from './KangurParentDashboardAiTut
 describe('KangurParentDashboardAiTutorWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    runtimeState.value = {
+      activeLearner: {
+        id: 'learner-1',
+        displayName: 'Ada',
+        aiTutor: {
+          currentMoodId: 'supportive',
+          baselineMoodId: 'calm',
+          confidence: 0.67,
+          lastComputedAt: '2026-03-08T08:00:00.000Z',
+          lastReasonCode: 'steady_progress',
+        },
+      },
+      activeTab: 'ai-tutor',
+      canAccessDashboard: true,
+    };
 
     settingsStoreMock.get.mockImplementation((key: string) => {
       if (key === KANGUR_AI_TUTOR_SETTINGS_KEY) {
@@ -241,6 +266,46 @@ describe('KangurParentDashboardAiTutorWidget', () => {
     expect(screen.getByText(/wykorzystanie dzisiaj/i)).toHaveClass('text-amber-700');
     expect(screen.getByText('Zużyto 4 z 12 wiadomości.')).toBeInTheDocument();
     expect(screen.getByText('Pozostało 8')).toHaveClass('text-amber-700');
+  });
+
+  it('shows the learner-specific tutor mood summary for the active learner', () => {
+    runtimeState.value = {
+      activeLearner: {
+        id: 'learner-1',
+        displayName: 'Ada',
+        aiTutor: {
+          currentMoodId: 'proud',
+          baselineMoodId: 'supportive',
+          confidence: 0.82,
+          lastComputedAt: '2026-03-08T09:15:00.000Z',
+          lastReasonCode: 'progress_gain',
+        },
+      },
+      activeTab: 'ai-tutor',
+      canAccessDashboard: true,
+    };
+
+    render(<KangurParentDashboardAiTutorWidget />);
+
+    expect(screen.getByTestId('parent-dashboard-ai-tutor-mood-current')).toHaveTextContent(
+      'Dumny'
+    );
+    expect(screen.getByTestId('parent-dashboard-ai-tutor-mood-current')).toHaveAttribute(
+      'data-mood-id',
+      'proud'
+    );
+    expect(screen.getByTestId('parent-dashboard-ai-tutor-mood-description')).toHaveTextContent(
+      'Tutor podkresla postep'
+    );
+    expect(screen.getByTestId('parent-dashboard-ai-tutor-mood-baseline')).toHaveTextContent(
+      'Wspierajacy'
+    );
+    expect(screen.getByTestId('parent-dashboard-ai-tutor-mood-confidence')).toHaveTextContent(
+      '82%'
+    );
+    expect(screen.getByTestId('parent-dashboard-ai-tutor-mood-updated')).not.toHaveTextContent(
+      'Jeszcze nie obliczono'
+    );
   });
 
   it('shows a fallback message when live usage cannot be loaded', () => {

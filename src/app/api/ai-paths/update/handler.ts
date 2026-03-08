@@ -14,7 +14,12 @@ import { getProductRepository } from '@/features/products/server';
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import { NoteUpdateInput } from '@/shared/contracts/notes';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { badRequestError, notFoundError, validationError } from '@/shared/errors/app-error';
+import {
+  badRequestError,
+  internalError,
+  notFoundError,
+  validationError,
+} from '@/shared/errors/app-error';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { removeUndefined } from '@/shared/utils';
 
@@ -66,6 +71,11 @@ const applyAppendMode = (
   return next;
 };
 
+const asRecord = (value: unknown): Record<string, unknown> | null =>
+  value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const { access, isInternal } = await requireAiPathsAccessOrInternal(req);
   if (!isInternal) {
@@ -113,9 +123,13 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     if (mode === 'append' && !existing) {
       throw notFoundError('Product not found', { productId: entityId });
     }
+    const existingRecord = existing ? asRecord(existing) : null;
+    if (mode === 'append' && existing && !existingRecord) {
+      throw internalError('Existing product payload is not an object.', { productId: entityId });
+    }
     const preparedRaw =
-      mode === 'append' && existing
-        ? applyAppendMode(normalizedUpdates, existing as unknown as Record<string, unknown>)
+      mode === 'append' && existingRecord
+        ? applyAppendMode(normalizedUpdates, existingRecord)
         : normalizedUpdates;
     const prepared = { ...preparedRaw } as Record<string, unknown>;
     if (Object.prototype.hasOwnProperty.call(prepared, 'simpleParameters')) {
@@ -151,9 +165,13 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     if (mode === 'append' && !existing) {
       throw notFoundError('Note not found', { noteId: entityId });
     }
+    const existingRecord = existing ? asRecord(existing) : null;
+    if (mode === 'append' && existing && !existingRecord) {
+      throw internalError('Existing note payload is not an object.', { noteId: entityId });
+    }
     const prepared =
-      mode === 'append' && existing
-        ? applyAppendMode(normalizedUpdates, existing as unknown as Record<string, unknown>)
+      mode === 'append' && existingRecord
+        ? applyAppendMode(normalizedUpdates, existingRecord)
         : normalizedUpdates;
     const validated = noteUpdateSchema.safeParse(prepared);
     if (!validated.success) {

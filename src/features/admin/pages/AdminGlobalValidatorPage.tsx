@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useMemo } from 'react';
 
-import { AdminImageStudioValidationPatternsPage } from '@/features/ai';
 import { ValidatorSettings } from '@/features/products';
 import { ValidatorDocsTooltipsProvider } from '@/features/products';
 import { AdminPromptEngineValidationPatternsPage } from '@/features/prompt-engine';
@@ -61,7 +60,12 @@ export function AdminGlobalValidatorPage(): React.JSX.Element {
           <FormSection variant='subtle' className='p-4'>
             <p className='text-sm text-gray-300'>{resolvedDescription}</p>
           </FormSection>
-          <AdminImageStudioValidationPatternsPage embedded />
+          <AdminPromptEngineValidationPatternsPage
+            embedded
+            eyebrow='AI · Image Studio'
+            backLinkHref='/admin/image-studio'
+            backLinkLabel='Back to Studio'
+          />
         </>
       );
     }

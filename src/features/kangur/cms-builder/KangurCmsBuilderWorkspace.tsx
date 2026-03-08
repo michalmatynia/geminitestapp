@@ -3,7 +3,6 @@
 import { PanelLeftClose, PanelRightClose } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useAdminLayoutActions } from '@/features/admin';
 import {
   CmsBuilderLeftPanel,
   DragStateProvider,
@@ -12,6 +11,7 @@ import {
   ThemeSettingsProvider,
   usePageBuilder,
 } from '@/features/cms/public';
+import { useAdminLayoutActions } from '@/shared/providers/AdminLayoutProvider';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Button, useToast } from '@/shared/ui';

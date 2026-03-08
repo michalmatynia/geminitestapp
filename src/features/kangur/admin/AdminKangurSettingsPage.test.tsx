@@ -54,13 +54,7 @@ vi.mock('@/shared/lib/api-client', () => ({
   },
 }));
 
-vi.mock('@/features/ai', () => ({
-  AgentPersonaMoodAvatar: () => null,
-  resolveAgentPersonaMood: () => ({
-    id: 'neutral',
-    svgContent: '<svg />',
-    avatarImageUrl: null,
-  }),
+vi.mock('@/shared/hooks/useAgentPersonas', () => ({
   useAgentPersonas: useAgentPersonasMock,
 }));
 
@@ -68,6 +62,7 @@ vi.mock('@/shared/ui', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/shared/ui')>();
   return {
     ...actual,
+    AgentPersonaMoodAvatar: () => null,
     useToast: () => ({
       toast: toastMock,
     }),

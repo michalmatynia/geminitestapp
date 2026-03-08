@@ -5,12 +5,9 @@ import { memo, useEffect, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
 import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
-import {
-  useAdminLayoutActions,
-  useAdminLayoutState,
-} from '@/features/admin';
 import { PRODUCT_PAGE_SIZE_OPTIONS } from '@/shared/lib/products/constants';
 import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
+import { useAdminLayoutActions, useAdminLayoutState } from '@/shared/providers/AdminLayoutProvider';
 import {
   useProductListActionsContext,
   useProductListFiltersContext,

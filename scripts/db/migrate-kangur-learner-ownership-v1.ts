@@ -26,6 +26,7 @@ import type {
   KangurLearnerProfile,
   KangurScore,
 } from '@/shared/contracts/kangur';
+import { createDefaultKangurAiTutorLearnerMood } from '@/shared/contracts/kangur-ai-tutor-mood';
 import { createDefaultKangurProgressState, kangurScoreSchema } from '@/shared/contracts/kangur';
 import { getAuthDataProvider, type AuthDbProvider } from '@/shared/lib/auth/services/auth-provider';
 
@@ -418,6 +419,7 @@ const prepareLearnersForOwner = async (input: {
           loginName: seed.preferredLoginName,
           status: 'active',
           legacyUserKey: seed.legacyUserKey,
+          aiTutor: createDefaultKangurAiTutorLearnerMood(),
           createdAt: new Date(0).toISOString(),
           updatedAt: new Date(0).toISOString(),
           simulated: true,

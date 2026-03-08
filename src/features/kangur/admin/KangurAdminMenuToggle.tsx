@@ -4,10 +4,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import {
-  useAdminLayoutActions,
-  useAdminLayoutState,
-} from '@/features/admin';
+import { useAdminLayoutActions, useAdminLayoutState } from '@/shared/providers/AdminLayoutProvider';
 import { Button } from '@/shared/ui';
 
 export function KangurAdminMenuToggle(): React.JSX.Element | null {

@@ -11,6 +11,16 @@ type DatabaseEngineCancelableJob = {
   jobType: string;
 };
 
+const isDatabaseEngineCancelableJob = (value: unknown): value is DatabaseEngineCancelableJob => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const record = value as Record<string, unknown>;
+  const productId = record['productId'];
+  return (
+    (typeof productId === 'string' || productId === null || productId === undefined) &&
+    typeof record['jobType'] === 'string'
+  );
+};
+
 const isDatabaseEngineOperationJob = (job: DatabaseEngineCancelableJob): boolean =>
   job.productId === 'system' && (job.jobType === 'db_backup' || job.jobType === 'db_sync');
 
@@ -37,7 +47,7 @@ export async function POST_handler(
   if (!job) {
     throw notFoundError('Job not found.', { jobId });
   }
-  if (!isDatabaseEngineOperationJob(job as unknown as DatabaseEngineCancelableJob)) {
+  if (!isDatabaseEngineCancelableJob(job) || !isDatabaseEngineOperationJob(job)) {
     throw badRequestError('Only Database Engine db_backup/db_sync jobs can be cancelled.', {
       jobId,
       productId: job['productId'],

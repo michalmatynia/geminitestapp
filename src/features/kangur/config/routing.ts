@@ -1,5 +1,7 @@
+import { DEFAULT_KANGUR_APP_EMBED_ENTRY_PAGE } from '@/shared/contracts/app-embeds';
+
 export const KANGUR_BASE_PATH = '/kangur';
-export const KANGUR_MAIN_PAGE_KEY = 'Game';
+export const KANGUR_MAIN_PAGE_KEY = DEFAULT_KANGUR_APP_EMBED_ENTRY_PAGE;
 export const KANGUR_EMBED_QUERY_PARAM = 'kangur';
 export const KANGUR_EMBED_BASE_PATH_PREFIX = '__kangur_embed__:';
 const KANGUR_EMBED_SCOPE_DELIMITER = '::';

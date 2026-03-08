@@ -10,6 +10,8 @@ import {
 } from './check-runner.mjs';
 
 const API_ROOT = path.join('src', 'app', 'api');
+const HTTP_METHOD_EXPORT_REGEX = /export const (GET|POST|PUT|PATCH|DELETE)\b/g;
+const WRAPPED_HANDLER_REGEX = /\bapiHandler(?:WithParams)?(?:\s*<[\s\S]*?>)?\s*\(/;
 
 const listRouteFiles = (absoluteDir, acc = []) => {
   if (!fs.existsSync(absoluteDir)) return acc;
@@ -51,6 +53,75 @@ const getLineNumber = (text, index) => {
   return line;
 };
 
+const listHttpExportBlocks = (text) => {
+  const matches = [...text.matchAll(HTTP_METHOD_EXPORT_REGEX)];
+  return matches.map((match, index) => ({
+    method: match[1],
+    text: text.slice(match.index, matches[index + 1]?.index ?? text.length),
+  }));
+};
+
+const parseNamedImports = (text) => {
+  const bindings = new Map();
+  const importRegex = /import\s*\{([\s\S]*?)\}\s*from\s*['"]([^'"]+)['"]/g;
+
+  for (const match of text.matchAll(importRegex)) {
+    const source = match[2];
+    const specifiers = match[1].split(',');
+    for (const specifier of specifiers) {
+      const cleaned = specifier.trim().replace(/^type\s+/, '');
+      if (!cleaned) continue;
+      const aliasParts = cleaned.split(/\s+as\s+/);
+      const imported = aliasParts[0]?.trim();
+      const local = (aliasParts[1] ?? aliasParts[0])?.trim();
+      if (!imported || !local) continue;
+      bindings.set(local, { imported, source });
+    }
+  }
+
+  return bindings;
+};
+
+const parseNamespaceImports = (text) => {
+  const bindings = new Map();
+  const namespaceImportRegex = /import\s+\*\s+as\s+([A-Za-z_$][\w$]*)\s+from\s+['"]([^'"]+)['"]/g;
+
+  for (const match of text.matchAll(namespaceImportRegex)) {
+    const namespace = match[1];
+    const source = match[2];
+    if (namespace && source) {
+      bindings.set(namespace, source);
+    }
+  }
+
+  return bindings;
+};
+
+const isDelegatedImportSource = (source) => /(?:^|\/)(route|server)$/.test(source);
+
+const isDelegatedHttpExport = (block, namedImports, namespaceImports) => {
+  const directAssignmentMatch = block.text.match(
+    /export const (GET|POST|PUT|PATCH|DELETE)\s*=\s*([A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)?)\s*;/
+  );
+  if (!directAssignmentMatch) return false;
+
+  const method = directAssignmentMatch[1];
+  const assignedValue = directAssignmentMatch[2];
+  const namedBinding = namedImports.get(assignedValue);
+  if (namedBinding) {
+    if (namedBinding.imported === method) return true;
+    return isDelegatedImportSource(namedBinding.source) && !/_handler$/i.test(namedBinding.imported);
+  }
+
+  const namespaceAssignmentMatch = assignedValue.match(/^([A-Za-z_$][\w$]*)\.(GET|POST|PUT|PATCH|DELETE)$/);
+  if (!namespaceAssignmentMatch) return false;
+
+  const namespace = namespaceAssignmentMatch[1];
+  const delegatedMethod = namespaceAssignmentMatch[2];
+  const namespaceSource = namespaceImports.get(namespace);
+  return delegatedMethod === method && Boolean(namespaceSource && isDelegatedImportSource(namespaceSource));
+};
+
 export const analyzeApiErrorSources = ({ root = process.cwd() } = {}) => {
   const issues = [];
   const apiDir = path.join(root, API_ROOT);
@@ -66,14 +137,15 @@ export const analyzeApiErrorSources = ({ root = process.cwd() } = {}) => {
     const rel = path.relative(apiDir, absolutePath).replace(/\\/g, '/').replace(/\/route\.ts$/, '');
     const sourceBase = rel.split('/').join('.');
     const text = fs.readFileSync(absolutePath, 'utf8');
-
-    // Check: Does this route use apiHandler?
-    const hasApiHandler = /\bapiHandler(?:WithParams)?\s*\(/.test(text);
-    const isDelegated = /export\s*\{[^}]+\}\s*from\s*['"]/.test(text);
-    const exportsHttpMethods = /export\s+(?:const|async\s+function)\s+(GET|POST|PUT|PATCH|DELETE)\b/.test(text);
+    const httpExportBlocks = listHttpExportBlocks(text);
+    const namedImports = parseNamedImports(text);
+    const namespaceImports = parseNamespaceImports(text);
 
     // Rule: api-handler-missing-wrapper
-    if (!hasApiHandler && !isDelegated && exportsHttpMethods) {
+    const hasUnwrappedHttpExport = httpExportBlocks.some(
+      (block) => !WRAPPED_HANDLER_REGEX.test(block.text) && !isDelegatedHttpExport(block, namedImports, namespaceImports)
+    );
+    if (hasUnwrappedHttpExport) {
       issues.push(
         createIssue({
           severity: 'error',
@@ -85,12 +157,13 @@ export const analyzeApiErrorSources = ({ root = process.cwd() } = {}) => {
     }
 
     // Original source mismatch check
-    const exportMatches = [
-      ...text.matchAll(
-        /export const (GET|POST|PUT|PATCH|DELETE) = apiHandler(?:WithParams)?[^\n]*\{\s*source:\s*"([^"]+)"\s*\}/g
-      ),
-    ];
-    const exportMap = new Map(exportMatches.map((m) => [m[1], m[2]]));
+    const exportMap = new Map();
+    for (const block of httpExportBlocks) {
+      if (!WRAPPED_HANDLER_REGEX.test(block.text)) continue;
+      const sourceMatch = block.text.match(/\bsource:\s*"([^"]+)"/);
+      if (!sourceMatch?.[1]) continue;
+      exportMap.set(block.method, sourceMatch[1]);
+    }
 
     for (const [method, source] of exportMap) {
       if (!method || !source) continue;

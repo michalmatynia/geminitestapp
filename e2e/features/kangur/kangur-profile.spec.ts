@@ -12,6 +12,7 @@ test.describe('Kangur Learner Profile', () => {
     await expect(page.getByText(/Seria dni/i)).toBeVisible();
     await expect(page.getByText(/Cel dzienny/i)).toBeVisible();
     await expect(page.getByText(/Odznaki/i).first()).toBeVisible();
+    await expect(page.getByText(/Nastroj AI Tutora/i)).toBeVisible();
 
     await expect(page.getByText(/Aktywnosc 7 dni/i)).toBeVisible();
     await expect(page.getByText(/Wyniki wg operacji/i)).toBeVisible();
@@ -121,6 +122,106 @@ test.describe('Kangur Learner Profile', () => {
     await playNowLink.click();
     await expect(page).toHaveURL(/\/kangur\/game/);
     await expect(page.getByText(/Tryb treningowy/i)).toBeVisible();
+  });
+
+  test('shows the persisted AI tutor mood on the learner profile', async ({ page }) => {
+    const nowIso = '2026-03-08T08:00:00.000Z';
+
+    await page.route('**/api/auth/session**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          user: {
+            id: 'user-jan',
+            name: 'Jan',
+            email: 'jan@example.com',
+            role: 'user',
+          },
+          expires: '2099-01-01T00:00:00.000Z',
+        }),
+      });
+    });
+
+    await page.route('**/api/kangur/auth/me**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          id: 'parent-001',
+          full_name: 'Parent Demo',
+          email: 'parent@example.com',
+          role: 'user',
+          actorType: 'parent',
+          canManageLearners: true,
+          ownerUserId: 'parent-001',
+          activeLearner: {
+            id: 'learner-001',
+            ownerUserId: 'parent-001',
+            displayName: 'Jan',
+            loginName: 'jan-demo',
+            status: 'active',
+            legacyUserKey: null,
+            aiTutor: {
+              currentMoodId: 'proud',
+              baselineMoodId: 'supportive',
+              confidence: 0.82,
+              lastComputedAt: nowIso,
+              lastReasonCode: 'progress_gain',
+            },
+            createdAt: nowIso,
+            updatedAt: nowIso,
+          },
+          learners: [
+            {
+              id: 'learner-001',
+              ownerUserId: 'parent-001',
+              displayName: 'Jan',
+              loginName: 'jan-demo',
+              status: 'active',
+              legacyUserKey: null,
+              aiTutor: {
+                currentMoodId: 'proud',
+                baselineMoodId: 'supportive',
+                confidence: 0.82,
+                lastComputedAt: nowIso,
+                lastReasonCode: 'progress_gain',
+              },
+              createdAt: nowIso,
+              updatedAt: nowIso,
+            },
+          ],
+        }),
+      });
+    });
+
+    await page.route('**/api/kangur/scores**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([]),
+      });
+    });
+
+    await page.goto('/kangur/profile');
+
+    await expect(page.getByTestId('learner-profile-ai-tutor-mood')).toBeVisible();
+    await expect(page.getByTestId('learner-profile-ai-tutor-mood-current')).toContainText(
+      'Dumny'
+    );
+    await expect(page.getByTestId('learner-profile-ai-tutor-mood-current')).toHaveAttribute(
+      'data-mood-id',
+      'proud'
+    );
+    await expect(page.getByTestId('learner-profile-ai-tutor-mood-baseline')).toContainText(
+      'Wspierajacy'
+    );
+    await expect(page.getByTestId('learner-profile-ai-tutor-mood-confidence')).toContainText(
+      '82%'
+    );
+    await expect(page.getByTestId('learner-profile-ai-tutor-mood-updated')).not.toContainText(
+      'Jeszcze nie obliczono'
+    );
   });
 
   test('opens focused lesson from recommendation deep link', async ({ page }) => {

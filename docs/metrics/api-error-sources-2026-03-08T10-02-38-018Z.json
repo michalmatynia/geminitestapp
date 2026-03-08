@@ -1,0 +1,1729 @@
+{
+  "generatedAt": "2026-03-08T10:02:38.018Z",
+  "status": "failed",
+  "summary": {
+    "total": 169,
+    "errorCount": 115,
+    "warningCount": 54,
+    "infoCount": 0,
+    "status": "failed",
+    "routeFileCount": 330,
+    "handlerFileCount": 318
+  },
+  "scope": {
+    "root": "src/app/api"
+  },
+  "issues": [
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/agentcreator/agent/[runId]/assets/[file]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/agentcreator/agent/[runId]/audits/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/agentcreator/agent/[runId]/controls/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/agentcreator/agent/[runId]/logs/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/agentcreator/agent/[runId]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/agentcreator/agent/[runId]/snapshots/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/agentcreator/agent/[runId]/stream/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/agentcreator/agent/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/agentcreator/agent/snapshots/[snapshotId]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/agentcreator/personas/[personaId]/memory/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/ai-paths/playwright/[runId]/artifacts/[file]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/ai-paths/playwright/[runId]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/ai-paths/runs/[runId]/cancel/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/ai-paths/runs/[runId]/resume/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/ai-paths/runs/[runId]/retry-node/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/ai-paths/runs/[runId]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/ai-paths/runs/[runId]/stream/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/ai-paths/trigger-buttons/[id]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/ai/context/related/[id]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/ai/schema/[entity]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/assets3d/[id]/file/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/assets3d/[id]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/auth/users/[id]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/auth/users/[id]/security/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/case-resolver/ocr/jobs/[jobId]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/chatbot/agent/[runId]/[action]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/chatbot/jobs/[jobId]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/chatbot/sessions/[sessionId]/messages/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/chatbot/sessions/[sessionId]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/cms/domains/[id]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/cms/pages/[id]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/cms/slugs/[id]/domains/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/cms/slugs/[id]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/cms/themes/[id]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/databases/engine/operations/jobs/[jobId]/cancel/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/drafts/[id]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/files/[id]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/image-studio/projects/[projectId]/assets/delete/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/image-studio/projects/[projectId]/assets/import/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/image-studio/projects/[projectId]/assets/move/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/image-studio/projects/[projectId]/assets/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/image-studio/projects/[projectId]/folders/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/image-studio/projects/[projectId]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/image-studio/projects/[projectId]/slots/ensure-from-upload/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/image-studio/projects/[projectId]/slots/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/image-studio/projects/[projectId]/variants/delete/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/image-studio/runs/[runId]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/image-studio/runs/[runId]/stream/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/image-studio/sequences/[runId]/cancel/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/image-studio/sequences/[runId]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/image-studio/sequences/[runId]/stream/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/image-studio/slots/[slotId]/analysis/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/image-studio/slots/[slotId]/autoscale/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/image-studio/slots/[slotId]/center/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/image-studio/slots/[slotId]/crop/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/image-studio/slots/[slotId]/masks/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/image-studio/slots/[slotId]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/image-studio/slots/[slotId]/screenshot/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/image-studio/slots/[slotId]/upscale/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/kangur/assignments/[id]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/kangur/learners/[id]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/marketplace/[resource]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/marketplace/mappings/[id]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/notes/[id]/files/[slotIndex]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/notes/[id]/files/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/notes/[id]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/notes/categories/[id]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/notes/notebooks/[id]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/notes/tags/[id]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/notes/themes/[id]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/public/products/[id]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/allegro/authorize/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/allegro/callback/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/allegro/disconnect/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/allegro/request/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/allegro/test/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/base/inventories/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/base/products/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/base/request/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/base/test/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/test/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/integrations/[id]/connections/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/integrations/connections/[id]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/integrations/connections/[id]/session/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/integrations/exports/base/[setting]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/integrations/imports/base/[setting]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/integrations/imports/base/runs/[runId]/cancel/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/integrations/imports/base/runs/[runId]/report/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/integrations/imports/base/runs/[runId]/resume/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/integrations/imports/base/runs/[runId]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/integrations/products/[id]/base/link-existing/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/integrations/products/[id]/base/sku-check/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/integrations/products/[id]/export-to-base/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/integrations/products/[id]/listings/[listingId]/delete-from-base/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/integrations/products/[id]/listings/[listingId]/purge/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/integrations/products/[id]/listings/[listingId]/relist/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/integrations/products/[id]/listings/[listingId]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/integrations/products/[id]/listings/[listingId]/sync-base-images/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/integrations/products/[id]/listings/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/products/[id]/duplicate/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/products/[id]/images/[imageFileId]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/products/[id]/images/base64/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/products/[id]/images/link-to-file/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/products/[id]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/products/[id]/studio/[action]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/products/[id]/studio/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/products/ai-jobs/[jobId]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/products/categories/[id]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/products/parameters/[id]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/products/producers/[id]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/products/sync/profiles/[id]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/products/sync/profiles/[id]/run/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/products/sync/runs/[runId]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/products/tags/[id]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "api-handler-missing-wrapper",
+      "message": "Route exports HTTP methods without apiHandler/apiHandlerWithParams wrapper.",
+      "file": "src/app/api/v2/products/validator-patterns/[id]/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "raw-new-response",
+      "message": "Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse.",
+      "file": "src/app/api/ai-paths/portable-engine/remediation-dead-letters/replay-history/handler.ts",
+      "line": 658,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "raw-new-response",
+      "message": "Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse.",
+      "file": "src/app/api/ai-paths/portable-engine/remediation-dead-letters/replay-history/handler.ts",
+      "line": 685,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "raw-new-response",
+      "message": "Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse.",
+      "file": "src/app/api/ai-paths/runs/[runId]/stream/handler.ts",
+      "line": 359,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "unchecked-req-json",
+      "message": "req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation.",
+      "file": "src/app/api/assets3d/[id]/handler.ts",
+      "line": 30,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "raw-new-response",
+      "message": "Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse.",
+      "file": "src/app/api/auth/[...nextauth]/handler.ts",
+      "line": 75,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "unchecked-req-json",
+      "message": "req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation.",
+      "file": "src/app/api/chatbot/handler.ts",
+      "line": 223,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "unchecked-req-json",
+      "message": "req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation.",
+      "file": "src/app/api/cms/css-ai/stream/handler.ts",
+      "line": 21,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "raw-new-response",
+      "message": "Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse.",
+      "file": "src/app/api/cms/css-ai/stream/handler.ts",
+      "line": 92,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "raw-new-response",
+      "message": "Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse.",
+      "file": "src/app/api/cms/domains/[id]/handler.ts",
+      "line": 32,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "raw-new-response",
+      "message": "Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse.",
+      "file": "src/app/api/cms/pages/[id]/handler.ts",
+      "line": 150,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "raw-new-response",
+      "message": "Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse.",
+      "file": "src/app/api/cms/slugs/[id]/handler.ts",
+      "line": 74,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "raw-new-response",
+      "message": "Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse.",
+      "file": "src/app/api/cms/themes/[id]/handler.ts",
+      "line": 58,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "unchecked-req-json",
+      "message": "req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation.",
+      "file": "src/app/api/databases/copy-collection/handler.ts",
+      "line": 25,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "unchecked-req-json",
+      "message": "req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation.",
+      "file": "src/app/api/databases/crud/handler.ts",
+      "line": 18,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "unchecked-req-json",
+      "message": "req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation.",
+      "file": "src/app/api/databases/delete/handler.ts",
+      "line": 21,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "unchecked-req-json",
+      "message": "req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation.",
+      "file": "src/app/api/databases/execute/handler.ts",
+      "line": 16,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "unchecked-req-json",
+      "message": "req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation.",
+      "file": "src/app/api/databases/json-restore/handler.ts",
+      "line": 13,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "unchecked-req-json",
+      "message": "req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation.",
+      "file": "src/app/api/databases/preview/handler.ts",
+      "line": 36,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "unchecked-req-json",
+      "message": "req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation.",
+      "file": "src/app/api/databases/restore/handler.ts",
+      "line": 51,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "raw-new-response",
+      "message": "Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse.",
+      "file": "src/app/api/files/[id]/handler.ts",
+      "line": 31,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "raw-new-response",
+      "message": "Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse.",
+      "file": "src/app/api/image-studio/projects/[projectId]/assets/delete/handler.ts",
+      "line": 282,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "raw-new-response",
+      "message": "Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse.",
+      "file": "src/app/api/image-studio/projects/[projectId]/assets/delete/handler.ts",
+      "line": 315,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "raw-new-response",
+      "message": "Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse.",
+      "file": "src/app/api/image-studio/runs/[runId]/stream/handler.ts",
+      "line": 153,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "raw-new-response",
+      "message": "Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse.",
+      "file": "src/app/api/image-studio/sequences/[runId]/stream/handler.ts",
+      "line": 157,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "unchecked-req-json",
+      "message": "req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation.",
+      "file": "src/app/api/image-studio/slots/[slotId]/analysis/handler.ts",
+      "line": 65,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "unchecked-req-json",
+      "message": "req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation.",
+      "file": "src/app/api/image-studio/slots/[slotId]/crop/handler.ts",
+      "line": 103,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "unchecked-req-json",
+      "message": "req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation.",
+      "file": "src/app/api/marketplace/categories/fetch/handler.ts",
+      "line": 24,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "unchecked-req-json",
+      "message": "req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation.",
+      "file": "src/app/api/marketplace/producers/fetch/handler.ts",
+      "line": 24,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "unchecked-req-json",
+      "message": "req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation.",
+      "file": "src/app/api/marketplace/tags/fetch/handler.ts",
+      "line": 24,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "unchecked-req-json",
+      "message": "req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation.",
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.ts",
+      "line": 55,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "raw-new-response",
+      "message": "Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse.",
+      "file": "src/app/api/v2/integrations/connections/[id]/handler.ts",
+      "line": 305,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "unchecked-req-json",
+      "message": "req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation.",
+      "file": "src/app/api/v2/metadata/[type]/[id]/handler.ts",
+      "line": 215,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "raw-new-response",
+      "message": "Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse.",
+      "file": "src/app/api/v2/metadata/[type]/[id]/handler.ts",
+      "line": 407,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "raw-new-response",
+      "message": "Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse.",
+      "file": "src/app/api/v2/metadata/[type]/[id]/handler.ts",
+      "line": 424,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "raw-new-response",
+      "message": "Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse.",
+      "file": "src/app/api/v2/metadata/[type]/[id]/handler.ts",
+      "line": 430,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "raw-new-response",
+      "message": "Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse.",
+      "file": "src/app/api/v2/metadata/[type]/[id]/handler.ts",
+      "line": 452,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "raw-new-response",
+      "message": "Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse.",
+      "file": "src/app/api/v2/metadata/[type]/[id]/handler.ts",
+      "line": 458,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "unchecked-req-json",
+      "message": "req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation.",
+      "file": "src/app/api/v2/metadata/handler.ts",
+      "line": 229,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "raw-new-response",
+      "message": "Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse.",
+      "file": "src/app/api/v2/products/[id]/handler.ts",
+      "line": 201,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "raw-new-response",
+      "message": "Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse.",
+      "file": "src/app/api/v2/products/[id]/images/[imageFileId]/handler.ts",
+      "line": 28,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "unchecked-req-json",
+      "message": "req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation.",
+      "file": "src/app/api/v2/products/entities/handler.ts",
+      "line": 64,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "raw-new-response",
+      "message": "Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse.",
+      "file": "src/app/api/v2/products/entities/handler.ts",
+      "line": 86,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "raw-new-response",
+      "message": "Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse.",
+      "file": "src/app/api/v2/products/entities/handler.ts",
+      "line": 93,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "unchecked-req-json",
+      "message": "req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation.",
+      "file": "src/app/api/v2/products/metadata/[type]/[id]/handler.ts",
+      "line": 24,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "raw-new-response",
+      "message": "Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse.",
+      "file": "src/app/api/v2/products/metadata/[type]/[id]/handler.ts",
+      "line": 379,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "raw-new-response",
+      "message": "Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse.",
+      "file": "src/app/api/v2/products/metadata/[type]/[id]/handler.ts",
+      "line": 384,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "raw-new-response",
+      "message": "Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse.",
+      "file": "src/app/api/v2/products/metadata/[type]/[id]/handler.ts",
+      "line": 389,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "raw-new-response",
+      "message": "Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse.",
+      "file": "src/app/api/v2/products/metadata/[type]/[id]/handler.ts",
+      "line": 421,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "raw-new-response",
+      "message": "Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse.",
+      "file": "src/app/api/v2/products/metadata/[type]/[id]/handler.ts",
+      "line": 426,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "raw-new-response",
+      "message": "Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse.",
+      "file": "src/app/api/v2/products/metadata/[type]/[id]/handler.ts",
+      "line": 430,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "unchecked-req-json",
+      "message": "req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation.",
+      "file": "src/app/api/v2/products/metadata/handler.ts",
+      "line": 21,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "raw-new-response",
+      "message": "Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse.",
+      "file": "src/app/api/v2/products/producers/[id]/handler.ts",
+      "line": 51,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "unchecked-req-json",
+      "message": "req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation.",
+      "file": "src/app/api/v2/products/validation/handler.ts",
+      "line": 9,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "raw-new-response",
+      "message": "Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse.",
+      "file": "src/app/api/v2/products/validator-patterns/[id]/handler.ts",
+      "line": 359,
+      "column": null,
+      "snippet": null,
+      "context": null
+    }
+  ],
+  "rules": [
+    {
+      "ruleId": "api-handler-missing-wrapper",
+      "errorCount": 115,
+      "warningCount": 0,
+      "infoCount": 0
+    },
+    {
+      "ruleId": "raw-new-response",
+      "errorCount": 0,
+      "warningCount": 32,
+      "infoCount": 0
+    },
+    {
+      "ruleId": "unchecked-req-json",
+      "errorCount": 0,
+      "warningCount": 22,
+      "infoCount": 0
+    }
+  ],
+  "durationMs": 247
+}

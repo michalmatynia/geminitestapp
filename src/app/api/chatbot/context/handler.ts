@@ -16,6 +16,14 @@ const chunkText = (text: string, maxChars: number): string[] => {
   return chunks.filter(Boolean);
 };
 
+type PdfParseResult = {
+  text?: unknown;
+};
+
+type PdfParseFn = (buffer: Buffer) => Promise<PdfParseResult>;
+
+const isPdfParseFn = (value: unknown): value is PdfParseFn => typeof value === 'function';
+
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const formData = await req.formData();
   const file = formData.get('file');
@@ -27,18 +35,21 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     throw badRequestError('Only PDF files are supported.');
   }
 
-  let pdfParse: (buffer: Buffer) => Promise<{ text: string }>;
+  let pdfParse: PdfParseFn;
   try {
     const pdfModule = await import('pdf-parse');
-    pdfParse = (pdfModule as unknown as { default: (buffer: Buffer) => Promise<{ text: string }> })
-      .default;
+    const pdfParseCandidate = Reflect.get(pdfModule, 'default') ?? pdfModule;
+    if (!isPdfParseFn(pdfParseCandidate)) {
+      throw configurationError('PDF parser not installed. Run `npm install pdf-parse`.');
+    }
+    pdfParse = pdfParseCandidate;
   } catch {
     throw configurationError('PDF parser not installed. Run `npm install pdf-parse`.');
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
   const result = await pdfParse(buffer);
-  const rawText = result.text || '';
+  const rawText = typeof result.text === 'string' ? result.text : '';
   const pages = rawText.split('\f').map((chunk: string) => chunk.trim());
   const segments: Array<{ title: string; content: string }> = [];
 

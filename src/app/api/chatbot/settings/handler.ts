@@ -3,7 +3,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { parseJsonBody } from '@/features/products/server';
-import type { ChatbotSettingsRecordDto as ChatbotSettingsRecord } from '@/shared/contracts/chatbot';
+import {
+  parseChatbotSettingsPayload,
+  type ChatbotSettingsDto,
+} from '@/shared/contracts/chatbot';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
 import prisma from '@/shared/lib/db/prisma';
@@ -15,6 +18,24 @@ const DEFAULT_SETTINGS_KEY = 'default';
 const settingsSchema = z.object({
   key: z.string().trim().optional(),
   settings: z.record(z.string(), z.unknown()).optional(),
+});
+
+type ChatbotSettingsRow = Prisma.ChatbotSettingsGetPayload<Record<string, never>>;
+
+type ChatbotSettingsResponse = {
+  id: string;
+  key: string;
+  settings: ChatbotSettingsDto;
+  createdAt: string;
+  updatedAt: string;
+};
+
+const toChatbotSettingsResponse = (record: ChatbotSettingsRow): ChatbotSettingsResponse => ({
+  id: record.id,
+  key: record.key,
+  settings: parseChatbotSettingsPayload(record.settings),
+  createdAt: record.createdAt.toISOString(),
+  updatedAt: record.updatedAt.toISOString(),
 });
 
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
@@ -34,7 +55,9 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
       durationMs: Date.now() - requestStart,
     });
   }
-  return NextResponse.json({ settings: settings as ChatbotSettingsRecord | null });
+  return NextResponse.json({
+    settings: settings ? toChatbotSettingsResponse(settings) : null,
+  });
 }
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
@@ -63,5 +86,5 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       durationMs: Date.now() - requestStart,
     });
   }
-  return NextResponse.json({ settings: saved as unknown as ChatbotSettingsRecord });
+  return NextResponse.json({ settings: toChatbotSettingsResponse(saved) });
 }

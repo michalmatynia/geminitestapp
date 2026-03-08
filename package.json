@@ -8,7 +8,7 @@
     "dev": "node --max-old-space-size=8192 server.cjs",
     "dev:heap": "node --max-old-space-size=8192 --heapsnapshot-near-heap-limit=2 --trace-gc server.cjs",
     "postinstall": "prisma generate",
-    "build": "prisma generate && next build --webpack",
+    "build": "prisma generate && NODE_OPTIONS=--max-old-space-size=8192 next build --webpack",
     "start": "NODE_ENV=production node --max-old-space-size=4096 server.cjs",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit --incremental false",

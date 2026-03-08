@@ -3,9 +3,16 @@ export const dynamic = 'force-dynamic';
 
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
-import { getUserPreferencesHandler, patchUserPreferencesHandler } from './handler';
+import {
+  getQuerySchema,
+  getUserPreferencesHandler,
+  patchUserPreferencesHandler,
+} from './handler';
 
-export const GET = apiHandler(getUserPreferencesHandler, { source: 'user.preferences.GET' });
+export const GET = apiHandler(getUserPreferencesHandler, {
+  source: 'user.preferences.GET',
+  querySchema: getQuerySchema,
+});
 
 export const PATCH = apiHandler(patchUserPreferencesHandler, { source: 'user.preferences.PATCH' });
 

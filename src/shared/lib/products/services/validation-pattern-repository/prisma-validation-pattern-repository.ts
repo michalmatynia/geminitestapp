@@ -172,14 +172,26 @@ type ProductValidationPatternDelegate = {
   delete: (args: { where: { id: string } }) => Promise<PrismaPattern>;
 };
 
-const getPatternDelegate = (): ProductValidationPatternDelegate | null => {
-  const delegate = (
-    prisma as unknown as { productValidationPattern?: ProductValidationPatternDelegate }
-  ).productValidationPattern;
-  if (!delegate || typeof delegate.findMany !== 'function') {
-    return null;
+const isProductValidationPatternDelegate = (
+  value: unknown
+): value is ProductValidationPatternDelegate => {
+  if (!value || typeof value !== 'object') {
+    return false;
   }
-  return delegate;
+  const candidate = value as Partial<ProductValidationPatternDelegate>;
+  return (
+    typeof candidate.findMany === 'function' &&
+    typeof candidate.findUnique === 'function' &&
+    typeof candidate.create === 'function' &&
+    typeof candidate.update === 'function' &&
+    typeof candidate.updateMany === 'function' &&
+    typeof candidate.delete === 'function'
+  );
+};
+
+const getPatternDelegate = (): ProductValidationPatternDelegate | null => {
+  const delegate = Reflect.get(prisma, 'productValidationPattern');
+  return isProductValidationPatternDelegate(delegate) ? delegate : null;
 };
 
 const requirePatternDelegate = (): ProductValidationPatternDelegate => {
@@ -304,9 +316,10 @@ export const prismaValidationPatternRepository: ProductValidationPatternReposito
         take: 1,
       });
       const firstRow = Array.isArray(maxSequenceRows) ? maxSequenceRows[0] : null;
+      const firstRowRecord = firstRow as { sequence?: unknown } | null;
       const firstSequence =
-        firstRow && typeof (firstRow as unknown as { sequence?: unknown }).sequence === 'number'
-          ? Math.floor((firstRow as unknown as { sequence: number }).sequence)
+        firstRowRecord && typeof firstRowRecord.sequence === 'number'
+          ? Math.floor(firstRowRecord.sequence)
           : null;
       fallbackSequence = firstSequence !== null ? firstSequence + 10 : 10;
     } catch (error) {

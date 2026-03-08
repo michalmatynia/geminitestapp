@@ -32,6 +32,12 @@ type CollectionHandler = {
   prismaToMongo: () => Promise<SyncResult>;
 };
 
+const getPrismaModel = (modelName: string): PrismaModel | null => {
+  const key = modelName.charAt(0).toLowerCase() + modelName.slice(1);
+  const model = Reflect.get(prisma, key) as PrismaModel | undefined;
+  return model ?? null;
+};
+
 const AI_PATHS_KEY_PREFIX = 'ai_paths_';
 const AI_PATHS_DEPRECATED_STORE_PREFIX = 'ai_paths_store:';
 const AI_PATHS_DEPRECATED_STORE_KEY_PREFIX = `${AI_PATHS_DEPRECATED_STORE_PREFIX}${AI_PATHS_KEY_PREFIX}`;
@@ -71,8 +77,7 @@ const genericHandler = (
       })
       .filter(Boolean);
 
-    const key = prismaModelName.charAt(0).toLowerCase() + prismaModelName.slice(1);
-    const model = (prisma as unknown as Record<string, PrismaModel>)[key];
+    const model = getPrismaModel(prismaModelName);
     if (!model) {
       return {
         sourceCount: docs.length,
@@ -95,8 +100,7 @@ const genericHandler = (
 
   async prismaToMongo(): Promise<SyncResult> {
     const mongo = await getMongoDb();
-    const key = prismaModelName.charAt(0).toLowerCase() + prismaModelName.slice(1);
-    const model = (prisma as unknown as Record<string, PrismaModel>)[key];
+    const model = getPrismaModel(prismaModelName);
     if (!model) {
       return {
         sourceCount: 0,

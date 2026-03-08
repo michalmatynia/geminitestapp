@@ -9,11 +9,11 @@ import {
 } from '@/app/api/v2/products/ai-jobs/[jobId]/handler';
 
 export const GET = apiHandlerWithParams<{ jobId: string }>(GET_handler, {
-  source: 'products.ai-jobs.[jobId].GET',
+  source: 'v2.products.ai-jobs.[jobId].GET',
 });
 export const POST = apiHandlerWithParams<{ jobId: string }>(POST_handler, {
-  source: 'products.ai-jobs.[jobId].POST',
+  source: 'v2.products.ai-jobs.[jobId].POST',
 });
 export const DELETE = apiHandlerWithParams<{ jobId: string }>(DELETE_handler, {
-  source: 'products.ai-jobs.[jobId].DELETE',
+  source: 'v2.products.ai-jobs.[jobId].DELETE',
 });

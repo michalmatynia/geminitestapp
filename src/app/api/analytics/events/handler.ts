@@ -5,9 +5,12 @@ import { insertAnalyticsEvent, listAnalyticsEvents } from '@/shared/lib/analytic
 import { auth, extractClientIp } from '@/features/auth/server';
 import type { AnalyticsEventCreateInput, AnalyticsScope } from '@/shared/contracts';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { authError, badRequestError } from '@/shared/errors/app-error';
-import { getPaginationParams, getQueryParams } from '@/shared/lib/api/api-handler';
+import { authError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import {
+  normalizeOptionalQueryString,
+  optionalIntegerQuerySchema,
+} from '@/shared/lib/api/query-schema';
 import { logger } from '@/shared/utils/logger';
 
 const BLOCKING_ANALYTICS_EVENTS_INGESTION =
@@ -66,6 +69,19 @@ const createEventSchema = z.object({
 
 const RANGE_VALUES = ['24h', '7d', '30d'] as const;
 type AnalyticsRange = (typeof RANGE_VALUES)[number];
+
+export const querySchema = z.object({
+  page: optionalIntegerQuerySchema(z.number().int().min(1)).default(1),
+  pageSize: optionalIntegerQuerySchema(z.number().int().min(1).max(100)).default(20),
+  range: z.preprocess(
+    (value) => normalizeOptionalQueryString(value) ?? '24h',
+    z.enum(RANGE_VALUES)
+  ),
+  scope: z.preprocess(
+    (value) => normalizeOptionalQueryString(value) ?? 'all',
+    z.enum(['all', 'public', 'admin'])
+  ),
+});
 
 const getRangeWindow = (range: AnalyticsRange): { from: Date; to: Date } => {
   const to = new Date();
@@ -175,24 +191,17 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   return NextResponse.json({ ok: true, queued: true, requestId: _ctx.requestId }, { status: 202 });
 }
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();
   if (!session?.user) throw authError('Unauthorized.');
 
-  const searchParams = getQueryParams(req);
-  const { page, pageSize, skip } = getPaginationParams(searchParams);
-
-  const rangeRaw = searchParams.get('range') ?? '24h';
-  if (!RANGE_VALUES.includes(rangeRaw as AnalyticsRange)) {
-    throw badRequestError('Invalid range');
-  }
-  const range = rangeRaw as AnalyticsRange;
-
-  const scopeRaw = searchParams.get('scope') ?? 'all';
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const page = query.page;
+  const pageSize = query.pageSize;
+  const skip = (page - 1) * pageSize;
+  const range = query.range as AnalyticsRange;
+  const scopeRaw = query.scope;
   const scope = scopeRaw === 'all' ? undefined : (scopeRaw as AnalyticsScope);
-  if (scopeRaw !== 'all' && scope !== 'public' && scope !== 'admin') {
-    throw badRequestError('Invalid scope');
-  }
 
   const { from, to } = getRangeWindow(range);
   const result = await listAnalyticsEvents({

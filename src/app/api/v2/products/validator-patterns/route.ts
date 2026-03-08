@@ -9,12 +9,12 @@ import {
 } from '@/app/api/v2/products/validator-patterns/handler';
 
 export const GET = apiHandler(getValidatorPatternsHandler, {
-  source: 'products.validator-patterns.GET',
+  source: 'v2.products.validator-patterns.GET',
   cacheControl: 'no-store',
 });
 
 export const POST = apiHandler(postValidatorPatternsHandler, {
-  source: 'products.validator-patterns.POST',
+  source: 'v2.products.validator-patterns.POST',
   parseJsonBody: true,
   bodySchema: createPatternSchema,
 });

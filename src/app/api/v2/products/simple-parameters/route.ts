@@ -6,10 +6,10 @@ import { GET_products_metadata_handler, POST_products_metadata_handler } from '.
 
 export const GET = apiHandler(
   (req, ctx) => GET_products_metadata_handler(req, ctx, { type: 'simple-parameters' }),
-  { source: 'products.v2.simple-parameters.GET' }
+  { source: 'v2.products.simple-parameters.GET' }
 );
 
 export const POST = apiHandler(
   (req, ctx) => POST_products_metadata_handler(req, ctx, { type: 'simple-parameters' }),
-  { source: 'products.v2.simple-parameters.POST' }
+  { source: 'v2.products.simple-parameters.POST' }
 );

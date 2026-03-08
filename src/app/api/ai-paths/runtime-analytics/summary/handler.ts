@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
 import {
@@ -8,17 +9,21 @@ import {
 import { startAiInsightsQueue, startAiPathRunQueue } from '@/features/jobs/server';
 import type { AiPathRuntimeAnalyticsRange } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { AppErrorCodes, badRequestError, isAppError } from '@/shared/errors/app-error';
-import { getQueryParams } from '@/shared/lib/api/api-handler';
+import { AppErrorCodes, isAppError } from '@/shared/errors/app-error';
+import { normalizeOptionalQueryString } from '@/shared/lib/api/query-schema';
 
 const RANGE_VALUES: readonly AiPathRuntimeAnalyticsRange[] = ['1h', '24h', '7d', '30d'];
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const searchParams = getQueryParams(req);
-  const rangeRaw = (searchParams.get('range') ?? '24h') as AiPathRuntimeAnalyticsRange;
-  if (!RANGE_VALUES.includes(rangeRaw)) {
-    throw badRequestError('Invalid range.');
-  }
+export const querySchema = z.object({
+  range: z.preprocess(
+    (value: unknown) => normalizeOptionalQueryString(value),
+    z.enum(RANGE_VALUES).optional()
+  ),
+});
+
+export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const rangeRaw = query.range ?? '24h';
   const { from, to } = resolveRuntimeAnalyticsRangeWindow(rangeRaw);
   try {
     await requireAiPathsAccess();

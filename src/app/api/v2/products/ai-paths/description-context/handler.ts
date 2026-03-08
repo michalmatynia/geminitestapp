@@ -30,14 +30,6 @@ type DescriptionContextPayload = {
   categories: DescriptionContextCategory[];
 };
 
-const normalizeQueryValue = (value: string | null): string => {
-  const normalized = value?.trim() ?? '';
-  if (!normalized) return '';
-  const lowered = normalized.toLowerCase();
-  if (lowered === 'undefined' || lowered === 'null') return '';
-  return normalized;
-};
-
 const buildEmptyPayload = (
   catalogId: string | null,
   categoryId: string | null
@@ -89,22 +81,11 @@ const toDescriptionContextCategory = (category: ProductCategory): DescriptionCon
   sortIndex: category.sortIndex ?? null,
 });
 
-const normalizeIncludeCategories = (value: string | null): boolean => {
-  const normalized = normalizeQueryValue(value).toLowerCase();
-  if (!normalized) return true;
-  if (normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'off') {
-    return false;
-  }
-  return true;
-};
-
-export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const query = ctx.query as DescriptionContextQuery | undefined;
-  const { searchParams } = new URL(req.url);
-  const catalogId = query?.catalogId ?? normalizeQueryValue(searchParams.get('catalogId'));
-  const categoryId = query?.categoryId ?? normalizeQueryValue(searchParams.get('categoryId'));
-  const includeCategories =
-    query?.includeCategories ?? normalizeIncludeCategories(searchParams.get('includeCategories'));
+  const catalogId = query?.catalogId ?? '';
+  const categoryId = query?.categoryId ?? '';
+  const includeCategories = query?.includeCategories ?? true;
 
   if (!catalogId) {
     return NextResponse.json(buildEmptyPayload(null, categoryId || null));

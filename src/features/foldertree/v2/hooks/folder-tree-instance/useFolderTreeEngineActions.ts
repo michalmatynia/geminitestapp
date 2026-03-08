@@ -59,8 +59,7 @@ export function useFolderTreeEngineActions(
       });
       if (!result.ok) return createErrorAction(result.code);
 
-      /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any */
-      const actionResult = (await applyPersistedOperation({
+      const actionResult = await applyPersistedOperation({
         operation: {
           type: 'move',
           nodeId,
@@ -72,10 +71,9 @@ export function useFolderTreeEngineActions(
         txId: createTxId(),
         txVersion: ++txVersionRef.current,
         instanceId,
-      })) as any;
+      });
 
-      return actionResult as MasterFolderTreeActionResult;
-      /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any */
+      return actionResult;
     },
     [applyPersistedOperation, profile, store, txVersionRef, instanceId]
   );
@@ -96,8 +94,7 @@ export function useFolderTreeEngineActions(
       });
       if (!result.ok) return createErrorAction(result.code);
 
-      /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any */
-      const actionResult = (await applyPersistedOperation({
+      const actionResult = await applyPersistedOperation({
         operation: {
           type: 'reorder',
           nodeId,
@@ -109,10 +106,9 @@ export function useFolderTreeEngineActions(
         txId: createTxId(),
         txVersion: ++txVersionRef.current,
         instanceId,
-      })) as any;
+      });
 
-      return actionResult as MasterFolderTreeActionResult;
-      /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any */
+      return actionResult;
     },
     [applyPersistedOperation, profile, store, txVersionRef, instanceId]
   );
@@ -128,8 +124,7 @@ export function useFolderTreeEngineActions(
       });
       if (!result.ok) return createErrorAction(result.code);
 
-      /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any */
-      const actionResult = (await applyPersistedOperation({
+      const actionResult = await applyPersistedOperation({
         operation: {
           type: 'move',
           nodeId,
@@ -141,10 +136,9 @@ export function useFolderTreeEngineActions(
         txId: createTxId(),
         txVersion: ++txVersionRef.current,
         instanceId,
-      })) as any;
+      });
 
-      return actionResult as MasterFolderTreeActionResult;
-      /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any */
+      return actionResult;
     },
     [applyPersistedOperation, profile, store, txVersionRef, instanceId]
   );
@@ -204,8 +198,7 @@ export function useFolderTreeEngineActions(
           : node
       );
 
-      /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any */
-      const actionResult = (await applyPersistedOperation({
+      const actionResult = await applyPersistedOperation({
         operation: {
           type: 'rename',
           nodeId,
@@ -216,7 +209,7 @@ export function useFolderTreeEngineActions(
         txId: createTxId(),
         txVersion: ++txVersionRef.current,
         instanceId,
-      })) as any;
+      });
 
       store.patchState((prev: FolderTreeState) => ({
         ...prev,
@@ -224,8 +217,7 @@ export function useFolderTreeEngineActions(
         renameDraft: '',
       }));
 
-      return actionResult as MasterFolderTreeActionResult;
-      /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any */
+      return actionResult;
     },
     [applyPersistedOperation, cancelRename, store, txVersionRef, instanceId]
   );

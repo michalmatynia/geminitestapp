@@ -6,6 +6,9 @@ import { createProductTagSchema } from '@/shared/contracts/products';
 export { createProductTagSchema as productTagCreateSchema };
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
+import { catalogIdQuerySchema } from '@/shared/validations/product-metadata-api-schemas';
+
+export const querySchema = catalogIdQuerySchema;
 
 /**
  * GET /api/v2/products/tags
@@ -13,9 +16,9 @@ import { badRequestError, conflictError } from '@/shared/errors/app-error';
  * Query params:
  * - catalogId: Filter by catalog (required)
  */
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const { searchParams } = new URL(req.url);
-  const catalogId = searchParams.get('catalogId');
+export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const catalogId = query.catalogId;
 
   if (!catalogId) {
     throw badRequestError('catalogId query parameter is required');

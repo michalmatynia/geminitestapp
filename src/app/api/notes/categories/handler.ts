@@ -1,21 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { categoryCreateSchema } from '@/features/notesapp';
 import { noteService } from '@/features/notesapp/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { CategoryCreateInput } from '@/shared/contracts/notes';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import { removeUndefined } from '@/shared/utils';
+
+export const querySchema = z.object({
+  notebookId: optionalTrimmedQueryString(),
+});
 
 /**
  * GET /api/notes/categories
  * Fetches all categories.
  */
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const { searchParams } = new URL(req.url);
-  const notebookIdParam = searchParams.get('notebookId');
-  const notebook = notebookIdParam
-    ? { id: notebookIdParam }
+export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const notebook = query.notebookId
+    ? { id: query.notebookId }
     : await noteService.getOrCreateDefaultNotebook();
   const categories = await noteService.getAllCategories(notebook.id);
   return NextResponse.json(categories);

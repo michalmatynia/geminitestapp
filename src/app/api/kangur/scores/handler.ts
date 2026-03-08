@@ -13,15 +13,16 @@ import {
   kangurScoreSortSchema,
 } from '@/shared/contracts/kangur';
 import {
-  optionalIntegerQuerySchema,
+  normalizeOptionalQueryString,
+  parseOptionalIntegerQueryValue,
   optionalTrimmedQueryString,
 } from '@/shared/lib/api/query-schema';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 export const querySchema = z.object({
-  sort: optionalTrimmedQueryString(kangurScoreSortSchema),
-  limit: optionalIntegerQuerySchema(kangurScoreLimitSchema),
+  sort: z.preprocess(normalizeOptionalQueryString, kangurScoreSortSchema.optional()),
+  limit: z.preprocess(parseOptionalIntegerQueryValue, kangurScoreLimitSchema.optional()),
   player_name: optionalTrimmedQueryString(),
   operation: optionalTrimmedQueryString(),
   created_by: optionalTrimmedQueryString(),
@@ -42,7 +43,7 @@ const readBodyJson = async (request: NextRequest): Promise<unknown> => {
 };
 
 export async function getKangurScoresHandler(
-  req: NextRequest,
+  _req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<Response> {
   const query = (ctx.query ?? {}) as z.infer<typeof querySchema>;

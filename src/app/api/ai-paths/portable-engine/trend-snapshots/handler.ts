@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
-import { getQueryParams } from '@/shared/lib/api/api-handler';
+import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import { AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION } from '@/shared/lib/ai-paths/portable-engine';
 import { getPortablePathRunExecutionSnapshot } from '@/shared/lib/ai-paths/portable-engine/portable-engine-observability';
 import {
@@ -38,6 +39,14 @@ const DEFAULT_AUTO_REMEDIATION_NOTIFICATION_TIMEOUT_MS = 8000;
 const DEFAULT_AUTO_REMEDIATION_DEAD_LETTER_MAX_ENTRIES = 200;
 const DEAD_LETTER_ERROR_BREAKDOWN_LIMIT = 5;
 const RUN_EXECUTION_RECENT_FAILURE_LIMIT = 10;
+
+export const querySchema = z.object({
+  limit: optionalTrimmedQueryString(),
+  trigger: optionalTrimmedQueryString(),
+  from: optionalTrimmedQueryString(),
+  to: optionalTrimmedQueryString(),
+  cursor: optionalTrimmedQueryString(),
+});
 const DEAD_LETTER_REPLAY_POLICY_SKIP_REASONS = new Set<string>([
   'dead_letter_endpoint_missing',
   'dead_letter_endpoint_invalid',
@@ -293,18 +302,18 @@ const buildRunExecutionSummary = (): {
   }
 };
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireAiPathsAccess();
 
-  const searchParams = getQueryParams(req);
-  const limit = parseTrendSnapshotLimit(searchParams.get('limit'));
-  const trigger = parseTrendSnapshotTrigger(searchParams.get('trigger'));
-  const from = parseTrendSnapshotTimestamp('from', searchParams.get('from'));
-  const to = parseTrendSnapshotTimestamp('to', searchParams.get('to'));
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const limit = parseTrendSnapshotLimit(query.limit ?? null);
+  const trigger = parseTrendSnapshotTrigger(query.trigger ?? null);
+  const from = parseTrendSnapshotTimestamp('from', query.from ?? null);
+  const to = parseTrendSnapshotTimestamp('to', query.to ?? null);
   if (from && to && from.getTime() > to.getTime()) {
     throw badRequestError('Trend snapshot "from" timestamp must be earlier than or equal to "to".');
   }
-  const cursor = parseTrendSnapshotCursor(searchParams.get('cursor'), {
+  const cursor = parseTrendSnapshotCursor(query.cursor ?? null, {
     trigger,
     from,
     to,

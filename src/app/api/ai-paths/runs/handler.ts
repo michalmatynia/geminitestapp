@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import {
   canAccessGlobalAiPathRuns,
@@ -16,6 +17,11 @@ import { deletePathRunsWithRepository } from '@/features/ai/ai-paths/server';
 import type { AiPathRunListOptions, AiPathRunStatus } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError } from '@/shared/errors/app-error';
+import {
+  normalizeOptionalQueryString,
+  optionalIntegerQuerySchema,
+  optionalTrimmedQueryString,
+} from '@/shared/lib/api/query-schema';
 
 let lastStaleRunningCleanupAt = 0;
 let staleRunningCleanupPromise: Promise<void> | null = null;
@@ -100,36 +106,66 @@ const RUN_STATUSES: AiPathRunStatus[] = [
 
 const TERMINAL_STATUSES: AiPathRunStatus[] = ['completed', 'failed', 'canceled', 'dead_lettered'];
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+const listStatusSchema = z.preprocess((value) => {
+  const normalized = normalizeOptionalQueryString(value)?.toLowerCase();
+  return normalized && RUN_STATUSES.includes(normalized as AiPathRunStatus) ? normalized : undefined;
+}, z.enum(['queued', 'running', 'paused', 'completed', 'failed', 'canceled', 'dead_lettered']).optional());
+
+export const listQuerySchema = z.object({
+  visibility: z.preprocess((value) => {
+    const normalized = normalizeOptionalQueryString(value)?.toLowerCase();
+    return normalized === 'global' ? 'global' : 'scoped';
+  }, z.enum(['scoped', 'global'])).default('scoped'),
+  pathId: optionalTrimmedQueryString(),
+  nodeId: optionalTrimmedQueryString(),
+  requestId: optionalTrimmedQueryString(),
+  query: optionalTrimmedQueryString(),
+  source: optionalTrimmedQueryString(),
+  sourceMode: z.preprocess((value) => {
+    const normalized = normalizeOptionalQueryString(value)?.toLowerCase();
+    return normalized === 'exclude' ? 'exclude' : 'include';
+  }, z.enum(['include', 'exclude'])).default('include'),
+  status: listStatusSchema,
+  limit: optionalIntegerQuerySchema(z.number().int().min(1).max(500)),
+  offset: optionalIntegerQuerySchema(z.number().int().min(0)),
+  includeTotal: z.preprocess((value) => {
+    const normalized = normalizeOptionalQueryString(value)?.toLowerCase();
+    return !(normalized === '0' || normalized === 'false' || normalized === 'no');
+  }, z.boolean()).default(true),
+  fresh: z.preprocess((value) => {
+    const normalized = normalizeOptionalQueryString(value)?.toLowerCase();
+    return normalized === '1' || normalized === 'true' || normalized === 'yes';
+  }, z.boolean()).default(false),
+});
+
+export const deleteQuerySchema = z.object({
+  scope: z.preprocess((value) => {
+    const normalized = normalizeOptionalQueryString(value)?.toLowerCase();
+    return normalized === 'all' ? 'all' : 'terminal';
+  }, z.enum(['terminal', 'all'])).default('terminal'),
+  pathId: optionalTrimmedQueryString(),
+  source: optionalTrimmedQueryString(),
+  sourceMode: z.preprocess((value) => {
+    const normalized = normalizeOptionalQueryString(value)?.toLowerCase();
+    return normalized === 'exclude' ? 'exclude' : 'include';
+  }, z.enum(['include', 'exclude'])).default('include'),
+});
+
+export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const access = await requireAiPathsRunAccess();
-  const url = new URL(req.url);
-  const visibilityParam = url.searchParams.get('visibility')?.trim().toLowerCase() || 'scoped';
-  const visibility = visibilityParam === 'global' ? 'global' : 'scoped';
-  const pathId = url.searchParams.get('pathId')?.trim() || undefined;
-  const nodeId = url.searchParams.get('nodeId')?.trim() || undefined;
-  const requestId = url.searchParams.get('requestId')?.trim() || undefined;
-  const query = url.searchParams.get('query')?.trim() || undefined;
-  const source = url.searchParams.get('source')?.trim() || undefined;
-  const sourceModeParam = url.searchParams.get('sourceMode')?.trim() || '';
-  const sourceMode = sourceModeParam === 'exclude' ? 'exclude' : 'include';
-  const statusParam = url.searchParams.get('status')?.trim() || '';
-  const status = RUN_STATUSES.includes(statusParam as AiPathRunStatus)
-    ? (statusParam as AiPathRunStatus)
-    : undefined;
-  const limitParam = url.searchParams.get('limit');
-  const offsetParam = url.searchParams.get('offset');
-  const includeTotalParam = url.searchParams.get('includeTotal')?.trim().toLowerCase();
-  const includeTotal = !(
-    includeTotalParam === '0' ||
-    includeTotalParam === 'false' ||
-    includeTotalParam === 'no'
-  );
-  const freshParam = url.searchParams.get('fresh')?.trim().toLowerCase();
-  const fresh = freshParam === '1' || freshParam === 'true' || freshParam === 'yes';
-  const limitRaw = limitParam ? Number.parseInt(limitParam, 10) : NaN;
-  const offsetRaw = offsetParam ? Number.parseInt(offsetParam, 10) : NaN;
-  const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, 500) : undefined;
-  const offset = Number.isFinite(offsetRaw) && offsetRaw >= 0 ? offsetRaw : undefined;
+  const query = (_ctx.query ?? {}) as z.infer<typeof listQuerySchema>;
+  const visibility = query.visibility;
+  const pathId = query.pathId ?? undefined;
+  const nodeId = query.nodeId ?? undefined;
+  const requestId = query.requestId ?? undefined;
+  const searchQuery = query.query ?? undefined;
+  const source = query.source ?? undefined;
+  const sourceMode = query.sourceMode;
+  const status = query.status ?? undefined;
+  const limit = query.limit ?? undefined;
+  const offset = query.offset ?? undefined;
+  const includeTotal = query.includeTotal;
+  const fresh = query.fresh;
   const repo = await getPathRunRepository();
   scheduleStaleRunningCleanup(repo);
   const hasGlobalRunAccess = canAccessGlobalAiPathRuns(access);
@@ -142,7 +178,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     pathId: pathId ?? null,
     nodeId: nodeId ?? null,
     requestId: requestId ?? null,
-    query: query ?? null,
+    query: searchQuery ?? null,
     source: source ?? null,
     sourceMode,
     status: status ?? null,
@@ -168,7 +204,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     ...(pathId ? { pathId } : {}),
     ...(nodeId ? { nodeId } : {}),
     ...(requestId ? { requestId } : {}),
-    ...(query ? { query } : {}),
+    ...(searchQuery ? { query: searchQuery } : {}),
     ...(source ? { source, sourceMode } : {}),
     ...(status ? { status } : {}),
     ...(limit !== undefined ? { limit } : {}),
@@ -189,16 +225,14 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   });
 }
 
-export async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const access = await requireAiPathsAccess();
   await enforceAiPathsActionRateLimit(access, 'runs-clear');
-  const url = new URL(req.url);
-  const scopeRaw = url.searchParams.get('scope')?.trim().toLowerCase() || 'terminal';
-  const scope = scopeRaw === 'all' ? 'all' : 'terminal';
-  const pathId = url.searchParams.get('pathId')?.trim() || undefined;
-  const source = url.searchParams.get('source')?.trim() || undefined;
-  const sourceModeParam = url.searchParams.get('sourceMode')?.trim() || '';
-  const sourceMode = sourceModeParam === 'exclude' ? 'exclude' : 'include';
+  const query = (_ctx.query ?? {}) as z.infer<typeof deleteQuerySchema>;
+  const scope = query.scope;
+  const pathId = query.pathId ?? undefined;
+  const source = query.source ?? undefined;
+  const sourceMode = query.sourceMode;
 
   const repo = await getPathRunRepository();
   const hasGlobalRunAccess = canAccessGlobalAiPathRuns(access);

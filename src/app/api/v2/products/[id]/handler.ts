@@ -9,7 +9,12 @@ import { validateProductUpdateMiddleware } from '@/features/products/validations
 import type { ProductRecord, ProductWithImages } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError, payloadTooLargeError } from '@/shared/errors/app-error';
+import { optionalBooleanQuerySchema } from '@/shared/lib/api/query-schema';
 import { env } from '@/shared/lib/env';
+
+export const getQuerySchema = z.object({
+  fresh: optionalBooleanQuerySchema().default(false),
+});
 
 const shouldLogTiming = () => env.DEBUG_API_TIMING;
 
@@ -46,12 +51,13 @@ const isLikelyPayloadTooLarge = (error: unknown): boolean => {
  * Fetches a single product by its ID.
  */
 export async function GET_handler(
-  req: NextRequest,
+  _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
   const id = params.id;
-  const forceFresh = req.nextUrl.searchParams.get('fresh') === '1';
+  const query = (_ctx.query ?? {}) as z.infer<typeof getQuerySchema>;
+  const forceFresh = query.fresh;
 
   const product = forceFresh
     ? await productService.getProductById(id)

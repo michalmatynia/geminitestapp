@@ -7,7 +7,7 @@ import { descriptionContextQuerySchema } from '@/shared/validations/product-meta
 import { GET_handler } from '@/app/api/v2/products/ai-paths/description-context/handler';
 
 export const GET = apiHandler(GET_handler, {
-  source: 'products.ai-paths.description-context.GET',
+  source: 'v2.products.ai-paths.description-context.GET',
   cacheControl: 'no-store',
   querySchema: descriptionContextQuerySchema,
   rateLimitKey: 'search',

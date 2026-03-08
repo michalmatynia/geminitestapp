@@ -31,6 +31,10 @@ export type CaseResolverWorkspaceDetachedDocumentsPayload = CaseResolverWorkspac
   CaseResolverWorkspaceDetachedDocumentsFileEntry
 >;
 
+const coerceDetachedWorkspaceFile = (
+  value: unknown
+): CaseResolverWorkspace['files'][number] => value as CaseResolverWorkspace['files'][number];
+
 const truncate = (value: string, maxChars: number): string =>
   value.length > maxChars ? value.slice(0, maxChars) : value;
 
@@ -214,7 +218,7 @@ export const stripCaseResolverWorkspaceDetachedDocuments = (
     ...workspace,
     files: workspace.files.map((file): CaseResolverWorkspace['files'][number] => {
       if (file.fileType !== 'document' && file.fileType !== 'scanfile') return file;
-      const fileRecord = { ...file } as Record<string, unknown>;
+      const fileRecord: Record<string, unknown> = { ...file };
       delete fileRecord['documentContent'];
       delete fileRecord['documentContentHtml'];
       delete fileRecord['documentContentMarkdown'];
@@ -243,7 +247,7 @@ export const stripCaseResolverWorkspaceDetachedDocuments = (
           delete fileRecord['documentContentPlainText'];
         }
       }
-      return fileRecord as CaseResolverWorkspace['files'][number];
+      return coerceDetachedWorkspaceFile(fileRecord);
     }),
   };
 };
@@ -315,7 +319,7 @@ export const applyCaseResolverWorkspaceDetachedDocumentsPayload = ({
     const payload = payloadByFileId.get(file.id);
     if (!payload) return file;
     updated = true;
-    const fileRecord = { ...file } as Record<string, unknown>;
+    const fileRecord: Record<string, unknown> = { ...file };
     const mergeString = (
       key: Exclude<keyof CaseResolverWorkspaceDetachedDocumentsFileEntry, 'id' | 'scanSlots'>
     ): void => {
@@ -333,7 +337,7 @@ export const applyCaseResolverWorkspaceDetachedDocumentsPayload = ({
     if (Array.isArray(payload.scanSlots)) {
       fileRecord['scanSlots'] = payload.scanSlots;
     }
-    return fileRecord as CaseResolverWorkspace['files'][number];
+    return coerceDetachedWorkspaceFile(fileRecord);
   });
   return updated ? { ...workspace, files } : workspace;
 };

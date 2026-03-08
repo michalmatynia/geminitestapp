@@ -9,6 +9,7 @@ import {
 } from '@/shared/contracts/chatbot';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
+import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import prisma from '@/shared/lib/db/prisma';
 import { logger } from '@/shared/utils/logger';
 
@@ -18,6 +19,10 @@ const DEFAULT_SETTINGS_KEY = 'default';
 const settingsSchema = z.object({
   key: z.string().trim().optional(),
   settings: z.record(z.string(), z.unknown()).optional(),
+});
+
+export const querySchema = z.object({
+  key: optionalTrimmedQueryString(),
 });
 
 type ChatbotSettingsRow = Prisma.ChatbotSettingsGetPayload<Record<string, never>>;
@@ -38,13 +43,13 @@ const toChatbotSettingsResponse = (record: ChatbotSettingsRow): ChatbotSettingsR
   updatedAt: record.updatedAt.toISOString(),
 });
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
   if (!('chatbotSettings' in prisma)) {
     throw internalError('Chatbot settings not initialized. Run prisma generate/db push.');
   }
-  const url = new URL(req.url);
-  const key = url.searchParams.get('key')?.trim() || DEFAULT_SETTINGS_KEY;
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const key = query.key ?? DEFAULT_SETTINGS_KEY;
   const settings = await prisma.chatbotSettings.findUnique({
     where: { key },
   });

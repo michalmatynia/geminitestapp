@@ -2,6 +2,7 @@ import { promises as fs } from 'fs';
 import { join } from 'path';
 
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import {
   pgBackupsDir,
@@ -12,9 +13,17 @@ import {
 import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/database-engine-access';
 import type { DatabaseBackupFile as DatabaseInfo } from '@/shared/contracts/database';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { normalizeOptionalQueryString } from '@/shared/lib/api/query-schema';
 
 const isValidDate = (value: unknown): value is Date =>
   value instanceof Date && Number.isFinite(value.getTime());
+
+export const querySchema = z.object({
+  type: z.preprocess(
+    (value: unknown) => normalizeOptionalQueryString(value),
+    z.enum(['postgresql', 'mongodb']).optional()
+  ),
+});
 
 async function getBackups(type: 'postgresql' | 'mongodb'): Promise<DatabaseInfo[]> {
   const backupsDir = type === 'mongodb' ? mongoBackupsDir : pgBackupsDir;
@@ -57,11 +66,11 @@ async function getBackups(type: 'postgresql' | 'mongodb'): Promise<DatabaseInfo[
   });
 }
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertDatabaseEngineManageAccess();
 
-  const { searchParams } = new URL(req.url);
-  const type = (searchParams.get('type') as 'postgresql' | 'mongodb') || 'postgresql';
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const type = query.type === 'mongodb' ? 'mongodb' : 'postgresql';
 
   try {
     const backups = await getBackups(type);

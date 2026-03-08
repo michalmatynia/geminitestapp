@@ -1,10 +1,12 @@
 import { NextRequest } from 'next/server';
+import { z } from 'zod';
 
 import { assertAiPathRunAccess, requireAiPathsRunAccess } from '@/features/ai/ai-paths/server';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
+import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import { getRedisSubscriber, isSubscriberConnected } from '@/shared/lib/redis-pubsub';
 
 const TERMINAL_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
@@ -25,6 +27,10 @@ const PUBSUB_CATCHUP_INTERVAL_MS = 10_000;
 const POLL_INTERVAL_MIN_MS = 200;
 const POLL_INTERVAL_MAX_MS = 2_000;
 const POLL_BACKOFF_MULTIPLIER = 1.5;
+
+export const querySchema = z.object({
+  since: optionalTrimmedQueryString(),
+});
 
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -313,8 +319,8 @@ export async function getAiPathRunStreamHandler(
   assertAiPathRunAccess(access, initialRun);
 
   const encoder = new TextEncoder();
-  const sinceParam = new URL(req.url).searchParams.get('since');
-  const initialSince = parseSinceParam(sinceParam);
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const initialSince = parseSinceParam(query.since ?? null);
 
   let cancelled = false;
   req.signal.addEventListener('abort', () => {

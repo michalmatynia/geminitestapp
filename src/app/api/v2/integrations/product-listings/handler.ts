@@ -9,6 +9,7 @@ import {
 import type { ListingBadgesPayload, MarketplaceBadgeEntry } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { optionalCsvQueryStringArray } from '@/shared/lib/api/query-schema';
 import { env } from '@/shared/lib/env';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
@@ -69,6 +70,10 @@ const productIdsBodySchema = z.object({
   productIds: z.array(z.string().trim().min(1)).min(1).max(PRODUCT_IDS_PARAM_LIMIT),
 });
 
+export const querySchema = z.object({
+  productIds: optionalCsvQueryStringArray(),
+});
+
 const safeDecode = (value: string): string => {
   try {
     return decodeURIComponent(value);
@@ -81,12 +86,6 @@ const normalizeRequestedProductIds = (productIds: readonly string[]): string[] =
   Array.from(
     new Set(productIds.map((value) => safeDecode(value).trim()).filter((value) => value.length > 0))
   );
-
-const parseRequestedProductIds = (req: NextRequest): string[] => {
-  const raw = req.nextUrl.searchParams.get('productIds');
-  if (!raw) return [];
-  return normalizeRequestedProductIds(raw.split(',')).slice(0, PRODUCT_IDS_PARAM_LIMIT);
-};
 
 const buildPayload = async (
   requestedProductIds: string[],
@@ -178,10 +177,11 @@ const buildPayload = async (
  * GET /api/v2/integrations/product-listings
  * Returns listing badge statuses grouped by marketplace for each product.
  */
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const timings: Record<string, number | null | undefined> = {};
   const totalStart = performance.now();
-  const response = await buildPayload(parseRequestedProductIds(req), timings);
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const response = await buildPayload(query.productIds ?? [], timings);
   timings['total'] = performance.now() - totalStart;
   attachTimingHeaders(response, timings);
   if (shouldLogTiming()) {

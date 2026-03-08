@@ -1,10 +1,5 @@
 'use client';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-
 import { useCallback, useState } from 'react';
 import { Integration, IntegrationConnection, TestLogEntry } from '@/shared/contracts/integrations';
 import {
@@ -28,6 +23,7 @@ import {
 } from '@/features/integrations/constants/slugs';
 import { normalizeSteps } from '@/features/integrations/utils/connections';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 import type { PlaywrightPersona, PlaywrightSettings } from '@/shared/contracts/playwright';
 import type { ListQuery } from '@/shared/contracts/ui';
 
@@ -164,7 +160,7 @@ export function useIntegrationsActionsImpl(args: {
       toast('Password/Token is required.', { variant: 'error' });
       return null;
     }
-    const payload: any = {
+    const payload: Record<string, unknown> = {
       name: normalizedName,
       username: normalizedUsername,
       ...(formData.password.trim() ? { password: formData.password.trim() } : {}),
@@ -282,8 +278,8 @@ export function useIntegrationsActionsImpl(args: {
         let extraInfo = '';
         if (type === 'base/test' && payload['inventoryCount'] !== undefined) {
           extraInfo = `\nInventories found: ${String(payload['inventoryCount'])}`;
-        } else if (type === 'allegro/test' && payload.profile) {
-          const profile = payload.profile as any;
+        } else if (type === 'allegro/test' && isObjectRecord(payload['profile'])) {
+          const profile = payload['profile'];
           const login = profile['login'] ?? '';
           const name = profile['name'] ?? '';
           const identifier = name || login;
@@ -297,7 +293,9 @@ export function useIntegrationsActionsImpl(args: {
       } catch (error: unknown) {
         const durationMs = Math.round(performance.now() - startedAt);
         const message = (error as Error)?.message ?? 'Unknown error';
-        const data = (error as any)['data'] as Record<string, unknown> | undefined;
+        const data = isObjectRecord((error as { data?: unknown } | null)?.data)
+          ? (error as { data?: Record<string, unknown> }).data
+          : undefined;
 
         let errorMessage = `${title} failed.\nURL: ${requestUrl}\nDuration: ${durationMs}ms\nError: ${message}`;
 

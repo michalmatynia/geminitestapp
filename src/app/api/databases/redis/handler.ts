@@ -1,19 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import type { RedisOverview } from '@/shared/contracts/database';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { optionalIntegerQuerySchema } from '@/shared/lib/api/query-schema';
 import { getRedisClient } from '@/shared/lib/redis';
 
-const parsePositiveInt = (
-  value: string | null,
-  fallback: number,
-  min: number,
-  max: number
-): number => {
-  const parsed = Number.parseInt(value ?? '', 10);
-  if (!Number.isFinite(parsed)) return fallback;
-  return Math.min(Math.max(parsed, min), max);
-};
+export const querySchema = z.object({
+  limit: optionalIntegerQuerySchema(z.number().int().min(20).max(2000)),
+  count: optionalIntegerQuerySchema(z.number().int().min(20).max(1000)),
+});
 
 const parseInfoValue = (info: string, key: string): string | null => {
   const row = info
@@ -30,7 +26,8 @@ const getNamespace = (key: string): string => {
   return key.slice(0, idx);
 };
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
   const client = getRedisClient();
   if (!client) {
     const disabled: RedisOverview = {
@@ -54,9 +51,8 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     });
   }
 
-  const { searchParams } = new URL(req.url);
-  const limit = parsePositiveInt(searchParams.get('limit'), 200, 20, 2000);
-  const count = parsePositiveInt(searchParams.get('count'), 200, 20, 1000);
+  const limit = query.limit ?? 200;
+  const count = query.count ?? 200;
 
   let connected: boolean;
   try {

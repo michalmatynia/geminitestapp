@@ -1,9 +1,5 @@
 import 'server-only';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-
 import { getImportTemplate } from '@/features/integrations/services/import-template-repository';
 import {
   buildSummaryMessage,
@@ -421,7 +417,7 @@ export const processBaseImportRun = async (
     }
 
     await updateBaseImportRunStatus(runId, 'running', {
-      queueJobId: options?.jobId ?? (run as any).queueJobId ?? null,
+      queueJobId: options?.jobId ?? run.queueJobId ?? null,
       summaryMessage: `Processing ${initialItems.length} product(s).`,
       cancellationRequestedAt: run.cancellationRequestedAt ?? null,
     });

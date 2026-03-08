@@ -1,23 +1,23 @@
 export const runtime = 'nodejs';
 
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import { catalogIdQuerySchema } from '@/shared/validations/product-metadata-api-schemas';
 
 import {
   GET_handler,
   POST_handler,
   productCategoryCreateSchema,
+  querySchema,
 } from '@/app/api/v2/products/categories/handler';
 
 export const GET = apiHandler(GET_handler, {
-  source: 'products.categories.GET',
+  source: 'v2.products.categories.GET',
   cacheControl: 'no-store',
-  querySchema: catalogIdQuerySchema,
+  querySchema,
   rateLimitKey: 'search',
 });
 
 export const POST = apiHandler(POST_handler, {
-  source: 'products.categories.POST',
+  source: 'v2.products.categories.POST',
   parseJsonBody: true,
   bodySchema: productCategoryCreateSchema,
 });

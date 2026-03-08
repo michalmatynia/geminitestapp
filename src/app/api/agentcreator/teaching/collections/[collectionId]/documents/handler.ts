@@ -13,6 +13,7 @@ import type {
 } from '@/shared/contracts/agent-teaching';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { optionalIntegerQuerySchema } from '@/shared/lib/api/query-schema';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 const createDocumentSchema = z.object({
@@ -22,14 +23,19 @@ const createDocumentSchema = z.object({
   tags: z.array(z.string().trim().min(1)).optional().default([]),
 });
 
-export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export const querySchema = z.object({
+  limit: optionalIntegerQuerySchema(z.number().int().positive().max(500)),
+  skip: optionalIntegerQuerySchema(z.number().int().nonnegative()),
+});
+
+export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const collectionId = ctx.params?.['collectionId'];
   if (typeof collectionId !== 'string' || !collectionId.trim()) {
     throw badRequestError('Missing collectionId.');
   }
-  const url = new URL(req.url);
-  const limit = Number(url.searchParams.get('limit') ?? '50');
-  const skip = Number(url.searchParams.get('skip') ?? '0');
+  const query = (ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const limit = query.limit ?? 50;
+  const skip = query.skip ?? 0;
   const result = await listEmbeddingDocuments(collectionId, { limit, skip });
   return NextResponse.json(result);
 }

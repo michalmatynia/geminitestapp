@@ -1,12 +1,5 @@
 import 'server-only';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-
 import { randomUUID } from 'crypto';
 
 import {
@@ -233,18 +226,27 @@ export async function buildPlanWithLLM({
         failedStep,
       }),
     });
-    const parsed = parsePlanJson(content) as any;
-    if (!parsed) {
+    const parsed = parsePlanJson(content);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
       throw new Error('Planner LLM returned invalid JSON.');
     }
-    const meta = normalizePlannerMeta(parsed);
-    let hierarchy = mode === 'plan' ? normalizePlanHierarchy(parsed) : null;
-    if (!hierarchy && mode === 'plan' && Array.isArray(parsed.steps)) {
+    const plannerResponse = parsed as Record<string, unknown>;
+    const rawSteps = Array.isArray(plannerResponse['steps']) ? plannerResponse['steps'] : [];
+    const rawBranchSteps = Array.isArray(plannerResponse['branchSteps'])
+      ? plannerResponse['branchSteps']
+      : rawSteps;
+    const rawDecision =
+      plannerResponse['decision'] && typeof plannerResponse['decision'] === 'object'
+        ? (plannerResponse['decision'] as Partial<AgentDecision>)
+        : undefined;
+    const meta = normalizePlannerMeta(plannerResponse);
+    let hierarchy = mode === 'plan' ? normalizePlanHierarchy(plannerResponse) : null;
+    if (!hierarchy && mode === 'plan' && rawSteps.length > 0) {
       const expanded = await expandHierarchyFromStepsWithLLM({
         prompt,
         model,
         memory,
-        steps: parsed.steps,
+        steps: rawSteps,
         meta,
         ...(runId && { runId }),
       });
@@ -266,7 +268,7 @@ export async function buildPlanWithLLM({
       }
     }
     const hierarchySteps = hierarchy ? flattenPlanHierarchy(hierarchy) : [];
-    const stepSpecs = hierarchySteps.length > 0 ? hierarchySteps : (parsed.steps ?? []);
+    const stepSpecs = hierarchySteps.length > 0 ? hierarchySteps : rawSteps;
     const normalizedStepSpecs = normalizePlanStepSpecs(stepSpecs);
     let steps = buildPlanStepsFromSpecs(
       normalizedStepSpecs,
@@ -329,7 +331,7 @@ export async function buildPlanWithLLM({
         steps = optimization.optimizedSteps;
       }
     }
-    const branchSpecs = (parsed.branchSteps ?? parsed.steps ?? []).slice(0, 4);
+    const branchSpecs = rawBranchSteps.slice(0, 4);
     const branchSteps: PlanStep[] = branchSpecs.map(
       (step: {
         title?: string;
@@ -348,11 +350,11 @@ export async function buildPlanWithLLM({
       })
     );
     const fallbackBranchSteps = buildBranchStepsFromAlternatives(
-      (meta as any)?.alternatives ?? undefined,
+      meta?.alternatives ?? undefined,
       maxStepAttempts,
       maxSteps
     );
-    const decision = normalizeDecision(parsed.decision, steps, prompt, memory);
+    const decision = normalizeDecision(rawDecision, steps, prompt, memory);
     return {
       steps: steps.length ? steps : fallbackSteps,
       decision,

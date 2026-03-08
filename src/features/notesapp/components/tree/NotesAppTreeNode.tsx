@@ -55,7 +55,7 @@ export function NotesAppTreeNode(props: NotesAppTreeNodeProps): React.JSX.Elemen
   const canToggle = isFolder && hasChildren;
   const Icon = isFolder ? (isExpanded ? FolderOpenIcon : FolderClosedIcon) : FileIcon;
   const handleSelectNode = (event: React.MouseEvent<HTMLElement>): void => {
-    select(event as unknown as React.MouseEvent<HTMLDivElement>);
+    select(event as React.MouseEvent<HTMLDivElement>);
     if (folderId) {
       setSelectedFolderId(folderId);
       setSelectedNote(null);

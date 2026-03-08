@@ -1,13 +1,26 @@
 export const runtime = 'nodejs';
 
+import { z } from 'zod';
+
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 
-import { GET_products_metadata_handler, POST_products_metadata_handler } from '../handler';
+import {
+  GET_products_metadata_handler,
+  POST_products_metadata_handler,
+  querySchema,
+} from '../handler';
 
-export const GET = apiHandlerWithParams(GET_products_metadata_handler, {
-  source: 'products-metadata.GET',
+const typeParamSchema = z.object({
+  type: z.string().trim().min(1, 'type is required'),
 });
 
-export const POST = apiHandlerWithParams(POST_products_metadata_handler, {
-  source: 'products-metadata.POST',
+export const GET = apiHandlerWithParams<{ type: string }>(GET_products_metadata_handler, {
+  source: 'v2.products.metadata.[type].GET',
+  paramsSchema: typeParamSchema,
+  querySchema,
+});
+
+export const POST = apiHandlerWithParams<{ type: string }>(POST_products_metadata_handler, {
+  source: 'v2.products.metadata.[type].POST',
+  paramsSchema: typeParamSchema,
 });

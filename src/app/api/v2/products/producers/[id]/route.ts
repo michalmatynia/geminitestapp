@@ -9,11 +9,11 @@ import {
 } from '@/app/api/v2/products/producers/[id]/handler';
 
 export const PUT = apiHandlerWithParams<{ id: string }>(PUT_handler, {
-  source: 'products.producers.[id].PUT',
+  source: 'v2.products.producers.[id].PUT',
   parseJsonBody: true,
   bodySchema: producerUpdateSchema,
 });
 
 export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, {
-  source: 'products.producers.[id].DELETE',
+  source: 'v2.products.producers.[id].DELETE',
 });

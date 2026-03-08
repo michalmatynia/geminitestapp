@@ -5,7 +5,10 @@ import { CachedProductService } from '@/features/products/server';
 import { getParameterRepository } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
-import type { CatalogIdQuery } from '@/shared/validations/product-metadata-api-schemas';
+import {
+  catalogIdQuerySchema,
+  type CatalogIdQuery,
+} from '@/shared/validations/product-metadata-api-schemas';
 
 const SELECTOR_TYPES = [
   'text',
@@ -23,6 +26,27 @@ const SELECTOR_TYPES_REQUIRING_OPTIONS = new Set<(typeof SELECTOR_TYPES)[number]
   'dropdown',
   'checklist',
 ]);
+
+const freshQuerySchema = z.preprocess(
+  (value: unknown) => {
+    if (typeof value === 'boolean') return value;
+    if (typeof value !== 'string') return undefined;
+    const normalized = value.trim().toLowerCase();
+    if (!normalized) return undefined;
+    if (normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on') {
+      return true;
+    }
+    if (normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'off') {
+      return false;
+    }
+    return value;
+  },
+  z.boolean().optional()
+);
+
+export const querySchema = catalogIdQuerySchema.extend({
+  fresh: freshQuerySchema,
+});
 
 const normalizeOptionLabels = (input: unknown): string[] => {
   if (!Array.isArray(input)) return [];
@@ -67,16 +91,15 @@ export const productParameterCreateSchema = z
  * Query params:
  * - catalogId: Filter by catalog (required)
  */
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const query = _ctx.query as CatalogIdQuery | undefined;
-  const catalogId =
-    query?.catalogId ?? new URL(req.url).searchParams.get('catalogId')?.trim() ?? '';
+export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const query = _ctx.query as (CatalogIdQuery & { fresh?: boolean }) | undefined;
+  const catalogId = query?.catalogId ?? '';
 
   if (!catalogId) {
     throw badRequestError('catalogId query parameter is required');
   }
 
-  const forceFresh = new URL(req.url).searchParams.get('fresh') === '1';
+  const forceFresh = query?.fresh === true;
   const parameters = forceFresh
     ? await (async () => {
       const repository = await getParameterRepository();

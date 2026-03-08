@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { CachedProductService, performanceMonitor } from '@/features/products/performance';
@@ -11,7 +12,26 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, payloadTooLargeError } from '@/shared/errors/app-error';
 import { env } from '@/shared/lib/env';
 
-export { productFilterSchema };
+const freshQuerySchema = z.preprocess(
+  (value: unknown) => {
+    if (typeof value === 'boolean') return value;
+    if (typeof value !== 'string') return undefined;
+    const normalized = value.trim().toLowerCase();
+    if (!normalized) return undefined;
+    if (normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on') {
+      return true;
+    }
+    if (normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'off') {
+      return false;
+    }
+    return value;
+  },
+  z.boolean().optional()
+);
+
+export const querySchema = productFilterSchema.extend({
+  fresh: freshQuerySchema,
+});
 
 /**
  * GET /api/v2/products
@@ -47,10 +67,11 @@ const attachTimingHeaders = (
   }
 };
 
-export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  const filters = ctx.query as ProductFiltersParsed;
+export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+  const query = ctx.query as ProductFiltersParsed & { fresh?: boolean };
+  const { fresh, ...filters } = query;
   const timings: Record<string, number | null | undefined> = {};
-  const forceFresh = req.nextUrl.searchParams.get('fresh') === '1';
+  const forceFresh = fresh === true;
 
   try {
     const providerStart = performance.now();
@@ -59,8 +80,8 @@ export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Pro
 
     // Use CachedProductService for better performance, unless fresh data is explicitly requested.
     const products = forceFresh
-      ? await productService.getProducts(filters, { timings, provider })
-      : await CachedProductService.getProducts(filters);
+      ? await productService.getProducts(filters as ProductFiltersParsed, { timings, provider })
+      : await CachedProductService.getProducts(filters as ProductFiltersParsed);
 
     timings['total'] = ctx.getElapsedMs();
 

@@ -349,7 +349,7 @@ const updateDraft_Mongo = async (
   const doc =
     typeof result === 'object' && 'value' in result
       ? (result.value as MongoDraftDoc | null)
-      : (result as unknown as MongoDraftDoc | null);
+      : (result as MongoDraftDoc | null);
 
   if (!doc) return null;
 

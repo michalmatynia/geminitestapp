@@ -13,6 +13,8 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type { Job } from 'bullmq';
 
 const TRANSIENT_REDIS_ERROR_CODES = new Set(['EPIPE', 'ECONNRESET', 'ECONNREFUSED', 'ETIMEDOUT']);
+type BullMqQueueConnection = NonNullable<ConstructorParameters<typeof Queue>[1]>['connection'];
+type BullMqWorkerConnection = NonNullable<ConstructorParameters<typeof Worker>[2]>['connection'];
 
 const transientErrorLoggedAt = new Map<string, number>();
 const TRANSIENT_ERROR_LOG_COOLDOWN_MS = 30_000;
@@ -57,8 +59,7 @@ export function createManagedQueue<TJobData>(
     const connection = getRedisConnection();
     if (!connection) return null;
     queue = new Queue(config.name, {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-      connection: connection as any,
+      connection: connection as BullMqQueueConnection,
       defaultJobOptions: {
         removeOnComplete: true,
         removeOnFail: 100,
@@ -171,8 +172,7 @@ export function createManagedQueue<TJobData>(
       },
       {
         ...config.workerOptions,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-        connection: connection as any,
+        connection: connection as BullMqWorkerConnection,
         concurrency: config.concurrency,
         lockDuration,
         removeOnComplete: { count: 0 },

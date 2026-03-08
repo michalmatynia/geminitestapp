@@ -1,20 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { CachedProductService } from '@/features/products/server';
 import { getCategoryRepository, getProductDataProvider } from '@/features/products/server';
 import type { ProductCategory } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
+import {
+  optionalBooleanQuerySchema,
+  optionalTrimmedQueryString,
+} from '@/shared/lib/api/query-schema';
 
 const MAX_CATALOG_IDS = 25;
+
+export const querySchema = z.object({
+  catalogIds: optionalTrimmedQueryString(),
+  fresh: optionalBooleanQuerySchema().default(false),
+});
 
 /**
  * GET /api/v2/products/categories/batch?catalogIds=id1,id2,id3
  * Returns categories grouped by catalogId in a single request,
  * eliminating the N parallel requests previously made by useQueries.
  */
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const rawParam = new URL(req.url).searchParams.get('catalogIds')?.trim() ?? '';
+export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const rawParam = query.catalogIds ?? '';
   if (!rawParam) {
     throw badRequestError('catalogIds query parameter is required');
   }
@@ -31,7 +42,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     throw badRequestError(`catalogIds may contain at most ${MAX_CATALOG_IDS} IDs`);
   }
 
-  const forceFresh = new URL(req.url).searchParams.get('fresh') === '1';
+  const forceFresh = query.fresh;
   const primaryProvider = await getProductDataProvider();
   const repository = await getCategoryRepository(primaryProvider);
 

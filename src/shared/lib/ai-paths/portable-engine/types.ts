@@ -50,13 +50,29 @@ export type PrismaSettingClient = {
   };
 };
 
+export type PrismaSettingDelegate = NonNullable<PrismaSettingClient['setting']>;
+
+const isPrismaSettingDelegate = (value: unknown): value is PrismaSettingDelegate => {
+  if (!value || typeof value !== 'object') return false;
+  return (
+    typeof Reflect.get(value, 'findUnique') === 'function' &&
+    typeof Reflect.get(value, 'upsert') === 'function'
+  );
+};
+
+export const getPrismaSettingDelegate = (
+  prismaClient: unknown
+): PrismaSettingDelegate | null => {
+  if (!process.env['DATABASE_URL'] || !prismaClient || typeof prismaClient !== 'object') {
+    return null;
+  }
+  const setting = Reflect.get(prismaClient, 'setting');
+  return isPrismaSettingDelegate(setting) ? setting : null;
+};
+
 export const canUsePrismaSettings = (
-  prismaClient: PrismaSettingClient | null | undefined
-): boolean =>
-  Boolean(process.env['DATABASE_URL']) &&
-  prismaClient !== null &&
-  typeof prismaClient === 'object' &&
-  'setting' in prismaClient;
+  prismaClient: unknown
+): boolean => getPrismaSettingDelegate(prismaClient) !== null;
 
 export type PortablePathAuditSinkStartupHealthState = {
   consecutiveFailureCount: number;

@@ -2,6 +2,7 @@ import fs from 'fs/promises';
 
 import mime from 'mime-types';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import {
   getDiskPathFromPublicPath,
@@ -10,9 +11,15 @@ import {
 } from '@/features/files/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const fileId = req.nextUrl.searchParams.get('fileId');
+export const querySchema = z.object({
+  fileId: optionalTrimmedQueryString(),
+});
+
+export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const fileId = query.fileId;
 
   if (!fileId) {
     throw badRequestError('File ID is required');

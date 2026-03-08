@@ -1,5 +1,6 @@
 import { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import {
   getProductAiJobs,
@@ -11,8 +12,21 @@ import { startProductAiJobQueue, getQueueStatus } from '@/features/jobs/server';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
+import {
+  optionalBooleanQuerySchema,
+  optionalTrimmedQueryString,
+} from '@/shared/lib/api/query-schema';
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export const listQuerySchema = z.object({
+  status: optionalBooleanQuerySchema().default(false),
+  productId: optionalTrimmedQueryString(),
+});
+
+export const deleteQuerySchema = z.object({
+  scope: z.enum(['terminal', 'all']),
+});
+
+export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const staleCount = await cleanupStaleRunningProductAiJobs(1000 * 60 * 10);
     if (staleCount > 0) {
@@ -22,11 +36,10 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
         context: { staleCount },
       });
     }
-    const { searchParams } = new URL(req.url);
+    const query = (_ctx.query ?? {}) as z.infer<typeof listQuerySchema>;
 
     // Check if requesting queue status
-    const checkStatus = searchParams.get('status');
-    if (checkStatus === 'true') {
+    if (query.status) {
       const status = await getQueueStatus();
       await logSystemEvent({
         level: 'info',
@@ -43,8 +56,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
       );
     }
 
-    const productId = searchParams.get('productId') || undefined;
-    const jobs = await getProductAiJobs(productId);
+    const jobs = await getProductAiJobs(query.productId ?? undefined);
     const queueStatus = await getQueueStatus();
     if (!queueStatus.running) {
       const hasActiveJobs = jobs.some(
@@ -92,9 +104,9 @@ const hasScheduledMarker = (payload: unknown): boolean => {
   return false;
 };
 
-export async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const { searchParams } = new URL(req.url);
-  const scope = searchParams.get('scope');
+export async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const query = (_ctx.query ?? {}) as z.infer<typeof deleteQuerySchema>;
+  const scope = query.scope;
 
   if (scope === 'terminal') {
     const count = await deleteTerminalProductAiJobs();

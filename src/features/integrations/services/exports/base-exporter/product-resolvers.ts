@@ -96,7 +96,7 @@ export const getProducerEntryName = (entry: ProducerEntry): string | null => {
 };
 
 export const getProductCategoryId = (product: ProductWithImages): string | null => {
-  const record = product as unknown as Record<string, unknown>;
+  const record = product as Record<string, unknown>;
   const direct = toTrimmedString(record['categoryId']) ?? toTrimmedString(record['category_id']);
   if (direct) return direct;
 
@@ -134,7 +134,7 @@ export const getProductProducerValues = (
   producerExternalIdByInternalId?: ProducerExternalIdLookup
 ): { producerIds: string[]; producerNames: string[] } => {
   const entries = Array.isArray(product.producers)
-    ? (product.producers as unknown as ProducerEntry[])
+    ? (product.producers as ProducerEntry[])
     : [];
   const producerIds: string[] = [];
   const producerNames: string[] = [];
@@ -178,7 +178,7 @@ export const getProductTagValues = (
   tagNameById?: TagNameLookup,
   tagExternalIdByInternalId?: TagExternalIdLookup
 ): { tagIds: string[]; tagNames: string[] } => {
-  const entries = Array.isArray(product.tags) ? (product.tags as unknown as TagEntry[]) : [];
+  const entries = Array.isArray(product.tags) ? (product.tags as TagEntry[]) : [];
   const tagIds: string[] = [];
   const tagNames: string[] = [];
   const seenIds = new Set<string>();

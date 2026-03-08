@@ -6,9 +6,33 @@ import { CachedProductService } from '@/features/products/server';
 import { getCategoryRepository, getProductDataProvider } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
-import type { CatalogIdQuery } from '@/shared/validations/product-metadata-api-schemas';
+import {
+  catalogIdQuerySchema,
+  type CatalogIdQuery,
+} from '@/shared/validations/product-metadata-api-schemas';
 
 const shouldLogTiming = () => process.env['DEBUG_API_TIMING'] === 'true';
+
+const freshQuerySchema = z.preprocess(
+  (value: unknown) => {
+    if (typeof value === 'boolean') return value;
+    if (typeof value !== 'string') return undefined;
+    const normalized = value.trim().toLowerCase();
+    if (!normalized) return undefined;
+    if (normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on') {
+      return true;
+    }
+    if (normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'off') {
+      return false;
+    }
+    return value;
+  },
+  z.boolean().optional()
+);
+
+export const querySchema = catalogIdQuerySchema.extend({
+  fresh: freshQuerySchema,
+});
 
 const buildServerTiming = (entries: Record<string, number | null | undefined>): string => {
   const parts = Object.entries(entries)
@@ -42,18 +66,17 @@ export const productCategoryCreateSchema = z.object({
  * Query params:
  * - catalogId: Filter by catalog (required)
  */
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const timings: Record<string, number | null | undefined> = {};
   const requestStart = performance.now();
-  const query = _ctx.query as CatalogIdQuery | undefined;
-  const catalogId =
-    query?.catalogId ?? new URL(req.url).searchParams.get('catalogId')?.trim() ?? '';
+  const query = _ctx.query as (CatalogIdQuery & { fresh?: boolean }) | undefined;
+  const catalogId = query?.catalogId ?? '';
 
   if (!catalogId) {
     throw badRequestError('catalogId query parameter is required');
   }
 
-  const forceFresh = req.nextUrl.searchParams.get('fresh') === '1';
+  const forceFresh = query?.fresh === true;
   const repositoryStart = performance.now();
 
   const categories = forceFresh

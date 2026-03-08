@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import {
   getPromptValidationObservabilitySnapshot,
@@ -17,16 +18,16 @@ import {
   resetPromptRuntimeLoadSnapshot,
 } from '@/features/prompt-exploder/runtime-load-shedder';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { optionalBooleanQuerySchema } from '@/shared/lib/api/query-schema';
 
-const isResetEnabled = (request: NextRequest): boolean => {
-  const raw = request.nextUrl.searchParams.get('reset');
-  if (!raw) return false;
-  const normalized = raw.trim().toLowerCase();
-  return normalized === '1' || normalized === 'true' || normalized === 'yes';
-};
+export const querySchema = z.object({
+  reset: optionalBooleanQuerySchema(),
+});
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  if (isResetEnabled(req)) {
+export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+
+  if (query.reset === true) {
     resetPromptValidationObservability();
     resetPromptExploderRuntimePatternCache();
     resetPromptValidationRuntimeSelectionCache();

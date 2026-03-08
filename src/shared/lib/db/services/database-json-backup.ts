@@ -2,7 +2,7 @@ import 'server-only';
 
 import { promises as fs } from 'fs';
 import path from 'path';
-import { Readable, Writable } from 'stream';
+import { Readable } from 'stream';
 import { pipeline } from 'stream/promises';
 import { createGzip, createGunzip } from 'zlib';
 
@@ -46,9 +46,7 @@ type DmmfDatamodel = {
 const getPrismaDmmf = (): DmmfDatamodel | null => {
   if (!process.env['DATABASE_URL']) return null;
   try {
-    return (
-      (prisma as unknown as { _dmmf?: { datamodel?: DmmfDatamodel } })._dmmf?.datamodel ?? null
-    );
+    return (prisma as { _dmmf?: { datamodel?: DmmfDatamodel } })._dmmf?.datamodel ?? null;
   } catch {
     return null;
   }
@@ -133,7 +131,7 @@ interface PrismaModel {
 
 const getPrismaModel = (modelName: string): PrismaModel | null => {
   const key = modelName.charAt(0).toLowerCase() + modelName.slice(1);
-  const model = (prisma as unknown as Record<string, PrismaModel>)[key];
+  const model = Reflect.get(prisma, key) as PrismaModel | undefined;
   if (!model || typeof model.findMany !== 'function') return null;
   return model;
 };
@@ -209,9 +207,7 @@ export async function createPrismaJsonBackup(): Promise<DatabaseBackupResult> {
   const jsonString = JSON.stringify(data, null, 0);
   const source = Readable.from([jsonString]);
   const gzip = createGzip();
-  const destination = Writable.toWeb(
-    await fs.open(backupPath, 'w').then((fh) => fh.createWriteStream())
-  ) as unknown as NodeJS.WritableStream;
+  const destination = await fs.open(backupPath, 'w').then((fh) => fh.createWriteStream());
 
   await pipeline(source, gzip, destination);
 

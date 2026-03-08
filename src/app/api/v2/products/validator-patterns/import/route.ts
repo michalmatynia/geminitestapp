@@ -8,7 +8,7 @@ import {
 } from '@/app/api/v2/products/validator-patterns/import/handler';
 
 export const POST = apiHandler(postValidatorPatternsImportHandler, {
-  source: 'products.validator-patterns.import.POST',
+  source: 'v2.products.validator-patterns.import.POST',
   parseJsonBody: true,
   bodySchema: postValidatorPatternsImportSchema,
 });

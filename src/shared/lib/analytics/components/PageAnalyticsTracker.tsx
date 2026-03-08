@@ -180,7 +180,7 @@ export default function PageAnalyticsTracker(): null {
       clientTs,
     };
 
-    trackEventMutation.mutate(event as unknown as Record<string, unknown>, {
+    trackEventMutation.mutate(event as Record<string, unknown>, {
       onError: () => {
         // Intentionally swallow errors; analytics must never break UX.
       },

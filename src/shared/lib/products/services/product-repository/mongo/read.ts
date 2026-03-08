@@ -1,10 +1,13 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-
 import { Document, Collection, Filter, WithId } from 'mongodb';
 import { ProductDocument, toProductResponse } from '../mongo-product-repository-mappers';
 import { ProductFilters, ProductWithImages } from '@/shared/contracts/products';
 import { buildProductIdFilter, isEmptyFilter } from '../mongo-product-repository.helpers';
 import { buildMongoWhere } from '../mongo-product-repository.filters';
+
+type ProductsWithCountAggregateResult = {
+  products?: Document[];
+  meta?: Array<{ total?: number }>;
+};
 
 export const buildListProjectStage = (filters: ProductFilters): Document | null => {
   if (typeof filters.sku === 'string' && filters.sku.trim().length > 0) {
@@ -161,7 +164,7 @@ export const mongoProductReadImpl = {
     }
 
     const [result] = await collection
-      .aggregate([
+      .aggregate<ProductsWithCountAggregateResult>([
         { $match: searchFilter },
         {
           $facet: {
@@ -172,8 +175,11 @@ export const mongoProductReadImpl = {
       ])
       .toArray();
 
-    const docs = (result?.['products'] as Document[]) ?? [];
-    const total = (result?.['meta']?.[0]?.['total'] as number) ?? 0;
+    const docs = Array.isArray(result?.products) ? result.products : [];
+    const total =
+      result?.meta && Array.isArray(result.meta) && typeof result.meta[0]?.total === 'number'
+        ? result.meta[0].total
+        : 0;
 
     return {
       products: docs.map((doc) => toProductResponse(doc as WithId<ProductDocument>)),

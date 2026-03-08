@@ -1,11 +1,12 @@
 import { createHmac } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { gzipSync } from 'zlib';
 
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
-import { getQueryParams } from '@/shared/lib/api/api-handler';
+import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import { AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION } from '@/shared/lib/ai-paths/portable-engine';
 import {
   PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_ALERT_TYPE,
@@ -113,6 +114,16 @@ type ReplayHistoryExportSignature = {
 type ReplayHistoryExportFormat = 'json' | 'ndjson' | 'csv';
 
 const REPLAY_HISTORY_EXPORT_FORMATS: ReplayHistoryExportFormat[] = ['json', 'ndjson', 'csv'];
+
+export const querySchema = z.object({
+  limit: optionalTrimmedQueryString(),
+  from: optionalTrimmedQueryString(),
+  to: optionalTrimmedQueryString(),
+  includeAttempts: optionalTrimmedQueryString(),
+  signed: optionalTrimmedQueryString(),
+  format: optionalTrimmedQueryString(),
+  cursor: optionalTrimmedQueryString(),
+});
 
 const parseHistoryLimit = (value: string | null): number => {
   if (!value) return DEFAULT_HISTORY_LIMIT;
@@ -522,26 +533,22 @@ const toReplayHistoryNdjson = (
   return `${lines.join('\n')}\n`;
 };
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireAiPathsAccess();
 
-  const searchParams = getQueryParams(req);
-  const limit = parseHistoryLimit(searchParams.get('limit'));
-  const from = parseHistoryTimestamp('from', searchParams.get('from'));
-  const to = parseHistoryTimestamp('to', searchParams.get('to'));
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const limit = parseHistoryLimit(query.limit ?? null);
+  const from = parseHistoryTimestamp('from', query.from ?? null);
+  const to = parseHistoryTimestamp('to', query.to ?? null);
   if (from && to && from.getTime() > to.getTime()) {
     throw badRequestError(
       'Remediation replay history "from" timestamp must be earlier than or equal to "to".'
     );
   }
-  const includeAttempts = parseBooleanQuery(
-    'includeAttempts',
-    searchParams.get('includeAttempts'),
-    false
-  );
-  const signed = parseBooleanQuery('signed', searchParams.get('signed'), true);
-  const format = parseReplayHistoryExportFormat(searchParams.get('format'));
-  const cursor = parseReplayHistoryCursor(searchParams.get('cursor'), { from, to });
+  const includeAttempts = parseBooleanQuery('includeAttempts', query.includeAttempts ?? null, false);
+  const signed = parseBooleanQuery('signed', query.signed ?? null, true);
+  const format = parseReplayHistoryExportFormat(query.format ?? null);
+  const cursor = parseReplayHistoryCursor(query.cursor ?? null, { from, to });
 
   const matchedEntries: ReplayHistoryRecordWithCursor[] = [];
   let matchedReplayCount = 0;
@@ -651,7 +658,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
       payload.redaction.mode
     );
     const body = maybeCompressReplayHistoryExportBody(
-      req,
+      _req,
       toReplayHistoryNdjson(payload, signature),
       headers
     );
@@ -678,7 +685,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
       payload.redaction.mode
     );
     const body = maybeCompressReplayHistoryExportBody(
-      req,
+      _req,
       toReplayHistoryCsv(payload.entries),
       headers
     );

@@ -1,58 +1,86 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { noteCreateSchema } from '@/features/notesapp';
 import { noteService } from '@/features/notesapp/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { NoteFilters } from '@/shared/contracts/notes';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import {
+  optionalCsvQueryStringArray,
+  optionalTrimmedQueryString,
+} from '@/shared/lib/api/query-schema';
+
+const searchScopeSchema = z.preprocess((value) => {
+  const normalized = typeof value === 'string' ? value.trim() : '';
+  return normalized === 'both' || normalized === 'title' || normalized === 'content'
+    ? normalized
+    : undefined;
+}, z.enum(['both', 'title', 'content']).optional());
+
+const optionalPresentBooleanSchema = z.preprocess((value) => {
+  if (value === undefined) return undefined;
+  return typeof value === 'string' && value.trim().toLowerCase() === 'true';
+}, z.boolean().optional());
+
+export const querySchema = z.object({
+  truncateContent: z.preprocess(
+    (value) => typeof value === 'string' && value.trim().toLowerCase() === 'true',
+    z.boolean()
+  ),
+  notebookId: optionalTrimmedQueryString(),
+  search: optionalTrimmedQueryString(),
+  searchScope: searchScopeSchema,
+  isPinned: optionalPresentBooleanSchema,
+  isArchived: optionalPresentBooleanSchema,
+  isFavorite: optionalPresentBooleanSchema,
+  tagIds: optionalCsvQueryStringArray(),
+  categoryIds: optionalCsvQueryStringArray(),
+});
 
 /**
  * GET /api/notes
  * Fetches a list of notes with optional filters.
  */
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const { searchParams } = new URL(_req.url);
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
 
   const filters: NoteFilters = {
-    truncateContent: searchParams.get('truncateContent') === 'true',
+    truncateContent: query.truncateContent,
   };
-  const notebookIdParam = searchParams.get('notebookId');
-  if (notebookIdParam) {
-    filters.notebookId = notebookIdParam;
+  if (query.notebookId) {
+    filters.notebookId = query.notebookId;
   } else {
     const notebook = await noteService.getOrCreateDefaultNotebook();
     filters.notebookId = notebook.id;
   }
 
-  if (searchParams.has('search')) {
-    filters.search = searchParams.get('search')!;
+  if (query.search) {
+    filters.search = query.search;
   }
 
-  if (searchParams.has('searchScope')) {
-    const scope = searchParams.get('searchScope');
-    if (scope === 'both' || scope === 'title' || scope === 'content') {
-      filters.searchScope = scope;
-    }
+  if (query.searchScope) {
+    filters.searchScope = query.searchScope;
   }
 
-  if (searchParams.has('isPinned')) {
-    filters.isPinned = searchParams.get('isPinned') === 'true';
+  if (query.isPinned !== undefined) {
+    filters.isPinned = query.isPinned;
   }
 
-  if (searchParams.has('isArchived')) {
-    filters.isArchived = searchParams.get('isArchived') === 'true';
+  if (query.isArchived !== undefined) {
+    filters.isArchived = query.isArchived;
   }
 
-  if (searchParams.has('isFavorite')) {
-    filters.isFavorite = searchParams.get('isFavorite') === 'true';
+  if (query.isFavorite !== undefined) {
+    filters.isFavorite = query.isFavorite;
   }
 
-  if (searchParams.has('tagIds')) {
-    filters.tagIds = searchParams.get('tagIds')!.split(',');
+  if (query.tagIds) {
+    filters.tagIds = query.tagIds;
   }
 
-  if (searchParams.has('categoryIds')) {
-    filters.categoryIds = searchParams.get('categoryIds')!.split(',');
+  if (query.categoryIds) {
+    filters.categoryIds = query.categoryIds;
   }
 
   const notes = await noteService.getAll(filters);

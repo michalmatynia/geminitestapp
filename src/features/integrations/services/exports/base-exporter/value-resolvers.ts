@@ -109,7 +109,7 @@ export const getProductValue = (
     return getImageSlotUrl(product, slotIndex, 'slot', imageBaseUrl, diagnostics);
   }
 
-  const record = product as unknown as Record<string, unknown>;
+  const record = product as Record<string, unknown>;
   return record[sourceKey] ?? record[normalized] ?? null;
 };
 

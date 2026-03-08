@@ -142,7 +142,7 @@ export const buildTree = (
   });
 
   notes.forEach((note: NoteRecord): void => {
-    const noteCategories = (note.categories || []) as unknown as Array<
+    const noteCategories = (note.categories || []) as Array<
       string | { categoryId: string }
     >;
     noteCategories.forEach((c): void => {

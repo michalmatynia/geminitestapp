@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { canAccessGlobalAiPathRuns, requireAiPathsRunAccess } from '@/features/ai/ai-paths/server';
 import { getAiPathRunQueueStatus } from '@/features/jobs/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError } from '@/shared/errors/app-error';
+import { normalizeOptionalQueryString } from '@/shared/lib/api/query-schema';
 
 const parseEnvNumber = (value: string | undefined, fallback: number): number => {
   const parsed = Number.parseInt(value ?? '', 10);
@@ -22,13 +24,22 @@ export const __testOnly = {
   },
 };
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export const querySchema = z.object({
+  visibility: z.preprocess((value) => {
+    const normalized = normalizeOptionalQueryString(value)?.toLowerCase();
+    return normalized === 'global' ? 'global' : 'scoped';
+  }, z.enum(['scoped', 'global'])).default('scoped'),
+  fresh: z.preprocess((value) => {
+    const normalized = normalizeOptionalQueryString(value)?.toLowerCase();
+    return normalized === '1' || normalized === 'true' || normalized === 'yes';
+  }, z.boolean()).default(false),
+});
+
+export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const access = await requireAiPathsRunAccess();
-  const url = new URL(req.url);
-  const visibilityParam = url.searchParams.get('visibility')?.trim().toLowerCase() || 'scoped';
-  const visibility = visibilityParam === 'global' ? 'global' : 'scoped';
-  const freshParam = url.searchParams.get('fresh')?.trim().toLowerCase();
-  const fresh = freshParam === '1' || freshParam === 'true' || freshParam === 'yes';
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const visibility = query.visibility;
+  const fresh = query.fresh;
   if (visibility === 'global' && !canAccessGlobalAiPathRuns(access)) {
     throw forbiddenError('Global queue status access denied.');
   }

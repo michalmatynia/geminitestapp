@@ -23,11 +23,15 @@ export const buildCategoryTree = (categories: ExternalCategory[]): CategoryRow[]
 
   // Second pass: link children
   categories.forEach((cat) => {
-    const node = byId.get(cat.externalId)!;
+    const node = byId.get(cat.externalId);
+    if (!node) {
+      return;
+    }
     const parentId = normalizeParentExternalId(cat.parentExternalId);
+    const parentNode = parentId ? byId.get(parentId) : null;
 
-    if (parentId && byId.has(parentId)) {
-      byId.get(parentId)!.subRows!.push(node);
+    if (parentNode?.subRows) {
+      parentNode.subRows.push(node);
     } else {
       roots.push(node);
     }

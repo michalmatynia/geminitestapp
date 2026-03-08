@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import {
   parseKangurAssignmentCreatePayload,
-  parseKangurAssignmentListQuery,
 } from '@/shared/validations/kangur';
+import { optionalBooleanQuerySchema } from '@/shared/lib/api/query-schema';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
@@ -15,14 +16,16 @@ import {
   resolveAssignmentActor,
 } from './shared';
 
+export const querySchema = z.object({
+  includeArchived: optionalBooleanQuerySchema().default(false),
+});
+
 export async function getKangurAssignmentsHandler(
   req: NextRequest,
-  _ctx: ApiHandlerContext
+  ctx: ApiHandlerContext
 ): Promise<Response> {
   const actor = await resolveAssignmentActor(req);
-  const query = parseKangurAssignmentListQuery({
-    includeArchived: req.nextUrl.searchParams.get('includeArchived') ?? undefined,
-  });
+  const query = (ctx.query ?? {}) as z.infer<typeof querySchema>;
 
   const snapshots = await listAssignmentSnapshotsForLearner({
     learnerKey: actor.learnerKey,

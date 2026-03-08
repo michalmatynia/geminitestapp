@@ -8,7 +8,7 @@ import {
 } from '@/app/api/v2/products/categories/reorder/handler';
 
 export const POST = apiHandler(POST_handler, {
-  source: 'products.categories.reorder.POST',
+  source: 'v2.products.categories.reorder.POST',
   parseJsonBody: true,
   bodySchema: reorderCategorySchema,
 });

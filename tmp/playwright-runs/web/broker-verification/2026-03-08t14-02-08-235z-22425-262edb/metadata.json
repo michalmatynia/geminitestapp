@@ -1,0 +1,33 @@
+{
+  "generatedAt": "2026-03-08T14:02:20.968Z",
+  "runtime": {
+    "source": "broker",
+    "managed": true,
+    "reused": false,
+    "rootDir": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp",
+    "appId": "web",
+    "mode": "dev",
+    "agentId": "broker-verification",
+    "host": "127.0.0.1",
+    "port": 57637,
+    "baseUrl": "http://127.0.0.1:57637",
+    "pid": 22426,
+    "distDir": ".next-dev-web-dev-broker-verification",
+    "leaseKey": "web-dev-broker-verification-ed58ad7e",
+    "leaseFilePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/tmp/playwright-runtime-broker/leases/web-dev-broker-verification-ed58ad7e.json",
+    "logFilePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/tmp/playwright-runtime-broker/logs/web-dev-broker-verification-ed58ad7e.log",
+    "startedAt": "2026-03-08T14:02:08.245Z",
+    "preferredBrowserNodeBinDir": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin"
+  },
+  "playwrightArgs": [
+    "test",
+    "e2e/features/kangur/kangur-profile.spec.ts",
+    "--workers=1",
+    "--grep",
+    "renders learner profile shell and baseline sections"
+  ],
+  "runId": "2026-03-08t14-02-08-235z-22425-262edb",
+  "outputDir": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/tmp/playwright-runs/web/broker-verification/2026-03-08t14-02-08-235z-22425-262edb/test-results",
+  "htmlReportDir": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/tmp/playwright-runs/web/broker-verification/2026-03-08t14-02-08-235z-22425-262edb/html-report",
+  "junitOutputFile": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/tmp/playwright-runs/web/broker-verification/2026-03-08t14-02-08-235z-22425-262edb/junit.xml"
+}

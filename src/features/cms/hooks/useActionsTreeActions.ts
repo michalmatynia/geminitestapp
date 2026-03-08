@@ -1,3 +1,3 @@
 'use client';
 
-export { useTreeActionsActions } from './useTreeActionsContext';
+export { useTreeActionsActions } from './useTreeActionsContext.hooks';

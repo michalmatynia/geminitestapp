@@ -37,7 +37,6 @@ export type KangurTrainingSetupDifficultyOption = {
 
 type UseKangurTrainingSetupStateOptions = {
   active?: boolean;
-  onBack?: () => void;
   onStart?: (selection: KangurTrainingSelection) => void;
 };
 
@@ -72,7 +71,6 @@ export const useKangurTrainingSetupState = (
   options: UseKangurTrainingSetupStateOptions = {}
 ) => {
   const active = options.active ?? true;
-  const onBack = options.onBack;
   const onStart = options.onStart;
   const previousActiveRef = useRef(active);
   const [selectedCategories, setSelectedCategories] =
@@ -114,10 +112,6 @@ export const useKangurTrainingSetupState = (
       difficulty,
     });
   }, [difficulty, onStart, questionCount, selectedCategories]);
-
-  const goBack = useCallback((): void => {
-    onBack?.();
-  }, [onBack]);
 
   const categoryOptions = useMemo<KangurTrainingSetupCategoryOption[]>(
     () =>
@@ -172,7 +166,6 @@ export const useKangurTrainingSetupState = (
     countOptions,
     difficulty,
     difficultyOptions,
-    goBack,
     questionCount,
     selectedCategories,
     setDifficulty,

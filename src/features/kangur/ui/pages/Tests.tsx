@@ -15,8 +15,8 @@ import {
   parseKangurTestQuestionStore,
   getQuestionsForSuite,
 } from '@/features/kangur/test-questions';
-import { KangurPrimaryNavigation } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
 import { KangurTestSuitePlayer } from '@/features/kangur/ui/components/KangurTestSuitePlayer';
+import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import {
@@ -55,19 +55,23 @@ export default function Tests(): React.JSX.Element {
     [activeSuite, questionStore]
   );
   const learnerId = user?.activeLearner?.id ?? user?.id ?? null;
+  const navigation = useMemo(
+    () => ({
+      basePath,
+      contentClassName: 'justify-center',
+      currentPage: 'Tests' as const,
+      isAuthenticated: Boolean(user),
+      onLogin: navigateToLogin,
+      onLogout: () => logout(false),
+      showParentDashboard: false,
+    }),
+    [basePath, logout, navigateToLogin, user]
+  );
 
   return (
     <KangurPageShell tone='learn' id='kangur-tests-page' skipLinkTargetId='kangur-tests-main'>
       <KangurDocsTooltipEnhancer enabled={docsTooltipsEnabled} rootId='kangur-tests-page' />
-      <KangurPrimaryNavigation
-        basePath={basePath}
-        contentClassName='justify-center'
-        currentPage='Tests'
-        isAuthenticated={Boolean(user)}
-        onLogin={navigateToLogin}
-        onLogout={() => logout(false)}
-        showParentDashboard={false}
-      />
+      <KangurTopNavigationController navigation={navigation} />
 
       <KangurPageContainer id='kangur-tests-main'>
         <AnimatePresence mode='wait'>

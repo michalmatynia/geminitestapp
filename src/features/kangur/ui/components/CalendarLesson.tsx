@@ -18,7 +18,10 @@ import {
   KangurGlassPanel,
   KangurHeadline,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_STEP_PILL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_PENDING_STEP_PILL_CLASSNAME,
+  KANGUR_STEP_PILL_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/shared/utils';
 
 type SectionId = 'intro' | 'dni' | 'miesiace' | 'data' | 'game';
@@ -269,12 +272,12 @@ function SectionView({
                 aria-current={i === slide ? 'step' : undefined}
                 className={cn(
                   KANGUR_STEP_PILL_CLASSNAME,
-                  'h-[14px] min-w-[14px]',
+                  'h-[14px] min-w-[14px] cursor-pointer',
                   i === slide
                     ? 'w-8 scale-[1.04] bg-emerald-500'
                     : i < slide
                       ? 'w-6 bg-emerald-200'
-                      : 'w-[14px] soft-cta opacity-80 hover:opacity-100'
+                      : KANGUR_PENDING_STEP_PILL_CLASSNAME
                 )}
                 data-testid={`calendar-lesson-slide-${sectionId}-${i}`}
               />

@@ -19,7 +19,6 @@ import { useSegmentEditorPatterns } from './hooks/useSegmentEditorPatterns';
 import { useSegmentPatternApproval } from './hooks/useSegmentPatternApproval';
 
 import type { PromptExploderSegment } from '../types';
-import type { ApprovalDraft } from '../helpers/segment-helpers';
 import type {
   SegmentEditorActions,
   SegmentEditorPatternsState,

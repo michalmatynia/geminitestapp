@@ -7,7 +7,6 @@ import type { KangurMode } from '@/features/kangur/ui/types';
 
 export type KangurSetupProps = {
   onStart: (mode: KangurMode) => void;
-  onBack: () => void;
 };
 
 export type KangurGameProviderProps = {

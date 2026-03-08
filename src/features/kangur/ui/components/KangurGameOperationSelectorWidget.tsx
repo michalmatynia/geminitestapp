@@ -1,6 +1,7 @@
 'use client';
 
 import OperationSelector from '@/features/kangur/ui/components/OperationSelector';
+import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
 import KangurPracticeAssignmentBanner from '@/features/kangur/ui/components/KangurPracticeAssignmentBanner';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
@@ -9,6 +10,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
   const {
     activePracticeAssignment,
     basePath,
+    handleHome,
     handleSelectOperation,
     playerName,
     practiceAssignmentsByOperation,
@@ -21,12 +23,20 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
   }
 
   return (
-    <div className='w-full flex flex-col items-center'>
-      <p className='mb-4 text-lg text-slate-500'>
+    <div className='w-full flex flex-col items-center gap-4'>
+      <KangurPageIntroCard
+        accent='violet'
+        className='max-w-md'
+        description='Wybierz rodzaj gry i przejdz od razu do matematycznej zabawy.'
+        onBack={handleHome}
+        testId='kangur-game-operation-top-section'
+        title='Grajmy!'
+      />
+      <p className='text-lg text-slate-500'>
         Cześć, <span className='font-bold text-indigo-500'>{playerName}</span>! 👋
       </p>
       {activePracticeAssignment ? (
-        <div className='mb-4 flex w-full justify-center px-4'>
+        <div className='flex w-full justify-center px-4'>
           <KangurPracticeAssignmentBanner
             assignment={activePracticeAssignment}
             basePath={basePath}

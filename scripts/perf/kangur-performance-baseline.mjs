@@ -3,9 +3,13 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 
 import {
-  buildPlaywrightSuiteRuntime,
-  detectExistingPlaywrightServer,
-} from '../testing/lib/playwright-suite-runtime.mjs';
+  acquireRuntimeLease,
+  buildBrokeredPlaywrightEnv,
+  resolveNpxExecutable,
+  resolvePlaywrightRunArtifacts,
+  resolveRuntimeAgentId,
+  stopBrokerRuntimeLease,
+} from '../testing/lib/runtime-broker.mjs';
 
 const args = new Set(process.argv.slice(2));
 const strictMode = args.has('--strict');
@@ -16,7 +20,7 @@ const allowInfraE2EFail = args.has('--allow-infra-e2e-fail');
 const root = process.cwd();
 const outDir = path.join(root, 'docs', 'metrics');
 const MAX_OUTPUT_BYTES = 100_000;
-const PLAYWRIGHT_BASE_URL = process.env['PLAYWRIGHT_BASE_URL'] || 'http://localhost:3000';
+const PLAYWRIGHT_BASE_URL = process.env['PLAYWRIGHT_BASE_URL'] || 'http://127.0.0.1:3000';
 const PLAYWRIGHT_HOST =
   process.env['HOST'] || (() => {
     try {
@@ -25,6 +29,8 @@ const PLAYWRIGHT_HOST =
       return 'localhost';
     }
   })();
+const PLAYWRIGHT_AGENT_ID = resolveRuntimeAgentId({ env: process.env });
+const shouldStopPlaywrightRuntime = process.env['PLAYWRIGHT_RUNTIME_KEEP_ALIVE'] !== 'true';
 
 const KANGUR_UNIT_TESTS = [
   '__tests__/features/kangur/learner-profile.page.test.tsx',
@@ -180,114 +186,133 @@ const toMarkdown = (payload) => {
 };
 
 const run = async () => {
-  const unit = await runCommand({
-    command: 'npx',
-    commandArgs: ['vitest', 'run', ...KANGUR_UNIT_TESTS],
-    label: 'kangur-unit',
-  });
-
-  let e2e = null;
-  if (includeE2E) {
-    const e2eArgs = ['playwright', 'test', ...KANGUR_E2E_TESTS, '--workers=1'];
-    const playwrightRuntime = await buildPlaywrightSuiteRuntime({
-      baseUrl: PLAYWRIGHT_BASE_URL,
-      host: PLAYWRIGHT_HOST,
-      env: process.env,
+  let playwrightRuntime = null;
+  try {
+    const unit = await runCommand({
+      command: 'npx',
+      commandArgs: ['vitest', 'run', ...KANGUR_UNIT_TESTS],
+      label: 'kangur-unit',
     });
-    const e2eCommand = commandToText(
-      playwrightRuntime.preferredBrowserNodeBinDir
-        ? path.join(playwrightRuntime.preferredBrowserNodeBinDir, 'npx')
-        : 'npx',
-      e2eArgs
-    );
 
-    const e2eEnv = {
-      ALLOW_UNSUPPORTED_NODE_DEV: '1',
-      SKIP_PORTABLE_PATH_BOOTSTRAP: '1',
-      ...playwrightRuntime.env,
+    let e2e = null;
+    if (includeE2E) {
+      const e2eArgs = ['playwright', 'test', ...KANGUR_E2E_TESTS, '--workers=1'];
+      playwrightRuntime = await acquireRuntimeLease({
+        rootDir: root,
+        appId: 'web',
+        mode: 'dev',
+        agentId: PLAYWRIGHT_AGENT_ID,
+        host: PLAYWRIGHT_HOST,
+        env: process.env,
+      });
+      const artifacts = resolvePlaywrightRunArtifacts({
+        rootDir: root,
+        appId: 'web',
+        agentId: playwrightRuntime.agentId ?? PLAYWRIGHT_AGENT_ID,
+        runId: `${process.env['TEST_RUN_ID'] ?? 'kangur-perf'}-e2e`,
+        env: process.env,
+      });
+
+      const e2eEnv = {
+        SKIP_PORTABLE_PATH_BOOTSTRAP: '1',
+        ...buildBrokeredPlaywrightEnv({
+          env: process.env,
+          host: playwrightRuntime.host,
+          baseUrl: playwrightRuntime.baseUrl,
+          artifacts,
+          preferredBrowserNodeBinDir: playwrightRuntime.preferredBrowserNodeBinDir,
+          agentId: playwrightRuntime.agentId ?? PLAYWRIGHT_AGENT_ID,
+          leaseKey: playwrightRuntime.leaseKey,
+          distDir: playwrightRuntime.distDir,
+        }),
+      };
+
+      console.log(
+        `[kangur-perf] e2e-runtime=${playwrightRuntime.source}${playwrightRuntime.reused ? ':reused' : ':started'} host=${playwrightRuntime.host} baseURL=${playwrightRuntime.baseUrl} agent=${playwrightRuntime.agentId}`
+      );
+
+      e2e = await runCommand({
+        command: resolveNpxExecutable({
+          preferredBrowserNodeBinDir: playwrightRuntime.preferredBrowserNodeBinDir,
+        }),
+        commandArgs: e2eArgs,
+        label: 'kangur-e2e',
+        env: e2eEnv,
+      });
+
+      if (allowInfraE2EFail && e2e.status === 'fail' && isInfraE2EFailure(e2e.output)) {
+        e2e.status = 'infra_fail';
+      }
+    }
+
+    const fileMetrics = await Promise.all(BASELINE_FILE_SET.map((item) => toFileMetrics(item)));
+    const bundleRisk = {
+      files: [...fileMetrics].sort((left, right) => right.bytes - left.bytes),
+      totalBytes: fileMetrics.reduce((sum, item) => sum + item.bytes, 0),
+      totalLines: fileMetrics.reduce((sum, item) => sum + item.lines, 0),
     };
 
+    const summary = {
+      failedRuns: [unit, e2e].filter((runItem) => runItem && runItem.status === 'fail').length,
+      infraFailures: [unit, e2e].filter((runItem) => runItem && runItem.status === 'infra_fail').length,
+    };
+
+    const payload = {
+      generatedAt: new Date().toISOString(),
+      strictMode,
+      includeE2E,
+      allowInfraE2EFail,
+      runtime: playwrightRuntime
+        ? {
+            source: playwrightRuntime.source,
+            reused: playwrightRuntime.reused,
+            baseUrl: playwrightRuntime.baseUrl,
+            agentId: playwrightRuntime.agentId,
+            leaseKey: playwrightRuntime.leaseKey ?? null,
+          }
+        : null,
+      unit,
+      e2e,
+      bundleRisk,
+      summary,
+    };
+
+    await fs.mkdir(outDir, { recursive: true });
+    const stamp = payload.generatedAt.replace(/[:.]/g, '-');
+
+    const latestJsonPath = path.join(outDir, 'kangur-performance-latest.json');
+    const latestMdPath = path.join(outDir, 'kangur-performance-latest.md');
+    const historicalJsonPath = path.join(outDir, `kangur-performance-${stamp}.json`);
+    const historicalMdPath = path.join(outDir, `kangur-performance-${stamp}.md`);
+
+    await fs.writeFile(latestJsonPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+    await fs.writeFile(latestMdPath, toMarkdown(payload), 'utf8');
+
+    if (shouldWriteHistory) {
+      await fs.writeFile(historicalJsonPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+      await fs.writeFile(historicalMdPath, toMarkdown(payload), 'utf8');
+    }
+
     console.log(
-      `[kangur-perf] e2e-config existingServer=${String(playwrightRuntime.reuseExistingServer)} env=${String(process.env['PLAYWRIGHT_USE_EXISTING_SERVER'] ?? '')} host=${PLAYWRIGHT_HOST} baseURL=${PLAYWRIGHT_BASE_URL}`
+      `[kangur-perf] unit=${unit.status.toUpperCase()} (${formatDuration(unit.durationMs)}) e2e=${e2e ? `${e2e.status.toUpperCase()} (${formatDuration(e2e.durationMs)})` : 'SKIPPED'}`
     );
-
-    let existingServerWarning = '';
-    if (
-      process.env['PLAYWRIGHT_USE_EXISTING_SERVER'] === 'true' &&
-      !(await detectExistingPlaywrightServer({ baseUrl: PLAYWRIGHT_BASE_URL }))
-    ) {
-      existingServerWarning = `[kangur-perf] PLAYWRIGHT_USE_EXISTING_SERVER=true but preflight to ${PLAYWRIGHT_BASE_URL} failed. Proceeding with Playwright run.`;
+    console.log(`Wrote ${path.relative(root, latestJsonPath)}`);
+    console.log(`Wrote ${path.relative(root, latestMdPath)}`);
+    if (shouldWriteHistory) {
+      console.log(`Wrote ${path.relative(root, historicalJsonPath)}`);
+      console.log(`Wrote ${path.relative(root, historicalMdPath)}`);
     }
 
-    e2e = await runCommand({
-      command: playwrightRuntime.preferredBrowserNodeBinDir
-        ? path.join(playwrightRuntime.preferredBrowserNodeBinDir, 'npx')
-        : 'npx',
-      commandArgs: e2eArgs,
-      label: 'kangur-e2e',
-      env: e2eEnv,
-    });
-
-    if (existingServerWarning) {
-      e2e.output = `${existingServerWarning}\n${e2e.output}`.trim();
+    if (strictMode && summary.failedRuns > 0) {
+      process.exitCode = 1;
     }
-
-    if (allowInfraE2EFail && e2e.status === 'fail' && isInfraE2EFailure(e2e.output)) {
-      e2e.status = 'infra_fail';
+  } finally {
+    if (shouldStopPlaywrightRuntime && playwrightRuntime?.managed && playwrightRuntime.leaseFilePath) {
+      await stopBrokerRuntimeLease({
+        lease: playwrightRuntime,
+        leaseFilePath: playwrightRuntime.leaseFilePath,
+      });
     }
-  }
-
-  const fileMetrics = await Promise.all(BASELINE_FILE_SET.map((item) => toFileMetrics(item)));
-  const bundleRisk = {
-    files: [...fileMetrics].sort((left, right) => right.bytes - left.bytes),
-    totalBytes: fileMetrics.reduce((sum, item) => sum + item.bytes, 0),
-    totalLines: fileMetrics.reduce((sum, item) => sum + item.lines, 0),
-  };
-
-  const summary = {
-    failedRuns: [unit, e2e].filter((runItem) => runItem && runItem.status === 'fail').length,
-    infraFailures: [unit, e2e].filter((runItem) => runItem && runItem.status === 'infra_fail').length,
-  };
-
-  const payload = {
-    generatedAt: new Date().toISOString(),
-    strictMode,
-    includeE2E,
-    allowInfraE2EFail,
-    unit,
-    e2e,
-    bundleRisk,
-    summary,
-  };
-
-  await fs.mkdir(outDir, { recursive: true });
-  const stamp = payload.generatedAt.replace(/[:.]/g, '-');
-
-  const latestJsonPath = path.join(outDir, 'kangur-performance-latest.json');
-  const latestMdPath = path.join(outDir, 'kangur-performance-latest.md');
-  const historicalJsonPath = path.join(outDir, `kangur-performance-${stamp}.json`);
-  const historicalMdPath = path.join(outDir, `kangur-performance-${stamp}.md`);
-
-  await fs.writeFile(latestJsonPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
-  await fs.writeFile(latestMdPath, toMarkdown(payload), 'utf8');
-
-  if (shouldWriteHistory) {
-    await fs.writeFile(historicalJsonPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
-    await fs.writeFile(historicalMdPath, toMarkdown(payload), 'utf8');
-  }
-
-  console.log(
-    `[kangur-perf] unit=${unit.status.toUpperCase()} (${formatDuration(unit.durationMs)}) e2e=${e2e ? `${e2e.status.toUpperCase()} (${formatDuration(e2e.durationMs)})` : 'SKIPPED'}`
-  );
-  console.log(`Wrote ${path.relative(root, latestJsonPath)}`);
-  console.log(`Wrote ${path.relative(root, latestMdPath)}`);
-  if (shouldWriteHistory) {
-    console.log(`Wrote ${path.relative(root, historicalJsonPath)}`);
-    console.log(`Wrote ${path.relative(root, historicalMdPath)}`);
-  }
-
-  if (strictMode && summary.failedRuns > 0) {
-    process.exit(1);
   }
 };
 

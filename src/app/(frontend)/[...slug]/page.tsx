@@ -4,7 +4,10 @@ import { JSX } from 'react';
 import { CmsPageRenderer } from '@/features/cms/components/frontend/CmsPageRenderer';
 import { CmsPageShell } from '@/features/cms/components/frontend/CmsPageShell';
 import { ThemeProvider } from '@/features/cms/components/frontend/ThemeProvider';
+import { KangurPublicApp } from '@/features/kangur/ui/KangurPublicApp';
+import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
 
+import { getFrontPageSetting, shouldUseFrontPageAppRedirect } from '../home-helpers';
 import { buildSlugMetadata, loadSlugRenderData, resolveSlugToPage } from './slug-page-data';
 
 import type { Metadata } from 'next';
@@ -17,6 +20,14 @@ interface SlugPageProps {
 
 export async function generateMetadata({ params }: SlugPageProps): Promise<Metadata> {
   const { slug } = await params;
+  if (shouldUseFrontPageAppRedirect()) {
+    const frontPageSetting = await getFrontPageSetting();
+    if (getFrontPagePublicOwner(frontPageSetting) === 'kangur') {
+      return {
+        title: slug[0]?.trim().toLowerCase() === 'login' ? 'Kangur Login' : 'Kangur',
+      };
+    }
+  }
   const page = await resolveSlugToPage(slug);
 
   if (!page) {
@@ -28,6 +39,12 @@ export async function generateMetadata({ params }: SlugPageProps): Promise<Metad
 
 export default async function CmsSlugPage({ params }: SlugPageProps): Promise<JSX.Element> {
   const { slug } = await params;
+  if (shouldUseFrontPageAppRedirect()) {
+    const frontPageSetting = await getFrontPageSetting();
+    if (getFrontPagePublicOwner(frontPageSetting) === 'kangur') {
+      return <KangurPublicApp slug={slug} basePath='/' />;
+    }
+  }
   const page = await resolveSlugToPage(slug);
 
   if (!page) {

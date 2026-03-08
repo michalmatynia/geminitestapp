@@ -1,0 +1,851 @@
+'use client';
+
+import { useCallback, useEffect, useMemo, useState } from 'react';
+
+import type { CompositeLayerConfig } from '@/shared/contracts/image-studio';
+import { internalError } from '@/shared/errors/app-error';
+import { useToast } from '@/shared/ui';
+
+import { useSlotsActions, useSlotsState } from './SlotsContext';
+import type {
+  VersionGraphActions,
+  VersionGraphFilterType,
+  VersionGraphState,
+} from './version-graph-context-types';
+import {
+  VERSION_GRAPH_IMAGE_PRELOAD_LIMIT,
+  asRecord,
+  collectHiddenIds,
+  matchesFilter,
+  preloadVersionGraphImage,
+  remapMetadataForDetachedCopy,
+} from './version-graph-context-utils';
+import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/utils/image-src';
+import { readMeta } from '@/features/ai/image-studio/utils/metadata';
+import {
+  computeTimelineLayout,
+  computeVersionGraph,
+  type LayoutMode,
+} from '@/features/ai/image-studio/utils/version-graph';
+import { resolveScopedVersionGraphSlots } from '@/features/ai/image-studio/utils/version-graph-scope';
+
+export function useVersionGraphRuntime(): {
+  state: VersionGraphState;
+  actions: VersionGraphActions;
+} {
+  const { slots, selectedSlotId } = useSlotsState();
+  const { setSelectedSlotId, setWorkingSlotId, createSlots, updateSlotMutation } =
+    useSlotsActions();
+  const { toast } = useToast();
+
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+  const [mergeMode, setMergeMode] = useState(false);
+  const [mergeSelectedIds, setMergeSelectedIds] = useState<string[]>([]);
+  const [collapsedNodeIds, setCollapsedNodeIds] = useState<Set<string>>(new Set());
+  const [compositeMode, setCompositeMode] = useState(false);
+  const [compositeSelectedIds, setCompositeSelectedIds] = useState<string[]>([]);
+  const [compositeResultCache, setCompositeResultCache] = useState<Map<string, string>>(new Map());
+  const [compositeLoading, setCompositeLoading] = useState(false);
+  const [filterQuery, setFilterQuery] = useState('');
+  const [filterTypes, setFilterTypes] = useState<Set<VersionGraphFilterType>>(new Set());
+  const [filterHasMask, setFilterHasMask] = useState<boolean | null>(null);
+  const [filterLeafOnly, setFilterLeafOnly] = useState(false);
+  const [layoutMode, setLayoutMode] = useState<LayoutMode>('dag');
+  const [isolatedNodeId, setIsolatedNodeId] = useState<string | null>(null);
+  const [compareMode, setCompareMode] = useState(false);
+  const [compareNodeIds, setCompareNodeIds] = useState<[string, string] | null>(null);
+
+  const activeSlotId = useMemo(() => selectedSlotId ?? null, [selectedSlotId]);
+
+  const scopedSlots = useMemo(
+    () => resolveScopedVersionGraphSlots(slots, activeSlotId),
+    [slots, activeSlotId]
+  );
+  const baseGraph = useMemo(() => computeVersionGraph(scopedSlots), [scopedSlots]);
+
+  useEffect(() => {
+    setSelectedNodeId(activeSlotId);
+    setHoveredNodeId(null);
+    setMergeMode(false);
+    setMergeSelectedIds([]);
+    setCompositeMode(false);
+    setCompositeSelectedIds([]);
+    setCompositeResultCache(new Map());
+    setCompositeLoading(false);
+    setCollapsedNodeIds(new Set());
+    setIsolatedNodeId(null);
+    setCompareMode(false);
+    setCompareNodeIds(null);
+  }, [activeSlotId]);
+
+  const layoutGraph = useMemo(() => {
+    if (layoutMode === 'dag') {
+      return baseGraph;
+    }
+    const orientation = layoutMode === 'timeline-h' ? 'horizontal' : 'vertical';
+    const result = computeTimelineLayout(baseGraph.nodes, baseGraph.edges, orientation);
+    return { ...baseGraph, nodes: result.nodes, edges: result.edges };
+  }, [baseGraph, layoutMode]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    const candidates = layoutGraph.nodes.slice(0, VERSION_GRAPH_IMAGE_PRELOAD_LIMIT);
+    candidates.forEach((node) => {
+      const src = getImageStudioSlotImageSrc(node.slot);
+      if (!src) {
+        return;
+      }
+      preloadVersionGraphImage(src);
+    });
+  }, [layoutGraph.nodes]);
+
+  const hiddenIds = useMemo(
+    () => collectHiddenIds(collapsedNodeIds, layoutGraph.nodes),
+    [collapsedNodeIds, layoutGraph.nodes]
+  );
+
+  const visibleNodes = useMemo(
+    () => layoutGraph.nodes.filter((node) => !hiddenIds.has(node.id)),
+    [layoutGraph.nodes, hiddenIds]
+  );
+  const visibleEdges = useMemo(
+    () => layoutGraph.edges.filter((edge) => !hiddenIds.has(edge.source) && !hiddenIds.has(edge.target)),
+    [layoutGraph.edges, hiddenIds]
+  );
+
+  const filteredNodeIds = useMemo<Set<string> | null>(() => {
+    const hasFilter =
+      filterQuery || filterTypes.size > 0 || filterHasMask !== null || filterLeafOnly;
+    if (!hasFilter) {
+      return null;
+    }
+
+    const matched = new Set<string>();
+    for (const node of visibleNodes) {
+      if (!matchesFilter(node, filterQuery, filterTypes, filterHasMask)) {
+        continue;
+      }
+      if (filterLeafOnly && node.childIds.length > 0) {
+        continue;
+      }
+      matched.add(node.id);
+    }
+    return matched;
+  }, [visibleNodes, filterQuery, filterTypes, filterHasMask, filterLeafOnly]);
+
+  const graphStats = useMemo(() => {
+    let baseCount = 0;
+    let generationCount = 0;
+    let mergeCount = 0;
+    let compositeCount = 0;
+    let maxDepth = 0;
+    let maskedCount = 0;
+
+    for (const node of layoutGraph.nodes) {
+      if (node.type === 'base') {
+        baseCount += 1;
+      } else if (node.type === 'generation') {
+        generationCount += 1;
+      } else if (node.type === 'composite') {
+        compositeCount += 1;
+      } else {
+        mergeCount += 1;
+      }
+      if (node.depth > maxDepth) {
+        maxDepth = node.depth;
+      }
+      if (node.hasMask) {
+        maskedCount += 1;
+      }
+    }
+
+    return {
+      totalNodes: layoutGraph.nodes.length,
+      baseCount,
+      generationCount,
+      mergeCount,
+      compositeCount,
+      maxDepth,
+      maskedCount,
+    };
+  }, [layoutGraph.nodes]);
+
+  const isolatedNodeIds = useMemo<Set<string> | null>(() => {
+    if (!isolatedNodeId) {
+      return null;
+    }
+
+    const nodeById = new Map(layoutGraph.nodes.map((node) => [node.id, node]));
+    const result = new Set<string>([isolatedNodeId]);
+
+    const upQueue = [isolatedNodeId];
+    while (upQueue.length > 0) {
+      const id = upQueue.shift();
+      if (!id) {
+        continue;
+      }
+      const node = nodeById.get(id);
+      if (!node) {
+        continue;
+      }
+      for (const parentId of node.parentIds) {
+        if (result.has(parentId)) {
+          continue;
+        }
+        result.add(parentId);
+        upQueue.push(parentId);
+      }
+    }
+
+    const downQueue = [isolatedNodeId];
+    while (downQueue.length > 0) {
+      const id = downQueue.shift();
+      if (!id) {
+        continue;
+      }
+      const node = nodeById.get(id);
+      if (!node) {
+        continue;
+      }
+      for (const childId of node.childIds) {
+        if (result.has(childId)) {
+          continue;
+        }
+        result.add(childId);
+        downQueue.push(childId);
+      }
+    }
+
+    return result;
+  }, [isolatedNodeId, layoutGraph.nodes]);
+
+  const selectNode = useCallback((slotId: string | null) => {
+    setSelectedNodeId(slotId);
+  }, []);
+
+  const hoverNode = useCallback((slotId: string | null) => {
+    setHoveredNodeId(slotId);
+  }, []);
+
+  const activateNode = useCallback(
+    (slotId: string) => {
+      setWorkingSlotId(slotId);
+      setSelectedNodeId(slotId);
+      setSelectedSlotId(slotId);
+    },
+    [setWorkingSlotId, setSelectedSlotId]
+  );
+
+  const detachSubtree = useCallback(
+    async (slotId: string) => {
+      const nodeById = new Map(layoutGraph.nodes.map((node) => [node.id, node]));
+      const rootNode = nodeById.get(slotId);
+      if (!rootNode) {
+        toast('Selected node no longer exists.', { variant: 'error' });
+        return;
+      }
+
+      const subtreeIds = new Set<string>([slotId]);
+      const queue = [slotId];
+      while (queue.length > 0) {
+        const currentId = queue.shift();
+        if (!currentId) {
+          continue;
+        }
+        const currentNode = nodeById.get(currentId);
+        if (!currentNode) {
+          continue;
+        }
+        currentNode.childIds.forEach((childId) => {
+          if (subtreeIds.has(childId)) {
+            return;
+          }
+          subtreeIds.add(childId);
+          queue.push(childId);
+        });
+      }
+
+      const subtreeNodes = layoutGraph.nodes.filter((node) => subtreeIds.has(node.id));
+      if (subtreeNodes.length === 0) {
+        toast('No detachable subtree found for that node.', { variant: 'error' });
+        return;
+      }
+
+      const orderedNodes = [...subtreeNodes].sort((a, b) => {
+        if (a.id === slotId) {
+          return -1;
+        }
+        if (b.id === slotId) {
+          return 1;
+        }
+        if (a.depth !== b.depth) {
+          return a.depth - b.depth;
+        }
+        return a.id.localeCompare(b.id);
+      });
+
+      const idMap = new Map<string, string>();
+      let detachedRootId: string | null = null;
+
+      try {
+        for (const node of orderedNodes) {
+          const slot = node.slot;
+          const metadata = remapMetadataForDetachedCopy(
+            asRecord(slot.metadata),
+            idMap,
+            node.id === slotId
+          );
+          const createdSlots = await createSlots([
+            {
+              name: slot.name ?? null,
+              folderPath: slot.folderPath ?? null,
+              imageFileId: slot.imageFileId ?? null,
+              imageUrl: slot.imageUrl ?? null,
+              imageBase64: slot.imageBase64 ?? null,
+              asset3dId: slot.asset3dId ?? null,
+              metadata,
+            },
+          ]);
+
+          const created = createdSlots[0];
+          if (!created) {
+            throw internalError('detached copy failed');
+          }
+
+          idMap.set(node.id, created.id);
+          if (node.id === slotId) {
+            detachedRootId = created.id;
+          }
+        }
+      } catch {
+        toast('Failed to detach the selected subtree.', { variant: 'error' });
+        return;
+      }
+
+      if (!detachedRootId) {
+        toast('Detached subtree was created, but no root was returned.', { variant: 'error' });
+        return;
+      }
+
+      setWorkingSlotId(detachedRootId);
+      setSelectedSlotId(detachedRootId);
+      setSelectedNodeId(detachedRootId);
+      toast(
+        `Detached ${subtreeNodes.length} ${subtreeNodes.length === 1 ? 'node' : 'nodes'} into an independent card tree.`,
+        { variant: 'success' }
+      );
+    },
+    [layoutGraph.nodes, createSlots, setWorkingSlotId, setSelectedSlotId, toast]
+  );
+
+  const toggleMergeMode = useCallback(() => {
+    setMergeMode((previous) => {
+      if (previous) {
+        setMergeSelectedIds([]);
+      } else {
+        setCompositeMode(false);
+        setCompositeSelectedIds([]);
+      }
+      return !previous;
+    });
+  }, []);
+
+  const toggleMergeSelection = useCallback((slotId: string) => {
+    setMergeSelectedIds((previous) =>
+      previous.includes(slotId) ? previous.filter((id) => id !== slotId) : [...previous, slotId]
+    );
+  }, []);
+
+  const clearMergeSelection = useCallback(() => {
+    setMergeSelectedIds([]);
+  }, []);
+
+  const executeMerge = useCallback(async () => {
+    if (mergeSelectedIds.length < 2) {
+      toast('Select at least 2 nodes to merge.', { variant: 'info' });
+      return;
+    }
+
+    const selectedSlots = mergeSelectedIds
+      .map((id) => slots.find((slot) => slot.id === id))
+      .filter(Boolean);
+
+    if (selectedSlots.length < 2) {
+      toast('Selected nodes no longer exist.', { variant: 'error' });
+      return;
+    }
+
+    try {
+      const created = await createSlots([
+        {
+          name: `Merge (${mergeSelectedIds.length})`,
+          folderPath: selectedSlots[0]!.folderPath,
+          metadata: {
+            role: 'merge',
+            sourceSlotIds: mergeSelectedIds,
+            relationType: 'merge:output',
+          },
+        },
+      ]);
+
+      const newSlot = created[0];
+      if (newSlot) {
+        setSelectedNodeId(newSlot.id);
+        setSelectedSlotId(newSlot.id);
+      }
+
+      setMergeMode(false);
+      setMergeSelectedIds([]);
+      toast('Merge node created.', { variant: 'success' });
+    } catch {
+      toast('Failed to create merge node.', { variant: 'error' });
+    }
+  }, [mergeSelectedIds, slots, createSlots, setSelectedSlotId, toast]);
+
+  const toggleCollapse = useCallback((nodeId: string) => {
+    setCollapsedNodeIds((previous) => {
+      const next = new Set(previous);
+      if (next.has(nodeId)) {
+        next.delete(nodeId);
+      } else {
+        next.add(nodeId);
+      }
+      return next;
+    });
+  }, []);
+
+  const expandAll = useCallback(() => {
+    setCollapsedNodeIds(new Set());
+  }, []);
+
+  const collapseAll = useCallback(() => {
+    const withChildren = new Set<string>();
+    for (const node of layoutGraph.nodes) {
+      if (node.childIds.length > 0) {
+        withChildren.add(node.id);
+      }
+    }
+    setCollapsedNodeIds(withChildren);
+  }, [layoutGraph.nodes]);
+
+  const toggleCompositeMode = useCallback(() => {
+    setCompositeMode((previous) => {
+      if (previous) {
+        setCompositeSelectedIds([]);
+        setCompositeResultCache(new Map());
+      } else {
+        setMergeMode(false);
+        setMergeSelectedIds([]);
+      }
+      return !previous;
+    });
+  }, []);
+
+  const toggleCompositeSelection = useCallback((slotId: string) => {
+    setCompositeSelectedIds((previous) =>
+      previous.includes(slotId) ? previous.filter((id) => id !== slotId) : [...previous, slotId]
+    );
+  }, []);
+
+  const clearCompositeSelection = useCallback(() => {
+    setCompositeSelectedIds([]);
+  }, []);
+
+  const refreshCompositePreviewInternal = useCallback(
+    async (slotId: string, layers: CompositeLayerConfig[]) => {
+      setCompositeLoading(true);
+      try {
+        const response = await fetch('/api/image-studio/composite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ layers }),
+        });
+        if (!response.ok) {
+          throw internalError('Composite API failed');
+        }
+        const data = (await response.json()) as { resultImageBase64: string };
+        setCompositeResultCache((previous) => {
+          const next = new Map(previous);
+          next.set(slotId, data.resultImageBase64);
+          return next;
+        });
+        await updateSlotMutation.mutateAsync({
+          id: slotId,
+          data: { imageBase64: data.resultImageBase64 },
+        });
+      } catch {
+        toast('Failed to generate composite preview.', { variant: 'error' });
+      } finally {
+        setCompositeLoading(false);
+      }
+    },
+    [updateSlotMutation, toast]
+  );
+
+  const executeComposite = useCallback(async () => {
+    if (compositeSelectedIds.length < 2) {
+      toast('Select at least 2 nodes to composite.', { variant: 'info' });
+      return;
+    }
+
+    const selectedSlots = compositeSelectedIds
+      .map((id) => slots.find((slot) => slot.id === id))
+      .filter(Boolean);
+
+    if (selectedSlots.length < 2) {
+      toast('Selected nodes no longer exist.', { variant: 'error' });
+      return;
+    }
+
+    try {
+      const layers: CompositeLayerConfig[] = compositeSelectedIds.map((slotId, index) => ({
+        slotId,
+        order: index,
+      }));
+
+      const created = await createSlots([
+        {
+          name: `Composite (${compositeSelectedIds.length})`,
+          folderPath: selectedSlots[0]!.folderPath,
+          metadata: {
+            role: 'composite',
+            sourceSlotIds: compositeSelectedIds,
+            relationType: 'composite:output',
+            compositeConfig: { layers },
+          },
+        },
+      ]);
+
+      const newSlot = created[0];
+      if (newSlot) {
+        setSelectedNodeId(newSlot.id);
+        setSelectedSlotId(newSlot.id);
+        void refreshCompositePreviewInternal(newSlot.id, layers);
+      }
+
+      setCompositeMode(false);
+      setCompositeSelectedIds([]);
+      toast('Composite node created.', { variant: 'success' });
+    } catch {
+      toast('Failed to create composite node.', { variant: 'error' });
+    }
+  }, [
+    compositeSelectedIds,
+    slots,
+    createSlots,
+    setSelectedSlotId,
+    toast,
+    refreshCompositePreviewInternal,
+  ]);
+
+  const refreshCompositePreview = useCallback(
+    async (compositeSlotId: string) => {
+      const slot = slots.find((entry) => entry.id === compositeSlotId);
+      if (!slot) {
+        return;
+      }
+      const meta = readMeta(slot);
+      const layers = meta.compositeConfig?.layers;
+      if (!layers || layers.length === 0) {
+        return;
+      }
+      await refreshCompositePreviewInternal(compositeSlotId, layers);
+    },
+    [slots, refreshCompositePreviewInternal]
+  );
+
+  const reorderCompositeLayer = useCallback(
+    async (compositeSlotId: string, fromIndex: number, toIndex: number) => {
+      const slot = slots.find((entry) => entry.id === compositeSlotId);
+      if (!slot) {
+        return;
+      }
+      const meta = readMeta(slot);
+      const layers = meta.compositeConfig?.layers;
+      if (!layers) {
+        return;
+      }
+
+      const reordered = [...layers];
+      const [moved] = reordered.splice(fromIndex, 1);
+      if (!moved) {
+        return;
+      }
+      reordered.splice(toIndex, 0, moved);
+      const updated = reordered.map((layer, index) => ({ ...layer, order: index }));
+
+      setCompositeResultCache((previous) => {
+        const next = new Map(previous);
+        next.delete(compositeSlotId);
+        return next;
+      });
+
+      await updateSlotMutation.mutateAsync({
+        id: compositeSlotId,
+        data: {
+          metadata: {
+            ...meta,
+            compositeConfig: { ...meta.compositeConfig, layers: updated },
+          } as Record<string, unknown>,
+        },
+      });
+
+      void refreshCompositePreviewInternal(compositeSlotId, updated);
+    },
+    [slots, updateSlotMutation, refreshCompositePreviewInternal]
+  );
+
+  const flattenComposite = useCallback(
+    async (compositeSlotId: string) => {
+      const slot = slots.find((entry) => entry.id === compositeSlotId);
+      if (!slot) {
+        return;
+      }
+      const meta = readMeta(slot);
+      const layers = meta.compositeConfig?.layers;
+      if (!layers || layers.length === 0) {
+        return;
+      }
+
+      setCompositeLoading(true);
+      try {
+        const response = await fetch('/api/image-studio/composite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ layers, flatten: true }),
+        });
+        if (!response.ok) {
+          throw internalError('Composite flatten API failed');
+        }
+        const data = (await response.json()) as { resultImageBase64: string };
+
+        const created = await createSlots([
+          {
+            name: `Flattened (${layers.length})`,
+            folderPath: slot.folderPath,
+            imageBase64: data.resultImageBase64,
+            metadata: {
+              role: 'composite',
+              sourceSlotId: compositeSlotId,
+              relationType: 'composite:flatten',
+            },
+          },
+        ]);
+
+        const flatSlot = created[0];
+        if (flatSlot) {
+          await updateSlotMutation.mutateAsync({
+            id: compositeSlotId,
+            data: {
+              metadata: {
+                ...meta,
+                compositeConfig: { ...meta.compositeConfig, layers, flattenedSlotId: flatSlot.id },
+              } as Record<string, unknown>,
+            },
+          });
+          setSelectedNodeId(flatSlot.id);
+          setSelectedSlotId(flatSlot.id);
+        }
+
+        toast('Composite flattened to new node.', { variant: 'success' });
+      } catch {
+        toast('Failed to flatten composite.', { variant: 'error' });
+      } finally {
+        setCompositeLoading(false);
+      }
+    },
+    [slots, createSlots, updateSlotMutation, setSelectedSlotId, toast]
+  );
+
+  const setFilterQueryAction = useCallback((query: string) => {
+    setFilterQuery(query);
+  }, []);
+
+  const toggleFilterType = useCallback((type: VersionGraphFilterType) => {
+    setFilterTypes((previous) => {
+      const next = new Set(previous);
+      if (next.has(type)) {
+        next.delete(type);
+      } else {
+        next.add(type);
+      }
+      return next;
+    });
+  }, []);
+
+  const setFilterHasMaskAction = useCallback((value: boolean | null) => {
+    setFilterHasMask(value);
+  }, []);
+
+  const clearFilters = useCallback(() => {
+    setFilterQuery('');
+    setFilterTypes(new Set());
+    setFilterHasMask(null);
+    setFilterLeafOnly(false);
+  }, []);
+
+  const toggleFilterLeafOnly = useCallback(() => {
+    setFilterLeafOnly((previous) => !previous);
+  }, []);
+
+  const setLayoutModeAction = useCallback((mode: LayoutMode) => {
+    setLayoutMode(mode);
+  }, []);
+
+  const isolateBranch = useCallback((nodeId: string | null) => {
+    setIsolatedNodeId(nodeId);
+  }, []);
+
+  const setAnnotation = useCallback(
+    async (nodeId: string, text: string) => {
+      const slot = slots.find((entry) => entry.id === nodeId);
+      if (!slot) {
+        return;
+      }
+      const existingMeta = readMeta(slot);
+      await updateSlotMutation.mutateAsync({
+        id: nodeId,
+        data: {
+          metadata: { ...existingMeta, annotation: text || undefined } as Record<string, unknown>,
+        },
+      });
+    },
+    [slots, updateSlotMutation]
+  );
+
+  const toggleCompareMode = useCallback(() => {
+    setCompareMode((previous) => {
+      if (previous) {
+        setCompareNodeIds(null);
+      }
+      return !previous;
+    });
+  }, []);
+
+  const setCompareNodeIdsAction = useCallback((ids: [string, string] | null) => {
+    setCompareNodeIds(ids);
+  }, []);
+
+  const state = useMemo<VersionGraphState>(
+    () => ({
+      nodes: visibleNodes,
+      edges: visibleEdges,
+      allNodes: layoutGraph.nodes,
+      rootNodes: layoutGraph.rootNodes,
+      selectedNodeId,
+      hoveredNodeId,
+      mergeMode,
+      mergeSelectedIds,
+      collapsedNodeIds,
+      filterQuery,
+      filterTypes,
+      filterHasMask,
+      filteredNodeIds,
+      filterLeafOnly,
+      layoutMode,
+      graphStats,
+      compositeMode,
+      compositeSelectedIds,
+      compositeResultCache,
+      compositeLoading,
+      isolatedNodeId,
+      isolatedNodeIds,
+      compareMode,
+      compareNodeIds,
+    }),
+    [
+      visibleNodes,
+      visibleEdges,
+      layoutGraph.nodes,
+      layoutGraph.rootNodes,
+      selectedNodeId,
+      hoveredNodeId,
+      mergeMode,
+      mergeSelectedIds,
+      collapsedNodeIds,
+      filterQuery,
+      filterTypes,
+      filterHasMask,
+      filteredNodeIds,
+      filterLeafOnly,
+      layoutMode,
+      graphStats,
+      compositeMode,
+      compositeSelectedIds,
+      compositeResultCache,
+      compositeLoading,
+      isolatedNodeId,
+      isolatedNodeIds,
+      compareMode,
+      compareNodeIds,
+    ]
+  );
+
+  const actions = useMemo<VersionGraphActions>(
+    () => ({
+      selectNode,
+      hoverNode,
+      activateNode,
+      detachSubtree,
+      toggleMergeMode,
+      toggleMergeSelection,
+      clearMergeSelection,
+      executeMerge,
+      toggleCollapse,
+      expandAll,
+      collapseAll,
+      toggleCompositeMode,
+      toggleCompositeSelection,
+      clearCompositeSelection,
+      executeComposite,
+      reorderCompositeLayer,
+      flattenComposite,
+      refreshCompositePreview,
+      setFilterQuery: setFilterQueryAction,
+      toggleFilterType,
+      setFilterHasMask: setFilterHasMaskAction,
+      toggleFilterLeafOnly,
+      clearFilters,
+      setLayoutMode: setLayoutModeAction,
+      isolateBranch,
+      setAnnotation,
+      toggleCompareMode,
+      setCompareNodeIds: setCompareNodeIdsAction,
+    }),
+    [
+      selectNode,
+      hoverNode,
+      activateNode,
+      detachSubtree,
+      toggleMergeMode,
+      toggleMergeSelection,
+      clearMergeSelection,
+      executeMerge,
+      toggleCollapse,
+      expandAll,
+      collapseAll,
+      toggleCompositeMode,
+      toggleCompositeSelection,
+      clearCompositeSelection,
+      executeComposite,
+      reorderCompositeLayer,
+      flattenComposite,
+      refreshCompositePreview,
+      setFilterQueryAction,
+      toggleFilterType,
+      setFilterHasMaskAction,
+      toggleFilterLeafOnly,
+      clearFilters,
+      setLayoutModeAction,
+      isolateBranch,
+      setAnnotation,
+      toggleCompareMode,
+      setCompareNodeIdsAction,
+    ]
+  );
+
+  return { state, actions };
+}

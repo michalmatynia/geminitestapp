@@ -2,6 +2,7 @@ export const FRONT_PAGE_ALLOWED = new Set(['cms', 'products', 'kangur', 'chatbot
 
 export type FrontPageStoredApp = 'cms' | 'products' | 'kangur' | 'chatbot' | 'notes';
 export type FrontPageSelectableApp = Exclude<FrontPageStoredApp, 'products'>;
+export type FrontPagePublicOwner = 'cms' | 'kangur';
 export type FrontPageOption = {
   id: FrontPageSelectableApp;
   title: string;
@@ -10,7 +11,7 @@ export type FrontPageOption = {
 };
 export const FRONT_PAGE_APP_ROUTE: Record<FrontPageSelectableApp, string> = {
   cms: '/',
-  kangur: '/kangur',
+  kangur: '/',
   chatbot: '/admin/chatbot',
   notes: '/admin/notes',
 };
@@ -25,7 +26,7 @@ export const FRONT_PAGE_OPTIONS: FrontPageOption[] = [
   {
     id: 'kangur',
     title: 'Kangur',
-    description: 'Open the Kangur application on the home page.',
+    description: 'Mount Kangur at / and let it own the full public frontend.',
     route: FRONT_PAGE_APP_ROUTE.kangur,
   },
   {
@@ -56,8 +57,15 @@ export const getFrontPageRedirectPath = (
   value: string | null | undefined
 ): string | null => {
   const app = normalizeFrontPageApp(value);
-  if (!app || app === 'cms') {
+  if (!app || app === 'cms' || app === 'kangur') {
     return null;
   }
   return FRONT_PAGE_APP_ROUTE[app];
+};
+
+export const getFrontPagePublicOwner = (
+  value: string | null | undefined
+): FrontPagePublicOwner => {
+  const app = normalizeFrontPageApp(value);
+  return app === 'kangur' ? 'kangur' : 'cms';
 };

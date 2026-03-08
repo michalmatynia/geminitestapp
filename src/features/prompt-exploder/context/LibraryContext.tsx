@@ -15,7 +15,6 @@ import {
   removePromptExploderLibraryItemById,
   sortPromptExploderLibraryItemsByUpdated,
   upsertPromptExploderLibraryItems,
-  type PromptExploderLibraryItem,
 } from '../prompt-library';
 import {
   buildPromptExploderSegmentationAnalysisContextJson,
@@ -26,8 +25,6 @@ import {
   sortPromptExploderSegmentationRecordsByCapturedAt,
 } from '../segmentation-library';
 import {
-  type PromptExploderSegmentationRecord,
-  type CaptureSegmentationRecordResult,
   type PromptExploderSegmentationLibraryState,
 } from '@/shared/contracts/prompt-exploder';
 import { useBenchmarkActions } from './hooks/useBenchmark';

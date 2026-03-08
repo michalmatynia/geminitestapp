@@ -89,7 +89,17 @@
     "src/global.d.ts",
     "src/shared/contracts/ambient.d.ts",
     ".next-codex-build/types/**/*.ts",
-    ".next-codex-build/dev/types/**/*.ts"
+    ".next-codex-build/dev/types/**/*.ts",
+    ".next-dev-web-dev-broker-verification/types/**/*.ts",
+    ".next-dev-web-dev-broker-verification/dev/types/**/*.ts",
+    ".next-dev-web-dev-michalmatynia/types/**/*.ts",
+    ".next-dev-web-dev-michalmatynia/dev/types/**/*.ts",
+    ".next-dev-web-dev-perf-validation/types/**/*.ts",
+    ".next-dev-web-dev-perf-validation/dev/types/**/*.ts",
+    ".next-dev-web-dev-cleanup-validation/types/**/*.ts",
+    ".next-dev-web-dev-cleanup-validation/dev/types/**/*.ts",
+    ".next-dev-web-dev-cleanup-validation-2/types/**/*.ts",
+    ".next-dev-web-dev-cleanup-validation-2/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

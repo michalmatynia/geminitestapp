@@ -63,6 +63,18 @@ const mockKangurAuthMe = async (page, user) => {
   });
 };
 
+const seedKangurProgress = async (page, progress) => {
+  await page.addInitScript(
+    ({ key, value }) => {
+      window.localStorage.setItem(key, JSON.stringify(value));
+    },
+    {
+      key: KANGUR_PROGRESS_STORAGE_KEY,
+      value: progress,
+    }
+  );
+};
+
 test.describe('Kangur Learner Profile', () => {
   test('renders learner profile shell and baseline sections', async ({ page }) => {
     await page.goto('/kangur/profile');
@@ -100,21 +112,16 @@ test.describe('Kangur Learner Profile', () => {
     const nowIso = now.toISOString();
     const yesterdayIso = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
 
-    await page.addInitScript(() => {
-      window.localStorage.setItem(
-        KANGUR_PROGRESS_STORAGE_KEY,
-        JSON.stringify({
-          totalXp: 620,
-          gamesPlayed: 22,
-          perfectGames: 6,
-          lessonsCompleted: 9,
-          clockPerfect: 2,
-          calendarPerfect: 1,
-          geometryPerfect: 1,
-          badges: ['first_game', 'perfect_10', 'lesson_hero', 'ten_games'],
-          operationsPlayed: ['addition', 'multiplication', 'division'],
-        })
-      );
+    await seedKangurProgress(page, {
+      totalXp: 620,
+      gamesPlayed: 22,
+      perfectGames: 6,
+      lessonsCompleted: 9,
+      clockPerfect: 2,
+      calendarPerfect: 1,
+      geometryPerfect: 1,
+      badges: ['first_game', 'perfect_10', 'lesson_hero', 'ten_games'],
+      operationsPlayed: ['addition', 'multiplication', 'division'],
     });
 
     await mockKangurAuthMe(
@@ -243,21 +250,16 @@ test.describe('Kangur Learner Profile', () => {
     const nowIso = now.toISOString();
     const yesterdayIso = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
 
-    await page.addInitScript(() => {
-      window.localStorage.setItem(
-        KANGUR_PROGRESS_STORAGE_KEY,
-        JSON.stringify({
-          totalXp: 620,
-          gamesPlayed: 22,
-          perfectGames: 6,
-          lessonsCompleted: 9,
-          clockPerfect: 2,
-          calendarPerfect: 1,
-          geometryPerfect: 1,
-          badges: ['first_game', 'perfect_10', 'lesson_hero', 'ten_games'],
-          operationsPlayed: ['addition', 'division'],
-        })
-      );
+    await seedKangurProgress(page, {
+      totalXp: 620,
+      gamesPlayed: 22,
+      perfectGames: 6,
+      lessonsCompleted: 9,
+      clockPerfect: 2,
+      calendarPerfect: 1,
+      geometryPerfect: 1,
+      badges: ['first_game', 'perfect_10', 'lesson_hero', 'ten_games'],
+      operationsPlayed: ['addition', 'division'],
     });
 
     await mockKangurAuthMe(
@@ -313,21 +315,16 @@ test.describe('Kangur Learner Profile', () => {
   });
 
   test('quick-start training works from profile in local mode', async ({ page }) => {
-    await page.addInitScript(() => {
-      window.localStorage.setItem(
-        KANGUR_PROGRESS_STORAGE_KEY,
-        JSON.stringify({
-          totalXp: 280,
-          gamesPlayed: 8,
-          perfectGames: 1,
-          lessonsCompleted: 3,
-          clockPerfect: 0,
-          calendarPerfect: 0,
-          geometryPerfect: 0,
-          badges: ['first_game'],
-          operationsPlayed: ['addition'],
-        })
-      );
+    await seedKangurProgress(page, {
+      totalXp: 280,
+      gamesPlayed: 8,
+      perfectGames: 1,
+      lessonsCompleted: 3,
+      clockPerfect: 0,
+      calendarPerfect: 0,
+      geometryPerfect: 0,
+      badges: ['first_game'],
+      operationsPlayed: ['addition'],
     });
 
     await page.route('**/api/kangur/auth/me**', async (route) => {
@@ -352,21 +349,16 @@ test.describe('Kangur Learner Profile', () => {
     const now = new Date();
     const nowIso = now.toISOString();
 
-    await page.addInitScript(() => {
-      window.localStorage.setItem(
-        KANGUR_PROGRESS_STORAGE_KEY,
-        JSON.stringify({
-          totalXp: 310,
-          gamesPlayed: 10,
-          perfectGames: 2,
-          lessonsCompleted: 4,
-          clockPerfect: 0,
-          calendarPerfect: 0,
-          geometryPerfect: 0,
-          badges: ['first_game'],
-          operationsPlayed: ['division'],
-        })
-      );
+    await seedKangurProgress(page, {
+      totalXp: 310,
+      gamesPlayed: 10,
+      perfectGames: 2,
+      lessonsCompleted: 4,
+      clockPerfect: 0,
+      calendarPerfect: 0,
+      geometryPerfect: 0,
+      badges: ['first_game'],
+      operationsPlayed: ['division'],
     });
 
     await mockKangurAuthMe(

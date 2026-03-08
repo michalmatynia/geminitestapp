@@ -149,6 +149,26 @@ const createScore = (overrides: Partial<KangurScoreRecord>): KangurScoreRecord =
   ...overrides,
 });
 
+const getFeaturedHomeAction = (label: string): HTMLElement => {
+  const action = screen
+    .getAllByText(label)
+    .map((node) => node.closest('a, button'))
+    .find((node) => node?.classList.contains('home-action-featured'));
+
+  expect(action).toBeTruthy();
+
+  return action as HTMLElement;
+};
+
+const getCurrentBackButton = (): HTMLButtonElement => {
+  const buttons = screen.getAllByRole('button', { name: 'Wróć do poprzedniej strony' });
+  const button = buttons.at(-1);
+
+  expect(button).toBeTruthy();
+
+  return button as HTMLButtonElement;
+};
+
 describe('Kangur accessibility smoke', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -270,5 +290,35 @@ describe('Kangur accessibility smoke', () => {
     expect(screen.getByRole('heading', { name: 'Ekran startowy' })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: 'Imie gracza' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Wybierz aktywnosc' })).toBeInTheDocument();
+  });
+
+  it('keeps entry-screen back navigation discoverable by accessible name on the game page', async () => {
+    useKangurAuthMock.mockReturnValue({
+      user: null,
+      navigateToLogin: navigateToLoginMock,
+      logout: logoutMock,
+    });
+
+    const user = userEvent.setup();
+
+    render(<Game />);
+
+    await user.click(getFeaturedHomeAction('Grajmy!'));
+    expect(await screen.findByRole('heading', { name: 'Grajmy!' })).toBeInTheDocument();
+    expect(getCurrentBackButton()).toBeInTheDocument();
+
+    await user.click(getCurrentBackButton());
+    expect(await screen.findByRole('heading', { name: 'Wybierz aktywnosc' })).toBeInTheDocument();
+
+    await user.click(getFeaturedHomeAction('Trening mieszany'));
+    expect(await screen.findByRole('heading', { name: 'Trening mieszany' })).toBeInTheDocument();
+    expect(getCurrentBackButton()).toBeInTheDocument();
+
+    await user.click(getCurrentBackButton());
+    expect(await screen.findByRole('heading', { name: 'Wybierz aktywnosc' })).toBeInTheDocument();
+
+    await user.click(getFeaturedHomeAction('Kangur Matematyczny'));
+    expect(await screen.findByRole('heading', { name: 'Kangur Matematyczny' })).toBeInTheDocument();
+    expect(getCurrentBackButton()).toBeInTheDocument();
   });
 });

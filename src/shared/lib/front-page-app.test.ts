@@ -4,6 +4,7 @@ import {
   FRONT_PAGE_ALLOWED,
   FRONT_PAGE_APP_ROUTE,
   FRONT_PAGE_OPTIONS,
+  getFrontPagePublicOwner,
   getFrontPageRedirectPath,
   normalizeFrontPageApp,
 } from '@/shared/lib/front-page-app';
@@ -36,7 +37,7 @@ describe('front-page-app helpers', () => {
 
   it('exposes the canonical route for each selectable app', () => {
     expect(FRONT_PAGE_APP_ROUTE.cms).toBe('/');
-    expect(FRONT_PAGE_APP_ROUTE.kangur).toBe('/kangur');
+    expect(FRONT_PAGE_APP_ROUTE.kangur).toBe('/');
     expect(FRONT_PAGE_APP_ROUTE.chatbot).toBe('/admin/chatbot');
     expect(FRONT_PAGE_APP_ROUTE.notes).toBe('/admin/notes');
   });
@@ -49,15 +50,24 @@ describe('front-page-app helpers', () => {
       'notes',
     ]);
     expect(FRONT_PAGE_OPTIONS[0]?.title).toBe('CMS Home');
-    expect(FRONT_PAGE_OPTIONS[1]?.route).toBe('/kangur');
+    expect(FRONT_PAGE_OPTIONS[1]?.route).toBe('/');
   });
 
   it('resolves redirect paths only for non-cms destinations', () => {
     expect(getFrontPageRedirectPath('cms')).toBeNull();
     expect(getFrontPageRedirectPath('products')).toBeNull();
-    expect(getFrontPageRedirectPath('kangur')).toBe('/kangur');
+    expect(getFrontPageRedirectPath('kangur')).toBeNull();
     expect(getFrontPageRedirectPath('chatbot')).toBe('/admin/chatbot');
     expect(getFrontPageRedirectPath('notes')).toBe('/admin/notes');
     expect(getFrontPageRedirectPath('unknown')).toBeNull();
+  });
+
+  it('resolves which app owns the public frontend', () => {
+    expect(getFrontPagePublicOwner('cms')).toBe('cms');
+    expect(getFrontPagePublicOwner('products')).toBe('cms');
+    expect(getFrontPagePublicOwner('kangur')).toBe('kangur');
+    expect(getFrontPagePublicOwner('chatbot')).toBe('cms');
+    expect(getFrontPagePublicOwner('notes')).toBe('cms');
+    expect(getFrontPagePublicOwner('unknown')).toBe('cms');
   });
 });

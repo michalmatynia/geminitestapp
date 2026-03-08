@@ -32,7 +32,6 @@ type KangurEdition = {
 
 type KangurSetupProps = {
   onStart: (mode: KangurMode) => void;
-  onBack: () => void;
 };
 
 const EDITIONS: KangurEdition[] = [
@@ -84,7 +83,7 @@ const EDITIONS: KangurEdition[] = [
   },
 ];
 
-export default function KangurSetup({ onStart, onBack }: KangurSetupProps): React.JSX.Element {
+export default function KangurSetup({ onStart }: KangurSetupProps): React.JSX.Element {
   const [selectedEdition, setSelectedEdition] = useState<KangurEdition | null>(null);
   const editionsHeadingId = useId();
   const setsHeadingId = useId();
@@ -92,17 +91,6 @@ export default function KangurSetup({ onStart, onBack }: KangurSetupProps): Reac
   if (!selectedEdition) {
     return (
       <section aria-labelledby={editionsHeadingId} className='flex w-full max-w-md flex-col gap-4'>
-        <KangurButton
-          aria-label='Wroc do poprzedniego widoku'
-          onClick={onBack}
-          type='button'
-          variant='surface'
-          size='sm'
-          className='self-start'
-        >
-          <ArrowLeft className='w-4 h-4' /> Wroc
-        </KangurButton>
-
         <KangurGlassPanel
           className='flex flex-col items-center gap-5 text-center'
           data-testid='kangur-setup-editions-shell'
@@ -113,12 +101,12 @@ export default function KangurSetup({ onStart, onBack }: KangurSetupProps): Reac
           <KangurSectionHeading
             accent='amber'
             data-testid='kangur-setup-editions-heading'
-            description='Wybierz edycje konkursu, z ktorej chcesz rozwiazywac zadania.'
-            headingAs='h2'
+            description='Zdecyduj, z ktorej edycji chcesz rozwiazywac zadania.'
+            headingAs='h3'
             headingSize='md'
             icon='🦘'
             iconSize='3xl'
-            title='Kangur Matematyczny'
+            title='Wybierz edycje konkursu'
             titleId={editionsHeadingId}
           />
 
@@ -210,7 +198,7 @@ export default function KangurSetup({ onStart, onBack }: KangurSetupProps): Reac
           accent='amber'
           data-testid='kangur-setup-selected-edition-heading'
           description='Wybierz zestaw pytan:'
-          headingAs='h2'
+          headingAs='h3'
           headingSize='md'
           icon={selectedEdition.emoji}
           iconSize='2xl'

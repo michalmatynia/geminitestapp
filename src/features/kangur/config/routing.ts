@@ -268,6 +268,28 @@ export const normalizeKangurRequestedPath = (
   return joinKangurPath(normalizedBasePath, slugSegments.join('/'));
 };
 
+export const resolveKangurPublicBasePathFromHref = (
+  href: string,
+  currentOrigin: string
+): string => {
+  try {
+    const parsed = new URL(href, currentOrigin);
+    if (parsed.origin !== currentOrigin) {
+      return KANGUR_BASE_PATH;
+    }
+    const normalizedPathname = normalizeKangurHostPathname(parsed.pathname);
+    return normalizedPathname === KANGUR_BASE_PATH ||
+      normalizedPathname.startsWith(`${KANGUR_BASE_PATH}/`)
+      ? KANGUR_BASE_PATH
+      : '/';
+  } catch {
+    if (href.startsWith(`${KANGUR_BASE_PATH}/`) || href === KANGUR_BASE_PATH) {
+      return KANGUR_BASE_PATH;
+    }
+    return href.startsWith('/') ? '/' : KANGUR_BASE_PATH;
+  }
+};
+
 export const getKangurPageHref = (
   pageName: string,
   basePath: string = KANGUR_BASE_PATH
@@ -291,6 +313,70 @@ export const getKangurPageHref = (
 
 export const getKangurHomeHref = (basePath: string = KANGUR_BASE_PATH): string =>
   normalizeKangurRequestedPath([], basePath);
+
+type KangurPublicSearchParams =
+  | URLSearchParams
+  | string
+  | Record<string, string | string[] | undefined>
+  | null
+  | undefined;
+
+const toKangurSearchParams = (searchParams: KangurPublicSearchParams): URLSearchParams => {
+  if (!searchParams) {
+    return new URLSearchParams();
+  }
+
+  if (searchParams instanceof URLSearchParams) {
+    return new URLSearchParams(searchParams.toString());
+  }
+
+  if (typeof searchParams === 'string') {
+    const normalizedSearch = searchParams.startsWith('?') ? searchParams.slice(1) : searchParams;
+    return new URLSearchParams(normalizedSearch);
+  }
+
+  const nextSearchParams = new URLSearchParams();
+
+  Object.entries(searchParams).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      value.forEach((entry) => nextSearchParams.append(key, entry));
+      return;
+    }
+
+    if (typeof value === 'string') {
+      nextSearchParams.set(key, value);
+    }
+  });
+
+  return nextSearchParams;
+};
+
+export const getKangurCanonicalPublicHref = (
+  slugSegments: readonly string[] = [],
+  searchParams?: KangurPublicSearchParams
+): string => {
+  const pathname = normalizeKangurRequestedPath(slugSegments, '/');
+  const query = toKangurSearchParams(searchParams).toString();
+
+  return query ? `${pathname}?${query}` : pathname;
+};
+
+export const getKangurLoginHref = (
+  basePath: string = KANGUR_BASE_PATH,
+  callbackUrl?: string | null
+): string => {
+  const loginPath = joinKangurPath(basePath, 'login');
+  if (!callbackUrl) {
+    return loginPath;
+  }
+  try {
+    const parsed = new URL(loginPath, 'https://kangur.local');
+    parsed.searchParams.set('callbackUrl', callbackUrl);
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return loginPath;
+  }
+};
 
 export const resolveKangurPageKeyFromSlug = (slug: string | null | undefined): string | null => {
   if (!slug) {

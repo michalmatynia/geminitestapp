@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 
 import { KangurDocsTooltipEnhancer, useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
@@ -11,7 +11,7 @@ import { KangurParentDashboardLearnerManagementWidget } from '@/features/kangur/
 import { KangurParentDashboardProgressWidget } from '@/features/kangur/ui/components/KangurParentDashboardProgressWidget';
 import { KangurParentDashboardScoresWidget } from '@/features/kangur/ui/components/KangurParentDashboardScoresWidget';
 import { KangurParentDashboardTabsWidget } from '@/features/kangur/ui/components/KangurParentDashboardTabsWidget';
-import { KangurPrimaryNavigation } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
+import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
 import {
   KangurPageContainer,
   KangurPageShell,
@@ -164,6 +164,17 @@ function ParentDashboardContent(): React.JSX.Element {
     },
     []
   );
+  const navigation = useMemo(
+    () => ({
+      basePath,
+      canManageLearners: true,
+      currentPage: 'ParentDashboard' as const,
+      isAuthenticated,
+      onLogin: navigateToLogin,
+      onLogout: () => logout(false),
+    }),
+    [basePath, isAuthenticated, logout, navigateToLogin]
+  );
 
   if (!canAccessDashboard) {
     return (
@@ -197,14 +208,7 @@ function ParentDashboardContent(): React.JSX.Element {
         enabled={docsTooltipsEnabled}
         rootId='kangur-parent-dashboard-page'
       />
-      <KangurPrimaryNavigation
-        basePath={basePath}
-        canManageLearners
-        currentPage='ParentDashboard'
-        isAuthenticated={isAuthenticated}
-        onLogin={navigateToLogin}
-        onLogout={() => logout(false)}
-      />
+      <KangurTopNavigationController navigation={navigation} />
 
       <KangurPageContainer
         id='kangur-parent-dashboard-main'

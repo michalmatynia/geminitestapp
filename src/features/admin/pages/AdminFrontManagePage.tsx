@@ -64,7 +64,7 @@ function AdminFrontManageContent({
     <div className='container mx-auto max-w-4xl py-10'>
       <SectionHeader
         title='Front Manage'
-        description='Pick which app should open when users land on the home page.'
+        description='Pick which app should own the public home route.'
         eyebrow={
           <Link href='/admin' className='text-blue-300 hover:text-blue-200'>
             ← Back to dashboard
@@ -75,7 +75,7 @@ function AdminFrontManageContent({
 
       <FormSection
         title='Front Page Destination'
-        description='Choose whether HOME should render the CMS page or redirect into an admin workspace.'
+        description='Choose whether HOME stays CMS-controlled, mounts Kangur, or redirects into an admin workspace.'
         className='p-6'
       >
         <div className='space-y-4'>

@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { KangurProgressState } from '@/features/kangur/ui/types';
@@ -104,6 +104,16 @@ vi.mock('@/features/kangur/ui/components/KangurPracticeAssignmentBanner', () => 
   default: () => <div data-testid='kangur-practice-assignment-banner' />,
 }));
 
+vi.mock('@/features/kangur/ui/components/CalendarTrainingGame', () => ({
+  __esModule: true,
+  default: () => <div data-testid='mock-calendar-training-game'>Mock Calendar Training</div>,
+}));
+
+vi.mock('@/features/kangur/ui/components/GeometryDrawingGame', () => ({
+  __esModule: true,
+  default: () => <div data-testid='mock-geometry-training-game'>Mock Geometry Training</div>,
+}));
+
 import Game from '@/features/kangur/ui/pages/Game';
 
 const baseProgress: KangurProgressState = {
@@ -117,6 +127,17 @@ const baseProgress: KangurProgressState = {
   badges: [],
   operationsPlayed: [],
   lessonMastery: {},
+};
+
+const getFeaturedHomeAction = (label: string): HTMLElement => {
+  const action = screen
+    .getAllByText(label)
+    .map((node) => node.closest('a, button'))
+    .find((node) => node?.classList.contains('home-action-featured'));
+
+  expect(action).toBeTruthy();
+
+  return action as HTMLElement;
 };
 
 describe('Game branding', () => {
@@ -177,5 +198,54 @@ describe('Game branding', () => {
       expect(action).not.toHaveClass('home-action-active');
       expect(action?.parentElement).toHaveClass('home-action-featured-shell');
     }
+  });
+
+  it('keeps the Lekcje-style top section on every primary game entry screen', async () => {
+    render(<Game />);
+
+    fireEvent.click(getFeaturedHomeAction('Grajmy!'));
+    expect(await screen.findByRole('heading', { name: 'Grajmy!' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
+    expect(await screen.findByTestId('kangur-home-actions-shell')).toBeInTheDocument();
+
+    fireEvent.click(getFeaturedHomeAction('Trening mieszany'));
+    expect(await screen.findByRole('heading', { name: 'Trening mieszany' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
+    expect(await screen.findByTestId('kangur-home-actions-shell')).toBeInTheDocument();
+
+    fireEvent.click(getFeaturedHomeAction('Kangur Matematyczny'));
+    expect(
+      await screen.findByRole('heading', { name: 'Kangur Matematyczny' })
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' })).toBeInTheDocument();
+  });
+
+  it('keeps the same back-navigation pattern for quick-practice screens inside Grajmy', async () => {
+    render(<Game />);
+
+    fireEvent.click(getFeaturedHomeAction('Grajmy!'));
+    expect(await screen.findByRole('heading', { name: 'Grajmy!' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /ćwiczenia z kalendarzem/i }));
+    expect(
+      await screen.findByRole('heading', { name: 'Ćwiczenia z Kalendarzem' })
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('mock-calendar-training-game')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
+    expect(await screen.findByRole('heading', { name: 'Grajmy!' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /ćwiczenia z figurami/i }));
+    expect(
+      await screen.findByRole('heading', { name: 'Ćwiczenia z Figurami' })
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('mock-geometry-training-game')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
+    expect(await screen.findByRole('heading', { name: 'Grajmy!' })).toBeInTheDocument();
   });
 });

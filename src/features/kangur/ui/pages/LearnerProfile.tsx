@@ -1,7 +1,8 @@
 'use client';
 
+import { useMemo } from 'react';
+
 import { KangurDocsTooltipEnhancer, useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
-import { KangurPrimaryNavigation } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
 import { KangurLearnerProfileAssignmentsWidget } from '@/features/kangur/ui/components/KangurLearnerProfileAssignmentsWidget';
 import { KangurLearnerProfileAiTutorMoodWidget } from '@/features/kangur/ui/components/KangurLearnerProfileAiTutorMoodWidget';
 import { KangurLearnerProfileHeroWidget } from '@/features/kangur/ui/components/KangurLearnerProfileHeroWidget';
@@ -11,6 +12,7 @@ import { KangurLearnerProfileOverviewWidget } from '@/features/kangur/ui/compone
 import { KangurLearnerProfilePerformanceWidget } from '@/features/kangur/ui/components/KangurLearnerProfilePerformanceWidget';
 import { KangurLearnerProfileRecommendationsWidget } from '@/features/kangur/ui/components/KangurLearnerProfileRecommendationsWidget';
 import { KangurLearnerProfileSessionsWidget } from '@/features/kangur/ui/components/KangurLearnerProfileSessionsWidget';
+import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
 import {
   KangurPageContainer,
   KangurPageShell,
@@ -23,6 +25,18 @@ export default function LearnerProfile(): React.JSX.Element {
   const { basePath } = useKangurRouting();
   const { user, navigateToLogin, logout } = useKangurAuth();
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('profile');
+  const navigation = useMemo(
+    () => ({
+      basePath,
+      canManageLearners: Boolean(user?.canManageLearners),
+      contentClassName: 'justify-center',
+      currentPage: 'LearnerProfile' as const,
+      isAuthenticated: Boolean(user),
+      onLogin: navigateToLogin,
+      onLogout: () => logout(false),
+    }),
+    [basePath, logout, navigateToLogin, user]
+  );
 
   return (
     <KangurLearnerProfileRuntimeBoundary enabled>
@@ -35,15 +49,7 @@ export default function LearnerProfile(): React.JSX.Element {
           enabled={docsTooltipsEnabled}
           rootId='kangur-learner-profile-page'
         />
-        <KangurPrimaryNavigation
-          basePath={basePath}
-          canManageLearners={Boolean(user?.canManageLearners)}
-          contentClassName='justify-center'
-          currentPage='LearnerProfile'
-          isAuthenticated={Boolean(user)}
-          onLogin={navigateToLogin}
-          onLogout={() => logout(false)}
-        />
+        <KangurTopNavigationController navigation={navigation} />
 
         <KangurPageContainer id='kangur-learner-profile-main' className='flex flex-col gap-6'>
           <h2 className='sr-only'>Statystyki ucznia</h2>

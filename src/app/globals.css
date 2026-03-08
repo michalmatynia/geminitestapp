@@ -1022,6 +1022,29 @@
       inset 0 1px 0 rgba(255, 255, 255, 0.92);
   }
 
+  .kangur-step-pill-pending {
+    border-color: rgba(148, 163, 184, 0.92);
+    background: linear-gradient(
+      180deg,
+      rgba(226, 232, 240, 0.98) 0%,
+      rgba(203, 213, 225, 0.96) 100%
+    );
+    box-shadow:
+      0 14px 22px -20px rgba(71, 85, 105, 0.55),
+      inset 0 1px 0 rgba(255, 255, 255, 0.72);
+    opacity: 1;
+  }
+
+  .kangur-step-pill-pending:hover,
+  .kangur-step-pill-pending:focus-visible {
+    border-color: rgba(100, 116, 139, 0.98);
+    background: linear-gradient(
+      180deg,
+      rgba(226, 232, 240, 1) 0%,
+      rgba(196, 206, 220, 0.98) 100%
+    );
+  }
+
   .surface-cta {
     background: linear-gradient(
       180deg,

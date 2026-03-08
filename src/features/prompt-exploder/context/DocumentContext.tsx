@@ -1,24 +1,11 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
 
-import { recordPromptValidationCounter } from '@/shared/lib/prompt-core/runtime-observability';
 import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {
-  readPromptExploderDraftPayload,
-  savePromptExploderApplyPrompt,
-  savePromptExploderApplyPromptForCaseResolver,
   type PromptExploderBridgeSource,
   type PromptExploderCaseResolverContext,
 } from '../bridge';
@@ -28,36 +15,50 @@ import type {
   PromptExploderParamEntriesState,
 } from '@/shared/contracts/prompt-exploder';
 import { buildPromptExploderParamEntries } from '../params-editor';
-import { reassemblePromptSegments, updatePromptExploderDocument } from '../parser';
-import { explodePromptWithValidationRuntime } from '../prompt-validation-orchestrator';
-import { leavePromptRuntimeScope, tryEnterPromptRuntimeScope } from '../runtime-load-shedder';
-import {
-  buildCaseResolverSegmentCaptureRules,
-  resolveCaseResolverBridgePayloadForTransfer,
-} from '@/features/prompt-exploder/utils/case-resolver-extraction';
+import { updatePromptExploderDocument } from '../parser';
 import { useSettingsState } from './hooks/useSettings';
+import { useDocumentApplyAction } from './hooks/useDocumentApplyAction';
+import { useDocumentBridgeHydration } from './hooks/useDocumentBridgeHydration';
+import { useDocumentExplodeAction } from './hooks/useDocumentExplodeAction';
 
 import type {
   PromptExploderBinding,
   PromptExploderDocument,
-  PromptExploderLearnedTemplate,
   PromptExploderParamUiControl,
   PromptExploderSegment,
 } from '../types';
 
-import { DocumentPromptContext, type DocumentPromptState } from './document/DocumentPromptContext';
+import {
+  DocumentPromptContext,
+  type DocumentPromptState,
+  useDocumentPrompt as useDocumentPromptValue,
+} from './document/DocumentPromptContext';
 export { DocumentPromptContext, type DocumentPromptState };
-import { DocumentCoreContext, type DocumentCoreState } from './document/DocumentCoreContext';
+import {
+  DocumentCoreContext,
+  type DocumentCoreState,
+  useDocumentCore as useDocumentCoreValue,
+} from './document/DocumentCoreContext';
 import {
   DocumentSelectionContext,
   type DocumentSelectionState,
+  useDocumentSelection as useDocumentSelectionValue,
 } from './document/DocumentSelectionContext';
-import { DocumentParamsContext, type DocumentParamsState } from './document/DocumentParamsContext';
+import {
+  DocumentParamsContext,
+  type DocumentParamsState,
+  useDocumentParams as useDocumentParamsValue,
+} from './document/DocumentParamsContext';
 import {
   DocumentMetricsContext,
   type DocumentMetricsState,
+  useDocumentMetrics as useDocumentMetricsValue,
 } from './document/DocumentMetricsContext';
-import { DocumentActionsContext, type DocumentActions } from './document/DocumentActionsContext';
+import {
+  DocumentActionsContext,
+  type DocumentActions,
+  useDocumentActions as useDocumentActionsValue,
+} from './document/DocumentActionsContext';
 import { internalError } from '@/shared/errors/app-error';
 
 export { DocumentActionsContext };
@@ -253,111 +254,18 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
     [manualBindings]
   );
 
-  const handleExplode = useCallback(() => {
-    const trimmed = promptText.trim();
-    if (!trimmed) {
-      toast('Enter a prompt first.', { variant: 'info' });
-      return;
-    }
-    if (runtimeGuardrailIssue) {
-      toast(runtimeGuardrailIssue, { variant: 'error' });
-      return;
-    }
-    if (explodeInFlightRef.current) {
-      recordPromptValidationCounter('runtime_backpressure_drop', 1, {
-        scope: runtimeSelection.identity.scope,
-      });
-      toast('Prompt explosion is already running.', { variant: 'info' });
-      return;
-    }
-    if (!tryEnterPromptRuntimeScope(runtimeSelection.identity.scope)) {
-      recordPromptValidationCounter('runtime_backpressure_drop', 1, {
-        scope: runtimeSelection.identity.scope,
-      });
-      toast('Runtime is busy for this scope. Try again in a moment.', {
-        variant: 'info',
-      });
-      return;
-    }
-    explodeInFlightRef.current = true;
-
-    try {
-      const similarityThreshold = promptExploderClampNumber(
-        promptExploderSettings.learning.similarityThreshold,
-        0.3,
-        0.95
-      );
-      const learnedTemplateSignature = runtimeSelection.runtimeLearnedTemplates
-        .map(
-          (template: PromptExploderLearnedTemplate) =>
-            `${template.id}:${template.state}:${template.updatedAt}`
-        )
-        .join('|');
-      const runtimeSignature = [
-        trimmed,
-        runtimeSelection.identity.cacheKey,
-        similarityThreshold.toFixed(4),
-        learnedTemplateSignature,
-      ].join('::');
-      if (lastExplosionRef.current?.signature === runtimeSignature) {
-        recordPromptValidationCounter('runtime_fast_path_hit', 1, {
-          scope: runtimeSelection.identity.scope,
-        });
-        const nextDocument = lastExplosionRef.current.document;
-        setManualBindings([]);
-        setDocumentState(nextDocument);
-        setSelectedSegmentId(nextDocument.segments[0]?.id ?? null);
-        toast(`Reused ${nextDocument.segments.length} cached segment(s).`, {
-          variant: 'info',
-        });
-        return;
-      }
-      recordPromptValidationCounter('runtime_fast_path_miss', 1, {
-        scope: runtimeSelection.identity.scope,
-      });
-
-      const orchestratorEnabled = promptExploderSettings.runtime.orchestratorEnabled ?? true;
-      if (!orchestratorEnabled) {
-        toast('Prompt runtime orchestrator is disabled in settings.', {
-          variant: 'error',
-        });
-        return;
-      }
-      const nextDocument = explodePromptWithValidationRuntime({
-        prompt: trimmed,
-        runtime: runtimeSelection,
-        similarityThreshold,
-      });
-      lastExplosionRef.current = {
-        signature: runtimeSignature,
-        document: nextDocument,
-      };
-
-      setManualBindings([]);
-      setDocumentState(nextDocument);
-      setSelectedSegmentId(nextDocument.segments[0]?.id ?? null);
-      toast(`Exploded into ${nextDocument.segments.length} segment(s).`, {
-        variant: 'success',
-      });
-    } catch (error) {
-      logClientError(error, {
-        context: {
-          source: 'DocumentProvider',
-          action: 'handleExplode',
-          correlationId: runtimeSelection.correlationId,
-          scope: runtimeSelection.identity.scope,
-          stack: runtimeSelection.identity.stack,
-          level: 'error',
-        },
-      });
-      toast(error instanceof Error ? error.message : 'Explosion failed.', {
-        variant: 'error',
-      });
-    } finally {
-      explodeInFlightRef.current = false;
-      leavePromptRuntimeScope(runtimeSelection.identity.scope);
-    }
-  }, [promptText, promptExploderSettings, runtimeGuardrailIssue, runtimeSelection, toast]);
+  const handleExplode = useDocumentExplodeAction({
+    promptText,
+    promptExploderSettings,
+    runtimeGuardrailIssue,
+    runtimeSelection,
+    explodeInFlightRef,
+    lastExplosionRef,
+    setDocumentState,
+    setManualBindings,
+    setSelectedSegmentId,
+    toast,
+  });
 
   const clearDocument = useCallback(() => {
     setDocumentState(null);
@@ -370,120 +278,17 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
     handleExplode();
   }, [clearDocument, handleExplode]);
 
-  const handleApplyToImageStudio = useCallback(async () => {
-    try {
-      const reassembled = documentState
-        ? reassemblePromptSegments(documentState.segments)
-        : promptText.trim();
-      if (!reassembled) {
-        toast('No reassembled text available to apply.', { variant: 'warning' });
-        return;
-      }
-      if (returnTarget === 'case-resolver') {
-        const resolvedContextFileId = incomingCaseResolverContext?.fileId?.trim() ?? '';
-        const resolvedContextSessionId = incomingCaseResolverContext?.sessionId?.trim() ?? '';
-        if (!resolvedContextFileId) {
-          toast('Cannot apply to Case Resolver without a valid target document context.', {
-            variant: 'error',
-          });
-          return;
-        }
-
-        const transferSegments = documentState?.segments ?? [];
-        let captureParties;
-        let captureMetadata;
-        let hasCaptureData = false;
-
-        if (transferSegments.length > 0) {
-          const captureRules = buildCaseResolverSegmentCaptureRules(
-            runtimeSelection.runtimeValidationRules,
-            runtimeSelection.identity.scope
-          );
-          const isRulesOnlyCaptureMode =
-            promptExploderSettings.runtime.caseResolverExtractionMode === 'rules_only';
-          if (isRulesOnlyCaptureMode && captureRules.length === 0) {
-            toast(
-              'No Case Resolver capture rules are active for this validation scope. Configure capture rules before applying.',
-              { variant: 'warning' }
-            );
-          }
-          const transferPayload = resolveCaseResolverBridgePayloadForTransfer({
-            segments: transferSegments,
-            captureRules,
-            mode: promptExploderSettings.runtime.caseResolverExtractionMode,
-          });
-          hasCaptureData = transferPayload.hasCaptureData;
-          captureParties = transferPayload.payload.parties;
-          captureMetadata = transferPayload.payload.metadata;
-        } else {
-          toast(
-            'No exploded segments detected. Applying raw prompt text without structured captures.',
-            { variant: 'info' }
-          );
-        }
-
-        if (!hasCaptureData) {
-          if (promptExploderSettings.runtime.caseResolverExtractionMode === 'rules_only') {
-            toast(
-              'No addresser/addressee/date captures found in rules-only mode. No fallback extraction will run; applying will transfer text only.',
-              { variant: 'warning' }
-            );
-          } else {
-            toast('No addresser/addressee/date captures found. Applying will transfer text only.', {
-              variant: 'warning',
-            });
-          }
-        }
-        const transferContext = {
-          fileId: resolvedContextFileId,
-          fileName: incomingCaseResolverContext?.fileName?.trim() || resolvedContextFileId,
-          ...(resolvedContextSessionId
-            ? {
-              sessionId: resolvedContextSessionId,
-            }
-            : {}),
-          ...(typeof incomingCaseResolverContext?.documentVersionAtStart === 'number'
-            ? {
-              documentVersionAtStart: incomingCaseResolverContext.documentVersionAtStart,
-            }
-            : {}),
-        };
-        savePromptExploderApplyPromptForCaseResolver(
-          reassembled,
-          transferContext,
-          captureParties,
-          captureMetadata
-        );
-      } else {
-        savePromptExploderApplyPrompt(reassembled);
-      }
-      router.push(returnTo);
-    } catch (error) {
-      logClientError(error, {
-        context: {
-          source: 'DocumentProvider',
-          action: 'handleApplyToImageStudio',
-          scope: runtimeSelection.identity.scope,
-          stack: runtimeSelection.identity.stack,
-          level: 'error',
-        },
-      });
-      toast(error instanceof Error ? error.message : 'Failed to apply prompt output.', {
-        variant: 'error',
-      });
-    }
-  }, [
+  const handleApplyToImageStudio = useDocumentApplyAction({
     documentState,
     incomingCaseResolverContext,
     promptText,
-    promptExploderSettings.runtime.caseResolverExtractionMode,
+    promptExploderSettings,
     returnTarget,
     returnTo,
     router,
-    runtimeSelection.identity.scope,
-    runtimeSelection.runtimeValidationRules,
+    runtimeSelection,
     toast,
-  ]);
+  });
 
   const updateParameterValue = useCallback(
     (segmentId: string, path: string, value: unknown) => {
@@ -555,41 +360,15 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
     [updateSegment]
   );
 
-  // ── Bridge logic ───────────────────────────────────────────────────────────
-
-  useEffect(() => {
-    const payload = readPromptExploderDraftPayload();
-    const rawPayloadContext = payload?.caseResolverContext ?? null;
-    const isConsumableDraftPayload = payload !== null && payload.target === 'prompt-exploder';
-    const nextBridgeSource = isConsumableDraftPayload ? (payload?.source ?? null) : null;
-    if (nextBridgeSource !== incomingBridgeSource) {
-      setIncomingBridgeSource(nextBridgeSource);
-    }
-    const payloadContext = isConsumableDraftPayload ? rawPayloadContext : null;
-    if (
-      (incomingCaseResolverContext?.fileId ?? null) !== (payloadContext?.fileId ?? null) ||
-      (incomingCaseResolverContext?.sessionId ?? null) !== (payloadContext?.sessionId ?? null)
-    ) {
-      setIncomingCaseResolverContext(payloadContext);
-    }
-    const promptFromPayload = isConsumableDraftPayload ? (payload?.prompt ?? null) : null;
-    const payloadKey = payload
-      ? [
-        payload.createdAt,
-        payload.source ?? '',
-        payload.target ?? '',
-        payload.caseResolverContext?.fileId ?? '',
-        payload.caseResolverContext?.sessionId ?? '',
-        String(payload.prompt.length),
-      ].join('|')
-      : null;
-    if (promptFromPayload && payloadKey && lastHydratedDraftPayloadKeyRef.current !== payloadKey) {
-      lastHydratedDraftPayloadKeyRef.current = payloadKey;
-      clearDocument();
-      setPromptText(promptFromPayload);
-      return;
-    }
-  }, [clearDocument, incomingBridgeSource, incomingCaseResolverContext]);
+  useDocumentBridgeHydration({
+    clearDocument,
+    incomingBridgeSource,
+    incomingCaseResolverContext,
+    lastHydratedDraftPayloadKeyRef,
+    setIncomingBridgeSource,
+    setIncomingCaseResolverContext,
+    setPromptText,
+  });
 
   // ── Context values ─────────────────────────────────────────────────────────
 
@@ -702,44 +481,17 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
   );
 }
 
-export function useDocumentPrompt(): DocumentPromptState {
-  const context = useContext(DocumentPromptContext);
-  if (!context) throw internalError('useDocumentPrompt must be used within DocumentProvider');
-  return context;
-}
-
-export function useDocumentCore(): DocumentCoreState {
-  const context = useContext(DocumentCoreContext);
-  if (!context) throw internalError('useDocumentCore must be used within DocumentProvider');
-  return context;
-}
-
-export function useDocumentSelection(): DocumentSelectionState {
-  const context = useContext(DocumentSelectionContext);
-  if (!context) throw internalError('useDocumentSelection must be used within DocumentProvider');
-  return context;
-}
-
-export function useDocumentParams(): DocumentParamsState {
-  const context = useContext(DocumentParamsContext);
-  if (!context) throw internalError('useDocumentParams must be used within DocumentProvider');
-  return context;
-}
-
-export function useDocumentMetrics(): DocumentMetricsState {
-  const context = useContext(DocumentMetricsContext);
-  if (!context) throw internalError('useDocumentMetrics must be used within DocumentProvider');
-  return context;
-}
+export {
+  useDocumentPromptValue as useDocumentPrompt,
+  useDocumentCoreValue as useDocumentCore,
+  useDocumentSelectionValue as useDocumentSelection,
+  useDocumentParamsValue as useDocumentParams,
+  useDocumentMetricsValue as useDocumentMetrics,
+  useDocumentActionsValue as useDocumentActions,
+};
 
 export function useDocumentState(): DocumentState {
   const context = useContext(DocumentStateContext);
   if (!context) throw internalError('useDocumentState must be used within DocumentProvider');
-  return context;
-}
-
-export function useDocumentActions(): DocumentActions {
-  const context = useContext(DocumentActionsContext);
-  if (!context) throw internalError('useDocumentActions must be used within DocumentProvider');
   return context;
 }

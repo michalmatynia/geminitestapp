@@ -1,0 +1,151 @@
+
+> libapp2@0.1.0 predev
+> node scripts/runtime/check-node-version.cjs
+
+
+> libapp2@0.1.0 dev
+> node --max-old-space-size=8192 server.cjs
+
+○ Compiling instrumentation Node.js ...
+
+  We detected TypeScript in your project and reconfigured your tsconfig.json file for you.
+  The following suggested values were added to your tsconfig.json. These values can be changed to fit your project's needs:
+
+  	- include was updated to add '.next-dev-web-dev-broker-verification/types/**/*.ts'
+  	- include was updated to add '.next-dev-web-dev-broker-verification/dev/types/**/*.ts'
+
+[ai-paths.portable-engine.envelope-verification] Portable envelope verification audit sink health probe sinkId=portable-envelope-verification-log-forwarding {
+  category: 'ai_path_portable_envelope_verification_audit_sink_health',
+  kind: 'ai-paths.portable-envelope-verification-audit-sink-health.v1',
+  sinkId: 'portable-envelope-verification-log-forwarding',
+  stage: 'probe',
+  service: 'ai-paths.portable-engine'
+}
+[ai-paths.portable-engine.envelope-verification.sink-bootstrap] Portable envelope verification audit sink startup health summary sinkId=all {
+  category: 'ai_path_portable_envelope_verification_audit_sink_health',
+  kind: 'ai-paths.portable-envelope-verification-audit-sink-health.v1',
+  profile: 'dev',
+  policy: 'warn',
+  timeoutMs: 3000,
+  status: 'healthy',
+  failedSinkIds: [],
+  diagnostics: [
+    {
+      sinkId: 'portable-envelope-verification-log-forwarding',
+      status: 'healthy',
+      checkedAt: '2026-03-08T14:02:13.216Z',
+      durationMs: 96,
+      message: 'Health check passed.',
+      error: null
+    }
+  ],
+  service: 'ai-paths.portable-engine'
+}
+[queue-factory] [queue-factory:database-backup-scheduler] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:product-sync-scheduler] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:system-log-alerts] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-init] Starting BullMQ workers... { service: 'queue-init' }
+[queue-registry] [queue-registry] Starting queue worker: base-import { queueName: 'base-import', service: 'queue-registry' }
+[queue-factory] [queue-factory:base-import] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: database-backup-scheduler { queueName: 'database-backup-scheduler', service: 'queue-registry' }
+[queue-registry] [queue-registry] Starting queue worker: system-log-alerts { queueName: 'system-log-alerts', service: 'queue-registry' }
+[queue-registry] [queue-registry] Starting queue worker: tradera-listings { queueName: 'tradera-listings', service: 'queue-registry' }
+[queue-factory] [queue-factory:tradera-listings] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-ai { queueName: 'product-ai', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-ai] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync { queueName: 'product-sync', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-sync] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync-backfill { queueName: 'product-sync-backfill', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-sync-backfill] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync-scheduler { queueName: 'product-sync-scheduler', service: 'queue-registry' }
+[queue-factory] [queue-factory:case-resolver-ocr] BullMQ worker started (concurrency: 2) { concurrency: 2, service: 'queue-factory' }
+[queue-factory] [queue-factory:ai-path-run] BullMQ worker started (concurrency: 3) { concurrency: 3, service: 'queue-factory' }
+[queue-factory] [queue-factory:chatbot] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:agent] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:image-studio-run] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:tradera-relist-scheduler] Worker stopped { service: 'queue-factory' }
+Ready on http://localhost:57637 { port: 57637, host: '127.0.0.1' }
+[queue-factory] [queue-factory:image-studio-sequence] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+ GET /api/health 200 in 1495ms (compile: 711ms, proxy.ts: 40ms, render: 744ms)
+[health.GET] health.GET completed successfully {
+  durationMs: 783,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: 'd0e9421d560ca0c0c20d3e89557b5382',
+  otelSpanId: 'c8d5d96fb88aa2d1',
+  otelTraceFlags: '01',
+  service: 'health',
+  traceId: 'c5e6576b-c065-4d5a-970f-b338281cb356',
+  correlationId: 'fcf1fad8-8391-4bde-8f9e-82bb4654288c'
+}
+○ Compiling / ...
+ GET /api/health 200 in 678ms (compile: 7ms, proxy.ts: 4ms, render: 667ms)
+ GET /kangur/profile 200 in 5.6s (compile: 5.1s, render: 448ms)
+[system] [timing] home {
+  cmsRepository: 541.7326659999999,
+  headers: 0.4851669999989099,
+  cmsDomain: 497.5251669999998,
+  cmsSlugs: 227.2020420000008,
+  total: 1267.2053750000014,
+  otelTraceId: '2409206daecc9e7daaf33440fce28df1',
+  otelSpanId: '6d8f46109bbcf058',
+  otelTraceFlags: '01'
+}
+[kangur.auth.me.GET] Authentication required. {
+  errorId: 'fb72446a-29f8-41a4-8696-d642b16d8a63',
+  code: 'UNAUTHORIZED',
+  category: 'AUTH',
+  durationMs: 5,
+  source: 'kangur.auth.me.GET',
+  route: '/api/kangur/auth/me',
+  method: 'GET',
+  traceId: 'd929fbd9-f614-40e7-a8f2-fed68bc15e66',
+  correlationId: '6bc26e8f-4adc-4530-a7a3-cf302a672b96',
+  otelTraceId: '11f7e55aa508f1f330164f09a6468266',
+  otelSpanId: '0772c50d561cd4d6',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  expected: true,
+  critical: false,
+  retryable: false,
+  error: {
+    message: 'Authentication required.',
+    stack: 'AppError: Authentication required.\n' +
+      '    at authError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-broker-verification/dev/server/chunks/src_shared_fdaf7903._.js:167:53)\n' +
+      '    at resolveKangurActor (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-broker-verification/dev/server/chunks/src_features_58eba39a._.js:6348:170)\n' +
+      '    at async getKangurAuthMeHandler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-broker-verification/dev/server/chunks/src_app_api_kangur_auth_me_629d727f._.js:25:19)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-broker-verification/dev/server/chunks/src_shared_fdaf7903._.js:2352:34\n' +
+      '    at async AppRouteRouteModule.do (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:37866)\n' +
+      '    at async AppRouteRouteModule.handle (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:45156)\n' +
+      '    at async responseGenerator (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-broker-verification/dev/server/chunks/node_modules_next_c632bd6c._.js:17157:38)\n' +
+      '    at async AppRouteRouteModule.handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:1:191938)\n' +
+      '    at async handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-broker-verification/dev/server/chunks/node_modules_next_c632bd6c._.js:17220:32)\n' +
+      '    at async Module.handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-broker-verification/dev/server/chunks/node_modules_next_c632bd6c._.js:17271:13)\n' +
+      '    at async DevServer.renderToResponseWithComponentsImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1442:9)\n' +
+      '    at async DevServer.renderPageComponent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1494:24)\n' +
+      '    at async DevServer.renderToResponseImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1544:32)\n' +
+      '    at async DevServer.pipeImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1038:25)\n' +
+      '    at async NextNodeServer.handleCatchallRenderRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/next-server.js:395:17)\n' +
+      '    at async DevServer.handleRequestImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:929:17)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:387:20\n' +
+      '    at async Span.traceAsyncFn (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/trace/trace.js:157:20)\n' +
+      '    at async DevServer.handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:383:24)\n' +
+      '    at async invokeRender (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:248:21)\n' +
+      '    at async handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:447:24)\n' +
+      '    at async NextCustomServer.requestHandlerImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:496:13)',
+    name: 'AppError',
+    code: 'UNAUTHORIZED',
+    httpStatus: 401,
+    expected: true,
+    critical: false,
+    retryable: false
+  },
+  errorCode: 'UNAUTHORIZED',
+  errorName: 'AppError',
+  fingerprint: 'f7acf41f5f48ea6d'
+}
+ GET /api/kangur/auth/me 401 in 1104ms (compile: 1074ms, proxy.ts: 16ms, render: 14ms)
+ GET /api/settings/lite 200 in 1608ms (compile: 1319ms, proxy.ts: 12ms, render: 276ms)
+ GET /api/auth/session 200 in 2.1s (proxy.ts: 14ms)
+Received SIGTERM, shutting down gracefully... { signal: 'SIGTERM' }
+Server closed undefined

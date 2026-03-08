@@ -99,7 +99,6 @@ export function KangurCmsRuntimeDataProvider({
   });
   const trainingSetup = useKangurTrainingSetupState({
     active: game?.screen === 'training',
-    onBack: game?.handleHome,
     onStart: game?.handleStartTraining,
   });
   const operationSelector = useKangurOperationSelectorState({

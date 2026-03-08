@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { useKangurGameRuntimeMock } = vi.hoisted(() => ({
@@ -29,68 +29,63 @@ describe('Kangur game training widgets', () => {
     vi.clearAllMocks();
   });
 
-  it('uses the shared feature header for the calendar training widget', () => {
+  it('uses the shared top section for the calendar training widget', () => {
+    const setScreen = vi.fn();
+
     useKangurGameRuntimeMock.mockReturnValue({
       handleHome: vi.fn(),
       screen: 'calendar_quiz',
+      setScreen,
     });
 
     render(<KangurGameCalendarTrainingWidget />);
 
-    const header = screen.getByTestId('kangur-calendar-training-header');
-
-    expect(screen.getByTestId('kangur-calendar-training-shell')).toHaveClass(
+    expect(screen.getByTestId('kangur-calendar-training-top-section')).toHaveClass(
       'glass-panel',
-      'border-white/88',
-      'bg-white/94'
+      'border-white/78',
+      'bg-white/68'
     );
-    expect(within(header).getByRole('heading', { name: /ćwiczenia z kalendarzem/i })).toHaveClass(
-      'text-xl',
-      'text-green-700'
-    );
-    expect(within(header).getByText('📅')).toHaveClass(
-      'h-12',
-      'w-12',
-      'bg-emerald-100',
-      'text-emerald-700'
-    );
+    expect(screen.getByRole('heading', { name: /ćwiczenia z kalendarzem/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' })).toBeInTheDocument();
     expect(screen.getByTestId('mock-calendar-training-game')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
+
+    expect(setScreen).toHaveBeenCalledWith('operation');
   });
 
-  it('uses the shared feature header for the geometry training widget and stays hidden off-screen', () => {
+  it('uses the shared top section for the geometry training widget and stays hidden off-screen', () => {
     useKangurGameRuntimeMock.mockReturnValue({
       handleHome: vi.fn(),
       screen: 'home',
+      setScreen: vi.fn(),
     });
 
     const { rerender } = render(<KangurGameGeometryTrainingWidget />);
 
-    expect(screen.queryByTestId('kangur-geometry-training-header')).toBeNull();
+    expect(screen.queryByTestId('kangur-geometry-training-top-section')).toBeNull();
+
+    const setScreen = vi.fn();
 
     useKangurGameRuntimeMock.mockReturnValue({
       handleHome: vi.fn(),
       screen: 'geometry_quiz',
+      setScreen,
     });
 
     rerender(<KangurGameGeometryTrainingWidget />);
 
-    const header = screen.getByTestId('kangur-geometry-training-header');
-
-    expect(screen.getByTestId('kangur-geometry-training-shell')).toHaveClass(
+    expect(screen.getByTestId('kangur-geometry-training-top-section')).toHaveClass(
       'glass-panel',
-      'border-white/88',
-      'bg-white/94'
+      'border-white/78',
+      'bg-white/68'
     );
-    expect(within(header).getByRole('heading', { name: /ćwiczenia z figur/i })).toHaveClass(
-      'text-xl',
-      'text-violet-700'
-    );
-    expect(within(header).getByText('🔷')).toHaveClass(
-      'h-12',
-      'w-12',
-      'bg-violet-100',
-      'text-violet-700'
-    );
+    expect(screen.getByRole('heading', { name: /ćwiczenia z figurami/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' })).toBeInTheDocument();
     expect(screen.getByTestId('mock-geometry-training-game')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
+
+    expect(setScreen).toHaveBeenCalledWith('operation');
   });
 });

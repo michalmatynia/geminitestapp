@@ -1,0 +1,225 @@
+import { spawn } from 'node:child_process';
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+
+import { afterEach, describe, expect, it } from 'vitest';
+
+import {
+  acquireRuntimeLease,
+  buildBrokeredPlaywrightEnv,
+  buildRuntimeLeaseKey,
+  cleanupBrokerRuntimeLeases,
+  resolveBrokerManagedDistDir,
+  resolvePlaywrightRunArtifacts,
+  resolveRuntimeAgentId,
+  sanitizeRuntimeToken,
+} from './lib/runtime-broker.mjs';
+
+const cleanupTargets: string[] = [];
+
+afterEach(async () => {
+  await Promise.all(
+    cleanupTargets.splice(0).map(async (rootDir) => {
+      await cleanupBrokerRuntimeLeases({
+        rootDir,
+        env: {},
+      });
+      await fs.rm(rootDir, { recursive: true, force: true });
+    })
+  );
+});
+
+describe('sanitizeRuntimeToken', () => {
+  it('normalizes mixed punctuation into a safe token', () => {
+    expect(sanitizeRuntimeToken('Agent 7 / Feature:Playwright')).toBe(
+      'agent-7-feature-playwright'
+    );
+  });
+
+  it('falls back when the token is empty after normalization', () => {
+    expect(sanitizeRuntimeToken('***', 'local')).toBe('local');
+  });
+});
+
+describe('resolveRuntimeAgentId', () => {
+  it('prefers AI_AGENT_ID when available', () => {
+    expect(
+      resolveRuntimeAgentId({
+        env: {
+          AI_AGENT_ID: 'Codex Agent 12',
+          USER: 'ignored-user',
+        },
+      })
+    ).toBe('codex-agent-12');
+  });
+
+  it('falls back to a sanitized default when no agent env is present', () => {
+    expect(resolveRuntimeAgentId({ env: {}, fallback: 'Local Dev' })).toBe('local-dev');
+  });
+});
+
+describe('buildRuntimeLeaseKey', () => {
+  it('includes app, mode, agent, and root hash components', () => {
+    const leaseKey = buildRuntimeLeaseKey({
+      rootDir: '/tmp/worktrees/feature-a',
+      appId: 'admin-web',
+      mode: 'dev',
+      agentId: 'agent-2',
+    });
+
+    expect(leaseKey).toMatch(/^admin-web-dev-agent-2-[a-f0-9]{8}$/);
+  });
+
+  it('changes when the root or agent changes', () => {
+    const left = buildRuntimeLeaseKey({
+      rootDir: '/tmp/worktrees/feature-a',
+      appId: 'web',
+      mode: 'dev',
+      agentId: 'agent-1',
+    });
+    const right = buildRuntimeLeaseKey({
+      rootDir: '/tmp/worktrees/feature-b',
+      appId: 'web',
+      mode: 'dev',
+      agentId: 'agent-2',
+    });
+
+    expect(left).not.toBe(right);
+  });
+});
+
+describe('resolveBrokerManagedDistDir', () => {
+  it('creates an agent-scoped Next dist dir name', () => {
+    expect(
+      resolveBrokerManagedDistDir({
+        appId: 'web',
+        mode: 'dev',
+        agentId: 'Agent 4',
+      })
+    ).toBe('.next-dev-web-dev-agent-4');
+  });
+});
+
+describe('resolvePlaywrightRunArtifacts', () => {
+  it('namespaces artifacts by app, agent, and run id', () => {
+    const artifacts = resolvePlaywrightRunArtifacts({
+      rootDir: '/repo/app',
+      appId: 'storefront',
+      agentId: 'agent-9',
+      runId: 'Run 2026 03 08',
+      env: {},
+    });
+
+    expect(artifacts.runRoot).toBe(
+      path.join('/repo/app', 'tmp', 'playwright-runs', 'storefront', 'agent-9', 'run-2026-03-08')
+    );
+    expect(artifacts.outputDir).toBe(path.join(artifacts.runRoot, 'test-results'));
+    expect(artifacts.htmlReportDir).toBe(path.join(artifacts.runRoot, 'html-report'));
+    expect(artifacts.junitOutputFile).toBe(path.join(artifacts.runRoot, 'junit.xml'));
+  });
+});
+
+describe('buildBrokeredPlaywrightEnv', () => {
+  it('injects base url, artifact paths, and PATH overrides for brokered runs', () => {
+    const artifacts = resolvePlaywrightRunArtifacts({
+      rootDir: '/repo/app',
+      appId: 'web',
+      agentId: 'agent-1',
+      runId: 'run-a',
+      env: {},
+    });
+
+    const env = buildBrokeredPlaywrightEnv({
+      env: { PATH: '/usr/bin' },
+      host: '127.0.0.1',
+      baseUrl: 'http://127.0.0.1:3173',
+      artifacts,
+      preferredBrowserNodeBinDir: '/opt/node22/bin',
+      agentId: 'agent-1',
+      leaseKey: 'web-dev-agent-1-deadbeef',
+      distDir: '.next-dev-web-dev-agent-1',
+    });
+
+    expect(env).toEqual(
+      expect.objectContaining({
+        HOST: '127.0.0.1',
+        PLAYWRIGHT_BASE_URL: 'http://127.0.0.1:3173',
+        PLAYWRIGHT_USE_EXISTING_SERVER: 'true',
+        PLAYWRIGHT_OUTPUT_DIR: artifacts.outputDir,
+        PLAYWRIGHT_HTML_REPORT_DIR: artifacts.htmlReportDir,
+        PLAYWRIGHT_JUNIT_OUTPUT_FILE: artifacts.junitOutputFile,
+        PLAYWRIGHT_RUNTIME_RUN_ID: 'run-a',
+        PLAYWRIGHT_RUNTIME_LEASE_KEY: 'web-dev-agent-1-deadbeef',
+        NEXT_DIST_DIR: '.next-dev-web-dev-agent-1',
+        AI_AGENT_ID: 'agent-1',
+        PATH: `/opt/node22/bin${path.delimiter}/usr/bin`,
+      })
+    );
+  });
+});
+
+describe('acquireRuntimeLease', () => {
+  it('serializes concurrent lease creation so same-key callers reuse one runtime', async () => {
+    const rootDir = await fs.mkdtemp(path.join(os.tmpdir(), 'runtime-broker-test-'));
+    cleanupTargets.push(rootDir);
+
+    const healthyBaseUrls = new Set<string>();
+    let spawnCount = 0;
+
+    const spawnImpl = (_command: string, _args: string[], options: { env: Record<string, string> }) => {
+      spawnCount += 1;
+      const child = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], {
+        detached: true,
+        stdio: 'ignore',
+      });
+      child.unref();
+
+      const baseUrl = `http://${options.env.HOST}:${options.env.PORT}`;
+      setTimeout(() => {
+        healthyBaseUrls.add(baseUrl);
+      }, 50);
+
+      return child;
+    };
+
+    const fetchImpl = async (candidate: string) => {
+      const url = new URL(candidate);
+      const baseUrl = `${url.protocol}//${url.host}`;
+      if (healthyBaseUrls.has(baseUrl)) {
+        return { status: 200 };
+      }
+
+      throw new Error('runtime not ready');
+    };
+
+    const [left, right] = await Promise.all([
+      acquireRuntimeLease({
+        rootDir,
+        appId: 'web',
+        mode: 'dev',
+        agentId: 'agent-lock',
+        env: {},
+        spawnImpl,
+        fetchImpl,
+        startupTimeoutMs: 3_000,
+        reuseTimeoutMs: 500,
+      }),
+      acquireRuntimeLease({
+        rootDir,
+        appId: 'web',
+        mode: 'dev',
+        agentId: 'agent-lock',
+        env: {},
+        spawnImpl,
+        fetchImpl,
+        startupTimeoutMs: 3_000,
+        reuseTimeoutMs: 500,
+      }),
+    ]);
+
+    expect(spawnCount).toBe(1);
+    expect(left.baseUrl).toBe(right.baseUrl);
+    expect([left.reused, right.reused].filter(Boolean)).toHaveLength(1);
+  });
+});

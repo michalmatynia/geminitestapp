@@ -39,9 +39,14 @@ import {
   setStoredActiveLearnerId,
 } from '@/features/kangur/services/kangur-active-learner';
 import {
+  getKangurLoginHref,
+  resolveKangurPublicBasePathFromHref,
+} from '@/features/kangur/config/routing';
+import {
   createGuestKangurScore,
   hasGuestKangurScores,
   listGuestKangurScores,
+  resetGuestKangurScoreSession,
   syncGuestKangurScores,
 } from '@/features/kangur/services/guest-kangur-scores';
 import { sortScores } from '@/features/kangur/services/kangur-score-repository/shared';
@@ -97,9 +102,8 @@ const clearSessionUserCache = (): void => {
 const prepareLoginHref = (returnUrl: string): string => {
   clearSessionUserCache();
   clearScoreQueryCache();
-  const loginUrl = new URL('/kangur/login', window.location.origin);
-  loginUrl.searchParams.set('callbackUrl', returnUrl);
-  return `${loginUrl.pathname}${loginUrl.search}${loginUrl.hash}`;
+  const basePath = resolveKangurPublicBasePathFromHref(returnUrl, window.location.origin);
+  return getKangurLoginHref(basePath, returnUrl);
 };
 
 const createActorAwareHeaders = (headers?: HeadersInit): Headers => {
@@ -863,6 +867,7 @@ export const createLocalKangurPlatform = (): KangurPlatform => {
         clearSessionUserCache();
         clearScoreQueryCache();
         clearStoredActiveLearnerId();
+        resetGuestKangurScoreSession();
         await fetch(KANGUR_LEARNER_SIGNOUT_ENDPOINT, {
           method: 'POST',
           headers: withCsrfHeaders(),

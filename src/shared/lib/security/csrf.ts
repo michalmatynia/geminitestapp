@@ -41,16 +41,51 @@ export const getCsrfTokenFromRequest = (request: NextRequest): string | null =>
 export const getCsrfTokenFromHeaders = (request: NextRequest): string | null =>
   request.headers.get(CSRF_HEADER_NAME) ?? null;
 
+const LOOPBACK_HOSTNAMES = new Set(['localhost', '127.0.0.1', '0.0.0.0', '::1', '[::1]']);
+
+const isLoopbackHostname = (hostname: string): boolean => LOOPBACK_HOSTNAMES.has(hostname);
+
+const isEquivalentLoopbackOrigin = (candidateOrigin: string, requestOrigin: string): boolean => {
+  try {
+    const candidate = new URL(candidateOrigin);
+    const request = new URL(requestOrigin);
+    return (
+      candidate.protocol === request.protocol &&
+      candidate.port === request.port &&
+      isLoopbackHostname(candidate.hostname) &&
+      isLoopbackHostname(request.hostname)
+    );
+  } catch {
+    return false;
+  }
+};
+
+const isAllowedOrigin = (candidateOrigin: string, requestOrigin: string): boolean =>
+  candidateOrigin === requestOrigin || isEquivalentLoopbackOrigin(candidateOrigin, requestOrigin);
+
+const getRequestOrigin = (request: NextRequest): string => {
+  const forwardedHost = request.headers.get('x-forwarded-host');
+  const forwardedProto = request.headers.get('x-forwarded-proto');
+  const host = forwardedHost ?? request.headers.get('host');
+
+  if (host) {
+    const protocol = forwardedProto ?? request.nextUrl.protocol.replace(/:$/, '');
+    return `${protocol}://${host}`;
+  }
+
+  return request.nextUrl.origin;
+};
+
 export const isSameOriginRequest = (request: NextRequest): boolean => {
   const origin = request.headers.get('origin');
   const referer = request.headers.get('referer');
-  const requestOrigin = request.nextUrl.origin;
+  const requestOrigin = getRequestOrigin(request);
   if (origin) {
-    return origin === requestOrigin;
+    return isAllowedOrigin(origin, requestOrigin);
   }
   if (referer) {
     try {
-      return new URL(referer).origin === requestOrigin;
+      return isAllowedOrigin(new URL(referer).origin, requestOrigin);
     } catch {
       return false;
     }

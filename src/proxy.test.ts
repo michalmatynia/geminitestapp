@@ -4,7 +4,9 @@ const { ensureCsrfCookieMock } = vi.hoisted(() => ({
   ensureCsrfCookieMock: vi.fn(),
 }));
 
-vi.mock('next/server', () => {
+vi.mock('next/server', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('next/server')>();
+
   class MockNextResponse extends Response {
     static next() {
       return new MockNextResponse(null, {
@@ -25,6 +27,7 @@ vi.mock('next/server', () => {
   }
 
   return {
+    ...actual,
     NextResponse: MockNextResponse,
   };
 });

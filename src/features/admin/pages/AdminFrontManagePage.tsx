@@ -2,11 +2,12 @@
 
 import { SaveIcon } from 'lucide-react';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import {
-  FRONT_PAGE_APP_ROUTE,
+  FRONT_PAGE_OPTIONS,
   normalizeFrontPageApp,
+  type FrontPageOption,
   type FrontPageSelectableApp,
 } from '@/shared/lib/front-page-app';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -44,37 +45,6 @@ function AdminFrontManageContent({
   const [selected, setSelected] = useState<FrontAppOption>(initialSelected);
   const updateSetting = useUpdateSetting();
 
-  const options = useMemo(
-    () => [
-      {
-        id: 'cms' as const,
-        title: 'CMS Home',
-        description:
-          'Render the CMS-owned home page so zoning, default slugs, and App Embed blocks stay in control.',
-        route: FRONT_PAGE_APP_ROUTE.cms,
-      },
-      {
-        id: 'kangur' as const,
-        title: 'Kangur',
-        description: 'Open the Kangur application on the home page.',
-        route: FRONT_PAGE_APP_ROUTE.kangur,
-      },
-      {
-        id: 'chatbot' as const,
-        title: 'Chatbot',
-        description: 'Open the admin chatbot workspace on the home page.',
-        route: FRONT_PAGE_APP_ROUTE.chatbot,
-      },
-      {
-        id: 'notes' as const,
-        title: 'Notes',
-        description: 'Open the admin notes workspace on the home page.',
-        route: FRONT_PAGE_APP_ROUTE.notes,
-      },
-    ],
-    []
-  );
-
   const handleSave = async (): Promise<void> => {
     try {
       await updateSetting.mutateAsync({
@@ -110,13 +80,8 @@ function AdminFrontManageContent({
       >
         <div className='space-y-4'>
           <div className='grid gap-3'>
-            {options.map(
-              (option: {
-                id: FrontAppOption;
-                title: string;
-                description: string;
-                route: string;
-              }) => (
+            {FRONT_PAGE_OPTIONS.map(
+              (option: FrontPageOption) => (
                 <Button
                   key={option.id}
                   type='button'

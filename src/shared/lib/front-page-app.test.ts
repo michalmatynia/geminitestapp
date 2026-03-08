@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   FRONT_PAGE_ALLOWED,
   FRONT_PAGE_APP_ROUTE,
+  FRONT_PAGE_OPTIONS,
   getFrontPageRedirectPath,
   normalizeFrontPageApp,
 } from '@/shared/lib/front-page-app';
@@ -38,6 +39,17 @@ describe('front-page-app helpers', () => {
     expect(FRONT_PAGE_APP_ROUTE.kangur).toBe('/kangur');
     expect(FRONT_PAGE_APP_ROUTE.chatbot).toBe('/admin/chatbot');
     expect(FRONT_PAGE_APP_ROUTE.notes).toBe('/admin/notes');
+  });
+
+  it('exposes the selectable options in UI order', () => {
+    expect(FRONT_PAGE_OPTIONS.map((option) => option.id)).toEqual([
+      'cms',
+      'kangur',
+      'chatbot',
+      'notes',
+    ]);
+    expect(FRONT_PAGE_OPTIONS[0]?.title).toBe('CMS Home');
+    expect(FRONT_PAGE_OPTIONS[1]?.route).toBe('/kangur');
   });
 
   it('resolves redirect paths only for non-cms destinations', () => {

@@ -3,9 +3,8 @@ import { useContext } from 'react';
 import {
   SegmentEditorStateContext,
   SegmentEditorActionsContext,
-  type SegmentEditorState,
-  type SegmentEditorActions,
 } from '../SegmentEditorContext';
+import type { SegmentEditorState, SegmentEditorActions } from '../SegmentEditorContext.types';
 
 export const useSegmentEditorState = (): SegmentEditorState => {
   const ctx = useContext(SegmentEditorStateContext);

@@ -11,26 +11,48 @@ import { internalError } from '@/shared/errors/app-error';
 
 import { useTeachingAgents, useTeachingCollections } from '../hooks/useAgentTeachingQueries';
 
-interface AgentTeachingContextType {
+interface AgentTeachingStateContextType {
   agents: AgentTeachingAgentRecord[];
   collections: AgentTeachingEmbeddingCollectionRecord[];
   chatModelId: string;
   embeddingModelId: string;
   isLoading: boolean;
+}
+
+interface AgentTeachingActionsContextType {
   refetchAgents: () => Promise<unknown>;
   refetchCollections: () => Promise<unknown>;
 }
 
-const AgentTeachingContext = createContext<AgentTeachingContextType | null>(null);
+type AgentTeachingContextType = AgentTeachingStateContextType & AgentTeachingActionsContextType;
 
-export const useAgentTeachingQueriesContext = (): AgentTeachingContextType => {
-  const context = useContext(AgentTeachingContext);
+const AgentTeachingStateContext = createContext<AgentTeachingStateContextType | null>(null);
+const AgentTeachingActionsContext = createContext<AgentTeachingActionsContextType | null>(null);
+
+export const useAgentTeachingState = (): AgentTeachingStateContextType => {
+  const context = useContext(AgentTeachingStateContext);
   if (!context) {
     throw internalError(
-      'useAgentTeachingQueriesContext must be used within an AgentTeachingProvider'
+      'useAgentTeachingState must be used within an AgentTeachingProvider'
     );
   }
   return context;
+};
+
+export const useAgentTeachingActions = (): AgentTeachingActionsContextType => {
+  const context = useContext(AgentTeachingActionsContext);
+  if (!context) {
+    throw internalError(
+      'useAgentTeachingActions must be used within an AgentTeachingProvider'
+    );
+  }
+  return context;
+};
+
+export const useAgentTeachingQueriesContext = (): AgentTeachingContextType => {
+  const state = useAgentTeachingState();
+  const actions = useAgentTeachingActions();
+  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
 };
 
 export function AgentTeachingProvider({ children }: { children: ReactNode }): React.JSX.Element {
@@ -54,26 +76,29 @@ export function AgentTeachingProvider({ children }: { children: ReactNode }): Re
   const embeddingModelId = embeddingAssignment.effectiveModelId.trim();
   const isLoading = loadingAgents || loadingCollections;
 
-  const value = useMemo(
-    (): AgentTeachingContextType => ({
+  const stateValue = useMemo(
+    (): AgentTeachingStateContextType => ({
       agents,
       collections,
       chatModelId,
       embeddingModelId,
       isLoading,
+    }),
+    [agents, collections, chatModelId, embeddingModelId, isLoading]
+  );
+  const actionsValue = useMemo(
+    (): AgentTeachingActionsContextType => ({
       refetchAgents,
       refetchCollections,
     }),
-    [
-      agents,
-      collections,
-      chatModelId,
-      embeddingModelId,
-      isLoading,
-      refetchAgents,
-      refetchCollections,
-    ]
+    [refetchAgents, refetchCollections]
   );
 
-  return <AgentTeachingContext.Provider value={value}>{children}</AgentTeachingContext.Provider>;
+  return (
+    <AgentTeachingActionsContext.Provider value={actionsValue}>
+      <AgentTeachingStateContext.Provider value={stateValue}>
+        {children}
+      </AgentTeachingStateContext.Provider>
+    </AgentTeachingActionsContext.Provider>
+  );
 }

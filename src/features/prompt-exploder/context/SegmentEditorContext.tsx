@@ -1,16 +1,11 @@
 'use client';
 
-import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 
-import { PROMPT_ENGINE_SETTINGS_KEY } from '@/shared/contracts/prompt-engine';
 import { useToast } from '@/shared/ui';
-import { serializeSetting } from '@/shared/utils/settings-json';
 
-import { promptExploderClampNumber } from '../helpers/formatting';
 import {
-  promptExploderBuildSegmentSampleText,
   promptExploderCreateApprovalDraftFromSegment,
-  type ApprovalDraft,
 } from '../helpers/segment-helpers';
 import {
   promptExploderInsertSegmentRelative,
@@ -18,61 +13,18 @@ import {
   promptExploderRemoveSegmentById,
   promptExploderSplitSegmentByRange,
 } from '../helpers/segment-transforms';
-import { buildManualLearnedRegexRuleDraft } from '../rule-drafts';
-import { upsertRegexLearnedRule } from '../rule-learning';
-import {
-  buildRuntimeRulesForReexplode,
-  buildRuntimeTemplatesForReexplode,
-  reexplodePromptWithRuntime,
-  resolveSegmentIdAfterReexplode,
-} from '../runtime-refresh';
-import { PROMPT_EXPLODER_SETTINGS_KEY } from '../settings';
-import {
-  normalizeLearningText,
-  templateSimilarityScore,
-  upsertLearnedTemplate,
-} from '../template-learning';
 import { useDocumentState, useDocumentActions } from './hooks/useDocument';
 import { useSettingsState, useSettingsActions } from './hooks/useSettings';
+import { useSegmentEditorPatterns } from './hooks/useSegmentEditorPatterns';
+import { useSegmentPatternApproval } from './hooks/useSegmentPatternApproval';
 
-import type { PromptExploderLearnedTemplate, PromptExploderSegment } from '../types';
-
-// ── Types ────────────────────────────────────────────────────────────────────
-
-export interface SegmentEditorPatternsState {
-  approvalDraft: ApprovalDraft;
-  matchedRuleDetails: Array<{
-    id: string;
-    title: string;
-    sequenceLabel?: string;
-    segmentType: string | null;
-    priority: number;
-    confidenceBoost: number;
-    treatAsHeading: boolean;
-  }>;
-  similarTemplateCandidates: Array<{
-    id: string;
-    title: string;
-    segmentType: PromptExploderLearnedTemplate['segmentType'];
-    score: number;
-    approvals: number;
-    state: PromptExploderLearnedTemplate['state'];
-    mergeEligible: boolean;
-  }>;
-  templateTargetOptions: Array<{ value: string; label: string }>;
-}
-
-export interface SegmentEditorState extends SegmentEditorPatternsState {}
-
-export interface SegmentEditorActions {
-  setApprovalDraft: React.Dispatch<React.SetStateAction<ApprovalDraft>>;
-  addSegmentRelative: (segmentId: string, position: 'before' | 'after') => void;
-  removeSegment: (segmentId: string) => void;
-  splitSegment: (segmentId: string, selectionStart: number, selectionEnd: number) => void;
-  mergeSegmentWithPrevious: (segmentId: string) => void;
-  mergeSegmentWithNext: (segmentId: string) => void;
-  handleApproveSelectedSegmentPattern: () => Promise<void>;
-}
+import type { PromptExploderSegment } from '../types';
+import type { ApprovalDraft } from '../helpers/segment-helpers';
+import type {
+  SegmentEditorActions,
+  SegmentEditorPatternsState,
+  SegmentEditorState,
+} from './SegmentEditorContext.types';
 
 // ── Contexts ─────────────────────────────────────────────────────────────────
 
@@ -86,8 +38,8 @@ const SegmentEditorActionsContext = createContext<SegmentEditorActions | null>(n
 export function SegmentEditorProvider({
   children,
 }: {
-  children: React.ReactNode;
-}): React.JSX.Element {
+  children: ReactNode;
+}) {
   const { toast } = useToast();
 
   const {
@@ -120,100 +72,14 @@ export function SegmentEditorProvider({
 
   // ── Derived ────────────────────────────────────────────────────────────────
 
-  const matchedRuleDetails = useMemo(() => {
-    if (!selectedSegment) return [];
-    const byId = new Map(effectiveRules.map((rule) => [rule.id, rule]));
-    return selectedSegment.matchedPatternIds.map((patternId: string, index: number) => {
-      const rule = byId.get(patternId);
-      const storedLabel = selectedSegment.matchedPatternLabels?.[index]?.trim() ?? '';
-      const sequenceLabel = rule?.sequenceGroupLabel?.trim() ?? '';
-      return {
-        id: patternId,
-        title: (storedLabel || rule?.title) ?? patternId,
-        ...(sequenceLabel ? { sequenceLabel } : {}),
-        segmentType: rule?.promptExploderSegmentType ?? null,
-        priority: rule?.promptExploderPriority ?? 0,
-        confidenceBoost: rule?.promptExploderConfidenceBoost ?? 0,
-        treatAsHeading: rule?.promptExploderTreatAsHeading ?? false,
-      };
+  const { matchedRuleDetails, similarTemplateCandidates, templateTargetOptions } =
+    useSegmentEditorPatterns({
+      approvalDraft,
+      effectiveRules,
+      effectiveLearnedTemplates,
+      selectedSegment,
+      templateMergeThreshold,
     });
-  }, [effectiveRules, selectedSegment]);
-
-  const similarTemplateCandidates = useMemo(() => {
-    if (!selectedSegment)
-      return [] as Array<{
-        id: string;
-        title: string;
-        segmentType: PromptExploderLearnedTemplate['segmentType'];
-        score: number;
-        approvals: number;
-        state: PromptExploderLearnedTemplate['state'];
-        mergeEligible: boolean;
-        sameType: boolean;
-        normalizedTitle?: string;
-      }>;
-    const sourceText =
-      `${selectedSegment.title || ''} ${promptExploderBuildSegmentSampleText(selectedSegment)}`.trim();
-    const normalizedSelectedTitle = normalizeLearningText(selectedSegment.title || '');
-    return effectiveLearnedTemplates
-      .map((template) => {
-        const score = templateSimilarityScore(sourceText, template);
-        const sameType = template.segmentType === approvalDraft.ruleSegmentType;
-        const mergeEligible = sameType && score >= templateMergeThreshold;
-        return {
-          id: template.id,
-          title: template.title || 'Untitled',
-          segmentType: template.segmentType,
-          score,
-          approvals: typeof template.approvals === 'number' ? template.approvals : 0,
-          state: (template.state as string) || 'candidate',
-          mergeEligible,
-          sameType,
-          normalizedTitle: template.normalizedTitle,
-        };
-      })
-      .filter(
-        (candidate) =>
-          candidate.score >= promptExploderClampNumber(templateMergeThreshold - 0.1, 0.3, 0.95) ||
-          candidate.normalizedTitle === normalizedSelectedTitle
-      )
-      .sort((left, right) => {
-        if (Number(right.mergeEligible) !== Number(left.mergeEligible)) {
-          return Number(right.mergeEligible) - Number(left.mergeEligible);
-        }
-        if (right.score !== left.score) return right.score - left.score;
-        if (right.approvals !== left.approvals) return right.approvals - left.approvals;
-        return right.id.localeCompare(left.id);
-      })
-      .slice(0, 6)
-      .map(({ sameType: _sameType, normalizedTitle: _normalizedTitle, ...candidate }) => candidate);
-  }, [
-    approvalDraft.ruleSegmentType,
-    effectiveLearnedTemplates,
-    selectedSegment,
-    templateMergeThreshold,
-  ]);
-
-  const templateTargetOptions = useMemo(() => {
-    const normalizeApprovals = (val: unknown): number => {
-      if (typeof val === 'number') return val;
-      return 0;
-    };
-
-    return effectiveLearnedTemplates
-      .filter((template) => template.segmentType === approvalDraft.ruleSegmentType)
-      .sort((left, right) => {
-        const leftApprovals = normalizeApprovals(left.approvals);
-        const rightApprovals = normalizeApprovals(right.approvals);
-        if (rightApprovals !== leftApprovals) return rightApprovals - leftApprovals;
-        return String(right.updatedAt || '').localeCompare(String(left.updatedAt || ''));
-      })
-      .slice(0, 80)
-      .map((template) => ({
-        value: template.id,
-        label: `${template.title} (${template.state}, ${normalizeApprovals(template.approvals)})`,
-      }));
-  }, [approvalDraft.ruleSegmentType, effectiveLearnedTemplates]);
 
   // ── Actions ────────────────────────────────────────────────────────────────
 
@@ -313,167 +179,10 @@ export function SegmentEditorProvider({
     [applySegmentEditResult, documentState, toast]
   );
 
-  const handleApproveSelectedSegmentPattern = useCallback(async () => {
-    if (!selectedSegment) {
-      toast('Select a segment before approving a pattern.', { variant: 'info' });
-      return;
-    }
-    if (!approvalDraft.rulePattern.trim()) {
-      toast('Rule pattern cannot be empty.', { variant: 'error' });
-      return;
-    }
-    try {
-      void new RegExp(approvalDraft.rulePattern, 'mi');
-    } catch (error) {
-      toast(
-        error instanceof Error
-          ? `Invalid regex pattern: ${error.message}`
-          : 'Invalid regex pattern.',
-        { variant: 'error' }
-      );
-      return;
-    }
-    try {
-      const now = new Date().toISOString();
-      const segmentSampleText = promptExploderBuildSegmentSampleText(selectedSegment);
-      const segmentLearningSource = `${selectedSegment.title || ''} ${segmentSampleText}`.trim();
-      const templateUpsert = upsertLearnedTemplate({
-        templates: effectiveLearnedTemplates,
-        segmentType: approvalDraft.ruleSegmentType,
-        title: selectedSegment.title || '',
-        sourceText: segmentLearningSource,
-        sampleText: segmentSampleText,
-        similarityThreshold: templateMergeThreshold,
-        minApprovalsForMatching: learningDraft.minApprovalsForMatching,
-        autoActivateLearnedTemplates: learningDraft.autoActivateLearnedTemplates,
-        mergeMode: approvalDraft.templateMergeMode,
-        targetTemplateId: approvalDraft.templateTargetId,
-        now,
-        createTemplateId: ({ segmentType, existingTemplateIds }) => {
-          let nextId = `template_${segmentType}_${Date.now().toString(36)}`;
-          while (existingTemplateIds.has(nextId)) {
-            nextId = `${nextId}_x`;
-          }
-          return nextId;
-        },
-      });
-      if (!templateUpsert.ok) {
-        toast(templateUpsert.errorMessage, { variant: 'error' });
-        return;
-      }
-      const { nextTemplate, nextTemplates, mergeMessage } = templateUpsert;
-
-      const learnedRuleId = `segment.learned.${approvalDraft.ruleSegmentType}.${nextTemplate.id}`;
-      const learnedRuleDraft = buildManualLearnedRegexRuleDraft({
-        id: learnedRuleId,
-        segmentTitle: selectedSegment.title || '',
-        segmentType: approvalDraft.ruleSegmentType,
-        sequence: 1000 + nextTemplates.length,
-        ruleTitle: approvalDraft.ruleTitle,
-        rulePattern: approvalDraft.rulePattern,
-        priority: approvalDraft.rulePriority,
-        confidenceBoost: approvalDraft.ruleConfidenceBoost,
-        treatAsHeading: approvalDraft.ruleTreatAsHeading,
-      });
-
-      const basePromptSettings = promptSettings;
-      const learnedRules = basePromptSettings.promptValidation.learnedRules ?? [];
-      const learnedRuleUpsert = upsertRegexLearnedRule({
-        rules: learnedRules,
-        incomingRule: learnedRuleDraft,
-      });
-      const nextLearnedRules = learnedRuleUpsert.nextRules;
-
-      const nextPromptSettings = {
-        ...basePromptSettings,
-        promptValidation: {
-          ...basePromptSettings.promptValidation,
-          learnedRules: nextLearnedRules,
-        },
-      };
-      const nextExploderSettings = {
-        ...promptExploderSettings,
-        learning: {
-          ...promptExploderSettings.learning,
-          templates: nextTemplates,
-        },
-      };
-      const writePayloads = [
-        {
-          key: PROMPT_ENGINE_SETTINGS_KEY,
-          value: serializeSetting(nextPromptSettings),
-        },
-        {
-          key: PROMPT_EXPLODER_SETTINGS_KEY,
-          value: serializeSetting(nextExploderSettings),
-        },
-      ];
-      const changedPayloads = writePayloads.filter(
-        (payload) => settingsMap.get(payload.key) !== payload.value
-      );
-      if (changedPayloads.length === 1) {
-        await updateSetting.mutateAsync(changedPayloads[0]!);
-      } else if (changedPayloads.length > 1) {
-        await updateSettingsBulk.mutateAsync(changedPayloads);
-      }
-
-      setSessionLearnedRules((previous) => {
-        const byId = new Map(previous.map((rule) => [rule.id, rule]));
-        byId.set(learnedRuleUpsert.nextRule.id, learnedRuleUpsert.nextRule);
-        return [...byId.values()];
-      });
-      setSessionLearnedTemplates((previous) => {
-        const byId = new Map(previous.map((template) => [template.id, template]));
-        byId.set(nextTemplate.id, nextTemplate);
-        return [...byId.values()];
-      });
-
-      const runtimeTemplatesAfterApproval = buildRuntimeTemplatesForReexplode({
-        useUpdatedTemplates: true,
-        runtimeLearnedTemplates,
-        nextTemplates,
-        learningEnabled: nextExploderSettings.learning.enabled,
-        minApprovalsForMatching: nextExploderSettings.learning.minApprovalsForMatching,
-        maxTemplates: nextExploderSettings.learning.maxTemplates,
-      });
-      const runtimeRulesAfterApproval = buildRuntimeRulesForReexplode({
-        runtimeValidationRules,
-        runtimeRuleProfile: learningDraft.runtimeRuleProfile,
-        appliedRules: [learnedRuleUpsert.nextRule],
-      });
-      const sourcePrompt = promptText.trim() || documentState?.sourcePrompt || '';
-      if (sourcePrompt) {
-        const refreshed = reexplodePromptWithRuntime({
-          prompt: sourcePrompt,
-          validationRules: runtimeRulesAfterApproval,
-          learnedTemplates: runtimeTemplatesAfterApproval,
-          similarityThreshold: nextExploderSettings.learning.similarityThreshold,
-          validationScope: activeValidationScope,
-        });
-        setManualBindings([]);
-        setDocumentState(refreshed);
-        setSelectedSegmentId((previous) =>
-          resolveSegmentIdAfterReexplode({
-            document: refreshed,
-            strategy: { kind: 'preserve_id', previousId: previous ?? null },
-          })
-        );
-      }
-
-      const messageParts = [
-        `Pattern approved: ${learnedRuleUpsert.nextRule.title}.`,
-        mergeMessage ? `Template: ${mergeMessage}.` : null,
-      ].filter(Boolean);
-      toast(messageParts.join(' '), { variant: 'success' });
-    } catch (error) {
-      toast(error instanceof Error ? error.message : 'Failed to approve segment pattern.', {
-        variant: 'error',
-      });
-    }
-  }, [
+  const handleApproveSelectedSegmentPattern = useSegmentPatternApproval({
     approvalDraft,
-    documentState?.sourcePrompt,
     activeValidationScope,
+    documentState,
     effectiveLearnedTemplates,
     learningDraft,
     promptExploderSettings,
@@ -483,16 +192,16 @@ export function SegmentEditorProvider({
     runtimeValidationRules,
     settingsMap,
     selectedSegment,
+    templateMergeThreshold,
+    toast,
     setDocumentState,
     setManualBindings,
     setSelectedSegmentId,
     setSessionLearnedRules,
     setSessionLearnedTemplates,
-    templateMergeThreshold,
-    toast,
     updateSetting,
     updateSettingsBulk,
-  ]);
+  });
 
   // ── Memoized context values ────────────────────────────────────────────────
 

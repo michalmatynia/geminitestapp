@@ -464,6 +464,7 @@ export const kangurScoreSchema = z.object({
   correct_answers: z.number().int().min(0).max(10_000),
   time_taken: z.number().int().min(0).max(86_400),
   created_date: z.string().datetime({ offset: true }),
+  client_mutation_id: z.string().trim().max(120).nullable().optional(),
   created_by: z.string().trim().nullable().optional(),
   learner_id: z.string().trim().max(120).nullable().optional(),
   owner_user_id: z.string().trim().max(120).nullable().optional(),

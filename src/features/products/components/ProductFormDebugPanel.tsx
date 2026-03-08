@@ -3,19 +3,35 @@
 import { useContext } from 'react';
 
 import { ProductFormSubmitContext } from '@/features/products/context/ProductFormContext';
-import { ProductFormCoreContext } from '@/features/products/context/ProductFormCoreContext';
+import {
+  ProductFormCoreActionsContext,
+  ProductFormCoreStateContext,
+} from '@/features/products/context/ProductFormCoreContext';
 import { ProductFormImageContext } from '@/features/products/context/ProductFormImageContext';
 import { ProductFormMetadataContext } from '@/features/products/context/ProductFormMetadataContext';
 import { ProductFormParameterContext } from '@/features/products/context/ProductFormParameterContext';
-import { ProductFormStudioContext } from '@/features/products/context/ProductFormStudioContext';
+import {
+  ProductFormStudioActionsContext,
+  ProductFormStudioStateContext,
+} from '@/features/products/context/ProductFormStudioContext';
 
 export default function ProductFormDebugPanel(): React.JSX.Element | null {
-  const coreContext = useContext(ProductFormCoreContext);
+  const coreStateContext = useContext(ProductFormCoreStateContext);
+  const coreActionsContext = useContext(ProductFormCoreActionsContext);
   const metadataContext = useContext(ProductFormMetadataContext);
   const imageContext = useContext(ProductFormImageContext);
   const parameterContext = useContext(ProductFormParameterContext);
-  const studioContext = useContext(ProductFormStudioContext);
+  const studioStateContext = useContext(ProductFormStudioStateContext);
+  const studioActionsContext = useContext(ProductFormStudioActionsContext);
   const submitContext = useContext(ProductFormSubmitContext);
+  const coreContext =
+    coreStateContext || coreActionsContext
+      ? { ...(coreStateContext ?? {}), ...(coreActionsContext ?? {}) }
+      : null;
+  const studioContext =
+    studioStateContext || studioActionsContext
+      ? { ...(studioStateContext ?? {}), ...(studioActionsContext ?? {}) }
+      : null;
 
   if (
     !coreContext &&

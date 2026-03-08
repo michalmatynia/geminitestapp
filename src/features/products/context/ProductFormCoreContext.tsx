@@ -29,32 +29,40 @@ import { internalError } from '@/shared/errors/app-error';
 
 export interface ProductFormCoreContextType {
   register: UseFormRegister<ProductFormData>;
-  handleSubmit: (e?: BaseSyntheticEvent) => Promise<void>;
   hasUnsavedChanges: boolean;
   errors: FieldErrors<ProductFormData>;
-  setValue: UseFormSetValue<ProductFormData>;
   getValues: UseFormGetValues<ProductFormData>;
   selectedNoteIds: string[];
-  toggleNote: (noteId: string) => void;
-  removeNote: (noteId: string) => void;
   generationError: string | null;
-  setGenerationError: (error: string | null) => void;
   product?: ProductWithImages | undefined;
   draft?: ProductDraft | null | undefined;
   ConfirmationModal: React.ComponentType;
   methods: UseFormReturn<ProductFormData>;
+  uploading: boolean;
+  uploadError: string | null;
+  uploadSuccess: boolean;
+}
+
+export interface ProductFormCoreActionsContextType {
+  handleSubmit: (e?: BaseSyntheticEvent) => Promise<void>;
+  setValue: UseFormSetValue<ProductFormData>;
+  toggleNote: (noteId: string) => void;
+  removeNote: (noteId: string) => void;
+  setGenerationError: (error: string | null) => void;
   setHandleSubmit: (fn: (e?: BaseSyntheticEvent) => Promise<void>) => void;
   setConfirmationModal: (component: React.ComponentType) => void;
   setHasUnsavedChanges: (value: boolean) => void;
-  uploading: boolean;
   setUploading: (value: boolean) => void;
-  uploadError: string | null;
   setUploadError: (value: string | null) => void;
-  uploadSuccess: boolean;
   setUploadSuccess: (value: boolean) => void;
 }
 
-export const ProductFormCoreContext = createContext<ProductFormCoreContextType | null>(null);
+type ProductFormCoreContextValue = ProductFormCoreContextType & ProductFormCoreActionsContextType;
+
+export const ProductFormCoreStateContext = createContext<ProductFormCoreContextType | null>(null);
+export const ProductFormCoreActionsContext = createContext<ProductFormCoreActionsContextType | null>(
+  null
+);
 
 export function ProductFormCoreProvider({
   children,
@@ -132,61 +140,93 @@ export function ProductFormCoreProvider({
     setSelectedNoteIds((prev: string[]) => prev.filter((n: string) => n !== id));
   };
 
-  const value = useMemo(
-    () => ({
+  const stateValue = useMemo(
+    (): ProductFormCoreContextType => ({
       register: methods.register,
-      handleSubmit: handleSubmitFn,
       hasUnsavedChanges,
       errors: methods.formState.errors,
-      setValue: methods.setValue,
       getValues: methods.getValues,
       selectedNoteIds,
-      toggleNote,
-      removeNote,
       generationError,
-      setGenerationError,
       product,
       draft,
       ConfirmationModal,
       methods,
-      setHandleSubmit: updateHandleSubmit,
-      setConfirmationModal: updateConfirmationModal,
-      setHasUnsavedChanges,
       uploading,
-      setUploading,
       uploadError,
-      setUploadError,
       uploadSuccess,
-      setUploadSuccess,
     }),
     [
       methods,
-      handleSubmitFn,
       hasUnsavedChanges,
       selectedNoteIds,
       generationError,
       product,
       draft,
       ConfirmationModal,
-      updateHandleSubmit,
-      updateConfirmationModal,
       uploading,
       uploadError,
       uploadSuccess,
     ]
   );
+  const actionsValue = useMemo(
+    (): ProductFormCoreActionsContextType => ({
+      handleSubmit: handleSubmitFn,
+      setValue: methods.setValue,
+      toggleNote,
+      removeNote,
+      setGenerationError,
+      setHandleSubmit: updateHandleSubmit,
+      setConfirmationModal: updateConfirmationModal,
+      setHasUnsavedChanges,
+      setUploading,
+      setUploadError,
+      setUploadSuccess,
+    }),
+    [
+      handleSubmitFn,
+      methods.setValue,
+      toggleNote,
+      removeNote,
+      setGenerationError,
+      updateHandleSubmit,
+      updateConfirmationModal,
+      setHasUnsavedChanges,
+      setUploading,
+      setUploadError,
+      setUploadSuccess,
+    ]
+  );
 
   return (
-    <ProductFormCoreContext.Provider value={value}>
-      <FormProvider {...methods}>{children}</FormProvider>
-    </ProductFormCoreContext.Provider>
+    <ProductFormCoreActionsContext.Provider value={actionsValue}>
+      <ProductFormCoreStateContext.Provider value={stateValue}>
+        <FormProvider {...methods}>{children}</FormProvider>
+      </ProductFormCoreStateContext.Provider>
+    </ProductFormCoreActionsContext.Provider>
   );
 }
 
-export const useProductFormCore = (): ProductFormCoreContextType => {
-  const context = useContext(ProductFormCoreContext);
+export const useProductFormCoreState = (): ProductFormCoreContextType => {
+  const context = useContext(ProductFormCoreStateContext);
   if (!context) {
-    throw internalError('useProductFormCore must be used within a ProductFormCoreProvider');
+    throw internalError('useProductFormCoreState must be used within a ProductFormCoreProvider');
   }
   return context;
+};
+
+export const useProductFormCoreActions = (): ProductFormCoreActionsContextType => {
+  const context = useContext(ProductFormCoreActionsContext);
+  if (!context) {
+    throw internalError(
+      'useProductFormCoreActions must be used within a ProductFormCoreProvider'
+    );
+  }
+  return context;
+};
+
+export const useProductFormCore = (): ProductFormCoreContextValue => {
+  const state = useProductFormCoreState();
+  const actions = useProductFormCoreActions();
+  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
 };

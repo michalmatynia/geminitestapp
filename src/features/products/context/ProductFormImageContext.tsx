@@ -33,6 +33,32 @@ export interface ProductFormImageContextType {
   refreshImagesFromProduct: (savedProduct: ProductWithImages) => void;
 }
 
+export type ProductFormImageStateContextType = Pick<
+  ProductFormImageContextType,
+  | 'imageSlots'
+  | 'imageLinks'
+  | 'imageBase64s'
+  | 'uploading'
+  | 'uploadError'
+  | 'uploadSuccess'
+  | 'showFileManager'
+>;
+
+export type ProductFormImageActionsContextType = Pick<
+  ProductFormImageContextType,
+  | 'setShowFileManager'
+  | 'handleSlotImageChange'
+  | 'handleSlotFileSelect'
+  | 'handleSlotDisconnectImage'
+  | 'handleMultiImageChange'
+  | 'handleMultiFileSelect'
+  | 'swapImageSlots'
+  | 'setImageLinkAt'
+  | 'setImageBase64At'
+  | 'setImagesReordering'
+  | 'refreshImagesFromProduct'
+>;
+
 export const ProductFormImageContext = createContext<ProductFormImageContextType | null>(null);
 
 export function ProductFormImageProvider({
@@ -102,10 +128,63 @@ export function ProductFormImageProvider({
   );
 }
 
-export const useProductFormImages = (): ProductFormImageContextType => {
+const useRequiredProductFormImageContext = (): ProductFormImageContextType => {
   const context = useContext(ProductFormImageContext);
   if (!context) {
     throw internalError('useProductFormImages must be used within a ProductFormImageProvider');
   }
   return context;
 };
+
+export const useProductFormImageState = (): ProductFormImageStateContextType => {
+  const {
+    imageSlots,
+    imageLinks,
+    imageBase64s,
+    uploading,
+    uploadError,
+    uploadSuccess,
+    showFileManager,
+  } = useRequiredProductFormImageContext();
+  return {
+    imageSlots,
+    imageLinks,
+    imageBase64s,
+    uploading,
+    uploadError,
+    uploadSuccess,
+    showFileManager,
+  };
+};
+
+export const useProductFormImageActions = (): ProductFormImageActionsContextType => {
+  const {
+    setShowFileManager,
+    handleSlotImageChange,
+    handleSlotFileSelect,
+    handleSlotDisconnectImage,
+    handleMultiImageChange,
+    handleMultiFileSelect,
+    swapImageSlots,
+    setImageLinkAt,
+    setImageBase64At,
+    setImagesReordering,
+    refreshImagesFromProduct,
+  } = useRequiredProductFormImageContext();
+  return {
+    setShowFileManager,
+    handleSlotImageChange,
+    handleSlotFileSelect,
+    handleSlotDisconnectImage,
+    handleMultiImageChange,
+    handleMultiFileSelect,
+    swapImageSlots,
+    setImageLinkAt,
+    setImageBase64At,
+    setImagesReordering,
+    refreshImagesFromProduct,
+  };
+};
+
+export const useProductFormImages = (): ProductFormImageContextType =>
+  useRequiredProductFormImageContext();

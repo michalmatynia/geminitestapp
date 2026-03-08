@@ -26,7 +26,6 @@ export const statusOptions = [
 type StatusType = (typeof statusOptions)[number]['value'];
 
 interface FileUploadEventsContextState {
-  // State
   status: StatusType;
   category: string;
   projectId: string;
@@ -35,14 +34,13 @@ interface FileUploadEventsContextState {
   toDate: string;
   page: number;
   pageSize: number;
-
-  // Data
   events: FileUploadEventRecord[];
   total: number;
   totalPages: number;
   isFetching: boolean;
+}
 
-  // Setters
+interface FileUploadEventsContextActions {
   setStatus: (val: StatusType) => void;
   setCategory: (val: string) => void;
   setProjectId: (val: string) => void;
@@ -51,13 +49,16 @@ interface FileUploadEventsContextState {
   setToDate: (val: string) => void;
   setPage: (val: number) => void;
   setPageSize: (val: number) => void;
-
-  // Actions
   handleResetFilters: () => void;
   refetch: () => Promise<unknown>;
 }
 
-const FileUploadEventsContext = createContext<FileUploadEventsContextState | undefined>(undefined);
+type FileUploadEventsContextValue = FileUploadEventsContextState & FileUploadEventsContextActions;
+
+const FileUploadEventsStateContext = createContext<FileUploadEventsContextState | undefined>(undefined);
+const FileUploadEventsActionsContext = createContext<FileUploadEventsContextActions | undefined>(
+  undefined
+);
 
 export function FileUploadEventsProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const { toast } = useToast();
@@ -106,8 +107,8 @@ export function FileUploadEventsProvider({ children }: { children: ReactNode }):
     setPage(1);
   }, []);
 
-  const value = useMemo(
-    () => ({
+  const stateValue = useMemo(
+    (): FileUploadEventsContextState => ({
       status,
       category,
       projectId,
@@ -120,16 +121,6 @@ export function FileUploadEventsProvider({ children }: { children: ReactNode }):
       total,
       totalPages,
       isFetching: eventsQuery.isFetching,
-      setStatus,
-      setCategory,
-      setProjectId,
-      setQuery,
-      setFromDate,
-      setToDate,
-      setPage,
-      setPageSize,
-      handleResetFilters,
-      refetch: eventsQuery.refetch,
     }),
     [
       status,
@@ -144,21 +135,53 @@ export function FileUploadEventsProvider({ children }: { children: ReactNode }):
       total,
       totalPages,
       eventsQuery.isFetching,
-      eventsQuery.refetch,
-      handleResetFilters,
-      setPageSize,
     ]
+  );
+  const actionsValue = useMemo(
+    (): FileUploadEventsContextActions => ({
+      setStatus,
+      setCategory,
+      setProjectId,
+      setQuery,
+      setFromDate,
+      setToDate,
+      setPage,
+      setPageSize,
+      handleResetFilters,
+      refetch: eventsQuery.refetch,
+    }),
+    [eventsQuery.refetch, handleResetFilters]
   );
 
   return (
-    <FileUploadEventsContext.Provider value={value}>{children}</FileUploadEventsContext.Provider>
+    <FileUploadEventsActionsContext.Provider value={actionsValue}>
+      <FileUploadEventsStateContext.Provider value={stateValue}>
+        {children}
+      </FileUploadEventsStateContext.Provider>
+    </FileUploadEventsActionsContext.Provider>
   );
 }
 
-export function useFileUploadEventsContext(): FileUploadEventsContextState {
-  const context = useContext(FileUploadEventsContext);
+export function useFileUploadEventsState(): FileUploadEventsContextState {
+  const context = useContext(FileUploadEventsStateContext);
   if (context === undefined) {
-    throw internalError('useFileUploadEventsContext must be used within a FileUploadEventsProvider');
+    throw internalError('useFileUploadEventsState must be used within a FileUploadEventsProvider');
   }
   return context;
+}
+
+export function useFileUploadEventsActions(): FileUploadEventsContextActions {
+  const context = useContext(FileUploadEventsActionsContext);
+  if (context === undefined) {
+    throw internalError(
+      'useFileUploadEventsActions must be used within a FileUploadEventsProvider'
+    );
+  }
+  return context;
+}
+
+export function useFileUploadEventsContext(): FileUploadEventsContextValue {
+  const state = useFileUploadEventsState();
+  const actions = useFileUploadEventsActions();
+  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
 }

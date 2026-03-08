@@ -44,6 +44,7 @@ import { KangurLearnerProfileRuntimeBoundary } from '@/features/kangur/ui/contex
 import { KangurParentDashboardRuntimeBoundary } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 import { KangurLessonsRuntimeBoundary } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
 import { KangurProgressSyncProvider } from '@/features/kangur/ui/context/KangurProgressSyncProvider';
+import { KangurScoreSyncProvider } from '@/features/kangur/ui/context/KangurScoreSyncProvider';
 import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';
 import type { PageZone } from '@/shared/contracts/cms';
 import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
@@ -600,24 +601,26 @@ export function KangurCmsPreviewPanel(): React.ReactNode {
                       >
                         <KangurAuthProvider>
                           <KangurProgressSyncProvider>
-                            <KangurGameRuntimeBoundary enabled={activeScreenKey === 'Game'}>
-                              <KangurLessonsRuntimeBoundary enabled={activeScreenKey === 'Lessons'}>
-                                <KangurLearnerProfileRuntimeBoundary
-                                  enabled={activeScreenKey === 'LearnerProfile'}
-                                >
-                                  <KangurParentDashboardRuntimeBoundary
-                                    enabled={activeScreenKey === 'ParentDashboard'}
+                            <KangurScoreSyncProvider>
+                              <KangurGameRuntimeBoundary enabled={activeScreenKey === 'Game'}>
+                                <KangurLessonsRuntimeBoundary enabled={activeScreenKey === 'Lessons'}>
+                                  <KangurLearnerProfileRuntimeBoundary
+                                    enabled={activeScreenKey === 'LearnerProfile'}
                                   >
-                                    <KangurCmsRuntimeDataProvider>
-                                      <KangurCmsPreviewCanvasSections
-                                        hierarchy={hierarchy}
-                                        rootSectionIdsByZone={rootSectionIdsByZone}
-                                      />
-                                    </KangurCmsRuntimeDataProvider>
-                                  </KangurParentDashboardRuntimeBoundary>
-                                </KangurLearnerProfileRuntimeBoundary>
-                              </KangurLessonsRuntimeBoundary>
-                            </KangurGameRuntimeBoundary>
+                                    <KangurParentDashboardRuntimeBoundary
+                                      enabled={activeScreenKey === 'ParentDashboard'}
+                                    >
+                                      <KangurCmsRuntimeDataProvider>
+                                        <KangurCmsPreviewCanvasSections
+                                          hierarchy={hierarchy}
+                                          rootSectionIdsByZone={rootSectionIdsByZone}
+                                        />
+                                      </KangurCmsRuntimeDataProvider>
+                                    </KangurParentDashboardRuntimeBoundary>
+                                  </KangurLearnerProfileRuntimeBoundary>
+                                </KangurLessonsRuntimeBoundary>
+                              </KangurGameRuntimeBoundary>
+                            </KangurScoreSyncProvider>
                           </KangurProgressSyncProvider>
                         </KangurAuthProvider>
                       </KangurRoutingProvider>

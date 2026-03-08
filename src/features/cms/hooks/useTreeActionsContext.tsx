@@ -20,16 +20,14 @@ import { internalError } from '@/shared/errors/app-error';
 // Types
 // ---------------------------------------------------------------------------
 
-export interface TreeActionsContextValue {
-  // UI State
+export interface TreeActionsStateContextValue {
   expandedIds: Set<string>;
+}
 
-  // Selection & Expansion
+export interface TreeActionsActionsContextValue {
   selectNode: (nodeId: string) => void;
   toggleExpand: (nodeId: string) => void;
   autoExpand: (...nodeIds: (string | string[] | null | undefined)[]) => void;
-
-  // Block Operations
   blockActions: {
     add: (sectionId: string, blockType: string) => void;
     addToColumn: (sectionId: string, columnId: string, blockType: string) => void;
@@ -85,8 +83,6 @@ export interface TreeActionsContextValue {
     ) => void;
     remove: (sectionId: string, blockId: string, columnId?: string, parentBlockId?: string) => void;
   };
-
-  // Section Operations
   sectionActions: {
     add: (sectionType: string, zone: PageZone) => void;
     remove: (sectionId: string) => void;
@@ -117,8 +113,6 @@ export interface TreeActionsContextValue {
     ) => void;
     paste: (zone: PageZone) => void;
   };
-
-  // Grid Operations
   gridActions: {
     addRow: (sectionId: string) => void;
     removeRow: (sectionId: string, rowId: string) => void;
@@ -127,11 +121,14 @@ export interface TreeActionsContextValue {
   };
 }
 
+export type TreeActionsContextValue = TreeActionsStateContextValue & TreeActionsActionsContextValue;
+
 // ---------------------------------------------------------------------------
 // Context
 // ---------------------------------------------------------------------------
 
-const TreeActionsContext = createContext<TreeActionsContextValue | null>(null);
+const TreeActionsStateContext = createContext<TreeActionsStateContextValue | null>(null);
+const TreeActionsActionsContext = createContext<TreeActionsActionsContextValue | null>(null);
 
 // ---------------------------------------------------------------------------
 // Provider
@@ -589,9 +586,14 @@ export function TreeActionsProvider({
     [addGridRow, removeGridRow, addColumnToRow, removeColumnFromRow]
   );
 
-  const value = useMemo<TreeActionsContextValue>(
+  const stateValue = useMemo<TreeActionsStateContextValue>(
     () => ({
       expandedIds,
+    }),
+    [expandedIds]
+  );
+  const actionsValue = useMemo<TreeActionsActionsContextValue>(
+    () => ({
       selectNode,
       toggleExpand,
       autoExpand,
@@ -599,20 +601,40 @@ export function TreeActionsProvider({
       sectionActions,
       gridActions,
     }),
-    [expandedIds, selectNode, toggleExpand, autoExpand, blockActions, sectionActions, gridActions]
+    [selectNode, toggleExpand, autoExpand, blockActions, sectionActions, gridActions]
   );
 
-  return <TreeActionsContext.Provider value={value}>{children}</TreeActionsContext.Provider>;
+  return (
+    <TreeActionsActionsContext.Provider value={actionsValue}>
+      <TreeActionsStateContext.Provider value={stateValue}>
+        {children}
+      </TreeActionsStateContext.Provider>
+    </TreeActionsActionsContext.Provider>
+  );
 }
 
 // ---------------------------------------------------------------------------
 // Hook
 // ---------------------------------------------------------------------------
 
-export function useTreeActions(): TreeActionsContextValue {
-  const context = useContext(TreeActionsContext);
+export function useTreeActionsState(): TreeActionsStateContextValue {
+  const context = useContext(TreeActionsStateContext);
   if (!context) {
-    throw internalError('useTreeActions must be used within a TreeActionsProvider');
+    throw internalError('useTreeActionsState must be used within a TreeActionsProvider');
   }
   return context;
+}
+
+export function useTreeActionsActions(): TreeActionsActionsContextValue {
+  const context = useContext(TreeActionsActionsContext);
+  if (!context) {
+    throw internalError('useTreeActionsActions must be used within a TreeActionsProvider');
+  }
+  return context;
+}
+
+export function useTreeActions(): TreeActionsContextValue {
+  const state = useTreeActionsState();
+  const actions = useTreeActionsActions();
+  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
 }

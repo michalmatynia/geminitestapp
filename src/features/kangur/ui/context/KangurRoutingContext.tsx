@@ -12,7 +12,12 @@ type KangurRoutingContextValue = {
   embedded: boolean;
 };
 
-const KangurRoutingContext = createContext<KangurRoutingContextValue | null>(null);
+type KangurRoutingStateContextValue = KangurRoutingContextValue;
+type KangurRoutingActionsContextValue = Record<string, never>;
+
+const KangurRoutingStateContext = createContext<KangurRoutingStateContextValue | null>(null);
+const KangurRoutingActionsContext = createContext<KangurRoutingActionsContextValue | null>(null);
+const EMPTY_KANGUR_ROUTING_ACTIONS: KangurRoutingActionsContextValue = {};
 
 type KangurRoutingProviderProps = {
   pageKey?: string | null;
@@ -30,7 +35,7 @@ export const KangurRoutingProvider = ({
   children,
 }: KangurRoutingProviderProps): React.JSX.Element => {
   const resolvedBasePath = normalizeKangurBasePath(basePath);
-  const value = useMemo(
+  const stateValue = useMemo<KangurRoutingStateContextValue>(
     () => ({
       pageKey,
       requestedPath,
@@ -40,11 +45,33 @@ export const KangurRoutingProvider = ({
     [embedded, pageKey, requestedPath, resolvedBasePath]
   );
 
-  return <KangurRoutingContext.Provider value={value}>{children}</KangurRoutingContext.Provider>;
+  return (
+    <KangurRoutingActionsContext.Provider value={EMPTY_KANGUR_ROUTING_ACTIONS}>
+      <KangurRoutingStateContext.Provider value={stateValue}>
+        {children}
+      </KangurRoutingStateContext.Provider>
+    </KangurRoutingActionsContext.Provider>
+  );
+};
+
+export const useKangurRoutingState = (): KangurRoutingStateContextValue => {
+  const context = useContext(KangurRoutingStateContext);
+  if (!context) {
+    throw internalError('useKangurRoutingState must be used within a KangurRoutingProvider');
+  }
+  return context;
+};
+
+export const useKangurRoutingActions = (): KangurRoutingActionsContextValue => {
+  const context = useContext(KangurRoutingActionsContext);
+  if (!context) {
+    throw internalError('useKangurRoutingActions must be used within a KangurRoutingProvider');
+  }
+  return context;
 };
 
 export const useKangurRouting = (): KangurRoutingContextValue => {
-  const context = useContext(KangurRoutingContext);
+  const context = useContext(KangurRoutingStateContext);
   if (!context) {
     throw internalError('useKangurRouting must be used within a KangurRoutingProvider');
   }
@@ -52,4 +79,4 @@ export const useKangurRouting = (): KangurRoutingContextValue => {
 };
 
 export const useOptionalKangurRouting = (): KangurRoutingContextValue | null =>
-  useContext(KangurRoutingContext);
+  useContext(KangurRoutingStateContext);

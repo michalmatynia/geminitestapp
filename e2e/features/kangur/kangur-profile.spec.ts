@@ -1,12 +1,75 @@
 import { test, expect } from '@playwright/test';
 
+const KANGUR_PROGRESS_STORAGE_KEY = 'sprycio_progress';
+
+const buildManagerUser = (overrides = {}) => {
+  const nowIso = new Date('2026-03-08T10:00:00.000Z').toISOString();
+
+  return {
+    id: 'parent-001',
+    full_name: 'Parent Demo',
+    email: 'parent@example.com',
+    role: 'user',
+    actorType: 'parent',
+    canManageLearners: true,
+    ownerUserId: 'parent-001',
+    activeLearner: {
+      id: 'learner-001',
+      ownerUserId: 'parent-001',
+      displayName: 'Jan',
+      loginName: 'jan-demo',
+      status: 'active',
+      legacyUserKey: null,
+      aiTutor: {
+        currentMoodId: 'supportive',
+        baselineMoodId: 'calm',
+        confidence: 0.67,
+        lastComputedAt: nowIso,
+        lastReasonCode: 'steady_progress',
+      },
+      createdAt: nowIso,
+      updatedAt: nowIso,
+    },
+    learners: [
+      {
+        id: 'learner-001',
+        ownerUserId: 'parent-001',
+        displayName: 'Jan',
+        loginName: 'jan-demo',
+        status: 'active',
+        legacyUserKey: null,
+        aiTutor: {
+          currentMoodId: 'supportive',
+          baselineMoodId: 'calm',
+          confidence: 0.67,
+          lastComputedAt: nowIso,
+          lastReasonCode: 'steady_progress',
+        },
+        createdAt: nowIso,
+        updatedAt: nowIso,
+      },
+    ],
+    ...overrides,
+  };
+};
+
+const mockKangurAuthMe = async (page, user) => {
+  await page.route('**/api/kangur/auth/me**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(user),
+    });
+  });
+};
+
 test.describe('Kangur Learner Profile', () => {
   test('renders learner profile shell and baseline sections', async ({ page }) => {
     await page.goto('/kangur/profile');
 
     await expect(page).toHaveURL(/\/kangur\/profile/);
     await expect(page.getByRole('heading', { name: /Profil ucznia/i })).toBeVisible();
-    await expect(page.getByText(/Statystyki ucznia/i)).toBeVisible();
+    await expect(page.getByText(/Statystyki ucznia: Tryb lokalny\./i)).toBeVisible();
 
     await expect(page.getByText(/Srednia skutecznosc/i)).toBeVisible();
     await expect(page.getByText(/Seria dni/i)).toBeVisible();
@@ -21,6 +84,7 @@ test.describe('Kangur Learner Profile', () => {
   });
 
   test('supports navigation from game screen to learner profile', async ({ page }) => {
+    await mockKangurAuthMe(page, buildManagerUser());
     await page.goto('/kangur/game');
 
     const profileLink = page.getByRole('link', { name: /Profil/i }).first();
@@ -38,7 +102,7 @@ test.describe('Kangur Learner Profile', () => {
 
     await page.addInitScript(() => {
       window.localStorage.setItem(
-        'mathblast_progress',
+        KANGUR_PROGRESS_STORAGE_KEY,
         JSON.stringify({
           totalXp: 620,
           gamesPlayed: 22,
@@ -53,21 +117,13 @@ test.describe('Kangur Learner Profile', () => {
       );
     });
 
-    await page.route('**/api/auth/session**', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          user: {
-            id: 'user-jan',
-            name: 'Jan',
-            email: 'jan@example.com',
-            role: 'user',
-          },
-          expires: '2099-01-01T00:00:00.000Z',
-        }),
-      });
-    });
+    await mockKangurAuthMe(
+      page,
+      buildManagerUser({
+        full_name: 'Jan',
+        email: 'jan@example.com',
+      })
+    );
 
     await page.route('**/api/kangur/scores**', async (route) => {
       await route.fulfill({
@@ -104,7 +160,7 @@ test.describe('Kangur Learner Profile', () => {
 
     await expect(page.getByRole('heading', { name: /Profil ucznia/i })).toBeVisible();
     await expect(page.getByText(/Statystyki ucznia: Jan\./i)).toBeVisible();
-    await expect(page.getByText(/620 XP lacznie/i)).toBeVisible();
+    await expect(page.getByText(/Poziom 4 · 620 XP lacznie/i)).toBeVisible();
     await expect(page.getByText(/Plan na dzis/i)).toBeVisible();
 
     await expect(page.getByText('90%').first()).toBeVisible();
@@ -127,72 +183,30 @@ test.describe('Kangur Learner Profile', () => {
   test('shows the persisted AI tutor mood on the learner profile', async ({ page }) => {
     const nowIso = '2026-03-08T08:00:00.000Z';
 
-    await page.route('**/api/auth/session**', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          user: {
-            id: 'user-jan',
-            name: 'Jan',
-            email: 'jan@example.com',
-            role: 'user',
+    await mockKangurAuthMe(page, {
+      ...buildManagerUser(),
+      activeLearner: {
+        ...buildManagerUser().activeLearner,
+        aiTutor: {
+          currentMoodId: 'proud',
+          baselineMoodId: 'supportive',
+          confidence: 0.82,
+          lastComputedAt: nowIso,
+          lastReasonCode: 'progress_gain',
+        },
+      },
+      learners: [
+        {
+          ...buildManagerUser().learners[0],
+          aiTutor: {
+            currentMoodId: 'proud',
+            baselineMoodId: 'supportive',
+            confidence: 0.82,
+            lastComputedAt: nowIso,
+            lastReasonCode: 'progress_gain',
           },
-          expires: '2099-01-01T00:00:00.000Z',
-        }),
-      });
-    });
-
-    await page.route('**/api/kangur/auth/me**', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          id: 'parent-001',
-          full_name: 'Parent Demo',
-          email: 'parent@example.com',
-          role: 'user',
-          actorType: 'parent',
-          canManageLearners: true,
-          ownerUserId: 'parent-001',
-          activeLearner: {
-            id: 'learner-001',
-            ownerUserId: 'parent-001',
-            displayName: 'Jan',
-            loginName: 'jan-demo',
-            status: 'active',
-            legacyUserKey: null,
-            aiTutor: {
-              currentMoodId: 'proud',
-              baselineMoodId: 'supportive',
-              confidence: 0.82,
-              lastComputedAt: nowIso,
-              lastReasonCode: 'progress_gain',
-            },
-            createdAt: nowIso,
-            updatedAt: nowIso,
-          },
-          learners: [
-            {
-              id: 'learner-001',
-              ownerUserId: 'parent-001',
-              displayName: 'Jan',
-              loginName: 'jan-demo',
-              status: 'active',
-              legacyUserKey: null,
-              aiTutor: {
-                currentMoodId: 'proud',
-                baselineMoodId: 'supportive',
-                confidence: 0.82,
-                lastComputedAt: nowIso,
-                lastReasonCode: 'progress_gain',
-              },
-              createdAt: nowIso,
-              updatedAt: nowIso,
-            },
-          ],
-        }),
-      });
+        },
+      ],
     });
 
     await page.route('**/api/kangur/scores**', async (route) => {
@@ -231,7 +245,7 @@ test.describe('Kangur Learner Profile', () => {
 
     await page.addInitScript(() => {
       window.localStorage.setItem(
-        'mathblast_progress',
+        KANGUR_PROGRESS_STORAGE_KEY,
         JSON.stringify({
           totalXp: 620,
           gamesPlayed: 22,
@@ -246,21 +260,13 @@ test.describe('Kangur Learner Profile', () => {
       );
     });
 
-    await page.route('**/api/auth/session**', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          user: {
-            id: 'user-jan',
-            name: 'Jan',
-            email: 'jan@example.com',
-            role: 'user',
-          },
-          expires: '2099-01-01T00:00:00.000Z',
-        }),
-      });
-    });
+    await mockKangurAuthMe(
+      page,
+      buildManagerUser({
+        full_name: 'Jan',
+        email: 'jan@example.com',
+      })
+    );
 
     await page.route('**/api/kangur/scores**', async (route) => {
       await route.fulfill({
@@ -302,13 +308,14 @@ test.describe('Kangur Learner Profile', () => {
 
     await expect(page).toHaveURL(/\/kangur\/lessons/);
     await expect(page).not.toHaveURL(/focus=/);
-    await expect(page.getByText(/6 ÷ 2 = 3/)).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Dzielenie' })).toBeVisible();
+    await expect(page.getByTestId('lesson-hub-section-intro')).toBeVisible();
   });
 
   test('quick-start training works from profile in local mode', async ({ page }) => {
     await page.addInitScript(() => {
       window.localStorage.setItem(
-        'mathblast_progress',
+        KANGUR_PROGRESS_STORAGE_KEY,
         JSON.stringify({
           totalXp: 280,
           gamesPlayed: 8,
@@ -323,11 +330,11 @@ test.describe('Kangur Learner Profile', () => {
       );
     });
 
-    await page.route('**/api/auth/session**', async (route) => {
+    await page.route('**/api/kangur/auth/me**', async (route) => {
       await route.fulfill({
-        status: 200,
+        status: 401,
         contentType: 'application/json',
-        body: JSON.stringify(null),
+        body: JSON.stringify({ message: 'Unauthorized' }),
       });
     });
 
@@ -347,7 +354,7 @@ test.describe('Kangur Learner Profile', () => {
 
     await page.addInitScript(() => {
       window.localStorage.setItem(
-        'mathblast_progress',
+        KANGUR_PROGRESS_STORAGE_KEY,
         JSON.stringify({
           totalXp: 310,
           gamesPlayed: 10,
@@ -362,21 +369,13 @@ test.describe('Kangur Learner Profile', () => {
       );
     });
 
-    await page.route('**/api/auth/session**', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          user: {
-            id: 'user-jan',
-            name: 'Jan',
-            email: 'jan@example.com',
-            role: 'user',
-          },
-          expires: '2099-01-01T00:00:00.000Z',
-        }),
-      });
-    });
+    await mockKangurAuthMe(
+      page,
+      buildManagerUser({
+        full_name: 'Jan',
+        email: 'jan@example.com',
+      })
+    );
 
     await page.route('**/api/kangur/scores**', async (route) => {
       await route.fulfill({
@@ -400,7 +399,9 @@ test.describe('Kangur Learner Profile', () => {
 
     await page.goto('/kangur/profile');
 
-    const operationLink = page.locator('a[href*="quickStart=operation"][href*="operation=division"]').first();
+    const operationLink = page.locator(
+      'a[href*="quickStart=operation"][href*="operation=division"]'
+    ).first();
     await expect(operationLink).toBeVisible();
     await expect(operationLink).toHaveAttribute('href', /difficulty=easy/);
 

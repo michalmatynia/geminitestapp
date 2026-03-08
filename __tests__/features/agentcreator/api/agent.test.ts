@@ -1,9 +1,83 @@
 import { ChatbotAgentRun, AgentBrowserLog, AgentAuditLog } from '@prisma/client';
 import { NextRequest } from 'next/server';
 
-vi.mock('@/features/jobs/server', () => ({
+vi.mock('@/features/ai/server', () => ({
   startAgentQueue: vi.fn(),
 }));
+
+vi.mock('@/features/ai/agent-runtime/audit', () => ({
+  logAgentAudit: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('@/shared/lib/ai-brain/server', () => ({
+  getBrainAssignmentForFeature: vi.fn().mockResolvedValue({ enabled: true }),
+}));
+
+vi.mock('@/shared/lib/api/api-handler', async () => {
+  const { NextResponse } = await import('next/server');
+
+  return {
+    apiHandler:
+      (
+        handler: (req: NextRequest, ctx: { getElapsedMs: () => number }) => Promise<Response>
+      ) =>
+      async (req: NextRequest): Promise<Response> => {
+        try {
+          return await handler(req, {
+            getElapsedMs: () => 0,
+          });
+        } catch (error) {
+          const status =
+            typeof error === 'object' &&
+            error !== null &&
+            'httpStatus' in error &&
+            typeof error.httpStatus === 'number'
+              ? error.httpStatus
+              : 500;
+
+          return NextResponse.json(
+            { error: error instanceof Error ? error.message : 'Internal server error' },
+            { status }
+          );
+        }
+      },
+    apiHandlerWithParams:
+      <TParams extends Record<string, string>>(
+        handler: (
+          req: NextRequest,
+          ctx: { getElapsedMs: () => number },
+          params: TParams
+        ) => Promise<Response>
+      ) =>
+      async (
+        req: NextRequest,
+        routeContext?: { params?: Promise<TParams> }
+      ): Promise<Response> => {
+        try {
+          return await handler(
+            req,
+            {
+              getElapsedMs: () => 0,
+            },
+            (routeContext?.params ? await routeContext.params : ({} as TParams))
+          );
+        } catch (error) {
+          const status =
+            typeof error === 'object' &&
+            error !== null &&
+            'httpStatus' in error &&
+            typeof error.httpStatus === 'number'
+              ? error.httpStatus
+              : 500;
+
+          return NextResponse.json(
+            { error: error instanceof Error ? error.message : 'Internal server error' },
+            { status }
+          );
+        }
+      },
+  };
+});
 
 import { GET as getAgentAction } from '@/app/api/chatbot/agent/[runId]/[action]/route';
 import { GET as listRuns, POST as createRun } from '@/app/api/chatbot/agent/route';

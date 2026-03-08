@@ -1,32 +1,32 @@
 # Kangur Performance Baseline
 
-Generated at: 2026-03-06T04:55:23.705Z
+Generated at: 2026-03-08T13:35:04.528Z
 
 ## Execution Summary
 
 - Unit test suite status: PASS
-- Unit test suite duration: 6.8s
-- E2E suite status: INFRA_FAIL
-- E2E suite duration: 22.6s
+- Unit test suite duration: 8.2s
+- E2E suite status: FAIL
+- E2E suite duration: 1.2m
 
 ## Bundle Risk Snapshot
 
 | File | Lines | Bytes |
 | --- | ---: | ---: |
-| `src/features/kangur/ui/pages/Game.tsx` | 669 | 26187 |
-| `src/features/kangur/ui/services/kangur-questions-data.js` | 329 | 21283 |
-| `src/features/kangur/ui/pages/LearnerProfile.tsx` | 493 | 19587 |
-| `src/features/kangur/ui/pages/Lessons.tsx` | 389 | 15122 |
-| `src/features/kangur/ui/components/KangurGame.tsx` | 313 | 10439 |
-| `src/features/kangur/ui/components/KangurIllustrations.jsx` | 14 | 853 |
+| `src/features/kangur/ui/pages/Lessons.tsx` | 798 | 32559 |
+| `src/features/kangur/ui/services/kangur-questions-data.js` | 329 | 21289 |
+| `src/features/kangur/ui/components/KangurGame.tsx` | 373 | 11848 |
+| `src/features/kangur/ui/pages/Game.tsx` | 250 | 9356 |
+| `src/features/kangur/ui/pages/LearnerProfile.tsx` | 64 | 3364 |
+| `src/features/kangur/ui/components/KangurIllustrations.ts` | 14 | 853 |
 
-- Total bytes (tracked files): 93471
-- Total lines (tracked files): 2207
+- Total bytes (tracked files): 79269
+- Total lines (tracked files): 1828
 
 ## Commands
 
 - Unit: `npx vitest run __tests__/features/kangur/learner-profile.page.test.tsx __tests__/features/kangur/lessons-focus-routing.test.tsx __tests__/features/kangur/kangur-feature-app.shell.test.tsx __tests__/features/kangur/kangur-admin-menu-toggle.test.tsx src/features/kangur/ui/services/profile.test.ts src/features/kangur/settings.test.ts`
-- E2E: `npx playwright test e2e/features/kangur/kangur-profile.spec.ts e2e/features/kangur/kangur-game-quickstart.spec.ts --workers=1`
+- E2E: `/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/kangur/kangur-profile.spec.ts e2e/features/kangur/kangur-game-quickstart.spec.ts --workers=1`
 
 ## Notes
 

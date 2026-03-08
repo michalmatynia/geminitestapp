@@ -32,7 +32,7 @@ vi.mock('next/server', async (importOriginal) => {
   };
 });
 
-vi.mock('@/features/auth/server', () => ({
+vi.mock('@/features/auth/edge', () => ({
   auth: undefined,
 }));
 

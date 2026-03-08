@@ -1,0 +1,221 @@
+{
+  "generatedAt": "2026-03-08T13:41:10.610Z",
+  "status": "warn",
+  "summary": {
+    "total": 19,
+    "errorCount": 0,
+    "warningCount": 19,
+    "infoCount": 0,
+    "status": "warn",
+    "contextFileCount": 235
+  },
+  "scope": {
+    "sourceDirs": [
+      "src/features",
+      "src/shared"
+    ],
+    "providerValueFieldThreshold": 15,
+    "oversizedLocThreshold": 500
+  },
+  "issues": [
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 809 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/admin/context/AdminMenuSettingsContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 1069 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/ai/ai-paths/components/JobQueueContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 712 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/ai/ai-paths/context/RuntimeContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 845 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/ai/image-studio/components/studio-modals/StudioInlineEditContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 857 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/ai/image-studio/context/GenerationContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 793 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/ai/image-studio/context/MaskingContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 865 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/ai/image-studio/context/VersionGraphContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 865 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/case-resolver/context/AdminCaseResolverCasesContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 851 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/case-resolver/context/CaseResolverFolderTreeContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 868 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/cms/components/page-builder/context/InspectorAiContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 641 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/cms/hooks/useTreeActionsContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 885 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/data-import-export/context/ImportExportContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 645 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/integrations/context/ProductListingsContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 919 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/notesapp/context/NoteFormContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 676 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/notesapp/hooks/NotesAppContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 568 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/prompt-exploder/context/BenchmarkContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 746 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/prompt-exploder/context/DocumentContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 556 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/prompt-exploder/context/LibraryContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 957 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/shared/lib/ai-brain/context/BrainContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    }
+  ],
+  "rules": [
+    {
+      "ruleId": "context-oversized",
+      "errorCount": 0,
+      "warningCount": 19,
+      "infoCount": 0
+    }
+  ],
+  "durationMs": 231
+}

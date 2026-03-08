@@ -132,7 +132,7 @@ describe('Tests page smoke', () => {
     render(<Tests />);
     expect(screen.getByRole('link', { name: /Strona glowna/i })).toHaveAttribute(
       'href',
-      '/kangur/game'
+      '/kangur'
     );
     expect(screen.getByRole('link', { name: /Lekcje/i })).toHaveAttribute(
       'href',
@@ -193,7 +193,7 @@ describe('Tests page smoke', () => {
     render(<Tests />);
     expect(screen.getByRole('link', { name: /Strona glowna/i })).toHaveAttribute(
       'href',
-      '/admin/kangur/game'
+      '/admin/kangur'
     );
   });
 });

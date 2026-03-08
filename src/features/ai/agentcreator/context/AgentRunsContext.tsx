@@ -13,25 +13,24 @@ import {
 } from '../hooks/useAgentRunsQueries';
 
 export interface AgentRunsContextValue {
-  // Runs List
   agentRuns: AiPathRunRecord[];
   isAgentRunsLoading: boolean;
   isAgentRunsFetching: boolean;
-  refetchAgentRuns: () => void;
-
-  // Selection & Details
   selectedAgentRunId: string | null;
-  setSelectedAgentRunId: (id: string | null) => void;
   selectedAgentRun: AiPathRunRecord | null;
-
-  // Run Data
   agentSnapshots: AgentSnapshot[];
   agentBrowserLogs: AgentBrowserLog[];
   agentAuditLogs: AgentAuditLog[];
   agentStreamStatus: string;
 }
 
-const AgentRunsContext = createContext<AgentRunsContextValue | null>(null);
+export interface AgentRunsActionsContextValue {
+  refetchAgentRuns: () => void;
+  setSelectedAgentRunId: (id: string | null) => void;
+}
+
+const AgentRunsStateContext = createContext<AgentRunsContextValue | null>(null);
+const AgentRunsActionsContext = createContext<AgentRunsActionsContextValue | null>(null);
 
 export function AgentRunsProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const [selectedAgentRunId, setSelectedAgentRunId] = useState<string | null>(null);
@@ -61,16 +60,12 @@ export function AgentRunsProvider({ children }: { children: React.ReactNode }): 
 
   const agentStreamStatus = 'idle';
 
-  const contextValue: AgentRunsContextValue = useMemo(
+  const stateValue: AgentRunsContextValue = useMemo(
     () => ({
       agentRuns,
       isAgentRunsLoading,
       isAgentRunsFetching,
-      refetchAgentRuns: () => {
-        void refetchAgentRuns();
-      },
       selectedAgentRunId,
-      setSelectedAgentRunId,
       selectedAgentRun,
       agentSnapshots,
       agentBrowserLogs,
@@ -90,14 +85,41 @@ export function AgentRunsProvider({ children }: { children: React.ReactNode }): 
       agentStreamStatus,
     ]
   );
+  const actionsValue: AgentRunsActionsContextValue = useMemo(
+    () => ({
+      refetchAgentRuns: () => {
+        void refetchAgentRuns();
+      },
+      setSelectedAgentRunId,
+    }),
+    [refetchAgentRuns]
+  );
 
-  return <AgentRunsContext.Provider value={contextValue}>{children}</AgentRunsContext.Provider>;
+  return (
+    <AgentRunsActionsContext.Provider value={actionsValue}>
+      <AgentRunsStateContext.Provider value={stateValue}>{children}</AgentRunsStateContext.Provider>
+    </AgentRunsActionsContext.Provider>
+  );
 }
 
-export function useAgentRunsContext(): AgentRunsContextValue {
-  const context = useContext(AgentRunsContext);
+export function useAgentRunsState(): AgentRunsContextValue {
+  const context = useContext(AgentRunsStateContext);
   if (!context) {
-    throw internalError('useAgentRunsContext must be used within AgentRunsProvider');
+    throw internalError('useAgentRunsState must be used within AgentRunsProvider');
   }
   return context;
+}
+
+export function useAgentRunsActions(): AgentRunsActionsContextValue {
+  const context = useContext(AgentRunsActionsContext);
+  if (!context) {
+    throw internalError('useAgentRunsActions must be used within AgentRunsProvider');
+  }
+  return context;
+}
+
+export function useAgentRunsContext(): AgentRunsContextValue & AgentRunsActionsContextValue {
+  const state = useAgentRunsState();
+  const actions = useAgentRunsActions();
+  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
 }

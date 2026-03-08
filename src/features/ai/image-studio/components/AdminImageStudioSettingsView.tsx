@@ -15,7 +15,10 @@ import {
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import { useImageStudioSettingsContext } from '../context/ImageStudioSettingsContext';
+import {
+  useImageStudioSettingsActions,
+  useImageStudioSettingsState,
+} from '../context/ImageStudioSettingsContext';
 import { PromptSettingsTab } from './settings/PromptSettingsTab';
 import { GenerationSettingsTab } from './settings/GenerationSettingsTab';
 import { ValidationSettingsTab } from './settings/ValidationSettingsTab';
@@ -32,14 +35,16 @@ export function AdminImageStudioSettingsView({
     settingsStore,
     settingsLoaded,
     activeSettingsTab,
+    updateSetting,
+    settingsSource,
+    imageModelsQuery,
+  } = useImageStudioSettingsState();
+  const {
     setActiveSettingsTab,
     handleRefresh,
     resetStudioSettings,
     saveStudioSettings,
-    updateSetting,
-    settingsSource,
-    imageModelsQuery,
-  } = useImageStudioSettingsContext();
+  } = useImageStudioSettingsActions();
 
   const isSaving = updateSetting.isPending;
   const isRefreshing = settingsStore.isFetching || imageModelsQuery.isFetching;

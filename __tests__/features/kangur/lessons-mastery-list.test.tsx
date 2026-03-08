@@ -228,6 +228,7 @@ describe('Lessons page mastery list', () => {
 
     await screen.findByRole('heading', { name: 'Lekcje' });
     const link = screen.getByRole('link', { name: 'Strona glowna' });
+    expect(link).toHaveAttribute('href', '/admin/kangur');
     const topBar = link.closest('div.sticky');
     expect(topBar).toBeInTheDocument();
     expect(topBar?.className).toContain('sticky');

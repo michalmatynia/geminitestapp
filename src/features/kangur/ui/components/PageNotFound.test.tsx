@@ -73,7 +73,7 @@ describe('PageNotFound', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Go Home' }));
 
-    expect(routerPushMock).toHaveBeenCalledWith('/kangur/game');
+    expect(routerPushMock).toHaveBeenCalledWith('/kangur');
   });
 
   it('uses shared Kangur summary and dot primitives for the admin note', async () => {

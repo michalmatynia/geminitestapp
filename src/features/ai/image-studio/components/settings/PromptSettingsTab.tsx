@@ -19,7 +19,10 @@ import {
 import { cn } from '@/shared/utils';
 
 import { IMAGE_STUDIO_SEQUENCE_OPERATIONS } from '@/features/ai/image-studio/utils/studio-settings';
-import { useImageStudioSettingsContext } from '../../context/ImageStudioSettingsContext';
+import {
+  useImageStudioSettingsActions,
+  useImageStudioSettingsState,
+} from '../../context/ImageStudioSettingsContext';
 
 export function PromptSettingsTab(): React.JSX.Element {
   const promptExtractModel = useBrainAssignment({
@@ -30,10 +33,12 @@ export function PromptSettingsTab(): React.JSX.Element {
   });
   const {
     studioSettings,
+  } = useImageStudioSettingsState();
+  const {
     setStudioSettings,
     toggleProjectSequencingOperation,
     moveProjectSequencingOperation,
-  } = useImageStudioSettingsContext();
+  } = useImageStudioSettingsActions();
 
   const handleUiExtractorModeChange = (val: string): void => {
     setStudioSettings((prev) => ({

@@ -24,7 +24,7 @@ import {
   getProductStudioVariants,
   linkProductImageToStudio,
   sendProductImageToStudio,
-} from '@/features/ai/image-studio/product-studio/product-studio-service';
+} from '@/features/ai/server';
 import { productService } from '@/shared/lib/products/services/productService';
 
 vi.mock('@/shared/lib/products/services/productService', () => ({
@@ -38,7 +38,7 @@ vi.mock('@/shared/lib/products/services/product-studio-config', () => ({
   setProductStudioConfig: vi.fn(),
 }));
 
-vi.mock('@/features/ai/image-studio/product-studio/product-studio-service', () => ({
+vi.mock('@/features/ai/server', () => ({
   sendProductImageToStudio: vi.fn(),
   linkProductImageToStudio: vi.fn(),
   getProductStudioSequencePreflight: vi.fn(),

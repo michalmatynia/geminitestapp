@@ -402,28 +402,28 @@ test.describe('Kangur navigation continuity', () => {
     expectRouteShellContinuity(await stopRouteShellMonitor(page), 'game -> lessons');
 
     await startRouteShellMonitor(page);
+    await page.getByTestId('kangur-primary-nav-home').click();
+    await expect(page).toHaveURL(/\/kangur$/);
+    await expectRouteShellMarker(page);
+    await expect(page.getByTestId('kangur-route-content')).toBeVisible();
+    await page.waitForTimeout(250);
+    expectRouteShellContinuity(await stopRouteShellMonitor(page), 'lessons -> home');
+
+    await startRouteShellMonitor(page);
     await page.getByTestId('kangur-primary-nav-tests').click();
     await expect(page).toHaveURL(/\/kangur\/tests$/);
     await expectRouteShellMarker(page);
     await expect(page.getByRole('heading', { name: /Testy Kangur/i })).toBeVisible();
     await page.waitForTimeout(250);
-    expectRouteShellContinuity(await stopRouteShellMonitor(page), 'lessons -> tests');
-
-    await startRouteShellMonitor(page);
-    await page.getByRole('link', { name: /^Profil$/ }).click();
-    await expect(page).toHaveURL(/\/kangur\/profile$/);
-    await expectRouteShellMarker(page);
-    await expect(page.getByRole('heading', { name: /Profil ucznia/i })).toBeVisible();
-    await page.waitForTimeout(250);
-    expectRouteShellContinuity(await stopRouteShellMonitor(page), 'tests -> profile');
+    expectRouteShellContinuity(await stopRouteShellMonitor(page), 'home -> tests');
 
     await startRouteShellMonitor(page);
     await page.getByTestId('kangur-primary-nav-home').click();
-    await expect(page).toHaveURL(/\/kangur\/game$/);
+    await expect(page).toHaveURL(/\/kangur$/);
     await expectRouteShellMarker(page);
     await expect(page.getByTestId('kangur-route-content')).toBeVisible();
     await page.waitForTimeout(250);
-    expectRouteShellContinuity(await stopRouteShellMonitor(page), 'profile -> game');
+    expectRouteShellContinuity(await stopRouteShellMonitor(page), 'tests -> home');
 
     const documentLoadCount = await page.evaluate(
       (storageKey) => window.localStorage.getItem(storageKey),
@@ -457,17 +457,17 @@ test.describe('Kangur navigation continuity', () => {
 
     await startRouteShellMonitor(page);
     await page.getByTestId('kangur-primary-nav-home').click();
-    await expect(page).toHaveURL(/\/kangur\/game$/);
+    await expect(page).toHaveURL(/\/kangur$/);
     await expectRouteShellMarker(page);
     await page.waitForTimeout(250);
-    expectRouteShellContinuity(await stopRouteShellMonitor(page), 'parent-dashboard -> game');
+    expectRouteShellContinuity(await stopRouteShellMonitor(page), 'parent-dashboard -> home');
 
     await startRouteShellMonitor(page);
     await page.getByTestId('kangur-primary-nav-parent-dashboard').click();
     await expect(page).toHaveURL(/\/kangur\/parent-dashboard$/);
     await expectRouteShellMarker(page);
     await page.waitForTimeout(250);
-    expectRouteShellContinuity(await stopRouteShellMonitor(page), 'game -> parent-dashboard');
+    expectRouteShellContinuity(await stopRouteShellMonitor(page), 'home -> parent-dashboard');
 
     const documentLoadCount = await page.evaluate(
       (storageKey) => window.localStorage.getItem(storageKey),

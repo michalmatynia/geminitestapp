@@ -10,7 +10,10 @@ import {
   UserRound,
 } from 'lucide-react';
 
-import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
+import {
+  getKangurHomeHref,
+  getKangurPageHref as createPageUrl,
+} from '@/features/kangur/config/routing';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
   KangurButton,
@@ -71,7 +74,7 @@ export function KangurParentDashboardHeroWidget({
         </KangurButton>
 
         <KangurButton asChild size='sm' variant='ghost' data-doc-id='top_nav_home'>
-          <Link href={createPageUrl('Game', basePath)} targetPageKey='Game'>
+          <Link href={getKangurHomeHref(basePath)} targetPageKey='Game'>
             <ArrowLeft className='h-4 w-4' /> Wroc do gry
           </Link>
         </KangurButton>
@@ -131,7 +134,7 @@ export function KangurParentDashboardHeroWidget({
           <div className='flex w-full flex-col items-stretch gap-2 sm:w-auto sm:items-end'>
             <KangurTopNavGroup label='Szybkie akcje rodzica' className='w-full sm:w-auto'>
               <KangurButton asChild size='sm' variant='navigation'>
-                <Link href={createPageUrl('Game', basePath)} targetPageKey='Game'>
+                <Link href={getKangurHomeHref(basePath)} targetPageKey='Game'>
                   <Home className='h-4 w-4' /> Gra
                 </Link>
               </KangurButton>

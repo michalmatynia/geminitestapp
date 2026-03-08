@@ -139,8 +139,28 @@ type KangurLearnerProfileRuntimeContextValue = {
   navigateToLogin: () => void;
 };
 
-const KangurLearnerProfileRuntimeContext =
-  createContext<KangurLearnerProfileRuntimeContextValue | null>(null);
+type KangurLearnerProfileRuntimeStateContextValue = Pick<
+  KangurLearnerProfileRuntimeContextValue,
+  | 'basePath'
+  | 'user'
+  | 'progress'
+  | 'scores'
+  | 'isLoadingScores'
+  | 'scoresError'
+  | 'snapshot'
+  | 'maxWeeklyGames'
+  | 'xpToNextLevel'
+>;
+
+type KangurLearnerProfileRuntimeActionsContextValue = Pick<
+  KangurLearnerProfileRuntimeContextValue,
+  'navigateToLogin'
+>;
+
+const KangurLearnerProfileRuntimeStateContext =
+  createContext<KangurLearnerProfileRuntimeStateContextValue | null>(null);
+const KangurLearnerProfileRuntimeActionsContext =
+  createContext<KangurLearnerProfileRuntimeActionsContextValue | null>(null);
 
 export function KangurLearnerProfileRuntimeProvider({
   children,
@@ -232,7 +252,7 @@ export function KangurLearnerProfileRuntimeProvider({
     ? Math.max(0, snapshot.nextLevel.minXp - snapshot.totalXp)
     : 0;
 
-  const value = useMemo<KangurLearnerProfileRuntimeContextValue>(
+  const stateValue = useMemo<KangurLearnerProfileRuntimeStateContextValue>(
     () => ({
       basePath,
       user,
@@ -243,13 +263,11 @@ export function KangurLearnerProfileRuntimeProvider({
       snapshot,
       maxWeeklyGames,
       xpToNextLevel,
-      navigateToLogin,
     }),
     [
       basePath,
       isLoadingScores,
       maxWeeklyGames,
-      navigateToLogin,
       progress,
       scores,
       scoresError,
@@ -258,11 +276,19 @@ export function KangurLearnerProfileRuntimeProvider({
       xpToNextLevel,
     ]
   );
+  const actionsValue = useMemo<KangurLearnerProfileRuntimeActionsContextValue>(
+    () => ({
+      navigateToLogin,
+    }),
+    [navigateToLogin]
+  );
 
   return (
-    <KangurLearnerProfileRuntimeContext.Provider value={value}>
-      {children}
-    </KangurLearnerProfileRuntimeContext.Provider>
+    <KangurLearnerProfileRuntimeActionsContext.Provider value={actionsValue}>
+      <KangurLearnerProfileRuntimeStateContext.Provider value={stateValue}>
+        {children}
+      </KangurLearnerProfileRuntimeStateContext.Provider>
+    </KangurLearnerProfileRuntimeActionsContext.Provider>
   );
 }
 
@@ -273,24 +299,57 @@ export function KangurLearnerProfileRuntimeBoundary({
   enabled: boolean;
   children: ReactNode;
 }): JSX.Element {
-  const existingContext = useContext(KangurLearnerProfileRuntimeContext);
-  if (!enabled || existingContext) {
+  const existingStateContext = useContext(KangurLearnerProfileRuntimeStateContext);
+  const existingActionsContext = useContext(KangurLearnerProfileRuntimeActionsContext);
+  if (!enabled || existingStateContext || existingActionsContext) {
     return <>{children}</>;
   }
 
   return <KangurLearnerProfileRuntimeProvider>{children}</KangurLearnerProfileRuntimeProvider>;
 }
 
-export const useKangurLearnerProfileRuntime = (): KangurLearnerProfileRuntimeContextValue => {
-  const context = useContext(KangurLearnerProfileRuntimeContext);
+export const useKangurLearnerProfileRuntimeState =
+  (): KangurLearnerProfileRuntimeStateContextValue => {
+  const context = useContext(KangurLearnerProfileRuntimeStateContext);
   if (!context) {
     throw internalError(
-      'useKangurLearnerProfileRuntime must be used within a KangurLearnerProfileRuntimeProvider'
+      'useKangurLearnerProfileRuntimeState must be used within a KangurLearnerProfileRuntimeProvider'
     );
   }
   return context;
 };
 
+export const useKangurLearnerProfileRuntimeActions =
+  (): KangurLearnerProfileRuntimeActionsContextValue => {
+  const context = useContext(KangurLearnerProfileRuntimeActionsContext);
+  if (!context) {
+    throw internalError(
+      'useKangurLearnerProfileRuntimeActions must be used within a KangurLearnerProfileRuntimeProvider'
+    );
+  }
+  return context;
+};
+
+export const useKangurLearnerProfileRuntime = (): KangurLearnerProfileRuntimeContextValue => {
+  const state = useContext(KangurLearnerProfileRuntimeStateContext);
+  const actions = useContext(KangurLearnerProfileRuntimeActionsContext);
+  if (!state || !actions) {
+    throw internalError(
+      'useKangurLearnerProfileRuntime must be used within a KangurLearnerProfileRuntimeProvider'
+    );
+  }
+  return useMemo(() => ({ ...state, ...actions }), [actions, state]);
+};
+
 export const useOptionalKangurLearnerProfileRuntime = ():
   | KangurLearnerProfileRuntimeContextValue
-  | null => useContext(KangurLearnerProfileRuntimeContext);
+  | null => {
+  const state = useContext(KangurLearnerProfileRuntimeStateContext);
+  const actions = useContext(KangurLearnerProfileRuntimeActionsContext);
+  return useMemo(() => {
+    if (!state || !actions) {
+      return null;
+    }
+    return { ...state, ...actions };
+  }, [actions, state]);
+};

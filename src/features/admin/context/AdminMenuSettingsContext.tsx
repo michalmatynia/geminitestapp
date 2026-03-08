@@ -241,7 +241,7 @@ const findNodeById = (items: AdminMenuCustomNode[], nodeId: string): AdminMenuCu
 
 export type { AdminMenuLayoutNodeState };
 
-export interface AdminMenuSettingsContextValue {
+export interface AdminMenuSettingsStateContextValue {
   favorites: string[];
   sectionColors: Record<string, string>;
   customEnabled: boolean;
@@ -263,7 +263,9 @@ export interface AdminMenuSettingsContextValue {
   isDirty: boolean;
   isDefaultState: boolean;
   isSaving: boolean;
+}
 
+export interface AdminMenuSettingsActionsContextValue {
   setQuery: (q: string) => void;
   setLibraryQuery: (q: string) => void;
   setCustomEnabled: (enabled: boolean) => void;
@@ -282,7 +284,15 @@ export interface AdminMenuSettingsContextValue {
   handleReset: () => void;
 }
 
-const AdminMenuSettingsContext = createContext<AdminMenuSettingsContextValue | null>(null);
+export type AdminMenuSettingsContextValue = AdminMenuSettingsStateContextValue &
+  AdminMenuSettingsActionsContextValue;
+
+const AdminMenuSettingsStateContext = createContext<AdminMenuSettingsStateContextValue | null>(
+  null
+);
+const AdminMenuSettingsActionsContext = createContext<AdminMenuSettingsActionsContextValue | null>(
+  null
+);
 
 export function AdminMenuSettingsProvider({
   children,
@@ -682,8 +692,8 @@ export function AdminMenuSettingsProvider({
     setCustomNav(defaultCustomNav);
   }, [defaultCustomNav]);
 
-  const value = useMemo(
-    () => ({
+  const stateValue = useMemo(
+    (): AdminMenuSettingsStateContextValue => ({
       favorites,
       sectionColors,
       customEnabled,
@@ -704,22 +714,6 @@ export function AdminMenuSettingsProvider({
       isDirty,
       isDefaultState,
       isSaving: updateSettingsBulk.isPending,
-      setQuery,
-      setLibraryQuery,
-      setCustomEnabled,
-      handleToggleFavorite,
-      moveFavorite,
-      updateSectionColor,
-      handleAddRootNode,
-      addCustomChildNode,
-      removeCustomNodeById,
-      updateCustomNodeLabelById,
-      updateCustomNodeHrefById,
-      updateCustomNodeSemanticById,
-      replaceCustomNavFromMasterNodes,
-      addBuiltInNode,
-      handleSave,
-      handleReset,
     }),
     [
       favorites,
@@ -742,6 +736,13 @@ export function AdminMenuSettingsProvider({
       isDirty,
       isDefaultState,
       updateSettingsBulk.isPending,
+    ]
+  );
+  const actionsValue = useMemo(
+    (): AdminMenuSettingsActionsContextValue => ({
+      setQuery,
+      setLibraryQuery,
+      setCustomEnabled,
       handleToggleFavorite,
       moveFavorite,
       updateSectionColor,
@@ -755,18 +756,53 @@ export function AdminMenuSettingsProvider({
       addBuiltInNode,
       handleSave,
       handleReset,
+    }),
+    [
+      addBuiltInNode,
+      addCustomChildNode,
+      handleAddRootNode,
+      handleReset,
+      handleSave,
+      handleToggleFavorite,
+      moveFavorite,
+      removeCustomNodeById,
+      replaceCustomNavFromMasterNodes,
+      updateCustomNodeHrefById,
+      updateCustomNodeLabelById,
+      updateCustomNodeSemanticById,
+      updateSectionColor,
     ]
   );
 
   return (
-    <AdminMenuSettingsContext.Provider value={value}>{children}</AdminMenuSettingsContext.Provider>
+    <AdminMenuSettingsActionsContext.Provider value={actionsValue}>
+      <AdminMenuSettingsStateContext.Provider value={stateValue}>
+        {children}
+      </AdminMenuSettingsStateContext.Provider>
+    </AdminMenuSettingsActionsContext.Provider>
   );
 }
 
-export function useAdminMenuSettings(): AdminMenuSettingsContextValue {
-  const context = useContext(AdminMenuSettingsContext);
+export function useAdminMenuSettingsState(): AdminMenuSettingsStateContextValue {
+  const context = useContext(AdminMenuSettingsStateContext);
   if (!context) {
-    throw internalError('useAdminMenuSettings must be used within AdminMenuSettingsProvider');
+    throw internalError('useAdminMenuSettingsState must be used within AdminMenuSettingsProvider');
   }
   return context;
+}
+
+export function useAdminMenuSettingsActions(): AdminMenuSettingsActionsContextValue {
+  const context = useContext(AdminMenuSettingsActionsContext);
+  if (!context) {
+    throw internalError(
+      'useAdminMenuSettingsActions must be used within AdminMenuSettingsProvider'
+    );
+  }
+  return context;
+}
+
+export function useAdminMenuSettings(): AdminMenuSettingsContextValue {
+  const state = useAdminMenuSettingsState();
+  const actions = useAdminMenuSettingsActions();
+  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
 }

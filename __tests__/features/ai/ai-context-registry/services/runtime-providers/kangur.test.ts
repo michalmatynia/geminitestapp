@@ -14,7 +14,7 @@ const {
   buildKangurAssignmentContextRuntimeDocumentMock: vi.fn(),
 }));
 
-vi.mock('@/features/kangur/server/context-registry', () => ({
+vi.mock('@/features/kangur/server', () => ({
   loadKangurRegistryBaseData: loadKangurRegistryBaseDataMock,
   buildKangurLearnerSnapshotRuntimeDocument:
     buildKangurLearnerSnapshotRuntimeDocumentMock,

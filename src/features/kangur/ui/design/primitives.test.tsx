@@ -278,13 +278,18 @@ describe('Kangur shared primitives', () => {
       'border-slate-200/80',
       'w-full'
     );
-    expect(screen.getByTestId('kangur-option')).toHaveClass('soft-card', 'border-amber-300');
+    expect(screen.getByTestId('kangur-option')).toHaveClass(
+      'soft-card',
+      'border-amber-300',
+      'cursor-pointer'
+    );
     expect(screen.getByTestId('kangur-option-muted')).toHaveClass(
       'soft-card',
       'border-slate-200/80',
       'text-slate-400',
       'opacity-70'
     );
+    expect(screen.getByTestId('kangur-option-muted')).not.toHaveClass('cursor-pointer');
     expect(screen.getByTestId('kangur-button-primary')).toHaveClass(
       'kangur-cta-pill',
       'primary-cta',

@@ -11,8 +11,20 @@ type LessonContentEditorRuntimeContextValue = {
   onClearContent: () => void;
 };
 
-const LessonContentEditorRuntimeContext =
-  createContext<LessonContentEditorRuntimeContextValue | null>(null);
+type LessonContentEditorRuntimeStateContextValue = Pick<
+  LessonContentEditorRuntimeContextValue,
+  'isSaving'
+>;
+
+type LessonContentEditorRuntimeActionsContextValue = Pick<
+  LessonContentEditorRuntimeContextValue,
+  'onClose' | 'onSave' | 'onImportLegacy' | 'onClearContent'
+>;
+
+const LessonContentEditorRuntimeStateContext =
+  createContext<LessonContentEditorRuntimeStateContextValue | null>(null);
+const LessonContentEditorRuntimeActionsContext =
+  createContext<LessonContentEditorRuntimeActionsContextValue | null>(null);
 
 type LessonContentEditorRuntimeProviderProps = LessonContentEditorRuntimeContextValue & {
   children: ReactNode;
@@ -26,30 +38,59 @@ export function LessonContentEditorRuntimeProvider({
   onClearContent,
   children,
 }: LessonContentEditorRuntimeProviderProps): React.JSX.Element {
-  const value = useMemo(
+  const stateValue = useMemo<LessonContentEditorRuntimeStateContextValue>(
     () => ({
       isSaving,
+    }),
+    [isSaving]
+  );
+  const actionsValue = useMemo<LessonContentEditorRuntimeActionsContextValue>(
+    () => ({
       onClose,
       onSave,
       onImportLegacy,
       onClearContent,
     }),
-    [isSaving, onClearContent, onClose, onImportLegacy, onSave]
+    [onClearContent, onClose, onImportLegacy, onSave]
   );
 
   return (
-    <LessonContentEditorRuntimeContext.Provider value={value}>
-      {children}
-    </LessonContentEditorRuntimeContext.Provider>
+    <LessonContentEditorRuntimeActionsContext.Provider value={actionsValue}>
+      <LessonContentEditorRuntimeStateContext.Provider value={stateValue}>
+        {children}
+      </LessonContentEditorRuntimeStateContext.Provider>
+    </LessonContentEditorRuntimeActionsContext.Provider>
   );
 }
 
-export function useLessonContentEditorRuntimeContext(): LessonContentEditorRuntimeContextValue {
-  const context = useContext(LessonContentEditorRuntimeContext);
+export function useLessonContentEditorRuntimeState(): LessonContentEditorRuntimeStateContextValue {
+  const context = useContext(LessonContentEditorRuntimeStateContext);
   if (!context) {
+    throw internalError(
+      'useLessonContentEditorRuntimeState must be used within a LessonContentEditorRuntimeProvider'
+    );
+  }
+  return context;
+}
+
+export function useLessonContentEditorRuntimeActions():
+  LessonContentEditorRuntimeActionsContextValue {
+  const context = useContext(LessonContentEditorRuntimeActionsContext);
+  if (!context) {
+    throw internalError(
+      'useLessonContentEditorRuntimeActions must be used within a LessonContentEditorRuntimeProvider'
+    );
+  }
+  return context;
+}
+
+export function useLessonContentEditorRuntimeContext(): LessonContentEditorRuntimeContextValue {
+  const state = useContext(LessonContentEditorRuntimeStateContext);
+  const actions = useContext(LessonContentEditorRuntimeActionsContext);
+  if (!state || !actions) {
     throw internalError(
       'useLessonContentEditorRuntimeContext must be used within a LessonContentEditorRuntimeProvider'
     );
   }
-  return context;
+  return useMemo(() => ({ ...state, ...actions }), [actions, state]);
 }

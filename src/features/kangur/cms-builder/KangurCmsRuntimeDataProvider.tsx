@@ -217,17 +217,17 @@ export function KangurCmsRuntimeDataProvider({
       homeSpotlight: {
         actionLabel: homeSpotlightAssignment
           ? getKangurAssignmentActionLabel(homeSpotlightAssignment)
-          : 'Kontynuuj zadanie',
+          : 'Wroc do praktyki',
         description:
-          homeSpotlightAssignment?.description?.trim() || 'Wroc do zadania i kontynuuj wyzwanie.',
+          homeSpotlightAssignment?.description?.trim() || 'Wroc do praktyki i kontynuuj wyzwanie.',
         hasAssignment: Boolean(homeSpotlightAssignment),
         openAssignment: openHomeSpotlightAssignment,
         priorityLabel: homeSpotlightAssignment
           ? resolveAssignmentPriorityLabel(homeSpotlightAssignment.priority)
-          : 'Priorytet wysoki',
+          : 'Sesja praktyki',
         progressLabel: homeSpotlightAssignment?.progress.summary ?? '0% ukonczono',
         progressPercent: homeSpotlightAssignment?.progress.percent ?? 0,
-        title: homeSpotlightAssignment?.title ?? 'Zadanie od rodzica',
+        title: homeSpotlightAssignment?.title ?? 'Kontynuuj praktyke',
       },
       priorityAssignments: {
         count: priorityAssignmentItems.length,
@@ -238,24 +238,24 @@ export function KangurCmsRuntimeDataProvider({
       activePracticeAssignmentBanner: {
         actionLabel: game.activePracticeAssignment
           ? getKangurAssignmentActionLabel(game.activePracticeAssignment)
-          : 'Kontynuuj zadanie',
+          : 'Wroc do praktyki',
         description:
           game.activePracticeAssignment?.description?.trim() ||
-          'Wroc do zadania i kontynuuj wyzwanie.',
+          'Wroc do praktyki i kontynuuj wyzwanie.',
         hasAssignment: Boolean(game.activePracticeAssignment),
         helperLabel: game.activePracticeAssignment
           ? resolvePracticeAssignmentHelperLabel(
             game.screen,
             game.activePracticeAssignment.target.operation
           )
-          : 'Najblizszy priorytet w praktyce.',
+          : 'Nastepny krok w praktyce.',
         openAssignment: openActivePracticeAssignment,
         priorityLabel: game.activePracticeAssignment
           ? resolveAssignmentPriorityLabel(game.activePracticeAssignment.priority)
-          : 'Priorytet wysoki',
+          : 'Sesja praktyki',
         progressLabel: game.activePracticeAssignment?.progress.summary ?? '0% ukonczono',
         progressPercent: game.activePracticeAssignment?.progress.percent ?? 0,
-        title: game.activePracticeAssignment?.title ?? 'Zadanie od rodzica',
+        title: game.activePracticeAssignment?.title ?? 'Kontynuuj praktyke',
       },
       leaderboard: {
         emptyStateLabel: leaderboard.emptyStateLabel,
@@ -349,17 +349,17 @@ export function KangurCmsRuntimeDataProvider({
         accuracyLabel: `${resultPercent}%`,
         assignmentActionLabel: resultAssignment
           ? getKangurAssignmentActionLabel(resultAssignment)
-          : 'Kontynuuj zadanie',
+          : 'Wroc do praktyki',
         assignmentDescription:
-          resultAssignment?.description?.trim() || 'Wroc do zadania i kontynuuj wyzwanie.',
+          resultAssignment?.description?.trim() || 'Wroc do praktyki i kontynuuj wyzwanie.',
         assignmentEyebrow: resultAssignment
           ? resultAssignment.progress.status === 'completed'
             ? 'Ukonczone zadanie od rodzica'
             : 'Zadanie od rodzica'
-          : 'Zadanie od rodzica',
+          : 'Dalsza praktyka',
         assignmentProgressLabel: resultAssignment?.progress.summary ?? 'Brak aktywnego zadania.',
         assignmentProgressPercent: resultAssignment?.progress.percent ?? 0,
-        assignmentTitle: resultAssignment?.title ?? 'Priorytetowe zadanie',
+        assignmentTitle: resultAssignment?.title ?? 'Kontynuuj praktyke',
         hasAssignment: Boolean(resultAssignment),
         message: resolveResultMessage(resultPercent),
         operationLabel: formatKangurAssignmentOperationLabel(game.operation ?? 'mixed'),

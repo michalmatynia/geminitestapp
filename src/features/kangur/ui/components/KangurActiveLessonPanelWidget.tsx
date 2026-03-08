@@ -11,7 +11,10 @@ import {
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
-import { useKangurLessonsRuntime } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
+import {
+  useKangurLessonsRuntimeActions,
+  useKangurLessonsRuntimeState,
+} from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
 
 export function KangurActiveLessonPanelWidget(): JSX.Element {
   const {
@@ -23,8 +26,10 @@ export function KangurActiveLessonPanelWidget(): JSX.Element {
     shouldRenderLessonDocument,
     hasActiveLessonDocumentContent,
     activeLessonContentRef,
+  } = useKangurLessonsRuntimeState();
+  const {
     clearActiveLesson,
-  } = useKangurLessonsRuntime();
+  } = useKangurLessonsRuntimeActions();
 
   if (!activeLesson) {
     return (

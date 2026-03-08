@@ -9,9 +9,10 @@ import {
   KangurOptionCardButton,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import { getLessonMasteryPresentation } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext.shared';
 import {
-  getLessonMasteryPresentation,
-  useKangurLessonsRuntime,
+  useKangurLessonsRuntimeActions,
+  useKangurLessonsRuntimeState,
 } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
 
 export function KangurLessonsCatalogWidget(): JSX.Element {
@@ -22,8 +23,10 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
     activeLessonId,
     lessonAssignmentsByComponent,
     completedLessonAssignmentsByComponent,
+  } = useKangurLessonsRuntimeState();
+  const {
     selectLesson,
-  } = useKangurLessonsRuntime();
+  } = useKangurLessonsRuntimeActions();
 
   if (orderedLessons.length === 0) {
     return (

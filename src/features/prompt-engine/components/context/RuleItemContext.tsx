@@ -18,9 +18,12 @@ import {
 import { usePromptEngineActions } from '../../context/prompt-engine/PromptEngineActionsContext';
 import { internalError } from '@/shared/errors/app-error';
 
-interface RuleItemContextValue {
+interface RuleItemStateContextValue {
   draft: RuleDraft;
   rule: PromptValidationRule | null;
+}
+
+interface RuleItemActionsContextValue {
   patchRule: (patch: Partial<PromptValidationRule>) => void;
   updateSimilar: (index: number, patch: Partial<PromptValidationSimilarPattern>) => void;
   removeSimilar: (index: number) => void;
@@ -30,14 +33,31 @@ interface RuleItemContextValue {
   addAutofixOperation: (kind: PromptAutofixOperation['kind']) => void;
 }
 
-const RuleItemContext = createContext<RuleItemContextValue | null>(null);
+type RuleItemContextValue = RuleItemStateContextValue & RuleItemActionsContextValue;
 
-export function useRuleItemContext(): RuleItemContextValue {
-  const context = useContext(RuleItemContext);
+const RuleItemStateContext = createContext<RuleItemStateContextValue | null>(null);
+const RuleItemActionsContext = createContext<RuleItemActionsContextValue | null>(null);
+
+export function useRuleItemState(): RuleItemStateContextValue {
+  const context = useContext(RuleItemStateContext);
   if (!context) {
-    throw internalError('useRuleItemContext must be used within a RuleItemProvider');
+    throw internalError('useRuleItemState must be used within a RuleItemProvider');
   }
   return context;
+}
+
+export function useRuleItemActions(): RuleItemActionsContextValue {
+  const context = useContext(RuleItemActionsContext);
+  if (!context) {
+    throw internalError('useRuleItemActions must be used within a RuleItemProvider');
+  }
+  return context;
+}
+
+export function useRuleItemContext(): RuleItemContextValue {
+  const state = useRuleItemState();
+  const actions = useRuleItemActions();
+  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
 }
 
 interface RuleItemProviderProps {
@@ -96,10 +116,15 @@ export function RuleItemProvider({ draft, children }: RuleItemProviderProps): Re
     [rule, patchRule]
   );
 
-  const value = useMemo(
-    () => ({
+  const stateValue = useMemo(
+    (): RuleItemStateContextValue => ({
       draft,
       rule,
+    }),
+    [draft, rule]
+  );
+  const actionsValue = useMemo(
+    (): RuleItemActionsContextValue => ({
       patchRule,
       updateSimilar,
       removeSimilar,
@@ -109,8 +134,6 @@ export function RuleItemProvider({ draft, children }: RuleItemProviderProps): Re
       addAutofixOperation,
     }),
     [
-      draft,
-      rule,
       patchRule,
       updateSimilar,
       removeSimilar,
@@ -121,5 +144,9 @@ export function RuleItemProvider({ draft, children }: RuleItemProviderProps): Re
     ]
   );
 
-  return <RuleItemContext.Provider value={value}>{children}</RuleItemContext.Provider>;
+  return (
+    <RuleItemActionsContext.Provider value={actionsValue}>
+      <RuleItemStateContext.Provider value={stateValue}>{children}</RuleItemStateContext.Provider>
+    </RuleItemActionsContext.Provider>
+  );
 }

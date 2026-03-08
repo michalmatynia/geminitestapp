@@ -38,6 +38,30 @@ export interface ProductFormMetadataContextType {
   filteredPriceGroups: PriceGroupWithDetails[];
 }
 
+export type ProductFormMetadataStateContextType = Pick<
+  ProductFormMetadataContextType,
+  | 'catalogs'
+  | 'catalogsLoading'
+  | 'catalogsError'
+  | 'selectedCatalogIds'
+  | 'categories'
+  | 'categoriesLoading'
+  | 'selectedCategoryId'
+  | 'tags'
+  | 'tagsLoading'
+  | 'selectedTagIds'
+  | 'producers'
+  | 'producersLoading'
+  | 'selectedProducerIds'
+  | 'filteredLanguages'
+  | 'filteredPriceGroups'
+>;
+
+export type ProductFormMetadataActionsContextType = Pick<
+  ProductFormMetadataContextType,
+  'toggleCatalog' | 'setCategoryId' | 'toggleTag' | 'toggleProducer'
+>;
+
 export const ProductFormMetadataContext = createContext<ProductFormMetadataContextType | null>(
   null
 );
@@ -99,10 +123,61 @@ export function ProductFormMetadataProvider({
   );
 }
 
-export const useProductFormMetadata = (): ProductFormMetadataContextType => {
+const useRequiredProductFormMetadataContext = (): ProductFormMetadataContextType => {
   const context = useContext(ProductFormMetadataContext);
   if (!context) {
     throw internalError('useProductFormMetadata must be used within a ProductFormMetadataProvider');
   }
   return context;
 };
+
+export const useProductFormMetadataState = (): ProductFormMetadataStateContextType => {
+  const {
+    catalogs,
+    catalogsLoading,
+    catalogsError,
+    selectedCatalogIds,
+    categories,
+    categoriesLoading,
+    selectedCategoryId,
+    tags,
+    tagsLoading,
+    selectedTagIds,
+    producers,
+    producersLoading,
+    selectedProducerIds,
+    filteredLanguages,
+    filteredPriceGroups,
+  } = useRequiredProductFormMetadataContext();
+  return {
+    catalogs,
+    catalogsLoading,
+    catalogsError,
+    selectedCatalogIds,
+    categories,
+    categoriesLoading,
+    selectedCategoryId,
+    tags,
+    tagsLoading,
+    selectedTagIds,
+    producers,
+    producersLoading,
+    selectedProducerIds,
+    filteredLanguages,
+    filteredPriceGroups,
+  };
+};
+
+export const useProductFormMetadataActions = (): ProductFormMetadataActionsContextType => {
+  const { toggleCatalog, setCategoryId, toggleTag, toggleProducer } =
+    useRequiredProductFormMetadataContext();
+  return {
+    toggleCatalog,
+    setCategoryId,
+    toggleTag,
+    toggleProducer,
+  };
+};
+
+export const useProductFormMetadata = (): ProductFormMetadataContextType =>
+  useRequiredProductFormMetadataContext();

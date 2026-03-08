@@ -35,13 +35,20 @@ import {
 
 import {
   type StudioSettingsTab,
+  type ImageStudioSettingsActionsContextValue,
+  type ImageStudioSettingsStateContextValue,
   type ImageStudioSettingsContextValue,
 } from './settings/settings-types';
 import { useSettingsHydration } from './settings/useSettingsHydration';
 import { useModelAwareSettings } from './settings/useModelAwareSettings';
 import { useMaintenanceActions } from './settings/useMaintenanceActions';
+import { useProjectSequencingActions } from './settings/useProjectSequencingActions';
 
-const ImageStudioSettingsContext = createContext<ImageStudioSettingsContextValue | null>(null);
+const ImageStudioSettingsStateContext = createContext<ImageStudioSettingsStateContextValue | null>(
+  null
+);
+const ImageStudioSettingsActionsContext =
+  createContext<ImageStudioSettingsActionsContextValue | null>(null);
 
 export function ImageStudioSettingsProvider({
   children,
@@ -303,55 +310,11 @@ export function ImageStudioSettingsProvider({
     backfillIncludeHeuristicGenerationLinks,
     toast,
   });
-
   const { backfillRunning, backfillResultText, runCardBackfill } = maintenance;
-
-  const toggleProjectSequencingOperation = useCallback(
-    (operation: string, checked: boolean): void => {
-      setStudioSettings((prev) => {
-        type Op = 'crop_center' | 'mask' | 'generate' | 'regenerate' | 'upscale';
-        const operations = prev.projectSequencing.operations as Op[];
-        const op = operation as Op;
-        const nextOperations: Op[] = checked
-          ? operations.includes(op)
-            ? operations
-            : [...operations, op]
-          : operations.filter((entry) => entry !== op);
-        return {
-          ...prev,
-          projectSequencing: {
-            ...prev.projectSequencing,
-            operations: nextOperations,
-          },
-        };
-      });
-    },
-    []
-  );
-
-  const moveProjectSequencingOperation = useCallback(
-    (operation: string, direction: number): void => {
-      setStudioSettings((prev) => {
-        type Op = 'crop_center' | 'mask' | 'generate' | 'regenerate' | 'upscale';
-        const operations = [...(prev.projectSequencing.operations as Op[])];
-        const op = operation as Op;
-        const index = operations.indexOf(op);
-        if (index < 0) return prev;
-        const target = index + direction;
-        if (target < 0 || target >= operations.length) return prev;
-        const [removed] = operations.splice(index, 1);
-        if (removed) operations.splice(target, 0, removed);
-        return {
-          ...prev,
-          projectSequencing: {
-            ...prev.projectSequencing,
-            operations,
-          },
-        };
-      });
-    },
-    []
-  );
+  const { toggleProjectSequencingOperation, moveProjectSequencingOperation } =
+    useProjectSequencingActions({
+      setStudioSettings,
+    });
 
   const modelAware = useModelAwareSettings({
     studioSettings,
@@ -384,71 +347,135 @@ export function ImageStudioSettingsProvider({
     return globalStudioSettingsRaw ? 'global settings' : 'defaults';
   }, [activeProjectId, globalStudioSettingsRaw, projectSettingsKey, projectStudioSettingsRaw]);
 
-  const value: ImageStudioSettingsContextValue = {
-    settingsLoaded,
-    activeSettingsTab,
-    setActiveSettingsTab,
-    studioSettings,
-    setStudioSettings,
-    advancedOverridesText,
-    advancedOverridesError,
-    promptValidationEnabled,
-    setPromptValidationEnabled,
-    promptValidationRulesText,
-    promptValidationRulesError,
-    backfillProjectId,
-    setBackfillProjectId,
-    backfillDryRun,
-    setBackfillDryRun,
-    backfillIncludeHeuristicGenerationLinks,
-    setBackfillIncludeHeuristicGenerationLinks,
-    backfillRunning,
-    backfillResultText,
-    settingsSource,
-    isGpt52Model,
-    modelCapabilities,
-    modelAwareSizeValue,
-    modelAwareQualityValue,
-    modelAwareBackgroundValue,
-    modelAwareFormatValue,
-    modelAwareSizeOptions,
-    modelAwareQualityOptions,
-    modelAwareBackgroundOptions,
-    modelAwareFormatOptions,
-    settingsStore: {
-      isFetching: settingsStore.isFetching,
-      isLoading: settingsStore.isLoading,
-    },
-    imageModelsQuery: {
-      isFetching: imageModelsQuery.isFetching,
-      refetch: () => imageModelsQuery.refetch(),
-    },
-    updateSetting: {
-      isPending: updateSetting.isPending,
-    },
-    handleRefresh,
-    handleAdvancedOverridesChange,
-    handlePromptValidationRulesChange,
-    saveStudioSettings,
-    resetStudioSettings,
-    runCardBackfill,
-    toggleProjectSequencingOperation,
-    moveProjectSequencingOperation,
-  };
+  const stateValue = useMemo(
+    (): ImageStudioSettingsStateContextValue => ({
+      settingsLoaded,
+      activeSettingsTab,
+      studioSettings,
+      advancedOverridesText,
+      advancedOverridesError,
+      promptValidationEnabled,
+      promptValidationRulesText,
+      promptValidationRulesError,
+      backfillProjectId,
+      backfillDryRun,
+      backfillIncludeHeuristicGenerationLinks,
+      backfillRunning,
+      backfillResultText,
+      settingsSource,
+      isGpt52Model,
+      modelCapabilities,
+      modelAwareSizeValue,
+      modelAwareQualityValue,
+      modelAwareBackgroundValue,
+      modelAwareFormatValue,
+      modelAwareSizeOptions,
+      modelAwareQualityOptions,
+      modelAwareBackgroundOptions,
+      modelAwareFormatOptions,
+      settingsStore: {
+        isFetching: settingsStore.isFetching,
+        isLoading: settingsStore.isLoading,
+      },
+      imageModelsQuery: {
+        isFetching: imageModelsQuery.isFetching,
+        refetch: () => imageModelsQuery.refetch(),
+      },
+      updateSetting: {
+        isPending: updateSetting.isPending,
+      },
+    }),
+    [
+      activeSettingsTab,
+      advancedOverridesError,
+      advancedOverridesText,
+      backfillDryRun,
+      backfillIncludeHeuristicGenerationLinks,
+      backfillProjectId,
+      backfillResultText,
+      backfillRunning,
+      imageModelsQuery.isFetching,
+      isGpt52Model,
+      modelAwareBackgroundOptions,
+      modelAwareBackgroundValue,
+      modelAwareFormatOptions,
+      modelAwareFormatValue,
+      modelAwareQualityOptions,
+      modelAwareQualityValue,
+      modelAwareSizeOptions,
+      modelAwareSizeValue,
+      modelCapabilities,
+      promptValidationEnabled,
+      promptValidationRulesError,
+      promptValidationRulesText,
+      settingsLoaded,
+      settingsSource,
+      settingsStore.isFetching,
+      settingsStore.isLoading,
+      studioSettings,
+      updateSetting.isPending,
+    ]
+  );
+  const actionsValue = useMemo(
+    (): ImageStudioSettingsActionsContextValue => ({
+      setActiveSettingsTab,
+      setStudioSettings,
+      setPromptValidationEnabled,
+      setBackfillProjectId,
+      setBackfillDryRun,
+      setBackfillIncludeHeuristicGenerationLinks,
+      handleRefresh,
+      handleAdvancedOverridesChange,
+      handlePromptValidationRulesChange,
+      saveStudioSettings,
+      resetStudioSettings,
+      runCardBackfill,
+      toggleProjectSequencingOperation,
+      moveProjectSequencingOperation,
+    }),
+    [
+      handleAdvancedOverridesChange,
+      handlePromptValidationRulesChange,
+      handleRefresh,
+      moveProjectSequencingOperation,
+      resetStudioSettings,
+      runCardBackfill,
+      saveStudioSettings,
+      toggleProjectSequencingOperation,
+    ]
+  );
 
   return (
-    <ImageStudioSettingsContext.Provider value={value}>
-      {children}
-    </ImageStudioSettingsContext.Provider>
+    <ImageStudioSettingsActionsContext.Provider value={actionsValue}>
+      <ImageStudioSettingsStateContext.Provider value={stateValue}>
+        {children}
+      </ImageStudioSettingsStateContext.Provider>
+    </ImageStudioSettingsActionsContext.Provider>
   );
 }
 
-export function useImageStudioSettingsContext(): ImageStudioSettingsContextValue {
-  const context = useContext(ImageStudioSettingsContext);
+export function useImageStudioSettingsState(): ImageStudioSettingsStateContextValue {
+  const context = useContext(ImageStudioSettingsStateContext);
   if (!context) {
     throw internalError(
-      'useImageStudioSettingsContext must be used within ImageStudioSettingsProvider'
+      'useImageStudioSettingsState must be used within ImageStudioSettingsProvider'
     );
   }
   return context;
+}
+
+export function useImageStudioSettingsActions(): ImageStudioSettingsActionsContextValue {
+  const context = useContext(ImageStudioSettingsActionsContext);
+  if (!context) {
+    throw internalError(
+      'useImageStudioSettingsActions must be used within ImageStudioSettingsProvider'
+    );
+  }
+  return context;
+}
+
+export function useImageStudioSettingsContext(): ImageStudioSettingsContextValue {
+  const state = useImageStudioSettingsState();
+  const actions = useImageStudioSettingsActions();
+  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
 }

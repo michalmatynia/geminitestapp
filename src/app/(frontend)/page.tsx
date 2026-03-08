@@ -4,6 +4,7 @@ import { JSX } from 'react';
 
 import { getCmsRepository } from '@/features/cms/server';
 import { getSlugsForDomain, resolveCmsDomainFromHeaders } from '@/features/cms/server';
+import { KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
 
 import { HomeContent } from './HomeContent';
 import {
@@ -20,14 +21,14 @@ export default async function Home(): Promise<JSX.Element> {
   const { withTiming, flush } = createHomeTimingRecorder();
 
   const frontPageRedirectEnabled = shouldUseFrontPageAppRedirect();
-  const [cmsRepository, frontPageApp] = await Promise.all([
-    withTiming('cmsRepository', getCmsRepository),
-    frontPageRedirectEnabled
-      ? withTiming('frontPageSetting', getFrontPageSetting)
-      : Promise.resolve<string | null>(null),
-  ]);
+  const frontPageApp = frontPageRedirectEnabled
+    ? await withTiming('frontPageSetting', getFrontPageSetting)
+    : null;
 
   if (frontPageRedirectEnabled && frontPageApp && FRONT_PAGE_ALLOWED.has(frontPageApp)) {
+    if (frontPageApp === 'kangur') {
+      redirect(KANGUR_BASE_PATH);
+    }
     if (frontPageApp === 'chatbot') {
       redirect('/admin/chatbot');
     }
@@ -35,6 +36,8 @@ export default async function Home(): Promise<JSX.Element> {
       redirect('/admin/notes');
     }
   }
+
+  const cmsRepository = await withTiming('cmsRepository', getCmsRepository);
 
   const hdrs = await withTiming('headers', () => headers());
   const domain = await withTiming('cmsDomain', () => resolveCmsDomainFromHeaders(hdrs));

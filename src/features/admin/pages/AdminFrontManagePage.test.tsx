@@ -59,6 +59,7 @@ describe('AdminFrontManagePage', () => {
     render(<AdminFrontManagePage />);
 
     expect(screen.getByRole('button', { name: /cms home/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /kangur/i })).toBeInTheDocument();
     expect(screen.getByText(/kangur on home/i)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /open cms pages/i })).toHaveAttribute(
       'href',
@@ -87,6 +88,20 @@ describe('AdminFrontManagePage', () => {
       expect(mutateAsyncMock).toHaveBeenCalledWith({
         key: 'front_page_app',
         value: 'chatbot',
+      })
+    );
+  });
+
+  it('saves the Kangur destination when selected', async () => {
+    render(<AdminFrontManagePage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /kangur/i }));
+    fireEvent.click(screen.getByRole('button', { name: /save selection/i }));
+
+    await waitFor(() =>
+      expect(mutateAsyncMock).toHaveBeenCalledWith({
+        key: 'front_page_app',
+        value: 'kangur',
       })
     );
   });

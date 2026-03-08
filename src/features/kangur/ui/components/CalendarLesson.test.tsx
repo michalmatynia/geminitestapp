@@ -64,7 +64,7 @@ describe('CalendarLesson', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: /menu/i }));
-    fireEvent.click(screen.getByRole('button', { name: /gra z kalendarzem/i }));
+    fireEvent.click(screen.getByRole('button', { name: /ćwiczenia z kalendarzem/i }));
 
     const header = screen.getByTestId('calendar-lesson-game-header');
     expect(screen.getByTestId('calendar-lesson-game-shell')).toHaveClass(
@@ -73,9 +73,15 @@ describe('CalendarLesson', () => {
       'bg-white/94'
     );
 
-    expect(within(header).getByRole('heading', { name: /gra z kalendarzem/i })).toHaveClass(
+    expect(
+      within(header).getByRole('heading', { name: /ćwiczenia z kalendarzem/i })
+    ).toHaveClass(
       'text-xl',
       'text-green-700'
+    );
+    expect(screen.getByRole('button', { name: /wróć do menu/i })).toHaveClass(
+      'kangur-cta-pill',
+      'surface-cta'
     );
     expect(within(header).getByText('📅')).toHaveClass(
       'h-12',

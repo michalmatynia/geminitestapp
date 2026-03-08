@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, type Dispatch, type SetStateAction } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 import type {
@@ -37,17 +37,20 @@ import {
   resolveRequestedCaseResolverFileId,
 } from './case-resolver-folder-tree-utils';
 import {
-  fromCaseResolverAssetNodeId,
-  fromCaseResolverFileNodeId,
-  fromCaseResolverFolderNodeId,
   getCachedCaseResolverRuntimeIndexes,
   logCaseResolverDurationMetric,
+  useCaseResolverRuntimeSelector,
+} from '../runtime';
+import {
+  fromCaseResolverAssetNodeId,
+  fromCaseResolverCaseNodeId,
+  fromCaseResolverFileNodeId,
+  fromCaseResolverFolderNodeId,
   toCaseResolverAssetNodeId,
   toCaseResolverCaseNodeId,
   toCaseResolverFileNodeId,
   toCaseResolverFolderNodeId,
-  useCaseResolverRuntimeSelector,
-} from '../runtime';
+} from '../master-tree';
 
 export function useCaseResolverFolderTreeRuntime({
   showChildCaseFolders,
@@ -57,8 +60,8 @@ export function useCaseResolverFolderTreeRuntime({
 }: {
   showChildCaseFolders: boolean;
   highlightedNodeFileAssetIds: string[];
-  setShowChildCaseFolders: React.Dispatch<React.SetStateAction<boolean>>;
-  setHighlightedNodeFileAssetIds: React.Dispatch<React.SetStateAction<string[]>>;
+  setShowChildCaseFolders: Dispatch<SetStateAction<boolean>>;
+  setHighlightedNodeFileAssetIds: Dispatch<SetStateAction<string[]>>;
 }): CaseResolverFolderTreeRuntimeResult {
   const searchParams = useSearchParams();
   const requestedFileId = useMemo(
@@ -137,6 +140,8 @@ export function useCaseResolverFolderTreeRuntime({
           if (fileId) return { entity: 'file', id: fileId, nodeId };
           const assetId = fromCaseResolverAssetNodeId(nodeId);
           if (assetId) return { entity: 'asset', id: assetId, nodeId };
+          const caseId = fromCaseResolverCaseNodeId(nodeId);
+          if (caseId) return { entity: 'folder', id: caseId, nodeId };
           const folderPath = fromCaseResolverFolderNodeId(nodeId);
           return { entity: 'folder', id: folderPath || nodeId, nodeId };
         },

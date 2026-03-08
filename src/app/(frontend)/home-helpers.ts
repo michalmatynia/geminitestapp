@@ -36,8 +36,10 @@ export const canPreviewDrafts = async (session: Session | null): Promise<boolean
 const canUsePrismaSettings = (): boolean =>
   Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
 
-export const shouldUseFrontPageAppRedirect = (): boolean =>
-  process.env['ENABLE_FRONT_PAGE_APP_REDIRECT'] === 'true';
+export const shouldApplyFrontPageAppSelection = (): boolean => {
+  const value = process.env['ENABLE_FRONT_PAGE_APP_REDIRECT']?.trim().toLowerCase();
+  return value !== 'false' && value !== '0';
+};
 
 const readMongoFrontPageSetting = async (): Promise<string | null> => {
   if (!process.env['MONGODB_URI']) return null;

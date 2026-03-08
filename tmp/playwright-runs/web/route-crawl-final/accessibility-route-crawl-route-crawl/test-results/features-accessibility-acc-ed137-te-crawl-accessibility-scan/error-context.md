@@ -1,0 +1,162 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#app-content"
+  - main [active] [ref=e3]:
+    - generic [ref=e4]:
+      - status [ref=e5]
+      - navigation "Glowna nawigacja Kangur" [ref=e9]:
+        - button "Strona glowna" [ref=e10] [cursor=pointer]:
+          - img [ref=e12]
+          - generic [ref=e21]: Strona glowna
+        - link "Lekcje" [ref=e22] [cursor=pointer]:
+          - /url: /lessons
+          - img [ref=e23]
+          - generic [ref=e25]: Lekcje
+        - link "Testy" [ref=e26] [cursor=pointer]:
+          - /url: /tests
+          - img [ref=e27]
+          - generic [ref=e33]: Testy
+        - button "Zaloguj się" [ref=e35] [cursor=pointer]:
+          - img [ref=e36]
+          - generic [ref=e39]: Zaloguj się
+      - generic [ref=e41]:
+        - link "Przejdz do glownej tresci" [ref=e42] [cursor=pointer]:
+          - /url: "#kangur-game-main"
+        - generic [ref=e43]:
+          - status [ref=e44]: "Widok: Ekran startowy"
+          - main "Sprycio Ekran startowy" [ref=e45]:
+            - heading "Sprycio" [level=1] [ref=e46]
+            - generic [ref=e47]:
+              - heading "Ekran startowy" [level=2] [ref=e48]
+              - region "Rozpocznij gre" [ref=e49]:
+                - heading "Rozpocznij gre" [level=3] [ref=e50]
+                - generic [ref=e52]:
+                  - generic [ref=e53]: Imie gracza
+                  - textbox "Imie gracza" [ref=e54]:
+                    - /placeholder: Wpisz swoje imie...
+                - region "Wybierz aktywnosc" [ref=e56]:
+                  - heading "Wybierz aktywnosc" [level=3] [ref=e57]
+                  - generic [ref=e58]:
+                    - link "Lekcje ✦ ✦ ✦" [ref=e60] [cursor=pointer]:
+                      - /url: /lessons
+                      - generic [ref=e62]:
+                        - generic [ref=e63]: 📚
+                        - generic [ref=e64]: Lekcje
+                      - generic: ✦
+                      - generic: ✦
+                      - generic: ✦
+                    - button "Grajmy! ✦ ✦ ✦" [ref=e66] [cursor=pointer]:
+                      - generic [ref=e68]:
+                        - generic [ref=e69]: 🪐
+                        - generic [ref=e70]: Grajmy!
+                        - generic [ref=e71]: 🚀
+                      - generic: ✦
+                      - generic: ✦
+                      - generic: ✦
+                    - button "Trening mieszany ✦ ✦ ✦" [ref=e73] [cursor=pointer]:
+                      - generic [ref=e75]:
+                        - generic [ref=e76]: 🤸
+                        - generic [ref=e77]: Trening mieszany
+                      - generic: ✦
+                      - generic: ✦
+                      - generic: ✦
+                    - button "Kangur Matematyczny ✦ ✦ ✦" [ref=e79] [cursor=pointer]:
+                      - generic [ref=e81]:
+                        - generic [ref=e82]: 🦘
+                        - generic [ref=e83]: Kangur Matematyczny
+                      - generic: ✦
+                      - generic: ✦
+                      - generic: ✦
+              - region "Ranking i postep" [ref=e84]:
+                - heading "Ranking i postep" [level=3] [ref=e85]
+                - generic [ref=e87]:
+                  - generic [ref=e88]:
+                    - img [ref=e89]
+                    - heading "Najlepsze wyniki" [level=3] [ref=e95]
+                  - generic [ref=e96]:
+                    - generic [ref=e97]:
+                      - button "🏆 Wszystkie" [pressed] [ref=e98] [cursor=pointer]
+                      - button "➕ Dodawanie" [ref=e99] [cursor=pointer]
+                      - button "➖ Odejmowanie" [ref=e100] [cursor=pointer]
+                      - button "✖️ Mnozenie" [ref=e101] [cursor=pointer]
+                      - button "➗ Dzielenie" [ref=e102] [cursor=pointer]
+                      - button "🔢 Ulamki" [ref=e103] [cursor=pointer]
+                      - button "⚡ Potegi" [ref=e104] [cursor=pointer]
+                      - button "√ Pierwiastki" [ref=e105] [cursor=pointer]
+                      - button "🕐 Zegar" [ref=e106] [cursor=pointer]
+                      - button "🎲 Mieszane" [ref=e107] [cursor=pointer]
+                    - generic [ref=e108]:
+                      - button "Wszyscy" [pressed] [ref=e109] [cursor=pointer]
+                      - button "Zalogowani" [ref=e110] [cursor=pointer]:
+                        - img [ref=e111]
+                        - text: Zalogowani
+                      - button "Anonimowi" [ref=e114] [cursor=pointer]:
+                        - img [ref=e115]
+                        - text: Anonimowi
+                  - generic [ref=e118]:
+                    - generic [ref=e119]: 🥇
+                    - generic [ref=e120]:
+                      - generic [ref=e121]:
+                        - generic [ref=e122]: Michal
+                        - generic "Zalogowany" [ref=e123]:
+                          - img [ref=e124]
+                      - generic [ref=e127]: ➕ Dodawanie
+                    - generic [ref=e128]:
+                      - generic [ref=e129]: 9/10
+                      - generic [ref=e130]: 33s
+                - generic [ref=e133]:
+                  - generic [ref=e134]:
+                    - generic [ref=e135]: 🎖️
+                    - generic [ref=e136]:
+                      - paragraph [ref=e137]: Raczkujacy 🐣
+                      - paragraph [ref=e138]: Poziom 1 · 0 XP lacznie
+                  - generic [ref=e139]:
+                    - generic [ref=e140]:
+                      - generic [ref=e141]: 0 XP
+                      - generic [ref=e142]: "do poz. 2: 100 XP"
+                    - progressbar "Postep" [ref=e143]
+                  - generic [ref=e144]:
+                    - generic [ref=e145]:
+                      - generic [ref=e146]: Gier
+                      - generic [ref=e147]: "0"
+                    - generic [ref=e148]:
+                      - generic [ref=e149]: Lekcji
+                      - generic [ref=e150]: "0"
+                    - generic [ref=e151]:
+                      - generic [ref=e152]: Odznak
+                      - generic [ref=e153]: "0"
+                  - generic [ref=e154]:
+                    - paragraph [ref=e155]: Odznaki
+                    - generic [ref=e156]:
+                      - 'generic "Pierwsza gra: Ukoncz pierwsza gre" [ref=e157]':
+                        - generic [ref=e158]: 🎮
+                        - generic [ref=e159]: Pierwsza gra
+                      - 'generic "Idealny wynik: Zdobadz 10/10 w grze" [ref=e160]':
+                        - generic [ref=e161]: 💯
+                        - generic [ref=e162]: Idealny wynik
+                      - 'generic "Bohater lekcji: Ukoncz pierwsza lekcje" [ref=e163]':
+                        - generic [ref=e164]: 📚
+                        - generic [ref=e165]: Bohater lekcji
+                      - 'generic "Mistrz zegara: Ukoncz trening zegara z 5/5" [ref=e166]':
+                        - generic [ref=e167]: 🕐
+                        - generic [ref=e168]: Mistrz zegara
+                      - 'generic "Artysta figur: Ukoncz trening figur geometrycznych na pelny wynik" [ref=e169]':
+                        - generic [ref=e170]: 🔷
+                        - generic [ref=e171]: Artysta figur
+                      - 'generic "Dziesiatka: Zagraj 10 gier" [ref=e172]':
+                        - generic [ref=e173]: 🔟
+                        - generic [ref=e174]: Dziesiatka
+                      - 'generic "Pol tysiaca XP: Zdobadz 500 XP lacznie" [ref=e175]':
+                        - generic [ref=e176]: ⭐
+                        - generic [ref=e177]: Pol tysiaca XP
+                      - 'generic "Tysiacznik: Zdobadz 1000 XP lacznie" [ref=e178]':
+                        - generic [ref=e179]: 🌟
+                        - generic [ref=e180]: Tysiacznik
+                      - 'generic "Wszechstronny: Zagraj 5 roznych operacji" [ref=e181]':
+                        - generic [ref=e182]: 🎲
+                        - generic [ref=e183]: Wszechstronny
+  - alert [ref=e184]
+```

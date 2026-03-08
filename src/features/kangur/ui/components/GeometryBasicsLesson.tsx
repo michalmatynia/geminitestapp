@@ -14,6 +14,7 @@ import {
   KangurLessonCallout,
   KangurLessonChip,
 } from '@/features/kangur/ui/design/lesson-primitives';
+import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 
 type SectionId = 'punkt' | 'bok' | 'kat' | 'podsumowanie';
 
@@ -130,6 +131,8 @@ export const HUB_SECTIONS = [
 
 export default function GeometryBasicsLesson(): React.JSX.Element {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
+  const { markSectionOpened, markSectionViewedCount, sectionProgress } =
+    useLessonHubProgress(SLIDES);
 
   const handleComplete = (): void => {
     const progress = loadProgress();
@@ -145,6 +148,7 @@ export default function GeometryBasicsLesson(): React.JSX.Element {
         slides={SLIDES[activeSection]}
         onBack={() => setActiveSection(null)}
         onComplete={activeSection === 'podsumowanie' ? handleComplete : undefined}
+        onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
         dotActiveClass='bg-cyan-500'
         dotDoneClass='bg-cyan-300'
         gradientClass='from-cyan-500 to-sky-500'
@@ -157,8 +161,15 @@ export default function GeometryBasicsLesson(): React.JSX.Element {
       lessonEmoji='📐'
       lessonTitle='Podstawy geometrii'
       gradientClass='from-cyan-500 to-sky-500'
-      sections={HUB_SECTIONS}
-      onSelect={(id) => setActiveSection(id as SectionId)}
+      progressDotClassName='bg-cyan-300'
+      sections={HUB_SECTIONS.map((section) => ({
+        ...section,
+        progress: sectionProgress[section.id as SectionId],
+      }))}
+      onSelect={(id) => {
+        markSectionOpened(id as SectionId);
+        setActiveSection(id as SectionId);
+      }}
     />
   );
 }

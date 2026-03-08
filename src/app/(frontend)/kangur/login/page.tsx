@@ -5,7 +5,7 @@ import { getKangurCanonicalPublicHref } from '@/features/kangur/config/routing';
 import { KangurLoginPage } from '@/features/kangur/ui/KangurLoginPage';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
 
-import { getFrontPageSetting, shouldUseFrontPageAppRedirect } from '../../home-helpers';
+import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '../../home-helpers';
 
 type KangurAliasLoginPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -14,7 +14,7 @@ type KangurAliasLoginPageProps = {
 export default async function Page({
   searchParams,
 }: KangurAliasLoginPageProps): Promise<JSX.Element> {
-  if (shouldUseFrontPageAppRedirect()) {
+  if (shouldApplyFrontPageAppSelection()) {
     const frontPageSetting = await getFrontPageSetting();
 
     if (getFrontPagePublicOwner(frontPageSetting) === 'kangur') {

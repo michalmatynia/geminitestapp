@@ -1,6 +1,6 @@
-<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="0" time="4.579693">
-<testsuite name="features/accessibility/notes-workspace-accessibility.spec.ts" timestamp="2026-03-08T14:15:49.401Z" hostname="" tests="1" failures="0" skipped="0" time="3.444" errors="0">
-<testcase name="notes workspace exposes list controls accessibly and passes the accessibility smoke scan" classname="features/accessibility/notes-workspace-accessibility.spec.ts" time="3.444">
+<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="0" time="4.7735959999999995">
+<testsuite name="features/accessibility/notes-workspace-accessibility.spec.ts" timestamp="2026-03-08T14:58:16.851Z" hostname="" tests="1" failures="0" skipped="0" time="3.527" errors="0">
+<testcase name="notes workspace exposes list controls accessibly and passes the accessibility smoke scan" classname="features/accessibility/notes-workspace-accessibility.spec.ts" time="3.527">
 </testcase>
 </testsuite>
 </testsuites>

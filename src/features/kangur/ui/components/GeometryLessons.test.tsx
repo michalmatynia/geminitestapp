@@ -82,7 +82,8 @@ describe('Geometry lessons shared surfaces', () => {
       'border-white/88',
       'bg-white/94'
     );
-    expect(screen.getByRole('button', { name: /wróc do menu/i })).toHaveClass(
+    expect(screen.getByRole('heading', { name: /ćwiczenia z figurami/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /wróć do menu/i })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
     );

@@ -1,6 +1,6 @@
-<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="0" time="10.773838">
-<testsuite name="features/accessibility/cms-builder-accessibility.spec.ts" timestamp="2026-03-08T14:15:54.828Z" hostname="" tests="1" failures="0" skipped="0" time="9.559" errors="0">
-<testcase name="cms builder exposes shell controls accessibly and passes the accessibility smoke scan" classname="features/accessibility/cms-builder-accessibility.spec.ts" time="9.559">
+<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="0" time="9.015775">
+<testsuite name="features/accessibility/cms-builder-accessibility.spec.ts" timestamp="2026-03-08T14:58:22.906Z" hostname="" tests="1" failures="0" skipped="0" time="7.646" errors="0">
+<testcase name="cms builder exposes shell controls accessibly and passes the accessibility smoke scan" classname="features/accessibility/cms-builder-accessibility.spec.ts" time="7.646">
 </testcase>
 </testsuite>
 </testsuites>

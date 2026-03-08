@@ -1,12 +1,12 @@
 # Accessibility Smoke Report
 
-Generated at: 2026-03-08T14:16:05.551Z
+Generated at: 2026-03-08T15:11:23.199Z
 
 ## Summary
 
 - Suites: 14
-- Passed: 13
-- Failed: 1
+- Passed: 14
+- Failed: 0
 - React act warnings: 0
 - Warning budget: 10
 - Warning budget status: ok
@@ -16,20 +16,20 @@ Generated at: 2026-03-08T14:16:05.551Z
 
 | Suite | Runner | Status | Duration | Exit | Tests |
 | --- | --- | --- | ---: | ---: | --- |
-| App Shell Accessibility | vitest | PASS | 1.7s | 0 | `src/app/__tests__/shell-accessibility.test.tsx` |
-| Auth Sign-In Accessibility | vitest | PASS | 2.9s | 0 | `__tests__/features/auth/pages/signin-page.test.tsx` |
-| Products Edit Form Accessibility | vitest | PASS | 4.5s | 0 | `__tests__/features/products/pages/product-edit-page.test.tsx` |
-| Image Studio UI Accessibility | vitest | PASS | 3.1s | 0 | `src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx` |
-| AI Paths Canvas Accessibility | vitest | PASS | 3.5s | 0 | `src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx` |
-| Case Resolver Header Accessibility | vitest | PASS | 2.9s | 0 | `src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx` |
-| Case Resolver Accessibility | playwright | PASS | 15.5s | 0 | `e2e/features/accessibility/case-resolver-accessibility.spec.ts` |
-| Kangur Profile Accessibility | vitest | FAIL | 4.2s | 1 | `__tests__/features/kangur/kangur-accessibility-smoke.test.tsx` |
-| Public Auth Route Accessibility | playwright | PASS | 4.0s | 0 | `e2e/features/accessibility/public-auth-accessibility.spec.ts` |
-| Admin Dashboard Accessibility | playwright | PASS | 5.4s | 0 | `e2e/features/accessibility/admin-dashboard-accessibility.spec.ts` |
-| Products List Accessibility | playwright | PASS | 7.1s | 0 | `e2e/features/accessibility/products-list-accessibility.spec.ts` |
-| CMS Pages Accessibility | playwright | PASS | 5.3s | 0 | `e2e/features/accessibility/cms-pages-accessibility.spec.ts` |
-| Notes Workspace Accessibility | playwright | PASS | 5.5s | 0 | `e2e/features/accessibility/notes-workspace-accessibility.spec.ts` |
-| CMS Builder Accessibility | playwright | PASS | 11.6s | 0 | `e2e/features/accessibility/cms-builder-accessibility.spec.ts` |
+| App Shell Accessibility | vitest | PASS | 2.5s | 0 | `src/app/__tests__/shell-accessibility.test.tsx` |
+| Auth Sign-In Accessibility | vitest | PASS | 3.7s | 0 | `__tests__/features/auth/pages/signin-page.test.tsx` |
+| Products Edit Form Accessibility | vitest | PASS | 4.9s | 0 | `__tests__/features/products/pages/product-edit-page.test.tsx` |
+| Image Studio UI Accessibility | vitest | PASS | 3.3s | 0 | `src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx` |
+| AI Paths Canvas Accessibility | vitest | PASS | 3.4s | 0 | `src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx` |
+| Case Resolver Header Accessibility | vitest | PASS | 2.7s | 0 | `src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx` |
+| Case Resolver Accessibility | playwright | PASS | 14.1s | 0 | `e2e/features/accessibility/case-resolver-accessibility.spec.ts` |
+| Kangur Profile Accessibility | vitest | PASS | 7.2s | 0 | `__tests__/features/kangur/kangur-accessibility-smoke.test.tsx` |
+| Public Auth Route Accessibility | playwright | PASS | 4.5s | 0 | `e2e/features/accessibility/public-auth-accessibility.spec.ts` |
+| Admin Dashboard Accessibility | playwright | PASS | 6.0s | 0 | `e2e/features/accessibility/admin-dashboard-accessibility.spec.ts` |
+| Products List Accessibility | playwright | PASS | 7.5s | 0 | `e2e/features/accessibility/products-list-accessibility.spec.ts` |
+| CMS Pages Accessibility | playwright | PASS | 6.7s | 0 | `e2e/features/accessibility/cms-pages-accessibility.spec.ts` |
+| Notes Workspace Accessibility | playwright | PASS | 5.8s | 0 | `e2e/features/accessibility/notes-workspace-accessibility.spec.ts` |
+| CMS Builder Accessibility | playwright | PASS | 9.8s | 0 | `e2e/features/accessibility/cms-builder-accessibility.spec.ts` |
 
 ## Warning Details
 

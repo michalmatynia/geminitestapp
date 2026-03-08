@@ -33,7 +33,8 @@ export async function ensureAdminSession(
   const destinationUrl = new URL(destination, 'http://localhost');
 
   await page.goto(`/auth/signin?callbackUrl=${encodeURIComponent(destination)}`, {
-    waitUntil: 'networkidle',
+    waitUntil: 'domcontentloaded',
+    timeout: 60_000,
   });
   const signInHeading = page.getByRole('heading', { name: /sign in/i });
   if (!(await signInHeading.isVisible().catch(() => false))) {
@@ -41,21 +42,34 @@ export async function ensureAdminSession(
   }
 
   for (const candidate of credentialCandidates) {
+    await page.getByRole('textbox', { name: /email/i }).waitFor({ state: 'visible', timeout: 20_000 });
     await page.getByRole('textbox', { name: /email/i }).fill(candidate.email);
     await page.getByRole('textbox', { name: /password/i }).fill(candidate.password);
     await page.getByRole('button', { name: /sign in/i }).click();
 
-    const signedIn = await page
+    const landingPath = await page
       .waitForURL(
+        (url) => url.pathname !== '/auth/signin',
+        { timeout: 30_000 }
+      )
+      .then(() => new URL(page.url(), 'http://localhost').pathname)
+      .catch(() => null);
+
+    if (landingPath === destinationUrl.pathname) {
+      return;
+    }
+
+    if (landingPath === '/admin') {
+      await page.goto(destination, {
+        waitUntil: 'domcontentloaded',
+        timeout: 60_000,
+      });
+      await page.waitForURL(
         (url) =>
           url.pathname === destinationUrl.pathname &&
           (destinationUrl.search ? url.search === destinationUrl.search : true),
         { timeout: 30_000 }
-      )
-      .then(() => true)
-      .catch(() => false);
-
-    if (signedIn) {
+      );
       return;
     }
   }

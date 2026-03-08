@@ -28,7 +28,6 @@ vi.mock('framer-motion', () => ({
 }));
 
 import LessonHub from '@/features/kangur/ui/components/LessonHub';
-import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 
 describe('LessonHub', () => {
   it('uses shared option cards and chips for lesson and game entries', () => {
@@ -51,7 +50,7 @@ describe('LessonHub', () => {
           {
             id: 'game',
             emoji: '🎮',
-            title: 'Gra z kalendarzem',
+            title: 'Ćwiczenia z Kalendarzem',
             description: 'Cwicz w interaktywnej grze',
             isGame: true,
           },
@@ -72,6 +71,8 @@ describe('LessonHub', () => {
       'bg-indigo-100',
       'text-indigo-700'
     );
+    expect(screen.queryByText('Nauka kalendarza')).not.toBeInTheDocument();
+    expect(screen.queryByText('Wybierz temat')).not.toBeInTheDocument();
     expect(within(lessonCard).getByText('Lekcja')).toHaveClass('border-slate-200', 'bg-slate-100');
     expect(within(gameCard).getByText('Gra')).toHaveClass('border-indigo-200', 'bg-indigo-100');
 
@@ -80,30 +81,37 @@ describe('LessonHub', () => {
     expect(onSelect).toHaveBeenCalledWith('game');
   });
 
-  it('reads the back action from lesson navigation context', () => {
-    const onBack = vi.fn();
-
+  it('renders a compact read-only progress strip under lesson pills', () => {
     render(
-      <KangurLessonNavigationProvider onBack={onBack}>
-        <LessonHub
-          gradientClass='from-emerald-400 to-teal-500'
-          lessonEmoji='📅'
-          lessonTitle='Nauka kalendarza'
-          onSelect={vi.fn()}
-          sections={[
-            {
-              id: 'days',
-              emoji: '🗓️',
-              title: 'Dni tygodnia',
-              description: 'Od poniedzialku do niedzieli',
+      <LessonHub
+        gradientClass='from-emerald-400 to-teal-500'
+        lessonEmoji='📅'
+        lessonTitle='Nauka kalendarza'
+        onBack={vi.fn()}
+        onSelect={vi.fn()}
+        progressDotClassName='bg-emerald-200'
+        sections={[
+          {
+            id: 'days',
+            emoji: '🗓️',
+            title: 'Dni tygodnia',
+            description: 'Od poniedzialku do niedzieli',
+            progress: {
+              viewedCount: 2,
+              totalCount: 3,
             },
-          ]}
-        />
-      </KangurLessonNavigationProvider>
+          },
+        ]}
+      />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Wróc do listy' }));
+    const progress = screen.getByTestId('lesson-hub-progress-days');
 
-    expect(onBack).toHaveBeenCalledTimes(1);
+    expect(progress).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-hub-progress-dot-days-0')).toHaveClass('bg-emerald-200');
+    expect(screen.getByTestId('lesson-hub-progress-dot-days-1')).toHaveClass('bg-emerald-200');
+    expect(screen.getByTestId('lesson-hub-progress-dot-days-2')).toHaveClass(
+      'kangur-step-pill-pending'
+    );
   });
 });

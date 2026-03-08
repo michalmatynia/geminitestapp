@@ -42,4 +42,31 @@ describe('AddingLesson', () => {
 
     expect(screen.getByRole('button', { name: /synteza dodawania/i })).toBeInTheDocument();
   });
+
+  it('shows subsection progress dots on the lesson hub after viewing slides', () => {
+    render(
+      <KangurLessonNavigationProvider onBack={vi.fn()}>
+        <AddingLesson />
+      </KangurLessonNavigationProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /podstawy dodawania/i }));
+    fireEvent.click(screen.getByRole('button', { name: /wróć do tematów/i }));
+
+    expect(screen.getByTestId('lesson-hub-progress-podstawy')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-hub-progress-dot-podstawy-0')).toHaveClass(
+      'bg-orange-200'
+    );
+    expect(screen.getByTestId('lesson-hub-progress-dot-podstawy-1')).toHaveClass(
+      'kangur-step-pill-pending'
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /podstawy dodawania/i }));
+    fireEvent.click(screen.getByTestId('lesson-slide-indicator-1'));
+    fireEvent.click(screen.getByRole('button', { name: /wróć do tematów/i }));
+
+    expect(screen.getByTestId('lesson-hub-progress-dot-podstawy-1')).toHaveClass(
+      'bg-orange-200'
+    );
+  });
 });

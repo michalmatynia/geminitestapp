@@ -1,0 +1,519 @@
+
+> libapp2@0.1.0 predev
+> node scripts/runtime/check-node-version.cjs
+
+
+> libapp2@0.1.0 dev
+> node --max-old-space-size=8192 server.cjs
+
+○ Compiling instrumentation Node.js ...
+
+  We detected TypeScript in your project and reconfigured your tsconfig.json file for you.
+  The following suggested values were added to your tsconfig.json. These values can be changed to fit your project's needs:
+
+  	- include was updated to add '.next-dev-web-dev-accessibility-final/types/**/*.ts'
+  	- include was updated to add '.next-dev-web-dev-accessibility-final/dev/types/**/*.ts'
+
+[ai-paths.portable-engine.envelope-verification] Portable envelope verification audit sink health probe sinkId=portable-envelope-verification-log-forwarding {
+  category: 'ai_path_portable_envelope_verification_audit_sink_health',
+  kind: 'ai-paths.portable-envelope-verification-audit-sink-health.v1',
+  sinkId: 'portable-envelope-verification-log-forwarding',
+  stage: 'probe',
+  service: 'ai-paths.portable-engine'
+}
+[ai-paths.portable-engine.envelope-verification.sink-bootstrap] Portable envelope verification audit sink startup health summary sinkId=all {
+  category: 'ai_path_portable_envelope_verification_audit_sink_health',
+  kind: 'ai-paths.portable-envelope-verification-audit-sink-health.v1',
+  profile: 'dev',
+  policy: 'warn',
+  timeoutMs: 3000,
+  status: 'healthy',
+  failedSinkIds: [],
+  diagnostics: [
+    {
+      sinkId: 'portable-envelope-verification-log-forwarding',
+      status: 'healthy',
+      checkedAt: '2026-03-08T15:09:53.518Z',
+      durationMs: 163,
+      message: 'Health check passed.',
+      error: null
+    }
+  ],
+  service: 'ai-paths.portable-engine'
+}
+[queue-factory] [queue-factory:database-backup-scheduler] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:product-sync-scheduler] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:system-log-alerts] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-init] Starting BullMQ workers... { service: 'queue-init' }
+[queue-registry] [queue-registry] Starting queue worker: base-import { queueName: 'base-import', service: 'queue-registry' }
+[queue-factory] [queue-factory:base-import] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: database-backup-scheduler { queueName: 'database-backup-scheduler', service: 'queue-registry' }
+[queue-registry] [queue-registry] Starting queue worker: system-log-alerts { queueName: 'system-log-alerts', service: 'queue-registry' }
+[queue-registry] [queue-registry] Starting queue worker: tradera-listings { queueName: 'tradera-listings', service: 'queue-registry' }
+[queue-factory] [queue-factory:tradera-listings] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-ai { queueName: 'product-ai', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-ai] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync { queueName: 'product-sync', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-sync] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync-backfill { queueName: 'product-sync-backfill', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-sync-backfill] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync-scheduler { queueName: 'product-sync-scheduler', service: 'queue-registry' }
+[queue-factory] [queue-factory:case-resolver-ocr] BullMQ worker started (concurrency: 2) { concurrency: 2, service: 'queue-factory' }
+[queue-factory] [queue-factory:ai-path-run] BullMQ worker started (concurrency: 3) { concurrency: 3, service: 'queue-factory' }
+[queue-factory] [queue-factory:chatbot] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:agent] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:image-studio-run] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:tradera-relist-scheduler] Worker stopped { service: 'queue-factory' }
+Ready on http://localhost:63964 { port: 63964, host: '127.0.0.1' }
+[queue-factory] [queue-factory:image-studio-sequence] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+ GET /api/health 200 in 1495ms (compile: 778ms, proxy.ts: 38ms, render: 679ms)
+[health.GET] health.GET completed successfully {
+  durationMs: 820,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: 'b001d81df0c8c431d9c00132c5bb13d9',
+  otelSpanId: '9090091107217b19',
+  otelTraceFlags: '01',
+  service: 'health',
+  traceId: 'de03bcb0-2a17-44b6-937f-0bb11e1a41e8',
+  correlationId: 'addee453-ea75-4ce8-a17c-bb0a14345bf6'
+}
+○ Compiling / ...
+ GET /api/health 200 in 617ms (compile: 3ms, proxy.ts: 4ms, render: 610ms)
+[system] [timing] home {
+  cmsRepository: 652.9871669999993,
+  headers: 2.32591599999796,
+  cmsDomain: 53.36358299999847,
+  cmsSlugs: 142.43808300000092,
+  total: 851.4214159999974,
+  otelTraceId: 'df03efad1d6467d81d7499be03f0b807',
+  otelSpanId: '692f8cbe3f311fe6',
+  otelTraceFlags: '01'
+}
+ GET /auth/signin?callbackUrl=%2Fadmin%2Fcase-resolver 200 in 923ms (compile: 872ms, render: 51ms)
+ GET /api/auth/session 200 in 1039ms (compile: 1021ms, proxy.ts: 8ms, render: 10ms)
+ GET /api/auth/providers 200 in 917ms (compile: 898ms, proxy.ts: 6ms, render: 12ms)
+ GET /api/auth/session 200 in 24ms (compile: 10ms, proxy.ts: 4ms, render: 11ms)
+ GET /api/auth/csrf 200 in 26ms (compile: 10ms, proxy.ts: 6ms, render: 10ms)
+[system] [AUTH-REPO] Finding user admin@example.com using mongodb {
+  email: 'admin@example.com',
+  provider: 'mongodb',
+  otelTraceId: 'b5bc8a5a8f49fd526889c6a4eba6f618',
+  otelSpanId: 'e3eeab37ca772e8c',
+  otelTraceFlags: '01'
+}
+[auth.[...nextauth].POST] auth.[...nextauth].POST completed successfully {
+  durationMs: 773,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  params: { nextauth: [ 'callback', 'credentials' ] },
+  otelTraceId: 'b5bc8a5a8f49fd526889c6a4eba6f618',
+  otelSpanId: 'e3eeab37ca772e8c',
+  otelTraceFlags: '01',
+  service: 'auth.[',
+  traceId: '73019b09-0f5f-4d5e-9781-0da16da102ec',
+  correlationId: '4d7bf36e-88c1-4df5-a26b-653fe9b57f44'
+}
+ POST /api/auth/callback/credentials 200 in 790ms (compile: 6ms, proxy.ts: 4ms, render: 781ms)
+ GET /api/auth/session 200 in 20ms (compile: 5ms, proxy.ts: 2ms, render: 13ms)
+[auth.security] User signed in successfully {
+  email: 'admin@example.com',
+  ip: '127.0.0.1',
+  service: 'auth.security',
+  otelTraceId: 'b5bc8a5a8f49fd526889c6a4eba6f618',
+  otelSpanId: 'e3eeab37ca772e8c',
+  otelTraceFlags: '01'
+}
+[user] Activity: auth.login - User logged in: admin@example.com {
+  activityId: '69ad916338c82c497f073124',
+  activityType: 'auth.login',
+  userId: '6973e8e16e457862e8b1ba21',
+  entityId: '6973e8e16e457862e8b1ba21',
+  entityType: 'user',
+  metadata: null,
+  service: 'user',
+  otelTraceId: 'b5bc8a5a8f49fd526889c6a4eba6f618',
+  otelSpanId: 'e3eeab37ca772e8c',
+  otelTraceFlags: '01'
+}
+○ Compiling /admin/case-resolver ...
+ GET /admin/case-resolver 200 in 6.7s (compile: 6.5s, proxy.ts: 20ms, render: 199ms)
+ GET /api/auth/session 200 in 70ms (compile: 13ms, proxy.ts: 7ms, render: 51ms)
+ GET /api/auth/session 200 in 41ms (compile: 14ms, proxy.ts: 3ms, render: 23ms)
+ GET /api/auth/session 200 in 32ms (compile: 7ms, proxy.ts: 9ms, render: 17ms)
+[system] [timing] user.preferences.GET {
+  auth: 2.6375000000043656,
+  cache: 0.08274999999412103,
+  repository: 125.6034159999981,
+  total: 128.69750000000204,
+  databaseConfigured: true,
+  otelTraceId: '8ead7e539f5806875d6faa99eff2ec5b',
+  otelSpanId: 'b2d5abe2bd4fed2d',
+  otelTraceFlags: '01'
+}
+ GET /api/user/preferences 200 in 667ms (compile: 525ms, proxy.ts: 5ms, render: 138ms)
+ GET /api/v2/metadata/countries 200 in 992ms (proxy.ts: 5ms)
+ GET /auth/signin 200 in 40ms (compile: 3ms, render: 37ms)
+ GET /api/auth/session 200 in 14ms (compile: 6ms, proxy.ts: 3ms, render: 4ms)
+ GET /api/auth/session 200 in 11ms (compile: 3ms, proxy.ts: 3ms, render: 6ms)
+ GET /api/settings/lite 200 in 254ms (compile: 189ms, proxy.ts: 3ms, render: 63ms)
+ GET /auth/register 200 in 710ms (compile: 641ms, render: 69ms)
+ GET /api/settings/lite 200 in 7ms (compile: 2ms, proxy.ts: 2ms, render: 3ms)
+ GET /api/auth/session 200 in 31ms (compile: 23ms, proxy.ts: 2ms, render: 7ms)
+ GET /api/auth/session 200 in 9ms (compile: 3ms, proxy.ts: 2ms, render: 4ms)
+ GET /auth/signin?callbackUrl=%2Fadmin 200 in 39ms (compile: 1826µs, render: 37ms)
+ GET /api/settings/lite 200 in 10ms (compile: 3ms, proxy.ts: 3ms, render: 5ms)
+ GET /api/auth/session 200 in 18ms (compile: 11ms, proxy.ts: 3ms, render: 4ms)
+ GET /api/auth/session 200 in 11ms (compile: 4ms, proxy.ts: 3ms, render: 4ms)
+ GET /api/auth/providers 200 in 18ms (compile: 7ms, proxy.ts: 3ms, render: 8ms)
+ GET /api/auth/csrf 200 in 16ms (compile: 8ms, proxy.ts: 3ms, render: 5ms)
+[system] [AUTH-REPO] Finding user admin@example.com using mongodb {
+  email: 'admin@example.com',
+  provider: 'mongodb',
+  otelTraceId: 'e155d872e119cb8d80319d0014c142eb',
+  otelSpanId: '3ab1eef665d68a74',
+  otelTraceFlags: '01'
+}
+ POST /api/auth/callback/credentials 200 in 537ms (compile: 3ms, proxy.ts: 2ms, render: 532ms)
+ GET /api/auth/session 200 in 15ms (compile: 4ms, proxy.ts: 1897µs, render: 8ms)
+[user] Activity: auth.login - User logged in: admin@example.com {
+  activityId: '69ad917b38c82c497f073125',
+  activityType: 'auth.login',
+  userId: '6973e8e16e457862e8b1ba21',
+  entityId: '6973e8e16e457862e8b1ba21',
+  entityType: 'user',
+  metadata: null,
+  service: 'user',
+  otelTraceId: 'e155d872e119cb8d80319d0014c142eb',
+  otelSpanId: '3ab1eef665d68a74',
+  otelTraceFlags: '01'
+}
+[auth.security] User signed in successfully {
+  email: 'admin@example.com',
+  ip: '127.0.0.1',
+  service: 'auth.security',
+  otelTraceId: 'e155d872e119cb8d80319d0014c142eb',
+  otelSpanId: '3ab1eef665d68a74',
+  otelTraceFlags: '01'
+}
+ GET /admin 200 in 1133ms (compile: 1081ms, proxy.ts: 5ms, render: 47ms)
+ GET /api/user/preferences 200 in 39ms (compile: 9ms, proxy.ts: 5ms, render: 26ms)
+[system] [timing] user.preferences.GET {
+  auth: 20.888708999998926,
+  cache: 0.03629199999704724,
+  total: 21.02829099999508,
+  databaseConfigured: true,
+  source: 'cache',
+  otelTraceId: 'd529a50c8c0a144ec8e2732351ab3c2a',
+  otelSpanId: '26887d32e16876be',
+  otelTraceFlags: '01'
+}
+ GET /api/auth/session 200 in 97ms (compile: 43ms, proxy.ts: 8ms, render: 46ms)
+[system] [timing] user.preferences.GET {
+  auth: 18.616582999995444,
+  cache: 0.03824999999778811,
+  total: 18.844209000002593,
+  databaseConfigured: true,
+  source: 'cache',
+  otelTraceId: '6016c636cee36218d714ccf35cc9dc8a',
+  otelSpanId: 'bdd2526b169e7ede',
+  otelTraceFlags: '01'
+}
+ GET /api/user/preferences 200 in 69ms (compile: 19ms, proxy.ts: 7ms, render: 43ms)
+ GET /api/auth/session 200 in 56ms (compile: 4ms, proxy.ts: 4ms, render: 49ms)
+ GET /api/auth/session 200 in 54ms (compile: 10ms, proxy.ts: 14ms, render: 30ms)
+ GET /api/system/activity?page=1&pageSize=5 200 in 480ms (compile: 446ms, proxy.ts: 3ms, render: 31ms)
+ GET /api/health 200 in 483ms (compile: 3ms, proxy.ts: 4ms, render: 475ms)
+[health.GET] health.GET completed successfully {
+  durationMs: 1021,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: 'ef67ea27c0b9c4a6285bca0ff302ac37',
+  otelSpanId: 'f84364125422e5be',
+  otelTraceFlags: '01',
+  service: 'health',
+  traceId: '156b0db5-7554-4a4e-8975-84abd499e88d',
+  correlationId: 'a2f77f2f-3e93-41c8-95db-050c371f2e51'
+}
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 1,
+  reason: 'idle',
+  address: 'cluster0-shard-00-02.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 1,
+  reason: 'idle',
+  address: 'cluster0-shard-00-00.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 2,
+  reason: 'idle',
+  address: 'cluster0-shard-00-01.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+ GET /auth/signin?callbackUrl=%2Fadmin%2Fproducts 200 in 33ms (compile: 1534µs, render: 31ms)
+ GET /api/settings/lite 200 in 10ms (compile: 3ms, proxy.ts: 3ms, render: 4ms)
+ GET /api/auth/session 200 in 18ms (compile: 11ms, proxy.ts: 3ms, render: 4ms)
+ GET /api/auth/session 200 in 10ms (compile: 3ms, proxy.ts: 2ms, render: 5ms)
+ GET /api/auth/providers 200 in 16ms (compile: 10ms, proxy.ts: 2ms, render: 4ms)
+ GET /api/auth/csrf 200 in 9ms (compile: 3ms, proxy.ts: 1762µs, render: 5ms)
+[system] [AUTH-REPO] Finding user admin@example.com using mongodb {
+  email: 'admin@example.com',
+  provider: 'mongodb',
+  otelTraceId: '4a242af9c1b336b9cea7e28ad9593fac',
+  otelSpanId: 'c793ea9db5093624',
+  otelTraceFlags: '01'
+}
+ POST /api/auth/callback/credentials 200 in 473ms (compile: 3ms, proxy.ts: 2ms, render: 467ms)
+ GET /api/auth/session 200 in 12ms (compile: 3ms, proxy.ts: 1883µs, render: 7ms)
+[user] Activity: auth.login - User logged in: admin@example.com {
+  activityId: '69ad918138c82c497f073126',
+  activityType: 'auth.login',
+  userId: '6973e8e16e457862e8b1ba21',
+  entityId: '6973e8e16e457862e8b1ba21',
+  entityType: 'user',
+  metadata: null,
+  service: 'user',
+  otelTraceId: '4a242af9c1b336b9cea7e28ad9593fac',
+  otelSpanId: 'c793ea9db5093624',
+  otelTraceFlags: '01'
+}
+[auth.security] User signed in successfully {
+  email: 'admin@example.com',
+  ip: '127.0.0.1',
+  service: 'auth.security',
+  otelTraceId: '4a242af9c1b336b9cea7e28ad9593fac',
+  otelSpanId: 'c793ea9db5093624',
+  otelTraceFlags: '01'
+}
+ GET /admin/products 200 in 1597ms (compile: 1510ms, proxy.ts: 5ms, render: 82ms)
+[api/settings] [api/settings] [timing] settings.fetch {
+  service: 'api/settings',
+  scope: 'light',
+  provider: 0.06870899999921676,
+  mongo: 3671.162624999997,
+  total: 3671.4240419999987,
+  category: 'NETWORK',
+  otelTraceId: 'eec9af8da5a3c905d40abb3e5438a24b',
+  otelSpanId: '5cd7219ddf693969',
+  otelTraceFlags: '01'
+}
+[system] [settings] cache {
+  scope: 'light',
+  status: 'miss',
+  otelTraceId: 'eec9af8da5a3c905d40abb3e5438a24b',
+  otelSpanId: '5cd7219ddf693969',
+  otelTraceFlags: '01'
+}
+[settings.GET] settings.GET completed successfully {
+  durationMs: 3712,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: 'eec9af8da5a3c905d40abb3e5438a24b',
+  otelSpanId: '5cd7219ddf693969',
+  otelTraceFlags: '01',
+  service: 'settings',
+  traceId: '3ec220e0-0ac1-406a-b638-8d50943acf34',
+  correlationId: '632d154a-b15d-429c-84cc-77e322d58090'
+}
+[api/settings] [api/settings] [settings] cache hit {
+  service: 'api/settings',
+  scope: 'light',
+  status: 'hit',
+  category: 'SYSTEM',
+  otelTraceId: '447d24c6548b8e795d412e9b9dccb728',
+  otelSpanId: '47d3951d2bbf8bfc',
+  otelTraceFlags: '01'
+}
+ GET /api/settings?scope=light 200 in 134ms (compile: 27ms, proxy.ts: 16ms, render: 91ms)
+[system] [timing] user.preferences.GET {
+  auth: 92.82074999999895,
+  cache: 0.04083300000638701,
+  total: 92.97362499999872,
+  databaseConfigured: true,
+  source: 'cache',
+  otelTraceId: '6c9e7c38cdfc87320e0f0b5ecd9e761c',
+  otelSpanId: 'a3bff00418b0e1ef',
+  otelTraceFlags: '01'
+}
+ GET /api/user/preferences 200 in 244ms (compile: 21ms, proxy.ts: 13ms, render: 210ms)
+ GET /api/auth/session 200 in 298ms (compile: 61ms, proxy.ts: 19ms, render: 219ms)
+ GET /api/v2/metadata/languages 200 in 110ms (compile: 15ms, proxy.ts: 7ms, render: 88ms)
+ GET /api/v2/metadata/currencies 200 in 152ms (compile: 7ms, proxy.ts: 4ms, render: 141ms)
+ GET /auth/signin?callbackUrl=%2Fadmin%2Fcms%2Fpages 200 in 34ms (compile: 1556µs, render: 32ms)
+ GET /api/settings/lite 200 in 9ms (compile: 2ms, proxy.ts: 3ms, render: 5ms)
+ GET /api/auth/session 200 in 17ms (compile: 10ms, proxy.ts: 2ms, render: 5ms)
+ GET /api/auth/session 200 in 10ms (compile: 3ms, proxy.ts: 3ms, render: 4ms)
+ GET /api/auth/providers 200 in 12ms (compile: 4ms, proxy.ts: 3ms, render: 5ms)
+ GET /api/auth/csrf 200 in 12ms (compile: 4ms, proxy.ts: 3ms, render: 6ms)
+[system] [AUTH-REPO] Finding user admin@example.com using mongodb {
+  email: 'admin@example.com',
+  provider: 'mongodb',
+  otelTraceId: 'ed769bc3651e03ee192c272284eb27f1',
+  otelSpanId: '06a0b68263a54a0a',
+  otelTraceFlags: '01'
+}
+ POST /api/auth/callback/credentials 200 in 606ms (compile: 3ms, proxy.ts: 3ms, render: 600ms)
+ GET /api/auth/session 200 in 15ms (compile: 4ms, proxy.ts: 2ms, render: 9ms)
+[user] Activity: auth.login - User logged in: admin@example.com {
+  activityId: '69ad918938c82c497f073127',
+  activityType: 'auth.login',
+  userId: '6973e8e16e457862e8b1ba21',
+  entityId: '6973e8e16e457862e8b1ba21',
+  entityType: 'user',
+  metadata: null,
+  service: 'user',
+  otelTraceId: 'ed769bc3651e03ee192c272284eb27f1',
+  otelSpanId: '06a0b68263a54a0a',
+  otelTraceFlags: '01'
+}
+[auth.security] User signed in successfully {
+  email: 'admin@example.com',
+  ip: '127.0.0.1',
+  service: 'auth.security',
+  otelTraceId: 'ed769bc3651e03ee192c272284eb27f1',
+  otelSpanId: '06a0b68263a54a0a',
+  otelTraceFlags: '01'
+}
+ GET /admin/cms/pages 200 in 1141ms (compile: 1079ms, proxy.ts: 7ms, render: 56ms)
+ GET /api/user/preferences 200 in 47ms (compile: 10ms, proxy.ts: 8ms, render: 29ms)
+[api/settings] [api/settings] [settings] cache hit {
+  service: 'api/settings',
+  scope: 'light',
+  status: 'hit',
+  category: 'SYSTEM',
+  otelTraceId: '77bcdaaefdc7916952e451b1d67f10f2',
+  otelSpanId: '8d1e0382314df580',
+  otelTraceFlags: '01'
+}
+ GET /api/settings?scope=light 200 in 73ms (compile: 10ms, proxy.ts: 6ms, render: 57ms)
+[system] [timing] user.preferences.GET {
+  auth: 49.71995900000911,
+  cache: 0.04312499999650754,
+  total: 49.863666999997804,
+  databaseConfigured: true,
+  source: 'cache',
+  otelTraceId: '6bbc011c975e0e621683fbd4adf7a658',
+  otelSpanId: '6740ae5f42bf5f9f',
+  otelTraceFlags: '01'
+}
+[system] [timing] user.preferences.GET {
+  auth: 18.899334000001545,
+  cache: 0.06387500000710133,
+  total: 19.098666999998386,
+  databaseConfigured: true,
+  source: 'cache',
+  otelTraceId: 'de00f6e1b3666d50aaaba58fd14d8591',
+  otelSpanId: '1b20a0db43efeb63',
+  otelTraceFlags: '01'
+}
+ GET /api/user/preferences 200 in 111ms (compile: 13ms, proxy.ts: 25ms, render: 74ms)
+ GET /api/auth/session 200 in 133ms (compile: 40ms, proxy.ts: 36ms, render: 58ms)
+ GET /api/auth/session 200 in 39ms (compile: 6ms, proxy.ts: 7ms, render: 25ms)
+ GET /api/auth/session 200 in 43ms (compile: 18ms, proxy.ts: 5ms, render: 21ms)
+[cms.pages.GET] cms.pages.GET completed successfully {
+  durationMs: 965,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: 'a7909d0526174662a4c2364ae2e978c0',
+  otelSpanId: '2b4c20888cdce015',
+  otelTraceFlags: '01',
+  service: 'cms.pages',
+  traceId: '2361c770-17db-4c1d-987b-21773272a0f6',
+  correlationId: '9b7fc5b6-53e7-4675-b125-32103f29f015'
+}
+ GET /auth/signin?callbackUrl=%2Fadmin%2Fnotes 200 in 34ms (compile: 1550µs, render: 33ms)
+ GET /api/auth/session 200 in 11ms (compile: 5ms, proxy.ts: 2ms, render: 4ms)
+ GET /api/auth/session 200 in 15ms (compile: 7ms, proxy.ts: 3ms, render: 5ms)
+ GET /api/auth/providers 200 in 10ms (compile: 3ms, proxy.ts: 1980µs, render: 4ms)
+ GET /api/auth/csrf 200 in 9ms (compile: 3ms, proxy.ts: 2ms, render: 4ms)
+[system] [AUTH-REPO] Finding user admin@example.com using mongodb {
+  email: 'admin@example.com',
+  provider: 'mongodb',
+  otelTraceId: '87ca3c8f4d8ad9dd5dad672fc36ff7a6',
+  otelSpanId: '48df34dc37c77437',
+  otelTraceFlags: '01'
+}
+ POST /api/auth/callback/credentials 200 in 508ms (compile: 3ms, proxy.ts: 2ms, render: 503ms)
+ GET /api/auth/session 200 in 13ms (compile: 4ms, proxy.ts: 1848µs, render: 8ms)
+[user] Activity: auth.login - User logged in: admin@example.com {
+  activityId: '69ad918f38c82c497f073128',
+  activityType: 'auth.login',
+  userId: '6973e8e16e457862e8b1ba21',
+  entityId: '6973e8e16e457862e8b1ba21',
+  entityType: 'user',
+  metadata: null,
+  service: 'user',
+  otelTraceId: '87ca3c8f4d8ad9dd5dad672fc36ff7a6',
+  otelSpanId: '48df34dc37c77437',
+  otelTraceFlags: '01'
+}
+[auth.security] User signed in successfully {
+  email: 'admin@example.com',
+  ip: '127.0.0.1',
+  service: 'auth.security',
+  otelTraceId: '87ca3c8f4d8ad9dd5dad672fc36ff7a6',
+  otelSpanId: '48df34dc37c77437',
+  otelTraceFlags: '01'
+}
+ GET /admin/notes 200 in 1052ms (compile: 993ms, proxy.ts: 6ms, render: 54ms)
+[system] [timing] user.preferences.GET {
+  auth: 113.78770900001109,
+  cache: 0.038792000006651506,
+  total: 113.9149999999936,
+  databaseConfigured: true,
+  source: 'cache',
+  otelTraceId: 'e8967ffaf76e18b7215cdc7d141d9184',
+  otelSpanId: 'ed48624c4273b935',
+  otelTraceFlags: '01'
+}
+ GET /api/user/preferences 200 in 266ms (compile: 20ms, proxy.ts: 28ms, render: 218ms)
+ GET /api/auth/session 200 in 257ms (compile: 46ms, proxy.ts: 24ms, render: 186ms)
+ GET /api/auth/session 200 in 35ms (compile: 10ms, proxy.ts: 6ms, render: 19ms)
+ GET /api/auth/session 200 in 35ms (compile: 12ms, proxy.ts: 6ms, render: 17ms)
+ GET /auth/signin?callbackUrl=%2Fadmin%2Fcms%2Fbuilder 200 in 47ms (compile: 1636µs, render: 45ms)
+ GET /api/auth/session 200 in 11ms (compile: 5ms, proxy.ts: 2ms, render: 4ms)
+ GET /api/auth/session 200 in 14ms (compile: 8ms, proxy.ts: 2ms, render: 3ms)
+ GET /api/auth/providers 200 in 10ms (compile: 3ms, proxy.ts: 3ms, render: 4ms)
+ GET /api/auth/csrf 200 in 12ms (compile: 3ms, proxy.ts: 4ms, render: 5ms)
+[system] [AUTH-REPO] Finding user admin@example.com using mongodb {
+  email: 'admin@example.com',
+  provider: 'mongodb',
+  otelTraceId: '280ac3386281004cf906016758887d86',
+  otelSpanId: 'eb58696ca6767f61',
+  otelTraceFlags: '01'
+}
+ POST /api/auth/callback/credentials 200 in 517ms (compile: 3ms, proxy.ts: 3ms, render: 511ms)
+ GET /api/auth/session 200 in 31ms (compile: 6ms, proxy.ts: 2ms, render: 23ms)
+[user] Activity: auth.login - User logged in: admin@example.com {
+  activityId: '69ad919438c82c497f073129',
+  activityType: 'auth.login',
+  userId: '6973e8e16e457862e8b1ba21',
+  entityId: '6973e8e16e457862e8b1ba21',
+  entityType: 'user',
+  metadata: null,
+  service: 'user',
+  otelTraceId: '280ac3386281004cf906016758887d86',
+  otelSpanId: 'eb58696ca6767f61',
+  otelTraceFlags: '01'
+}
+[auth.security] User signed in successfully {
+  email: 'admin@example.com',
+  ip: '127.0.0.1',
+  service: 'auth.security',
+  otelTraceId: '280ac3386281004cf906016758887d86',
+  otelSpanId: 'eb58696ca6767f61',
+  otelTraceFlags: '01'
+}
+ GET /admin/cms/builder 200 in 2.2s (compile: 2.1s, proxy.ts: 7ms, render: 52ms)
+ GET /api/auth/session 200 in 279ms (compile: 21ms, proxy.ts: 4ms, render: 254ms)
+ GET /api/auth/session 200 in 277ms (compile: 221ms, proxy.ts: 6ms, render: 49ms)
+ GET /api/auth/session 200 in 263ms (compile: 28ms, proxy.ts: 195ms, render: 39ms)
+ GET /admin/cms/builder?pageId=page-1 200 in 606ms (compile: 14ms, proxy.ts: 26ms, render: 565ms)
+Received SIGTERM, shutting down gracefully... { signal: 'SIGTERM' }
+Server closed undefined

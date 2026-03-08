@@ -432,6 +432,107 @@ test.describe('Kangur navigation continuity', () => {
     expect(documentLoadCount).toBe('1');
   });
 
+  test('keeps game entry screens and quick-practice flows on the same route with consistent back navigation', async ({
+    page,
+  }) => {
+    await page.goto('/kangur/game');
+
+    const routeShell = page.getByTestId('kangur-route-shell');
+    await expect(routeShell).toBeVisible();
+    await markRouteShellAsPersistent(page);
+
+    await page.getByRole('button', { name: /grajmy/i }).click();
+    await expect(page).toHaveURL(/\/kangur\/game$/);
+    await expect(page.getByTestId('kangur-game-operation-top-section')).toBeVisible();
+    await expect(
+      page.getByTestId('kangur-game-operation-top-section').getByRole('heading', { name: 'Grajmy!' })
+    ).toBeVisible();
+    await expectRouteShellMarker(page);
+
+    await page
+      .getByTestId('kangur-game-operation-top-section')
+      .getByRole('button', { name: 'Wróć do poprzedniej strony' })
+      .click();
+    await expect(page).toHaveURL(/\/kangur\/game$/);
+    await expect(page.getByTestId('kangur-home-actions-shell')).toBeVisible();
+    await expectRouteShellMarker(page);
+
+    await page.getByRole('button', { name: /trening mieszany/i }).click();
+    await expect(page).toHaveURL(/\/kangur\/game$/);
+    await expect(page.getByTestId('kangur-game-training-top-section')).toBeVisible();
+    await expect(
+      page
+        .getByTestId('kangur-game-training-top-section')
+        .getByRole('heading', { name: 'Trening mieszany' })
+    ).toBeVisible();
+    await expectRouteShellMarker(page);
+
+    await page
+      .getByTestId('kangur-game-training-top-section')
+      .getByRole('button', { name: 'Wróć do poprzedniej strony' })
+      .click();
+    await expect(page).toHaveURL(/\/kangur\/game$/);
+    await expect(page.getByTestId('kangur-home-actions-shell')).toBeVisible();
+    await expectRouteShellMarker(page);
+
+    await page.getByRole('button', { name: /kangur matematyczny/i }).click();
+    await expect(page).toHaveURL(/\/kangur\/game$/);
+    await expect(page.getByTestId('kangur-game-kangur-setup-top-section')).toBeVisible();
+    await expect(
+      page
+        .getByTestId('kangur-game-kangur-setup-top-section')
+        .getByRole('heading', { name: 'Kangur Matematyczny' })
+    ).toBeVisible();
+    await expectRouteShellMarker(page);
+
+    await page
+      .getByTestId('kangur-game-kangur-setup-top-section')
+      .getByRole('button', { name: 'Wróć do poprzedniej strony' })
+      .click();
+    await expect(page).toHaveURL(/\/kangur\/game$/);
+    await expect(page.getByTestId('kangur-home-actions-shell')).toBeVisible();
+    await expectRouteShellMarker(page);
+
+    await page.getByRole('button', { name: /grajmy/i }).click();
+    await expect(page.getByTestId('kangur-game-operation-top-section')).toBeVisible();
+
+    await page.getByRole('button', { name: /ćwiczenia z kalendarzem/i }).click();
+    await expect(page).toHaveURL(/\/kangur\/game$/);
+    await expect(page.getByTestId('kangur-calendar-training-top-section')).toBeVisible();
+    await expect(
+      page
+        .getByTestId('kangur-calendar-training-top-section')
+        .getByRole('heading', { name: 'Ćwiczenia z Kalendarzem' })
+    ).toBeVisible();
+    await expectRouteShellMarker(page);
+
+    await page
+      .getByTestId('kangur-calendar-training-top-section')
+      .getByRole('button', { name: 'Wróć do poprzedniej strony' })
+      .click();
+    await expect(page).toHaveURL(/\/kangur\/game$/);
+    await expect(page.getByTestId('kangur-game-operation-top-section')).toBeVisible();
+    await expectRouteShellMarker(page);
+
+    await page.getByRole('button', { name: /ćwiczenia z figurami/i }).click();
+    await expect(page).toHaveURL(/\/kangur\/game$/);
+    await expect(page.getByTestId('kangur-geometry-training-top-section')).toBeVisible();
+    await expect(
+      page
+        .getByTestId('kangur-geometry-training-top-section')
+        .getByRole('heading', { name: 'Ćwiczenia z Figurami' })
+    ).toBeVisible();
+    await expectRouteShellMarker(page);
+
+    await page
+      .getByTestId('kangur-geometry-training-top-section')
+      .getByRole('button', { name: 'Wróć do poprzedniej strony' })
+      .click();
+    await expect(page).toHaveURL(/\/kangur\/game$/);
+    await expect(page.getByTestId('kangur-game-operation-top-section')).toBeVisible();
+    await expectRouteShellMarker(page);
+  });
+
   test('keeps the persistent shell mounted for parent-dashboard navigation', async ({ page }) => {
     await page.route('**/api/kangur/auth/me', async (route) => {
       await route.fulfill({

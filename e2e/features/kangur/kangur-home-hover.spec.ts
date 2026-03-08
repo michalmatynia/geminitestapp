@@ -114,7 +114,7 @@ test.describe('Kangur Home Hover', () => {
     const lessonsLink = page.locator('[data-doc-id="home_lessons_action"]');
     const playButton = page.getByRole('button', { name: /Grajmy/i });
     const trainingButton = page.getByRole('button', { name: /Trening mieszany/i });
-    const geometryHomeButton = page.getByRole('button', { name: /Trening figur/i });
+    const geometryHomeButton = page.getByRole('button', { name: /Ćwiczenia z figurami/i });
     const playWrapper = getFeaturedActionParts(page, playButton).wrapper;
 
     await expect(nameInput).toBeVisible();

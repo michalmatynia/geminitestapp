@@ -8,7 +8,7 @@ import { KangurPublicApp } from '@/features/kangur/ui/KangurPublicApp';
 import { getFrontPagePublicOwner, getFrontPageRedirectPath } from '@/shared/lib/front-page-app';
 
 import { HomeContent } from './HomeContent';
-import { getFrontPageSetting, shouldUseFrontPageAppRedirect } from './home-helpers';
+import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from './home-helpers';
 import { createHomeTimingRecorder } from './home-timing';
 
 export const dynamic = 'force-dynamic';
@@ -17,21 +17,21 @@ export const revalidate = 0;
 export default async function Home(): Promise<JSX.Element> {
   const { withTiming, flush } = createHomeTimingRecorder();
 
-  const frontPageRedirectEnabled = shouldUseFrontPageAppRedirect();
-  const frontPageSetting = frontPageRedirectEnabled
+  const shouldApplyFrontPageSelection = shouldApplyFrontPageAppSelection();
+  const frontPageSetting = shouldApplyFrontPageSelection
     ? await withTiming('frontPageSetting', getFrontPageSetting)
     : null;
   const publicOwner = getFrontPagePublicOwner(frontPageSetting);
   const redirectPath = getFrontPageRedirectPath(frontPageSetting);
 
-  if (frontPageRedirectEnabled && redirectPath) {
+  if (shouldApplyFrontPageSelection && redirectPath) {
     await flush();
     redirect(redirectPath);
   }
 
-  if (frontPageRedirectEnabled && publicOwner === 'kangur') {
+  if (shouldApplyFrontPageSelection && publicOwner === 'kangur') {
     await flush();
-    return <KangurPublicApp basePath='/' />;
+    return <KangurPublicApp basePath='/' embedded />;
   }
 
   const cmsRepository = await withTiming('cmsRepository', getCmsRepository);

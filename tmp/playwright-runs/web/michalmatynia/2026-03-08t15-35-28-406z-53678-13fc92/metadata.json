@@ -1,0 +1,31 @@
+{
+  "generatedAt": "2026-03-08T15:35:36.592Z",
+  "runtime": {
+    "source": "broker",
+    "managed": true,
+    "reused": false,
+    "rootDir": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp",
+    "appId": "web",
+    "mode": "dev",
+    "agentId": "michalmatynia",
+    "host": "127.0.0.1",
+    "port": 51639,
+    "baseUrl": "http://127.0.0.1:51639",
+    "pid": 53687,
+    "distDir": ".next-dev-web-dev-michalmatynia",
+    "leaseKey": "web-dev-michalmatynia-ed58ad7e",
+    "leaseFilePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/tmp/playwright-runtime-broker/leases/web-dev-michalmatynia-ed58ad7e.json",
+    "logFilePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/tmp/playwright-runtime-broker/logs/web-dev-michalmatynia-ed58ad7e.log",
+    "startedAt": "2026-03-08T15:35:28.419Z",
+    "preferredBrowserNodeBinDir": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin"
+  },
+  "playwrightArgs": [
+    "test",
+    "e2e/features/kangur/kangur-game-quickstart.spec.ts",
+    "e2e/features/kangur/kangur-profile.spec.ts"
+  ],
+  "runId": "2026-03-08t15-35-28-406z-53678-13fc92",
+  "outputDir": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/tmp/playwright-runs/web/michalmatynia/2026-03-08t15-35-28-406z-53678-13fc92/test-results",
+  "htmlReportDir": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/tmp/playwright-runs/web/michalmatynia/2026-03-08t15-35-28-406z-53678-13fc92/html-report",
+  "junitOutputFile": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/tmp/playwright-runs/web/michalmatynia/2026-03-08t15-35-28-406z-53678-13fc92/junit.xml"
+}

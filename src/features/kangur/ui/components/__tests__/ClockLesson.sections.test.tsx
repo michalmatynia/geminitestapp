@@ -71,6 +71,16 @@ describe('ClockLesson sectioned structure', () => {
       'kangur-step-pill-pending',
       'cursor-pointer'
     );
+    expect(screen.getByTestId('clock-lesson-section-progress-hours')).toBeInTheDocument();
+    expect(screen.getByTestId('clock-lesson-section-progress-dot-hours-0')).toHaveClass(
+      'bg-indigo-200'
+    );
+    expect(screen.getByTestId('clock-lesson-section-progress-dot-hours-1')).toHaveClass(
+      'kangur-step-pill-pending'
+    );
+    expect(screen.getByTestId('clock-lesson-section-progress-dot-minutes-0')).toHaveClass(
+      'kangur-step-pill-pending'
+    );
     expect(screen.getByTestId('clock-lesson-section-toggle-minutes')).toHaveClass(
       'soft-card',
       'bg-slate-100/85'
@@ -128,6 +138,13 @@ describe('ClockLesson sectioned structure', () => {
       expect(screen.getByTestId('clock-lesson-collapsed-hint')).toBeInTheDocument();
     });
     expect(screen.queryByText('Co pokazuje krótka wskazówka?')).toBeNull();
+    expect(screen.getByTestId('clock-lesson-section-progress-hours')).toBeInTheDocument();
+    expect(screen.getByTestId('clock-lesson-section-progress-dot-hours-0')).toHaveClass(
+      'bg-indigo-200'
+    );
+    expect(screen.getByTestId('clock-lesson-section-progress-dot-hours-1')).toHaveClass(
+      'kangur-step-pill-pending'
+    );
   });
 
   it('shows training CTA only on the last slide of the combined section', async () => {

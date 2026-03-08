@@ -1,0 +1,6 @@
+<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="0" time="4.690567999999999">
+<testsuite name="features/accessibility/notes-workspace-accessibility.spec.ts" timestamp="2026-03-08T15:11:08.730Z" hostname="" tests="1" failures="0" skipped="0" time="3.154" errors="0">
+<testcase name="notes workspace exposes list controls accessibly and passes the accessibility smoke scan" classname="features/accessibility/notes-workspace-accessibility.spec.ts" time="3.154">
+</testcase>
+</testsuite>
+</testsuites>

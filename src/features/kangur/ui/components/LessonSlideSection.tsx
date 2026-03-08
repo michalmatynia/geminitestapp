@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 
 import {
   KangurButton,
@@ -23,6 +23,7 @@ type LessonSlideSectionProps = {
   slides: LessonSlide[];
   onBack?: () => void;
   onComplete?: () => void;
+  onProgressChange?: (viewedCount: number, totalCount: number) => void;
   dotActiveClass: string;
   dotDoneClass: string;
   gradientClass: string;
@@ -32,11 +33,13 @@ export default function LessonSlideSection({
   slides,
   onBack,
   onComplete,
+  onProgressChange,
   dotActiveClass,
   dotDoneClass,
 }: LessonSlideSectionProps): React.JSX.Element {
   const handleBack = useKangurLessonBackAction(onBack);
   const [slide, setSlide] = useState(0);
+  const completionReportedRef = useRef(false);
   const isLast = slide === slides.length - 1;
   const activeSlide = slides[slide];
 
@@ -53,36 +56,51 @@ export default function LessonSlideSection({
     );
   }
 
-  const handleDone = (): void => {
+  useEffect(() => {
+    onProgressChange?.(slide + 1, slides.length);
+  }, [onProgressChange, slide, slides.length]);
+
+  useEffect(() => {
+    if (!isLast || completionReportedRef.current) {
+      return;
+    }
+
+    completionReportedRef.current = true;
     onComplete?.();
-    handleBack();
-  };
+  }, [isLast, onComplete]);
 
   return (
     <div className='flex w-full max-w-md flex-col items-center gap-4'>
-      {slides.length > 1 && (
-        <div className='flex gap-2'>
-          {slides.map((_, i) => (
-            <button
-              key={i}
-              type='button'
-              onClick={() => setSlide(i)}
-              aria-label={`Przejdz do slajdu ${i + 1}`}
-              aria-current={i === slide ? 'step' : undefined}
-              className={cn(
-                KANGUR_STEP_PILL_CLASSNAME,
-                'h-[14px] min-w-[14px] cursor-pointer',
-                i === slide
-                  ? ['w-8 scale-[1.04]', dotActiveClass]
-                  : i < slide
-                    ? ['w-6', dotDoneClass]
-                    : KANGUR_PENDING_STEP_PILL_CLASSNAME
-              )}
-              data-testid={`lesson-slide-indicator-${i}`}
-            />
-          ))}
-        </div>
-      )}
+      <div className='flex w-full flex-wrap items-center justify-between gap-3'>
+        <KangurButton onClick={handleBack} size='sm' variant='surface'>
+          <ChevronLeft className='w-4 h-4' />
+          Wróć do tematów
+        </KangurButton>
+
+        {slides.length > 1 ? (
+          <div className='flex gap-2'>
+            {slides.map((_, i) => (
+              <button
+                key={i}
+                type='button'
+                onClick={() => setSlide(i)}
+                aria-label={`Przejdz do slajdu ${i + 1}`}
+                aria-current={i === slide ? 'step' : undefined}
+                className={cn(
+                  KANGUR_STEP_PILL_CLASSNAME,
+                  'h-[14px] min-w-[14px] cursor-pointer',
+                  i === slide
+                    ? ['w-8 scale-[1.04]', dotActiveClass]
+                    : i < slide
+                      ? ['w-6', dotDoneClass]
+                      : KANGUR_PENDING_STEP_PILL_CLASSNAME
+                )}
+                data-testid={`lesson-slide-indicator-${i}`}
+              />
+            ))}
+          </div>
+        ) : null}
+      </div>
 
       <AnimatePresence mode='wait'>
         <motion.div
@@ -103,32 +121,6 @@ export default function LessonSlideSection({
           </KangurGlassPanel>
         </motion.div>
       </AnimatePresence>
-
-      <div className='flex gap-3 w-full'>
-        <KangurButton
-          onClick={slide === 0 ? handleBack : () => setSlide(slide - 1)}
-          size='lg'
-          variant='surface'
-        >
-          <ChevronLeft className='w-4 h-4' />
-          {slide === 0 ? 'Menu' : 'Poprzedni'}
-        </KangurButton>
-
-        {isLast ? (
-          <KangurButton onClick={handleDone} className='flex-1' size='lg' variant='primary'>
-            Gotowe!
-          </KangurButton>
-        ) : (
-          <KangurButton
-            onClick={() => setSlide(slide + 1)}
-            className='flex-1'
-            size='lg'
-            variant='primary'
-          >
-            Nastepny <ChevronRight className='w-4 h-4' />
-          </KangurButton>
-        )}
-      </div>
     </div>
   );
 }

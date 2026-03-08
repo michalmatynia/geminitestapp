@@ -1,0 +1,157 @@
+
+> libapp2@0.1.0 predev
+> node scripts/runtime/check-node-version.cjs
+
+
+> libapp2@0.1.0 dev
+> node --max-old-space-size=8192 server.cjs
+
+○ Compiling instrumentation Node.js ...
+
+  We detected TypeScript in your project and reconfigured your tsconfig.json file for you.
+  The following suggested values were added to your tsconfig.json. These values can be changed to fit your project's needs:
+
+  	- include was updated to add '.next-dev-web-dev-case-resolver-fix-2/types/**/*.ts'
+  	- include was updated to add '.next-dev-web-dev-case-resolver-fix-2/dev/types/**/*.ts'
+
+[ai-paths.portable-engine.envelope-verification] Portable envelope verification audit sink health probe sinkId=portable-envelope-verification-log-forwarding {
+  category: 'ai_path_portable_envelope_verification_audit_sink_health',
+  kind: 'ai-paths.portable-envelope-verification-audit-sink-health.v1',
+  sinkId: 'portable-envelope-verification-log-forwarding',
+  stage: 'probe',
+  service: 'ai-paths.portable-engine'
+}
+[ai-paths.portable-engine.envelope-verification.sink-bootstrap] Portable envelope verification audit sink startup health summary sinkId=all {
+  category: 'ai_path_portable_envelope_verification_audit_sink_health',
+  kind: 'ai-paths.portable-envelope-verification-audit-sink-health.v1',
+  profile: 'dev',
+  policy: 'warn',
+  timeoutMs: 3000,
+  status: 'healthy',
+  failedSinkIds: [],
+  diagnostics: [
+    {
+      sinkId: 'portable-envelope-verification-log-forwarding',
+      status: 'healthy',
+      checkedAt: '2026-03-08T15:09:01.603Z',
+      durationMs: 98,
+      message: 'Health check passed.',
+      error: null
+    }
+  ],
+  service: 'ai-paths.portable-engine'
+}
+[queue-factory] [queue-factory:database-backup-scheduler] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:product-sync-scheduler] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:system-log-alerts] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-init] Starting BullMQ workers... { service: 'queue-init' }
+[queue-registry] [queue-registry] Starting queue worker: base-import { queueName: 'base-import', service: 'queue-registry' }
+[queue-factory] [queue-factory:base-import] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: database-backup-scheduler { queueName: 'database-backup-scheduler', service: 'queue-registry' }
+[queue-registry] [queue-registry] Starting queue worker: system-log-alerts { queueName: 'system-log-alerts', service: 'queue-registry' }
+[queue-registry] [queue-registry] Starting queue worker: tradera-listings { queueName: 'tradera-listings', service: 'queue-registry' }
+[queue-factory] [queue-factory:tradera-listings] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-ai { queueName: 'product-ai', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-ai] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync { queueName: 'product-sync', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-sync] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync-backfill { queueName: 'product-sync-backfill', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-sync-backfill] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync-scheduler { queueName: 'product-sync-scheduler', service: 'queue-registry' }
+[queue-factory] [queue-factory:case-resolver-ocr] BullMQ worker started (concurrency: 2) { concurrency: 2, service: 'queue-factory' }
+[queue-factory] [queue-factory:ai-path-run] BullMQ worker started (concurrency: 3) { concurrency: 3, service: 'queue-factory' }
+[queue-factory] [queue-factory:chatbot] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:agent] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:image-studio-run] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:image-studio-sequence] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:tradera-relist-scheduler] Worker stopped { service: 'queue-factory' }
+Ready on http://localhost:63812 { port: 63812, host: '127.0.0.1' }
+ GET /api/health 200 in 1495ms (compile: 735ms, proxy.ts: 36ms, render: 724ms)
+[health.GET] health.GET completed successfully {
+  durationMs: 794,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '85011e8fc6632a22edc2f55dfde51dac',
+  otelSpanId: 'd57456ba04e8811c',
+  otelTraceFlags: '01',
+  service: 'health',
+  traceId: '6367bf74-d78a-4ab7-a848-7c1f7dcb8fd7',
+  correlationId: '8c80e849-85b2-48b1-b2b4-19853807e509'
+}
+○ Compiling / ...
+ GET /api/health 200 in 634ms (compile: 4ms, proxy.ts: 4ms, render: 627ms)
+ GET /auth/signin?callbackUrl=%2Fadmin%2Fcase-resolver 200 in 2.9s (compile: 2.6s, render: 349ms)
+ GET /api/auth/session 200 in 1199ms (compile: 1182ms, proxy.ts: 7ms, render: 11ms)
+ GET /api/auth/providers 200 in 1088ms (compile: 1057ms, proxy.ts: 4ms, render: 26ms)
+ GET /api/auth/session 200 in 47ms (compile: 30ms, proxy.ts: 6ms, render: 11ms)
+ GET /api/auth/csrf 200 in 47ms (compile: 33ms, proxy.ts: 9ms, render: 5ms)
+[system] [AUTH-REPO] Finding user admin@example.com using mongodb {
+  email: 'admin@example.com',
+  provider: 'mongodb',
+  otelTraceId: 'df71d19ca39742b38340ddff648b4488',
+  otelSpanId: '907132902d44e31b',
+  otelTraceFlags: '01'
+}
+[system] [timing] home {
+  cmsRepository: 423.20800000000236,
+  headers: 1.6126660000008997,
+  cmsDomain: 55.039208999998664,
+  cmsSlugs: 141.1541670000006,
+  total: 621.302416999999,
+  otelTraceId: '00a536a78883b26651a80fb372cdd957',
+  otelSpanId: 'f9a1052149b4375c',
+  otelTraceFlags: '01'
+}
+[auth.[...nextauth].POST] auth.[...nextauth].POST completed successfully {
+  durationMs: 772,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  params: { nextauth: [ 'callback', 'credentials' ] },
+  otelTraceId: 'df71d19ca39742b38340ddff648b4488',
+  otelSpanId: '907132902d44e31b',
+  otelTraceFlags: '01',
+  service: 'auth.[',
+  traceId: '463a78a1-244b-4312-84dc-dd40e6b89703',
+  correlationId: 'e9ac1671-5545-4ac2-ad30-5d41c59f1925'
+}
+ POST /api/auth/callback/credentials 200 in 784ms (compile: 4ms, proxy.ts: 3ms, render: 777ms)
+ GET /api/auth/session 200 in 30ms (compile: 5ms, proxy.ts: 2ms, render: 23ms)
+[auth.security] User signed in successfully {
+  email: 'admin@example.com',
+  ip: '127.0.0.1',
+  service: 'auth.security',
+  otelTraceId: 'df71d19ca39742b38340ddff648b4488',
+  otelSpanId: '907132902d44e31b',
+  otelTraceFlags: '01'
+}
+[user] Activity: auth.login - User logged in: admin@example.com {
+  activityId: '69ad911d02bb9fb7748c90ea',
+  activityType: 'auth.login',
+  userId: '6973e8e16e457862e8b1ba21',
+  entityId: '6973e8e16e457862e8b1ba21',
+  entityType: 'user',
+  metadata: null,
+  service: 'user',
+  otelTraceId: 'df71d19ca39742b38340ddff648b4488',
+  otelSpanId: '907132902d44e31b',
+  otelTraceFlags: '01'
+}
+○ Compiling /admin/case-resolver ...
+ GET /admin/case-resolver 200 in 5.0s (compile: 4.8s, proxy.ts: 12ms, render: 170ms)
+ GET /api/auth/session 200 in 87ms (compile: 16ms, proxy.ts: 8ms, render: 62ms)
+ GET /api/auth/session 200 in 43ms (compile: 11ms, proxy.ts: 3ms, render: 29ms)
+ GET /api/auth/session 200 in 42ms (compile: 16ms, proxy.ts: 7ms, render: 18ms)
+[system] [timing] user.preferences.GET {
+  auth: 3.548125000001164,
+  cache: 0.09662499999831198,
+  repository: 72.33845800000199,
+  total: 76.35425000000032,
+  databaseConfigured: true,
+  otelTraceId: '2a403215701d80aa9406f59cf65a5824',
+  otelSpanId: '877e95eedaa921da',
+  otelTraceFlags: '01'
+}
+ GET /api/user/preferences 200 in 658ms (compile: 562ms, proxy.ts: 6ms, render: 89ms)
+ GET /api/v2/metadata/countries 200 in 999ms (proxy.ts: 12ms)
+Received SIGTERM, shutting down gracefully... { signal: 'SIGTERM' }
+Server closed undefined

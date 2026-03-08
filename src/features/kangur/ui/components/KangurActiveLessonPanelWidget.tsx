@@ -2,10 +2,9 @@
 
 import type { JSX } from 'react';
 
+import { KangurActiveLessonHeader } from '@/features/kangur/ui/components/KangurActiveLessonHeader';
 import { KangurLessonDocumentRenderer } from '@/features/kangur/ui/components/KangurLessonDocumentRenderer';
-import { KangurLessonNarrator } from '@/features/kangur/ui/components/KangurLessonNarrator';
 import {
-  KangurButton,
   KangurEmptyState,
   KangurGlassPanel,
   KangurSummaryPanel,
@@ -45,35 +44,18 @@ export function KangurActiveLessonPanelWidget(): JSX.Element {
 
   return (
     <div className='flex w-full flex-col items-center gap-4'>
-      {activeLessonAssignment ? (
-        <KangurSummaryPanel
-          accent='rose'
-          className='w-full'
-          description={activeLessonAssignment.description}
-          label='Priorytet rodzica'
-          labelAccent='rose'
-          padding='md'
-          title={activeLessonAssignment.title}
-          tone='accent'
-        />
-      ) : completedActiveLessonAssignment ? (
-        <KangurSummaryPanel
-          accent='emerald'
-          className='w-full'
-          description={`To zadanie zostalo juz wykonane. ${completedActiveLessonAssignment.progress.summary}`}
-          label='Ukonczone zadanie od rodzica'
-          labelAccent='emerald'
-          padding='md'
-          title={completedActiveLessonAssignment.title}
-          tone='accent'
-        />
-      ) : null}
-
-      <KangurLessonNarrator
+      <KangurActiveLessonHeader
         lesson={activeLesson}
         lessonDocument={activeLessonDocument}
         lessonContentRef={activeLessonContentRef}
-        readLabel='Read lesson'
+        activeLessonAssignment={activeLessonAssignment}
+        completedActiveLessonAssignment={completedActiveLessonAssignment}
+        headerTestId='active-lesson-widget-header'
+        headerActionsTestId='active-lesson-widget-header-icon-actions'
+        iconTestId={`active-lesson-widget-icon-${activeLesson.id}`}
+        priorityChipTestId='active-lesson-widget-parent-priority-chip'
+        completedChipTestId='active-lesson-widget-parent-completed-chip'
+        onBack={clearActiveLesson}
       />
 
       <div ref={activeLessonContentRef} className='flex w-full flex-col items-center gap-4'>
@@ -90,19 +72,7 @@ export function KangurActiveLessonPanelWidget(): JSX.Element {
                 padding='lg'
                 title={activeLesson.title}
                 tone='accent'
-              >
-                <div className='mt-4 flex justify-start md:justify-end'>
-                  <KangurButton
-                    type='button'
-                    onClick={clearActiveLesson}
-                    size='sm'
-                    variant='surface'
-                    data-doc-id='lessons_back_button'
-                  >
-                    Wroc do listy lekcji
-                  </KangurButton>
-                </div>
-              </KangurSummaryPanel>
+              />
             </KangurGlassPanel>
             <KangurLessonDocumentRenderer document={activeLessonDocument} />
           </div>
@@ -119,18 +89,7 @@ export function KangurActiveLessonPanelWidget(): JSX.Element {
               padding='xl'
               title={activeLesson.title}
               tone='accent'
-            >
-              <KangurButton
-                type='button'
-                onClick={clearActiveLesson}
-                className='mt-5'
-                size='sm'
-                variant='surface'
-                data-doc-id='lessons_back_button'
-              >
-                Wroc do listy lekcji
-              </KangurButton>
-            </KangurSummaryPanel>
+            />
           </KangurGlassPanel>
         ) : ActiveLessonComponent ? (
           <KangurLessonNavigationProvider onBack={clearActiveLesson}>

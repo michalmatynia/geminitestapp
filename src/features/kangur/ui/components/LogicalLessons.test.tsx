@@ -36,7 +36,7 @@ describe('Logical lessons shared surfaces', () => {
 
     expect(screen.getByText(/Wzorce sa wszedzie:/i).parentElement).toHaveClass('text-slate-600');
 
-    fireEvent.click(screen.getByRole('button', { name: /nastepny/i }));
+    fireEvent.click(screen.getByTestId('lesson-slide-indicator-1'));
     await screen.findByText('Wzorce kolorów i kształtów');
 
     expect(screen.getByText(/^Wzorzec AB$/i)).toHaveClass('text-slate-400');
@@ -51,7 +51,7 @@ describe('Logical lessons shared surfaces', () => {
       'text-slate-700'
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /nastepny/i }));
+    fireEvent.click(screen.getByTestId('lesson-slide-indicator-1'));
     await screen.findByText(/Jesli… to…/i);
 
     expect(getParagraphByTextContent('NIE znaczy')).toHaveClass('text-slate-500');
@@ -64,7 +64,7 @@ describe('Logical lessons shared surfaces', () => {
 
     expect(screen.getByText(/Klasyfikacja to układanie rzeczy/i)).toHaveClass('text-slate-700');
 
-    fireEvent.click(screen.getByRole('button', { name: /nastepny/i }));
+    fireEvent.click(screen.getByTestId('lesson-slide-indicator-1'));
     await screen.findByText(/Grupowanie według cech/i);
 
     expect(screen.getByText(/Cecha: maja skrzydła/i)).toHaveClass('text-slate-500');

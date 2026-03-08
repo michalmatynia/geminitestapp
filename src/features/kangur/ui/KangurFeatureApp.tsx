@@ -1,6 +1,8 @@
 'use client';
 
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import type { JSX } from 'react';
+import { useEffect } from 'react';
 
 import { PageNotFound } from '@/features/kangur/ui/components/PageNotFound';
 import UserNotRegisteredError from '@/features/kangur/ui/components/UserNotRegisteredError';
@@ -9,11 +11,21 @@ import { resolveKangurPageKey } from '@/features/kangur/config/routing';
 import { KangurAuthProvider, useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { KangurProgressSyncProvider } from '@/features/kangur/ui/context/KangurProgressSyncProvider';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
+import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 
 const AuthenticatedApp = (): JSX.Element | null => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useKangurAuth();
-  const { pageKey } = useKangurRouting();
+  const { pageKey, requestedPath } = useKangurRouting();
   const authErrorType = authError?.type;
+  const prefersReducedMotion = useReducedMotion();
+  const routeContentMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
+  const routeTransitionKey = requestedPath || (pageKey ? `page:${pageKey}` : 'page:unknown');
+
+  useEffect(() => {
+    if (authErrorType === 'auth_required') {
+      navigateToLogin();
+    }
+  }, [authErrorType, navigateToLogin]);
 
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
@@ -28,7 +40,6 @@ const AuthenticatedApp = (): JSX.Element | null => {
   }
 
   if (authErrorType === 'auth_required') {
-    navigateToLogin();
     return null;
   }
 
@@ -42,7 +53,19 @@ const AuthenticatedApp = (): JSX.Element | null => {
     return <PageNotFound />;
   }
 
-  return <ResolvedPage />;
+  return (
+    <AnimatePresence mode='wait'>
+      <motion.div
+        key={routeTransitionKey}
+        {...routeContentMotionProps}
+        className='min-h-screen'
+        data-route-transition-key={routeTransitionKey}
+        data-testid='kangur-route-content'
+      >
+        <ResolvedPage />
+      </motion.div>
+    </AnimatePresence>
+  );
 };
 
 export function KangurFeatureApp(): JSX.Element {

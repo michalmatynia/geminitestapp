@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { LogIn, LogOut, BookOpen, ArrowLeft, LayoutDashboard, UserRound } from 'lucide-react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -20,6 +20,7 @@ import { isKangurAuthStatusError } from '@/features/kangur/services/status-error
 import { KangurGameProvider } from '@/features/kangur/ui/context/KangurGameContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
+import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import {
   DIFFICULTY_CONFIG,
   generateQuestions,
@@ -103,6 +104,8 @@ const isKangurDifficulty = (value: string | null): value is KangurDifficulty =>
 
 export default function Game() {
   const { basePath } = useKangurRouting();
+  const prefersReducedMotion = useReducedMotion();
+  const screenMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const quickStartConsumedRef = useRef(false);
   const [screen, setScreen] = useState<KangurGameScreen>('home');
   const [user, setUser] = useState<KangurUser | null>(null);
@@ -376,9 +379,7 @@ export default function Game() {
           {screen === 'home' && (
             <motion.div
               key='home'
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
+              {...screenMotionProps}
               className='flex flex-col items-center gap-6 w-full'
             >
               <div className='bg-white rounded-3xl shadow-xl p-8 flex flex-col items-center gap-4 w-full max-w-sm'>
@@ -509,9 +510,7 @@ export default function Game() {
           {screen === 'training' && (
             <motion.div
               key='training'
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
+              {...screenMotionProps}
               className='w-full flex flex-col items-center'
             >
               <TrainingSetup onStart={handleStartTraining} onBack={() => setScreen('home')} />
@@ -521,9 +520,7 @@ export default function Game() {
           {screen === 'kangur_setup' && (
             <motion.div
               key='kangur_setup'
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
+              {...screenMotionProps}
               className='w-full flex flex-col items-center'
             >
               <KangurSetup onStart={handleStartKangur} onBack={() => setScreen('home')} />
@@ -533,9 +530,7 @@ export default function Game() {
           {screen === 'kangur' && (
             <motion.div
               key='kangur'
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
+              {...screenMotionProps}
               className='w-full flex flex-col items-center max-w-lg'
             >
               <KangurGameProvider mode={kangurMode} onBack={() => setScreen('kangur_setup')}>
@@ -547,9 +542,7 @@ export default function Game() {
           {screen === 'calendar_quiz' && (
             <motion.div
               key='calendar_quiz'
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
+              {...screenMotionProps}
               className='w-full flex flex-col items-center max-w-lg gap-4'
             >
               <div className='bg-white rounded-3xl shadow-xl p-6 w-full flex flex-col items-center gap-4'>
@@ -564,9 +557,7 @@ export default function Game() {
           {screen === 'geometry_quiz' && (
             <motion.div
               key='geometry_quiz'
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
+              {...screenMotionProps}
               className='w-full flex flex-col items-center max-w-lg gap-4'
             >
               <div className='bg-white rounded-3xl shadow-xl p-6 w-full flex flex-col items-center gap-4'>
@@ -579,9 +570,7 @@ export default function Game() {
           {screen === 'operation' && (
             <motion.div
               key='operation'
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
+              {...screenMotionProps}
               className='w-full flex flex-col items-center'
             >
               <p className='text-gray-500 mb-4 text-lg'>
@@ -610,9 +599,7 @@ export default function Game() {
           {screen === 'playing' && activeQuestion && (
             <motion.div
               key='playing'
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
+              {...screenMotionProps}
               className='flex flex-col items-center w-full'
             >
               <div className='flex justify-between items-center w-full max-w-md mb-4 px-2'>
@@ -636,9 +623,7 @@ export default function Game() {
           {screen === 'result' && (
             <motion.div
               key='result'
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
+              {...screenMotionProps}
               className='flex flex-col items-center w-full gap-6'
             >
               <ResultScreen
@@ -657,8 +642,8 @@ export default function Game() {
 
         {screen === 'home' && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={screenMotionProps.initial}
+            animate={screenMotionProps.animate}
             transition={{ delay: 0.1 }}
             className='w-full flex justify-center mt-2'
           >

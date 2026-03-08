@@ -4,14 +4,10 @@ import { JSX } from 'react';
 
 import { getCmsRepository } from '@/features/cms/server';
 import { getSlugsForDomain, resolveCmsDomainFromHeaders } from '@/features/cms/server';
-import { KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
+import { getFrontPageRedirectPath } from '@/shared/lib/front-page-app';
 
 import { HomeContent } from './HomeContent';
-import {
-  FRONT_PAGE_ALLOWED,
-  getFrontPageSetting,
-  shouldUseFrontPageAppRedirect,
-} from './home-helpers';
+import { getFrontPageSetting, shouldUseFrontPageAppRedirect } from './home-helpers';
 import { createHomeTimingRecorder } from './home-timing';
 
 export const dynamic = 'force-dynamic';
@@ -21,20 +17,13 @@ export default async function Home(): Promise<JSX.Element> {
   const { withTiming, flush } = createHomeTimingRecorder();
 
   const frontPageRedirectEnabled = shouldUseFrontPageAppRedirect();
-  const frontPageApp = frontPageRedirectEnabled
+  const frontPageSetting = frontPageRedirectEnabled
     ? await withTiming('frontPageSetting', getFrontPageSetting)
     : null;
+  const redirectPath = getFrontPageRedirectPath(frontPageSetting);
 
-  if (frontPageRedirectEnabled && frontPageApp && FRONT_PAGE_ALLOWED.has(frontPageApp)) {
-    if (frontPageApp === 'kangur') {
-      redirect(KANGUR_BASE_PATH);
-    }
-    if (frontPageApp === 'chatbot') {
-      redirect('/admin/chatbot');
-    }
-    if (frontPageApp === 'notes') {
-      redirect('/admin/notes');
-    }
+  if (frontPageRedirectEnabled && redirectPath) {
+    redirect(redirectPath);
   }
 
   const cmsRepository = await withTiming('cmsRepository', getCmsRepository);

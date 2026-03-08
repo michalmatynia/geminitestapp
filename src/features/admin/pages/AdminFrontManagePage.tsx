@@ -4,12 +4,17 @@ import { SaveIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
+import {
+  FRONT_PAGE_APP_ROUTE,
+  normalizeFrontPageApp,
+  type FrontPageSelectableApp,
+} from '@/shared/lib/front-page-app';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { Button, useToast, SectionHeader, FormSection, Badge, LoadingState } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-type FrontAppOption = 'cms' | 'kangur' | 'chatbot' | 'notes';
+type FrontAppOption = FrontPageSelectableApp;
 
 const FRONT_PAGE_SETTING_KEY = 'front_page_app';
 
@@ -25,8 +30,7 @@ export function AdminFrontManagePage(): React.ReactNode {
   }
 
   const current = settingsQuery.data.get(FRONT_PAGE_SETTING_KEY);
-  const initialSelected: FrontAppOption =
-    current === 'kangur' || current === 'chatbot' || current === 'notes' ? current : 'cms';
+  const initialSelected: FrontAppOption = normalizeFrontPageApp(current) ?? 'cms';
 
   return <AdminFrontManageContent initialSelected={initialSelected} />;
 }
@@ -47,25 +51,25 @@ function AdminFrontManageContent({
         title: 'CMS Home',
         description:
           'Render the CMS-owned home page so zoning, default slugs, and App Embed blocks stay in control.',
-        route: '/',
+        route: FRONT_PAGE_APP_ROUTE.cms,
       },
       {
         id: 'kangur' as const,
         title: 'Kangur',
         description: 'Open the Kangur application on the home page.',
-        route: '/kangur',
+        route: FRONT_PAGE_APP_ROUTE.kangur,
       },
       {
         id: 'chatbot' as const,
         title: 'Chatbot',
         description: 'Open the admin chatbot workspace on the home page.',
-        route: '/admin/chatbot',
+        route: FRONT_PAGE_APP_ROUTE.chatbot,
       },
       {
         id: 'notes' as const,
         title: 'Notes',
         description: 'Open the admin notes workspace on the home page.',
-        route: '/admin/notes',
+        route: FRONT_PAGE_APP_ROUTE.notes,
       },
     ],
     []

@@ -4,19 +4,23 @@ const {
   flushMock,
   frontPageAllowed,
   getCmsRepositoryMock,
+  getSlugsForDomainMock,
   getFrontPageSettingMock,
   headersMock,
   homeContentMock,
   redirectMock,
+  resolveCmsDomainFromHeadersMock,
   shouldUseFrontPageAppRedirectMock,
 } = vi.hoisted(() => ({
   flushMock: vi.fn(),
   frontPageAllowed: new Set(['cms', 'products', 'kangur', 'chatbot', 'notes']),
   getCmsRepositoryMock: vi.fn(),
+  getSlugsForDomainMock: vi.fn(),
   getFrontPageSettingMock: vi.fn(),
   headersMock: vi.fn(),
   homeContentMock: vi.fn(),
   redirectMock: vi.fn(),
+  resolveCmsDomainFromHeadersMock: vi.fn(),
   shouldUseFrontPageAppRedirectMock: vi.fn(),
 }));
 
@@ -30,8 +34,8 @@ vi.mock('next/headers', () => ({
 
 vi.mock('@/features/cms/server', () => ({
   getCmsRepository: getCmsRepositoryMock,
-  getSlugsForDomain: vi.fn(),
-  resolveCmsDomainFromHeaders: vi.fn(),
+  getSlugsForDomain: getSlugsForDomainMock,
+  resolveCmsDomainFromHeaders: resolveCmsDomainFromHeadersMock,
 }));
 
 vi.mock('@/app/(frontend)/HomeContent', () => ({
@@ -61,10 +65,12 @@ describe('front page app redirects', () => {
     vi.clearAllMocks();
 
     getCmsRepositoryMock.mockResolvedValue({});
+    getSlugsForDomainMock.mockResolvedValue([]);
     getFrontPageSettingMock.mockResolvedValue('kangur');
     headersMock.mockResolvedValue(new Headers());
     flushMock.mockResolvedValue(undefined);
-    homeContentMock.mockResolvedValue(null);
+    homeContentMock.mockReturnValue(null);
+    resolveCmsDomainFromHeadersMock.mockResolvedValue({ id: 'default-domain' });
     shouldUseFrontPageAppRedirectMock.mockReturnValue(true);
     redirectMock.mockImplementation((target: string) => {
       throw new Error(`redirect:${target}`);
@@ -78,5 +84,18 @@ describe('front page app redirects', () => {
     expect(getCmsRepositoryMock).not.toHaveBeenCalled();
     expect(headersMock).not.toHaveBeenCalled();
     expect(homeContentMock).not.toHaveBeenCalled();
+  });
+
+  it('keeps the legacy products setting on the CMS home flow', async () => {
+    getFrontPageSettingMock.mockResolvedValue('products');
+
+    const result = await Home();
+
+    expect(result).toBeTruthy();
+    expect(redirectMock).not.toHaveBeenCalled();
+    expect(getCmsRepositoryMock).toHaveBeenCalled();
+    expect(headersMock).toHaveBeenCalled();
+    expect(resolveCmsDomainFromHeadersMock).toHaveBeenCalled();
+    expect(getSlugsForDomainMock).toHaveBeenCalledWith('default-domain', {});
   });
 });

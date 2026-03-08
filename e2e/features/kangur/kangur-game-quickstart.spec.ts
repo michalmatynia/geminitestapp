@@ -25,6 +25,14 @@ test.describe('Kangur Game Quick Start', () => {
         body: JSON.stringify(null),
       });
     });
+
+    await page.route('**/api/kangur/auth/me**', async (route) => {
+      await route.fulfill({
+        status: 401,
+        contentType: 'application/json',
+        body: JSON.stringify({ message: 'Unauthorized' }),
+      });
+    });
   });
 
   test('opens training setup from quickStart=training and clears query params', async ({ page }) => {

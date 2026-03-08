@@ -83,10 +83,6 @@ docker.md
 /test-results/
 .aider*
 
-# Bazel cache
-.cache/
-
-# Metrics documents
+# Testing
 /docs/metrics
-
-/tmp
+/tmp/playwright-runs/

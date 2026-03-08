@@ -1,22 +1,22 @@
 {
-  "generatedAt": "2026-03-08T15:27:07.601Z",
+  "generatedAt": "2026-03-08T15:36:35.054Z",
   "status": "failed",
   "runtime": {
     "source": "broker",
     "reused": false,
-    "baseUrl": "http://127.0.0.1:50550",
-    "agentId": "route-crawl-final",
-    "leaseKey": "web-dev-route-crawl-final-ed58ad7e"
+    "baseUrl": "http://127.0.0.1:51536",
+    "agentId": "route-crawl-final-2",
+    "leaseKey": "web-dev-route-crawl-final-2-ed58ad7e"
   },
   "summary": {
     "total": 17,
-    "passed": 0,
-    "failed": 17,
-    "durationMs": 17483.703,
+    "passed": 3,
+    "failed": 14,
+    "durationMs": 64834.405,
     "unexpected": 1,
     "flaky": 0,
-    "skipped": 16,
-    "errorCount": 1
+    "skipped": 13,
+    "errorCount": 2
   },
   "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/accessibility-route-crawl.spec.ts --reporter=json",
   "externalErrors": [],
@@ -29,11 +29,9 @@
       "readySelector": null,
       "contextSelector": null,
       "title": "[public-home] / passes the route-crawl accessibility scan",
-      "status": "fail",
-      "durationMs": 15462,
-      "errors": [
-        "Error: Accessibility violations detected:\n\n[moderate] landmark-main-is-top-level: Main landmark should not be contained in another landmark\nEnsure the main landmark is at top level\n- #kangur-game-main\nFix any of the following:\n  The main landmark is contained in another landmark.\nhttps://dequeuniversity.com/rules/axe/4.11/landmark-main-is-top-level?application=axeAPI\n\n[moderate] landmark-no-duplicate-main: Document should not have more than one main landmark\nEnsure the document has at most one main landmark\n- #app-content\nFix any of the following:\n  Document has more than one main landmark\nhttps://dequeuniversity.com/rules/axe/4.11/landmark-no-duplicate-main?application=axeAPI\n\n   at support/accessibility.ts:100\n\n   98 |   if (violations.length === 0) return;\n   99 |\n> 100 |   throw new Error(`Accessibility violations detected:\\n\\n${formatViolations(violations)}`);\n      |         ^\n  101 | }\n  102 |\n    at expectPageToHaveNoAxeViolations (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/support/accessibility.ts:100:9)\n    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/accessibility-route-crawl.spec.ts:39:5"
-      ]
+      "status": "pass",
+      "durationMs": 15822,
+      "errors": []
     },
     {
       "id": "auth-signin",
@@ -43,8 +41,8 @@
       "readySelector": null,
       "contextSelector": null,
       "title": "[auth-signin] /auth/signin passes the route-crawl accessibility scan",
-      "status": "fail",
-      "durationMs": 0,
+      "status": "pass",
+      "durationMs": 10063,
       "errors": []
     },
     {
@@ -55,8 +53,8 @@
       "readySelector": null,
       "contextSelector": null,
       "title": "[auth-register] /auth/register passes the route-crawl accessibility scan",
-      "status": "fail",
-      "durationMs": 0,
+      "status": "pass",
+      "durationMs": 4826,
       "errors": []
     },
     {
@@ -68,8 +66,11 @@
       "contextSelector": null,
       "title": "[admin-dashboard] /admin passes the route-crawl accessibility scan",
       "status": "fail",
-      "durationMs": 0,
-      "errors": []
+      "durationMs": 30840,
+      "errors": [
+        "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+        "Error: locator.waitFor: Target page, context or browser has been closed\n\n   at support/admin-auth.ts:45\n\n  43 |\n  44 |   for (const candidate of credentialCandidates) {\n> 45 |     await page.getByRole('textbox', { name: /email/i }).waitFor({ state: 'visible', timeout: 20_000 });\n     |                                                         ^\n  46 |     await page.getByRole('textbox', { name: /email/i }).fill(candidate.email);\n  47 |     await page.getByRole('textbox', { name: /password/i }).fill(candidate.password);\n  48 |     await page.getByRole('button', { name: /sign in/i }).click();\n    at ensureAdminSession (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/support/admin-auth.ts:45:57)\n    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/accessibility-route-crawl.spec.ts:18:7"
+      ]
     },
     {
       "id": "admin-products",
@@ -229,6 +230,6 @@
     }
   ],
   "stderr": "",
-  "durationMs": 32582,
+  "durationMs": 79462,
   "exitCode": 1
 }

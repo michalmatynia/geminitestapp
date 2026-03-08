@@ -1,26 +1,26 @@
 # Accessibility Route Crawl Report
 
-Generated at: 2026-03-08T15:27:07.601Z
+Generated at: 2026-03-08T15:36:35.054Z
 
 ## Summary
 
 - Status: FAILED
 - Routes: 17
-- Passed: 0
-- Failed: 17
+- Passed: 3
+- Failed: 14
 - Unexpected Playwright failures: 1
 - Flaky results: 0
-- Skipped: 16
-- Error messages captured: 1
+- Skipped: 13
+- Error messages captured: 2
 
 ## Route Status
 
 | Route | Audience | Status | Duration | Errors |
 | --- | --- | --- | ---: | ---: |
-| / | public | FAIL | 15.5s | 1 |
-| /auth/signin | public | FAIL | 0ms | 0 |
-| /auth/register | public | FAIL | 0ms | 0 |
-| /admin | admin | FAIL | 0ms | 0 |
+| / | public | PASS | 15.8s | 0 |
+| /auth/signin | public | PASS | 10.1s | 0 |
+| /auth/register | public | PASS | 4.8s | 0 |
+| /admin | admin | FAIL | 30.8s | 2 |
 | /admin/products | admin | FAIL | 0ms | 0 |
 | /admin/notes | admin | FAIL | 0ms | 0 |
 | /admin/integrations | admin | FAIL | 0ms | 0 |
@@ -37,34 +37,22 @@ Generated at: 2026-03-08T15:27:07.601Z
 
 ## Errors
 
-### Public Home
+### Admin Dashboard
 
-- Error: Accessibility violations detected:
+- [31mTest timeout of 30000ms exceeded.[39m
+- Error: locator.waitFor: Target page, context or browser has been closed
 
-[moderate] landmark-main-is-top-level: Main landmark should not be contained in another landmark
-Ensure the main landmark is at top level
-- #kangur-game-main
-Fix any of the following:
-  The main landmark is contained in another landmark.
-https://dequeuniversity.com/rules/axe/4.11/landmark-main-is-top-level?application=axeAPI
+   at support/admin-auth.ts:45
 
-[moderate] landmark-no-duplicate-main: Document should not have more than one main landmark
-Ensure the document has at most one main landmark
-- #app-content
-Fix any of the following:
-  Document has more than one main landmark
-https://dequeuniversity.com/rules/axe/4.11/landmark-no-duplicate-main?application=axeAPI
-
-   at support/accessibility.ts:100
-
-   98 |   if (violations.length === 0) return;
-   99 |
-> 100 |   throw new Error(`Accessibility violations detected:\n\n${formatViolations(violations)}`);
-      |         ^
-  101 | }
-  102 |
-    at expectPageToHaveNoAxeViolations (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/support/accessibility.ts:100:9)
-    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/accessibility-route-crawl.spec.ts:39:5
+  43 |
+  44 |   for (const candidate of credentialCandidates) {
+> 45 |     await page.getByRole('textbox', { name: /email/i }).waitFor({ state: 'visible', timeout: 20_000 });
+     |                                                         ^
+  46 |     await page.getByRole('textbox', { name: /email/i }).fill(candidate.email);
+  47 |     await page.getByRole('textbox', { name: /password/i }).fill(candidate.password);
+  48 |     await page.getByRole('button', { name: /sign in/i }).click();
+    at ensureAdminSession (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/support/admin-auth.ts:45:57)
+    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/accessibility-route-crawl.spec.ts:18:7
 
 ## Notes
 

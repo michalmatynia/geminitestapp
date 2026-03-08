@@ -487,6 +487,57 @@ describe('KangurAiTutorWidget', () => {
     );
   });
 
+  it('treats launcher opens with an active lesson selection as selection-mode opens', () => {
+    useKangurAiTutorMock.mockReturnValue({
+      enabled: true,
+      tutorSettings: {
+        enabled: true,
+        agentPersonaId: null,
+        motionPresetId: null,
+        uiMode: 'anchored',
+        allowCrossPagePersistence: true,
+        allowLessons: true,
+        testAccessMode: 'guided',
+        showSources: true,
+        allowSelectedTextSupport: true,
+        dailyMessageLimit: null,
+      },
+      tutorName: 'Pomocnik',
+      sessionContext: {
+        surface: 'lesson',
+        contentId: 'lesson-1',
+        title: 'Dodawanie',
+      },
+      isOpen: false,
+      messages: [],
+      isLoading: false,
+      isUsageLoading: false,
+      highlightedText: null,
+      usageSummary: null,
+      openChat: openChatMock,
+      closeChat: closeChatMock,
+      sendMessage: sendMessageMock,
+      setHighlightedText: setHighlightedTextMock,
+    });
+
+    render(<KangurAiTutorWidget />);
+
+    fireEvent.mouseDown(screen.getByTestId('kangur-ai-tutor-avatar'));
+    fireEvent.click(screen.getByTestId('kangur-ai-tutor-avatar'));
+
+    expect(openChatMock).toHaveBeenCalledTimes(1);
+    expect(trackKangurClientEventMock).toHaveBeenCalledWith(
+      'kangur_ai_tutor_opened',
+      expect.objectContaining({
+        surface: 'lesson',
+        title: 'Dodawanie',
+        reason: 'selection',
+        hasSelectedText: true,
+        messageCount: 0,
+      })
+    );
+  });
+
   it('closes the tutor when the user clicks outside the desktop bubble', () => {
     render(<KangurAiTutorWidget />);
 
@@ -512,6 +563,56 @@ describe('KangurAiTutorWidget', () => {
     fireEvent.pointerDown(screen.getByTestId('kangur-ai-tutor-panel'));
 
     expect(closeChatMock).not.toHaveBeenCalled();
+  });
+
+  it('preserves the selection context while the tutor stays open after the live dom selection clears', () => {
+    useKangurAiTutorMock.mockReturnValue({
+      enabled: true,
+      tutorSettings: {
+        enabled: true,
+        agentPersonaId: null,
+        motionPresetId: null,
+        uiMode: 'anchored',
+        allowCrossPagePersistence: true,
+        allowLessons: true,
+        testAccessMode: 'guided',
+        showSources: true,
+        allowSelectedTextSupport: true,
+        dailyMessageLimit: null,
+      },
+      tutorName: 'Pomocnik',
+      tutorMoodId: 'neutral',
+      tutorAvatarSvg:
+        '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="34" fill="#ffffff" /></svg>',
+      tutorAvatarImageUrl: null,
+      sessionContext: {
+        surface: 'lesson',
+        contentId: 'lesson-1',
+        title: 'Dodawanie',
+      },
+      isOpen: true,
+      messages: [],
+      isLoading: false,
+      isUsageLoading: false,
+      highlightedText: '2 + 2',
+      usageSummary: null,
+      openChat: openChatMock,
+      closeChat: closeChatMock,
+      sendMessage: sendMessageMock,
+      setHighlightedText: setHighlightedTextMock,
+    });
+
+    useKangurTextHighlightMock.mockReturnValue({
+      selectedText: null,
+      selectionRect: null,
+      clearSelection: clearSelectionMock,
+    });
+
+    render(<KangurAiTutorWidget />);
+
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveTextContent('"2 + 2"');
+    expect(screen.getByRole('button', { name: 'Ten fragment' })).toBeInTheDocument();
+    expect(setHighlightedTextMock).not.toHaveBeenCalledWith(null);
   });
 
   it('keeps the tutor docked in static ui mode while preserving selection context', () => {

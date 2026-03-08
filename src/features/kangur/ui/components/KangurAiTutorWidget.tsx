@@ -824,8 +824,20 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
   }, [messages, isOpen]);
 
   useEffect(() => {
-    setHighlightedText(allowSelectedTextSupport ? selectedText : null);
-  }, [allowSelectedTextSupport, selectedText, setHighlightedText]);
+    if (!allowSelectedTextSupport) {
+      setHighlightedText(null);
+      return;
+    }
+
+    if (selectedText) {
+      setHighlightedText(selectedText);
+      return;
+    }
+
+    if (!isOpen) {
+      setHighlightedText(null);
+    }
+  }, [allowSelectedTextSupport, isOpen, selectedText, setHighlightedText]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -1111,12 +1123,36 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     sessionContext?.title,
   ]);
 
+  const persistSelectionContext = useCallback(
+    (options?: { prefillInput?: boolean }): string | null => {
+      if (!allowSelectedTextSupport) {
+        return null;
+      }
+
+      const trimmedSelectedText = selectedText?.trim() || null;
+      if (!trimmedSelectedText) {
+        return null;
+      }
+
+      if (options?.prefillInput) {
+        setInputValue(`"${trimmedSelectedText}"\n\n`);
+      }
+
+      setHighlightedText(trimmedSelectedText);
+      setPersistedSelectionRect(cloneRect(selectionRect));
+      return trimmedSelectedText;
+    },
+    [allowSelectedTextSupport, selectedText, selectionRect, setHighlightedText]
+  );
+
   const handleOpenChat = useCallback(
     (reason: 'toggle' | 'selection'): void => {
+      const capturedSelectedText = reason === 'toggle' ? persistSelectionContext() : null;
+      const resolvedReason = reason === 'toggle' && capturedSelectedText ? 'selection' : reason;
       trackKangurClientEvent('kangur_ai_tutor_opened', {
         ...telemetryContext,
-        reason,
-        hasSelectedText: Boolean(activeSelectedText),
+        reason: resolvedReason,
+        hasSelectedText: Boolean(capturedSelectedText ?? activeSelectedText),
         messageCount: messages.length,
       });
       openChat();
@@ -1125,6 +1161,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
       activeSelectedText,
       messages.length,
       openChat,
+      persistSelectionContext,
       telemetryContext,
     ]
   );
@@ -1176,17 +1213,14 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
   if (!enabled || !mounted) return null;
 
   const handleAskAbout = (): void => {
-    if (!allowSelectedTextSupport || !selectedText) return;
+    const persistedSelectedText = persistSelectionContext({ prefillInput: true });
+    if (!persistedSelectedText) return;
     trackKangurClientEvent('kangur_ai_tutor_selection_cta_clicked', {
       surface: sessionContext?.surface ?? null,
       contentId: sessionContext?.contentId ?? null,
       title: sessionContext?.title ?? null,
-      selectionLength: selectedText.trim().length,
+      selectionLength: persistedSelectedText.length,
     });
-    const quoted = `"${selectedText}"\n\n`;
-    setInputValue(quoted);
-    setHighlightedText(selectedText);
-    setPersistedSelectionRect(cloneRect(selectionRect));
     handleOpenChat('selection');
   };
 
@@ -1196,6 +1230,13 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     // Keep the browser selection alive long enough for the CTA click to open the tutor
     // against the current highlighted fragment.
     event.preventDefault();
+  };
+
+  const handleAvatarMouseDown = (event: React.MouseEvent<HTMLButtonElement>): void => {
+    if (!isOpen && allowSelectedTextSupport && selectedText && selectionRect) {
+      // Keep the lesson selection stable when opening via the launcher.
+      event.preventDefault();
+    }
   };
 
   const handleSend = async (): Promise<void> => {
@@ -1320,6 +1361,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
           data-motion-behavior={prefersReducedMotion ? 'reduced' : 'animated'}
           data-ui-mode={uiMode}
           type='button'
+          onMouseDown={handleAvatarMouseDown}
           onClick={(): void => (isOpen ? handleCloseChat('toggle') : handleOpenChat('toggle'))}
           initial={false}
           animate={avatarStyle}

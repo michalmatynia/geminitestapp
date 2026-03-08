@@ -1,8 +1,9 @@
-export type KangurPageTransitionMotionProps = {
-  initial: { opacity: number; y: number };
-  animate: { opacity: number; y: number };
-  exit: { opacity: number; y: number };
-};
+import type { HTMLMotionProps } from 'framer-motion';
+
+type KangurPageTransitionMotionProps = Pick<
+  HTMLMotionProps<'div'>,
+  'initial' | 'animate' | 'exit'
+>;
 
 export const createKangurPageTransitionMotionProps = (
   prefersReducedMotion: boolean | null

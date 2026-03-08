@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import type { JSX } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect } from 'react';
 
 import { KangurPageTransitionSkeleton } from '@/features/kangur/ui/components/KangurPageTransitionSkeleton';
 import { PageNotFound } from '@/features/kangur/ui/components/PageNotFound';
@@ -28,44 +28,17 @@ import {
   KangurTopNavigationProvider,
 } from '@/features/kangur/ui/context/KangurTopNavigationContext';
 import { KangurTutorAnchorProvider } from '@/features/kangur/ui/context/KangurTutorAnchorContext';
+import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import { cn } from '@/shared/utils';
-
-type KangurRouteTransitionClass =
-  | 'kangur-route-content-enter-a'
-  | 'kangur-route-content-enter-b';
-
-const toggleRouteTransitionClass = (
-  current: KangurRouteTransitionClass
-): KangurRouteTransitionClass =>
-  current === 'kangur-route-content-enter-a'
-    ? 'kangur-route-content-enter-b'
-    : 'kangur-route-content-enter-a';
 
 const AuthenticatedApp = (): JSX.Element | null => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useKangurAuth();
   const { pageKey, embedded, requestedPath } = useKangurRouting();
   const { isRoutePending } = useKangurRouteTransition();
   const authErrorType = authError?.type;
-  const [routeTransitionClass, setRouteTransitionClass] =
-    useState<KangurRouteTransitionClass>('kangur-route-content-enter-a');
-  const previousRequestedPathRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!requestedPath) {
-      return;
-    }
-
-    if (previousRequestedPathRef.current === null) {
-      previousRequestedPathRef.current = requestedPath;
-      return;
-    }
-
-    if (previousRequestedPathRef.current !== requestedPath) {
-      setRouteTransitionClass(toggleRouteTransitionClass);
-    }
-
-    previousRequestedPathRef.current = requestedPath;
-  }, [requestedPath]);
+  const prefersReducedMotion = useReducedMotion();
+  const routeContentMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
+  const routeTransitionKey = requestedPath || (pageKey ? `page:${pageKey}` : 'page:unknown');
 
   useEffect(() => {
     if (authErrorType === 'auth_required') {
@@ -100,17 +73,23 @@ const AuthenticatedApp = (): JSX.Element | null => {
     <>
       <KangurRouteAccessibilityAnnouncer />
       <KangurTopNavigationHost />
-      <div
-        aria-busy={isRoutePending}
-        className={cn(
-          routeTransitionClass,
-          embedded ? 'min-h-full' : 'min-h-screen',
-          isRoutePending && 'pointer-events-none select-none'
-        )}
-        data-testid='kangur-route-content'
-      >
-        {routeContent}
-      </div>
+      <AnimatePresence mode='wait'>
+        {routeContent ? (
+          <motion.div
+            key={routeTransitionKey}
+            {...routeContentMotionProps}
+            aria-busy={isRoutePending}
+            className={cn(
+              embedded ? 'min-h-full' : 'min-h-screen',
+              isRoutePending && 'pointer-events-none select-none'
+            )}
+            data-route-transition-key={routeTransitionKey}
+            data-testid='kangur-route-content'
+          >
+            {routeContent}
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </>
   );
 };

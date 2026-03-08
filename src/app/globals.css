@@ -453,21 +453,6 @@
     background: radial-gradient(circle at top, #fffdfd 0%, #f7f3f6 45%, #f3f1f8 100%) !important;
   }
 
-  .kangur-route-content-enter-a,
-  .kangur-route-content-enter-b {
-    min-height: 100%;
-    will-change: opacity;
-    animation: kangur-route-content-enter 240ms cubic-bezier(0.22, 1, 0.36, 1);
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .kangur-route-content-enter-a,
-    .kangur-route-content-enter-b {
-      animation: none;
-      transform: none;
-    }
-  }
-
   .glass-panel {
     @apply border border-white/70 bg-white/70 backdrop-blur-[20px];
     box-shadow: 0 20px 60px rgba(168, 175, 216, 0.18);
@@ -1099,16 +1084,6 @@
     box-shadow:
       0 16px 28px -24px rgba(16, 185, 129, 0.34),
       inset 0 1px 0 rgba(255, 255, 255, 0.88);
-  }
-}
-
-@keyframes kangur-route-content-enter {
-  from {
-    opacity: 0.84;
-  }
-
-  to {
-    opacity: 1;
   }
 }
 

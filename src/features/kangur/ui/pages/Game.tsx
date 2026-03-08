@@ -24,6 +24,7 @@ import {
   KangurGameRuntimeBoundary,
   useKangurGameRuntime,
 } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
+import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import type { KangurAiTutorConversationContext } from '@/shared/contracts/kangur-ai-tutor';
 import type { KangurGameScreen } from '@/features/kangur/ui/types';
 
@@ -118,18 +119,7 @@ function GameContent(): React.JSX.Element {
     screen,
   ]);
   const screenMotionProps = useMemo(
-    () =>
-      prefersReducedMotion
-        ? {
-          initial: { opacity: 1, y: 0 },
-          animate: { opacity: 1, y: 0 },
-          exit: { opacity: 1, y: 0 },
-        }
-        : {
-          initial: { opacity: 0, y: 20 },
-          animate: { opacity: 1, y: 0 },
-          exit: { opacity: 0, y: -20 },
-        },
+    () => createKangurPageTransitionMotionProps(prefersReducedMotion),
     [prefersReducedMotion]
   );
 

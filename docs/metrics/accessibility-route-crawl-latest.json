@@ -1,22 +1,22 @@
 {
-  "generatedAt": "2026-03-08T17:16:23.830Z",
-  "status": "failed",
+  "generatedAt": "2026-03-08T17:59:51.409Z",
+  "status": "passed",
   "runtime": {
     "source": "broker",
     "reused": false,
-    "baseUrl": "http://127.0.0.1:54673",
-    "agentId": "route-crawl-isolated-3",
-    "leaseKey": "web-dev-route-crawl-isolated-3-ed58ad7e"
+    "baseUrl": "http://127.0.0.1:57179",
+    "agentId": "route-crawl-final-6",
+    "leaseKey": "web-dev-route-crawl-final-6-ed58ad7e"
   },
   "summary": {
     "total": 17,
-    "passed": 10,
-    "failed": 7,
-    "durationMs": 278956.988,
-    "unexpected": 1,
+    "passed": 17,
+    "failed": 0,
+    "durationMs": 193071.734,
+    "unexpected": 0,
     "flaky": 0,
-    "skipped": 6,
-    "errorCount": 1
+    "skipped": 0,
+    "errorCount": 0
   },
   "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/accessibility-route-crawl.spec.ts --reporter=json",
   "externalErrors": [],
@@ -30,7 +30,7 @@
       "contextSelector": null,
       "title": "[public-home] / passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 21201,
+      "durationMs": 16246,
       "errors": []
     },
     {
@@ -42,7 +42,7 @@
       "contextSelector": null,
       "title": "[auth-signin] /auth/signin passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 16200,
+      "durationMs": 1654,
       "errors": []
     },
     {
@@ -54,7 +54,7 @@
       "contextSelector": null,
       "title": "[auth-register] /auth/register passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 14268,
+      "durationMs": 2524,
       "errors": []
     },
     {
@@ -66,7 +66,7 @@
       "contextSelector": null,
       "title": "[admin-dashboard] /admin passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 41376,
+      "durationMs": 8496,
       "errors": []
     },
     {
@@ -78,7 +78,7 @@
       "contextSelector": null,
       "title": "[admin-products] /admin/products passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 46181,
+      "durationMs": 9711,
       "errors": []
     },
     {
@@ -90,7 +90,7 @@
       "contextSelector": null,
       "title": "[admin-notes] /admin/notes passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 38354,
+      "durationMs": 6005,
       "errors": []
     },
     {
@@ -102,7 +102,7 @@
       "contextSelector": null,
       "title": "[admin-integrations] /admin/integrations passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 3602,
+      "durationMs": 6557,
       "errors": []
     },
     {
@@ -114,7 +114,7 @@
       "contextSelector": null,
       "title": "[admin-case-resolver] /admin/case-resolver passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 10667,
+      "durationMs": 9673,
       "errors": []
     },
     {
@@ -126,7 +126,7 @@
       "contextSelector": null,
       "title": "[admin-cms] /admin/cms passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 6305,
+      "durationMs": 35078,
       "errors": []
     },
     {
@@ -138,7 +138,7 @@
       "contextSelector": null,
       "title": "[admin-ai-paths] /admin/ai-paths passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 19735,
+      "durationMs": 17946,
       "errors": []
     },
     {
@@ -149,11 +149,9 @@
       "readySelector": null,
       "contextSelector": null,
       "title": "[admin-image-studio] /admin/image-studio passes the route-crawl accessibility scan",
-      "status": "fail",
-      "durationMs": 56144,
-      "errors": [
-        "Error: Accessibility violations detected:\n\n[critical] aria-required-children: Certain ARIA roles must contain particular children\nEnsure elements with an ARIA role that require child roles contain them\n- div[role=\"tree\"]\nFix any of the following:\n  Element has children which are not allowed: button[aria-label], button[tabindex]\nhttps://dequeuniversity.com/rules/axe/4.11/aria-required-children?application=axeAPI\n\n   at support/accessibility.ts:100\n\n   98 |   if (violations.length === 0) return;\n   99 |\n> 100 |   throw new Error(`Accessibility violations detected:\\n\\n${formatViolations(violations)}`);\n      |         ^\n  101 | }\n  102 |\n    at expectPageToHaveNoAxeViolations (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/support/accessibility.ts:100:9)\n    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/accessibility-route-crawl.spec.ts:42:5"
-      ]
+      "status": "pass",
+      "durationMs": 36860,
+      "errors": []
     },
     {
       "id": "admin-chatbot",
@@ -163,8 +161,8 @@
       "readySelector": null,
       "contextSelector": null,
       "title": "[admin-chatbot] /admin/chatbot passes the route-crawl accessibility scan",
-      "status": "fail",
-      "durationMs": 0,
+      "status": "pass",
+      "durationMs": 6451,
       "errors": []
     },
     {
@@ -175,8 +173,8 @@
       "readySelector": null,
       "contextSelector": null,
       "title": "[admin-agentcreator] /admin/agentcreator passes the route-crawl accessibility scan",
-      "status": "fail",
-      "durationMs": 0,
+      "status": "pass",
+      "durationMs": 3400,
       "errors": []
     },
     {
@@ -187,8 +185,8 @@
       "readySelector": null,
       "contextSelector": null,
       "title": "[admin-prompt-engine-validation] /admin/prompt-engine/validation passes the route-crawl accessibility scan",
-      "status": "fail",
-      "durationMs": 0,
+      "status": "pass",
+      "durationMs": 3301,
       "errors": []
     },
     {
@@ -199,8 +197,8 @@
       "readySelector": null,
       "contextSelector": null,
       "title": "[admin-kangur] /admin/kangur passes the route-crawl accessibility scan",
-      "status": "fail",
-      "durationMs": 0,
+      "status": "pass",
+      "durationMs": 6046,
       "errors": []
     },
     {
@@ -211,8 +209,8 @@
       "readySelector": null,
       "contextSelector": null,
       "title": "[admin-databases] /admin/databases/engine passes the route-crawl accessibility scan",
-      "status": "fail",
-      "durationMs": 0,
+      "status": "pass",
+      "durationMs": 13210,
       "errors": []
     },
     {
@@ -223,12 +221,12 @@
       "readySelector": null,
       "contextSelector": null,
       "title": "[admin-brain-settings] /admin/brain?tab=routing passes the route-crawl accessibility scan",
-      "status": "fail",
-      "durationMs": 0,
+      "status": "pass",
+      "durationMs": 8075,
       "errors": []
     }
   ],
   "stderr": "",
-  "durationMs": 354843,
-  "exitCode": 1
+  "durationMs": 210762,
+  "exitCode": 0
 }

@@ -4,22 +4,22 @@
 
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   useRouterMock,
   useSearchParamsMock,
-  routerPushMock,
-  signInMock,
   signOutMock,
   trackKangurClientEventMock,
+  locationAssignMock,
+  routerPushMock,
 } = vi.hoisted(() => ({
   useRouterMock: vi.fn(),
   useSearchParamsMock: vi.fn(),
-  routerPushMock: vi.fn(),
-  signInMock: vi.fn(),
   signOutMock: vi.fn(),
   trackKangurClientEventMock: vi.fn(),
+  locationAssignMock: vi.fn(),
+  routerPushMock: vi.fn(),
 }));
 
 vi.mock('next/link', () => ({
@@ -41,7 +41,6 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('next-auth/react', () => ({
-  signIn: signInMock,
   signOut: signOutMock,
 }));
 
@@ -52,38 +51,102 @@ vi.mock('@/features/kangur/observability/client', () => ({
 import { KangurLoginPage } from '@/features/kangur/ui/KangurLoginPage';
 
 describe('KangurLoginPage', () => {
+  const originalLocation = window.location;
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.unstubAllGlobals();
+    Object.defineProperty(window, 'location', {
+      value: {
+        ...originalLocation,
+        assign: locationAssignMock,
+        origin: originalLocation.origin,
+      },
+      configurable: true,
+    });
     useRouterMock.mockReturnValue({
       push: routerPushMock,
     });
     useSearchParamsMock.mockReturnValue(
       new URLSearchParams('callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision')
     );
-    signInMock.mockResolvedValue({ ok: true });
     signOutMock.mockResolvedValue(undefined);
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        json: vi.fn().mockResolvedValue({ ok: true }),
+      vi.fn().mockImplementation(async (input: RequestInfo | URL) => {
+        const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+        if (url === '/api/kangur/auth/learner-signout') {
+          return {
+            ok: true,
+            status: 200,
+            json: vi.fn().mockResolvedValue({ ok: true }),
+          };
+        }
+
+        if (url === '/api/auth/csrf') {
+          return {
+            ok: true,
+            status: 200,
+            json: vi.fn().mockResolvedValue({ csrfToken: 'kangur-parent-csrf' }),
+          };
+        }
+
+        if (url === '/api/auth/callback/credentials') {
+          return {
+            ok: true,
+            status: 200,
+            json: vi.fn().mockResolvedValue({ url: '/kangur/tests?focus=division' }),
+          };
+        }
+
+        if (url === '/api/kangur/auth/learner-signin') {
+          return {
+            ok: true,
+            status: 200,
+            json: vi.fn().mockResolvedValue({ learnerId: 'learner-7' }),
+          };
+        }
+
+        throw new Error(`Unexpected fetch: ${url}`);
       })
     );
   });
 
-  it('renders parent and student login forms on the same Kangur screen', () => {
+  afterEach(() => {
+    Object.defineProperty(window, 'location', {
+      value: originalLocation,
+      configurable: true,
+    });
+  });
+
+  it('renders a single Kangur login form in parent mode by default', () => {
     render(<KangurLoginPage defaultCallbackUrl='/kangur' backHref='/kangur' />);
 
     expect(screen.getByTestId('kangur-login-shell')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-login-parent-form')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-login-student-form')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-login-form')).toHaveAttribute('data-hydrated', 'true');
+    expect(screen.getByTestId('kangur-login-form')).toHaveAttribute('data-login-mode', 'parent');
+    expect(screen.getByRole('tab', { name: 'Rodzic' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: 'Uczen' })).toHaveAttribute('aria-selected', 'false');
     expect(screen.getByLabelText('Email rodzica')).toBeInTheDocument();
-    expect(screen.getByLabelText('Nick ucznia')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Nick ucznia')).not.toBeInTheDocument();
     expect(
       screen.queryByRole('link', { name: /Przejdz do logowania rodzica/i })
     ).not.toBeInTheDocument();
+  });
+
+  it('switches the shared login form into student mode', async () => {
+    const user = userEvent.setup();
+
+    render(<KangurLoginPage defaultCallbackUrl='/kangur' backHref='/kangur' />);
+
+    expect(screen.getByTestId('kangur-login-form')).toHaveAttribute('data-hydrated', 'true');
+    await user.click(screen.getByRole('tab', { name: 'Uczen' }));
+
+    expect(screen.getByTestId('kangur-login-form')).toHaveAttribute('data-login-mode', 'student');
+    expect(screen.getByRole('tab', { name: 'Rodzic' })).toHaveAttribute('aria-selected', 'false');
+    expect(screen.getByRole('tab', { name: 'Uczen' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByLabelText('Nick ucznia')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Email rodzica')).not.toBeInTheDocument();
   });
 
   it('submits parent credentials from the Kangur login screen and stays on the shared callback flow', async () => {
@@ -92,9 +155,9 @@ describe('KangurLoginPage', () => {
 
     render(<KangurLoginPage defaultCallbackUrl='/kangur' backHref='/kangur' />);
 
+    expect(screen.getByTestId('kangur-login-form')).toHaveAttribute('data-hydrated', 'true');
     await user.type(screen.getByLabelText('Email rodzica'), 'parent@example.com');
-    const passwordFields = screen.getAllByLabelText(/^Haslo$/i);
-    await user.type(passwordFields[0]!, 'secret123');
+    await user.type(screen.getByLabelText(/^Haslo$/i), 'secret123');
     await user.click(screen.getByRole('button', { name: 'Zaloguj rodzica' }));
 
     expect(fetchMock).toHaveBeenCalledWith(
@@ -104,16 +167,22 @@ describe('KangurLoginPage', () => {
         credentials: 'same-origin',
       })
     );
-    expect(signInMock).toHaveBeenCalledWith('credentials', {
-      email: 'parent@example.com',
-      password: 'secret123',
-      callbackUrl: '/kangur/tests?focus=division',
-      redirect: false,
+    expect(fetchMock).toHaveBeenCalledWith('/api/auth/csrf', {
+      credentials: 'same-origin',
     });
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/auth/callback/credentials',
+      expect.objectContaining({
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: expect.any(URLSearchParams),
+      })
+    );
     await waitFor(() => {
-      expect(routerPushMock).toHaveBeenCalledWith('/kangur/tests?focus=division', {
-        scroll: false,
-      });
+      expect(locationAssignMock).toHaveBeenCalledWith('/kangur/tests?focus=division');
     });
   });
 
@@ -141,9 +210,10 @@ describe('KangurLoginPage', () => {
 
     render(<KangurLoginPage defaultCallbackUrl='/kangur' backHref='/kangur' />);
 
+    expect(screen.getByTestId('kangur-login-form')).toHaveAttribute('data-hydrated', 'true');
+    await user.click(screen.getByRole('tab', { name: 'Uczen' }));
     await user.type(screen.getByLabelText('Nick ucznia'), 'janek');
-    const passwordFields = screen.getAllByLabelText(/^Haslo$/i);
-    await user.type(passwordFields[1]!, 'tajnehaslo');
+    await user.type(screen.getByLabelText(/^Haslo$/i), 'tajnehaslo');
     await user.click(screen.getByRole('button', { name: 'Zaloguj ucznia' }));
 
     expect(signOutMock).toHaveBeenCalledWith({ redirect: false });
@@ -160,9 +230,7 @@ describe('KangurLoginPage', () => {
       })
     );
     await waitFor(() => {
-      expect(routerPushMock).toHaveBeenCalledWith('/kangur/tests?focus=division', {
-        scroll: false,
-      });
+      expect(locationAssignMock).toHaveBeenCalledWith('/kangur/tests?focus=division');
     });
   });
 });

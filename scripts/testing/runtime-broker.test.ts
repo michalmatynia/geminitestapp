@@ -11,6 +11,7 @@ import {
   buildRuntimeLeaseKey,
   cleanupBrokerRuntimeLeases,
   resolveBrokerManagedDistDir,
+  resolveBrokerManagedRuntimeTmpDir,
   resolvePlaywrightRunArtifacts,
   resolveRuntimeAgentId,
   sanitizeRuntimeToken,
@@ -102,6 +103,14 @@ describe('resolveBrokerManagedDistDir', () => {
   });
 });
 
+describe('resolveBrokerManagedRuntimeTmpDir', () => {
+  it('creates a lease-scoped runtime temp dir name', () => {
+    expect(resolveBrokerManagedRuntimeTmpDir({ leaseKey: 'web-dev-agent-4-abc12345' })).toBe(
+      path.join('tmp', 'playwright-runtime-broker', 'runtime-tmp', 'web-dev-agent-4-abc12345')
+    );
+  });
+});
+
 describe('resolvePlaywrightRunArtifacts', () => {
   it('namespaces artifacts by app, agent, and run id', () => {
     const artifacts = resolvePlaywrightRunArtifacts({
@@ -170,9 +179,11 @@ describe('acquireRuntimeLease', () => {
 
     const healthyBaseUrls = new Set<string>();
     let spawnCount = 0;
+    const spawnedEnvs: Array<Record<string, string>> = [];
 
     const spawnImpl = (_command: string, _args: string[], options: { env: Record<string, string> }) => {
       spawnCount += 1;
+      spawnedEnvs.push(options.env);
       const child = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], {
         detached: true,
         stdio: 'ignore',
@@ -225,6 +236,13 @@ describe('acquireRuntimeLease', () => {
     expect(spawnCount).toBe(1);
     expect(left.baseUrl).toBe(right.baseUrl);
     expect([left.reused, right.reused].filter(Boolean)).toHaveLength(1);
+    expect(left.runtimeTmpDir).toBe(resolveBrokerManagedRuntimeTmpDir({ leaseKey: left.leaseKey }));
+    expect(right.runtimeTmpDir).toBe(resolveBrokerManagedRuntimeTmpDir({ leaseKey: right.leaseKey }));
+    expect(spawnedEnvs).toHaveLength(1);
+    expect(spawnedEnvs[0]?.TMPDIR).toBe(path.join(rootDir, left.runtimeTmpDir));
+    expect(spawnedEnvs[0]?.TMP).toBe(path.join(rootDir, left.runtimeTmpDir));
+    expect(spawnedEnvs[0]?.TEMP).toBe(path.join(rootDir, left.runtimeTmpDir));
+    await expect(fs.stat(path.join(rootDir, left.runtimeTmpDir))).resolves.toBeTruthy();
   });
 });
 
@@ -247,11 +265,14 @@ describe('cleanupBrokerRuntimeLeases', () => {
       mode,
       agentId,
     });
+    const runtimeTmpDir = resolveBrokerManagedRuntimeTmpDir({ leaseKey });
     const brokerDir = path.join(rootDir, 'tmp', 'playwright-runtime-broker');
     const leaseFilePath = path.join(brokerDir, 'leases', `${leaseKey}.json`);
 
     await fs.mkdir(path.join(rootDir, distDir), { recursive: true });
     await fs.writeFile(path.join(rootDir, distDir, 'marker.txt'), 'stale runtime', 'utf8');
+    await fs.mkdir(path.join(rootDir, runtimeTmpDir), { recursive: true });
+    await fs.writeFile(path.join(rootDir, runtimeTmpDir, 'marker.txt'), 'stale temp runtime', 'utf8');
     await fs.mkdir(path.dirname(leaseFilePath), { recursive: true });
     await fs.writeFile(
       leaseFilePath,
@@ -269,6 +290,8 @@ describe('cleanupBrokerRuntimeLeases', () => {
           baseUrl: 'http://127.0.0.1:3210',
           pid: 999_999,
           distDir,
+          runtimeTmpDir,
+          managedRuntimeTmpDir: true,
           leaseKey,
           startedAt: new Date().toISOString(),
         },
@@ -291,6 +314,7 @@ describe('cleanupBrokerRuntimeLeases', () => {
       removed: 1,
     });
     await expect(fs.stat(path.join(rootDir, distDir))).rejects.toMatchObject({ code: 'ENOENT' });
+    await expect(fs.stat(path.join(rootDir, runtimeTmpDir))).rejects.toMatchObject({ code: 'ENOENT' });
     await expect(fs.stat(leaseFilePath)).rejects.toMatchObject({ code: 'ENOENT' });
   });
 

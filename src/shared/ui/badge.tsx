@@ -62,13 +62,13 @@ function Badge({
   const isSplitInteractive = isClickable && !!onRemove;
   const handleButtonClick: React.MouseEventHandler<HTMLButtonElement> | undefined = onClick
     ? (event) => {
-        onClick(event as unknown as React.MouseEvent<HTMLDivElement>);
-      }
+      onClick(event as unknown as React.MouseEvent<HTMLDivElement>);
+    }
     : undefined;
   const handleButtonKeyDown: React.KeyboardEventHandler<HTMLButtonElement> | undefined = onKeyDown
     ? (event) => {
-        onKeyDown(event as unknown as React.KeyboardEvent<HTMLDivElement>);
-      }
+      onKeyDown(event as unknown as React.KeyboardEvent<HTMLDivElement>);
+    }
     : undefined;
   const sharedClassName = cn(
     badgeVariants({ variant }),

@@ -187,6 +187,35 @@ describe('shared accessibility primitives', () => {
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps the split Badge wrapper non-interactive and exposes exactly two buttons', () => {
+    const { container } = render(
+      <Badge onClick={vi.fn()} onRemove={vi.fn()} removeLabel='Remove preset'>
+        Apply preset
+      </Badge>
+    );
+
+    expect(screen.getAllByRole('button')).toHaveLength(2);
+    expect(container.firstElementChild).not.toHaveAttribute('role', 'button');
+    expect(container.firstElementChild).not.toHaveAttribute('tabindex');
+  });
+
+  it('forwards keyboard handlers to the primary action of split Badge instances', () => {
+    const onKeyDown = vi.fn();
+    render(
+      <Badge
+        onClick={vi.fn()}
+        onKeyDown={onKeyDown}
+        onRemove={vi.fn()}
+        removeLabel='Remove preset'
+      >
+        Apply preset
+      </Badge>
+    );
+
+    fireEvent.keyDown(screen.getByRole('button', { name: 'Apply preset' }), { key: 'Enter' });
+    expect(onKeyDown).toHaveBeenCalledTimes(1);
+  });
+
   it('describes FileUploadTrigger drag and paste affordances to assistive tech', () => {
     render(<FileUploadTrigger onFilesSelected={vi.fn()}>Upload files</FileUploadTrigger>);
 

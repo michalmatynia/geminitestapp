@@ -250,7 +250,8 @@ export function ProvidersTab(): React.JSX.Element {
       </FormSection>
 
       <FormSection
-        title='Cloud API keys'
+        title='Global Provider Credentials'
+        description='Brain-managed provider keys are shared across Brain-routed features, including Image Studio, Kangur, and Case Resolver OCR.'
         titleIcon={<KeyRound className='size-4 text-emerald-300' />}
         className='p-4'
       >

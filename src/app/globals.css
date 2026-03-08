@@ -446,6 +446,10 @@
     background: radial-gradient(circle at top, #fffdfd 0%, #f7f3f6 45%, #f3f1f8 100%);
   }
 
+  .kangur-surface-active {
+    background: radial-gradient(circle at top, #fffdfd 0%, #f7f3f6 45%, #f3f1f8 100%) !important;
+  }
+
   .kangur-route-content-enter-a,
   .kangur-route-content-enter-b {
     min-height: 100%;

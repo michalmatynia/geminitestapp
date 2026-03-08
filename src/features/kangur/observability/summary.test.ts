@@ -118,6 +118,7 @@ describe('kangur observability alerts', () => {
       routeMetrics: createRouteMetrics(),
       analytics: createAnalyticsSnapshot({ signInSuccess: 19, signInFailure: 1 }),
       ttsRequestCount: 20,
+      ttsGenerationFailureCount: 0,
       ttsFallbackCount: 1,
       performanceBaseline: {
         generatedAt: '2026-03-07T12:00:00.000Z',
@@ -150,6 +151,7 @@ describe('kangur observability alerts', () => {
       routeMetrics: createRouteMetrics(),
       analytics: createAnalyticsSnapshot(),
       ttsRequestCount: 5,
+      ttsGenerationFailureCount: 0,
       ttsFallbackCount: 2,
       performanceBaseline: null,
     });
@@ -172,6 +174,7 @@ describe('kangur observability alerts', () => {
       routeMetrics: createRouteMetrics(),
       analytics: createAnalyticsSnapshot(),
       ttsRequestCount: 20,
+      ttsGenerationFailureCount: 0,
       ttsFallbackCount: 0,
       performanceBaseline: {
         generatedAt: '2026-03-07T12:00:00.000Z',
@@ -213,6 +216,7 @@ describe('kangur observability alerts', () => {
       }),
       analytics: createAnalyticsSnapshot(),
       ttsRequestCount: 20,
+      ttsGenerationFailureCount: 0,
       ttsFallbackCount: 0,
       performanceBaseline: null,
     });
@@ -223,6 +227,29 @@ describe('kangur observability alerts', () => {
     expect(latencyAlert?.investigation).toEqual({
       label: 'View slow sync logs',
       href: '/admin/system/logs?source=kangur.progress.PATCH&minDurationMs=750&from=2026-03-06T12%3A00%3A00.000Z&to=2026-03-07T12%3A00%3A00.000Z',
+    });
+  });
+
+  it('flags neural narration generation failures independently of fallback rate', () => {
+    const alerts = __testables.buildKangurObservabilityAlerts({
+      range: '24h',
+      from: new Date('2026-03-06T12:00:00.000Z'),
+      to: new Date('2026-03-07T12:00:00.000Z'),
+      serverLogMetrics: createServerLogMetrics({ total: 50, errors: 0 }),
+      routeMetrics: createRouteMetrics(),
+      analytics: createAnalyticsSnapshot(),
+      ttsRequestCount: 20,
+      ttsGenerationFailureCount: 2,
+      ttsFallbackCount: 0,
+      performanceBaseline: null,
+    });
+
+    const generationAlert = alerts.find((alert) => alert.id === 'kangur-tts-generation-failures');
+    expect(generationAlert?.status).toBe('warning');
+    expect(generationAlert?.value).toBe(2);
+    expect(generationAlert?.investigation).toEqual({
+      label: 'View generation failure logs',
+      href: '/admin/system/logs?source=kangur.tts.generationFailed&from=2026-03-06T12%3A00%3A00.000Z&to=2026-03-07T12%3A00%3A00.000Z',
     });
   });
 });

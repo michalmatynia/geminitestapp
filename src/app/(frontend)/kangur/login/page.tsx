@@ -10,12 +10,35 @@ import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 
 const DEFAULT_CALLBACK_URL = '/kangur';
 
+export const resolveKangurLoginCallbackNavigation = (
+  callbackUrl: string,
+  currentOrigin: string
+): { kind: 'router' | 'location'; href: string } | null => {
+  const trimmed = callbackUrl.trim();
+  if (!trimmed) return null;
+  if (trimmed.startsWith('/')) {
+    return { kind: 'router', href: trimmed };
+  }
+
+  try {
+    const parsed = new URL(trimmed, currentOrigin);
+    if (parsed.origin === currentOrigin) {
+      return { kind: 'router', href: `${parsed.pathname}${parsed.search}${parsed.hash}` };
+    }
+  } catch {
+    return { kind: 'location', href: trimmed };
+  }
+
+  return { kind: 'location', href: trimmed };
+};
+
 const navigateToCallback = (router: ReturnType<typeof useRouter>, callbackUrl: string): void => {
-  if (callbackUrl.startsWith('/')) {
-    router.push(callbackUrl);
+  const navigationTarget = resolveKangurLoginCallbackNavigation(callbackUrl, window.location.origin);
+  if (navigationTarget?.kind === 'router') {
+    router.push(navigationTarget.href);
     return;
   }
-  window.location.assign(callbackUrl);
+  window.location.assign(navigationTarget?.href ?? callbackUrl);
 };
 
 function KangurLoginPageContent(): React.JSX.Element {
@@ -80,7 +103,7 @@ function KangurLoginPageContent(): React.JSX.Element {
   };
 
   return (
-    <div className='min-h-screen bg-gradient-to-br from-slate-100 via-indigo-50 to-blue-100 px-4 py-10'>
+    <div className='kangur-premium-bg min-h-screen px-4 py-10' data-testid='kangur-login-shell'>
       <div className='mx-auto grid max-w-5xl gap-6 lg:grid-cols-2'>
         <section className='rounded-3xl bg-white p-8 shadow-xl'>
           <div className='mb-6'>

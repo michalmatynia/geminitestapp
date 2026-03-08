@@ -45,6 +45,7 @@ const createSummaryResponse = () => ({
       learnerSignInFailureRatePercent: 8.3,
       progressSyncFailures: 4,
       ttsRequests: 11,
+      ttsGenerationFailures: 2,
       ttsFallbackRatePercent: 18.2,
     },
     alerts: [],

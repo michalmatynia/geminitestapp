@@ -59,6 +59,17 @@ function Badge({
 }: BadgeProps) {
   const isClickable = !!onClick;
   const isNativeButton = isClickable && !onRemove;
+  const isSplitInteractive = isClickable && !!onRemove;
+  const handleButtonClick: React.MouseEventHandler<HTMLButtonElement> | undefined = onClick
+    ? (event) => {
+        onClick(event as unknown as React.MouseEvent<HTMLDivElement>);
+      }
+    : undefined;
+  const handleButtonKeyDown: React.KeyboardEventHandler<HTMLButtonElement> | undefined = onKeyDown
+    ? (event) => {
+        onKeyDown(event as unknown as React.KeyboardEvent<HTMLDivElement>);
+      }
+    : undefined;
   const sharedClassName = cn(
     badgeVariants({ variant }),
     isClickable && 'cursor-pointer hover:brightness-110 active:opacity-80 transition-all',
@@ -90,12 +101,39 @@ function Badge({
       <button
         type='button'
         className={sharedClassName}
-        onClick={onClick as React.MouseEventHandler<HTMLButtonElement> | undefined}
-        onKeyDown={onKeyDown as React.KeyboardEventHandler<HTMLButtonElement> | undefined}
+        onClick={handleButtonClick}
+        onKeyDown={handleButtonKeyDown}
         {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}
       >
         {content}
       </button>
+    );
+  }
+
+  if (isSplitInteractive) {
+    return (
+      <div className={cn(sharedClassName, 'gap-0 px-0 py-0')} {...props}>
+        <button
+          type='button'
+          className='inline-flex items-center rounded-full rounded-r-none px-2.5 py-0.5 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2'
+          onClick={handleButtonClick}
+          onKeyDown={handleButtonKeyDown}
+        >
+          {icon && <span className='mr-1.5 shrink-0'>{icon}</span>}
+          {children}
+        </button>
+        <button
+          type='button'
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove();
+          }}
+          className='mr-1 rounded-full p-0.5 hover:bg-black/10 focus:outline-none transition-colors'
+          aria-label={removeLabel || 'Remove'}
+        >
+          <X className='size-3' />
+        </button>
+      </div>
     );
   }
 

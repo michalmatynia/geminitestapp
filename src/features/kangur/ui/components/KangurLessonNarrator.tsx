@@ -31,6 +31,7 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { cn } from '@/shared/utils';
 
 type PlaybackStatus = 'idle' | 'loading' | 'playing' | 'paused' | 'error';
+type PlaybackTransport = 'server' | 'client' | 'client-fallback' | null;
 
 type KangurLessonNarratorProps = {
   lesson: Pick<KangurLesson, 'id' | 'title' | 'description' | 'contentMode'>;
@@ -71,8 +72,10 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
   const [observedText, setObservedText] = useState('');
   const [status, setStatus] = useState<PlaybackStatus>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [fallbackMessage, setFallbackMessage] = useState<string | null>(null);
   const [manifest, setManifest] = useState<KangurLessonTtsAudioResponse | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [playbackTransport, setPlaybackTransport] = useState<PlaybackTransport>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioQueueRef = useRef<KangurLessonTtsAudioResponse['segments']>([]);
   const fallbackSegmentsRef = useRef<Array<{ id: string; text: string }>>([]);
@@ -167,6 +170,7 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
     fallbackSegmentsRef.current = [];
     currentIndexRef.current = 0;
     setCurrentIndex(0);
+    setPlaybackTransport(null);
     setStatus('idle');
     const audio = audioRef.current;
     if (audio) {
@@ -182,12 +186,18 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
   useEffect(() => {
     stopPlayback();
     setErrorMessage(null);
+    setFallbackMessage(null);
     setManifest(responseCacheRef.current.get(scriptCacheKey) ?? null);
   }, [scriptCacheKey, stopPlayback]);
 
   const speakClientSegments = useCallback(
-    (segments: Array<{ id: string; text: string }>, startIndex: number = 0): void => {
+    (
+      segments: Array<{ id: string; text: string }>,
+      startIndex: number = 0,
+      transport: Exclude<PlaybackTransport, 'server' | null> = 'client'
+    ): void => {
       if (typeof window === 'undefined' || !window.speechSynthesis) {
+        setPlaybackTransport(null);
         setStatus('error');
         setErrorMessage('Client narration is not available in this browser.');
         return;
@@ -204,6 +214,7 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
       audioQueueRef.current = [];
       currentIndexRef.current = startIndex;
       setCurrentIndex(startIndex);
+      setPlaybackTransport(transport);
       window.speechSynthesis.cancel();
 
       const utterance = new SpeechSynthesisUtterance(nextSegment.text);
@@ -221,7 +232,7 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
           setStatus('idle');
           return;
         }
-        speakClientSegments(segments, nextIndex);
+        speakClientSegments(segments, nextIndex, transport);
       };
       utterance.onerror = () => {
         setStatus('error');
@@ -247,6 +258,7 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
       fallbackSegmentsRef.current = [];
       currentIndexRef.current = startIndex;
       setCurrentIndex(startIndex);
+      setPlaybackTransport('server');
       audio.src = nextSegment.audioUrl;
       audio.playbackRate = DEFAULT_PLAYBACK_RATE;
 
@@ -289,8 +301,8 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
     };
   }, []);
 
-  const prepareServerNarration =
-    useCallback(async (): Promise<KangurLessonTtsAudioResponse | null> => {
+  const prepareServerNarration = useCallback(
+    async (): Promise<KangurLessonTtsAudioResponse | 'client-fallback' | null> => {
       if (!hasKangurLessonNarrationContent(script)) {
         setStatus('error');
         setErrorMessage('There is not enough visible lesson text to read aloud yet.');
@@ -315,13 +327,25 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
 
         if (response.mode !== 'audio') {
           setManifest(null);
+          const canUseBrowserFallback =
+            typeof window !== 'undefined' && Boolean(window.speechSynthesis);
+          const combinedMessage = `${response.message} ${SERVER_MODE_FALLBACK_HINT}`;
+
+          if (canUseBrowserFallback && response.segments.length > 0) {
+            setFallbackMessage(combinedMessage);
+            speakClientSegments(response.segments, 0, 'client-fallback');
+            return 'client-fallback';
+          }
+
+          setFallbackMessage(null);
           setStatus('error');
-          setErrorMessage(`${response.message} ${SERVER_MODE_FALLBACK_HINT}`);
+          setErrorMessage(combinedMessage);
           return null;
         }
 
         responseCacheRef.current.set(scriptCacheKey, response);
         setManifest(response);
+        setFallbackMessage(null);
         setStatus('idle');
         return response;
       } catch (error) {
@@ -331,11 +355,11 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
         );
         return null;
       }
-    }, [script, scriptCacheKey, voice]);
+    },
+    [script, scriptCacheKey, speakClientSegments, voice]
+  );
 
   const handlePlay = useCallback(async () => {
-    setErrorMessage(null);
-
     if (status === 'paused') {
       const audio = audioRef.current;
       if (audioQueueRef.current.length > 0 && audio) {
@@ -357,14 +381,17 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
       }
     }
 
+    setErrorMessage(null);
+    setFallbackMessage(null);
+
     if (narratorSettings.engine === 'client') {
       stopPlayback();
-      speakClientSegments(script.segments, 0);
+      speakClientSegments(script.segments, 0, 'client');
       return;
     }
 
     const response = await prepareServerNarration();
-    if (!response) return;
+    if (!response || response === 'client-fallback') return;
     await playAudioSegments(response.segments, 0);
   }, [
     narratorSettings.engine,
@@ -394,16 +421,26 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
   const activeSegmentText =
     manifest?.segments[currentIndex]?.text ?? script.segments[currentIndex]?.text ?? lesson.title;
   const engineLabel =
-    narratorSettings.engine === 'server' ? 'server narration' : 'browser narration';
+    playbackTransport === 'client-fallback'
+      ? 'browser fallback narration'
+      : playbackTransport === 'server'
+        ? 'server narration'
+        : narratorSettings.engine === 'server'
+          ? 'server narration'
+          : 'browser narration';
   const statusLabel =
     status === 'loading'
       ? 'Preparing server narration...'
       : status === 'playing'
-        ? narratorSettings.engine === 'server'
-          ? 'Playing server narration'
-          : 'Playing browser narration'
+        ? playbackTransport === 'client-fallback'
+          ? 'Playing browser fallback narration'
+          : playbackTransport === 'server'
+            ? 'Playing server narration'
+            : 'Playing browser narration'
         : status === 'paused'
-          ? 'Narration paused'
+          ? playbackTransport === 'client-fallback'
+            ? 'Browser fallback narration paused'
+            : 'Narration paused'
           : status === 'error'
             ? 'Narration unavailable'
             : `Ready to read the visible lesson with ${engineLabel}`;
@@ -488,6 +525,15 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
           accent='rose'
           className='mt-4'
           description={errorMessage}
+          padding='sm'
+          tone='accent'
+        />
+      ) : null}
+      {!errorMessage && fallbackMessage ? (
+        <KangurSummaryPanel
+          accent='amber'
+          className='mt-4'
+          description={fallbackMessage}
           padding='sm'
           tone='accent'
         />

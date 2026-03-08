@@ -13,12 +13,10 @@ import { FolderTreeSearchBar, useMasterFolderTreeSearch } from '@/features/folde
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
-  Breadcrumbs,
   Button,
   FolderTreePanel,
   FormModal,
   Skeleton,
-  SectionHeader,
   useToast,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
@@ -59,6 +57,7 @@ import { TestSuiteTreeRow } from './components/TestSuiteTreeRow';
 import { KangurQuestionsManagerPanel } from './KangurQuestionsManagerPanel';
 import { KangurQuestionsManagerRuntimeProvider } from './context/KangurQuestionsManagerRuntimeContext';
 import type { KangurTestSuite } from '@/shared/contracts/kangur-tests';
+import { KangurAdminContentShell } from './components/KangurAdminContentShell';
 
 const ORDERED_TREE_INSTANCE = 'kangur_test_suites_manager';
 const CATALOG_TREE_INSTANCE = 'kangur_test_suites_manager_catalog';
@@ -269,23 +268,8 @@ export function AdminKangurTestSuitesManagerPage({
 
   // Questions manager slide-in
   if (managingSuite) {
-    return (
+    const questionsContent = (
       <div className='flex h-full flex-col gap-4 overflow-hidden'>
-        {standalone ? (
-          <SectionHeader
-            title='Kangur Questions'
-            description='Author questions for this test suite.'
-          >
-            <Breadcrumbs
-              items={[
-                { label: 'Admin', href: '/admin' },
-                { label: 'Kangur', href: '/admin/kangur' },
-                { label: 'Tests', href: '/admin/kangur/tests-manager' },
-                { label: managingSuite.title },
-              ]}
-            />
-          </SectionHeader>
-        ) : null}
         <div className='flex-1 overflow-hidden rounded-2xl border border-border/60 bg-card/20 p-4'>
           <KangurQuestionsManagerRuntimeProvider
             suite={managingSuite}
@@ -296,25 +280,32 @@ export function AdminKangurTestSuitesManagerPage({
         </div>
       </div>
     );
+
+    if (!standalone) {
+      return questionsContent;
+    }
+
+    return (
+      <KangurAdminContentShell
+        title='Kangur Questions'
+        description='Author questions for this test suite.'
+        breadcrumbs={[
+          { label: 'Admin', href: '/admin' },
+          { label: 'Kangur', href: '/admin/kangur' },
+          { label: 'Tests', href: '/admin/kangur/tests-manager' },
+          { label: managingSuite.title },
+        ]}
+        className='h-full'
+        panelClassName='flex h-full min-h-0 flex-col'
+        contentClassName='flex min-h-0 flex-1 flex-col'
+      >
+        {questionsContent}
+      </KangurAdminContentShell>
+    );
   }
 
-  return (
+  const content = (
     <div className='flex h-full flex-col gap-4 overflow-hidden'>
-      {standalone ? (
-        <SectionHeader
-          title='Kangur Tests'
-          description='Create and manage test suites with questions, illustrations, and scoring.'
-        >
-          <Breadcrumbs
-            items={[
-              { label: 'Admin', href: '/admin' },
-              { label: 'Kangur', href: '/admin/kangur' },
-              { label: 'Tests' },
-            ]}
-          />
-        </SectionHeader>
-      ) : null}
-
       <FolderTreePanel
         className='min-h-0 flex-1'
         header={
@@ -448,5 +439,26 @@ export function AdminKangurTestSuitesManagerPage({
         isDangerous={true}
       />
     </div>
+  );
+
+  if (!standalone) {
+    return content;
+  }
+
+  return (
+    <KangurAdminContentShell
+      title='Kangur Tests'
+      description='Create and manage test suites with questions, illustrations, and scoring.'
+      breadcrumbs={[
+        { label: 'Admin', href: '/admin' },
+        { label: 'Kangur', href: '/admin/kangur' },
+        { label: 'Tests' },
+      ]}
+      className='h-full'
+      panelClassName='flex h-full min-h-0 flex-col'
+      contentClassName='flex min-h-0 flex-1 flex-col'
+    >
+      {content}
+    </KangurAdminContentShell>
   );
 }

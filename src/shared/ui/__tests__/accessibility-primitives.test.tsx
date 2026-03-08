@@ -169,6 +169,24 @@ describe('shared accessibility primitives', () => {
     expect(trigger).not.toHaveAttribute('tabindex');
   });
 
+  it('splits clickable removable Badge instances into separate action buttons', () => {
+    const onClick = vi.fn();
+    const onRemove = vi.fn();
+    render(
+      <Badge onClick={onClick} onRemove={onRemove} removeLabel='Remove preset'>
+        Apply preset
+      </Badge>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Apply preset' }));
+    expect(onClick).toHaveBeenCalledTimes(1);
+    expect(onRemove).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Remove preset' }));
+    expect(onRemove).toHaveBeenCalledTimes(1);
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
   it('describes FileUploadTrigger drag and paste affordances to assistive tech', () => {
     render(<FileUploadTrigger onFilesSelected={vi.fn()}>Upload files</FileUploadTrigger>);
 

@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { type JSX, type ReactNode, useCallback } from 'react';
 
+import { KangurAdminContentShell } from '@/features/kangur/admin/components/KangurAdminContentShell';
 import { KangurDocsTooltipEnhancer, useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
 import { useKangurObservabilitySummary } from '@/features/kangur/observability/hooks';
 import type {
@@ -34,7 +35,6 @@ import {
   FormSection,
   LoadingState,
   MetadataItem,
-  PageLayout,
   SegmentedControl,
   StatusBadge,
 } from '@/shared/ui';
@@ -502,6 +502,11 @@ function SummaryContent({
     from: summary.window.from,
     to: summary.window.to,
   });
+  const ttsGenerationFailureLogsHref = buildSystemLogsHref({
+    source: 'kangur.tts.generationFailed',
+    from: summary.window.from,
+    to: summary.window.to,
+  });
 
   return (
     <div className='space-y-6'>
@@ -541,7 +546,7 @@ function SummaryContent({
       </FormSection>
 
       <FormSection title='Key Metrics' variant='subtle'>
-        <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
+        <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-5'>
           <MetricCard
             title='Server Error Rate'
             value={formatPercent(summary.keyMetrics.serverErrorRatePercent)}
@@ -562,6 +567,13 @@ function SummaryContent({
             hint='Client progress sync failures observed through Kangur runtime telemetry.'
             icon={<RefreshCwIcon className='size-3.5' />}
             alert={alertById.get('kangur-progress-sync-failures')}
+          />
+          <MetricCard
+            title='TTS Generation Failures'
+            value={formatNumber(summary.keyMetrics.ttsGenerationFailures)}
+            hint='Server narrator generation failures before browser fallback or client narrator recovery.'
+            icon={<AudioLinesIcon className='size-3.5' />}
+            alert={alertById.get('kangur-tts-generation-failures')}
           />
           <MetricCard
             title='TTS Fallback Rate'
@@ -667,6 +679,12 @@ function SummaryContent({
               </Link>
             </Button>
             <Button asChild variant='outline' className='w-full justify-between'>
+              <Link href={ttsGenerationFailureLogsHref}>
+                TTS Generation Failure Logs
+                <ArrowUpRightIcon className='size-3.5' />
+              </Link>
+            </Button>
+            <Button asChild variant='outline' className='w-full justify-between'>
               <Link href={ttsFallbackLogsHref}>
                 TTS Fallback Logs
                 <ArrowUpRightIcon className='size-3.5' />
@@ -720,15 +738,14 @@ export function AdminKangurObservabilityPage(): JSX.Element {
   );
 
   return (
-    <PageLayout
+    <KangurAdminContentShell
       title='Kangur Observability'
       description='Monitor Kangur-specific alerts, route health, client telemetry, and recent server activity.'
-      eyebrow={
-        <Link href='/admin/kangur' className='text-blue-300 hover:text-blue-200'>
-          ← Back to Kangur
-        </Link>
-      }
-      containerClassName='container mx-auto py-10'
+      breadcrumbs={[
+        { label: 'Admin', href: '/admin' },
+        { label: 'Kangur', href: '/admin/kangur' },
+        { label: 'Observability' },
+      ]}
       refresh={{
         onRefresh: (): void => {
           void summaryQuery.refetch();
@@ -782,6 +799,6 @@ export function AdminKangurObservabilityPage(): JSX.Element {
           <SummaryContent range={range} summary={summary} />
         )}
       </div>
-    </PageLayout>
+    </KangurAdminContentShell>
   );
 }

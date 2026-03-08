@@ -7,13 +7,12 @@ import type {
 } from 'openai/resources/chat/completions';
 
 import type { SimpleChatMessage } from '@/shared/contracts/chatbot';
-import { IMAGE_STUDIO_OPENAI_API_KEY_KEY } from '@/shared/contracts/image-studio';
 import { configurationError, operationFailedError } from '@/shared/errors/app-error';
 
 import { inferBrainModelVendor, normalizeBrainModelId } from './model-vendor';
 import type { BrainModelVendor } from '@/shared/contracts/ai-brain';
 import { resolveOllamaBaseUrl } from './ollama-config';
-import { readStoredSettingValue } from './server';
+import { resolveBrainProviderCredential } from './provider-credentials';
 
 export type BrainRuntimeVendor = BrainModelVendor;
 
@@ -47,37 +46,15 @@ export const normalizeBrainRuntimeModelId = (modelId: string): string =>
   normalizeBrainModelId(modelId);
 
 const resolveOpenAiApiKey = async (): Promise<string> => {
-  const apiKey =
-    (await readStoredSettingValue(IMAGE_STUDIO_OPENAI_API_KEY_KEY))?.trim() ||
-    (await readStoredSettingValue('openai_api_key'))?.trim() ||
-    process.env['OPENAI_API_KEY']?.trim() ||
-    '';
-  if (!apiKey) {
-    throw configurationError('OpenAI API key is missing in Brain-controlled settings.');
-  }
-  return apiKey;
+  return resolveBrainProviderCredential('openai');
 };
 
 const resolveAnthropicApiKey = async (): Promise<string> => {
-  const apiKey =
-    (await readStoredSettingValue('anthropic_api_key'))?.trim() ||
-    process.env['ANTHROPIC_API_KEY']?.trim() ||
-    '';
-  if (!apiKey) {
-    throw configurationError('Anthropic API key is missing in Brain-controlled settings.');
-  }
-  return apiKey;
+  return resolveBrainProviderCredential('anthropic');
 };
 
 const resolveGeminiApiKey = async (): Promise<string> => {
-  const apiKey =
-    (await readStoredSettingValue('gemini_api_key'))?.trim() ||
-    process.env['GEMINI_API_KEY']?.trim() ||
-    '';
-  if (!apiKey) {
-    throw configurationError('Gemini API key is missing in Brain-controlled settings.');
-  }
-  return apiKey;
+  return resolveBrainProviderCredential('gemini');
 };
 
 const buildOpenAiCompatibleMessages = (

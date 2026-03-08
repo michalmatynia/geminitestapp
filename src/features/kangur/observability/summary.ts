@@ -558,6 +558,7 @@ const buildKangurObservabilityAlerts = (input: {
   routeMetrics: KangurRouteMetrics;
   analytics: KangurAnalyticsSnapshot;
   ttsRequestCount: number;
+  ttsGenerationFailureCount: number;
   ttsFallbackCount: number;
   performanceBaseline: KangurPerformanceBaseline | null;
 }): KangurObservabilityAlert[] => {
@@ -575,6 +576,8 @@ const buildKangurObservabilityAlerts = (input: {
 
   const progressWarningThreshold = scaleCountThreshold(input.range, 3);
   const progressCriticalThreshold = scaleCountThreshold(input.range, 10);
+  const ttsGenerationWarningThreshold = scaleCountThreshold(input.range, 1);
+  const ttsGenerationCriticalThreshold = scaleCountThreshold(input.range, 3);
   const recentAnalyticsHref = buildKangurObservabilitySectionHref(
     input.range,
     'recent-analytics-events'
@@ -689,6 +692,30 @@ const buildKangurObservabilityAlerts = (input: {
       },
     },
     {
+      id: 'kangur-tts-generation-failures',
+      title: 'TTS Generation Failures',
+      status: countStatus(input.ttsGenerationFailureCount, {
+        warningThreshold: ttsGenerationWarningThreshold,
+        criticalThreshold: ttsGenerationCriticalThreshold,
+      }),
+      value: input.ttsGenerationFailureCount,
+      unit: 'events',
+      warningThreshold: ttsGenerationWarningThreshold,
+      criticalThreshold: ttsGenerationCriticalThreshold,
+      summary:
+        input.ttsGenerationFailureCount === 0
+          ? 'No server-side Kangur neural narration generation failures were logged in the selected window.'
+          : `${input.ttsGenerationFailureCount} server-side Kangur neural narration generation failures were logged before fallback handling.`,
+      investigation: {
+        label: 'View generation failure logs',
+        href: buildSystemLogsHref({
+          source: 'kangur.tts.generationFailed',
+          from: input.from,
+          to: input.to,
+        }),
+      },
+    },
+    {
       id: 'kangur-tts-fallback-rate',
       title: 'TTS Fallback Rate',
       status: rateStatus(ttsFallbackRatePercent, {
@@ -794,6 +821,16 @@ export const getKangurObservabilitySummary = async (input: {
     ]);
 
   const ttsRequestCount = routeMetrics.ttsPost.metrics?.total ?? 0;
+  const ttsGenerationFailureCount =
+    (await getSystemLogMetrics({ source: 'kangur.tts.generationFailed', from, to }).catch(
+      (error: unknown) => {
+        errors['ttsGenerationFailures'] =
+          error instanceof Error
+            ? error.message
+            : 'Failed to load Kangur TTS generation failure metrics.';
+        return null;
+      }
+    ))?.total ?? 0;
   const ttsFallbackCount =
     (await getSystemLogMetrics({ source: 'kangur.tts.fallback', from, to }).catch(
       (error: unknown) => {
@@ -811,6 +848,7 @@ export const getKangurObservabilitySummary = async (input: {
     routeMetrics,
     analytics,
     ttsRequestCount,
+    ttsGenerationFailureCount,
     ttsFallbackCount,
     performanceBaseline,
   });
@@ -837,6 +875,7 @@ export const getKangurObservabilitySummary = async (input: {
       ),
       progressSyncFailures: progressSyncFailureCount,
       ttsRequests: ttsRequestCount,
+      ttsGenerationFailures: ttsGenerationFailureCount,
       ttsFallbackRatePercent: toPercent(ttsFallbackCount, ttsRequestCount),
     },
     alerts,

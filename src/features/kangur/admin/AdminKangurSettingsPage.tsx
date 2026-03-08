@@ -30,16 +30,21 @@ import {
 } from '@/features/kangur/settings';
 import {
   KANGUR_TTS_VOICE_OPTIONS,
+  type KangurLessonTtsProbeResponse,
   type KangurLessonTtsVoice,
 } from '@/features/kangur/tts/contracts';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
+import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Button, FormSection, PageLayout, Switch, useToast } from '@/shared/ui';
+import { Button, FormSection, Switch, useToast } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
+import { KangurAdminContentShell } from './components/KangurAdminContentShell';
+
 const TEST_NARRATOR_TEMPLATE_TEXT =
   'A bright classroom welcomes curious minds. Here is a short narration sample to verify the chosen voice.';
+const TEST_NARRATOR_PROBE_TEXT = 'To jest krotki test narratora Kangur.';
 
 const DOCS_TOOLTIP_SURFACES: Array<{
   key: keyof KangurHelpSettings['docsTooltips'];
@@ -97,6 +102,8 @@ const areHelpSettingsEqual = (left: KangurHelpSettings, right: KangurHelpSetting
 const ADMIN_FORM_CONTROL_CLASS_NAME =
   'w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm transition focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 disabled:cursor-not-allowed disabled:opacity-60';
 
+const SETTINGS_SECTION_CLASS_NAME = 'border-border/60 bg-card/55 shadow-sm';
+
 const areAiTutorAppSettingsEqual = (
   left: KangurAiTutorAppSettings,
   right: KangurAiTutorAppSettings
@@ -112,6 +119,17 @@ const parseAiTutorDailyMessageLimit = (value: string): number | null => {
   }
 
   return Math.min(parsed, 200);
+};
+
+const formatProbeTimestamp = (value: string): string => {
+  try {
+    return new Intl.DateTimeFormat('pl-PL', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(new Date(value));
+  } catch {
+    return value;
+  }
 };
 
 export function AdminKangurSettingsPage(): React.JSX.Element {
@@ -154,8 +172,12 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
       : ''
   );
   const [copyStatus, setCopyStatus] = useState('Copy text');
+  const [narratorProbe, setNarratorProbe] = useState<KangurLessonTtsProbeResponse | null>(null);
+  const [isProbingNarrator, setIsProbingNarrator] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const copyTimeoutRef = useRef<number | null>(null);
+  const narratorProbeRequestIdRef = useRef(0);
+  const lastAutoProbeVoiceRef = useRef<KangurLessonTtsVoice | null>(null);
   const agentPersonaFieldId = useId();
   const motionPresetFieldId = useId();
   const dailyMessageLimitFieldId = useId();
@@ -208,6 +230,58 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
       setCopyStatus('Copy failed');
     }
   };
+
+  const handleProbeNarrator = async ({
+    notify = true,
+  }: {
+    notify?: boolean;
+  } = {}): Promise<void> => {
+    const probeRequestId = narratorProbeRequestIdRef.current + 1;
+    narratorProbeRequestIdRef.current = probeRequestId;
+    setNarratorProbe(null);
+    setIsProbingNarrator(true);
+    try {
+      const response = await api.post<KangurLessonTtsProbeResponse>(
+        '/api/kangur/tts/probe',
+        {
+          voice,
+          locale: 'pl-PL',
+          text: TEST_NARRATOR_PROBE_TEXT,
+        },
+        { logError: false }
+      );
+      if (narratorProbeRequestIdRef.current !== probeRequestId) {
+        return;
+      }
+      setNarratorProbe(response);
+      if (notify) {
+        toast(response.ok ? 'Server narrator is ready.' : 'Server narrator probe found an issue.', {
+          variant: response.ok ? 'success' : 'error',
+        });
+      }
+    } catch (error) {
+      if (narratorProbeRequestIdRef.current !== probeRequestId) {
+        return;
+      }
+      if (notify) {
+        toast(error instanceof Error ? error.message : 'Failed to probe the server narrator.', {
+          variant: 'error',
+        });
+      }
+    } finally {
+      if (narratorProbeRequestIdRef.current === probeRequestId) {
+        setIsProbingNarrator(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (lastAutoProbeVoiceRef.current === voice) {
+      return;
+    }
+    lastAutoProbeVoiceRef.current = voice;
+    void handleProbeNarrator({ notify: false });
+  }, [voice]);
 
   const narratorDirty =
     engine !== persistedNarratorSettings.engine || voice !== persistedNarratorSettings.voice;
@@ -287,15 +361,28 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
   };
 
   return (
-    <PageLayout
+    <KangurAdminContentShell
       title='Kangur Settings'
       description='Manage global AI Tutor, narration, and documentation-driven tooltip behavior across Kangur.'
-      eyebrow={
-        <Link href='/admin/kangur' className='text-blue-300 hover:text-blue-200'>
-          ← Back to Kangur
-        </Link>
+      breadcrumbs={[
+        { label: 'Admin', href: '/admin' },
+        { label: 'Kangur', href: '/admin/kangur' },
+        { label: 'Settings' },
+      ]}
+      headerActions={
+        <>
+          <Button asChild variant='outline' size='sm'>
+            <Link href='/admin/kangur/documentation'>Documentation</Link>
+          </Button>
+          <Button
+            onClick={() => void handleSave()}
+            disabled={!isDirty || isSaving}
+            data-doc-id='settings_save'
+          >
+            {isSaving ? 'Saving...' : 'Save Settings'}
+          </Button>
+        </>
       }
-      containerClassName='container mx-auto py-10'
     >
       <div id='kangur-admin-settings-page' className='space-y-6'>
         <KangurDocsTooltipEnhancer enabled={adminDocsEnabled} rootId='kangur-admin-settings-page' />
@@ -303,7 +390,7 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
         <FormSection
           title='Narrator Engine'
           description='This applies globally to every learner-facing Kangur lesson and exercise.'
-          className='p-6'
+          className={SETTINGS_SECTION_CLASS_NAME}
         >
           <div className='grid gap-4 md:grid-cols-2'>
             {KANGUR_NARRATOR_ENGINE_OPTIONS.map((option) => {
@@ -397,21 +484,68 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
                   Paste this sample into a lesson or narration override to quickly hear the selected
                   voice.
                 </p>
+                <p className='mt-2 text-xs text-muted-foreground'>
+                  A silent health check also runs automatically when this page opens or the server
+                  narrator voice changes.
+                </p>
               </div>
-              <Button
-                size='sm'
-                variant='ghost'
-                onClick={() => {
-                  void handleCopyTemplateText();
-                }}
-                data-doc-id='settings_narrator_sample_copy'
-              >
-                {copyStatus}
-              </Button>
+              <div className='flex flex-wrap gap-2'>
+                <Button
+                  size='sm'
+                  variant='ghost'
+                  onClick={() => {
+                    void handleCopyTemplateText();
+                  }}
+                  data-doc-id='settings_narrator_sample_copy'
+                >
+                  {copyStatus}
+                </Button>
+                <Button
+                  size='sm'
+                  variant='outline'
+                  onClick={() => {
+                    void handleProbeNarrator({ notify: true });
+                  }}
+                  disabled={isProbingNarrator}
+                >
+                  {isProbingNarrator ? 'Testing...' : 'Test server narrator'}
+                </Button>
+              </div>
             </div>
             <div className='mt-3 rounded-xl border border-border/60 bg-white/80 px-3 py-2 text-sm text-slate-700'>
               {TEST_NARRATOR_TEMPLATE_TEXT}
             </div>
+            {narratorProbe ? (
+              <div
+                className={cn(
+                  'mt-4 rounded-xl border px-3 py-3',
+                  narratorProbe.ok
+                    ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
+                    : 'border-amber-200 bg-amber-50 text-amber-900'
+                )}
+              >
+                <div className='text-sm font-semibold'>
+                  {narratorProbe.ok ? 'Server narrator ready' : 'Server narrator unavailable'}
+                </div>
+                <p className='mt-1 text-sm'>{narratorProbe.message}</p>
+                <div className='mt-2 text-xs opacity-80'>
+                  Voice: {narratorProbe.voice} · Model: {narratorProbe.model} · Checked:{' '}
+                  {formatProbeTimestamp(narratorProbe.checkedAt)}
+                </div>
+                {!narratorProbe.ok && narratorProbe.errorStatus ? (
+                  <div className='mt-2 text-xs opacity-80'>
+                    Status: {narratorProbe.errorStatus}
+                    {narratorProbe.errorCode ? ` · Code: ${narratorProbe.errorCode}` : ''}
+                  </div>
+                ) : null}
+                {!narratorProbe.ok && narratorProbe.errorCode === 'billing_not_active' ? (
+                  <div className='mt-2 text-xs font-medium'>
+                    The configured OpenAI account exists, but billing is inactive. Keep Client
+                    narrator enabled until billing is restored.
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
           </div>
 
           <div className='mt-6 rounded-2xl border border-border/70 bg-muted/20 px-4 py-4 text-sm text-muted-foreground'>
@@ -423,7 +557,7 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
         <FormSection
           title='AI Tutor'
           description='These settings apply to the whole Kangur app. Parent profiles only manage learner-specific access and guardrails, while model routing stays in AI Brain.'
-          className='p-6'
+          className={SETTINGS_SECTION_CLASS_NAME}
         >
           <div className='grid gap-4 lg:grid-cols-2'>
             <div className='space-y-3 rounded-2xl border border-indigo-100 bg-indigo-50/80 px-4 py-4 shadow-sm'>
@@ -560,7 +694,7 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
         <FormSection
           title='Docs & Tooltips'
           description='These toggles control documentation-driven tooltips. Tooltip text is sourced only from the central Kangur documentation files.'
-          className='p-6'
+          className={SETTINGS_SECTION_CLASS_NAME}
         >
           <div className='rounded-2xl border border-border/70 bg-muted/20 px-4 py-4'>
             <div className='flex items-center justify-between gap-4'>
@@ -646,7 +780,7 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
         <FormSection
           title='Operations & Observability'
           description='Quick access to Kangur telemetry, summary health, and log triage surfaces.'
-          className='p-6'
+          className={SETTINGS_SECTION_CLASS_NAME}
         >
           <div className='grid gap-4 lg:grid-cols-3'>
             <div className='rounded-2xl border border-border/70 bg-background/90 px-4 py-4 shadow-sm'>
@@ -700,7 +834,7 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
           </div>
         </FormSection>
 
-        <div className='flex items-center justify-between border-t border-border pt-6'>
+        <div className='flex flex-col gap-3 border-t border-border/60 pt-6 md:flex-row md:items-center md:justify-between'>
           <p className='text-xs text-muted-foreground'>
             Saved narrator mode:{' '}
             <span className='font-semibold text-foreground'>
@@ -712,15 +846,11 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
               {persistedHelpSettings.docsTooltips.enabled ? 'On' : 'Off'}
             </span>
           </p>
-          <Button
-            onClick={() => void handleSave()}
-            disabled={!isDirty || isSaving}
-            data-doc-id='settings_save'
-          >
-            {isSaving ? 'Saving...' : 'Save Settings'}
-          </Button>
+          <div className='text-xs text-muted-foreground'>
+            {isDirty ? 'You have unsaved changes.' : 'All settings are in sync.'}
+          </div>
         </div>
       </div>
-    </PageLayout>
+    </KangurAdminContentShell>
   );
 }

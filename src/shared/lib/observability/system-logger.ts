@@ -545,9 +545,11 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
       try {
         let hydratedContext = context;
         try {
-          const { hydrateLogRuntimeContext } =
+          const hydrationModule =
             await import('./runtime-context/hydrate-system-log-runtime-context');
-          hydratedContext = (await hydrateLogRuntimeContext(context)) ?? context;
+          if (typeof hydrationModule.hydrateLogRuntimeContext === 'function') {
+            hydratedContext = (await hydrationModule.hydrateLogRuntimeContext(context)) ?? context;
+          }
         } catch (enrichmentError) {
           console.error(
             '[system-logger] Failed to attach registry runtime context',

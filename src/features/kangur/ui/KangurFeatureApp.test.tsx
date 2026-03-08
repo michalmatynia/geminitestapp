@@ -16,6 +16,14 @@ const {
   routeTransitionStateMock: vi.fn(),
 }));
 
+vi.mock('framer-motion', () => ({
+  AnimatePresence: ({ children }: { children: ReactNode }) => <>{children}</>,
+  motion: {
+    div: ({ children, ...props }: React.ComponentProps<'div'>) => <div {...props}>{children}</div>,
+  },
+  useReducedMotion: () => false,
+}));
+
 vi.mock('@/features/kangur/ui/components/KangurPageTransitionSkeleton', () => ({
   KangurPageTransitionSkeleton: ({ pageKey }: { pageKey?: string | null }) => (
     <div data-testid='kangur-page-transition-skeleton'>{pageKey ?? 'none'}</div>
@@ -137,6 +145,10 @@ describe('KangurFeatureApp', () => {
 
     expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
     expect(screen.getByTestId('kangur-page-lessons')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-route-content')).toHaveAttribute(
+      'data-route-transition-key',
+      '/kangur/lessons'
+    );
   });
 
   it('still renders the boot skeleton while the Kangur app is loading', () => {

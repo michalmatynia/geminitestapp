@@ -1,5 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import type { ReactNode } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { useKangurAuthMock, useKangurRoutingMock, resolveKangurPageKeyMock } = vi.hoisted(() => ({
@@ -24,6 +24,14 @@ vi.mock('@/features/kangur/ui/context/KangurProgressSyncProvider', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   KangurAiTutorProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+}));
+
+vi.mock('framer-motion', () => ({
+  AnimatePresence: ({ children }: { children: ReactNode }) => <>{children}</>,
+  motion: {
+    div: ({ children, ...props }: ComponentProps<'div'>) => <div {...props}>{children}</div>,
+  },
+  useReducedMotion: () => false,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurTutorAnchorContext', () => ({
@@ -115,10 +123,11 @@ describe('KangurFeatureApp shell behavior', () => {
       })
     );
 
-    const { container } = render(<KangurFeatureApp />);
+    render(<KangurFeatureApp />);
 
     expect(navigateToLogin).toHaveBeenCalledTimes(1);
-    expect(container).toBeEmptyDOMElement();
+    expect(screen.queryByTestId('kangur-route-content')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-game-page')).not.toBeInTheDocument();
   });
 
   it('renders the user-not-registered state for missing Kangur enrollment', () => {
@@ -158,8 +167,9 @@ describe('KangurFeatureApp shell behavior', () => {
     render(<KangurFeatureApp />);
 
     expect(screen.getByTestId('kangur-lessons-page')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-route-content')).toHaveClass(
-      'kangur-route-content-enter-a'
+    expect(screen.getByTestId('kangur-route-content')).toHaveAttribute(
+      'data-route-transition-key',
+      '/kangur/lessons'
     );
   });
 
@@ -184,8 +194,9 @@ describe('KangurFeatureApp shell behavior', () => {
 
     const { rerender } = render(<KangurFeatureApp />);
 
-    expect(screen.getByTestId('kangur-route-content')).toHaveClass(
-      'kangur-route-content-enter-a'
+    expect(screen.getByTestId('kangur-route-content')).toHaveAttribute(
+      'data-route-transition-key',
+      '/kangur/game'
     );
 
     useKangurRoutingMock.mockReturnValue({
@@ -197,8 +208,9 @@ describe('KangurFeatureApp shell behavior', () => {
     rerender(<KangurFeatureApp />);
 
     await waitFor(() => {
-      expect(screen.getByTestId('kangur-route-content')).toHaveClass(
-        'kangur-route-content-enter-b'
+      expect(screen.getByTestId('kangur-route-content')).toHaveAttribute(
+        'data-route-transition-key',
+        '/kangur/lessons'
       );
     });
   });

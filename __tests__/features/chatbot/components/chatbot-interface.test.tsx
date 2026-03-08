@@ -5,21 +5,102 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { ChatInterface } from '@/features/ai/chatbot/components/ChatInterface';
-import { useChatbotMessages } from '@/features/ai/chatbot/context/ChatbotContext';
+import {
+  useChatbotMessages,
+  useChatbotSessions,
+  useChatbotSettings,
+} from '@/features/ai/chatbot/context/ChatbotContext';
+import { useAgentPersonas } from '@/features/ai/agentcreator/hooks/useAgentPersonas';
 
 vi.mock('@/features/ai/chatbot/context/ChatbotContext', () => {
-  const useChatbotMock = vi.fn();
   const useChatbotMessagesMock = vi.fn();
+  const useChatbotSessionsMock = vi.fn();
+  const useChatbotSettingsMock = vi.fn();
   return {
-    useChatbot: useChatbotMock,
     useChatbotMessages: useChatbotMessagesMock,
+    useChatbotSessions: useChatbotSessionsMock,
+    useChatbotSettings: useChatbotSettingsMock,
   };
 });
+
+vi.mock('@/features/ai/agentcreator/hooks/useAgentPersonas', () => ({
+  useAgentPersonas: vi.fn(),
+}));
 
 describe('ChatInterface', () => {
   beforeEach(() => {
     window.HTMLElement.prototype.scrollIntoView = vi.fn();
     vi.clearAllMocks();
+    vi.mocked(useChatbotSessions).mockReturnValue({
+      sessions: [],
+      currentSessionId: null,
+      sessionsLoading: false,
+      createNewSession: vi.fn(),
+      deleteSession: vi.fn(),
+      selectSession: vi.fn(),
+    });
+    vi.mocked(useChatbotSettings).mockReturnValue({
+      personaId: null,
+      model: 'default',
+      webSearchEnabled: false,
+      useGlobalContext: false,
+      useLocalContext: false,
+      agentModeEnabled: false,
+      searchProvider: 'serpapi',
+      playwrightPersonaId: null,
+      agentBrowser: 'chromium',
+      agentRunHeadless: true,
+      agentIgnoreRobotsTxt: false,
+      agentRequireHumanApproval: false,
+      agentMemoryValidationModel: null,
+      agentPlannerModel: null,
+      agentSelfCheckModel: null,
+      agentExtractionValidationModel: null,
+      agentToolRouterModel: null,
+      agentLoopGuardModel: null,
+      agentApprovalGateModel: null,
+      agentMemorySummarizationModel: null,
+      agentSelectorInferenceModel: null,
+      agentOutputNormalizationModel: null,
+      agentMaxSteps: 10,
+      agentMaxStepAttempts: 3,
+      agentMaxReplanCalls: 3,
+      agentReplanEverySteps: 1,
+      agentMaxSelfChecks: 3,
+      agentLoopGuardThreshold: 0.5,
+      agentLoopBackoffBaseMs: 500,
+      agentLoopBackoffMaxMs: 60_000,
+      globalContext: '',
+      localContext: '',
+      localContextMode: 'override',
+      settingsDirty: false,
+      settingsSaving: false,
+      loadChatbotSettings: vi.fn(),
+      saveChatbotSettings: vi.fn(),
+    });
+    vi.mocked(useAgentPersonas).mockReturnValue({
+      data: [],
+      error: null,
+      isError: false,
+      isFetched: true,
+      isFetching: false,
+      isLoading: false,
+      isPending: false,
+      isPlaceholderData: false,
+      isRefetchError: false,
+      isRefetching: false,
+      isStale: false,
+      isSuccess: true,
+      refetch: vi.fn(),
+      status: 'success',
+      fetchStatus: 'idle',
+      failureCount: 0,
+      failureReason: null,
+      dataUpdatedAt: 0,
+      errorUpdatedAt: 0,
+      isEnabled: true,
+      promise: Promise.resolve([]),
+    } as ReturnType<typeof useAgentPersonas>);
   });
 
   const mockMessages = [

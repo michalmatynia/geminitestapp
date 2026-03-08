@@ -24909,3 +24909,17 @@ The column `(not available)` does not exist in the current database. {
   errorName: 'PrismaClientKnownRequestError',
   fingerprint: '22429054c808ba90'
 }
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 4,
+  reason: 'idle',
+  address: 'cluster0-shard-00-00.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 4,
+  reason: 'idle',
+  address: 'cluster0-shard-00-02.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}

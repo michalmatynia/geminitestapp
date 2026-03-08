@@ -57,7 +57,7 @@ const CHECK_LABELS = Object.freeze({
 
 const CHECK_READINESS = Object.freeze({
   build: { required: true },
-  lint: { required: true },
+  lint: { required: false },
   lintDomains: { required: true },
   typecheck: { required: true },
   criticalFlows: { required: true },

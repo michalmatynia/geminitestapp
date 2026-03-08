@@ -188,8 +188,8 @@ const normalizePersistedSessionState = (value: unknown): KangurAiTutorSessionSta
   const input = value as Record<string, unknown>;
   const messages = Array.isArray(input['messages'])
     ? input['messages']
-        .map(normalizePersistedMessage)
-        .filter((message): message is ChatMessage => message !== null)
+      .map(normalizePersistedMessage)
+      .filter((message): message is ChatMessage => message !== null)
     : [];
   const suggestedMoodId = agentPersonaMoodIdSchema.safeParse(input['suggestedMoodId']).data ?? null;
   const usageSummary = kangurAiTutorUsageSummarySchema.safeParse(input['usageSummary']).data ?? null;
@@ -225,17 +225,17 @@ const loadPersistedRuntimeState = (): PersistedKangurAiTutorRuntimeState => {
       sessionStates:
         parsed.sessionStates && typeof parsed.sessionStates === 'object'
           ? Object.entries(parsed.sessionStates).reduce<Record<string, KangurAiTutorSessionState>>(
-              (acc, [sessionKey, sessionState]) => {
-                const normalized = normalizePersistedSessionState(sessionState);
-                if (!normalized) {
-                  return acc;
-                }
-
-                acc[sessionKey] = normalized;
+            (acc, [sessionKey, sessionState]) => {
+              const normalized = normalizePersistedSessionState(sessionState);
+              if (!normalized) {
                 return acc;
-              },
-              {}
-            )
+              }
+
+              acc[sessionKey] = normalized;
+              return acc;
+            },
+            {}
+          )
           : {},
     };
   } catch {
@@ -417,11 +417,11 @@ export function KangurAiTutorSessionSyncInner({
       sessionKey === null
         ? null
         : {
-            token: tokenRef.current,
-            learnerId,
-            sessionContext: normalizedSessionContext,
-            sessionKey,
-          };
+          token: tokenRef.current,
+          learnerId,
+          sessionContext: normalizedSessionContext,
+          sessionKey,
+        };
 
     setRegistration(registration);
 
@@ -497,8 +497,11 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
     [activeLearnerId, appSettings, parsedSettings]
   );
   const availability = useMemo(
-    () => resolveKangurAiTutorAvailability(tutorSettings, activeSessionContext),
-    [activeSessionContext, tutorSettings]
+    () =>
+      resolveKangurAiTutorAvailability(tutorSettings, activeSessionContext, {
+        ownerEmailVerified: authUser?.ownerEmailVerified,
+      }),
+    [activeSessionContext, authUser?.ownerEmailVerified, tutorSettings]
   );
   const enabled = availability.allowed;
   const allowCrossPagePersistence = tutorSettings?.allowCrossPagePersistence ?? true;
@@ -675,10 +678,10 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
       updateSessionState(activeSessionKey, (currentState) =>
         currentState.isLoading || currentState.isUsageLoading
           ? {
-              ...currentState,
-              isLoading: false,
-              isUsageLoading: false,
-            }
+            ...currentState,
+            isLoading: false,
+            isUsageLoading: false,
+          }
           : currentState
       );
     }
@@ -864,8 +867,8 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
         const usageFromError =
           error instanceof ApiError && error.payload && typeof error.payload === 'object'
             ? kangurAiTutorUsageSummarySchema
-                .safeParse((error.payload as Record<string, unknown>)['details'])
-                .data ?? null
+              .safeParse((error.payload as Record<string, unknown>)['details'])
+              .data ?? null
             : null;
         updateSessionState(activeSessionKey, (currentState) => ({
           ...currentState,

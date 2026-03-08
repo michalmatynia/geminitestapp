@@ -2,7 +2,6 @@
 
 import { useMemo } from 'react';
 
-import { DocumentationTooltipEnhancer } from '@/features/tooltip-engine';
 import {
   KANGUR_HELP_SETTINGS_KEY,
   areKangurDocsTooltipsEnabled,
@@ -10,7 +9,11 @@ import {
   type KangurDocsTooltipSurface,
   type KangurHelpSettings,
 } from '@/features/kangur/help-settings';
-import { DOCUMENTATION_MODULE_IDS, getDocumentationTooltip } from '@/shared/lib/documentation';
+import {
+  DOCUMENTATION_MODULE_IDS,
+  DocumentationTooltipEnhancer,
+  getDocumentationTooltip,
+} from '@/shared/lib/documentation';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
 export const getKangurDocTooltip = (docId: string): string | null =>

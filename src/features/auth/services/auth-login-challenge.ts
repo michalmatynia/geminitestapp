@@ -6,23 +6,40 @@ import { getAuthDataProvider, requireAuthProvider } from '@/shared/lib/auth/serv
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 
+export type AuthChallengePurpose =
+  | 'credentials'
+  | 'magic_login'
+  | 'magic_email_link'
+  | 'email_verification';
+
 type ChallengeRecord = {
   _id: string;
   userId: string;
   email: string;
   ip: string | null;
   mfaRequired: boolean;
+  purpose: AuthChallengePurpose;
+  callbackUrl: string | null;
   expiresAt: Date;
   createdAt: Date;
 };
 
 const CHALLENGES_COLLECTION = 'auth_login_challenges';
-const CHALLENGE_TTL_MINUTES = 5;
+const DEFAULT_LOGIN_CHALLENGE_TTL_MINUTES = 5;
+const MAGIC_LOGIN_CHALLENGE_TTL_MINUTES = 10;
+const MAGIC_EMAIL_LINK_TTL_MINUTES = 20;
+const EMAIL_VERIFICATION_TTL_MINUTES = 7 * 24 * 60;
 
 const memoryChallenges = new Map<string, ChallengeRecord>();
 let challengeIndexesReady: Promise<void> | null = null;
 
 const nowPlusMinutes = (minutes: number): Date => new Date(Date.now() + minutes * 60 * 1000);
+
+const isAuthChallengePurpose = (value: unknown): value is AuthChallengePurpose =>
+  value === 'credentials' ||
+  value === 'magic_login' ||
+  value === 'magic_email_link' ||
+  value === 'email_verification';
 
 const toDate = (value: unknown): Date | null => {
   if (value instanceof Date) return value;
@@ -31,6 +48,15 @@ const toDate = (value: unknown): Date | null => {
     return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
   return null;
+};
+
+const normalizeCallbackUrl = (value: unknown): string | null => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
 };
 
 const parseChallengeRecord = (value: unknown): ChallengeRecord | null => {
@@ -54,6 +80,8 @@ const parseChallengeRecord = (value: unknown): ChallengeRecord | null => {
     email: record['email'],
     ip: typeof record['ip'] === 'string' ? record['ip'] : null,
     mfaRequired: record['mfaRequired'],
+    purpose: isAuthChallengePurpose(record['purpose']) ? record['purpose'] : 'credentials',
+    callbackUrl: normalizeCallbackUrl(record['callbackUrl']),
     expiresAt,
     createdAt,
   };
@@ -154,6 +182,9 @@ export const createLoginChallenge = async (input: {
   email: string;
   ip: string | null;
   mfaRequired: boolean;
+  purpose?: Extract<AuthChallengePurpose, 'credentials' | 'magic_login'>;
+  callbackUrl?: string | null;
+  ttlMinutes?: number;
 }): Promise<{ id: string; expiresAt: Date; mfaRequired: boolean }> => {
   const id = crypto.randomBytes(32).toString('hex');
   const record: ChallengeRecord = {
@@ -162,11 +193,59 @@ export const createLoginChallenge = async (input: {
     email: input.email.toLowerCase(),
     ip: input.ip ?? null,
     mfaRequired: input.mfaRequired,
-    expiresAt: nowPlusMinutes(CHALLENGE_TTL_MINUTES),
+    purpose: input.purpose ?? 'credentials',
+    callbackUrl: normalizeCallbackUrl(input.callbackUrl),
+    expiresAt: nowPlusMinutes(input.ttlMinutes ?? DEFAULT_LOGIN_CHALLENGE_TTL_MINUTES),
     createdAt: new Date(),
   };
   await setChallenge(record);
   return { id, expiresAt: record.expiresAt, mfaRequired: record.mfaRequired };
+};
+
+const createStoredChallenge = async (input: {
+  userId: string;
+  email: string;
+  purpose: AuthChallengePurpose;
+  ttlMinutes: number;
+  callbackUrl?: string | null;
+  ip?: string | null;
+  mfaRequired?: boolean;
+}): Promise<{ id: string; expiresAt: Date }> => {
+  const record: ChallengeRecord = {
+    _id: crypto.randomBytes(32).toString('hex'),
+    userId: input.userId,
+    email: input.email.toLowerCase(),
+    ip: input.ip ?? null,
+    mfaRequired: input.mfaRequired ?? false,
+    purpose: input.purpose,
+    callbackUrl: normalizeCallbackUrl(input.callbackUrl),
+    expiresAt: nowPlusMinutes(input.ttlMinutes),
+    createdAt: new Date(),
+  };
+
+  await setChallenge(record);
+  return {
+    id: record._id,
+    expiresAt: record.expiresAt,
+  };
+};
+
+const consumeStoredChallenge = async (input: {
+  id: string;
+  allowedPurposes: AuthChallengePurpose[];
+  email?: string | null;
+  ip?: string | null;
+}): Promise<ChallengeRecord | null> => {
+  const record = await getChallenge(input.id);
+  if (!record) return null;
+  await deleteChallenge(input.id);
+
+  if (record.expiresAt.getTime() < Date.now()) return null;
+  if (!input.allowedPurposes.includes(record.purpose)) return null;
+  if (typeof input.email === 'string' && record.email !== input.email.toLowerCase()) return null;
+  if (record.ip && input.ip && record.ip !== input.ip) return null;
+
+  return record;
 };
 
 export const consumeLoginChallenge = async (input: {
@@ -174,13 +253,63 @@ export const consumeLoginChallenge = async (input: {
   email: string;
   ip: string | null;
 }): Promise<ChallengeRecord | null> => {
-  const record = await getChallenge(input.id);
-  if (!record) return null;
-  await deleteChallenge(input.id);
-
-  if (record.expiresAt.getTime() < Date.now()) return null;
-  if (record.email !== input.email.toLowerCase()) return null;
-  if (record.ip && input.ip && record.ip !== input.ip) return null;
-
-  return record;
+  return consumeStoredChallenge({
+    ...input,
+    allowedPurposes: ['credentials', 'magic_login'],
+  });
 };
+
+export const createMagicLoginChallenge = async (input: {
+  userId: string;
+  email: string;
+  callbackUrl?: string | null;
+}): Promise<{ id: string; expiresAt: Date }> =>
+  createStoredChallenge({
+    userId: input.userId,
+    email: input.email,
+    purpose: 'magic_login',
+    ttlMinutes: MAGIC_LOGIN_CHALLENGE_TTL_MINUTES,
+    callbackUrl: input.callbackUrl,
+  });
+
+export const createMagicEmailLinkChallenge = async (input: {
+  userId: string;
+  email: string;
+  callbackUrl?: string | null;
+}): Promise<{ id: string; expiresAt: Date }> =>
+  createStoredChallenge({
+    userId: input.userId,
+    email: input.email,
+    purpose: 'magic_email_link',
+    ttlMinutes: MAGIC_EMAIL_LINK_TTL_MINUTES,
+    callbackUrl: input.callbackUrl,
+  });
+
+export const createEmailVerificationChallenge = async (input: {
+  userId: string;
+  email: string;
+  callbackUrl?: string | null;
+}): Promise<{ id: string; expiresAt: Date }> =>
+  createStoredChallenge({
+    userId: input.userId,
+    email: input.email,
+    purpose: 'email_verification',
+    ttlMinutes: EMAIL_VERIFICATION_TTL_MINUTES,
+    callbackUrl: input.callbackUrl,
+  });
+
+export const consumeMagicEmailLinkChallenge = async (
+  id: string
+): Promise<ChallengeRecord | null> =>
+  consumeStoredChallenge({
+    id,
+    allowedPurposes: ['magic_email_link'],
+  });
+
+export const consumeEmailVerificationChallenge = async (
+  id: string
+): Promise<ChallengeRecord | null> =>
+  consumeStoredChallenge({
+    id,
+    allowedPurposes: ['email_verification'],
+  });

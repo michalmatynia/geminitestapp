@@ -77,6 +77,7 @@ export const DEFAULT_KANGUR_AI_TUTOR_LEARNER_SETTINGS: KangurAiTutorLearnerSetti
 
 export type KangurAiTutorAvailabilityReason =
   | 'disabled'
+  | 'email_unverified'
   | 'missing_context'
   | 'lessons_disabled'
   | 'tests_disabled'
@@ -300,10 +301,17 @@ export function getKangurAiTutorSettingsForLearner(
 
 export function resolveKangurAiTutorAvailability(
   settings: KangurAiTutorLearnerSettings | null | undefined,
-  context: KangurAiTutorConversationContext | null | undefined
+  context: KangurAiTutorConversationContext | null | undefined,
+  options?: {
+    ownerEmailVerified?: boolean | null;
+  }
 ): { allowed: true } | { allowed: false; reason: KangurAiTutorAvailabilityReason } {
   if (!settings?.enabled) {
     return { allowed: false, reason: 'disabled' };
+  }
+
+  if (options?.ownerEmailVerified === false) {
+    return { allowed: false, reason: 'email_unverified' };
   }
 
   if (!context) {

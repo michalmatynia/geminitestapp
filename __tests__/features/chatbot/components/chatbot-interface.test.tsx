@@ -236,6 +236,30 @@ describe('ChatInterface', () => {
     expect(screen.getByText('Hi there!')).toBeInTheDocument();
   });
 
+  it('uses motion-safe auto scrolling when reduced motion is enabled', () => {
+    const scrollIntoView = vi.fn();
+    window.HTMLElement.prototype.scrollIntoView = scrollIntoView;
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+      matches: query === '(prefers-reduced-motion: reduce)',
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }));
+
+    vi.mocked(useChatbotMessages).mockReturnValue({
+      ...defaultMockValue,
+      messages: mockMessages,
+    });
+
+    render(<ChatInterface />);
+
+    expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'auto' });
+  });
+
   it('calls setInput on input change', () => {
     const setInput = vi.fn();
     vi.mocked(useChatbotMessages).mockReturnValue({

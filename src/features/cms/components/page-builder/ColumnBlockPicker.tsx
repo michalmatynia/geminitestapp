@@ -2,7 +2,7 @@
 
 import React, { useCallback, useMemo } from 'react';
 
-import { APP_EMBED_SETTING_KEY, type AppEmbedId } from '@/features/app-embeds';
+import { APP_EMBED_SETTING_KEY, type AppEmbedId } from '@/shared/lib/app-embeds';
 import type { PickerOption } from '@/shared/contracts/ui';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { GenericPickerDropdown } from '@/shared/ui/templates/pickers';

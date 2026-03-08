@@ -2,8 +2,7 @@
 
 import React from 'react';
 
-import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
-import { DocumentationTooltipEnhancer } from '@/features/tooltip-engine';
+import { DOCUMENTATION_MODULE_IDS, DocumentationTooltipEnhancer } from '@/shared/lib/documentation';
 
 export function DocsTooltipEnhancer(props: {
   rootId: string;

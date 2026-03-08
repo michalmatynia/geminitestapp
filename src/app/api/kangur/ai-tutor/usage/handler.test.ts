@@ -45,6 +45,7 @@ describe('kangur ai tutor usage handler', () => {
       activeLearner: {
         id: 'learner-1',
       },
+      ownerEmailVerified: true,
     });
 
     readStoredSettingValueMock.mockImplementation(async (key: string) => {
@@ -123,6 +124,25 @@ describe('kangur ai tutor usage handler', () => {
       )
     ).rejects.toMatchObject({
       message: 'AI tutor is not enabled for this learner.',
+      httpStatus: 400,
+    });
+  });
+
+  it('rejects usage reads when the parent email is not verified yet', async () => {
+    resolveKangurActorMock.mockResolvedValue({
+      activeLearner: {
+        id: 'learner-1',
+      },
+      ownerEmailVerified: false,
+    });
+
+    await expect(
+      getKangurAiTutorUsageHandler(
+        new NextRequest('http://localhost/api/kangur/ai-tutor/usage'),
+        createRequestContext()
+      )
+    ).rejects.toMatchObject({
+      message: 'Verify your parent email to unlock AI Tutor.',
       httpStatus: 400,
     });
   });

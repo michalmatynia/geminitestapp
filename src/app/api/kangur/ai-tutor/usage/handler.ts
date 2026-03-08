@@ -16,6 +16,16 @@ import type { KangurAiTutorUsageResponse } from '@/shared/contracts/kangur-ai-tu
 import { badRequestError } from '@/shared/errors/app-error';
 import { readStoredSettingValue } from '@/shared/lib/ai-brain/server';
 
+const AI_TUTOR_AVAILABILITY_ERROR_MESSAGES = {
+  disabled: 'AI tutor is not enabled for this learner.',
+  email_unverified: 'Verify your parent email to unlock AI Tutor.',
+  missing_context: 'AI tutor context is required for Kangur tutoring sessions.',
+  lessons_disabled: 'AI tutor is disabled for lessons for this learner.',
+  tests_disabled: 'AI tutor is disabled for tests for this learner.',
+  review_after_answer_only:
+    'AI tutor is available in tests only after the answer has been revealed.',
+} as const;
+
 export async function getKangurAiTutorUsageHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext
@@ -30,7 +40,15 @@ export async function getKangurAiTutorUsageHandler(
   const tutorSettings = getKangurAiTutorSettingsForLearner(settingsStore, learnerId, appSettings);
 
   if (!tutorSettings.enabled) {
-    throw badRequestError('AI tutor is not enabled for this learner.');
+    throw badRequestError(AI_TUTOR_AVAILABILITY_ERROR_MESSAGES.disabled, {
+      reason: 'disabled',
+    });
+  }
+
+  if (!actor.ownerEmailVerified) {
+    throw badRequestError(AI_TUTOR_AVAILABILITY_ERROR_MESSAGES.email_unverified, {
+      reason: 'email_unverified',
+    });
   }
 
   const usage = await readKangurAiTutorDailyUsage({

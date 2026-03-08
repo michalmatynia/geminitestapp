@@ -12,7 +12,7 @@ import {
   DEFAULT_APP_EMBED_ID,
   KANGUR_APP_EMBED_ENTRY_PAGE_OPTIONS,
   getAppEmbedOption,
-} from '@/features/app-embeds';
+} from '@/shared/lib/app-embeds';
 
 import { SettingsFormProvider } from './SettingsFormContext';
 import {

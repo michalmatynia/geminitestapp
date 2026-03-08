@@ -1,11 +1,11 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-08T19:09:02.883Z
+Generated at: 2026-03-08T19:28:39.239Z
 
 ## Snapshot
 
-- Source files: 5120
-- Source lines: 833021
+- Source files: 5127
+- Source lines: 833109
 - use client files: 1496
 - Files >= 1000 LOC: 9
 - Files >= 1500 LOC: 3
@@ -14,7 +14,7 @@ Generated at: 2026-03-08T19:09:02.883Z
 - API delegated server routes: 0
 - API routes without apiHandler/delegation: 13
 - API explicit cache policy coverage: 330/330 (100.0%)
-- Cross-feature dependency pairs: 55
+- Cross-feature dependency pairs: 50
 - Shared -> features imports: 75
 - setInterval occurrences: 22
 - Prop-drilling chains (depth >= 3): 24
@@ -54,18 +54,18 @@ Generated at: 2026-03-08T19:09:02.883Z
 | `kangur -> foldertree` | 10 |
 | `case-resolver -> ai` | 9 |
 | `ai -> products` | 8 |
-| `cms -> app-embeds` | 8 |
 | `cms -> viewer3d` | 8 |
 | `integrations -> products` | 8 |
 | `kangur -> cms` | 8 |
 | `products -> internationalization` | 8 |
+| `integrations -> playwright` | 7 |
 
 ## Top File Hotspots (by LOC)
 
 | File | LOC |
 | --- | ---: |
 | `src/features/kangur/cms-builder/project.ts` | 2855 |
-| `src/features/kangur/ui/components/KangurAiTutorWidget.tsx` | 2243 |
+| `src/features/kangur/ui/components/KangurAiTutorWidget.tsx` | 2245 |
 | `src/features/kangur/ui/components/KangurAiTutorWidget.test.tsx` | 1596 |
 | `src/features/kangur/ui/design/primitives.tsx` | 1480 |
 | `src/features/cms/components/page-builder/registry/block-definitions-content.ts` | 1140 |

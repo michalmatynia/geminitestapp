@@ -1,15 +1,15 @@
 # Import Boundaries Check
 
-Generated at: 2026-03-08T19:02:20.230Z
+Generated at: 2026-03-08T19:27:15.223Z
 
 ## Summary
 
-- Status: WARN
-- Files scanned: 4410
+- Status: PASSED
+- Files scanned: 4415
 - Features tracked: 15
 - Circular dependencies: 0
 - Errors: 0
-- Warnings: 1
+- Warnings: 0
 - Info: 0
 
 ## Feature Dependency Graph
@@ -18,7 +18,7 @@ Generated at: 2026-03-08T19:02:20.230Z
 | --- | --- | ---: |
 | ai | auth, files, foldertree, notesapp, playwright, products, prompt-engine, prompt-exploder, tooltip-engine, viewer3d | 10 |
 | case-resolver | admin, ai, auth, case-resolver-capture, document-editor, filemaker, foldertree, prompt-exploder | 8 |
-| cms | admin, app-embeds, files, foldertree, gsap, products, viewer3d | 7 |
+| cms | admin, files, foldertree, gsap, products, viewer3d | 6 |
 | jobs | ai, case-resolver, integrations, product-sync, products | 5 |
 | kangur | auth, cms, document-editor, foldertree, tooltip-engine | 5 |
 | admin | auth, foldertree, notesapp, prompt-engine | 4 |
@@ -36,13 +36,10 @@ Generated at: 2026-03-08T19:02:20.230Z
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| deep-relative-import | 0 | 1 | 0 |
 
 ## Issues
 
-| Severity | Rule | Location | Message |
-| --- | --- | --- | --- |
-| WARN | deep-relative-import | src/app/(frontend)/kangur/(app)/[[...slug]]/page.tsx:6 | Deep relative import (3 levels up). Consider using path aliases. |
+No import boundary issues detected.
 
 ## Notes
 

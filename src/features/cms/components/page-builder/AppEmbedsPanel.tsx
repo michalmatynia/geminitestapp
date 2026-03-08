@@ -3,9 +3,16 @@
 import Link from 'next/link';
 import React from 'react';
 
-import { APP_EMBED_OPTIONS } from '@/features/app-embeds';
-import { AppEmbedsProvider, useAppEmbeds } from '@/features/app-embeds';
-import { Button, Checkbox, Label, SectionHeader, SimpleSettingsList, LoadingState } from '@/shared/ui';
+import { APP_EMBED_OPTIONS } from '@/shared/lib/app-embeds';
+import { AppEmbedsProvider, useAppEmbeds } from '@/shared/providers/AppEmbedsProvider';
+import {
+  Button,
+  Checkbox,
+  Label,
+  LoadingState,
+  SectionHeader,
+  SimpleSettingsList,
+} from '@/shared/ui';
 
 export function AppEmbedsPanel({
   showHeader = true,

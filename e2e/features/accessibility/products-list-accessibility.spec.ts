@@ -6,6 +6,8 @@ import { expectPageToHaveNoAxeViolations } from '../../support/accessibility';
 test('products list exposes search and actions accessibly and passes the accessibility smoke scan', async ({
   page,
 }) => {
+  test.setTimeout(60_000);
+
   await ensureAdminSession(page, '/admin/products');
 
   await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible();

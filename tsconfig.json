@@ -115,7 +115,13 @@
     ".next-dev-web-dev-smoke-final/types/**/*.ts",
     ".next-dev-web-dev-smoke-final/dev/types/**/*.ts",
     ".next-dev-web-dev-route-crawl-isolated-5/types/**/*.ts",
-    ".next-dev-web-dev-route-crawl-isolated-5/dev/types/**/*.ts"
+    ".next-dev-web-dev-route-crawl-isolated-5/dev/types/**/*.ts",
+    ".next-dev-web-dev-smoke-final-check/types/**/*.ts",
+    ".next-dev-web-dev-smoke-final-check/dev/types/**/*.ts",
+    ".next-dev-web-dev-smoke-final-2/types/**/*.ts",
+    ".next-dev-web-dev-smoke-final-2/dev/types/**/*.ts",
+    ".next-dev-web-dev-smoke-final-3/types/**/*.ts",
+    ".next-dev-web-dev-smoke-final-3/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

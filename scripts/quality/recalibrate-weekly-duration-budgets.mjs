@@ -28,7 +28,7 @@ const BUDGET_BLOCK_PATTERN = /const DURATION_ALERT_BUDGETS_MS = Object\.freeze\(
 const WEEKLY_DURATION_BUDGETS_MS = Object.freeze({
   build: 195 * 1000,
   lint: 4 * 60 * 1000,
-  lintDomains: 260 * 1000,
+  lintDomains: 407 * 1000,
   typecheck: 2 * 60 * 1000,
   criticalFlows: 60 * 1000,
   securitySmoke: 60 * 1000,

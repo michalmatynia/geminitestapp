@@ -1,11 +1,11 @@
 'use client';
 
-import Link from 'next/link';
 import { signIn, signOut } from 'next-auth/react';
 import { Suspense, useState, type JSX } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
+import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
   clearStoredActiveLearnerId,
   setStoredActiveLearnerId,
@@ -42,7 +42,7 @@ export const resolveKangurLoginCallbackNavigation = (
 const navigateToCallback = (router: ReturnType<typeof useRouter>, callbackUrl: string): void => {
   const navigationTarget = resolveKangurLoginCallbackNavigation(callbackUrl, window.location.origin);
   if (navigationTarget?.kind === 'router') {
-    router.push(navigationTarget.href);
+    router.push(navigationTarget.href, { scroll: false });
     return;
   }
   window.location.assign(navigationTarget?.href ?? callbackUrl);
@@ -287,7 +287,11 @@ function KangurLoginPageContent({
             </button>
           </form>
 
-          <Link href={backHref} className='mt-6 inline-flex text-sm text-slate-300 hover:text-white'>
+          <Link
+            href={backHref}
+            className='mt-6 inline-flex text-sm text-slate-300 hover:text-white'
+            targetPageKey='Game'
+          >
             Wroc do Kangura
           </Link>
         </section>

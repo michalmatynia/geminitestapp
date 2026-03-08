@@ -155,7 +155,7 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
 
   const navigateToLogin = useCallback((): void => {
     const loginHref = kangurPlatform.auth.prepareLoginHref(window.location.href);
-    router.push(loginHref);
+    router.push(loginHref, { scroll: false });
   }, [router]);
 
   const selectLearner = useCallback(async (learnerId: string): Promise<void> => {

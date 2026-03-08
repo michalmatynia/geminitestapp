@@ -20,6 +20,7 @@ const createEvent = (id: string) => ({
   source: 'ui.products.table',
   operation: 'fetch',
   resource: '/api/v2/products',
+  description: 'Fetches product rows for the products table.',
   key: 'customer=john.doe@example.com&phone=+48 123 456 789&' + 'x'.repeat(220),
   keyHash: 'hash-key-1',
   criticality: 'critical',
@@ -91,6 +92,7 @@ describe('query telemetry ingestion', () => {
     });
     expect(ingestedLog?.context).toMatchObject({
       eventId: 'evt-1',
+      description: 'Fetches product rows for the products table.',
       keyHash: 'hash-key-1',
       keyPreviewTruncated: true,
       telemetryTruncation: {

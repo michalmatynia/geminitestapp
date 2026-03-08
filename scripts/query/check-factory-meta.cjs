@@ -29,6 +29,7 @@ const FACTORY_CALLS = new Set([
   'fetchQueryV2',
   'prefetchQueryV2',
 ]);
+const MULTI_QUERY_CALLS = new Set(['createMultiQueryV2', 'createSuspenseMultiQueryV2']);
 
 const FACTORY_META_IGNORED_DIRS = new Set(['node_modules', '.next', '__tests__', 'dist']);
 const REPO_SCAN_IGNORED_DIRS = new Set([
@@ -46,6 +47,23 @@ const RAW_QUERY_EXECUTION_ALLOWLIST = new Set([
   'src/shared/lib/tanstack-factory-v2/executors.ts',
 ]);
 const RAW_QUERY_EXECUTION_METHODS = new Set(['fetchQuery', 'prefetchQuery', 'ensureQueryData']);
+const LOW_SIGNAL_DESCRIPTION_PATTERNS = [
+  /^Handles query and mutation requests\.$/,
+  /^(Loads|Creates|Updates|Deletes|Runs|Uploads) (list|detail|create|update|delete|action|upload)\.$/,
+];
+
+const unwrapExpression = (expression) => {
+  let current = expression;
+  while (
+    current &&
+    (ts.isAsExpression(current) ||
+      ts.isParenthesizedExpression(current) ||
+      (typeof ts.isSatisfiesExpression === 'function' && ts.isSatisfiesExpression(current)))
+  ) {
+    current = current.expression;
+  }
+  return current;
+};
 
 // Config: force all createMutationV2 to use 'action' if STRICT_GENERIC_ACTION is true.
 // Otherwise they can use any operation.
@@ -139,6 +157,133 @@ const extractMetaObject = (metaProperty) => {
   return null;
 };
 
+const isLowSignalDescription = (descriptionValue) =>
+  LOW_SIGNAL_DESCRIPTION_PATTERNS.some((pattern) => pattern.test(descriptionValue));
+
+const isFactoryMetaPlaceholderQueryKey = (expression) => {
+  const unwrapped = unwrapExpression(expression);
+  if (!unwrapped || !ts.isArrayLiteralExpression(unwrapped)) return false;
+  const [firstElement] = unwrapped.elements;
+  return Boolean(firstElement && readStringLiteralValue(firstElement) === 'factory-meta');
+};
+
+const collectQueryDescriptorObjects = (expression, acc = []) => {
+  const current = unwrapExpression(expression);
+  if (!current) return acc;
+
+  if (ts.isObjectLiteralExpression(current)) {
+    acc.push(current);
+    return acc;
+  }
+
+  if (ts.isArrayLiteralExpression(current)) {
+    current.elements.forEach((element) => collectQueryDescriptorObjects(element, acc));
+    return acc;
+  }
+
+  if (
+    ts.isCallExpression(current) &&
+    ts.isPropertyAccessExpression(current.expression) &&
+    current.expression.name.text === 'map'
+  ) {
+    const callback = current.arguments[0];
+    if (callback && (ts.isArrowFunction(callback) || ts.isFunctionExpression(callback))) {
+      collectQueryDescriptorObjects(callback.body, acc);
+    }
+    return acc;
+  }
+
+  if (ts.isBlock(current)) {
+    current.statements.forEach((statement) => {
+      if (ts.isReturnStatement(statement) && statement.expression) {
+        collectQueryDescriptorObjects(statement.expression, acc);
+      }
+    });
+    return acc;
+  }
+
+  if (ts.isConditionalExpression(current)) {
+    collectQueryDescriptorObjects(current.whenTrue, acc);
+    collectQueryDescriptorObjects(current.whenFalse, acc);
+  }
+
+  return acc;
+};
+
+const inspectMultiQueryDescriptor = (descriptorObject, sourceFile, relFilePath, callName, issues) => {
+  const line = getLineNumber(sourceFile, descriptorObject);
+  const queryKeyProperty = findObjectProperty(descriptorObject, 'queryKey');
+  if (!queryKeyProperty || !ts.isPropertyAssignment(queryKeyProperty)) {
+    issues.push({
+      file: relFilePath,
+      line,
+      callName,
+      message: 'multi-query descriptors must define `queryKey`.',
+    });
+  } else if (isFactoryMetaPlaceholderQueryKey(queryKeyProperty.initializer)) {
+    issues.push({
+      file: relFilePath,
+      line,
+      callName,
+      message: 'synthetic `factory-meta` query keys are forbidden. Use a canonical domain query key.',
+    });
+  }
+
+  const metaProperty = findObjectProperty(descriptorObject, 'meta');
+  if (!metaProperty) {
+    issues.push({
+      file: relFilePath,
+      line,
+      callName,
+      message: 'multi-query descriptors must include `meta`.',
+    });
+    return;
+  }
+
+  const metaObject = extractMetaObject(metaProperty);
+  if (!metaObject) {
+    issues.push({
+      file: relFilePath,
+      line,
+      callName,
+      message: 'multi-query descriptor `meta` must be an object literal.',
+    });
+    return;
+  }
+
+  const domainProperty = findObjectProperty(metaObject, 'domain');
+  if (!domainProperty) {
+    issues.push({
+      file: relFilePath,
+      line,
+      callName,
+      message: 'missing `domain` in multi-query descriptor `meta`.',
+    });
+  }
+
+  const descriptionProperty = findObjectProperty(metaObject, 'description');
+  if (!descriptionProperty) {
+    issues.push({
+      file: relFilePath,
+      line,
+      callName,
+      message:
+        'missing `description` in multi-query descriptor `meta`. Adding a description improves debugging and monitoring.',
+    });
+  } else if (ts.isPropertyAssignment(descriptionProperty)) {
+    const descriptionValue = readStringLiteralValue(descriptionProperty.initializer);
+    if (descriptionValue && isLowSignalDescription(descriptionValue)) {
+      issues.push({
+        file: relFilePath,
+        line,
+        callName,
+        message:
+          'multi-query descriptor `meta.description` is too generic. Use a resource-specific description that explains what the query does.',
+      });
+    }
+  }
+};
+
 const inspectFactoryMetaCallExpression = (callExpression, sourceFile, relFilePath, issues) => {
   const callName = getCallName(callExpression);
   if (!callName || !FACTORY_CALLS.has(callName)) {
@@ -149,6 +294,7 @@ const inspectFactoryMetaCallExpression = (callExpression, sourceFile, relFilePat
   const isManualHelperCall = new Set(['prefetchQueryV2', 'fetchQueryV2', 'ensureQueryDataV2']).has(
     callName
   );
+  const isMultiQueryCall = MULTI_QUERY_CALLS.has(callName);
   const configArgIndex = isManualHelperCall ? 1 : 0;
   const configArg = callExpression.arguments[configArgIndex];
 
@@ -164,7 +310,7 @@ const inspectFactoryMetaCallExpression = (callExpression, sourceFile, relFilePat
 
   // Check for missing queryKey (queries only)
   const isQueryFactory = callName.includes('Query') || callName.includes('query');
-  if (isQueryFactory) {
+  if (isQueryFactory && !isMultiQueryCall) {
     const queryKeyProperty = findObjectProperty(configArg, 'queryKey');
     if (!queryKeyProperty) {
       const keyProperty = findObjectProperty(configArg, 'key');
@@ -174,6 +320,15 @@ const inspectFactoryMetaCallExpression = (callExpression, sourceFile, relFilePat
           line,
           callName,
           message: 'missing `queryKey` in factory config. Queries must have an explicit cache key.',
+        });
+      }
+    } else if (ts.isPropertyAssignment(queryKeyProperty)) {
+      if (isFactoryMetaPlaceholderQueryKey(queryKeyProperty.initializer)) {
+        issues.push({
+          file: relFilePath,
+          line,
+          callName,
+          message: 'synthetic `factory-meta` query keys are forbidden. Use a canonical domain query key.',
         });
       }
     }
@@ -190,7 +345,24 @@ const inspectFactoryMetaCallExpression = (callExpression, sourceFile, relFilePat
     return;
   }
 
-  if (callName === 'createMultiQueryV2' || callName === 'createSuspenseMultiQueryV2') {
+  if (isMultiQueryCall) {
+    const topLevelQueryKeyProperty = findObjectProperty(configArg, 'queryKey');
+    if (topLevelQueryKeyProperty) {
+      issues.push({
+        file: relFilePath,
+        line,
+        callName,
+        message: 'top-level `queryKey` is not used by multi-query factories and should be removed.',
+      });
+    }
+
+    const queriesProperty = findObjectProperty(configArg, 'queries');
+    if (queriesProperty && ts.isPropertyAssignment(queriesProperty)) {
+      const descriptorObjects = collectQueryDescriptorObjects(queriesProperty.initializer);
+      descriptorObjects.forEach((descriptorObject) => {
+        inspectMultiQueryDescriptor(descriptorObject, sourceFile, relFilePath, callName, issues);
+      });
+    }
     return;
   }
 
@@ -215,6 +387,17 @@ const inspectFactoryMetaCallExpression = (callExpression, sourceFile, relFilePat
         callName,
         message: 'missing `description` in `meta`. Adding a description improves debugging and monitoring.',
       });
+    } else if (ts.isPropertyAssignment(descriptionProperty)) {
+      const descriptionValue = readStringLiteralValue(descriptionProperty.initializer);
+      if (descriptionValue && isLowSignalDescription(descriptionValue)) {
+        issues.push({
+          file: relFilePath,
+          line,
+          callName,
+          message:
+            'meta.description is too generic. Use a resource-specific description that explains what the query or mutation does.',
+        });
+      }
     }
   } else {
     issues.push({
@@ -451,6 +634,7 @@ module.exports = {
   getScriptKindForFile,
   inspectFactoryMetaSourceFile,
   inspectForbiddenManualQueryExecutionSourceFile,
+  isLowSignalDescription,
   RAW_QUERY_EXECUTION_ALLOWLIST,
   runCheckFactoryMeta,
 };

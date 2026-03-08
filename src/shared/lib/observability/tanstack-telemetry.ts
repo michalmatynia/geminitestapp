@@ -28,6 +28,7 @@ const MAX_CONTEXT_SIZE = 6_000;
 const MAX_CONTEXT_VALUE_LENGTH = 2_000;
 const MAX_META_SOURCE_LENGTH = 240;
 const MAX_META_RESOURCE_LENGTH = 240;
+const MAX_META_DESCRIPTION_LENGTH = 320;
 const MAX_META_TAGS = 16;
 const MAX_META_TAG_LENGTH = 120;
 const MAX_EVENT_QUEUE = 20;
@@ -217,6 +218,7 @@ const toFallbackMeta = (meta: TanstackFactoryMeta | null | undefined): TanstackF
     typeof meta?.resource === 'string' && meta.resource.trim().length > 0
       ? meta.resource
       : 'unknown-resource',
+  description: typeof meta?.description === 'string' ? meta.description : undefined,
   queryKey: meta?.queryKey,
   mutationKey: meta?.mutationKey,
   criticality: meta?.criticality,
@@ -247,10 +249,19 @@ export const resolveTanstackFactoryMeta = (
   assertFactoryMeta(meta);
   const safeMeta = toFallbackMeta(meta);
   const key = safeMeta.queryKey ?? safeMeta.mutationKey ?? options?.key;
+  let description: string | null = null;
+  if (typeof safeMeta.description === 'string' && safeMeta.description.trim().length > 0) {
+    description = clampMetaText(
+      safeMeta.description,
+      safeMeta.description.trim(),
+      MAX_META_DESCRIPTION_LENGTH
+    );
+  }
   return {
     source: clampMetaText(safeMeta.source, 'tanstack.unknown', MAX_META_SOURCE_LENGTH),
     operation: safeMeta.operation,
     resource: clampMetaText(safeMeta.resource, 'unknown-resource', MAX_META_RESOURCE_LENGTH),
+    ...(description ? { description } : {}),
     key,
     criticality: safeMeta.criticality ?? 'normal',
     samplingRate: clampSamplingRate(safeMeta.samplingRate),
@@ -278,6 +289,8 @@ export const getTanstackFactoryMetaFromBag = (
       source,
       operation: operation as TanstackFactoryMeta['operation'],
       resource,
+      description:
+        typeof storedMeta['description'] === 'string' ? storedMeta['description'] : undefined,
       queryKey: Array.isArray(storedMeta['key']) ? (storedMeta['key'] as QueryKey) : undefined,
       criticality: (storedMeta['criticality'] as TanstackCriticality | undefined) ?? 'normal',
       samplingRate:
@@ -442,6 +455,7 @@ export const emitTanstackTelemetry = (input: EmitTanstackTelemetryInput): boolea
     source: resolvedMeta.source,
     operation: resolvedMeta.operation,
     resource: resolvedMeta.resource,
+    ...(resolvedMeta.description ? { description: resolvedMeta.description } : {}),
     key: stableKey,
     keyHash: hashKey(stableKey),
     criticality: resolvedMeta.criticality,
@@ -472,6 +486,7 @@ export const emitTanstackTelemetry = (input: EmitTanstackTelemetryInput): boolea
         source: event.source,
         operation: event.operation,
         resource: event.resource,
+        ...(event.description ? { description: event.description } : {}),
         category: event.category,
         domain: event.domain,
         key: event.key,
@@ -500,6 +515,7 @@ export const flushTanstackTelemetry = async (): Promise<void> => {
 export const tanstackTelemetryTestUtils = {
   buildDedupeKey,
   clampSamplingRate,
+  getQueuedEvents: (): TanstackTelemetryEvent[] => [...queuedEvents],
   hashKey,
   isAbortError,
   shouldSampleEvent,

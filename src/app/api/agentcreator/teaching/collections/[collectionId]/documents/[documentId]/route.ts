@@ -1,9 +1,12 @@
 export const runtime = 'nodejs';
 
-import { apiHandler } from '@/shared/lib/api/api-handler';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 
 import { DELETE_handler } from './handler';
 
-export const DELETE = apiHandler(DELETE_handler, {
-  source: 'agentcreator.teaching.documents.DELETE',
-});
+export const DELETE = apiHandlerWithParams<{ collectionId: string; documentId: string }>(
+  async (request, ctx, params) => DELETE_handler(request, { ...ctx, params }),
+  {
+    source: 'agentcreator.teaching.collections.[collectionId].documents.[documentId].DELETE',
+  }
+);

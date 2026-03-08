@@ -10,6 +10,7 @@ import {
 } from '@/features/ai/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
+import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 
 const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');
 
@@ -27,6 +28,10 @@ const sanitizeFolderPath = (value: string): string => {
 
 const createFolderSchema = z.object({
   folder: z.string().min(1),
+});
+
+export const deleteQuerySchema = z.object({
+  folder: optionalTrimmedQueryString(),
 });
 
 const normalizeTreePath = (value: string): string => sanitizeFolderPath(value);
@@ -74,15 +79,15 @@ type DeleteFolderResult = {
 };
 
 export async function DELETE_handler(
-  req: NextRequest,
+  _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { projectId: string }
 ): Promise<Response> {
   const projectId = sanitizeProjectId(params.projectId);
   if (!projectId) throw badRequestError('Project id is required');
 
-  const folderRaw = req.nextUrl.searchParams.get('folder');
-  const safeFolder = sanitizeFolderPath(folderRaw ?? '');
+  const query = (_ctx.query ?? {}) as z.infer<typeof deleteQuerySchema>;
+  const safeFolder = sanitizeFolderPath(query.folder ?? '');
   if (!safeFolder) {
     throw badRequestError('Folder query param is required');
   }

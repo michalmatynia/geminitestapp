@@ -1,7 +1,6 @@
 'use client';
 
-import Link from 'next/link';
-
+import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
   KangurButton,
   KangurEmptyState,
@@ -65,7 +64,10 @@ export function KangurLearnerProfileRecommendationsWidget(): React.JSX.Element {
                   variant='primary'
                   data-doc-id='learner_recommendation_action'
                 >
-                  <Link href={buildKangurRecommendationHref(basePath, recommendation.action)}>
+                  <Link
+                    href={buildKangurRecommendationHref(basePath, recommendation.action)}
+                    targetPageKey={recommendation.action.page}
+                  >
                     {recommendation.action.label}
                   </Link>
                 </KangurButton>

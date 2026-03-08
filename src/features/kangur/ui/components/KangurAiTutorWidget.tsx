@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { createPortal } from 'react-dom';
 import {
   useCallback,
@@ -16,6 +15,7 @@ import { X, Send, BrainCircuit } from 'lucide-react';
 import { KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
 import { resolveKangurAiTutorMotionPresetKind } from '@/features/kangur/settings-ai-tutor';
+import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
   buildKangurRecommendationHref,
 } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
@@ -1952,6 +1952,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
                                         <Link
                                           href={toFollowUpHref(basePath, action)}
                                           onClick={() => handleFollowUpClick(action, index)}
+                                          targetPageKey={action.page}
                                         >
                                           {action.label}
                                         </Link>

@@ -8,6 +8,6 @@ export const POST = apiHandler(POST_handler, {
   source: 'query-telemetry.POST',
   rateLimitKey: 'write',
   parseJsonBody: true,
-  bodySchema,
+  bodySchema: bodySchema,
   requireCsrf: false,
 });

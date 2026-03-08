@@ -44,21 +44,6 @@ export const querySchema = z.object({
   endpoint: optionalTrimmedQueryString(),
 });
 
-const parseDeadLetterLimit = (value: string | null): number => {
-  if (!value) return DEFAULT_DEAD_LETTER_LIMIT;
-  const numeric = Number(value);
-  if (!Number.isFinite(numeric)) {
-    throw badRequestError('Invalid remediation dead-letter limit.');
-  }
-  const normalized = Math.floor(numeric);
-  if (normalized <= 0 || normalized > MAX_DEAD_LETTER_LIMIT) {
-    throw badRequestError(
-      `Remediation dead-letter limit must be between 1 and ${MAX_DEAD_LETTER_LIMIT}.`
-    );
-  }
-  return normalized;
-};
-
 const parseDeadLetterReplayLimit = (value: unknown): number => {
   if (value === undefined || value === null) return DEFAULT_DEAD_LETTER_REPLAY_LIMIT;
   const numeric = Number(value);

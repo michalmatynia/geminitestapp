@@ -4,7 +4,11 @@
 
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const { startRouteTransitionMock } = vi.hoisted(() => ({
+  startRouteTransitionMock: vi.fn(),
+}));
 
 vi.mock('next/link', () => ({
   default: ({
@@ -54,9 +58,21 @@ vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useOptionalKangurRouting: () => null,
 }));
 
+vi.mock('@/features/kangur/ui/context/KangurRouteTransitionContext', () => ({
+  useOptionalKangurRouteTransition: () => ({
+    isRoutePending: false,
+    pendingPageKey: null,
+    startRouteTransition: startRouteTransitionMock,
+  }),
+}));
+
 import { KangurPrimaryNavigation } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
 
 describe('KangurPrimaryNavigation', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('renders the SVG logo inside the home control', () => {
     render(
       <KangurPrimaryNavigation
@@ -107,6 +123,24 @@ describe('KangurPrimaryNavigation', () => {
       'href',
       '/kangur/tests'
     );
+  });
+
+  it('starts the Kangur route transition before navigating to another page', () => {
+    render(
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        currentPage='Game'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('link', { name: /lekcje/i }));
+
+    expect(startRouteTransitionMock).toHaveBeenCalledWith({
+      href: '/kangur/lessons',
+      pageKey: 'Lessons',
+    });
   });
 
   it('renders the toolbar nav group at full width', () => {

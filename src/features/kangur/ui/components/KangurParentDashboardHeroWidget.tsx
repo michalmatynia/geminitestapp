@@ -9,9 +9,9 @@ import {
   LogOut,
   UserRound,
 } from 'lucide-react';
-import Link from 'next/link';
 
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
+import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
   KangurButton,
   KangurGlassPanel,
@@ -71,7 +71,7 @@ export function KangurParentDashboardHeroWidget({
         </KangurButton>
 
         <KangurButton asChild size='sm' variant='ghost' data-doc-id='top_nav_home'>
-          <Link href={createPageUrl('Game', basePath)}>
+          <Link href={createPageUrl('Game', basePath)} targetPageKey='Game'>
             <ArrowLeft className='h-4 w-4' /> Wroc do gry
           </Link>
         </KangurButton>
@@ -99,7 +99,9 @@ export function KangurParentDashboardHeroWidget({
           Ten widok jest dostepny tylko dla konta rodzica, ktore zarzadza profilami uczniow.
         </p>
         <KangurButton asChild size='lg' variant='primary' data-doc-id='top_nav_profile'>
-          <Link href={createPageUrl('LearnerProfile', basePath)}>Wroc do profilu ucznia</Link>
+          <Link href={createPageUrl('LearnerProfile', basePath)} targetPageKey='LearnerProfile'>
+            Wroc do profilu ucznia
+          </Link>
         </KangurButton>
       </KangurGlassPanel>
     );
@@ -129,22 +131,25 @@ export function KangurParentDashboardHeroWidget({
           <div className='flex w-full flex-col items-stretch gap-2 sm:w-auto sm:items-end'>
             <KangurTopNavGroup label='Szybkie akcje rodzica' className='w-full sm:w-auto'>
               <KangurButton asChild size='sm' variant='navigation'>
-                <Link href={createPageUrl('Game', basePath)}>
+                <Link href={createPageUrl('Game', basePath)} targetPageKey='Game'>
                   <Home className='h-4 w-4' /> Gra
                 </Link>
               </KangurButton>
               <KangurButton asChild size='sm' variant='navigation'>
-                <Link href={createPageUrl('Lessons', basePath)}>
+                <Link href={createPageUrl('Lessons', basePath)} targetPageKey='Lessons'>
                   <BookOpen className='h-4 w-4' /> Lekcje
                 </Link>
               </KangurButton>
               <KangurButton asChild size='sm' variant='navigation'>
-                <Link href={createPageUrl('LearnerProfile', basePath)}>
+                <Link href={createPageUrl('LearnerProfile', basePath)} targetPageKey='LearnerProfile'>
                   <UserRound className='h-4 w-4' /> Profil
                 </Link>
               </KangurButton>
               <KangurButton asChild size='sm' variant='navigationActive'>
-                <Link href={createPageUrl('ParentDashboard', basePath)}>
+                <Link
+                  href={createPageUrl('ParentDashboard', basePath)}
+                  targetPageKey='ParentDashboard'
+                >
                   <LayoutGrid className='h-4 w-4' /> Rodzic
                 </Link>
               </KangurButton>

@@ -1,7 +1,6 @@
 'use client';
 
-import Link from 'next/link';
-
+import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
   KangurActivityColumn,
   KangurButton,
@@ -80,6 +79,7 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
                           item.operation,
                           item.averageAccuracy
                         )}
+                        targetPageKey='Game'
                       >
                         Trenuj
                       </Link>

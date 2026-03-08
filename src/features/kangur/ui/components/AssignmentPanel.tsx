@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
 import { CheckCircle2, Circle } from 'lucide-react';
-import Link from 'next/link';
 
 import {
   appendKangurUrlParams,
   getKangurPageHref as createPageUrl,
 } from '@/features/kangur/config/routing';
+import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import { KANGUR_ACCENT_STYLES } from '@/features/kangur/ui/design/tokens';
 import {
   KangurButton,
@@ -148,7 +148,10 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
                       size='sm'
                       variant={completed ? 'success' : 'surface'}
                     >
-                      <Link href={buildAssignmentHref(basePath, assignment.action)}>
+                      <Link
+                        href={buildAssignmentHref(basePath, assignment.action)}
+                        targetPageKey={assignment.action.page}
+                      >
                         {assignment.action.label}
                       </Link>
                     </KangurButton>

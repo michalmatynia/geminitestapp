@@ -12,6 +12,7 @@ import type {
 import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import { logger } from '@/shared/utils/logger';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
@@ -28,6 +29,10 @@ const enqueueJobSchema = z.object({
   messages: z.array(chatMessageSchema).min(1),
   userMessage: z.string().trim().optional(),
 }) as z.ZodSchema<EnqueueJobRequest>;
+
+export const deleteQuerySchema = z.object({
+  scope: optionalTrimmedQueryString(z.enum(['terminal'])),
+});
 
 export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const jobs: ChatbotJob[] = await chatbotJobRepository.findAll(50);
@@ -125,14 +130,11 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
   });
 }
 
-export async function DELETE_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  const scope = req.nextUrl.searchParams.get('scope') ?? 'terminal';
-
+export async function DELETE_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+  void _req;
+  const scope = (ctx.query as z.infer<typeof deleteQuerySchema> | undefined)?.scope ?? null;
+  void scope;
   const terminalStatuses: Array<ChatbotJob['status']> = ['completed', 'failed', 'canceled'];
-
-  if (scope !== 'terminal') {
-    throw badRequestError('Unsupported delete scope.');
-  }
 
   const deletedCount: number = await chatbotJobRepository.deleteMany(terminalStatuses);
 

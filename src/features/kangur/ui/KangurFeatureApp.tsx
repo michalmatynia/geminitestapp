@@ -3,6 +3,7 @@
 import type { JSX } from 'react';
 import { useEffect, useRef, useState } from 'react';
 
+import { KangurPageTransitionSkeleton } from '@/features/kangur/ui/components/KangurPageTransitionSkeleton';
 import { PageNotFound } from '@/features/kangur/ui/components/PageNotFound';
 import UserNotRegisteredError from '@/features/kangur/ui/components/UserNotRegisteredError';
 import { KangurAiTutorWidget } from '@/features/kangur/ui/components/KangurAiTutorWidget';
@@ -12,8 +13,13 @@ import { KangurCmsRuntimeScreen } from '@/features/kangur/cms-builder/KangurCmsR
 import { KangurAiTutorProvider } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { KangurAuthProvider, useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { KangurProgressSyncProvider } from '@/features/kangur/ui/context/KangurProgressSyncProvider';
+import {
+  KangurRouteTransitionProvider,
+  useKangurRouteTransition,
+} from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KangurTutorAnchorProvider } from '@/features/kangur/ui/context/KangurTutorAnchorContext';
+import { cn } from '@/shared/utils';
 
 type KangurRouteTransitionClass =
   | 'kangur-route-content-enter-a'
@@ -29,6 +35,7 @@ const toggleRouteTransitionClass = (
 const AuthenticatedApp = (): JSX.Element | null => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useKangurAuth();
   const { pageKey, embedded, requestedPath } = useKangurRouting();
+  const { isRoutePending, pendingPageKey } = useKangurRouteTransition();
   const authErrorType = authError?.type;
   const [routeTransitionClass, setRouteTransitionClass] =
     useState<KangurRouteTransitionClass>('kangur-route-content-enter-a');
@@ -52,17 +59,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
   }, [requestedPath]);
 
   if (isLoadingPublicSettings || isLoadingAuth) {
-    return (
-      <div
-        className={
-          embedded
-            ? 'absolute inset-0 z-20 flex items-center justify-center bg-white/80 backdrop-blur-sm'
-            : 'absolute inset-0 z-20 flex items-center justify-center bg-white/35 backdrop-blur-[2px]'
-        }
-      >
-        <div className='w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin'></div>
-      </div>
-    );
+    return <KangurPageTransitionSkeleton pageKey={pageKey ?? KANGUR_MAIN_PAGE} reason='boot' />;
   }
 
   if (authErrorType === 'user_not_registered') {
@@ -84,27 +81,39 @@ const AuthenticatedApp = (): JSX.Element | null => {
     return <PageNotFound />;
   }
 
+  const activeSkeletonPageKey = pendingPageKey ?? resolvedPageKey;
+
   return (
-    <div
-      className={routeTransitionClass}
-      data-testid='kangur-route-content'
-    >
-      <KangurCmsRuntimeScreen pageKey={resolvedPageKey} fallback={<ResolvedPage />} />
-    </div>
+    <>
+      <div
+        aria-busy={isRoutePending}
+        className={cn(
+          routeTransitionClass,
+          embedded ? 'min-h-full' : 'min-h-screen',
+          isRoutePending && 'pointer-events-none select-none'
+        )}
+        data-testid='kangur-route-content'
+      >
+        <KangurCmsRuntimeScreen pageKey={resolvedPageKey} fallback={<ResolvedPage />} />
+      </div>
+      {isRoutePending ? <KangurPageTransitionSkeleton pageKey={activeSkeletonPageKey} /> : null}
+    </>
   );
 };
 
 export function KangurFeatureApp(): JSX.Element {
   return (
-    <KangurAuthProvider>
-      <KangurProgressSyncProvider>
-        <KangurAiTutorProvider>
-          <KangurTutorAnchorProvider>
-            <AuthenticatedApp />
-            <KangurAiTutorWidget />
-          </KangurTutorAnchorProvider>
-        </KangurAiTutorProvider>
-      </KangurProgressSyncProvider>
-    </KangurAuthProvider>
+    <KangurRouteTransitionProvider>
+      <KangurAuthProvider>
+        <KangurProgressSyncProvider>
+          <KangurAiTutorProvider>
+            <KangurTutorAnchorProvider>
+              <AuthenticatedApp />
+              <KangurAiTutorWidget />
+            </KangurTutorAnchorProvider>
+          </KangurAiTutorProvider>
+        </KangurProgressSyncProvider>
+      </KangurAuthProvider>
+    </KangurRouteTransitionProvider>
   );
 }

@@ -1,0 +1,21 @@
+{
+  "generatedAt": "2026-03-08T11:38:39.837Z",
+  "status": "passed",
+  "summary": {
+    "total": 0,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "status": "passed",
+    "fileCount": 673,
+    "totalHandlers": 648,
+    "validatedHandlers": 648,
+    "coveragePercent": 100
+  },
+  "scope": {
+    "root": "src/app/api"
+  },
+  "issues": [],
+  "rules": [],
+  "durationMs": 71
+}

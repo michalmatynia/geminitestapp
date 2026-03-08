@@ -1,10 +1,10 @@
-import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
 import {
   appendKangurUrlParams,
   getKangurPageHref as createPageUrl,
 } from '@/features/kangur/config/routing';
+import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import { logKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurScoreRecord } from '@/features/kangur/services/ports';
@@ -319,7 +319,9 @@ export default function ScoreHistory({
                 </p>
                 {weakestLessonHref && (
                   <KangurButton asChild className='mt-3' size='sm' variant='surface'>
-                    <Link href={weakestLessonHref}>Powtorz lekcje</Link>
+                    <Link href={weakestLessonHref} targetPageKey='Lessons'>
+                      Powtorz lekcje
+                    </Link>
                   </KangurButton>
                 )}
               </>

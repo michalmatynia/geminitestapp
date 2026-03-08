@@ -9,7 +9,7 @@ import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { Button, useToast, SectionHeader, FormSection, Badge, LoadingState } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-type FrontAppOption = 'cms' | 'chatbot' | 'notes';
+type FrontAppOption = 'cms' | 'kangur' | 'chatbot' | 'notes';
 
 const FRONT_PAGE_SETTING_KEY = 'front_page_app';
 
@@ -26,7 +26,7 @@ export function AdminFrontManagePage(): React.ReactNode {
 
   const current = settingsQuery.data.get(FRONT_PAGE_SETTING_KEY);
   const initialSelected: FrontAppOption =
-    current === 'chatbot' || current === 'notes' ? current : 'cms';
+    current === 'kangur' || current === 'chatbot' || current === 'notes' ? current : 'cms';
 
   return <AdminFrontManageContent initialSelected={initialSelected} />;
 }
@@ -48,6 +48,12 @@ function AdminFrontManageContent({
         description:
           'Render the CMS-owned home page so zoning, default slugs, and App Embed blocks stay in control.',
         route: '/',
+      },
+      {
+        id: 'kangur' as const,
+        title: 'Kangur',
+        description: 'Open the Kangur application on the home page.',
+        route: '/kangur',
       },
       {
         id: 'chatbot' as const,
@@ -142,8 +148,9 @@ function AdminFrontManageContent({
             <div className='rounded-xl border border-border/40 bg-card/20 px-4 py-3 text-sm text-gray-300'>
               <div className='font-medium text-white'>Kangur on HOME</div>
               <div className='mt-1 text-gray-400'>
-                Keep Front Manage on CMS Home, then place a Kangur App Embed block in the default
-                HOME page template zone.
+                Select <span className='font-medium text-white'>Kangur</span> above for the full
+                app as HOME. Keep CMS Home only when you want Kangur embedded inside the default
+                HOME page template zone with CMS content around it.
               </div>
               <div className='mt-3 flex flex-wrap gap-3 text-xs'>
                 <Link href='/admin/cms/pages' className='text-blue-300 hover:text-blue-200'>

@@ -7,7 +7,7 @@ import prisma from '@/shared/lib/db/prisma';
 import type { Session } from 'next-auth';
 
 const FRONT_PAGE_SETTING_KEY = 'front_page_app';
-export const FRONT_PAGE_ALLOWED = new Set(['cms', 'products', 'chatbot', 'notes']);
+export const FRONT_PAGE_ALLOWED = new Set(['cms', 'products', 'kangur', 'chatbot', 'notes']);
 
 const isAdminSession = (session: Session | null): boolean => {
   if (!session?.user) return false;

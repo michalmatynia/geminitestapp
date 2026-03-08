@@ -80,6 +80,21 @@ describe('AdminFrontManagePage', () => {
     expect(chatbotButton).toHaveClass('border-blue-500/60');
   });
 
+  it('renders the Kangur option', () => {
+    vi.mocked(useSettingsMap).mockReturnValue({
+      isPending: false,
+      data: new Map([['front_page_app', 'products']]),
+    } as unknown as ReturnType<typeof useSettingsMap>);
+
+    renderPage();
+
+    expect(
+      screen.getByRole('button', {
+        name: /Kangur Open the Kangur application on the home page/i,
+      })
+    ).toBeInTheDocument();
+  });
+
   it('allows changing selection and saving', async () => {
     vi.mocked(useSettingsMap).mockReturnValue({
       isPending: false,
@@ -104,6 +119,29 @@ describe('AdminFrontManagePage', () => {
         value: 'notes',
       });
       expect(mockToast).toHaveBeenCalledWith('Front page updated', { variant: 'success' });
+    });
+  });
+
+  it('allows selecting Kangur and saving', async () => {
+    vi.mocked(useSettingsMap).mockReturnValue({
+      isPending: false,
+      data: new Map([['front_page_app', 'products']]),
+    } as unknown as ReturnType<typeof useSettingsMap>);
+
+    renderPage();
+
+    const kangurButton = screen.getByRole('button', {
+      name: /Kangur Open the Kangur application on the home page/i,
+    });
+    fireEvent.click(kangurButton);
+
+    fireEvent.click(screen.getByText(/Save Selection/i));
+
+    await waitFor(() => {
+      expect(mockMutateAsync).toHaveBeenCalledWith({
+        key: 'front_page_app',
+        value: 'kangur',
+      });
     });
   });
 });

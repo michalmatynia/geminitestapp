@@ -181,7 +181,7 @@ const enqueueScheduledBackup = async (dbType: DatabaseEngineBackupType): Promise
   });
 
   try {
-    const queueModule = await import('@/features/products/workers/productAiQueue');
+    const queueModule = await import('@/features/products/server');
     queueModule.startProductAiJobQueue();
     const runtimeType = job.jobType ?? job.type ?? 'db_backup';
     void queueModule

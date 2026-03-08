@@ -1,3 +1,7 @@
+import 'server-only';
+
+import { AsyncLocalStorage } from 'node:async_hooks';
+
 export type RequestContext = {
   requestId: string;
   traceId: string;
@@ -12,31 +16,18 @@ interface IAsyncLocalStorage<T> {
   run<R>(store: T, callback: () => R): R;
 }
 
-// Mock for client-side or when async_hooks is unavailable
-class MockAsyncLocalStorage<T> implements IAsyncLocalStorage<T> {
-  getStore(): T | undefined {
-    return undefined;
-  }
-  run<R>(_store: T, callback: () => R): R {
-    return callback();
-  }
-}
+type RequestContextGlobal = typeof globalThis & {
+  __geminitestappRequestContextStorage?: IAsyncLocalStorage<RequestContext>;
+};
 
-let storage: IAsyncLocalStorage<RequestContext>;
+const requestContextGlobal = globalThis as RequestContextGlobal;
 
-if (typeof window === 'undefined' && process?.versions?.node) {
-  try {
-    // Dynamically require async_hooks only in Node.js environment
+const storage =
+  requestContextGlobal.__geminitestappRequestContextStorage ??
+  new AsyncLocalStorage<RequestContext>();
 
-    const { AsyncLocalStorage } = require('async_hooks') as {
-      AsyncLocalStorage: new <T>() => IAsyncLocalStorage<T>;
-    };
-    storage = new AsyncLocalStorage<RequestContext>();
-  } catch (_error) {
-    storage = new MockAsyncLocalStorage<RequestContext>();
-  }
-} else {
-  storage = new MockAsyncLocalStorage<RequestContext>();
+if (!requestContextGlobal.__geminitestappRequestContextStorage) {
+  requestContextGlobal.__geminitestappRequestContextStorage = storage;
 }
 
 export const requestContextStorage = storage;

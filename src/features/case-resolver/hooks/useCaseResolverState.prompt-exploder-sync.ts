@@ -1,19 +1,19 @@
 import {
   buildCaseResolverCaptureProposalState,
   type CaseResolverCaptureProposalState,
-} from '@/features/case-resolver-capture/proposals';
+} from '@/features/case-resolver-capture';
 import {
   deriveDocumentContentSync,
   ensureSafeDocumentHtml,
   toStorageDocumentValue,
-} from '@/features/document-editor/content-format';
+} from '@/features/document-editor';
 import {
   clearPromptExploderApplyPayload,
   consumePromptExploderApplyPromptForCaseResolver,
   readPromptExploderApplyPayloadSnapshot,
   savePromptExploderApplyPromptForCaseResolver,
   type PromptExploderBridgePayload,
-} from '@/features/prompt-exploder/bridge';
+} from '@/features/prompt-exploder';
 import type {
   CaseResolverFile,
   CaseResolverFileEditDraft,

@@ -4,8 +4,8 @@ import {
   DEFAULT_APP_EMBED_HEIGHT,
   DEFAULT_APP_EMBED_ID,
   KANGUR_APP_EMBED_ENTRY_PAGE_OPTIONS,
-} from '@/features/app-embeds/lib/constants';
-import { KANGUR_WIDGET_OPTIONS } from '@/features/kangur/cms-builder/project';
+} from '@/features/app-embeds';
+import { KANGUR_WIDGET_OPTIONS } from '@/features/kangur/public';
 
 import { colorSchemeField, paddingFields } from './shared-field-helpers';
 

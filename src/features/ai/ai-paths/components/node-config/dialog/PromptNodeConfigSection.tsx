@@ -116,7 +116,7 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
         return {
           id: `direct-${port}-${index}`,
           label: formatPortLabel(port),
-          token: `{{${port}}}`,
+          placeholder: `{{${port}}}`,
           resolvesTo:
             value !== undefined ? formatRuntimeValue(value) : 'Connected input placeholder.',
         };
@@ -150,7 +150,7 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
         bundleEntries.push({
           id: `bundle-${key}-${index}`,
           label: key,
-          token: `{{${key}}}`,
+          placeholder: `{{${key}}}`,
           resolvesTo: resolved !== undefined ? formatRuntimeValue(resolved) : `Bundle key: ${key}`,
         });
       });
@@ -174,14 +174,14 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
         {
           id: 'current-value',
           label: 'Current value',
-          token: '{{value}}',
+          placeholder: '{{value}}',
           resolvesTo: currentResolved,
           dynamic: true,
         },
         {
           id: 'current',
           label: 'Current',
-          token: '{{current}}',
+          placeholder: '{{current}}',
           resolvesTo: currentResolved,
           dynamic: true,
         },
@@ -265,7 +265,9 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
         target={placeholderTarget}
         onTargetChange={setPlaceholderTarget}
         targetOptions={[{ value: 'prompt', label: 'Prompt template' }]}
-        onInsert={(token: string, _target: PlaceholderTarget) => insertPromptPlaceholder(token)}
+        onInsert={(placeholder: string, _target: PlaceholderTarget) =>
+          insertPromptPlaceholder(placeholder)
+        }
       />
       {((): React.JSX.Element => {
         const outgoingEdges = edges.filter((edge: Edge) => edge.from === selectedNode.id);

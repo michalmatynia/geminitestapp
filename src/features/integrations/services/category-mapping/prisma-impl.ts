@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/shared/lib/db/prisma-client';
 import prisma from '@/shared/lib/db/prisma';
 import {
   CategoryMapping,

@@ -2,7 +2,7 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import { Prisma, type FileUploadEvent } from '@prisma/client';
+import { Prisma, type FileUploadEvent } from '@/shared/lib/db/prisma-client';
 import { ObjectId } from 'mongodb';
 
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';

@@ -1,3 +1,7 @@
+'use client';
+
+'use client';
+
 import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -53,11 +57,7 @@ export default function Tests(): React.JSX.Element {
   const learnerId = user?.activeLearner?.id ?? user?.id ?? null;
 
   return (
-    <KangurPageShell
-      tone='learn'
-      id='kangur-tests-page'
-      skipLinkTargetId='kangur-tests-main'
-    >
+    <KangurPageShell tone='learn' id='kangur-tests-page' skipLinkTargetId='kangur-tests-main'>
       <KangurDocsTooltipEnhancer enabled={docsTooltipsEnabled} rootId='kangur-tests-page' />
       <KangurPrimaryNavigation
         basePath={basePath}
@@ -137,9 +137,18 @@ export default function Tests(): React.JSX.Element {
               exit={{ opacity: 0, y: -20 }}
               className='w-full max-w-2xl mx-auto'
             >
-              <KangurGlassPanel className='flex flex-col gap-5' padding='lg' surface='mistStrong' variant='soft'>
+              <KangurGlassPanel
+                className='flex flex-col gap-5'
+                padding='lg'
+                surface='mistStrong'
+                variant='soft'
+              >
                 <div className='flex flex-col items-center gap-3 text-center'>
-                  <KangurStatusChip accent='slate' className='text-[11px] uppercase tracking-[0.22em]' size='sm'>
+                  <KangurStatusChip
+                    accent='slate'
+                    className='text-[11px] uppercase tracking-[0.22em]'
+                    size='sm'
+                  >
                     Zestawy treningowe
                   </KangurStatusChip>
                   <KangurSectionHeading

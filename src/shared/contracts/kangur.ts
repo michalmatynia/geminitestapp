@@ -1,5 +1,10 @@
 import { z } from 'zod';
 
+import {
+  createDefaultKangurAiTutorLearnerMood,
+  kangurAiTutorLearnerMoodSchema,
+} from './kangur-ai-tutor-mood';
+
 const nonEmptyTrimmedString = z.string().trim().min(1);
 
 export const KANGUR_LESSONS_SETTING_KEY = 'kangur_lessons_v1';
@@ -324,6 +329,7 @@ export const kangurLearnerProfileSchema = z.object({
   loginName: nonEmptyTrimmedString.max(80),
   status: kangurLearnerStatusSchema,
   legacyUserKey: z.string().trim().max(160).nullable().default(null),
+  aiTutor: kangurAiTutorLearnerMoodSchema.default(createDefaultKangurAiTutorLearnerMood()),
   createdAt: z.string().datetime({ offset: true }),
   updatedAt: z.string().datetime({ offset: true }),
 });

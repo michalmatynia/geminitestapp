@@ -1,20 +1,23 @@
 import 'server-only';
 
-import type { ContextRegistryRef, ContextRuntimeDocument } from '@/shared/contracts/ai-context-registry';
+import type {
+  ContextRegistryRef,
+  ContextRuntimeDocument,
+} from '@/shared/contracts/ai-context-registry';
 import type { RuntimeContextProvider } from '../runtime-provider';
 import type { KangurAiTutorConversationContext } from '@/shared/contracts/kangur-ai-tutor';
 import {
   buildKangurAiTutorContextRegistryRefs,
   KANGUR_RUNTIME_PROVIDER_ID,
   parseKangurRuntimeRef,
-} from '@/features/kangur/context-registry/refs';
+} from '@/features/kangur/public';
 import {
   buildKangurAssignmentContextRuntimeDocument,
   buildKangurLearnerSnapshotRuntimeDocument,
   buildKangurLessonContextRuntimeDocument,
   buildKangurTestContextRuntimeDocument,
   loadKangurRegistryBaseData,
-} from '@/features/kangur/server/context-registry';
+} from '@/features/kangur/server';
 
 const PROVIDER_VERSION = '1';
 
@@ -29,7 +32,11 @@ type KangurRuntimeProviderInput = {
 const readKangurRuntimeInput = (
   input: Record<string, unknown> | null
 ): KangurRuntimeProviderInput | null => {
-  if (!input || typeof input['kangurRuntime'] !== 'object' || Array.isArray(input['kangurRuntime'])) {
+  if (
+    !input ||
+    typeof input['kangurRuntime'] !== 'object' ||
+    Array.isArray(input['kangurRuntime'])
+  ) {
     return null;
   }
 
@@ -100,7 +107,10 @@ export const kangurRuntimeContextProvider: RuntimeContextProvider = {
       grouped.set(key, current);
     });
 
-    const dataByLearnerId = new Map<string, Awaited<ReturnType<typeof loadKangurRegistryBaseData>>>();
+    const dataByLearnerId = new Map<
+      string,
+      Awaited<ReturnType<typeof loadKangurRegistryBaseData>>
+    >();
     await Promise.all(
       [...grouped.keys()].map(async (learnerId) => {
         dataByLearnerId.set(learnerId, await loadKangurRegistryBaseData(learnerId));

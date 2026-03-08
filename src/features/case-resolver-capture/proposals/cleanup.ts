@@ -1,8 +1,8 @@
 import {
   normalizeCaseResolverComparable,
   composeCandidateStreetNumber,
-} from '@/features/case-resolver/party-matching';
-import { extractCaseResolverDocumentDate } from '@/features/case-resolver/settings';
+} from '@/features/case-resolver';
+import { extractCaseResolverDocumentDate } from '@/features/case-resolver';
 import type { PromptExploderCaseResolverPartyCandidate } from '@/shared/contracts/prompt-exploder';
 
 import type { CaseResolverCaptureProposalState, CaseResolverCaptureCleanupResult } from './types';

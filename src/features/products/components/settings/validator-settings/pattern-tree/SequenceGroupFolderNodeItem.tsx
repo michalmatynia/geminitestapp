@@ -3,7 +3,7 @@
 import React from 'react';
 import { GripVertical, Layers } from 'lucide-react';
 
-import type { FolderTreeViewportRenderNodeInput as SequenceGroupFolderNodeItemProps } from '@/features/foldertree/v2';
+import type { FolderTreeViewportRenderNodeInput as SequenceGroupFolderNodeItemProps } from '@/features/foldertree';
 import { TreeCaret, TreeContextMenu, TreeRow } from '@/shared/ui';
 import { focusOnMount } from '@/shared/utils/focus-on-mount';
 import { cn } from '@/shared/utils';

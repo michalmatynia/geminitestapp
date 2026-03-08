@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { createPortal } from 'react-dom';
 import {
@@ -43,14 +42,18 @@ import {
   ATTACHED_AVATAR_EDGE_INSET,
   ATTACHED_AVATAR_OVERLAP,
   AVATAR_SIZE,
+  BUBBLE_MAX_HEIGHT,
+  BUBBLE_MIN_HEIGHT,
   CTA_HEIGHT,
   CTA_WIDTH,
   DESKTOP_BUBBLE_WIDTH,
   EDGE_GAP,
   KANGUR_AI_TUTOR_WIDGET_STORAGE_KEY,
   MOBILE_BUBBLE_WIDTH,
+  PROTECTED_CONTENT_GAP,
   type ActiveTutorFocus,
   type TutorAvatarAttachmentSide,
+  type TutorBubblePlacementStrategy,
   type TutorMoodAvatarProps,
   type TutorMotionPosition,
   type TutorMotionProfile,
@@ -80,13 +83,11 @@ const TutorMoodAvatar = ({
       role='img'
     >
       {hasImage ? (
-        <Image
+        <img
           src={avatarImageUrl ?? undefined}
           alt={label}
-          width={96}
-          height={96}
           className={cn('h-full w-full object-cover', imgClassName)}
-          unoptimized
+          loading='lazy'
         />
       ) : hasSvg ? (
         <div
@@ -137,6 +138,33 @@ const cloneRect = (rect: DOMRect | null | undefined): DOMRect | null => {
   } as DOMRect;
 };
 
+const createRect = (left: number, top: number, width: number, height: number): DOMRect => {
+  if (typeof DOMRect === 'function') {
+    return new DOMRect(left, top, width, height);
+  }
+
+  return {
+    x: left,
+    y: top,
+    width,
+    height,
+    top,
+    right: left + width,
+    bottom: top + height,
+    left,
+    toJSON: () => ({
+      x: left,
+      y: top,
+      width,
+      height,
+      top,
+      right: left + width,
+      bottom: top + height,
+      left,
+    }),
+  } as DOMRect;
+};
+
 const getViewport = (): { width: number; height: number } => {
   if (typeof window === 'undefined') {
     return { width: 1280, height: 720 };
@@ -152,6 +180,14 @@ const getDockAvatarStyle = (): TutorMotionPosition => ({
   left: `calc(100vw - ${EDGE_GAP + AVATAR_SIZE}px)`,
   top: `calc(100vh - ${EDGE_GAP + AVATAR_SIZE}px)`,
 });
+
+const getDockAvatarRect = (viewport: { width: number; height: number }): DOMRect =>
+  createRect(
+    viewport.width - EDGE_GAP - AVATAR_SIZE,
+    viewport.height - EDGE_GAP - AVATAR_SIZE,
+    AVATAR_SIZE,
+    AVATAR_SIZE
+  );
 
 const loadPersistedTutorSessionKey = (): string | null => {
   if (typeof window === 'undefined') {
@@ -217,13 +253,81 @@ const getAnchorAvatarStyle = (rect: DOMRect): TutorMotionPosition => {
   };
 };
 
+const getEstimatedBubbleHeight = (viewport: { width: number; height: number }): number => {
+  const maxHeight = Math.max(220, viewport.height - EDGE_GAP * 2);
+  return clamp(Math.min(viewport.height * 0.58, BUBBLE_MAX_HEIGHT), Math.min(BUBBLE_MIN_HEIGHT, maxHeight), maxHeight);
+};
+
+const getRectUnion = (rects: Array<DOMRect | null | undefined>): DOMRect | null => {
+  const validRects = rects.filter(Boolean) as DOMRect[];
+  if (validRects.length === 0) {
+    return null;
+  }
+
+  const left = Math.min(...validRects.map((rect) => rect.left));
+  const top = Math.min(...validRects.map((rect) => rect.top));
+  const right = Math.max(...validRects.map((rect) => rect.right));
+  const bottom = Math.max(...validRects.map((rect) => rect.bottom));
+  return createRect(left, top, right - left, bottom - top);
+};
+
+const getRectOverlapArea = (left: DOMRect, right: DOMRect): number => {
+  const overlapWidth = Math.max(0, Math.min(left.right, right.right) - Math.max(left.left, right.left));
+  const overlapHeight = Math.max(0, Math.min(left.bottom, right.bottom) - Math.max(left.top, right.top));
+  return overlapWidth * overlapHeight;
+};
+
+const getPanelCenterDistance = (
+  panelRect: DOMRect,
+  dockRect: DOMRect
+): number => {
+  const panelCenterX = panelRect.left + panelRect.width / 2;
+  const panelCenterY = panelRect.top + panelRect.height / 2;
+  const dockCenterX = dockRect.left + dockRect.width / 2;
+  const dockCenterY = dockRect.top + dockRect.height / 2;
+  return Math.hypot(panelCenterX - dockCenterX, panelCenterY - dockCenterY);
+};
+
+const getDockLaunchOffset = (input: {
+  finalLeft: number;
+  finalTop: number;
+  width: number;
+  side: TutorAvatarAttachmentSide;
+  viewport: { width: number; height: number };
+}): { x: number; y: number } => {
+  const dockRect = getDockAvatarRect(input.viewport);
+  const dockCenterX = dockRect.left + dockRect.width / 2;
+  const dockCenterY = dockRect.top + dockRect.height / 2;
+  const avatarCenterOffsetX =
+    input.side === 'left'
+      ? AVATAR_SIZE / 2 - ATTACHED_AVATAR_OVERLAP
+      : input.width - (AVATAR_SIZE / 2 - ATTACHED_AVATAR_OVERLAP);
+  const avatarCenterOffsetY = ATTACHED_AVATAR_EDGE_INSET + AVATAR_SIZE / 2;
+  const launchPanelLeft = dockCenterX - avatarCenterOffsetX;
+  const launchPanelTop = dockCenterY - avatarCenterOffsetY;
+
+  return {
+    x: launchPanelLeft - input.finalLeft,
+    y: launchPanelTop - input.finalTop,
+  };
+};
+
 const getAttachedAvatarSide = (input: {
   rect: DOMRect | null;
   viewport: { width: number; height: number };
   mode: 'bubble' | 'sheet';
+  strategy: TutorBubblePlacementStrategy;
 }): TutorAvatarAttachmentSide => {
   if (input.mode === 'sheet' || !input.rect) {
     return 'left';
+  }
+
+  if (input.strategy === 'right' || input.strategy === 'top-right' || input.strategy === 'bottom-right') {
+    return 'left';
+  }
+
+  if (input.strategy === 'left' || input.strategy === 'top-left' || input.strategy === 'bottom-left') {
+    return 'right';
   }
 
   return input.rect.left + input.rect.width / 2 > input.viewport.width / 2 ? 'right' : 'left';
@@ -266,17 +370,24 @@ const getBubblePlacement = (
   widthConfig: {
     desktop: number;
     mobile: number;
+  },
+  options?: {
+    protectedRects?: DOMRect[];
   }
 ): {
   style: TutorMotionPosition;
   tailPlacement: 'top' | 'bottom' | 'dock';
   width?: number;
   mode: 'bubble' | 'sheet';
+  strategy: TutorBubblePlacementStrategy;
+  launchOrigin: 'dock-bottom-right' | 'sheet';
 } => {
   if (mode === 'sheet') {
     return {
       mode,
       tailPlacement: 'dock',
+      strategy: 'dock',
+      launchOrigin: 'sheet',
       style: {
         left: EDGE_GAP,
         right: EDGE_GAP,
@@ -295,6 +406,8 @@ const getBubblePlacement = (
       mode,
       width,
       tailPlacement: 'dock',
+      strategy: 'dock',
+      launchOrigin: 'dock-bottom-right',
       style: {
         left: viewport.width - EDGE_GAP - width,
         top: clamp(viewport.height - 440, EDGE_GAP, viewport.height - EDGE_GAP - 220),
@@ -302,24 +415,118 @@ const getBubblePlacement = (
     };
   }
 
-  const left = clamp(
-    rect.left + rect.width / 2 - width / 2,
-    EDGE_GAP,
-    viewport.width - EDGE_GAP - width
-  );
-  const belowTop = rect.bottom + AVATAR_SIZE + 18;
-  const aboveTop = rect.top - Math.min(viewport.height * 0.6, 420);
-  const shouldPlaceAbove = belowTop > viewport.height - 280 && aboveTop >= EDGE_GAP;
+  const estimatedHeight = getEstimatedBubbleHeight(viewport);
+  const maxLeft = viewport.width - EDGE_GAP - width;
+  const maxTop = viewport.height - EDGE_GAP - estimatedHeight;
+  const protectedRects = options?.protectedRects?.filter(Boolean) ?? [];
+  const protectedZone = getRectUnion([rect, ...protectedRects]) ?? rect;
+  const focusCenterX = rect.left + rect.width / 2;
+  const focusCenterY = rect.top + rect.height / 2;
+  const centeredLeft = focusCenterX - width / 2;
+  const centeredTop = focusCenterY - estimatedHeight / 2;
+  const dockRect = getDockAvatarRect(viewport);
+
+  const candidates: Array<{
+    strategy: TutorBubblePlacementStrategy;
+    tailPlacement: 'top' | 'bottom' | 'dock';
+    left: number;
+    top: number;
+    priority: number;
+  }> = [
+    {
+      strategy: 'right',
+      tailPlacement: 'dock',
+      left: protectedZone.right + PROTECTED_CONTENT_GAP,
+      top: centeredTop,
+      priority: 0,
+    },
+    {
+      strategy: 'left',
+      tailPlacement: 'dock',
+      left: protectedZone.left - PROTECTED_CONTENT_GAP - width,
+      top: centeredTop,
+      priority: 1,
+    },
+    {
+      strategy: 'above',
+      tailPlacement: 'bottom',
+      left: centeredLeft,
+      top: protectedZone.top - PROTECTED_CONTENT_GAP - estimatedHeight,
+      priority: 2,
+    },
+    {
+      strategy: 'below',
+      tailPlacement: 'top',
+      left: centeredLeft,
+      top: protectedZone.bottom + PROTECTED_CONTENT_GAP,
+      priority: 3,
+    },
+    {
+      strategy: 'top-right',
+      tailPlacement: 'dock',
+      left: viewport.width - EDGE_GAP - width,
+      top: EDGE_GAP,
+      priority: 4,
+    },
+    {
+      strategy: 'top-left',
+      tailPlacement: 'dock',
+      left: EDGE_GAP,
+      top: EDGE_GAP,
+      priority: 5,
+    },
+    {
+      strategy: 'bottom-right',
+      tailPlacement: 'dock',
+      left: viewport.width - EDGE_GAP - width,
+      top: viewport.height - EDGE_GAP - estimatedHeight,
+      priority: 6,
+    },
+    {
+      strategy: 'bottom-left',
+      tailPlacement: 'dock',
+      left: EDGE_GAP,
+      top: viewport.height - EDGE_GAP - estimatedHeight,
+      priority: 7,
+    },
+  ];
+
+  const bestCandidate = candidates
+    .map((candidate) => {
+      const left = clamp(candidate.left, EDGE_GAP, maxLeft);
+      const top = clamp(candidate.top, EDGE_GAP, maxTop);
+      const panelRect = createRect(left, top, width, estimatedHeight);
+      const primaryOverlapArea = getRectOverlapArea(panelRect, rect);
+      const secondaryOverlapArea = protectedRects.reduce(
+        (sum, protectedRect) => sum + getRectOverlapArea(panelRect, protectedRect),
+        0
+      );
+      const repositionCost = Math.hypot(candidate.left - left, candidate.top - top);
+      const score =
+        primaryOverlapArea * 28 +
+        secondaryOverlapArea * 12 +
+        repositionCost * 0.5 +
+        getPanelCenterDistance(panelRect, dockRect) * 0.08 +
+        candidate.priority * 30;
+
+      return {
+        candidate,
+        left,
+        top,
+        score,
+      };
+    })
+    .sort((leftCandidate, rightCandidate) => leftCandidate.score - rightCandidate.score)[0];
 
   return {
     mode,
     width,
-    tailPlacement: shouldPlaceAbove ? 'bottom' : 'top',
+    tailPlacement: bestCandidate?.candidate.tailPlacement ?? 'dock',
+    strategy: bestCandidate?.candidate.strategy ?? 'dock',
+    launchOrigin: 'dock-bottom-right',
     style: {
-      left,
-      top: shouldPlaceAbove
-        ? clamp(aboveTop, EDGE_GAP, viewport.height - EDGE_GAP - 220)
-        : clamp(belowTop, EDGE_GAP, viewport.height - EDGE_GAP - 220),
+      left: bestCandidate?.left ?? viewport.width - EDGE_GAP - width,
+      top: bestCandidate?.top ?? clamp(viewport.height - 440, EDGE_GAP, viewport.height - EDGE_GAP - 220),
     },
   };
 };
@@ -720,14 +927,21 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     sendMessage,
     setHighlightedText,
   } = tutorRuntime;
+  const tutorBehaviorMoodId = tutorRuntime.tutorBehaviorMoodId ?? 'neutral';
+  const tutorBehaviorMoodLabel = tutorRuntime.tutorBehaviorMoodLabel ?? 'Neutralny';
+  const tutorBehaviorMoodDescription =
+    tutorRuntime.tutorBehaviorMoodDescription ??
+    'Stabilny punkt wyjscia, gdy nie potrzeba silniejszego tonu.';
   const sessionContext = tutorRuntime.sessionContext;
-  const { selectedText, selectionRect, clearSelection } = useKangurTextHighlight();
+  const { selectedText, selectionRect, selectionContainerRect, clearSelection } = useKangurTextHighlight();
   const tutorAnchorContext = useOptionalKangurTutorAnchors();
   const routing = useOptionalKangurRouting();
   const [mounted, setMounted] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [hasNewMessage, setHasNewMessage] = useState(false);
+  const [panelMotionState, setPanelMotionState] = useState<'animating' | 'settled'>('settled');
   const [persistedSelectionRect, setPersistedSelectionRect] = useState<DOMRect | null>(null);
+  const [persistedSelectionContainerRect, setPersistedSelectionContainerRect] = useState<DOMRect | null>(null);
   const [contextSwitchNotice, setContextSwitchNotice] = useState<{
     title: string;
     target: string;
@@ -750,6 +964,9 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     ? (selectedText ?? highlightedText)?.trim() || null
     : null;
   const activeSelectionRect = activeSelectedText ? selectionRect ?? persistedSelectionRect : null;
+  const activeSelectionContainerRect = activeSelectedText
+    ? selectionContainerRect ?? persistedSelectionContainerRect
+    : null;
   const remainingMessages = usageSummary?.remainingMessages ?? null;
   const canSendMessages = remainingMessages !== 0;
   const basePath = routing?.basePath ?? KANGUR_BASE_PATH;
@@ -842,6 +1059,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
   useEffect(() => {
     if (!isOpen) {
       setPersistedSelectionRect(null);
+      setPersistedSelectionContainerRect(null);
       setContextSwitchNotice(null);
     }
   }, [isOpen]);
@@ -855,6 +1073,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     if (previousSessionKey && previousSessionKey !== tutorSessionKey) {
       setInputValue('');
       setPersistedSelectionRect(null);
+      setPersistedSelectionContainerRect(null);
       setContextSwitchNotice(
         isOpen
           ? getContextSwitchNotice({
@@ -996,6 +1215,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
 
   const focusChipLabel = getFocusChipLabel(activeFocus, activeSelectedText);
   const selectionActionStyle = selectionRect ? getSelectionActionStyle(selectionRect) : null;
+  const isStaticUiMode = uiMode === 'static';
   const displayFocusRect = isAnchoredUiMode ? activeFocus.rect : null;
   const isMobileSheet = viewport.width < motionProfile.sheetBreakpoint;
   const bubblePlacement = getBubblePlacement(
@@ -1005,15 +1225,33 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     {
       desktop: motionProfile.desktopBubbleWidth,
       mobile: motionProfile.mobileBubbleWidth,
+    },
+    {
+      protectedRects: activeSelectionContainerRect ? [activeSelectionContainerRect] : [],
     }
   );
   const showAttachedAvatarShell = isOpen && isAnchoredUiMode;
+  const hideFloatingAvatar = isOpen && isStaticUiMode;
+  const showFloatingAvatar = !showAttachedAvatarShell && !hideFloatingAvatar;
   const avatarAttachmentSide = getAttachedAvatarSide({
     rect: displayFocusRect,
     viewport,
     mode: bubblePlacement.mode,
+    strategy: bubblePlacement.strategy,
   });
   const attachedAvatarStyle = getAttachedAvatarStyle(avatarAttachmentSide);
+  const attachedLaunchOffset =
+    bubblePlacement.mode === 'bubble' &&
+    typeof bubblePlacement.style.left === 'number' &&
+    typeof bubblePlacement.style.top === 'number'
+      ? getDockLaunchOffset({
+          finalLeft: bubblePlacement.style.left,
+          finalTop: bubblePlacement.style.top,
+          width: bubblePlacement.width ?? motionProfile.desktopBubbleWidth,
+          side: avatarAttachmentSide,
+          viewport,
+        })
+      : { x: 0, y: 0 };
   const avatarStyle =
     showAttachedAvatarShell || (isOpen && bubblePlacement.mode === 'sheet')
       ? getDockAvatarStyle()
@@ -1021,6 +1259,22 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
         ? getAnchorAvatarStyle(displayFocusRect)
         : getDockAvatarStyle();
   const avatarAnchorKind = isOpen && isAnchoredUiMode ? activeFocus.kind ?? 'dock' : 'dock';
+  const panelAvatarPlacement = showAttachedAvatarShell
+    ? 'attached'
+    : hideFloatingAvatar
+      ? 'hidden'
+      : 'independent';
+  const panelOpenAnimation =
+    bubblePlacement.mode === 'sheet'
+      ? 'sheet'
+      : isStaticUiMode
+        ? 'fade'
+        : 'dock-launch';
+  const panelTransition = prefersReducedMotion
+    ? reducedMotionTransitions.instant
+    : panelOpenAnimation === 'fade'
+      ? { duration: 0.2, ease: 'easeOut' as const }
+      : motionProfile.bubbleTransition;
   const focusTelemetryKey = useMemo(
     () => (isOpen ? getFocusTelemetryKey(tutorSessionKey, activeFocus) : null),
     [activeFocus, isOpen, tutorSessionKey]
@@ -1065,6 +1319,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
   useEffect(() => {
     if (!isOpen || !focusTelemetryKey || !activeFocus.kind) {
       lastTrackedFocusKeyRef.current = focusTelemetryKey;
+      setPanelMotionState('settled');
       if (motionTimeoutRef.current !== null) {
         window.clearTimeout(motionTimeoutRef.current);
         motionTimeoutRef.current = null;
@@ -1077,6 +1332,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     }
 
     lastTrackedFocusKeyRef.current = focusTelemetryKey;
+    setPanelMotionState('animating');
     trackKangurClientEvent('kangur_ai_tutor_anchor_changed', {
       surface: sessionContext?.surface ?? null,
       contentId: sessionContext?.contentId ?? null,
@@ -1091,6 +1347,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
       window.clearTimeout(motionTimeoutRef.current);
     }
     motionTimeoutRef.current = window.setTimeout(() => {
+      setPanelMotionState('settled');
       trackKangurClientEvent('kangur_ai_tutor_motion_completed', {
         surface: sessionContext?.surface ?? null,
         contentId: sessionContext?.contentId ?? null,
@@ -1140,9 +1397,16 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
 
       setHighlightedText(trimmedSelectedText);
       setPersistedSelectionRect(cloneRect(selectionRect));
+      setPersistedSelectionContainerRect(cloneRect(selectionContainerRect));
       return trimmedSelectedText;
     },
-    [allowSelectedTextSupport, selectedText, selectionRect, setHighlightedText]
+    [
+      allowSelectedTextSupport,
+      selectedText,
+      selectionContainerRect,
+      selectionRect,
+      setHighlightedText,
+    ]
   );
 
   const handleOpenChat = useCallback(
@@ -1177,6 +1441,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
         clearSelection();
         setHighlightedText(null);
         setPersistedSelectionRect(null);
+        setPersistedSelectionContainerRect(null);
       }
       closeChat();
     },
@@ -1185,6 +1450,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
       clearSelection,
       closeChat,
       messages.length,
+      setPersistedSelectionContainerRect,
       setHighlightedText,
       telemetryContext,
     ]
@@ -1246,6 +1512,9 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     if (activeSelectedText && selectionRect) {
       setPersistedSelectionRect(cloneRect(selectionRect));
     }
+    if (activeSelectedText && selectionContainerRect) {
+      setPersistedSelectionContainerRect(cloneRect(selectionContainerRect));
+    }
     await sendMessage(text, {
       promptMode: activeSelectedText ? 'selected_text' : 'chat',
       selectedText: activeSelectedText,
@@ -1277,6 +1546,9 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     if (isLoading || !canSendMessages) return;
     if (activeSelectedText && selectionRect) {
       setPersistedSelectionRect(cloneRect(selectionRect));
+    }
+    if (activeSelectedText && selectionContainerRect) {
+      setPersistedSelectionContainerRect(cloneRect(selectionContainerRect));
     }
     trackKangurClientEvent('kangur_ai_tutor_quick_action_clicked', {
       ...telemetryContext,
@@ -1352,7 +1624,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
         ) : null}
       </AnimatePresence>
 
-      {!showAttachedAvatarShell ? (
+      {showFloatingAvatar ? (
         <motion.button
           data-testid='kangur-ai-tutor-avatar'
           data-anchor-kind={avatarAnchorKind}
@@ -1406,22 +1678,34 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
               key='chat-panel'
               data-testid='kangur-ai-tutor-panel'
               data-layout={bubblePlacement.mode}
-              data-avatar-placement={showAttachedAvatarShell ? 'attached' : 'independent'}
+              data-avatar-placement={panelAvatarPlacement}
+              data-launch-origin={bubblePlacement.launchOrigin}
               data-motion-behavior={prefersReducedMotion ? 'reduced' : 'animated'}
               data-motion-preset={motionProfile.kind}
+              data-motion-state={panelMotionState}
+              data-open-animation={panelOpenAnimation}
+              data-placement-strategy={bubblePlacement.strategy}
               data-ui-mode={uiMode}
               initial={
                 prefersReducedMotion
                   ? bubblePlacement.mode === 'sheet'
                     ? reducedMotionTransitions.staticSheetState
                     : reducedMotionTransitions.stableState
-                  : bubblePlacement.mode === 'sheet'
+                  : panelOpenAnimation === 'sheet'
                     ? { opacity: 0, y: 28 }
-                    : { opacity: 0, y: 16, scale: 0.97 }
+                    : panelOpenAnimation === 'fade'
+                      ? { opacity: 0 }
+                    : {
+                        opacity: 0,
+                        x: attachedLaunchOffset.x,
+                        y: attachedLaunchOffset.y,
+                        scale: 0.97,
+                      }
               }
               animate={{
                 ...bubblePlacement.style,
                 opacity: 1,
+                x: 0,
                 y: 0,
                 ...(bubblePlacement.mode === 'sheet' ? {} : { scale: 1 }),
               }}
@@ -1430,11 +1714,18 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
                   ? bubblePlacement.mode === 'sheet'
                     ? reducedMotionTransitions.staticSheetState
                     : reducedMotionTransitions.stableState
-                  : bubblePlacement.mode === 'sheet'
+                  : panelOpenAnimation === 'sheet'
                     ? { opacity: 0, y: 28 }
-                    : { opacity: 0, y: 16, scale: 0.97 }
+                    : panelOpenAnimation === 'fade'
+                      ? { opacity: 0 }
+                    : {
+                        opacity: 0,
+                        x: attachedLaunchOffset.x * 0.18,
+                        y: attachedLaunchOffset.y * 0.18,
+                        scale: 0.97,
+                      }
               }
-              transition={prefersReducedMotion ? reducedMotionTransitions.instant : motionProfile.bubbleTransition}
+              transition={panelTransition}
               className='fixed z-[65]'
               style={bubblePlacement.width ? { width: bubblePlacement.width } : undefined}
             >
@@ -1510,6 +1801,19 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
                     <div className='flex flex-col'>
                       <span className='text-sm font-black uppercase tracking-[0.08em] text-white'>
                         {tutorName}
+                      </span>
+                      <span
+                        data-testid='kangur-ai-tutor-mood-chip'
+                        data-mood-id={tutorBehaviorMoodId}
+                        className='mt-1 inline-flex w-fit items-center rounded-full border border-white/25 bg-white/16 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.1em] text-white/95'
+                      >
+                        Nastroj: {tutorBehaviorMoodLabel}
+                      </span>
+                      <span
+                        data-testid='kangur-ai-tutor-mood-description'
+                        className='mt-1 text-[11px] leading-relaxed text-white/88'
+                      >
+                        {tutorBehaviorMoodDescription}
                       </span>
                       {sessionContext?.title || sessionContext?.contentId ? (
                         <span className='text-[11px] text-white/85'>

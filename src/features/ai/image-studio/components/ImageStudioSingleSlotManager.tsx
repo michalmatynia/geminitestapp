@@ -11,8 +11,8 @@ import {
   useState,
 } from 'react';
 
-import ProductImageManager from '@/features/products/components/ProductImageManager';
-import { ProductImageManagerControllerProvider } from '@/features/products/components/ProductImageManagerControllerContext';
+import ProductImageManager from '@/features/products';
+import { ProductImageManagerControllerProvider } from '@/features/products';
 import { api } from '@/shared/lib/api-client';
 
 import { useProjectsState } from '../context/ProjectsContext';

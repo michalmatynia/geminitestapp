@@ -48,7 +48,7 @@ vi.mock('@/shared/lib/api-client', () => ({
   },
 }));
 
-vi.mock('@/features/integrations/hooks/useProductListingMutations', () => ({
+vi.mock('@/features/integrations', () => ({
   useGenericExportToBaseMutation: () => ({
     isPending: false,
     mutateAsync: mutateAsyncMock,

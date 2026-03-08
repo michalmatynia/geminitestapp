@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { agentPersonaMoodIdSchema } from './agents';
 import { agentTeachingChatSourceSchema } from './agent-teaching';
+import { kangurAiTutorLearnerMoodSchema } from './kangur-ai-tutor-mood';
 
 const nonEmptyTrimmedString = z.string().trim().min(1);
 
@@ -102,6 +103,7 @@ export const kangurAiTutorChatResponseSchema = z.object({
   sources: z.array(agentTeachingChatSourceSchema).default([]),
   followUpActions: z.array(kangurAiTutorFollowUpActionSchema).default([]),
   suggestedMoodId: agentPersonaMoodIdSchema.nullable().optional(),
+  tutorMood: kangurAiTutorLearnerMoodSchema.optional(),
   usage: kangurAiTutorUsageSummarySchema.optional(),
 });
 export type KangurAiTutorChatResponse = z.infer<typeof kangurAiTutorChatResponseSchema>;

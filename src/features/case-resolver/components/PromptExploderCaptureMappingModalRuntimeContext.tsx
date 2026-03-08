@@ -5,8 +5,8 @@ import React from 'react';
 import type {
   CaseResolverCaptureDocumentDateAction,
   CaseResolverCaptureProposalState,
-} from '@/features/case-resolver-capture/proposals';
-import type { CaseResolverCaptureAction } from '@/features/case-resolver-capture/settings';
+} from '@/features/case-resolver-capture';
+import type { CaseResolverCaptureAction } from '@/features/case-resolver-capture';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 export type PromptExploderCaptureMappingDiagnostics = {

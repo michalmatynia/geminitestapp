@@ -3,7 +3,7 @@
 import React from 'react';
 
 import { MarkdownSplitEditor } from '@/features/document-editor';
-import { MarkdownSplitEditorProvider } from '@/features/document-editor/context/MarkdownSplitEditorContext';
+import { MarkdownSplitEditorProvider } from '@/features/document-editor';
 import {
   useNoteContentContext,
   useNoteEditorContext,

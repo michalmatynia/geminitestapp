@@ -5,3 +5,6 @@ export * from './lib/internationalizationFallback';
 export * from './api';
 export * from './hooks/useInternationalizationQueries';
 export * from './hooks/useInternationalizationMutations';
+export * from './components/country-modal/CountryModal';
+export * from './components/currency-modal/CurrencyModal';
+export * from './components/language-modal/LanguageModal';

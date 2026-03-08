@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { PromptExploderCaseResolverPartyCandidate } from '@/features/prompt-exploder/bridge';
+import type { PromptExploderCaseResolverPartyCandidate } from '@/features/prompt-exploder';
 import type { CountryOption } from '@/shared/contracts/internationalization';
 
 import {

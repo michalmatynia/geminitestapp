@@ -4,8 +4,8 @@ import dynamic from 'next/dynamic';
 
 const AdminImageStudioValidationPatternsPage = dynamic(
   () =>
-    import('@/features/ai/image-studio').then(
-      (mod: typeof import('@/features/ai/image-studio')) =>
+    import('@/features/ai').then(
+      (mod: typeof import('@/features/ai')) =>
         mod.AdminImageStudioValidationPatternsPage
     ),
   {

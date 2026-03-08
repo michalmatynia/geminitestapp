@@ -1,4 +1,4 @@
-import { Prisma as _Prisma, type Currency, CurrencyCode } from '@prisma/client';
+import { Prisma as _Prisma, type Currency, CurrencyCode } from '@/shared/lib/db/prisma-client';
 
 import { defaultCurrencies } from '@/features/internationalization/server';
 import type { CurrencyRecord } from '@/shared/contracts/internationalization';

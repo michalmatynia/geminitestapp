@@ -2,7 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 
-import { invalidateProducts } from '@/features/products/hooks/productCache';
+import { invalidateProducts } from '@/features/products';
 import type {
   ListingBadgesPayload,
   MarketplaceBadgeEntry,

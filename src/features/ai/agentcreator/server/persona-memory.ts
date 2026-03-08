@@ -1,6 +1,6 @@
 import 'server-only';
 
-import type { Prisma } from '@prisma/client';
+import type { Prisma } from '@/shared/lib/db/prisma-client';
 
 import { addAgentLongTermMemory } from '@/features/ai/agent-runtime/memory';
 import {

@@ -2,7 +2,7 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/shared/lib/db/prisma-client';
 
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import {

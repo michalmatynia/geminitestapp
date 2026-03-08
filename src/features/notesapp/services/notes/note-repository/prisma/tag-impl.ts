@@ -3,7 +3,7 @@ import prisma from '@/shared/lib/db/prisma';
 
 import { getOrCreateDefaultNotebook } from './notebook-impl';
 
-import type { Tag } from '@prisma/client';
+import type { Tag } from '@/shared/lib/db/prisma-client';
 
 export const getAllTags = async (notebookId?: string | null): Promise<TagRecord[]> => {
   const resolvedNotebookId = notebookId ?? (await getOrCreateDefaultNotebook()).id;

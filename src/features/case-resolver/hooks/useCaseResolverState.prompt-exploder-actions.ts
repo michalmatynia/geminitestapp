@@ -4,7 +4,7 @@ import type {
   CaseResolverFile,
   CaseResolverCaptureSettings,
 } from '@/shared/contracts/case-resolver';
-import type { CaseResolverCaptureProposalState } from '@/features/case-resolver-capture/proposals';
+import type { CaseResolverCaptureProposalState } from '@/features/case-resolver-capture';
 import {
   discardPendingCaseResolverPromptExploderPayload,
   readCaseResolverPromptExploderPayloadState,
@@ -17,7 +17,7 @@ import {
 import {
   PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY,
   PROMPT_EXPLODER_BRIDGE_STORAGE_EVENT,
-} from '@/features/prompt-exploder/bridge';
+} from '@/features/prompt-exploder';
 import { resolveCaseResolverFileById } from './useCaseResolverState.helpers';
 import { logCaseResolverWorkspaceEvent } from '../workspace-persistence';
 import {

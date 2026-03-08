@@ -5,7 +5,7 @@ import {
   ImageFile as PrismaImageFile,
   Catalog as PrismaCatalog,
   ProductCatalog as PrismaProductCatalog,
-} from '@prisma/client';
+} from '@/shared/lib/db/prisma-client';
 import type { ImageFileRecord } from '@/shared/contracts/files';
 import { CatalogRecord, ProductWithImages, ProductImageRecord } from '@/shared/contracts/products';
 import { normalizeProductParameterValues } from './prisma-product-repository.helpers';

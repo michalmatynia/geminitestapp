@@ -12,27 +12,32 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { MediaLibraryPanel } from '@/features/cms/components/page-builder/MediaLibraryPanel';
-import { PreviewSection, type MediaReplaceTarget } from '@/features/cms/components/page-builder/PreviewBlock';
-import { useThemeSettingsValue } from '@/features/cms/components/page-builder/ThemeSettingsContext';
-import { PreviewEditorProvider } from '@/features/cms/components/page-builder/preview/context/PreviewEditorContext';
-import { VectorOverlay } from '@/features/cms/components/page-builder/VectorOverlay';
-import { CmsPageProvider } from '@/features/cms/components/frontend/CmsPageContext';
-import {
-  isCmsNodeVisible,
-  useOptionalCmsRuntime,
-} from '@/features/cms/components/frontend/CmsRuntimeContext';
-import { MediaStylesProvider } from '@/features/cms/components/frontend/media-styles-context';
-import { getMediaInlineStyles } from '@/features/cms/components/frontend/theme-styles';
-import { getMediaStyleVars } from '@/features/cms/components/frontend/theme-styles';
-import { usePageBuilderDispatch, usePageBuilderState, useVectorOverlay } from '@/features/cms/hooks/usePageBuilderContext';
 import {
   buildHierarchyIndexes,
+  CmsPageProvider,
   flattenByZonePreorder,
+  getMediaInlineStyles,
+  getMediaStyleVars,
   type HierarchyIndexes,
-} from '@/features/cms/hooks/page-builder/section-hierarchy';
-import { isCmsSectionHidden } from '@/features/cms/utils/page-builder-normalization';
-import { getKangurPageHref, getKangurPageSlug, normalizeKangurRequestedPath } from '@/features/kangur/config/routing';
+  isCmsNodeVisible,
+  isCmsSectionHidden,
+  MediaLibraryPanel,
+  MediaStylesProvider,
+  PreviewEditorProvider,
+  PreviewSection,
+  type MediaReplaceTarget,
+  useOptionalCmsRuntime,
+  usePageBuilderDispatch,
+  usePageBuilderState,
+  useThemeSettingsValue,
+  useVectorOverlay,
+  VectorOverlay,
+} from '@/features/cms/public';
+import {
+  getKangurPageHref,
+  getKangurPageSlug,
+  normalizeKangurRequestedPath,
+} from '@/features/kangur/config/routing';
 import { KangurAuthProvider } from '@/features/kangur/ui/context/KangurAuthContext';
 import { KangurGameRuntimeBoundary } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import { KangurLearnerProfileRuntimeBoundary } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';

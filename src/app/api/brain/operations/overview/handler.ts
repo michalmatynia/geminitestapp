@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { chatbotJobRepository } from '@/features/ai/chatbot/services/chatbot-job-repository';
-import { listImageStudioRuns } from '@/features/ai/image-studio/server';
+import { listImageStudioRuns } from '@/features/ai/server';
 import { listAiInsights } from '@/features/ai/insights/server';
 import { getAiPathRunQueueStatus } from '@/features/jobs/server';
 import type {

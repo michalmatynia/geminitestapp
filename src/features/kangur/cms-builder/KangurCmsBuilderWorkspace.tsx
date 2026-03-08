@@ -3,17 +3,19 @@
 import { PanelLeftClose, PanelRightClose } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useAdminLayoutActions } from '@/features/admin/context/AdminLayoutContext';
-import { PageBuilderPageSkeleton } from '@/features/cms/components/page-builder/PageBuilderPageSkeleton';
-import { ThemeSettingsProvider } from '@/features/cms/components/page-builder/ThemeSettingsContext';
-import { DragStateProvider } from '@/features/cms/hooks/useDragStateContext';
-import { PageBuilderProvider, usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
+import { useAdminLayoutActions } from '@/features/admin';
+import {
+  CmsBuilderLeftPanel,
+  DragStateProvider,
+  PageBuilderPageSkeleton,
+  PageBuilderProvider,
+  ThemeSettingsProvider,
+  usePageBuilder,
+} from '@/features/cms/public';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Button, useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
-
-import { CmsBuilderLeftPanel } from '@/features/cms/components/page-builder/CmsBuilderLeftPanel';
 import { KangurCmsBuilderRuntimeProvider } from './KangurCmsBuilderRuntimeContext';
 import { KangurCmsBuilderRightPanel } from './KangurCmsBuilderRightPanel';
 import { KangurCmsPreviewPanel } from './KangurCmsPreviewPanel';

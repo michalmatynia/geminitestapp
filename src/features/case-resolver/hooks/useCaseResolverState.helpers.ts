@@ -33,7 +33,7 @@ export {
   createUniqueCaseFileName,
 } from './useCaseResolverState.helpers.naming';
 
-export { ensureSafeDocumentHtml } from '@/features/document-editor/content-format';
+export { ensureSafeDocumentHtml } from '@/features/document-editor';
 export {
   isLikelyImageFile,
   isLikelyPdfFile,

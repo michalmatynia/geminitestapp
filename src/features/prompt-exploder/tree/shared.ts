@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { FolderTreeViewportV2Props } from '@/features/foldertree/v2';
+import type { FolderTreeViewportV2Props } from '@/features/foldertree';
 import type { MasterTreeId, MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 export const PROMPT_EXPLODER_DRAG_HANDLE_SELECTOR = '[data-master-tree-drag-handle="true"]';

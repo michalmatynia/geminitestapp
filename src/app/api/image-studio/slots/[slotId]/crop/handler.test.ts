@@ -68,7 +68,7 @@ vi.mock('@/features/ai/image-studio/server/crop-utils', () => ({
   validateCropSourceDimensions: validateCropSourceDimensionsMock,
 }));
 
-vi.mock('@/features/ai/image-studio/server', () => ({
+vi.mock('@/features/ai/server', () => ({
   getImageStudioSlotLinkBySourceAndRelation: getImageStudioSlotLinkBySourceAndRelationMock,
   upsertImageStudioSlotLink: upsertImageStudioSlotLinkMock,
   createImageStudioSlots: createImageStudioSlotsMock,

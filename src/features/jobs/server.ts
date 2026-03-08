@@ -5,8 +5,8 @@ export {
   startAgentQueue,
   stopAgentQueue,
   enqueueAgentRun,
-} from '@/features/ai/agent-runtime/workers/agentQueue';
-export { startAiInsightsQueue } from '@/features/ai/insights/workers/aiInsightsQueue';
+} from '@/features/ai/server';
+export { startAiInsightsQueue } from '@/features/ai/server';
 export {
   startAiPathRunQueue,
   assertAiPathRunQueueReady,
@@ -15,26 +15,26 @@ export {
   getAiPathRunQueueStatus,
   getAiPathRunQueueHotStatus,
   removePathRunQueueEntries,
-} from '@/features/ai/ai-paths/workers/aiPathRunQueue';
+} from '@/features/ai/server';
 export {
   startChatbotJobQueue,
   stopChatbotJobQueue,
   enqueueChatbotJob,
-} from '@/features/ai/chatbot/workers/chatbotJobQueue';
+} from '@/features/ai/server';
 export { startDatabaseBackupSchedulerQueue } from '@/shared/lib/db/workers/databaseBackupSchedulerQueue';
 export {
   startImageStudioRunQueue,
   enqueueImageStudioRunJob,
-} from '@/features/ai/image-studio/workers/imageStudioRunQueue';
+} from '@/features/ai/server';
 export {
   startImageStudioSequenceQueue,
   enqueueImageStudioSequenceJob,
-} from '@/features/ai/image-studio/workers/imageStudioSequenceQueue';
+} from '@/features/ai/server';
 export {
   startTraderaListingQueue,
   enqueueTraderaListingJob,
-} from '@/features/integrations/workers/traderaListingQueue';
-export { startTraderaRelistSchedulerQueue } from '@/features/integrations/workers/traderaRelistSchedulerQueue';
+} from '@/features/integrations/server';
+export { startTraderaRelistSchedulerQueue } from '@/features/integrations/server';
 
 export {
   getQueueHealth as getGenericQueueStatus,
@@ -46,11 +46,11 @@ export {
   enqueueProductAiJobToQueue,
   processProductAiJob,
   getQueueStatus,
-} from '@/features/products/workers/productAiQueue';
+} from '@/features/products/server';
 
-export { startProductSyncSchedulerQueue } from '@/features/product-sync/workers/productSyncSchedulerQueue';
+export { startProductSyncSchedulerQueue } from '@/features/product-sync/server';
 export {
   startProductSyncBackfillQueue,
   stopProductSyncBackfillQueue,
   enqueueProductSyncBackfillJob,
-} from '@/features/product-sync/workers/productSyncBackfillQueue';
+} from '@/features/product-sync/server';

@@ -3,8 +3,8 @@
 import { FileCode2, Save, Settings2, Copy } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
-import { CanvasBoard } from '@/features/ai/ai-paths/components/canvas-board';
-import { AiPathsProvider } from '@/features/ai/ai-paths/context';
+import { CanvasBoard } from '@/features/ai';
+import { AiPathsProvider } from '@/features/ai';
 import {
   type AiNode,
   type CaseResolverNodeFileSnapshot,

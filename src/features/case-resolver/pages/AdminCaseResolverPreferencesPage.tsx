@@ -6,7 +6,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   useUpdateUserPreferencesMutation,
   useUserPreferences,
-} from '@/features/auth/hooks/useUserPreferences';
+} from '@/features/auth';
 import type { UserPreferences } from '@/shared/contracts/auth';
 import {
   Button,

@@ -19,8 +19,8 @@ import {
   useCategoryMappings,
 } from '@/features/integrations/hooks/useMarketplaceQueries';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { useProductCategories } from '@/features/products/hooks/useCategoryQueries';
-import { useCatalogs } from '@/features/products/hooks/useProductMetadataQueries';
+import { useProductCategories } from '@/features/products';
+import { useCatalogs } from '@/features/products';
 import type { ExternalCategory, CategoryMappingWithDetails } from '@/shared/contracts/integrations';
 import type { CatalogRecord, ProductCategory } from '@/shared/contracts/products';
 import type {

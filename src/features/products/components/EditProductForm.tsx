@@ -14,7 +14,7 @@ import { useProductFormImages } from '@/features/products/context/ProductFormIma
 import type { ProductWithImages } from '@/shared/contracts/products';
 import { Button, Card } from '@/shared/ui';
 
-const FileManager = dynamic(() => import('@/features/files/components/FileManager'), {
+const FileManager = dynamic(() => import('@/features/files'), {
   ssr: false,
 });
 function ArrowLeftIcon(props: React.SVGProps<SVGSVGElement>): React.JSX.Element {

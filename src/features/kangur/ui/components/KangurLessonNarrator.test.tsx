@@ -55,6 +55,7 @@ function NarratorHarness(): React.JSX.Element {
         }}
         lessonDocument={null}
         lessonContentRef={lessonContentRef}
+        readLabel='Read lesson'
       />
     </>
   );
@@ -119,24 +120,22 @@ describe('KangurLessonNarrator', () => {
     render(<NarratorHarness />);
 
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: /^play$/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /^read lesson$/i })).toBeInTheDocument()
     );
 
-    expect(screen.getByTestId('lesson-narrator-shell')).toHaveClass(
-      'glass-panel',
-      'border-indigo-200/70'
-    );
-    expect(screen.getByText('Lesson narrator')).toHaveClass('border-indigo-200', 'bg-indigo-100');
+    expect(screen.getByTestId('lesson-narrator-shell')).toHaveClass('w-full');
+    expect(screen.queryByText('Lesson narrator')).toBeNull();
 
-    fireEvent.click(screen.getByRole('button', { name: /^play$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^read lesson$/i }));
 
     await waitFor(() => expect(speechSynthesisMock.speak).toHaveBeenCalledTimes(1));
 
     expect(apiPostMock).not.toHaveBeenCalled();
-    expect(screen.getByRole('button', { name: /^stop$/i })).toHaveClass(
+    expect(screen.getByRole('button', { name: /^pause$/i })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
     );
+    expect(screen.queryByRole('button', { name: /^stop$/i })).toBeNull();
     expect(screen.queryByText('Voice')).toBeNull();
     expect(screen.queryByText('Playback speed')).toBeNull();
   });
@@ -158,10 +157,10 @@ describe('KangurLessonNarrator', () => {
     render(<NarratorHarness />);
 
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: /^play$/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /^read lesson$/i })).toBeInTheDocument()
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /^play$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^read lesson$/i }));
 
     await waitFor(() => expect(apiPostMock).toHaveBeenCalledTimes(1));
 
@@ -188,7 +187,8 @@ describe('KangurLessonNarrator', () => {
     apiPostMock.mockResolvedValue({
       mode: 'fallback',
       reason: 'generation_failed',
-      message: 'Neural narration could not be prepared right now, so browser narration fallback will be used.',
+      message:
+        'Neural narration could not be prepared right now, so browser narration fallback will be used.',
       segments: [
         {
           id: 'clock-segment-1',
@@ -200,17 +200,17 @@ describe('KangurLessonNarrator', () => {
     render(<NarratorHarness />);
 
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: /^play$/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /^read lesson$/i })).toBeInTheDocument()
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /^play$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^read lesson$/i }));
 
     await waitFor(() => expect(speechSynthesisMock.speak).toHaveBeenCalledTimes(1));
 
     expect(audioPlayMock).not.toHaveBeenCalled();
-    expect((speechSynthesisMock.speak.mock.calls[0]?.[0] as MockSpeechSynthesisUtterance)?.text).toBe(
-      'To jest tekst lekcji do czytania przez narratora.'
-    );
+    expect(
+      (speechSynthesisMock.speak.mock.calls[0]?.[0] as MockSpeechSynthesisUtterance)?.text
+    ).toBe('To jest tekst lekcji do czytania przez narratora.');
     expect(
       screen.getByText(
         /Neural narration could not be prepared right now, so browser narration fallback will be used\./i
@@ -224,10 +224,10 @@ describe('KangurLessonNarrator', () => {
     render(<NarratorHarness />);
 
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: /^play$/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /^read lesson$/i })).toBeInTheDocument()
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /^play$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^read lesson$/i }));
 
     await waitFor(() => expect(screen.getByText('Narrator network failed.')).toBeInTheDocument());
 

@@ -9,7 +9,7 @@ import type {
 import { parseChatbotSettingsPayload } from '@/shared/contracts/chatbot';
 import prisma from '@/shared/lib/db/prisma';
 
-import type { Prisma } from '@prisma/client';
+import type { Prisma } from '@/shared/lib/db/prisma-client';
 
 type ChatMessageRow = Prisma.ChatbotMessageGetPayload<Record<string, never>>;
 type ChatSessionRow = Prisma.ChatbotSessionGetPayload<{

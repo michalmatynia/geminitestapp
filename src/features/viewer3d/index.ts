@@ -11,5 +11,6 @@ export { DitheringPass, DitheringEffectImpl } from './components/shaders/Ditheri
 export { Admin3DAssetsPage } from './pages/Admin3DAssetsPage';
 export { Asset3DListPage } from './pages/Asset3DListPage';
 export * from './context/Viewer3DContext';
+export * from './hooks/useAsset3dQueries';
 export * from './api';
 export * from '@/shared/contracts/viewer3d';

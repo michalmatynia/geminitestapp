@@ -9,7 +9,7 @@ import vm from 'vm';
 import {
   defaultPlaywrightSettings,
   PLAYWRIGHT_PERSONA_SETTINGS_KEY,
-} from '@/features/playwright/constants/playwright';
+} from '@/features/playwright';
 import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import {
   playwrightSettingsSchema,

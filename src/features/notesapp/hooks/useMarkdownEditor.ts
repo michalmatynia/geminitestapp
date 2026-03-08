@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback } from 'react';
-import type { MarkdownToolbarActionHandlers as UseMarkdownEditorReturn } from '@/features/document-editor/context/MarkdownToolbarContext';
+import type { MarkdownToolbarActionHandlers as UseMarkdownEditorReturn } from '@/features/document-editor';
 
 export type UseMarkdownEditorProps = {
   content: string;

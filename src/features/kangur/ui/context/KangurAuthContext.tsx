@@ -142,4 +142,7 @@ export const useKangurAuth = (): KangurAuthContextValue => {
   return context;
 };
 
+export const useOptionalKangurAuth = (): KangurAuthContextValue | null =>
+  useContext(KangurAuthContext);
+
 export type { KangurAuthContextValue, KangurAuthError };

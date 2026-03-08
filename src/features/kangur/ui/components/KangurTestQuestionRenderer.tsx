@@ -10,6 +10,8 @@ import { useOptionalKangurTestSuiteRuntime } from '@/features/kangur/ui/context/
 import { KANGUR_ACCENT_STYLES, type KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/shared/utils';
 import type { KangurTestQuestion } from '@/shared/contracts/kangur-tests';
+import type { KangurLesson } from '@/shared/contracts/kangur';
+import { KangurLessonNarrator } from './KangurLessonNarrator';
 import { KangurQuestionIllustrationRenderer } from './KangurQuestionIllustrationRenderer';
 
 type Props = {
@@ -19,6 +21,7 @@ type Props = {
   showAnswer: boolean;
   questionIndex?: number;
   totalQuestions?: number;
+  showReadControl?: boolean;
 };
 
 export function KangurTestQuestionRenderer({
@@ -28,23 +31,70 @@ export function KangurTestQuestionRenderer({
   showAnswer,
   questionIndex,
   totalQuestions,
+  showReadControl = true,
 }: Props): React.JSX.Element {
   const runtime = useOptionalKangurTestSuiteRuntime();
   const resolvedTotalQuestions = totalQuestions ?? runtime?.totalQuestions;
   const isAnswered = selectedLabel !== null;
   const isCorrect = selectedLabel === question.correctChoiceLabel;
+  const narrationSourceRef = React.useRef<HTMLDivElement | null>(null);
+  const narratorLesson = React.useMemo<
+    Pick<KangurLesson, 'id' | 'title' | 'description' | 'contentMode'>
+  >(
+    () => ({
+      id: `kangur-test-question:${question.id}`,
+      title: questionIndex !== undefined ? `Question ${questionIndex + 1}` : 'Question',
+      description: question.prompt,
+      contentMode: 'component',
+    }),
+    [question.id, question.prompt, questionIndex]
+  );
+  const narrationText = React.useMemo(() => {
+    const parts = [
+      questionIndex !== undefined && resolvedTotalQuestions !== undefined
+        ? `Question ${questionIndex + 1} of ${resolvedTotalQuestions}.`
+        : null,
+      question.prompt,
+      ...question.choices.map((choice) => `${choice.label}. ${choice.text}.`),
+      showAnswer ? `Correct answer: ${question.correctChoiceLabel}.` : null,
+      showAnswer && question.explanation ? `Explanation. ${question.explanation}` : null,
+    ];
+
+    return parts.filter(Boolean).join(' ');
+  }, [
+    question.choices,
+    question.correctChoiceLabel,
+    question.explanation,
+    question.prompt,
+    questionIndex,
+    resolvedTotalQuestions,
+    showAnswer,
+  ]);
 
   return (
     <div className='space-y-4'>
+      <div aria-hidden='true' className='sr-only' ref={narrationSourceRef}>
+        {narrationText}
+      </div>
       {/* Header */}
       {questionIndex !== undefined && resolvedTotalQuestions !== undefined ? (
-        <div className='flex items-center justify-between'>
-          <span className='text-xs font-semibold uppercase tracking-wide text-slate-400'>
+        <div className='flex items-start justify-between gap-3'>
+          <span className='pt-2 text-xs font-semibold uppercase tracking-wide text-slate-400'>
             Question {questionIndex + 1} / {resolvedTotalQuestions}
           </span>
-          <KangurStatusChip accent='slate' size='sm'>
-            {question.pointValue} {question.pointValue === 1 ? 'pt' : 'pts'}
-          </KangurStatusChip>
+          <div className='flex items-center gap-2'>
+            {showReadControl ? (
+              <KangurLessonNarrator
+                lesson={narratorLesson}
+                lessonDocument={null}
+                lessonContentRef={narrationSourceRef}
+                readLabel='Read question'
+              />
+            ) : null}
+            <KangurStatusChip accent='slate' size='sm'>
+              {question.pointValue} {question.pointValue === 1 ? 'pt' : 'pts'}
+            </KangurStatusChip>
+          </div>
         </div>
       ) : null}
 

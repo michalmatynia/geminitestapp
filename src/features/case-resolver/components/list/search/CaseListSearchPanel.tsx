@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
-import { searchMasterTreeNodes } from '@/features/foldertree/v2/operations/search';
+import { searchMasterTreeNodes } from '@/features/foldertree';
 import type { CaseResolverFile, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 import { MasterTreeSettingsButton, Button, StatusBadge, Badge } from '@/shared/ui';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';

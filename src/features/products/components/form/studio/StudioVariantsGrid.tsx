@@ -6,7 +6,7 @@ import { Trash2 } from 'lucide-react';
 import { Button, FormSection, LoadingState, StatusBadge } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import { useProductStudioContext } from '../../../context/ProductStudioContext';
-import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/image-src';
+import { getImageStudioSlotImageSrc } from '@/features/ai';
 import { useProductSettings } from '@/features/products/hooks/useProductSettings';
 
 export function StudioVariantsGrid(): React.JSX.Element {

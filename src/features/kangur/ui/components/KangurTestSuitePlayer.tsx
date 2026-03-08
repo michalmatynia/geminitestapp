@@ -69,6 +69,7 @@ function ExamSummary({
                 onSelect={(): void => {}}
                 showAnswer={true}
                 questionIndex={i}
+                showReadControl={false}
               />
             </KangurInfoCard>
           );
@@ -90,7 +91,12 @@ function ExamSummary({
   );
 }
 
-export function KangurTestSuitePlayer({ suite, questions, learnerId, onFinish }: Props): React.JSX.Element {
+export function KangurTestSuitePlayer({
+  suite,
+  questions,
+  learnerId,
+  onFinish,
+}: Props): React.JSX.Element {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [showAnswer, setShowAnswer] = useState(false);
@@ -150,7 +156,9 @@ export function KangurTestSuitePlayer({ suite, questions, learnerId, onFinish }:
     metadata: {
       contentId: suite.id,
       label:
-        totalQuestions > 0 ? `Pytanie ${currentIndex + 1}/${totalQuestions}` : currentQuestion?.prompt ?? null,
+        totalQuestions > 0
+          ? `Pytanie ${currentIndex + 1}/${totalQuestions}`
+          : (currentQuestion?.prompt ?? null),
     },
   });
   useKangurTutorAnchor({
@@ -232,10 +240,7 @@ export function KangurTestSuitePlayer({ suite, questions, learnerId, onFinish }:
 
   return (
     <>
-      <KangurAiTutorSessionSync
-        learnerId={learnerId ?? null}
-        sessionContext={activeTutorContext}
-      />
+      <KangurAiTutorSessionSync learnerId={learnerId ?? null} sessionContext={activeTutorContext} />
       <KangurTestSuiteRuntimeProvider totalQuestions={totalQuestions}>
         <div className='space-y-4'>
           {/* Progress bar */}
@@ -257,6 +262,7 @@ export function KangurTestSuitePlayer({ suite, questions, learnerId, onFinish }:
             <motion.div
               ref={questionAnchorRef}
               key={currentIndex}
+              data-testid='kangur-test-question-anchor'
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
@@ -285,7 +291,7 @@ export function KangurTestSuitePlayer({ suite, questions, learnerId, onFinish }:
               data-doc-id='tests_suite_player'
             >
               <ChevronLeft className='size-4' />
-            Previous
+              Previous
             </KangurButton>
 
             {isAnswered ? (

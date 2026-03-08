@@ -179,6 +179,7 @@ describe('KangurAiTutorWidget', () => {
     useKangurTextHighlightMock.mockReturnValue({
       selectedText: '2 + 2',
       selectionRect: new DOMRect(120, 180, 140, 26),
+      selectionContainerRect: new DOMRect(80, 150, 520, 240),
       clearSelection: clearSelectionMock,
     });
   });
@@ -290,6 +291,105 @@ describe('KangurAiTutorWidget', () => {
     expect(
       screen.getByTestId('kangur-ai-tutor-header-avatar-image').querySelector('svg')
     ).not.toBeNull();
+  });
+
+  it('shows the learner-specific tutor mood in the modal header without depending on avatar changes', () => {
+    useKangurAiTutorMock.mockReturnValue({
+      enabled: true,
+      tutorSettings: {
+        enabled: true,
+        agentPersonaId: null,
+        motionPresetId: null,
+        uiMode: 'anchored',
+        allowCrossPagePersistence: true,
+        allowLessons: true,
+        testAccessMode: 'guided',
+        showSources: true,
+        allowSelectedTextSupport: true,
+        dailyMessageLimit: null,
+      },
+      tutorName: 'Pomocnik',
+      tutorMoodId: 'neutral',
+      tutorBehaviorMoodId: 'supportive',
+      tutorBehaviorMoodLabel: 'Wspierajacy',
+      tutorBehaviorMoodDescription: 'Tutor aktywnie podtrzymuje ucznia w biezacej probie.',
+      tutorAvatarSvg:
+        '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="34" fill="#ffffff" /></svg>',
+      tutorAvatarImageUrl: null,
+      sessionContext: {
+        surface: 'lesson',
+        contentId: 'lesson-1',
+        title: 'Dodawanie',
+      },
+      isOpen: true,
+      messages: [],
+      isLoading: false,
+      isUsageLoading: false,
+      highlightedText: null,
+      usageSummary: null,
+      openChat: openChatMock,
+      closeChat: closeChatMock,
+      sendMessage: sendMessageMock,
+      setHighlightedText: setHighlightedTextMock,
+    });
+
+    render(<KangurAiTutorWidget />);
+
+    expect(screen.getByTestId('kangur-ai-tutor-mood-chip')).toHaveTextContent(
+      'Nastroj: Wspierajacy'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-mood-chip')).toHaveAttribute(
+      'data-mood-id',
+      'supportive'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-mood-description')).toHaveTextContent(
+      'Tutor aktywnie podtrzymuje ucznia w biezacej probie.'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-header-avatar-image')).toBeInTheDocument();
+  });
+
+  it('renders the tutor avatar from the uploaded image url when one is available', () => {
+    useKangurAiTutorMock.mockReturnValue({
+      enabled: true,
+      tutorSettings: {
+        enabled: true,
+        agentPersonaId: null,
+        motionPresetId: null,
+        uiMode: 'anchored',
+        allowCrossPagePersistence: true,
+        allowLessons: true,
+        testAccessMode: 'guided',
+        showSources: true,
+        allowSelectedTextSupport: true,
+        dailyMessageLimit: null,
+      },
+      tutorName: 'Pomocnik',
+      tutorMoodId: 'neutral',
+      tutorAvatarSvg: null,
+      tutorAvatarImageUrl: '/uploads/agentcreator/personas/persona-1/neutral/avatar.png',
+      sessionContext: {
+        surface: 'lesson',
+        contentId: 'lesson-1',
+        title: 'Dodawanie',
+      },
+      isOpen: true,
+      messages: [],
+      isLoading: false,
+      isUsageLoading: false,
+      highlightedText: '2 + 2',
+      usageSummary: null,
+      openChat: openChatMock,
+      closeChat: closeChatMock,
+      sendMessage: sendMessageMock,
+      setHighlightedText: setHighlightedTextMock,
+    });
+
+    render(<KangurAiTutorWidget />);
+
+    expect(screen.getByAltText('Pomocnik avatar (neutral)')).toHaveAttribute(
+      'src',
+      '/uploads/agentcreator/personas/persona-1/neutral/avatar.png'
+    );
   });
 
   it('renders user messages in the warm orange tutor bubble instead of the old indigo bubble', () => {
@@ -660,17 +760,16 @@ describe('KangurAiTutorWidget', () => {
 
     render(<KangurAiTutorWidget />);
 
-    expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute('data-ui-mode', 'static');
-    expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute('data-anchor-kind', 'dock');
-    expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
-      'data-avatar-placement',
-      'floating'
-    );
+    expect(screen.queryByTestId('kangur-ai-tutor-avatar')).not.toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute('data-ui-mode', 'static');
     expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute('data-layout', 'bubble');
     expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute(
       'data-avatar-placement',
-      'independent'
+      'hidden'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute(
+      'data-open-animation',
+      'fade'
     );
     expect(screen.getByTestId('kangur-ai-tutor-focus-chip')).toHaveTextContent('Fragment lekcji');
     expect(screen.getByRole('button', { name: 'Ten fragment' })).toBeInTheDocument();
@@ -690,6 +789,47 @@ describe('KangurAiTutorWidget', () => {
     expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute(
       'data-avatar-placement',
       'attached'
+    );
+  });
+
+  it('launches the anchored tutor from the dock and prefers empty space beside the highlighted lesson block', () => {
+    render(<KangurAiTutorWidget />);
+
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute(
+      'data-launch-origin',
+      'dock-bottom-right'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute(
+      'data-open-animation',
+      'dock-launch'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute(
+      'data-placement-strategy',
+      'right'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
+      'data-avatar-attachment-side',
+      'left'
+    );
+  });
+
+  it('switches the anchored tutor to the left side when the highlighted block occupies the right edge', () => {
+    useKangurTextHighlightMock.mockReturnValue({
+      selectedText: '2 + 2',
+      selectionRect: new DOMRect(980, 180, 140, 26),
+      selectionContainerRect: new DOMRect(720, 140, 500, 260),
+      clearSelection: clearSelectionMock,
+    });
+
+    render(<KangurAiTutorWidget />);
+
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute(
+      'data-placement-strategy',
+      'left'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
+      'data-avatar-attachment-side',
+      'right'
     );
   });
 
@@ -782,6 +922,10 @@ describe('KangurAiTutorWidget', () => {
     render(<KangurAiTutorWidget />);
 
     expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute('data-layout', 'sheet');
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute(
+      'data-open-animation',
+      'sheet'
+    );
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
       'data-avatar-placement',
       'attached'

@@ -2,8 +2,8 @@
 
 import { z } from 'zod';
 
-import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/features/playwright/constants/playwright';
-import { normalizePlaywrightPersonas } from '@/features/playwright/utils/personas';
+import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/features/playwright';
+import { normalizePlaywrightPersonas } from '@/features/playwright';
 import { fetchSettingsCached } from '@/shared/api/settings-client';
 import {
   importExportTemplateSchema,

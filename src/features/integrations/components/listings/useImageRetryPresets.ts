@@ -3,7 +3,7 @@
 import {
   getDefaultImageRetryPresets,
   normalizeImageRetryPresets,
-} from '@/features/data-import-export/utils/image-retry-presets';
+} from '@/features/data-import-export';
 import type { ImageRetryPreset } from '@/shared/contracts/integrations';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';

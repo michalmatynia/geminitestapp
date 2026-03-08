@@ -72,7 +72,7 @@ vi.mock('@/features/ai/image-studio/server/auto-scaler-utils', () => ({
   validateAutoScalerSourceDimensions: validateAutoScalerSourceDimensionsMock,
 }));
 
-vi.mock('@/features/ai/image-studio/server', () => ({
+vi.mock('@/features/ai/server', () => ({
   getImageStudioSlotLinkBySourceAndRelation: getImageStudioSlotLinkBySourceAndRelationMock,
   upsertImageStudioSlotLink: upsertImageStudioSlotLinkMock,
   createImageStudioSlots: createImageStudioSlotsMock,

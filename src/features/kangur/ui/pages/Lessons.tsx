@@ -1,3 +1,7 @@
+'use client';
+
+'use client';
+
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -59,9 +63,7 @@ const LessonLoadingFallback = (): React.JSX.Element => (
   </KangurGlassPanel>
 );
 
-const loadLessonComponent = (
-  loader: () => Promise<unknown>
-): ComponentType<LessonProps> =>
+const loadLessonComponent = (loader: () => Promise<unknown>): ComponentType<LessonProps> =>
   dynamic<LessonProps>(
     async () => {
       const module = (await loader()) as { default: ComponentType<LessonProps> };
@@ -73,7 +75,9 @@ const loadLessonComponent = (
     }
   );
 
-const ClockLesson = loadLessonComponent(() => import('@/features/kangur/ui/components/ClockLesson'));
+const ClockLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/ClockLesson')
+);
 const CalendarLesson = loadLessonComponent(
   () => import('@/features/kangur/ui/components/CalendarLesson')
 );
@@ -448,24 +452,13 @@ export default function Lessons() {
       contentId: activeLesson?.id,
       assignmentId: activeLessonAssignment?.id ?? completedActiveLessonAssignment?.id,
     }),
-    [
-      activeLesson?.id,
-      activeLessonAssignment?.id,
-      completedActiveLessonAssignment?.id,
-    ]
+    [activeLesson?.id, activeLessonAssignment?.id, completedActiveLessonAssignment?.id]
   );
 
   return (
     <>
-      <KangurAiTutorSessionSync
-        learnerId={learnerId}
-        sessionContext={lessonTutorContext}
-      />
-      <KangurPageShell
-        tone='learn'
-        id='kangur-lessons-page'
-        skipLinkTargetId='kangur-lessons-main'
-      >
+      <KangurAiTutorSessionSync learnerId={learnerId} sessionContext={lessonTutorContext} />
+      <KangurPageShell tone='learn' id='kangur-lessons-page' skipLinkTargetId='kangur-lessons-main'>
         <KangurDocsTooltipEnhancer enabled={docsTooltipsEnabled} rootId='kangur-lessons-page' />
         <KangurPrimaryNavigation
           basePath={basePath}
@@ -526,7 +519,7 @@ export default function Lessons() {
                   orderedLessons.map((lesson, index) => {
                     const masteryPresentation = getLessonMasteryPresentation(lesson, progress);
                     const lessonAssignment =
-                    lessonAssignmentsByComponent.get(lesson.componentId) ?? null;
+                      lessonAssignmentsByComponent.get(lesson.componentId) ?? null;
                     const completedLessonAssignment = !lessonAssignment
                       ? (completedLessonAssignmentsByComponent.get(lesson.componentId) ?? null)
                       : null;
@@ -565,22 +558,22 @@ export default function Lessons() {
                                   {lesson.description}
                                 </div>
                                 {lesson.contentMode === 'document' &&
-                            hasKangurLessonDocumentContent(lessonDocuments[lesson.id]) ? (
-                                    <KangurStatusChip
-                                      accent='sky'
-                                      className='mt-2 uppercase tracking-[0.14em]'
-                                      size='sm'
-                                    >
-                                Wlasna zawartosc
-                                    </KangurStatusChip>
-                                  ) : null}
+                                hasKangurLessonDocumentContent(lessonDocuments[lesson.id]) ? (
+                                  <KangurStatusChip
+                                    accent='sky'
+                                    className='mt-2 uppercase tracking-[0.14em]'
+                                    size='sm'
+                                  >
+                                    Wlasna zawartosc
+                                  </KangurStatusChip>
+                                ) : null}
                                 {lessonAssignment ? (
                                   <KangurStatusChip
                                     accent='rose'
                                     className='mt-2 uppercase tracking-[0.14em]'
                                     size='sm'
                                   >
-                                Priorytet rodzica
+                                    Priorytet rodzica
                                   </KangurStatusChip>
                                 ) : completedLessonAssignment ? (
                                   <KangurStatusChip
@@ -588,7 +581,7 @@ export default function Lessons() {
                                     className='mt-2 uppercase tracking-[0.14em]'
                                     size='sm'
                                   >
-                                Ukonczone dla rodzica
+                                    Ukonczone dla rodzica
                                   </KangurStatusChip>
                                 ) : null}
                               </div>
@@ -618,7 +611,7 @@ export default function Lessons() {
                                     className='whitespace-nowrap uppercase tracking-[0.14em]'
                                     size='sm'
                                   >
-                                Zadanie zamkniete
+                                    Zadanie zamkniete
                                   </KangurStatusChip>
                                 ) : null}
                               </div>
@@ -632,7 +625,7 @@ export default function Lessons() {
                               </div>
                             ) : completedLessonAssignment ? (
                               <div className='mt-2 text-xs font-semibold text-emerald-600'>
-                            Zadanie od rodzica zostalo juz wykonane.{' '}
+                                Zadanie od rodzica zostalo juz wykonane.{' '}
                                 {completedLessonAssignment.progress.summary}
                               </div>
                             ) : null}
@@ -681,9 +674,13 @@ export default function Lessons() {
                     lesson={activeLesson}
                     lessonDocument={activeLessonDocument}
                     lessonContentRef={activeLessonContentRef}
+                    readLabel='Read lesson'
                   />
                 </div>
-                <div ref={activeLessonContentRef} className='w-full flex flex-col items-center gap-4'>
+                <div
+                  ref={activeLessonContentRef}
+                  className='w-full flex flex-col items-center gap-4'
+                >
                   {shouldRenderLessonDocument && activeLessonDocument ? (
                     <div className='w-full max-w-5xl space-y-4'>
                       <KangurSummaryPanel
@@ -705,13 +702,14 @@ export default function Lessons() {
                             variant='surface'
                             data-doc-id='lessons_back_button'
                           >
-                          Wroc do listy lekcji
+                            Wroc do listy lekcji
                           </KangurButton>
                         </div>
                       </KangurSummaryPanel>
                       <KangurLessonDocumentRenderer document={activeLessonDocument} />
                     </div>
-                  ) : activeLesson?.contentMode === 'document' && !hasActiveLessonDocumentContent ? (
+                  ) : activeLesson?.contentMode === 'document' &&
+                    !hasActiveLessonDocumentContent ? (
                     <KangurSummaryPanel
                       accent='amber'
                       align='center'
@@ -732,7 +730,7 @@ export default function Lessons() {
                         variant='surface'
                         data-doc-id='lessons_back_button'
                       >
-                      Wroc do listy lekcji
+                        Wroc do listy lekcji
                       </KangurButton>
                     </KangurSummaryPanel>
                   ) : ActiveLessonComponent ? (

@@ -9,7 +9,7 @@ import {
   type ImageStudioAnalysisRequest,
 } from '@/features/ai/image-studio/contracts/analysis';
 import { analyzeImageByAutoScalerLayout } from '@/features/ai/image-studio/server/auto-scaler-utils';
-import { getImageStudioSlotById } from '@/features/ai/image-studio/server';
+import { getImageStudioSlotById } from '@/features/ai/server';
 import {
   loadSourceBufferFromSlot,
   parseImageDataUrl,

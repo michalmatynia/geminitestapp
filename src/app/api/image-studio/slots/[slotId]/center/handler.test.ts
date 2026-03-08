@@ -75,7 +75,7 @@ vi.mock('@/features/ai/image-studio/server/center-utils', () => ({
   validateCenterSourceDimensions: validateCenterSourceDimensionsMock,
 }));
 
-vi.mock('@/features/ai/image-studio/server', () => ({
+vi.mock('@/features/ai/server', () => ({
   getImageStudioSlotLinkBySourceAndRelation: getImageStudioSlotLinkBySourceAndRelationMock,
   upsertImageStudioSlotLink: upsertImageStudioSlotLinkMock,
   createImageStudioSlots: createImageStudioSlotsMock,

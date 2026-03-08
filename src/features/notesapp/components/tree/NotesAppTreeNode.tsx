@@ -3,7 +3,7 @@
 import React from 'react';
 import { ChevronDown, ChevronRight, FilePlus, FolderPlus, Copy, Edit2, Trash2 } from 'lucide-react';
 
-import type { FolderTreeViewportRenderNodeInput as NotesAppTreeNodeProps } from '@/features/foldertree/v2';
+import type { FolderTreeViewportRenderNodeInput as NotesAppTreeNodeProps } from '@/features/foldertree';
 import { useNotesAppActions } from '@/features/notesapp/hooks/NotesAppContext';
 import {
   fromFolderMasterNodeId,

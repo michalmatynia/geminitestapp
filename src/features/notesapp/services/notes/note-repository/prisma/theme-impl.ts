@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { Prisma, type Theme } from '@prisma/client';
+import { Prisma, type Theme } from '@/shared/lib/db/prisma-client';
 
 import type { ThemeRecord, ThemeCreateInput, ThemeUpdateInput } from '@/shared/contracts/notes';
 import prisma from '@/shared/lib/db/prisma';

@@ -12,21 +12,21 @@ import type { NextRequest } from 'next/server';
 
 export const AI_PATHS_PERMISSION = 'ai_paths.manage';
 const AI_PATHS_RUNNER_PERMISSION = 'products.manage';
-const DEV_INTERNAL_TOKEN = 'dev-secret-change-me';
+const DEV_INTERNAL_HEADER_VALUE = 'dev-internal-header-value-change-me';
 
-const getInternalToken = (): string | null => {
+const getExpectedInternalHeaderValue = (): string | null => {
   if (process.env['AI_PATHS_INTERNAL_TOKEN']) return process.env['AI_PATHS_INTERNAL_TOKEN'];
   if (process.env['AUTH_SECRET']) return process.env['AUTH_SECRET'];
   if (process.env['NEXTAUTH_SECRET']) return process.env['NEXTAUTH_SECRET'];
-  if (process.env['NODE_ENV'] === 'development') return DEV_INTERNAL_TOKEN;
+  if (process.env['NODE_ENV'] === 'development') return DEV_INTERNAL_HEADER_VALUE;
   return null;
 };
 
 export const isAiPathsInternalRequest = (request: NextRequest): boolean => {
-  const token = getInternalToken();
-  if (!token) return false;
+  const expectedHeaderValue = getExpectedInternalHeaderValue();
+  if (!expectedHeaderValue) return false;
   const header = request.headers.get('x-ai-paths-internal');
-  return Boolean(header && header === token);
+  return Boolean(header && header === expectedHeaderValue);
 };
 
 export type AiPathsAccessContext = {

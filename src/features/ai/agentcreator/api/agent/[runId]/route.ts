@@ -17,7 +17,7 @@ import {
 } from '@/shared/lib/api/api-handler';
 import prisma from '@/shared/lib/db/prisma';
 
-import type { Prisma } from '@prisma/client';
+import type { Prisma } from '@/shared/lib/db/prisma-client';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 

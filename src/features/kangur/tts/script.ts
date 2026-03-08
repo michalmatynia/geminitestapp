@@ -8,7 +8,7 @@ import type {
 } from '@/shared/contracts/kangur';
 import { getKangurLessonActivityDefinition } from '@/features/kangur/lesson-activities';
 import { resolveKangurLessonDocumentPages } from '@/features/kangur/lesson-documents';
-import { stripHtmlToPlainText } from '@/features/document-editor/content-format';
+import { stripHtmlToPlainText } from '@/features/document-editor';
 
 import type { KangurLessonNarrationScript, KangurLessonNarrationSegment } from './contracts';
 import { KANGUR_TTS_DEFAULT_LOCALE } from './contracts';

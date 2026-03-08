@@ -24,7 +24,7 @@ const question: KangurTestQuestion = {
 };
 
 describe('KangurTestQuestionRenderer', () => {
-  it('uses Kangur option-card styling for answer choices and shared feedback surfaces', () => {
+  it('uses Kangur option-card styling for answer choices and shared feedback surfaces', async () => {
     const onSelect = vi.fn();
     const { rerender } = render(
       <KangurTestQuestionRenderer
@@ -37,6 +37,7 @@ describe('KangurTestQuestionRenderer', () => {
       />
     );
 
+    expect(await screen.findByRole('button', { name: /read question/i })).toBeInTheDocument();
     const correctChoiceButton = screen.getByRole('button', { name: /A.*4/i });
     const wrongChoiceButton = screen.getByRole('button', { name: /B.*5/i });
 

@@ -13,7 +13,7 @@ import {
   useGraphState,
   useSelectionActions,
   useSelectionState,
-} from '@/features/ai/ai-paths/context';
+} from '@/features/ai';
 import type {
   AiNode,
   CaseResolverNodeMeta,

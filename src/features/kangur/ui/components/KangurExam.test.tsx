@@ -49,6 +49,7 @@ describe('KangurExam', () => {
       'border-amber-200',
       'bg-amber-100'
     );
+    expect(await screen.findByRole('button', { name: /czytaj pytanie/i })).toBeInTheDocument();
     expect(screen.getByRole('group', { name: 'Pytanie 1' })).toBeInTheDocument();
     expect(screen.getByTestId('kangur-exam-question-illustration')).toHaveClass(
       'soft-card',
@@ -79,10 +80,7 @@ describe('KangurExam', () => {
       'border-white/88',
       'bg-white/94'
     );
-    expect(screen.getByTestId('kangur-exam-summary-emoji')).toHaveClass(
-      'inline-flex',
-      'text-6xl'
-    );
+    expect(screen.getByTestId('kangur-exam-summary-emoji')).toHaveClass('inline-flex', 'text-6xl');
     expect(screen.getByTestId('kangur-exam-summary-progress-bar')).toHaveAttribute(
       'aria-valuenow',
       '100'

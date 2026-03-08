@@ -9,13 +9,13 @@ import { useProductFormCore } from './ProductFormCoreContext';
 import { useProductFormImages } from './ProductFormImageContext';
 import { useProductFormStudio } from './ProductFormStudioContext';
 import { resolveProductImageUrl } from '@/shared/utils/image-routing';
-import { useStudioProjects } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
+import { useStudioProjects } from '@/features/ai';
 import {
   useSendToStudioMutation,
   useAcceptVariantMutation,
   useRotateImageSlotMutation,
 } from '../hooks/useProductStudioMutations';
-import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/image-src';
+import { getImageStudioSlotImageSrc } from '@/features/ai';
 
 import type { ImageStudioSlotDto as ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type {

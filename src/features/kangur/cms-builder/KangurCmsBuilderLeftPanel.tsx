@@ -1,6 +1,6 @@
 'use client';
 
-import { CmsBuilderLeftPanel } from '@/features/cms/components/page-builder/CmsBuilderLeftPanel';
+import { CmsBuilderLeftPanel } from '@/features/cms/public';
 
 export function KangurCmsBuilderLeftPanel(): React.JSX.Element {
   return <CmsBuilderLeftPanel variant='kangur' />;

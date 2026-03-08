@@ -7,15 +7,15 @@ import {
   InternationalizationProvider,
 } from '@/features/internationalization';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { ProductSyncSettings } from '@/features/product-sync/components/ProductSyncSettings';
+import { ProductSyncSettings } from '@/features/product-sync';
 import { ParametersSettings } from '@/features/products/components/constructor/ParametersSettings';
 import { CatalogsSettings } from '@/features/products/components/settings/catalogs/CatalogsSettings';
 import { CategoriesSettings } from '@/features/products/components/settings/CategoriesSettings';
 import { CatalogModal } from '@/features/products/components/settings/modals/catalog-modal/CatalogModal';
 import { PriceGroupModal } from '@/features/products/components/settings/modals/price-group-modal/PriceGroupModal';
-import { CountryModal } from '@/features/internationalization/components/country-modal/CountryModal';
-import { CurrencyModal } from '@/features/internationalization/components/currency-modal/CurrencyModal';
-import { LanguageModal } from '@/features/internationalization/components/language-modal/LanguageModal';
+import { CountryModal } from '@/features/internationalization';
+import { CurrencyModal } from '@/features/internationalization';
+import { LanguageModal } from '@/features/internationalization';
 import { PriceGroupsSettings } from '@/features/products/components/settings/pricing/PriceGroupsSettings';
 import { ProductImageRoutingSettings } from '@/features/products/components/settings/ProductImageRoutingSettings';
 import { ProductSettingsProvider } from '@/features/products/components/settings/ProductSettingsContext';

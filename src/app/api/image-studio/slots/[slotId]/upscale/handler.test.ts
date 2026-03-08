@@ -74,7 +74,7 @@ vi.mock('@/features/ai/image-studio/server/upscale-utils', () => ({
   validateUpscaleSourceDimensions: validateUpscaleSourceDimensionsMock,
 }));
 
-vi.mock('@/features/ai/image-studio/server', () => ({
+vi.mock('@/features/ai/server', () => ({
   getImageStudioSlotLinkBySourceAndRelation: getImageStudioSlotLinkBySourceAndRelationMock,
   upsertImageStudioSlotLink: upsertImageStudioSlotLinkMock,
   createImageStudioSlots: createImageStudioSlotsMock,

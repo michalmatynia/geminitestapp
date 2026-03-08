@@ -3,9 +3,9 @@ import React from 'react';
 import type {
   CaseResolverCaptureDocumentDateAction,
   CaseResolverCaptureProposalState,
-} from '@/features/case-resolver-capture/proposals';
-import { type CaseResolverCaptureAction } from '@/features/case-resolver-capture/settings';
-import { encodeFilemakerPartyReference } from '@/features/filemaker/settings';
+} from '@/features/case-resolver-capture';
+import { type CaseResolverCaptureAction } from '@/features/case-resolver-capture';
+import { encodeFilemakerPartyReference } from '@/features/filemaker';
 import { Badge, Button, FormField, SelectSimple } from '@/shared/ui';
 import { ConfirmDialog } from '@/shared/ui/confirm-dialog';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';

@@ -9,11 +9,11 @@ import {
   createImageStudioRun,
   getImageStudioRunById,
   updateImageStudioRun,
-} from '@/features/ai/image-studio/server';
+} from '@/features/ai/server';
 import {
   enqueueImageStudioRunJob,
   startImageStudioRunQueue,
-} from '@/features/ai/image-studio/workers/imageStudioRunQueue';
+} from '@/features/ai/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, operationFailedError } from '@/shared/errors/app-error';
 

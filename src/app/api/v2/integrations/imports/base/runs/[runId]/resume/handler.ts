@@ -6,7 +6,7 @@ import {
   toStartResponse,
   updateBaseImportRunQueueJob,
 } from '@/features/integrations/server';
-import { enqueueBaseImportRunJob } from '@/features/integrations/workers/baseImportQueue';
+import { enqueueBaseImportRunJob } from '@/features/integrations/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const requestSchema = z.object({

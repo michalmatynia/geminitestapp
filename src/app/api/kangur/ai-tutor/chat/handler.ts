@@ -22,7 +22,11 @@ import {
   type KangurAiTutorAvailabilityReason,
 } from '@/features/kangur/settings-ai-tutor';
 import { consumeKangurAiTutorDailyUsage } from '@/features/kangur/server/ai-tutor-usage';
-import { resolveKangurActor } from '@/features/kangur/server';
+import {
+  buildKangurAiTutorLearnerMood,
+  resolveKangurActor,
+  setKangurLearnerAiTutorState,
+} from '@/features/kangur/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import {
   AGENT_PERSONA_SETTINGS_KEY,
@@ -36,6 +40,7 @@ import {
   type KangurAiTutorInteractionIntent,
   type KangurAiTutorPromptMode,
 } from '@/shared/contracts/kangur-ai-tutor';
+import { createDefaultKangurAiTutorLearnerMood } from '@/shared/contracts/kangur-ai-tutor-mood';
 import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
 import { badRequestError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
@@ -366,6 +371,42 @@ export async function postKangurAiTutorChatHandler(
         });
       }
     }
+    let tutorMood = actor.activeLearner.aiTutor ?? createDefaultKangurAiTutorLearnerMood();
+    try {
+      tutorMood = await buildKangurAiTutorLearnerMood({
+        learnerId,
+        context,
+        messages,
+        latestUserMessage,
+        personaSuggestedMoodId: suggestedPersonaMoodId,
+        previousMood: actor.activeLearner.aiTutor ?? null,
+      });
+    } catch (error) {
+      await logKangurServerEvent({
+        source: 'kangur.ai-tutor.chat.mood-build-failed',
+        service: 'kangur.ai-tutor',
+        message: 'Failed to resolve learner-specific Kangur tutor mood.',
+        level: 'warn',
+        request: req,
+        requestContext: ctx,
+        actor,
+        error,
+        statusCode: 500,
+        context: {
+          learnerId,
+          surface: context?.surface ?? null,
+          contentId: context?.contentId ?? null,
+          previousTutorMoodId: actor.activeLearner.aiTutor?.currentMoodId ?? null,
+        },
+      });
+    }
+    systemParts.push(
+      [
+        `Learner-specific tutor mood: ${tutorMood.currentMoodId}.`,
+        `Baseline learner mood: ${tutorMood.baselineMoodId}.`,
+        'Match this tone in your wording, but keep the answer concise and age-appropriate.',
+      ].join(' ')
+    );
     const contextInstructions = buildContextInstructions({
       context,
       registryBundle: contextRegistryBundle,
@@ -505,6 +546,30 @@ export async function postKangurAiTutorChatHandler(
       }
     }
 
+    try {
+      await setKangurLearnerAiTutorState(learnerId, tutorMood);
+    } catch (error) {
+      await logKangurServerEvent({
+        source: 'kangur.ai-tutor.chat.mood-persist-failed',
+        service: 'kangur.ai-tutor',
+        message: 'Failed to persist learner-specific Kangur tutor mood.',
+        level: 'warn',
+        request: req,
+        requestContext: ctx,
+        actor,
+        error,
+        statusCode: 500,
+        context: {
+          learnerId,
+          tutorMoodId: tutorMood.currentMoodId,
+          tutorBaselineMoodId: tutorMood.baselineMoodId,
+          tutorMoodReasonCode: tutorMood.lastReasonCode,
+          surface: context?.surface ?? null,
+          contentId: context?.contentId ?? null,
+        },
+      });
+    }
+
     await logKangurServerEvent({
       source: 'kangur.ai-tutor.chat.completed',
       service: 'kangur.ai-tutor',
@@ -533,6 +598,10 @@ export async function postKangurAiTutorChatHandler(
         personaId: tutorSettings.agentPersonaId,
         suggestedPersonaMoodId,
         personaMemorySessionId,
+        tutorMoodId: tutorMood.currentMoodId,
+        tutorBaselineMoodId: tutorMood.baselineMoodId,
+        tutorMoodReasonCode: tutorMood.lastReasonCode,
+        tutorMoodConfidence: tutorMood.confidence,
         dailyMessageLimit: usage.dailyMessageLimit,
         dailyUsageCount: usage.messageCount,
         dailyUsageRemaining: usage.remainingMessages,
@@ -546,6 +615,7 @@ export async function postKangurAiTutorChatHandler(
       sources: [],
       followUpActions: adaptiveGuidance.followUpActions,
       ...(suggestedPersonaMoodId ? { suggestedMoodId: suggestedPersonaMoodId } : {}),
+      tutorMood,
       usage,
     } satisfies KangurAiTutorChatResponse);
   } catch (error) {

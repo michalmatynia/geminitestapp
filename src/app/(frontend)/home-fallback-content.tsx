@@ -2,8 +2,8 @@ import { Facebook, Instagram, Linkedin, Twitter, Youtube } from 'lucide-react';
 import Link from 'next/link';
 import React from 'react';
 
-import { ProductCard } from '@/features/products/';
-import type { ProductWithImages } from '@/features/products/';
+import ProductCard from '@/features/products/components/ProductCard';
+import type { ProductWithImages } from '@/shared/contracts/products';
 
 type SocialThemeSettings = {
   socialFacebook?: string | null;

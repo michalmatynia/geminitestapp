@@ -18,8 +18,8 @@ import {
 import {
   getImageStudioSlotLinkBySourceAndRelation,
   upsertImageStudioSlotLink,
-} from '@/features/ai/image-studio/server';
-import { createImageStudioSlots, getImageStudioSlotById } from '@/features/ai/image-studio/server';
+} from '@/features/ai/server';
+import { createImageStudioSlots, getImageStudioSlotById } from '@/features/ai/server';
 import { getImageFileRepository } from '@/features/files/server';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

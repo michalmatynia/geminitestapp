@@ -68,6 +68,7 @@ export function KangurActiveLessonPanelWidget(): JSX.Element {
         lesson={activeLesson}
         lessonDocument={activeLessonDocument}
         lessonContentRef={activeLessonContentRef}
+        readLabel='Read lesson'
       />
 
       <div ref={activeLessonContentRef} className='flex w-full flex-col items-center gap-4'>

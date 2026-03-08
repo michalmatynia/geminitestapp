@@ -10,7 +10,7 @@ import {
   Pencil,
   Trash2,
 } from 'lucide-react';
-import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/v2';
+import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree';
 import { Badge, TreeRow } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import type { KangurLesson } from '@/shared/contracts/kangur';

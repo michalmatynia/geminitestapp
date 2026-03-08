@@ -1,7 +1,7 @@
 import { Redis } from 'ioredis';
 import { NextRequest } from 'next/server';
 
-import { getImageStudioRunById } from '@/features/ai/image-studio/server';
+import { getImageStudioRunById } from '@/features/ai/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { startIntervalTask, type IntervalTaskHandle } from '@/shared/lib/timers';

@@ -6,14 +6,14 @@ import React from 'react';
 import { EventEffectsWrapper } from '@/features/cms/components/shared/EventEffectsWrapper';
 import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
 import { isCmsSectionHidden } from '@/features/cms/utils/page-builder-normalization';
-import { DEFAULT_APP_EMBED_ID, getAppEmbedOption } from '@/features/app-embeds/lib/constants';
+import { DEFAULT_APP_EMBED_ID, getAppEmbedOption } from '@/features/app-embeds';
+import { getKangurWidgetLabel } from '@/features/kangur/public';
 import {
   isCmsNodeVisible,
   resolveCmsConnectedSettings,
   resolveCmsRuntimeValue,
   useOptionalCmsRuntime,
 } from '@/features/cms/components/frontend/CmsRuntimeContext';
-import { getKangurWidgetLabel } from '@/features/kangur/cms-builder/project';
 import type { GsapAnimationConfig } from '@/features/gsap';
 import type { CssAnimationConfig } from '@/shared/contracts/cms';
 import type { SectionInstance, BlockInstance, PreviewBlockItemProps } from '@/shared/contracts/cms';
@@ -716,16 +716,17 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
       resolvedSettings['buttonDisabledPath'].trim().length > 0;
     const runtimeDisabledValue = hasRuntimeDisabledBinding
       ? resolveCmsRuntimeValue(
-        runtime,
-        resolvedSettings['buttonDisabledSource'],
-        resolvedSettings['buttonDisabledPath']
-      )
+          runtime,
+          resolvedSettings['buttonDisabledSource'],
+          resolvedSettings['buttonDisabledPath']
+        )
       : undefined;
     const isDisabled = hasRuntimeDisabledBinding
       ? resolvedSettings['buttonDisabledWhen'] === 'falsy'
         ? !isTruthyRuntimeValue(runtimeDisabledValue)
         : isTruthyRuntimeValue(runtimeDisabledValue)
-      : resolvedSettings['buttonDisabled'] === true || resolvedSettings['buttonDisabled'] === 'true';
+      : resolvedSettings['buttonDisabled'] === true ||
+        resolvedSettings['buttonDisabled'] === 'true';
 
     return wrapBlock(
       <div
@@ -783,7 +784,8 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
         ? resolvedSettings['progressMax']
         : 100;
     const height =
-      typeof resolvedSettings['progressHeight'] === 'number' && resolvedSettings['progressHeight'] > 0
+      typeof resolvedSettings['progressHeight'] === 'number' &&
+      resolvedSettings['progressHeight'] > 0
         ? resolvedSettings['progressHeight']
         : 12;
     const borderRadius =
@@ -791,11 +793,13 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
         ? resolvedSettings['borderRadius']
         : 999;
     const fillColor =
-      typeof resolvedSettings['fillColor'] === 'string' && resolvedSettings['fillColor'].trim().length > 0
+      typeof resolvedSettings['fillColor'] === 'string' &&
+      resolvedSettings['fillColor'].trim().length > 0
         ? resolvedSettings['fillColor']
         : '#6366f1';
     const trackColor =
-      typeof resolvedSettings['trackColor'] === 'string' && resolvedSettings['trackColor'].trim().length > 0
+      typeof resolvedSettings['trackColor'] === 'string' &&
+      resolvedSettings['trackColor'].trim().length > 0
         ? resolvedSettings['trackColor']
         : '#e2e8f0';
     const showPercentage =
@@ -868,8 +872,8 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
           <div className='rounded-xl border border-dashed border-border/40 bg-card/20 p-3 text-xs text-gray-400'>
             {renderMode === 'internal-app'
               ? `Entry page: ${entryPage || 'default'}${
-                basePath ? ` · host page override: ${basePath}` : ' · host page: current CMS page'
-              }`
+                  basePath ? ` · host page override: ${basePath}` : ' · host page: current CMS page'
+                }`
               : 'Preview uses the published iframe URL at runtime.'}
           </div>
         </div>
@@ -905,10 +909,7 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
   }
 
   return wrapBlock(
-    <div
-      {...selectableBlockProps}
-      className={buildContainerClass('relative group w-full', '')}
-    >
+    <div {...selectableBlockProps} className={buildContainerClass('relative group w-full', '')}>
       {renderBlockSelectionButton('left-2 top-2')}
       <span className='text-gray-500'>{block.type}</span>
     </div>

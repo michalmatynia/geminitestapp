@@ -7,7 +7,7 @@ import {
   defaultLanguages,
 } from '@/features/internationalization/lib/internationalizationDefaults';
 
-import type { Prisma } from '@prisma/client';
+import type { Prisma } from '@/shared/lib/db/prisma-client';
 
 export async function ensureInternationalizationDefaults(
   tx: Prisma.TransactionClient

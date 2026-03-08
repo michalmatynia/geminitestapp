@@ -11,7 +11,7 @@ import prisma from '@/shared/lib/db/prisma';
 
 import { getOrCreateDefaultNotebook } from './notebook-impl';
 
-import type { Prisma } from '@prisma/client';
+import type { Prisma } from '@/shared/lib/db/prisma-client';
 
 const noteInclude = {
   tags: { include: { tag: true } },

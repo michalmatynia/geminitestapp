@@ -9,7 +9,7 @@ import {
 import {
   IMAGE_STUDIO_SETTINGS_KEY,
   parsePersistedImageStudioSettings,
-} from '@/features/ai/image-studio/server';
+} from '@/features/ai/server';
 import { auth } from '@/features/auth/server';
 import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

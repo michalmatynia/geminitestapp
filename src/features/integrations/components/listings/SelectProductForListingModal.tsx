@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { useProductsWithCount } from '@/features/products/hooks/useProductsQuery';
+import { useProductsWithCount } from '@/features/products';
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import { FormModal } from '@/shared/ui';
 

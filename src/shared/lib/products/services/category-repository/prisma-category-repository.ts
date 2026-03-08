@@ -1,4 +1,4 @@
-import { Prisma, ProductCategory as PrismaProductCategory } from '@prisma/client';
+import { Prisma, ProductCategory as PrismaProductCategory } from '@/shared/lib/db/prisma-client';
 
 import type { CategoryRepository, CategoryFilters } from '@/shared/contracts/products';
 import type {

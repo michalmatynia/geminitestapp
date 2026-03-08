@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/shared/lib/db/prisma-client';
 
 import type { NoteFileRecord, NoteFileCreateInput } from '@/shared/contracts/notes';
 import prisma from '@/shared/lib/db/prisma';

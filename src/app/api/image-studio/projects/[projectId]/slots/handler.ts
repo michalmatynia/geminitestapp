@@ -5,7 +5,7 @@ import {
   countImageStudioSlots,
   createImageStudioSlots,
   listImageStudioSlots,
-} from '@/features/ai/image-studio/server';
+} from '@/features/ai/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, quotaExceededError } from '@/shared/errors/app-error';
 

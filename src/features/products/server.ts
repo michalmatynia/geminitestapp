@@ -40,3 +40,4 @@ export {
   validateAndNormalizeRuntimeConfig,
   parseRuntimeConfigForEvaluation,
 } from './validations/validator-runtime-config';
+export * from './workers/productAiQueue';

@@ -10,7 +10,7 @@ import React, {
   useEffect,
 } from 'react';
 
-import type { ProductImageManagerController } from '@/features/products/components/ProductImageManager';
+import type { ProductImageManagerController } from '@/features/products';
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,

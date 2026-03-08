@@ -5,7 +5,7 @@ import {
   ensureSafeDocumentHtml,
   stripHtmlToPlainText,
   toStorageDocumentValue,
-} from '@/features/document-editor/content-format';
+} from '@/features/document-editor';
 import {
   type CaseResolverDocumentHistoryEntry,
   type CaseResolverDocumentVersion,

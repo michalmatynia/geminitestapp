@@ -8,7 +8,7 @@ import {
   useAssets3D,
   useAsset3DCategories,
   useAsset3DTags,
-} from '@/features/viewer3d/hooks/useAsset3dQueries';
+} from '@/features/viewer3d';
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import type { Asset3DListFilters, Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { FilterPanel, Button, FormSection, EmptyState } from '@/shared/ui';

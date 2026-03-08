@@ -1,4 +1,4 @@
-import { ensureHtmlForPreview } from '@/features/document-editor/content-format';
+import { ensureHtmlForPreview } from '@/features/document-editor';
 import type {
   CaseResolverDocumentHistoryEntry,
   CaseResolverFileEditDraft,

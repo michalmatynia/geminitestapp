@@ -22,25 +22,29 @@ vi.mock('@/features/document-editor', () => ({
   ),
 }));
 
-vi.mock('@/features/cms/components/page-builder/MediaLibraryPanel', () => ({
-  MediaLibraryPanel: ({
-    open,
-    onSelect,
-  }: {
-    open: boolean;
-    onSelect: (filepaths: string[]) => void;
-  }) =>
-    open ? (
-      <>
-        <button type='button' onClick={(): void => onSelect(['/uploads/kangur/mock-image.svg'])}>
-          Pick library SVG
-        </button>
-        <button type='button' onClick={(): void => onSelect(['/uploads/kangur/mock-image.png'])}>
-          Pick library PNG
-        </button>
-      </>
-    ) : null,
-}));
+vi.mock('@/features/cms/public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/cms/public')>();
+  return {
+    ...actual,
+    MediaLibraryPanel: ({
+      open,
+      onSelect,
+    }: {
+      open: boolean;
+      onSelect: (filepaths: string[]) => void;
+    }) =>
+      open ? (
+        <>
+          <button type='button' onClick={(): void => onSelect(['/uploads/kangur/mock-image.svg'])}>
+            Pick library SVG
+          </button>
+          <button type='button' onClick={(): void => onSelect(['/uploads/kangur/mock-image.png'])}>
+            Pick library PNG
+          </button>
+        </>
+      ) : null,
+  };
+});
 
 import { KangurLessonDocumentEditor } from '@/features/kangur/admin/KangurLessonDocumentEditor';
 import { LessonContentEditorProvider } from '@/features/kangur/admin/context/LessonContentEditorContext';

@@ -4,7 +4,7 @@ import { Box, Eye, EyeOff, Trash2, Plus, GripVertical, type LucideIcon } from 'l
 import React from 'react';
 
 import { isCmsSectionHidden } from '@/features/cms/utils/page-builder-normalization';
-import { setMasterTreeDragNodeData } from '@/features/foldertree/v2';
+import { setMasterTreeDragNodeData } from '@/features/foldertree';
 import { Button, Badge, TreeCaret } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 

@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { Prisma, AiPathRunEventLevel } from '@prisma/client';
+import { Prisma, AiPathRunEventLevel } from '@/shared/lib/db/prisma-client';
 
 import { AI_PATHS_RUN_SOURCE_VALUES } from '@/shared/lib/ai-paths/run-sources';
 import type {

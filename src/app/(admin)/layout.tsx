@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
-import { AdminLayout } from '@/features/admin/layout/AdminLayout';
+import { AdminLayout } from '@/features/admin';
 import { auth, getUserPreferences } from '@/features/auth/server';
 import { SettingsStoreProvider } from '@/shared/providers/SettingsStoreProvider';
 

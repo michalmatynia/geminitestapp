@@ -3,7 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import React, { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 
-import { useAdminLayoutActions } from '@/features/admin/context/AdminLayoutContext';
+import { useAdminLayoutActions } from '@/features/admin';
 import {
   ClientOnly,
   Tabs,

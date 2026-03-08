@@ -1,4 +1,4 @@
-import type { ProductWithImages } from '@/features/products/';
+import type { ProductWithImages } from '@/shared/contracts/products';
 
 type MaybeImages = {
   images?: (ProductWithImages['images'][number] | null)[] | null;

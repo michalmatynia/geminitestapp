@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
-import { useAdminLayoutActions } from '@/features/admin/context/AdminLayoutContext';
+import { useAdminLayoutActions } from '@/features/admin';
 import { CmsDomainSelector } from '@/features/cms/components/CmsDomainSelector';
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
 import { useCmsPages, useCmsSlugs, useDeletePage } from '@/features/cms/hooks/useCmsQueries';

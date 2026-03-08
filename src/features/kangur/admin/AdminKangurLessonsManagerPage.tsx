@@ -8,8 +8,8 @@ import {
   FolderTreeViewportV2,
   useMasterFolderTreeShell,
   type FolderTreeViewportRenderNodeInput,
-} from '@/features/foldertree/v2';
-import { FolderTreeSearchBar, useMasterFolderTreeSearch } from '@/features/foldertree/v2/search';
+} from '@/features/foldertree';
+import { FolderTreeSearchBar, useMasterFolderTreeSearch } from '@/features/foldertree';
 import type { KangurLesson, KangurLessonComponentId } from '@/shared/contracts/kangur';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';

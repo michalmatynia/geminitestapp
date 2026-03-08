@@ -40,6 +40,9 @@ export type MockKangurTutorEnvironment = {
 type MockKangurTutorEnvironmentOptions = {
   uiMode?: 'anchored' | 'static';
   allowCrossPagePersistence?: boolean;
+  tutorPersonaImageUrl?: string | null;
+  tutorLearnerMoodId?: string | null;
+  chatResponseDelayMs?: number;
 };
 
 const NOW_ISO = '2026-03-07T12:00:00.000Z';
@@ -51,6 +54,7 @@ const KANGUR_LESSONS_SETTING_KEY = 'kangur_lessons_v1';
 const KANGUR_LESSON_DOCUMENTS_SETTING_KEY = 'kangur_lesson_documents_v1';
 const KANGUR_TEST_SUITES_SETTING_KEY = 'kangur_test_suites_v1';
 const KANGUR_TEST_QUESTIONS_SETTING_KEY = 'kangur_test_questions_v1';
+const AGENT_PERSONA_SETTINGS_KEY = 'agent_personas';
 
 const createDefaultProgress = (): Record<string, unknown> => ({
   totalXp: 0,
@@ -92,6 +96,9 @@ export async function mockKangurTutorEnvironment(
   const {
     uiMode = 'anchored',
     allowCrossPagePersistence = true,
+    tutorPersonaImageUrl = null,
+    tutorLearnerMoodId = null,
+    chatResponseDelayMs = 0,
   } = options;
   const learner = {
     id: 'learner-ada',
@@ -100,6 +107,15 @@ export async function mockKangurTutorEnvironment(
     loginName: 'ada',
     status: 'active',
     legacyUserKey: null,
+    aiTutor: tutorLearnerMoodId
+      ? {
+          currentMoodId: tutorLearnerMoodId,
+          baselineMoodId: tutorLearnerMoodId,
+          confidence: 0.72,
+          lastComputedAt: NOW_ISO,
+          lastReasonCode: 'fixture',
+        }
+      : undefined,
     createdAt: NOW_ISO,
     updatedAt: NOW_ISO,
   };
@@ -122,6 +138,41 @@ export async function mockKangurTutorEnvironment(
   const hintResponse =
     'Podpowiedz do pytania: dopelnij 8 do 10, a potem dodaj pozostale 3.';
   let progress = createDefaultProgress();
+  const tutorPersonaId = 'persona-mila';
+  const heavySettings = tutorPersonaImageUrl
+    ? [
+        {
+          key: AGENT_PERSONA_SETTINGS_KEY,
+          value: JSON.stringify([
+            {
+              id: tutorPersonaId,
+              name: 'Mila',
+              createdAt: NOW_ISO,
+              updatedAt: NOW_ISO,
+              defaultMoodId: 'neutral',
+              moods: [
+                {
+                  id: 'neutral',
+                  label: 'Neutral',
+                  description: 'Default tutor expression.',
+                  svgContent: '',
+                  avatarImageUrl: tutorPersonaImageUrl,
+                  avatarImageFileId: 'persona-file-neutral',
+                },
+                {
+                  id: 'thinking',
+                  label: 'Thinking',
+                  description: 'Shown while the tutor prepares a response.',
+                  svgContent: '',
+                  avatarImageUrl: null,
+                  avatarImageFileId: null,
+                },
+              ],
+            },
+          ]),
+        },
+      ]
+    : [];
 
   const settingsLite = [
     {
@@ -142,7 +193,7 @@ export async function mockKangurTutorEnvironment(
       key: KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
       value: JSON.stringify({
         teachingAgentId: null,
-        agentPersonaId: null,
+        agentPersonaId: tutorPersonaImageUrl ? tutorPersonaId : null,
         motionPresetId: null,
         dailyMessageLimit: null,
       }),
@@ -244,7 +295,7 @@ export async function mockKangurTutorEnvironment(
   });
 
   await page.route(/\/api\/settings\?scope=heavy(?:&.*)?$/, async (route) => {
-    await fulfillJson(route, []);
+    await fulfillJson(route, heavySettings);
   });
 
   await page.route('**/api/kangur/auth/me**', async (route) => {
@@ -299,6 +350,10 @@ export async function mockKangurTutorEnvironment(
       message = lessonResponse;
     } else if (context?.surface === 'test') {
       message = hintResponse;
+    }
+
+    if (chatResponseDelayMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, chatResponseDelayMs));
     }
 
     await fulfillJson(route, {

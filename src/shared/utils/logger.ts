@@ -1,4 +1,3 @@
-import { getRequestContext } from '@/shared/lib/observability/request-context';
 import { getActiveOtelContextAttributes } from '@/shared/lib/observability/otel-context';
 
 /**
@@ -15,7 +14,29 @@ export type LogHandler = (
   context?: Record<string, unknown>
 ) => void;
 
+type RequestContextSnapshot = {
+  requestId?: string;
+  traceId?: string;
+  correlationId?: string;
+  userId?: string | null;
+};
+
+type RequestContextStorageReader = {
+  getStore(): RequestContextSnapshot | undefined;
+};
+
+type RequestContextGlobal = typeof globalThis & {
+  __geminitestappRequestContextStorage?: RequestContextStorageReader;
+};
+
 const handlers: LogHandler[] = [];
+
+const readRequestContext = (): RequestContextSnapshot | undefined => {
+  if (typeof window !== 'undefined') {
+    return undefined;
+  }
+  return (globalThis as RequestContextGlobal).__geminitestappRequestContextStorage?.getStore();
+};
 
 export const registerLogHandler = (handler: LogHandler): void => {
   handlers.push(handler);
@@ -27,7 +48,7 @@ const formatMessage = (
   _context?: Record<string, unknown>
 ): string => {
   const timestamp = new Date().toISOString();
-  const requestContext = getRequestContext();
+  const requestContext = readRequestContext();
   const requestId = requestContext?.requestId ? ` [RID:${requestContext.requestId}]` : '';
   const traceId = requestContext?.traceId ? ` [TID:${requestContext.traceId}]` : '';
   const correlationId = requestContext?.correlationId
@@ -51,7 +72,7 @@ const normalizeContext = (
   message: string,
   context?: Record<string, unknown>
 ): Record<string, unknown> => {
-  const requestContext = getRequestContext();
+  const requestContext = readRequestContext();
   const otelContext = getActiveOtelContextAttributes();
   const normalized: Record<string, unknown> = {
     ...(context ?? {}),

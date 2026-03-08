@@ -11,6 +11,7 @@ const {
   apiGetMock,
   apiPostMock,
   useAgentPersonasMock,
+  useOptionalKangurAuthMock,
   trackKangurClientEventMock,
   logKangurClientErrorMock,
 } = vi.hoisted(() => ({
@@ -20,6 +21,7 @@ const {
   apiGetMock: vi.fn(),
   apiPostMock: vi.fn(),
   useAgentPersonasMock: vi.fn(),
+  useOptionalKangurAuthMock: vi.fn(),
   trackKangurClientEventMock: vi.fn(),
   logKangurClientErrorMock: vi.fn(),
 }));
@@ -39,8 +41,16 @@ vi.mock('@/shared/lib/api-client', async (importOriginal) => {
   };
 });
 
-vi.mock('@/features/ai/agentcreator/hooks/useAgentPersonas', () => ({
-  useAgentPersonas: useAgentPersonasMock,
+vi.mock('@/features/ai', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/ai')>();
+  return {
+    ...actual,
+    useAgentPersonas: useAgentPersonasMock,
+  };
+});
+
+vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
+  useOptionalKangurAuth: useOptionalKangurAuthMock,
 }));
 
 vi.mock('@/features/kangur/observability/client', () => ({
@@ -60,6 +70,9 @@ function Harness(): React.JSX.Element {
   const {
     tutorName,
     tutorMoodId,
+    tutorBehaviorMoodId,
+    tutorBehaviorMoodLabel,
+    tutorBehaviorMoodDescription,
     tutorAvatarSvg,
     tutorAvatarImageUrl,
     messages,
@@ -80,6 +93,9 @@ function Harness(): React.JSX.Element {
     <div>
       <div data-testid='tutor-name'>{tutorName}</div>
       <div data-testid='tutor-mood'>{tutorMoodId}</div>
+      <div data-testid='tutor-behavior-mood'>{tutorBehaviorMoodId}</div>
+      <div data-testid='tutor-behavior-mood-label'>{tutorBehaviorMoodLabel}</div>
+      <div data-testid='tutor-behavior-mood-description'>{tutorBehaviorMoodDescription}</div>
       <div data-testid='tutor-avatar'>{tutorAvatarSvg ? 'present' : 'missing'}</div>
       <div data-testid='tutor-avatar-image-url'>{tutorAvatarImageUrl ?? 'none'}</div>
       <div data-testid='is-open'>{String(isOpen)}</div>
@@ -194,6 +210,7 @@ describe('KangurAiTutorContext', () => {
         },
       ],
     });
+    useOptionalKangurAuthMock.mockReturnValue(null);
   });
 
   afterEach(() => {
@@ -230,6 +247,13 @@ describe('KangurAiTutorContext', () => {
     apiPostMock.mockResolvedValue({
       message: 'Spróbuj policzyć krok po kroku.',
       suggestedMoodId: 'encouraging',
+      tutorMood: {
+        currentMoodId: 'supportive',
+        baselineMoodId: 'encouraging',
+        confidence: 0.72,
+        lastComputedAt: '2026-03-08T12:00:00.000Z',
+        lastReasonCode: 'learner_confusion',
+      },
       sources: [
         {
           documentId: 'doc-1',
@@ -274,6 +298,8 @@ describe('KangurAiTutorContext', () => {
 
     expect(screen.getByTestId('tutor-name')).toHaveTextContent('Mila');
     expect(screen.getByTestId('tutor-mood')).toHaveTextContent('neutral');
+    expect(screen.getByTestId('tutor-behavior-mood')).toHaveTextContent('neutral');
+    expect(screen.getByTestId('tutor-behavior-mood-label')).toHaveTextContent('Neutralny');
     expect(screen.getByTestId('tutor-avatar')).toHaveTextContent('present');
     expect(screen.getByTestId('tutor-avatar-image-url')).toHaveTextContent('none');
     await waitFor(() => expect(apiGetMock).toHaveBeenCalledWith('/api/kangur/ai-tutor/usage'));
@@ -283,6 +309,10 @@ describe('KangurAiTutorContext', () => {
 
     await waitFor(() => expect(apiPostMock).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(screen.getByTestId('tutor-mood')).toHaveTextContent('encouraging'));
+    await waitFor(() =>
+      expect(screen.getByTestId('tutor-behavior-mood')).toHaveTextContent('supportive')
+    );
+    expect(screen.getByTestId('tutor-behavior-mood-label')).toHaveTextContent('Wspierajacy');
 
     expect(apiPostMock).toHaveBeenCalledWith('/api/kangur/ai-tutor/chat', {
       messages: [{ role: 'user', content: 'Pomóż mi z tym zadaniem.' }],
@@ -331,6 +361,59 @@ describe('KangurAiTutorContext', () => {
     expect(screen.getByTestId('usage-summary')).toHaveTextContent('2/3/1');
   });
 
+  it('hydrates the learner-scoped tutor mood from the active learner profile', async () => {
+    useOptionalKangurAuthMock.mockReturnValue({
+      user: {
+        id: 'parent-1',
+        full_name: 'Parent Ada',
+        email: 'parent@example.com',
+        role: 'user',
+        actorType: 'parent',
+        canManageLearners: true,
+        ownerUserId: 'parent-1',
+        activeLearner: {
+          id: 'learner-1',
+          ownerUserId: 'parent-1',
+          displayName: 'Ada',
+          loginName: 'ada',
+          status: 'active',
+          legacyUserKey: null,
+          aiTutor: {
+            currentMoodId: 'calm',
+            baselineMoodId: 'supportive',
+            confidence: 0.66,
+            lastComputedAt: '2026-03-08T11:30:00.000Z',
+            lastReasonCode: 'learner_confusion',
+          },
+          createdAt: '2026-03-07T10:00:00.000Z',
+          updatedAt: '2026-03-08T11:30:00.000Z',
+        },
+        learners: [],
+      },
+    });
+
+    render(
+      <KangurAiTutorProvider
+        learnerId='learner-1'
+        sessionContext={{
+          surface: 'lesson',
+          contentId: 'lesson-1',
+          title: 'Dodawanie',
+        }}
+      >
+        <Harness />
+      </KangurAiTutorProvider>
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId('tutor-behavior-mood')).toHaveTextContent('calm')
+    );
+    expect(screen.getByTestId('tutor-behavior-mood-label')).toHaveTextContent('Spokojny');
+    expect(screen.getByTestId('tutor-behavior-mood-description')).toHaveTextContent(
+      'Tutor obniza napiecie i porzadkuje sytuacje krok po kroku.'
+    );
+  });
+
   it('surfaces uploaded persona avatar image URLs from the resolved tutor mood', async () => {
     useAgentPersonasMock.mockReturnValue({
       data: [
@@ -366,6 +449,57 @@ describe('KangurAiTutorContext', () => {
 
     await waitFor(() => expect(screen.getByTestId('tutor-name')).toHaveTextContent('Mila'));
     expect(screen.getByTestId('tutor-avatar')).toHaveTextContent('missing');
+    expect(screen.getByTestId('tutor-avatar-image-url')).toHaveTextContent(
+      '/uploads/agentcreator/personas/persona-1/neutral/avatar.png'
+    );
+  });
+
+  it('falls back to the default mood avatar image when the active tutor mood has no visual asset', async () => {
+    apiPostMock.mockReturnValue(new Promise<never>(() => {}));
+
+    useAgentPersonasMock.mockReturnValue({
+      data: [
+        {
+          id: 'persona-1',
+          name: 'Mila',
+          defaultMoodId: 'neutral',
+          moods: [
+            {
+              id: 'neutral',
+              label: 'Neutral',
+              svgContent: '',
+              avatarImageUrl: '/uploads/agentcreator/personas/persona-1/neutral/avatar.png',
+              avatarImageFileId: 'file-1',
+            },
+            {
+              id: 'thinking',
+              label: 'Thinking',
+              svgContent: '',
+              avatarImageUrl: null,
+              avatarImageFileId: null,
+            },
+          ],
+        },
+      ],
+    });
+
+    render(
+      <KangurAiTutorProvider
+        learnerId='learner-1'
+        sessionContext={{
+          surface: 'lesson',
+          contentId: 'lesson-1',
+          title: 'Dodawanie',
+        }}
+      >
+        <Harness />
+      </KangurAiTutorProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+
+    await waitFor(() => expect(screen.getByTestId('is-loading')).toHaveTextContent('true'));
+    expect(screen.getByTestId('tutor-mood')).toHaveTextContent('thinking');
     expect(screen.getByTestId('tutor-avatar-image-url')).toHaveTextContent(
       '/uploads/agentcreator/personas/persona-1/neutral/avatar.png'
     );

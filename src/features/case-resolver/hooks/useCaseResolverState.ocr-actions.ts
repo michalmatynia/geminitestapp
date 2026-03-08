@@ -19,7 +19,7 @@ import { buildCombinedOcrText } from '@/features/case-resolver/utils/caseResolve
 import {
   deriveDocumentContentSync,
   toStorageDocumentValue,
-} from '@/features/document-editor/content-format';
+} from '@/features/document-editor';
 import type { SettingsStoreValue } from '@/shared/providers/SettingsStoreProvider';
 import type { Toast } from '@/shared/contracts/ui';
 

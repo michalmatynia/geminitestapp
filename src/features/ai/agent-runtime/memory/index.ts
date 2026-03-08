@@ -9,7 +9,7 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import prisma from '@/shared/lib/db/prisma';
 import type { MemoryScope } from '@/shared/contracts/agent-runtime';
 
-import type { Prisma } from '@prisma/client';
+import type { Prisma } from '@/shared/lib/db/prisma-client';
 
 export type { MemoryScope };
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';

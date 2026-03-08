@@ -3,7 +3,7 @@
 import { Sparkles } from 'lucide-react';
 import React, { useCallback, useMemo } from 'react';
 
-import { FolderTreeSearchBar } from '@/features/foldertree/v2/search';
+import { FolderTreeSearchBar } from '@/features/foldertree';
 import { Button, SelectSimple, SegmentedControl } from '@/shared/ui';
 import {
   CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS,

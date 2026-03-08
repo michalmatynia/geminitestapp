@@ -3,9 +3,11 @@
 import Link from 'next/link';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 
-import { AgentPersonaMoodAvatar } from '@/features/ai/agentcreator/components/AgentPersonaMoodAvatar';
-import { useAgentPersonas } from '@/features/ai/agentcreator/hooks/useAgentPersonas';
-import { resolveAgentPersonaMood } from '@/features/ai/agentcreator/utils/personas';
+import {
+  AgentPersonaMoodAvatar,
+  resolveAgentPersonaMood,
+  useAgentPersonas,
+} from '@/features/ai';
 import { KangurDocsTooltipEnhancer } from '@/features/kangur/docs/tooltips';
 import {
   KANGUR_HELP_SETTINGS_KEY,

@@ -7,7 +7,7 @@ import {
   FolderTreeViewportV2,
   resolveFolderTreeIconSet,
   useMasterFolderTreeShell,
-} from '@/features/foldertree/v2';
+} from '@/features/foldertree';
 import { resolveVerticalDropPosition } from '@/shared/utils/drag-drop';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { ReorderCategoryPayload } from '@/features/products/api/settings';

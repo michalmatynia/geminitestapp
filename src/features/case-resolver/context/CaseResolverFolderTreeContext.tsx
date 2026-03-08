@@ -29,7 +29,7 @@ import {
   fromCaseResolverFileNodeId,
   fromCaseResolverAssetNodeId,
 } from '../master-tree';
-import { createMasterFolderTreeAdapterV3 } from '@/features/foldertree/v2';
+import { createMasterFolderTreeAdapterV3 } from '@/features/foldertree';
 import { buildCaseResolverNodeFileRelationIndexFromAssets } from '@/features/case-resolver/nodefile-relations';
 import {
   type FolderCaseFileStats,

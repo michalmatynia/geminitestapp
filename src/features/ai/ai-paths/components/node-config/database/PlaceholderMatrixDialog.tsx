@@ -13,7 +13,7 @@ export type PlaceholderTargetOption = LabeledOptionDto<PlaceholderTarget>;
 export type PlaceholderEntry = {
   id: string;
   label: string;
-  token: string;
+  placeholder: string;
   resolvesTo: string;
   description?: string;
   dynamic?: boolean;
@@ -32,7 +32,7 @@ type PlaceholderMatrixDialogProps = {
   groups: PlaceholderGroup[];
   target: PlaceholderTarget;
   onTargetChange: (target: PlaceholderTarget) => void;
-  onInsert: (token: string, target: PlaceholderTarget) => void;
+  onInsert: (placeholder: string, target: PlaceholderTarget) => void;
   targetOptions?: PlaceholderTargetOption[];
   onSync?: (() => void) | undefined;
   syncing?: boolean | undefined;
@@ -125,7 +125,9 @@ export function PlaceholderMatrixDialog(props: PlaceholderMatrixDialogProps): Re
                     <div className='flex flex-wrap items-start justify-between gap-3'>
                       <div className='space-y-1'>
                         <div className='text-xs font-medium text-gray-100'>{entry.label}</div>
-                        <div className='font-mono text-[10px] text-emerald-200'>{entry.token}</div>
+                        <div className='font-mono text-[10px] text-emerald-200'>
+                          {entry.placeholder}
+                        </div>
                         {entry.description ? (
                           <div className='text-[10px] text-gray-400'>{entry.description}</div>
                         ) : null}
@@ -133,7 +135,7 @@ export function PlaceholderMatrixDialog(props: PlaceholderMatrixDialogProps): Re
                       <Button
                         type='button'
                         className='h-7 rounded-md border border-emerald-500/40 px-2 text-[10px] text-emerald-100 hover:bg-emerald-500/10'
-                        onClick={(): void => onInsert(entry.token, target)}
+                        onClick={(): void => onInsert(entry.placeholder, target)}
                       >
                         Insert
                       </Button>

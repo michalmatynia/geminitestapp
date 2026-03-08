@@ -9,7 +9,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { useUserPreferences } from '@/features/auth/hooks/useUserPreferences';
+import { useUserPreferences } from '@/features/auth';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
   defaultPromptEngineSettings,

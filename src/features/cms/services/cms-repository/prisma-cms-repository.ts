@@ -22,7 +22,7 @@ import type {
   CmsTheme as PrismaCmsTheme,
   PageComponent as PrismaPageComponent,
   CmsDomain as PrismaCmsDomain,
-} from '@prisma/client';
+} from '@/shared/lib/db/prisma-client';
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------

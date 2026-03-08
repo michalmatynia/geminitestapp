@@ -9,7 +9,7 @@ import {
   isInternalMasterTreeNode,
   resolveFolderTreeIconSet,
   useMasterFolderTreeShell,
-} from '@/features/foldertree/v2';
+} from '@/features/foldertree';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import {
   getFolderTreeInstanceSettingsHref,

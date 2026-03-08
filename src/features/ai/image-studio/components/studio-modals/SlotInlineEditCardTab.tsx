@@ -1,8 +1,8 @@
 import {} from 'lucide-react';
 import React from 'react';
 
-import ProductImageManager from '@/features/products/components/ProductImageManager';
-import { ProductImageManagerControllerProvider } from '@/features/products/components/ProductImageManagerControllerContext';
+import ProductImageManager from '@/features/products';
+import { ProductImageManagerControllerProvider } from '@/features/products';
 import { Button, Input, Label, TabsContent, LoadingState } from '@/shared/ui';
 import { Hint } from '@/shared/ui';
 

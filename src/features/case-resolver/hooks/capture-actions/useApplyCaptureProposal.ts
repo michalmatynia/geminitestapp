@@ -5,11 +5,11 @@ import { flushSync } from 'react-dom';
 import type {
   CaseResolverCaptureProposalState,
   CaseResolverCaptureProposal,
-} from '@/features/case-resolver-capture/proposals';
-import { stripAcceptedCaptureContentFromTextWithReport } from '@/features/case-resolver-capture/proposals';
+} from '@/features/case-resolver-capture';
+import { stripAcceptedCaptureContentFromTextWithReport } from '@/features/case-resolver-capture';
 import { deriveDocumentContentSync, toStorageDocumentValue } from '@/features/document-editor';
 import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
-import { FILEMAKER_DATABASE_KEY, normalizeFilemakerDatabase } from '@/features/filemaker/settings';
+import { FILEMAKER_DATABASE_KEY, normalizeFilemakerDatabase } from '@/features/filemaker';
 import type { CaseResolverFile, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 import { useToast } from '@/shared/ui';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
@@ -26,7 +26,7 @@ import {
   buildFileEditDraft,
   createCaseResolverHistorySnapshotEntry,
 } from '@/features/case-resolver/utils/caseResolverUtils';
-import { upsertFilemakerCaptureCandidate } from '@/features/case-resolver-capture/filemaker-upsert';
+import { upsertFilemakerCaptureCandidate } from '@/features/case-resolver-capture';
 import { resolveCaptureMappingApplyGuardReason } from '../../capture-mapping-apply-guard';
 import { type CaseResolverFileEditDraft, type CaseResolverStateValue } from '../../types';
 

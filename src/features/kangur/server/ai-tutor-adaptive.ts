@@ -136,7 +136,7 @@ const pickRelevantAssignment = (
     }
   }
 
-  if (context?.surface === 'test') {
+  if (context?.surface === 'test' || context?.surface === 'game') {
     const practiceAssignment =
       assignments.find((assignment) => assignment.target.type === 'practice') ?? null;
     if (practiceAssignment) {
@@ -424,7 +424,7 @@ const buildAdaptiveGuidanceFromRegistry = (input: {
   registryBundle: ContextRegistryResolutionBundle;
 }): KangurAiTutorAdaptiveGuidance => {
   const { learnerSnapshot, surfaceContext, assignmentContext } =
-    resolveKangurAiTutorRuntimeDocuments(input.registryBundle);
+    resolveKangurAiTutorRuntimeDocuments(input.registryBundle, input.context);
   const weakLessons = readSectionItems(learnerSnapshot, 'weak_lessons');
   const recentSessions = readSectionItems(learnerSnapshot, 'recent_sessions');
   const recommendations = readSectionItems(learnerSnapshot, 'recommendations');

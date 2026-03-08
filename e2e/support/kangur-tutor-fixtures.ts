@@ -6,7 +6,7 @@ type TutorChatRequest = {
     content: string;
   }>;
   context?: {
-    surface?: 'lesson' | 'test';
+    surface?: 'lesson' | 'test' | 'game';
     contentId?: string;
     title?: string;
     selectedText?: string;
@@ -348,7 +348,7 @@ export async function mockKangurTutorEnvironment(
 
     if (context?.surface === 'lesson' && context.selectedText) {
       message = lessonResponse;
-    } else if (context?.surface === 'test') {
+    } else if (context?.surface === 'test' || context?.surface === 'game') {
       message = hintResponse;
     }
 

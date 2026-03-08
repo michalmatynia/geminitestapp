@@ -17,7 +17,7 @@ export type KangurTutorAnchorMetadata = {
 export type KangurTutorAnchorRegistration = {
   id: string;
   kind: KangurTutorAnchorKind;
-  surface: 'lesson' | 'test';
+  surface: 'lesson' | 'test' | 'game';
   priority: number;
   metadata?: KangurTutorAnchorMetadata;
   getRect: () => DOMRect | null;

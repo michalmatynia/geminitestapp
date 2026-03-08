@@ -12,7 +12,7 @@ type UseKangurTutorAnchorInput = {
   id: string;
   kind: KangurTutorAnchorKind;
   ref: RefObject<HTMLElement | null>;
-  surface: 'lesson' | 'test';
+  surface: 'lesson' | 'test' | 'game';
   enabled?: boolean;
   priority?: number;
   metadata?: KangurTutorAnchorMetadata;

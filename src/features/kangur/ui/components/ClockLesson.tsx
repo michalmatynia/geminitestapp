@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, ArrowRight, ChevronDown, ChevronRight, Lock } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronRight, Lock } from 'lucide-react';
 
 import ClockTrainingGame from './ClockTrainingGame';
 import { KangurLessonProgressDots } from '@/features/kangur/ui/components/KangurLessonProgressDots';
@@ -484,64 +484,17 @@ export default function ClockLesson(): React.JSX.Element {
     setInTraining(true);
   }, []);
 
-  const goNext = useCallback(() => {
-    if (!activeSection || openSection === null) {
-      return;
-    }
+  const selectSectionSlide = useCallback(
+    (sectionIndex: number, slideIndex: number) => {
+      setSectionSlideIndex(sectionIndex, slideIndex);
+      const lastSlideIndex = Math.max((LESSON_SECTIONS[sectionIndex]?.slides.length ?? 1) - 1, 0);
 
-    if (isFinalSection && isFinalSlide) {
-      markSectionCompleted(openSection);
-      handleStartTraining();
-      return;
-    }
-
-    if (isFinalSlide) {
-      markSectionCompleted(openSection);
-      const nextSection = openSection + 1;
-      setOpenSection(nextSection);
-      setSectionSlideIndex(nextSection, 0);
-      return;
-    }
-
-    setSectionSlideIndex(openSection, activeSlideIndex + 1);
-  }, [
-    activeSection,
-    activeSlideIndex,
-    handleStartTraining,
-    isFinalSection,
-    isFinalSlide,
-    markSectionCompleted,
-    openSection,
-    setSectionSlideIndex,
-  ]);
-
-  const goPrev = useCallback(() => {
-    if (!activeSection || openSection === null) {
-      return;
-    }
-
-    if (activeSlideIndex > 0) {
-      setSectionSlideIndex(openSection, activeSlideIndex - 1);
-      return;
-    }
-
-    if (openSection > 0) {
-      const previousSection = openSection - 1;
-      const previousSectionLastSlide = (LESSON_SECTIONS[previousSection]?.slides.length ?? 1) - 1;
-      openSectionAt(previousSection);
-      setSectionSlideIndex(previousSection, previousSectionLastSlide);
-      return;
-    }
-
-    handleBack();
-  }, [
-    activeSection,
-    activeSlideIndex,
-    handleBack,
-    openSection,
-    openSectionAt,
-    setSectionSlideIndex,
-  ]);
+      if (slideIndex >= lastSlideIndex) {
+        markSectionCompleted(sectionIndex);
+      }
+    },
+    [markSectionCompleted, setSectionSlideIndex]
+  );
 
   if (inTraining) {
     return (
@@ -553,7 +506,7 @@ export default function ClockLesson(): React.JSX.Element {
           type='button'
           variant='surface'
         >
-          <ArrowLeft className='w-4 h-4' /> Wróć do lekcji
+          <ArrowLeft className='w-4 h-4' /> Wróć do tematów
         </KangurButton>
         <KangurGlassPanel
           className='flex w-full flex-col items-center gap-5'
@@ -578,15 +531,6 @@ export default function ClockLesson(): React.JSX.Element {
   if (!activeSection || !activeSlide) {
     return (
       <div className='flex flex-col items-center w-full max-w-lg gap-4'>
-        <KangurButton
-          onClick={handleBack}
-          className='self-start'
-          size='sm'
-          type='button'
-          variant='surface'
-        >
-          <ArrowLeft className='w-4 h-4' /> Wróć do lekcji
-        </KangurButton>
         <KangurLessonCallout
           data-testid='clock-lesson-collapsed-hint'
           accent='indigo'
@@ -671,16 +615,6 @@ export default function ClockLesson(): React.JSX.Element {
 
   return (
     <div className='flex flex-col items-center w-full max-w-lg gap-4'>
-      <KangurButton
-        onClick={handleBack}
-        className='self-start'
-        size='sm'
-        type='button'
-        variant='surface'
-      >
-        <ArrowLeft className='w-4 h-4' /> Wróć do lekcji
-      </KangurButton>
-
       {LESSON_SECTIONS.map((section, sectionIndex) => {
         const isOpen = sectionIndex === openSection;
         const sectionSlideIndex = sectionSlides[sectionIndex] ?? 0;
@@ -760,28 +694,39 @@ export default function ClockLesson(): React.JSX.Element {
                   data-testid={`clock-lesson-section-divider-${section.id}`}
                   size='sm'
                 />
-                <div className='flex gap-2'>
-                  {section.slides.map((_, slideIndex) => (
-                    <button
-                      key={`${section.id}-${slideIndex}`}
-                      onClick={() => {
-                        setSectionSlideIndex(sectionIndex, slideIndex);
-                      }}
-                      type='button'
-                      aria-label={`Przejdz do slajdu ${slideIndex + 1} w sekcji ${section.title}`}
-                      aria-current={slideIndex === sectionSlideIndex ? 'step' : undefined}
-                      className={cn(
-                        KANGUR_STEP_PILL_CLASSNAME,
-                        'h-[14px] min-w-[14px] cursor-pointer',
-                        slideIndex === sectionSlideIndex
-                          ? 'w-8 scale-[1.04] bg-indigo-500'
-                          : slideIndex < sectionSlideIndex
-                            ? 'w-6 bg-indigo-200'
-                            : KANGUR_PENDING_SECTION_STEP_PILL_CLASSNAME
-                      )}
-                      data-testid={`clock-lesson-section-slide-${section.id}-${slideIndex}`}
-                    />
-                  ))}
+                <div className='flex flex-wrap items-center justify-between gap-3'>
+                  <KangurButton
+                    onClick={() => setOpenSection(null)}
+                    size='sm'
+                    type='button'
+                    variant='surface'
+                  >
+                    <ArrowLeft className='w-4 h-4' />
+                    Wróć do tematów
+                  </KangurButton>
+                  <div className='flex gap-2'>
+                    {section.slides.map((_, slideIndex) => (
+                      <button
+                        key={`${section.id}-${slideIndex}`}
+                        onClick={() => {
+                          selectSectionSlide(sectionIndex, slideIndex);
+                        }}
+                        type='button'
+                        aria-label={`Przejdz do slajdu ${slideIndex + 1} w sekcji ${section.title}`}
+                        aria-current={slideIndex === sectionSlideIndex ? 'step' : undefined}
+                        className={cn(
+                          KANGUR_STEP_PILL_CLASSNAME,
+                          'h-[14px] min-w-[14px] cursor-pointer',
+                          slideIndex === sectionSlideIndex
+                            ? 'w-8 scale-[1.04] bg-indigo-500'
+                            : slideIndex < sectionSlideIndex
+                              ? 'w-6 bg-indigo-200'
+                              : KANGUR_PENDING_SECTION_STEP_PILL_CLASSNAME
+                        )}
+                        data-testid={`clock-lesson-section-slide-${section.id}-${slideIndex}`}
+                      />
+                    ))}
+                  </div>
                 </div>
 
                 <div className='flex items-center justify-between gap-3'>
@@ -801,32 +746,13 @@ export default function ClockLesson(): React.JSX.Element {
                     {activeSlide.content}
                   </motion.div>
                 </AnimatePresence>
-
-                <div className='flex gap-3 w-full'>
-                  <KangurButton onClick={goPrev} size='lg' type='button' variant='surface'>
-                    <ArrowLeft className='w-4 h-4' />
-                    {openSection === 0 && activeSlideIndex === 0 ? 'Wróć' : 'Wstecz'}
-                  </KangurButton>
-
-                  <KangurButton
-                    onClick={goNext}
-                    className='flex-1'
-                    size='lg'
-                    type='button'
-                    variant='primary'
-                  >
-                    {isFinalSection && isFinalSlide ? (
-                      'Ćwiczenie z zegarem 🕐'
-                    ) : isFinalSlide ? (
-                      'Następna sekcja'
-                    ) : (
-                      <>
-                        <span>Dalej</span>
-                        <ArrowRight className='w-4 h-4' />
-                      </>
-                    )}
-                  </KangurButton>
-                </div>
+                {isFinalSection && isFinalSlide ? (
+                  <div className='flex w-full justify-start'>
+                    <KangurButton onClick={handleStartTraining} size='lg' type='button' variant='primary'>
+                      Ćwiczenie z zegarem 🕐
+                    </KangurButton>
+                  </div>
+                ) : null}
               </div>
             )}
           </KangurGlassPanel>

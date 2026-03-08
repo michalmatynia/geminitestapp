@@ -14,6 +14,7 @@ import { KangurTopNavigationController } from './KangurTopNavigationController';
 
 const LESSONS_NAVIGATION = {
   basePath: '/kangur',
+  canManageLearners: true,
   contentClassName: 'justify-center',
   currentPage: 'Lessons' as const,
   isAuthenticated: false,
@@ -24,6 +25,7 @@ const LESSONS_NAVIGATION = {
 const TESTS_NAVIGATION = {
   ...LESSONS_NAVIGATION,
   currentPage: 'Tests' as const,
+  showParentDashboard: false,
 };
 
 describe('KangurTopNavigationController', () => {
@@ -49,6 +51,7 @@ describe('KangurTopNavigationController', () => {
     ).toBeInTheDocument();
     expect(screen.getAllByRole('navigation', { name: /glowna nawigacja kangur/i })).toHaveLength(1);
     expect(screen.getByTestId('kangur-primary-nav-lessons')).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByTestId('kangur-primary-nav-parent-dashboard')).toBeInTheDocument();
 
     rerender(
       <KangurTopNavigationProvider>
@@ -59,5 +62,6 @@ describe('KangurTopNavigationController', () => {
 
     expect(screen.getAllByRole('navigation', { name: /glowna nawigacja kangur/i })).toHaveLength(1);
     expect(screen.getByTestId('kangur-primary-nav-tests')).toHaveAttribute('aria-current', 'page');
+    expect(screen.queryByTestId('kangur-primary-nav-parent-dashboard')).toBeNull();
   });
 });

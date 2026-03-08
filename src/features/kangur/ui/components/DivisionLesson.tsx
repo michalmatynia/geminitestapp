@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ArrowLeft } from 'lucide-react';
 
 import DivisionGame from '@/features/kangur/ui/components/DivisionGame';
 import LessonHub from '@/features/kangur/ui/components/LessonHub';
@@ -8,6 +9,7 @@ import LessonSlideSection, {
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
 import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 import {
+  KangurButton,
   KangurDisplayEmoji,
   KangurEquationDisplay,
   KangurFeatureHeader,
@@ -143,8 +145,11 @@ export default function DivisionLesson(): React.JSX.Element {
   if (activeSection === 'game') {
     return (
       <div className='flex flex-col items-center gap-4 w-full max-w-sm'>
+        <KangurButton onClick={() => setActiveSection(null)} size='sm' variant='surface'>
+          <ArrowLeft className='w-4 h-4' /> Wróć do tematów
+        </KangurButton>
         <KangurFeatureHeader accent='sky' icon='🎮' title='Gra z dzieleniem!' />
-        <DivisionGame onFinish={() => setActiveSection(null)} />
+        <DivisionGame finishLabel='Wróć do tematów' onFinish={() => setActiveSection(null)} />
       </div>
     );
   }

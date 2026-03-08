@@ -1,0 +1,310 @@
+
+> libapp2@0.1.0 predev
+> node scripts/runtime/check-node-version.cjs
+
+
+> libapp2@0.1.0 dev
+> node --max-old-space-size=8192 server.cjs
+
+○ Compiling instrumentation Node.js ...
+
+  We detected TypeScript in your project and reconfigured your tsconfig.json file for you.
+  The following suggested values were added to your tsconfig.json. These values can be changed to fit your project's needs:
+
+  	- include was updated to add '.next-dev-web-dev-image-studio-route-fix-3/types/**/*.ts'
+  	- include was updated to add '.next-dev-web-dev-image-studio-route-fix-3/dev/types/**/*.ts'
+
+[ai-paths.portable-engine.envelope-verification] Portable envelope verification audit sink health probe sinkId=portable-envelope-verification-log-forwarding {
+  category: 'ai_path_portable_envelope_verification_audit_sink_health',
+  kind: 'ai-paths.portable-envelope-verification-audit-sink-health.v1',
+  sinkId: 'portable-envelope-verification-log-forwarding',
+  stage: 'probe',
+  service: 'ai-paths.portable-engine'
+}
+[ai-paths.portable-engine.envelope-verification.sink-bootstrap] Portable envelope verification audit sink startup health summary sinkId=all {
+  category: 'ai_path_portable_envelope_verification_audit_sink_health',
+  kind: 'ai-paths.portable-envelope-verification-audit-sink-health.v1',
+  profile: 'dev',
+  policy: 'warn',
+  timeoutMs: 3000,
+  status: 'healthy',
+  failedSinkIds: [],
+  diagnostics: [
+    {
+      sinkId: 'portable-envelope-verification-log-forwarding',
+      status: 'healthy',
+      checkedAt: '2026-03-08T16:11:53.724Z',
+      durationMs: 109,
+      message: 'Health check passed.',
+      error: null
+    }
+  ],
+  service: 'ai-paths.portable-engine'
+}
+[queue-factory] [queue-factory:database-backup-scheduler] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:product-sync-scheduler] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:system-log-alerts] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-init] Starting BullMQ workers... { service: 'queue-init' }
+[queue-registry] [queue-registry] Starting queue worker: base-import { queueName: 'base-import', service: 'queue-registry' }
+[queue-factory] [queue-factory:base-import] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: database-backup-scheduler { queueName: 'database-backup-scheduler', service: 'queue-registry' }
+[queue-registry] [queue-registry] Starting queue worker: system-log-alerts { queueName: 'system-log-alerts', service: 'queue-registry' }
+[queue-registry] [queue-registry] Starting queue worker: tradera-listings { queueName: 'tradera-listings', service: 'queue-registry' }
+[queue-factory] [queue-factory:tradera-listings] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-ai { queueName: 'product-ai', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-ai] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync { queueName: 'product-sync', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-sync] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync-backfill { queueName: 'product-sync-backfill', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-sync-backfill] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync-scheduler { queueName: 'product-sync-scheduler', service: 'queue-registry' }
+[queue-factory] [queue-factory:case-resolver-ocr] BullMQ worker started (concurrency: 2) { concurrency: 2, service: 'queue-factory' }
+[queue-factory] [queue-factory:ai-path-run] BullMQ worker started (concurrency: 3) { concurrency: 3, service: 'queue-factory' }
+[queue-factory] [queue-factory:chatbot] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:agent] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:image-studio-run] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:tradera-relist-scheduler] Worker stopped { service: 'queue-factory' }
+[queue-factory] [queue-factory:image-studio-sequence] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+Ready on http://localhost:59869 { port: 59869, host: '127.0.0.1' }
+ GET /api/health 200 in 1496ms (compile: 895ms, proxy.ts: 52ms, render: 549ms)
+[health.GET] health.GET completed successfully {
+  durationMs: 805,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '06ec6c040bb0744ff56ecdf08b7144eb',
+  otelSpanId: '6e608033545f39c8',
+  otelTraceFlags: '01',
+  service: 'health',
+  traceId: '179e9c78-475e-4249-bdda-529f8ed8e655',
+  correlationId: '76dd7de0-1ae9-4091-aa79-7f0d0800e2dc'
+}
+○ Compiling / ...
+ GET /api/health 200 in 668ms (compile: 6ms, proxy.ts: 15ms, render: 646ms)
+ GET /auth/signin?callbackUrl=%2Fadmin%2Fimage-studio 200 in 6.8s (compile: 6.2s, render: 526ms)
+ GET /auth/signin 200 in 825ms (compile: 739ms, render: 86ms)
+ GET /api/settings/lite 200 in 699ms (compile: 319ms, proxy.ts: 5ms, render: 376ms)
+ GET /api/auth/session 200 in 1044ms (compile: 1030ms, proxy.ts: 5ms, render: 9ms)
+ GET /api/auth/session 200 in 15ms (compile: 6ms, proxy.ts: 3ms, render: 6ms)
+[system] [timing] home {
+  frontPageSetting: 613.4270419999993,
+  total: 613.7459999999955,
+  otelTraceId: '95666ce5b765c30b1fdfc47b7feadfae',
+  otelSpanId: '49acde5651a01633',
+  otelTraceFlags: '01'
+}
+ GET /api/auth/providers 200 in 29ms (compile: 14ms, proxy.ts: 6ms, render: 10ms)
+ GET /api/auth/csrf 200 in 17ms (compile: 5ms, proxy.ts: 3ms, render: 9ms)
+[system] [AUTH-REPO] Finding user e2e.admin@example.com using mongodb {
+  email: 'e2e.admin@example.com',
+  provider: 'mongodb',
+  otelTraceId: '2edcf54c61ae8b94a43221d6a90a64d9',
+  otelSpanId: 'da63e952c8ee2ff2',
+  otelTraceFlags: '01'
+}
+[auth.[...nextauth].POST] auth.[...nextauth].POST completed successfully {
+  durationMs: 787,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  params: { nextauth: [ 'callback', 'credentials' ] },
+  otelTraceId: '2edcf54c61ae8b94a43221d6a90a64d9',
+  otelSpanId: 'da63e952c8ee2ff2',
+  otelTraceFlags: '01',
+  service: 'auth.[',
+  traceId: '419331a3-4242-4ed6-857b-b194f21c255f',
+  correlationId: '7d3411ae-59df-40b0-8097-e874ac4befb2'
+}
+ POST /api/auth/callback/credentials 200 in 800ms (compile: 5ms, proxy.ts: 4ms, render: 791ms)
+ GET /api/auth/session 200 in 22ms (compile: 4ms, proxy.ts: 1999µs, render: 15ms)
+[auth.security] User signed in successfully {
+  email: 'e2e.admin@example.com',
+  ip: '127.0.0.1',
+  service: 'auth.security',
+  otelTraceId: '2edcf54c61ae8b94a43221d6a90a64d9',
+  otelSpanId: 'da63e952c8ee2ff2',
+  otelTraceFlags: '01'
+}
+[user] Activity: auth.login - User logged in: e2e.admin@example.com {
+  activityId: '69ad9fff66c7915ce4756abb',
+  activityType: 'auth.login',
+  userId: '69a9bc1e2d43c3d631e76018',
+  entityId: '69a9bc1e2d43c3d631e76018',
+  entityType: 'user',
+  metadata: null,
+  service: 'user',
+  otelTraceId: '2edcf54c61ae8b94a43221d6a90a64d9',
+  otelSpanId: 'da63e952c8ee2ff2',
+  otelTraceFlags: '01'
+}
+ GET /admin 200 in 2.0s (compile: 1853ms, proxy.ts: 13ms, render: 147ms)
+ GET /api/auth/session 200 in 66ms (compile: 22ms, proxy.ts: 14ms, render: 29ms)
+ GET /api/auth/session 200 in 49ms (compile: 6ms, proxy.ts: 10ms, render: 33ms)
+ GET /api/auth/session 200 in 44ms (compile: 14ms, proxy.ts: 10ms, render: 20ms)
+[health.GET] health.GET completed successfully {
+  durationMs: 1014,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '2ee77cd6ca81443e50349d688a006421',
+  otelSpanId: '77393c0a395d4c90',
+  otelTraceFlags: '01',
+  service: 'health',
+  traceId: '3b24eaa1-5e78-4263-ab3c-0c991894cab5',
+  correlationId: 'ed6d15d0-18b3-412c-9ee8-375377aafc5f'
+}
+ GET /api/health 200 in 1041ms (compile: 14ms, proxy.ts: 4ms, render: 1023ms)
+ GET /api/system/activity?page=1&pageSize=5 200 in 1197ms (compile: 1104ms, proxy.ts: 15ms, render: 78ms)
+[system] [timing] user.preferences.GET {
+  auth: 6.966874999998254,
+  cache: 0.31879099999787286,
+  repository: 64.06083299999591,
+  total: 71.9464580000058,
+  databaseConfigured: true,
+  otelTraceId: 'e578d692e539b0d8b482496962004667',
+  otelSpanId: '0f61496ef7250ef6',
+  otelTraceFlags: '01'
+}
+ GET /api/user/preferences 200 in 1181ms (compile: 1092ms, proxy.ts: 6ms, render: 83ms)
+○ Compiling /api/system/activity ...
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 1,
+  reason: 'idle',
+  address: 'cluster0-shard-00-02.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 1,
+  reason: 'idle',
+  address: 'cluster0-shard-00-00.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+[api/settings] [api/settings] [timing] settings.fetch {
+  service: 'api/settings',
+  scope: 'light',
+  provider: 0.06262499999138527,
+  mongo: 3640.224500000011,
+  total: 3640.485541999995,
+  category: 'NETWORK',
+  otelTraceId: '161de37de78175ba790ec9115fee7182',
+  otelSpanId: '17c0e23d9640c66d',
+  otelTraceFlags: '01'
+}
+[system] [settings] cache {
+  scope: 'light',
+  status: 'miss',
+  otelTraceId: '161de37de78175ba790ec9115fee7182',
+  otelSpanId: '17c0e23d9640c66d',
+  otelTraceFlags: '01'
+}
+[settings.GET] settings.GET completed successfully {
+  durationMs: 3661,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '161de37de78175ba790ec9115fee7182',
+  otelSpanId: '17c0e23d9640c66d',
+  otelTraceFlags: '01',
+  service: 'settings',
+  traceId: 'c81abf50-dbc3-44ac-8b84-2acc3b0cdce5',
+  correlationId: '78e95095-927e-45be-9809-6acefe72aac3'
+}
+ GET /api/settings?scope=light 200 in 6.8s (compile: 3.1s, proxy.ts: 29ms, render: 3.7s)
+ GET /admin/image-studio 200 in 6.9s (compile: 6.3s, proxy.ts: 43ms, render: 580ms)
+[api/settings] [api/settings] [settings] cache hit {
+  service: 'api/settings',
+  scope: 'light',
+  status: 'hit',
+  category: 'SYSTEM',
+  otelTraceId: '4964e9247763760bf5416396f8196ef4',
+  otelSpanId: '5d607c9a88fbe9a3',
+  otelTraceFlags: '01'
+}
+ GET /api/settings?scope=light 200 in 94ms (compile: 9ms, proxy.ts: 62ms, render: 23ms)
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 1,
+  reason: 'idle',
+  address: 'cluster0-shard-00-01.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+ GET /api/image-studio/projects 200 in 2.3s (compile: 2.2s, proxy.ts: 9ms, render: 20ms)
+[api/settings] [api/settings] [settings] cache fallback {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'timeout-prisma-fallback',
+  reason: '[settings] cache miss fetch timed out after 3000ms',
+  category: 'SYSTEM',
+  otelTraceId: '1d79b7c980aae926c47db6b31070a4a9',
+  otelSpanId: '12737731e4b46019',
+  otelTraceFlags: '01',
+  fingerprint: '772884b32ff22fd8'
+}
+[settings.GET] settings.GET completed successfully {
+  durationMs: 3111,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '1d79b7c980aae926c47db6b31070a4a9',
+  otelSpanId: '12737731e4b46019',
+  otelTraceFlags: '01',
+  service: 'settings',
+  traceId: 'e08a1fd7-d95d-44a4-8632-606ced8b4c52',
+  correlationId: '6eaf60ce-301d-4fb6-b6da-41234346d01d'
+}
+ GET /api/settings?scope=heavy 200 in 3.2s (compile: 10ms, proxy.ts: 43ms, render: 3.1s)
+ GET /api/image-studio/runs?projectId=TrzynaDwa&limit=25 200 in 1355ms (compile: 1121ms, proxy.ts: 12ms, render: 223ms)
+[image-studio.projects.[projectId].slots.GET] image-studio.projects.[projectId].slots.GET completed successfully {
+  durationMs: 870,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  params: { projectId: 'TrzynaDwa' },
+  otelTraceId: 'ba2666992408fa4a92627e18bfd9ba13',
+  otelSpanId: 'df3c07c9b19db574',
+  otelTraceFlags: '01',
+  service: 'image-studio.projects',
+  traceId: 'beb0587e-b488-4a30-a2b7-4ec013c89b82',
+  correlationId: '9a7a3afb-990e-43ff-a91f-bd2a2ac5a4fa'
+}
+ GET /api/image-studio/projects/TrzynaDwa/slots 200 in 3.5s (compile: 2.6s, proxy.ts: 11ms, render: 875ms)
+[api/settings] [api/settings] [timing] settings.fetch {
+  service: 'api/settings',
+  scope: 'heavy',
+  provider: 0.2332499999902211,
+  mongo: 12292.670666999999,
+  total: 12292.988666999998,
+  category: 'NETWORK',
+  otelTraceId: '1d79b7c980aae926c47db6b31070a4a9',
+  otelSpanId: '12737731e4b46019',
+  otelTraceFlags: '01'
+}
+Persisting failed: Failed to compact database
+
+Caused by:
+    0: Failed to merge database files for family 1
+    1: Failed to write value blocks
+    2: Failed to write small value block
+    3: Failed to write compressed block
+    4: No space left on device (os error 28)
+[ai-paths-settings-api] [ai-paths-settings-api] GET /api/ai-paths/settings {
+  durationMs: 12780,
+  recordCount: 20,
+  payloadBytes: 1216310,
+  requestedKeys: 0,
+  service: 'ai-paths-settings-api',
+  otelTraceId: '781a2eaf51bf1a14c0b583d21469090a',
+  otelSpanId: '4c8e8a8e8b6d58a0',
+  otelTraceFlags: '01'
+}
+[ai-paths.settings.GET] ai-paths.settings.GET completed successfully {
+  durationMs: 12843,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '781a2eaf51bf1a14c0b583d21469090a',
+  otelSpanId: '4c8e8a8e8b6d58a0',
+  otelTraceFlags: '01',
+  service: 'ai-paths.settings',
+  traceId: 'beb0587e-b488-4a30-a2b7-4ec013c89b82',
+  correlationId: '9b4e489a-da47-4dbb-9a9f-26177a30dc8d'
+}
+ GET /api/ai-paths/settings 200 in 14.4s (compile: 1534ms, proxy.ts: 29ms, render: 12.9s)
+ GET /api/ai-paths/settings 200 in 44ms (compile: 4ms, proxy.ts: 4ms, render: 35ms)
+Received SIGTERM, shutting down gracefully... { signal: 'SIGTERM' }
+Server closed undefined

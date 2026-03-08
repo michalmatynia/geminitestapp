@@ -16,8 +16,9 @@ vi.mock('next/link', () => ({
   default: ({
     children,
     href,
+    scroll: _scroll,
     ...rest
-  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; scroll?: boolean }) => (
     <a href={href} {...rest}>
       {children}
     </a>

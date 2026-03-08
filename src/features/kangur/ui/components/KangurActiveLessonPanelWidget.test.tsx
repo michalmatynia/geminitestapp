@@ -105,7 +105,7 @@ describe('KangurActiveLessonPanelWidget', () => {
     );
     expect(screen.queryByText('Powtorz dodawanie')).toBeNull();
     expect(screen.queryByText('Skup sie na prostych sumach.')).toBeNull();
-    expect(screen.getByRole('button', { name: 'Wroc do listy lekcji' })).toHaveClass(
+    expect(screen.getByRole('button', { name: 'Wróć do listy lekcji' })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
     );
@@ -190,7 +190,7 @@ describe('KangurActiveLessonPanelWidget', () => {
 
     render(<KangurActiveLessonPanelWidget />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Wroc do listy lekcji' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Wróć do listy lekcji' }));
 
     expect(clearActiveLessonMock).toHaveBeenCalledTimes(1);
   });

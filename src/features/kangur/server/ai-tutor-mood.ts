@@ -216,7 +216,7 @@ export const resolveKangurAiTutorMoodFromSignals = (
     addScore(scores, 'motivating', 1);
   }
 
-  if (input.context?.surface === 'test') {
+  if (input.context?.surface === 'test' || input.context?.surface === 'game') {
     if (input.context.answerRevealed) {
       addScore(scores, 'reflective', 6);
       addScore(scores, 'supportive', 1);

@@ -51,6 +51,14 @@ export function CanvasControlPanel(props: CanvasControlPanelProps): React.JSX.El
       getDocumentationTooltip(DOCUMENTATION_MODULE_IDS.aiPaths, docId) ?? fallback,
     []
   );
+  const zoomInLabel = resolveTooltip('canvas_zoom_in', 'Zoom In');
+  const zoomOutLabel = resolveTooltip('canvas_zoom_out', 'Zoom Out');
+  const fitNodesLabel = resolveTooltip('canvas_fit_nodes', 'Fit all nodes');
+  const fitSelectionLabel = resolveTooltip('canvas_fit_selection', 'Fit selection');
+  const resetViewLabel = resolveTooltip('canvas_reset_view', 'Reset view');
+  const minimapLabel = showMinimap ? 'Hide Minimap' : 'Show Minimap';
+  const edgeRoutingLabel =
+    edgeRoutingMode === 'bezier' ? 'Switch to orthogonal edges' : 'Switch to bezier edges';
 
   return (
     <div
@@ -60,13 +68,15 @@ export function CanvasControlPanel(props: CanvasControlPanelProps): React.JSX.El
       )}
     >
       <div className='flex items-center gap-1 px-1'>
-        <Tooltip content={resolveTooltip('canvas_zoom_in', 'Zoom In')}>
+        <Tooltip content={zoomInLabel}>
           <Button
             data-doc-id='canvas_zoom_in'
             variant='ghost'
             size='icon'
             className='h-8 w-8 rounded-full'
             onClick={onZoomIn}
+            aria-label={zoomInLabel}
+            title={zoomInLabel}
           >
             <ZoomIn className='size-4' />
           </Button>
@@ -74,13 +84,15 @@ export function CanvasControlPanel(props: CanvasControlPanelProps): React.JSX.El
         <div className='min-w-[42px] text-center text-[11px] font-bold tabular-nums text-foreground/90'>
           {Math.round(viewScale * 100)}%
         </div>
-        <Tooltip content={resolveTooltip('canvas_zoom_out', 'Zoom Out')}>
+        <Tooltip content={zoomOutLabel}>
           <Button
             data-doc-id='canvas_zoom_out'
             variant='ghost'
             size='icon'
             className='h-8 w-8 rounded-full'
             onClick={onZoomOut}
+            aria-label={zoomOutLabel}
+            title={zoomOutLabel}
           >
             <ZoomOut className='size-4' />
           </Button>
@@ -90,35 +102,41 @@ export function CanvasControlPanel(props: CanvasControlPanelProps): React.JSX.El
       <div className='h-4 w-px bg-border/40' />
 
       <div className='flex items-center gap-1'>
-        <Tooltip content={resolveTooltip('canvas_fit_nodes', 'Fit all nodes')}>
+        <Tooltip content={fitNodesLabel}>
           <Button
             data-doc-id='canvas_fit_nodes'
             variant='ghost'
             size='icon'
             className='h-8 w-8 rounded-full'
             onClick={onFitToNodes}
+            aria-label={fitNodesLabel}
+            title={fitNodesLabel}
           >
             <Maximize className='size-4' />
           </Button>
         </Tooltip>
-        <Tooltip content={resolveTooltip('canvas_fit_selection', 'Fit selection')}>
+        <Tooltip content={fitSelectionLabel}>
           <Button
             data-doc-id='canvas_fit_selection'
             variant='ghost'
             size='icon'
             className='h-8 w-8 rounded-full'
             onClick={onFitToSelection}
+            aria-label={fitSelectionLabel}
+            title={fitSelectionLabel}
           >
             <Crosshair className='size-4' />
           </Button>
         </Tooltip>
-        <Tooltip content={resolveTooltip('canvas_reset_view', 'Reset view')}>
+        <Tooltip content={resetViewLabel}>
           <Button
             data-doc-id='canvas_reset_view'
             variant='ghost'
             size='icon'
             className='h-8 w-8 rounded-full'
             onClick={onResetView}
+            aria-label={resetViewLabel}
+            title={resetViewLabel}
           >
             <Activity className='size-4' />
           </Button>
@@ -128,13 +146,15 @@ export function CanvasControlPanel(props: CanvasControlPanelProps): React.JSX.El
       <div className='h-4 w-px bg-border/40' />
 
       <div className='flex items-center gap-1'>
-        <Tooltip content={showMinimap ? 'Hide Minimap' : 'Show Minimap'}>
+        <Tooltip content={minimapLabel}>
           <Button
             data-doc-id='canvas_toggle_minimap'
             variant={showMinimap ? 'secondary' : 'ghost'}
             size='icon'
             className='h-8 w-8 rounded-full'
             onClick={onToggleMinimap}
+            aria-label={minimapLabel}
+            title={minimapLabel}
           >
             <MapIcon className='size-4' />
           </Button>
@@ -148,6 +168,8 @@ export function CanvasControlPanel(props: CanvasControlPanelProps): React.JSX.El
             onClick={() =>
               onEdgeRoutingModeChange(edgeRoutingMode === 'bezier' ? 'orthogonal' : 'bezier')
             }
+            aria-label={edgeRoutingLabel}
+            title={edgeRoutingLabel}
           >
             {edgeRoutingMode === 'bezier' ? (
               <Zap className='size-4 text-amber-400/80' />

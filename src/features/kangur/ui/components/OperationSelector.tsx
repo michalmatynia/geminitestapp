@@ -38,7 +38,7 @@ export default function OperationSelector({
       aria-labelledby={headingId}
       className='flex w-full max-w-3xl flex-col items-center gap-6'
     >
-      <DifficultySelector selected={difficulty} onSelect={setDifficulty} />
+      <DifficultySelector selected={difficulty} onSelect={setDifficulty} showHeading={false} />
       <KangurSectionHeading
         accent='indigo'
         data-testid='operation-selector-heading'

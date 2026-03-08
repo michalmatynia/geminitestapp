@@ -705,8 +705,8 @@ export const buildCaseResolverRelationGraph = ({
   });
 
   return {
-    nodes: nextNodes as CaseResolverRelationGraph['nodes'],
-    edges: nextEdges as CaseResolverRelationGraph['edges'],
+    nodes: nextNodes,
+    edges: nextEdges,
     nodeMeta: nextNodeMeta,
     edgeMeta: nextEdgeMeta,
   };

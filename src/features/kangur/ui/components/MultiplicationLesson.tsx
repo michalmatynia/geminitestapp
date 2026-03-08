@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ArrowLeft } from 'lucide-react';
 
 import MultiplicationGame from '@/features/kangur/ui/components/MultiplicationGame';
 import MultiplicationArrayGame from '@/features/kangur/ui/components/MultiplicationArrayGame';
@@ -9,6 +10,7 @@ import LessonSlideSection, {
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
 import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 import {
+  KangurButton,
   KangurDisplayEmoji,
   KangurEquationDisplay,
   KangurFeatureHeader,
@@ -175,8 +177,14 @@ export default function MultiplicationLesson(): React.JSX.Element {
   if (activeSection === 'game_array') {
     return (
       <div className='flex flex-col items-center gap-4 w-full max-w-sm'>
+        <KangurButton onClick={() => setActiveSection(null)} size='sm' variant='surface'>
+          <ArrowLeft className='w-4 h-4' /> Wróć do tematów
+        </KangurButton>
         <KangurFeatureHeader accent='violet' icon='✨' title='Gra z grupami!' />
-        <MultiplicationArrayGame onFinish={() => setActiveSection(null)} />
+        <MultiplicationArrayGame
+          finishLabel='Wróć do tematów'
+          onFinish={() => setActiveSection(null)}
+        />
       </div>
     );
   }
@@ -184,8 +192,14 @@ export default function MultiplicationLesson(): React.JSX.Element {
   if (activeSection === 'game_quiz') {
     return (
       <div className='flex flex-col items-center gap-4 w-full max-w-sm'>
+        <KangurButton onClick={() => setActiveSection(null)} size='sm' variant='surface'>
+          <ArrowLeft className='w-4 h-4' /> Wróć do tematów
+        </KangurButton>
         <KangurFeatureHeader accent='violet' icon='📝' title='Quiz mnozenia!' />
-        <MultiplicationGame onFinish={() => setActiveSection(null)} />
+        <MultiplicationGame
+          finishLabel='Wróć do tematów'
+          onFinish={() => setActiveSection(null)}
+        />
       </div>
     );
   }

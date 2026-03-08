@@ -1,40 +1,38 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { LogIn } from 'lucide-react';
 
-import {
-  KangurButton,
-  KangurGlassPanel,
-  KangurGradientHeading,
-} from '@/features/kangur/ui/design/primitives';
+import { getKangurHomeHref } from '@/features/kangur/config/routing';
+import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
+import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import {
   getKangurLearnerProfileDisplayName,
   useKangurLearnerProfileRuntime,
 } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
 
 export function KangurLearnerProfileHeroWidget(): React.JSX.Element {
-  const { user, navigateToLogin } = useKangurLearnerProfileRuntime();
+  const router = useRouter();
+  const { basePath, user, navigateToLogin } = useKangurLearnerProfileRuntime();
   const displayName = getKangurLearnerProfileDisplayName(user);
 
   return (
-    <KangurGlassPanel
-      className='flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between'
-      padding='lg'
-      surface='mistStrong'
-      variant='soft'
+    <KangurPageIntroCard
+      accent='indigo'
+      className='mx-auto w-full max-w-2xl'
+      description={
+        <>
+          Statystyki ucznia: <span className='font-semibold text-slate-700'>{displayName}</span>.
+        </>
+      }
+      headingAs='h1'
+      onBack={() => router.push(getKangurHomeHref(basePath))}
+      testId='kangur-learner-profile-hero'
+      title='Profil ucznia'
     >
-      <div className='max-w-2xl'>
-        <div className='text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
-          Dane i postep
-        </div>
-        <KangurGradientHeading gradientClass='from-indigo-500 to-purple-600' size='lg'>
-          Profil ucznia
-        </KangurGradientHeading>
-        <p className='mt-2 text-sm text-slate-500'>Statystyki ucznia: {displayName}.</p>
-      </div>
       {!user ? (
         <KangurButton
-          className='sm:self-start'
+          className='w-full sm:w-auto'
           onClick={navigateToLogin}
           size='sm'
           variant='surface'
@@ -43,6 +41,6 @@ export function KangurLearnerProfileHeroWidget(): React.JSX.Element {
           <LogIn className='h-4 w-4' /> Zaloguj sie, aby synchronizowac postep
         </KangurButton>
       ) : null}
-    </KangurGlassPanel>
+    </KangurPageIntroCard>
   );
 }

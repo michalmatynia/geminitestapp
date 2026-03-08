@@ -578,6 +578,88 @@ describe('kangur ai tutor chat handler', () => {
     });
   });
 
+  it('builds structured game tutor context from the live request when the registry has no game surface document', async () => {
+    contextRegistryResolveRefsMock.mockResolvedValue(
+      createContextRegistryBundle({
+        learnerSummary: 'Average accuracy 81%. 1 active assignment.',
+      })
+    );
+    runBrainChatCompletionMock.mockResolvedValue({
+      text: 'Najpierw dolicz 3 do 7, a potem jeszcze 2.',
+    });
+
+    const response = await postKangurAiTutorChatHandler(
+      createPostRequest(
+        JSON.stringify({
+          messages: [{ role: 'user', content: 'Poprosze wskazowke.' }],
+          context: {
+            surface: 'game',
+            contentId: 'game',
+            title: 'Trening dodawania',
+            description: 'Krotki trening z dodawania do 20.',
+            masterySummary: 'Dodawanie mastery 68% po 3 probach.',
+            assignmentId: 'assignment-1',
+            assignmentSummary: 'Trening: dodawanie do 20.',
+            currentQuestion: 'Ile to 7 + 5?',
+            questionId: 'game-q-2',
+            questionProgressLabel: 'Pytanie 2/10',
+            promptMode: 'hint',
+            answerRevealed: false,
+          },
+        })
+      ),
+      createRequestContext()
+    );
+
+    const brainInput = runBrainChatCompletionMock.mock.calls[0]?.[0];
+    expect(brainInput.messages[0].content).toContain('Current Kangur surface: game practice.');
+    expect(brainInput.messages[0].content).toContain('Current title: Trening dodawania');
+    expect(brainInput.messages[0].content).toContain(
+      'Current description: Krotki trening z dodawania do 20.'
+    );
+    expect(brainInput.messages[0].content).toContain(
+      'Learner snapshot: Average accuracy 81%. 1 active assignment.'
+    );
+    expect(brainInput.messages[0].content).toContain(
+      'Learner mastery snapshot: Dodawanie mastery 68% po 3 probach.'
+    );
+    expect(brainInput.messages[0].content).toContain(
+      'Active assignment or focus: Trening: dodawanie do 20.'
+    );
+    expect(brainInput.messages[0].content).toContain('Current question: Ile to 7 + 5?');
+    expect(brainInput.messages[0].content).toContain('Question progress: Pytanie 2/10');
+    expect(brainInput.messages[0].content).toContain(
+      'The learner is in an active practice question. Do not reveal the final answer or solve the problem outright.'
+    );
+    expect(persistAgentPersonaExchangeMemoryMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourceLabel: 'Kangur game · game',
+        tags: ['kangur', 'game', 'hint'],
+      })
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      message: 'Najpierw dolicz 3 do 7, a potem jeszcze 2.',
+      sources: [],
+      followUpActions: [],
+      suggestedMoodId: 'encouraging',
+      tutorMood: {
+        currentMoodId: 'supportive',
+        baselineMoodId: 'encouraging',
+        confidence: 0.72,
+        lastComputedAt: '2026-03-07T10:00:00.000Z',
+        lastReasonCode: 'learner_confusion',
+      },
+      usage: {
+        dateKey: '2026-03-07',
+        messageCount: 0,
+        dailyMessageLimit: null,
+        remainingMessages: null,
+      },
+    });
+  });
+
   it('returns adaptive follow-up actions with the tutor response', async () => {
     buildKangurAiTutorAdaptiveGuidanceMock.mockResolvedValue({
       instructions:

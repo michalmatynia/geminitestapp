@@ -24,6 +24,23 @@ export interface UseVersionGraphShortcutsParams {
 
 type VersionGraphShortcutEvent = Pick<KeyboardEvent, 'key' | 'preventDefault' | 'target'>;
 
+const INTERACTIVE_SHORTCUT_TARGET_SELECTOR = [
+  'a[href]',
+  'button',
+  'input',
+  'textarea',
+  'select',
+  '[role="button"]',
+  '[role="link"]',
+  '[contenteditable="true"]',
+  '[contenteditable=""]',
+].join(',');
+
+const isInteractiveShortcutTarget = (target: EventTarget | null): boolean => {
+  if (!(target instanceof Element)) return false;
+  return target.closest(INTERACTIVE_SHORTCUT_TARGET_SELECTOR) !== null;
+};
+
 // ── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useVersionGraphShortcuts({
@@ -45,9 +62,7 @@ export function useVersionGraphShortcuts({
 }: UseVersionGraphShortcutsParams): (event: React.KeyboardEvent | VersionGraphShortcutEvent) => void {
   return useCallback(
     (e: React.KeyboardEvent | VersionGraphShortcutEvent) => {
-      // Don't capture when typing in inputs
-      const tag = e.target instanceof HTMLElement ? e.target.tagName : '';
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      if (isInteractiveShortcutTarget(e.target)) return;
 
       switch (e.key) {
         case 'Escape':

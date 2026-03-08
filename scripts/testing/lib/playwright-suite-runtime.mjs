@@ -28,8 +28,10 @@ export const resolvePreferredBrowserNodeBinDir = ({
 
 const probeCandidates = (baseUrl) => [
   new URL('/api/health', baseUrl).toString(),
-  new URL('/', baseUrl).toString(),
+  new URL('/auth/signin', baseUrl).toString(),
 ];
+
+const isSuccessfulProbeResponse = (response) => response.status >= 200 && response.status < 500;
 
 export const detectExistingPlaywrightServer = async ({
   baseUrl,
@@ -39,21 +41,54 @@ export const detectExistingPlaywrightServer = async ({
     return false;
   }
 
-  for (const candidate of probeCandidates(baseUrl)) {
+  const [healthUrl, rootUrl] = probeCandidates(baseUrl);
+  let healthReachable = false;
+
+  try {
+    const response = await fetchImpl(healthUrl, {
+      method: 'GET',
+      signal: AbortSignal.timeout(1500),
+      headers: {
+        accept: 'application/json,text/html,text/plain',
+      },
+    });
+    healthReachable = isSuccessfulProbeResponse(response);
+  } catch {
+    healthReachable = false;
+  }
+
+  if (healthReachable) {
     try {
-      const response = await fetchImpl(candidate, {
+      const response = await fetchImpl(rootUrl, {
         method: 'GET',
         signal: AbortSignal.timeout(1500),
         headers: {
           accept: 'application/json,text/html,text/plain',
         },
       });
-      if (response.status >= 200 && response.status < 500) {
+      if (isSuccessfulProbeResponse(response)) {
         return true;
       }
     } catch {
-      // Ignore probe failures and try the next candidate.
+      return false;
     }
+
+    return false;
+  }
+
+  try {
+    const response = await fetchImpl(rootUrl, {
+      method: 'GET',
+      signal: AbortSignal.timeout(1500),
+      headers: {
+        accept: 'application/json,text/html,text/plain',
+      },
+    });
+    if (isSuccessfulProbeResponse(response)) {
+      return true;
+    }
+  } catch {
+    // Ignore probe failures and report the server as unavailable.
   }
 
   return false;

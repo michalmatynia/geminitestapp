@@ -32,7 +32,7 @@ import { resolveScopedVersionGraphSlots } from '@/features/ai/image-studio/utils
 export function useVersionGraphRuntime(): {
   state: VersionGraphState;
   actions: VersionGraphActions;
-} {
+  } {
   const { slots, selectedSlotId } = useSlotsState();
   const { setSelectedSlotId, setWorkingSlotId, createSlots, updateSlotMutation } =
     useSlotsActions();

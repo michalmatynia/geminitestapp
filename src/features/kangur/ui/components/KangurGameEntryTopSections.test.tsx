@@ -60,9 +60,10 @@ describe('Kangur game entry top sections', () => {
       'border-white/78',
       'bg-white/68'
     );
-    expect(screen.getByRole('heading', { name: 'Grajmy!' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Grajmy!' })).toHaveClass('text-3xl');
     expect(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' })).toBeInTheDocument();
     expect(screen.getByTestId('mock-operation-selector')).toBeInTheDocument();
+    expect(screen.queryByText(/Cześć,/i)).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
 
@@ -87,7 +88,7 @@ describe('Kangur game entry top sections', () => {
       'border-white/78',
       'bg-white/68'
     );
-    expect(screen.getByRole('heading', { name: 'Trening mieszany' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Trening mieszany' })).toHaveClass('text-3xl');
     expect(screen.getByTestId('mock-training-setup')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
@@ -111,7 +112,7 @@ describe('Kangur game entry top sections', () => {
       'border-white/78',
       'bg-white/68'
     );
-    expect(screen.getByRole('heading', { name: 'Kangur Matematyczny' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Kangur Matematyczny' })).toHaveClass('text-3xl');
     expect(screen.getByTestId('mock-kangur-setup')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));

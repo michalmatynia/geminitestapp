@@ -210,7 +210,7 @@ const isPrismaDelegate = (value: unknown): value is PrismaDelegate => {
 const getPrismaDelegate = (collection: string): PrismaDelegate | null => {
   const delegateName = PRISMA_COLLECTION_DELEGATES[collection];
   if (!delegateName) return null;
-  const delegate = Reflect.get(prisma, delegateName);
+  const delegate: unknown = Reflect.get(prisma as object, delegateName);
   return isPrismaDelegate(delegate) ? delegate : null;
 };
 

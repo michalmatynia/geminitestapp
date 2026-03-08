@@ -27,6 +27,7 @@ function ParentDashboardContent(): React.JSX.Element {
     activeTab,
     basePath,
     canAccessDashboard,
+    canManageLearners,
     isAuthenticated,
     logout,
     navigateToLogin,
@@ -167,13 +168,13 @@ function ParentDashboardContent(): React.JSX.Element {
   const navigation = useMemo(
     () => ({
       basePath,
-      canManageLearners: true,
+      canManageLearners,
       currentPage: 'ParentDashboard' as const,
       isAuthenticated,
       onLogin: navigateToLogin,
       onLogout: () => logout(false),
     }),
-    [basePath, isAuthenticated, logout, navigateToLogin]
+    [basePath, canManageLearners, isAuthenticated, logout, navigateToLogin]
   );
 
   if (!canAccessDashboard) {

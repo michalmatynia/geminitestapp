@@ -1,8 +1,82 @@
-<testsuites id="" name="" tests="2" failures="0" skipped="0" errors="0" time="19.805797">
-<testsuite name="features/accessibility/public-auth-accessibility.spec.ts" timestamp="2026-03-08T14:57:13.811Z" hostname="" tests="2" failures="0" skipped="0" time="11.311" errors="0">
-<testcase name="/auth/signin exposes skip navigation and passes the accessibility smoke scan" classname="features/accessibility/public-auth-accessibility.spec.ts" time="5.528">
+<testsuites id="" name="" tests="2" failures="2" skipped="0" errors="0" time="5.130754999999999">
+<testsuite name="features/accessibility/public-auth-accessibility.spec.ts" timestamp="2026-03-08T17:13:44.574Z" hostname="" tests="2" failures="2" skipped="0" time="0.877" errors="0">
+<testcase name="/auth/signin exposes skip navigation and passes the accessibility smoke scan" classname="features/accessibility/public-auth-accessibility.spec.ts" time="0.397">
+<failure message="public-auth-accessibility.spec.ts:8:3 /auth/signin exposes skip navigation and passes the accessibility smoke scan" type="FAILURE">
+<![CDATA[  features/accessibility/public-auth-accessibility.spec.ts:8:3 › /auth/signin exposes skip navigation and passes the accessibility smoke scan 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:54651/auth/signin
+    Call log:
+      - navigating to "http://127.0.0.1:54651/auth/signin", waiting until "load"
+
+
+       9 |     page,
+      10 |   }) => {
+    > 11 |     await page.goto(route);
+         |                ^
+      12 |
+      13 |     const main = page.locator('#app-content');
+      14 |     await expect(main).toBeVisible();
+        at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/public-auth-accessibility.spec.ts:11:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../tmp/playwright-runs/web/michalmatynia/accessibility-smoke-public-auth-routes-browser-a/test-results/features-accessibility-pub-17aac-he-accessibility-smoke-scan/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../tmp/playwright-runs/web/michalmatynia/accessibility-smoke-public-auth-routes-browser-a/test-results/features-accessibility-pub-17aac-he-accessibility-smoke-scan/trace.zip
+    Usage:
+
+        npx playwright show-trace ../tmp/playwright-runs/web/michalmatynia/accessibility-smoke-public-auth-routes-browser-a/test-results/features-accessibility-pub-17aac-he-accessibility-smoke-scan/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/features-accessibility-pub-17aac-he-accessibility-smoke-scan/test-failed-1.png]]
+
+[[ATTACHMENT|test-results/features-accessibility-pub-17aac-he-accessibility-smoke-scan/trace.zip]]
+]]>
+</system-out>
 </testcase>
-<testcase name="/auth/register exposes skip navigation and passes the accessibility smoke scan" classname="features/accessibility/public-auth-accessibility.spec.ts" time="5.783">
+<testcase name="/auth/register exposes skip navigation and passes the accessibility smoke scan" classname="features/accessibility/public-auth-accessibility.spec.ts" time="0.48">
+<failure message="public-auth-accessibility.spec.ts:8:3 /auth/register exposes skip navigation and passes the accessibility smoke scan" type="FAILURE">
+<![CDATA[  features/accessibility/public-auth-accessibility.spec.ts:8:3 › /auth/register exposes skip navigation and passes the accessibility smoke scan 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:54651/auth/register
+    Call log:
+      - navigating to "http://127.0.0.1:54651/auth/register", waiting until "load"
+
+
+       9 |     page,
+      10 |   }) => {
+    > 11 |     await page.goto(route);
+         |                ^
+      12 |
+      13 |     const main = page.locator('#app-content');
+      14 |     await expect(main).toBeVisible();
+        at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/public-auth-accessibility.spec.ts:11:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../tmp/playwright-runs/web/michalmatynia/accessibility-smoke-public-auth-routes-browser-a/test-results/features-accessibility-pub-64d98-he-accessibility-smoke-scan/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../tmp/playwright-runs/web/michalmatynia/accessibility-smoke-public-auth-routes-browser-a/test-results/features-accessibility-pub-64d98-he-accessibility-smoke-scan/trace.zip
+    Usage:
+
+        npx playwright show-trace ../tmp/playwright-runs/web/michalmatynia/accessibility-smoke-public-auth-routes-browser-a/test-results/features-accessibility-pub-64d98-he-accessibility-smoke-scan/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/features-accessibility-pub-64d98-he-accessibility-smoke-scan/test-failed-1.png]]
+
+[[ATTACHMENT|test-results/features-accessibility-pub-64d98-he-accessibility-smoke-scan/trace.zip]]
+]]>
+</system-out>
 </testcase>
 </testsuite>
 </testsuites>

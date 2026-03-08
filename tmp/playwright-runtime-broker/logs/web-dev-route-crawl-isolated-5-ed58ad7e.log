@@ -1,0 +1,2869 @@
+
+> libapp2@0.1.0 predev
+> node scripts/runtime/check-node-version.cjs
+
+
+> libapp2@0.1.0 dev
+> node --max-old-space-size=8192 server.cjs
+
+○ Compiling instrumentation Node.js ...
+
+  We detected TypeScript in your project and reconfigured your tsconfig.json file for you.
+  The following suggested values were added to your tsconfig.json. These values can be changed to fit your project's needs:
+
+  	- include was updated to add '.next-dev-web-dev-route-crawl-isolated-5/types/**/*.ts'
+  	- include was updated to add '.next-dev-web-dev-route-crawl-isolated-5/dev/types/**/*.ts'
+
+[ai-paths.portable-engine.envelope-verification] Portable envelope verification audit sink health probe sinkId=portable-envelope-verification-log-forwarding {
+  category: 'ai_path_portable_envelope_verification_audit_sink_health',
+  kind: 'ai-paths.portable-envelope-verification-audit-sink-health.v1',
+  sinkId: 'portable-envelope-verification-log-forwarding',
+  stage: 'probe',
+  service: 'ai-paths.portable-engine'
+}
+[ai-paths.portable-engine.envelope-verification.sink-bootstrap] Portable envelope verification audit sink startup health summary sinkId=all {
+  category: 'ai_path_portable_envelope_verification_audit_sink_health',
+  kind: 'ai-paths.portable-envelope-verification-audit-sink-health.v1',
+  profile: 'dev',
+  policy: 'warn',
+  timeoutMs: 3000,
+  status: 'healthy',
+  failedSinkIds: [],
+  diagnostics: [
+    {
+      sinkId: 'portable-envelope-verification-log-forwarding',
+      status: 'healthy',
+      checkedAt: '2026-03-08T17:18:45.929Z',
+      durationMs: 1357,
+      message: 'Health check passed.',
+      error: null
+    }
+  ],
+  service: 'ai-paths.portable-engine'
+}
+[queue-factory] [queue-factory:database-backup-scheduler] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:product-sync-scheduler] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:system-log-alerts] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-init] Starting BullMQ workers... { service: 'queue-init' }
+[queue-registry] [queue-registry] Starting queue worker: base-import { queueName: 'base-import', service: 'queue-registry' }
+[queue-factory] [queue-factory:base-import] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: database-backup-scheduler { queueName: 'database-backup-scheduler', service: 'queue-registry' }
+[queue-registry] [queue-registry] Starting queue worker: system-log-alerts { queueName: 'system-log-alerts', service: 'queue-registry' }
+[queue-registry] [queue-registry] Starting queue worker: tradera-listings { queueName: 'tradera-listings', service: 'queue-registry' }
+[queue-factory] [queue-factory:tradera-listings] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-ai { queueName: 'product-ai', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-ai] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync { queueName: 'product-sync', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-sync] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync-backfill { queueName: 'product-sync-backfill', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-sync-backfill] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync-scheduler { queueName: 'product-sync-scheduler', service: 'queue-registry' }
+[queue-factory] [queue-factory:case-resolver-ocr] BullMQ worker started (concurrency: 2) { concurrency: 2, service: 'queue-factory' }
+[queue-factory] [queue-factory:ai-path-run] BullMQ worker started (concurrency: 3) { concurrency: 3, service: 'queue-factory' }
+[queue-factory] [queue-factory:chatbot] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:agent] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:image-studio-run] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:tradera-relist-scheduler] Worker stopped { service: 'queue-factory' }
+Ready on http://localhost:57746 { port: 57746, host: '127.0.0.1' }
+[queue-factory] [queue-factory:image-studio-sequence] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+○ Compiling /api/health ...
+[health.GET] health.GET completed successfully {
+  durationMs: 1022,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '34ecff57e2da6d67dfc0bc132c418022',
+  otelSpanId: '0c61e4e5eb97997c',
+  otelTraceFlags: '01',
+  service: 'health',
+  traceId: 'f5532ca7-406c-4fde-a8f5-cc2872f2db49',
+  correlationId: 'c708261c-73ba-4afc-8a8d-4d9d89fb5375'
+}
+[health.GET] health.GET completed successfully {
+  durationMs: 814,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: 'f906135cfc467a829e3bf736321a74a0',
+  otelSpanId: '9d4532bdef015031',
+  otelTraceFlags: '01',
+  service: 'health',
+  traceId: '8b0acc05-6418-47b0-ac39-14d0a7902bb2',
+  correlationId: 'f18a1dac-05ea-4eee-9632-3635faaf1160'
+}
+ GET /api/health 200 in 841ms (compile: 4ms, proxy.ts: 10ms, render: 827ms)
+ GET /api/health 200 in 757ms (compile: 9ms, proxy.ts: 19ms, render: 729ms)
+[health.GET] health.GET completed successfully {
+  durationMs: 944,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '59b0ff72edd9460a3dbb6b13f665e44c',
+  otelSpanId: '3396473921d157f8',
+  otelTraceFlags: '01',
+  service: 'health',
+  traceId: 'a1ea063e-d0a8-4570-a675-26fdfdb7c8d0',
+  correlationId: '421e5990-db1a-4223-9a95-3dbfc0be8060'
+}
+ GET /api/health 200 in 1047ms (compile: 24ms, proxy.ts: 56ms, render: 967ms)
+[health.GET] health.GET completed successfully {
+  durationMs: 950,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '04c876418165b48222b4d34ec88336d6',
+  otelSpanId: 'ff3647bf84be230e',
+  otelTraceFlags: '01',
+  service: 'health',
+  traceId: '8921e977-368c-40c1-b81b-def69dc3ec28',
+  correlationId: '7bcbbb2c-3d2c-48b8-bf8b-3957e4f151a9'
+}
+ GET /api/health 200 in 1011ms (compile: 27ms, proxy.ts: 12ms, render: 973ms)
+[health.GET] health.GET completed successfully {
+  durationMs: 818,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '820e292fe09bbc190eab06d87fc23123',
+  otelSpanId: 'faa73c2878522832',
+  otelTraceFlags: '01',
+  service: 'health',
+  traceId: 'b76a69a7-47c0-4dc8-918f-4f1f1a9bb4a5',
+  correlationId: 'a72029e0-b261-4073-bed6-68108a0b9188'
+}
+ GET /api/health 200 in 907ms (compile: 13ms, proxy.ts: 40ms, render: 853ms)
+[health.GET] health.GET completed successfully {
+  durationMs: 927,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '424ea2037c84b9dfd06b29dd7d53d1a3',
+  otelSpanId: '20c9b9d6ea28c9d0',
+  otelTraceFlags: '01',
+  service: 'health',
+  traceId: '29a94258-ea5b-4981-9c0b-e540fe30cf8b',
+  correlationId: 'e62af3f4-1334-4102-86c9-eaf88ea7217e'
+}
+ GET /api/health 200 in 1083ms (compile: 20ms, proxy.ts: 70ms, render: 994ms)
+[health.GET] health.GET completed successfully {
+  durationMs: 759,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '6ca91081a7487c1a0e61e18b2655f11e',
+  otelSpanId: 'a582cfe93efea665',
+  otelTraceFlags: '01',
+  service: 'health',
+  traceId: '2e97fdd9-9dd3-4124-aecf-adacd6e0bfac',
+  correlationId: 'd07ca09f-9b38-4aa6-b52f-7151b37d8691'
+}
+ GET /api/health 200 in 858ms (compile: 39ms, proxy.ts: 48ms, render: 771ms)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/static/development/_buildManifest.js.tmp.41l242yuhus'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/static/development/_buildManifest.js.tmp.41l242yuhus'
+}
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 113ms (compile: 94ms, proxy.ts: 17ms, render: 1640µs)
+ GET /api/health 500 in 113ms (compile: 94ms, proxy.ts: 17ms, render: 1701µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 96ms (compile: 61ms, proxy.ts: 34ms, render: 1108µs)
+ GET /api/health 500 in 96ms (compile: 61ms, proxy.ts: 34ms, render: 1179µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 13ms (compile: 12ms, render: 981µs)
+ GET / 500 in 13ms (compile: 12ms, render: 1009µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 17ms (compile: 13ms, proxy.ts: 4ms, render: 1017µs)
+ GET /api/health 500 in 17ms (compile: 13ms, proxy.ts: 4ms, render: 1046µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 15ms (compile: 14ms, render: 1079µs)
+ GET / 500 in 15ms (compile: 14ms, render: 1108µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 15ms (compile: 12ms, proxy.ts: 2ms, render: 1039µs)
+ GET /api/health 500 in 16ms (compile: 12ms, proxy.ts: 2ms, render: 1070µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 16ms (compile: 15ms, render: 950µs)
+ GET / 500 in 16ms (compile: 15ms, render: 978µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 24ms (compile: 20ms, proxy.ts: 2ms, render: 1230µs)
+ GET /api/health 500 in 24ms (compile: 20ms, proxy.ts: 2ms, render: 1266µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 14ms (compile: 13ms, render: 1137µs)
+ GET / 500 in 14ms (compile: 13ms, render: 1167µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 16ms (compile: 12ms, proxy.ts: 3ms, render: 1036µs)
+ GET /api/health 500 in 16ms (compile: 12ms, proxy.ts: 3ms, render: 1065µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 13ms (compile: 12ms, render: 948µs)
+ GET / 500 in 13ms (compile: 12ms, render: 974µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 18ms (compile: 14ms, proxy.ts: 3ms, render: 1040µs)
+ GET /api/health 500 in 18ms (compile: 14ms, proxy.ts: 3ms, render: 1068µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 13ms (compile: 12ms, render: 956µs)
+ GET / 500 in 13ms (compile: 12ms, render: 979µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 14ms (compile: 11ms, proxy.ts: 2ms, render: 984µs)
+ GET /api/health 500 in 14ms (compile: 11ms, proxy.ts: 2ms, render: 1025µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 12ms (compile: 11ms, render: 872µs)
+ GET / 500 in 12ms (compile: 11ms, render: 898µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 15ms (compile: 11ms, proxy.ts: 2ms, render: 1155µs)
+ GET /api/health 500 in 15ms (compile: 11ms, proxy.ts: 2ms, render: 1202µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 12ms (compile: 12ms, render: 793µs)
+ GET / 500 in 12ms (compile: 12ms, render: 815µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 15ms (compile: 12ms, proxy.ts: 1978µs, render: 965µs)
+ GET /api/health 500 in 15ms (compile: 12ms, proxy.ts: 1978µs, render: 992µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 13ms (compile: 12ms, render: 1183µs)
+ GET / 500 in 13ms (compile: 12ms, render: 1212µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 14ms (compile: 10ms, proxy.ts: 3ms, render: 1098µs)
+ GET /api/health 500 in 14ms (compile: 10ms, proxy.ts: 3ms, render: 1130µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 16ms (compile: 15ms, render: 954µs)
+ GET / 500 in 16ms (compile: 15ms, render: 994µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 17ms (compile: 14ms, proxy.ts: 1926µs, render: 1137µs)
+ GET /api/health 500 in 17ms (compile: 14ms, proxy.ts: 1926µs, render: 1167µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 13ms (compile: 12ms, render: 847µs)
+ GET / 500 in 13ms (compile: 12ms, render: 871µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 19ms (compile: 16ms, proxy.ts: 2ms, render: 1041µs)
+ GET /api/health 500 in 19ms (compile: 16ms, proxy.ts: 2ms, render: 1067µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 17ms (compile: 16ms, render: 1080µs)
+ GET / 500 in 17ms (compile: 16ms, render: 1108µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 17ms (compile: 11ms, proxy.ts: 2ms, render: 4ms)
+ GET /api/health 500 in 17ms (compile: 11ms, proxy.ts: 2ms, render: 4ms)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 24ms (compile: 17ms, render: 7ms)
+ GET / 500 in 24ms (compile: 17ms, render: 7ms)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 13ms (compile: 10ms, proxy.ts: 2ms, render: 1017µs)
+ GET /api/health 500 in 13ms (compile: 10ms, proxy.ts: 2ms, render: 1049µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 15ms (compile: 14ms, render: 1049µs)
+ GET / 500 in 15ms (compile: 14ms, render: 1076µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 15ms (compile: 11ms, proxy.ts: 2ms, render: 980µs)
+ GET /api/health 500 in 15ms (compile: 11ms, proxy.ts: 2ms, render: 1007µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 14ms (compile: 13ms, render: 983µs)
+ GET / 500 in 14ms (compile: 13ms, render: 1007µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 13ms (compile: 10ms, proxy.ts: 2ms, render: 852µs)
+ GET /api/health 500 in 13ms (compile: 10ms, proxy.ts: 2ms, render: 876µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 12ms (compile: 11ms, render: 824µs)
+ GET / 500 in 12ms (compile: 11ms, render: 851µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 612ms (compile: 587ms, proxy.ts: 20ms, render: 5ms)
+ GET /api/health 500 in 612ms (compile: 587ms, proxy.ts: 20ms, render: 5ms)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 29ms (compile: 17ms, proxy.ts: 11ms, render: 1200µs)
+ GET /api/health 500 in 29ms (compile: 17ms, proxy.ts: 11ms, render: 1254µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 15ms (compile: 14ms, render: 1002µs)
+ GET / 500 in 15ms (compile: 14ms, render: 1031µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 17ms (compile: 14ms, proxy.ts: 2ms, render: 1373µs)
+ GET /api/health 500 in 17ms (compile: 14ms, proxy.ts: 2ms, render: 1410µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 14ms (compile: 12ms, render: 1026µs)
+ GET / 500 in 14ms (compile: 12ms, render: 1056µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 15ms (compile: 11ms, proxy.ts: 2ms, render: 941µs)
+ GET /api/health 500 in 15ms (compile: 11ms, proxy.ts: 2ms, render: 967µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 13ms (compile: 13ms, render: 842µs)
+ GET / 500 in 13ms (compile: 13ms, render: 868µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 16ms (compile: 12ms, proxy.ts: 2ms, render: 1073µs)
+ GET /api/health 500 in 16ms (compile: 12ms, proxy.ts: 2ms, render: 1102µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 14ms (compile: 13ms, render: 1116µs)
+ GET / 500 in 14ms (compile: 13ms, render: 1149µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 16ms (compile: 13ms, proxy.ts: 2ms, render: 1042µs)
+ GET /api/health 500 in 16ms (compile: 13ms, proxy.ts: 2ms, render: 1071µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 14ms (compile: 13ms, render: 957µs)
+ GET / 500 in 14ms (compile: 13ms, render: 991µs)
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 1,
+  reason: 'idle',
+  address: 'cluster0-shard-00-00.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 1,
+  reason: 'idle',
+  address: 'cluster0-shard-00-02.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 2,
+  reason: 'idle',
+  address: 'cluster0-shard-00-01.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 15ms (compile: 11ms, proxy.ts: 2ms, render: 966µs)
+ GET /api/health 500 in 15ms (compile: 11ms, proxy.ts: 2ms, render: 996µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 15ms (compile: 14ms, render: 908µs)
+ GET / 500 in 15ms (compile: 14ms, render: 933µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 15ms (compile: 12ms, proxy.ts: 2ms, render: 992µs)
+ GET /api/health 500 in 15ms (compile: 12ms, proxy.ts: 2ms, render: 1032µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 13ms (compile: 12ms, render: 728µs)
+ GET / 500 in 13ms (compile: 12ms, render: 753µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 16ms (compile: 12ms, proxy.ts: 3ms, render: 987µs)
+ GET /api/health 500 in 16ms (compile: 12ms, proxy.ts: 3ms, render: 1018µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 14ms (compile: 13ms, render: 881µs)
+ GET / 500 in 14ms (compile: 13ms, render: 909µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 14ms (compile: 10ms, proxy.ts: 2ms, render: 1007µs)
+ GET /api/health 500 in 14ms (compile: 10ms, proxy.ts: 2ms, render: 1041µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 12ms (compile: 11ms, render: 818µs)
+ GET / 500 in 12ms (compile: 11ms, render: 846µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 13ms (compile: 10ms, proxy.ts: 2ms, render: 873µs)
+ GET /api/health 500 in 13ms (compile: 10ms, proxy.ts: 2ms, render: 905µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 13ms (compile: 12ms, render: 947µs)
+ GET / 500 in 13ms (compile: 12ms, render: 977µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 13ms (compile: 10ms, proxy.ts: 1933µs, render: 1086µs)
+ GET /api/health 500 in 14ms (compile: 10ms, proxy.ts: 1933µs, render: 1116µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 13ms (compile: 12ms, render: 736µs)
+ GET / 500 in 13ms (compile: 12ms, render: 762µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 15ms (compile: 12ms, proxy.ts: 1948µs, render: 928µs)
+ GET /api/health 500 in 15ms (compile: 12ms, proxy.ts: 1948µs, render: 960µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 13ms (compile: 13ms, render: 848µs)
+ GET / 500 in 14ms (compile: 13ms, render: 880µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 17ms (compile: 14ms, proxy.ts: 3ms, render: 1104µs)
+ GET /api/health 500 in 17ms (compile: 14ms, proxy.ts: 3ms, render: 1137µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 14ms (compile: 13ms, render: 1042µs)
+ GET / 500 in 14ms (compile: 13ms, render: 1073µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 21ms (compile: 16ms, proxy.ts: 3ms, render: 1077µs)
+ GET /api/health 500 in 21ms (compile: 16ms, proxy.ts: 3ms, render: 1112µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 21ms (compile: 20ms, render: 1126µs)
+ GET / 500 in 21ms (compile: 20ms, render: 1158µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 55ms (compile: 50ms, proxy.ts: 3ms, render: 2ms)
+ GET /api/health 500 in 55ms (compile: 50ms, proxy.ts: 3ms, render: 2ms)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 82ms (compile: 79ms, render: 3ms)
+ GET / 500 in 82ms (compile: 79ms, render: 3ms)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 13ms (compile: 10ms, proxy.ts: 3ms, render: 825µs)
+ GET /api/health 500 in 13ms (compile: 10ms, proxy.ts: 3ms, render: 858µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 13ms (compile: 12ms, render: 919µs)
+ GET / 500 in 13ms (compile: 12ms, render: 948µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 17ms (compile: 13ms, proxy.ts: 1957µs, render: 1240µs)
+ GET /api/health 500 in 17ms (compile: 13ms, proxy.ts: 1957µs, render: 1272µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 13ms (compile: 12ms, render: 935µs)
+ GET / 500 in 13ms (compile: 12ms, render: 960µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 15ms (compile: 13ms, proxy.ts: 1667µs, render: 920µs)
+ GET /api/health 500 in 15ms (compile: 13ms, proxy.ts: 1667µs, render: 947µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 11ms (compile: 10ms, render: 720µs)
+ GET / 500 in 11ms (compile: 10ms, render: 741µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 13ms (compile: 10ms, proxy.ts: 1756µs, render: 969µs)
+ GET /api/health 500 in 13ms (compile: 10ms, proxy.ts: 1756µs, render: 996µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 12ms (compile: 11ms, render: 971µs)
+ GET / 500 in 12ms (compile: 11ms, render: 998µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 71ms (compile: 63ms, proxy.ts: 7ms, render: 1840µs)
+ GET /api/health 500 in 71ms (compile: 63ms, proxy.ts: 7ms, render: 1873µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 625ms (compile: 620ms, render: 5ms)
+ GET / 500 in 637ms (compile: 620ms, render: 18ms)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 26ms (compile: 22ms, proxy.ts: 3ms, render: 1484µs)
+ GET /api/health 500 in 26ms (compile: 22ms, proxy.ts: 3ms, render: 1538µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 18ms (compile: 16ms, render: 2ms)
+ GET / 500 in 18ms (compile: 16ms, render: 2ms)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 12ms (compile: 9ms, proxy.ts: 2ms, render: 968µs)
+ GET /api/health 500 in 12ms (compile: 9ms, proxy.ts: 2ms, render: 998µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 16ms (compile: 15ms, render: 891µs)
+ GET / 500 in 16ms (compile: 15ms, render: 917µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 22ms (compile: 19ms, proxy.ts: 2ms, render: 1155µs)
+ GET /api/health 500 in 22ms (compile: 19ms, proxy.ts: 2ms, render: 1194µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 18ms (compile: 17ms, render: 1476µs)
+ GET / 500 in 19ms (compile: 17ms, render: 1614µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 17ms (compile: 13ms, proxy.ts: 3ms, render: 1086µs)
+ GET /api/health 500 in 17ms (compile: 13ms, proxy.ts: 3ms, render: 1120µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 16ms (compile: 15ms, render: 949µs)
+ GET / 500 in 16ms (compile: 15ms, render: 979µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 13ms (compile: 10ms, proxy.ts: 1875µs, render: 950µs)
+ GET /api/health 500 in 13ms (compile: 10ms, proxy.ts: 1875µs, render: 983µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 12ms (compile: 12ms, render: 775µs)
+ GET / 500 in 13ms (compile: 12ms, render: 799µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 16ms (compile: 13ms, proxy.ts: 2ms, render: 1181µs)
+ GET /api/health 500 in 16ms (compile: 13ms, proxy.ts: 2ms, render: 1217µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 19ms (compile: 18ms, render: 936µs)
+ GET / 500 in 19ms (compile: 18ms, render: 964µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 42ms (compile: 38ms, proxy.ts: 2ms, render: 1263µs)
+ GET /api/health 500 in 42ms (compile: 38ms, proxy.ts: 2ms, render: 1311µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 13ms (compile: 12ms, render: 897µs)
+ GET / 500 in 13ms (compile: 12ms, render: 926µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 14ms (compile: 11ms, proxy.ts: 2ms, render: 1008µs)
+ GET /api/health 500 in 14ms (compile: 11ms, proxy.ts: 2ms, render: 1038µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 13ms (compile: 12ms, render: 906µs)
+ GET / 500 in 13ms (compile: 12ms, render: 934µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 17ms (compile: 14ms, proxy.ts: 2ms, render: 1013µs)
+ GET /api/health 500 in 17ms (compile: 14ms, proxy.ts: 2ms, render: 1042µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 12ms (compile: 11ms, render: 932µs)
+ GET / 500 in 12ms (compile: 11ms, render: 959µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 15ms (compile: 11ms, proxy.ts: 3ms, render: 1032µs)
+ GET /api/health 500 in 16ms (compile: 11ms, proxy.ts: 3ms, render: 1065µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 13ms (compile: 12ms, render: 998µs)
+ GET / 500 in 13ms (compile: 12ms, render: 1025µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 14ms (compile: 11ms, proxy.ts: 2ms, render: 864µs)
+ GET /api/health 500 in 14ms (compile: 11ms, proxy.ts: 2ms, render: 892µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 17ms (compile: 16ms, render: 900µs)
+ GET / 500 in 17ms (compile: 16ms, render: 925µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 14ms (compile: 11ms, proxy.ts: 1998µs, render: 924µs)
+ GET /api/health 500 in 14ms (compile: 11ms, proxy.ts: 1998µs, render: 952µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 12ms (compile: 11ms, render: 968µs)
+ GET / 500 in 12ms (compile: 11ms, render: 997µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 16ms (compile: 13ms, proxy.ts: 2ms, render: 1043µs)
+ GET /api/health 500 in 16ms (compile: 13ms, proxy.ts: 2ms, render: 1087µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 19ms (compile: 18ms, render: 1013µs)
+ GET / 500 in 19ms (compile: 18ms, render: 1044µs)
+⨯ Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/api/health/[__metadata_id__]/route/app-paths-manifest.json'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET /api/health 500 in 14ms (compile: 10ms, proxy.ts: 3ms, render: 1046µs)
+ GET /api/health 500 in 14ms (compile: 10ms, proxy.ts: 3ms, render: 1075µs)
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/app/(frontend)/page.js:1:7) {
+  page: '/'
+}
+⨯ ReferenceError: require is not defined in ES module scope, you can use import instead
+    at <unknown> (.next-dev-web-dev-route-crawl-isolated-5/dev/server/pages/_document.js:1:7)
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-5/dev/routes-manifest.json'
+}
+ GET / 500 in 16ms (compile: 15ms, render: 896µs)
+ GET / 500 in 16ms (compile: 15ms, render: 925µs)
+Received SIGTERM, shutting down gracefully... { signal: 'SIGTERM' }
+Server closed undefined

@@ -12,6 +12,10 @@ import { useClusterPresetsActions } from './hooks/useClusterPresetsActions';
 export type { ClusterPresetDraft };
 
 export function ClusterPresetsPanel(): React.JSX.Element {
+  const nameFieldId = React.useId();
+  const descriptionFieldId = React.useId();
+  const bundlePortsFieldId = React.useId();
+  const templateFieldId = React.useId();
   const { presetDraft, editingPresetId, clusterPresets } = usePresetsState();
   const { setPresetDraft, resetPresetDraft, loadPresetIntoDraft } = usePresetsActions();
   const {
@@ -51,8 +55,11 @@ export function ClusterPresetsPanel(): React.JSX.Element {
         </div>
         <div className='space-y-3 text-xs text-gray-300'>
           <div>
-            <Label className='text-[10px] uppercase text-gray-500'>Name</Label>
+            <Label htmlFor={nameFieldId} className='text-[10px] uppercase text-gray-500'>
+              Name
+            </Label>
             <Input
+              id={nameFieldId}
               className='mt-2 w-full rounded-md border border-border bg-card/70 px-3 py-2 text-xs text-white'
               value={presetDraft.name}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
@@ -61,8 +68,11 @@ export function ClusterPresetsPanel(): React.JSX.Element {
             />
           </div>
           <div>
-            <Label className='text-[10px] uppercase text-gray-500'>Description</Label>
+            <Label htmlFor={descriptionFieldId} className='text-[10px] uppercase text-gray-500'>
+              Description
+            </Label>
             <Textarea
+              id={descriptionFieldId}
               className='mt-2 min-h-[64px] w-full rounded-md border border-border bg-card/70 text-xs text-white'
               value={presetDraft.description}
               onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
@@ -74,8 +84,11 @@ export function ClusterPresetsPanel(): React.JSX.Element {
             />
           </div>
           <div>
-            <Label className='text-[10px] uppercase text-gray-500'>Bundle Ports (one per line)</Label>
+            <Label htmlFor={bundlePortsFieldId} className='text-[10px] uppercase text-gray-500'>
+              Bundle Ports (one per line)
+            </Label>
             <Textarea
+              id={bundlePortsFieldId}
               className='mt-2 min-h-[90px] w-full rounded-md border border-border bg-card/70 text-xs text-white'
               value={presetDraft.bundlePorts}
               onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
@@ -87,8 +100,11 @@ export function ClusterPresetsPanel(): React.JSX.Element {
             />
           </div>
           <div>
-            <Label className='text-[10px] uppercase text-gray-500'>Template</Label>
+            <Label htmlFor={templateFieldId} className='text-[10px] uppercase text-gray-500'>
+              Template
+            </Label>
             <Textarea
+              id={templateFieldId}
               className='mt-2 min-h-[90px] w-full rounded-md border border-border bg-card/70 text-xs text-white'
               value={presetDraft.template}
               onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>

@@ -14,6 +14,7 @@ import {
   resolvePlaywrightRunArtifacts,
   resolveRuntimeAgentId,
   sanitizeRuntimeToken,
+  stopBrokerRuntimeLease,
 } from './lib/runtime-broker.mjs';
 
 const cleanupTargets: string[] = [];
@@ -163,6 +164,9 @@ describe('acquireRuntimeLease', () => {
   it('serializes concurrent lease creation so same-key callers reuse one runtime', async () => {
     const rootDir = await fs.mkdtemp(path.join(os.tmpdir(), 'runtime-broker-test-'));
     cleanupTargets.push(rootDir);
+    const env = {
+      PLAYWRIGHT_BASE_URL: 'http://127.0.0.1:43173',
+    };
 
     const healthyBaseUrls = new Set<string>();
     let spawnCount = 0;
@@ -199,7 +203,7 @@ describe('acquireRuntimeLease', () => {
         appId: 'web',
         mode: 'dev',
         agentId: 'agent-lock',
-        env: {},
+        env,
         spawnImpl,
         fetchImpl,
         startupTimeoutMs: 3_000,
@@ -210,7 +214,7 @@ describe('acquireRuntimeLease', () => {
         appId: 'web',
         mode: 'dev',
         agentId: 'agent-lock',
-        env: {},
+        env,
         spawnImpl,
         fetchImpl,
         startupTimeoutMs: 3_000,
@@ -221,5 +225,155 @@ describe('acquireRuntimeLease', () => {
     expect(spawnCount).toBe(1);
     expect(left.baseUrl).toBe(right.baseUrl);
     expect([left.reused, right.reused].filter(Boolean)).toHaveLength(1);
+  });
+});
+
+describe('cleanupBrokerRuntimeLeases', () => {
+  it('removes the broker-managed dist dir for stale leases', async () => {
+    const rootDir = await fs.mkdtemp(path.join(os.tmpdir(), 'runtime-broker-cleanup-'));
+    cleanupTargets.push(rootDir);
+
+    const appId = 'web';
+    const mode = 'dev';
+    const agentId = 'agent-cleanup';
+    const leaseKey = buildRuntimeLeaseKey({
+      rootDir,
+      appId,
+      mode,
+      agentId,
+    });
+    const distDir = resolveBrokerManagedDistDir({
+      appId,
+      mode,
+      agentId,
+    });
+    const brokerDir = path.join(rootDir, 'tmp', 'playwright-runtime-broker');
+    const leaseFilePath = path.join(brokerDir, 'leases', `${leaseKey}.json`);
+
+    await fs.mkdir(path.join(rootDir, distDir), { recursive: true });
+    await fs.writeFile(path.join(rootDir, distDir, 'marker.txt'), 'stale runtime', 'utf8');
+    await fs.mkdir(path.dirname(leaseFilePath), { recursive: true });
+    await fs.writeFile(
+      leaseFilePath,
+      `${JSON.stringify(
+        {
+          source: 'broker',
+          managed: true,
+          reused: false,
+          rootDir,
+          appId,
+          mode,
+          agentId,
+          host: '127.0.0.1',
+          port: 3210,
+          baseUrl: 'http://127.0.0.1:3210',
+          pid: 999_999,
+          distDir,
+          leaseKey,
+          startedAt: new Date().toISOString(),
+        },
+        null,
+        2
+      )}\n`,
+      'utf8'
+    );
+
+    const summary = await cleanupBrokerRuntimeLeases({
+      rootDir,
+      appId,
+      agentId,
+      env: {},
+    });
+
+    expect(summary).toEqual({
+      inspected: 1,
+      stopped: 0,
+      removed: 1,
+    });
+    await expect(fs.stat(path.join(rootDir, distDir))).rejects.toMatchObject({ code: 'ENOENT' });
+    await expect(fs.stat(leaseFilePath)).rejects.toMatchObject({ code: 'ENOENT' });
+  });
+
+  it('keeps a shared managed dist dir while another lease still references it', async () => {
+    const rootDir = await fs.mkdtemp(path.join(os.tmpdir(), 'runtime-broker-shared-dist-'));
+    cleanupTargets.push(rootDir);
+
+    const appId = 'web';
+    const mode = 'dev';
+    const agentId = 'agent-shared';
+    const distDir = resolveBrokerManagedDistDir({
+      appId,
+      mode,
+      agentId,
+    });
+    const brokerDir = path.join(rootDir, 'tmp', 'playwright-runtime-broker');
+    const leaseDir = path.join(brokerDir, 'leases');
+    const firstLeaseKey = buildRuntimeLeaseKey({
+      rootDir,
+      appId,
+      mode,
+      agentId,
+    });
+    const firstLeaseFilePath = path.join(leaseDir, `${firstLeaseKey}.json`);
+    const secondLeaseFilePath = path.join(leaseDir, 'web-dev-agent-shared-replacement.json');
+
+    const baseLease = {
+      source: 'broker',
+      managed: true,
+      reused: false,
+      rootDir,
+      appId,
+      mode,
+      agentId,
+      host: '127.0.0.1',
+      port: 3210,
+      baseUrl: 'http://127.0.0.1:3210',
+      pid: 999_999,
+      distDir,
+      managedDistDir: true,
+      startedAt: new Date().toISOString(),
+    };
+
+    await fs.mkdir(path.join(rootDir, distDir), { recursive: true });
+    await fs.writeFile(path.join(rootDir, distDir, 'marker.txt'), 'shared runtime', 'utf8');
+    await fs.mkdir(leaseDir, { recursive: true });
+    await fs.writeFile(
+      firstLeaseFilePath,
+      `${JSON.stringify(
+        {
+          ...baseLease,
+          leaseKey: firstLeaseKey,
+        },
+        null,
+        2
+      )}\n`,
+      'utf8'
+    );
+    await fs.writeFile(
+      secondLeaseFilePath,
+      `${JSON.stringify(
+        {
+          ...baseLease,
+          baseUrl: 'http://127.0.0.1:3211',
+          port: 3211,
+          leaseKey: 'web-dev-agent-shared-replacement',
+        },
+        null,
+        2
+      )}\n`,
+      'utf8'
+    );
+
+    await stopBrokerRuntimeLease({
+      lease: {
+        ...baseLease,
+        leaseKey: firstLeaseKey,
+      },
+      leaseFilePath: firstLeaseFilePath,
+    });
+
+    await expect(fs.stat(path.join(rootDir, distDir))).resolves.toBeTruthy();
+    await expect(fs.stat(firstLeaseFilePath)).rejects.toMatchObject({ code: 'ENOENT' });
+    await expect(fs.stat(secondLeaseFilePath)).resolves.toBeTruthy();
   });
 });

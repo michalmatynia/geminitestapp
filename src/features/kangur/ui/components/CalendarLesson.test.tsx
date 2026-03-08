@@ -29,6 +29,11 @@ describe('CalendarLesson', () => {
     expect(firstIndicator).toHaveClass('kangur-cta-pill', 'bg-emerald-500');
     expect(firstIndicator).toHaveClass('cursor-pointer');
     expect(firstIndicator).toHaveAttribute('aria-current', 'step');
+    expect(screen.getByRole('button', { name: 'Wróć do tematów' })).toHaveClass(
+      'kangur-cta-pill',
+      'surface-cta'
+    );
+    expect(screen.queryByRole('button', { name: /dalej/i })).not.toBeInTheDocument();
     expect(secondIndicator).toHaveClass(
       'kangur-cta-pill',
       'kangur-step-pill-pending',
@@ -63,7 +68,7 @@ describe('CalendarLesson', () => {
       'text-slate-800'
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /menu/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Wróć do tematów' }));
     fireEvent.click(screen.getByRole('button', { name: /ćwiczenia z kalendarzem/i }));
 
     const header = screen.getByTestId('calendar-lesson-game-header');
@@ -79,7 +84,7 @@ describe('CalendarLesson', () => {
       'text-xl',
       'text-green-700'
     );
-    expect(screen.getByRole('button', { name: /wróć do menu/i })).toHaveClass(
+    expect(screen.getByRole('button', { name: /wróć do tematów/i })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
     );

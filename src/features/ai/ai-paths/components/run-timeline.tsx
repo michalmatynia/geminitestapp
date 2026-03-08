@@ -372,9 +372,9 @@ export function RunTimeline(props: {
                   minMaxNodeDuration.min.durationMs
                 )}`}
               >
-                <span
-                  tabIndex={0}
-                  className='cursor-help rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
+                <button
+                  type='button'
+                  className='cursor-help rounded-sm bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
                   aria-label={`Fastest: ${minMaxNodeDuration.min.label} · ${formatDurationMs(
                     minMaxNodeDuration.min.durationMs
                   )}`}
@@ -383,7 +383,7 @@ export function RunTimeline(props: {
                   )}`}
                 >
                   Min {formatDurationMs(durationStats.min) ?? '—'}
-                </span>
+                </button>
               </Tooltip>
             ) : (
               <span>Min —</span>
@@ -395,9 +395,9 @@ export function RunTimeline(props: {
                   minMaxNodeDuration.max.durationMs
                 )}`}
               >
-                <span
-                  tabIndex={0}
-                  className='cursor-help rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
+                <button
+                  type='button'
+                  className='cursor-help rounded-sm bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
                   aria-label={`Slowest: ${minMaxNodeDuration.max.label} · ${formatDurationMs(
                     minMaxNodeDuration.max.durationMs
                   )}`}
@@ -406,7 +406,7 @@ export function RunTimeline(props: {
                   )}`}
                 >
                   Max {formatDurationMs(durationStats.max) ?? '—'}
-                </span>
+                </button>
               </Tooltip>
             ) : (
               <span>Max —</span>

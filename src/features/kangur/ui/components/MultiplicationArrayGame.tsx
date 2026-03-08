@@ -23,6 +23,7 @@ import {
 import { cn } from '@/shared/utils';
 
 type MultiplicationArrayGameProps = {
+  finishLabel?: string;
   onFinish: () => void;
 };
 
@@ -66,6 +67,7 @@ const ROW_GLOW = [
 ];
 
 export default function MultiplicationArrayGame({
+  finishLabel = 'Gotowe!',
   onFinish,
 }: MultiplicationArrayGameProps): React.JSX.Element {
   const [[a, b], setProblem] = useState<[number, number]>(() => pickProblem());
@@ -169,7 +171,7 @@ export default function MultiplicationArrayGame({
               <RefreshCw className='w-4 h-4' /> Jeszcze raz
             </KangurButton>
             <KangurButton className='flex-1' onClick={onFinish} size='lg' variant='primary'>
-              Gotowe!
+              {finishLabel}
             </KangurButton>
           </div>
         </KangurGlassPanel>

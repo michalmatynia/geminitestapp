@@ -165,11 +165,17 @@ function KangurHomeActionCard({
   );
 }
 
-export function KangurGameHomeActionsWidget(): React.JSX.Element | null {
+type KangurGameHomeActionsWidgetProps = {
+  hideWhenScreenMismatch?: boolean;
+};
+
+export function KangurGameHomeActionsWidget({
+  hideWhenScreenMismatch = true,
+}: KangurGameHomeActionsWidgetProps = {}): React.JSX.Element | null {
   const { basePath, canStartFromHome, handleStartGame, screen, setScreen } =
     useKangurGameRuntime();
 
-  if (screen !== 'home') {
+  if (hideWhenScreenMismatch && screen !== 'home') {
     return null;
   }
 

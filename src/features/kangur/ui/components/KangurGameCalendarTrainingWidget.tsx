@@ -17,6 +17,7 @@ export function KangurGameCalendarTrainingWidget(): React.JSX.Element | null {
         accent='emerald'
         className='max-w-md'
         description='Sprawdz, jak dobrze orientujesz sie w datach, dniach tygodnia i miesiacach.'
+        headingSize='lg'
         onBack={() => setScreen('operation')}
         testId='kangur-calendar-training-top-section'
         title='Ćwiczenia z Kalendarzem'

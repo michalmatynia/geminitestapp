@@ -57,13 +57,11 @@ describe('resolvePreferredBrowserNodeBinDir', () => {
 });
 
 describe('detectExistingPlaywrightServer', () => {
-  it('returns true when the health endpoint is reachable', async () => {
+  it('returns true when the health endpoint and auth route are reachable', async () => {
     const calls = [];
     const fetchImpl = async (url) => {
       calls.push(url);
-      return {
-        status: url.endsWith('/api/health') ? 200 : 404,
-      };
+      return { status: 200 };
     };
 
     await expect(
@@ -72,10 +70,35 @@ describe('detectExistingPlaywrightServer', () => {
         fetchImpl,
       })
     ).resolves.toBe(true);
-    expect(calls[0]).toBe('http://127.0.0.1:3000/api/health');
+    expect(calls).toEqual([
+      'http://127.0.0.1:3000/api/health',
+      'http://127.0.0.1:3000/auth/signin',
+    ]);
   });
 
-  it('falls back to probing the root route when health is unavailable', async () => {
+  it('keeps waiting when health responds but the auth route is still unavailable', async () => {
+    const calls = [];
+    const fetchImpl = async (url) => {
+      calls.push(url);
+      if (url.endsWith('/api/health')) {
+        return { status: 200 };
+      }
+      throw new Error('auth route not ready');
+    };
+
+    await expect(
+      detectExistingPlaywrightServer({
+        baseUrl: 'http://127.0.0.1:3000',
+        fetchImpl,
+      })
+    ).resolves.toBe(false);
+    expect(calls).toEqual([
+      'http://127.0.0.1:3000/api/health',
+      'http://127.0.0.1:3000/auth/signin',
+    ]);
+  });
+
+  it('falls back to probing the auth route when health is unavailable', async () => {
     const calls = [];
     const fetchImpl = async (url) => {
       calls.push(url);
@@ -93,7 +116,7 @@ describe('detectExistingPlaywrightServer', () => {
     ).resolves.toBe(true);
     expect(calls).toEqual([
       'http://127.0.0.1:3000/api/health',
-      'http://127.0.0.1:3000/',
+      'http://127.0.0.1:3000/auth/signin',
     ]);
   });
 });

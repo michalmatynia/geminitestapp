@@ -47,6 +47,7 @@ type MultiplicationBlankQuestion = {
 type MultiplicationQuestion = MultiplicationResultQuestion | MultiplicationBlankQuestion;
 
 type MultiplicationGameProps = {
+  finishLabel?: string;
   onFinish: () => void;
 };
 
@@ -111,6 +112,7 @@ function MultiplyGrid({ a, b }: { a: number; b: number }): React.JSX.Element | n
 }
 
 export default function MultiplicationGame({
+  finishLabel = 'Wróć do lekcji',
   onFinish,
 }: MultiplicationGameProps): React.JSX.Element {
   const [roundIndex, setRoundIndex] = useState(0);
@@ -207,7 +209,7 @@ export default function MultiplicationGame({
               <RefreshCw className='w-4 h-4' /> Jeszcze raz
             </KangurButton>
             <KangurButton className='flex-1' onClick={onFinish} size='lg' variant='primary'>
-              Wróć do lekcji
+              {finishLabel}
             </KangurButton>
           </div>
         </KangurGlassPanel>

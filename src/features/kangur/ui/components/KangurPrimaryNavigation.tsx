@@ -14,6 +14,7 @@ import {
   KangurPageTopBar,
   KangurTopNavGroup,
 } from '@/features/kangur/ui/design/primitives';
+import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 
 type KangurPrimaryNavigationPage =
   | 'Game'
@@ -116,7 +117,14 @@ export function KangurPrimaryNavigation({
   showParentDashboard = canManageLearners,
   showTests = true,
 }: KangurPrimaryNavigationProps): React.JSX.Element {
-  const authAction = isAuthenticated ? (
+  const auth = useOptionalKangurAuth();
+  const effectiveIsAuthenticated = auth?.isAuthenticated ?? isAuthenticated;
+  const effectiveCanManageLearners = auth?.user
+    ? Boolean(auth.user.canManageLearners)
+    : canManageLearners;
+  const effectiveShowParentDashboard = effectiveCanManageLearners && showParentDashboard;
+
+  const authAction = effectiveIsAuthenticated ? (
     <NavAction docId='profile_logout' onClick={onLogout}>
       <LogOut className={ICON_CLASSNAME} strokeWidth={2.15} />
       <span>Wyloguj</span>
@@ -176,14 +184,14 @@ export function KangurPrimaryNavigation({
             </NavAction>
           ) : null}
 
-          {isAuthenticated ? (
+          {effectiveIsAuthenticated ? (
             <KangurProfileMenu
               basePath={basePath}
               isActive={currentPage === 'LearnerProfile'}
             />
           ) : null}
 
-          {showParentDashboard ? (
+          {effectiveShowParentDashboard ? (
             <NavAction
               active={currentPage === 'ParentDashboard'}
               docId='top_nav_parent_dashboard'

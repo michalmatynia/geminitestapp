@@ -43,7 +43,7 @@ export function KangurActiveLessonHeader({
   priorityChipTestId,
   completedChipTestId,
   onBack,
-  backButtonLabel = 'Wroc do listy lekcji',
+  backButtonLabel = 'Wróć do listy lekcji',
 }: KangurActiveLessonHeaderProps): React.JSX.Element {
   return (
     <KangurGlassPanel

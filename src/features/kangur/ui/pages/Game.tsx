@@ -17,12 +17,14 @@ import { KangurGameResultWidget } from '@/features/kangur/ui/components/KangurGa
 import { KangurGameTrainingSetupWidget } from '@/features/kangur/ui/components/KangurGameTrainingSetupWidget';
 import { KangurPriorityAssignments } from '@/features/kangur/ui/components/KangurPriorityAssignments';
 import { KangurDocsTooltipEnhancer, useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
+import { KangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { PlayerProgressCard, XpToast } from '@/features/kangur/ui/components/progress';
 import { KangurPageContainer, KangurPageShell } from '@/features/kangur/ui/design/primitives';
 import {
   KangurGameRuntimeBoundary,
   useKangurGameRuntime,
 } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
+import type { KangurAiTutorConversationContext } from '@/shared/contracts/kangur-ai-tutor';
 import type { KangurGameScreen } from '@/features/kangur/ui/types';
 
 const GAME_BRAND_NAME = 'Sprycio';
@@ -42,6 +44,18 @@ const GAME_SCREEN_LABELS: Record<KangurGameScreen, string> = {
   result: 'Wynik gry',
 };
 
+const GAME_SCREEN_DESCRIPTIONS: Record<KangurGameScreen, string> = {
+  home: 'Wybierz sposob cwiczenia i rozpocznij kolejna sesje.',
+  training: 'Skonfiguruj trening mieszany i dobierz zakres pytan.',
+  kangur_setup: 'Przygotuj sesje Kangura Matematycznego.',
+  kangur: 'Rozwiazuj zadania Kangura Matematycznego krok po kroku.',
+  calendar_quiz: 'Cwicz odczytywanie dat i zaleznosci w kalendarzu.',
+  geometry_quiz: 'Cwicz figury, ksztalty i zaleznosci przestrzenne.',
+  operation: 'Wybierz rodzaj matematycznej gry i poziom trudnosci.',
+  playing: 'Rozwiaz aktualne pytanie bez podpowiedzi z gotowa odpowiedzia.',
+  result: 'Sprawdz wynik gry i zdecyduj, co cwiczyc dalej.',
+};
+
 function GameContent(): React.JSX.Element {
   const runtime = useKangurGameRuntime();
   const { basePath, progress, screen, user, xpToast } = runtime;
@@ -52,6 +66,57 @@ function GameContent(): React.JSX.Element {
   const screenHeadingRef = useRef<HTMLHeadingElement>(null);
   const previousScreenRef = useRef<KangurGameScreen | null>(null);
   const currentScreenLabel = GAME_SCREEN_LABELS[screen];
+  const learnerId = user?.activeLearner?.id ?? null;
+  const activeGameAssignment = runtime.activePracticeAssignment ?? runtime.resultPracticeAssignment;
+  const tutorSessionContext = useMemo<KangurAiTutorConversationContext | null>(() => {
+    const questionText = runtime.currentQuestion?.question?.trim() || null;
+    const assignmentSummary = activeGameAssignment
+      ? [activeGameAssignment.title, activeGameAssignment.progress.summary].filter(Boolean).join(' - ')
+      : null;
+    const questionProgressLabel =
+      screen === 'playing'
+        ? `Pytanie ${runtime.currentQuestionIndex + 1}/${runtime.totalQuestions}`
+        : screen === 'result'
+          ? `Wynik ${runtime.score}/${runtime.totalQuestions}`
+          : null;
+    const focusKind =
+      screen === 'playing'
+        ? 'question'
+        : screen === 'result'
+          ? 'review'
+          : activeGameAssignment
+            ? 'assignment'
+            : undefined;
+    const focusLabel =
+      screen === 'playing'
+        ? questionText
+        : activeGameAssignment?.title?.trim() || currentScreenLabel;
+
+    return {
+      surface: 'game',
+      contentId: 'game',
+      title: currentScreenLabel,
+      description: GAME_SCREEN_DESCRIPTIONS[screen],
+      ...(assignmentSummary ? { assignmentSummary } : {}),
+      ...(activeGameAssignment?.id ? { assignmentId: activeGameAssignment.id } : {}),
+      ...(questionText ? { currentQuestion: questionText } : {}),
+      ...(questionProgressLabel ? { questionProgressLabel } : {}),
+      ...(screen === 'playing'
+        ? { questionId: `game-question-${runtime.currentQuestionIndex + 1}` }
+        : {}),
+      ...(screen === 'result' ? { answerRevealed: true } : {}),
+      ...(focusKind ? { focusKind } : {}),
+      ...(focusLabel ? { focusLabel } : {}),
+    };
+  }, [
+    activeGameAssignment,
+    currentScreenLabel,
+    runtime.currentQuestion,
+    runtime.currentQuestionIndex,
+    runtime.score,
+    runtime.totalQuestions,
+    screen,
+  ]);
   const screenMotionProps = useMemo(
     () =>
       prefersReducedMotion
@@ -101,28 +166,30 @@ function GameContent(): React.JSX.Element {
   );
 
   return (
-    <KangurPageShell tone='play' id='kangur-game-page' skipLinkTargetId={GAME_MAIN_ID}>
-      <KangurDocsTooltipEnhancer enabled={docsTooltipsEnabled} rootId='kangur-game-page' />
-      <XpToast
-        xpGained={xpToast.xpGained}
-        newBadges={xpToast.newBadges}
-        visible={xpToast.visible}
-      />
-      <KangurGameNavigationWidget />
+    <>
+      <KangurAiTutorSessionSync learnerId={learnerId} sessionContext={tutorSessionContext} />
+      <KangurPageShell tone='play' id='kangur-game-page' skipLinkTargetId={GAME_MAIN_ID}>
+        <KangurDocsTooltipEnhancer enabled={docsTooltipsEnabled} rootId='kangur-game-page' />
+        <XpToast
+          xpGained={xpToast.xpGained}
+          newBadges={xpToast.newBadges}
+          visible={xpToast.visible}
+        />
+        <KangurGameNavigationWidget />
 
-      <div role='status' aria-live='polite' aria-atomic='true' className='sr-only'>
-        Widok: {currentScreenLabel}
-      </div>
+        <div role='status' aria-live='polite' aria-atomic='true' className='sr-only'>
+          Widok: {currentScreenLabel}
+        </div>
 
-      <KangurPageContainer
-        id={GAME_MAIN_ID}
-        aria-labelledby={`${GAME_TITLE_ID} ${GAME_SCREEN_TITLE_ID}`}
-        className='flex flex-col items-center gap-10 pt-6 sm:pt-8'
-      >
-        <h1 id={GAME_TITLE_ID} className='sr-only'>
-          {GAME_BRAND_NAME}
-        </h1>
-        <AnimatePresence mode='wait'>
+        <KangurPageContainer
+          id={GAME_MAIN_ID}
+          aria-labelledby={`${GAME_TITLE_ID} ${GAME_SCREEN_TITLE_ID}`}
+          className='flex flex-col items-center gap-10 pt-6 sm:pt-8'
+        >
+          <h1 id={GAME_TITLE_ID} className='sr-only'>
+            {GAME_BRAND_NAME}
+          </h1>
+          <AnimatePresence mode='wait'>
           {screen === 'home' ? (
             renderScreen(
               'home',
@@ -132,8 +199,8 @@ function GameContent(): React.JSX.Element {
                   <h3 id='kangur-home-start-heading' className='sr-only'>
                     Rozpocznij gre
                   </h3>
-                  <KangurGameHomeHeroWidget />
-                  <KangurGameHomeActionsWidget />
+                  <KangurGameHomeHeroWidget hideWhenScreenMismatch={false} />
+                  <KangurGameHomeActionsWidget hideWhenScreenMismatch={false} />
                 </section>
 
                 {canAccessParentAssignments ? (
@@ -234,9 +301,10 @@ function GameContent(): React.JSX.Element {
               </>
             )
           ) : null}
-        </AnimatePresence>
-      </KangurPageContainer>
-    </KangurPageShell>
+          </AnimatePresence>
+        </KangurPageContainer>
+      </KangurPageShell>
+    </>
   );
 }
 

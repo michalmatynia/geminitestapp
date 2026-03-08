@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -70,6 +71,7 @@ const resolveErrorMessage = (value: unknown): string => {
 
 export const KangurAuthProvider = ({ children }: { children: ReactNode }): React.JSX.Element => {
   const router = useRouter();
+  const authRequestVersionRef = useRef(0);
   const [user, setUser] = useState<KangurUser | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
@@ -79,14 +81,21 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
   const canAccessParentAssignments = resolveCanAccessParentAssignments(user, isAuthenticated);
 
   const checkAppState = useCallback(async (): Promise<void> => {
+    const requestVersion = ++authRequestVersionRef.current;
     setAuthError(null);
     setIsLoadingAuth(true);
 
     try {
       const currentUser = await kangurPlatform.auth.me();
+      if (authRequestVersionRef.current !== requestVersion) {
+        return;
+      }
       setUser(currentUser);
       setIsAuthenticated(true);
     } catch (error: unknown) {
+      if (authRequestVersionRef.current !== requestVersion) {
+        return;
+      }
       setUser(null);
       setIsAuthenticated(false);
 
@@ -105,7 +114,9 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
         });
       }
     } finally {
-      setIsLoadingAuth(false);
+      if (authRequestVersionRef.current === requestVersion) {
+        setIsLoadingAuth(false);
+      }
     }
   }, []);
 
@@ -114,27 +125,33 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
   }, [checkAppState]);
 
   const logout = useCallback((shouldRedirect = true): void => {
+    authRequestVersionRef.current += 1;
     setUser(null);
     setIsAuthenticated(false);
+    setAuthError(null);
+    setIsLoadingAuth(!shouldRedirect);
 
-    if (shouldRedirect) {
-      void kangurPlatform.auth.logout(window.location.href).catch((error: unknown) => {
+    void (async (): Promise<void> => {
+      try {
+        if (shouldRedirect) {
+          await kangurPlatform.auth.logout(window.location.href);
+          return;
+        }
+        await kangurPlatform.auth.logout();
+        router.refresh();
+        await checkAppState();
+      } catch (error: unknown) {
         logKangurClientError(error, {
           source: 'KangurAuthContext',
           action: 'logout',
-          shouldRedirect: true,
+          shouldRedirect,
         });
-      });
-      return;
-    }
-    void kangurPlatform.auth.logout().catch((error: unknown) => {
-      logKangurClientError(error, {
-        source: 'KangurAuthContext',
-        action: 'logout',
-        shouldRedirect: false,
-      });
-    });
-  }, []);
+        if (!shouldRedirect) {
+          await checkAppState();
+        }
+      }
+    })();
+  }, [checkAppState, router]);
 
   const navigateToLogin = useCallback((): void => {
     const loginHref = kangurPlatform.auth.prepareLoginHref(window.location.href);

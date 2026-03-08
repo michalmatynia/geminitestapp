@@ -1,0 +1,193 @@
+
+> libapp2@0.1.0 predev
+> node scripts/runtime/check-node-version.cjs
+
+
+> libapp2@0.1.0 dev
+> node --max-old-space-size=8192 server.cjs
+
+○ Compiling instrumentation Node.js ...
+
+  We detected TypeScript in your project and reconfigured your tsconfig.json file for you.
+  The following suggested values were added to your tsconfig.json. These values can be changed to fit your project's needs:
+
+  	- include was updated to add '.next-dev-web-dev-ai-paths-a11y-fix-3/types/**/*.ts'
+  	- include was updated to add '.next-dev-web-dev-ai-paths-a11y-fix-3/dev/types/**/*.ts'
+
+[ai-paths.portable-engine.envelope-verification] Portable envelope verification audit sink health probe sinkId=portable-envelope-verification-log-forwarding {
+  category: 'ai_path_portable_envelope_verification_audit_sink_health',
+  kind: 'ai-paths.portable-envelope-verification-audit-sink-health.v1',
+  sinkId: 'portable-envelope-verification-log-forwarding',
+  stage: 'probe',
+  service: 'ai-paths.portable-engine'
+}
+[ai-paths.portable-engine.envelope-verification.sink-bootstrap] Portable envelope verification audit sink startup health summary sinkId=all {
+  category: 'ai_path_portable_envelope_verification_audit_sink_health',
+  kind: 'ai-paths.portable-envelope-verification-audit-sink-health.v1',
+  profile: 'dev',
+  policy: 'warn',
+  timeoutMs: 3000,
+  status: 'healthy',
+  failedSinkIds: [],
+  diagnostics: [
+    {
+      sinkId: 'portable-envelope-verification-log-forwarding',
+      status: 'healthy',
+      checkedAt: '2026-03-08T15:49:43.371Z',
+      durationMs: 168,
+      message: 'Health check passed.',
+      error: null
+    }
+  ],
+  service: 'ai-paths.portable-engine'
+}
+[queue-factory] [queue-factory:database-backup-scheduler] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:product-sync-scheduler] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:system-log-alerts] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-init] Starting BullMQ workers... { service: 'queue-init' }
+[queue-registry] [queue-registry] Starting queue worker: base-import { queueName: 'base-import', service: 'queue-registry' }
+[queue-factory] [queue-factory:base-import] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: database-backup-scheduler { queueName: 'database-backup-scheduler', service: 'queue-registry' }
+[queue-registry] [queue-registry] Starting queue worker: system-log-alerts { queueName: 'system-log-alerts', service: 'queue-registry' }
+[queue-registry] [queue-registry] Starting queue worker: tradera-listings { queueName: 'tradera-listings', service: 'queue-registry' }
+[queue-factory] [queue-factory:tradera-listings] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-ai { queueName: 'product-ai', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-ai] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync { queueName: 'product-sync', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-sync] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync-backfill { queueName: 'product-sync-backfill', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-sync-backfill] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync-scheduler { queueName: 'product-sync-scheduler', service: 'queue-registry' }
+[queue-factory] [queue-factory:case-resolver-ocr] BullMQ worker started (concurrency: 2) { concurrency: 2, service: 'queue-factory' }
+[queue-factory] [queue-factory:ai-path-run] BullMQ worker started (concurrency: 3) { concurrency: 3, service: 'queue-factory' }
+[queue-factory] [queue-factory:chatbot] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:agent] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:image-studio-run] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:tradera-relist-scheduler] Worker stopped { service: 'queue-factory' }
+Ready on http://localhost:53938 { port: 53938, host: '127.0.0.1' }
+[queue-factory] [queue-factory:image-studio-sequence] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+○ Compiling /api/health ...
+[health.GET] health.GET completed successfully {
+  durationMs: 853,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '7403cd9435b6b4658540fd89ae26ae3d',
+  otelSpanId: '6e99a8e7c01cff93',
+  otelTraceFlags: '01',
+  service: 'health',
+  traceId: 'f78f3080-83c6-4ede-aedc-9c9f40046cd3',
+  correlationId: '59975ac1-0443-40c6-96d5-0eb899b2200d'
+}
+ GET /api/health 200 in 696ms (compile: 25ms, proxy.ts: 5ms, render: 666ms)
+[agent-queue] [agent-queue] 
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$instrumentation$5d$__$28$ecmascript$29$__["default"].chatbotAgentRun.findFirst()` invocation in
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-ai-paths-a11y-fix-3/dev/server/chunks/src_features_ai_agent-runtime_6c936d39._.js:7491:192
+
+  7488 async function processNextQueuedAgentRun() {
+  7489     if (!('chatbotAgentRun' in __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$instrumentation$5d$__$28$ecmascript$29$__["default"])) return;
+  7490     await recoverStuckRuns();
+→ 7491     const nextRun = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$instrumentation$5d$__$28$ecmascript$29$__["default"].chatbotAgentRun.findFirst(
+The column `(not available)` does not exist in the current database. {
+  service: 'agent-queue',
+  runId: '__recovery__',
+  category: 'VALIDATION',
+  jobId: undefined,
+  productId: undefined,
+  error: {
+    message: '\n' +
+      'Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$instrumentation$5d$__$28$ecmascript$29$__["default"].chatbotAgentRun.findFirst()` invocation in\n' +
+      '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-ai-paths-a11y-fix-3/dev/server/chunks/src_features_ai_agent-runtime_6c936d39._.js:7491:192\n' +
+      '\n' +
+      '  7488 async function processNextQueuedAgentRun() {\n' +
+      `  7489     if (!('chatbotAgentRun' in __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$instrumentation$5d$__$28$ecmascript$29$__["default"])) return;\n` +
+      '  7490     await recoverStuckRuns();\n' +
+      '→ 7491     const nextRun = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$instrumentation$5d$__$28$ecmascript$29$__["default"].chatbotAgentRun.findFirst(\n' +
+      'The column `(not available)` does not exist in the current database.',
+    stack: 'PrismaClientKnownRequestError: \n' +
+      'Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$instrumentation$5d$__$28$ecmascript$29$__["default"].chatbotAgentRun.findFirst()` invocation in\n' +
+      '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-ai-paths-a11y-fix-3/dev/server/chunks/src_features_ai_agent-runtime_6c936d39._.js:7491:192\n' +
+      '\n' +
+      '  7488 async function processNextQueuedAgentRun() {\n' +
+      `  7489     if (!('chatbotAgentRun' in __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$instrumentation$5d$__$28$ecmascript$29$__["default"])) return;\n` +
+      '  7490     await recoverStuckRuns();\n' +
+      '→ 7491     const nextRun = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$instrumentation$5d$__$28$ecmascript$29$__["default"].chatbotAgentRun.findFirst(\n' +
+      'The column `(not available)` does not exist in the current database.\n' +
+      '    at zr.handleRequestError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@prisma/client/runtime/client.js:65:8286)\n' +
+      '    at zr.handleAndLogRequestError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@prisma/client/runtime/client.js:65:7581)\n' +
+      '    at zr.request (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@prisma/client/runtime/client.js:65:7288)\n' +
+      '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+      '    at async a (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@prisma/client/runtime/client.js:75:5816)\n' +
+      '    at async processNextQueuedAgentRun (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-ai-paths-a11y-fix-3/dev/server/chunks/src_features_ai_agent-runtime_6c936d39._.js:7491:21)\n' +
+      '    at async Object.processor (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-ai-paths-a11y-fix-3/dev/server/chunks/src_features_ai_agent-runtime_6c936d39._.js:7610:13)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/bullmq/dist/cjs/classes/worker.js:571:32',
+    name: 'PrismaClientKnownRequestError',
+    code: 'P2022',
+    meta: { modelName: 'ChatbotAgentRun', driverAdapterError: [Object] }
+  },
+  errorCode: 'P2022',
+  errorName: 'PrismaClientKnownRequestError',
+  fingerprint: '579e00d74820535d'
+}
+ GET /auth/signin?callbackUrl=%2Fadmin%2Fai-paths 200 in 7.0s (compile: 6.3s, render: 607ms)
+ GET /api/settings/lite 200 in 3.7s (compile: 3.4s, proxy.ts: 14ms, render: 362ms)
+ GET /api/auth/session 200 in 4.3s (compile: 4.2s, proxy.ts: 17ms, render: 13ms)
+ GET /api/auth/session 200 in 40ms (compile: 24ms, proxy.ts: 6ms, render: 11ms)
+[system] [timing] home {
+  frontPageSetting: 643.9432499999966,
+  total: 644.2212910000017,
+  otelTraceId: 'ed918496709ac3881d94cb01a1dc5b99',
+  otelSpanId: '5b085f7e3d00e0cf',
+  otelTraceFlags: '01'
+}
+✓ Compiled in 2.3s
+ GET /auth/signin?callbackUrl=%2Fadmin%2Fai-paths 200 in 104ms (compile: 16ms, render: 87ms)
+ GET /api/auth/providers 200 in 416ms (compile: 139ms, proxy.ts: 11ms, render: 266ms)
+ GET /api/auth/csrf 200 in 20ms (compile: 10ms, proxy.ts: 1928µs, render: 7ms)
+[system] [AUTH-REPO] Finding user e2e.admin@example.com using mongodb {
+  email: 'e2e.admin@example.com',
+  provider: 'mongodb',
+  otelTraceId: 'ad05df3db9e17bd631162a4b6dfeadca',
+  otelSpanId: 'fd3e081fccb5efe2',
+  otelTraceFlags: '01'
+}
+[auth.[...nextauth].POST] auth.[...nextauth].POST completed successfully {
+  durationMs: 753,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  params: { nextauth: [ 'callback', 'credentials' ] },
+  otelTraceId: 'ad05df3db9e17bd631162a4b6dfeadca',
+  otelSpanId: 'fd3e081fccb5efe2',
+  otelTraceFlags: '01',
+  service: 'auth.[',
+  traceId: '6b607b50-b0af-49eb-85bf-7aeeffa93260',
+  correlationId: 'f990e02e-67b5-4529-bced-2ee793fe746a'
+}
+ POST /api/auth/callback/credentials 200 in 764ms (compile: 3ms, proxy.ts: 3ms, render: 758ms)
+ GET /api/auth/session 200 in 26ms (compile: 5ms, proxy.ts: 3ms, render: 17ms)
+[auth.security] User signed in successfully {
+  email: 'e2e.admin@example.com',
+  ip: '127.0.0.1',
+  service: 'auth.security',
+  otelTraceId: 'ad05df3db9e17bd631162a4b6dfeadca',
+  otelSpanId: 'fd3e081fccb5efe2',
+  otelTraceFlags: '01'
+}
+[user] Activity: auth.login - User logged in: e2e.admin@example.com {
+  activityId: '69ad9aceff9dea09065e3497',
+  activityType: 'auth.login',
+  userId: '69a9bc1e2d43c3d631e76018',
+  entityId: '69a9bc1e2d43c3d631e76018',
+  entityType: 'user',
+  metadata: null,
+  service: 'user',
+  otelTraceId: 'ad05df3db9e17bd631162a4b6dfeadca',
+  otelSpanId: 'fd3e081fccb5efe2',
+  otelTraceFlags: '01'
+}
+○ Compiling /admin/ai-paths ...
+ GET /admin/ai-paths 200 in 4.5s (compile: 4.2s, proxy.ts: 20ms, render: 309ms)
+ GET /api/auth/session 200 in 120ms (compile: 45ms, proxy.ts: 7ms, render: 68ms)
+ GET /api/auth/session 200 in 65ms (compile: 7ms, proxy.ts: 4ms, render: 55ms)
+ GET /api/auth/session 200 in 61ms (compile: 15ms, proxy.ts: 3ms, render: 43ms)
+Received SIGTERM, shutting down gracefully... { signal: 'SIGTERM' }
+Server closed undefined

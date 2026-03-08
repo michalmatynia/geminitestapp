@@ -10,12 +10,17 @@ const { startRouteTransitionMock } = vi.hoisted(() => ({
   startRouteTransitionMock: vi.fn(),
 }));
 
+const { optionalAuthMock } = vi.hoisted(() => ({
+  optionalAuthMock: vi.fn(),
+}));
+
 vi.mock('next/link', () => ({
   default: ({
     children,
     href,
+    scroll: _scroll,
     ...rest
-  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; scroll?: boolean }) => (
     <a href={href} {...rest}>
       {children}
     </a>
@@ -66,11 +71,16 @@ vi.mock('@/features/kangur/ui/context/KangurRouteTransitionContext', () => ({
   }),
 }));
 
+vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
+  useOptionalKangurAuth: () => optionalAuthMock(),
+}));
+
 import { KangurPrimaryNavigation } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
 
 describe('KangurPrimaryNavigation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    optionalAuthMock.mockReturnValue(null);
   });
 
   it('renders the SVG logo inside the home control', () => {
@@ -210,5 +220,52 @@ describe('KangurPrimaryNavigation', () => {
 
     expect(onLogin).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole('link', { name: /profil/i })).toBeNull();
+  });
+
+  it('hides the parent dashboard link when auth resolves a student session', () => {
+    optionalAuthMock.mockReturnValue({
+      authError: null,
+      appPublicSettings: null,
+      canAccessParentAssignments: true,
+      checkAppState: vi.fn(),
+      isAuthenticated: true,
+      isLoadingAuth: false,
+      isLoadingPublicSettings: false,
+      logout: vi.fn(),
+      navigateToLogin: vi.fn(),
+      selectLearner: vi.fn(),
+      user: {
+        activeLearner: {
+          createdAt: '2026-03-08T10:00:00.000Z',
+          displayName: 'Ola',
+          id: 'learner-1',
+          loginName: 'ola',
+          ownerUserId: 'parent-1',
+          status: 'active',
+          updatedAt: '2026-03-08T10:00:00.000Z',
+        },
+        actorType: 'learner',
+        canManageLearners: false,
+        email: null,
+        full_name: 'Ola',
+        id: 'learner-1',
+        learners: [],
+        ownerUserId: 'parent-1',
+        role: 'user',
+      },
+    });
+
+    render(
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        canManageLearners
+        currentPage='Lessons'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByTestId('kangur-primary-nav-parent-dashboard')).toBeNull();
+    expect(screen.getByRole('link', { name: /profil/i })).toBeInTheDocument();
   });
 });

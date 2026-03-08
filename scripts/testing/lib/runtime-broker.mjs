@@ -166,6 +166,117 @@ const removeFileIfPresent = async (filePath) => {
   }
 };
 
+const removeDirectoryIfPresent = async (directoryPath) => {
+  try {
+    await fsPromises.rm(directoryPath, { recursive: true, force: true });
+  } catch (error) {
+    if (error?.code !== 'ENOENT') {
+      throw error;
+    }
+  }
+};
+
+const resolveManagedLeaseDistDirPath = (lease) => {
+  if (!lease || typeof lease.rootDir !== 'string' || typeof lease.distDir !== 'string') {
+    return null;
+  }
+
+  const expectedManagedDistDir = resolveBrokerManagedDistDir({
+    appId: lease.appId,
+    mode: lease.mode,
+    agentId: lease.agentId,
+  });
+  const usesManagedDistDir =
+    lease.managedDistDir === true ||
+    (lease.managedDistDir == null && lease.distDir === expectedManagedDistDir);
+
+  if (!usesManagedDistDir || path.isAbsolute(lease.distDir)) {
+    return null;
+  }
+
+  const resolvedRootDir = path.resolve(lease.rootDir);
+  const resolvedDistDir = path.resolve(resolvedRootDir, lease.distDir);
+  if (
+    resolvedDistDir !== resolvedRootDir &&
+    !resolvedDistDir.startsWith(`${resolvedRootDir}${path.sep}`)
+  ) {
+    return null;
+  }
+
+  return resolvedDistDir;
+};
+
+const resolveLeaseDirectory = (leaseFilePath) => {
+  if (typeof leaseFilePath !== 'string' || leaseFilePath.length === 0) {
+    return null;
+  }
+
+  const candidate = path.dirname(leaseFilePath);
+  return path.basename(candidate) === 'leases' ? candidate : null;
+};
+
+const leaseReferencesManagedDistDir = (candidateLease, lease) =>
+  Boolean(
+    candidateLease &&
+      lease &&
+      typeof candidateLease.rootDir === 'string' &&
+      typeof candidateLease.distDir === 'string' &&
+      candidateLease.rootDir === lease.rootDir &&
+      candidateLease.distDir === lease.distDir
+  );
+
+const hasSiblingLeaseForManagedDistDir = async ({
+  lease,
+  leaseFilePath,
+} = {}) => {
+  const leaseDir = resolveLeaseDirectory(leaseFilePath);
+  if (!leaseDir) {
+    return false;
+  }
+
+  let files = [];
+  try {
+    files = await fsPromises.readdir(leaseDir);
+  } catch (error) {
+    if (error?.code === 'ENOENT') {
+      return false;
+    }
+
+    throw error;
+  }
+
+  const currentLeaseFileName = path.basename(leaseFilePath);
+
+  for (const file of files) {
+    if (!file.endsWith('.json') || file === currentLeaseFileName) {
+      continue;
+    }
+
+    const candidateLease = await readLeaseRecord(path.join(leaseDir, file));
+    if (leaseReferencesManagedDistDir(candidateLease, lease)) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+const cleanupLeaseManagedDistDir = async ({
+  lease,
+  leaseFilePath = null,
+} = {}) => {
+  const managedDistDirPath = resolveManagedLeaseDistDirPath(lease);
+  if (!managedDistDirPath) {
+    return;
+  }
+
+  if (await hasSiblingLeaseForManagedDistDir({ lease, leaseFilePath })) {
+    return;
+  }
+
+  await removeDirectoryIfPresent(managedDistDirPath);
+};
+
 const signalProcess = async (pid, signal) => {
   if (!Number.isInteger(pid) || pid <= 0) {
     return false;
@@ -532,6 +643,7 @@ export const resolveExplicitPlaywrightRuntime = async ({
     port: parsed?.port ? Number(parsed.port) : null,
     pid: null,
     distDir: env['NEXT_DIST_DIR'] ?? null,
+    managedDistDir: false,
     leaseKey: null,
     leaseFilePath: null,
     logFilePath: null,
@@ -569,6 +681,8 @@ export const stopBrokerRuntimeLease = async ({
   if (removeLeaseFile && leaseFilePath) {
     await removeFileIfPresent(leaseFilePath);
   }
+
+  await cleanupLeaseManagedDistDir({ lease, leaseFilePath });
 };
 
 export const acquireRuntimeLease = async ({
@@ -647,13 +761,14 @@ export const acquireRuntimeLease = async ({
     const configuredBaseUrl = parseBaseUrl(env['PLAYWRIGHT_BASE_URL']);
     const port = configuredBaseUrl?.port ? Number(configuredBaseUrl.port) : await allocatePort({ host });
     const baseUrl = configuredBaseUrl?.toString() ?? `http://${host}:${port}`;
-    const distDir =
+  const distDir =
       env['NEXT_DIST_DIR']?.trim() ||
       resolveBrokerManagedDistDir({
         appId: resolvedAppId,
         mode: resolvedMode,
         agentId: resolvedAgentId,
       });
+    const managedDistDir = !(env['NEXT_DIST_DIR']?.trim());
 
     await fsPromises.mkdir(path.dirname(logFilePath), { recursive: true });
     const logFd = fs.openSync(logFilePath, 'a');
@@ -691,6 +806,7 @@ export const acquireRuntimeLease = async ({
       baseUrl,
       pid: child.pid ?? null,
       distDir,
+      managedDistDir,
       leaseKey,
       leaseFilePath,
       logFilePath,
@@ -767,14 +883,15 @@ export const cleanupBrokerRuntimeLeases = async ({
 
     summary.inspected += 1;
 
-    if (await isProcessAlive(lease.pid)) {
+    const running = await isProcessAlive(lease.pid);
+    if (running) {
       await stopBrokerRuntimeLease({ lease, leaseFilePath });
       summary.stopped += 1;
       summary.removed += 1;
       continue;
     }
 
-    await removeFileIfPresent(leaseFilePath);
+    await stopBrokerRuntimeLease({ lease, leaseFilePath });
     summary.removed += 1;
   }
 

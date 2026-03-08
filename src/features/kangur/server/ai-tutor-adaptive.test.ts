@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createDefaultKangurProgressState, type KangurAssignment, type KangurScore } from '@/shared/contracts/kangur';
+import type { ContextRegistryResolutionBundle } from '@/shared/contracts/ai-context-registry';
 
 const {
   getKangurProgressRepositoryMock,
@@ -27,6 +28,44 @@ vi.mock('@/shared/utils/observability/error-system', () => ({
 }));
 
 import { buildKangurAiTutorAdaptiveGuidance } from './ai-tutor-adaptive';
+
+const createRegistryBundle = (): ContextRegistryResolutionBundle => ({
+  refs: [
+    {
+      id: 'runtime:kangur:learner:learner-1',
+      kind: 'runtime_document',
+      providerId: 'kangur',
+      entityType: 'kangur_learner_snapshot',
+    },
+  ],
+  nodes: [],
+  documents: [
+    {
+      id: 'runtime:kangur:learner:learner-1',
+      kind: 'runtime_document',
+      entityType: 'kangur_learner_snapshot',
+      title: 'Learner snapshot',
+      summary: 'Average accuracy 81%. 1 active assignment.',
+      status: 'active',
+      tags: ['kangur', 'learner', 'ai-tutor'],
+      relatedNodeIds: [],
+      facts: {
+        learnerSummary: 'Average accuracy 81%. 1 active assignment.',
+        averageAccuracy: 81,
+        todayGames: 2,
+        dailyGoalGames: 3,
+        currentStreakDays: 4,
+      },
+      sections: [],
+      provenance: {
+        providerId: 'kangur',
+        source: 'test',
+      },
+    },
+  ],
+  truncated: false,
+  engineVersion: 'test-engine',
+});
 
 describe('buildKangurAiTutorAdaptiveGuidance', () => {
   beforeEach(() => {
@@ -158,6 +197,33 @@ describe('buildKangurAiTutorAdaptiveGuidance', () => {
         reason: 'Skup sie na: Dodawanie',
       },
     ]);
+  });
+
+  it('uses synthesized game surface context when registry docs omit a game runtime document', async () => {
+    const guidance = await buildKangurAiTutorAdaptiveGuidance({
+      learnerId: 'learner-1',
+      context: {
+        surface: 'game',
+        contentId: 'game',
+        assignmentId: 'assignment-1',
+        assignmentSummary: 'Trening: dodawanie do 20.',
+        currentQuestion: 'Ile to 7 + 5?',
+        questionProgressLabel: 'Pytanie 2/10',
+        interactionIntent: 'review',
+      },
+      registryBundle: createRegistryBundle(),
+    });
+
+    expect(guidance.instructions).toContain(
+      'Adaptive learner snapshot: Average accuracy 81%. 1 active assignment.'
+    );
+    expect(guidance.instructions).toContain(
+      'Relevant active assignment: Trening: dodawanie do 20.'
+    );
+    expect(guidance.followUpActions).toEqual([]);
+    expect(getKangurProgressRepositoryMock).not.toHaveBeenCalled();
+    expect(getKangurScoreRepositoryMock).not.toHaveBeenCalled();
+    expect(getKangurAssignmentRepositoryMock).not.toHaveBeenCalled();
   });
 
   it('returns an empty guidance payload and captures the error when adaptive lookup fails', async () => {

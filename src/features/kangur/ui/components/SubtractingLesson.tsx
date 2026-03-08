@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ArrowLeft } from 'lucide-react';
 
 import SubtractingGame from '@/features/kangur/ui/components/SubtractingGame';
 import LessonHub from '@/features/kangur/ui/components/LessonHub';
@@ -8,6 +9,7 @@ import LessonSlideSection, {
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
 import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 import {
+  KangurButton,
   KangurDisplayEmoji,
   KangurEquationDisplay,
   KangurFeatureHeader,
@@ -186,8 +188,14 @@ export default function SubtractingLesson(): React.JSX.Element {
   if (activeSection === 'game') {
     return (
       <div className='flex flex-col items-center gap-4 w-full max-w-sm'>
+        <KangurButton onClick={() => setActiveSection(null)} size='sm' variant='surface'>
+          <ArrowLeft className='w-4 h-4' /> Wróć do tematów
+        </KangurButton>
         <KangurFeatureHeader accent='rose' icon='🎮' title='Gra z odejmowaniem!' />
-        <SubtractingGame onFinish={() => setActiveSection(null)} />
+        <SubtractingGame
+          finishLabel='Wróć do tematów'
+          onFinish={() => setActiveSection(null)}
+        />
       </div>
     );
   }

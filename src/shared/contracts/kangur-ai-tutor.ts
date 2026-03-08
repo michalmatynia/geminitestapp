@@ -41,7 +41,7 @@ export type KangurAiTutorInteractionIntent = z.infer<
   typeof kangurAiTutorInteractionIntentSchema
 >;
 
-export const kangurAiTutorSurfaceSchema = z.enum(['lesson', 'test']);
+export const kangurAiTutorSurfaceSchema = z.enum(['lesson', 'test', 'game']);
 export type KangurAiTutorSurface = z.infer<typeof kangurAiTutorSurfaceSchema>;
 
 export const kangurAiTutorActionPageSchema = z.enum([

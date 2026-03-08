@@ -14,8 +14,9 @@ vi.mock('next/link', () => ({
   default: ({
     children,
     href,
+    scroll: _scroll,
     ...rest
-  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; scroll?: boolean }) => (
     <a href={href} {...rest}>
       {children}
     </a>
@@ -108,5 +109,20 @@ describe('KangurGameHomeActionsWidget', () => {
     render(<KangurGameHomeActionsWidget />);
 
     expect(screen.getByTestId('kangur-home-actions-list')).toHaveClass('space-y-6', 'sm:space-y-7');
+  });
+
+  it('stays mounted outside the home screen when the transition override is disabled', () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      basePath: '/kangur',
+      canStartFromHome: true,
+      handleStartGame: vi.fn(),
+      screen: 'operation',
+      setScreen: vi.fn(),
+    });
+
+    render(<KangurGameHomeActionsWidget hideWhenScreenMismatch={false} />);
+
+    expect(screen.getByTestId('kangur-home-actions-shell')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /grajmy!/i })).toBeInTheDocument();
   });
 });

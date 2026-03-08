@@ -798,14 +798,87 @@ export const buildKangurAssignmentContextRuntimeDocument = async (input: {
   };
 };
 
+const buildKangurGameSurfaceRuntimeDocument = (
+  context: KangurAiTutorConversationContext | null | undefined
+): ContextRuntimeDocument | null => {
+  if (context?.surface !== 'game') {
+    return null;
+  }
+
+  const contentId = readTrimmedString(context.contentId) ?? 'game';
+  const questionId = readTrimmedString(context.questionId);
+  const title = readTrimmedString(context.title) ?? 'Kangur game practice';
+  const description = readTrimmedString(context.description);
+  const masterySummary = readTrimmedString(context.masterySummary);
+  const assignmentSummary = readTrimmedString(context.assignmentSummary);
+  const assignmentId = readTrimmedString(context.assignmentId);
+  const currentQuestion = readTrimmedString(context.currentQuestion);
+  const questionProgressLabel = readTrimmedString(context.questionProgressLabel);
+  const answerRevealed = context.answerRevealed ?? false;
+  const summary =
+    currentQuestion && questionProgressLabel
+      ? `Active game question ${questionProgressLabel}.`
+      : currentQuestion
+        ? 'Active game question.'
+        : assignmentSummary ?? description ?? title;
+
+  return {
+    id: `runtime:kangur:game:${contentId}:${questionId ?? 'summary'}:${answerRevealed ? 'revealed' : currentQuestion ? 'active' : 'summary'}`,
+    kind: 'runtime_document',
+    entityType: KANGUR_RUNTIME_ENTITY_TYPES.testContext,
+    title,
+    summary,
+    status: currentQuestion ? (answerRevealed ? 'summary' : 'in_progress') : 'active',
+    tags: ['kangur', 'game', 'ai-tutor'],
+    relatedNodeIds: [
+      'page:kangur-game',
+      'action:kangur-ai-tutor-chat',
+      'policy:kangur-ai-tutor-socratic',
+      'policy:kangur-ai-tutor-test-guardrails',
+    ],
+    facts: {
+      contentId,
+      title,
+      answerRevealed,
+      ...(description ? { description } : {}),
+      ...(masterySummary ? { masterySummary } : {}),
+      ...(assignmentSummary ? { assignmentSummary } : {}),
+      ...(assignmentId ? { assignmentId } : {}),
+      ...(questionId ? { questionId } : {}),
+      ...(currentQuestion ? { currentQuestion } : {}),
+      ...(questionProgressLabel ? { questionProgressLabel } : {}),
+    },
+    sections: [
+      {
+        id: 'game_overview',
+        kind: 'text',
+        title: 'Game overview',
+        text: [title, description, masterySummary, assignmentSummary].filter(Boolean).join('\n'),
+      },
+      {
+        id: 'current_question',
+        kind: 'text',
+        title: 'Current question',
+        text: currentQuestion ?? '',
+      },
+    ],
+    provenance: {
+      providerId: 'kangur',
+      source: 'kangur-conversation-context',
+    },
+  };
+};
+
 export const resolveKangurAiTutorRuntimeDocuments = (
-  bundle: ContextRegistryResolutionBundle | null | undefined
+  bundle: ContextRegistryResolutionBundle | null | undefined,
+  context?: KangurAiTutorConversationContext | null
 ): {
   learnerSnapshot: ContextRuntimeDocument | null;
   surfaceContext: ContextRuntimeDocument | null;
   assignmentContext: ContextRuntimeDocument | null;
 } => {
   const documents = bundle?.documents ?? [];
+  const fallbackSurfaceContext = buildKangurGameSurfaceRuntimeDocument(context);
 
   return {
     learnerSnapshot:
@@ -816,7 +889,8 @@ export const resolveKangurAiTutorRuntimeDocuments = (
         (document) =>
           document.entityType === KANGUR_RUNTIME_ENTITY_TYPES.lessonContext ||
           document.entityType === KANGUR_RUNTIME_ENTITY_TYPES.testContext
-      ) ?? null,
+      ) ??
+      fallbackSurfaceContext,
     assignmentContext:
       documents.find(
         (document) => document.entityType === KANGUR_RUNTIME_ENTITY_TYPES.assignmentContext

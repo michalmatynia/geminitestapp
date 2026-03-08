@@ -18,6 +18,7 @@ interface LabeledSliderProps {
 }
 
 export function LabeledSlider(props: LabeledSliderProps): React.JSX.Element {
+  const sliderId = React.useId();
   const {
     label,
     value,
@@ -32,9 +33,12 @@ export function LabeledSlider(props: LabeledSliderProps): React.JSX.Element {
 
   return (
     <div className={cn('contents', className)}>
-      <Label className='text-[11px] text-gray-300'>{label}</Label>
+      <Label htmlFor={sliderId} className='text-[11px] text-gray-300'>
+        {label}
+      </Label>
       <div className='flex items-center gap-2'>
         <Input
+          id={sliderId}
           size='sm'
           type='range'
           min={min}

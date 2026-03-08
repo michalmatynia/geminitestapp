@@ -1,0 +1,199 @@
+
+> libapp2@0.1.0 predev
+> node scripts/runtime/check-node-version.cjs
+
+
+> libapp2@0.1.0 dev
+> node --max-old-space-size=8192 server.cjs
+
+○ Compiling instrumentation Node.js ...
+
+  We detected TypeScript in your project and reconfigured your tsconfig.json file for you.
+  The following suggested values were added to your tsconfig.json. These values can be changed to fit your project's needs:
+
+  	- include was updated to add '.next-dev-web-dev-image-studio-skip-link-inspect/types/**/*.ts'
+  	- include was updated to add '.next-dev-web-dev-image-studio-skip-link-inspect/dev/types/**/*.ts'
+
+[ai-paths.portable-engine.envelope-verification] Portable envelope verification audit sink health probe sinkId=portable-envelope-verification-log-forwarding {
+  category: 'ai_path_portable_envelope_verification_audit_sink_health',
+  kind: 'ai-paths.portable-envelope-verification-audit-sink-health.v1',
+  sinkId: 'portable-envelope-verification-log-forwarding',
+  stage: 'probe',
+  service: 'ai-paths.portable-engine'
+}
+[ai-paths.portable-engine.envelope-verification.sink-bootstrap] Portable envelope verification audit sink startup health summary sinkId=all {
+  category: 'ai_path_portable_envelope_verification_audit_sink_health',
+  kind: 'ai-paths.portable-envelope-verification-audit-sink-health.v1',
+  profile: 'dev',
+  policy: 'warn',
+  timeoutMs: 3000,
+  status: 'healthy',
+  failedSinkIds: [],
+  diagnostics: [
+    {
+      sinkId: 'portable-envelope-verification-log-forwarding',
+      status: 'healthy',
+      checkedAt: '2026-03-08T15:58:38.719Z',
+      durationMs: 158,
+      message: 'Health check passed.',
+      error: null
+    }
+  ],
+  service: 'ai-paths.portable-engine'
+}
+[queue-factory] [queue-factory:database-backup-scheduler] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:product-sync-scheduler] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:system-log-alerts] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-init] Starting BullMQ workers... { service: 'queue-init' }
+[queue-registry] [queue-registry] Starting queue worker: base-import { queueName: 'base-import', service: 'queue-registry' }
+[queue-factory] [queue-factory:base-import] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: database-backup-scheduler { queueName: 'database-backup-scheduler', service: 'queue-registry' }
+[queue-registry] [queue-registry] Starting queue worker: system-log-alerts { queueName: 'system-log-alerts', service: 'queue-registry' }
+[queue-registry] [queue-registry] Starting queue worker: tradera-listings { queueName: 'tradera-listings', service: 'queue-registry' }
+[queue-factory] [queue-factory:tradera-listings] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-ai { queueName: 'product-ai', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-ai] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync { queueName: 'product-sync', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-sync] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync-backfill { queueName: 'product-sync-backfill', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-sync-backfill] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync-scheduler { queueName: 'product-sync-scheduler', service: 'queue-registry' }
+[queue-factory] [queue-factory:case-resolver-ocr] BullMQ worker started (concurrency: 2) { concurrency: 2, service: 'queue-factory' }
+[queue-factory] [queue-factory:ai-path-run] BullMQ worker started (concurrency: 3) { concurrency: 3, service: 'queue-factory' }
+[queue-factory] [queue-factory:chatbot] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:agent] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:image-studio-run] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:tradera-relist-scheduler] Worker stopped { service: 'queue-factory' }
+Ready on http://localhost:56455 { port: 56455, host: '127.0.0.1' }
+[queue-factory] [queue-factory:image-studio-sequence] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+ GET /api/health 200 in 1494ms (compile: 937ms, proxy.ts: 41ms, render: 517ms)
+[health.GET] health.GET completed successfully {
+  durationMs: 853,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: 'd5b4c192b277fd198275bbcbf595e58b',
+  otelSpanId: 'bfa79e6ef549a2f0',
+  otelTraceFlags: '01',
+  service: 'health',
+  traceId: '6d48c6d4-2e67-478c-b744-7fc811f3b15b',
+  correlationId: '0656f9bb-5e8b-49cf-9360-3d6ad21a6680'
+}
+○ Compiling / ...
+ GET /api/health 200 in 677ms (compile: 8ms, proxy.ts: 3ms, render: 666ms)
+ GET /auth/signin?callbackUrl=%2Fadmin%2Fimage-studio 200 in 5.4s (compile: 4.8s, render: 628ms)
+ GET /api/settings/lite 200 in 1296ms (compile: 839ms, proxy.ts: 10ms, render: 447ms)
+ GET /api/auth/session 200 in 1936ms (compile: 1916ms, proxy.ts: 10ms, render: 10ms)
+ GET /api/auth/providers 200 in 1904ms (compile: 1883ms, proxy.ts: 9ms, render: 12ms)
+ GET /api/auth/csrf 200 in 29ms (compile: 11ms, proxy.ts: 5ms, render: 13ms)
+ GET /api/auth/session 200 in 33ms (compile: 18ms, proxy.ts: 4ms, render: 11ms)
+[31m[auth][error][0m CredentialsSignin: Read more at https://errors.authjs.dev#credentialssignin
+    at Module.callback (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-image-studio-skip-link-inspect/dev/server/chunks/node_modules_@auth_core_e658b776._.js:4314:30)
+    at async AuthInternal (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-image-studio-skip-link-inspect/dev/server/chunks/node_modules_@auth_core_e658b776._.js:5162:24)
+    at async Auth (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-image-studio-skip-link-inspect/dev/server/chunks/node_modules_@auth_core_e658b776._.js:5384:34)
+    at async POST_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-image-studio-skip-link-inspect/dev/server/chunks/[root-of-the-server]__8cf96936._.js:10951:22)
+    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-image-studio-skip-link-inspect/dev/server/chunks/src_shared_fdaf7903._.js:2471:34
+    at async AppRouteRouteModule.do (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:37866)
+    at async AppRouteRouteModule.handle (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:45156)
+    at async responseGenerator (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-image-studio-skip-link-inspect/dev/server/chunks/node_modules_next_d881c5f8._.js:17157:38)
+    at async AppRouteRouteModule.handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:1:191938)
+    at async handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-image-studio-skip-link-inspect/dev/server/chunks/node_modules_next_d881c5f8._.js:17220:32)
+    at async Module.handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-image-studio-skip-link-inspect/dev/server/chunks/node_modules_next_d881c5f8._.js:17271:13)
+    at async DevServer.renderToResponseWithComponentsImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1442:9)
+    at async DevServer.renderPageComponent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1494:24)
+    at async DevServer.renderToResponseImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1544:32)
+    at async DevServer.pipeImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1038:25)
+    at async NextNodeServer.handleCatchallRenderRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/next-server.js:395:17)
+    at async DevServer.handleRequestImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:929:17)
+    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:387:20
+    at async Span.traceAsyncFn (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/trace/trace.js:157:20)
+    at async DevServer.handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:383:24)
+    at async invokeRender (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:248:21)
+    at async handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:447:24)
+    at async NextCustomServer.requestHandlerImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:496:13)
+[auth] [auth] [AUTH] Missing email or password {
+  service: 'auth',
+  category: 'AUTH',
+  otelTraceId: 'ae97cbc4fa90aff402d77aadf163de12',
+  otelSpanId: '71794f7f702065b9',
+  otelTraceFlags: '01'
+}
+ POST /api/auth/callback/credentials 200 in 38ms (compile: 8ms, proxy.ts: 10ms, render: 20ms)
+ GET /api/auth/session 200 in 31ms (compile: 12ms, proxy.ts: 9ms, render: 11ms)
+[system] [timing] home {
+  frontPageSetting: 540.6208750000005,
+  total: 540.7885830000014,
+  otelTraceId: '996726dde95fa67e3285988553ceff10',
+  otelSpanId: 'b2af0a7408921790',
+  otelTraceFlags: '01'
+}
+✓ Compiled in 1537ms
+ GET /api/auth/csrf 200 in 50ms (compile: 24ms, proxy.ts: 9ms, render: 17ms)
+[system] [AUTH-REPO] Finding user e2e.admin@example.com using mongodb {
+  email: 'e2e.admin@example.com',
+  provider: 'mongodb',
+  otelTraceId: '00e3881fc7b20dda9759dca041838a22',
+  otelSpanId: '0f1fcd980fa6481e',
+  otelTraceFlags: '01'
+}
+[auth.[...nextauth].POST] auth.[...nextauth].POST completed successfully {
+  durationMs: 1669,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  params: { nextauth: [ 'callback', 'credentials' ] },
+  otelTraceId: '00e3881fc7b20dda9759dca041838a22',
+  otelSpanId: '0f1fcd980fa6481e',
+  otelTraceFlags: '01',
+  service: 'auth.[',
+  traceId: 'b255762d-643a-482d-90b4-5812ee3ded19',
+  correlationId: '583aa13a-0b0c-4ee2-9179-da16b73ee96e'
+}
+ POST /api/auth/callback/credentials 200 in 1698ms (compile: 16ms, proxy.ts: 5ms, render: 1677ms)
+ GET /api/auth/session 200 in 94ms (compile: 16ms, proxy.ts: 34ms, render: 44ms)
+[auth.security] User signed in successfully {
+  email: 'e2e.admin@example.com',
+  ip: '127.0.0.1',
+  service: 'auth.security',
+  otelTraceId: '00e3881fc7b20dda9759dca041838a22',
+  otelSpanId: '0f1fcd980fa6481e',
+  otelTraceFlags: '01'
+}
+[user] Activity: auth.login - User logged in: e2e.admin@example.com {
+  activityId: '69ad9cdea60eb7369ce207c6',
+  activityType: 'auth.login',
+  userId: '69a9bc1e2d43c3d631e76018',
+  entityId: '69a9bc1e2d43c3d631e76018',
+  entityType: 'user',
+  metadata: null,
+  service: 'user',
+  otelTraceId: '00e3881fc7b20dda9759dca041838a22',
+  otelSpanId: '0f1fcd980fa6481e',
+  otelTraceFlags: '01'
+}
+○ Compiling /admin/image-studio ...
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 1,
+  reason: 'idle',
+  address: 'cluster0-shard-00-02.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 1,
+  reason: 'idle',
+  address: 'cluster0-shard-00-00.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 3,
+  reason: 'idle',
+  address: 'cluster0-shard-00-01.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+ GET /admin/image-studio 200 in 16.4s (compile: 15.2s, proxy.ts: 26ms, render: 1204ms)
+ GET /api/auth/session 200 in 264ms (compile: 59ms, proxy.ts: 5ms, render: 200ms)
+ GET /api/auth/session 200 in 70ms (compile: 7ms, proxy.ts: 12ms, render: 51ms)
+ GET /api/auth/session 200 in 83ms (compile: 7ms, proxy.ts: 12ms, render: 64ms)
+Received SIGTERM, shutting down gracefully... { signal: 'SIGTERM' }
+Server closed undefined

@@ -105,6 +105,10 @@ const SOUND_PALETTE_GROUPS: PaletteGroup[] = [
 ];
 
 export function CanvasSidebar(): React.JSX.Element {
+  const titleFieldId = React.useId();
+  const descriptionFieldId = React.useId();
+  const sourceConnectorDataId = React.useId();
+  const targetConnectorDataId = React.useId();
   // --- Context Hooks ---
   const { nodes, edges, executionMode } = useGraphState();
   const { savePathConfig } = usePersistenceActions();
@@ -424,8 +428,11 @@ export function CanvasSidebar(): React.JSX.Element {
                   </Button>
                 )}
                 <div>
-                  <Label className='text-[10px] uppercase text-gray-500'>Title</Label>
+                  <Label htmlFor={titleFieldId} className='text-[10px] uppercase text-gray-500'>
+                    Title
+                  </Label>
                   <Input
+                    id={titleFieldId}
                     data-doc-id='inspector_node_title'
                     className='mt-2 w-full rounded-md border bg-card/70 px-3 py-2 text-xs text-white'
                     value={selectedNode.title ?? ''}
@@ -439,8 +446,14 @@ export function CanvasSidebar(): React.JSX.Element {
                   />
                 </div>
                 <div>
-                  <Label className='text-[10px] uppercase text-gray-500'>Description</Label>
+                  <Label
+                    htmlFor={descriptionFieldId}
+                    className='text-[10px] uppercase text-gray-500'
+                  >
+                    Description
+                  </Label>
                   <Textarea
+                    id={descriptionFieldId}
                     data-doc-id='inspector_node_description'
                     className='mt-2 min-h-[64px] w-full rounded-md border bg-card/70 text-xs text-white'
                     value={selectedNode.description ?? ''}
@@ -723,20 +736,26 @@ export function CanvasSidebar(): React.JSX.Element {
                       Connector Data
                       </Hint>
                       <div>
-                        <div className='text-[10px] text-amber-300'>
+                        <div id={sourceConnectorDataId} className='text-[10px] text-amber-300'>
                         Source ({selectedEdge.fromPort ?? 'default'})
                         </div>
-                        <pre className='mt-1 max-h-28 overflow-auto whitespace-pre-wrap rounded border border-border/50 bg-black/30 px-2 py-1 text-[10px] text-gray-200'>
+                        <pre
+                          className='mt-1 max-h-28 overflow-auto whitespace-pre-wrap rounded border border-border/50 bg-black/30 px-2 py-1 text-[10px] text-gray-200'
+                          aria-labelledby={sourceConnectorDataId}
+                        >
                           {sourceValue === undefined
                             ? 'No runtime output yet.'
                             : formatRuntimeValue(sourceValue)}
                         </pre>
                       </div>
                       <div>
-                        <div className='text-[10px] text-sky-300'>
+                        <div id={targetConnectorDataId} className='text-[10px] text-sky-300'>
                         Target ({selectedEdge.toPort ?? 'default'})
                         </div>
-                        <pre className='mt-1 max-h-28 overflow-auto whitespace-pre-wrap rounded border border-border/50 bg-black/30 px-2 py-1 text-[10px] text-gray-200'>
+                        <pre
+                          className='mt-1 max-h-28 overflow-auto whitespace-pre-wrap rounded border border-border/50 bg-black/30 px-2 py-1 text-[10px] text-gray-200'
+                          aria-labelledby={targetConnectorDataId}
+                        >
                           {targetValue === undefined
                             ? 'No runtime input yet.'
                             : formatRuntimeValue(targetValue)}

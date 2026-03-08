@@ -317,101 +317,103 @@ export function SlotTree({
 
   return (
     <SlotTreeContext.Provider value={contextValue}>
-      <div
-        ref={treeRef}
-        className='relative h-full w-full min-w-0 overflow-y-auto overflow-x-hidden rounded border border-border bg-card/40 p-2'
-        role='tree'
-        tabIndex={0}
-        aria-label='Image card folders and cards'
-        onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
-          if (event.key !== 'Escape') return;
-          if (!clearSelectionOnAwayClick) return;
-          event.stopPropagation();
-          clearSelection();
-        }}
-        onClick={(): void => {
-          if (!clearSelectionOnAwayClick) return;
-          clearSelection();
-        }}
-      >
-        <FolderTreeViewportV2
-          controller={controller}
-          scrollToNodeRef={scrollToNodeRef}
-          className='space-y-0.5'
-          emptyLabel='No folders yet. Create a folder or add cards here.'
-          rootDropUi={rootDropUi}
-          resolveDropPosition={(event, { targetId }, ctlr): MasterTreeDropPosition => {
-            const targetNode = ctlr.nodes.find(
-              (candidate: MasterTreeNode): boolean => candidate.id === targetId
-            );
-            if (targetNode?.type === 'folder') return 'inside';
-            const targetRect = event.currentTarget.getBoundingClientRect();
-            return (
-              resolveVerticalDropPosition(event.clientY, targetRect, {
-                thresholdRatio: 0.34,
-              }) ?? 'after'
-            );
+      <div className='relative h-full w-full min-w-0'>
+        <div
+          ref={treeRef}
+          className='h-full overflow-y-auto overflow-x-hidden rounded border border-border bg-card/40 p-2'
+          role='region'
+          tabIndex={0}
+          aria-label='Image card folders and cards'
+          onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
+            if (event.key !== 'Escape') return;
+            if (!clearSelectionOnAwayClick) return;
+            event.stopPropagation();
+            clearSelection();
           }}
-          resolveDraggedNodeId={(event: React.DragEvent<HTMLElement>): MasterTreeId | null =>
-            resolveExternalDraggedNodeId(event.dataTransfer)
-          }
-          canDrop={({ draggedNodeId, targetId, defaultAllowed }, ctlr): boolean => {
-            if (defaultAllowed) return true;
-            const isInternalNode = isInternalMasterTreeNode(ctlr.nodes, draggedNodeId);
-            if (isInternalNode && targetId === null) {
-              return canDropInternalNodeToRoot(draggedNodeId);
-            }
-            if (isInternalNode && targetId !== null) {
+          onClick={(): void => {
+            if (!clearSelectionOnAwayClick) return;
+            clearSelection();
+          }}
+        >
+          <FolderTreeViewportV2
+            controller={controller}
+            scrollToNodeRef={scrollToNodeRef}
+            className='space-y-0.5'
+            emptyLabel='No folders yet. Create a folder or add cards here.'
+            rootDropUi={rootDropUi}
+            resolveDropPosition={(event, { targetId }, ctlr): MasterTreeDropPosition => {
               const targetNode = ctlr.nodes.find(
                 (candidate: MasterTreeNode): boolean => candidate.id === targetId
               );
-              return targetNode?.type === 'folder';
+              if (targetNode?.type === 'folder') return 'inside';
+              const targetRect = event.currentTarget.getBoundingClientRect();
+              return (
+                resolveVerticalDropPosition(event.clientY, targetRect, {
+                  thresholdRatio: 0.34,
+                }) ?? 'after'
+              );
+            }}
+            resolveDraggedNodeId={(event: React.DragEvent<HTMLElement>): MasterTreeId | null =>
+              resolveExternalDraggedNodeId(event.dataTransfer)
             }
-            return canDropImageStudioExternalNode({
-              draggedNodeId,
-              targetId,
-              nodes: ctlr.nodes,
-              profile,
-            });
-          }}
-          onNodeDrop={async (
-            { draggedNodeId, targetId, position, rootDropZone }: SlotTreeDropInput,
-            ctlr
-          ): Promise<void> => {
-            await handleMasterTreeDrop({
-              input: {
+            canDrop={({ draggedNodeId, targetId, defaultAllowed }, ctlr): boolean => {
+              if (defaultAllowed) return true;
+              const isInternalNode = isInternalMasterTreeNode(ctlr.nodes, draggedNodeId);
+              if (isInternalNode && targetId === null) {
+                return canDropInternalNodeToRoot(draggedNodeId);
+              }
+              if (isInternalNode && targetId !== null) {
+                const targetNode = ctlr.nodes.find(
+                  (candidate: MasterTreeNode): boolean => candidate.id === targetId
+                );
+                return targetNode?.type === 'folder';
+              }
+              return canDropImageStudioExternalNode({
                 draggedNodeId,
                 targetId,
-                position,
-                rootDropZone,
-              },
-              controller: ctlr,
-              onExternalDrop: async ({ input, controller }): Promise<void> => {
-                const action = resolveImageStudioExternalDropAction({
-                  draggedNodeId: input.draggedNodeId,
-                  targetId: input.targetId,
-                  nodes: controller.nodes,
-                });
-                if (!action) return;
+                nodes: ctlr.nodes,
+                profile,
+              });
+            }}
+            onNodeDrop={async (
+              { draggedNodeId, targetId, position, rootDropZone }: SlotTreeDropInput,
+              ctlr
+            ): Promise<void> => {
+              await handleMasterTreeDrop({
+                input: {
+                  draggedNodeId,
+                  targetId,
+                  position,
+                  rootDropZone,
+                },
+                controller: ctlr,
+                onExternalDrop: async ({ input, controller }): Promise<void> => {
+                  const action = resolveImageStudioExternalDropAction({
+                    draggedNodeId: input.draggedNodeId,
+                    targetId: input.targetId,
+                    nodes: controller.nodes,
+                  });
+                  if (!action) return;
 
-                if (action.type === 'move_slot') {
-                  const slot = slotById.get(action.slotId);
-                  if (!slot) return;
-                  await moveSlot({ slot, targetFolder: action.targetFolder });
-                  return;
-                }
+                  if (action.type === 'move_slot') {
+                    const slot = slotById.get(action.slotId);
+                    if (!slot) return;
+                    await moveSlot({ slot, targetFolder: action.targetFolder });
+                    return;
+                  }
 
-                await onMoveFolder(action.folderPath, action.targetFolder);
-              },
-            });
-          }}
-          renderNode={(props) => {
-            if (fromFolderMasterNodeId(props.node.id) !== null) {
-              return <FolderNodeItem {...props} />;
-            }
-            return <CardNodeItem {...props} />;
-          }}
-        />
+                  await onMoveFolder(action.folderPath, action.targetFolder);
+                },
+              });
+            }}
+            renderNode={(props) => {
+              if (fromFolderMasterNodeId(props.node.id) !== null) {
+                return <FolderNodeItem {...props} />;
+              }
+              return <CardNodeItem {...props} />;
+            }}
+          />
+        </div>
         <MasterTreeSettingsButton
           instance='image_studio'
           href={getFolderTreeInstanceSettingsHref('image_studio')}

@@ -105,6 +105,12 @@ test.describe('Kangur AI Tutor', () => {
     await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'selection');
     await expect(tutorAvatar).toHaveAttribute('data-avatar-placement', 'attached');
     await expect(tutorPanel).toHaveAttribute('data-avatar-placement', 'attached');
+    await expect(tutorPanel).toHaveAttribute('data-has-pointer', 'true');
+    await expect(tutorPanel).toHaveAttribute('data-pointer-side', 'left');
+    await expect(page.getByTestId('kangur-ai-tutor-pointer')).toHaveAttribute(
+      'data-pointer-side',
+      'left'
+    );
     await expect(tutorPanel).toHaveAttribute('data-launch-origin', 'dock-bottom-right');
     await waitForTutorPanelToSettle(tutorPanel);
     await expect(tutorPanel).toContainText(lessonSelectedText);
@@ -307,6 +313,35 @@ test.describe('Kangur AI Tutor', () => {
 
     await expect.poll(() => chatRequests.length).toBe(1);
     expect(chatRequests[0]?.context?.currentQuestion).toBe(questionPrompt);
+    expect(chatRequests[0]?.context?.focusKind).toBe('question');
+    await expect(tutorPanel).toContainText(hintResponse);
+  });
+
+  test('shows the tutor on active game questions and sends game context', async ({ page }) => {
+    const {
+      chatRequests,
+      hintResponse,
+    } = await mockKangurTutorEnvironment(page);
+
+    await page.goto('/kangur/game?quickStart=operation&operation=division&difficulty=easy');
+
+    const tutorAvatar = page.getByTestId('kangur-ai-tutor-avatar');
+    const tutorPanel = page.getByTestId('kangur-ai-tutor-panel');
+
+    await expect(page.getByTestId('question-card-shell')).toBeVisible();
+    await expect(tutorAvatar).toBeVisible();
+
+    await tutorAvatar.click();
+
+    await expect(tutorPanel).toBeVisible();
+    await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'question');
+    await expect(page.getByTestId('kangur-ai-tutor-focus-chip')).toContainText('Aktualne pytanie');
+
+    await tutorPanel.getByRole('button', { name: 'Podpowiedz' }).click();
+
+    await expect.poll(() => chatRequests.length).toBe(1);
+    expect(chatRequests[0]?.context?.surface).toBe('game');
+    expect(chatRequests[0]?.context?.currentQuestion).toBeTruthy();
     expect(chatRequests[0]?.context?.focusKind).toBe('question');
     await expect(tutorPanel).toContainText(hintResponse);
   });

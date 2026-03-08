@@ -1,8 +1,11 @@
 'use client';
 
+import { useRef } from 'react';
+
 import { QuestionCard } from '@/features/kangur/ui/components/game';
 import KangurPracticeAssignmentBanner from '@/features/kangur/ui/components/KangurPracticeAssignmentBanner';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
+import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { DIFFICULTY_CONFIG } from '@/features/kangur/ui/services/math-questions';
 
 export function KangurGameQuestionWidget(): React.JSX.Element | null {
@@ -18,6 +21,21 @@ export function KangurGameQuestionWidget(): React.JSX.Element | null {
     screen,
     totalQuestions,
   } = useKangurGameRuntime();
+  const questionAnchorRef = useRef<HTMLDivElement | null>(null);
+
+  useKangurTutorAnchor({
+    id: 'kangur-game-question-anchor',
+    kind: 'question',
+    ref: questionAnchorRef,
+    surface: 'game',
+    enabled: screen === 'playing' && Boolean(currentQuestion),
+    priority: 120,
+    metadata: {
+      contentId: 'game',
+      label: currentQuestion?.question ?? null,
+      assignmentId: activePracticeAssignment?.id ?? null,
+    },
+  });
 
   if (screen !== 'playing' || !currentQuestion) {
     return null;
@@ -42,13 +60,19 @@ export function KangurGameQuestionWidget(): React.JSX.Element | null {
           {DIFFICULTY_CONFIG[difficulty]?.emoji} {DIFFICULTY_CONFIG[difficulty]?.label}
         </span>
       </div>
-      <QuestionCard
-        question={currentQuestion}
-        onAnswer={handleAnswer}
-        questionNumber={currentQuestionIndex + 1}
-        total={totalQuestions}
-        timeLimit={questionTimeLimit}
-      />
+      <div
+        ref={questionAnchorRef}
+        className='flex w-full justify-center'
+        data-testid='kangur-game-question-anchor'
+      >
+        <QuestionCard
+          question={currentQuestion}
+          onAnswer={handleAnswer}
+          questionNumber={currentQuestionIndex + 1}
+          total={totalQuestions}
+          timeLimit={questionTimeLimit}
+        />
+      </div>
     </div>
   );
 }

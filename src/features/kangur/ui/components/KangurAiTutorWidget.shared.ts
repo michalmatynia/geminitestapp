@@ -12,6 +12,8 @@ export const DESKTOP_BUBBLE_WIDTH = 384;
 export const MOBILE_BUBBLE_WIDTH = 320;
 export const ATTACHED_AVATAR_EDGE_INSET = 18;
 export const ATTACHED_AVATAR_OVERLAP = 12;
+export const ATTACHED_AVATAR_POINTER_EDGE_INSET = 6;
+export const ATTACHED_AVATAR_POINTER_PADDING = 12;
 export const PROTECTED_CONTENT_GAP = 20;
 export const BUBBLE_MIN_HEIGHT = 280;
 export const BUBBLE_MAX_HEIGHT = 460;
@@ -25,6 +27,7 @@ export type TutorMotionPosition = {
 };
 
 export type TutorAvatarAttachmentSide = 'left' | 'right';
+export type TutorPointerSide = TutorAvatarAttachmentSide;
 export type TutorBubblePlacementStrategy =
   | 'dock'
   | 'right'

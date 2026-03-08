@@ -153,6 +153,7 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
       onFilesSelected={(files) => handleSlotFileUpload(index, files)}
       disabled={imageLocked}
       asChild
+      preserveChildSemantics={isSingleMinimalSlot}
     >
       <div
         draggable={canReorder && hasUpload}

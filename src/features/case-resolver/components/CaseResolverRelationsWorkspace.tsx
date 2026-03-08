@@ -244,7 +244,7 @@ const projectCaseOnlyRelationGraph = (
     return true;
   });
 
-  const caseEdges = toStrictEdges(graph.edges as Edge[]).filter((edge): boolean => {
+  const caseEdges = toStrictEdges(graph.edges).filter((edge): boolean => {
     const endpoints = readEdgeEndpoints(edge);
     if (!endpoints) return false;
     return caseNodeIds.has(endpoints.source) && caseNodeIds.has(endpoints.target);
@@ -274,8 +274,8 @@ const projectCaseOnlyRelationGraph = (
   );
 
   return {
-    nodes: caseNodes as CaseResolverRelationGraph['nodes'],
-    edges: caseEdges as CaseResolverRelationGraph['edges'],
+    nodes: caseNodes,
+    edges: caseEdges,
     nodeMeta: caseNodeMeta,
     edgeMeta: caseEdgeMeta,
   };
@@ -304,16 +304,15 @@ function CaseResolverRelationsWorkspaceInner(): React.JSX.Element {
     [relationGraph.nodes]
   );
   const incomingStrictEdges = React.useMemo(
-    (): CaseResolverRelationGraph['edges'] =>
-      toStrictEdges(relationGraph.edges as Edge[]),
+    (): CaseResolverRelationGraph['edges'] => toStrictEdges(relationGraph.edges),
     [relationGraph.edges]
   );
   const incomingEdges = React.useMemo(
-    (): Edge[] => incomingStrictEdges as Edge[],
+    (): Edge[] => incomingStrictEdges,
     [incomingStrictEdges]
   );
   const strictEdges = React.useMemo(
-    (): CaseResolverRelationGraph['edges'] => toStrictEdges(edges as Edge[]),
+    (): CaseResolverRelationGraph['edges'] => toStrictEdges(edges),
     [edges]
   );
 
@@ -499,7 +498,7 @@ export function CaseResolverRelationsWorkspace(): React.JSX.Element {
       <AiPathsProvider
         initialSelectedNodeId={initialSelectedNodeId}
         initialNodes={toRuntimeNodes(relationGraph.nodes)}
-        initialEdges={toStrictEdges(relationGraph.edges as Edge[]) as Edge[]}
+        initialEdges={toStrictEdges(relationGraph.edges)}
         initialLoading={false}
         initialRuntimeState={EMPTY_RUNTIME_STATE}
       >

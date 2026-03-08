@@ -17,6 +17,7 @@ export function KangurGameKangurSetupWidget(): React.JSX.Element | null {
         accent='amber'
         className='max-w-md'
         description='Wybierz edycje konkursu i zestaw zadan do rozwiazania.'
+        headingSize='lg'
         onBack={handleHome}
         testId='kangur-game-kangur-setup-top-section'
         title='Kangur Matematyczny'

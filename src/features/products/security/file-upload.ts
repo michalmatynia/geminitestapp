@@ -4,7 +4,7 @@ import { NextRequest } from 'next/server';
 
 import { badRequestError } from '@/shared/errors/app-error';
 
-const CONTROL_CHARACTERS_PATTERN = new RegExp('[\\x00-\\x1f\\x80-\\x9f]', 'g');
+const CONTROL_CHARACTERS_PATTERN = /\p{Cc}/gu;
 
 type FileValidationResult = {
   isValid: boolean;

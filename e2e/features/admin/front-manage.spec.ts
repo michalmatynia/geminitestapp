@@ -197,6 +197,13 @@ test.describe.serial('Front Manage', () => {
       });
       await expect(page).toHaveURL(/\/login\?callbackUrl=%2Fkangur%2Ftests$/);
       await expect(page.locator('[data-testid="kangur-login-shell"]')).toBeVisible();
+      await expect(
+        page.getByTestId('kangur-login-parent-form').getByLabel('Email rodzica')
+      ).toBeVisible();
+      await expect(
+        page.getByTestId('kangur-login-student-form').getByLabel('Nick ucznia')
+      ).toBeVisible();
+      await expect(page.getByRole('link', { name: /Przejdz do logowania rodzica/i })).toHaveCount(0);
     } finally {
       await page.goto('/admin/front-manage', { waitUntil: 'domcontentloaded' }).catch(() => {});
       if (originalValue === 'products') {
@@ -225,6 +232,12 @@ test.describe.serial('Front Manage', () => {
       });
       await expect(page).toHaveURL(/\/kangur\/login\?callbackUrl=%2Fkangur%2Ftests$/);
       await expect(page.locator('[data-testid="kangur-login-shell"]')).toBeVisible();
+      await expect(
+        page.getByTestId('kangur-login-parent-form').getByLabel('Email rodzica')
+      ).toBeVisible();
+      await expect(
+        page.getByTestId('kangur-login-student-form').getByLabel('Nick ucznia')
+      ).toBeVisible();
     } finally {
       await page.goto('/admin/front-manage', { waitUntil: 'domcontentloaded' }).catch(() => {});
       if (originalValue === 'products') {

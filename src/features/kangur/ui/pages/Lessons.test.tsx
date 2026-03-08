@@ -53,8 +53,9 @@ vi.mock('next/link', () => ({
   default: ({
     children,
     href,
+    scroll: _scroll,
     ...rest
-  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; scroll?: boolean }) => (
     <a href={href} {...rest}>
       {children}
     </a>
@@ -62,13 +63,16 @@ vi.mock('next/link', () => ({
 }));
 
 vi.mock('framer-motion', () => {
+  const serializeMotionValue = (value: unknown): string | undefined =>
+    value === undefined ? undefined : JSON.stringify(value);
+
   const createMotionTag = (tag: keyof React.JSX.IntrinsicElements) =>
     function MotionTag({
       children,
-      initial: _initial,
-      animate: _animate,
-      exit: _exit,
-      transition: _transition,
+      initial,
+      animate,
+      exit,
+      transition,
       whileHover: _whileHover,
       whileTap: _whileTap,
       ...props
@@ -81,11 +85,22 @@ vi.mock('framer-motion', () => {
       whileHover?: unknown;
       whileTap?: unknown;
     }): React.JSX.Element {
-      return React.createElement(tag, props, children);
+      return React.createElement(
+        tag,
+        {
+          ...props,
+          'data-motion-initial': serializeMotionValue(initial),
+          'data-motion-animate': serializeMotionValue(animate),
+          'data-motion-exit': serializeMotionValue(exit),
+          'data-motion-transition': serializeMotionValue(transition),
+        },
+        children
+      );
     };
 
   return {
     AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    useReducedMotion: () => false,
     motion: {
       div: createMotionTag('div'),
       button: createMotionTag('button'),
@@ -99,6 +114,7 @@ vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: () => authState.value,
+  useOptionalKangurAuth: () => authState.value,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
@@ -237,7 +253,7 @@ describe('Lessons', () => {
       'border-sky-300'
     );
     expect(screen.queryByTestId('legacy-lesson')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Wroc do listy lekcji' })).toHaveClass(
+    expect(screen.getByRole('button', { name: 'Wróć do listy lekcji' })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
     );
@@ -342,7 +358,7 @@ describe('Lessons', () => {
     );
     expect(headerActions.firstElementChild).toBe(screen.getByTestId('active-lesson-icon-clock-component'));
     expect(headerActions).toContainElement(screen.getByTestId('kangur-lesson-narrator'));
-    expect(screen.getByRole('button', { name: 'Wroc do listy lekcji' })).toHaveClass(
+    expect(screen.getByRole('button', { name: 'Wróć do listy lekcji' })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
     );
@@ -358,10 +374,48 @@ describe('Lessons', () => {
     render(<Lessons />);
 
     fireEvent.click(screen.getByRole('button', { name: /nauka zegara/i }));
-    fireEvent.click(screen.getByRole('button', { name: 'Wroc do listy lekcji' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Wróć do listy lekcji' }));
 
     expect(screen.getByRole('button', { name: /nauka zegara/i })).toBeInTheDocument();
     expect(screen.queryByTestId('legacy-lesson')).not.toBeInTheDocument();
+  });
+
+  it('uses the smoother motion preset for lessons list and active lesson transitions', () => {
+    setSettingsStore({
+      lessons: [
+        createLesson(),
+        createLesson({
+          id: 'adding-lesson',
+          componentId: 'adding',
+          title: 'Dodawanie',
+          description: 'Licz szybciej',
+          emoji: '➕',
+          sortOrder: 1010,
+        }),
+      ],
+    });
+
+    render(<Lessons />);
+
+    expect(screen.getByTestId('lessons-list-transition')).toHaveAttribute(
+      'data-motion-transition',
+      JSON.stringify({ duration: 0.32, ease: [0.22, 1, 0.36, 1] })
+    );
+    expect(screen.getByTestId('lesson-library-motion-kangur-lesson-clock')).toHaveAttribute(
+      'data-motion-transition',
+      JSON.stringify({ duration: 0.26, ease: [0.22, 1, 0.36, 1], delay: 0 })
+    );
+    expect(screen.getByTestId('lesson-library-motion-adding-lesson')).toHaveAttribute(
+      'data-motion-transition',
+      JSON.stringify({ duration: 0.26, ease: [0.22, 1, 0.36, 1], delay: 0.06 })
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /nauka zegara/i }));
+
+    expect(screen.getByTestId('lessons-active-transition')).toHaveAttribute(
+      'data-motion-transition',
+      JSON.stringify({ duration: 0.32, ease: [0.22, 1, 0.36, 1] })
+    );
   });
 
   it('shows the empty-document warning when a document-mode lesson has no saved content', () => {
@@ -405,7 +459,7 @@ describe('Lessons', () => {
     expect(screen.getByText('Lesson document')).toHaveClass('border-amber-200', 'bg-amber-100');
     expect(screen.queryByTestId('legacy-lesson')).not.toBeInTheDocument();
     expect(screen.queryByTestId('lesson-document-renderer')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Wroc do listy lekcji' })).toHaveClass(
+    expect(screen.getByRole('button', { name: 'Wróć do listy lekcji' })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
     );

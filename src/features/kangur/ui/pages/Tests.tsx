@@ -1,11 +1,11 @@
 'use client';
 
-'use client';
-
 import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 
 import { KangurDocsTooltipEnhancer, useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
+import { getKangurHomeHref } from '@/features/kangur/config/routing';
 import {
   KANGUR_TEST_SUITES_SETTING_KEY,
   KANGUR_TEST_QUESTIONS_SETTING_KEY,
@@ -15,6 +15,7 @@ import {
   parseKangurTestQuestionStore,
   getQuestionsForSuite,
 } from '@/features/kangur/test-questions';
+import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
 import { KangurTestSuitePlayer } from '@/features/kangur/ui/components/KangurTestSuitePlayer';
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
@@ -27,7 +28,6 @@ import {
   KangurOptionCardButton,
   KangurPageContainer,
   KangurPageShell,
-  KangurSectionHeading,
   KangurStatusChip,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
@@ -35,6 +35,7 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { KangurTestSuite } from '@/shared/contracts/kangur-tests';
 
 export default function Tests(): React.JSX.Element {
+  const router = useRouter();
   const { basePath } = useKangurRouting();
   const { user, navigateToLogin, logout } = useKangurAuth();
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('tests');
@@ -55,9 +56,13 @@ export default function Tests(): React.JSX.Element {
     [activeSuite, questionStore]
   );
   const learnerId = user?.activeLearner?.id ?? user?.id ?? null;
+  const handleGoBack = (): void => {
+    router.push(getKangurHomeHref(basePath));
+  };
   const navigation = useMemo(
     () => ({
       basePath,
+      canManageLearners: Boolean(user?.canManageLearners),
       contentClassName: 'justify-center',
       currentPage: 'Tests' as const,
       isAuthenticated: Boolean(user),
@@ -139,94 +144,78 @@ export default function Tests(): React.JSX.Element {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className='w-full max-w-2xl mx-auto'
+              className='mx-auto flex w-full max-w-2xl flex-col items-center gap-4'
             >
-              <KangurGlassPanel
-                className='flex flex-col gap-5'
-                padding='lg'
-                surface='mistStrong'
-                variant='soft'
-              >
-                <div className='flex flex-col items-center gap-3 text-center'>
-                  <KangurStatusChip
-                    accent='slate'
-                    className='text-[11px] uppercase tracking-[0.22em]'
-                    size='sm'
-                  >
-                    Zestawy treningowe
-                  </KangurStatusChip>
-                  <KangurSectionHeading
-                    accent='indigo'
-                    data-testid='kangur-tests-list-heading'
-                    description='Wybierz zestaw testowy, aby rozpocząć.'
-                    headingAs='h1'
-                    headingSize='md'
-                    icon='🦘'
-                    iconAccent='indigo'
-                    iconSize='lg'
-                    title='Testy Kangur'
-                  />
-                </div>
+              <KangurPageIntroCard
+                accent='indigo'
+                className='max-w-md'
+                description='Wybierz zestaw testowy, aby rozpocząć.'
+                headingAs='h1'
+                headingTestId='kangur-tests-list-heading'
+                onBack={handleGoBack}
+                testId='kangur-tests-list-top-section'
+                title='Testy Kangur'
+              />
 
-                {enabledSuites.length === 0 ? (
-                  <KangurEmptyState
-                    accent='indigo'
-                    description='Skontaktuj się z administratorem.'
-                    padding='xl'
-                    title='Brak aktywnych zestawów testowych.'
-                  />
-                ) : (
-                  <div className='flex flex-col gap-3'>
-                    {enabledSuites.map((suite) => {
-                      const questionCount = getQuestionsForSuite(questionStore, suite.id).length;
-                      return (
-                        <KangurOptionCardButton
+              {enabledSuites.length === 0 ? (
+                <KangurEmptyState
+                  accent='indigo'
+                  className='w-full'
+                  description='Skontaktuj się z administratorem.'
+                  padding='xl'
+                  title='Brak aktywnych zestawów testowych.'
+                />
+              ) : (
+                <div className='flex w-full flex-col gap-3'>
+                  {enabledSuites.map((suite) => {
+                    const questionCount = getQuestionsForSuite(questionStore, suite.id).length;
+                    return (
+                      <KangurOptionCardButton
+                        accent='indigo'
+                        key={suite.id}
+                        className='flex items-center gap-4'
+                        data-doc-id='tests_suite_card'
+                        emphasis='neutral'
+                        onClick={(): void => setActiveSuite(suite)}
+                        type='button'
+                      >
+                        <KangurIconBadge
                           accent='indigo'
-                          key={suite.id}
-                          className='flex items-center gap-4'
-                          data-doc-id='tests_suite_card'
-                          emphasis='neutral'
-                          onClick={(): void => setActiveSuite(suite)}
-                          type='button'
+                          className='shrink-0 text-2xl'
+                          data-testid={`tests-suite-icon-${suite.id}`}
+                          size='md'
                         >
-                          <KangurIconBadge
-                            accent='indigo'
-                            className='shrink-0 text-2xl'
-                            data-testid={`tests-suite-icon-${suite.id}`}
-                            size='md'
-                          >
-                            🦘
-                          </KangurIconBadge>
-                          <div className='min-w-0 flex-1 text-left'>
-                            <div className='truncate font-bold text-indigo-900'>{suite.title}</div>
-                            {suite.description ? (
-                              <div className='mt-0.5 truncate text-xs text-indigo-500'>
-                                {suite.description}
-                              </div>
-                            ) : null}
-                            <div className='mt-2 flex flex-wrap items-center gap-2'>
-                              {suite.year ? (
-                                <KangurStatusChip accent='slate' size='sm'>
-                                  {suite.year}
-                                </KangurStatusChip>
-                              ) : null}
-                              {suite.gradeLevel ? (
-                                <KangurStatusChip accent='slate' size='sm'>
-                                  {suite.gradeLevel}
-                                </KangurStatusChip>
-                              ) : null}
-                              <KangurStatusChip accent='indigo' size='sm'>
-                                {questionCount} pytań
-                              </KangurStatusChip>
+                          🦘
+                        </KangurIconBadge>
+                        <div className='min-w-0 flex-1 text-left'>
+                          <div className='truncate font-bold text-indigo-900'>{suite.title}</div>
+                          {suite.description ? (
+                            <div className='mt-0.5 truncate text-xs text-indigo-500'>
+                              {suite.description}
                             </div>
+                          ) : null}
+                          <div className='mt-2 flex flex-wrap items-center gap-2'>
+                            {suite.year ? (
+                              <KangurStatusChip accent='slate' size='sm'>
+                                {suite.year}
+                              </KangurStatusChip>
+                            ) : null}
+                            {suite.gradeLevel ? (
+                              <KangurStatusChip accent='slate' size='sm'>
+                                {suite.gradeLevel}
+                              </KangurStatusChip>
+                            ) : null}
+                            <KangurStatusChip accent='indigo' size='sm'>
+                              {questionCount} pytań
+                            </KangurStatusChip>
                           </div>
-                          <div className='shrink-0 text-indigo-300'>›</div>
-                        </KangurOptionCardButton>
-                      );
-                    })}
-                  </div>
-                )}
-              </KangurGlassPanel>
+                        </div>
+                        <div className='shrink-0 text-indigo-300'>›</div>
+                      </KangurOptionCardButton>
+                    );
+                  })}
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

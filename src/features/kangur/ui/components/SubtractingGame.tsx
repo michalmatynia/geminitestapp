@@ -33,6 +33,7 @@ type SubtractingQuestion = {
 };
 
 type SubtractingGameProps = {
+  finishLabel?: string;
   onFinish: () => void;
 };
 
@@ -86,7 +87,10 @@ function AppleVisual({ a, b }: { a: number; b: number }): React.JSX.Element | nu
   );
 }
 
-export default function SubtractingGame({ onFinish }: SubtractingGameProps): React.JSX.Element {
+export default function SubtractingGame({
+  finishLabel = 'Wróć do lekcji',
+  onFinish,
+}: SubtractingGameProps): React.JSX.Element {
   const [roundIndex, setRoundIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
@@ -180,7 +184,7 @@ export default function SubtractingGame({ onFinish }: SubtractingGameProps): Rea
               <RefreshCw className='w-4 h-4' /> Jeszcze raz
             </KangurButton>
             <KangurButton className='flex-1' onClick={onFinish} size='lg' variant='primary'>
-              Wróć do lekcji
+              {finishLabel}
             </KangurButton>
           </div>
         </KangurGlassPanel>

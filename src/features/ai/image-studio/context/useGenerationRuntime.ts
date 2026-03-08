@@ -222,7 +222,7 @@ const toGenerationRecordFromRun = (runRecord: ImageStudioRunRecord): GenerationR
 export function useGenerationRuntime(): {
   state: GenerationState;
   actions: GenerationActions;
-} {
+  } {
   const { toast } = useToast();
   const { projectId } = useProjectsState();
   const { workingSlot, slots, compositeAssetIds } = useSlotsState();

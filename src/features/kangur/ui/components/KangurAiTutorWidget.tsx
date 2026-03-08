@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import {
   useCallback,
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -33,14 +34,18 @@ import {
 import { useKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { useKangurTextHighlight } from '@/features/kangur/ui/hooks/useKangurTextHighlight';
 import type {
+  KangurAiTutorConversationContext,
   KangurAiTutorFollowUpAction,
   KangurAiTutorPromptMode,
+  KangurAiTutorSurface,
 } from '@/shared/contracts/kangur-ai-tutor';
 import { cn, sanitizeSvg } from '@/shared/utils';
 
 import {
   ATTACHED_AVATAR_EDGE_INSET,
   ATTACHED_AVATAR_OVERLAP,
+  ATTACHED_AVATAR_POINTER_EDGE_INSET,
+  ATTACHED_AVATAR_POINTER_PADDING,
   AVATAR_SIZE,
   BUBBLE_MAX_HEIGHT,
   BUBBLE_MIN_HEIGHT,
@@ -58,8 +63,26 @@ import {
   type TutorMotionPosition,
   type TutorMotionProfile,
   type TutorMotionPresetKind,
+  type TutorPointerSide,
   type TutorQuickAction,
 } from './KangurAiTutorWidget.shared';
+
+type TutorSurface = KangurAiTutorSurface;
+type TutorPoint = {
+  x: number;
+  y: number;
+};
+
+type TutorPointerGeometry = {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  side: TutorPointerSide;
+  start: TutorPoint;
+  end: TutorPoint;
+};
+
 const clamp = (value: number, min: number, max: number): number => Math.min(Math.max(value, min), max);
 
 const TutorMoodAvatar = ({
@@ -314,12 +337,19 @@ const getDockLaunchOffset = (input: {
 
 const getAttachedAvatarSide = (input: {
   rect: DOMRect | null;
-  viewport: { width: number; height: number };
   mode: 'bubble' | 'sheet';
+  panelLeft?: number;
+  panelWidth?: number;
   strategy: TutorBubblePlacementStrategy;
 }): TutorAvatarAttachmentSide => {
   if (input.mode === 'sheet' || !input.rect) {
     return 'left';
+  }
+
+  if (typeof input.panelLeft === 'number' && typeof input.panelWidth === 'number') {
+    const panelCenterX = input.panelLeft + input.panelWidth / 2;
+    const focusCenterX = input.rect.left + input.rect.width / 2;
+    return focusCenterX <= panelCenterX ? 'left' : 'right';
   }
 
   if (input.strategy === 'right' || input.strategy === 'top-right' || input.strategy === 'bottom-right') {
@@ -330,7 +360,7 @@ const getAttachedAvatarSide = (input: {
     return 'right';
   }
 
-  return input.rect.left + input.rect.width / 2 > input.viewport.width / 2 ? 'right' : 'left';
+  return 'left';
 };
 
 const getAttachedAvatarStyle = (
@@ -342,6 +372,77 @@ const getAttachedAvatarStyle = (
     ? { left: -ATTACHED_AVATAR_OVERLAP }
     : { right: -ATTACHED_AVATAR_OVERLAP }),
 });
+
+const getAttachedAvatarRect = (input: {
+  panelLeft: number;
+  panelTop: number;
+  panelWidth: number;
+  side: TutorAvatarAttachmentSide;
+}): DOMRect => {
+  const avatarLeft =
+    input.side === 'left'
+      ? input.panelLeft - ATTACHED_AVATAR_OVERLAP
+      : input.panelLeft + input.panelWidth - AVATAR_SIZE + ATTACHED_AVATAR_OVERLAP;
+
+  return createRect(
+    avatarLeft,
+    input.panelTop + ATTACHED_AVATAR_EDGE_INSET,
+    AVATAR_SIZE,
+    AVATAR_SIZE
+  );
+};
+
+const getTutorPointerGeometry = (input: {
+  focusRect: DOMRect | null;
+  panelLeft: number;
+  panelTop: number;
+  panelWidth: number;
+  side: TutorPointerSide;
+}): TutorPointerGeometry | null => {
+  if (!input.focusRect) {
+    return null;
+  }
+
+  const avatarRect = getAttachedAvatarRect({
+    panelLeft: input.panelLeft,
+    panelTop: input.panelTop,
+    panelWidth: input.panelWidth,
+    side: input.side,
+  });
+  const originX =
+    input.side === 'left'
+      ? avatarRect.left + ATTACHED_AVATAR_POINTER_EDGE_INSET
+      : avatarRect.right - ATTACHED_AVATAR_POINTER_EDGE_INSET;
+  const originY = avatarRect.top + avatarRect.height / 2;
+  const verticalInset = Math.min(10, input.focusRect.height / 2);
+  const minTargetY = input.focusRect.top + verticalInset;
+  const maxTargetY = input.focusRect.bottom - verticalInset;
+  const targetY =
+    minTargetY <= maxTargetY
+      ? clamp(originY, minTargetY, maxTargetY)
+      : input.focusRect.top + input.focusRect.height / 2;
+  const targetX = input.side === 'left' ? input.focusRect.right : input.focusRect.left;
+  const left = Math.min(originX, targetX) - ATTACHED_AVATAR_POINTER_PADDING;
+  const top = Math.min(originY, targetY) - ATTACHED_AVATAR_POINTER_PADDING;
+  const width = Math.max(Math.abs(targetX - originX), 1) + ATTACHED_AVATAR_POINTER_PADDING * 2;
+  const height = Math.max(Math.abs(targetY - originY), 1) + ATTACHED_AVATAR_POINTER_PADDING * 2;
+
+  return {
+    left: left - input.panelLeft,
+    top: top - input.panelTop,
+    width,
+    height,
+    side: input.side,
+    start: {
+      x: originX - left,
+      y: originY - top,
+    },
+    end: {
+      x: targetX - left,
+      y: targetY - top,
+    },
+  };
+};
 
 const getSelectionActionStyle = (rect: DOMRect): CSSProperties => {
   const viewport = getViewport();
@@ -532,7 +633,7 @@ const getBubblePlacement = (
 };
 
 const getAnchorKindsForSurface = (
-  surface: 'lesson' | 'test' | null | undefined,
+  surface: TutorSurface | null | undefined,
   answerRevealed: boolean | undefined
 ): KangurTutorAnchorKind[] => {
   if (surface === 'lesson') {
@@ -543,14 +644,25 @@ const getAnchorKindsForSurface = (
     return answerRevealed ? ['review', 'summary', 'question'] : ['question', 'review', 'summary'];
   }
 
+  if (surface === 'game') {
+    return answerRevealed ? ['review', 'assignment', 'question'] : ['question', 'assignment'];
+  }
+
   return [];
 };
 
 const getFocusChipLabel = (
   focus: ActiveTutorFocus,
-  selectedText: string | null
+  selectedText: string | null,
+  surface: TutorSurface | null | undefined
 ): string | null => {
   if (focus.kind === 'selection') {
+    if (surface === 'test') {
+      return selectedText ? 'Fragment pytania' : 'Zaznaczony fragment';
+    }
+    if (surface === 'game') {
+      return selectedText ? 'Fragment gry' : 'Zaznaczony fragment';
+    }
     return selectedText ? 'Fragment lekcji' : 'Zaznaczony fragment';
   }
 
@@ -589,7 +701,7 @@ const getInteractionIntent = (
 };
 
 const buildQuickActions = (input: {
-  surface: 'lesson' | 'test' | null | undefined;
+  surface: TutorSurface | null | undefined;
   answerRevealed: boolean | undefined;
   hasSelectedText: boolean;
   hasCurrentQuestion: boolean;
@@ -597,14 +709,20 @@ const buildQuickActions = (input: {
   focusKind: ActiveTutorFocus['kind'];
 }): TutorQuickAction[] => {
   const actions: TutorQuickAction[] = [];
+  const isQuestionSurface =
+    input.surface === 'test' || (input.surface === 'game' && input.hasCurrentQuestion);
+  const isReviewSurface =
+    (input.surface === 'test' || input.surface === 'game') && input.answerRevealed;
 
-  if (input.surface === 'test' && input.answerRevealed) {
+  if (isReviewSurface) {
     actions.push({
       id: 'review',
-      label: input.hasCurrentQuestion ? 'Omow odpowiedz' : 'Omow wynik',
+      label: input.hasCurrentQuestion ? 'Omow odpowiedz' : input.surface === 'game' ? 'Omow gre' : 'Omow wynik',
       prompt: input.hasCurrentQuestion
         ? 'Omów to pytanie: co poszło dobrze, gdzie był błąd i co sprawdzić następnym razem.'
-        : 'Omów mój wynik testu: co poszło dobrze i co warto poprawić następnym razem.',
+        : input.surface === 'game'
+          ? 'Omów moją ostatnią grę: co poszło dobrze i co warto ćwiczyć dalej.'
+          : 'Omów mój wynik testu: co poszło dobrze i co warto poprawić następnym razem.',
       promptMode: 'explain',
       interactionIntent: 'review',
     });
@@ -613,11 +731,13 @@ const buildQuickActions = (input: {
       label: input.hasCurrentQuestion ? 'Co poprawic?' : 'Co cwiczyc?',
       prompt: input.hasCurrentQuestion
         ? 'Powiedz, co ćwiczyć dalej po tym pytaniu.'
-        : 'Powiedz, jaki powinien być mój następny krok po tym teście.',
+        : input.surface === 'game'
+          ? 'Powiedz, jaki powinien być mój następny krok po tej grze.'
+          : 'Powiedz, jaki powinien być mój następny krok po tym teście.',
       promptMode: 'chat',
       interactionIntent: 'next_step',
     });
-  } else if (input.surface === 'test') {
+  } else if (isQuestionSurface) {
     actions.push({
       id: 'hint',
       label: 'Podpowiedz',
@@ -655,8 +775,12 @@ const buildQuickActions = (input: {
       label: input.focusKind === 'assignment' || input.hasAssignmentSummary ? 'Plan zadania' : 'Co dalej?',
       prompt:
         input.focusKind === 'assignment' || input.hasAssignmentSummary
-          ? 'Powiedz, jaki ma być mój następny krok w tym zadaniu i w tej lekcji.'
-          : 'Powiedz, co warto ćwiczyć dalej na podstawie mojego postępu.',
+          ? input.surface === 'game'
+            ? 'Powiedz, jaki ma byc moj nastepny krok w tym zadaniu i w tej grze.'
+            : 'Powiedz, jaki ma być mój następny krok w tym zadaniu i w tej lekcji.'
+          : input.surface === 'game'
+            ? 'Powiedz, co warto cwiczyc dalej na podstawie mojej gry.'
+            : 'Powiedz, co warto ćwiczyć dalej na podstawie mojego postępu.',
       promptMode: 'chat',
       interactionIntent: 'next_step',
     });
@@ -676,7 +800,7 @@ const buildQuickActions = (input: {
 };
 
 const getEmptyStateMessage = (input: {
-  surface: 'lesson' | 'test' | null | undefined;
+  surface: TutorSurface | null | undefined;
   answerRevealed: boolean | undefined;
   hasCurrentQuestion: boolean;
   hasAssignmentSummary: boolean;
@@ -686,18 +810,24 @@ const getEmptyStateMessage = (input: {
     return 'Masz zaznaczony fragment. Poproś o wyjaśnienie albo kolejny krok.';
   }
 
-  if (input.surface === 'test' && !input.answerRevealed) {
+  if ((input.surface === 'test' || input.surface === 'game') && !input.answerRevealed && input.hasCurrentQuestion) {
     return 'Poproś o wskazówkę do tego pytania. Tutor nie poda gotowej odpowiedzi.';
   }
 
-  if (input.surface === 'test' && input.answerRevealed) {
+  if ((input.surface === 'test' || input.surface === 'game') && input.answerRevealed) {
     return input.hasCurrentQuestion
       ? 'Poproś o omówienie odpowiedzi albo o kolejny krok do ćwiczenia.'
-      : 'Poproś o omówienie wyniku albo plan następnych ćwiczeń.';
+      : input.surface === 'game'
+        ? 'Poproś o omówienie gry albo plan następnych ćwiczeń.'
+        : 'Poproś o omówienie wyniku albo plan następnych ćwiczeń.';
   }
 
   if (input.hasAssignmentSummary) {
     return 'Poproś o plan wykonania zadania albo krótkie wyjaśnienie tematu.';
+  }
+
+  if (input.surface === 'game') {
+    return 'Masz pytanie dotyczace gry? Popros o wyjasnienie albo nastepny krok.';
   }
 
   return 'Masz pytanie dotyczące lekcji? Poproś o wyjaśnienie albo następny krok.';
@@ -705,7 +835,7 @@ const getEmptyStateMessage = (input: {
 
 const getInputPlaceholder = (input: {
   canSendMessages: boolean;
-  surface: 'lesson' | 'test' | null | undefined;
+  surface: TutorSurface | null | undefined;
   answerRevealed: boolean | undefined;
   hasCurrentQuestion: boolean;
   hasAssignmentSummary: boolean;
@@ -719,18 +849,24 @@ const getInputPlaceholder = (input: {
     return 'Zapytaj o zaznaczony fragment';
   }
 
-  if (input.surface === 'test' && !input.answerRevealed) {
+  if ((input.surface === 'test' || input.surface === 'game') && !input.answerRevealed && input.hasCurrentQuestion) {
     return 'Popros o wskazowke do pytania';
   }
 
-  if (input.surface === 'test' && input.answerRevealed) {
+  if ((input.surface === 'test' || input.surface === 'game') && input.answerRevealed) {
     return input.hasCurrentQuestion
       ? 'Popros o omowienie odpowiedzi'
-      : 'Zapytaj o wynik lub nastepny krok';
+      : input.surface === 'game'
+        ? 'Zapytaj o gre lub nastepny krok'
+        : 'Zapytaj o wynik lub nastepny krok';
   }
 
   if (input.hasAssignmentSummary) {
     return 'Zapytaj o zadanie lub kolejny krok';
+  }
+
+  if (input.surface === 'game') {
+    return 'Zapytaj o gre';
   }
 
   return 'Pytaj…';
@@ -747,14 +883,7 @@ const toFollowUpHref = (
   });
 
 const getTutorSessionKey = (
-  sessionContext:
-    | {
-        surface: 'lesson' | 'test';
-        contentId?: string;
-        title?: string;
-      }
-    | null
-    | undefined
+  sessionContext: KangurAiTutorConversationContext | null | undefined
 ): string | null => {
   if (!sessionContext) {
     return null;
@@ -764,7 +893,7 @@ const getTutorSessionKey = (
 };
 
 const getContextSwitchNotice = (input: {
-  surface: 'lesson' | 'test' | null | undefined;
+  surface: TutorSurface | null | undefined;
   title?: string | null | undefined;
   contentId: string | null | undefined;
   questionProgressLabel?: string | null | undefined;
@@ -780,13 +909,16 @@ const getContextSwitchNotice = (input: {
     return null;
   }
 
-  const surfaceLabel = input.surface === 'test' ? 'Test' : 'Lekcja';
+  const surfaceLabel =
+    input.surface === 'test' ? 'Test' : input.surface === 'game' ? 'Gra' : 'Lekcja';
   const targetLabel = input.title?.trim()
     ? `${surfaceLabel}: ${input.title.trim()}`
     : input.contentId?.trim()
       ? `${surfaceLabel}: ${input.contentId.trim()}`
       : input.surface === 'test'
         ? 'Nowe pytanie testowe'
+        : input.surface === 'game'
+          ? 'Nowy etap gry'
         : 'Nowy fragment lekcji';
   const detail = input.questionProgressLabel?.trim()
     ? input.questionProgressLabel.trim()
@@ -1213,7 +1345,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     };
   }, [activeSelectedText, activeSelectionRect, registeredAnchor, viewportTick]);
 
-  const focusChipLabel = getFocusChipLabel(activeFocus, activeSelectedText);
+  const focusChipLabel = getFocusChipLabel(activeFocus, activeSelectedText, sessionContext?.surface);
   const selectionActionStyle = selectionRect ? getSelectionActionStyle(selectionRect) : null;
   const isStaticUiMode = uiMode === 'static';
   const displayFocusRect = isAnchoredUiMode ? activeFocus.rect : null;
@@ -1235,11 +1367,27 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
   const showFloatingAvatar = !showAttachedAvatarShell && !hideFloatingAvatar;
   const avatarAttachmentSide = getAttachedAvatarSide({
     rect: displayFocusRect,
-    viewport,
     mode: bubblePlacement.mode,
+    panelLeft:
+      typeof bubblePlacement.style.left === 'number' ? bubblePlacement.style.left : undefined,
+    panelWidth: bubblePlacement.width,
     strategy: bubblePlacement.strategy,
   });
   const attachedAvatarStyle = getAttachedAvatarStyle(avatarAttachmentSide);
+  const avatarPointer =
+    bubblePlacement.mode === 'bubble' &&
+    isAnchoredUiMode &&
+    displayFocusRect &&
+    typeof bubblePlacement.style.left === 'number' &&
+    typeof bubblePlacement.style.top === 'number'
+      ? getTutorPointerGeometry({
+          focusRect: displayFocusRect,
+          panelLeft: bubblePlacement.style.left,
+          panelTop: bubblePlacement.style.top,
+          panelWidth: bubblePlacement.width ?? motionProfile.desktopBubbleWidth,
+          side: avatarAttachmentSide,
+        })
+      : null;
   const attachedLaunchOffset =
     bubblePlacement.mode === 'bubble' &&
     typeof bubblePlacement.style.left === 'number' &&
@@ -1259,6 +1407,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
         ? getAnchorAvatarStyle(displayFocusRect)
         : getDockAvatarStyle();
   const avatarAnchorKind = isOpen && isAnchoredUiMode ? activeFocus.kind ?? 'dock' : 'dock';
+  const pointerMarkerId = `kangur-ai-tutor-pointer-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
   const panelAvatarPlacement = showAttachedAvatarShell
     ? 'attached'
     : hideFloatingAvatar
@@ -1685,6 +1834,8 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
               data-motion-state={panelMotionState}
               data-open-animation={panelOpenAnimation}
               data-placement-strategy={bubblePlacement.strategy}
+              data-has-pointer={avatarPointer ? 'true' : 'false'}
+              data-pointer-side={avatarPointer?.side ?? 'none'}
               data-ui-mode={uiMode}
               initial={
                 prefersReducedMotion
@@ -1729,6 +1880,54 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
               className='fixed z-[65]'
               style={bubblePlacement.width ? { width: bubblePlacement.width } : undefined}
             >
+              {avatarPointer ? (
+                <svg
+                  aria-hidden='true'
+                  data-testid='kangur-ai-tutor-pointer'
+                  data-pointer-side={avatarPointer.side}
+                  className='pointer-events-none absolute z-0 overflow-visible'
+                  style={{
+                    left: avatarPointer.left,
+                    top: avatarPointer.top,
+                    width: avatarPointer.width,
+                    height: avatarPointer.height,
+                  }}
+                  viewBox={`0 0 ${avatarPointer.width} ${avatarPointer.height}`}
+                >
+                  <defs>
+                    <marker
+                      id={pointerMarkerId}
+                      markerWidth='9'
+                      markerHeight='9'
+                      refX='7'
+                      refY='4.5'
+                      orient='auto'
+                      viewBox='0 0 9 9'
+                    >
+                      <path d='M0 0 L9 4.5 L0 9 Z' fill='#b45309' />
+                    </marker>
+                  </defs>
+                  <line
+                    x1={avatarPointer.start.x}
+                    y1={avatarPointer.start.y}
+                    x2={avatarPointer.end.x}
+                    y2={avatarPointer.end.y}
+                    stroke='#fff7cf'
+                    strokeLinecap='round'
+                    strokeWidth='6'
+                  />
+                  <line
+                    x1={avatarPointer.start.x}
+                    y1={avatarPointer.start.y}
+                    x2={avatarPointer.end.x}
+                    y2={avatarPointer.end.y}
+                    markerEnd={`url(#${pointerMarkerId})`}
+                    stroke='#b45309'
+                    strokeLinecap='round'
+                    strokeWidth='3'
+                  />
+                </svg>
+              ) : null}
               {showAttachedAvatarShell ? (
                 <motion.button
                   data-testid='kangur-ai-tutor-avatar'
@@ -1767,7 +1966,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
                 )}
                 style={{ maxHeight: bubblePlacement.mode === 'sheet' ? 'min(76vh, 680px)' : '70vh' }}
               >
-                {bubblePlacement.tailPlacement !== 'dock' ? (
+                {!avatarPointer && bubblePlacement.tailPlacement !== 'dock' ? (
                   <div
                     aria-hidden='true'
                     className={cn(
@@ -1817,7 +2016,12 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
                       </span>
                       {sessionContext?.title || sessionContext?.contentId ? (
                         <span className='text-[11px] text-white/85'>
-                          {sessionContext.surface === 'test' ? 'Test' : 'Lekcja'}:{' '}
+                          {sessionContext.surface === 'test'
+                            ? 'Test'
+                            : sessionContext.surface === 'game'
+                              ? 'Gra'
+                              : 'Lekcja'}
+                          :{' '}
                           {sessionContext.title ?? sessionContext.contentId}
                         </span>
                       ) : null}

@@ -41,6 +41,7 @@ describe('useBrainProviderStatus', () => {
       vendor: 'openai',
       label: 'OpenAI',
       settingKey: 'openai_api_key',
+      settingsPath: 'ai_brain.providers.openai_api_key',
       configured: true,
       statusText: 'configured in AI Brain',
     });
@@ -53,6 +54,7 @@ describe('useBrainProviderStatus', () => {
       vendor: 'gemini',
       label: 'Gemini',
       settingKey: 'gemini_api_key',
+      settingsPath: 'ai_brain.providers.gemini_api_key',
       configured: false,
       statusText: 'missing',
     });

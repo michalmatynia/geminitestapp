@@ -93,7 +93,7 @@ export function GenerationSettingsTab(): React.JSX.Element {
             </p>
             <div className='mt-2 text-xs'>
               <Link href='/admin/brain?tab=providers' className='text-blue-300 hover:text-blue-200'>
-                Open AI Brain providers
+                OpenAI providers in AI Brain
               </Link>
             </div>
           </div>

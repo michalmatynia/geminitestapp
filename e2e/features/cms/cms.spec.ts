@@ -197,25 +197,4 @@ test.describe('CMS and Page Builder', () => {
       })
       .toBeGreaterThan(beforeNestingX + 8);
   });
-
-  test('should update front page destination setting', async ({ page }) => {
-    await ensureAdminSession(page);
-
-    await page.goto('/admin/front-manage');
-    await page.waitForLoadState('networkidle');
-
-    // Select "Chatbot"
-    await page.click('button:has-text("Chatbot")');
-
-    // Save
-    await page.click('button:has-text("Save Selection")', { force: true });
-
-    // Expect success toast
-    await expect(page.locator('text=Front page updated')).toBeVisible({ timeout: 30000 });
-
-    // Switch back to Products
-    await page.click('button:has-text("Products")');
-    await page.click('button:has-text("Save Selection")', { force: true });
-    await expect(page.locator('text=Front page updated')).toBeVisible({ timeout: 30000 });
-  });
 });

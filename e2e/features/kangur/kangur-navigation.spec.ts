@@ -407,6 +407,69 @@ test.describe('Kangur navigation continuity', () => {
     expect(documentLoadCount).toBe('1');
   });
 
+  test('keeps the parent-dashboard scroll position stable when switching tabs', async ({
+    page,
+  }) => {
+    await page.route('**/api/kangur/auth/me', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(buildManagerUser()),
+      });
+    });
+
+    await page.goto('/kangur/parent-dashboard');
+    await expect(page.getByRole('heading', { name: /^Panel Rodzica$/ })).toBeVisible();
+
+    const scoresTab = page.getByRole('button', { name: /wyniki gier/i });
+    const tabTop = await scoresTab.evaluate(
+      (element) => element.getBoundingClientRect().top + window.scrollY
+    );
+
+    await page.evaluate((targetTop) => {
+      window.scrollTo({ top: Math.max(0, targetTop - 24), left: 0 });
+    }, tabTop);
+
+    const beforeScrollY = await page.evaluate(() => window.scrollY);
+
+    const scoresTabBox = await scoresTab.boundingBox();
+    expect(scoresTabBox).not.toBeNull();
+    if (!scoresTabBox) {
+      return;
+    }
+
+    await page.mouse.click(
+      scoresTabBox.x + scoresTabBox.width / 2,
+      scoresTabBox.y + scoresTabBox.height / 2
+    );
+
+    await expect(scoresTab).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByText('Brak zapisanych wynikow.')).toBeVisible();
+
+    const afterScoresScrollY = await page.evaluate(() => window.scrollY);
+    expect(Math.abs(afterScoresScrollY - beforeScrollY)).toBeLessThan(48);
+
+    const progressTab = page.getByRole('button', { name: /postep/i });
+    const beforeProgressScrollY = await page.evaluate(() => window.scrollY);
+
+    const progressTabBox = await progressTab.boundingBox();
+    expect(progressTabBox).not.toBeNull();
+    if (!progressTabBox) {
+      return;
+    }
+
+    await page.mouse.click(
+      progressTabBox.x + progressTabBox.width / 2,
+      progressTabBox.y + progressTabBox.height / 2
+    );
+
+    await expect(progressTab).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByText(/Poziom i doswiadczenie/i)).toBeVisible();
+
+    const afterProgressScrollY = await page.evaluate(() => window.scrollY);
+    expect(Math.abs(afterProgressScrollY - beforeProgressScrollY)).toBeLessThan(48);
+  });
+
   test('preserves the Kangur surface across login entry and return navigation', async ({ page }) => {
     await page.goto('/kangur/game');
 

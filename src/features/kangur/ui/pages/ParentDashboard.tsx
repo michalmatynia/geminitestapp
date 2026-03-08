@@ -1,6 +1,7 @@
 'use client';
 
-import { AnimatePresence, motion } from 'framer-motion';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
 
 import { KangurDocsTooltipEnhancer, useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
 import { KangurParentDashboardAssignmentsWidget } from '@/features/kangur/ui/components/KangurParentDashboardAssignmentsWidget';
@@ -17,6 +18,7 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import {
   KangurParentDashboardRuntimeBoundary,
+  type KangurParentDashboardTabId,
   useKangurParentDashboardRuntime,
 } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 
@@ -30,6 +32,138 @@ function ParentDashboardContent(): React.JSX.Element {
     navigateToLogin,
   } = useKangurParentDashboardRuntime();
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('parentDashboard');
+  const tabPanelsRef = useRef<HTMLDivElement | null>(null);
+  const tabPanelsContentRef = useRef<HTMLDivElement | null>(null);
+  const knownTabPanelHeightsRef = useRef<Partial<Record<KangurParentDashboardTabId, number>>>({});
+  const pendingScrollSnapshotRef = useRef<number | null>(null);
+  const restoreScrollAnimationFrameRef = useRef<number | null>(null);
+  const [reservedTabPanelHeight, setReservedTabPanelHeight] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (typeof ResizeObserver === 'undefined') {
+      return;
+    }
+
+    const tabPanelsContent = tabPanelsContentRef.current;
+    if (!tabPanelsContent) {
+      return;
+    }
+
+    const syncKnownHeight = (): void => {
+      const measuredHeight = Math.ceil(tabPanelsContent.getBoundingClientRect().height);
+      if (measuredHeight <= 0) {
+        return;
+      }
+      knownTabPanelHeightsRef.current[activeTab] = measuredHeight;
+    };
+
+    syncKnownHeight();
+
+    const observer = new ResizeObserver(() => {
+      syncKnownHeight();
+    });
+    observer.observe(tabPanelsContent);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (reservedTabPanelHeight === null) {
+      return;
+    }
+
+    const tabPanelsContent = tabPanelsContentRef.current;
+    if (!tabPanelsContent) {
+      return;
+    }
+
+    const releaseReserveIfSafe = (): void => {
+      const actualContentHeight = Math.ceil(tabPanelsContent.getBoundingClientRect().height);
+      if (actualContentHeight <= 0) {
+        return;
+      }
+
+      if (reservedTabPanelHeight <= actualContentHeight) {
+        setReservedTabPanelHeight(null);
+        return;
+      }
+
+      const hypotheticalDocumentHeight =
+        document.documentElement.scrollHeight - (reservedTabPanelHeight - actualContentHeight);
+      if (window.scrollY + window.innerHeight <= hypotheticalDocumentHeight + 1) {
+        setReservedTabPanelHeight(null);
+      }
+    };
+
+    releaseReserveIfSafe();
+
+    window.addEventListener('scroll', releaseReserveIfSafe, { passive: true });
+    window.addEventListener('resize', releaseReserveIfSafe);
+
+    const observer =
+      typeof ResizeObserver === 'undefined'
+        ? null
+        : new ResizeObserver(() => {
+            releaseReserveIfSafe();
+          });
+    observer?.observe(tabPanelsContent);
+
+    return () => {
+      window.removeEventListener('scroll', releaseReserveIfSafe);
+      window.removeEventListener('resize', releaseReserveIfSafe);
+      observer?.disconnect();
+    };
+  }, [reservedTabPanelHeight]);
+
+  useLayoutEffect(() => {
+    const previousScrollY = pendingScrollSnapshotRef.current;
+    if (previousScrollY === null) {
+      return;
+    }
+
+    pendingScrollSnapshotRef.current = null;
+    window.scrollTo({ top: previousScrollY, left: 0 });
+
+    if (restoreScrollAnimationFrameRef.current !== null) {
+      window.cancelAnimationFrame(restoreScrollAnimationFrameRef.current);
+    }
+
+    restoreScrollAnimationFrameRef.current = window.requestAnimationFrame(() => {
+      window.scrollTo({ top: previousScrollY, left: 0 });
+      restoreScrollAnimationFrameRef.current = null;
+    });
+  }, [activeTab]);
+
+  useEffect(
+    () => () => {
+      if (restoreScrollAnimationFrameRef.current !== null) {
+        window.cancelAnimationFrame(restoreScrollAnimationFrameRef.current);
+      }
+    },
+    []
+  );
+
+  const reservePanelHeightBeforeTabChange = useCallback(
+    (nextTab: KangurParentDashboardTabId): void => {
+      pendingScrollSnapshotRef.current = window.scrollY;
+      const panelRect = tabPanelsRef.current?.getBoundingClientRect() ?? null;
+      const currentHeight = Math.ceil(
+        tabPanelsContentRef.current?.getBoundingClientRect().height ?? panelRect?.height ?? 0
+      );
+      const nextKnownHeight = knownTabPanelHeightsRef.current[nextTab] ?? 0;
+      const viewportSupportHeight = panelRect
+        ? Math.ceil(Math.max(0, window.innerHeight - panelRect.top))
+        : 0;
+      const reservedHeight = Math.max(currentHeight, nextKnownHeight, viewportSupportHeight);
+
+      if (reservedHeight > 0) {
+        setReservedTabPanelHeight(reservedHeight);
+      }
+    },
+    []
+  );
 
   if (!canAccessDashboard) {
     return (
@@ -81,21 +215,25 @@ function ParentDashboardContent(): React.JSX.Element {
         </motion.div>
 
         <KangurParentDashboardLearnerManagementWidget />
-        <KangurParentDashboardTabsWidget />
+        <div>
+          <KangurParentDashboardTabsWidget onBeforeTabChange={reservePanelHeightBeforeTabChange} />
+        </div>
 
-        <AnimatePresence mode='wait'>
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -16 }}
-          >
+        <div
+          ref={tabPanelsRef}
+          style={
+            reservedTabPanelHeight !== null
+              ? { minHeight: `${reservedTabPanelHeight}px` }
+              : undefined
+          }
+        >
+          <div ref={tabPanelsContentRef}>
             <KangurParentDashboardProgressWidget displayMode='active-tab' />
             <KangurParentDashboardScoresWidget displayMode='active-tab' />
             <KangurParentDashboardAssignmentsWidget displayMode='active-tab' />
             <KangurParentDashboardAiTutorWidget displayMode='active-tab' />
-          </motion.div>
-        </AnimatePresence>
+          </div>
+        </div>
       </KangurPageContainer>
     </KangurPageShell>
   );

@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 import { type ChatCompletionContentPart } from 'openai/resources/chat/completions';
+import { resolveBrainProviderCredential } from '@/shared/lib/ai-brain/provider-credentials';
 import { REMOTE_OCR_TIMEOUT_MS } from '../config';
-import { resolveOpenAiApiKey } from '../api-keys';
 import { parseOpenAiResponseText } from '../response-parsers';
 import { type OpenAiChatCompletionPayload } from '../types';
 import { buildOcrPromptContent, withPromiseTimeout } from '../utils';
@@ -14,7 +14,7 @@ export const runOpenAiOcrRequest = async (input: {
   mimeType?: string | undefined;
   extractedDocumentText?: string | undefined;
 }): Promise<string> => {
-  const apiKey = await resolveOpenAiApiKey();
+  const apiKey = await resolveBrainProviderCredential('openai');
   const client = new OpenAI({ apiKey });
 
   const content: string | ChatCompletionContentPart[] =

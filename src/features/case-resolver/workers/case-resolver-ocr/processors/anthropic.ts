@@ -1,5 +1,5 @@
+import { resolveBrainProviderCredential } from '@/shared/lib/ai-brain/provider-credentials';
 import { REMOTE_OCR_TIMEOUT_MS } from '../config';
-import { resolveAnthropicApiKey } from '../api-keys';
 import { parseAnthropicResponseText } from '../response-parsers';
 import { type AnthropicMessageResponse } from '../types';
 import { buildOcrPromptContent, fetchWithTimeout } from '../utils';
@@ -12,7 +12,7 @@ export const runAnthropicOcrRequest = async (input: {
   mimeType?: string | undefined;
   extractedDocumentText?: string | undefined;
 }): Promise<string> => {
-  const apiKey = await resolveAnthropicApiKey();
+  const apiKey = await resolveBrainProviderCredential('anthropic');
   const content = [
     {
       type: 'text',

@@ -8,12 +8,12 @@ import { z } from 'zod';
 import {
   getImageStudioSlotLinkBySourceAndRelation,
   upsertImageStudioSlotLink,
-} from '@/features/ai/image-studio/server';
+} from '@/features/ai/server';
 import {
   createImageStudioSlots,
   getImageStudioSlotById,
   updateImageStudioSlot,
-} from '@/features/ai/image-studio/server';
+} from '@/features/ai/server';
 import { getDiskPathFromPublicPath, getImageFileRepository } from '@/features/files/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';

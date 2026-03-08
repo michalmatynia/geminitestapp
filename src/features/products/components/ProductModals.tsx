@@ -3,9 +3,9 @@
 import dynamic from 'next/dynamic';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import { ListProductModal } from '@/features/integrations/components/listings/ListProductModal';
-import { MassListProductModal } from '@/features/integrations/components/listings/MassListProductModal';
-import { ProductListingsModal } from '@/features/integrations/components/listings/ProductListingsModal';
+import { ListProductModal } from '@/features/integrations';
+import { MassListProductModal } from '@/features/integrations';
+import { ProductListingsModal } from '@/features/integrations';
 import { ProductFormProvider } from '@/features/products/context/ProductFormContext';
 import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
 import { useProductFormImages } from '@/features/products/context/ProductFormImageContext';
@@ -17,12 +17,12 @@ import { FormModal, Skeleton } from '@/shared/ui';
 
 import ProductForm from './ProductForm';
 
-const FileManager = dynamic(() => import('@/features/files/components/FileManager'), {
+const FileManager = dynamic(() => import('@/features/files'), {
   ssr: false,
 });
 
 const SelectIntegrationModal = dynamic(
-  () => import('@/features/integrations/components/listings/SelectIntegrationModal'),
+  () => import('@/features/integrations'),
   {
     ssr: false,
   }

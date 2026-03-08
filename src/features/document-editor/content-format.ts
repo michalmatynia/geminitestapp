@@ -22,7 +22,7 @@ type DeriveDocumentContentInput = {
 
 const MAX_DOCUMENT_INPUT_CHARS = 400_000;
 const MAX_PLAIN_TEXT_CHARS = 300_000;
-const LINE_BREAK_TOKEN = '__CR_BR__';
+const LINE_BREAK_MARKER = '__CR_BR__';
 
 const ENTITY_MAP: Record<string, string> = {
   '&nbsp;': ' ',
@@ -373,7 +373,7 @@ export const ensureSafeDocumentHtml = (value: string): string => {
 };
 
 export const withPreservedLineBreaks = (value: string): string =>
-  value.replace(/\n/g, LINE_BREAK_TOKEN);
+  value.replace(/\n/g, LINE_BREAK_MARKER);
 
 export const restorePreservedLineBreaks = (value: string): string =>
-  value.replace(new RegExp(LINE_BREAK_TOKEN, 'g'), '\n');
+  value.replace(new RegExp(LINE_BREAK_MARKER, 'g'), '\n');

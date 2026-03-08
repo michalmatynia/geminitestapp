@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { ProductAiJob, Prisma } from '@prisma/client';
+import { ProductAiJob, Prisma } from '@/shared/lib/db/prisma-client';
 
 import type {
   FindProductAiJobsOptions,

@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/shared/lib/db/prisma-client';
 import prisma from '@/shared/lib/db/prisma';
 import { isBaseIntegrationSlug } from '@/features/integrations/constants/slugs';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';

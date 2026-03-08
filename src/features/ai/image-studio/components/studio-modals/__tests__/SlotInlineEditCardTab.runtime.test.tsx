@@ -62,14 +62,14 @@ vi.mock('@/shared/ui', async () => {
   };
 });
 
-vi.mock('@/features/products/components/ProductImageManager', async () => {
+vi.mock('@/features/products', async () => {
   const mocks = await import('./studioInlineEditRuntimeMockComponents');
   return {
     default: mocks.MockProductImageManager,
   };
 });
 
-vi.mock('@/features/products/components/ProductImageManagerControllerContext', async () => {
+vi.mock('@/features/products', async () => {
   const mocks = await import('./studioInlineEditRuntimeMockComponents');
   return {
     ProductImageManagerControllerProvider: mocks.MockProductImageManagerControllerProvider,

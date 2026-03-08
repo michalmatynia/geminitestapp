@@ -1,3 +1,5 @@
+'use client';
+
 import { Upload } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import React from 'react';
@@ -9,7 +11,7 @@ import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 import { useUploadCmsMedia } from '../../hooks/useCmsQueries';
 
-const FileManager = dynamic(() => import('@/features/files/components/FileManager'), {
+const FileManager = dynamic(() => import('@/features/files'), {
   ssr: false,
   loading: () => <div>Loading file manager...</div>,
 });

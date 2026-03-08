@@ -1,4 +1,4 @@
-import { Prisma, ProductValidationPattern as PrismaPattern } from '@prisma/client';
+import { Prisma, ProductValidationPattern as PrismaPattern } from '@/shared/lib/db/prisma-client';
 
 import {
   PRODUCT_FORMATTER_ENABLED_BY_DEFAULT_SETTING_KEY,

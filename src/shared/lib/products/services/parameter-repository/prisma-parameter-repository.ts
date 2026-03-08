@@ -1,4 +1,4 @@
-import { Prisma, ProductParameter as PrismaProductParameter } from '@prisma/client';
+import { Prisma, ProductParameter as PrismaProductParameter } from '@/shared/lib/db/prisma-client';
 
 import type {
   ParameterRepository,

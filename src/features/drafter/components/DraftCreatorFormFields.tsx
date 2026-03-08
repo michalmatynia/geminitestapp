@@ -3,11 +3,11 @@
 import { useMemo } from 'react';
 
 import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
-import { CatalogMultiSelectField } from '@/features/products/components/form/CatalogMultiSelectField';
-import { CategorySingleSelectField } from '@/features/products/components/form/CategorySingleSelectField';
-import { ProducerMultiSelectField } from '@/features/products/components/form/ProducerMultiSelectField';
-import { ProductMetadataFieldProvider } from '@/features/products/components/form/ProductMetadataFieldContext';
-import { TagMultiSelectField } from '@/features/products/components/form/TagMultiSelectField';
+import { CatalogMultiSelectField } from '@/features/products';
+import { CategorySingleSelectField } from '@/features/products';
+import { ProducerMultiSelectField } from '@/features/products';
+import { ProductMetadataFieldProvider } from '@/features/products';
+import { TagMultiSelectField } from '@/features/products';
 import type { ProductParameter, ProductParameterValue } from '@/shared/contracts/products';
 import {
   PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS,

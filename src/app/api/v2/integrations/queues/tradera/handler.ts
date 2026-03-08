@@ -8,8 +8,8 @@ import { getQueueHealth, isRedisAvailable } from '@/shared/lib/queue';
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   initializeQueues();
   await Promise.all([
-    import('@/features/integrations/workers/traderaListingQueue'),
-    import('@/features/integrations/workers/traderaRelistSchedulerQueue'),
+    import('@/features/integrations/server'),
+    import('@/features/integrations/server'),
   ]);
 
   const redisAvailable = isRedisAvailable();

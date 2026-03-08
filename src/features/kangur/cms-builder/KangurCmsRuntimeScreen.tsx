@@ -3,9 +3,11 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { useMemo } from 'react';
 
-import { CmsPageRenderer } from '@/features/cms/components/frontend/CmsPageRenderer';
-import { getMediaInlineStyles } from '@/features/cms/components/frontend/theme-styles';
-import { getMediaStyleVars } from '@/features/cms/components/frontend/theme-styles';
+import {
+  CmsRuntimePageRenderer,
+  getMediaInlineStyles,
+  getMediaStyleVars,
+} from '@/features/cms/public';
 import { KangurGameRuntimeBoundary } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import { KangurLearnerProfileRuntimeBoundary } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
 import { KangurParentDashboardRuntimeBoundary } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
@@ -129,7 +131,7 @@ export function KangurCmsRuntimeScreen({
             <KangurLearnerProfileRuntimeBoundary enabled={screenKey === 'LearnerProfile'}>
               <KangurParentDashboardRuntimeBoundary enabled={screenKey === 'ParentDashboard'}>
                 <KangurCmsRuntimeDataProvider>
-                  <CmsPageRenderer
+                  <CmsRuntimePageRenderer
                     components={screen.components}
                     colorSchemes={colorSchemes}
                     layout={{ fullWidth: theme.fullWidth }}

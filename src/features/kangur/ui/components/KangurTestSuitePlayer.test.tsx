@@ -43,6 +43,7 @@ describe('KangurTestSuitePlayer', () => {
     render(<KangurTestSuitePlayer suite={suite} questions={questions} onFinish={onFinish} />);
 
     expect(screen.getByText('Question 1 / 1')).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /read question/i })).toBeInTheDocument();
     expect(screen.getByTestId('kangur-test-suite-progress-bar')).toHaveAttribute(
       'aria-valuenow',
       '100'

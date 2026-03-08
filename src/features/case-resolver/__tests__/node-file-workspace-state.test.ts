@@ -60,7 +60,7 @@ vi.mock('@/features/case-resolver/relation-search/hooks/useDocumentRelationSearc
   }),
 }));
 
-vi.mock('@/features/ai/ai-paths/context', () => ({
+vi.mock('@/features/ai', () => ({
   useCanvasRefs: () => ({
     viewportRef: { current: null },
     canvasRef: { current: null },

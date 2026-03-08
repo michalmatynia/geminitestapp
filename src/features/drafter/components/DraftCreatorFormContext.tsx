@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useMemo } from 'react';
 
-import type { ProductImageManagerController } from '@/features/products/components/ProductImageManager';
+import type { ProductImageManagerController } from '@/features/products';
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import type {
   CatalogRecord,

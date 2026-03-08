@@ -18,7 +18,7 @@ import {
   resolveFolderTreeIconSet,
   useMasterFolderTreeShell,
   type FolderTreeViewportRenderNodeInput,
-} from '@/features/foldertree/v2';
+} from '@/features/foldertree';
 import { CaseListSearchPanel } from './list/search';
 import {
   Button,

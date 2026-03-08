@@ -8,7 +8,7 @@ import type {
 } from '@/shared/contracts/products';
 import prisma from '@/shared/lib/db/prisma';
 
-import type { Catalog as PrismaCatalog } from '@prisma/client';
+import type { Catalog as PrismaCatalog } from '@/shared/lib/db/prisma-client';
 
 const toRecord = (
   catalog: PrismaCatalog & {

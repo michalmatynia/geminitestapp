@@ -55,7 +55,7 @@ export function SettingsTab(): React.JSX.Element {
     let active: boolean = true;
     const loadPersonas = async (): Promise<void> => {
       try {
-        const { fetchPlaywrightPersonas } = await import('@/features/playwright/utils/personas');
+        const { fetchPlaywrightPersonas } = await import('@/features/playwright');
         const stored = await fetchPlaywrightPersonas();
         if (!active) return;
         setPlaywrightPersonas(stored);

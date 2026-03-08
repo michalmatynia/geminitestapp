@@ -5,3 +5,6 @@ export * from './pages/AdminCaseResolverIdentifiersPage';
 export * from './pages/AdminCaseResolverCategoriesPage';
 export * from './pages/AdminCaseResolverSettingsPage';
 export * from './pages/AdminCaseResolverPreferencesPage';
+export * from './party-matching';
+export * from './settings';
+export * from './utils/caseResolverUtils';

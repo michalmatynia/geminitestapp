@@ -12,7 +12,7 @@ import { resolveBaseConnectionToken } from '@/features/integrations/server';
 import {
   callBaseApi,
   fetchBaseProductDetails,
-} from '@/features/integrations/services/imports/base-client';
+} from '@/features/integrations/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import {
   getProductSyncProfile,

@@ -6,8 +6,8 @@ import {
   createMasterFolderTreeTransactionAdapter,
   FolderTreeViewportV2,
   useMasterFolderTreeShell,
-} from '@/features/foldertree/v2';
-import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/v2';
+} from '@/features/foldertree';
+import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree';
 import { useReorderValidationPatternsMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import type { SequenceGroupDraft } from '@/shared/contracts/products';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';

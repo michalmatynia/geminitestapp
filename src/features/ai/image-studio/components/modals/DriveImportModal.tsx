@@ -3,7 +3,7 @@
 import { Upload } from 'lucide-react';
 import React, { useCallback, useMemo } from 'react';
 
-import FileManager, { FileManagerRuntimeContext } from '@/features/files/components/FileManager';
+import FileManager, { FileManagerRuntimeContext } from '@/features/files';
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import { Button, FileUploadTrigger } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';

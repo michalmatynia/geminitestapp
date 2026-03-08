@@ -13,7 +13,10 @@ import {
   type ReactNode,
 } from 'react';
 
-import { useAgentPersonas } from '@/features/ai/agentcreator/hooks/useAgentPersonas';
+import {
+  resolveAgentPersonaMood,
+  useAgentPersonas,
+} from '@/features/ai';
 import {
   DEFAULT_AGENT_PERSONA_MOOD_ID,
   agentPersonaMoodIdSchema,
@@ -21,12 +24,10 @@ import {
   type AgentPersonaMoodId,
 } from '@/shared/contracts/agents';
 import {
-  resolveAgentPersonaMood,
-} from '@/features/ai/agentcreator/utils/personas';
-import {
   logKangurClientError,
   trackKangurClientEvent,
 } from '@/features/kangur/observability/client';
+import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import {
   KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
   KANGUR_AI_TUTOR_SETTINGS_KEY,
@@ -47,6 +48,12 @@ import type {
   KangurAiTutorUsageSummary,
   KangurAiTutorUsageResponse,
 } from '@/shared/contracts/kangur-ai-tutor';
+import {
+  createDefaultKangurAiTutorLearnerMood,
+  getKangurTutorMoodPreset,
+  type KangurAiTutorLearnerMood,
+  type KangurTutorMoodId,
+} from '@/shared/contracts/kangur-ai-tutor-mood';
 import { kangurAiTutorUsageSummarySchema } from '@/shared/contracts/kangur-ai-tutor';
 import { ApiError, api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -87,6 +94,9 @@ type KangurAiTutorContextValue = {
   tutorPersona: AgentPersona | null;
   tutorName: string;
   tutorMoodId: AgentPersonaMoodId;
+  tutorBehaviorMoodId: KangurTutorMoodId;
+  tutorBehaviorMoodLabel: string;
+  tutorBehaviorMoodDescription: string;
   tutorAvatarSvg: string | null;
   tutorAvatarImageUrl: string | null;
   sessionContext: KangurAiTutorConversationContext | null;
@@ -254,6 +264,29 @@ const clearPersistedRuntimeState = (): void => {
   }
 };
 
+const toMoodTimestamp = (mood: KangurAiTutorLearnerMood | null | undefined): number => {
+  if (!mood?.lastComputedAt) {
+    return 0;
+  }
+
+  const timestamp = Date.parse(mood.lastComputedAt);
+  return Number.isNaN(timestamp) ? 0 : timestamp;
+};
+
+const mergeLearnerTutorMood = (
+  current: KangurAiTutorLearnerMood | null | undefined,
+  next: KangurAiTutorLearnerMood | null | undefined
+): KangurAiTutorLearnerMood => {
+  if (!current) {
+    return next ?? createDefaultKangurAiTutorLearnerMood();
+  }
+  if (!next) {
+    return current;
+  }
+
+  return toMoodTimestamp(next) >= toMoodTimestamp(current) ? next : current;
+};
+
 const omitUndefinedFields = <T extends Record<string, unknown>>(value: T): T =>
   Object.fromEntries(
     Object.entries(value).filter(([, fieldValue]) => fieldValue !== undefined)
@@ -417,10 +450,41 @@ export function KangurAiTutorProvider({
   const [sessionStates, setSessionStates] = useState<Record<string, KangurAiTutorSessionState>>(
     initialRuntimeStateRef.current.sessionStates
   );
+  const [learnerMoodById, setLearnerMoodById] = useState<Record<string, KangurAiTutorLearnerMood>>(
+    {}
+  );
+  const authState = useOptionalKangurAuth();
+  const authUser = authState?.user ?? null;
 
   const activeLearnerId = activeRegistration?.learnerId ?? null;
   const activeSessionContext = activeRegistration?.sessionContext ?? null;
   const activeSessionKey = activeRegistration?.sessionKey ?? null;
+
+  useEffect(() => {
+    const nextEntries = [
+      ...(authUser?.learners ?? []),
+      ...(authUser?.activeLearner ? [authUser.activeLearner] : []),
+    ];
+
+    if (nextEntries.length === 0) {
+      return;
+    }
+
+    setLearnerMoodById((current) => {
+      let changed = false;
+      const nextState = { ...current };
+
+      nextEntries.forEach((learner) => {
+        const merged = mergeLearnerTutorMood(nextState[learner.id], learner.aiTutor);
+        if (merged !== nextState[learner.id]) {
+          nextState[learner.id] = merged;
+          changed = true;
+        }
+      });
+
+      return changed ? nextState : current;
+    });
+  }, [authUser]);
 
   const rawSettings = settingsStore.get(KANGUR_AI_TUTOR_SETTINGS_KEY);
   const rawAppSettings = settingsStore.get(KANGUR_AI_TUTOR_APP_SETTINGS_KEY);
@@ -459,6 +523,17 @@ export function KangurAiTutorProvider({
     suggestedMoodId,
     usageSummary,
   } = activeSessionState;
+  const tutorBehaviorMood = useMemo(
+    () =>
+      activeLearnerId
+        ? mergeLearnerTutorMood(learnerMoodById[activeLearnerId], null)
+        : createDefaultKangurAiTutorLearnerMood(),
+    [activeLearnerId, learnerMoodById]
+  );
+  const tutorBehaviorMoodPreset = useMemo(
+    () => getKangurTutorMoodPreset(tutorBehaviorMood.currentMoodId),
+    [tutorBehaviorMood.currentMoodId]
+  );
 
   const updateSessionState = useCallback(
     (
@@ -510,9 +585,49 @@ export function KangurAiTutorProvider({
     () => resolveAgentPersonaMood(tutorPersona, requestedTutorMoodId),
     [requestedTutorMoodId, tutorPersona]
   );
+  const defaultTutorMood = useMemo(
+    () => resolveAgentPersonaMood(tutorPersona),
+    [tutorPersona]
+  );
+  const resolvedTutorMoodVisuals = useMemo(() => {
+    const resolvedImage = resolvedTutorMood.avatarImageUrl?.trim() || null;
+    const resolvedSvg = resolvedTutorMood.svgContent.trim() || null;
+
+    if (resolvedImage) {
+      return {
+        tutorAvatarImageUrl: resolvedImage,
+        tutorAvatarSvg: null,
+      };
+    }
+
+    if (resolvedSvg) {
+      return {
+        tutorAvatarImageUrl: null,
+        tutorAvatarSvg: resolvedSvg,
+      };
+    }
+
+    const fallbackImage = defaultTutorMood.avatarImageUrl?.trim() || null;
+    if (fallbackImage) {
+      return {
+        tutorAvatarImageUrl: fallbackImage,
+        tutorAvatarSvg: null,
+      };
+    }
+
+    return {
+      tutorAvatarImageUrl: null,
+      tutorAvatarSvg: defaultTutorMood.svgContent.trim() || null,
+    };
+  }, [
+    defaultTutorMood.avatarImageUrl,
+    defaultTutorMood.svgContent,
+    resolvedTutorMood.avatarImageUrl,
+    resolvedTutorMood.svgContent,
+  ]);
   const tutorMoodId = resolvedTutorMood.id;
-  const tutorAvatarSvg = resolvedTutorMood.svgContent.trim() || null;
-  const tutorAvatarImageUrl = resolvedTutorMood.avatarImageUrl?.trim() || null;
+  const tutorAvatarSvg = resolvedTutorMoodVisuals.tutorAvatarSvg;
+  const tutorAvatarImageUrl = resolvedTutorMoodVisuals.tutorAvatarImageUrl;
 
   const previousSessionKeyRef = useRef<string | null>(null);
 
@@ -723,6 +838,12 @@ export function KangurAiTutorProvider({
           hasSources: sources.length > 0,
           followUpActionCount: followUpActions.length,
         });
+        if (result.tutorMood && activeLearnerId) {
+          setLearnerMoodById((current) => ({
+            ...current,
+            [activeLearnerId]: mergeLearnerTutorMood(current[activeLearnerId], result.tutorMood),
+          }));
+        }
         updateSessionState(activeSessionKey, (currentState) => ({
           ...currentState,
           messages: [
@@ -773,6 +894,7 @@ export function KangurAiTutorProvider({
       }
     },
     [
+      activeLearnerId,
       activeSessionContext,
       activeSessionKey,
       allowSelectedTextSupport,
@@ -805,6 +927,9 @@ export function KangurAiTutorProvider({
       tutorPersona,
       tutorName,
       tutorMoodId,
+      tutorBehaviorMoodId: tutorBehaviorMood.currentMoodId,
+      tutorBehaviorMoodLabel: tutorBehaviorMoodPreset.label,
+      tutorBehaviorMoodDescription: tutorBehaviorMoodPreset.description,
       tutorAvatarSvg,
       tutorAvatarImageUrl,
       sessionContext: activeSessionContext,
@@ -826,6 +951,9 @@ export function KangurAiTutorProvider({
       tutorPersona,
       tutorName,
       tutorMoodId,
+      tutorBehaviorMood.currentMoodId,
+      tutorBehaviorMoodPreset.description,
+      tutorBehaviorMoodPreset.label,
       tutorAvatarSvg,
       tutorAvatarImageUrl,
       isOpen,
@@ -837,6 +965,7 @@ export function KangurAiTutorProvider({
       openChat,
       closeChat,
       sendMessage,
+      setHighlightedText,
     ]
   );
 

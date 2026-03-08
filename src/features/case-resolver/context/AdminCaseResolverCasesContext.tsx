@@ -4,7 +4,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import {
   useUpdateUserPreferencesMutation,
   useUserPreferences,
-} from '@/features/auth/hooks/useUserPreferences';
+} from '@/features/auth';
 import type {
   CaseResolverCategory,
   CaseResolverIdentifier,

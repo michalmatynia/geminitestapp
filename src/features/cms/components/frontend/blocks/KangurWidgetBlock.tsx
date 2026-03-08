@@ -2,53 +2,53 @@
 
 import React from 'react';
 
-import { getKangurWidgetLabel } from '@/features/kangur/cms-builder/project';
-import KangurAssignmentSpotlight from '@/features/kangur/ui/components/KangurAssignmentSpotlight';
-import { KangurActiveLessonPanelWidget } from '@/features/kangur/ui/components/KangurActiveLessonPanelWidget';
-import { KangurGameCalendarTrainingWidget } from '@/features/kangur/ui/components/KangurGameCalendarTrainingWidget';
-import { KangurGameGeometryTrainingWidget } from '@/features/kangur/ui/components/KangurGameGeometryTrainingWidget';
-import { KangurGameHomeActionsWidget } from '@/features/kangur/ui/components/KangurGameHomeActionsWidget';
-import { KangurGameHomeHeroWidget } from '@/features/kangur/ui/components/KangurGameHomeHeroWidget';
-import { KangurGameKangurSessionWidget } from '@/features/kangur/ui/components/KangurGameKangurSessionWidget';
-import { KangurGameKangurSetupWidget } from '@/features/kangur/ui/components/KangurGameKangurSetupWidget';
-import { KangurGameNavigationWidget } from '@/features/kangur/ui/components/KangurGameNavigationWidget';
-import { KangurGameOperationSelectorWidget } from '@/features/kangur/ui/components/KangurGameOperationSelectorWidget';
-import { KangurGameQuestionWidget } from '@/features/kangur/ui/components/KangurGameQuestionWidget';
-import { KangurGameResultWidget } from '@/features/kangur/ui/components/KangurGameResultWidget';
-import { KangurGameTrainingSetupWidget } from '@/features/kangur/ui/components/KangurGameTrainingSetupWidget';
-import { KangurGameXpToastWidget } from '@/features/kangur/ui/components/KangurGameXpToastWidget';
-import { KangurLessonNavigationWidget } from '@/features/kangur/ui/components/KangurLessonNavigationWidget';
-import { KangurLearnerProfileAssignmentsWidget } from '@/features/kangur/ui/components/KangurLearnerProfileAssignmentsWidget';
-import { KangurLearnerProfileHeroWidget } from '@/features/kangur/ui/components/KangurLearnerProfileHeroWidget';
-import { KangurLearnerProfileLevelProgressWidget } from '@/features/kangur/ui/components/KangurLearnerProfileLevelProgressWidget';
-import { KangurLearnerProfileMasteryWidget } from '@/features/kangur/ui/components/KangurLearnerProfileMasteryWidget';
-import { KangurLearnerProfileOverviewWidget } from '@/features/kangur/ui/components/KangurLearnerProfileOverviewWidget';
-import { KangurLearnerProfilePerformanceWidget } from '@/features/kangur/ui/components/KangurLearnerProfilePerformanceWidget';
-import { KangurLearnerProfileRecommendationsWidget } from '@/features/kangur/ui/components/KangurLearnerProfileRecommendationsWidget';
-import { KangurLearnerProfileSessionsWidget } from '@/features/kangur/ui/components/KangurLearnerProfileSessionsWidget';
-import { KangurParentDashboardAssignmentsWidget } from '@/features/kangur/ui/components/KangurParentDashboardAssignmentsWidget';
-import { KangurParentDashboardHeroWidget } from '@/features/kangur/ui/components/KangurParentDashboardHeroWidget';
-import { KangurParentDashboardLearnerManagementWidget } from '@/features/kangur/ui/components/KangurParentDashboardLearnerManagementWidget';
-import { KangurParentDashboardProgressWidget } from '@/features/kangur/ui/components/KangurParentDashboardProgressWidget';
-import { KangurParentDashboardScoresWidget } from '@/features/kangur/ui/components/KangurParentDashboardScoresWidget';
-import { KangurParentDashboardTabsWidget } from '@/features/kangur/ui/components/KangurParentDashboardTabsWidget';
-import Leaderboard from '@/features/kangur/ui/components/Leaderboard';
-import { KangurLessonsCatalogWidget } from '@/features/kangur/ui/components/KangurLessonsCatalogWidget';
-import PlayerProgressCard from '@/features/kangur/ui/components/PlayerProgressCard';
-import { KangurPriorityAssignments } from '@/features/kangur/ui/components/KangurPriorityAssignments';
 import {
+  Game as GamePage,
+  getKangurWidgetLabel,
   isKangurGameScreen,
+  KangurActiveLessonPanelWidget,
+  KangurAssignmentSpotlight,
+  KangurGameCalendarTrainingWidget,
+  KangurGameGeometryTrainingWidget,
+  KangurGameHomeActionsWidget,
+  KangurGameHomeHeroWidget,
+  KangurGameKangurSessionWidget,
+  KangurGameKangurSetupWidget,
+  KangurGameNavigationWidget,
+  KangurGameOperationSelectorWidget,
+  KangurGameQuestionWidget,
+  KangurGameResultWidget,
+  KangurGameTrainingSetupWidget,
+  KangurGameXpToastWidget,
+  LearnerProfile as LearnerProfilePage,
+  KangurLearnerProfileAssignmentsWidget,
+  KangurLearnerProfileHeroWidget,
+  KangurLearnerProfileLevelProgressWidget,
+  KangurLearnerProfileMasteryWidget,
+  KangurLearnerProfileOverviewWidget,
+  KangurLearnerProfilePerformanceWidget,
+  KangurLearnerProfileRecommendationsWidget,
+  KangurLearnerProfileSessionsWidget,
+  KangurLessonNavigationWidget,
+  KangurLessonsCatalogWidget,
+  Lessons as LessonsPage,
+  ParentDashboard as ParentDashboardPage,
+  KangurParentDashboardAssignmentsWidget,
+  KangurParentDashboardHeroWidget,
+  KangurParentDashboardLearnerManagementWidget,
+  KangurParentDashboardProgressWidget,
+  KangurParentDashboardScoresWidget,
+  KangurParentDashboardTabsWidget,
+  KangurPriorityAssignments,
+  Leaderboard,
+  PlayerProgressCard,
+  useKangurProgressState,
   useOptionalKangurGameRuntime,
-} from '@/features/kangur/ui/context/KangurGameRuntimeContext';
-import { useOptionalKangurLearnerProfileRuntime } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
-import { useOptionalKangurParentDashboardRuntime } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
-import { useOptionalKangurLessonsRuntime } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
-import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
-import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
-import GamePage from '@/features/kangur/ui/pages/Game';
-import LearnerProfilePage from '@/features/kangur/ui/pages/LearnerProfile';
-import LessonsPage from '@/features/kangur/ui/pages/Lessons';
-import ParentDashboardPage from '@/features/kangur/ui/pages/ParentDashboard';
+  useOptionalKangurLearnerProfileRuntime,
+  useOptionalKangurLessonsRuntime,
+  useOptionalKangurParentDashboardRuntime,
+  useOptionalKangurRouting,
+} from '@/features/kangur/public';
 import { Card } from '@/shared/ui';
 
 import { useRequiredBlockSettings } from './BlockContext';
@@ -64,15 +64,11 @@ const resolveLimit = (value: unknown, fallback: number): number => {
 const resolveText = (value: unknown, fallback: string): string =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : fallback;
 
-const resolveParentDashboardDisplayMode = (
-  value: unknown
-): 'always' | 'active-tab' =>
+const resolveParentDashboardDisplayMode = (value: unknown): 'always' | 'active-tab' =>
   value === 'active-tab' ? 'active-tab' : 'always';
 
 const resolveGameScreenVisibility = (value: unknown): string =>
-  typeof value === 'string' && (value === 'always' || isKangurGameScreen(value))
-    ? value
-    : 'always';
+  typeof value === 'string' && (value === 'always' || isKangurGameScreen(value)) ? value : 'always';
 
 function KangurWidgetFallback({
   title,

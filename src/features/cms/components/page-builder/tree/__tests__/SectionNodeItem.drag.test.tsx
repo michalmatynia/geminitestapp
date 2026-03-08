@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SectionNodeItem } from '@/features/cms/components/page-builder/tree/SectionNodeItem';
-import { MASTER_TREE_DRAG_NODE_ID } from '@/features/foldertree/v2';
+import { MASTER_TREE_DRAG_NODE_ID } from '@/features/foldertree';
 import type { SectionInstance } from '@/shared/contracts/cms';
 import { DRAG_KEYS } from '@/shared/utils/drag-drop';
 

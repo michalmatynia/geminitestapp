@@ -7,7 +7,7 @@ import {
   FolderTreeViewportV2,
   handleMasterTreeDrop,
   useMasterFolderTreeShell,
-} from '@/features/foldertree/v2';
+} from '@/features/foldertree';
 import { Button, Card } from '@/shared/ui';
 
 import { useDocumentActions, useDocumentState } from '../../context/hooks/useDocument';

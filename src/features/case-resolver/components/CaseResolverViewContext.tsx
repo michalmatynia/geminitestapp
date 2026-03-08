@@ -16,8 +16,8 @@ import type {
 import type {
   CaseResolverCaptureProposalState,
   CaseResolverCaptureDocumentDateAction,
-} from '@/features/case-resolver-capture/proposals';
-import type { CaseResolverCaptureAction } from '@/features/case-resolver-capture/settings';
+} from '@/features/case-resolver-capture';
+import type { CaseResolverCaptureAction } from '@/features/case-resolver-capture';
 export type { EditorDetailsTab };
 
 type WorkspaceView = CaseResolverWorkspaceView;

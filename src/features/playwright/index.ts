@@ -2,6 +2,7 @@
 export * from './components/PlaywrightSettingsForm';
 export * from './context/PlaywrightSettingsContext';
 export * from './constants/playwright';
+export * from './hooks/usePlaywrightPersonas';
 export * from './pages/PlaywrightPersonasPage';
 export * from '@/shared/contracts/playwright';
 export * from './utils/personas';

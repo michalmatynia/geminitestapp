@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { PromptExploderCaptureMappingModal } from '@/features/case-resolver/components/PromptExploderCaptureMappingModal';
 import { PromptExploderCaptureMappingModalRuntimeProvider } from '@/features/case-resolver/components/PromptExploderCaptureMappingModalRuntimeContext';
-import type { CaseResolverCaptureProposalState } from '@/features/case-resolver-capture/proposals';
+import type { CaseResolverCaptureProposalState } from '@/features/case-resolver-capture';
 
 const buildProposalDraft = (): CaseResolverCaptureProposalState =>
   ({

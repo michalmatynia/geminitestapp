@@ -3,8 +3,8 @@
 import { Save, Sparkles } from 'lucide-react';
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 
-import { CanvasBoard } from '@/features/ai/ai-paths/components/canvas-board';
-import { AiPathsProvider } from '@/features/ai/ai-paths/context/AiPathsProvider';
+import { CanvasBoard } from '@/features/ai';
+import { AiPathsProvider } from '@/features/ai';
 import { AI_PATHS_UI_STATE_KEY, EMPTY_RUNTIME_STATE } from '@/shared/lib/ai-paths/core/constants';
 import type { AiNode, Edge as AiEdge } from '@/shared/contracts/case-resolver';
 import {
@@ -12,11 +12,11 @@ import {
   invalidateAiPathsSettingsCache,
   updateAiPathsSetting,
 } from '@/shared/lib/ai-paths/settings-store-client';
-import { useGraphState } from '@/features/ai/ai-paths/context/hooks/useGraph';
+import { useGraphState } from '@/features/ai';
 import {
   useSelectionActions,
   useSelectionState,
-} from '@/features/ai/ai-paths/context/hooks/useSelection';
+} from '@/features/ai';
 import {
   type CaseResolverNodeMeta,
   type CaseResolverEdgeMeta,

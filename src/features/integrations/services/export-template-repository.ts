@@ -7,7 +7,7 @@ import { ObjectId as _ObjectId } from 'mongodb';
 import {
   getDefaultImageRetryPresets,
   normalizeImageRetryPresets,
-} from '@/features/data-import-export/utils/image-retry-presets';
+} from '@/features/data-import-export';
 import {
   buildActiveTemplateScopeKey,
   normalizeActiveTemplateId,

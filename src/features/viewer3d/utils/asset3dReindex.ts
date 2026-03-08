@@ -3,7 +3,7 @@ import 'server-only';
 import fs from 'fs/promises';
 import path from 'path';
 
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/shared/lib/db/prisma-client';
 
 import prisma from '@/shared/lib/db/prisma';
 

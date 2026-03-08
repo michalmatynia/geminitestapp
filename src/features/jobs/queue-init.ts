@@ -100,20 +100,20 @@ export const initializeQueues = (): void => {
 
     // Import all queue modules to trigger registration via createManagedQueue
     const queueModules = await Promise.all([
-      import('@/features/products/workers/productAiQueue'),
-      import('@/features/ai/ai-paths/workers/aiPathRunQueue'),
-      import('@/features/ai/chatbot/workers/chatbotJobQueue'),
-      import('@/features/ai/agent-runtime/workers/agentQueue'),
+      import('@/features/products/server'),
+      import('@/features/ai/server'),
+      import('@/features/ai/server'),
+      import('@/features/ai/server'),
       import('@/shared/lib/db/workers/databaseBackupSchedulerQueue'),
-      import('@/features/ai/image-studio/workers/imageStudioRunQueue'),
-      import('@/features/ai/image-studio/workers/imageStudioSequenceQueue'),
-      import('@/features/integrations/workers/traderaListingQueue'),
-      import('@/features/integrations/workers/traderaRelistSchedulerQueue'),
-      import('@/features/integrations/workers/baseImportQueue'),
-      import('@/features/product-sync/workers/productSyncQueue'),
-      import('@/features/product-sync/workers/productSyncBackfillQueue'),
-      import('@/features/product-sync/workers/productSyncSchedulerQueue'),
-      import('@/features/case-resolver/workers/caseResolverOcrQueue'),
+      import('@/features/ai/server'),
+      import('@/features/ai/server'),
+      import('@/features/integrations/server'),
+      import('@/features/integrations/server'),
+      import('@/features/integrations/server'),
+      import('@/features/product-sync/server'),
+      import('@/features/product-sync/server'),
+      import('@/features/product-sync/server'),
+      import('@/features/case-resolver/server'),
       import('@/shared/lib/observability/workers/systemLogAlertsQueue'),
     ]);
 
@@ -178,7 +178,7 @@ export const initializeQueues = (): void => {
 
     // AI Insights queue is started separately after the generic startup pass so Brain gating
     // can decide whether the worker should run at all.
-    const startAiInsightsQueue = (await import('@/features/ai/insights/workers/aiInsightsQueue'))
+    const startAiInsightsQueue = (await import('@/features/ai/server'))
       .startAiInsightsQueue as (() => void) | undefined;
     startAiInsightsQueue?.();
   })();

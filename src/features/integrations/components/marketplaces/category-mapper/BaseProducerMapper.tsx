@@ -11,7 +11,7 @@ import {
   useProducerMappings,
   useExternalProducers,
 } from '@/features/integrations/hooks/useMarketplaceQueries';
-import { useProducers } from '@/features/products/hooks/useProductMetadataQueries';
+import { useProducers } from '@/features/products';
 import { type ProducerMapping, type ExternalProducer } from '@/shared/contracts/integrations';
 import { type Producer } from '@/shared/contracts/products';
 import { GenericMapper, type GenericItemMapperConfig } from '@/shared/ui';

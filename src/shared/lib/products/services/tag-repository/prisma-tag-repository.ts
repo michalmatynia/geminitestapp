@@ -1,4 +1,4 @@
-import { Prisma, ProductTag as PrismaProductTag } from '@prisma/client';
+import { Prisma, ProductTag as PrismaProductTag } from '@/shared/lib/db/prisma-client';
 
 import type { TagRepository, TagFilters } from '@/shared/contracts/products';
 import type { ProductTag } from '@/shared/contracts/products';

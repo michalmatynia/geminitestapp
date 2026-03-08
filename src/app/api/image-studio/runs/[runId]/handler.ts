@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getImageStudioRunById } from '@/features/ai/image-studio/server';
+import { getImageStudioRunById } from '@/features/ai/server';
 import type { ImageStudioRunDetailResponse } from '@/shared/contracts/image-studio';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';

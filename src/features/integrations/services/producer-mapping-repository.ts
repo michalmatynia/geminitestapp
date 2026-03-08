@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/shared/lib/db/prisma-client';
 import { ObjectId } from 'mongodb';
 
 import {

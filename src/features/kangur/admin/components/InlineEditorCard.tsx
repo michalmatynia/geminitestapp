@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { MediaLibraryPanel } from '@/features/cms/components/page-builder/MediaLibraryPanel';
+import { MediaLibraryPanel } from '@/features/cms/public';
 import { DocumentWysiwygEditor } from '@/features/document-editor';
 import {
   isSvgImageSource,

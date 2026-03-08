@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 
-import { useAdminLayoutState } from '@/features/admin/context/AdminLayoutContext';
+import { useAdminLayoutState } from '@/features/admin';
 import { CreateNoteModal } from '@/features/notesapp/components/CreateNoteModal';
 import { NoteDetailView } from '@/features/notesapp/components/NoteDetailView';
 import { NoteListView } from '@/features/notesapp/components/NoteListView';

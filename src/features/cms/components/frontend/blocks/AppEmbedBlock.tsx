@@ -9,7 +9,7 @@ import {
   DEFAULT_APP_EMBED_HEIGHT,
   DEFAULT_APP_EMBED_ID,
   getAppEmbedOption,
-} from '@/features/app-embeds/lib/constants';
+} from '@/features/app-embeds';
 import {
   buildKangurEmbeddedBasePath,
   getKangurPageSlug,
@@ -18,8 +18,8 @@ import {
   KANGUR_PAGE_TO_SLUG,
   readKangurUrlParam,
   KANGUR_EMBED_QUERY_PARAM,
-} from '@/features/kangur/config/routing';
-import { KangurFeaturePage } from '@/features/kangur/public';
+  KangurFeaturePage,
+} from '@/features/kangur/public';
 import { Card } from '@/shared/ui';
 
 import { useRequiredBlockRenderContext, useRequiredBlockSettings } from './BlockContext';

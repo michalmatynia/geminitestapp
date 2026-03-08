@@ -1,6 +1,6 @@
 'use client';
 
-import { invalidateProductsAndCounts } from '@/features/products/hooks/productCache';
+import { invalidateProductsAndCounts } from '@/features/products';
 import type { CreateMutation } from '@/shared/contracts/ui';
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';

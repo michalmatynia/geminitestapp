@@ -18,7 +18,7 @@ import React, { useMemo } from 'react';
 import {
   encodeFilemakerPartyReference,
   decodeFilemakerPartyReference,
-} from '@/features/filemaker/settings';
+} from '@/features/filemaker';
 import {
   Badge,
   Button,

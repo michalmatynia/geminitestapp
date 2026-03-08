@@ -27,7 +27,7 @@ import { useStudioProjects } from '@/features/ai/image-studio/hooks/useImageStud
 import {
   useUpdateUserPreferencesMutation,
   useUserPreferences,
-} from '@/features/auth/hooks/useUserPreferences';
+} from '@/features/auth';
 import type { ImageStudioProjectRecord } from '@/shared/contracts/image-studio';
 import type { CreateMutation, DeleteMutation, UpdateMutation } from '@/shared/contracts/ui';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';

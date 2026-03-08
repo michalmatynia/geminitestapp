@@ -5,7 +5,7 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { buildKangurEmbeddedBasePath } from '@/features/kangur/config/routing';
+import { buildKangurEmbeddedBasePath } from '@/features/kangur/public';
 
 const { usePathnameMock, useSearchParamsMock } = vi.hoisted(() => ({
   usePathnameMock: vi.fn(),

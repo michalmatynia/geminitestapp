@@ -75,7 +75,7 @@ export function TemplateNodeConfigSection(): React.JSX.Element | null {
         return {
           id: `direct-${port}-${index}`,
           label: formatPortLabel(port),
-          token: `{{${port}}}`,
+          placeholder: `{{${port}}}`,
           resolvesTo:
             value !== undefined ? formatRuntimeValue(value) : 'Connected input placeholder.',
         };
@@ -109,7 +109,7 @@ export function TemplateNodeConfigSection(): React.JSX.Element | null {
         bundleEntries.push({
           id: `bundle-${key}-${index}`,
           label: key,
-          token: `{{bundle.${key}}}`,
+          placeholder: `{{bundle.${key}}}`,
           resolvesTo: resolved !== undefined ? formatRuntimeValue(resolved) : `Bundle key: ${key}`,
         });
       });
@@ -133,14 +133,14 @@ export function TemplateNodeConfigSection(): React.JSX.Element | null {
         {
           id: 'current-value',
           label: 'Current value',
-          token: '{{value}}',
+          placeholder: '{{value}}',
           resolvesTo: currentResolved,
           dynamic: true,
         },
         {
           id: 'current',
           label: 'Current',
-          token: '{{current}}',
+          placeholder: '{{current}}',
           resolvesTo: currentResolved,
           dynamic: true,
         },
@@ -216,7 +216,9 @@ export function TemplateNodeConfigSection(): React.JSX.Element | null {
         target={placeholderTarget}
         onTargetChange={setPlaceholderTarget}
         targetOptions={[{ value: 'template', label: 'Template' }]}
-        onInsert={(token: string, _target: PlaceholderTarget) => insertTemplatePlaceholder(token)}
+        onInsert={(placeholder: string, _target: PlaceholderTarget) =>
+          insertTemplatePlaceholder(placeholder)
+        }
       />
     </div>
   );

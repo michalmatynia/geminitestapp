@@ -7,7 +7,7 @@ import {
   createMasterFolderTreeTransactionAdapter,
   FolderTreeViewportV2,
   useMasterFolderTreeShell,
-} from '@/features/foldertree/v2';
+} from '@/features/foldertree';
 import { Button, Card, FormField, Input, SectionHeader, Textarea } from '@/shared/ui';
 
 import { SegmentEditorListItemLogicalEditor } from '../SegmentEditorListItemLogicalEditor';

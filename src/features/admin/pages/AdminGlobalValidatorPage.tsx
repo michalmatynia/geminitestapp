@@ -4,9 +4,9 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useMemo } from 'react';
 
-import { AdminImageStudioValidationPatternsPage } from '@/features/ai/image-studio';
-import { ValidatorSettings } from '@/features/products/components/settings/ValidatorSettings';
-import { ValidatorDocsTooltipsProvider } from '@/features/products/components/settings/validator-settings/ValidatorDocsTooltips';
+import { AdminImageStudioValidationPatternsPage } from '@/features/ai';
+import { ValidatorSettings } from '@/features/products';
+import { ValidatorDocsTooltipsProvider } from '@/features/products';
 import { AdminPromptEngineValidationPatternsPage } from '@/features/prompt-engine';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { Button, ClientOnly, FormSection, SectionHeader } from '@/shared/ui';

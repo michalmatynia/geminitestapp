@@ -25,7 +25,7 @@ import {
 import {
   useParameters as useProductParameters,
   useSimpleParameters as useProductSimpleParameters,
-} from '@/features/products/hooks/useProductSettingsQueries';
+} from '@/features/products';
 import {
   useImportExportActions,
   useImportExportData,

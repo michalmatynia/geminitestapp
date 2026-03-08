@@ -5,7 +5,7 @@ import React, { useCallback, useMemo, useRef, useEffect } from 'react';
 
 import { stableStringify } from '@/shared/lib/ai-paths/core/utils/runtime';
 import type { FilemakerPartyKind } from '@/features/filemaker';
-import { resolveFilemakerPartyLabel } from '@/features/filemaker/settings';
+import { resolveFilemakerPartyLabel } from '@/features/filemaker';
 import { DEFAULT_CASE_RESOLVER_NODE_META } from '@/shared/contracts/case-resolver';
 import type {
   AiNode,

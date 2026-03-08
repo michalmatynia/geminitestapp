@@ -13,7 +13,7 @@ import {
   useOptionalProductImagesTabStateContext,
 } from './ProductImagesTabContext';
 
-const FileManager = dynamic(() => import('@/features/files/components/FileManager'), {
+const FileManager = dynamic(() => import('@/features/files'), {
   ssr: false,
 });
 

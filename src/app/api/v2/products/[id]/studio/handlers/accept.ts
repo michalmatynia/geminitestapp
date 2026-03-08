@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { acceptProductStudioVariant } from '@/features/ai/image-studio/server';
+import { acceptProductStudioVariant } from '@/features/ai/server';
 import { productStudioAcceptRequestSchema as acceptSchema } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';

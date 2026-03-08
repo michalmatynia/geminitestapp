@@ -12,19 +12,19 @@ type KangurLearnerSessionPayload = {
 
 const COOKIE_NAME = 'kangur.learner-session';
 const COOKIE_TTL_MS = 1000 * 60 * 60 * 24 * 30;
-const DEV_FALLBACK_SECRET = 'kangur-dev-secret-change-me';
+const DEV_FALLBACK_SIGNING_KEY = 'kangur-dev-signing-key-change-me';
 
-const resolveSecret = (): string =>
+const resolveSigningKey = (): string =>
   process.env['AUTH_SECRET'] ||
   process.env['NEXTAUTH_SECRET'] ||
-  (process.env['NODE_ENV'] === 'development' ? DEV_FALLBACK_SECRET : '');
+  (process.env['NODE_ENV'] === 'development' ? DEV_FALLBACK_SIGNING_KEY : '');
 
 const base64UrlEncode = (value: string): string => Buffer.from(value).toString('base64url');
 
 const base64UrlDecode = (value: string): string => Buffer.from(value, 'base64url').toString('utf8');
 
 const signValue = (value: string): string =>
-  createHmac('sha256', resolveSecret()).update(value).digest('base64url');
+  createHmac('sha256', resolveSigningKey()).update(value).digest('base64url');
 
 const safeEqual = (left: string, right: string): boolean => {
   const leftBuffer = Buffer.from(left);

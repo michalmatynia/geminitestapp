@@ -3,7 +3,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { CmsRuntimeProvider } from '@/features/cms/components/frontend/CmsRuntimeContext';
+import { CmsRuntimeProvider } from '@/features/cms/public';
 import { getKangurPageHref } from '@/features/kangur/config/routing';
 import {
   buildKangurAssignmentHref,

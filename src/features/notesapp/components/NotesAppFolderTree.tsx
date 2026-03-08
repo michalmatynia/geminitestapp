@@ -8,7 +8,7 @@ import {
   handleMasterTreeDrop,
   resolveFolderTreeIconSet,
   useMasterFolderTreeShell,
-} from '@/features/foldertree/v2';
+} from '@/features/foldertree';
 import { useNotesAppActions, useNotesAppState } from '@/features/notesapp/hooks/NotesAppContext';
 import type { NotesMasterTreeOperations } from '@/shared/contracts/notes';
 import { FolderTreePanel } from '@/shared/ui';

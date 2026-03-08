@@ -7,7 +7,7 @@ import { createPortal } from 'react-dom';
 import {
   useAdminLayoutActions,
   useAdminLayoutState,
-} from '@/features/admin/context/AdminLayoutContext';
+} from '@/features/admin';
 import { Button } from '@/shared/ui';
 
 export function KangurAdminMenuToggle(): React.JSX.Element | null {

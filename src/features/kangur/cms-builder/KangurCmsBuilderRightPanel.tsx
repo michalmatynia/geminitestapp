@@ -1,7 +1,6 @@
 'use client';
 
-import { ComponentSettingsPanel } from '@/features/cms/components/page-builder/ComponentSettingsPanel';
-import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
+import { ComponentSettingsPanel, usePageBuilder } from '@/features/cms/public';
 import { SidePanel } from '@/shared/ui';
 
 export function KangurCmsBuilderRightPanel(): React.JSX.Element {

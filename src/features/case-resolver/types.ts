@@ -1,4 +1,4 @@
-import type { CaseResolverCaptureProposalState } from '@/features/case-resolver-capture/proposals';
+import type { CaseResolverCaptureProposalState } from '@/features/case-resolver-capture';
 import type {
   CaseResolverFile,
   CaseResolverAssetFile,

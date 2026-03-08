@@ -90,7 +90,7 @@ const syncTraderaRelistSchedulerWorker = async (key: string): Promise<void> => {
   if (!TRADERA_RELIST_SCHEDULER_SETTING_KEYS.has(key)) return;
   try {
     const { startTraderaRelistSchedulerQueue } =
-      await import('@/features/integrations/workers/traderaRelistSchedulerQueue');
+      await import('@/features/integrations/server');
     startTraderaRelistSchedulerQueue();
   } catch (error) {
     await ErrorSystem.logWarning('[settings] Failed to sync Tradera relist scheduler worker.', {

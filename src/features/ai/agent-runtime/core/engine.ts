@@ -4,7 +4,7 @@ import { randomUUID } from 'crypto';
 import { promises as fs } from 'fs';
 import path from 'path';
 
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/shared/lib/db/prisma-client';
 
 import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
 import { DEBUG_CHATBOT } from '@/features/ai/agent-runtime/core/config';

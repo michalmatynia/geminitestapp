@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import type { ProductWithImages, ProductDraft } from '@/shared/contracts/products';
-import { useIntegrationOperations } from '@/features/integrations/hooks/useIntegrationOperations';
+import { useIntegrationOperations } from '@/features/integrations';
 import type { Toast } from '@/shared/contracts/ui';
 
 export function useProductListModals({

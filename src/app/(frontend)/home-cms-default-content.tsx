@@ -1,5 +1,8 @@
 import { CmsPageRenderer } from '@/features/cms/components/frontend/CmsPageRenderer';
-import { getMediaInlineStyles, getMediaStyleVars } from '@/features/cms/public';
+import {
+  getMediaInlineStyles,
+  getMediaStyleVars,
+} from '@/features/cms/components/frontend/theme-styles';
 
 export function HomeCmsDefaultContent(props: {
   themeSettings: Parameters<typeof getMediaStyleVars>[0];

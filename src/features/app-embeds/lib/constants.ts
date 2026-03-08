@@ -1,6 +1,6 @@
 import type { AppEmbedId } from '@/shared/contracts/app-embeds';
 import { APP_EMBED_SETTING_KEY as SETTING_KEY } from '@/shared/contracts/app-embeds';
-import { KANGUR_MAIN_PAGE_KEY } from '@/features/kangur/config/routing';
+import { KANGUR_MAIN_PAGE_KEY } from '@/features/kangur/public';
 
 export type { AppEmbedId };
 

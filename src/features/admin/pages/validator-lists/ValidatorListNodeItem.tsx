@@ -4,7 +4,7 @@ import React from 'react';
 import { ExternalLink, GripVertical, Lock, Pencil, Trash2, Unlock } from 'lucide-react';
 import Link from 'next/link';
 
-import type { FolderTreeViewportRenderNodeInput as ValidatorListNodeItemProps } from '@/features/foldertree/v2';
+import type { FolderTreeViewportRenderNodeInput as ValidatorListNodeItemProps } from '@/features/foldertree';
 import { Badge, TreeContextMenu, TreeRow } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { KangurAssignment, KangurLearnerProfile } from '@/shared/contracts/kangur';
 import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
+import { createDefaultKangurAiTutorLearnerMood } from '@/shared/contracts/kangur-ai-tutor-mood';
 
 import {
   buildDefaultKangurLearnerSeed,
@@ -19,6 +20,7 @@ const buildLearner = (overrides: Partial<KangurLearnerProfile> = {}): KangurLear
   loginName: overrides.loginName ?? 'ada',
   status: overrides.status ?? 'active',
   legacyUserKey: overrides.legacyUserKey ?? null,
+  aiTutor: overrides.aiTutor ?? createDefaultKangurAiTutorLearnerMood(),
   createdAt: overrides.createdAt ?? '2026-03-06T12:00:00.000Z',
   updatedAt: overrides.updatedAt ?? '2026-03-06T12:00:00.000Z',
 });

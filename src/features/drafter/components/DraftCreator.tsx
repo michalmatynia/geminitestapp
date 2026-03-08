@@ -16,12 +16,12 @@ import type {
   ProductParameterValue,
   CreateProductDraftInput,
 } from '@/shared/contracts/products';
-import { getCategoriesFlat, getParameters, getTags } from '@/features/products/api/settings';
-import { ProductImagesTabContent } from '@/features/products/components/form/ProductImagesTabContent';
-import { ProductImagesTabProvider } from '@/features/products/components/form/ProductImagesTabContext';
-import type { ProductImageManagerController } from '@/features/products/components/ProductImageManager';
-import { useProductImages } from '@/features/products/hooks/useProductImages';
-import { useCatalogs, useProducers } from '@/features/products/hooks/useProductMetadataQueries';
+import { getCategoriesFlat, getParameters, getTags } from '@/features/products';
+import { ProductImagesTabContent } from '@/features/products';
+import { ProductImagesTabProvider } from '@/features/products';
+import type { ProductImageManagerController } from '@/features/products';
+import { useProductImages } from '@/features/products';
+import { useCatalogs, useProducers } from '@/features/products';
 import { type ProductDraftOpenFormTab } from '@/shared/contracts/products';
 import { createMultiQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';

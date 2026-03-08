@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { sendProductImageToStudio } from '@/features/ai/image-studio/server';
+import { sendProductImageToStudio } from '@/features/ai/server';
 import { productStudioSendRequestSchema as sendSchema } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';

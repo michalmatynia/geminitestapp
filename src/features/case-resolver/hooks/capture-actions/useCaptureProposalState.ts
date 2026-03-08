@@ -5,10 +5,10 @@ import type {
   CaseResolverCaptureProposalState,
   CaseResolverCaptureProposal,
   CaseResolverCaptureDocumentDateAction,
-} from '@/features/case-resolver-capture/proposals';
-import type { CaseResolverCaptureAction } from '@/features/case-resolver-capture/settings';
+} from '@/features/case-resolver-capture';
+import type { CaseResolverCaptureAction } from '@/features/case-resolver-capture';
 import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
-import { decodeFilemakerPartyReference } from '@/features/filemaker/settings';
+import { decodeFilemakerPartyReference } from '@/features/filemaker';
 import { logCaseResolverWorkspaceEvent } from '../../workspace-persistence';
 import { useToast } from '@/shared/ui';
 

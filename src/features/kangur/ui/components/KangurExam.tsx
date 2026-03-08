@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useId, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle, ChevronLeft, ChevronRight, XCircle } from 'lucide-react';
 
@@ -30,6 +30,8 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_ACCENT_STYLES, type KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { getKangurQuestions } from '@/features/kangur/ui/services/kangur-questions';
+import { KangurLessonNarrator } from '@/features/kangur/ui/components/KangurLessonNarrator';
+import type { KangurLesson } from '@/shared/contracts/kangur';
 import type { KangurExamQuestion, KangurQuestionChoice } from '@/features/kangur/ui/types';
 import { cn } from '@/shared/utils';
 
@@ -102,9 +104,33 @@ function ExamQuestion({
   const pointLabel = POINT_LABELS[q.id];
   const headingId = useId();
   const descriptionId = useId();
+  const narrationSourceRef = useRef<HTMLDivElement | null>(null);
+  const narratorLesson = useMemo<
+    Pick<KangurLesson, 'id' | 'title' | 'description' | 'contentMode'>
+  >(
+    () => ({
+      id: `kangur-exam-question:${q.id}`,
+      title: `Pytanie ${qIndex + 1}`,
+      description: q.question,
+      contentMode: 'component',
+    }),
+    [q.id, q.question, qIndex]
+  );
+  const narrationText = useMemo(
+    () =>
+      [
+        `Pytanie ${qIndex + 1} z ${total}.`,
+        q.question,
+        ...q.choices.map((choice, index) => `${String.fromCharCode(65 + index)}. ${choice}.`),
+      ].join(' '),
+    [q.choices, q.question, qIndex, total]
+  );
 
   return (
     <section aria-labelledby={headingId} className='flex flex-col gap-4 w-full'>
+      <div aria-hidden='true' className='sr-only' ref={narrationSourceRef}>
+        {narrationText}
+      </div>
       <div aria-live='polite' aria-atomic='true' className='flex items-center gap-2'>
         <KangurProgressBar
           accent='amber'
@@ -126,15 +152,30 @@ function ExamQuestion({
         padding='lg'
         tone='neutral'
       >
-        <div className='flex items-center justify-between mb-1'>
+        <div className='mb-1 flex items-start justify-between gap-3'>
           <p id={headingId} className='text-sm font-bold text-orange-500 uppercase tracking-wide'>
             Pytanie {qIndex + 1}
           </p>
-          {pointLabel ? (
-            <KangurStatusChip accent='amber' data-testid='kangur-exam-question-point-chip' size='sm'>
-              {pointLabel}
-            </KangurStatusChip>
-          ) : null}
+          <div className='flex items-center gap-2'>
+            <KangurLessonNarrator
+              lesson={narratorLesson}
+              lessonDocument={null}
+              lessonContentRef={narrationSourceRef}
+              readLabel='Czytaj pytanie'
+              pauseLabel='Pauza'
+              resumeLabel='Wznow'
+              loadingLabel='Przygotowywanie...'
+            />
+            {pointLabel ? (
+              <KangurStatusChip
+                accent='amber'
+                data-testid='kangur-exam-question-point-chip'
+                size='sm'
+              >
+                {pointLabel}
+              </KangurStatusChip>
+            ) : null}
+          </div>
         </div>
         <p id={descriptionId} className='font-semibold leading-relaxed text-slate-800'>
           {q.question}
@@ -275,7 +316,11 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
               Pytanie {reviewing + 1}
             </p>
             {pointLabel ? (
-              <KangurStatusChip accent='amber' data-testid='kangur-exam-review-point-chip' size='sm'>
+              <KangurStatusChip
+                accent='amber'
+                data-testid='kangur-exam-review-point-chip'
+                size='sm'
+              >
                 {pointLabel}
               </KangurStatusChip>
             ) : null}

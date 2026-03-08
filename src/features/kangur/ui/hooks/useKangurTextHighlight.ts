@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 export type KangurTextHighlightResult = {
   selectedText: string | null;
   selectionRect: DOMRect | null;
+  selectionContainerRect: DOMRect | null;
   clearSelection: () => void;
 };
 
@@ -42,8 +43,32 @@ const cloneDomRect = (rect: DOMRect | DOMRectReadOnly | null): DOMRect | null =>
 export function useKangurTextHighlight(): KangurTextHighlightResult {
   const [selectedText, setSelectedText] = useState<string | null>(null);
   const [selectionRect, setSelectionRect] = useState<DOMRect | null>(null);
+  const [selectionContainerRect, setSelectionContainerRect] = useState<DOMRect | null>(null);
 
   useEffect(() => {
+    const resolveSelectionContainerRect = (range: Range | null): DOMRect | null => {
+      if (!range || typeof document === 'undefined') {
+        return null;
+      }
+
+      const commonAncestor =
+        range.commonAncestorContainer instanceof Element
+          ? range.commonAncestorContainer
+          : range.commonAncestorContainer.parentElement;
+
+      for (let current = commonAncestor; current; current = current.parentElement) {
+        const testId = current.getAttribute('data-testid');
+        const isLessonBlock = testId?.startsWith('lesson-') && testId.includes('-block-');
+        const isQuestionAnchor = testId === 'kangur-test-question-anchor';
+
+        if (isLessonBlock || isQuestionAnchor) {
+          return cloneDomRect(current.getBoundingClientRect());
+        }
+      }
+
+      return null;
+    };
+
     const handleSelectionChange = (): void => {
       if (typeof window === 'undefined') return;
       const selection = window.getSelection();
@@ -56,8 +81,10 @@ export function useKangurTextHighlight(): KangurTextHighlightResult {
         range && typeof range.getBoundingClientRect === 'function'
           ? cloneDomRect(range.getBoundingClientRect())
           : null;
+      const containerRect = text.length > 0 ? resolveSelectionContainerRect(range) : null;
       setSelectedText(text.length > 0 ? text : null);
       setSelectionRect(text.length > 0 ? rangeRect : null);
+      setSelectionContainerRect(containerRect);
     };
 
     document.addEventListener('selectionchange', handleSelectionChange);
@@ -76,7 +103,8 @@ export function useKangurTextHighlight(): KangurTextHighlightResult {
     }
     setSelectedText(null);
     setSelectionRect(null);
+    setSelectionContainerRect(null);
   }, []);
 
-  return { selectedText, selectionRect, clearSelection };
+  return { selectedText, selectionRect, selectionContainerRect, clearSelection };
 }

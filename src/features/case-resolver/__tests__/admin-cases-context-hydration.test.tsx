@@ -44,7 +44,7 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(''),
 }));
 
-vi.mock('@/features/auth/hooks/useUserPreferences', () => ({
+vi.mock('@/features/auth', () => ({
   useUserPreferences: () => userPreferencesQueryMock,
   useUpdateUserPreferencesMutation: () => ({
     mutateAsync: updatePreferencesMutateAsyncMock,

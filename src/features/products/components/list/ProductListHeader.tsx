@@ -8,7 +8,7 @@ import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-butto
 import {
   useAdminLayoutActions,
   useAdminLayoutState,
-} from '@/features/admin/context/AdminLayoutContext';
+} from '@/features/admin';
 import { PRODUCT_PAGE_SIZE_OPTIONS } from '@/shared/lib/products/constants';
 import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
 import {

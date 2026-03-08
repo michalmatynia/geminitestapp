@@ -129,12 +129,12 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
   const placeholderGroups = React.useMemo((): PlaceholderGroup[] => {
     const groups: PlaceholderGroup[] = [];
     const connectedEntries = connectedPlaceholders.map(
-      (token: string, index: number): PlaceholderEntry => {
-        const raw = token.replace(/^\{\{|\}\}$/g, '').trim();
+      (placeholder: string, index: number): PlaceholderEntry => {
+        const raw = placeholder.replace(/^\{\{|\}\}$/g, '').trim();
         return {
           id: `connected-${index}`,
           label: raw,
-          token,
+          placeholder,
           resolvesTo: '—',
         };
       }
@@ -152,17 +152,17 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
       id: 'special',
       title: 'Special Tokens',
       entries: [
-        { id: 'val', label: 'value', token: '{{value}}', resolvesTo: 'Last node output' },
+        { id: 'val', label: 'value', placeholder: '{{value}}', resolvesTo: 'Last node output' },
         {
           id: 'ctx-id',
           label: 'context.entityId',
-          token: '{{context.entityId}}',
+          placeholder: '{{context.entityId}}',
           resolvesTo: 'ID of current entity',
         },
         {
           id: 'ctx-type',
           label: 'context.entityType',
-          token: '{{context.entityType}}',
+          placeholder: '{{context.entityType}}',
           resolvesTo: 'Type of current entity',
         },
       ],

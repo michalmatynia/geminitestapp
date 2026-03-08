@@ -18,7 +18,7 @@ import {
   FolderTreeViewportV2,
   useMasterFolderTreeShell,
   type FolderTreeViewportRenderNodeInput,
-} from '@/features/foldertree/v2';
+} from '@/features/foldertree';
 import type { AdminNavLeaf, AdminNavNodeEntry } from '@/shared/contracts/admin';
 import {
   Button,

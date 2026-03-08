@@ -10,7 +10,7 @@ import React, {
   useState,
 } from 'react';
 
-import { useUserPreferences } from '@/features/auth/hooks/useUserPreferences';
+import { useUserPreferences } from '@/features/auth';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';

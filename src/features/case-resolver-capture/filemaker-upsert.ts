@@ -3,13 +3,13 @@ import {
   findExistingFilemakerAddressId,
   findExistingFilemakerPartyReference,
   normalizeCaseResolverComparable,
-} from '@/features/case-resolver/party-matching';
-import { createId } from '@/features/case-resolver/utils/caseResolverUtils';
+} from '@/features/case-resolver';
+import { createId } from '@/features/case-resolver';
 import {
   createFilemakerAddress,
   createFilemakerOrganization,
   createFilemakerPerson,
-} from '@/features/filemaker/settings';
+} from '@/features/filemaker';
 import type { CaseResolverPartyReference } from '@/shared/contracts/case-resolver';
 import type {
   FilemakerAddressDto as FilemakerAddress,

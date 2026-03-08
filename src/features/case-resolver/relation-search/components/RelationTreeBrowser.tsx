@@ -7,8 +7,8 @@ import {
   useFolderTreeInstanceV2,
   useSharedMasterFolderTreeRuntime,
   type FolderTreeViewportRenderNodeInput,
-} from '@/features/foldertree/v2';
-import { useMasterFolderTreeSearch } from '@/features/foldertree/v2/search';
+} from '@/features/foldertree';
+import { useMasterFolderTreeSearch } from '@/features/foldertree';
 import type {
   MasterTreeDropPosition,
   MasterTreeNode,

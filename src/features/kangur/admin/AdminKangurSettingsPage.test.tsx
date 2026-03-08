@@ -54,7 +54,13 @@ vi.mock('@/shared/lib/api-client', () => ({
   },
 }));
 
-vi.mock('@/features/ai/agentcreator/hooks/useAgentPersonas', () => ({
+vi.mock('@/features/ai', () => ({
+  AgentPersonaMoodAvatar: () => null,
+  resolveAgentPersonaMood: () => ({
+    id: 'neutral',
+    svgContent: '<svg />',
+    avatarImageUrl: null,
+  }),
   useAgentPersonas: useAgentPersonasMock,
 }));
 

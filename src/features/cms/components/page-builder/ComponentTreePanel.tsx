@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 
-import { FolderTreeViewportV2, useMasterFolderTreeShell } from '@/features/foldertree/v2';
+import { FolderTreeViewportV2, useMasterFolderTreeShell } from '@/features/foldertree';
 import type { PageZone, SectionInstance } from '@/shared/contracts/cms';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Button, FolderTreePanel, TreeHeader, EmptyState } from '@/shared/ui';

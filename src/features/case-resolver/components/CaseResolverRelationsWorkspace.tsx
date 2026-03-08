@@ -4,14 +4,14 @@ import { Network } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import React from 'react';
 
-import { CanvasBoard } from '@/features/ai/ai-paths/components/canvas-board';
+import { CanvasBoard } from '@/features/ai';
 import {
   AiPathsProvider,
   useGraphActions,
   useGraphState,
   useSelectionActions,
   useSelectionState,
-} from '@/features/ai/ai-paths/context';
+} from '@/features/ai';
 import { EMPTY_RUNTIME_STATE, typeStyles } from '@/shared/lib/ai-paths/core/constants';
 import { stableStringify } from '@/shared/lib/ai-paths/core/utils/runtime';
 import type { AiNode, Edge } from '@/shared/contracts/case-resolver';

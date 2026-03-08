@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 
-import { Prisma, type SystemLog } from '@prisma/client';
+import { Prisma, type SystemLog } from '@/shared/lib/db/prisma-client';
 
 import type { ActivityRepository, ActivityFilters } from '@/shared/contracts/system';
 import type { ActivityLog, CreateActivityLog } from '@/shared/contracts/system';

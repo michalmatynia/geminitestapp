@@ -26,7 +26,7 @@ vi.mock('@/features/ai/chatbot/services/chatbot-job-repository', () => ({
   },
 }));
 
-vi.mock('@/features/ai/image-studio/server', () => ({
+vi.mock('@/features/ai/server', () => ({
   listImageStudioRuns: listImageStudioRunsMock,
 }));
 

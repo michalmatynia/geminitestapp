@@ -3,7 +3,7 @@
 import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { useImportExportState } from '@/features/data-import-export/context/ImportExportContext';
-import { useCategoryMappingsByConnection } from '@/features/integrations/hooks/useMarketplaceQueries';
+import { useCategoryMappingsByConnection } from '@/features/integrations';
 import { Badge, Hint } from '@/shared/ui';
 
 export function ExportCategoryStatusSection(): React.JSX.Element {

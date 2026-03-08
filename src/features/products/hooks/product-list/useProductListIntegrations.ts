@@ -6,11 +6,11 @@ import {
   fetchIntegrationsWithConnections,
   fetchPreferredBaseConnection,
   integrationSelectionQueryKeys,
-} from '@/features/integrations/components/listings/hooks/useIntegrationSelection';
+} from '@/features/integrations';
 import {
   fetchProductListings,
   productListingsQueryKey,
-} from '@/features/integrations/hooks/useListingQueries';
+} from '@/features/integrations';
 import { prefetchQueryV2, fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 
@@ -18,7 +18,7 @@ export function useProductListIntegrations() {
   const queryClient = useQueryClient();
 
   const prefetchIntegrationSelectionData = useCallback((): void => {
-    void import('@/features/integrations/components/listings/SelectIntegrationModal');
+    void import('@/features/integrations');
     void prefetchQueryV2(queryClient, {
       queryKey: normalizeQueryKey(integrationSelectionQueryKeys.withConnections),
       queryFn: fetchIntegrationsWithConnections,

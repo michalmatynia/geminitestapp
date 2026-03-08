@@ -1,4 +1,4 @@
-import type { SystemLog } from '@prisma/client';
+import type { SystemLog } from '@/shared/lib/db/prisma-client';
 
 import type {
   SystemLogLevelDto as SystemLogLevel,

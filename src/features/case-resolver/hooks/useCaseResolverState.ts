@@ -6,17 +6,17 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   useAdminLayoutActions,
   useAdminLayoutState,
-} from '@/features/admin/context/AdminLayoutContext';
+} from '@/features/admin';
 import {
   CASE_RESOLVER_CAPTURE_SETTINGS_KEY,
   parseCaseResolverCaptureSettings,
   type CaseResolverCaptureSettings as CaseResolverCaptureSettingsType,
-} from '@/features/case-resolver-capture/settings';
+} from '@/features/case-resolver-capture';
 import {
   FILEMAKER_DATABASE_KEY,
   createDefaultFilemakerDatabase,
   parseFilemakerDatabase,
-} from '@/features/filemaker/settings';
+} from '@/features/filemaker';
 import { useCountries } from '@/shared/hooks/use-i18n-queries';
 import type {
   CaseResolverCategory,

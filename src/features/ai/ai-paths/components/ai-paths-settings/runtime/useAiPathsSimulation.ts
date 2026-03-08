@@ -12,7 +12,7 @@ import type {
   PathExecutionMode,
 } from '@/shared/lib/ai-paths';
 import { TRIGGER_EVENTS, evaluateDataContractPreflight, entityApi } from '@/shared/lib/ai-paths';
-import { getProductDetailQueryKey } from '@/features/products/hooks/productCache';
+import { getProductDetailQueryKey } from '@/features/products';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 

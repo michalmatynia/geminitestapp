@@ -9,9 +9,9 @@ import {
   resolveFolderTreeIconSet,
   useMasterFolderTreeShell,
   type FolderTreeViewportRenderNodeInput,
-} from '@/features/foldertree/v2';
-import { useMasterFolderTreeSearch } from '@/features/foldertree/v2/search';
-import type { MasterTreeDropInput } from '@/features/foldertree/v2/operations/drop';
+} from '@/features/foldertree';
+import { useMasterFolderTreeSearch } from '@/features/foldertree';
+import type { MasterTreeDropInput } from '@/features/foldertree';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { FolderTreePanel } from '@/shared/ui';
 import { DRAG_KEYS, resolveVerticalDropPosition, setDragData } from '@/shared/utils/drag-drop';

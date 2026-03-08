@@ -29,8 +29,8 @@ const {
   folderTreeSearchBarMock: vi.fn(),
 }));
 
-vi.mock('@/features/foldertree/v2', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/features/foldertree/v2')>();
+vi.mock('@/features/foldertree', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/foldertree')>();
   return {
     ...actual,
     createMasterFolderTreeTransactionAdapter: vi.fn(() => ({ apply: vi.fn() })),
@@ -42,7 +42,7 @@ vi.mock('@/features/foldertree/v2', async (importOriginal) => {
   };
 });
 
-vi.mock('@/features/foldertree/v2/search', () => ({
+vi.mock('@/features/foldertree', () => ({
   FolderTreeSearchBar: (props: { placeholder?: string }) => {
     console.log('FolderTreeSearchBar props:', props);
     folderTreeSearchBarMock(props);

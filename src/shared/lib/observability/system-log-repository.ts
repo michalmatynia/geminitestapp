@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 
-import { Prisma, type SystemLog } from '@prisma/client';
+import { Prisma, type SystemLog } from '@/shared/lib/db/prisma-client';
 import { ObjectId, type Filter, type OptionalId } from 'mongodb';
 
 import type {

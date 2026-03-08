@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { FolderTreeViewportRenderNodeInput as CategoryTreeNodeRendererProps } from '@/features/foldertree/v2';
+import type { FolderTreeViewportRenderNodeInput as CategoryTreeNodeRendererProps } from '@/features/foldertree';
 import { TreeActionButton, TreeActionSlot, TreeCaret } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 

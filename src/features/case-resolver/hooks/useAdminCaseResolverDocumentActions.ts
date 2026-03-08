@@ -22,7 +22,7 @@ import {
   toStorageDocumentValue,
   type DocumentContentCanonical,
 } from '@/features/document-editor';
-import { savePromptExploderDraftPromptFromCaseResolver } from '@/features/prompt-exploder/bridge';
+import { savePromptExploderDraftPromptFromCaseResolver } from '@/features/prompt-exploder';
 import type { CaseResolverFileEditDraft } from '../types';
 import { logCaseResolverWorkspaceEvent } from '../workspace-persistence';
 

@@ -30,7 +30,7 @@ import { useProductListListingStatuses } from './product-list/useProductListList
 import { useProductListQueueStatus } from './product-list/useProductListQueueStatus';
 import { useProductListCategories } from './product-list/useProductListCategories';
 import { useProductListFilters } from './product-list/useProductListFilters';
-import { useDraftQueries } from '@/features/drafter/hooks/useDraftQueries';
+import { useDraftQueries } from '@/features/drafter';
 import { useCreateFromDraft } from './useCreateFromDraft';
 
 export { shouldAdoptIncomingEditProductDetail } from './product-list/useProductEditHydration';

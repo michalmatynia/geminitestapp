@@ -3,7 +3,7 @@
 import { PanelLeftClose, PanelRightClose } from 'lucide-react';
 import React, { useEffect, useRef } from 'react';
 
-import { useAdminLayoutActions } from '@/features/admin/context/AdminLayoutContext';
+import { useAdminLayoutActions } from '@/features/admin';
 import { Button } from '@/shared/ui';
 
 import { PagePreviewPanel } from './PagePreviewPanel';

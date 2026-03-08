@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import { useAdminLayoutActions } from '@/features/admin/context/AdminLayoutContext';
+import { useAdminLayoutActions } from '@/features/admin';
 import { Card } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 

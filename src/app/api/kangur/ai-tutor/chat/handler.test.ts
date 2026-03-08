@@ -11,6 +11,8 @@ import { KANGUR_AI_TUTOR_USAGE_SETTINGS_KEY } from '@/features/kangur/server/ai-
 
 const {
   resolveKangurActorMock,
+  buildKangurAiTutorLearnerMoodMock,
+  setKangurLearnerAiTutorStateMock,
   resolveBrainExecutionConfigForCapabilityMock,
   runBrainChatCompletionMock,
   contextRegistryResolveRefsMock,
@@ -25,6 +27,8 @@ const {
   buildKangurAiTutorAdaptiveGuidanceMock,
 } = vi.hoisted(() => ({
   resolveKangurActorMock: vi.fn(),
+  buildKangurAiTutorLearnerMoodMock: vi.fn(),
+  setKangurLearnerAiTutorStateMock: vi.fn(),
   resolveBrainExecutionConfigForCapabilityMock: vi.fn(),
   runBrainChatCompletionMock: vi.fn(),
   contextRegistryResolveRefsMock: vi.fn(),
@@ -41,6 +45,8 @@ const {
 
 vi.mock('@/features/kangur/server', () => ({
   resolveKangurActor: resolveKangurActorMock,
+  buildKangurAiTutorLearnerMood: buildKangurAiTutorLearnerMoodMock,
+  setKangurLearnerAiTutorState: setKangurLearnerAiTutorStateMock,
 }));
 
 vi.mock('@/features/ai/agentcreator/server/persona-memory', () => ({
@@ -224,7 +230,24 @@ describe('kangur ai tutor chat handler', () => {
     resolveKangurActorMock.mockResolvedValue({
       activeLearner: {
         id: 'learner-1',
+        aiTutor: {
+          currentMoodId: 'neutral',
+          baselineMoodId: 'neutral',
+          confidence: 0.25,
+          lastComputedAt: null,
+          lastReasonCode: null,
+        },
       },
+    });
+    buildKangurAiTutorLearnerMoodMock.mockResolvedValue({
+      currentMoodId: 'supportive',
+      baselineMoodId: 'encouraging',
+      confidence: 0.72,
+      lastComputedAt: '2026-03-07T10:00:00.000Z',
+      lastReasonCode: 'learner_confusion',
+    });
+    setKangurLearnerAiTutorStateMock.mockResolvedValue({
+      id: 'learner-1',
     });
     contextRegistryResolveRefsMock.mockResolvedValue(
       createContextRegistryBundle({
@@ -381,6 +404,13 @@ describe('kangur ai tutor chat handler', () => {
         }),
       })
     );
+    expect(buildKangurAiTutorLearnerMoodMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        learnerId: 'learner-1',
+        latestUserMessage: 'Pomóż mi z tym pytaniem.',
+        personaSuggestedMoodId: 'encouraging',
+      })
+    );
     expect(resolveBrainExecutionConfigForCapabilityMock).toHaveBeenCalledWith(
       KANGUR_AI_TUTOR_BRAIN_CAPABILITY,
       expect.objectContaining({
@@ -423,6 +453,9 @@ describe('kangur ai tutor chat handler', () => {
     expect(brainInput.messages[0].content).toContain(
       'Adaptive learner guidance:\nTop recommendation: Powtorz lekcje: Dodawanie.'
     );
+    expect(brainInput.messages[0].content).toContain(
+      'Learner-specific tutor mood: supportive.'
+    );
     expect(logKangurServerEventMock).toHaveBeenCalledWith(
       expect.objectContaining({
         source: 'kangur.ai-tutor.chat.completed',
@@ -442,6 +475,10 @@ describe('kangur ai tutor chat handler', () => {
           personaId: 'persona-1',
           suggestedPersonaMoodId: 'encouraging',
           personaMemorySessionId: 'kangur-persona-session-1',
+          tutorMoodId: 'supportive',
+          tutorBaselineMoodId: 'encouraging',
+          tutorMoodReasonCode: 'learner_confusion',
+          tutorMoodConfidence: 0.72,
           dailyUsageCount: 0,
           usageDateKey: '2026-03-07',
         }),
@@ -510,6 +547,13 @@ describe('kangur ai tutor chat handler', () => {
         moodHints: ['encouraging'],
       })
     );
+    expect(setKangurLearnerAiTutorStateMock).toHaveBeenCalledWith('learner-1', {
+      currentMoodId: 'supportive',
+      baselineMoodId: 'encouraging',
+      confidence: 0.72,
+      lastComputedAt: '2026-03-07T10:00:00.000Z',
+      lastReasonCode: 'learner_confusion',
+    });
     expect(upsertStoredSettingValueMock).not.toHaveBeenCalled();
 
     expect(response.status).toBe(200);
@@ -518,6 +562,13 @@ describe('kangur ai tutor chat handler', () => {
       sources: [],
       followUpActions: [],
       suggestedMoodId: 'encouraging',
+      tutorMood: {
+        currentMoodId: 'supportive',
+        baselineMoodId: 'encouraging',
+        confidence: 0.72,
+        lastComputedAt: '2026-03-07T10:00:00.000Z',
+        lastReasonCode: 'learner_confusion',
+      },
       usage: {
         dateKey: '2026-03-07',
         messageCount: 0,
@@ -597,6 +648,13 @@ describe('kangur ai tutor chat handler', () => {
         },
       ],
       suggestedMoodId: 'encouraging',
+      tutorMood: {
+        currentMoodId: 'supportive',
+        baselineMoodId: 'encouraging',
+        confidence: 0.72,
+        lastComputedAt: '2026-03-07T10:00:00.000Z',
+        lastReasonCode: 'learner_confusion',
+      },
       usage: {
         dateKey: '2026-03-07',
         messageCount: 0,
@@ -647,6 +705,13 @@ describe('kangur ai tutor chat handler', () => {
       sources: [],
       followUpActions: [],
       suggestedMoodId: 'encouraging',
+      tutorMood: {
+        currentMoodId: 'supportive',
+        baselineMoodId: 'encouraging',
+        confidence: 0.72,
+        lastComputedAt: '2026-03-07T10:00:00.000Z',
+        lastReasonCode: 'learner_confusion',
+      },
       usage: {
         dateKey: '2026-03-07',
         messageCount: 0,

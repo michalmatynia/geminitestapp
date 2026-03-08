@@ -12,6 +12,10 @@ import {
   type KangurLearnerStatus,
   type KangurLearnerUpdateInput,
 } from '@/shared/contracts/kangur';
+import {
+  createDefaultKangurAiTutorLearnerMood,
+  type KangurAiTutorLearnerMood,
+} from '@/shared/contracts/kangur-ai-tutor-mood';
 import { conflictError, notFoundError } from '@/shared/errors/app-error';
 import { readStoredSettingValue, upsertStoredSettingValue } from '@/shared/lib/ai-brain/server';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
@@ -33,6 +37,7 @@ type MongoKangurLearnerDocument = {
   loginName: string;
   status: KangurLearnerStatus;
   legacyUserKey: string | null;
+  aiTutor?: KangurAiTutorLearnerMood;
   createdAt: string;
   updatedAt: string;
   passwordHash: string;
@@ -53,6 +58,7 @@ const toPublicLearnerProfile = (stored: StoredKangurLearnerProfile): KangurLearn
   loginName: stored.loginName,
   status: stored.status,
   legacyUserKey: stored.legacyUserKey ?? null,
+  aiTutor: stored.aiTutor,
   createdAt: stored.createdAt,
   updatedAt: stored.updatedAt,
 });
@@ -82,6 +88,7 @@ const normalizeStoredLearner = (value: unknown): StoredKangurLearnerProfile | nu
       legacyUserKey: normalizeLegacyUserKey(
         typeof record['legacyUserKey'] === 'string' ? record['legacyUserKey'] : null
       ),
+      aiTutor: record['aiTutor'],
       createdAt: typeof record['createdAt'] === 'string' ? record['createdAt'] : '',
       updatedAt: typeof record['updatedAt'] === 'string' ? record['updatedAt'] : '',
     },
@@ -161,6 +168,7 @@ const toMongoLearnerUpdate = (
   loginName: profile.loginName,
   status: profile.status,
   legacyUserKey: profile.legacyUserKey ?? null,
+  aiTutor: profile.aiTutor,
   createdAt: profile.createdAt,
   updatedAt: profile.updatedAt,
   passwordHash: profile.passwordHash,
@@ -403,6 +411,7 @@ export const createKangurLearner = async (input: {
     loginName,
     status: input.status ?? 'active',
     legacyUserKey: normalizeLegacyUserKey(input.legacyUserKey),
+    aiTutor: createDefaultKangurAiTutorLearnerMood(),
     createdAt: now,
     updatedAt: now,
     passwordHash: await bcrypt.hash(input.learner.password, 12),
@@ -484,6 +493,37 @@ export const setKangurLearnerLegacyUserKey = async (
   const nextProfile: StoredKangurLearnerProfile = {
     ...current,
     legacyUserKey: normalizedLegacyUserKey,
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (await shouldUseMongoLearnerCollection()) {
+    await writeMongoStoredLearner(nextProfile);
+  } else {
+    const profiles = await readLegacyStoredLearners();
+    const index = profiles.findIndex((profile) => profile.id === learnerId);
+    if (index < 0) {
+      throw notFoundError('Learner not found.');
+    }
+    const nextProfiles = [...profiles];
+    nextProfiles[index] = nextProfile;
+    await writeLegacyStoredLearners(nextProfiles);
+  }
+
+  return toPublicLearnerProfile(nextProfile);
+};
+
+export const setKangurLearnerAiTutorState = async (
+  learnerId: string,
+  aiTutor: KangurAiTutorLearnerMood
+): Promise<KangurLearnerProfile> => {
+  const current = await getKangurStoredLearnerById(learnerId);
+  if (!current) {
+    throw notFoundError('Learner not found.');
+  }
+
+  const nextProfile: StoredKangurLearnerProfile = {
+    ...current,
+    aiTutor,
     updatedAt: new Date().toISOString(),
   };
 

@@ -2,10 +2,10 @@
 
 import React, { useCallback, useMemo, useState } from 'react';
 
-import ProductImageManager from '@/features/products/components/ProductImageManager';
+import ProductImageManager from '@/features/products';
 import { Viewer3D } from '@/features/viewer3d';
 import { Asset3DPreviewModal } from '@/features/viewer3d';
-import { useAsset3DById } from '@/features/viewer3d/hooks/useAsset3dQueries';
+import { useAsset3DById } from '@/features/viewer3d';
 import type { ManagedImageSlot } from '@/shared/contracts/image-slots';
 import type { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';

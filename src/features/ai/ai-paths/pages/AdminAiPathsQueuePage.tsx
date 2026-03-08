@@ -4,7 +4,7 @@ import { ActivityIcon, ExternalLinkIcon, ImageIcon, UploadCloudIcon } from 'luci
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-import { FileUploadEventsPanel } from '@/features/files/components/FileUploadEventsPanel';
+import { FileUploadEventsPanel } from '@/features/files';
 import ProductListingJobsPanel from '@/shared/lib/jobs/components/ProductListingJobsPanel';
 import { Badge, Button, ListPanel, Breadcrumbs, Hint } from '@/shared/ui';
 

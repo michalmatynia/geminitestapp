@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { useBrainProviderStatus } from '@/shared/lib/ai-brain/hooks/useBrainProviderStatus';
 import { CopyButton, Input, FormSection, DocumentationList, Card, Hint } from '@/shared/ui';
 
 import { useGenerationState } from '../context/GenerationContext';
@@ -100,7 +100,6 @@ export function ImageStudioDocsContent(): React.JSX.Element {
   } = useMaskingState();
   const { runOutputs, generationHistory, runMutation, maskEligibleCount } = useGenerationState();
 
-  const settingsStore = useSettingsStore();
   const heavySettings = useSettingsMap({ scope: 'heavy' });
   const heavyMap = heavySettings.data ?? new Map<string, string>();
 
@@ -114,9 +113,9 @@ export function ImageStudioDocsContent(): React.JSX.Element {
     );
   };
 
-  const brainOpenAiApiKeyRaw = settingsStore.get('openai_api_key') ?? '';
-  const apiKeyConfigured = brainOpenAiApiKeyRaw.trim().length > 0;
-  const openAiProviderStatus = apiKeyConfigured ? 'configured in AI Brain' : 'missing';
+  const openAiProvider = useBrainProviderStatus('openai');
+  const apiKeyConfigured = openAiProvider.configured;
+  const openAiProviderStatus = openAiProvider.statusText;
 
   const projectTreeKey = useMemo(
     () => (projectId ? `${IMAGE_STUDIO_TREE_KEY_PREFIX}${sanitizeProjectId(projectId)}` : null),

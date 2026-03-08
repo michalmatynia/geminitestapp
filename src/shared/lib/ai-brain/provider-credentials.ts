@@ -2,9 +2,13 @@ import 'server-only';
 
 import { configurationError } from '@/shared/errors/app-error';
 
+import {
+  BRAIN_PROVIDER_ENV_KEYS,
+  BRAIN_PROVIDER_LABELS,
+  BRAIN_PROVIDER_SETTING_KEYS,
+  type BrainProviderCredentialVendor,
+} from './provider-metadata';
 import { readStoredSettingValue } from './server';
-
-export type BrainProviderCredentialVendor = 'openai' | 'anthropic' | 'gemini';
 
 type ProviderCredentialResolutionSource = 'brain' | 'env' | 'missing';
 
@@ -13,24 +17,6 @@ export type BrainProviderCredentialResolution = {
   source: ProviderCredentialResolutionSource;
   sourceKey: string | null;
 };
-
-const PROVIDER_SETTING_KEYS = {
-  openai: 'openai_api_key',
-  anthropic: 'anthropic_api_key',
-  gemini: 'gemini_api_key',
-} as const satisfies Record<BrainProviderCredentialVendor, string>;
-
-const PROVIDER_ENV_KEYS = {
-  openai: 'OPENAI_API_KEY',
-  anthropic: 'ANTHROPIC_API_KEY',
-  gemini: 'GEMINI_API_KEY',
-} as const satisfies Record<BrainProviderCredentialVendor, string>;
-
-const PROVIDER_LABELS = {
-  openai: 'OpenAI',
-  anthropic: 'Anthropic',
-  gemini: 'Gemini',
-} as const satisfies Record<BrainProviderCredentialVendor, string>;
 
 const normalizeConfiguredSecret = (value: string | null | undefined): string | null => {
   if (typeof value !== 'string') return null;
@@ -41,7 +27,7 @@ const normalizeConfiguredSecret = (value: string | null | undefined): string | n
 export const readBrainProviderCredential = async (
   vendor: BrainProviderCredentialVendor
 ): Promise<BrainProviderCredentialResolution> => {
-  const primarySettingKey = PROVIDER_SETTING_KEYS[vendor];
+  const primarySettingKey = BRAIN_PROVIDER_SETTING_KEYS[vendor];
   const primaryValue = normalizeConfiguredSecret(await readStoredSettingValue(primarySettingKey));
 
   if (primaryValue) {
@@ -52,7 +38,7 @@ export const readBrainProviderCredential = async (
     };
   }
 
-  const envKey = PROVIDER_ENV_KEYS[vendor];
+  const envKey = BRAIN_PROVIDER_ENV_KEYS[vendor];
   const envValue = normalizeConfiguredSecret(process.env[envKey]);
   if (envValue) {
     return {
@@ -78,6 +64,6 @@ export const resolveBrainProviderCredential = async (
   }
 
   throw configurationError(
-    `${PROVIDER_LABELS[vendor]} API key is missing in AI Brain provider settings.`
+    `${BRAIN_PROVIDER_LABELS[vendor]} API key is missing in AI Brain provider settings.`
   );
 };

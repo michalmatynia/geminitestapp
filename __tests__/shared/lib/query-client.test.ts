@@ -12,10 +12,17 @@ vi.mock('@/shared/utils/observability/client-error-logger', () => ({
   isLoggableObject: (error: unknown): boolean => typeof error === 'object' && error !== null,
 }));
 
-vi.mock('@/shared/lib/observability/tanstack-telemetry', () => ({
-  emitTanstackTelemetry: vi.fn(),
-  getTanstackFactoryMetaFromBag: vi.fn(() => null),
-}));
+vi.mock('@/shared/lib/observability/tanstack-telemetry', async (importOriginal) => {
+  const actual = await importOriginal<
+    typeof import('@/shared/lib/observability/tanstack-telemetry')
+  >();
+
+  return {
+    ...actual,
+    emitTanstackTelemetry: vi.fn(),
+    getTanstackFactoryMetaFromBag: vi.fn(() => null),
+  };
+});
 
 describe('createQueryClient', () => {
   beforeEach(() => {

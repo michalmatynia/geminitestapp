@@ -52,6 +52,7 @@ export type TanstackFactoryMeta = {
   operation: TanstackRequestOperation;
   resource: string;
   domain: TanstackFactoryDomain;
+  description?: string | undefined;
   queryKey?: QueryKey | undefined;
   mutationKey?: QueryKey | undefined;
   criticality?: TanstackCriticality | undefined;
@@ -64,6 +65,7 @@ export type TanstackFactoryMetaResolved = {
   source: string;
   operation: TanstackRequestOperation;
   resource: string;
+  description?: string | undefined;
   key: QueryKey | undefined;
   criticality: TanstackCriticality;
   samplingRate: number;
@@ -85,6 +87,7 @@ export type TanstackTelemetryEvent = {
   source: string;
   operation: TanstackRequestOperation;
   resource: string;
+  description?: string | undefined;
   key: string;
   keyHash: string;
   criticality: TanstackCriticality;

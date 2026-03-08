@@ -251,6 +251,10 @@ vi.mock('@/shared/utils/observability/client-error-logger', () => ({
   logClientError: vi.fn(),
 }));
 
+vi.mock('@/features/kangur/admin/components/KangurAdminContentShell', () => ({
+  KangurAdminContentShell: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}));
+
 import { KANGUR_LESSON_DOCUMENTS_SETTING_KEY } from '@/features/kangur/lesson-documents';
 import { AdminKangurLessonsManagerPage } from '@/features/kangur/admin/AdminKangurLessonsManagerPage';
 import { KANGUR_LESSONS_SETTING_KEY } from '@/features/kangur/settings';

@@ -107,6 +107,7 @@ const createSummary = (range: '24h' | '7d' | '30d' = '24h') => ({
     learnerSignInFailureRatePercent: 8.3,
     progressSyncFailures: 4,
     ttsRequests: 11,
+    ttsGenerationFailures: 2,
     ttsFallbackRatePercent: 18.2,
   },
   alerts: [
@@ -150,6 +151,20 @@ const createSummary = (range: '24h' | '7d' | '30d' = '24h') => ({
       investigation: {
         label: 'Review sync analytics',
         href: `/admin/kangur/observability?range=${range}#recent-analytics-events`,
+      },
+    },
+    {
+      id: 'kangur-tts-generation-failures',
+      title: 'TTS generation failures',
+      status: 'warning' as const,
+      value: 2,
+      unit: 'count',
+      warningThreshold: 1,
+      criticalThreshold: 3,
+      summary: 'Neural narration generation is failing before fallback.',
+      investigation: {
+        label: 'View generation failure logs',
+        href: '/admin/system/logs?source=kangur.tts.generationFailed&from=2026-03-06T12:00:00.000Z&to=2026-03-07T12:00:00.000Z',
       },
     },
     {
@@ -289,9 +304,13 @@ describe('AdminKangurObservabilityPage', () => {
     render(<AdminKangurObservabilityPage />);
 
     expect(screen.getByText('Kangur Observability')).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: /breadcrumb/i })).toHaveTextContent(
+      'Admin/Kangur/Observability'
+    );
     expect(screen.getByText('Learner sign-in failure rate')).toBeInTheDocument();
     expect(screen.getByText('Progress sync failures detected.')).toBeInTheDocument();
     expect(screen.getByText('Kangur TTS fallback used.')).toBeInTheDocument();
+    expect(screen.getByText('TTS Generation Failures')).toBeInTheDocument();
     expect(useKangurObservabilitySummaryMock).toHaveBeenCalledWith('30d');
     const allLogsHref = screen.getByRole('link', { name: /all kangur logs/i }).getAttribute('href');
     const logsUrl = new URL(allLogsHref ?? '', 'http://localhost');
@@ -302,6 +321,14 @@ describe('AdminKangurObservabilityPage', () => {
     expect(screen.getByRole('link', { name: /view error logs/i })).toHaveAttribute(
       'href',
       '/admin/system/logs?query=kangur.&level=error&from=2026-03-06T12:00:00.000Z&to=2026-03-07T12:00:00.000Z'
+    );
+    expect(screen.getByRole('link', { name: /view generation failure logs/i })).toHaveAttribute(
+      'href',
+      '/admin/system/logs?source=kangur.tts.generationFailed&from=2026-03-06T12:00:00.000Z&to=2026-03-07T12:00:00.000Z'
+    );
+    expect(screen.getByRole('link', { name: /tts generation failure logs/i })).toHaveAttribute(
+      'href',
+      '/admin/system/logs?source=kangur.tts.generationFailed&from=2026-03-06T12%3A00%3A00.000Z&to=2026-03-07T12%3A00%3A00.000Z'
     );
     expect(screen.getByRole('link', { name: /open baseline details/i })).toHaveAttribute(
       'href',

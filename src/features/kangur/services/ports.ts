@@ -30,6 +30,7 @@ export type KangurAssignmentListQuery = SharedKangurAssignmentListQuery;
 
 export interface KangurAuthPort {
   me: () => Promise<KangurUser>;
+  prepareLoginHref: (returnUrl: string) => string;
   redirectToLogin: (returnUrl: string) => void;
   logout: (returnUrl?: string) => Promise<void>;
 }

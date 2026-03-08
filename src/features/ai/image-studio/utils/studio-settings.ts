@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { validationError } from '@/shared/errors/app-error';
+export { IMAGE_STUDIO_OPENAI_API_KEY_KEY } from '@/shared/contracts/image-studio';
 
 import {
   IMAGE_STUDIO_SEQUENCE_OPERATIONS,
@@ -19,7 +20,6 @@ import {
 export * from './studio-sequencing-settings';
 
 export const IMAGE_STUDIO_SETTINGS_KEY = 'image_studio_settings';
-export const IMAGE_STUDIO_OPENAI_API_KEY_KEY = 'image_studio_openai_api_key';
 export const IMAGE_STUDIO_PROJECT_SETTINGS_KEY_PREFIX = 'image_studio_project_settings_';
 
 export function sanitizeImageStudioProjectIdForSettings(value: string): string {

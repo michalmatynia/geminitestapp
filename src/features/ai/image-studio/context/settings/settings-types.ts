@@ -31,8 +31,6 @@ export interface ImageStudioSettingsContextValue {
   setStudioSettings: React.Dispatch<React.SetStateAction<ImageStudioSettings>>;
   advancedOverridesText: string;
   advancedOverridesError: string | null;
-  imageStudioApiKey: string;
-  setImageStudioApiKey: React.Dispatch<React.SetStateAction<string>>;
   promptValidationEnabled: boolean;
   setPromptValidationEnabled: React.Dispatch<React.SetStateAction<boolean>>;
   promptValidationRulesText: string;

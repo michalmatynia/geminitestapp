@@ -1,11 +1,11 @@
 import type { ReactNode } from 'react';
 
-import { KangurFeatureRouteShell } from '@/features/kangur/ui/KangurFeatureRouteShell';
+import { KangurSurfaceClassSync } from '@/features/kangur/ui/KangurSurfaceClassSync';
 
 export default function Layout({
-  children: _children,
+  children,
 }: {
   children: ReactNode;
 }): ReactNode {
-  return <KangurFeatureRouteShell />;
+  return <KangurSurfaceClassSync>{children}</KangurSurfaceClassSync>;
 }

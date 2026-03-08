@@ -7,6 +7,7 @@ const {
   fsMkdirMock,
   fsWriteFileMock,
   audioSpeechCreateMock,
+  logSystemEventMock,
   openAiConstructorMock,
   readStoredSettingValueMock,
   upsertStoredSettingValueMock,
@@ -16,6 +17,7 @@ const {
   fsMkdirMock: vi.fn(),
   fsWriteFileMock: vi.fn(),
   audioSpeechCreateMock: vi.fn(),
+  logSystemEventMock: vi.fn(),
   openAiConstructorMock: vi.fn(),
   readStoredSettingValueMock: vi.fn(),
   upsertStoredSettingValueMock: vi.fn(),
@@ -64,7 +66,15 @@ vi.mock('@/shared/lib/files/services/storage/file-storage-service', async () => 
   };
 });
 
-import { ensureKangurLessonNarrationAudio, inspectKangurLessonNarrationAudio } from './server';
+vi.mock('@/shared/lib/observability/system-logger', () => ({
+  logSystemEvent: logSystemEventMock,
+}));
+
+import {
+  ensureKangurLessonNarrationAudio,
+  inspectKangurLessonNarrationAudio,
+  probeKangurLessonNarrationBackend,
+} from './server';
 
 const createLessonScript = (text = 'To jest lekcja zegara.') => ({
   lessonId: 'clock',
@@ -123,6 +133,7 @@ describe('kangur tts server', () => {
     fsStatMock.mockResolvedValue(undefined);
     fsMkdirMock.mockResolvedValue(undefined);
     fsWriteFileMock.mockResolvedValue(undefined);
+    logSystemEventMock.mockResolvedValue(undefined);
     audioSpeechCreateMock.mockResolvedValue({
       arrayBuffer: async (): Promise<ArrayBuffer> =>
         Uint8Array.from([1, 2, 3, 4]).buffer as ArrayBuffer,
@@ -159,6 +170,7 @@ describe('kangur tts server', () => {
       segments: [{ id: 'segment-1', text: 'To jest lekcja zegara.' }],
     });
     expect(openAiConstructorMock).not.toHaveBeenCalled();
+    expect(logSystemEventMock).not.toHaveBeenCalled();
   });
 
   it('generates audio and caches the manifest when no cached asset exists', async () => {
@@ -260,6 +272,80 @@ describe('kangur tts server', () => {
         instructions: expect.stringContaining('English'),
       })
     );
+  });
+
+  it('logs the failure stage when neural narration generation fails', async () => {
+    readStoredSettingValueMock.mockImplementation(async (key: string): Promise<string | null> => {
+      if (key === 'openai_api_key') return 'test-openai-key';
+      if (key === KANGUR_LESSON_AUDIO_CACHE_SETTING_KEY) return null;
+      return null;
+    });
+    const error = new Error('OpenAI TTS request failed.') as Error & {
+      code?: string;
+      status?: number;
+    };
+    error.code = 'billing_not_active';
+    error.status = 429;
+    audioSpeechCreateMock.mockRejectedValueOnce(error);
+
+    const result = await ensureKangurLessonNarrationAudio({
+      script: createLessonScript(),
+      voice: 'coral',
+    });
+
+    expect(result).toEqual({
+      mode: 'fallback',
+      reason: 'generation_failed',
+      message:
+        'Neural narration could not be prepared right now, so browser narration fallback will be used.',
+      segments: [{ id: 'segment-1', text: 'To jest lekcja zegara.' }],
+    });
+    expect(logSystemEventMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        level: 'warn',
+        source: 'kangur.tts.generationFailed',
+        service: 'kangur.tts',
+        context: expect.objectContaining({
+          lessonId: 'clock',
+          failureStage: 'openai_speech',
+          errorMessage: 'OpenAI TTS request failed.',
+          errorStatus: 429,
+          errorCode: 'billing_not_active',
+        }),
+      })
+    );
+  });
+
+  it('reports billing failures from the narrator probe', async () => {
+    readStoredSettingValueMock.mockImplementation(async (key: string): Promise<string | null> => {
+      if (key === 'openai_api_key') return 'test-openai-key';
+      return null;
+    });
+    const error = new Error('429 Your account is not active, please check your billing details on our website.') as Error & {
+      code?: string;
+      status?: number;
+    };
+    error.code = 'billing_not_active';
+    error.status = 429;
+    audioSpeechCreateMock.mockRejectedValueOnce(error);
+
+    const result = await probeKangurLessonNarrationBackend({
+      voice: 'coral',
+      locale: 'pl-PL',
+      text: 'To jest test narratora Kangur.',
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      stage: 'openai_speech',
+      voice: 'coral',
+      model: 'gpt-4o-mini-tts',
+      checkedAt: expect.any(String),
+      message: '429 Your account is not active, please check your billing details on our website.',
+      errorName: 'KangurLessonTtsGenerationError',
+      errorStatus: 429,
+      errorCode: 'billing_not_active',
+    });
   });
 
   it('reports ready when all cached audio segments already exist', async () => {

@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 
+import { IMAGE_STUDIO_OPENAI_API_KEY_KEY } from '@/shared/contracts/image-studio';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -21,7 +22,6 @@ import {
   IMAGE_STUDIO_VERSION_GRAPH_DOC_KEYS,
 } from '@/features/ai/image-studio/utils/studio-docs';
 import { IMAGE_STUDIO_TREE_KEY_PREFIX } from '@/features/ai/image-studio/utils/studio-tree';
-import { IMAGE_STUDIO_OPENAI_API_KEY_KEY } from '@/features/ai/image-studio/utils/studio-settings';
 
 import { useDocsSnapshots } from './docs/useDocsSnapshots';
 import {
@@ -115,9 +115,16 @@ export function ImageStudioDocsContent(): React.JSX.Element {
     );
   };
 
-  const apiKeyRaw =
-    settingsStore.get(IMAGE_STUDIO_OPENAI_API_KEY_KEY) ?? settingsStore.get('openai_api_key') ?? '';
-  const apiKeyConfigured = apiKeyRaw.trim().length > 0;
+  const brainOpenAiApiKeyRaw = settingsStore.get('openai_api_key') ?? '';
+  const legacyOpenAiApiKeyRaw = settingsStore.get(IMAGE_STUDIO_OPENAI_API_KEY_KEY) ?? '';
+  const apiKeyConfigured =
+    brainOpenAiApiKeyRaw.trim().length > 0 || legacyOpenAiApiKeyRaw.trim().length > 0;
+  const openAiProviderStatus =
+    brainOpenAiApiKeyRaw.trim().length > 0
+      ? 'configured in AI Brain'
+      : legacyOpenAiApiKeyRaw.trim().length > 0
+        ? 'legacy Image Studio fallback configured'
+        : 'missing';
 
   const projectTreeKey = useMemo(
     () => (projectId ? `${IMAGE_STUDIO_TREE_KEY_PREFIX}${sanitizeProjectId(projectId)}` : null),
@@ -445,10 +452,11 @@ export function ImageStudioDocsContent(): React.JSX.Element {
           : 'null',
       },
       {
-        path: 'image_studio_openai_api_key',
-        label: 'Image Studio API key',
-        description: 'Secret key used by generation, extraction and AI mask features.',
-        value: apiKeyConfigured ? 'configured' : 'missing',
+        path: 'ai_brain.providers.openai_api_key',
+        label: 'Brain OpenAI provider key',
+        description:
+          'Global OpenAI credential shared across Brain-routed features. Legacy Image Studio fallback is deprecated.',
+        value: openAiProviderStatus,
       },
       {
         path: 'image_studio_ui_presets',
@@ -482,6 +490,7 @@ export function ImageStudioDocsContent(): React.JSX.Element {
       enabledValidationRuleCount,
       formatterRuleCount,
       learnedValidationRules.length,
+      openAiProviderStatus,
       persistedTree.fileMap,
       persistedTree.folders.length,
       projectTreeKey,

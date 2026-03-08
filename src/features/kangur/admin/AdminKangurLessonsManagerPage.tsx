@@ -14,12 +14,10 @@ import type { KangurLesson, KangurLessonComponentId } from '@/shared/contracts/k
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
-  Breadcrumbs,
   Button,
   FolderTreePanel,
   FormModal,
   Skeleton,
-  SectionHeader,
   useToast,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
@@ -71,6 +69,7 @@ import {
   toLessonFormData,
   upsertLesson,
 } from './utils';
+import { KangurAdminContentShell } from './components/KangurAdminContentShell';
 
 export function AdminKangurLessonsManagerPage({
   standalone = true,
@@ -505,23 +504,8 @@ export function AdminKangurLessonsManagerPage({
     [lessonById, lessonDocuments, updateSetting.isPending]
   );
 
-  return (
+  const content = (
     <div className='flex h-full flex-col gap-4 overflow-hidden'>
-      {standalone ? (
-        <SectionHeader
-          title='Kangur Lessons'
-          description='Manage lesson library, order, and interactive content.'
-        >
-          <Breadcrumbs
-            items={[
-              { label: 'Admin', href: '/admin' },
-              { label: 'Kangur', href: '/admin/kangur' },
-              { label: 'Lessons' },
-            ]}
-          />
-        </SectionHeader>
-      ) : null}
-
       <FolderTreePanel
         className='min-h-0 flex-1'
         header={
@@ -730,5 +714,26 @@ export function AdminKangurLessonsManagerPage({
         }}
       />
     </div>
+  );
+
+  if (!standalone) {
+    return content;
+  }
+
+  return (
+    <KangurAdminContentShell
+      title='Kangur Lessons'
+      description='Manage lesson library, order, and interactive content.'
+      breadcrumbs={[
+        { label: 'Admin', href: '/admin' },
+        { label: 'Kangur', href: '/admin/kangur' },
+        { label: 'Lessons' },
+      ]}
+      className='h-full'
+      panelClassName='flex h-full min-h-0 flex-col'
+      contentClassName='flex min-h-0 flex-1 flex-col'
+    >
+      {content}
+    </KangurAdminContentShell>
   );
 }

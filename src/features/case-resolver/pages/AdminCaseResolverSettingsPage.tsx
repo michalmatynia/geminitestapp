@@ -261,7 +261,7 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
                 {detectedOcrProviderLabel}
               </Badge>
             }
-            description={`OpenAI OCR calls use the Image Studio API key first. Key source: ${ocrKeySourceLabel}`}
+            description={`OpenAI OCR calls use the Brain-managed global OpenAI provider. Model source: ${ocrKeySourceLabel}`}
           >
             <SelectSimple
               value={draft.ocrModel}

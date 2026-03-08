@@ -59,6 +59,13 @@ export const kangurLessonTtsStatusRequestSchema = z.object({
 });
 export type KangurLessonTtsStatusRequest = z.infer<typeof kangurLessonTtsStatusRequestSchema>;
 
+export const kangurLessonTtsProbeRequestSchema = z.object({
+  voice: kangurLessonTtsVoiceSchema.default(KANGUR_TTS_DEFAULT_VOICE),
+  locale: z.string().trim().min(2).max(16).default(KANGUR_TTS_DEFAULT_LOCALE),
+  text: nonEmptyTrimmedString.max(400).default('Krotki test narratora Kangur.'),
+});
+export type KangurLessonTtsProbeRequest = z.infer<typeof kangurLessonTtsProbeRequestSchema>;
+
 export const kangurLessonAudioSegmentSchema = kangurLessonNarrationSegmentSchema.extend({
   audioUrl: nonEmptyTrimmedString.max(2_048),
   createdAt: z.string().datetime({ offset: true }),
@@ -104,6 +111,29 @@ export const kangurLessonTtsStatusResponseSchema = z.object({
   segments: z.array(kangurLessonAudioSegmentSchema).max(32).default([]),
 });
 export type KangurLessonTtsStatusResponse = z.infer<typeof kangurLessonTtsStatusResponseSchema>;
+
+export const kangurLessonTtsProbeStageSchema = z.enum([
+  'ready',
+  'config',
+  'openai_speech',
+  'audio_buffer',
+  'storage_upload',
+  'unknown',
+]);
+export type KangurLessonTtsProbeStage = z.infer<typeof kangurLessonTtsProbeStageSchema>;
+
+export const kangurLessonTtsProbeResponseSchema = z.object({
+  ok: z.boolean(),
+  stage: kangurLessonTtsProbeStageSchema,
+  voice: kangurLessonTtsVoiceSchema,
+  model: nonEmptyTrimmedString.max(80),
+  checkedAt: z.string().datetime({ offset: true }),
+  message: z.string().trim().max(240),
+  errorName: z.string().trim().max(120).nullable().default(null),
+  errorStatus: z.number().int().nullable().default(null),
+  errorCode: z.string().trim().max(120).nullable().default(null),
+});
+export type KangurLessonTtsProbeResponse = z.infer<typeof kangurLessonTtsProbeResponseSchema>;
 
 export const kangurLessonAudioCacheEntrySchema = z.object({
   audioUrl: nonEmptyTrimmedString.max(2_048),

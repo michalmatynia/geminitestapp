@@ -20,6 +20,14 @@ const KANGUR_VISUAL_CONTRACTS = [
     requiredTokens: ['kangur-premium-bg', 'data-testid=\'kangur-route-shell\''],
   },
   {
+    file: 'src/features/kangur/ui/KangurSurfaceClassSync.tsx',
+    requiredTokens: ['kangur-surface-active', "document.getElementById('app-content')"],
+  },
+  {
+    file: 'src/app/(frontend)/kangur/(app)/layout.tsx',
+    requiredTokens: ['KangurFeatureRouteShell'],
+  },
+  {
     file: 'src/features/kangur/ui/KangurFeaturePage.tsx',
     requiredTokens: ['kangur-premium-bg', 'data-testid=\'kangur-feature-page-shell\''],
   },
@@ -57,6 +65,10 @@ const KANGUR_VISUAL_CONTRACTS = [
       'kangur-premium-bg',
       'Back to Kangur',
     ],
+  },
+  {
+    file: 'src/app/(frontend)/kangur/login/page.tsx',
+    requiredTokens: ['data-testid=\'kangur-login-shell\'', 'kangur-premium-bg', 'Wroc do Kangura'],
   },
 ] as const;
 

@@ -28,7 +28,6 @@ import { useProjectsState } from './ProjectsContext';
 import { useStudioImageModels } from '../hooks/useImageStudioQueries';
 import {
   defaultImageStudioSettings,
-  IMAGE_STUDIO_OPENAI_API_KEY_KEY,
   IMAGE_STUDIO_SETTINGS_KEY,
   getImageStudioProjectSettingsKey,
   type ImageStudioSettings,
@@ -66,7 +65,6 @@ export function ImageStudioSettingsProvider({
     JSON.stringify(defaultImageStudioSettings.targetAi.openai.advanced_overrides ?? {}, null, 2)
   );
   const [advancedOverridesError, setAdvancedOverridesError] = useState<string | null>(null);
-  const [imageStudioApiKey, setImageStudioApiKey] = useState<string>('');
   const [promptValidationEnabled, setPromptValidationEnabled] = useState<boolean>(
     defaultPromptEngineSettings.promptValidation.enabled
   );
@@ -106,9 +104,7 @@ export function ImageStudioSettingsProvider({
   const globalStudioSettingsRaw = heavyMap.get(IMAGE_STUDIO_SETTINGS_KEY);
   const projectStudioSettingsRaw = projectSettingsKey ? heavyMap.get(projectSettingsKey) : null;
   const studioSettingsRaw = projectStudioSettingsRaw ?? globalStudioSettingsRaw;
-  const apiKeyFallback =
-    settingsStore.get(IMAGE_STUDIO_OPENAI_API_KEY_KEY) ?? settingsStore.get('openai_api_key') ?? '';
-  const hydrationSignature = `${projectSettingsKey ?? IMAGE_STUDIO_SETTINGS_KEY}:${studioSettingsRaw ?? ''}:${apiKeyFallback}:${promptEngineRaw ?? ''}`;
+  const hydrationSignature = `${projectSettingsKey ?? IMAGE_STUDIO_SETTINGS_KEY}:${studioSettingsRaw ?? ''}:${promptEngineRaw ?? ''}`;
 
   useSettingsHydration({
     settingsStore,
@@ -118,10 +114,8 @@ export function ImageStudioSettingsProvider({
     settingsLoaded,
     setSettingsLoaded,
     studioSettingsRaw,
-    apiKeyFallback,
     setStudioSettings,
     setAdvancedOverridesText,
-    setImageStudioApiKey,
     setPromptValidationEnabled,
     setPromptValidationRulesText,
     setPromptValidationRulesError,
@@ -241,10 +235,6 @@ export function ImageStudioSettingsProvider({
         key: targetSettingsKey,
         value: serializeSetting(nextStudioSettings),
       });
-      await updateSetting.mutateAsync({
-        key: IMAGE_STUDIO_OPENAI_API_KEY_KEY,
-        value: imageStudioApiKey.trim(),
-      });
       const parsedRules = parsePromptValidationRules(promptValidationRulesText);
       if (!parsedRules.ok) {
         throw new Error(parsedRules.error);
@@ -283,7 +273,6 @@ export function ImageStudioSettingsProvider({
     promptValidationRulesError,
     promptExtractModel.effectiveModelId,
     studioSettings,
-    imageStudioApiKey,
     selectedProjectId,
     activeProjectId,
     promptValidationRulesText,
@@ -403,8 +392,6 @@ export function ImageStudioSettingsProvider({
     setStudioSettings,
     advancedOverridesText,
     advancedOverridesError,
-    imageStudioApiKey,
-    setImageStudioApiKey,
     promptValidationEnabled,
     setPromptValidationEnabled,
     promptValidationRulesText,

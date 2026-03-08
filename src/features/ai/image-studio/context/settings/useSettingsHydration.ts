@@ -21,10 +21,8 @@ export function useSettingsHydration({
   settingsLoaded,
   setSettingsLoaded,
   studioSettingsRaw,
-  apiKeyFallback,
   setStudioSettings,
   setAdvancedOverridesText,
-  setImageStudioApiKey,
   setPromptValidationEnabled,
   setPromptValidationRulesText,
   setPromptValidationRulesError,
@@ -41,10 +39,8 @@ export function useSettingsHydration({
   settingsLoaded: boolean;
   setSettingsLoaded: (loaded: boolean) => void;
   studioSettingsRaw: string | null | undefined;
-  apiKeyFallback: string;
   setStudioSettings: (settings: ImageStudioSettings) => void;
   setAdvancedOverridesText: (text: string) => void;
-  setImageStudioApiKey: (key: string) => void;
   setPromptValidationEnabled: (enabled: boolean) => void;
   setPromptValidationRulesText: (text: string) => void;
   setPromptValidationRulesError: (error: string | null) => void;
@@ -92,7 +88,6 @@ export function useSettingsHydration({
     setAdvancedOverridesText(
       JSON.stringify(hydrated.targetAi.openai.advanced_overrides ?? {}, null, 2)
     );
-    setImageStudioApiKey(apiKeyFallback);
     setPromptValidationEnabled(promptEngineStored.promptValidation.enabled);
     setPromptValidationRulesText(
       JSON.stringify(promptEngineStored.promptValidation.rules, null, 2)
@@ -108,11 +103,9 @@ export function useSettingsHydration({
     settingsStore,
     userPreferencesQuery.isLoading,
     studioSettingsRaw,
-    apiKeyFallback,
     setSettingsLoaded,
     setStudioSettings,
     setAdvancedOverridesText,
-    setImageStudioApiKey,
     setPromptValidationEnabled,
     setPromptValidationRulesText,
     setPromptValidationRulesError,

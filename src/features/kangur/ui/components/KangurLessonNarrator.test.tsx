@@ -184,6 +184,40 @@ describe('KangurLessonNarrator', () => {
     expect(screen.queryByText('Playback speed')).toBeNull();
   });
 
+  it('falls back to browser speech when the server narrator returns fallback segments', async () => {
+    apiPostMock.mockResolvedValue({
+      mode: 'fallback',
+      reason: 'generation_failed',
+      message: 'Neural narration could not be prepared right now, so browser narration fallback will be used.',
+      segments: [
+        {
+          id: 'clock-segment-1',
+          text: 'To jest tekst lekcji do czytania przez narratora.',
+        },
+      ],
+    });
+
+    render(<NarratorHarness />);
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /^play$/i })).toBeInTheDocument()
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /^play$/i }));
+
+    await waitFor(() => expect(speechSynthesisMock.speak).toHaveBeenCalledTimes(1));
+
+    expect(audioPlayMock).not.toHaveBeenCalled();
+    expect((speechSynthesisMock.speak.mock.calls[0]?.[0] as MockSpeechSynthesisUtterance)?.text).toBe(
+      'To jest tekst lekcji do czytania przez narratora.'
+    );
+    expect(
+      screen.getByText(
+        /Neural narration could not be prepared right now, so browser narration fallback will be used\./i
+      )
+    ).toBeInTheDocument();
+  });
+
   it('renders shared error feedback when narration preparation fails', async () => {
     apiPostMock.mockRejectedValueOnce(new Error('Narrator network failed.'));
 

@@ -12,12 +12,9 @@ import {
   type ImageFileRecord,
 } from '@/shared/contracts/image-studio';
 import { getImageModelCapabilities } from '@/features/ai/image-studio/utils/image-models';
-import {
-  IMAGE_STUDIO_OPENAI_API_KEY_KEY,
-  parsePersistedImageStudioSettings,
-} from '@/features/ai/image-studio/utils/studio-settings';
+import { parsePersistedImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
+import { resolveBrainProviderCredential } from '@/shared/lib/ai-brain/provider-credentials';
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
-import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import {
   badRequestError,
   configurationError,
@@ -79,15 +76,7 @@ export async function executeGenerationOperation(params: {
     throw badRequestError('Image Studio run currently supports the Images API only.');
   }
 
-  const apiKey =
-    (await getSettingValue(IMAGE_STUDIO_OPENAI_API_KEY_KEY))?.trim() ||
-    (await getSettingValue('openai_api_key'))?.trim() ||
-    process.env['OPENAI_API_KEY'] ||
-    null;
-
-  if (!apiKey) {
-    throw configurationError('OpenAI API key is missing. Set it in Image Studio settings.');
-  }
+  const apiKey = await resolveBrainProviderCredential('openai');
 
   const client = new OpenAI({
     apiKey,

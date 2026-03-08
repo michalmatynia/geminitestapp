@@ -27,6 +27,9 @@ describe('AdminKangurDocumentationPage', () => {
     render(<AdminKangurDocumentationPage />);
 
     expect(screen.getByText('Kangur Documentation')).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: /breadcrumb/i })).toHaveTextContent(
+      'Admin/Kangur/Documentation'
+    );
     expect(screen.getByText('Kangur Documentation Index')).toBeInTheDocument();
     expect(screen.getAllByText('Kangur Overview').length).toBeGreaterThan(0);
     expect(screen.getByRole('link', { name: /skip to documentation content/i })).toHaveAttribute(
@@ -35,7 +38,7 @@ describe('AdminKangurDocumentationPage', () => {
     );
     expect(screen.getByRole('main', { name: /documentation workspace/i })).toBeInTheDocument();
     expect(screen.getByRole('searchbox', { name: /search kangur documentation/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /back to kangur settings/i })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /open settings/i })).toHaveAttribute(
       'href',
       '/admin/kangur/settings'
     );

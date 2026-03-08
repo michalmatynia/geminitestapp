@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import React from 'react';
 
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
@@ -12,8 +13,6 @@ export function GenerationSettingsTab(): React.JSX.Element {
   const {
     studioSettings,
     setStudioSettings,
-    imageStudioApiKey,
-    setImageStudioApiKey,
     modelCapabilities,
     modelAwareSizeValue,
     modelAwareQualityValue,
@@ -86,14 +85,18 @@ export function GenerationSettingsTab(): React.JSX.Element {
     <div className='space-y-6'>
       <FormSection title='OpenAI Configuration' description='Settings for Image generation API.'>
         <div className='space-y-4'>
-          <FormField label='OpenAI API Key' description='Required for DALL-E generation.'>
-            <Input
-              type='password'
-              value={imageStudioApiKey}
-              onChange={(e) => setImageStudioApiKey(e.target.value)}
-              placeholder='sk-...'
-            />
-          </FormField>
+          <div className='rounded-md border border-border/60 bg-card/35 px-3 py-3 text-sm text-gray-300'>
+            <div className='font-medium text-white'>Global provider ownership</div>
+            <p className='mt-1 text-[13px] leading-relaxed text-gray-400'>
+              OpenAI credentials are managed centrally in AI Brain and shared across Brain-routed
+              features such as Image Studio, Kangur narration, and Case Resolver OCR.
+            </p>
+            <div className='mt-2 text-xs'>
+              <Link href='/admin/brain?tab=providers' className='text-blue-300 hover:text-blue-200'>
+                Open AI Brain provider settings
+              </Link>
+            </div>
+          </div>
 
           <div className='grid gap-6 lg:grid-cols-2'>
             <div className='space-y-4'>

@@ -6,11 +6,12 @@ import { createHash } from 'crypto';
 
 import OpenAI from 'openai';
 
-import { IMAGE_STUDIO_OPENAI_API_KEY_KEY } from '@/shared/contracts/image-studio';
+import { readBrainProviderCredential } from '@/shared/lib/ai-brain/provider-credentials';
 import { readStoredSettingValue, upsertStoredSettingValue } from '@/shared/lib/ai-brain/server';
 import { uploadsRoot } from '@/shared/lib/files/constants';
 import { getDiskPathFromPublicPath } from '@/shared/lib/files/services/image-file-service';
 import { uploadToConfiguredStorage } from '@/shared/lib/files/services/storage/file-storage-service';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils';
 
 import type {
@@ -18,6 +19,7 @@ import type {
   KangurLessonAudioCache,
   KangurLessonAudioCacheEntry,
   KangurLessonNarrationScript,
+  KangurLessonTtsProbeResponse,
   KangurLessonTtsResponse,
   KangurLessonTtsStatusResponse,
   KangurLessonTtsVoice,
@@ -66,13 +68,58 @@ const buildSegmentCacheKey = (input: {
     })
   ).slice(0, 40);
 
+type KangurLessonTtsFailureStage =
+  | 'openai_speech'
+  | 'audio_buffer'
+  | 'storage_upload'
+  | 'unknown';
+
+class KangurLessonTtsGenerationError extends Error {
+  readonly stage: KangurLessonTtsFailureStage;
+
+  constructor(stage: KangurLessonTtsFailureStage, cause: unknown) {
+    super(cause instanceof Error ? cause.message : String(cause));
+    this.name = 'KangurLessonTtsGenerationError';
+    this.stage = stage;
+    this.cause = cause;
+  }
+}
+
+const getKangurLessonTtsFailureStage = (error: unknown): KangurLessonTtsFailureStage =>
+  error instanceof KangurLessonTtsGenerationError ? error.stage : 'unknown';
+
+const getRootCauseError = (error: unknown): unknown =>
+  error instanceof KangurLessonTtsGenerationError ? error.cause : error;
+
+const getErrorName = (error: unknown): string =>
+  error instanceof Error ? error.name : typeof error === 'string' ? 'Error' : 'UnknownError';
+
+const getErrorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : String(error);
+
+const getErrorStatus = (error: unknown): number | null => {
+  const rootCause = getRootCauseError(error);
+  if (!rootCause || typeof rootCause !== 'object' || !('status' in rootCause)) {
+    return null;
+  }
+
+  const value = rootCause.status;
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+};
+
+const getErrorCode = (error: unknown): string | null => {
+  const rootCause = getRootCauseError(error);
+  if (!rootCause || typeof rootCause !== 'object' || !('code' in rootCause)) {
+    return null;
+  }
+
+  const value = rootCause.code;
+  return typeof value === 'string' && value.trim().length > 0 ? value : null;
+};
+
 const resolveOpenAiApiKey = async (): Promise<string | null> => {
-  const apiKey =
-    (await readStoredSettingValue(IMAGE_STUDIO_OPENAI_API_KEY_KEY))?.trim() ||
-    (await readStoredSettingValue('openai_api_key'))?.trim() ||
-    process.env['OPENAI_API_KEY']?.trim() ||
-    '';
-  return apiKey || null;
+  const resolved = await readBrainProviderCredential('openai');
+  return resolved.apiKey;
 };
 
 const parseAudioCache = (raw: string | null): KangurLessonAudioCache => {
@@ -133,19 +180,36 @@ const synthesizeSegmentAudio = async (input: {
   text: string;
   cacheKey: string;
 }): Promise<string> => {
-  const response = await input.client.audio.speech.create({
-    model: KANGUR_TTS_DEFAULT_MODEL,
-    voice: input.voice,
-    input: input.text,
-    instructions: buildTtsInstructions(input.locale),
-    response_format: 'mp3',
-  });
-  const audioBuffer = Buffer.from(await response.arrayBuffer());
-  return await persistAudioBuffer({
-    lessonId: input.lessonId,
-    cacheKey: input.cacheKey,
-    buffer: audioBuffer,
-  });
+  let response: Awaited<ReturnType<typeof input.client.audio.speech.create>>;
+
+  try {
+    response = await input.client.audio.speech.create({
+      model: KANGUR_TTS_DEFAULT_MODEL,
+      voice: input.voice,
+      input: input.text,
+      instructions: buildTtsInstructions(input.locale),
+      response_format: 'mp3',
+    });
+  } catch (error) {
+    throw new KangurLessonTtsGenerationError('openai_speech', error);
+  }
+
+  let audioBuffer: Buffer;
+  try {
+    audioBuffer = Buffer.from(await response.arrayBuffer());
+  } catch (error) {
+    throw new KangurLessonTtsGenerationError('audio_buffer', error);
+  }
+
+  try {
+    return await persistAudioBuffer({
+      lessonId: input.lessonId,
+      cacheKey: input.cacheKey,
+      buffer: audioBuffer,
+    });
+  } catch (error) {
+    throw new KangurLessonTtsGenerationError('storage_upload', error);
+  }
 };
 
 const resolveCachedAudioSegments = async (input: {
@@ -233,6 +297,76 @@ export const inspectKangurLessonNarrationAudio = async (input: {
     message: 'Audio has not been generated for this lesson draft yet.',
     segments: [],
   };
+};
+
+export const probeKangurLessonNarrationBackend = async (input: {
+  voice: KangurLessonTtsVoice;
+  locale: string;
+  text: string;
+}): Promise<KangurLessonTtsProbeResponse> => {
+  const checkedAt = new Date().toISOString();
+  const apiKey = await resolveOpenAiApiKey();
+  if (!apiKey) {
+    return {
+      ok: false,
+      stage: 'config',
+      voice: input.voice,
+      model: KANGUR_TTS_DEFAULT_MODEL,
+      checkedAt,
+      message: 'Neural TTS is not configured for this workspace.',
+      errorName: null,
+      errorStatus: null,
+      errorCode: null,
+    };
+  }
+
+  const client = new OpenAI({ apiKey });
+
+  try {
+    let response: Awaited<ReturnType<typeof client.audio.speech.create>>;
+
+    try {
+      response = await client.audio.speech.create({
+        model: KANGUR_TTS_DEFAULT_MODEL,
+        voice: input.voice,
+        input: input.text,
+        instructions: buildTtsInstructions(input.locale),
+        response_format: 'mp3',
+      });
+    } catch (error) {
+      throw new KangurLessonTtsGenerationError('openai_speech', error);
+    }
+
+    try {
+      await response.arrayBuffer();
+    } catch (error) {
+      throw new KangurLessonTtsGenerationError('audio_buffer', error);
+    }
+
+    return {
+      ok: true,
+      stage: 'ready',
+      voice: input.voice,
+      model: KANGUR_TTS_DEFAULT_MODEL,
+      checkedAt,
+      message: 'Server narrator is ready to generate neural audio.',
+      errorName: null,
+      errorStatus: null,
+      errorCode: null,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      stage: getKangurLessonTtsFailureStage(error),
+      voice: input.voice,
+      model: KANGUR_TTS_DEFAULT_MODEL,
+      checkedAt,
+      message: getErrorMessage(error),
+      errorName: getErrorName(error),
+      errorStatus: getErrorStatus(error),
+      errorCode: getErrorCode(error),
+    };
+  }
 };
 
 export const ensureKangurLessonNarrationAudio = async (input: {
@@ -325,7 +459,28 @@ export const ensureKangurLessonNarrationAudio = async (input: {
       voice: input.voice,
       segments,
     };
-  } catch {
+  } catch (error) {
+    void logSystemEvent({
+      level: 'warn',
+      source: 'kangur.tts.generationFailed',
+      service: 'kangur.tts',
+      message: 'Kangur lesson neural narration generation failed; browser fallback will be used.',
+      error,
+      context: {
+        feature: 'kangur',
+        lessonId: input.script.lessonId,
+        locale: input.script.locale,
+        voice: input.voice,
+        forceRegenerate: input.forceRegenerate ?? false,
+        segmentCount: input.script.segments.length,
+        failureStage: getKangurLessonTtsFailureStage(error),
+        errorName: getErrorName(error),
+        errorMessage: getErrorMessage(error),
+        errorStatus: getErrorStatus(error),
+        errorCode: getErrorCode(error),
+      },
+    }).catch(() => undefined);
+
     return {
       mode: 'fallback',
       reason: 'generation_failed',

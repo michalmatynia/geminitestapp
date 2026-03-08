@@ -87,6 +87,14 @@ const clearSessionUserCache = (): void => {
   sessionUserInFlight = null;
 };
 
+const prepareLoginHref = (returnUrl: string): string => {
+  clearSessionUserCache();
+  clearScoreQueryCache();
+  const loginUrl = new URL('/kangur/login', window.location.origin);
+  loginUrl.searchParams.set('callbackUrl', returnUrl);
+  return `${loginUrl.pathname}${loginUrl.search}${loginUrl.hash}`;
+};
+
 const createActorAwareHeaders = (headers?: HeadersInit): Headers => {
   const nextHeaders = withCsrfHeaders(headers);
   const activeLearnerId = getStoredActiveLearnerId();
@@ -747,12 +755,9 @@ export const createLocalKangurPlatform = (): KangurPlatform => {
   return {
     auth: {
       me: resolveSessionUser,
+      prepareLoginHref,
       redirectToLogin: (returnUrl: string) => {
-        clearSessionUserCache();
-        clearScoreQueryCache();
-        const loginUrl = new URL('/kangur/login', window.location.origin);
-        loginUrl.searchParams.set('callbackUrl', returnUrl);
-        window.location.assign(loginUrl.toString());
+        window.location.assign(prepareLoginHref(returnUrl));
       },
       logout: async (returnUrl?: string) => {
         clearSessionUserCache();

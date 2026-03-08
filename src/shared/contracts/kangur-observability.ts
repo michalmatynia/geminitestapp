@@ -135,6 +135,7 @@ export const kangurObservabilitySummarySchema = z.object({
     learnerSignInFailureRatePercent: z.number().nullable(),
     progressSyncFailures: z.number(),
     ttsRequests: z.number(),
+    ttsGenerationFailures: z.number(),
     ttsFallbackRatePercent: z.number().nullable(),
   }),
   alerts: z.array(kangurObservabilityAlertSchema),

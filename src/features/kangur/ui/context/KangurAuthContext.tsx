@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurUser } from '@/features/kangur/services/ports';
@@ -36,6 +37,7 @@ const resolveErrorMessage = (value: unknown): string => {
 };
 
 export const KangurAuthProvider = ({ children }: { children: ReactNode }): React.JSX.Element => {
+  const router = useRouter();
   const [user, setUser] = useState<KangurUser | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
@@ -102,7 +104,8 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
   };
 
   const navigateToLogin = (): void => {
-    kangurPlatform.auth.redirectToLogin(window.location.href);
+    const loginHref = kangurPlatform.auth.prepareLoginHref(window.location.href);
+    router.push(loginHref);
   };
 
   const selectLearner = async (learnerId: string): Promise<void> => {

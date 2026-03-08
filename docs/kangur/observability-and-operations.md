@@ -122,9 +122,13 @@ Use this runbook when Kangur shows elevated sign-in failures, progress sync issu
 - Server sources:
   - `kangur.tts.generate`
   - `kangur.tts.fallback`
+  - `kangur.tts.generationFailed`
+  - `kangur.tts.probe.ready`
+  - `kangur.tts.probe.failed`
 - Route metrics:
   - `kangur.tts.POST`
   - `kangur.tts.status.POST`
+  - `kangur.tts.probe.POST`
 
 ### AI Tutor
 
@@ -165,9 +169,14 @@ Use this runbook when Kangur shows elevated sign-in failures, progress sync issu
 ### TTS fallback rate spikes
 
 1. Check whether fallbacks are `tts_unavailable`, `generation_failed`, or `empty_script`.
-2. Verify the OpenAI API key and storage path used by Kangur narration.
-3. Use browser fallback as the short-term mitigation; do not block lesson playback on TTS readiness.
-4. If only one lesson is affected, inspect `POST /api/kangur/tts/status` for that lesson draft.
+2. Verify the AI Brain OpenAI provider credential and the storage path used by Kangur narration.
+3. If fallbacks are `generation_failed`, inspect `kangur.tts.generationFailed` logs for `failureStage`.
+4. Typical stages are `openai_speech`, `audio_buffer`, and `storage_upload`.
+5. For `openai_speech`, also inspect `errorStatus` and `errorCode`.
+6. `errorCode=billing_not_active` means the configured OpenAI account exists but billing is inactive, so neural narration will not recover until billing is re-enabled.
+7. Kangur settings now runs a silent narrator probe automatically when the page opens or the server voice changes, and the manual `Test server narrator` action remains available for explicit retests.
+8. Use browser fallback as the short-term mitigation; do not block lesson playback on TTS readiness.
+9. If only one lesson is affected, inspect `POST /api/kangur/tts/status` for that lesson draft.
 
 ### Performance artifact degrades
 

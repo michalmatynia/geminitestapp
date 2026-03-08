@@ -6,19 +6,12 @@ import { configurationError, operationFailedError } from '@/shared/errors/app-er
 
 import { inferBrainRuntimeVendor, normalizeBrainRuntimeModelId } from './server-runtime-client';
 import { resolveOllamaBaseUrl } from './ollama-config';
-import { readStoredSettingValue } from './server';
+import { resolveBrainProviderCredential } from './provider-credentials';
 
 const OLLAMA_BASE_URL = resolveOllamaBaseUrl();
 
 const resolveOpenAiApiKey = async (): Promise<string> => {
-  const apiKey =
-    (await readStoredSettingValue('openai_api_key'))?.trim() ||
-    process.env['OPENAI_API_KEY']?.trim() ||
-    '';
-  if (!apiKey) {
-    throw configurationError('OpenAI API key is missing in Brain-controlled settings.');
-  }
-  return apiKey;
+  return resolveBrainProviderCredential('openai');
 };
 
 const extractEmbedding = (payload: unknown): number[] | null => {

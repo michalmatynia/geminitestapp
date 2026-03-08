@@ -106,13 +106,13 @@ export function KangurDocumentationCenter(): React.JSX.Element {
     : `Showing ${visibleGuides.length} guides and ${visibleTooltipDocCount} tooltip documents across ${groupedTooltipDocs.length} sections in the Kangur documentation center.`;
 
   return (
-    <div className='space-y-5' data-doc-id='settings_documentation_library'>
+    <div className='space-y-6' data-doc-id='settings_documentation_library'>
       <div id={resultsStatusId} role='status' aria-live='polite' aria-atomic='true' className='sr-only'>
         {resultSummary}
       </div>
       <div className='grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]'>
         <section
-          className='rounded-2xl border border-border/70 bg-muted/20 p-4'
+          className='rounded-2xl border border-border/60 bg-card/55 p-5 shadow-sm'
           aria-labelledby={indexHeadingId}
           aria-describedby={indexDescriptionId}
         >
@@ -141,19 +141,19 @@ export function KangurDocumentationCenter(): React.JSX.Element {
             />
           </div>
           <div className='mt-4 grid gap-3 sm:grid-cols-3'>
-            <div className='rounded-xl border border-border/60 bg-background/80 px-3 py-3'>
+            <div className='rounded-xl border border-border/60 bg-background/70 px-3 py-3'>
               <div className='text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground'>
                 Guides
               </div>
               <div className='mt-1 text-2xl font-bold text-foreground'>{visibleGuides.length}</div>
             </div>
-            <div className='rounded-xl border border-border/60 bg-background/80 px-3 py-3'>
+            <div className='rounded-xl border border-border/60 bg-background/70 px-3 py-3'>
               <div className='text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground'>
                 Tooltip Docs
               </div>
               <div className='mt-1 text-2xl font-bold text-foreground'>{visibleTooltipDocCount}</div>
             </div>
-            <div className='rounded-xl border border-border/60 bg-background/80 px-3 py-3'>
+            <div className='rounded-xl border border-border/60 bg-background/70 px-3 py-3'>
               <div className='text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground'>
                 Sections
               </div>
@@ -176,7 +176,7 @@ export function KangurDocumentationCenter(): React.JSX.Element {
               <li key={guide.id}>
                 <article
                   aria-labelledby={`kangur-doc-guide-${guide.id}-title`}
-                  className='rounded-2xl border border-border/70 bg-background/90 p-4 shadow-sm'
+                  className='rounded-2xl border border-border/60 bg-card/50 p-4 shadow-sm'
                 >
                   <div className='flex items-start justify-between gap-3'>
                     <div>
@@ -192,7 +192,7 @@ export function KangurDocumentationCenter(): React.JSX.Element {
                       {formatAudience(guide.audience)}
                     </span>
                   </div>
-                  <div className='mt-3 rounded-xl border border-border/60 bg-muted/20 px-3 py-2 text-xs text-muted-foreground'>
+                  <div className='mt-3 rounded-xl border border-border/60 bg-background/60 px-3 py-2 text-xs text-muted-foreground'>
                     Source: <span className='font-mono text-foreground'>{guide.docPath}</span>
                   </div>
                   <div className='mt-3 flex flex-wrap gap-2'>
@@ -210,7 +210,7 @@ export function KangurDocumentationCenter(): React.JSX.Element {
             ))}
           </ul>
           {visibleGuides.length === 0 ? (
-            <div className='rounded-2xl border border-dashed border-border/70 bg-background/60 p-4 text-sm text-muted-foreground md:col-span-2'>
+            <div className='rounded-2xl border border-dashed border-border/60 bg-background/50 p-4 text-sm text-muted-foreground md:col-span-2'>
               No Kangur guide matched the current search.
             </div>
           ) : null}
@@ -229,7 +229,7 @@ export function KangurDocumentationCenter(): React.JSX.Element {
             <section
               key={group.section}
               aria-labelledby={`kangur-doc-tooltip-section-${groupIndex}-title`}
-              className='rounded-2xl border border-border/70 bg-background/90 p-4 shadow-sm'
+              className='rounded-2xl border border-border/60 bg-card/50 p-4 shadow-sm'
             >
               <div className='flex items-center justify-between gap-3'>
                 <h3
@@ -248,8 +248,8 @@ export function KangurDocumentationCenter(): React.JSX.Element {
                     <article
                       aria-labelledby={`kangur-doc-tooltip-${entry.id}-title`}
                       className={cn(
-                        'rounded-xl border border-border/60 bg-muted/20 px-3 py-3',
-                        'transition-colors hover:bg-muted/30'
+                        'rounded-xl border border-border/60 bg-background/55 px-3 py-3',
+                        'transition-colors hover:bg-background/70'
                       )}
                     >
                       <div className='flex flex-wrap items-start justify-between gap-3'>
@@ -289,7 +289,7 @@ export function KangurDocumentationCenter(): React.JSX.Element {
           ))}
         </div>
         {groupedTooltipDocs.length === 0 ? (
-          <div className='rounded-2xl border border-dashed border-border/70 bg-background/60 p-4 text-sm text-muted-foreground xl:col-span-2'>
+          <div className='rounded-2xl border border-dashed border-border/60 bg-background/50 p-4 text-sm text-muted-foreground xl:col-span-2'>
             No Kangur tooltip documentation matched the current search.
           </div>
         ) : null}

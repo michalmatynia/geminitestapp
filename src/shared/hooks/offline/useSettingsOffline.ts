@@ -35,7 +35,7 @@ export function useSettingsOffline(): SettingsOfflineHookResult {
       resource: 'settings',
       domain: 'global',
       tags: ['settings', 'offline'],
-    },
+      description: 'Loads settings.'},
   });
 
   const updateSettingMutation = useOfflineMutation<

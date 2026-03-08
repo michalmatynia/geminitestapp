@@ -61,7 +61,7 @@ export function useUserPreferences(): SingleQuery<UserPreferences> {
       resource: 'user-preferences',
       domain: 'auth',
       tags: ['user-preferences'],
-    },
+      description: 'Loads user preferences.'},
   });
 }
 
@@ -98,6 +98,6 @@ export function useUpdateUserPreferences(): MutationResult<UserPreferences, User
       resource: 'user-preferences',
       domain: 'auth',
       tags: ['user-preferences', 'update'],
-    },
+      description: 'Updates user preferences.'},
   });
 }

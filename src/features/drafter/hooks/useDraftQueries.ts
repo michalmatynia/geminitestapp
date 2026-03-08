@@ -35,7 +35,7 @@ export function useDraftQueries(notebookId?: string): ListQuery<ProductDraft> {
       domain: 'drafter',
       queryKey,
       tags: ['drafts', 'list'],
-    },
+      description: 'Loads drafts.'},
   });
 }
 
@@ -53,7 +53,7 @@ export function useDraft(id: string | null): SingleQuery<ProductDraft> {
       domain: 'drafter',
       queryKey,
       tags: ['drafts', 'detail'],
-    },
+      description: 'Loads drafts detail.'},
   });
 }
 
@@ -66,7 +66,7 @@ export function useCreateDraftMutation(): MutationResult<ProductDraft, CreatePro
       resource: 'drafts',
       domain: 'drafter',
       tags: ['drafts', 'create'],
-    },
+      description: 'Creates drafts.'},
     invalidateKeys: [draftKeys.lists()],
   });
 }
@@ -83,7 +83,7 @@ export function useUpdateDraftMutation(): MutationResult<
       resource: 'drafts',
       domain: 'drafter',
       tags: ['drafts', 'update'],
-    },
+      description: 'Updates drafts.'},
     invalidate: (queryClient, data) => {
       queryClient.setQueryData(draftKeys.detail(data.id), data);
       void queryClient.invalidateQueries({ queryKey: draftKeys.lists() });
@@ -100,7 +100,7 @@ export function useDeleteDraftMutation(): MutationResult<void, string> {
       resource: 'drafts',
       domain: 'drafter',
       tags: ['drafts', 'delete'],
-    },
+      description: 'Deletes drafts.'},
     invalidate: (queryClient, _, deletedId) => {
       queryClient.removeQueries({ queryKey: draftKeys.detail(deletedId) });
       void queryClient.invalidateQueries({ queryKey: draftKeys.lists() });

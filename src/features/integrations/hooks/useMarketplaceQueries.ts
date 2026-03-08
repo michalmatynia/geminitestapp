@@ -22,7 +22,7 @@ export function useExternalCategories(connectionId: string): ListQuery<ExternalC
       domain: 'integrations',
       queryKey,
       tags: ['integrations', 'marketplace', 'categories'],
-    },
+      description: 'Loads marketplace categories.'},
   });
 }
 
@@ -47,7 +47,7 @@ export function useCategoryMappings(
       domain: 'integrations',
       queryKey,
       tags: ['integrations', 'marketplace', 'mappings'],
-    },
+      description: 'Loads marketplace mappings.'},
   });
 }
 
@@ -72,7 +72,7 @@ export function useCategoryMappingsByConnection(
       domain: 'integrations',
       queryKey,
       tags: ['integrations', 'marketplace', 'mappings'],
-    },
+      description: 'Loads marketplace mappings connection.'},
   });
 }
 
@@ -90,7 +90,7 @@ export function useExternalProducers(connectionId: string): ListQuery<ExternalPr
       domain: 'integrations',
       queryKey,
       tags: ['integrations', 'marketplace', 'producers'],
-    },
+      description: 'Loads marketplace producers.'},
   });
 }
 
@@ -110,7 +110,7 @@ export function useProducerMappings(connectionId: string): ListQuery<ProducerMap
       domain: 'integrations',
       queryKey,
       tags: ['integrations', 'marketplace', 'producer-mappings'],
-    },
+      description: 'Loads marketplace producer mappings.'},
   });
 }
 
@@ -127,7 +127,7 @@ export function useExternalTags(connectionId: string): ListQuery<ExternalTag> {
       domain: 'integrations',
       queryKey,
       tags: ['integrations', 'marketplace', 'tags'],
-    },
+      description: 'Loads marketplace tags.'},
   });
 }
 
@@ -147,6 +147,6 @@ export function useTagMappings(connectionId: string): ListQuery<TagMappingWithDe
       domain: 'integrations',
       queryKey,
       tags: ['integrations', 'marketplace', 'tag-mappings'],
-    },
+      description: 'Loads marketplace tag mappings.'},
   });
 }

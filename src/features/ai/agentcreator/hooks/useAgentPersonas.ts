@@ -31,7 +31,7 @@ export function useAgentPersonas(): UseQueryResult<AgentPersona[], Error> {
       resource: 'agent-personas',
       domain: 'global',
       tags: ['ai', 'agentcreator', 'personas'],
-    },
+      description: 'Loads agent personas.'},
   });
 }
 
@@ -56,7 +56,7 @@ export function useSaveAgentPersonasMutation(): UseMutationResult<
       resource: 'agent-personas',
       domain: 'global',
       tags: ['ai', 'agentcreator', 'personas'],
-    },
+      description: 'Updates agent personas.'},
     invalidate: (queryClient) => invalidateAgentPersonas(queryClient),
   });
 }

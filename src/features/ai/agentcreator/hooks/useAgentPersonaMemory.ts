@@ -25,6 +25,6 @@ export function useAgentPersonaMemory(
       resource: 'agent-persona-memory',
       domain: 'global',
       tags: ['ai', 'agentcreator', 'personas', 'memory'],
-    },
+      description: 'Loads agent persona memory.'},
   });
 }

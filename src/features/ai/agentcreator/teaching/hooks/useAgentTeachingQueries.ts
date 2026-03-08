@@ -67,7 +67,7 @@ export function useSearchEmbeddingCollectionMutation(): MutationResult<
       domain: 'agent_creator',
       mutationKey,
       tags: ['agent-teaching', 'collections', 'search'],
-    },
+      description: 'Runs agent teaching embedding collections search.'},
   });
 }
 
@@ -90,7 +90,7 @@ export function useTeachingChatMutation(): MutationResult<
       domain: 'agent_creator',
       mutationKey,
       tags: ['agent-teaching', 'chat'],
-    },
+      description: 'Runs agent teaching chat.'},
   });
 }
 
@@ -109,7 +109,7 @@ export function useTeachingAgents(options?: {
       domain: 'agent_creator',
       queryKey,
       tags: ['agent-teaching', 'agents'],
-    },
+      description: 'Loads agent teaching agents.'},
   });
 }
 
@@ -125,7 +125,7 @@ export function useTeachingCollections(): ListQuery<AgentTeachingEmbeddingCollec
       domain: 'agent_creator',
       queryKey,
       tags: ['agent-teaching', 'collections'],
-    },
+      description: 'Loads agent teaching embedding collections.'},
   });
 }
 
@@ -147,7 +147,7 @@ export function useUpsertTeachingAgentMutation(): MutationResult<
       domain: 'agent_creator',
       mutationKey,
       tags: ['agent-teaching', 'agents', 'upsert'],
-    },
+      description: 'Updates agent teaching agents.'},
     invalidateKeys: [agentTeachingKeys.agents()],
   });
 }
@@ -164,7 +164,7 @@ export function useDeleteTeachingAgentMutation(): MutationResult<void, { id: str
       domain: 'agent_creator',
       mutationKey,
       tags: ['agent-teaching', 'agents', 'delete'],
-    },
+      description: 'Deletes agent teaching agents.'},
     invalidateKeys: [agentTeachingKeys.agents()],
   });
 }
@@ -187,7 +187,7 @@ export function useUpsertEmbeddingCollectionMutation(): MutationResult<
       domain: 'agent_creator',
       mutationKey,
       tags: ['agent-teaching', 'collections', 'upsert'],
-    },
+      description: 'Updates agent teaching embedding collections.'},
     invalidateKeys: [agentTeachingKeys.collections()],
   });
 }
@@ -204,7 +204,7 @@ export function useDeleteEmbeddingCollectionMutation(): MutationResult<void, { i
       domain: 'agent_creator',
       mutationKey,
       tags: ['agent-teaching', 'collections', 'delete'],
-    },
+      description: 'Deletes agent teaching embedding collections.'},
     invalidateKeys: [agentTeachingKeys.collections(), agentTeachingKeys.agents()],
   });
 }
@@ -237,7 +237,7 @@ export function useEmbeddingDocuments(
       domain: 'agent_creator',
       queryKey,
       tags: ['agent-teaching', 'documents'],
-    },
+      description: 'Loads agent teaching embedding documents.'},
   });
 }
 
@@ -289,7 +289,7 @@ export function useAddEmbeddingDocumentMutation(): MutationResult<
       domain: 'agent_creator',
       mutationKey,
       tags: ['agent-teaching', 'documents', 'create'],
-    },
+      description: 'Creates agent teaching embedding documents.'},
     invalidateKeys: (_item, vars: { collectionId: string }) => [
       agentTeachingKeys.documents(vars.collectionId),
     ],
@@ -312,7 +312,7 @@ export function useDeleteEmbeddingDocumentMutation(): MutationResult<
       domain: 'agent_creator',
       mutationKey,
       tags: ['agent-teaching', 'documents', 'delete'],
-    },
+      description: 'Deletes agent teaching embedding documents.'},
     invalidateKeys: (_item, vars: { collectionId: string }) => [
       agentTeachingKeys.documents(vars.collectionId),
     ],

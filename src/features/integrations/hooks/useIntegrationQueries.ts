@@ -45,7 +45,7 @@ export function useIntegrations(): ListQuery<Integration> {
       domain: 'integrations',
       queryKey,
       tags: ['integrations', 'list'],
-    },
+      description: 'Loads integrations.'},
   });
 }
 
@@ -72,7 +72,7 @@ export function useIntegrationConnections(
       domain: 'integrations',
       queryKey,
       tags: ['integrations', 'connections'],
-    },
+      description: 'Loads integrations connections.'},
   });
 }
 
@@ -97,7 +97,7 @@ export function useConnectionSession(
       domain: 'integrations',
       queryKey,
       tags: ['integrations', 'session'],
-    },
+      description: 'Loads integrations connection session.'},
   });
 }
 
@@ -116,7 +116,7 @@ export function useIntegrationsWithConnections(): ListQuery<IntegrationWithConne
       domain: 'integrations',
       queryKey,
       tags: ['integrations', 'with-connections'],
-    },
+      description: 'Loads integrations with connections.'},
   });
 }
 
@@ -142,7 +142,7 @@ export function usePlaywrightPersonas(): ListQuery<PlaywrightPersona> {
       domain: 'playwright',
       queryKey,
       tags: ['playwright', 'personas'],
-    },
+      description: 'Loads playwright personas.'},
   });
 }
 
@@ -163,7 +163,7 @@ export function useExportTemplates(): ListQuery<ImportExportTemplate> {
       domain: 'integrations',
       queryKey,
       tags: ['integrations', 'export-templates'],
-    },
+      description: 'Loads integrations export templates.'},
   });
 }
 
@@ -183,7 +183,7 @@ export function useActiveExportTemplate(): SingleQuery<{ templateId?: string | n
       domain: 'integrations',
       queryKey,
       tags: ['integrations', 'export-template'],
-    },
+      description: 'Loads integrations active export template.'},
   });
 }
 
@@ -203,7 +203,7 @@ export function useDefaultExportInventory(): SingleQuery<{ inventoryId?: string 
       domain: 'integrations',
       queryKey,
       tags: ['integrations', 'inventory'],
-    },
+      description: 'Loads integrations default export inventory.'},
   });
 }
 
@@ -225,7 +225,7 @@ export function useDefaultExportConnection(): SingleQuery<{ connectionId?: strin
       domain: 'integrations',
       queryKey,
       tags: ['integrations', 'connection'],
-    },
+      description: 'Loads integrations default export connection.'},
   });
 }
 
@@ -257,7 +257,7 @@ export function useBaseInventories(
       domain: 'integrations',
       queryKey,
       tags: ['integrations', 'inventories'],
-    },
+      description: 'Loads integrations base inventories.'},
   });
 }
 

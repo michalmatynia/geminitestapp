@@ -23,7 +23,7 @@ export function useFetchExternalCategoriesMutation() {
       resource: 'marketplace.categories.fetch',
       domain: 'integrations',
       tags: ['integrations', 'marketplace', 'categories'],
-    },
+      description: 'Runs marketplace categories fetch.'},
     invalidate: (queryClient, _data, { connectionId }) =>
       invalidateMarketplaceCategories(queryClient, connectionId),
   });
@@ -44,7 +44,7 @@ export function useSaveMappingsMutation() {
       resource: 'marketplace.mappings.bulk',
       domain: 'integrations',
       tags: ['integrations', 'marketplace', 'mappings'],
-    },
+      description: 'Updates marketplace mappings bulk.'},
     invalidate: (queryClient, _data, { connectionId, catalogId }) =>
       invalidateMarketplaceMappings(queryClient, connectionId, catalogId),
   });
@@ -61,7 +61,7 @@ export function useFetchExternalProducersMutation() {
       resource: 'marketplace.producers.fetch',
       domain: 'integrations',
       tags: ['integrations', 'marketplace', 'producers'],
-    },
+      description: 'Runs marketplace producers fetch.'},
     invalidate: (queryClient, _data, { connectionId }) =>
       invalidateMarketplaceProducers(queryClient, connectionId),
   });
@@ -84,7 +84,7 @@ export function useSaveProducerMappingsMutation() {
       resource: 'marketplace.producer-mappings.bulk',
       domain: 'integrations',
       tags: ['integrations', 'marketplace', 'producer-mappings'],
-    },
+      description: 'Updates marketplace producer mappings bulk.'},
     invalidate: (queryClient, _data, { connectionId }) =>
       invalidateMarketplaceProducerMappings(queryClient, connectionId),
   });
@@ -101,7 +101,7 @@ export function useFetchExternalTagsMutation() {
       resource: 'marketplace.tags.fetch',
       domain: 'integrations',
       tags: ['integrations', 'marketplace', 'tags'],
-    },
+      description: 'Runs marketplace tags fetch.'},
     invalidate: (queryClient, _data, { connectionId }) =>
       invalidateMarketplaceTags(queryClient, connectionId),
   });
@@ -124,7 +124,7 @@ export function useSaveTagMappingsMutation() {
       resource: 'marketplace.tag-mappings.bulk',
       domain: 'integrations',
       tags: ['integrations', 'marketplace', 'tag-mappings'],
-    },
+      description: 'Updates marketplace tag mappings bulk.'},
     invalidate: (queryClient, _data, { connectionId }) =>
       invalidateMarketplaceTagMappings(queryClient, connectionId),
   });

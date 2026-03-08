@@ -28,7 +28,7 @@ export function useOptimisticMutation<TData, TError, TVariables, TCacheData = TD
       domain: 'global',
       samplingRate: 0.4,
       tags: ['shared-hook', 'optimistic'],
-    },
+      description: 'Updates optimistic mutation.'},
   }) as unknown as UseMutationResult<
     TData,
     TError,

@@ -49,7 +49,7 @@ export function useAuthUsers(enabled: boolean = true): SingleQuery<AuthUsersResp
       domain: 'auth',
       queryKey,
       tags: ['auth', 'users'],
-    },
+      description: 'Loads auth users.'},
   });
 }
 
@@ -68,7 +68,7 @@ export function useAuthUserSecurity(userId?: string | null): SingleQuery<AuthUse
       domain: 'auth',
       queryKey,
       tags: ['auth', 'security'],
-    },
+      description: 'Loads auth user security.'},
   });
 }
 
@@ -103,7 +103,7 @@ export function useUpdateAuthUser(): UpdateMutation<
       domain: 'auth',
       mutationKey: authKeys.users.all,
       tags: ['auth', 'users', 'update'],
-    },
+      description: 'Updates auth users.'},
     invalidate: (queryClient) => invalidateUsers(queryClient),
   });
 }
@@ -140,7 +140,7 @@ export function useUpdateAuthUserSecurity(): UpdateMutation<
       domain: 'auth',
       mutationKey: authKeys.users.all,
       tags: ['auth', 'security', 'update'],
-    },
+      description: 'Updates auth user security.'},
     invalidate: (queryClient, _data, variables) => {
       void invalidateUsers(queryClient);
       return invalidateAuthSecurity(queryClient, variables.userId);
@@ -168,7 +168,7 @@ export function useDeleteAuthUser(): UpdateMutation<
       domain: 'auth',
       mutationKey: authKeys.users.all,
       tags: ['auth', 'users', 'delete'],
-    },
+      description: 'Deletes auth users.'},
     invalidate: (queryClient, _data, variables) => {
       void invalidateUsers(queryClient);
       return invalidateAuthSecurity(queryClient, variables.userId);
@@ -190,7 +190,7 @@ export function useMockSignIn(): MutationResult<
       domain: 'auth',
       mutationKey: authKeys.users.all,
       tags: ['auth', 'signin'],
-    },
+      description: 'Creates auth mock signin.'},
   });
 }
 
@@ -213,7 +213,7 @@ export function useRegisterUser(): CreateMutation<
       domain: 'auth',
       mutationKey: authKeys.users.all,
       tags: ['auth', 'register'],
-    },
+      description: 'Creates auth register.'},
     invalidate: (queryClient) => invalidateUsers(queryClient),
   });
 }

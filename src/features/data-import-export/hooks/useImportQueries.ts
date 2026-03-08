@@ -47,7 +47,7 @@ export function useIntegrationConnections(): ListQuery<IntegrationWithConnection
       domain: 'integrations',
       queryKey,
       tags: ['integrations', 'connections'],
-    },
+      description: 'Loads integrations connections.'},
   });
 }
 
@@ -63,7 +63,7 @@ export function useCatalogs(): ListQuery<CatalogRecord> {
       domain: 'integrations',
       queryKey,
       tags: ['import-export', 'catalogs'],
-    },
+      description: 'Loads products metadata catalogs.'},
   });
 }
 
@@ -81,7 +81,7 @@ export function useTemplates(scope: 'import' | 'export'): ListQuery<Template> {
       domain: 'integrations',
       queryKey,
       tags: ['import-export', 'templates', scope],
-    },
+      description: 'Loads use templates.'},
   });
 }
 
@@ -115,7 +115,7 @@ export function useImportPreference<T>(
       domain: 'integrations',
       queryKey,
       tags: ['import-export', 'preferences'],
-    },
+      description: 'Loads integrations import export preference.'},
   });
 }
 
@@ -138,7 +138,7 @@ export function useSavePreferenceMutation(): MutationResult<
       domain: 'integrations',
       mutationKey,
       tags: ['import-export', 'preferences', 'save'],
-    },
+      description: 'Updates integrations import export preference.'},
     invalidate: async (queryClient, _data, { endpoint }) => {
       void queryClient.invalidateQueries({ queryKey: importExportKeys.preferences() });
       const key = endpoint.split('/').pop();
@@ -176,7 +176,7 @@ export function useTemplateMutation(
       domain: 'integrations',
       mutationKey,
       tags: ['import-export', 'templates', scope, 'save'],
-    },
+      description: 'Runs use template mutation.'},
     invalidateKeys: [importExportKeys.templates(scope)],
   });
 }
@@ -207,7 +207,7 @@ export function useInventories(
       domain: 'integrations',
       queryKey,
       tags: ['import-export', 'inventories'],
-    },
+      description: 'Loads integrations import export inventories.'},
   });
 }
 
@@ -244,7 +244,7 @@ export function useWarehouses(
       domain: 'integrations',
       queryKey,
       tags: ['import-export', 'warehouses'],
-    },
+      description: 'Loads integrations import export warehouses.'},
   });
 }
 
@@ -273,7 +273,7 @@ export function useParameters(
       domain: 'integrations',
       queryKey,
       tags: ['import-export', 'parameters'],
-    },
+      description: 'Loads integrations import export parameters.'},
   });
 }
 
@@ -296,7 +296,7 @@ export function useImportParameterCache(
       domain: 'integrations',
       queryKey,
       tags: ['import-export', 'parameters', 'cache'],
-    },
+      description: 'Loads integrations import export parameter cache.'},
   });
 }
 
@@ -340,7 +340,7 @@ export function useRefreshImportParameterCacheMutation(): MutationResult<
       domain: 'integrations',
       mutationKey,
       tags: ['import-export', 'parameters', 'refresh'],
-    },
+      description: 'Runs integrations import export parameter cache refresh.'},
     invalidateKeys: [
       importExportKeys.pref('sample-product'),
       importExportKeys.pref('parameter-cache'),
@@ -414,7 +414,7 @@ export function useImportList(
       domain: 'integrations',
       queryKey,
       tags: ['import-export', 'import-list'],
-    },
+      description: 'Loads integrations import export import list.'},
   });
 }
 
@@ -455,7 +455,7 @@ export function useImportMutation(): MutationResult<
       domain: 'integrations',
       mutationKey,
       tags: ['import-export', 'import'],
-    },
+      description: 'Creates integrations import export import runs.'},
   });
 }
 
@@ -508,7 +508,7 @@ export function useImportRun(
       domain: 'integrations',
       queryKey,
       tags: ['import-export', 'import-runs', 'status'],
-    },
+      description: 'Loads integrations import export import run.'},
   });
 }
 
@@ -533,7 +533,7 @@ export function useResumeImportRunMutation(
       domain: 'integrations',
       mutationKey,
       tags: ['import-export', 'import-runs', 'resume'],
-    },
+      description: 'Runs integrations import export import run resume.'},
   });
 }
 
@@ -555,7 +555,7 @@ export function useCancelImportRunMutation(
       domain: 'integrations',
       mutationKey,
       tags: ['import-export', 'import-runs', 'cancel'],
-    },
+      description: 'Runs integrations import export import run cancel.'},
   });
 }
 
@@ -621,7 +621,7 @@ export function useSaveExportSettingsMutation(): MutationResult<
       domain: 'integrations',
       mutationKey,
       tags: ['import-export', 'export-settings', 'save'],
-    },
+      description: 'Updates integrations import export export settings.'},
     invalidateKeys: [
       importExportKeys.preferences(),
       integrationKeys.selection.defaultConnection(),
@@ -657,7 +657,7 @@ export function useSaveDefaultConnectionMutation(): MutationResult<
       domain: 'integrations',
       mutationKey,
       tags: ['import-export', 'default-connection', 'save'],
-    },
+      description: 'Updates integrations import export default connection.'},
     invalidateKeys: [
       integrationKeys.selection.defaultConnection(),
       importExportKeys.preferences(),
@@ -690,7 +690,7 @@ export function useClearInventoryMutation(): MutationResult<void, void> {
       domain: 'integrations',
       mutationKey,
       tags: ['import-export', 'inventory', 'clear'],
-    },
+      description: 'Deletes integrations import export inventory cache.'},
     invalidateKeys: [
       importExportKeys.pref('sample-product'),
       importExportKeys.pref('parameter-cache'),

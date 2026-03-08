@@ -50,7 +50,7 @@ export function useNoteTags(notebookId?: string, options?: QueryOptions): ListQu
       domain: 'notes',
       queryKey,
       tags: ['notes', 'tags'],
-    },
+      description: 'Loads notes tags.'},
   });
 }
 
@@ -74,7 +74,7 @@ export function useNoteThemes(notebookId?: string, options?: QueryOptions): List
       domain: 'notes',
       queryKey,
       tags: ['notes', 'themes'],
-    },
+      description: 'Loads notes themes.'},
   });
 }
 
@@ -101,7 +101,7 @@ export function useNoteCategories(
       domain: 'notes',
       queryKey,
       tags: ['notes', 'categories'],
-    },
+      description: 'Loads notes categories.'},
   });
 }
 
@@ -131,7 +131,7 @@ export function useNotes(
       domain: 'notes',
       queryKey,
       tags: ['notes', 'list'],
-    },
+      description: 'Loads notes.'},
   });
 }
 
@@ -157,7 +157,7 @@ export function useNote(
       domain: 'notes',
       queryKey,
       tags: ['notes', 'detail'],
-    },
+      description: 'Loads notes detail.'},
   });
 }
 
@@ -182,6 +182,6 @@ export function useNotesLookup(noteIds: string[], options?: QueryOptions): ListQ
       domain: 'notes',
       queryKey,
       tags: ['notes', 'lookup'],
-    },
+      description: 'Loads notes lookup.'},
   });
 }

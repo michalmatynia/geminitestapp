@@ -166,7 +166,7 @@ export function useDatabaseNodeConfigState() {
       operation: 'list',
       resource: 'database.schema',
       domain: 'database',
-    },
+      description: 'Loads database schema.'},
   });
 
   const schemaSyncMutation = createMutationV2<void, string | undefined>({
@@ -182,7 +182,7 @@ export function useDatabaseNodeConfigState() {
       operation: 'action',
       resource: 'database.schema',
       domain: 'database',
-    },
+      description: 'Runs database schema.'},
   });
 
   const fetchedDbSchema = schemaQuery.data;

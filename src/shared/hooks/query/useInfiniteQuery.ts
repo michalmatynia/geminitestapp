@@ -73,7 +73,7 @@ export function useInfiniteQueryWithPagination<TData>(
       resource: 'pagination',
       domain: 'global',
       tags: ['infinite', 'pagination'],
-    },
+      description: 'Loads paginated pagination.'},
   });
 }
 

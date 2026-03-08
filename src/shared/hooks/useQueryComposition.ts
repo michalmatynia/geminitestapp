@@ -25,7 +25,7 @@ export function useNormalizedQuery<T extends { id: string }>(
       resource: 'normalized-query',
       domain: 'global',
       tags: ['query', 'normalized'],
-    },
+      description: 'Loads normalized query.'},
   });
 
   // Derived normalized state
@@ -81,7 +81,7 @@ export function useComposedQuery<T, R>(
       resource: 'composed-query',
       domain: 'global',
       tags: ['query', 'composed'],
-    },
+      description: 'Loads composed query.'},
   });
 }
 
@@ -105,7 +105,7 @@ export function useAggregatedQuery<T, R>(
         resource: 'aggregated-query',
         domain: 'global',
         tags: ['query', 'aggregated'],
-      },
+        description: 'Loads aggregated query.'},
     })
   );
 

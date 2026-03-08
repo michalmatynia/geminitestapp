@@ -132,7 +132,7 @@ export function useUserPreferences(): UserPreferencesHookResult {
       domain: 'products',
       queryKey: userPreferencesQueryKey,
       tags: ['products', 'user-preferences'],
-    },
+      description: 'Loads user preferences product list.'},
   });
 
   const { data, isLoading } = query;

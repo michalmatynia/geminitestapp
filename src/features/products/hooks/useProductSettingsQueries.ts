@@ -82,7 +82,7 @@ export function useCategories(catalogId: string | null): ListQuery<ProductCatego
       domain: 'products',
       queryKey,
       tags: ['products', 'settings', 'categories', 'tree'],
-    },
+      description: 'Loads products settings categories tree.'},
   });
 }
 
@@ -111,7 +111,7 @@ export function useValidatorSettings(): SingleQuery<ProductValidatorSettings> {
       domain: 'products',
       queryKey,
       tags: ['products', 'settings', 'validator'],
-    },
+      description: 'Loads products settings validator.'},
   });
 }
 
@@ -135,7 +135,7 @@ export function useValidationPatterns(): ListQuery<ProductValidationPattern> {
       domain: 'products',
       queryKey,
       tags: ['products', 'settings', 'validator', 'patterns'],
-    },
+      description: 'Loads products settings validator patterns.'},
   });
 }
 
@@ -162,7 +162,7 @@ export function useProductValidatorConfig(
       domain: 'products',
       queryKey,
       tags: ['products', 'settings', 'validator', 'config'],
-    },
+      description: 'Loads products settings validator config.'},
   });
 }
 
@@ -178,7 +178,7 @@ export function useUpdatePriceGroupMutation(): UpdateMutation<PriceGroup, PriceG
       domain: 'products',
       mutationKey,
       tags: ['products', 'settings', 'price-groups', 'update'],
-    },
+      description: 'Updates products settings price groups.'},
     invalidate: async (queryClient) => {
       await invalidatePriceGroups(queryClient);
     },
@@ -197,7 +197,7 @@ export function useDeletePriceGroupMutation(): DeleteMutation {
       domain: 'products',
       mutationKey,
       tags: ['products', 'settings', 'price-groups', 'delete'],
-    },
+      description: 'Deletes products settings price groups.'},
     invalidate: async (queryClient) => {
       await invalidatePriceGroups(queryClient);
     },
@@ -217,7 +217,7 @@ export function useSavePriceGroupMutation(): SaveMutation<PriceGroup> {
       domain: 'products',
       mutationKey,
       tags: ['products', 'settings', 'price-groups', 'save'],
-    },
+      description: 'Runs products settings price groups.'},
     invalidate: async (queryClient) => {
       await invalidatePriceGroups(queryClient);
     },
@@ -236,7 +236,7 @@ export function useDeleteCatalogMutation(): DeleteMutation {
       domain: 'products',
       mutationKey,
       tags: ['products', 'settings', 'catalogs', 'delete'],
-    },
+      description: 'Deletes products settings catalogs.'},
     invalidate: async (queryClient) => {
       await invalidateProductSettingsCatalogs(queryClient);
     },
@@ -256,7 +256,7 @@ export function useSaveCatalogMutation(): SaveMutation<Catalog> {
       domain: 'products',
       mutationKey,
       tags: ['products', 'settings', 'catalogs', 'save'],
-    },
+      description: 'Runs products settings catalogs.'},
     invalidate: async (queryClient) => {
       await invalidateProductSettingsCatalogs(queryClient);
     },
@@ -279,7 +279,7 @@ export function useSaveCategoryMutation(): SaveMutation<
       domain: 'products',
       mutationKey,
       tags: ['products', 'settings', 'categories', 'save'],
-    },
+      description: 'Runs products settings categories.'},
     invalidate: async (queryClient, _data, variables) => {
       const catalogId = variables.data.catalogId ?? null;
       await invalidateCatalogScopedData(queryClient, catalogId);
@@ -302,7 +302,7 @@ export function useDeleteCategoryMutation(): UpdateMutation<
       domain: 'products',
       mutationKey,
       tags: ['products', 'settings', 'categories', 'delete'],
-    },
+      description: 'Deletes products settings categories.'},
     invalidate: async (queryClient, _data, variables) => {
       await invalidateCatalogScopedData(queryClient, variables.catalogId);
     },
@@ -324,7 +324,7 @@ export function useReorderCategoryMutation(): UpdateMutation<
       domain: 'products',
       mutationKey,
       tags: ['products', 'settings', 'categories', 'reorder'],
-    },
+      description: 'Updates products settings categories reorder.'},
     invalidate: (queryClient, _data, variables) => {
       const catalogId = variables.catalogId ?? null;
       return invalidateCatalogScopedData(queryClient, catalogId);
@@ -348,7 +348,7 @@ export function useSaveTagMutation(): SaveMutation<
       domain: 'products',
       mutationKey,
       tags: ['products', 'settings', 'tags', 'save'],
-    },
+      description: 'Runs products settings tags.'},
     invalidate: async (queryClient, _data, variables) => {
       const catalogId = variables.data.catalogId ?? null;
       await invalidateCatalogScopedData(queryClient, catalogId);
@@ -371,7 +371,7 @@ export function useDeleteTagMutation(): UpdateMutation<
       domain: 'products',
       mutationKey,
       tags: ['products', 'settings', 'tags', 'delete'],
-    },
+      description: 'Deletes products settings tags.'},
     invalidate: async (queryClient, _data, variables) => {
       await invalidateCatalogScopedData(queryClient, variables.catalogId);
     },
@@ -394,7 +394,7 @@ export function useSaveParameterMutation(): SaveMutation<
       domain: 'products',
       mutationKey,
       tags: ['products', 'settings', 'parameters', 'save'],
-    },
+      description: 'Runs products settings parameters.'},
     invalidate: async (queryClient, _data, variables) => {
       const catalogId = variables.data.catalogId ?? null;
       await invalidateCatalogScopedData(queryClient, catalogId);
@@ -417,7 +417,7 @@ export function useDeleteParameterMutation(): UpdateMutation<
       domain: 'products',
       mutationKey: queryKey,
       tags: ['products', 'settings', 'parameters', 'delete'],
-    },
+      description: 'Deletes products settings parameters.'},
     invalidate: async (queryClient, _data, variables) => {
       await invalidateCatalogScopedData(queryClient, variables.catalogId);
     },
@@ -439,7 +439,7 @@ export function useUpdateValidatorSettingsMutation(): UpdateMutation<
       domain: 'products',
       mutationKey,
       tags: ['products', 'settings', 'validator', 'update'],
-    },
+      description: 'Updates products settings validator.'},
     invalidate: async (queryClient) => {
       await invalidateValidatorConfig(queryClient);
     },
@@ -461,7 +461,7 @@ export function useCreateValidationPatternMutation(): CreateMutation<
       domain: 'products',
       mutationKey,
       tags: ['products', 'settings', 'validator', 'patterns', 'create'],
-    },
+      description: 'Creates products settings validator patterns.'},
     invalidate: async (queryClient) => {
       await invalidateValidatorConfig(queryClient);
     },
@@ -484,7 +484,7 @@ export function useUpdateValidationPatternMutation(): UpdateMutation<
       domain: 'products',
       mutationKey,
       tags: ['products', 'settings', 'validator', 'patterns', 'update'],
-    },
+      description: 'Updates products settings validator patterns.'},
     invalidate: async (queryClient) => {
       await invalidateValidatorConfig(queryClient);
     },
@@ -503,7 +503,7 @@ export function useDeleteValidationPatternMutation(): DeleteMutation {
       domain: 'products',
       mutationKey,
       tags: ['products', 'settings', 'validator', 'patterns', 'delete'],
-    },
+      description: 'Deletes products settings validator patterns.'},
     invalidate: async (queryClient) => {
       await invalidateValidatorConfig(queryClient);
     },
@@ -526,7 +526,7 @@ export function useReorderValidationPatternsMutation(): UpdateMutation<
       domain: 'products',
       mutationKey,
       tags: ['products', 'settings', 'validator', 'patterns', 'reorder'],
-    },
+      description: 'Updates products settings validator patterns reorder.'},
     invalidate: async (queryClient) => {
       await invalidateValidatorConfig(queryClient);
     },
@@ -548,7 +548,7 @@ export function useImportValidationPatternsMutation(): UpdateMutation<
       domain: 'products',
       mutationKey,
       tags: ['products', 'settings', 'validator', 'patterns', 'import'],
-    },
+      description: 'Updates products settings validator patterns import.'},
     invalidate: async (queryClient, _data, variables) => {
       if (variables.dryRun) return;
       await invalidateValidatorConfig(queryClient);

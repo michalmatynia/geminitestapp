@@ -44,6 +44,6 @@ export function useFileUploadEvents(
       domain: 'global',
       queryKey,
       tags: ['files', 'upload-events'],
-    },
+      description: 'Loads system upload events.'},
   });
 }

@@ -67,7 +67,7 @@ export function useProductListCategories({
       domain: 'products',
       queryKey: batchCategoryQueryKey,
       tags: ['products', 'categories', 'batch'],
-    },
+      description: 'Loads products categories batch.'},
   });
 
   const categoryNameById = useMemo((): Map<string, string> => {

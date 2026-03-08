@@ -27,7 +27,7 @@ export function usePaletteWithTriggerButtons(): NodeDefinition[] {
       operation: 'list',
       resource: 'aiPaths.triggerButtons',
       domain: 'global',
-    },
+      description: 'Loads ai paths trigger buttons.'},
   });
 
   return useMemo<NodeDefinition[]>(() => {

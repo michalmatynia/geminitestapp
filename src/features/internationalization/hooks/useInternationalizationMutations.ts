@@ -30,7 +30,7 @@ export function useDeleteCurrencyMutation(): DeleteMutation<void, string> {
       resource: 'internationalization.currencies',
       domain: 'internationalization',
       tags: ['internationalization', 'currencies', 'delete'],
-    },
+      description: 'Deletes internationalization currencies.'},
     invalidateKeys: [i18nKeys.currencies()],
   });
 }
@@ -46,7 +46,7 @@ export function useDeleteCountryMutation(): DeleteMutation<void, string> {
       resource: 'internationalization.countries',
       domain: 'internationalization',
       tags: ['internationalization', 'countries', 'delete'],
-    },
+      description: 'Deletes internationalization countries.'},
     invalidateKeys: [i18nKeys.countries()],
   });
 }
@@ -62,7 +62,7 @@ export function useDeleteLanguageMutation(): DeleteMutation<void, string> {
       resource: 'internationalization.languages',
       domain: 'internationalization',
       tags: ['internationalization', 'languages', 'delete'],
-    },
+      description: 'Deletes internationalization languages.'},
     invalidateKeys: [i18nKeys.languages()],
   });
 }
@@ -82,7 +82,7 @@ export function useSaveCurrencyMutation(): SaveMutation<
       resource: 'internationalization.currencies',
       domain: 'internationalization',
       tags: ['internationalization', 'currencies', 'save'],
-    },
+      description: 'Runs internationalization currencies.'},
     invalidateKeys: [i18nKeys.currencies()],
   });
 }
@@ -102,7 +102,7 @@ export function useSaveCountryMutation(): SaveMutation<
       resource: 'internationalization.countries',
       domain: 'internationalization',
       tags: ['internationalization', 'countries', 'save'],
-    },
+      description: 'Runs internationalization countries.'},
     invalidateKeys: [i18nKeys.countries()],
   });
 }
@@ -122,7 +122,7 @@ export function useSaveLanguageMutation(): SaveMutation<
       resource: 'internationalization.languages',
       domain: 'internationalization',
       tags: ['internationalization', 'languages', 'save'],
-    },
+      description: 'Runs internationalization languages.'},
     invalidateKeys: [i18nKeys.languages()],
   });
 }

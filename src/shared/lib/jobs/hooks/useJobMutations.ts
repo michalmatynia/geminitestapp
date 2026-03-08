@@ -24,7 +24,7 @@ export function useChatbotJobMutation(): UpdateMutation<
       domain: 'jobs',
       mutationKey: jobKeys.all,
       tags: ['jobs', 'chatbot', 'action'],
-    },
+      description: 'Creates jobs chatbot action.'},
     invalidateKeys: [jobKeys.all],
   });
 }
@@ -42,7 +42,7 @@ export function useClearChatbotJobsMutation(): VoidMutation<{ scope: string }> {
       domain: 'jobs',
       mutationKey: jobKeys.all,
       tags: ['jobs', 'chatbot', 'clear'],
-    },
+      description: 'Deletes jobs chatbot clear.'},
     invalidateKeys: [jobKeys.all],
   });
 }
@@ -60,7 +60,7 @@ export function useCancelListingMutation(): VoidMutation<{ productId: string; li
       domain: 'jobs',
       mutationKey: jobKeys.integrations(),
       tags: ['jobs', 'integrations', 'listing', 'cancel'],
-    },
+      description: 'Deletes jobs integrations listing.'},
     invalidateKeys: [jobKeys.integrations()],
   });
 }

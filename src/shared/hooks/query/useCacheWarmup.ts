@@ -45,7 +45,7 @@ export function useCacheWarmup(
             resource: 'cache-warmup',
             domain,
             tags: ['cache', 'warmup'],
-          },
+            description: 'Loads cache warmup.'},
         })();
         warmupTimeouts.current.delete(key);
       }, delay);
@@ -103,7 +103,7 @@ export function useSmartPrefetch(options?: { domain?: TanstackFactoryDomain }): 
                 resource: 'smart-prefetch',
                 domain,
                 tags: ['cache', 'prefetch', 'hover'],
-              },
+                description: 'Loads smart prefetch.'},
             })();
           }, delay);
         },
@@ -129,7 +129,7 @@ export function useSmartPrefetch(options?: { domain?: TanstackFactoryDomain }): 
               resource: 'smart-prefetch',
               domain,
               tags: ['cache', 'prefetch', 'focus'],
-            },
+              description: 'Loads smart prefetch.'},
           })();
         },
       };

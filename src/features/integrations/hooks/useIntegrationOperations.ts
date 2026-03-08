@@ -107,7 +107,7 @@ export function useIntegrationOperations(productIds: readonly string[] = []): {
       domain: 'integrations',
       queryKey: scopedListingBadgesQueryKey,
       tags: ['integrations', 'listings', 'badges'],
-    },
+      description: 'Polls integrations product listings badges.'},
   });
 
   const payload = listingsBadgeQuery.data || {};

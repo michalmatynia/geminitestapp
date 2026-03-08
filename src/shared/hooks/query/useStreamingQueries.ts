@@ -83,7 +83,7 @@ export function useStreamingQuery<T>(
       resource: 'streaming-query',
       domain,
       tags: ['streaming'],
-    },
+      description: 'Loads streaming query.'},
   });
 }
 
@@ -201,7 +201,7 @@ export function useSmartPolling<T>(
       resource: 'smart-polling',
       domain,
       tags: ['polling', 'smart'],
-    },
+      description: 'Polls smart polling.'},
   });
 
   useEffect((): void => {

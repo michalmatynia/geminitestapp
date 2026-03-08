@@ -442,7 +442,7 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
       domain: 'products',
       queryKey: QUERY_KEYS.products.validatorLatestProductSource(),
       tags: ['products', 'validator', 'latest-source'],
-    },
+      description: 'Loads products validator latest product source.'},
   });
 
   const latestProductValues = useMemo((): Record<string, unknown> | null => {

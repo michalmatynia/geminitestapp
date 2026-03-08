@@ -53,6 +53,6 @@ export function useProductListings(productId: string): ListQuery<ProductListingW
       domain: 'integrations',
       queryKey,
       tags: ['integrations', 'listings'],
-    },
+      description: 'Loads integrations product listings.'},
   });
 }

@@ -75,7 +75,7 @@ export function useProductListSelection({
             domain: 'products',
             queryKey,
             tags: ['products', 'list', 'select-all'],
-          },
+            description: 'Loads products list all.'},
         })();
 
         const newSelection: RowSelectionState = {};

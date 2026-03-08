@@ -37,7 +37,7 @@ export function useCsvImportMutation(): CreateMutation<
       domain: 'products',
       mutationKey,
       tags: ['products', 'import', 'csv'],
-    },
+      description: 'Uploads products import csv.'},
     invalidate: async (queryClient) => {
       await invalidateProductsAndCounts(queryClient);
     },

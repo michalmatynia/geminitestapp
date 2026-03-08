@@ -24,7 +24,7 @@ export const useAiInsightsNotifications = (
       domain: 'global',
       queryKey: aiNotificationsQueryKey,
       tags: ['ai', 'insights', 'notifications'],
-    },
+      description: 'Loads ai insights notifications.'},
   });
 
 export function useClearAiInsightsNotifications(): DeleteMutation<void, void> {
@@ -38,7 +38,7 @@ export function useClearAiInsightsNotifications(): DeleteMutation<void, void> {
       domain: 'global',
       mutationKey: aiNotificationsQueryKey,
       tags: ['ai', 'insights', 'notifications', 'clear'],
-    },
+      description: 'Deletes ai insights notifications.'},
     invalidateKeys: [aiNotificationsQueryKey],
   });
 }

@@ -159,7 +159,7 @@ export function useGenericExportToBaseMutation(): UpdateMutation<
       domain: 'integrations',
       mutationKey,
       tags: ['integrations', 'listings', 'export-to-base'],
-    },
+      description: 'Creates integrations listings export to base.'},
     onMutate: async (vars: GenericExportToBaseVariables): Promise<ListingBadgeContext> => {
       await queryClient.cancelQueries({ queryKey: listingBadgesQueryKey });
       const previousListingBadges = getListingBadgesSnapshot(queryClient);
@@ -206,7 +206,7 @@ export function useGenericCreateListingMutation(): CreateMutation<
       domain: 'integrations',
       mutationKey: integrationJobsQueryKey,
       tags: ['integrations', 'listings', 'create'],
-    },
+      description: 'Creates integrations listings.'},
     invalidate: async (queryClient, _data, vars) => {
       await invalidateProductListingsAndBadges(queryClient, vars.productId);
     },
@@ -236,7 +236,7 @@ export function useDeleteFromBaseMutation(
       domain: 'integrations',
       mutationKey: listingQueryKey,
       tags: ['integrations', 'listings', 'base', 'delete'],
-    },
+      description: 'Deletes integrations listings base.'},
     onMutate: async ({ listingId }): Promise<ProductListingAndJobsContext> => {
       await cancelProductListingsAndJobs(queryClient, productId);
 
@@ -303,7 +303,7 @@ export function usePurgeListingMutation(productId: string): DeleteMutation {
       domain: 'integrations',
       mutationKey: getProductListingsQueryKey(productId),
       tags: ['integrations', 'listings', 'purge'],
-    },
+      description: 'Deletes integrations listings purge.'},
     invalidate: async (queryClient) => {
       await invalidateProductListingsAndBadges(queryClient, productId);
     },
@@ -327,7 +327,7 @@ export function useUpdateListingInventoryIdMutation(
       domain: 'integrations',
       mutationKey: getProductListingsQueryKey(productId),
       tags: ['integrations', 'listings', 'inventory-id', 'update'],
-    },
+      description: 'Updates integrations listings inventory id.'},
     invalidate: async (queryClient) => {
       await invalidateProductListingsAndBadges(queryClient, productId);
     },
@@ -366,7 +366,7 @@ export function useSyncBaseImagesMutation(
       domain: 'integrations',
       mutationKey: getProductListingsQueryKey(productId),
       tags: ['integrations', 'listings', 'base-images', 'sync'],
-    },
+      description: 'Updates integrations listings base images.'},
     invalidate: async (queryClient) => {
       await invalidateProductListingsAndBadges(queryClient, productId);
       await invalidateProducts(queryClient);
@@ -407,7 +407,7 @@ export function useExportToBaseMutation(
       domain: 'integrations',
       mutationKey: getProductListingsQueryKey(productId),
       tags: ['integrations', 'listings', 'export-to-base'],
-    },
+      description: 'Creates integrations listings export to base.'},
     onMutate: async (_vars): Promise<ListingBadgeContext> => {
       await queryClient.cancelQueries({ queryKey: listingBadgesQueryKey });
       const previousListingBadges = getListingBadgesSnapshot(queryClient);
@@ -471,7 +471,7 @@ export function useCreateListingMutation(productId: string): CreateMutation<
       domain: 'integrations',
       mutationKey: getProductListingsQueryKey(productId),
       tags: ['integrations', 'listings', 'create'],
-    },
+      description: 'Creates integrations listings.'},
     invalidate: async (queryClient, data) => {
       const queueName = (data as { queue?: { name?: string } } | null)?.queue?.name ?? null;
       if (queueName === 'tradera-listings') {
@@ -505,7 +505,7 @@ export function useRelistTraderaMutation(productId: string): UpdateMutation<
       domain: 'integrations',
       mutationKey: getProductListingsQueryKey(productId),
       tags: ['integrations', 'listings', 'tradera', 'relist'],
-    },
+      description: 'Creates integrations listings tradera relist.'},
     invalidate: async (queryClient) => {
       setListingBadgeStatus(queryClient, productId, 'tradera', 'queued_relist');
       await invalidateProductListingsAndBadges(queryClient, productId);

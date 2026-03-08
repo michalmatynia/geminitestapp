@@ -115,7 +115,7 @@ export function useStudioModalsState() {
       operation: 'list',
       resource: 'image-studio.runs',
       domain: 'image_studio',
-    },
+      description: 'Loads image studio runs.'},
   });
 
   const linkedGeneratedVariants = useMemo(

@@ -38,7 +38,7 @@ export function useNotebookResource() {
       domain: 'notes',
       queryKey,
       tags: ['notes', 'notebooks'],
-    },
+      description: 'Loads notes notebooks.'},
   });
 
   const createMutation = createCreateMutationV2<NotebookRecord, NotebookCreateInput>({
@@ -51,7 +51,7 @@ export function useNotebookResource() {
       domain: 'notes',
       mutationKey: queryKey,
       tags: ['notes', 'notebooks', 'create'],
-    },
+      description: 'Creates notes notebooks.'},
     invalidateKeys: [queryKey],
   });
 
@@ -69,7 +69,7 @@ export function useNotebookResource() {
       domain: 'notes',
       mutationKey: queryKey,
       tags: ['notes', 'notebooks', 'update'],
-    },
+      description: 'Updates notes notebooks.'},
     invalidateKeys: [queryKey],
   });
 
@@ -83,7 +83,7 @@ export function useNotebookResource() {
       domain: 'notes',
       mutationKey: queryKey,
       tags: ['notes', 'notebooks', 'delete'],
-    },
+      description: 'Deletes notes notebooks.'},
     invalidateKeys: [queryKey],
   });
 

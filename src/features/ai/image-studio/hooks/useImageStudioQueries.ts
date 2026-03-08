@@ -84,6 +84,7 @@ export function useStudioProjects(): ListQuery<ImageStudioProjectRecord> {
       domain: 'image_studio',
       queryKey,
       tags: ['image-studio', 'projects'],
+      description: 'Loads image studio projects.',
     },
   });
 }
@@ -114,6 +115,7 @@ export function useStudioSlots(projectId: string): SingleQuery<StudioSlotsRespon
       domain: 'image_studio',
       queryKey,
       tags: ['image-studio', 'slots'],
+      description: 'Loads slots for the selected image studio project.',
     },
   });
 }
@@ -138,6 +140,7 @@ export function useStudioImageModels(): SingleQuery<ImageStudioModelsResponse> {
       domain: 'image_studio',
       queryKey,
       tags: ['image-studio', 'models'],
+      description: 'Loads the available image studio generation models.',
     },
   });
 }

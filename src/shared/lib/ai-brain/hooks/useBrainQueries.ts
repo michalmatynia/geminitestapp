@@ -69,6 +69,7 @@ export function useBrainModels(options?: {
       domain: 'global',
       queryKey,
       tags: ['brain', 'models'],
+      description: 'Polls the AI Brain model catalog.',
     },
   });
 }
@@ -94,6 +95,7 @@ export function useBrainOperationsOverview(options?: {
       domain: 'global',
       queryKey,
       tags: ['brain', 'operations-overview'],
+      description: 'Polls the AI Brain operations overview for the selected range.',
     },
   });
 }
@@ -115,6 +117,7 @@ export function useBrainAnalyticsSummary(): SingleQuery<AnalyticsSummary> {
       domain: 'global',
       queryKey,
       tags: ['brain', 'analytics-summary'],
+      description: 'Polls the cross-system analytics summary used by AI Brain.',
     },
   });
 }
@@ -139,6 +142,7 @@ export function useBrainLogMetrics(): SingleQuery<SystemLogMetrics> {
       domain: 'global',
       queryKey,
       tags: ['brain', 'log-metrics'],
+      description: 'Polls error log metrics surfaced in the AI Brain dashboard.',
     },
   });
 }
@@ -157,6 +161,7 @@ export function useBrainInsights(): SingleQuery<InsightsSnapshot> {
       domain: 'global',
       queryKey,
       tags: ['brain', 'insights'],
+      description: 'Polls the combined AI Brain insights snapshot.',
     },
   });
 }
@@ -187,6 +192,7 @@ export function useBrainRuntimeAnalytics(
       domain: 'global',
       queryKey,
       tags: ['brain', 'runtime-analytics'],
+      description: 'Polls AI Paths runtime analytics for the AI Brain dashboard.',
     },
   });
 }

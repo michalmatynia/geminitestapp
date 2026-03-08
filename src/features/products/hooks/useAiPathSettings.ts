@@ -328,7 +328,7 @@ const loadPathSettingsData = async (
       domain: 'ai_paths',
       queryKey,
       tags: ['ai-paths', 'settings', 'fetch'],
-    },
+      description: 'Loads ai paths settings.'},
   })();
   return { settingsData, settingsLoadMode: 'full' };
 };

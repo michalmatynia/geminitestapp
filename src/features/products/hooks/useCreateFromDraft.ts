@@ -40,7 +40,7 @@ export function useCreateFromDraft({
             domain: 'drafter',
             queryKey: normalizeQueryKey(draftKeys.detail(draftId)),
             tags: ['drafts', 'detail', 'fetch'],
-          },
+            description: 'Loads drafts detail.'},
         })();
         setCreateDraft(draft);
         handleOpenCreateFromDraft(draft);

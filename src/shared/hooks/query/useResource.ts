@@ -25,6 +25,7 @@ export function useResource<T extends { id: string }>(
 } {
   const normalizedResourcePath = resourcePath.replace(/^\/+|\/+$/g, '') || 'resource';
   const resourceTag = normalizedResourcePath.replaceAll('/', '.');
+  const resourceLabel = normalizedResourcePath.replaceAll('/', ' ');
   const domain = options?.domain ?? 'global';
 
   // List all items
@@ -38,6 +39,7 @@ export function useResource<T extends { id: string }>(
       resource: normalizedResourcePath,
       domain,
       tags: ['resource', resourceTag, 'list'],
+      description: `Loads records for ${resourceLabel}.`,
     },
   });
 
@@ -52,6 +54,7 @@ export function useResource<T extends { id: string }>(
       resource: normalizedResourcePath,
       domain,
       tags: ['resource', resourceTag, 'create'],
+      description: `Creates a record in ${resourceLabel}.`,
     },
   });
 
@@ -74,6 +77,7 @@ export function useResource<T extends { id: string }>(
       resource: normalizedResourcePath,
       domain,
       tags: ['resource', resourceTag, 'update'],
+      description: `Updates a record in ${resourceLabel}.`,
     },
   });
 
@@ -93,6 +97,7 @@ export function useResource<T extends { id: string }>(
       resource: normalizedResourcePath,
       domain,
       tags: ['resource', resourceTag, 'delete'],
+      description: `Deletes a record from ${resourceLabel}.`,
     },
   });
 

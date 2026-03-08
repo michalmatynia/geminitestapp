@@ -26,7 +26,7 @@ export function useChatbotContextSettingsQuery(): ListQuery<SettingRecord> {
       domain: 'chatbot',
       queryKey,
       tags: ['chatbot', 'context', 'settings'],
-    },
+      description: 'Loads chatbot context settings.'},
   });
 }
 
@@ -45,7 +45,7 @@ export function useSaveChatbotContextMutation(): MutationResult<
       domain: 'chatbot',
       mutationKey,
       tags: ['chatbot', 'context', 'settings', 'save'],
-    },
+      description: 'Updates chatbot context settings.'},
     invalidateKeys: [QUERY_KEYS.ai.chatbot.settings.allSettings('global-context')],
   });
 }
@@ -68,6 +68,6 @@ export function useUploadChatbotContextPdfMutation(): MutationResult<
       domain: 'chatbot',
       mutationKey,
       tags: ['chatbot', 'context', 'upload', 'pdf'],
-    },
+      description: 'Creates chatbot context pdf.'},
   });
 }

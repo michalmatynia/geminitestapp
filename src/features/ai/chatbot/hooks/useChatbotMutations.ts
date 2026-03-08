@@ -47,7 +47,7 @@ export function useCreateChatbotSession(): CreateMutation<
       domain: 'chatbot',
       mutationKey,
       tags: ['chatbot', 'sessions', 'create'],
-    },
+      description: 'Creates chatbot sessions.'},
     invalidate: (queryClient) => invalidateChatbotSessions(queryClient),
   });
 }
@@ -72,7 +72,7 @@ export function useUpdateSessionTitle(): UpdateMutation<
       domain: 'chatbot',
       mutationKey,
       tags: ['chatbot', 'sessions', 'update-title'],
-    },
+      description: 'Updates chatbot sessions title.'},
     invalidate: (queryClient, _data, { sessionId }) => {
       void invalidateChatbotSessions(queryClient);
       return invalidateChatbotSession(queryClient, sessionId);
@@ -96,7 +96,7 @@ export function useDeleteChatbotSession(): UpdateMutation<unknown, string> {
       domain: 'chatbot',
       mutationKey,
       tags: ['chatbot', 'sessions', 'delete'],
-    },
+      description: 'Deletes chatbot sessions.'},
     invalidate: (queryClient, _data, sessionId) => {
       void invalidateChatbotSessions(queryClient);
       queryClient.removeQueries({ queryKey: chatbotQueryKeys.session(sessionId) });
@@ -120,7 +120,7 @@ export function useDeleteChatbotSessions(): UpdateMutation<unknown, string[]> {
       domain: 'chatbot',
       mutationKey,
       tags: ['chatbot', 'sessions', 'bulk-delete'],
-    },
+      description: 'Deletes chatbot sessions bulk.'},
     invalidate: (queryClient, _data, sessionIds) => {
       void invalidateChatbotSessions(queryClient);
       sessionIds.forEach((id: string): void => {
@@ -153,7 +153,7 @@ export function useSendChatMessage(): UpdateMutation<
       domain: 'chatbot',
       mutationKey,
       tags: ['chatbot', 'messages', 'send'],
-    },
+      description: 'Runs chatbot messages.'},
   });
 }
 
@@ -181,7 +181,7 @@ export function useSaveChatbotSettings(): UpdateMutation<
       domain: 'chatbot',
       mutationKey,
       tags: ['chatbot', 'settings', 'save'],
-    },
+      description: 'Updates chatbot settings.'},
     invalidate: (queryClient, _data, { key }) => invalidateSettingsScope(queryClient, key),
   });
 }

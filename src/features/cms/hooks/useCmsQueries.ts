@@ -68,7 +68,7 @@ export function useCmsPages(domainId?: string | null): ListQuery<PageSummary> {
       domain: 'cms',
 
       tags: ['cms', 'pages'],
-    },
+      description: 'Loads cms pages.'},
   });
 }
 
@@ -86,7 +86,7 @@ export function useCmsPage(id?: string): SingleQuery<Page> {
       domain: 'cms',
 
       tags: ['cms', 'pages', 'detail'],
-    },
+      description: 'Loads cms pages detail.'},
   });
 }
 
@@ -105,7 +105,7 @@ export function useCreatePage(): CreateMutation<Page, { name: string; slugIds: s
       domain: 'cms',
 
       tags: ['cms', 'pages', 'create'],
-    },
+      description: 'Creates cms pages.'},
     invalidate: async (queryClient) => {
       await invalidateCmsPages(queryClient);
     },
@@ -134,7 +134,7 @@ export function useUpdatePage(): UpdateMutation<
       domain: 'cms',
 
       tags: ['cms', 'pages', 'update'],
-    },
+      description: 'Updates cms pages.'},
     invalidate: async (queryClient, _data, variables) => {
       await invalidateCmsPages(queryClient);
       await invalidateCmsPageDetail(queryClient, variables.id);
@@ -157,7 +157,7 @@ export function useDeletePage(): UpdateMutation<string, string> {
       domain: 'cms',
 
       tags: ['cms', 'pages', 'delete'],
-    },
+      description: 'Deletes cms pages.'},
     invalidate: async (queryClient) => {
       await invalidateCmsPages(queryClient);
     },
@@ -176,7 +176,7 @@ export function useCmsSlugs(domainId?: string | null): ListQuery<Slug> {
       domain: 'cms',
 
       tags: ['cms', 'slugs'],
-    },
+      description: 'Loads cms slugs.'},
   });
 }
 
@@ -193,7 +193,7 @@ export function useCmsAllSlugs(enabled: boolean = true): ListQuery<Slug> {
       domain: 'cms',
 
       tags: ['cms', 'slugs', 'all'],
-    },
+      description: 'Loads cms slugs all.'},
   });
 }
 
@@ -211,7 +211,7 @@ export function useCmsSlug(id?: string, domainId?: string): SingleQuery<Slug> {
       domain: 'cms',
 
       tags: ['cms', 'slugs', 'detail'],
-    },
+      description: 'Loads cms slugs detail.'},
   });
 }
 
@@ -229,7 +229,7 @@ export function useCmsSlugDomains(id?: string): SingleQuery<{ domainIds: string[
       domain: 'cms',
 
       tags: ['cms', 'slugs', 'domains'],
-    },
+      description: 'Loads cms slugs domains.'},
   });
 }
 
@@ -248,7 +248,7 @@ export function useCreateSlug(): CreateMutation<Slug, { slug: string; domainId?:
       domain: 'cms',
 
       tags: ['cms', 'slugs', 'create'],
-    },
+      description: 'Creates cms slugs.'},
     invalidate: async (queryClient) => {
       await invalidateCmsSlugs(queryClient);
     },
@@ -281,7 +281,7 @@ export function useUpdateSlug(): UpdateMutation<
       domain: 'cms',
 
       tags: ['cms', 'slugs', 'update'],
-    },
+      description: 'Updates cms slugs.'},
     invalidate: async (queryClient, _data, variables) => {
       await invalidateCmsSlugs(queryClient);
       await invalidateCmsSlugDetail(queryClient, variables.id);
@@ -304,7 +304,7 @@ export function useUpdateSlugDomains(): UpdateMutation<
       domain: 'cms',
 
       tags: ['cms', 'slugs', 'domains', 'update'],
-    },
+      description: 'Updates cms slugs domains.'},
     invalidate: (queryClient, _data, variables) => {
       void invalidateCmsSlugDetail(queryClient, variables.id);
       return invalidateCmsSlugs(queryClient);
@@ -327,7 +327,7 @@ export function useDeleteSlug(): UpdateMutation<string, { id: string; domainId?:
       domain: 'cms',
 
       tags: ['cms', 'slugs', 'delete'],
-    },
+      description: 'Deletes cms slugs.'},
     invalidate: async (queryClient) => {
       await invalidateCmsSlugs(queryClient);
     },
@@ -350,7 +350,7 @@ export function useCmsDomains(): ListQuery<CmsDomain> {
       domain: 'cms',
 
       tags: ['cms', 'domains'],
-    },
+      description: 'Loads cms domains.'},
   });
 }
 
@@ -369,7 +369,7 @@ export function useCreateCmsDomain(): CreateMutation<CmsDomain, { domain: string
       domain: 'cms',
 
       tags: ['cms', 'domains', 'create'],
-    },
+      description: 'Creates cms domains.'},
     invalidate: async (queryClient) => {
       await invalidateCmsDomains(queryClient);
     },
@@ -391,7 +391,7 @@ export function useDeleteCmsDomain(): UpdateMutation<string, string> {
       domain: 'cms',
 
       tags: ['cms', 'domains', 'delete'],
-    },
+      description: 'Deletes cms domains.'},
     invalidate: async (queryClient) => {
       await invalidateCmsDomains(queryClient);
     },
@@ -416,7 +416,7 @@ export function useUpdateCmsDomain(): UpdateMutation<
       domain: 'cms',
 
       tags: ['cms', 'domains', 'update'],
-    },
+      description: 'Updates cms domains.'},
     invalidate: async (queryClient) => {
       await invalidateCmsDomains(queryClient);
     },
@@ -439,7 +439,7 @@ export function useCmsThemes(): ListQuery<CmsTheme> {
       domain: 'cms',
 
       tags: ['cms', 'themes'],
-    },
+      description: 'Loads cms themes.'},
   });
 }
 
@@ -457,7 +457,7 @@ export function useCmsTheme(id?: string): SingleQuery<CmsTheme> {
       domain: 'cms',
 
       tags: ['cms', 'themes', 'detail'],
-    },
+      description: 'Loads cms themes detail.'},
   });
 }
 
@@ -476,7 +476,7 @@ export function useCreateTheme(): CreateMutation<CmsTheme, CmsThemeCreateInput> 
       domain: 'cms',
 
       tags: ['cms', 'themes', 'create'],
-    },
+      description: 'Creates cms themes.'},
     invalidate: async (queryClient) => {
       await invalidateCmsThemes(queryClient);
     },
@@ -501,7 +501,7 @@ export function useUpdateTheme(): UpdateMutation<
       domain: 'cms',
 
       tags: ['cms', 'themes', 'update'],
-    },
+      description: 'Updates cms themes.'},
     invalidate: async (queryClient, _data, variables) => {
       await invalidateCmsThemes(queryClient);
       await invalidateCmsThemeDetail(queryClient, variables.id);
@@ -524,7 +524,7 @@ export function useDeleteTheme(): UpdateMutation<string, string> {
       domain: 'cms',
 
       tags: ['cms', 'themes', 'delete'],
-    },
+      description: 'Deletes cms themes.'},
     invalidate: async (queryClient) => {
       await invalidateCmsThemes(queryClient);
     },
@@ -564,7 +564,7 @@ export function useUploadCmsMedia(): CreateMutation<
       domain: 'cms',
 
       tags: ['cms', 'media', 'upload'],
-    },
+      description: 'Uploads cms media.'},
     invalidate: async (queryClient) => {
       await invalidateFiles(queryClient);
     },

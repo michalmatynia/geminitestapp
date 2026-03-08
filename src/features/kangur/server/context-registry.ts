@@ -24,7 +24,9 @@ import {
 import { parseKangurLessonDocumentStore, resolveKangurLessonDocumentPages, stripHtmlToText } from '@/features/kangur/lesson-documents';
 import { parseKangurTestSuites } from '@/features/kangur/test-suites';
 import { getQuestionsForSuite, parseKangurTestQuestionStore } from '@/features/kangur/test-questions';
-import { getKangurAssignmentRepository, getKangurProgressRepository, getKangurScoreRepository } from '@/features/kangur/server';
+import { getKangurAssignmentRepository } from '@/features/kangur/services/kangur-assignment-repository';
+import { getKangurProgressRepository } from '@/features/kangur/services/kangur-progress-repository';
+import { getKangurScoreRepository } from '@/features/kangur/services/kangur-score-repository';
 import { getKangurLearnerById } from '@/features/kangur/services/kangur-learner-repository';
 import { evaluateKangurAssignment } from '@/features/kangur/services/kangur-assignments';
 import {

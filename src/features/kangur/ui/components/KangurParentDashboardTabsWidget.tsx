@@ -1,5 +1,6 @@
 'use client';
 
+import { useCallback } from 'react';
 import { BarChart2, BookOpen, BrainCircuit, ClipboardList } from 'lucide-react';
 
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
@@ -22,8 +23,21 @@ const TABS: Array<{
   { id: 'ai-tutor', label: 'AI Tutor', icon: BrainCircuit, docId: 'parent_ai_tutor_tab' },
 ];
 
-export function KangurParentDashboardTabsWidget(): React.JSX.Element | null {
+export function KangurParentDashboardTabsWidget({
+  onBeforeTabChange,
+}: {
+  onBeforeTabChange?: (tabId: KangurParentDashboardTabId) => void;
+} = {}): React.JSX.Element | null {
   const { activeTab, canAccessDashboard, setActiveTab } = useKangurParentDashboardRuntime();
+
+  const handlePointerTabMouseDown = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>): void => {
+      // Pointer focus makes the tab strip the browser's scroll anchor during tab content swaps.
+      // Keep keyboard focus behavior unchanged while avoiding pointer-driven viewport jumps.
+      event.preventDefault();
+    },
+    []
+  );
 
   if (!canAccessDashboard) {
     return null;
@@ -37,7 +51,14 @@ export function KangurParentDashboardTabsWidget(): React.JSX.Element | null {
         return (
           <KangurButton
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
+            onMouseDown={handlePointerTabMouseDown}
+            onClick={() => {
+              if (isActive) {
+                return;
+              }
+              onBeforeTabChange?.(tab.id);
+              setActiveTab(tab.id);
+            }}
             aria-pressed={isActive}
             className='min-w-0 flex-1 justify-center px-3 sm:px-4'
             size='sm'

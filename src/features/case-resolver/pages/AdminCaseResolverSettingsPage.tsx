@@ -62,7 +62,7 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
       resource: 'case-resolver.ocr.models',
       domain: 'global',
       tags: ['case-resolver', 'settings', 'ocr-models'],
-    },
+      description: 'Loads case resolver ocr models.'},
   });
 
   const [draft, setDraft] = useState<CaseResolverSettings | null>(null);

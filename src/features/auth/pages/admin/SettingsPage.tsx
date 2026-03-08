@@ -58,7 +58,7 @@ export default function AuthSettingsPage(): React.JSX.Element {
       resource: 'auth.mfa.setup',
       domain: 'global',
       tags: ['auth', 'mfa', 'settings'],
-    },
+      description: 'Runs auth mfa setup.'},
   });
   const mfaVerifyMutation = createMutationV2({
     mutationKey: QUERY_KEYS.auth.mutation('mfa.verify'),
@@ -69,7 +69,7 @@ export default function AuthSettingsPage(): React.JSX.Element {
       resource: 'auth.mfa.verify',
       domain: 'global',
       tags: ['auth', 'mfa', 'settings'],
-    },
+      description: 'Runs auth mfa verify.'},
   });
   const mfaDisableMutation = createMutationV2({
     mutationKey: QUERY_KEYS.auth.mutation('mfa.disable'),
@@ -80,7 +80,7 @@ export default function AuthSettingsPage(): React.JSX.Element {
       resource: 'auth.mfa.disable',
       domain: 'global',
       tags: ['auth', 'mfa', 'settings'],
-    },
+      description: 'Runs auth mfa disable.'},
   });
   const userSecurityQuery = useAuthUserSecurity(session?.user?.id);
 

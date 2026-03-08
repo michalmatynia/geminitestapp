@@ -443,7 +443,7 @@ export function ImageStudioDocsContent(): React.JSX.Element {
           : 'null',
       },
       {
-        path: 'ai_brain.providers.openai_api_key',
+        path: openAiProvider.settingsPath,
         label: 'Brain OpenAI provider key',
         description: 'Global OpenAI credential shared across Brain-routed features.',
         value: openAiProviderStatus,

@@ -7,8 +7,8 @@ import {
   useDeleteFile,
   useUpdateFileTags,
 } from '@/features/files/hooks/useFileQueries';
+import { useFileAsset3dList } from '@/features/files/hooks/useFileAsset3dQueries';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { useAssets3D } from '@/features/viewer3d';
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import type { ExpandedImageFile } from '@/shared/contracts/products';
 import type { Asset3DRecord, Asset3DListFilters } from '@/shared/contracts/viewer3d';
@@ -139,7 +139,7 @@ export function FileManagerProvider({
     return filters;
   }, [enableTagSearch, filenameSearch, tagSearchList]);
 
-  const { data: assets3d = [] } = useAssets3D(assetFilters);
+  const { data: assets3d = [] } = useFileAsset3dList(assetFilters);
 
   const getFileKind = useCallback((filepath: string) => {
     const clean = (filepath || '').trim();

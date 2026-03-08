@@ -18,9 +18,11 @@ import {
   useExternalCategories,
   useCategoryMappings,
 } from '@/features/integrations/hooks/useMarketplaceQueries';
+import {
+  useIntegrationCatalogs,
+  useIntegrationProductCategories,
+} from '@/features/integrations/hooks/useIntegrationProductQueries';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { useProductCategories } from '@/features/products';
-import { useCatalogs } from '@/features/products';
 import type { ExternalCategory, CategoryMappingWithDetails } from '@/shared/contracts/integrations';
 import type { CatalogRecord, ProductCategory } from '@/shared/contracts/products';
 import type {
@@ -158,7 +160,7 @@ export function CategoryMapperProvider({
   const { toast } = useToast();
 
   // Queries
-  const catalogsQuery = useCatalogs();
+  const catalogsQuery = useIntegrationCatalogs();
   const catalogs = useMemo(() => catalogsQuery.data ?? [], [catalogsQuery.data]);
   const catalogsLoading = catalogsQuery.isLoading;
 
@@ -182,7 +184,7 @@ export function CategoryMapperProvider({
     };
   }, [catalogs, selectedCatalogId]);
 
-  const internalCategoriesQuery = useProductCategories(selectedCatalogId ?? undefined);
+  const internalCategoriesQuery = useIntegrationProductCategories(selectedCatalogId ?? undefined);
   const internalCategories = internalCategoriesQuery.data ?? [];
   const internalCategoriesLoading = internalCategoriesQuery.isLoading;
   const internalCategoryOptions = useMemo(

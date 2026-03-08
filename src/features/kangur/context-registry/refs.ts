@@ -11,6 +11,7 @@ export const KANGUR_CONTEXT_ROOT_IDS = {
     'collection:kangur-scores',
     'collection:kangur-assignments',
   ],
+  loginActivity: ['collection:kangur-login-activity', 'action:kangur-ai-tutor-chat'],
   lessonContext: [
     'page:kangur-lessons',
     'collection:kangur-lessons',
@@ -36,6 +37,7 @@ export const KANGUR_CONTEXT_ROOT_IDS = {
 
 export const KANGUR_RUNTIME_ENTITY_TYPES = {
   learnerSnapshot: 'kangur_learner_snapshot',
+  loginActivity: 'kangur_login_activity',
   lessonContext: 'kangur_lesson_context',
   testContext: 'kangur_test_context',
   assignmentContext: 'kangur_assignment_context',
@@ -43,6 +45,7 @@ export const KANGUR_RUNTIME_ENTITY_TYPES = {
 
 type KangurRuntimeRefParts =
   | { kind: 'learner'; learnerId: string }
+  | { kind: 'loginActivity'; learnerId: string }
   | { kind: 'lesson'; learnerId: string; lessonId: string }
   | {
       kind: 'test';
@@ -70,6 +73,12 @@ export const createKangurLearnerSnapshotRef = (learnerId: string): ContextRegist
   createRuntimeDocumentRef(
     `${KANGUR_RUNTIME_REF_PREFIX}learner:${encodeSegment(learnerId)}`,
     KANGUR_RUNTIME_ENTITY_TYPES.learnerSnapshot
+  );
+
+export const createKangurLoginActivityRef = (learnerId: string): ContextRegistryRef =>
+  createRuntimeDocumentRef(
+    `${KANGUR_RUNTIME_REF_PREFIX}login-activity:${encodeSegment(learnerId)}`,
+    KANGUR_RUNTIME_ENTITY_TYPES.loginActivity
   );
 
 export const createKangurLessonContextRef = (
@@ -120,6 +129,11 @@ export const parseKangurRuntimeRef = (ref: ContextRegistryRef): KangurRuntimeRef
     return learnerId ? { kind: 'learner', learnerId } : null;
   }
 
+  if (kind === 'login-activity' && parts.length >= 2) {
+    const learnerId = decodeSegment(parts[1] ?? '');
+    return learnerId ? { kind: 'loginActivity', learnerId } : null;
+  }
+
   if (kind === 'lesson' && parts.length >= 3) {
     const learnerId = decodeSegment(parts[1] ?? '');
     const lessonId = decodeSegment(parts[2] ?? '');
@@ -159,7 +173,10 @@ export const buildKangurAiTutorContextRegistryRefs = (input: {
     'surface' | 'contentId' | 'assignmentId' | 'questionId' | 'answerRevealed'
   > | null | undefined;
 }): ContextRegistryRef[] => {
-  const refs: ContextRegistryRef[] = [createKangurLearnerSnapshotRef(input.learnerId)];
+  const refs: ContextRegistryRef[] = [
+    createKangurLearnerSnapshotRef(input.learnerId),
+    createKangurLoginActivityRef(input.learnerId),
+  ];
   const contentId = input.context?.contentId?.trim();
   const assignmentId = input.context?.assignmentId?.trim();
 

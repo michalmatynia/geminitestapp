@@ -10,7 +10,10 @@ import {
   resolveRuntimeAgentId,
   stopBrokerRuntimeLease,
 } from './lib/runtime-broker.mjs';
-import { buildAccessibilityPlaywrightRuntimeEnv } from './lib/accessibility-playwright-runtime-env.mjs';
+import {
+  buildAccessibilityBrokerLeaseRequest,
+  buildAccessibilityPlaywrightRuntimeContext,
+} from './lib/accessibility-playwright-runtime-env.mjs';
 
 const args = new Set(process.argv.slice(2));
 const strictMode = args.has('--strict');
@@ -22,13 +25,12 @@ const warningBudget = Number.parseInt(warningBudgetArg?.split('=')[1] ?? '10', 1
 const root = process.cwd();
 const outDir = path.join(root, 'docs', 'metrics');
 const MAX_OUTPUT_BYTES = 100_000;
-const playwrightHost = process.env['HOST'] || '127.0.0.1';
-const playwrightBaseUrl = process.env['PLAYWRIGHT_BASE_URL'] || `http://${playwrightHost}:3000`;
-const playwrightAgentId = resolveRuntimeAgentId({ env: process.env });
-const shouldStopPlaywrightRuntime = process.env['PLAYWRIGHT_RUNTIME_KEEP_ALIVE'] !== 'true';
-const playwrightRuntimeEnv = buildAccessibilityPlaywrightRuntimeEnv({
+const accessibilityRuntime = buildAccessibilityPlaywrightRuntimeContext({
   env: process.env,
+  agentId: resolveRuntimeAgentId({ env: process.env }),
 });
+const playwrightAgentId = accessibilityRuntime.agentId;
+const shouldStopPlaywrightRuntime = accessibilityRuntime.shouldStopRuntime;
 
 const suites = [
   {
@@ -273,14 +275,12 @@ const run = async () => {
   let playwrightRuntime = null;
 
   try {
-    playwrightRuntime = await acquireRuntimeLease({
-      rootDir: root,
-      appId: 'web',
-      mode: 'dev',
-      agentId: playwrightAgentId,
-      host: playwrightHost,
-      env: playwrightRuntimeEnv,
-    });
+    playwrightRuntime = await acquireRuntimeLease(
+      buildAccessibilityBrokerLeaseRequest({
+        rootDir: root,
+        context: accessibilityRuntime,
+      })
+    );
     console.log(
       `[a11y-smoke] runtime=${playwrightRuntime.source}${playwrightRuntime.reused ? ':reused' : ':started'} baseUrl=${playwrightRuntime.baseUrl} agent=${playwrightRuntime.agentId}`
     );

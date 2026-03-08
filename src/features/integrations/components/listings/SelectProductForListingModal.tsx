@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { useProductsWithCount } from '@/features/products';
+import { useIntegrationProductsWithCount } from '@/features/integrations/hooks/useIntegrationProductQueries';
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import { FormModal } from '@/shared/ui';
 
@@ -34,7 +34,7 @@ function SelectProductForListingModalContent(): React.JSX.Element {
     handleSubmit,
   } = useProductSelectionForm();
 
-  const productsQuery = useProductsWithCount({
+  const productsQuery = useIntegrationProductsWithCount({
     page: 1,
     pageSize: 10,
     search: productSearch,

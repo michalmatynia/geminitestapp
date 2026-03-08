@@ -5,6 +5,7 @@ import {
   useCallback,
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -13,13 +14,14 @@ import {
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { X, Send, BrainCircuit } from 'lucide-react';
 
-import { KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
+import { getKangurLoginHref, KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
 import { resolveKangurAiTutorMotionPresetKind } from '@/features/kangur/settings-ai-tutor';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
   buildKangurRecommendationHref,
 } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
+import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import {
   selectBestTutorAnchor,
@@ -53,7 +55,6 @@ import {
   CTA_WIDTH,
   DESKTOP_BUBBLE_WIDTH,
   EDGE_GAP,
-  KANGUR_AI_TUTOR_WIDGET_STORAGE_KEY,
   MOBILE_BUBBLE_WIDTH,
   PROTECTED_CONTENT_GAP,
   type ActiveTutorFocus,
@@ -66,11 +67,28 @@ import {
   type TutorPointerSide,
   type TutorQuickAction,
 } from './KangurAiTutorWidget.shared';
+import {
+  clearPersistedTutorSessionKey,
+  getGuestIntroPanelStyle,
+  loadPersistedGuestIntroRecord,
+  loadPersistedTutorSessionKey,
+  persistGuestIntroRecord,
+  persistTutorSessionKey,
+  type KangurAiTutorGuestIntroCheckResponse,
+  type KangurAiTutorGuestIntroRecord,
+} from './KangurAiTutorWidget.storage';
 
 type TutorSurface = KangurAiTutorSurface;
 type TutorPoint = {
   x: number;
   y: number;
+};
+
+type TutorProactiveNudge = {
+  mode: 'gentle' | 'coach';
+  title: string;
+  description: string;
+  action: TutorQuickAction;
 };
 
 type TutorPointerGeometry = {
@@ -212,51 +230,6 @@ const getDockAvatarRect = (viewport: { width: number; height: number }): DOMRect
     AVATAR_SIZE
   );
 
-const loadPersistedTutorSessionKey = (): string | null => {
-  if (typeof window === 'undefined') {
-    return null;
-  }
-
-  try {
-    const raw = window.sessionStorage.getItem(KANGUR_AI_TUTOR_WIDGET_STORAGE_KEY);
-    if (!raw) {
-      return null;
-    }
-
-    const parsed = JSON.parse(raw) as { lastSessionKey?: unknown } | null;
-    return typeof parsed?.lastSessionKey === 'string' ? parsed.lastSessionKey : null;
-  } catch {
-    return null;
-  }
-};
-
-const persistTutorSessionKey = (sessionKey: string | null): void => {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  try {
-    window.sessionStorage.setItem(
-      KANGUR_AI_TUTOR_WIDGET_STORAGE_KEY,
-      JSON.stringify({ lastSessionKey: sessionKey })
-    );
-  } catch {
-    // Ignore storage write failures so the widget remains functional without storage.
-  }
-};
-
-const clearPersistedTutorSessionKey = (): void => {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  try {
-    window.sessionStorage.removeItem(KANGUR_AI_TUTOR_WIDGET_STORAGE_KEY);
-  } catch {
-    // Ignore storage cleanup failures so the widget remains functional without storage.
-  }
-};
-
 const getAnchorAvatarStyle = (rect: DOMRect): TutorMotionPosition => {
   const viewport = getViewport();
   const left = clamp(
@@ -276,9 +249,21 @@ const getAnchorAvatarStyle = (rect: DOMRect): TutorMotionPosition => {
   };
 };
 
-const getEstimatedBubbleHeight = (viewport: { width: number; height: number }): number => {
+const getEstimatedBubbleHeight = (
+  viewport: { width: number; height: number },
+  extraHeight = 0
+): number => {
   const maxHeight = Math.max(220, viewport.height - EDGE_GAP * 2);
-  return clamp(Math.min(viewport.height * 0.58, BUBBLE_MAX_HEIGHT), Math.min(BUBBLE_MIN_HEIGHT, maxHeight), maxHeight);
+  const baseHeight = clamp(
+    Math.min(viewport.height * 0.58, BUBBLE_MAX_HEIGHT),
+    Math.min(BUBBLE_MIN_HEIGHT, maxHeight),
+    maxHeight
+  );
+  return clamp(
+    baseHeight + extraHeight,
+    Math.min(BUBBLE_MIN_HEIGHT, maxHeight),
+    maxHeight
+  );
 };
 
 const getRectUnion = (rects: Array<DOMRect | null | undefined>): DOMRect | null => {
@@ -473,6 +458,7 @@ const getBubblePlacement = (
     mobile: number;
   },
   options?: {
+    estimatedHeight?: number;
     protectedRects?: DOMRect[];
   }
 ): {
@@ -497,7 +483,7 @@ const getBubblePlacement = (
     };
   }
 
-  const width = Math.min(
+  const preferredWidth = Math.min(
     viewport.width - EDGE_GAP * 2,
     viewport.width < 640 ? widthConfig.mobile : widthConfig.desktop
   );
@@ -505,22 +491,34 @@ const getBubblePlacement = (
   if (!rect) {
     return {
       mode,
-      width,
+      width: preferredWidth,
       tailPlacement: 'dock',
       strategy: 'dock',
       launchOrigin: 'dock-bottom-right',
       style: {
-        left: viewport.width - EDGE_GAP - width,
+        left: viewport.width - EDGE_GAP - preferredWidth,
         top: clamp(viewport.height - 440, EDGE_GAP, viewport.height - EDGE_GAP - 220),
       },
     };
   }
 
-  const estimatedHeight = getEstimatedBubbleHeight(viewport);
-  const maxLeft = viewport.width - EDGE_GAP - width;
-  const maxTop = viewport.height - EDGE_GAP - estimatedHeight;
+  const estimatedHeight = options?.estimatedHeight ?? getEstimatedBubbleHeight(viewport);
   const protectedRects = options?.protectedRects?.filter(Boolean) ?? [];
   const protectedZone = getRectUnion([rect, ...protectedRects]) ?? rect;
+  const largestAvailableSideWidth = Math.max(
+    protectedZone.left - EDGE_GAP - PROTECTED_CONTENT_GAP,
+    viewport.width - protectedZone.right - EDGE_GAP - PROTECTED_CONTENT_GAP
+  );
+  const minimumAnchoredWidth = Math.min(
+    preferredWidth,
+    Math.max(280, Math.min(widthConfig.mobile, viewport.width - EDGE_GAP * 2))
+  );
+  const width =
+    largestAvailableSideWidth >= minimumAnchoredWidth
+      ? Math.min(preferredWidth, largestAvailableSideWidth)
+      : preferredWidth;
+  const maxLeft = viewport.width - EDGE_GAP - width;
+  const maxTop = viewport.height - EDGE_GAP - estimatedHeight;
   const focusCenterX = rect.left + rect.width / 2;
   const focusCenterY = rect.top + rect.height / 2;
   const centeredLeft = focusCenterX - width / 2;
@@ -614,10 +612,34 @@ const getBubblePlacement = (
         candidate,
         left,
         top,
+        primaryOverlapArea,
+        secondaryOverlapArea,
         score,
       };
     })
-    .sort((leftCandidate, rightCandidate) => leftCandidate.score - rightCandidate.score)[0];
+    .sort((leftCandidate, rightCandidate) => {
+      const leftHasPrimaryOverlap = leftCandidate.primaryOverlapArea > 0 ? 1 : 0;
+      const rightHasPrimaryOverlap = rightCandidate.primaryOverlapArea > 0 ? 1 : 0;
+      if (leftHasPrimaryOverlap !== rightHasPrimaryOverlap) {
+        return leftHasPrimaryOverlap - rightHasPrimaryOverlap;
+      }
+
+      if (leftCandidate.primaryOverlapArea !== rightCandidate.primaryOverlapArea) {
+        return leftCandidate.primaryOverlapArea - rightCandidate.primaryOverlapArea;
+      }
+
+      const leftHasSecondaryOverlap = leftCandidate.secondaryOverlapArea > 0 ? 1 : 0;
+      const rightHasSecondaryOverlap = rightCandidate.secondaryOverlapArea > 0 ? 1 : 0;
+      if (leftHasSecondaryOverlap !== rightHasSecondaryOverlap) {
+        return leftHasSecondaryOverlap - rightHasSecondaryOverlap;
+      }
+
+      if (leftCandidate.secondaryOverlapArea !== rightCandidate.secondaryOverlapArea) {
+        return leftCandidate.secondaryOverlapArea - rightCandidate.secondaryOverlapArea;
+      }
+
+      return leftCandidate.score - rightCandidate.score;
+    })[0];
 
   return {
     mode,
@@ -797,6 +819,134 @@ const buildQuickActions = (input: {
   }
 
   return actions;
+};
+
+const pickQuickAction = (
+  actions: TutorQuickAction[],
+  preferredIds: string[]
+): TutorQuickAction | null => {
+  for (const id of preferredIds) {
+    const action = actions.find((candidate) => candidate.id === id);
+    if (action) {
+      return action;
+    }
+  }
+
+  return actions[0] ?? null;
+};
+
+const buildProactiveNudge = (input: {
+  proactiveNudges: 'off' | 'gentle' | 'coach';
+  hintDepth: 'brief' | 'guided' | 'step_by_step';
+  surface: TutorSurface | null | undefined;
+  answerRevealed: boolean | undefined;
+  hasSelectedText: boolean;
+  hasCurrentQuestion: boolean;
+  hasAssignmentSummary: boolean;
+  quickActions: TutorQuickAction[];
+  hasMessages: boolean;
+  canSendMessages: boolean;
+}): TutorProactiveNudge | null => {
+  if (
+    input.proactiveNudges === 'off' ||
+    input.hasMessages ||
+    !input.canSendMessages ||
+    input.quickActions.length === 0
+  ) {
+    return null;
+  }
+
+  const isQuestionSurface =
+    input.surface === 'test' || (input.surface === 'game' && input.hasCurrentQuestion);
+  const isReviewSurface =
+    (input.surface === 'test' || input.surface === 'game') && input.answerRevealed;
+  const title =
+    input.proactiveNudges === 'coach' ? 'Tutor sugeruje start' : 'Sugerowany pierwszy krok';
+
+  if (input.hasSelectedText) {
+    const action = pickQuickAction(input.quickActions, ['selected-text', 'explain']);
+    return action
+      ? {
+        mode: input.proactiveNudges,
+        title,
+        description:
+          input.proactiveNudges === 'coach'
+            ? 'Masz zaznaczony fragment, wiec tutor proponuje najpierw rozbroic tylko ten kawalek.'
+            : 'Zacznij od krotkiego wyjasnienia zaznaczonego fragmentu.',
+        action,
+      }
+      : null;
+  }
+
+  if (isReviewSurface) {
+    const action = pickQuickAction(input.quickActions, ['review', 'next-step']);
+    return action
+      ? {
+        mode: input.proactiveNudges,
+        title,
+        description:
+          input.proactiveNudges === 'coach'
+            ? 'Tutor sugeruje najpierw omowic probe, a dopiero potem wybierac dalsze cwiczenie.'
+            : 'Najspokojniej bedzie zaczac od krotkiego omowienia ostatniej proby.',
+        action,
+      }
+      : null;
+  }
+
+  if (isQuestionSurface) {
+    const action = pickQuickAction(
+      input.quickActions,
+      input.hintDepth === 'step_by_step' ? ['how-think', 'hint'] : ['hint', 'how-think']
+    );
+    return action
+      ? {
+        mode: input.proactiveNudges,
+        title,
+        description:
+          input.hintDepth === 'step_by_step'
+            ? input.proactiveNudges === 'coach'
+              ? 'Tutor proponuje wejsc od razu w plan myslenia krok po kroku.'
+              : 'Najlepiej zaczac od planu myslenia krok po kroku.'
+            : input.proactiveNudges === 'coach'
+              ? 'Tutor sugeruje jedna szybka wskazowke, zeby ruszyc bez zdradzania odpowiedzi.'
+              : 'Jedna mala wskazowka powinna wystarczyc, zeby ruszyc dalej.',
+        action,
+      }
+      : null;
+  }
+
+  if (input.hasAssignmentSummary) {
+    const action = pickQuickAction(input.quickActions, ['next-step', 'explain']);
+    return action
+      ? {
+        mode: input.proactiveNudges,
+        title,
+        description:
+          input.proactiveNudges === 'coach'
+            ? 'Tutor sugeruje teraz wybrac jeden konkretny nastepny ruch do zadania.'
+            : 'Popros o jeden konkretny kolejny krok do tego zadania.',
+        action,
+      }
+      : null;
+  }
+
+  const action = pickQuickAction(
+    input.quickActions,
+    input.proactiveNudges === 'coach'
+      ? ['next-step', 'explain', 'hint']
+      : ['explain', 'hint', 'next-step']
+  );
+  return action
+    ? {
+      mode: input.proactiveNudges,
+      title,
+      description:
+        input.proactiveNudges === 'coach'
+          ? 'Tutor sugeruje od razu ustawic nastepny kierunek pracy.'
+          : 'Krotki start od wyjasnienia albo kolejnego kroku zwykle dziala najlepiej.',
+      action,
+    }
+    : null;
 };
 
 const getEmptyStateMessage = (input: {
@@ -1041,6 +1191,7 @@ const isTargetWithinTutorUi = (target: EventTarget | null): boolean => {
 export function KangurAiTutorWidget(): React.JSX.Element | null {
   const prefersReducedMotion = useReducedMotion();
   const tutorRuntime = useKangurAiTutor();
+  const authState = useOptionalKangurAuth();
   const {
     enabled,
     tutorSettings,
@@ -1071,7 +1222,10 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
   const [mounted, setMounted] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [hasNewMessage, setHasNewMessage] = useState(false);
+  const [guestIntroVisible, setGuestIntroVisible] = useState(false);
+  const [guestIntroHelpVisible, setGuestIntroHelpVisible] = useState(false);
   const [panelMotionState, setPanelMotionState] = useState<'animating' | 'settled'>('settled');
+  const [panelMeasuredHeight, setPanelMeasuredHeight] = useState<number | null>(null);
   const [persistedSelectionRect, setPersistedSelectionRect] = useState<DOMRect | null>(null);
   const [persistedSelectionContainerRect, setPersistedSelectionContainerRect] = useState<DOMRect | null>(null);
   const [contextSwitchNotice, setContextSwitchNotice] = useState<{
@@ -1082,16 +1236,25 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
   const [viewportTick, setViewportTick] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
   const persistedSessionKey = useMemo(() => loadPersistedTutorSessionKey(), []);
+  const [guestIntroRecord, setGuestIntroRecord] = useState<KangurAiTutorGuestIntroRecord | null>(
+    () => loadPersistedGuestIntroRecord()
+  );
   const previousSessionKeyRef = useRef<string | null>(persistedSessionKey);
   const lastShownSelectionKeyRef = useRef<string | null>(null);
   const lastTrackedFocusKeyRef = useRef<string | null>(null);
+  const lastTrackedProactiveNudgeKeyRef = useRef<string | null>(null);
+  const guestIntroCheckStartedRef = useRef(false);
+  const guestIntroLocalSuppressionTrackedRef = useRef(false);
   const motionTimeoutRef = useRef<number | null>(null);
   const uiMode = tutorSettings?.uiMode ?? 'anchored';
   const isAnchoredUiMode = uiMode !== 'static';
   const allowCrossPagePersistence = tutorSettings?.allowCrossPagePersistence ?? true;
   const allowSelectedTextSupport = tutorSettings?.allowSelectedTextSupport ?? true;
   const showSources = tutorSettings?.showSources ?? true;
+  const proactiveNudges = tutorSettings?.proactiveNudges ?? 'gentle';
+  const hintDepth = tutorSettings?.hintDepth ?? 'guided';
   const activeSelectedText = allowSelectedTextSupport
     ? (selectedText ?? highlightedText)?.trim() || null
     : null;
@@ -1102,6 +1265,17 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
   const remainingMessages = usageSummary?.remainingMessages ?? null;
   const canSendMessages = remainingMessages !== 0;
   const basePath = routing?.basePath ?? KANGUR_BASE_PATH;
+  const loginHref = useMemo(() => {
+    if (typeof window === 'undefined') {
+      return getKangurLoginHref(basePath);
+    }
+
+    return getKangurLoginHref(basePath, window.location.href);
+  }, [basePath]);
+  const isAnonymousVisitor = Boolean(
+    mounted && authState && !authState.isLoadingAuth && !authState.isAuthenticated
+  );
+  const shouldRenderGuestIntroUi = guestIntroVisible || guestIntroHelpVisible;
   const telemetryContext = {
     surface: sessionContext?.surface ?? null,
     contentId: sessionContext?.contentId ?? null,
@@ -1138,6 +1312,84 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
   }, []);
 
   useEffect(() => {
+    if (!mounted || !authState || authState.isLoadingAuth) {
+      return;
+    }
+
+    if (authState.isAuthenticated) {
+      setGuestIntroVisible(false);
+      setGuestIntroHelpVisible(false);
+      return;
+    }
+
+    if (guestIntroRecord) {
+      if (
+        !guestIntroVisible &&
+        !guestIntroHelpVisible &&
+        !guestIntroLocalSuppressionTrackedRef.current
+      ) {
+        guestIntroLocalSuppressionTrackedRef.current = true;
+        trackKangurClientEvent('kangur_ai_tutor_guest_intro_suppressed_local', {
+          status: guestIntroRecord.status,
+        });
+      }
+      return;
+    }
+
+    if (guestIntroCheckStartedRef.current) {
+      return;
+    }
+
+    guestIntroCheckStartedRef.current = true;
+    let cancelled = false;
+
+    void fetch('/api/kangur/ai-tutor/guest-intro', {
+      cache: 'no-store',
+      credentials: 'same-origin',
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          return null;
+        }
+
+        return (await response.json().catch(() => null)) as KangurAiTutorGuestIntroCheckResponse | null;
+      })
+      .then((payload) => {
+        if (cancelled || !payload) {
+          return;
+        }
+
+        guestIntroLocalSuppressionTrackedRef.current = false;
+
+        trackKangurClientEvent('kangur_ai_tutor_guest_intro_checked', {
+          reason: payload.reason ?? null,
+          shouldShow: payload.shouldShow === true,
+        });
+
+        if (payload.shouldShow !== true) {
+          trackKangurClientEvent('kangur_ai_tutor_guest_intro_suppressed_server_seen', {
+            reason: payload.reason ?? null,
+          });
+          return;
+        }
+
+        const nextRecord = persistGuestIntroRecord('shown');
+        setGuestIntroRecord(nextRecord);
+        setGuestIntroVisible(true);
+        trackKangurClientEvent('kangur_ai_tutor_guest_intro_shown', {
+          reason: payload.reason ?? null,
+        });
+      })
+      .catch(() => {
+        // Keep the prompt best-effort and silent on network failures.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authState, guestIntroHelpVisible, guestIntroRecord, guestIntroVisible, mounted]);
+
+  useEffect(() => {
     if (!mounted) return;
 
     let rafId = 0;
@@ -1157,6 +1409,42 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
       window.removeEventListener('scroll', handleViewportChange, true);
     };
   }, [mounted]);
+
+  useLayoutEffect(() => {
+    if (!isOpen) {
+      setPanelMeasuredHeight(null);
+      return;
+    }
+
+    const panel = panelRef.current;
+    if (!panel) {
+      return;
+    }
+
+    const updateMeasuredHeight = (): void => {
+      const nextHeight = Math.ceil(panel.getBoundingClientRect().height);
+      if (nextHeight <= 0) {
+        return;
+      }
+
+      setPanelMeasuredHeight((current) => (current === nextHeight ? current : nextHeight));
+    };
+
+    updateMeasuredHeight();
+
+    if (typeof ResizeObserver !== 'function') {
+      return;
+    }
+
+    const observer = new ResizeObserver(() => {
+      updateMeasuredHeight();
+    });
+    observer.observe(panel);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -1265,7 +1553,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     };
   }, [contextSwitchNotice, isOpen]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!selectionTelemetryKey) {
       lastShownSelectionKeyRef.current = null;
       return;
@@ -1352,6 +1640,38 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
   const isStaticUiMode = uiMode === 'static';
   const displayFocusRect = isAnchoredUiMode ? activeFocus.rect : null;
   const isMobileSheet = viewport.width < motionProfile.sheetBreakpoint;
+  const hasCurrentQuestion = Boolean(
+    sessionContext?.questionId?.trim() || sessionContext?.currentQuestion?.trim()
+  );
+  const hasAssignmentSummary = Boolean(
+    sessionContext?.assignmentId?.trim() || sessionContext?.assignmentSummary?.trim()
+  );
+  const quickActions = buildQuickActions({
+    surface: sessionContext?.surface,
+    answerRevealed: sessionContext?.answerRevealed,
+    hasSelectedText: Boolean(activeSelectedText),
+    hasCurrentQuestion,
+    hasAssignmentSummary,
+    focusKind: activeFocus.kind,
+  });
+  const proactiveNudge = buildProactiveNudge({
+    proactiveNudges,
+    hintDepth,
+    surface: sessionContext?.surface,
+    answerRevealed: sessionContext?.answerRevealed,
+    hasSelectedText: Boolean(activeSelectedText),
+    hasCurrentQuestion,
+    hasAssignmentSummary,
+    quickActions,
+    hasMessages: messages.length > 0,
+    canSendMessages,
+  });
+  const estimatedBubbleHeight = isMobileSheet
+    ? undefined
+    : Math.max(
+      panelMeasuredHeight ?? 0,
+      getEstimatedBubbleHeight(viewport, (proactiveNudge ? 108 : 0) + (quickActions.length > 2 ? 24 : 0))
+    );
   const bubblePlacement = getBubblePlacement(
     isOpen && !isMobileSheet ? displayFocusRect : null,
     viewport,
@@ -1361,6 +1681,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
       mobile: motionProfile.mobileBubbleWidth,
     },
     {
+      estimatedHeight: estimatedBubbleHeight,
       protectedRects: activeSelectionContainerRect ? [activeSelectionContainerRect] : [],
     }
   );
@@ -1431,20 +1752,63 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     [activeFocus, isOpen, tutorSessionKey]
   );
   const selectedTextPreview = activeSelectedText?.slice(0, 140) ?? null;
-  const hasCurrentQuestion = Boolean(
-    sessionContext?.questionId?.trim() || sessionContext?.currentQuestion?.trim()
+  const proactiveNudgeTelemetryKey = useMemo(
+    () => {
+      if (!isOpen || !proactiveNudge) {
+        return null;
+      }
+
+      const contextKey =
+        tutorSessionKey ??
+        [
+          sessionContext?.surface ?? 'unknown',
+          sessionContext?.contentId ?? sessionContext?.title ?? 'none',
+          activeFocus.id ?? activeFocus.kind ?? 'focus',
+        ].join(':');
+
+      return `${contextKey}:${proactiveNudge.mode}:${proactiveNudge.action.id}`;
+    },
+    [
+      activeFocus.id,
+      activeFocus.kind,
+      isOpen,
+      proactiveNudge,
+      sessionContext?.contentId,
+      sessionContext?.surface,
+      sessionContext?.title,
+      tutorSessionKey,
+    ]
   );
-  const hasAssignmentSummary = Boolean(
-    sessionContext?.assignmentId?.trim() || sessionContext?.assignmentSummary?.trim()
-  );
-  const quickActions = buildQuickActions({
-    surface: sessionContext?.surface,
-    answerRevealed: sessionContext?.answerRevealed,
-    hasSelectedText: Boolean(activeSelectedText),
-    hasCurrentQuestion,
-    hasAssignmentSummary,
-    focusKind: activeFocus.kind,
-  });
+  useLayoutEffect(() => {
+    if (!proactiveNudgeTelemetryKey || !proactiveNudge) {
+      lastTrackedProactiveNudgeKeyRef.current = proactiveNudgeTelemetryKey;
+      return;
+    }
+
+    if (lastTrackedProactiveNudgeKeyRef.current === proactiveNudgeTelemetryKey) {
+      return;
+    }
+
+    lastTrackedProactiveNudgeKeyRef.current = proactiveNudgeTelemetryKey;
+    trackKangurClientEvent('kangur_ai_tutor_proactive_nudge_shown', {
+      surface: sessionContext?.surface ?? null,
+      contentId: sessionContext?.contentId ?? null,
+      title: sessionContext?.title ?? null,
+      nudgeMode: proactiveNudges,
+      actionId: proactiveNudge.action.id,
+      hintDepth,
+      hasSelectedText: Boolean(activeSelectedText),
+    });
+  }, [
+    activeSelectedText,
+    hintDepth,
+    proactiveNudge,
+    proactiveNudgeTelemetryKey,
+    proactiveNudges,
+    sessionContext?.contentId,
+    sessionContext?.surface,
+    sessionContext?.title,
+  ]);
   const emptyStateMessage = getEmptyStateMessage({
     surface: sessionContext?.surface,
     answerRevealed: sessionContext?.answerRevealed,
@@ -1627,7 +1991,41 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     };
   }, [bubblePlacement.mode, handleCloseChat, isOpen]);
 
-  if (!enabled || !mounted) return null;
+  const handleGuestIntroDismiss = useCallback((): void => {
+    const nextRecord = persistGuestIntroRecord('dismissed');
+    setGuestIntroRecord(nextRecord);
+    setGuestIntroVisible(false);
+    setGuestIntroHelpVisible(false);
+    trackKangurClientEvent('kangur_ai_tutor_guest_intro_dismissed');
+  }, []);
+
+  const handleGuestIntroAccept = useCallback((): void => {
+    const nextRecord = persistGuestIntroRecord('accepted');
+    setGuestIntroRecord(nextRecord);
+    setGuestIntroVisible(false);
+    trackKangurClientEvent('kangur_ai_tutor_guest_intro_accepted', {
+      hasInteractiveTutor: enabled,
+    });
+
+    if (enabled) {
+      handleOpenChat('toggle');
+      return;
+    }
+
+    setGuestIntroHelpVisible(true);
+  }, [enabled, handleOpenChat]);
+
+  const handleGuestIntroHelpClose = useCallback((): void => {
+    setGuestIntroHelpVisible(false);
+  }, []);
+
+  const handleGuestIntroLogin = useCallback((): void => {
+    trackKangurClientEvent('kangur_ai_tutor_guest_intro_login_clicked');
+    setGuestIntroHelpVisible(false);
+    authState?.navigateToLogin?.();
+  }, [authState]);
+
+  if ((!enabled && !shouldRenderGuestIntroUi) || !mounted) return null;
 
   const handleAskAbout = (): void => {
     const persistedSelectedText = persistSelectionContext({ prefillInput: true });
@@ -1693,7 +2091,12 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     }
   };
 
-  const handleQuickAction = async (action: TutorQuickAction): Promise<void> => {
+  const handleQuickAction = async (
+    action: TutorQuickAction,
+    options?: {
+      source?: 'quick_action' | 'proactive_nudge';
+    }
+  ): Promise<void> => {
     if (isLoading || !canSendMessages) return;
     if (activeSelectedText && selectionRect) {
       setPersistedSelectionRect(cloneRect(selectionRect));
@@ -1703,6 +2106,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     }
     trackKangurClientEvent('kangur_ai_tutor_quick_action_clicked', {
       ...telemetryContext,
+      source: options?.source ?? 'quick_action',
       action: action.id,
       promptMode: action.promptMode,
       hasSelectedText: Boolean(activeSelectedText),
@@ -1775,6 +2179,110 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
         ) : null}
       </AnimatePresence>
 
+      <AnimatePresence>
+        {shouldRenderGuestIntroUi && isAnonymousVisitor ? (
+          <motion.div
+            key={guestIntroHelpVisible ? 'guest-help' : 'guest-intro'}
+            data-testid={
+              guestIntroHelpVisible
+                ? 'kangur-ai-tutor-guest-assistance'
+                : 'kangur-ai-tutor-guest-intro'
+            }
+            initial={
+              prefersReducedMotion
+                ? reducedMotionTransitions.stableState
+                : { opacity: 0, y: 8, scale: 0.98 }
+            }
+            animate={reducedMotionTransitions.stableState}
+            exit={
+              prefersReducedMotion
+                ? reducedMotionTransitions.stableState
+                : { opacity: 0, y: 8, scale: 0.98 }
+            }
+            transition={prefersReducedMotion ? reducedMotionTransitions.instant : undefined}
+            style={getGuestIntroPanelStyle(viewport)}
+            className='fixed z-[75]'
+          >
+            <KangurGlassPanel
+              surface='warmGlow'
+              variant='soft'
+              padding='lg'
+              className='border-amber-200/80 shadow-[0_26px_60px_-34px_rgba(180,83,9,0.38)]'
+            >
+              <div className='flex items-start gap-3'>
+                <TutorMoodAvatar
+                  svgContent={tutorAvatarSvg}
+                  avatarImageUrl={tutorAvatarImageUrl}
+                  label={tutorName}
+                  className='h-11 w-11 shrink-0 border border-amber-200 bg-gradient-to-br from-amber-300 via-orange-400 to-orange-500'
+                  fallbackIconClassName='text-white'
+                />
+                <div className='min-w-0 flex-1'>
+                  <div className='text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-700'>
+                    AI Tutor
+                  </div>
+                  <div className='mt-1 text-sm font-semibold leading-relaxed text-slate-900'>
+                    {guestIntroHelpVisible
+                      ? 'I can help you get started.'
+                      : 'Do you need help with the website?'}
+                  </div>
+                  <div className='mt-2 text-xs leading-relaxed text-slate-600'>
+                    {guestIntroHelpVisible
+                      ? 'If you already have an account, open the login flow. If not, you can keep exploring the Kangur pages as a guest.'
+                      : 'This appears only once for a first-time anonymous visit on this device and network.'}
+                  </div>
+                </div>
+              </div>
+
+              {guestIntroHelpVisible ? (
+                <div className='mt-4 flex flex-wrap gap-2'>
+                  <KangurButton
+                    type='button'
+                    size='sm'
+                    variant='primary'
+                    onClick={handleGuestIntroLogin}
+                  >
+                    Open login
+                  </KangurButton>
+                  <KangurButton
+                    type='button'
+                    size='sm'
+                    variant='surface'
+                    onClick={handleGuestIntroHelpClose}
+                  >
+                    Continue browsing
+                  </KangurButton>
+                  <KangurButton asChild type='button' size='sm' variant='surface'>
+                    <Link href={loginHref} targetPageKey='Home'>
+                      Login page
+                    </Link>
+                  </KangurButton>
+                </div>
+              ) : (
+                <div className='mt-4 flex gap-2'>
+                  <KangurButton
+                    type='button'
+                    size='sm'
+                    variant='primary'
+                    onClick={handleGuestIntroAccept}
+                  >
+                    Yes
+                  </KangurButton>
+                  <KangurButton
+                    type='button'
+                    size='sm'
+                    variant='surface'
+                    onClick={handleGuestIntroDismiss}
+                  >
+                    No
+                  </KangurButton>
+                </div>
+              )}
+            </KangurGlassPanel>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+
       {showFloatingAvatar ? (
         <motion.button
           data-testid='kangur-ai-tutor-avatar'
@@ -1827,6 +2335,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
             ) : null}
             <motion.div
               key='chat-panel'
+              ref={panelRef}
               data-testid='kangur-ai-tutor-panel'
               data-layout={bubblePlacement.mode}
               data-avatar-placement={panelAvatarPlacement}
@@ -2096,6 +2605,42 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
                               : `Pozostało ${remainingMessages}`}
                         </span>
                       </div>
+                    </div>
+                  ) : null}
+                  {proactiveNudge ? (
+                    <div
+                      data-testid='kangur-ai-tutor-proactive-nudge'
+                      data-nudge-mode={proactiveNudge.mode}
+                      className={cn(
+                        'w-full rounded-2xl border px-3 py-3 shadow-sm',
+                        proactiveNudge.mode === 'coach'
+                          ? 'border-sky-100 bg-sky-50/85'
+                          : 'border-emerald-100 bg-emerald-50/85'
+                      )}
+                    >
+                      <div className='text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500'>
+                        {proactiveNudge.title}
+                      </div>
+                      <div className='mt-1 text-sm font-semibold text-slate-800'>
+                        {proactiveNudge.action.label}
+                      </div>
+                      <div className='mt-1 text-xs leading-relaxed text-slate-600'>
+                        {proactiveNudge.description}
+                      </div>
+                      <KangurButton
+                        data-testid='kangur-ai-tutor-proactive-nudge-button'
+                        type='button'
+                        size='sm'
+                        variant='surface'
+                        className='mt-3 h-9 px-3 text-xs'
+                        disabled={isLoading || !canSendMessages}
+                        onClick={() =>
+                          void handleQuickAction(proactiveNudge.action, {
+                            source: 'proactive_nudge',
+                          })}
+                      >
+                        Sprobuj teraz
+                      </KangurButton>
                     </div>
                   ) : null}
                   {quickActions.map((action) => (

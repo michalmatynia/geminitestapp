@@ -145,7 +145,21 @@
     ".next-dev-web-dev-michalmatynia-route-crawl/types/**/*.ts",
     ".next-dev-web-dev-michalmatynia-route-crawl/dev/types/**/*.ts",
     ".next-dev-web-dev-codex-kangur-parent-auth/types/**/*.ts",
-    ".next-dev-web-dev-codex-kangur-parent-auth/dev/types/**/*.ts"
+    ".next-dev-web-dev-codex-kangur-parent-auth/dev/types/**/*.ts",
+    ".next-dev-web-dev-codex-kangur-login-activity/types/**/*.ts",
+    ".next-dev-web-dev-codex-kangur-login-activity/dev/types/**/*.ts",
+    ".next-dev-web-dev-codex-kangur-login-activity-fixes/types/**/*.ts",
+    ".next-dev-web-dev-codex-kangur-login-activity-fixes/dev/types/**/*.ts",
+    ".next-dev-web-dev-codex-ai-tutor-continue/types/**/*.ts",
+    ".next-dev-web-dev-codex-ai-tutor-continue/dev/types/**/*.ts",
+    ".next-dev-web-dev-codex-kangur-login-activity-fixes-2/types/**/*.ts",
+    ".next-dev-web-dev-codex-kangur-login-activity-fixes-2/dev/types/**/*.ts",
+    ".next-dev-web-dev-codex-kangur-login-activity-full-verify/types/**/*.ts",
+    ".next-dev-web-dev-codex-kangur-login-activity-full-verify/dev/types/**/*.ts",
+    ".next-dev-web-dev-codex-kangur-login-activity-final/types/**/*.ts",
+    ".next-dev-web-dev-codex-kangur-login-activity-final/dev/types/**/*.ts",
+    ".next-dev-web-dev-codex-kangur-login-activity-final-2/types/**/*.ts",
+    ".next-dev-web-dev-codex-kangur-login-activity-final-2/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

@@ -3,9 +3,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { findAuthUserById } from '@/features/auth/server';
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import { verifyKangurLearnerPassword } from '@/features/kangur/server';
+import { ActivityTypes } from '@/shared/constants/observability';
 import { authError } from '@/shared/errors/app-error';
 import { parseKangurLearnerSignInPayload } from '@/shared/validations/kangur';
 import { setKangurLearnerSession } from '@/features/kangur/services/kangur-learner-session';
+import { logActivity } from '@/shared/utils/observability/activity-service';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
@@ -56,5 +58,19 @@ export async function postKangurLearnerSignInHandler(
       learnerStatus: learner.status,
     },
   });
+  void logActivity({
+    type: ActivityTypes.KANGUR.LEARNER_SIGNIN,
+    description: `Kangur learner signed in: ${learner.displayName}`,
+    userId: learner.ownerUserId,
+    entityId: learner.id,
+    entityType: 'kangur_learner',
+    metadata: {
+      surface: 'kangur',
+      actorType: 'learner',
+      learnerId: learner.id,
+      learnerDisplayName: learner.displayName,
+      loginMethod: 'password',
+    },
+  }).catch(() => {});
   return response;
 }

@@ -40,6 +40,9 @@ export type MockKangurTutorEnvironment = {
 type MockKangurTutorEnvironmentOptions = {
   uiMode?: 'anchored' | 'static';
   allowCrossPagePersistence?: boolean;
+  rememberTutorContext?: boolean;
+  hintDepth?: 'brief' | 'guided' | 'step_by_step';
+  proactiveNudges?: 'off' | 'gentle' | 'coach';
   tutorPersonaImageUrl?: string | null;
   tutorLearnerMoodId?: string | null;
   chatResponseDelayMs?: number;
@@ -96,6 +99,9 @@ export async function mockKangurTutorEnvironment(
   const {
     uiMode = 'anchored',
     allowCrossPagePersistence = true,
+    rememberTutorContext = true,
+    hintDepth = 'guided',
+    proactiveNudges = 'gentle',
     tutorPersonaImageUrl = null,
     tutorLearnerMoodId = null,
     chatResponseDelayMs = 0,
@@ -109,12 +115,12 @@ export async function mockKangurTutorEnvironment(
     legacyUserKey: null,
     aiTutor: tutorLearnerMoodId
       ? {
-          currentMoodId: tutorLearnerMoodId,
-          baselineMoodId: tutorLearnerMoodId,
-          confidence: 0.72,
-          lastComputedAt: NOW_ISO,
-          lastReasonCode: 'fixture',
-        }
+        currentMoodId: tutorLearnerMoodId,
+        baselineMoodId: tutorLearnerMoodId,
+        confidence: 0.72,
+        lastComputedAt: NOW_ISO,
+        lastReasonCode: 'fixture',
+      }
       : undefined,
     createdAt: NOW_ISO,
     updatedAt: NOW_ISO,
@@ -127,6 +133,7 @@ export async function mockKangurTutorEnvironment(
     actorType: 'parent',
     canManageLearners: true,
     ownerUserId: null,
+    ownerEmailVerified: true,
     activeLearner: learner,
     learners: [learner],
   };
@@ -141,37 +148,37 @@ export async function mockKangurTutorEnvironment(
   const tutorPersonaId = 'persona-mila';
   const heavySettings = tutorPersonaImageUrl
     ? [
-        {
-          key: AGENT_PERSONA_SETTINGS_KEY,
-          value: JSON.stringify([
-            {
-              id: tutorPersonaId,
-              name: 'Mila',
-              createdAt: NOW_ISO,
-              updatedAt: NOW_ISO,
-              defaultMoodId: 'neutral',
-              moods: [
-                {
-                  id: 'neutral',
-                  label: 'Neutral',
-                  description: 'Default tutor expression.',
-                  svgContent: '',
-                  avatarImageUrl: tutorPersonaImageUrl,
-                  avatarImageFileId: 'persona-file-neutral',
-                },
-                {
-                  id: 'thinking',
-                  label: 'Thinking',
-                  description: 'Shown while the tutor prepares a response.',
-                  svgContent: '',
-                  avatarImageUrl: null,
-                  avatarImageFileId: null,
-                },
-              ],
-            },
-          ]),
-        },
-      ]
+      {
+        key: AGENT_PERSONA_SETTINGS_KEY,
+        value: JSON.stringify([
+          {
+            id: tutorPersonaId,
+            name: 'Mila',
+            createdAt: NOW_ISO,
+            updatedAt: NOW_ISO,
+            defaultMoodId: 'neutral',
+            moods: [
+              {
+                id: 'neutral',
+                label: 'Neutral',
+                description: 'Default tutor expression.',
+                svgContent: '',
+                avatarImageUrl: tutorPersonaImageUrl,
+                avatarImageFileId: 'persona-file-neutral',
+              },
+              {
+                id: 'thinking',
+                label: 'Thinking',
+                description: 'Shown while the tutor prepares a response.',
+                svgContent: '',
+                avatarImageUrl: null,
+                avatarImageFileId: null,
+              },
+            ],
+          },
+        ]),
+      },
+    ]
     : [];
 
   const settingsLite = [
@@ -182,10 +189,13 @@ export async function mockKangurTutorEnvironment(
           enabled: true,
           uiMode,
           allowCrossPagePersistence,
+          rememberTutorContext,
           allowLessons: true,
           testAccessMode: 'guided',
           showSources: false,
           allowSelectedTextSupport: true,
+          hintDepth,
+          proactiveNudges,
         },
       }),
     },

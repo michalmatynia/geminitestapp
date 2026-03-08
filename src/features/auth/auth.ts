@@ -165,11 +165,21 @@ const credentialsProvider = Credentials({
 
       void recordLoginSuccess({ email, ip, request, userId: user.id });
 
+      const loginMethod = challengeId ? 'magic_link' : 'password';
+      const activitySurface = authFlow === 'kangur_parent' ? 'kangur' : null;
+
       return {
         id: user.id,
         email: user.email,
         name: user.name ?? null,
         image: user.image ?? null,
+        ...(activitySurface
+          ? {
+            activitySurface,
+            authFlow,
+            loginMethod,
+          }
+          : {}),
       };
     } catch (error) {
       void ErrorSystem.captureException(error, {
@@ -312,12 +322,38 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
       events: {
         async signIn({ user }) {
           if (user?.id) {
+            const authActivityUser = user as User & {
+              activitySurface?: string | null;
+              authFlow?: string | null;
+              loginMethod?: string | null;
+            };
+            const activitySurface =
+              typeof authActivityUser.activitySurface === 'string'
+                ? authActivityUser.activitySurface.trim()
+                : null;
+            const authFlow =
+              typeof authActivityUser.authFlow === 'string'
+                ? authActivityUser.authFlow.trim()
+                : null;
+            const loginMethod =
+              typeof authActivityUser.loginMethod === 'string'
+                ? authActivityUser.loginMethod.trim()
+                : null;
             void logActivity({
               type: ActivityTypes.AUTH.LOGIN,
               description: `User logged in: ${user.email}`,
               userId: user.id,
               entityId: user.id,
               entityType: 'user',
+              metadata:
+                activitySurface === 'kangur'
+                  ? {
+                    surface: 'kangur',
+                    actorType: 'parent',
+                    authFlow,
+                    loginMethod,
+                  }
+                  : null,
             }).catch(() => {});
           }
         },

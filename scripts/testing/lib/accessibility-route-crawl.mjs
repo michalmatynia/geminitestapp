@@ -12,6 +12,23 @@ const normalizeOptionalString = (value) => {
 export const buildAccessibilityRouteCrawlTitle = (routeEntry) =>
   `[${routeEntry.id}] ${routeEntry.route} passes the route-crawl accessibility scan`;
 
+export const buildAccessibilityRouteCrawlHeartbeatLine = ({
+  elapsedMs,
+  baseUrl,
+  agentId,
+  leaseKey,
+  formatDuration,
+}) => {
+  const details = [
+    `elapsed=${formatDuration(elapsedMs)}`,
+    baseUrl ? `baseUrl=${baseUrl}` : null,
+    agentId ? `agent=${agentId}` : null,
+    leaseKey ? `lease=${leaseKey}` : null,
+  ].filter(Boolean);
+
+  return `[accessibility-route-crawl] still running ${details.join(' ')}`;
+};
+
 export const resolveAccessibilityRouteCrawlAgentId = ({
   env = process.env,
   defaultAgentId = 'local',

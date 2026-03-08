@@ -4,6 +4,9 @@ export const ActivityTypes = {
     LOGOUT: 'auth.logout',
     REGISTERED: 'auth.registered',
   },
+  KANGUR: {
+    LEARNER_SIGNIN: 'kangur.learner_signin',
+  },
   INTEGRATION: {
     UPDATED: 'integration.updated',
     CONNECTION_CREATED: 'integration.connection_created',

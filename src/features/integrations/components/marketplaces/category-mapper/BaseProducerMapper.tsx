@@ -11,7 +11,7 @@ import {
   useProducerMappings,
   useExternalProducers,
 } from '@/features/integrations/hooks/useMarketplaceQueries';
-import { useProducers } from '@/features/products';
+import { useIntegrationProductProducers } from '@/features/integrations/hooks/useIntegrationProductQueries';
 import { type ProducerMapping, type ExternalProducer } from '@/shared/contracts/integrations';
 import { type Producer } from '@/shared/contracts/products';
 import { GenericMapper, type GenericItemMapperConfig } from '@/shared/ui';
@@ -19,7 +19,7 @@ import { GenericMapper, type GenericItemMapperConfig } from '@/shared/ui';
 export function BaseProducerMapper(): React.JSX.Element {
   const { connectionId, connectionName } = useCategoryMapperConfig();
 
-  const producersQuery = useProducers();
+  const producersQuery = useIntegrationProductProducers();
   const externalProducersQuery = useExternalProducers(connectionId ?? '');
   const mappingsQuery = useProducerMappings(connectionId ?? '');
 

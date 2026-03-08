@@ -20,20 +20,21 @@ describe('kangur ai tutor settings', () => {
       })
     );
 
-    expect(getKangurAiTutorSettingsForLearner(store, 'learner-1')).toEqual(
-      expect.objectContaining({
-        enabled: true,
-        agentPersonaId: 'persona-1',
-        motionPresetId: null,
-        uiMode: 'anchored',
-        allowCrossPagePersistence: true,
-        allowLessons: true,
-        testAccessMode: 'guided',
-        showSources: true,
-        allowSelectedTextSupport: true,
-        dailyMessageLimit: null,
-      })
-    );
+    expect(getKangurAiTutorSettingsForLearner(store, 'learner-1')).toEqual({
+      enabled: true,
+      agentPersonaId: 'persona-1',
+      motionPresetId: null,
+      uiMode: 'anchored',
+      allowCrossPagePersistence: true,
+      rememberTutorContext: true,
+      allowLessons: true,
+      testAccessMode: 'guided',
+      showSources: true,
+      allowSelectedTextSupport: true,
+      hintDepth: 'guided',
+      proactiveNudges: 'gentle',
+      dailyMessageLimit: null,
+    });
   });
 
   it('reads the new motion preset field while staying backward compatible with legacy data', () => {
@@ -80,6 +81,27 @@ describe('kangur ai tutor settings', () => {
 
     expect(getKangurAiTutorSettingsForLearner(store, 'learner-1').allowCrossPagePersistence).toBe(
       false
+    );
+  });
+
+  it('normalizes tutor preference controls for hint depth, proactive nudges, and memory', () => {
+    const store = parseKangurAiTutorSettings(
+      JSON.stringify({
+        'learner-1': {
+          enabled: true,
+          rememberTutorContext: false,
+          hintDepth: 'step_by_step',
+          proactiveNudges: 'coach',
+        },
+      })
+    );
+
+    expect(getKangurAiTutorSettingsForLearner(store, 'learner-1')).toEqual(
+      expect.objectContaining({
+        rememberTutorContext: false,
+        hintDepth: 'step_by_step',
+        proactiveNudges: 'coach',
+      })
     );
   });
 
@@ -168,10 +190,13 @@ describe('kangur ai tutor settings', () => {
         motionPresetId: null,
         uiMode: 'anchored',
         allowCrossPagePersistence: true,
+        rememberTutorContext: true,
         allowLessons: true,
         testAccessMode: 'review_after_answer',
         showSources: true,
         allowSelectedTextSupport: true,
+        hintDepth: 'guided',
+        proactiveNudges: 'gentle',
         dailyMessageLimit: 12,
       },
       {
@@ -196,10 +221,13 @@ describe('kangur ai tutor settings', () => {
         motionPresetId: null,
         uiMode: 'anchored',
         allowCrossPagePersistence: true,
+        rememberTutorContext: true,
         allowLessons: true,
         testAccessMode: 'guided',
         showSources: true,
         allowSelectedTextSupport: true,
+        hintDepth: 'guided',
+        proactiveNudges: 'gentle',
         dailyMessageLimit: 12,
       },
       {

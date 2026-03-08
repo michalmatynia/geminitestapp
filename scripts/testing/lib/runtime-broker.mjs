@@ -715,6 +715,8 @@ export const buildBrokeredPlaywrightEnv = ({
     HOST: host,
     PLAYWRIGHT_BASE_URL: baseUrl,
     PLAYWRIGHT_USE_EXISTING_SERVER: 'true',
+    NEXT_PUBLIC_ENABLE_KANGUR_EVENT_ANALYTICS_IN_DEV:
+      env['NEXT_PUBLIC_ENABLE_KANGUR_EVENT_ANALYTICS_IN_DEV'] || 'true',
     PLAYWRIGHT_OUTPUT_DIR: artifacts.outputDir,
     PLAYWRIGHT_HTML_REPORT_DIR: artifacts.htmlReportDir,
     PLAYWRIGHT_JUNIT_OUTPUT_FILE: artifacts.junitOutputFile,
@@ -751,6 +753,8 @@ const buildBrokerServerEnv = ({
     HOST: host,
     PORT: String(port),
     NEXT_DIST_DIR: distDir,
+    NEXT_PUBLIC_ENABLE_KANGUR_EVENT_ANALYTICS_IN_DEV:
+      env['NEXT_PUBLIC_ENABLE_KANGUR_EVENT_ANALYTICS_IN_DEV'] || 'true',
     PLAYWRIGHT_RUNTIME_AGENT_ID: agentId,
     PLAYWRIGHT_RUNTIME_LEASE_KEY: leaseKey,
     TMPDIR: runtimeTmpDir,

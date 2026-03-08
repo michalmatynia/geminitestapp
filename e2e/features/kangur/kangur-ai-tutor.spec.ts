@@ -137,6 +137,46 @@ test.describe('Kangur AI Tutor', () => {
     await expect(tutorPanel).toContainText(lessonResponse);
   });
 
+  test('shows a proactive tutor nudge on lesson selection and routes it through the tutor request flow', async ({
+    page,
+  }) => {
+    const {
+      chatRequests,
+      lessonTitle,
+      lessonSelectedText,
+      lessonResponse,
+    } = await mockKangurTutorEnvironment(page, {
+      proactiveNudges: 'gentle',
+    });
+
+    await gotoTutorRoute(page, '/kangur/lessons');
+    await page.getByRole('button', { name: lessonTitle }).click();
+
+    await selectTextInElement(page, '[data-testid^="lesson-text-block-"]', lessonSelectedText);
+    await clickSelectionTutorCta(page);
+
+    const tutorPanel = page.getByTestId('kangur-ai-tutor-panel');
+    await expect(tutorPanel).toBeVisible();
+    await expect(page.getByTestId('kangur-ai-tutor-proactive-nudge')).toHaveAttribute(
+      'data-nudge-mode',
+      'gentle'
+    );
+    await expect(page.getByTestId('kangur-ai-tutor-proactive-nudge')).toContainText(
+      'Sugerowany pierwszy krok'
+    );
+    await expect(page.getByTestId('kangur-ai-tutor-proactive-nudge')).toContainText(
+      'Ten fragment'
+    );
+
+    await page.getByTestId('kangur-ai-tutor-proactive-nudge-button').click();
+
+    await expect.poll(() => chatRequests.length).toBe(1);
+    expect(chatRequests[0]?.context?.selectedText).toBe(lessonSelectedText);
+    expect(chatRequests[0]?.context?.promptMode).toBe('selected_text');
+    expect(chatRequests[0]?.context?.interactionIntent).toBe('explain');
+    await expect(tutorPanel).toContainText(lessonResponse);
+  });
+
   test('keeps the uploaded tutor avatar image visible while the tutor is thinking', async ({
     page,
   }) => {
@@ -205,6 +245,24 @@ test.describe('Kangur AI Tutor', () => {
     await expect(page.getByTestId('kangur-ai-tutor-mood-description')).toContainText(
       'Tutor obniza napiecie'
     );
+  });
+
+  test('hides proactive tutor nudges when parent settings disable them', async ({ page }) => {
+    const {
+      lessonTitle,
+      lessonSelectedText,
+    } = await mockKangurTutorEnvironment(page, {
+      proactiveNudges: 'off',
+    });
+
+    await gotoTutorRoute(page, '/kangur/lessons');
+    await page.getByRole('button', { name: lessonTitle }).click();
+
+    await selectTextInElement(page, '[data-testid^="lesson-text-block-"]', lessonSelectedText);
+    await clickSelectionTutorCta(page);
+
+    await expect(page.getByTestId('kangur-ai-tutor-panel')).toBeVisible();
+    await expect(page.getByTestId('kangur-ai-tutor-proactive-nudge')).toHaveCount(0);
   });
 
   test('closes the lesson tutor on outside click and re-docks the avatar', async ({ page }) => {

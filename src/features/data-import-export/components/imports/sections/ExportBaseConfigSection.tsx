@@ -6,9 +6,9 @@ import {
   useImportExportData,
   useImportExportState,
 } from '@/features/data-import-export/context/ImportExportContext';
+import type { IntegrationConnectionBasic } from '@/shared/contracts/integrations';
 import { Label, SelectSimple } from '@/shared/ui';
 import type { InventoryOption, Template } from '@/shared/contracts/integrations';
-import type { IntegrationConnectionBasic } from '@/features/integrations';
 
 export function ExportBaseConfigSection(): React.JSX.Element {
   const { baseConnections, inventories, exportTemplates, loadingExportTemplates } =

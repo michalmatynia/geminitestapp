@@ -14,3 +14,27 @@ export const buildAccessibilityPlaywrightRuntimeEnv = ({ env }) => ({
     normalizeQueueWorkerSetting(env['DISABLE_QUEUE_WORKERS']) ??
     'true',
 });
+
+export const buildAccessibilityPlaywrightRuntimeContext = ({ env, agentId }) => {
+  const host = env['HOST'] || '127.0.0.1';
+
+  return {
+    agentId,
+    host,
+    shouldStopRuntime: env['PLAYWRIGHT_RUNTIME_KEEP_ALIVE'] !== 'true',
+    runtimeEnv: buildAccessibilityPlaywrightRuntimeEnv({ env }),
+  };
+};
+
+export const buildAccessibilityBrokerLeaseRequest = ({
+  rootDir,
+  appId = 'web',
+  context,
+}) => ({
+  rootDir,
+  appId,
+  mode: 'dev',
+  agentId: context.agentId,
+  host: context.host,
+  env: context.runtimeEnv,
+});

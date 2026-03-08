@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-03-08T21:18:46.314Z",
+  "generatedAt": "2026-03-08T22:10:20.246Z",
   "source": {
-    "totalFiles": 5141,
-    "totalLines": 835321,
+    "totalFiles": 5153,
+    "totalLines": 838177,
     "useClientFiles": 1496,
     "filesOver800": 71,
     "filesOver1000": 9,
@@ -13,15 +13,15 @@
     }
   },
   "api": {
-    "totalRoutes": 334,
-    "routesWithApiHandler": 321,
+    "totalRoutes": 335,
+    "routesWithApiHandler": 322,
     "delegatedServerRoutes": 0,
     "routesWithoutApiHandler": 13,
-    "forceDynamicRoutes": 91,
+    "forceDynamicRoutes": 92,
     "revalidateRoutes": 19,
     "routesWithCacheHeader": 1,
     "routesWithCacheOption": 27,
-    "routesWithExplicitCachePolicy": 334,
+    "routesWithExplicitCachePolicy": 335,
     "routesWithoutExplicitCachePolicy": 0,
     "topRouteHotspots": [
       {
@@ -114,7 +114,7 @@
     "sharedToFeaturesTotalImports": 75
   },
   "architecture": {
-    "crossFeatureEdgePairs": 47,
+    "crossFeatureEdgePairs": 43,
     "topCrossFeatureEdges": [
       {
         "edge": "cms -> gsap",
@@ -158,10 +158,6 @@
       },
       {
         "edge": "cms -> viewer3d",
-        "references": 8
-      },
-      {
-        "edge": "integrations -> products",
         "references": 8
       },
       {
@@ -215,18 +211,22 @@
       {
         "edge": "notesapp -> document-editor",
         "references": 5
+      },
+      {
+        "edge": "ai -> auth",
+        "references": 4
       }
     ],
     "featureSizeByLines": [
       {
         "feature": "ai",
         "files": 962,
-        "lines": 194170
+        "lines": 194191
       },
       {
         "feature": "kangur",
-        "files": 428,
-        "lines": 88290
+        "files": 433,
+        "lines": 90452
       },
       {
         "feature": "case-resolver",
@@ -245,8 +245,8 @@
       },
       {
         "feature": "integrations",
-        "files": 197,
-        "lines": 29642
+        "files": 198,
+        "lines": 29769
       },
       {
         "feature": "prompt-exploder",
@@ -276,7 +276,7 @@
       {
         "feature": "auth",
         "files": 40,
-        "lines": 6348
+        "lines": 6384
       },
       {
         "feature": "database",
@@ -286,7 +286,7 @@
       {
         "feature": "data-import-export",
         "files": 30,
-        "lines": 6119
+        "lines": 6170
       },
       {
         "feature": "viewer3d",
@@ -325,8 +325,8 @@
       },
       {
         "feature": "files",
-        "files": 22,
-        "lines": 2176
+        "files": 23,
+        "lines": 2252
       },
       {
         "feature": "internationalization",
@@ -552,23 +552,27 @@
       },
       {
         "path": "src/features/kangur/ui/components/KangurAiTutorWidget.tsx",
-        "lines": 2264
+        "lines": 2811
       },
       {
         "path": "src/features/kangur/ui/components/KangurAiTutorWidget.test.tsx",
-        "lines": 1613
+        "lines": 1969
       },
       {
         "path": "src/features/kangur/ui/design/primitives.tsx",
         "lines": 1480
       },
       {
-        "path": "src/features/cms/components/page-builder/registry/block-definitions-content.ts",
-        "lines": 1140
+        "path": "src/features/kangur/ui/context/KangurAiTutorContext.test.tsx",
+        "lines": 1257
       },
       {
-        "path": "src/features/kangur/ui/context/KangurAiTutorContext.test.tsx",
-        "lines": 1116
+        "path": "src/features/kangur/ui/context/KangurAiTutorRuntime.shared.ts",
+        "lines": 1143
+      },
+      {
+        "path": "src/features/cms/components/page-builder/registry/block-definitions-content.ts",
+        "lines": 1140
       },
       {
         "path": "src/features/ai/ai-paths/components/__tests__/canvas-connection-preview.test.tsx",
@@ -579,11 +583,11 @@
         "lines": 1045
       },
       {
-        "path": "src/app/api/kangur/ai-tutor/chat/handler.test.ts",
-        "lines": 1015
+        "path": "src/features/ai/ai-paths/components/__tests__/run-trace-utils.test.ts",
+        "lines": 999
       },
       {
-        "path": "src/features/ai/ai-paths/components/__tests__/run-trace-utils.test.ts",
+        "path": "src/features/kangur/server/context-registry.ts",
         "lines": 999
       },
       {
@@ -597,10 +601,6 @@
       {
         "path": "src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts",
         "lines": 989
-      },
-      {
-        "path": "src/features/kangur/ui/context/KangurAiTutorRuntime.shared.ts",
-        "lines": 980
       },
       {
         "path": "src/features/kangur/ui/components/ClockTrainingGame.tsx",
@@ -659,12 +659,12 @@
         "lines": 901
       },
       {
-        "path": "src/features/kangur/server/context-registry.ts",
-        "lines": 900
-      },
-      {
         "path": "src/features/kangur/observability/summary.ts",
         "lines": 898
+      },
+      {
+        "path": "src/shared/lib/ai-paths/core/utils/data-contract-preflight.ts",
+        "lines": 897
       }
     ],
     "topPagesByLines": [

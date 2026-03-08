@@ -1,11 +1,40 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  buildAccessibilityRouteCrawlHeartbeatLine,
   buildAccessibilityRouteCrawlTitle,
   normalizeAccessibilityRouteEntries,
   resolveAccessibilityRouteCrawlAgentId,
   summarizeAccessibilityRouteCrawlReport,
 } from './lib/accessibility-route-crawl.mjs';
+
+describe('buildAccessibilityRouteCrawlHeartbeatLine', () => {
+  it('formats a progress line for long-running crawls', () => {
+    expect(
+      buildAccessibilityRouteCrawlHeartbeatLine({
+        elapsedMs: 95_000,
+        baseUrl: 'http://127.0.0.1:3000',
+        agentId: 'michalmatynia-route-crawl',
+        leaseKey: 'web-dev-michalmatynia-route-crawl',
+        formatDuration: (value) => `${Math.round(value / 1000)}s`,
+      })
+    ).toBe(
+      '[accessibility-route-crawl] still running elapsed=95s baseUrl=http://127.0.0.1:3000 agent=michalmatynia-route-crawl lease=web-dev-michalmatynia-route-crawl'
+    );
+  });
+
+  it('omits optional fields that are not available', () => {
+    expect(
+      buildAccessibilityRouteCrawlHeartbeatLine({
+        elapsedMs: 5_000,
+        baseUrl: null,
+        agentId: '',
+        leaseKey: null,
+        formatDuration: () => '5.0s',
+      })
+    ).toBe('[accessibility-route-crawl] still running elapsed=5.0s');
+  });
+});
 
 describe('normalizeAccessibilityRouteEntries', () => {
   it('normalizes route crawl entries and preserves selectors', () => {

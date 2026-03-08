@@ -148,6 +148,26 @@ export const collectionNodes: ContextNode[] = [
     source: { type: 'code', ref: SOURCE_REF },
   },
   {
+    id: 'collection:kangur-login-activity',
+    kind: 'collection',
+    name: 'kangur_login_activity',
+    description:
+      'Recent Kangur parent login and learner sign-in activity derived from the shared activity log and scoped to Kangur tutoring context.',
+    tags: ['kangur', 'auth', 'login', 'activity'],
+    relationships: [
+      { type: 'related_to', targetId: 'collection:kangur-progress' },
+      { type: 'related_to', targetId: 'collection:kangur-assignments' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'low',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-08T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
     id: 'collection:kangur-lessons',
     kind: 'collection',
     name: 'kangur_lessons',

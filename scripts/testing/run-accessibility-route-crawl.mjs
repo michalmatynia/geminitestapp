@@ -11,8 +11,12 @@ import {
   resolveRuntimeAgentId,
   stopBrokerRuntimeLease,
 } from './lib/runtime-broker.mjs';
-import { buildAccessibilityPlaywrightRuntimeEnv } from './lib/accessibility-playwright-runtime-env.mjs';
 import {
+  buildAccessibilityBrokerLeaseRequest,
+  buildAccessibilityPlaywrightRuntimeContext,
+} from './lib/accessibility-playwright-runtime-env.mjs';
+import {
+  buildAccessibilityRouteCrawlHeartbeatLine,
   normalizeAccessibilityRouteEntries,
   resolveAccessibilityRouteCrawlAgentId,
   summarizeAccessibilityRouteCrawlReport,
@@ -21,17 +25,16 @@ import {
 const root = process.cwd();
 
 const routeEntries = normalizeAccessibilityRouteEntries(accessibilityRouteCrawlRoutes);
-const playwrightHost = process.env['HOST'] || '127.0.0.1';
-const playwrightBaseUrl = process.env['PLAYWRIGHT_BASE_URL'] || `http://${playwrightHost}:3000`;
 const defaultPlaywrightAgentId = resolveRuntimeAgentId({ env: process.env });
-const playwrightAgentId = resolveAccessibilityRouteCrawlAgentId({
+const accessibilityRuntime = buildAccessibilityPlaywrightRuntimeContext({
   env: process.env,
-  defaultAgentId: defaultPlaywrightAgentId,
+  agentId: resolveAccessibilityRouteCrawlAgentId({
+    env: process.env,
+    defaultAgentId: defaultPlaywrightAgentId,
+  }),
 });
-const shouldStopPlaywrightRuntime = process.env['PLAYWRIGHT_RUNTIME_KEEP_ALIVE'] !== 'true';
-const playwrightRuntimeEnv = buildAccessibilityPlaywrightRuntimeEnv({
-  env: process.env,
-});
+const playwrightAgentId = accessibilityRuntime.agentId;
+const shouldStopPlaywrightRuntime = accessibilityRuntime.shouldStopRuntime;
 
 const toMarkdown = (payload) => {
   const lines = [];
@@ -103,6 +106,7 @@ const runPlaywrightRouteCrawl = async (playwrightRuntime) => {
   });
 
   return await new Promise((resolve) => {
+    const startedAt = Date.now();
     const command = resolveNpxExecutable({
       preferredBrowserNodeBinDir: playwrightRuntime.preferredBrowserNodeBinDir,
     });
@@ -112,6 +116,18 @@ const runPlaywrightRouteCrawl = async (playwrightRuntime) => {
       'e2e/features/accessibility/accessibility-route-crawl.spec.ts',
       '--reporter=json',
     ];
+    const heartbeatTimer = setInterval(() => {
+      console.log(
+        buildAccessibilityRouteCrawlHeartbeatLine({
+          elapsedMs: Date.now() - startedAt,
+          baseUrl: playwrightRuntime.baseUrl ?? null,
+          agentId: playwrightRuntime.agentId ?? null,
+          leaseKey: playwrightRuntime.leaseKey ?? null,
+          formatDuration,
+        })
+      );
+    }, 30_000);
+    heartbeatTimer.unref?.();
 
     const child = spawn(command, args, {
       cwd: root,
@@ -142,6 +158,7 @@ const runPlaywrightRouteCrawl = async (playwrightRuntime) => {
     });
 
     child.on('error', (error) => {
+      clearInterval(heartbeatTimer);
       resolve({
         exitCode: null,
         stdout,
@@ -151,6 +168,7 @@ const runPlaywrightRouteCrawl = async (playwrightRuntime) => {
     });
 
     child.on('close', (exitCode) => {
+      clearInterval(heartbeatTimer);
       resolve({
         exitCode,
         stdout,
@@ -176,14 +194,12 @@ const run = async () => {
   let playwrightRuntime = null;
 
   try {
-    playwrightRuntime = await acquireRuntimeLease({
-      rootDir: root,
-      appId: 'web',
-      mode: 'dev',
-      agentId: playwrightAgentId,
-      host: playwrightHost,
-      env: playwrightRuntimeEnv,
-    });
+    playwrightRuntime = await acquireRuntimeLease(
+      buildAccessibilityBrokerLeaseRequest({
+        rootDir: root,
+        context: accessibilityRuntime,
+      })
+    );
     console.log(
       `[accessibility-route-crawl] runtime=${playwrightRuntime.source}${playwrightRuntime.reused ? ':reused' : ':started'} baseUrl=${playwrightRuntime.baseUrl} agent=${playwrightRuntime.agentId}`
     );

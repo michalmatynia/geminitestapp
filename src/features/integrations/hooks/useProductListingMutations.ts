@@ -2,7 +2,6 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 
-import { invalidateProducts } from '@/features/products';
 import type {
   ListingBadgesPayload,
   MarketplaceBadgeEntry,
@@ -23,6 +22,7 @@ import {
 import {
   invalidateListingsBadgesAndQueues,
   invalidateProductListingsAndBadges,
+  invalidateProducts,
 } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 

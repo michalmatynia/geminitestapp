@@ -3,6 +3,7 @@
 import type { ExternalCategory, CategoryMappingWithDetails } from '@/shared/contracts/integrations';
 import type { ExternalProducer, ProducerMappingWithDetails } from '@/shared/contracts/integrations';
 import type { ExternalTag, TagMappingWithDetails } from '@/shared/contracts/integrations';
+export { useCategoryMappingsByConnection } from '@/shared/hooks/useIntegrationQueries';
 import type { ListQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
@@ -48,31 +49,6 @@ export function useCategoryMappings(
       queryKey,
       tags: ['integrations', 'marketplace', 'mappings'],
       description: 'Loads marketplace mappings.'},
-  });
-}
-
-export function useCategoryMappingsByConnection(
-  connectionId: string,
-  options?: { enabled?: boolean }
-): ListQuery<CategoryMappingWithDetails> {
-  const isEnabled = options?.enabled ?? !!connectionId;
-
-  const queryKey = marketplaceKeys.mappings(connectionId, 'all');
-  return createListQueryV2({
-    queryKey,
-    queryFn: () =>
-      api.get<CategoryMappingWithDetails[]>(
-        `/api/marketplace/mappings?connectionId=${connectionId}`
-      ),
-    enabled: isEnabled && !!connectionId,
-    meta: {
-      source: 'integrations.hooks.useCategoryMappingsByConnection',
-      operation: 'list',
-      resource: 'marketplace.mappings.connection',
-      domain: 'integrations',
-      queryKey,
-      tags: ['integrations', 'marketplace', 'mappings'],
-      description: 'Loads marketplace mappings connection.'},
   });
 }
 

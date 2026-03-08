@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-08T21:19:04.345Z",
+  "generatedAt": "2026-03-08T22:10:48.331Z",
   "hardLimits": {
     "sourceLargestFileLines": 4000
   },
@@ -8,14 +8,14 @@
     "source.filesOver1500": 3,
     "source.useClientFiles": 1496,
     "source.largestFileLines": 2855,
-    "api.totalRoutes": 334,
+    "api.totalRoutes": 335,
     "api.delegatedServerRoutes": 0,
     "api.routesWithoutApiHandler": 13,
     "api.routesWithoutExplicitCachePolicy": 0,
     "imports.appFeatureBarrelImports": 3,
     "imports.appFeatureDeepImports": 145,
     "imports.sharedToFeaturesTotalImports": 75,
-    "architecture.crossFeatureEdgePairs": 47,
+    "architecture.crossFeatureEdgePairs": 43,
     "runtime.setIntervalOccurrences": 22,
     "propDrilling.depthGte4Chains": 0,
     "propDrilling.componentsWithForwarding": 42,

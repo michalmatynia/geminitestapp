@@ -14,6 +14,10 @@ import type {
   BaseImportStartResponse as ImportResponse,
   IntegrationTemplate as Template,
 } from '@/shared/contracts/integrations';
+import type {
+  ProductParameter,
+  ProductSimpleParameter,
+} from '@/shared/contracts/products';
 import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import {
@@ -64,6 +68,53 @@ export function useCatalogs(): ListQuery<CatalogRecord> {
       queryKey,
       tags: ['import-export', 'catalogs'],
       description: 'Loads products metadata catalogs.'},
+  });
+}
+
+export function useProductParameters(catalogId: string | null): ListQuery<ProductParameter> {
+  const queryKey = productMetadataKeys.parameters(catalogId ?? null);
+  return createListQueryV2({
+    queryKey,
+    queryFn: async (): Promise<ProductParameter[]> => {
+      if (!catalogId) return [];
+      return await api.get<ProductParameter[]>('/api/v2/products/parameters', {
+        params: { catalogId },
+        cache: 'no-store',
+      });
+    },
+    enabled: Boolean(catalogId),
+    meta: {
+      source: 'importExport.hooks.useProductParameters',
+      operation: 'list',
+      resource: 'products.metadata.parameters',
+      domain: 'integrations',
+      queryKey,
+      tags: ['import-export', 'products', 'parameters'],
+      description: 'Loads products metadata parameters for import export.'},
+  });
+}
+
+export function useProductSimpleParameters(
+  catalogId: string | null
+): ListQuery<ProductSimpleParameter> {
+  const queryKey = productMetadataKeys.simpleParameters(catalogId ?? null);
+  return createListQueryV2({
+    queryKey,
+    queryFn: async (): Promise<ProductSimpleParameter[]> => {
+      if (!catalogId) return [];
+      return await api.get<ProductSimpleParameter[]>(
+        `/api/v2/products/simple-parameters?catalogId=${encodeURIComponent(catalogId)}`
+      );
+    },
+    enabled: Boolean(catalogId),
+    meta: {
+      source: 'importExport.hooks.useProductSimpleParameters',
+      operation: 'list',
+      resource: 'products.metadata.simple-parameters',
+      domain: 'integrations',
+      queryKey,
+      tags: ['import-export', 'products', 'simple-parameters'],
+      description: 'Loads products metadata simple parameters for import export.'},
   });
 }
 

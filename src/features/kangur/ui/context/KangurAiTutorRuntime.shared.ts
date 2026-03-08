@@ -21,6 +21,7 @@ import {
 import type { AgentTeachingChatSource } from '@/shared/contracts/agent-teaching';
 import {
   kangurAiTutorCoachingFrameSchema,
+  kangurAiTutorLearnerMemorySchema,
   kangurAiTutorUsageSummarySchema,
   type KangurAiTutorChatResponse,
   type KangurAiTutorCoachingFrame,
@@ -28,6 +29,7 @@ import {
   type KangurAiTutorFocusKind,
   type KangurAiTutorFollowUpAction,
   type KangurAiTutorInteractionIntent,
+  type KangurAiTutorLearnerMemory,
   type KangurAiTutorPromptMode,
   type KangurAiTutorUsageSummary,
   type KangurAiTutorUsageResponse,
@@ -131,6 +133,7 @@ export type KangurAiTutorSessionSyncProps = {
 type PersistedKangurAiTutorRuntimeState = {
   isOpen: boolean;
   sessionStates: Record<string, KangurAiTutorSessionState>;
+  learnerMemories: Record<string, KangurAiTutorLearnerMemory>;
 };
 
 export type KangurAiTutorSessionRegistryContextValue = {
@@ -159,6 +162,7 @@ const createEmptySessionState = (): KangurAiTutorSessionState => ({
 const createEmptyPersistedRuntimeState = (): PersistedKangurAiTutorRuntimeState => ({
   isOpen: false,
   sessionStates: {},
+  learnerMemories: {},
 });
 
 const normalizePersistedMessage = (value: unknown): ChatMessage | null => {
@@ -210,6 +214,9 @@ const normalizePersistedSessionState = (value: unknown): KangurAiTutorSessionSta
   };
 };
 
+const normalizePersistedLearnerMemory = (value: unknown): KangurAiTutorLearnerMemory | null =>
+  kangurAiTutorLearnerMemorySchema.safeParse(value).data ?? null;
+
 const loadPersistedRuntimeState = (): PersistedKangurAiTutorRuntimeState => {
   if (typeof window === 'undefined') {
     return createEmptyPersistedRuntimeState();
@@ -238,6 +245,21 @@ const loadPersistedRuntimeState = (): PersistedKangurAiTutorRuntimeState => {
               }
 
               acc[sessionKey] = normalized;
+              return acc;
+            },
+            {}
+          )
+          : {},
+      learnerMemories:
+        parsed.learnerMemories && typeof parsed.learnerMemories === 'object'
+          ? Object.entries(parsed.learnerMemories).reduce<Record<string, KangurAiTutorLearnerMemory>>(
+            (acc, [learnerId, learnerMemory]) => {
+              const normalized = normalizePersistedLearnerMemory(learnerMemory);
+              if (!normalized) {
+                return acc;
+              }
+
+              acc[learnerId] = normalized;
               return acc;
             },
             {}
@@ -300,6 +322,76 @@ const omitUndefinedFields = <T extends Record<string, unknown>>(value: T): T =>
   Object.fromEntries(
     Object.entries(value).filter(([, fieldValue]) => fieldValue !== undefined)
   ) as T;
+
+const normalizeTutorMemoryText = (
+  value: string | null | undefined,
+  maxLength: number
+): string | null => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const normalized = value.replace(/\s+/g, ' ').trim();
+  if (!normalized) {
+    return null;
+  }
+
+  return normalized.length > maxLength ? normalized.slice(0, maxLength).trimEnd() : normalized;
+};
+
+const buildTutorMemoryFocusLabel = (
+  context: KangurAiTutorConversationContext
+): string | undefined => {
+  const candidate =
+    normalizeTutorMemoryText(context.focusLabel, 160) ??
+    normalizeTutorMemoryText(context.title, 160) ??
+    normalizeTutorMemoryText(context.selectedText, 160) ??
+    normalizeTutorMemoryText(context.currentQuestion, 160) ??
+    normalizeTutorMemoryText(context.contentId, 160);
+
+  return candidate ?? undefined;
+};
+
+const buildTutorMemoryRecommendedAction = (input: {
+  followUpActions: KangurAiTutorFollowUpAction[];
+  coachingFrame: KangurAiTutorCoachingFrame | null;
+}): string | undefined => {
+  const primaryAction = input.followUpActions[0] ?? null;
+  const candidate = primaryAction
+    ? normalizeTutorMemoryText(
+      primaryAction.reason
+        ? `${primaryAction.label}: ${primaryAction.reason}`
+        : primaryAction.label,
+      160
+    )
+    : normalizeTutorMemoryText(input.coachingFrame?.label, 160);
+
+  return candidate ?? undefined;
+};
+
+const buildNextLearnerMemory = (input: {
+  current: KangurAiTutorLearnerMemory | null;
+  context: KangurAiTutorConversationContext;
+  userMessage: string;
+  assistantMessage: string;
+  followUpActions: KangurAiTutorFollowUpAction[];
+  coachingFrame: KangurAiTutorCoachingFrame | null;
+}): KangurAiTutorLearnerMemory =>
+  omitUndefinedFields({
+    lastSurface: input.context.surface,
+    lastFocusLabel: buildTutorMemoryFocusLabel(input.context) ?? input.current?.lastFocusLabel,
+    lastUnresolvedBlocker:
+      normalizeTutorMemoryText(input.userMessage, 200) ?? input.current?.lastUnresolvedBlocker,
+    lastRecommendedAction:
+      buildTutorMemoryRecommendedAction({
+        followUpActions: input.followUpActions,
+        coachingFrame: input.coachingFrame,
+      }) ?? input.current?.lastRecommendedAction,
+    lastSuccessfulIntervention:
+      normalizeTutorMemoryText(input.assistantMessage, 200) ??
+      input.current?.lastSuccessfulIntervention,
+    lastCoachingMode: input.coachingFrame?.mode ?? input.current?.lastCoachingMode,
+  });
 
 const buildSessionKey = (
   learnerId: string | null,
@@ -452,6 +544,9 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
   const [sessionStates, setSessionStates] = useState<Record<string, KangurAiTutorSessionState>>(
     initialRuntimeStateRef.current.sessionStates
   );
+  const [learnerMemories, setLearnerMemories] = useState<Record<string, KangurAiTutorLearnerMemory>>(
+    initialRuntimeStateRef.current.learnerMemories
+  );
   const [learnerMoodById, setLearnerMoodById] = useState<Record<string, KangurAiTutorLearnerMood>>(
     {}
   );
@@ -511,8 +606,12 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
   );
   const enabled = availability.allowed;
   const allowCrossPagePersistence = tutorSettings?.allowCrossPagePersistence ?? true;
+  const allowLearnerMemory =
+    allowCrossPagePersistence && (tutorSettings?.rememberTutorContext ?? true);
   const allowSelectedTextSupport = tutorSettings?.allowSelectedTextSupport ?? true;
   const showSources = tutorSettings?.showSources ?? true;
+  const activeLearnerMemory =
+    activeLearnerId && allowLearnerMemory ? learnerMemories[activeLearnerId] ?? null : null;
 
   const activeSessionState = activeSessionKey
     ? (sessionStates[activeSessionKey] ?? createEmptySessionState())
@@ -556,6 +655,41 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
         return {
           ...prev,
           [sessionKey]: nextState,
+        };
+      });
+    },
+    []
+  );
+
+  const updateLearnerMemory = useCallback(
+    (
+      learnerId: string | null,
+      updater: (memory: KangurAiTutorLearnerMemory | null) => KangurAiTutorLearnerMemory | null
+    ) => {
+      if (!learnerId) {
+        return;
+      }
+
+      setLearnerMemories((prev) => {
+        const currentMemory = prev[learnerId] ?? null;
+        const nextMemory = updater(currentMemory);
+        if (nextMemory === currentMemory) {
+          return prev;
+        }
+
+        if (!nextMemory) {
+          if (!(learnerId in prev)) {
+            return prev;
+          }
+
+          const nextState = { ...prev };
+          delete nextState[learnerId];
+          return nextState;
+        }
+
+        return {
+          ...prev,
+          [learnerId]: nextMemory,
         };
       });
     },
@@ -643,8 +777,9 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
     persistRuntimeState({
       isOpen,
       sessionStates,
+      learnerMemories,
     });
-  }, [allowCrossPagePersistence, isOpen, sessionStates]);
+  }, [allowCrossPagePersistence, isOpen, learnerMemories, sessionStates]);
 
   useLayoutEffect(() => {
     if (allowCrossPagePersistence) {
@@ -656,7 +791,18 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
     setSessionStates((currentStates) =>
       Object.keys(currentStates).length === 0 ? currentStates : {}
     );
+    setLearnerMemories((currentMemories) =>
+      Object.keys(currentMemories).length === 0 ? currentMemories : {}
+    );
   }, [activeSessionKey, allowCrossPagePersistence]);
+
+  useEffect(() => {
+    if (allowLearnerMemory || !activeLearnerId) {
+      return;
+    }
+
+    updateLearnerMemory(activeLearnerId, () => null);
+  }, [activeLearnerId, allowLearnerMemory, updateLearnerMemory]);
 
   useEffect(() => {
     const previousSessionKey = previousSessionKeyRef.current;
@@ -804,6 +950,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
         contentId: activeSessionContext?.contentId ?? null,
         promptMode: resolvedPromptMode,
         hasSelectedText: Boolean(resolvedSelectedText),
+        hasLearnerMemory: Boolean(activeLearnerMemory),
         focusKind: options?.focusKind ?? null,
         interactionIntent: options?.interactionIntent ?? null,
         messageCount: outgoingMessages.length,
@@ -832,6 +979,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
             content: message.content,
           })),
           context: nextContext,
+          ...(activeLearnerMemory ? { memory: activeLearnerMemory } : {}),
         });
         const sources = showSources && Array.isArray(result.sources) ? result.sources : [];
         const followUpActions = Array.isArray(result.followUpActions)
@@ -851,6 +999,18 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
             ...current,
             [activeLearnerId]: mergeLearnerTutorMood(current[activeLearnerId], result.tutorMood),
           }));
+        }
+        if (allowLearnerMemory && activeLearnerId) {
+          updateLearnerMemory(activeLearnerId, (currentMemory) =>
+            buildNextLearnerMemory({
+              current: currentMemory,
+              context: nextContext,
+              userMessage: userMessage.content,
+              assistantMessage: result.message,
+              followUpActions,
+              coachingFrame,
+            })
+          );
         }
         updateSessionState(activeSessionKey, (currentState) => ({
           ...currentState,
@@ -904,13 +1064,16 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
     },
     [
       activeLearnerId,
+      activeLearnerMemory,
       activeSessionContext,
       activeSessionKey,
+      allowLearnerMemory,
       allowSelectedTextSupport,
       enabled,
       highlightedText,
       messages,
       showSources,
+      updateLearnerMemory,
       updateSessionState,
     ]
   );

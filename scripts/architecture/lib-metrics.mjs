@@ -181,6 +181,68 @@ export const collectMetrics = async ({ root = process.cwd() } = {}) => {
     0
   );
 
+  // --- New: deep relative imports ---
+  const deepRelativeImportFiles = sourceRecords.filter(
+    (record) => /from\s+['"](\.\.\/){3,}/.test(record.content)
+  );
+
+  // --- New: circular feature dependencies ---
+  const featureDepGraph = new Map();
+  for (const [edge] of crossFeatureEdgeMap) {
+    const [from, , to] = edge.split(' ');
+    if (!featureDepGraph.has(from)) featureDepGraph.set(from, new Set());
+    featureDepGraph.get(from).add(to);
+  }
+
+  const detectCycles = (graph) => {
+    const cycles = [];
+    const visited = new Set();
+    const inStack = new Set();
+    const stack = [];
+    const dfs = (node) => {
+      if (inStack.has(node)) {
+        const start = stack.indexOf(node);
+        cycles.push(stack.slice(start).concat(node));
+        return;
+      }
+      if (visited.has(node)) return;
+      visited.add(node);
+      inStack.add(node);
+      stack.push(node);
+      for (const neighbor of graph.get(node) || []) dfs(neighbor);
+      stack.pop();
+      inStack.delete(node);
+    };
+    for (const node of graph.keys()) dfs(node);
+    const seen = new Set();
+    return cycles.filter((cycle) => {
+      const norm = cycle.slice(0, -1);
+      const minIdx = norm.indexOf(norm.reduce((a, b) => (a < b ? a : b)));
+      const key = [...norm.slice(minIdx), ...norm.slice(0, minIdx)].join('->');
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  };
+
+  const circularFeatureDeps = detectCycles(featureDepGraph);
+
+  // --- New: hook complexity (top hooks by effect/callback/memo count) ---
+  const hookRecords = sourceRecords.filter(
+    (record) => /\/use[A-Z]/.test(record.path) && !record.path.includes('.test.')
+  );
+  const hookComplexity = hookRecords
+    .map((record) => ({
+      path: record.path,
+      useEffectCount: countMatches(record.content, /\buseEffect\s*\(/g),
+      useCallbackCount: countMatches(record.content, /\buseCallback\s*\(/g),
+      useMemoCount: countMatches(record.content, /\buseMemo\s*\(/g),
+    }))
+    .map((h) => ({ ...h, total: h.useEffectCount + h.useCallbackCount + h.useMemoCount }))
+    .filter((h) => h.total > 0)
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 25);
+
   return {
     generatedAt: new Date().toISOString(),
     source: {
@@ -223,6 +285,11 @@ export const collectMetrics = async ({ root = process.cwd() } = {}) => {
     runtime: {
       setIntervalOccurrences,
     },
+    codeHealth: {
+      deepRelativeImportCount: deepRelativeImportFiles.length,
+      circularFeatureDeps,
+      hookComplexity,
+    },
     hotspots: {
       topFilesByLines: getTopByLineCount(sourceRecords, 30),
       topPagesByLines: getTopByLineCount(pageRecords, 20),
@@ -247,6 +314,11 @@ export const formatCompactSummary = (metrics) => {
   lines.push(`Cross-feature edge pairs: ${metrics.architecture.crossFeatureEdgePairs}`);
   lines.push(`Shared -> features imports: ${metrics.imports.sharedToFeaturesTotalImports}`);
   lines.push(`setInterval occurrences: ${metrics.runtime.setIntervalOccurrences}`);
+  if (metrics.codeHealth) {
+    lines.push(`Deep relative imports (3+ levels): ${metrics.codeHealth.deepRelativeImportCount}`);
+    lines.push(`Circular feature deps: ${metrics.codeHealth.circularFeatureDeps.length}`);
+    lines.push(`Top hook complexity: ${metrics.codeHealth.hookComplexity.length} hooks tracked`);
+  }
   if (metrics.propDrilling) {
     lines.push(
       `Prop drilling chains: depth>=3: ${metrics.propDrilling.candidateChains}, depth>=4: ${metrics.propDrilling.depthGte4Chains}`

@@ -66,6 +66,7 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
       prompt: run.prompt,
       model: run.model ?? null,
       memoryKey: run.memoryKey ?? null,
+      personaId: run.personaId ?? null,
       planState: run.planState,
       agentBrowser: run.agentBrowser,
       runHeadless: run.runHeadless,
@@ -196,6 +197,7 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
         const memoryResult = await validateAndAddAgentLongTermMemory({
           memoryKey,
           runId: run.id,
+          personaId: run.personaId ?? null,
           content: [
             `Self-improvement review: ${improvementReview.summary}`,
             improvementReview.mistakes.length
@@ -316,6 +318,7 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
         const memoryResult = await validateAndAddAgentLongTermMemory({
           memoryKey,
           runId: run.id,
+          personaId: run.personaId ?? null,
           content: [
             summary,
             'Steps:',

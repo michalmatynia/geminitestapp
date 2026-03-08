@@ -12,7 +12,6 @@ import {
 import {
   KANGUR_PROFILE_RECOMMENDATION_ACCENTS,
   buildKangurRecommendationHref,
-  getKangurRecommendationButtonVariant,
   useKangurLearnerProfileRuntime,
 } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
 
@@ -63,7 +62,7 @@ export function KangurLearnerProfileRecommendationsWidget(): React.JSX.Element {
                   asChild
                   className='mt-3'
                   size='sm'
-                  variant={getKangurRecommendationButtonVariant(recommendation.action.page)}
+                  variant='primary'
                   data-doc-id='learner_recommendation_action'
                 >
                   <Link href={buildKangurRecommendationHref(basePath, recommendation.action)}>

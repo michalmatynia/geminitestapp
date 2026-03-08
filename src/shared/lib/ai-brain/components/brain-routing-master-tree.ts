@@ -49,6 +49,11 @@ export const ROUTING_FEATURES: BrainRoutingFeatureConfig[] = [
     description: 'Authoritative AI routing for Chatbot message execution.',
   },
   {
+    key: 'kangur_ai_tutor',
+    label: 'Kangur AI Tutor',
+    description: 'Tutor chat routing for Kangur, managed directly through Brain.',
+  },
+  {
     key: 'products',
     label: 'Products',
     description: 'Product description, translation, and validation AI execution.',

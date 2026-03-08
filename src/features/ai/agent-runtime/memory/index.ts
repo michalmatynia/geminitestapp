@@ -28,6 +28,7 @@ const parseJsonObject = (raw: string): unknown => {
 
 export async function addAgentMemory(params: {
   runId?: string | null;
+  personaId?: string | null;
   scope: MemoryScope;
   content: string;
   metadata?: Record<string, unknown>;
@@ -42,6 +43,7 @@ export async function addAgentMemory(params: {
     return prisma.agentMemoryItem.create({
       data: {
         runId: params.runId ?? null,
+        personaId: params.personaId ?? null,
         scope: params.scope,
         content: params.content,
         ...(params.metadata !== undefined && {
@@ -75,6 +77,7 @@ export async function addAgentMemory(params: {
 
 export async function listAgentMemory(params: {
   runId?: string | null;
+  personaId?: string | null;
   scope?: MemoryScope;
 }): Promise<Prisma.AgentMemoryItemGetPayload<Record<string, never>>[]> {
   if (!('agentMemoryItem' in prisma)) {
@@ -87,6 +90,7 @@ export async function listAgentMemory(params: {
     return prisma.agentMemoryItem.findMany({
       where: {
         ...(params.runId ? { runId: params.runId } : {}),
+        ...(params.personaId ? { personaId: params.personaId } : {}),
         ...(params.scope ? { scope: params.scope } : {}),
       },
       orderBy: { createdAt: 'asc' },
@@ -120,9 +124,16 @@ export async function listAgentMemory(params: {
 export async function addAgentLongTermMemory(params: {
   memoryKey: string;
   runId?: string | null;
+  personaId?: string | null;
   content: string;
   summary?: string | null;
   tags?: string[];
+  topicHints?: string[];
+  moodHints?: string[];
+  sourceType?: string | null;
+  sourceId?: string | null;
+  sourceLabel?: string | null;
+  sourceCreatedAt?: Date | string | null;
   metadata?: Record<string, unknown>;
   importance?: number | null;
 }): Promise<Prisma.AgentLongTermMemoryGetPayload<Record<string, never>> | null> {
@@ -140,9 +151,21 @@ export async function addAgentLongTermMemory(params: {
       data: {
         memoryKey: params.memoryKey,
         runId: params.runId ?? null,
+        personaId: params.personaId ?? null,
         content: params.content,
         summary: params.summary ?? null,
         tags: params.tags ?? [],
+        topicHints: params.topicHints ?? [],
+        moodHints: params.moodHints ?? [],
+        sourceType: params.sourceType ?? null,
+        sourceId: params.sourceId ?? null,
+        sourceLabel: params.sourceLabel ?? null,
+        sourceCreatedAt:
+          params.sourceCreatedAt instanceof Date
+            ? params.sourceCreatedAt
+            : params.sourceCreatedAt
+              ? new Date(params.sourceCreatedAt)
+              : null,
         ...(params.metadata !== undefined && {
           metadata: params.metadata as Prisma.InputJsonValue,
         }),
@@ -246,10 +269,17 @@ export async function validateAgentLongTermMemory(params: {
 export async function validateAndAddAgentLongTermMemory(params: {
   memoryKey: string;
   runId?: string | null;
+  personaId?: string | null;
   content: string;
   summary?: string | null;
   summaryModel?: string | null;
   tags?: string[];
+  topicHints?: string[];
+  moodHints?: string[];
+  sourceType?: string | null;
+  sourceId?: string | null;
+  sourceLabel?: string | null;
+  sourceCreatedAt?: Date | string | null;
   metadata?: Record<string, unknown>;
   importance?: number | null;
   model?: string | null;
@@ -315,9 +345,16 @@ export async function validateAndAddAgentLongTermMemory(params: {
   const record = await addAgentLongTermMemory({
     memoryKey: params.memoryKey,
     runId: params.runId ?? null,
+    personaId: params.personaId ?? null,
     content: params.content,
     ...(summary !== undefined && { summary }),
     tags: params.tags ?? [],
+    topicHints: params.topicHints ?? [],
+    moodHints: params.moodHints ?? [],
+    sourceType: params.sourceType ?? null,
+    sourceId: params.sourceId ?? null,
+    sourceLabel: params.sourceLabel ?? null,
+    sourceCreatedAt: params.sourceCreatedAt ?? null,
     ...(params.metadata !== undefined && { metadata: params.metadata }),
     importance: params.importance ?? null,
   });
@@ -325,7 +362,8 @@ export async function validateAndAddAgentLongTermMemory(params: {
 }
 
 export async function listAgentLongTermMemory(params: {
-  memoryKey: string;
+  memoryKey?: string;
+  personaId?: string | null;
   limit?: number;
   tags?: string[];
 }): Promise<Prisma.AgentLongTermMemoryGetPayload<Record<string, never>>[]> {
@@ -339,10 +377,14 @@ export async function listAgentLongTermMemory(params: {
     return [];
   }
   try {
+    if (!params.memoryKey && !params.personaId) {
+      return [];
+    }
     const tagFilter = params.tags && params.tags.length > 0 ? { hasSome: params.tags } : undefined;
     const items = await prisma.agentLongTermMemory.findMany({
       where: {
-        memoryKey: params.memoryKey,
+        ...(params.memoryKey ? { memoryKey: params.memoryKey } : {}),
+        ...(params.personaId ? { personaId: params.personaId } : {}),
         ...(tagFilter ? { tags: tagFilter } : {}),
       },
       orderBy: { updatedAt: 'desc' },

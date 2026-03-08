@@ -11,6 +11,7 @@ import {
 } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import type { PathConfig, PathMeta } from '@/shared/lib/ai-paths';
 import type { PathSaveOptions as SavePathConfigOptions } from '../components/ai-paths-settings/useAiPathsPersistence.types';
 
 // ---------------------------------------------------------------------------
@@ -23,6 +24,14 @@ export type { SavePathConfigOptions };
 
 export interface PersistenceOperationHandlers {
   savePathConfig?: (options?: SavePathConfigOptions) => Promise<boolean>;
+  persistPathSettings?: (
+    nextPaths: PathMeta[],
+    configId: string,
+    config: PathConfig
+  ) => Promise<PathConfig | null>;
+  persistSettingsBulk?: (entries: Array<{ key: string; value: string }>) => Promise<void>;
+  persistActivePathPreference?: (pathId: string | null) => Promise<void>;
+  savePathIndex?: (nextPaths: PathMeta[]) => Promise<void>;
 }
 
 export interface PersistenceState {
@@ -66,6 +75,14 @@ export interface PersistenceActions {
   // Operation handlers (injected by orchestrator/runtime layer)
   setOperationHandlers: (handlers: PersistenceOperationHandlers) => void;
   savePathConfig: (options?: SavePathConfigOptions) => Promise<boolean>;
+  persistPathSettings: (
+    nextPaths: PathMeta[],
+    configId: string,
+    config: PathConfig
+  ) => Promise<PathConfig | null>;
+  persistSettingsBulk: (entries: Array<{ key: string; value: string }>) => Promise<void>;
+  persistActivePathPreference: (pathId: string | null) => Promise<void>;
+  savePathIndex: (nextPaths: PathMeta[]) => Promise<void>;
 }
 
 // ---------------------------------------------------------------------------
@@ -164,6 +181,46 @@ export function PersistenceProvider({
     return await handler(options);
   }, []);
 
+  const persistPathSettings = useCallback(
+    async (
+      nextPaths: PathMeta[],
+      configId: string,
+      config: PathConfig
+    ): Promise<PathConfig | null> => {
+      const handler = operationHandlersRef.current.persistPathSettings;
+      if (!handler) return null;
+      return await handler(nextPaths, configId, config);
+    },
+    []
+  );
+
+  const persistSettingsBulk = useCallback(
+    async (entries: Array<{ key: string; value: string }>): Promise<void> => {
+      const handler = operationHandlersRef.current.persistSettingsBulk;
+      if (!handler) return;
+      await handler(entries);
+    },
+    []
+  );
+
+  const persistActivePathPreference = useCallback(
+    async (pathId: string | null): Promise<void> => {
+      const handler = operationHandlersRef.current.persistActivePathPreference;
+      if (!handler) return;
+      await handler(pathId);
+    },
+    []
+  );
+
+  const savePathIndex = useCallback(
+    async (nextPaths: PathMeta[]): Promise<void> => {
+      const handler = operationHandlersRef.current.savePathIndex;
+      if (!handler) return;
+      await handler(nextPaths);
+    },
+    []
+  );
+
   // Actions are stable
   const actions = useMemo<PersistenceActions>(
     () => ({
@@ -190,6 +247,10 @@ export function PersistenceProvider({
       finishLoading,
       setOperationHandlers,
       savePathConfig,
+      persistPathSettings,
+      persistSettingsBulk,
+      persistActivePathPreference,
+      savePathIndex,
     }),
     [
       incrementLoadNonce,
@@ -201,6 +262,10 @@ export function PersistenceProvider({
       finishLoading,
       setOperationHandlers,
       savePathConfig,
+      persistPathSettings,
+      persistSettingsBulk,
+      persistActivePathPreference,
+      savePathIndex,
     ]
   );
 

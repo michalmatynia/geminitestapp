@@ -373,8 +373,12 @@ export function RunTimeline(props: {
                 )}`}
               >
                 <span
-                  className='cursor-help'
+                  tabIndex={0}
+                  className='cursor-help rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
                   aria-label={`Fastest: ${minMaxNodeDuration.min.label} · ${formatDurationMs(
+                    minMaxNodeDuration.min.durationMs
+                  )}`}
+                  title={`Fastest: ${minMaxNodeDuration.min.label} · ${formatDurationMs(
                     minMaxNodeDuration.min.durationMs
                   )}`}
                 >
@@ -392,8 +396,12 @@ export function RunTimeline(props: {
                 )}`}
               >
                 <span
-                  className='cursor-help'
+                  tabIndex={0}
+                  className='cursor-help rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
                   aria-label={`Slowest: ${minMaxNodeDuration.max.label} · ${formatDurationMs(
+                    minMaxNodeDuration.max.durationMs
+                  )}`}
+                  title={`Slowest: ${minMaxNodeDuration.max.label} · ${formatDurationMs(
                     minMaxNodeDuration.max.durationMs
                   )}`}
                 >

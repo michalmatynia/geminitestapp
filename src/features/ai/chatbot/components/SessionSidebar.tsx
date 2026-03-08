@@ -39,32 +39,26 @@ export function SessionSidebar(): React.JSX.Element {
               (session: ChatbotSessionListItem): React.JSX.Element => (
                 <div
                   key={session.id}
-                  className={`group flex items-center gap-2 rounded-lg p-3 cursor-pointer transition ${
+                  className={`group flex items-center gap-2 rounded-lg p-3 transition ${
                     currentSessionId === session.id
                       ? 'bg-primary/10 text-primary'
                       : 'text-gray-400 hover:bg-muted/50 hover:text-white'
                   }`}
-                  onClick={(): void => onSelectSession(session.id)}
-                  onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
-                    if (event.target !== event.currentTarget) {
-                      return;
-                    }
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault();
-                      onSelectSession(session.id);
-                    }
-                  }}
-                  role='button'
-                  tabIndex={0}
-                  aria-pressed={currentSessionId === session.id}
                 >
-                  <MessageSquare className='size-4 flex-shrink-0' />
-                  <div className='flex-1 overflow-hidden'>
-                    <div className='truncate text-sm font-medium'>{session.title}</div>
-                    <div className='truncate text-xs text-gray-500'>
-                      {session.messageCount ?? 0} messages
+                  <button
+                    type='button'
+                    onClick={(): void => onSelectSession(session.id)}
+                    aria-pressed={currentSessionId === session.id}
+                    className='flex min-w-0 flex-1 items-center gap-2 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
+                  >
+                    <MessageSquare className='size-4 flex-shrink-0' />
+                    <div className='min-w-0 flex-1 overflow-hidden'>
+                      <div className='truncate text-sm font-medium'>{session.title}</div>
+                      <div className='truncate text-xs text-gray-500'>
+                        {session.messageCount ?? 0} messages
+                      </div>
                     </div>
-                  </div>
+                  </button>
                   <Button
                     variant='ghost'
                     size='icon'

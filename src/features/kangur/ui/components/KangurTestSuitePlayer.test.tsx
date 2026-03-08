@@ -56,7 +56,7 @@ describe('KangurTestSuitePlayer', () => {
     await userEvent.click(screen.getByRole('button', { name: /A.*4/i }));
 
     const finishButton = screen.getByRole('button', { name: /finish/i });
-    expect(finishButton).toHaveClass('kangur-cta-pill', 'play-cta');
+    expect(finishButton).toHaveClass('kangur-cta-pill', 'primary-cta');
 
     await userEvent.click(finishButton);
 

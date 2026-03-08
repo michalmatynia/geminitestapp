@@ -1,0 +1,866 @@
+{
+  "generatedAt": "2026-03-08T04:45:57.089Z",
+  "source": {
+    "totalFiles": 4943,
+    "totalLines": 812951,
+    "useClientFiles": 1413,
+    "filesOver800": 75,
+    "filesOver1000": 10,
+    "filesOver1500": 2,
+    "largestFile": {
+      "path": "src/features/kangur/cms-builder/project.ts",
+      "lines": 2855
+    }
+  },
+  "api": {
+    "totalRoutes": 329,
+    "routesWithApiHandler": 316,
+    "delegatedServerRoutes": 4,
+    "routesWithoutApiHandler": 9,
+    "forceDynamicRoutes": 86,
+    "revalidateRoutes": 19,
+    "routesWithCacheHeader": 1,
+    "routesWithCacheOption": 27,
+    "routesWithExplicitCachePolicy": 329,
+    "routesWithoutExplicitCachePolicy": 0,
+    "topRouteHotspots": [
+      {
+        "path": "src/app/api/chatbot/agent/[runId]/[action]/route.ts",
+        "lines": 83
+      },
+      {
+        "path": "src/app/api/v2/products/[id]/studio/[action]/route.ts",
+        "lines": 40
+      },
+      {
+        "path": "src/app/api/marketplace/[resource]/route.ts",
+        "lines": 37
+      },
+      {
+        "path": "src/app/api/v2/products/[id]/route.ts",
+        "lines": 36
+      },
+      {
+        "path": "src/app/api/v2/products/sync/profiles/[id]/route.ts",
+        "lines": 28
+      },
+      {
+        "path": "src/app/api/v2/products/categories/[id]/route.ts",
+        "lines": 25
+      },
+      {
+        "path": "src/app/api/v2/products/categories/route.ts",
+        "lines": 24
+      },
+      {
+        "path": "src/app/api/v2/products/parameters/route.ts",
+        "lines": 24
+      },
+      {
+        "path": "src/app/api/auth/users/[id]/route.ts",
+        "lines": 23
+      },
+      {
+        "path": "src/app/api/v2/products/sync/profiles/route.ts",
+        "lines": 23
+      },
+      {
+        "path": "src/app/api/ai/schema/[entity]/route.ts",
+        "lines": 22
+      },
+      {
+        "path": "src/app/api/v2/metadata/[type]/[id]/route.ts",
+        "lines": 22
+      },
+      {
+        "path": "src/app/api/v2/products/entities/[type]/[id]/route.ts",
+        "lines": 22
+      },
+      {
+        "path": "src/app/api/v2/products/metadata/[type]/[id]/route.ts",
+        "lines": 22
+      },
+      {
+        "path": "src/app/api/auth/users/[id]/security/route.ts",
+        "lines": 21
+      },
+      {
+        "path": "src/app/api/drafts/[id]/route.ts",
+        "lines": 21
+      },
+      {
+        "path": "src/app/api/v2/products/validator-patterns/route.ts",
+        "lines": 21
+      },
+      {
+        "path": "src/app/api/v2/products/validator-settings/route.ts",
+        "lines": 21
+      },
+      {
+        "path": "src/app/api/ai/context/related/[id]/route.ts",
+        "lines": 20
+      },
+      {
+        "path": "src/app/api/v2/integrations/imports/base/runs/route.ts",
+        "lines": 20
+      }
+    ]
+  },
+  "imports": {
+    "appFeatureBarrelImports": 0,
+    "appFeatureDeepImports": 143,
+    "sharedToFeaturesStaticImports": 4,
+    "sharedToFeaturesDynamicImports": 7,
+    "sharedToFeaturesTotalImports": 11
+  },
+  "architecture": {
+    "crossFeatureEdgePairs": 74,
+    "topCrossFeatureEdges": [
+      {
+        "edge": "cms -> kangur",
+        "references": 49
+      },
+      {
+        "edge": "kangur -> cms",
+        "references": 26
+      },
+      {
+        "edge": "cms -> gsap",
+        "references": 19
+      },
+      {
+        "edge": "case-resolver -> case-resolver-capture",
+        "references": 18
+      },
+      {
+        "edge": "case-resolver -> foldertree",
+        "references": 15
+      },
+      {
+        "edge": "case-resolver -> filemaker",
+        "references": 13
+      },
+      {
+        "edge": "drafter -> products",
+        "references": 13
+      },
+      {
+        "edge": "case-resolver -> document-editor",
+        "references": 12
+      },
+      {
+        "edge": "jobs -> ai",
+        "references": 12
+      },
+      {
+        "edge": "products -> integrations",
+        "references": 12
+      },
+      {
+        "edge": "case-resolver -> ai",
+        "references": 10
+      },
+      {
+        "edge": "cms -> app-embeds",
+        "references": 8
+      },
+      {
+        "edge": "cms -> viewer3d",
+        "references": 8
+      },
+      {
+        "edge": "integrations -> products",
+        "references": 8
+      },
+      {
+        "edge": "kangur -> foldertree",
+        "references": 8
+      },
+      {
+        "edge": "products -> internationalization",
+        "references": 8
+      },
+      {
+        "edge": "ai -> products",
+        "references": 7
+      },
+      {
+        "edge": "integrations -> playwright",
+        "references": 7
+      },
+      {
+        "edge": "products -> foldertree",
+        "references": 7
+      },
+      {
+        "edge": "prompt-exploder -> foldertree",
+        "references": 7
+      },
+      {
+        "edge": "case-resolver -> prompt-exploder",
+        "references": 6
+      },
+      {
+        "edge": "case-resolver-capture -> case-resolver",
+        "references": 6
+      },
+      {
+        "edge": "products -> ai",
+        "references": 6
+      },
+      {
+        "edge": "admin -> foldertree",
+        "references": 5
+      },
+      {
+        "edge": "cms -> foldertree",
+        "references": 5
+      }
+    ],
+    "featureSizeByLines": [
+      {
+        "feature": "ai",
+        "files": 938,
+        "lines": 193870
+      },
+      {
+        "feature": "kangur",
+        "files": 366,
+        "lines": 74953
+      },
+      {
+        "feature": "case-resolver",
+        "files": 283,
+        "lines": 62498
+      },
+      {
+        "feature": "cms",
+        "files": 282,
+        "lines": 47361
+      },
+      {
+        "feature": "products",
+        "files": 211,
+        "lines": 39957
+      },
+      {
+        "feature": "integrations",
+        "files": 196,
+        "lines": 29524
+      },
+      {
+        "feature": "prompt-exploder",
+        "files": 142,
+        "lines": 26314
+      },
+      {
+        "feature": "notesapp",
+        "files": 81,
+        "lines": 13610
+      },
+      {
+        "feature": "foldertree",
+        "files": 76,
+        "lines": 9417
+      },
+      {
+        "feature": "filemaker",
+        "files": 53,
+        "lines": 9007
+      },
+      {
+        "feature": "admin",
+        "files": 32,
+        "lines": 6777
+      },
+      {
+        "feature": "database",
+        "files": 29,
+        "lines": 6233
+      },
+      {
+        "feature": "auth",
+        "files": 37,
+        "lines": 5812
+      },
+      {
+        "feature": "data-import-export",
+        "files": 26,
+        "lines": 5577
+      },
+      {
+        "feature": "viewer3d",
+        "files": 30,
+        "lines": 4750
+      },
+      {
+        "feature": "prompt-engine",
+        "files": 30,
+        "lines": 4016
+      },
+      {
+        "feature": "case-resolver-capture",
+        "files": 12,
+        "lines": 3206
+      },
+      {
+        "feature": "drafter",
+        "files": 14,
+        "lines": 2987
+      },
+      {
+        "feature": "product-sync",
+        "files": 9,
+        "lines": 2859
+      },
+      {
+        "feature": "observability",
+        "files": 17,
+        "lines": 2771
+      },
+      {
+        "feature": "document-editor",
+        "files": 19,
+        "lines": 2447
+      },
+      {
+        "feature": "files",
+        "files": 21,
+        "lines": 2123
+      },
+      {
+        "feature": "internationalization",
+        "files": 21,
+        "lines": 1976
+      },
+      {
+        "feature": "playwright",
+        "files": 8,
+        "lines": 798
+      },
+      {
+        "feature": "jobs",
+        "files": 4,
+        "lines": 480
+      },
+      {
+        "feature": "gsap",
+        "files": 4,
+        "lines": 370
+      },
+      {
+        "feature": "tooltip-engine",
+        "files": 6,
+        "lines": 363
+      },
+      {
+        "feature": "app-embeds",
+        "files": 5,
+        "lines": 280
+      }
+    ]
+  },
+  "runtime": {
+    "setIntervalOccurrences": 22
+  },
+  "codeHealth": {
+    "deepRelativeImportCount": 110,
+    "circularFeatureDeps": [
+      [
+        "products",
+        "files",
+        "products"
+      ],
+      [
+        "products",
+        "integrations",
+        "products"
+      ],
+      [
+        "integrations",
+        "data-import-export",
+        "integrations"
+      ],
+      [
+        "products",
+        "integrations",
+        "data-import-export",
+        "products"
+      ],
+      [
+        "integrations",
+        "product-sync",
+        "integrations"
+      ],
+      [
+        "ai",
+        "jobs",
+        "products",
+        "ai"
+      ],
+      [
+        "admin",
+        "ai",
+        "jobs",
+        "products",
+        "admin"
+      ],
+      [
+        "products",
+        "drafter",
+        "products"
+      ],
+      [
+        "ai",
+        "jobs",
+        "ai"
+      ],
+      [
+        "case-resolver",
+        "case-resolver-capture",
+        "case-resolver"
+      ],
+      [
+        "ai",
+        "jobs",
+        "case-resolver",
+        "ai"
+      ],
+      [
+        "admin",
+        "ai",
+        "jobs",
+        "case-resolver",
+        "admin"
+      ],
+      [
+        "ai",
+        "kangur",
+        "ai"
+      ],
+      [
+        "admin",
+        "ai",
+        "kangur",
+        "admin"
+      ],
+      [
+        "admin",
+        "ai",
+        "kangur",
+        "cms",
+        "admin"
+      ],
+      [
+        "kangur",
+        "cms",
+        "kangur"
+      ],
+      [
+        "kangur",
+        "cms",
+        "app-embeds",
+        "kangur"
+      ],
+      [
+        "admin",
+        "ai",
+        "admin"
+      ],
+      [
+        "admin",
+        "ai",
+        "notesapp",
+        "admin"
+      ]
+    ],
+    "hookComplexity": [
+      {
+        "path": "src/features/ai/ai-paths/hooks/useAdminAiPathsValidationState.ts",
+        "useEffectCount": 3,
+        "useCallbackCount": 16,
+        "useMemoCount": 20,
+        "total": 39
+      },
+      {
+        "path": "src/features/case-resolver/hooks/useAdminCaseResolverPageState.ts",
+        "useEffectCount": 4,
+        "useCallbackCount": 22,
+        "useMemoCount": 5,
+        "total": 31
+      },
+      {
+        "path": "src/features/products/hooks/useProductFormValidator.ts",
+        "useEffectCount": 8,
+        "useCallbackCount": 11,
+        "useMemoCount": 12,
+        "total": 31
+      },
+      {
+        "path": "src/features/cms/hooks/useTreeActionsContext.tsx",
+        "useEffectCount": 0,
+        "useCallbackCount": 25,
+        "useMemoCount": 3,
+        "total": 28
+      },
+      {
+        "path": "src/features/products/hooks/useProductData.ts",
+        "useEffectCount": 6,
+        "useCallbackCount": 19,
+        "useMemoCount": 3,
+        "total": 28
+      },
+      {
+        "path": "src/features/ai/ai-paths/hooks/useDatabaseNodeConfigState.ts",
+        "useEffectCount": 1,
+        "useCallbackCount": 8,
+        "useMemoCount": 14,
+        "total": 23
+      },
+      {
+        "path": "src/features/case-resolver/hooks/useCaseResolverState.ts",
+        "useEffectCount": 6,
+        "useCallbackCount": 2,
+        "useMemoCount": 15,
+        "total": 23
+      },
+      {
+        "path": "src/features/prompt-engine/context/prompt-engine/usePromptEngineActionsImpl.ts",
+        "useEffectCount": 0,
+        "useCallbackCount": 19,
+        "useMemoCount": 0,
+        "total": 19
+      },
+      {
+        "path": "src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsRuntime.ts",
+        "useEffectCount": 7,
+        "useCallbackCount": 8,
+        "useMemoCount": 3,
+        "total": 18
+      },
+      {
+        "path": "src/features/prompt-exploder/context/settings/useSettingsDataImpl.ts",
+        "useEffectCount": 6,
+        "useCallbackCount": 0,
+        "useMemoCount": 12,
+        "total": 18
+      },
+      {
+        "path": "src/features/ai/ai-paths/context/hooks/useCanvasInteractions.navigation.ts",
+        "useEffectCount": 0,
+        "useCallbackCount": 16,
+        "useMemoCount": 1,
+        "total": 17
+      },
+      {
+        "path": "src/features/filemaker/hooks/useAdminFilemakerPageState.ts",
+        "useEffectCount": 0,
+        "useCallbackCount": 14,
+        "useMemoCount": 2,
+        "total": 16
+      },
+      {
+        "path": "src/features/case-resolver/hooks/useCaseResolverState.requested-context.ts",
+        "useEffectCount": 5,
+        "useCallbackCount": 9,
+        "useMemoCount": 1,
+        "total": 15
+      },
+      {
+        "path": "src/features/case-resolver/hooks/useNodeFileWorkspaceState.ts",
+        "useEffectCount": 3,
+        "useCallbackCount": 5,
+        "useMemoCount": 7,
+        "total": 15
+      },
+      {
+        "path": "src/features/database/hooks/useDatabaseBackupsState.ts",
+        "useEffectCount": 2,
+        "useCallbackCount": 9,
+        "useMemoCount": 4,
+        "total": 15
+      },
+      {
+        "path": "src/features/products/components/settings/validator-settings/useValidatorSettingsController.ts",
+        "useEffectCount": 0,
+        "useCallbackCount": 10,
+        "useMemoCount": 5,
+        "total": 15
+      },
+      {
+        "path": "src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsRunHistory.ts",
+        "useEffectCount": 7,
+        "useCallbackCount": 5,
+        "useMemoCount": 2,
+        "total": 14
+      },
+      {
+        "path": "src/features/ai/ai-paths/context/hooks/useCanvasInteractions.nodes.ts",
+        "useEffectCount": 2,
+        "useCallbackCount": 12,
+        "useMemoCount": 0,
+        "total": 14
+      },
+      {
+        "path": "src/features/ai/ai-paths/hooks/useDeadLetterRuns.ts",
+        "useEffectCount": 7,
+        "useCallbackCount": 6,
+        "useMemoCount": 1,
+        "total": 14
+      },
+      {
+        "path": "src/features/case-resolver/hooks/useCaseResolverState.prompt-exploder-actions.ts",
+        "useEffectCount": 5,
+        "useCallbackCount": 8,
+        "useMemoCount": 1,
+        "total": 14
+      },
+      {
+        "path": "src/features/foldertree/v2/hooks/useFolderTreeInstanceV2.ts",
+        "useEffectCount": 3,
+        "useCallbackCount": 5,
+        "useMemoCount": 6,
+        "total": 14
+      },
+      {
+        "path": "src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsCanvasInteractions.ts",
+        "useEffectCount": 4,
+        "useCallbackCount": 9,
+        "useMemoCount": 0,
+        "total": 13
+      },
+      {
+        "path": "src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsPersistence.ts",
+        "useEffectCount": 6,
+        "useCallbackCount": 7,
+        "useMemoCount": 0,
+        "total": 13
+      },
+      {
+        "path": "src/features/case-resolver/hooks/useAdminCaseResolverCasesState.ts",
+        "useEffectCount": 0,
+        "useCallbackCount": 0,
+        "useMemoCount": 13,
+        "total": 13
+      },
+      {
+        "path": "src/features/case-resolver/hooks/useAdminCaseResolverDocumentActions.ts",
+        "useEffectCount": 0,
+        "useCallbackCount": 13,
+        "useMemoCount": 0,
+        "total": 13
+      }
+    ]
+  },
+  "hotspots": {
+    "topFilesByLines": [
+      {
+        "path": "src/features/kangur/cms-builder/project.ts",
+        "lines": 2855
+      },
+      {
+        "path": "src/features/kangur/ui/components/KangurAiTutorWidget.tsx",
+        "lines": 1566
+      },
+      {
+        "path": "src/features/kangur/ui/design/primitives.tsx",
+        "lines": 1473
+      },
+      {
+        "path": "src/features/kangur/ui/components/KangurAiTutorWidget.test.tsx",
+        "lines": 1174
+      },
+      {
+        "path": "src/features/cms/components/page-builder/registry/block-definitions-content.ts",
+        "lines": 1138
+      },
+      {
+        "path": "src/features/ai/ai-paths/components/JobQueueContext.tsx",
+        "lines": 1068
+      },
+      {
+        "path": "src/features/ai/ai-paths/components/__tests__/canvas-connection-preview.test.tsx",
+        "lines": 1055
+      },
+      {
+        "path": "src/features/kangur/admin/KangurLessonDocumentEditor.tsx",
+        "lines": 1045
+      },
+      {
+        "path": "src/features/ai/ai-paths/components/__tests__/run-trace-utils.test.ts",
+        "lines": 1003
+      },
+      {
+        "path": "src/shared/contracts/image-studio.ts",
+        "lines": 1001
+      },
+      {
+        "path": "src/shared/contracts/ai-paths.ts",
+        "lines": 995
+      },
+      {
+        "path": "src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts",
+        "lines": 989
+      },
+      {
+        "path": "src/features/kangur/ui/components/ClockTrainingGame.tsx",
+        "lines": 969
+      },
+      {
+        "path": "src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts",
+        "lines": 969
+      },
+      {
+        "path": "src/features/kangur/ui/context/KangurAiTutorContext.test.tsx",
+        "lines": 967
+      },
+      {
+        "path": "src/features/cms/components/page-builder/registry/block-definitions-media.ts",
+        "lines": 957
+      },
+      {
+        "path": "src/shared/contracts/ai-paths-core/nodes.ts",
+        "lines": 953
+      },
+      {
+        "path": "src/features/ai/image-studio/components/VersionNodeMapCanvas.tsx",
+        "lines": 945
+      },
+      {
+        "path": "src/shared/lib/ai-paths/core/utils/__tests__/graph-compile.test.ts",
+        "lines": 929
+      },
+      {
+        "path": "src/app/api/image-studio/slots/[slotId]/autoscale/handler.test.ts",
+        "lines": 927
+      },
+      {
+        "path": "src/app/api/image-studio/slots/[slotId]/crop/handler.ts",
+        "lines": 923
+      },
+      {
+        "path": "src/features/cms/components/page-builder/PreviewBlock.tsx",
+        "lines": 920
+      },
+      {
+        "path": "src/features/notesapp/context/NoteFormContext.tsx",
+        "lines": 918
+      },
+      {
+        "path": "src/shared/lib/documentation/catalogs/validator-docs.ts",
+        "lines": 909
+      },
+      {
+        "path": "src/features/ai/ai-paths/components/run-history-panel.tsx",
+        "lines": 902
+      },
+      {
+        "path": "src/features/case-resolver-capture/__tests__/proposals.test.ts",
+        "lines": 901
+      },
+      {
+        "path": "src/shared/lib/ai-paths/core/runtime/engine-modules/engine-execution-node.ts",
+        "lines": 901
+      },
+      {
+        "path": "src/shared/lib/ai-paths/core/utils/data-contract-preflight.ts",
+        "lines": 897
+      },
+      {
+        "path": "src/shared/contracts/cms.ts",
+        "lines": 895
+      },
+      {
+        "path": "src/shared/lib/ai-brain/context/BrainContext.tsx",
+        "lines": 894
+      }
+    ],
+    "topPagesByLines": [
+      {
+        "path": "src/app/(frontend)/preview/foldertree-shell-runtime/page.tsx",
+        "lines": 189
+      },
+      {
+        "path": "src/app/(frontend)/kangur/login/page.tsx",
+        "lines": 166
+      },
+      {
+        "path": "src/app/(frontend)/[...slug]/page.tsx",
+        "lines": 67
+      },
+      {
+        "path": "src/app/(frontend)/preview/[id]/page.tsx",
+        "lines": 67
+      },
+      {
+        "path": "src/app/(admin)/admin/settings/recovery/page.tsx",
+        "lines": 50
+      },
+      {
+        "path": "src/app/(frontend)/page.tsx",
+        "lines": 48
+      },
+      {
+        "path": "src/app/(admin)/admin/agentcreator/teaching/page.tsx",
+        "lines": 46
+      },
+      {
+        "path": "src/app/(admin)/admin/agentcreator/page.tsx",
+        "lines": 43
+      },
+      {
+        "path": "src/app/(admin)/admin/page.tsx",
+        "lines": 40
+      },
+      {
+        "path": "src/app/(admin)/admin/settings/logging/page.tsx",
+        "lines": 32
+      },
+      {
+        "path": "src/app/(frontend)/products/[id]/page.tsx",
+        "lines": 15
+      },
+      {
+        "path": "src/app/(admin)/admin/chatbot/context/page.tsx",
+        "lines": 14
+      },
+      {
+        "path": "src/app/(admin)/admin/chatbot/page.tsx",
+        "lines": 14
+      },
+      {
+        "path": "src/app/(admin)/admin/integrations/marketplaces/page.tsx",
+        "lines": 14
+      },
+      {
+        "path": "src/app/(admin)/admin/integrations/page.tsx",
+        "lines": 14
+      },
+      {
+        "path": "src/app/(admin)/admin/notes/notebooks/page.tsx",
+        "lines": 14
+      },
+      {
+        "path": "src/app/(admin)/admin/settings/playwright/page.tsx",
+        "lines": 14
+      },
+      {
+        "path": "src/app/(admin)/admin/system/logs/page.tsx",
+        "lines": 14
+      },
+      {
+        "path": "src/app/auth/signin/page.tsx",
+        "lines": 14
+      },
+      {
+        "path": "src/app/(admin)/admin/cms/slugs/create/page.tsx",
+        "lines": 13
+      }
+    ]
+  },
+  "propDrilling": {
+    "candidateChains": 15,
+    "depthGte4Chains": 0,
+    "forwardingComponents": 35
+  }
+}

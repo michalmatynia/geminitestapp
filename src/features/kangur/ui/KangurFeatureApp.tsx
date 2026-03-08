@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import type { JSX } from 'react';
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { PageNotFound } from '@/features/kangur/ui/components/PageNotFound';
 import UserNotRegisteredError from '@/features/kangur/ui/components/UserNotRegisteredError';
@@ -16,24 +16,50 @@ import { KangurProgressSyncProvider } from '@/features/kangur/ui/context/KangurP
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KangurTutorAnchorProvider } from '@/features/kangur/ui/context/KangurTutorAnchorContext';
 
+type KangurRouteTransitionClass =
+  | 'kangur-route-content-enter-a'
+  | 'kangur-route-content-enter-b';
+
+const toggleRouteTransitionClass = (
+  current: KangurRouteTransitionClass
+): KangurRouteTransitionClass =>
+  current === 'kangur-route-content-enter-a'
+    ? 'kangur-route-content-enter-b'
+    : 'kangur-route-content-enter-a';
+
 const AuthenticatedApp = (): JSX.Element | null => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useKangurAuth();
-  const { pageKey, embedded } = useKangurRouting();
+  const { pageKey, embedded, requestedPath } = useKangurRouting();
   const authErrorType = authError?.type;
-  const prefersReducedMotion = useReducedMotion();
-  const routeContentMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
-  const routeTransitionKey = requestedPath || (pageKey ? `page:${pageKey}` : 'page:unknown');
+  const [routeTransitionClass, setRouteTransitionClass] =
+    useState<KangurRouteTransitionClass>('kangur-route-content-enter-a');
+  const previousRequestedPathRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (authErrorType === 'auth_required') {
-      navigateToLogin();
+    if (!requestedPath) {
+      return;
     }
-  }, [authErrorType, navigateToLogin]);
+
+    if (previousRequestedPathRef.current === null) {
+      previousRequestedPathRef.current = requestedPath;
+      return;
+    }
+
+    if (previousRequestedPathRef.current !== requestedPath) {
+      setRouteTransitionClass(toggleRouteTransitionClass);
+    }
+
+    previousRequestedPathRef.current = requestedPath;
+  }, [requestedPath]);
 
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
       <div
-        className={embedded ? 'absolute inset-0 z-20 bg-white/80 backdrop-blur-sm flex items-center justify-center' : 'fixed inset-0 flex items-center justify-center'}
+        className={
+          embedded
+            ? 'absolute inset-0 z-20 flex items-center justify-center bg-white/80 backdrop-blur-sm'
+            : 'absolute inset-0 z-20 flex items-center justify-center bg-white/35 backdrop-blur-[2px]'
+        }
       >
         <div className='w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin'></div>
       </div>
@@ -58,7 +84,14 @@ const AuthenticatedApp = (): JSX.Element | null => {
     return <PageNotFound />;
   }
 
-  return <KangurCmsRuntimeScreen pageKey={resolvedPageKey} fallback={<ResolvedPage />} />;
+  return (
+    <div
+      className={routeTransitionClass}
+      data-testid='kangur-route-content'
+    >
+      <KangurCmsRuntimeScreen pageKey={resolvedPageKey} fallback={<ResolvedPage />} />
+    </div>
+  );
 };
 
 export function KangurFeatureApp(): JSX.Element {

@@ -142,6 +142,7 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
         <FormSection title='Engine Policy' className='lg:col-span-2 p-6'>
           <div className='grid gap-4 md:grid-cols-2'>
             <ToggleRow
+              id='database-engine-require-explicit-service-routing'
               label='Strict Service Routing'
               description='Require explicit provider per service'
               checked={policy.requireExplicitServiceRouting}
@@ -151,6 +152,7 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
               className='bg-white/5 border-white/5'
             />
             <ToggleRow
+              id='database-engine-require-explicit-collection-routing'
               label='Strict Collection Routing'
               description='Require explicit provider per collection'
               checked={policy.requireExplicitCollectionRouting}
@@ -160,6 +162,7 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
               className='bg-white/5 border-white/5'
             />
             <ToggleRow
+              id='database-engine-allow-automatic-fallback'
               label='Auto Fallback'
               description='Switch providers on failure'
               checked={policy.allowAutomaticFallback}
@@ -169,6 +172,7 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
               className='bg-white/5 border-white/5'
             />
             <ToggleRow
+              id='database-engine-strict-provider-availability'
               label='Strict Availability'
               description='Throw on unconfigured envs'
               checked={policy.strictProviderAvailability}

@@ -132,6 +132,13 @@ vi.mock('../node-config/dialog/database/PlaceholderMatrixDialog', () => ({
 
 import { PromptNodeConfigSection } from '../node-config/dialog/PromptNodeConfigSection';
 
+const readPromptTemplateFromCall = (callIndex: number): string => {
+  const updateArg = mockState.updateSelectedNodeConfig.mock.calls[callIndex]?.[0] as
+    | { prompt?: { template?: string } }
+    | undefined;
+  return updateArg?.prompt?.template ?? '';
+};
+
 describe('PromptNodeConfigSection', () => {
   beforeEach(() => {
     mockState.updateSelectedNodeConfig.mockReset();
@@ -144,13 +151,9 @@ describe('PromptNodeConfigSection', () => {
     const bundleKeyButton = screen.getByRole('button', { name: 'SKU' });
 
     fireEvent.click(directInputButton);
-    expect(
-      mockState.updateSelectedNodeConfig.mock.calls[0]?.[0]?.prompt?.template ?? ''
-    ).toContain('{{title}}');
+    expect(readPromptTemplateFromCall(0)).toContain('{{title}}');
 
     fireEvent.click(bundleKeyButton);
-    expect(
-      mockState.updateSelectedNodeConfig.mock.calls[1]?.[0]?.prompt?.template ?? ''
-    ).toContain('{{sku}}');
+    expect(readPromptTemplateFromCall(1)).toContain('{{sku}}');
   });
 });

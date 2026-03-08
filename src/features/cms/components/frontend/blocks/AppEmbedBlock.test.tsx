@@ -112,6 +112,22 @@ describe('AppEmbedBlock', () => {
     );
   });
 
+  it('supports Kangur tests as the embedded entry page when no query override is active', () => {
+    renderAppEmbedBlock({
+      appId: 'kangur',
+      title: 'Kangur Tests',
+      entryPage: 'Tests',
+      basePath: '',
+      height: 640,
+    });
+
+    expect(screen.getByTestId('kangur-feature-page')).toHaveAttribute('data-slug', '["tests"]');
+    expect(screen.getByTestId('kangur-feature-page')).toHaveAttribute(
+      'data-base-path',
+      buildKangurEmbeddedBasePath('/home?preview=1', 'app-embed-a')
+    );
+  });
+
   it('preserves other embedded Kangur instances when deriving the current host page', () => {
     useSearchParamsMock.mockReturnValue(
       new URLSearchParams(
@@ -158,6 +174,79 @@ describe('AppEmbedBlock', () => {
     expect(mount).toHaveAttribute(
       'data-base-path',
       buildKangurEmbeddedBasePath('/home?preview=1', 'app-embed-a')
+    );
+  });
+
+  it('keeps the same Kangur embed mount while query-driven page changes update the slug', () => {
+    useSearchParamsMock.mockReturnValue(
+      new URLSearchParams(
+        'preview=1&kangur-app-embed-a=lessons&kangur-app-embed-b=parent-dashboard'
+      )
+    );
+
+    const { rerender } = renderAppEmbedBlock(
+      {
+        appId: 'kangur',
+        title: 'Kangur Home',
+        entryPage: 'Lessons',
+        basePath: '',
+        height: 640,
+      },
+      'app-embed-a'
+    );
+
+    const mount = screen.getByTestId('kangur-feature-page');
+    mount.setAttribute('data-e2e-shell-marker', 'persist');
+
+    useSearchParamsMock.mockReturnValue(
+      new URLSearchParams(
+        'preview=1&kangur-app-embed-a=tests&kangur-app-embed-b=parent-dashboard'
+      )
+    );
+
+    rerender(
+      <BlockRenderContext.Provider
+        value={{
+          block: {
+            id: 'app-embed-a',
+            type: 'AppEmbed',
+            settings: {
+              appId: 'kangur',
+              title: 'Kangur Home',
+              entryPage: 'Lessons',
+              basePath: '',
+              height: 640,
+            },
+          },
+          mediaStyles: null,
+          stretch: false,
+        }}
+      >
+        <BlockSettingsContext.Provider
+          value={{
+            appId: 'kangur',
+            title: 'Kangur Home',
+            entryPage: 'Lessons',
+            basePath: '',
+            height: 640,
+          }}
+        >
+          <AppEmbedBlock />
+        </BlockSettingsContext.Provider>
+      </BlockRenderContext.Provider>
+    );
+
+    expect(screen.getByTestId('kangur-feature-page')).toHaveAttribute(
+      'data-e2e-shell-marker',
+      'persist'
+    );
+    expect(screen.getByTestId('kangur-feature-page')).toHaveAttribute('data-slug', '["tests"]');
+    expect(screen.getByTestId('kangur-feature-page')).toHaveAttribute(
+      'data-base-path',
+      buildKangurEmbeddedBasePath(
+        '/home?preview=1&kangur-app-embed-b=parent-dashboard',
+        'app-embed-a'
+      )
     );
   });
 });

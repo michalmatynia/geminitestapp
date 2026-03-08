@@ -15,6 +15,7 @@ import {
 } from '@/features/kangur/observability/client';
 import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KangurFeatureApp } from '@/features/kangur/ui/KangurFeatureApp';
+import { cn } from '@/shared/utils';
 
 export function KangurFeaturePage({
   slug = [],
@@ -41,13 +42,21 @@ export function KangurFeaturePage({
   }, [pageKey, requestedPath]);
 
   return (
-    <KangurRoutingProvider
-      pageKey={pageKey}
-      requestedPath={requestedPath}
-      basePath={normalizedBasePath}
-      embedded={embedded}
+    <div
+      className={cn(
+        'relative w-full kangur-premium-bg text-slate-800',
+        embedded ? 'min-h-full' : 'min-h-screen'
+      )}
+      data-testid='kangur-feature-page-shell'
     >
-      <KangurFeatureApp />
-    </KangurRoutingProvider>
+      <KangurRoutingProvider
+        pageKey={pageKey}
+        requestedPath={requestedPath}
+        basePath={normalizedBasePath}
+        embedded={embedded}
+      >
+        <KangurFeatureApp />
+      </KangurRoutingProvider>
+    </div>
   );
 }

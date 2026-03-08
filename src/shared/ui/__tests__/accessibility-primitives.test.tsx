@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { Drawer } from '@/shared/ui/Drawer';
 import { LoadingState } from '@/shared/ui/LoadingState';
@@ -160,12 +161,33 @@ describe('shared accessibility primitives', () => {
     expect(screen.getByRole('button', { name: 'Upload files' })).toBeInTheDocument();
   });
 
+  it('renders clickable Badge instances as native buttons', () => {
+    render(<Badge onClick={vi.fn()}>Apply preset</Badge>);
+
+    const trigger = screen.getByRole('button', { name: 'Apply preset' });
+    expect(trigger.tagName).toBe('BUTTON');
+    expect(trigger).not.toHaveAttribute('tabindex');
+  });
+
   it('describes FileUploadTrigger drag and paste affordances to assistive tech', () => {
     render(<FileUploadTrigger onFilesSelected={vi.fn()}>Upload files</FileUploadTrigger>);
 
     expect(screen.getByRole('button', { name: 'Upload files' })).toHaveAccessibleDescription(
       'Choose, drag and drop files, or paste files.'
     );
+  });
+
+  it('keeps child button semantics when FileUploadTrigger uses asChild preserveChildSemantics', () => {
+    render(
+      <FileUploadTrigger asChild preserveChildSemantics onFilesSelected={vi.fn()}>
+        <button type='button'>Upload files</button>
+      </FileUploadTrigger>
+    );
+
+    const trigger = screen.getByRole('button', { name: 'Upload files' });
+    expect(trigger).toHaveAccessibleDescription('Choose, drag and drop files, or paste files.');
+    expect(trigger).not.toHaveAttribute('tabindex');
+    expect(trigger).not.toHaveAttribute('role');
   });
 
   it('uses the placeholder as a fallback accessible name for SelectSimple triggers', () => {

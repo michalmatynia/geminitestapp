@@ -37,9 +37,15 @@ export type MockKangurTutorEnvironment = {
   hintResponse: string;
 };
 
+type MockKangurTutorEnvironmentOptions = {
+  uiMode?: 'anchored' | 'static';
+  allowCrossPagePersistence?: boolean;
+};
+
 const NOW_ISO = '2026-03-07T12:00:00.000Z';
 const TUTOR_USAGE_DATE = '2026-03-07';
 
+const KANGUR_AI_TUTOR_APP_SETTINGS_KEY = 'kangur_ai_tutor_app_settings_v1';
 const KANGUR_AI_TUTOR_SETTINGS_KEY = 'kangur_ai_tutor_settings';
 const KANGUR_LESSONS_SETTING_KEY = 'kangur_lessons_v1';
 const KANGUR_LESSON_DOCUMENTS_SETTING_KEY = 'kangur_lesson_documents_v1';
@@ -80,8 +86,13 @@ const fulfillJson = async (route: Route, body: unknown, status = 200): Promise<v
 };
 
 export async function mockKangurTutorEnvironment(
-  page: Page
+  page: Page,
+  options: MockKangurTutorEnvironmentOptions = {}
 ): Promise<MockKangurTutorEnvironment> {
+  const {
+    uiMode = 'anchored',
+    allowCrossPagePersistence = true,
+  } = options;
   const learner = {
     id: 'learner-ada',
     ownerUserId: 'parent-1',
@@ -118,15 +129,22 @@ export async function mockKangurTutorEnvironment(
       value: JSON.stringify({
         [learner.id]: {
           enabled: true,
-          teachingAgentId: null,
-          agentPersonaId: null,
-          playwrightPersonaId: null,
+          uiMode,
+          allowCrossPagePersistence,
           allowLessons: true,
           testAccessMode: 'guided',
           showSources: false,
           allowSelectedTextSupport: true,
-          dailyMessageLimit: null,
         },
+      }),
+    },
+    {
+      key: KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
+      value: JSON.stringify({
+        teachingAgentId: null,
+        agentPersonaId: null,
+        motionPresetId: null,
+        dailyMessageLimit: null,
       }),
     },
     {

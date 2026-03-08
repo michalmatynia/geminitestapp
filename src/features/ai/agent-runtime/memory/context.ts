@@ -3,6 +3,7 @@ import { validateAndAddAgentLongTermMemory } from '@/features/ai/agent-runtime/m
 export async function addProblemSolutionMemory({
   memoryKey,
   runId,
+  personaId,
   problem,
   countermeasure,
   context,
@@ -13,6 +14,7 @@ export async function addProblemSolutionMemory({
 }: {
   memoryKey: string;
   runId: string;
+  personaId?: string | null;
   problem: string;
   countermeasure: string;
   context?: Record<string, unknown>;
@@ -26,6 +28,7 @@ export async function addProblemSolutionMemory({
   await validateAndAddAgentLongTermMemory({
     memoryKey,
     runId,
+    personaId: personaId ?? null,
     content: summary,
     summary,
     tags: ['problem-solution', ...tags],

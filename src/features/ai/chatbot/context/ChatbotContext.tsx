@@ -74,6 +74,8 @@ export function ChatbotProvider({ children }: { children: ReactNode }): React.JS
     () => ({
       model: logic.model,
       setModel: logic.setModel,
+      personaId: logic.personaId,
+      setPersonaId: logic.setPersonaId,
       webSearchEnabled: logic.webSearchEnabled,
       setWebSearchEnabled: logic.setWebSearchEnabled,
       useGlobalContext: logic.useGlobalContext,
@@ -98,6 +100,8 @@ export function ChatbotProvider({ children }: { children: ReactNode }): React.JS
     [
       logic.model,
       logic.setModel,
+      logic.personaId,
+      logic.setPersonaId,
       logic.webSearchEnabled,
       logic.setWebSearchEnabled,
       logic.useGlobalContext,

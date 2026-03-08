@@ -169,19 +169,6 @@ export function ColumnNodeItem(props: ColumnNodeItemProps): React.ReactNode {
         <TreeContextMenu items={columnMenuItems}>
           <TreeRow
             tone='none'
-            role='button'
-            tabIndex={0}
-            onClick={(e: React.MouseEvent) => {
-              e.stopPropagation();
-              selectNode(column.id);
-            }}
-            onKeyDown={(e: React.KeyboardEvent) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                e.stopPropagation();
-                selectNode(column.id);
-              }
-            }}
             onDragOver={handleColumnDragOver}
             onDragLeave={(e: React.DragEvent) => {
               if (e.currentTarget.contains(e.relatedTarget as Node)) return;
@@ -204,8 +191,19 @@ export function ColumnNodeItem(props: ColumnNodeItemProps): React.ReactNode {
               iconClassName='size-3'
               placeholderClassName='block size-3 shrink-0'
             />
-            <Columns className='size-3.5 shrink-0' />
-            <span className='flex-1 truncate text-left'>{columnLabel}</span>
+            <button
+              type='button'
+              onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                e.stopPropagation();
+                selectNode(column.id);
+              }}
+              aria-pressed={isSelected}
+              aria-label={`Select ${columnLabel}`}
+              className='flex min-w-0 flex-1 items-center gap-1.5 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
+            >
+              <Columns className='size-3.5 shrink-0' />
+              <span className='min-w-0 flex-1 truncate text-left'>{columnLabel}</span>
+            </button>
             <TreeActionSlot show='always' align='inline'>
               <TreeActionButton
                 tone='danger'

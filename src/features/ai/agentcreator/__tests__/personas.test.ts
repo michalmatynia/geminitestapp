@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { normalizeAgentPersonas } from '../utils/personas';
+import {
+  diffRemovedAgentPersonaAvatarFileIds,
+  normalizeAgentPersonas,
+} from '../utils/personas';
 
 describe('normalizeAgentPersonas', () => {
   it('rejects unsupported capability model snapshot fields', () => {
@@ -77,6 +80,12 @@ describe('normalizeAgentPersonas', () => {
     expect(normalized).toHaveLength(1);
     expect(normalized[0]?.settings).toEqual({
       customInstructions: 'Stay concise',
+      memory: {
+        enabled: true,
+        includeChatHistory: true,
+        useMoodSignals: true,
+        defaultSearchLimit: 20,
+      },
     });
   });
 
@@ -105,6 +114,30 @@ describe('normalizeAgentPersonas', () => {
     expect(normalized[0]?.moods[1]?.label).toBe('Cheer On');
   });
 
+  it('preserves uploaded avatar fields for mood-based personas', () => {
+    const normalized = normalizeAgentPersonas([
+      {
+        id: 'persona-file-avatar',
+        name: 'File Avatar Persona',
+        moods: [
+          {
+            id: 'neutral',
+            label: 'Neutral',
+            svgContent: '',
+            avatarImageUrl: '/uploads/agentcreator/personas/file-avatar.png',
+            avatarImageFileId: 'file-avatar-1',
+          },
+        ],
+      },
+    ]);
+
+    expect(normalized[0]?.moods[0]).toMatchObject({
+      id: 'neutral',
+      avatarImageUrl: '/uploads/agentcreator/personas/file-avatar.png',
+      avatarImageFileId: 'file-avatar-1',
+    });
+  });
+
   it('rejects duplicate persona mood ids', () => {
     expect(() =>
       normalizeAgentPersonas([
@@ -118,5 +151,38 @@ describe('normalizeAgentPersonas', () => {
         },
       ])
     ).toThrowError(/duplicate agent persona mood id "neutral"/i);
+  });
+
+  it('finds avatar files removed between persona revisions', () => {
+    expect(
+      diffRemovedAgentPersonaAvatarFileIds(
+        {
+          moods: [
+            {
+              id: 'neutral',
+              label: 'Neutral',
+              svgContent: '',
+              avatarImageFileId: 'file-1',
+            },
+            {
+              id: 'happy',
+              label: 'Happy',
+              svgContent: '',
+              avatarImageFileId: 'file-2',
+            },
+          ],
+        },
+        {
+          moods: [
+            {
+              id: 'neutral',
+              label: 'Neutral',
+              svgContent: '',
+              avatarImageFileId: 'file-1',
+            },
+          ],
+        }
+      )
+    ).toEqual(['file-2']);
   });
 });

@@ -252,7 +252,7 @@ describe('LearnerProfile page', () => {
     );
     expect(screen.getByRole('link', { name: /zagraj/i })).toHaveClass(
       'kangur-cta-pill',
-      'play-cta'
+      'primary-cta'
     );
     expect(screen.getByText('➕ Dodawanie')).toBeInTheDocument();
     expect(screen.getByText('✖️ Mnozenie')).toBeInTheDocument();

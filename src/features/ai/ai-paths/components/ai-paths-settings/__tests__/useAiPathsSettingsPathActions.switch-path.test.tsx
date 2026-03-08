@@ -1,6 +1,5 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import type { Dispatch, SetStateAction } from 'react';
 
 import type { PathConfig, PathMeta } from '@/shared/lib/ai-paths';
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths';
@@ -94,19 +93,18 @@ vi.mock('@/features/ai/ai-paths/context/PersistenceContext', () => ({
 const mockedFetchAiPathsSettingsByKeysCached = vi.mocked(fetchAiPathsSettingsByKeysCached);
 const mockedFetchAiPathsSettingsCached = vi.mocked(fetchAiPathsSettingsCached);
 
-const createDispatchMock = <T,>() => {
-  const fn = vi.fn<(value: SetStateAction<T>) => void>();
-  return {
-    dispatch: fn as Dispatch<SetStateAction<T>>,
-    mock: fn,
-  };
-};
+const buildPathMeta = (config: Pick<PathConfig, 'id' | 'name'>): PathMeta => ({
+  id: config.id,
+  name: config.name,
+  createdAt: '2026-03-01T00:00:00.000Z',
+  updatedAt: '2026-03-01T00:00:00.000Z',
+});
 
 const buildInput = (): {
   input: PathActionsInput;
   mocks: {
     setActivePathId: ReturnType<typeof vi.fn>;
-    setIsPathSwitching: ReturnType<typeof createDispatchMock<boolean>>['mock'];
+    setIsPathSwitching: ReturnType<typeof vi.fn>;
     setPathConfigs: ReturnType<typeof vi.fn>;
     setPaths: ReturnType<typeof vi.fn>;
     toast: ReturnType<typeof vi.fn>;
@@ -115,17 +113,20 @@ const buildInput = (): {
 } => {
   const oldPathId = 'path_old';
   const oldConfig = createDefaultPathConfig(oldPathId);
-  const oldPath: PathMeta = {
-    id: oldPathId,
-    name: oldConfig.name,
-    createdAt: oldConfig.createdAt,
-    updatedAt: oldConfig.updatedAt,
-  };
+  const oldPath = buildPathMeta(oldConfig);
 
-  const toast = vi.fn();
-  const persistPathSettings = vi.fn().mockResolvedValue(undefined);
-  const persistSettingsBulk = vi.fn().mockResolvedValue(undefined);
-  const persistActivePathPreference = vi.fn().mockResolvedValue(undefined);
+  const toast = vi.fn<PathActionsInput['toast']>();
+  const persistPathSettings = vi.fn<PathActionsInput['persistPathSettings']>().mockResolvedValue(
+    undefined
+  );
+  const persistSettingsBulk = vi.fn<PathActionsInput['persistSettingsBulk']>().mockResolvedValue(
+    undefined
+  );
+  const persistActivePathPreference = vi
+    .fn<PathActionsInput['persistActivePathPreference']>()
+    .mockResolvedValue(undefined);
+  const reportAiPathsError = vi.fn<PathActionsInput['reportAiPathsError']>();
+  const confirm = vi.fn<PathActionsInput['confirm']>();
 
   const input: PathActionsInput = {
     activePathId: oldPathId,
@@ -136,8 +137,8 @@ const buildInput = (): {
     persistPathSettings,
     persistSettingsBulk,
     persistActivePathPreference,
-    reportAiPathsError: vi.fn(),
-    confirm: vi.fn(),
+    reportAiPathsError,
+    confirm,
     toast,
   };
 

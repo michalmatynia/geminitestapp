@@ -15,8 +15,10 @@ const { useJobQueueStateMock, useJobQueueActionsMock } = vi.hoisted(() => ({
 }));
 
 vi.mock('@/features/ai/ai-paths/components/JobQueueContext', () => ({
-  useJobQueueState: (...args: unknown[]) => useJobQueueStateMock(...args),
-  useJobQueueActions: (...args: unknown[]) => useJobQueueActionsMock(...args),
+  useJobQueueState:
+    useJobQueueStateMock as typeof import('@/features/ai/ai-paths/components/JobQueueContext').useJobQueueState,
+  useJobQueueActions:
+    useJobQueueActionsMock as typeof import('@/features/ai/ai-paths/components/JobQueueContext').useJobQueueActions,
 }));
 
 import { JobQueueRunCard } from '../job-queue-run-card';

@@ -1,4 +1,7 @@
+import { NextRequest } from 'next/server';
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
+
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const {
   requireAiPathsAccessOrInternalMock,
@@ -42,6 +45,35 @@ vi.mock('@/shared/lib/db/prisma', () => ({
 
 import { postAiPathsDbActionHandler } from '@/app/api/ai-paths/db-action/handler';
 
+const createRequestContext = (): ApiHandlerContext => ({
+  requestId: 'request-1',
+  traceId: 'trace-request-1',
+  correlationId: 'corr-request-1',
+  startTime: Date.now(),
+  getElapsedMs: () => 1,
+});
+
+const createDbActionRequest = (payload: unknown): NextRequest =>
+  new NextRequest('http://localhost/api/ai-paths/db-action', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+const invokeDbActionHandler = async (
+  payload: unknown,
+  context: ApiHandlerContext = createRequestContext()
+): Promise<Response> => postAiPathsDbActionHandler(createDbActionRequest(payload), context);
+
+const parseResponseBody = async (response: Response): Promise<Record<string, unknown>> => {
+  const bodyText = await response.text();
+  const parsed: unknown = bodyText ? JSON.parse(bodyText) : {};
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error('Expected a JSON object response body.');
+  }
+  return parsed;
+};
+
 describe('AI Paths DB provider fallback', () => {
   const originalDatabaseUrl = process.env['DATABASE_URL'];
   const originalMongoUrl = process.env['MONGODB_URI'];
@@ -70,7 +102,7 @@ describe('AI Paths DB provider fallback', () => {
     parseJsonBodyMock.mockImplementation(async (req: Request) => {
       try {
         const text = await req.text();
-        const data = text ? JSON.parse(text) : {};
+        const data: unknown = text ? JSON.parse(text) : {};
         return { ok: true, data };
       } catch {
         return {
@@ -108,15 +140,8 @@ describe('AI Paths DB provider fallback', () => {
     delete process.env['DATABASE_URL'];
     process.env['MONGODB_URI'] = 'mongodb://localhost/test';
 
-    const response = await (postAiPathsDbActionHandler as any)(
-      new Request('http://localhost/api/ai-paths/db-action', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(payload),
-      }),
-      {}
-    );
-    const body = (await response.json()) as Record<string, unknown>;
+    const response = await invokeDbActionHandler(payload);
+    const body = await parseResponseBody(response);
 
     expect(Object.prototype.hasOwnProperty.call(body, 'provider')).toBe(false);
     expect(body['resolvedProvider']).toBe('mongodb');
@@ -129,11 +154,21 @@ describe('AI Paths DB provider fallback', () => {
         resolvedProvider: 'mongodb',
       })
     );
-    expect(updateOneMock).toHaveBeenCalledWith(
-      { id: 'product-1' },
-      { $set: { name_en: 'Updated name', updatedAt: expect.any(Date) } },
-      expect.any(Object)
-    );
+    const updateInvocation = updateOneMock.mock.calls[0];
+    expect(updateInvocation).toBeDefined();
+    if (!updateInvocation) {
+      throw new Error('Expected MongoDB updateOne to be called.');
+    }
+    expect(updateInvocation[0]).toEqual({ id: 'product-1' });
+    expect(updateInvocation[1]).toMatchObject({
+      $set: {
+        name_en: 'Updated name',
+      },
+    });
+    expect(
+      (updateInvocation[1] as { $set?: { updatedAt?: unknown } }).$set?.updatedAt
+    ).toBeInstanceOf(Date);
+    expect(updateInvocation[2]).toEqual(expect.any(Object));
   });
 
   it('rejects unmapped collection names that are not allowlisted', async () => {
@@ -148,14 +183,7 @@ describe('AI Paths DB provider fallback', () => {
     isCollectionAllowedMock.mockImplementation((value: string) => value === 'products');
 
     await expect(
-      postAiPathsDbActionHandler(
-        new Request('http://localhost/api/ai-paths/db-action', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify(payload),
-        }) as any,
-        {} as any
-      )
+      invokeDbActionHandler(payload)
     ).rejects.toThrow('Collection not allowlisted');
 
     expect(isCollectionAllowedMock).toHaveBeenCalledWith('Product');
@@ -188,15 +216,8 @@ describe('AI Paths DB provider fallback', () => {
 
     process.env['MONGODB_URI'] = 'mongodb://localhost/test';
 
-    const response = await (postAiPathsDbActionHandler as any)(
-      new Request('http://localhost/api/ai-paths/db-action', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(payload),
-      }),
-      {}
-    );
-    const body = (await response.json()) as Record<string, unknown>;
+    const response = await invokeDbActionHandler(payload);
+    const body = await parseResponseBody(response);
 
     expect(isCollectionAllowedMock).toHaveBeenCalledWith('products');
     expect(resolveCollectionProviderForRequestMock).toHaveBeenCalledWith('products', 'auto');
@@ -226,15 +247,8 @@ describe('AI Paths DB provider fallback', () => {
     delete process.env['DATABASE_URL'];
     process.env['MONGODB_URI'] = 'mongodb://localhost/test';
 
-    const response = await (postAiPathsDbActionHandler as any)(
-      new Request('http://localhost/api/ai-paths/db-action', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(payload),
-      }),
-      {}
-    );
-    const body = (await response.json()) as Record<string, unknown>;
+    const response = await invokeDbActionHandler(payload);
+    const body = await parseResponseBody(response);
 
     expect(Object.prototype.hasOwnProperty.call(body, 'provider')).toBe(false);
     expect(body['resolvedProvider']).toBe('mongodb');
@@ -279,25 +293,28 @@ describe('AI Paths DB provider fallback', () => {
     process.env['DATABASE_URL'] = 'postgresql://localhost/test';
     process.env['MONGODB_URI'] = 'mongodb://localhost/test';
 
-    const response = await (postAiPathsDbActionHandler as any)(
-      new Request('http://localhost/api/ai-paths/db-action', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(payload),
-      }),
-      {}
-    );
-    const body = (await response.json()) as Record<string, unknown>;
+    const response = await invokeDbActionHandler(payload);
+    const body = await parseResponseBody(response);
 
     expect(prismaUpdateMock).toHaveBeenCalledWith({
       where: { id: 'product-1' },
       data: { name_en: 'Updated name' },
     });
-    expect(updateOneMock).toHaveBeenCalledWith(
-      { id: 'product-1' },
-      { $set: { name_en: 'Updated name', updatedAt: expect.any(Date) } },
-      { upsert: false }
-    );
+    const updateInvocation = updateOneMock.mock.calls[0];
+    expect(updateInvocation).toBeDefined();
+    if (!updateInvocation) {
+      throw new Error('Expected MongoDB updateOne to be called.');
+    }
+    expect(updateInvocation[0]).toEqual({ id: 'product-1' });
+    expect(updateInvocation[1]).toMatchObject({
+      $set: {
+        name_en: 'Updated name',
+      },
+    });
+    expect(
+      (updateInvocation[1] as { $set?: { updatedAt?: unknown } }).$set?.updatedAt
+    ).toBeInstanceOf(Date);
+    expect(updateInvocation[2]).toEqual({ upsert: false });
     expect(Object.prototype.hasOwnProperty.call(body, 'provider')).toBe(false);
     expect(body['resolvedProvider']).toBe('mongodb');
     expect(body['fallback']).toEqual(
@@ -333,19 +350,24 @@ describe('AI Paths DB provider fallback', () => {
 
     process.env['MONGODB_URI'] = 'mongodb://localhost/test';
 
-    const response = await (postAiPathsDbActionHandler as any)(
-      new Request('http://localhost/api/ai-paths/db-action', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(payload),
-      }),
-      {}
-    );
-    const body = (await response.json()) as Record<string, unknown>;
+    const response = await invokeDbActionHandler(payload);
+    const body = await parseResponseBody(response);
 
-    expect(findOneAndUpdateMock).toHaveBeenCalledWith(
-      { id: 'product-1' },
-      { $set: { name_en: 'Updated name', updatedAt: expect.any(Date) } },
+    const findOneAndUpdateInvocation = findOneAndUpdateMock.mock.calls[0];
+    expect(findOneAndUpdateInvocation).toBeDefined();
+    if (!findOneAndUpdateInvocation) {
+      throw new Error('Expected MongoDB findOneAndUpdate to be called.');
+    }
+    expect(findOneAndUpdateInvocation[0]).toEqual({ id: 'product-1' });
+    expect(findOneAndUpdateInvocation[1]).toMatchObject({
+      $set: {
+        name_en: 'Updated name',
+      },
+    });
+    expect(
+      (findOneAndUpdateInvocation[1] as { $set?: { updatedAt?: unknown } }).$set?.updatedAt
+    ).toBeInstanceOf(Date);
+    expect(findOneAndUpdateInvocation[2]).toEqual(
       expect.objectContaining({
         returnDocument: 'after',
       })

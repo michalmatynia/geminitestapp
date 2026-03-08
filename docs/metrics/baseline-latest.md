@@ -1,23 +1,23 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-07T10:03:01.659Z
+Generated at: 2026-03-08T04:48:38.840Z
 
 ## Snapshot
 
-- Source files: 4818
-- Source lines: 782115
-- use client files: 1392
-- Files >= 1000 LOC: 5
-- Files >= 1500 LOC: 1
+- Source files: 4943
+- Source lines: 812951
+- use client files: 1413
+- Files >= 1000 LOC: 10
+- Files >= 1500 LOC: 2
 - Largest file: `src/features/kangur/cms-builder/project.ts` (2855 LOC)
-- API routes: 324
+- API routes: 329
 - API delegated server routes: 4
 - API routes without apiHandler/delegation: 9
-- API explicit cache policy coverage: 324/324 (100.0%)
-- Cross-feature dependency pairs: 72
+- API explicit cache policy coverage: 329/329 (100.0%)
+- Cross-feature dependency pairs: 74
 - Shared -> features imports: 11
 - setInterval occurrences: 22
-- Prop-drilling chains (depth >= 3): 4
+- Prop-drilling chains (depth >= 3): 15
 - Prop-drilling chains (depth >= 4): 0
 
 ## Top API Hotspots (by LOC)
@@ -65,22 +65,22 @@ Generated at: 2026-03-07T10:03:01.659Z
 | File | LOC |
 | --- | ---: |
 | `src/features/kangur/cms-builder/project.ts` | 2855 |
-| `src/features/kangur/ui/design/primitives.tsx` | 1170 |
+| `src/features/kangur/ui/components/KangurAiTutorWidget.tsx` | 1566 |
+| `src/features/kangur/ui/design/primitives.tsx` | 1473 |
+| `src/features/kangur/ui/components/KangurAiTutorWidget.test.tsx` | 1174 |
 | `src/features/cms/components/page-builder/registry/block-definitions-content.ts` | 1138 |
+| `src/features/ai/ai-paths/components/JobQueueContext.tsx` | 1068 |
 | `src/features/ai/ai-paths/components/__tests__/canvas-connection-preview.test.tsx` | 1055 |
+| `src/features/kangur/admin/KangurLessonDocumentEditor.tsx` | 1045 |
 | `src/features/ai/ai-paths/components/__tests__/run-trace-utils.test.ts` | 1003 |
-| `src/shared/contracts/ai-paths.ts` | 993 |
+| `src/shared/contracts/image-studio.ts` | 1001 |
+| `src/shared/contracts/ai-paths.ts` | 995 |
 | `src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts` | 989 |
-| `src/shared/contracts/image-studio.ts` | 983 |
+| `src/features/kangur/ui/components/ClockTrainingGame.tsx` | 969 |
 | `src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts` | 969 |
-| `src/features/ai/ai-paths/components/JobQueueContext.tsx` | 968 |
-| `src/features/kangur/admin/KangurLessonDocumentEditor.tsx` | 962 |
+| `src/features/kangur/ui/context/KangurAiTutorContext.test.tsx` | 967 |
 | `src/features/cms/components/page-builder/registry/block-definitions-media.ts` | 957 |
-| `src/features/kangur/ui/components/ClockTrainingGame.tsx` | 957 |
 | `src/shared/contracts/ai-paths-core/nodes.ts` | 953 |
+| `src/features/ai/image-studio/components/VersionNodeMapCanvas.tsx` | 945 |
 | `src/shared/lib/ai-paths/core/utils/__tests__/graph-compile.test.ts` | 929 |
 | `src/app/api/image-studio/slots/[slotId]/autoscale/handler.test.ts` | 927 |
-| `src/app/api/image-studio/slots/[slotId]/crop/handler.ts` | 923 |
-| `src/features/notesapp/context/NoteFormContext.tsx` | 918 |
-| `src/features/cms/components/page-builder/PreviewBlock.tsx` | 912 |
-| `src/shared/lib/documentation/catalogs/validator-docs.ts` | 909 |

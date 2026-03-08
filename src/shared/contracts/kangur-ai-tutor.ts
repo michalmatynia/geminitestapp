@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { agentPersonaMoodIdSchema } from './agents';
 import { agentTeachingChatSourceSchema } from './agent-teaching';
 
 const nonEmptyTrimmedString = z.string().trim().min(1);
@@ -57,6 +58,7 @@ export const kangurAiTutorConversationContextSchema = z.object({
   description: z.string().trim().max(600).optional(),
   masterySummary: z.string().trim().max(240).optional(),
   assignmentSummary: z.string().trim().max(500).optional(),
+  questionId: z.string().trim().max(120).optional(),
   selectedText: z.string().trim().max(1_000).optional(),
   currentQuestion: z.string().trim().max(2_000).optional(),
   questionProgressLabel: z.string().trim().max(60).optional(),
@@ -99,6 +101,7 @@ export const kangurAiTutorChatResponseSchema = z.object({
   message: z.string(),
   sources: z.array(agentTeachingChatSourceSchema).default([]),
   followUpActions: z.array(kangurAiTutorFollowUpActionSchema).default([]),
+  suggestedMoodId: agentPersonaMoodIdSchema.nullable().optional(),
   usage: kangurAiTutorUsageSummarySchema.optional(),
 });
 export type KangurAiTutorChatResponse = z.infer<typeof kangurAiTutorChatResponseSchema>;

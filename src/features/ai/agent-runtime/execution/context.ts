@@ -22,6 +22,7 @@ type AgentRunContextInput = {
   prompt: string;
   model: string | null;
   memoryKey: string | null;
+  personaId?: string | null;
   planState: unknown;
   agentBrowser?: string | null;
   runHeadless?: boolean | null;
@@ -38,24 +39,36 @@ export async function prepareRunContext(run: AgentRunContextInput): Promise<Agen
   }
   await addAgentMemory({
     runId: run.id,
+    personaId: run.personaId ?? null,
     scope: 'session',
     content: run.prompt,
     metadata: { source: 'user' },
   });
 
-  const memory = await listAgentMemory({ runId: run.id, scope: 'session' });
+  const memory = await listAgentMemory({
+    runId: run.id,
+    personaId: run.personaId ?? null,
+    scope: 'session',
+  });
   const sessionContext = memory.map((item: { content: string }) => item.content).slice(-8);
-  const longTermItems = memoryKey ? await listAgentLongTermMemory({ memoryKey, limit: 4 }) : [];
-  const longTermProblemItems = memoryKey
+  const sharedMemoryLookup = run.personaId?.trim()
+    ? { personaId: run.personaId.trim() }
+    : memoryKey
+      ? { memoryKey }
+      : null;
+  const longTermItems = sharedMemoryLookup
+    ? await listAgentLongTermMemory({ ...sharedMemoryLookup, limit: 4 })
+    : [];
+  const longTermProblemItems = sharedMemoryLookup
     ? await listAgentLongTermMemory({
-      memoryKey,
+      ...sharedMemoryLookup,
       limit: 4,
       tags: ['problem-solution'],
     })
     : [];
-  const longTermImprovementItems = memoryKey
+  const longTermImprovementItems = sharedMemoryLookup
     ? await listAgentLongTermMemory({
-      memoryKey,
+      ...sharedMemoryLookup,
       limit: 3,
       tags: ['self-improvement'],
     })

@@ -9,6 +9,7 @@ export const DEFAULT_CHATBOT_SETTINGS: ChatbotSettingsPayload = {
   temperature: 0.7,
   maxTokens: 2048,
   systemPrompt: '',
+  personaId: null,
   enableMemory: false,
   enableContext: false,
   webSearchEnabled: false,

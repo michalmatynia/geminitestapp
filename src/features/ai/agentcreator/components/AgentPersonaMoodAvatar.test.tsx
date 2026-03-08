@@ -9,6 +9,21 @@ import { describe, expect, it } from 'vitest';
 import { AgentPersonaMoodAvatar } from './AgentPersonaMoodAvatar';
 
 describe('AgentPersonaMoodAvatar', () => {
+  it('renders uploaded image avatars when an image URL is provided', () => {
+    render(
+      <AgentPersonaMoodAvatar
+        avatarImageUrl='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9s2g9n0AAAAASUVORK5CYII='
+        label='Tutor avatar image'
+        data-testid='persona-avatar-image'
+      />
+    );
+
+    const avatar = screen.getByTestId('persona-avatar-image');
+    const image = avatar.querySelector('img');
+    expect(image).not.toBeNull();
+    expect(image?.getAttribute('src')).toContain('data:image/png;base64,');
+  });
+
   it('renders sanitized SVG markup when an avatar is provided', () => {
     render(
       <AgentPersonaMoodAvatar

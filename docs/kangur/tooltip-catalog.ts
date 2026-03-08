@@ -387,7 +387,7 @@ export const KANGUR_TOOLTIP_CATALOG: KangurTooltipDocEntry[] = [
   {
     id: 'parent_ai_tutor_tab',
     title: 'Parent AI Tutor Tab',
-    summary: 'Shows learner-specific AI tutor controls such as enablement, live daily usage, guardrails, daily caps, persona selection, and teaching-agent configuration.',
+    summary: 'Shows learner-specific AI tutor controls such as enablement, live daily usage, and learner guardrails. Global tutor persona, teaching-agent, device preset, and daily cap live in Kangur Settings.',
     section: 'Parent Dashboard',
     aliases: ['ai tutor', 'tutor tab', 'parent ai tutor'],
     docPath: '/docs/kangur/profile-and-parent-dashboard.md',

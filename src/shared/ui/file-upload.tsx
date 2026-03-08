@@ -264,6 +264,7 @@ export type FileUploadTriggerProps = {
   multiple?: boolean;
   disabled?: boolean;
   asChild?: boolean;
+  preserveChildSemantics?: boolean;
   className?: string;
   enableDrop?: boolean;
   enablePaste?: boolean;
@@ -279,6 +280,7 @@ export function FileUploadTrigger(props: FileUploadTriggerProps): React.JSX.Elem
     multiple = true,
     disabled,
     asChild,
+    preserveChildSemantics = false,
     className,
     enableDrop = true,
     enablePaste = true,
@@ -374,21 +376,25 @@ export function FileUploadTrigger(props: FileUploadTriggerProps): React.JSX.Elem
       {asChild ? (
         <Slot
           className={className}
-          role='button'
-          tabIndex={disabled ? -1 : 0}
-          aria-disabled={disabled}
+          role={preserveChildSemantics ? undefined : 'button'}
+          tabIndex={preserveChildSemantics ? undefined : disabled ? -1 : 0}
+          aria-disabled={preserveChildSemantics ? undefined : disabled}
           aria-describedby={describedBy}
           aria-busy={isUploading || undefined}
           onClick={() => {
             if (!disabled) inputRef.current?.click();
           }}
-          onKeyDown={(event: React.KeyboardEvent): void => {
-            if (disabled) return;
-            if (event.key === 'Enter' || event.key === ' ') {
-              event.preventDefault();
-              inputRef.current?.click();
-            }
-          }}
+          onKeyDown={
+            preserveChildSemantics
+              ? undefined
+              : (event: React.KeyboardEvent): void => {
+                  if (disabled) return;
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    inputRef.current?.click();
+                  }
+                }
+          }
           onDragOver={(event: React.DragEvent<HTMLElement>): void => {
             if (!enableDrop || disabled) return;
             event.preventDefault();

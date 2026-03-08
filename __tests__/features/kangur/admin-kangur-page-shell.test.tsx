@@ -14,7 +14,7 @@ vi.mock('@/features/kangur/admin/KangurAdminMenuToggle', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/KangurFeaturePage', () => ({
-  KangurFeaturePage: (props: { slug?: string[]; basePath?: string }) => {
+  KangurFeaturePage: (props: { slug?: string[]; basePath?: string; embedded?: boolean }) => {
     kangurPageSpy(props);
     return <div data-testid='kangur-feature-page' />;
   },
@@ -35,6 +35,7 @@ describe('AdminKangurPageShell', () => {
     expect(kangurPageSpy).toHaveBeenCalledWith({
       slug: ['parent-dashboard'],
       basePath: '/admin/kangur',
+      embedded: true,
     });
   });
 });

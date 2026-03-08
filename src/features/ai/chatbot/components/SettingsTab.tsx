@@ -2,9 +2,14 @@
 import Link from 'next/link';
 import React from 'react';
 
-import { useAgentCreatorModes, useAgentCreatorOperations } from '@/features/ai/agentcreator';
+import {
+  useAgentCreatorModes,
+  useAgentCreatorOperations,
+  useAgentPersonas,
+} from '@/features/ai/agentcreator';
 import { AgentCreatorSettingsSection } from '@/features/ai/agentcreator/components/AgentCreatorSettingsSection';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import type { AgentPersona } from '@/shared/contracts/agents';
 import type { PlaywrightPersona } from '@/shared/contracts/playwright';
 import {
   Button,
@@ -21,6 +26,8 @@ import { useChatbotSettings } from '../context/ChatbotContext';
 export function SettingsTab(): React.JSX.Element {
   const {
     model,
+    personaId,
+    setPersonaId,
     webSearchEnabled,
     setWebSearchEnabled,
     useGlobalContext,
@@ -39,9 +46,10 @@ export function SettingsTab(): React.JSX.Element {
   const { toast } = useToast();
   const { agentModeEnabled } = useAgentCreatorModes();
   const { setAgentRunHeadless } = useAgentCreatorOperations();
+  const { data: agentPersonas = [], isLoading: agentPersonasLoading } = useAgentPersonas();
 
-  const [personas, setPersonas] = React.useState<PlaywrightPersona[]>([]);
-  const [personasLoading, setPersonasLoading] = React.useState<boolean>(true);
+  const [playwrightPersonas, setPlaywrightPersonas] = React.useState<PlaywrightPersona[]>([]);
+  const [playwrightPersonasLoading, setPlaywrightPersonasLoading] = React.useState<boolean>(true);
 
   React.useEffect((): (() => void) => {
     let active: boolean = true;
@@ -50,7 +58,7 @@ export function SettingsTab(): React.JSX.Element {
         const { fetchPlaywrightPersonas } = await import('@/features/playwright/utils/personas');
         const stored = await fetchPlaywrightPersonas();
         if (!active) return;
-        setPersonas(stored);
+        setPlaywrightPersonas(stored);
       } catch (error: unknown) {
         if (!active) return;
         logClientError(error, {
@@ -59,7 +67,7 @@ export function SettingsTab(): React.JSX.Element {
         const message = error instanceof Error ? error.message : 'Failed to load personas.';
         toast(message, { variant: 'error' });
       } finally {
-        if (active) setPersonasLoading(false);
+        if (active) setPlaywrightPersonasLoading(false);
       }
     };
     void loadPersonas();
@@ -68,17 +76,24 @@ export function SettingsTab(): React.JSX.Element {
     };
   }, [toast]);
 
+  const selectedAgentPersona =
+    agentPersonas.find((item: AgentPersona): boolean => item.id === personaId) ?? null;
+
   const handlePersonaChange = (value: string): void => {
     const nextId = value === 'custom' ? null : value;
     setPlaywrightPersonaId(nextId);
-    const persona = personas.find((item: PlaywrightPersona): boolean => item.id === nextId);
+    const persona = playwrightPersonas.find(
+      (item: PlaywrightPersona): boolean => item.id === nextId
+    );
     if (persona) {
       setAgentRunHeadless(persona.settings.headless);
     }
   };
 
   const selectedPersona =
-    personas.find((item: PlaywrightPersona): boolean => item.id === playwrightPersonaId) ?? null;
+    playwrightPersonas.find(
+      (item: PlaywrightPersona): boolean => item.id === playwrightPersonaId
+    ) ?? null;
 
   return (
     <div className='space-y-6 p-4'>
@@ -129,6 +144,64 @@ export function SettingsTab(): React.JSX.Element {
         </div>
       </FormSection>
 
+      <FormSection
+        title='Agent persona'
+        description='Attach a tutor persona with shared memory and mood context to new chatbot sessions.'
+        variant='subtle'
+        className='p-4'
+        actions={
+          <Button variant='outline' size='sm' asChild>
+            <Link href='/admin/agentcreator/personas'>Manage personas</Link>
+          </Button>
+        }
+      >
+        {agentPersonasLoading ? (
+          <p className='text-xs text-gray-500 mt-4'>Loading personas...</p>
+        ) : agentPersonas.length === 0 ? (
+          <p className='text-xs text-gray-500 mt-4'>
+            No agent personas yet. Create one in Agent Creator.
+          </p>
+        ) : (
+          <div className='grid gap-4 md:grid-cols-2 mt-4'>
+            <FormField
+              label='Persona'
+              description='The selected persona is saved with new chat sessions and can retrieve its own memory bank.'
+            >
+              <SelectSimple
+                size='sm'
+                value={personaId ?? 'none'}
+                onValueChange={(value: string): void => setPersonaId(value === 'none' ? null : value)}
+                options={[
+                  { value: 'none', label: 'None' },
+                  ...agentPersonas.map((persona: AgentPersona) => ({
+                    value: persona.id,
+                    label: persona.name,
+                  })),
+                ]}
+                placeholder='Select persona'
+              />
+            </FormField>
+            <FormSection variant='subtle' className='p-3 text-xs text-gray-400'>
+              {selectedAgentPersona ? (
+                <>
+                  <p className='text-xs font-semibold text-gray-200'>{selectedAgentPersona.name}</p>
+                  <p className='mt-1'>
+                    {selectedAgentPersona.description || 'No description provided.'}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className='text-xs font-semibold text-gray-200'>No persona attached</p>
+                  <p className='mt-1'>
+                    Chat sessions will run without a persona memory bank until one is selected.
+                  </p>
+                </>
+              )}
+            </FormSection>
+          </div>
+        )}
+      </FormSection>
+
       <AgentCreatorSettingsSection />
 
       {agentModeEnabled && (
@@ -142,10 +215,10 @@ export function SettingsTab(): React.JSX.Element {
               <Link href='/admin/settings/playwright'>Manage personas</Link>
             </Button>
           }
-        >
-          {personasLoading ? (
+      >
+          {playwrightPersonasLoading ? (
             <p className='text-xs text-gray-500 mt-4'>Loading personas...</p>
-          ) : personas.length === 0 ? (
+          ) : playwrightPersonas.length === 0 ? (
             <p className='text-xs text-gray-500 mt-4'>No personas yet. Create one in settings.</p>
           ) : (
             <div className='grid gap-4 md:grid-cols-2 mt-4'>
@@ -159,7 +232,7 @@ export function SettingsTab(): React.JSX.Element {
                   onValueChange={handlePersonaChange}
                   options={[
                     { value: 'custom', label: 'Custom' },
-                    ...personas.map((persona: PlaywrightPersona) => ({
+                    ...playwrightPersonas.map((persona: PlaywrightPersona) => ({
                       value: persona.id,
                       label: persona.name,
                     })),

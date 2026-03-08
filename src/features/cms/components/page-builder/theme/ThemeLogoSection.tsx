@@ -84,6 +84,7 @@ export function ThemeLogoSection(): React.JSX.Element {
           accept='image/*'
           onFilesSelected={(files: File[]) => handleLogoSelect(files)}
           asChild
+          preserveChildSemantics
         >
           <Button
             type='button'

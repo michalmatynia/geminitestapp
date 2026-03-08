@@ -52,6 +52,7 @@ export function DocumentSearchPage(props: DocumentSearchPageProps): React.JSX.El
       <div
         role='region'
         aria-label={`${title} content`}
+        tabIndex={0}
         className='min-h-0 flex-1 overflow-y-auto rounded-md pr-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70'
       >
         {breadcrumb}

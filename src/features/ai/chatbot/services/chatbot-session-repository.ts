@@ -1,38 +1,60 @@
 import 'server-only';
 
-import { ObjectId } from 'mongodb';
-
 import type {
   ChatbotSessionDto as ChatSession,
   CreateChatSessionDto as CreateSessionInput,
   UpdateChatSessionDto as UpdateSessionInput,
   ChatMessageDto as ChatMessage,
 } from '@/shared/contracts/chatbot';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { parseChatbotSettingsPayload } from '@/shared/contracts/chatbot';
+import prisma from '@/shared/lib/db/prisma';
 
-const COLLECTION_NAME = 'chatbot_sessions';
+import type { Prisma } from '@prisma/client';
 
-interface ChatSessionDocument {
-  _id: ObjectId;
-  title: string | null;
-  messages: ChatMessage[];
-  createdAt: Date;
-  updatedAt: Date;
-  settings?: ChatSession['settings'];
-}
-
-function documentToSession(doc: ChatSessionDocument): ChatSession {
-  return {
-    id: doc._id.toString(),
-    title: doc.title,
-    userId: null,
-    messages: doc.messages,
-    messageCount: doc.messages.length,
-    createdAt: doc.createdAt.toISOString(),
-    updatedAt: doc.updatedAt.toISOString(),
-    settings: doc.settings,
+type ChatMessageRow = Prisma.ChatbotMessageGetPayload<Record<string, never>>;
+type ChatSessionRow = Prisma.ChatbotSessionGetPayload<{
+  include: {
+    messages: true;
   };
-}
+}>;
+
+const asRecord = (value: Prisma.JsonValue | null | undefined): Record<string, unknown> | undefined =>
+  value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : undefined;
+
+const toChatMessage = (message: ChatMessageRow): ChatMessage => ({
+  id: message.id,
+  sessionId: message.sessionId,
+  role: message.role as ChatMessage['role'],
+  content: message.content,
+  timestamp: message.createdAt.toISOString(),
+  ...(message.model ? { model: message.model } : {}),
+  ...(Array.isArray(message.images) && message.images.length > 0 ? { images: message.images } : {}),
+  ...(asRecord(message.metadata) ? { metadata: asRecord(message.metadata) } : {}),
+});
+
+const toChatSession = (session: ChatSessionRow): ChatSession => {
+  const messages = [...session.messages]
+    .sort((left, right) => left.createdAt.getTime() - right.createdAt.getTime())
+    .map(toChatMessage);
+  const settings = session.settings ? parseChatbotSettingsPayload(session.settings) : undefined;
+  const lastMessageAt = messages[messages.length - 1]?.timestamp ?? session.updatedAt.toISOString();
+
+  return {
+    id: session.id,
+    title: session.title,
+    userId: null,
+    personaId: session.personaId ?? null,
+    settings,
+    messages,
+    messageCount: messages.length,
+    lastMessageAt,
+    isActive: true,
+    createdAt: session.createdAt.toISOString(),
+    updatedAt: session.updatedAt.toISOString(),
+  };
+};
 
 export interface ChatbotSessionRepository {
   findAll(): Promise<ChatSession[]>;
@@ -48,106 +70,127 @@ export interface ChatbotSessionRepository {
 
 export const chatbotSessionRepository: ChatbotSessionRepository = {
   async findAll(): Promise<ChatSession[]> {
-    const db = await getMongoDb();
-    const docs = await db
-      .collection<ChatSessionDocument>(COLLECTION_NAME)
-      .find({})
-      .sort({ updatedAt: -1 })
-      .toArray();
-    return docs.map(documentToSession);
+    const sessions = await prisma.chatbotSession.findMany({
+      orderBy: { updatedAt: 'desc' },
+      include: {
+        messages: {
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+    });
+
+    return sessions.map(toChatSession);
   },
 
   async findById(id: string): Promise<ChatSession | null> {
-    const db = await getMongoDb();
-    const doc = await db
-      .collection<ChatSessionDocument>(COLLECTION_NAME)
-      .findOne({ _id: new ObjectId(id) });
-    return doc ? documentToSession(doc) : null;
+    const session = await prisma.chatbotSession.findUnique({
+      where: { id },
+      include: {
+        messages: {
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+    });
+
+    return session ? toChatSession(session) : null;
   },
 
   async create(input: CreateSessionInput): Promise<ChatSession> {
-    const db = await getMongoDb();
-    const now = new Date();
-    const doc: Omit<ChatSessionDocument, '_id'> = {
-      title: input.title,
-      messages: [],
-      createdAt: now,
-      updatedAt: now,
-      settings: input.settings,
-    };
+    const session = await prisma.chatbotSession.create({
+      data: {
+        title: input.title ?? null,
+        personaId: input.settings?.personaId?.trim() || null,
+        ...(input.settings !== undefined
+          ? {
+              settings: input.settings as unknown as Prisma.InputJsonValue,
+            }
+          : {}),
+      },
+      include: {
+        messages: true,
+      },
+    });
 
-    const result = await db
-      .collection<ChatSessionDocument>(COLLECTION_NAME)
-      .insertOne(doc as ChatSessionDocument);
-
-    return {
-      id: result.insertedId.toString(),
-      title: doc.title,
-      userId: null,
-      messages: doc.messages,
-      messageCount: doc.messages.length,
-      createdAt: doc.createdAt.toISOString(),
-      updatedAt: doc.updatedAt.toISOString(),
-      settings: doc.settings,
-    };
+    return toChatSession(session);
   },
 
   async update(id: string, input: UpdateSessionInput): Promise<ChatSession | null> {
-    const db = await getMongoDb();
-    const updateDoc: Partial<ChatSessionDocument> = {
-      updatedAt: new Date(),
-    };
+    const existing = await prisma.chatbotSession.findUnique({
+      where: { id },
+      include: {
+        messages: {
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+    });
+    if (!existing) {
+      return null;
+    }
 
-    if (input.title !== undefined) updateDoc.title = input.title;
-    if (input.messages !== undefined) updateDoc.messages = input.messages;
-    if (input.settings !== undefined) updateDoc.settings = input.settings;
+    const session = await prisma.chatbotSession.update({
+      where: { id },
+      data: {
+        ...(input.title !== undefined ? { title: input.title ?? null } : {}),
+        ...(input.settings !== undefined
+          ? {
+              settings: input.settings as unknown as Prisma.InputJsonValue,
+              personaId: input.settings?.personaId?.trim() || null,
+            }
+          : {}),
+      },
+      include: {
+        messages: {
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+    });
 
-    const result = await db
-      .collection<ChatSessionDocument>(COLLECTION_NAME)
-      .findOneAndUpdate(
-        { _id: new ObjectId(id) },
-        { $set: updateDoc },
-        { returnDocument: 'after' }
-      );
-
-    return result ? documentToSession(result) : null;
+    return toChatSession(session);
   },
 
   async delete(id: string): Promise<boolean> {
-    const db = await getMongoDb();
-    const result = await db
-      .collection<ChatSessionDocument>(COLLECTION_NAME)
-      .deleteOne({ _id: new ObjectId(id) });
-    return result.deletedCount > 0;
+    const result = await prisma.chatbotSession.deleteMany({
+      where: { id },
+    });
+
+    return result.count > 0;
   },
 
   async addMessage(
     id: string,
     message: Partial<ChatMessage> & { role: ChatMessage['role']; content: string }
   ): Promise<ChatSession | null> {
-    const db = await getMongoDb();
-    const fullMessage: ChatMessage = {
-      id: message.id || `msg_${id}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-      sessionId: message.sessionId || id,
-      timestamp: message.timestamp || new Date().toISOString(),
-      role: message.role,
-      content: message.content,
-      model: message.model,
-      images: message.images,
-      toolCalls: message.toolCalls,
-      toolResults: message.toolResults,
-      metadata: message.metadata,
-    };
-
-    const result = await db.collection<ChatSessionDocument>(COLLECTION_NAME).findOneAndUpdate(
-      { _id: new ObjectId(id) },
-      {
-        $push: { messages: fullMessage },
-        $set: { updatedAt: new Date() },
+    const session = await prisma.chatbotSession.findUnique({
+      where: { id },
+      select: {
+        id: true,
       },
-      { returnDocument: 'after' }
-    );
+    });
+    if (!session) {
+      return null;
+    }
 
-    return result ? documentToSession(result) : null;
+    await prisma.$transaction([
+      prisma.chatbotMessage.create({
+        data: {
+          sessionId: id,
+          role: message.role,
+          content: message.content,
+          ...(message.model ? { model: message.model } : {}),
+          ...(Array.isArray(message.images) ? { images: message.images } : {}),
+          ...(message.metadata
+            ? { metadata: message.metadata as unknown as Prisma.InputJsonValue }
+            : {}),
+        },
+      }),
+      prisma.chatbotSession.update({
+        where: { id },
+        data: {
+          updatedAt: new Date(),
+        },
+      }),
+    ]);
+
+    return this.findById(id);
   },
 };

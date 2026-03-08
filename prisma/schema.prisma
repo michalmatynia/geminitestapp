@@ -351,6 +351,7 @@ model ChatbotAgentRun {
   id                        String                 @id @default(cuid())
   prompt                    String
   model                     String?
+  personaId                 String?
   tools                     String[]               @default([])
   searchProvider            String?
   agentBrowser              String?
@@ -373,26 +374,39 @@ model ChatbotAgentRun {
   browserSnapshots          AgentBrowserSnapshot[]
   longTermMemory            AgentLongTermMemory[]
   memoryItems               AgentMemoryItem[]
+
+  @@index([personaId])
 }
 
 model AgentMemoryItem {
   id        String           @id @default(cuid())
   runId     String?
+  personaId String?
   scope     AgentMemoryScope @default(session)
   content   String
   metadata  Json?
   createdAt DateTime         @default(now())
   run       ChatbotAgentRun? @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([personaId])
+  @@index([runId, createdAt])
 }
 
 model AgentLongTermMemory {
   id             String           @id @default(cuid())
   memoryKey      String
   runId          String?
+  personaId      String?
   scope          AgentMemoryScope @default(longterm)
   content        String
   summary        String?
   tags           String[]         @default([])
+  topicHints     String[]         @default([])
+  moodHints      String[]         @default([])
+  sourceType     String?
+  sourceId       String?
+  sourceLabel    String?
+  sourceCreatedAt DateTime?
   metadata       Json?
   importance     Int?
   lastAccessedAt DateTime?
@@ -401,6 +415,9 @@ model AgentLongTermMemory {
   run            ChatbotAgentRun? @relation(fields: [runId], references: [id])
 
   @@index([memoryKey])
+  @@index([personaId])
+  @@index([personaId, updatedAt])
+  @@index([personaId, sourceType])
   @@index([runId])
   @@index([updatedAt])
 }
@@ -454,10 +471,15 @@ model AgentBrowserLog {
 model ChatbotSession {
   id        String           @id @default(cuid())
   title     String?
+  personaId String?
+  settings  Json?
   createdAt DateTime         @default(now())
   updatedAt DateTime         @updatedAt
   jobs      ChatbotJob[]
   messages  ChatbotMessage[]
+
+  @@index([personaId])
+  @@index([updatedAt])
 }
 
 model ChatbotMessage {
@@ -465,10 +487,14 @@ model ChatbotMessage {
   sessionId String
   role      String
   content   String
+  model     String?
+  images    String[]       @default([])
+  metadata  Json?
   createdAt DateTime       @default(now())
   session   ChatbotSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@index([sessionId])
+  @@index([sessionId, createdAt])
   @@index([createdAt])
 }
 

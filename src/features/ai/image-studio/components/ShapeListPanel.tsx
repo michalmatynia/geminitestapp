@@ -119,65 +119,61 @@ export function ShapeListPanel({ className }: ShapeListPanelProps): React.JSX.El
         return (
           <div
             key={shape.id}
-            role='button'
-            tabIndex={0}
-            aria-pressed={isActive}
             className={cn(
               'group flex items-center gap-1.5 rounded px-2 py-1 text-xs transition-colors cursor-pointer',
               isActive ? 'bg-accent/20 ring-1 ring-accent/40' : 'hover:bg-accent/10'
             )}
-            onClick={() => setActiveMaskId(shape.id)}
-            onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>) => {
-              if (event.key !== 'Enter' && event.key !== ' ') {
-                return;
-              }
-
-              event.preventDefault();
-              setActiveMaskId(shape.id);
-            }}
           >
-            {/* Color dot */}
-            <span
-              className='inline-block size-2.5 shrink-0 rounded-full'
-              style={{ backgroundColor: displayColor }}
-            />
-            <ShapeIcon className={cn('size-3 shrink-0', iconColorClass)} aria-hidden='true' />
-
-            {/* Name / rename */}
-            <div className='min-w-0 flex-1'>
-              {editingId === shape.id ? (
-                <Input
-                  ref={focusOnMount}
-                  size='sm'
-                  value={editName}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditName(e.target.value)}
-                  onBlur={commitRename}
-                  onKeyDown={(e: React.KeyboardEvent) => {
-                    if (e.key === 'Enter') commitRename();
-                    if (e.key === 'Escape') {
-                      setEditingId(null);
-                      setEditName('');
-                    }
-                  }}
-                  className='h-5 px-1 text-xs'
-                  onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                />
-              ) : (
+            {editingId === shape.id ? (
+              <>
                 <span
-                  className='block truncate'
-                  onDoubleClick={(e: React.MouseEvent) => {
-                    e.stopPropagation();
-                    startRename(shape);
-                  }}
-                  title={shape.label ?? shape.name}
-                >
+                  className='inline-block size-2.5 shrink-0 rounded-full'
+                  style={{ backgroundColor: displayColor }}
+                />
+                <ShapeIcon className={cn('size-3 shrink-0', iconColorClass)} aria-hidden='true' />
+                <div className='min-w-0 flex-1'>
+                  <Input
+                    ref={focusOnMount}
+                    size='sm'
+                    value={editName}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditName(e.target.value)}
+                    onBlur={commitRename}
+                    onKeyDown={(e: React.KeyboardEvent) => {
+                      if (e.key === 'Enter') commitRename();
+                      if (e.key === 'Escape') {
+                        setEditingId(null);
+                        setEditName('');
+                      }
+                    }}
+                    className='h-5 px-1 text-xs'
+                    onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                  />
+                </div>
+              </>
+            ) : (
+              <button
+                type='button'
+                onClick={() => setActiveMaskId(shape.id)}
+                onDoubleClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                  e.stopPropagation();
+                  startRename(shape);
+                }}
+                aria-pressed={isActive}
+                className='flex min-w-0 flex-1 items-center gap-1.5 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
+              >
+                <span
+                  className='inline-block size-2.5 shrink-0 rounded-full'
+                  style={{ backgroundColor: displayColor }}
+                />
+                <ShapeIcon className={cn('size-3 shrink-0', iconColorClass)} aria-hidden='true' />
+                <span className='min-w-0 flex-1 truncate' title={shape.label ?? shape.name}>
                   {shape.label ?? shape.name}
-                  {isMaskEligible && (
+                  {isMaskEligible ? (
                     <span className='ml-1 text-[9px] font-semibold text-sky-400'>M</span>
-                  )}
+                  ) : null}
                 </span>
-              )}
-            </div>
+              </button>
+            )}
 
             {/* Role selector */}
             {isActive && (

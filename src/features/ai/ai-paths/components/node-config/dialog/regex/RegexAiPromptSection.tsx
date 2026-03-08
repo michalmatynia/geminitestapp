@@ -78,17 +78,29 @@ export function RegexAiPromptSection(props: RegexAiPromptSectionProps): React.JS
       <div className='flex flex-wrap items-center gap-2 text-[11px] text-gray-400'>
         <span>Placeholders:</span>
         <Tooltip content={placeholderTooltips.text} side='bottom'>
-          <span className='rounded-full border px-2 py-0.5 text-[10px] text-gray-200'>
+          <span
+            tabIndex={0}
+            className='rounded-full border px-2 py-0.5 text-[10px] text-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
+            title={placeholderTooltips.text}
+          >
             {'{{text}}'}
           </span>
         </Tooltip>
         <Tooltip content={placeholderTooltips.lines} side='bottom'>
-          <span className='rounded-full border px-2 py-0.5 text-[10px] text-gray-200'>
+          <span
+            tabIndex={0}
+            className='rounded-full border px-2 py-0.5 text-[10px] text-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
+            title={placeholderTooltips.lines}
+          >
             {'{{lines}}'}
           </span>
         </Tooltip>
         <Tooltip content={placeholderTooltips.value} side='bottom'>
-          <span className='rounded-full border px-2 py-0.5 text-[10px] text-gray-200'>
+          <span
+            tabIndex={0}
+            className='rounded-full border px-2 py-0.5 text-[10px] text-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
+            title={placeholderTooltips.value}
+          >
             {'{{value}}'}
           </span>
         </Tooltip>

@@ -24,6 +24,8 @@ npm run perf:ops:weekly
     "canonical:check:sitewide": "node scripts/canonical/check-sitewide.mjs",
  accessibility smoke, security smoke, critical flows, and
   weekly quality rollups
+There are some general ones like health etc.
+
   
 ## address vitest Prisma mock issues
 

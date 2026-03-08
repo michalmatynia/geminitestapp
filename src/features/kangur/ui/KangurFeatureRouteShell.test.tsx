@@ -56,6 +56,10 @@ describe('KangurFeatureRouteShell', () => {
 
     render(<KangurFeatureRouteShell />);
 
+    expect(screen.getByTestId('kangur-route-shell')).toHaveClass(
+      'min-h-screen',
+      'kangur-premium-bg'
+    );
     expect(screen.getByTestId('kangur-feature-app')).toBeInTheDocument();
     expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
       pageKey: 'Lessons',

@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest';
 
-import { APP_EMBED_OPTIONS } from '@/features/app-embeds/lib/constants';
+import {
+  APP_EMBED_OPTIONS,
+  KANGUR_APP_EMBED_ENTRY_PAGE_OPTIONS,
+} from '@/features/app-embeds/lib/constants';
 
 describe('APP_EMBED_OPTIONS', () => {
   it('should have correct number of options', () => {
@@ -40,5 +43,16 @@ describe('APP_EMBED_OPTIONS', () => {
     expect(kangur).toBeDefined();
     expect(kangur?.label).toBe('Kangur');
     expect(kangur?.settingsRoute).toBe('/admin/kangur/settings');
+    expect(kangur?.renderMode).toBe('internal-app');
+  });
+
+  it('should expose Kangur entry-page options for every primary Kangur surface', () => {
+    expect(KANGUR_APP_EMBED_ENTRY_PAGE_OPTIONS).toEqual([
+      { label: 'Home / Game', value: 'Game' },
+      { label: 'Lessons', value: 'Lessons' },
+      { label: 'Tests', value: 'Tests' },
+      { label: 'Learner Profile', value: 'LearnerProfile' },
+      { label: 'Parent Dashboard', value: 'ParentDashboard' },
+    ]);
   });
 });

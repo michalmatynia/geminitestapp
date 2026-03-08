@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import * as chatbotApi from '@/features/ai/chatbot/api';
@@ -112,5 +112,39 @@ describe('useChatbotLogic', () => {
     expect(result.current.messages).toEqual([]);
     expect(result.current.input).toBe('');
     expect(result.current.isSending).toBe(false);
+  });
+
+  it('stores the suggested persona mood on assistant message metadata', async () => {
+    vi.mocked(chatbotApi.sendChatbotMessage).mockResolvedValue({
+      message: 'Persona reply',
+      suggestedMoodId: 'encouraging',
+    });
+
+    const { result } = renderHook(() => useChatbotLogic(), { wrapper });
+
+    await waitFor(() => {
+      expect(chatbotApi.fetchChatbotSessions).toHaveBeenCalledTimes(1);
+      expect(chatbotApi.fetchChatbotSettings).toHaveBeenCalledTimes(1);
+    });
+
+    act(() => {
+      result.current.setInput('Hello persona');
+    });
+
+    await act(async () => {
+      await result.current.sendMessage();
+    });
+
+    await waitFor(() => {
+      expect(result.current.messages).toHaveLength(2);
+    });
+
+    expect(result.current.messages[1]).toMatchObject({
+      role: 'assistant',
+      content: 'Persona reply',
+      metadata: {
+        suggestedPersonaMoodId: 'encouraging',
+      },
+    });
   });
 });

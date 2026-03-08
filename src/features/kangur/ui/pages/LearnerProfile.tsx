@@ -26,7 +26,7 @@ export default function LearnerProfile(): React.JSX.Element {
   return (
     <KangurLearnerProfileRuntimeBoundary enabled>
       <KangurPageShell
-        tone='profile' className='min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100'
+        tone='profile'
         id='kangur-learner-profile-page'
         skipLinkTargetId='kangur-learner-profile-main'
       >

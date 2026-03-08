@@ -1,0 +1,113 @@
+{
+  "generatedAt": "2026-03-07T18:28:41.372Z",
+  "strictMode": false,
+  "includeTestProbes": false,
+  "includeTestTree": false,
+  "summary": {
+    "total": 5,
+    "passed": 5,
+    "failed": 0,
+    "timedOut": 0,
+    "skipped": 0,
+    "totalDurationMs": 84584
+  },
+  "results": [
+    {
+      "id": "auth",
+      "name": "Auth",
+      "targets": [
+        "src/features/auth",
+        "src/app/api/auth"
+      ],
+      "resolvedTargets": [
+        "src/features/auth",
+        "src/app/api/auth"
+      ],
+      "resolvedTestTreeTargets": [],
+      "resolvedTestProbes": [],
+      "command": "npx eslint --no-warn-ignored src/features/auth src/app/api/auth",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 10770,
+      "output": ""
+    },
+    {
+      "id": "products",
+      "name": "Products",
+      "targets": [
+        "src/features/products",
+        "src/app/api/v2/products"
+      ],
+      "resolvedTargets": [
+        "src/features/products",
+        "src/app/api/v2/products"
+      ],
+      "resolvedTestTreeTargets": [],
+      "resolvedTestProbes": [],
+      "command": "npx eslint --no-warn-ignored src/features/products src/app/api/v2/products",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 16152,
+      "output": ""
+    },
+    {
+      "id": "ai-paths",
+      "name": "AI Paths",
+      "targets": [
+        "src/features/ai/ai-paths",
+        "src/app/api/ai-paths"
+      ],
+      "resolvedTargets": [
+        "src/features/ai/ai-paths",
+        "src/app/api/ai-paths"
+      ],
+      "resolvedTestTreeTargets": [],
+      "resolvedTestProbes": [],
+      "command": "npx eslint --no-warn-ignored src/features/ai/ai-paths src/app/api/ai-paths",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 21501,
+      "output": ""
+    },
+    {
+      "id": "image-studio",
+      "name": "Image Studio",
+      "targets": [
+        "src/features/ai/image-studio",
+        "src/app/api/image-studio"
+      ],
+      "resolvedTargets": [
+        "src/features/ai/image-studio",
+        "src/app/api/image-studio"
+      ],
+      "resolvedTestTreeTargets": [],
+      "resolvedTestProbes": [],
+      "command": "npx eslint --no-warn-ignored src/features/ai/image-studio src/app/api/image-studio",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 20164,
+      "output": ""
+    },
+    {
+      "id": "case-resolver",
+      "name": "Case Resolver",
+      "targets": [
+        "src/features/case-resolver",
+        "src/features/case-resolver-capture",
+        "src/app/api/case-resolver"
+      ],
+      "resolvedTargets": [
+        "src/features/case-resolver",
+        "src/features/case-resolver-capture",
+        "src/app/api/case-resolver"
+      ],
+      "resolvedTestTreeTargets": [],
+      "resolvedTestProbes": [],
+      "command": "npx eslint --no-warn-ignored src/features/case-resolver src/features/case-resolver-capture src/app/api/case-resolver",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 15997,
+      "output": ""
+    }
+  ]
+}

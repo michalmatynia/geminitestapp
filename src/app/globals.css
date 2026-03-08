@@ -446,6 +446,21 @@
     background: radial-gradient(circle at top, #fffdfd 0%, #f7f3f6 45%, #f3f1f8 100%);
   }
 
+  .kangur-route-content-enter-a,
+  .kangur-route-content-enter-b {
+    min-height: 100%;
+    will-change: opacity, transform;
+    animation: kangur-route-content-enter 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .kangur-route-content-enter-a,
+    .kangur-route-content-enter-b {
+      animation: none;
+      transform: none;
+    }
+  }
+
   .glass-panel {
     @apply border border-white/70 bg-white/70 backdrop-blur-[20px];
     box-shadow: 0 20px 60px rgba(168, 175, 216, 0.18);
@@ -956,20 +971,13 @@
 
   .primary-cta:hover,
   .primary-cta:focus-visible {
-    background: linear-gradient(90deg, #ffc06b 0%, #ff8b58 74%, #f0b4ff 100%);
+    background: linear-gradient(90deg, #ffc670 0%, #ff985f 56%, #ff7a45 100%);
     box-shadow:
       0 22px 34px -18px rgba(255, 137, 77, 0.36),
-      0 14px 24px -18px rgba(132, 102, 234, 0.16),
+      0 14px 24px -18px rgba(255, 154, 95, 0.2),
       inset 0 1px 0 rgba(255, 255, 255, 0.4);
     filter: saturate(1.03) brightness(1.01);
     transform: translateY(-1px) scale(1.014);
-  }
-
-  .play-cta {
-    background: linear-gradient(90deg, #6d7cf1 0%, #b77cf0 100%);
-    box-shadow:
-      0 14px 28px rgba(120, 102, 234, 0.28),
-      inset 0 1px 0 rgba(255, 255, 255, 0.28);
   }
 
   .kangur-cta-pill {
@@ -1039,12 +1047,12 @@
   .warning-cta:focus-visible {
     background: linear-gradient(
       180deg,
-      rgba(255, 244, 228, 0.99) 0%,
-      rgba(247, 239, 255, 0.94) 100%
+      rgba(255, 247, 230, 0.99) 0%,
+      rgba(255, 232, 195, 0.96) 100%
     );
     box-shadow:
       0 20px 32px -24px rgba(201, 142, 57, 0.42),
-      0 14px 24px -24px rgba(132, 102, 234, 0.16),
+      0 14px 24px -24px rgba(255, 154, 95, 0.2),
       inset 0 1px 0 rgba(255, 255, 255, 0.92);
     filter: saturate(1.02) brightness(1.01);
     transform: translateY(-1px) scale(1.014);
@@ -1059,6 +1067,18 @@
     box-shadow:
       0 16px 28px -24px rgba(16, 185, 129, 0.34),
       inset 0 1px 0 rgba(255, 255, 255, 0.88);
+  }
+}
+
+@keyframes kangur-route-content-enter {
+  from {
+    opacity: 0.72;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 

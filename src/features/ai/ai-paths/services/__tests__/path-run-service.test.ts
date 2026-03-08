@@ -145,17 +145,20 @@ describe('path-run-service enqueuePathRun', () => {
     expect(createRunNodesMock).toHaveBeenCalledWith('run-1', config.nodes);
     expect(enqueuePathRunJobMock).toHaveBeenCalledWith('run-1', undefined);
     expect(scheduleLocalFallbackRunMock).toHaveBeenCalledWith('run-1', 1500);
-    expect(createRunMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        graph: {
-          nodes: config.nodes,
-          edges: config.edges,
-        },
-        meta: expect.not.objectContaining({
-          identityRepair: expect.anything(),
-        }),
-      })
-    );
+    const createRunArgs = createRunMock.mock.calls[0]?.[0] as
+      | {
+          graph?: {
+            nodes?: typeof config.nodes;
+            edges?: typeof config.edges;
+          };
+          meta?: Record<string, unknown> | null;
+        }
+      | undefined;
+    expect(createRunArgs?.graph).toEqual({
+      nodes: config.nodes,
+      edges: config.edges,
+    });
+    expect(createRunArgs?.meta).not.toHaveProperty('identityRepair');
   });
 
   it('uses canonical requestId lookup only once when deduplicating enqueue runs', async () => {

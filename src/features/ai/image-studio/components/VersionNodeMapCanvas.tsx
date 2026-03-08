@@ -44,6 +44,17 @@ const SVG_STYLES = `
   from { stroke-dashoffset: 1000; }
   to { stroke-dashoffset: 0; }
 }
+.vgraph-focusable {
+  outline: none;
+}
+.vgraph-focusable:focus-visible > [data-focus-ring='true'] {
+  stroke: #93c5fd;
+  stroke-width: 1.5;
+}
+.vgraph-node-trigger:focus-visible > [data-focus-ring='true'] {
+  stroke: #facc15;
+  stroke-width: 2;
+}
 `;
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -111,6 +122,8 @@ function SvgDefs(): React.JSX.Element {
     </defs>
   );
 }
+
+const isActivationKey = (key: string): boolean => key === 'Enter' || key === ' ';
 
 // ── Node stroke class helper ─────────────────────────────────────────────────
 
@@ -432,9 +445,8 @@ export const VersionNodeMapCanvas = React.forwardRef<
     [onSelectNode]
   );
 
-  const handleNodeClick = useCallback(
-    (e: React.MouseEvent, nodeId: string) => {
-      e.stopPropagation();
+  const activateNode = useCallback(
+    (nodeId: string) => {
       if (compositeMode) {
         onToggleCompositeSelection(nodeId);
       } else if (mergeMode) {
@@ -444,6 +456,24 @@ export const VersionNodeMapCanvas = React.forwardRef<
       }
     },
     [compositeMode, mergeMode, onToggleCompositeSelection, onToggleMergeSelection, onSelectNode]
+  );
+
+  const handleNodeClick = useCallback(
+    (event: React.MouseEvent<SVGGElement>, nodeId: string) => {
+      event.stopPropagation();
+      activateNode(nodeId);
+    },
+    [activateNode]
+  );
+
+  const handleNodeKeyDown = useCallback(
+    (event: React.KeyboardEvent<SVGGElement>, nodeId: string) => {
+      if (!isActivationKey(event.key)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      activateNode(nodeId);
+    },
+    [activateNode]
   );
 
   // ── Viewport culling ──
@@ -480,8 +510,8 @@ export const VersionNodeMapCanvas = React.forwardRef<
   return (
     <svg
       ref={svgRef}
-      role='img'
-      aria-label={`Version graph with ${nodes.length} nodes and ${edges.length} edges`}
+      role='group'
+      aria-label={`Interactive version graph with ${nodes.length} nodes and ${edges.length} edges`}
       className='h-full w-full cursor-grab overscroll-none active:cursor-grabbing'
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
@@ -605,8 +635,6 @@ export const VersionNodeMapCanvas = React.forwardRef<
               <g
                 key={node.id}
                 data-node-id={node.id}
-                className='cursor-pointer'
-                onClick={(e) => handleNodeClick(e, node.id)}
                 onContextMenu={(e) => {
                   if (onContextMenu) {
                     e.preventDefault();
@@ -633,164 +661,227 @@ export const VersionNodeMapCanvas = React.forwardRef<
                   {operationVisual.label} ({node.type})
                 </title>
 
-                {isCompositeNode && compositeLayers.length > 0 ? (
-                  <CompositeStackNode
-                    node={node}
-                    isSelected={isSelected}
-                    isHovered={isHovered}
-                    layers={compositeLayers}
-                    zoom={zoom}
-                    getSlotLabel={(slotId) => {
-                      const n = nodeById.get(slotId);
-                      return n ? n.label : slotId.slice(0, 8);
-                    }}
-                    getSlotImageSrc={(slotId) => {
-                      const n = nodeById.get(slotId);
-                      return n ? getSlotImageSrc(n.slot) : null;
-                    }}
-                    onReorderLayer={(from, to) => onReorderCompositeLayer(node.id, from, to)}
+                <g
+                  className='cursor-pointer vgraph-focusable vgraph-node-trigger'
+                  role='button'
+                  focusable='true'
+                  tabIndex={0}
+                  aria-label={
+                    compositeMode
+                      ? `Toggle composite selection for ${node.label}`
+                      : mergeMode
+                        ? `Toggle merge selection for ${node.label}`
+                        : `Select node ${node.label}`
+                  }
+                  aria-pressed={isSelected || isMergeSelected || isCompositeSelected}
+                  onClick={(event) => handleNodeClick(event, node.id)}
+                  onKeyDown={(event) => handleNodeKeyDown(event, node.id)}
+                >
+                  <rect
+                    data-focus-ring='true'
+                    x={0}
+                    y={0}
+                    width={NODE_WIDTH}
+                    height={compositeHeight}
+                    rx={8}
+                    ry={8}
+                    fill='transparent'
+                    stroke='transparent'
+                    strokeWidth={0}
+                    pointerEvents='none'
                   />
-                ) : (
-                  <>
-                    {/* Background */}
-                    <rect
-                      x={0}
-                      y={0}
-                      width={NODE_WIDTH}
-                      height={NODE_HEIGHT}
-                      rx={8}
-                      ry={8}
-                      strokeWidth={isSelected || isMergeSelected || isCompositeSelected ? 2 : 1}
-                      strokeDasharray={
-                        isMergeSelected ? '4 3' : isCompositeSelected ? '6 3' : undefined
-                      }
-                      className={getNodeStrokeClass(
-                        node,
-                        isSelected,
-                        isMergeSelected,
-                        isCompareSelected,
-                        isCompositeSelected
-                      )}
+                  {isCompositeNode && compositeLayers.length > 0 ? (
+                    <CompositeStackNode
+                      node={node}
+                      isSelected={isSelected}
+                      isHovered={isHovered}
+                      layers={compositeLayers}
+                      zoom={zoom}
+                      getSlotLabel={(slotId) => {
+                        const n = nodeById.get(slotId);
+                        return n ? n.label : slotId.slice(0, 8);
+                      }}
+                      getSlotImageSrc={(slotId) => {
+                        const n = nodeById.get(slotId);
+                        return n ? getSlotImageSrc(n.slot) : null;
+                      }}
+                      onReorderLayer={(from, to) => onReorderCompositeLayer(node.id, from, to)}
                     />
-
-                    {/* Thumbnail */}
-                    {imageSrc && !brokenImagesRef.current.has(node.id) ? (
-                      <image
-                        href={imageSrc}
-                        x={(NODE_WIDTH - THUMB_SIZE) / 2}
-                        y={6}
-                        width={THUMB_SIZE}
-                        height={THUMB_SIZE}
-                        preserveAspectRatio='xMidYMid slice'
-                        clipPath='inset(0 round 4px)'
-                        onError={() => {
-                          brokenImagesRef.current.add(node.id);
-                          setBrokenTick((t) => t + 1);
-                        }}
-                      />
-                    ) : (
+                  ) : (
+                    <>
+                      {/* Background */}
                       <rect
-                        x={(NODE_WIDTH - THUMB_SIZE) / 2}
-                        y={6}
-                        width={THUMB_SIZE}
-                        height={THUMB_SIZE}
-                        rx={4}
-                        ry={4}
-                        fill={brokenImagesRef.current.has(node.id) ? '#7f1d1d' : '#374151'}
-                        fillOpacity={0.4}
+                        x={0}
+                        y={0}
+                        width={NODE_WIDTH}
+                        height={NODE_HEIGHT}
+                        rx={8}
+                        ry={8}
+                        strokeWidth={isSelected || isMergeSelected || isCompositeSelected ? 2 : 1}
+                        strokeDasharray={
+                          isMergeSelected ? '4 3' : isCompositeSelected ? '6 3' : undefined
+                        }
+                        className={getNodeStrokeClass(
+                          node,
+                          isSelected,
+                          isMergeSelected,
+                          isCompareSelected,
+                          isCompositeSelected
+                        )}
                       />
-                    )}
 
-                    {/* Operation label under thumbnail */}
-                    <g>
-                      <circle
-                        cx={NODE_WIDTH / 2 - 20}
-                        cy={THUMB_SIZE + 6 + LABEL_OFFSET_Y - 2}
-                        r={3}
-                        fill={operationVisual.color}
-                        fillOpacity={0.95}
-                      />
-                      <text
-                        x={NODE_WIDTH / 2 - 14}
-                        y={THUMB_SIZE + 6 + LABEL_OFFSET_Y + 1}
-                        textAnchor='start'
-                        fill={operationVisual.color}
-                        fontSize={7}
-                        fontWeight='bold'
-                      >
-                        {operationVisual.icon}
-                      </text>
-                      <text
-                        x={NODE_WIDTH / 2 - 6}
-                        y={THUMB_SIZE + 6 + LABEL_OFFSET_Y + 1}
-                        textAnchor='start'
-                        fill='#d1d5db'
-                        fontSize={8}
-                      >
-                        {operationVisual.label}
-                      </text>
-                    </g>
+                      {/* Thumbnail */}
+                      {imageSrc && !brokenImagesRef.current.has(node.id) ? (
+                        <image
+                          href={imageSrc}
+                          x={(NODE_WIDTH - THUMB_SIZE) / 2}
+                          y={6}
+                          width={THUMB_SIZE}
+                          height={THUMB_SIZE}
+                          preserveAspectRatio='xMidYMid slice'
+                          clipPath='inset(0 round 4px)'
+                          onError={() => {
+                            brokenImagesRef.current.add(node.id);
+                            setBrokenTick((t) => t + 1);
+                          }}
+                        />
+                      ) : (
+                        <rect
+                          x={(NODE_WIDTH - THUMB_SIZE) / 2}
+                          y={6}
+                          width={THUMB_SIZE}
+                          height={THUMB_SIZE}
+                          rx={4}
+                          ry={4}
+                          fill={brokenImagesRef.current.has(node.id) ? '#7f1d1d' : '#374151'}
+                          fillOpacity={0.4}
+                        />
+                      )}
 
-                    {/* Mask badge */}
-                    {node.hasMask ? (
-                      <circle cx={NODE_WIDTH - 6} cy={8} r={4} fill='#a855f7' />
-                    ) : null}
-
-                    {/* Annotation badge with tooltip */}
-                    {annotation ? (
+                      {/* Operation label under thumbnail */}
                       <g>
                         <circle
-                          cx={6}
-                          cy={NODE_HEIGHT - 8}
+                          cx={NODE_WIDTH / 2 - 20}
+                          cy={THUMB_SIZE + 6 + LABEL_OFFSET_Y - 2}
                           r={3}
-                          fill='#facc15'
-                          fillOpacity={0.8}
-                        />
-                        <title>{annotation}</title>
-                      </g>
-                    ) : null}
-
-                    {/* Collapse toggle button */}
-                    {hasChildren && !mergeMode && !compositeMode ? (
-                      <g
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onToggleCollapse(node.id);
-                        }}
-                        className='cursor-pointer'
-                      >
-                        {versionGraphTooltipsEnabled ? (
-                          <title>{tooltipContent.nodeToggleCollapse}</title>
-                        ) : null}
-                        <rect
-                          x={NODE_WIDTH / 2 - 10}
-                          y={NODE_HEIGHT - 4}
-                          width={20}
-                          height={14}
-                          rx={3}
-                          ry={3}
-                          fill='#1f2937'
-                          stroke='#4b5563'
-                          strokeWidth={0.5}
+                          fill={operationVisual.color}
+                          fillOpacity={0.95}
                         />
                         <text
-                          x={NODE_WIDTH / 2}
-                          y={NODE_HEIGHT + 7}
-                          textAnchor='middle'
-                          fill={isCollapsed ? '#facc15' : '#9ca3af'}
-                          fontSize={8}
+                          x={NODE_WIDTH / 2 - 14}
+                          y={THUMB_SIZE + 6 + LABEL_OFFSET_Y + 1}
+                          textAnchor='start'
+                          fill={operationVisual.color}
+                          fontSize={7}
                           fontWeight='bold'
                         >
-                          {isCollapsed ? `+${node.descendantCount}` : '\u2212'}
+                          {operationVisual.icon}
+                        </text>
+                        <text
+                          x={NODE_WIDTH / 2 - 6}
+                          y={THUMB_SIZE + 6 + LABEL_OFFSET_Y + 1}
+                          textAnchor='start'
+                          fill='#d1d5db'
+                          fontSize={8}
+                        >
+                          {operationVisual.label}
                         </text>
                       </g>
+
+                      {/* Mask badge */}
+                      {node.hasMask ? (
+                        <circle cx={NODE_WIDTH - 6} cy={8} r={4} fill='#a855f7' />
+                      ) : null}
+
+                      {/* Annotation badge with tooltip */}
+                      {annotation ? (
+                        <g>
+                          <circle
+                            cx={6}
+                            cy={NODE_HEIGHT - 8}
+                            r={3}
+                            fill='#facc15'
+                            fillOpacity={0.8}
+                          />
+                          <title>{annotation}</title>
+                        </g>
+                      ) : null}
+                    </>
+                  )}
+                </g>
+
+                {/* Collapse toggle button */}
+                {hasChildren && !mergeMode && !compositeMode ? (
+                  <g
+                    className='cursor-pointer vgraph-focusable'
+                    role='button'
+                    focusable='true'
+                    tabIndex={0}
+                    aria-label={
+                      versionGraphTooltipsEnabled
+                        ? tooltipContent.nodeToggleCollapse
+                        : isCollapsed
+                          ? `Expand ${node.label}`
+                          : `Collapse ${node.label}`
+                    }
+                    aria-expanded={!isCollapsed}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onToggleCollapse(node.id);
+                    }}
+                    onKeyDown={(event) => {
+                      if (!isActivationKey(event.key)) return;
+                      event.preventDefault();
+                      event.stopPropagation();
+                      onToggleCollapse(node.id);
+                    }}
+                  >
+                    {versionGraphTooltipsEnabled ? (
+                      <title>{tooltipContent.nodeToggleCollapse}</title>
                     ) : null}
-                  </>
-                )}
+                    <rect
+                      data-focus-ring='true'
+                      x={NODE_WIDTH / 2 - 10}
+                      y={NODE_HEIGHT - 4}
+                      width={20}
+                      height={14}
+                      rx={3}
+                      ry={3}
+                      fill='transparent'
+                      stroke='transparent'
+                      strokeWidth={0}
+                      pointerEvents='none'
+                    />
+                    <rect
+                      x={NODE_WIDTH / 2 - 10}
+                      y={NODE_HEIGHT - 4}
+                      width={20}
+                      height={14}
+                      rx={3}
+                      ry={3}
+                      fill='#1f2937'
+                      stroke='#4b5563'
+                      strokeWidth={0.5}
+                    />
+                    <text
+                      x={NODE_WIDTH / 2}
+                      y={NODE_HEIGHT + 7}
+                      textAnchor='middle'
+                      fill={isCollapsed ? '#facc15' : '#9ca3af'}
+                      fontSize={8}
+                      fontWeight='bold'
+                    >
+                      {isCollapsed ? `+${node.descendantCount}` : '\u2212'}
+                    </text>
+                  </g>
+                ) : null}
+
                 {onOpenNodeDetails ? (
                   <g
-                    className='cursor-pointer'
+                    className='cursor-pointer vgraph-focusable'
                     role='button'
+                    focusable='true'
+                    tabIndex={0}
                     aria-label={
                       versionGraphTooltipsEnabled
                         ? tooltipContent.nodeOpenDetails
@@ -801,10 +892,26 @@ export const VersionNodeMapCanvas = React.forwardRef<
                       e.stopPropagation();
                       onOpenNodeDetails(node.id);
                     }}
+                    onKeyDown={(event) => {
+                      if (!isActivationKey(event.key)) return;
+                      event.preventDefault();
+                      event.stopPropagation();
+                      onOpenNodeDetails(node.id);
+                    }}
                   >
                     {versionGraphTooltipsEnabled ? (
                       <title>{tooltipContent.nodeOpenDetails}</title>
                     ) : null}
+                    <circle
+                      data-focus-ring='true'
+                      cx={NODE_WIDTH - 8}
+                      cy={4}
+                      r={5.5}
+                      fill='transparent'
+                      stroke='transparent'
+                      strokeWidth={0}
+                      pointerEvents='none'
+                    />
                     <circle
                       cx={NODE_WIDTH - 8}
                       cy={4}

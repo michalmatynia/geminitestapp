@@ -79,6 +79,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   let body: {
     prompt?: string;
     model?: string;
+    personaId?: string;
     tools?: string[];
     searchProvider?: string;
     agentBrowser?: string;
@@ -142,6 +143,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       service: 'agent-api',
       promptLength: body.prompt.trim().length,
       model: body.model?.trim() || null,
+      personaId: body.personaId?.trim() || null,
       tools: body.tools ?? [],
       searchProvider: body.searchProvider?.trim() || null,
       agentBrowser: body.agentBrowser?.trim() || null,
@@ -160,6 +162,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     data: {
       prompt: body.prompt.trim(),
       model: body.model?.trim() || null,
+      personaId: body.personaId?.trim() || null,
       tools: body.tools ?? [],
       searchProvider: body.searchProvider?.trim() || null,
       agentBrowser: body.agentBrowser?.trim() || null,

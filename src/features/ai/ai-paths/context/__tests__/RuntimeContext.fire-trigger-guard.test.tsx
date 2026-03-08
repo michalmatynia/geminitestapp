@@ -53,16 +53,13 @@ describe('RuntimeContext fire trigger guard', () => {
     });
     expect(result.current.runtimeRunStatus).toBe('failed');
     expect(logClientErrorMock).toHaveBeenCalledTimes(1);
-    expect(logClientErrorMock).toHaveBeenCalledWith(
-      expect.any(Error),
-      expect.objectContaining({
-        context: expect.objectContaining({
-          source: 'ai-paths.runtime-context',
-          action: 'fireTrigger',
-          nodeId: triggerNode.id,
-        }),
-      })
-    );
+    const errorArgs = logClientErrorMock.mock.calls[0] as
+      | [Error, { context?: Record<string, unknown> }]
+      | undefined;
+    expect(errorArgs?.[0]).toBeInstanceOf(Error);
+    expect(errorArgs?.[1].context?.['source']).toBe('ai-paths.runtime-context');
+    expect(errorArgs?.[1].context?.['action']).toBe('fireTrigger');
+    expect(errorArgs?.[1].context?.['nodeId']).toBe(triggerNode.id);
   });
 
   it('dispatches fireTrigger to registered runtime control handlers', async () => {

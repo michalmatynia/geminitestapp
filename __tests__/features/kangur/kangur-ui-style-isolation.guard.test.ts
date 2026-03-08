@@ -10,33 +10,52 @@ const KANGUR_VISUAL_CONTRACTS = [
   {
     file: 'src/features/kangur/ui/KangurFeatureApp.tsx',
     requiredTokens: [
-      'fixed inset-0 flex items-center justify-center',
+      'absolute inset-0 z-20 flex items-center justify-center',
       'w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin',
+      'data-testid=\'kangur-route-content\'',
     ],
   },
   {
+    file: 'src/features/kangur/ui/KangurFeatureRouteShell.tsx',
+    requiredTokens: ['kangur-premium-bg', 'data-testid=\'kangur-route-shell\''],
+  },
+  {
+    file: 'src/features/kangur/ui/KangurFeaturePage.tsx',
+    requiredTokens: ['kangur-premium-bg', 'data-testid=\'kangur-feature-page-shell\''],
+  },
+  {
     file: 'src/features/kangur/ui/pages/Game.tsx',
-    requiredTokens: ['tone=\'play\' className=\'min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100\''],
+    requiredTokens: ['<KangurPageShell tone=\'play\'', 'id=\'kangur-game-page\''],
   },
   {
     file: 'src/features/kangur/ui/pages/Lessons.tsx',
-    requiredTokens: ['tone=\'learn\' className=\'min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100\''],
+    requiredTokens: ['tone=\'learn\'', 'id=\'kangur-lessons-page\''],
   },
   {
     file: 'src/features/kangur/ui/pages/ParentDashboard.tsx',
-    requiredTokens: ['tone=\'dashboard\' className=\'min-h-screen bg-gradient-to-br from-slate-100 to-blue-50\''],
+    requiredTokens: ['tone=\'dashboard\'', 'id=\'kangur-parent-dashboard-page\''],
   },
   {
     file: 'src/features/kangur/ui/pages/LearnerProfile.tsx',
     requiredTokens: [
-      'tone=\'profile\' className=\'min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100\'',
+      'tone=\'profile\'',
       'Statystyki ucznia',
     ],
-  },  {
+  },
+  {
     file: 'src/features/kangur/ui/components/PageNotFound.tsx',
     requiredTokens: [
-      'min-h-screen flex items-center justify-center p-6 bg-slate-50',
+      'data-testid=\'page-not-found-shell\'',
+      'kangur-premium-bg',
       'Page Not Found',
+    ],
+  },
+  {
+    file: 'src/app/(frontend)/kangur/error.tsx',
+    requiredTokens: [
+      'data-testid=\'kangur-error-shell\'',
+      'kangur-premium-bg',
+      'Back to Kangur',
     ],
   },
 ] as const;

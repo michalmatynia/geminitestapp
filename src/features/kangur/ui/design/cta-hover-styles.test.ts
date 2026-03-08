@@ -6,28 +6,29 @@ import { describe, expect, it } from 'vitest';
 const globalStylesheetPath = path.join(process.cwd(), 'src/app/globals.css');
 
 describe('Kangur CTA hover styles', () => {
-  it('adds a subtle purple-tinted hover state and lift effect to the orange primary cta', () => {
+  it('keeps the primary cta on the orange base and hover treatment', () => {
     const source = readFileSync(globalStylesheetPath, 'utf8');
 
+    expect(source).toMatch(/\.primary-cta\s*\{[\s\S]*#ffb347[\s\S]*#ff7a45/);
     expect(source).toMatch(
-      /\.primary-cta:hover,\s*\.primary-cta:focus-visible\s*\{[\s\S]*#ffc06b[\s\S]*#ff8b58[\s\S]*#f0b4ff/
+      /\.primary-cta:hover,\s*\.primary-cta:focus-visible\s*\{[\s\S]*#ffc670[\s\S]*#ff985f[\s\S]*#ff7a45/
     );
     expect(source).toMatch(
-      /\.primary-cta:hover,\s*\.primary-cta:focus-visible\s*\{[\s\S]*rgba\(132,\s*102,\s*234,\s*0\.16\)/
+      /\.primary-cta:hover,\s*\.primary-cta:focus-visible\s*\{[\s\S]*rgba\(255,\s*154,\s*95,\s*0\.2\)/
     );
     expect(source).toMatch(
       /\.primary-cta:hover,\s*\.primary-cta:focus-visible\s*\{[\s\S]*transform:\s*translateY\(-1px\)\s*scale\(1\.014\)/
     );
   });
 
-  it('adds the same subtle purple accent and lift effect to warning ctas', () => {
+  it('keeps warning ctas on the same warm hover direction instead of introducing purple', () => {
     const source = readFileSync(globalStylesheetPath, 'utf8');
 
     expect(source).toMatch(
-      /\.warning-cta:hover,\s*\.warning-cta:focus-visible\s*\{[\s\S]*rgba\(247,\s*239,\s*255,\s*0\.94\)/
+      /\.warning-cta:hover,\s*\.warning-cta:focus-visible\s*\{[\s\S]*rgba\(255,\s*247,\s*230,\s*0\.99\)[\s\S]*rgba\(255,\s*232,\s*195,\s*0\.96\)/
     );
     expect(source).toMatch(
-      /\.warning-cta:hover,\s*\.warning-cta:focus-visible\s*\{[\s\S]*rgba\(132,\s*102,\s*234,\s*0\.16\)/
+      /\.warning-cta:hover,\s*\.warning-cta:focus-visible\s*\{[\s\S]*rgba\(255,\s*154,\s*95,\s*0\.2\)/
     );
     expect(source).toMatch(
       /\.warning-cta:hover,\s*\.warning-cta:focus-visible\s*\{[\s\S]*transform:\s*translateY\(-1px\)\s*scale\(1\.014\)/

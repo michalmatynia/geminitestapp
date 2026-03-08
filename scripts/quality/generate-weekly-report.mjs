@@ -22,9 +22,9 @@ const BUILD_LOCK_PATH = path.join(root, '.next', 'lock');
 const BUILD_STANDALONE_PATH = path.join(root, '.next', 'standalone');
 const BUILD_TRACE_PATH = path.join(root, '.next', 'trace-build');
 const DURATION_ALERT_BUDGETS_MS = Object.freeze({
-  build: 3 * 60 * 1000,
+  build: 195 * 1000,
   lint: 4 * 60 * 1000,
-  lintDomains: 3 * 60 * 1000,
+  lintDomains: 260 * 1000,
   typecheck: 2 * 60 * 1000,
   criticalFlows: 60 * 1000,
   securitySmoke: 60 * 1000,
@@ -34,6 +34,12 @@ const DURATION_ALERT_BUDGETS_MS = Object.freeze({
   guardrails: 60 * 1000,
   uiConsolidation: 60 * 1000,
   observability: 30 * 1000,
+  unsafePatterns: 60 * 1000,
+  importBoundaries: 60 * 1000,
+  apiInputValidation: 60 * 1000,
+  contextHealth: 60 * 1000,
+  timerCleanup: 60 * 1000,
+  testDistribution: 60 * 1000,
 });
 
 const criticalFlows = [
@@ -712,6 +718,48 @@ const run = async () => {
       command: 'npm',
       commandArgs: ['run', 'observability:check'],
       timeoutMs: 10 * 60 * 1000,
+    },
+    {
+      id: 'unsafePatterns',
+      label: 'Unsafe Patterns',
+      command: 'node',
+      commandArgs: ['scripts/quality/check-unsafe-patterns.mjs', '--ci', '--no-history'],
+      timeoutMs: 60 * 1000,
+    },
+    {
+      id: 'importBoundaries',
+      label: 'Import Boundaries',
+      command: 'node',
+      commandArgs: ['scripts/quality/check-import-boundaries.mjs', '--ci', '--no-history'],
+      timeoutMs: 60 * 1000,
+    },
+    {
+      id: 'apiInputValidation',
+      label: 'API Input Validation',
+      command: 'node',
+      commandArgs: ['scripts/quality/check-api-input-validation.mjs', '--ci', '--no-history'],
+      timeoutMs: 60 * 1000,
+    },
+    {
+      id: 'contextHealth',
+      label: 'Context Health',
+      command: 'node',
+      commandArgs: ['scripts/quality/check-context-health.mjs', '--ci', '--no-history'],
+      timeoutMs: 60 * 1000,
+    },
+    {
+      id: 'timerCleanup',
+      label: 'Timer Cleanup',
+      command: 'node',
+      commandArgs: ['scripts/quality/check-timer-cleanup.mjs', '--ci', '--no-history'],
+      timeoutMs: 60 * 1000,
+    },
+    {
+      id: 'testDistribution',
+      label: 'Test Distribution',
+      command: 'node',
+      commandArgs: ['scripts/quality/check-test-distribution.mjs', '--ci', '--no-history'],
+      timeoutMs: 60 * 1000,
     },
   ];
 

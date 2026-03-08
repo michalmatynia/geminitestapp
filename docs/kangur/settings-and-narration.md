@@ -13,6 +13,18 @@ The global narrator settings define:
 
 Learner lessons consume these values so the narrator behavior stays consistent across the app.
 
+## AI Tutor settings
+
+The global AI Tutor settings define:
+
+- tutor persona
+- Brain model routing for tutor chat
+- shared tutor motion preset for the tutor avatar and bubble
+- daily message cap
+
+Parent-facing AI Tutor screens do not edit these values per learner. They only manage learner access and guardrails.
+Learner Agents remain part of the separate Agent Teaching feature and are not used by Kangur AI Tutor.
+
 ## Documentation-driven tooltips
 
 Kangur exposes a dedicated documentation-driven tooltip configuration. The admin can enable or disable tooltip coverage globally and by surface. Suggested surfaces:

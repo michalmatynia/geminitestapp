@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { ComponentType } from 'react';
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
 
 import {
   getKangurInternalQueryParamName,
@@ -235,6 +236,7 @@ const getLessonAssignmentTimestamp = (
 };
 
 export default function Lessons() {
+  const router = useRouter();
   const { basePath } = useKangurRouting();
   const { user, navigateToLogin, logout } = useKangurAuth();
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('lessons');
@@ -389,7 +391,6 @@ export default function Lessons() {
     activeLesson && !activeLessonAssignment
       ? (completedLessonAssignmentsByComponent.get(activeLesson.componentId) ?? null)
       : null;
-  const activeLessonMastery = activeLesson ? getLessonMasteryPresentation(activeLesson, progress) : null;
   const activeLessonContentRef = useRef<HTMLDivElement | null>(null);
   const activeLessonHeaderRef = useRef<HTMLDivElement | null>(null);
   const activeLessonAssignmentRef = useRef<HTMLDivElement | null>(null);
@@ -400,7 +401,7 @@ export default function Lessons() {
       return;
     }
 
-    window.location.assign(createPageUrl('Game', basePath));
+    router.push(createPageUrl('Game', basePath));
   };
 
   const learnerId = user?.activeLearner?.id ?? user?.id ?? null;
@@ -445,21 +446,12 @@ export default function Lessons() {
     () => ({
       surface: 'lesson' as const,
       contentId: activeLesson?.id,
-      title: activeLesson?.title ?? 'Lekcje',
-      description:
-        activeLesson?.description ??
-        'Wybierz temat, aby rozpocząć lekcję lub wrócić do ćwiczeń.',
-      masterySummary: activeLessonMastery?.summaryLabel,
-      assignmentSummary:
-        activeLessonAssignment?.description ?? completedActiveLessonAssignment?.progress.summary,
+      assignmentId: activeLessonAssignment?.id ?? completedActiveLessonAssignment?.id,
     }),
     [
-      activeLesson?.description,
       activeLesson?.id,
-      activeLesson?.title,
-      activeLessonAssignment?.description,
-      activeLessonMastery?.summaryLabel,
-      completedActiveLessonAssignment?.progress.summary,
+      activeLessonAssignment?.id,
+      completedActiveLessonAssignment?.id,
     ]
   );
 
@@ -470,7 +462,7 @@ export default function Lessons() {
         sessionContext={lessonTutorContext}
       />
       <KangurPageShell
-        tone='learn' className='min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100'
+        tone='learn'
         id='kangur-lessons-page'
         skipLinkTargetId='kangur-lessons-main'
       >

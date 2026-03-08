@@ -5,7 +5,6 @@ import React from 'react';
 import { AppErrorBoundary } from '@/shared/ui/AppErrorBoundary';
 
 import { AiPathsProvider } from '../context';
-import { AiPathsSettingsOrchestratorProvider } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
 import { AiPathsSettingsPageProvider } from './ai-paths-settings/AiPathsSettingsPageContext';
 import { AiPathsSettingsView } from './ai-paths-settings/AiPathsSettingsView';
 import { useAiPathsSettingsState } from './ai-paths-settings/useAiPathsSettingsState';
@@ -44,10 +43,8 @@ function AiPathsSettingsInnerOrchestrator(props: AiPathsSettingsProps): React.JS
 
   return (
     <AiPathsSettingsPageProvider value={pageContextValue}>
-      <AiPathsSettingsOrchestratorProvider value={state}>
-        <AiPathsSettingsView />
-        <ConfirmationModal />
-      </AiPathsSettingsOrchestratorProvider>
+      <AiPathsSettingsView />
+      <ConfirmationModal />
     </AiPathsSettingsPageProvider>
   );
 }

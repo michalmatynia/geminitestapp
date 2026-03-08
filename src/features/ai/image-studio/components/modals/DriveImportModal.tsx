@@ -49,6 +49,7 @@ export function DriveImportModal(): React.JSX.Element | null {
       }}
       disabled={uploadPending}
       asChild
+      preserveChildSemantics
     >
       <Button
         size='sm'

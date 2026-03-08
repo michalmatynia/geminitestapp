@@ -55,7 +55,6 @@ export default function Tests(): React.JSX.Element {
   return (
     <KangurPageShell
       tone='learn'
-      className='min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100'
       id='kangur-tests-page'
       skipLinkTargetId='kangur-tests-main'
     >

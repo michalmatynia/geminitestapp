@@ -168,20 +168,24 @@ describe('ai-paths portable-engine remediation dead-letter replay history handle
         applied: false,
       })
     );
-    expect(payload['entries']).toEqual([
+    const entries = payload['entries'] as Array<Record<string, unknown>>;
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toEqual(
       expect.objectContaining({
         dryRun: false,
         selectedCount: 2,
         attemptedCount: 1,
         deliveredCount: 1,
         failedCount: 1,
-        replayPolicy: expect.objectContaining({
-          replayWindowSeconds: 3600,
-          endpointAllowlistCount: 2,
-        }),
         attempts: null,
-      }),
-    ]);
+      })
+    );
+    expect((entries[0]?.['replayPolicy'] as Record<string, unknown> | undefined) ?? {}).toEqual(
+      expect.objectContaining({
+        replayWindowSeconds: 3600,
+        endpointAllowlistCount: 2,
+      })
+    );
     expect(payload['signature']).toEqual(
       expect.objectContaining({
         algorithm: 'hmac_sha256',

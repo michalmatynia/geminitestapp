@@ -4,6 +4,8 @@ import {
   getKangurAiTutorSettingsForLearner,
   parseKangurAiTutorSettings,
   resolveKangurAiTutorAvailability,
+  resolveKangurAiTutorAppSettings,
+  resolveKangurAiTutorMotionPresetKind,
 } from './settings-ai-tutor';
 
 describe('kangur ai tutor settings', () => {
@@ -12,7 +14,6 @@ describe('kangur ai tutor settings', () => {
       JSON.stringify({
         'learner-1': {
           enabled: true,
-          teachingAgentId: 'teacher-1',
           agentPersonaId: 'persona-1',
           playwrightPersonaId: '',
         },
@@ -21,9 +22,10 @@ describe('kangur ai tutor settings', () => {
 
     expect(getKangurAiTutorSettingsForLearner(store, 'learner-1')).toEqual({
       enabled: true,
-      teachingAgentId: 'teacher-1',
       agentPersonaId: 'persona-1',
       motionPresetId: null,
+      uiMode: 'anchored',
+      allowCrossPagePersistence: true,
       allowLessons: true,
       testAccessMode: 'guided',
       showSources: true,
@@ -37,13 +39,11 @@ describe('kangur ai tutor settings', () => {
       JSON.stringify({
         'learner-1': {
           enabled: true,
-          teachingAgentId: 'teacher-1',
           agentPersonaId: 'persona-1',
           motionPresetId: 'motion-2',
         },
         'learner-2': {
           enabled: true,
-          teachingAgentId: 'teacher-2',
           agentPersonaId: 'persona-2',
           playwrightPersonaId: 'legacy-motion',
         },
@@ -58,13 +58,114 @@ describe('kangur ai tutor settings', () => {
     );
   });
 
+  it('maps local and legacy motion preset ids onto tutor motion kinds without Playwright', () => {
+    expect(resolveKangurAiTutorMotionPresetKind(null)).toBe('default');
+    expect(resolveKangurAiTutorMotionPresetKind('tablet')).toBe('tablet');
+    expect(resolveKangurAiTutorMotionPresetKind('preset-tablet')).toBe('tablet');
+    expect(resolveKangurAiTutorMotionPresetKind('iphone-15')).toBe('mobile');
+    expect(resolveKangurAiTutorMotionPresetKind('desktop')).toBe('desktop');
+  });
+
+  it('respects an explicit cross-page persistence override', () => {
+    const store = parseKangurAiTutorSettings(
+      JSON.stringify({
+        'learner-1': {
+          enabled: true,
+          allowCrossPagePersistence: false,
+        },
+      })
+    );
+
+    expect(getKangurAiTutorSettingsForLearner(store, 'learner-1').allowCrossPagePersistence).toBe(
+      false
+    );
+  });
+
+  it('respects an explicit static ui mode override', () => {
+    const store = parseKangurAiTutorSettings(
+      JSON.stringify({
+        'learner-1': {
+          enabled: true,
+          uiMode: 'static',
+        },
+      })
+    );
+
+    expect(getKangurAiTutorSettingsForLearner(store, 'learner-1').uiMode).toBe('static');
+  });
+
+  it('resolves global tutor settings from the dedicated app key and overrides legacy learner values', () => {
+    const store = parseKangurAiTutorSettings(
+      JSON.stringify({
+        'learner-1': {
+          enabled: true,
+          agentPersonaId: 'legacy-persona',
+          motionPresetId: 'legacy-motion',
+          dailyMessageLimit: 3,
+        },
+      })
+    );
+    const appSettings = resolveKangurAiTutorAppSettings(
+      JSON.stringify({
+        agentPersonaId: 'persona-1',
+        motionPresetId: 'motion-2',
+        dailyMessageLimit: 12,
+      }),
+      store
+    );
+
+    expect(appSettings).toEqual({
+      agentPersonaId: 'persona-1',
+      motionPresetId: 'motion-2',
+      dailyMessageLimit: 12,
+    });
+    expect(getKangurAiTutorSettingsForLearner(store, 'learner-1', appSettings)).toMatchObject({
+      agentPersonaId: 'persona-1',
+      motionPresetId: 'motion-2',
+      dailyMessageLimit: 12,
+    });
+  });
+
+  it('ignores legacy teaching-agent ids in stored tutor settings', () => {
+    const store = parseKangurAiTutorSettings(
+      JSON.stringify({
+        'learner-1': {
+          enabled: true,
+          teachingAgentId: 'legacy-teacher',
+          agentPersonaId: 'persona-1',
+        },
+      })
+    );
+    const appSettings = resolveKangurAiTutorAppSettings(
+      JSON.stringify({
+        teachingAgentId: 'legacy-teacher',
+        agentPersonaId: 'persona-1',
+        dailyMessageLimit: 9,
+      }),
+      store
+    );
+
+    expect(appSettings).toEqual({
+      agentPersonaId: 'persona-1',
+      motionPresetId: null,
+      dailyMessageLimit: 9,
+    });
+    expect(getKangurAiTutorSettingsForLearner(store, 'learner-1', appSettings)).toEqual(
+      expect.objectContaining({
+        agentPersonaId: 'persona-1',
+        dailyMessageLimit: 9,
+      })
+    );
+  });
+
   it('blocks unrevealed test tutoring when the parent allows review only after the answer', () => {
     const availability = resolveKangurAiTutorAvailability(
       {
         enabled: true,
-        teachingAgentId: null,
         agentPersonaId: null,
         motionPresetId: null,
+        uiMode: 'anchored',
+        allowCrossPagePersistence: true,
         allowLessons: true,
         testAccessMode: 'review_after_answer',
         showSources: true,

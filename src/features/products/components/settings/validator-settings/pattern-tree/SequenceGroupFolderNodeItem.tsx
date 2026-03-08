@@ -4,7 +4,7 @@ import React from 'react';
 import { GripVertical, Layers } from 'lucide-react';
 
 import type { FolderTreeViewportRenderNodeInput as SequenceGroupFolderNodeItemProps } from '@/features/foldertree/v2';
-import { TreeCaret, TreeContextMenu, TreeRow, Button } from '@/shared/ui';
+import { TreeCaret, TreeContextMenu, TreeRow } from '@/shared/ui';
 import { focusOnMount } from '@/shared/utils/focus-on-mount';
 import { cn } from '@/shared/utils';
 
@@ -146,7 +146,6 @@ export function SequenceGroupFolderNodeItem(
         </TreeRow>
       ) : (
         <TreeRow
-          asChild
           depth={depth}
           baseIndent={8}
           indent={12}
@@ -157,21 +156,8 @@ export function SequenceGroupFolderNodeItem(
           dragOverClassName='bg-transparent text-gray-100 ring-0'
           className={cn('relative h-8 text-xs', isDragging && 'opacity-50')}
         >
-          <Button
-            variant='ghost'
-            className='flex h-full w-full min-w-0 cursor-pointer items-center gap-1 text-left p-0 font-normal hover:bg-transparent justify-start'
-            onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
-              event.stopPropagation();
-              select(event);
-            }}
-            onDoubleClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
-              event.preventDefault();
-              event.stopPropagation();
-              startRename();
-            }}
-            title={node.name}
-          >
-            <span className='inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center opacity-0 transition-opacity group-hover:opacity-100'>
+          <div className='flex h-full w-full min-w-0 items-center gap-1 text-left'>
+            <span className='inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100'>
               <GripVertical className='size-3.5 shrink-0 cursor-grab text-gray-500' />
             </span>
             <TreeCaret
@@ -183,35 +169,56 @@ export function SequenceGroupFolderNodeItem(
               buttonClassName='hover:bg-gray-700'
               placeholderClassName='w-3'
             />
-            <span className='inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center'>
-              <Layers className='size-3.5 text-cyan-400' />
-            </span>
-            <span className='min-w-0 flex-1 truncate font-medium text-cyan-200'>{node.name}</span>
-            <span className='ml-1 flex shrink-0 items-center gap-1.5 pr-2'>
-              <span className='text-[10px] text-gray-500'>
-                {childCount} pattern{childCount === 1 ? '' : 's'}
+            <button
+              type='button'
+              className='flex min-w-0 flex-1 items-center gap-1 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
+              onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                event.stopPropagation();
+                select(event);
+              }}
+              onDoubleClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                event.preventDefault();
+                event.stopPropagation();
+                startRename();
+              }}
+              aria-pressed={isSelected}
+              aria-label={`Select sequence group ${node.name}`}
+              title={node.name}
+            >
+              <span className='inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center'>
+                <Layers className='size-3.5 text-cyan-400' />
               </span>
-              {debounceMs > 0 && <span className='text-[10px] text-cyan-700'>{debounceMs}ms</span>}
-              <span
-                className={cn(
-                  'rounded px-1 py-0.5 text-[10px] text-amber-300 transition',
-                  'opacity-0 group-hover:opacity-100 hover:bg-amber-500/15',
-                  isPending && 'pointer-events-none opacity-40'
-                )}
-                onMouseDown={(event: React.MouseEvent<HTMLSpanElement>): void => {
-                  event.stopPropagation();
-                }}
-                onClick={(event: React.MouseEvent<HTMLSpanElement>): void => {
-                  event.stopPropagation();
-                  handleUngroup();
-                }}
-                title='Ungroup — move all patterns to standalone'
-                aria-hidden='true'
-              >
-                Ungroup
+              <span className='min-w-0 flex-1 truncate font-medium text-cyan-200'>{node.name}</span>
+              <span className='ml-1 flex shrink-0 items-center gap-1.5 pr-2'>
+                <span className='text-[10px] text-gray-500'>
+                  {childCount} pattern{childCount === 1 ? '' : 's'}
+                </span>
+                {debounceMs > 0 ? (
+                  <span className='text-[10px] text-cyan-700'>{debounceMs}ms</span>
+                ) : null}
               </span>
-            </span>
-          </Button>
+            </button>
+            <button
+              type='button'
+              className={cn(
+                'rounded px-1 py-0.5 text-[10px] text-amber-300 transition',
+                'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 hover:bg-amber-500/15',
+                isPending && 'pointer-events-none opacity-40'
+              )}
+              onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                event.stopPropagation();
+              }}
+              onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                event.stopPropagation();
+                handleUngroup();
+              }}
+              title='Ungroup — move all patterns to standalone'
+              aria-label='Ungroup sequence group'
+              disabled={isPending}
+            >
+              Ungroup
+            </button>
+          </div>
         </TreeRow>
       )}
     </TreeContextMenu>

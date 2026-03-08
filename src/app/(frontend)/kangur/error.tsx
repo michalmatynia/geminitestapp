@@ -21,7 +21,10 @@ export default function KangurErrorBoundary({
   }, [error]);
 
   return (
-    <div className='min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 flex items-center justify-center p-6'>
+    <div
+      className='kangur-premium-bg min-h-screen flex items-center justify-center p-6'
+      data-testid='kangur-error-shell'
+    >
       <div className='w-full max-w-lg rounded-3xl bg-white/90 shadow-2xl border border-indigo-100 p-8 text-center'>
         <div className='text-5xl mb-4'>🦘</div>
         <h2 className='text-2xl font-extrabold text-slate-800'>Kangur encountered an error</h2>

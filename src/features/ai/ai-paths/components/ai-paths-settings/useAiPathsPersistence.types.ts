@@ -26,6 +26,7 @@ export type PathSaveOptions = {
   nodesOverride?: AiNode[] | undefined;
   nodeOverride?: AiNode | undefined;
   edgesOverride?: Edge[] | undefined;
+  runtimeStateOverride?: RuntimeState | undefined;
 };
 
 export type UseAiPathsPersistenceArgs = {

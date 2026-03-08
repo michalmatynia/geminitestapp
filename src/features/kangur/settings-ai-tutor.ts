@@ -2,33 +2,77 @@ import { parseJsonSetting } from '@/shared/utils/settings-json';
 import type { KangurAiTutorConversationContext } from '@/shared/contracts/kangur-ai-tutor';
 
 export const KANGUR_AI_TUTOR_SETTINGS_KEY = 'kangur_ai_tutor_settings';
+export const KANGUR_AI_TUTOR_APP_SETTINGS_KEY = 'kangur_ai_tutor_app_settings_v1';
 
 export type KangurAiTutorTestAccessMode = 'disabled' | 'guided' | 'review_after_answer';
+export type KangurAiTutorUiMode = 'anchored' | 'static';
+export type KangurAiTutorMotionPresetKind = 'default' | 'desktop' | 'tablet' | 'mobile';
 
-export type KangurAiTutorLearnerSettings = {
-  enabled: boolean;
-  teachingAgentId: string | null;
+export const KANGUR_AI_TUTOR_MOTION_PRESET_OPTIONS: Array<{
+  id: Exclude<KangurAiTutorMotionPresetKind, 'default'>;
+  label: string;
+  description: string;
+}> = [
+  {
+    id: 'desktop',
+    label: 'Desktop',
+    description: 'Wider bubble and desktop-sized motion thresholds.',
+  },
+  {
+    id: 'tablet',
+    label: 'Tablet',
+    description: 'Broader sheet breakpoint and softer anchored motion.',
+  },
+  {
+    id: 'mobile',
+    label: 'Mobile',
+    description: 'Mobile-first sheet layout with tighter motion tuning.',
+  },
+];
+
+export type KangurAiTutorAppSettings = {
   agentPersonaId: string | null;
   motionPresetId: string | null;
+  dailyMessageLimit: number | null;
+};
+
+export type KangurAiTutorLearnerGuardrails = {
+  enabled: boolean;
+  uiMode: KangurAiTutorUiMode;
+  allowCrossPagePersistence: boolean;
   allowLessons: boolean;
   testAccessMode: KangurAiTutorTestAccessMode;
   showSources: boolean;
   allowSelectedTextSupport: boolean;
-  dailyMessageLimit: number | null;
 };
 
-export type KangurAiTutorSettingsStore = Record<string, KangurAiTutorLearnerSettings>;
+export type KangurAiTutorLearnerSettings = KangurAiTutorLearnerGuardrails &
+  KangurAiTutorAppSettings;
 
-export const DEFAULT_KANGUR_AI_TUTOR_LEARNER_SETTINGS: KangurAiTutorLearnerSettings = {
-  enabled: false,
-  teachingAgentId: null,
+export type KangurAiTutorLearnerStoredSettings = KangurAiTutorLearnerGuardrails &
+  Partial<KangurAiTutorAppSettings>;
+
+export type KangurAiTutorSettingsStore = Record<string, KangurAiTutorLearnerStoredSettings>;
+
+export const DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS: KangurAiTutorAppSettings = {
   agentPersonaId: null,
   motionPresetId: null,
+  dailyMessageLimit: null,
+};
+
+export const DEFAULT_KANGUR_AI_TUTOR_LEARNER_GUARDRAILS: KangurAiTutorLearnerGuardrails = {
+  enabled: false,
+  uiMode: 'anchored',
+  allowCrossPagePersistence: true,
   allowLessons: true,
   testAccessMode: 'guided',
   showSources: true,
   allowSelectedTextSupport: true,
-  dailyMessageLimit: null,
+};
+
+export const DEFAULT_KANGUR_AI_TUTOR_LEARNER_SETTINGS: KangurAiTutorLearnerSettings = {
+  ...DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS,
+  ...DEFAULT_KANGUR_AI_TUTOR_LEARNER_GUARDRAILS,
 };
 
 export type KangurAiTutorAvailabilityReason =
@@ -55,6 +99,61 @@ const normalizeTestAccessMode = (value: unknown): KangurAiTutorTestAccessMode =>
   }
 };
 
+const normalizeUiMode = (value: unknown): KangurAiTutorUiMode => {
+  switch (value) {
+    case 'static':
+    case 'anchored':
+      return value;
+    default:
+      return DEFAULT_KANGUR_AI_TUTOR_LEARNER_SETTINGS.uiMode;
+  }
+};
+
+export function resolveKangurAiTutorMotionPresetKind(
+  value: string | null | undefined
+): KangurAiTutorMotionPresetKind {
+  const normalized = normalizeOptionalId(value)?.toLowerCase();
+  if (!normalized) {
+    return 'default';
+  }
+
+  if (normalized === 'desktop' || normalized === 'tablet' || normalized === 'mobile') {
+    return normalized;
+  }
+
+  if (
+    normalized.includes('ipad') ||
+    normalized.includes('tablet') ||
+    normalized.includes('galaxy tab') ||
+    normalized.includes('galaxy-tab') ||
+    normalized.includes('galaxy_tab')
+  ) {
+    return 'tablet';
+  }
+
+  if (
+    normalized.includes('iphone') ||
+    normalized.includes('pixel') ||
+    normalized.includes('android') ||
+    normalized.includes('phone') ||
+    normalized.includes('mobile')
+  ) {
+    return 'mobile';
+  }
+
+  if (
+    normalized.includes('desktop') ||
+    normalized.includes('laptop') ||
+    normalized.includes('macbook') ||
+    normalized.includes('windows') ||
+    normalized.includes('chromeos')
+  ) {
+    return 'desktop';
+  }
+
+  return 'default';
+}
+
 const normalizeDailyMessageLimit = (value: unknown): number | null => {
   if (typeof value !== 'number' || !Number.isFinite(value)) {
     return null;
@@ -68,11 +167,73 @@ const normalizeDailyMessageLimit = (value: unknown): number | null => {
   return Math.min(normalized, 200);
 };
 
+const normalizeKangurAiTutorAppSettingsFields = (
+  input: Record<string, unknown>
+): KangurAiTutorAppSettings => ({
+  // Legacy teachingAgentId values are intentionally ignored.
+  // Kangur AI Tutor now runs directly through Brain with persona selection only.
+  agentPersonaId: normalizeOptionalId(input['agentPersonaId']),
+  motionPresetId:
+    normalizeOptionalId(input['motionPresetId']) ?? normalizeOptionalId(input['playwrightPersonaId']),
+  dailyMessageLimit: normalizeDailyMessageLimit(input['dailyMessageLimit']),
+});
+
+export function normalizeKangurAiTutorAppSettings(raw: unknown): KangurAiTutorAppSettings {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return { ...DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS };
+  }
+
+  return normalizeKangurAiTutorAppSettingsFields(raw as Record<string, unknown>);
+}
+
+export function parseKangurAiTutorAppSettings(raw: unknown): KangurAiTutorAppSettings {
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    return normalizeKangurAiTutorAppSettings(raw);
+  }
+
+  return normalizeKangurAiTutorAppSettings(
+    parseJsonSetting<unknown>(typeof raw === 'string' ? raw : null, null)
+  );
+}
+
+function deriveLegacyKangurAiTutorAppSettings(
+  store: KangurAiTutorSettingsStore
+): KangurAiTutorAppSettings {
+  return Object.values(store).reduce<KangurAiTutorAppSettings>(
+    (resolved, learnerSettings) => {
+      const legacy = normalizeKangurAiTutorAppSettings(learnerSettings);
+
+      return {
+        agentPersonaId: resolved.agentPersonaId ?? legacy.agentPersonaId,
+        motionPresetId: resolved.motionPresetId ?? legacy.motionPresetId,
+        dailyMessageLimit: resolved.dailyMessageLimit ?? legacy.dailyMessageLimit,
+      };
+    },
+    { ...DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS }
+  );
+}
+
+export function resolveKangurAiTutorAppSettings(
+  raw: unknown,
+  store: KangurAiTutorSettingsStore
+): KangurAiTutorAppSettings {
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    return normalizeKangurAiTutorAppSettings(raw);
+  }
+
+  const parsed = parseJsonSetting<unknown>(typeof raw === 'string' ? raw : null, null);
+  if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+    return normalizeKangurAiTutorAppSettings(parsed);
+  }
+
+  return deriveLegacyKangurAiTutorAppSettings(store);
+}
+
 export function normalizeKangurAiTutorLearnerSettings(
   raw: unknown
-): KangurAiTutorLearnerSettings {
+): KangurAiTutorLearnerStoredSettings {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
-    return { ...DEFAULT_KANGUR_AI_TUTOR_LEARNER_SETTINGS };
+    return { ...DEFAULT_KANGUR_AI_TUTOR_LEARNER_GUARDRAILS };
   }
 
   const input = raw as Record<string, unknown>;
@@ -81,26 +242,26 @@ export function normalizeKangurAiTutorLearnerSettings(
     enabled:
       typeof input['enabled'] === 'boolean'
         ? input['enabled']
-        : DEFAULT_KANGUR_AI_TUTOR_LEARNER_SETTINGS.enabled,
-    teachingAgentId: normalizeOptionalId(input['teachingAgentId']),
-    agentPersonaId: normalizeOptionalId(input['agentPersonaId']),
-    motionPresetId:
-      normalizeOptionalId(input['motionPresetId']) ??
-      normalizeOptionalId(input['playwrightPersonaId']),
+        : DEFAULT_KANGUR_AI_TUTOR_LEARNER_GUARDRAILS.enabled,
+    uiMode: normalizeUiMode(input['uiMode']),
+    allowCrossPagePersistence:
+      typeof input['allowCrossPagePersistence'] === 'boolean'
+        ? input['allowCrossPagePersistence']
+        : DEFAULT_KANGUR_AI_TUTOR_LEARNER_GUARDRAILS.allowCrossPagePersistence,
     allowLessons:
       typeof input['allowLessons'] === 'boolean'
         ? input['allowLessons']
-        : DEFAULT_KANGUR_AI_TUTOR_LEARNER_SETTINGS.allowLessons,
+        : DEFAULT_KANGUR_AI_TUTOR_LEARNER_GUARDRAILS.allowLessons,
     testAccessMode: normalizeTestAccessMode(input['testAccessMode']),
     showSources:
       typeof input['showSources'] === 'boolean'
         ? input['showSources']
-        : DEFAULT_KANGUR_AI_TUTOR_LEARNER_SETTINGS.showSources,
+        : DEFAULT_KANGUR_AI_TUTOR_LEARNER_GUARDRAILS.showSources,
     allowSelectedTextSupport:
       typeof input['allowSelectedTextSupport'] === 'boolean'
         ? input['allowSelectedTextSupport']
-        : DEFAULT_KANGUR_AI_TUTOR_LEARNER_SETTINGS.allowSelectedTextSupport,
-    dailyMessageLimit: normalizeDailyMessageLimit(input['dailyMessageLimit']),
+        : DEFAULT_KANGUR_AI_TUTOR_LEARNER_GUARDRAILS.allowSelectedTextSupport,
+    ...normalizeKangurAiTutorAppSettingsFields(input),
   };
 }
 
@@ -125,9 +286,16 @@ export function parseKangurAiTutorSettings(raw: unknown): KangurAiTutorSettingsS
 
 export function getKangurAiTutorSettingsForLearner(
   store: KangurAiTutorSettingsStore,
-  learnerId: string
+  learnerId: string,
+  appSettings?: KangurAiTutorAppSettings
 ): KangurAiTutorLearnerSettings {
-  return normalizeKangurAiTutorLearnerSettings(store[learnerId]);
+  const learnerSettings = normalizeKangurAiTutorLearnerSettings(store[learnerId]);
+
+  return {
+    ...DEFAULT_KANGUR_AI_TUTOR_LEARNER_SETTINGS,
+    ...learnerSettings,
+    ...(appSettings ?? normalizeKangurAiTutorAppSettings(learnerSettings)),
+  };
 }
 
 export function resolveKangurAiTutorAvailability(

@@ -141,6 +141,21 @@ const buildRunRecord = (): AiPathRunRecord => {
   } as AiPathRunRecord;
 };
 
+const getCompletedUpdatePayload = (): Record<string, unknown> | undefined =>
+  updateRunIfStatusMock.mock.calls
+    .map((call) => call[2] as Record<string, unknown>)
+    .find((payload) => payload['status'] === 'completed');
+
+const getRecordField = (
+  value: Record<string, unknown> | null | undefined,
+  key: string
+): Record<string, unknown> | undefined => {
+  const field = value?.[key];
+  return field && typeof field === 'object' && !Array.isArray(field)
+    ? (field as Record<string, unknown>)
+    : undefined;
+};
+
 describe('path-run-executor runtime-kernel settings integration', () => {
   beforeEach(() => {
     vi.resetModules();
@@ -242,15 +257,15 @@ describe('path-run-executor runtime-kernel settings integration', () => {
       | undefined;
     expect(args?.['runtimeKernelNodeTypes']).toBeUndefined();
 
-    const finalUpdatePayload = updateRunIfStatusMock.mock.calls
-      .map((call) => call[2] as Record<string, unknown>)
-      .find((payload) => payload['status'] === 'completed');
-    expect(finalUpdatePayload?.['meta']).toEqual(
+    const finalUpdatePayload = getCompletedUpdatePayload();
+    const runtimeKernelMeta = getRecordField(
+      getRecordField(finalUpdatePayload, 'meta'),
+      'runtimeKernel'
+    );
+    expect(runtimeKernelMeta).toEqual(
       expect.objectContaining({
-        runtimeKernel: expect.objectContaining({
-          runtimeKernelNodeTypes: [],
-          runtimeKernelNodeTypesSource: 'default',
-        }),
+        runtimeKernelNodeTypes: [],
+        runtimeKernelNodeTypesSource: 'default',
       })
     );
   });
@@ -280,15 +295,15 @@ describe('path-run-executor runtime-kernel settings integration', () => {
     expect(args?.['runtimeKernelNodeTypes']).toEqual(['template']);
     expect(args?.['runtimeKernelCodeObjectResolverIds']).toEqual(['resolver.path']);
 
-    const finalUpdatePayload = updateRunIfStatusMock.mock.calls
-      .map((call) => call[2] as Record<string, unknown>)
-      .find((payload) => payload['status'] === 'completed');
-    expect(finalUpdatePayload?.['meta']).toEqual(
+    const finalUpdatePayload = getCompletedUpdatePayload();
+    const runtimeKernelMeta = getRecordField(
+      getRecordField(finalUpdatePayload, 'meta'),
+      'runtimeKernel'
+    );
+    expect(runtimeKernelMeta).toEqual(
       expect.objectContaining({
-        runtimeKernel: expect.objectContaining({
-          runtimeKernelNodeTypesSource: 'path',
-          runtimeKernelCodeObjectResolverIdsSource: 'path',
-        }),
+        runtimeKernelNodeTypesSource: 'path',
+        runtimeKernelCodeObjectResolverIdsSource: 'path',
       })
     );
     expect(
@@ -324,17 +339,17 @@ describe('path-run-executor runtime-kernel settings integration', () => {
     expect(args?.['runtimeKernelNodeTypes']).toBeUndefined();
     expect(args?.['runtimeKernelCodeObjectResolverIds']).toBeUndefined();
 
-    const finalUpdatePayload = updateRunIfStatusMock.mock.calls
-      .map((call) => call[2] as Record<string, unknown>)
-      .find((payload) => payload['status'] === 'completed');
-    expect(finalUpdatePayload?.['meta']).toEqual(
+    const finalUpdatePayload = getCompletedUpdatePayload();
+    const runtimeKernelMeta = getRecordField(
+      getRecordField(finalUpdatePayload, 'meta'),
+      'runtimeKernel'
+    );
+    expect(runtimeKernelMeta).toEqual(
       expect.objectContaining({
-        runtimeKernel: expect.objectContaining({
-          runtimeKernelNodeTypes: [],
-          runtimeKernelNodeTypesSource: 'default',
-          runtimeKernelCodeObjectResolverIds: [],
-          runtimeKernelCodeObjectResolverIdsSource: 'default',
-        }),
+        runtimeKernelNodeTypes: [],
+        runtimeKernelNodeTypesSource: 'default',
+        runtimeKernelCodeObjectResolverIds: [],
+        runtimeKernelCodeObjectResolverIdsSource: 'default',
       })
     );
     expect(finalUpdatePayload?.['meta'] as Record<string, unknown> | undefined).not.toHaveProperty(
@@ -370,14 +385,15 @@ describe('path-run-executor runtime-kernel settings integration', () => {
           String(payload['message']).includes('code-object resolver ids include unknown entries')
       );
 
-    expect(warningEventPayload).toMatchObject({
-      runId: run.id,
-      level: 'warn',
-      metadata: expect.objectContaining({
+    const warningMetadata = getRecordField(warningEventPayload, 'metadata');
+    expect(warningEventPayload?.['runId']).toBe(run.id);
+    expect(warningEventPayload?.['level']).toBe('warn');
+    expect(warningMetadata).toEqual(
+      expect.objectContaining({
         runtimeKernelCodeObjectResolverIds: ['resolver.missing'],
         runtimeKernelCodeObjectResolverIdsMissing: ['resolver.missing'],
-      }),
-    });
+      })
+    );
   });
 
   it('wires runtime validation middleware according to preflight policy', async () => {
@@ -485,10 +501,11 @@ describe('path-run-executor runtime-kernel settings integration', () => {
           typeof payload['message'] === 'string' &&
           String(payload['message']).includes('finished with status: completed')
       );
-    expect(nodeFinishEventPayload).toMatchObject({
-      runId: run.id,
-      level: 'info',
-      metadata: expect.objectContaining({
+    const nodeFinishMetadata = getRecordField(nodeFinishEventPayload, 'metadata');
+    expect(nodeFinishEventPayload?.['runId']).toBe(run.id);
+    expect(nodeFinishEventPayload?.['level']).toBe('info');
+    expect(nodeFinishMetadata).toEqual(
+      expect.objectContaining({
         traceId: run.id,
         spanId: `${node?.id ?? 'node-1'}:1:1`,
         runtimeKernelNodeTypes: ['constant', 'template'],
@@ -498,57 +515,52 @@ describe('path-run-executor runtime-kernel settings integration', () => {
         runtimeStrategy: 'code_object_v3',
         runtimeResolutionSource: 'override',
         runtimeCodeObjectId: 'ai-paths.node-code-object.constant.v3',
-      }),
-    });
-
-    const finalUpdatePayload = updateRunIfStatusMock.mock.calls
-      .map((call) => call[2] as Record<string, unknown>)
-      .find((payload) => payload['status'] === 'completed');
-    expect(finalUpdatePayload).toBeDefined();
-    expect(finalUpdatePayload?.['meta']).toEqual(
-      expect.objectContaining({
-        runtimeKernel: {
-          runtimeKernelNodeTypes: ['constant', 'template'],
-          runtimeKernelNodeTypesSource: 'settings',
-          runtimeKernelCodeObjectResolverIds: ['resolver.primary', 'resolver.fallback'],
-          runtimeKernelCodeObjectResolverIdsSource: 'settings',
-        },
-        runtimeTrace: expect.objectContaining({
-          version: 'ai-paths.trace.v1',
-          traceId: run.id,
-          runId: run.id,
-          source: 'server',
-          finishedAt: expect.any(String),
-          spans: [
-            expect.objectContaining({
-              spanId: `${node?.id ?? 'node-1'}:1:1`,
-              runId: run.id,
-              traceId: run.id,
-              nodeId: node?.id ?? 'node-1',
-              nodeType: node?.type ?? 'trigger',
-              iteration: 1,
-              attempt: 1,
-              status: 'completed',
-            }),
-          ],
-          kernelParity: {
-            sampledHistoryEntries: 2,
-            strategyCounts: {
-              compatibility: 1,
-              code_object_v3: 1,
-              unknown: 0,
-            },
-            resolutionSourceCounts: {
-              override: 1,
-              registry: 1,
-              missing: 0,
-              unknown: 0,
-            },
-            codeObjectIds: ['ai-paths.node-code-object.constant.v3'],
-          },
-        }),
       })
     );
+
+    const finalUpdatePayload = getCompletedUpdatePayload();
+    expect(finalUpdatePayload).toBeDefined();
+    const finalMeta = getRecordField(finalUpdatePayload, 'meta');
+    const runtimeKernelMeta = getRecordField(finalMeta, 'runtimeKernel');
+    const runtimeTrace = getRecordField(finalMeta, 'runtimeTrace');
+    expect(runtimeKernelMeta).toEqual({
+      runtimeKernelNodeTypes: ['constant', 'template'],
+      runtimeKernelNodeTypesSource: 'settings',
+      runtimeKernelCodeObjectResolverIds: ['resolver.primary', 'resolver.fallback'],
+      runtimeKernelCodeObjectResolverIdsSource: 'settings',
+    });
+    expect(runtimeTrace?.['version']).toBe('ai-paths.trace.v1');
+    expect(runtimeTrace?.['traceId']).toBe(run.id);
+    expect(runtimeTrace?.['runId']).toBe(run.id);
+    expect(runtimeTrace?.['source']).toBe('server');
+    expect(typeof runtimeTrace?.['finishedAt']).toBe('string');
+    expect(runtimeTrace?.['spans']).toEqual([
+      expect.objectContaining({
+        spanId: `${node?.id ?? 'node-1'}:1:1`,
+        runId: run.id,
+        traceId: run.id,
+        nodeId: node?.id ?? 'node-1',
+        nodeType: node?.type ?? 'trigger',
+        iteration: 1,
+        attempt: 1,
+        status: 'completed',
+      }),
+    ]);
+    expect(getRecordField(runtimeTrace, 'kernelParity')).toEqual({
+      sampledHistoryEntries: 2,
+      strategyCounts: {
+        compatibility: 1,
+        code_object_v3: 1,
+        unknown: 0,
+      },
+      resolutionSourceCounts: {
+        override: 1,
+        registry: 1,
+        missing: 0,
+        unknown: 0,
+      },
+      codeObjectIds: ['ai-paths.node-code-object.constant.v3'],
+    });
     expect(nodeFinishEventPayload?.['metadata']).not.toHaveProperty(
       DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_FIELD
     );
@@ -601,16 +613,19 @@ describe('path-run-executor runtime-kernel settings integration', () => {
           'node_pre_execute'
       );
 
-    expect(validationEventPayload).toMatchObject({
-      runId: run.id,
-      level: 'warn',
-      message: 'validation warning from runtime middleware',
-      metadata: expect.objectContaining({
+    const validationMetadata = getRecordField(validationEventPayload, 'metadata');
+    expect(validationEventPayload?.['runId']).toBe(run.id);
+    expect(validationEventPayload?.['level']).toBe('warn');
+    expect(validationEventPayload?.['message']).toBe(
+      'validation warning from runtime middleware'
+    );
+    expect(validationMetadata).toEqual(
+      expect.objectContaining({
         stage: 'node_pre_execute',
         decision: 'warn',
         issueCount: 1,
         nodeId: warningNode?.id ?? null,
-      }),
-    });
+      })
+    );
   });
 });

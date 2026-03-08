@@ -24,6 +24,7 @@ export const DEFAULT_APP_EMBED_ENTRY_PAGE = KANGUR_MAIN_PAGE_KEY;
 export const KANGUR_APP_EMBED_ENTRY_PAGE_OPTIONS = [
   { label: 'Home / Game', value: 'Game' },
   { label: 'Lessons', value: 'Lessons' },
+  { label: 'Tests', value: 'Tests' },
   { label: 'Learner Profile', value: 'LearnerProfile' },
   { label: 'Parent Dashboard', value: 'ParentDashboard' },
 ] as const;

@@ -1,5 +1,5 @@
+import { resolveBrainProviderCredential } from '@/shared/lib/ai-brain/provider-credentials';
 import { REMOTE_OCR_TIMEOUT_MS } from '../config';
-import { resolveGeminiApiKey } from '../api-keys';
 import { parseGeminiResponseText } from '../response-parsers';
 import { type GeminiResponse } from '../types';
 import { buildOcrPromptContent, fetchWithTimeout } from '../utils';
@@ -12,7 +12,7 @@ export const runGeminiOcrRequest = async (input: {
   mimeType?: string | undefined;
   extractedDocumentText?: string | undefined;
 }): Promise<string> => {
-  const apiKey = await resolveGeminiApiKey();
+  const apiKey = await resolveBrainProviderCredential('gemini');
   const parts = [
     {
       text:

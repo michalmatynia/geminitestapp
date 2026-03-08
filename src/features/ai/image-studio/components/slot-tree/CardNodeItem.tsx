@@ -92,6 +92,10 @@ export function CardNodeItem(props: CardNodeItemProps): React.JSX.Element | null
           baseIndent={8}
           indent={12}
           tone='subtle'
+          role='treeitem'
+          aria-level={depth + 1}
+          aria-selected={isSelected}
+          aria-label={card.name || node.name}
           selected={isSelected}
           className='h-8 text-xs'
         >
@@ -153,6 +157,10 @@ export function CardNodeItem(props: CardNodeItemProps): React.JSX.Element | null
           baseIndent={8}
           indent={12}
           tone='subtle'
+          role='treeitem'
+          aria-level={depth + 1}
+          aria-selected={isSelected}
+          aria-label={card.name || node.name}
           selected={isSelected}
           selectedClassName='bg-muted text-white hover:bg-muted'
           className='relative h-8 text-xs'

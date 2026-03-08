@@ -81,9 +81,25 @@ const port = process.env.PORT ? Number(process.env.PORT) : 3000;
 const host = process.env.HOST || '::';
 const hasExplicitHost = typeof process.env.HOST === 'string' && process.env.HOST.length > 0;
 const nextHostname = host === '::' ? undefined : host;
+const requestedDevBundler =
+  typeof process.env['NEXT_DEV_BUNDLER'] === 'string'
+    ? process.env['NEXT_DEV_BUNDLER'].trim().toLowerCase()
+    : '';
 
 const next = require('next');
-const app = next({ dev, hostname: nextHostname, port });
+const nextOptions = {
+  dev,
+  hostname: nextHostname,
+  port,
+};
+
+if (dev && requestedDevBundler === 'webpack') {
+  nextOptions.webpack = true;
+} else if (dev && (requestedDevBundler === 'turbopack' || requestedDevBundler === 'turbo')) {
+  nextOptions.turbopack = true;
+}
+
+const app = next(nextOptions);
 const handle = app.getRequestHandler();
 
 const SCRAPER_GUARD = createScraperGuard({

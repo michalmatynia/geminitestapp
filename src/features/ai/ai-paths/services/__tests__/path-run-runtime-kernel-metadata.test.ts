@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { HISTORICAL_RUNTIME_COMPATIBILITY_ALIAS } from '../../../../../../scripts/db/ai-paths-runtime-compatibility-normalization';
+import { HISTORICAL_RUNTIME_COMPATIBILITY_ALIAS } from '@/dev/ai-paths-runtime-compatibility-normalization';
 import {
   DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD,
   DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD,

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildAccessibilityRouteCrawlTitle,
   normalizeAccessibilityRouteEntries,
+  resolveAccessibilityRouteCrawlAgentId,
   summarizeAccessibilityRouteCrawlReport,
 } from './lib/accessibility-route-crawl.mjs';
 
@@ -38,6 +39,28 @@ describe('normalizeAccessibilityRouteEntries', () => {
         { id: 'dashboard', route: '/admin/products', audience: 'admin' },
       ])
     ).toThrow(/duplicate id/i);
+  });
+});
+
+describe('resolveAccessibilityRouteCrawlAgentId', () => {
+  it('isolates the route crawl onto its own broker agent by default', () => {
+    expect(
+      resolveAccessibilityRouteCrawlAgentId({
+        env: {},
+        defaultAgentId: 'michalmatynia',
+      })
+    ).toBe('michalmatynia-route-crawl');
+  });
+
+  it('respects an explicit route crawl agent override', () => {
+    expect(
+      resolveAccessibilityRouteCrawlAgentId({
+        env: {
+          PLAYWRIGHT_ROUTE_CRAWL_AGENT_ID: 'Route Crawl Final',
+        },
+        defaultAgentId: 'michalmatynia',
+      })
+    ).toBe('route-crawl-final');
   });
 });
 

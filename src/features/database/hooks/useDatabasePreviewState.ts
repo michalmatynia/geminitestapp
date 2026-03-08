@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback, useRef } from 'react';
 
 import type { DatabaseTableDetail, DatabaseTablePreviewData } from '@/shared/contracts/database';
+import { getMotionSafeScrollBehavior } from '@/shared/utils';
 
 import {
   useDatabaseConfig,
@@ -29,14 +30,22 @@ export function useDatabasePreviewState() {
 
   const scrollToConsole = useCallback(() => {
     setTimeout(
-      () => consoleSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+      () =>
+        consoleSectionRef.current?.scrollIntoView({
+          behavior: getMotionSafeScrollBehavior('smooth'),
+          block: 'start',
+        }),
       50
     );
   }, []);
 
   const scrollToCrud = useCallback(() => {
     setTimeout(
-      () => crudSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+      () =>
+        crudSectionRef.current?.scrollIntoView({
+          behavior: getMotionSafeScrollBehavior('smooth'),
+          block: 'start',
+        }),
       50
     );
   }, []);

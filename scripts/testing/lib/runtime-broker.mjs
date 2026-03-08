@@ -184,6 +184,7 @@ const resolveManagedLeaseDistDirPath = (lease) => {
   const expectedManagedDistDir = resolveBrokerManagedDistDir({
     appId: lease.appId,
     mode: lease.mode,
+    bundler: lease.bundler ?? null,
     agentId: lease.agentId,
   });
   const usesManagedDistDir =
@@ -597,15 +598,19 @@ export const buildRuntimeLeaseKey = ({
   rootDir,
   appId = DEFAULT_APP_ID,
   mode = DEFAULT_MODE,
+  bundler = null,
   agentId = 'local',
 }) => {
   const rootHash = hashToken(path.resolve(rootDir || '.'));
   return [
     sanitizeRuntimeToken(appId, DEFAULT_APP_ID),
     sanitizeRuntimeToken(mode, DEFAULT_MODE),
+    bundler ? sanitizeRuntimeToken(bundler, 'bundler') : null,
     sanitizeRuntimeToken(agentId, 'local'),
     rootHash,
-  ].join('-');
+  ]
+    .filter(Boolean)
+    .join('-');
 };
 
 export const resolveRuntimeBrokerDir = ({ rootDir, env = process.env } = {}) =>
@@ -615,9 +620,43 @@ export const resolveRuntimeBrokerDir = ({ rootDir, env = process.env } = {}) =>
 export const resolveBrokerManagedDistDir = ({
   appId = DEFAULT_APP_ID,
   mode = DEFAULT_MODE,
+  bundler = null,
   agentId = 'local',
 } = {}) =>
-  `.next-dev-${sanitizeRuntimeToken(appId, DEFAULT_APP_ID)}-${sanitizeRuntimeToken(mode, DEFAULT_MODE)}-${sanitizeRuntimeToken(agentId, 'local')}`;
+  [
+    '.next-dev',
+    sanitizeRuntimeToken(appId, DEFAULT_APP_ID),
+    sanitizeRuntimeToken(mode, DEFAULT_MODE),
+    bundler ? sanitizeRuntimeToken(bundler, 'bundler') : null,
+    sanitizeRuntimeToken(agentId, 'local'),
+  ]
+    .filter(Boolean)
+    .join('-');
+
+const resolveBrokerDevBundler = ({
+  env = process.env,
+  mode = DEFAULT_MODE,
+  fallback = null,
+} = {}) => {
+  if (sanitizeRuntimeToken(mode, DEFAULT_MODE) !== DEFAULT_MODE) {
+    return null;
+  }
+
+  const requestedBundler = sanitizeRuntimeToken(
+    env['PLAYWRIGHT_RUNTIME_DEV_BUNDLER'] ?? env['NEXT_DEV_BUNDLER'],
+    ''
+  );
+
+  if (requestedBundler === 'webpack') {
+    return 'webpack';
+  }
+
+  if (requestedBundler === 'turbopack' || requestedBundler === 'turbo') {
+    return 'turbopack';
+  }
+
+  return fallback ? sanitizeRuntimeToken(fallback, 'bundler') : null;
+};
 
 export const resolveBrokerManagedRuntimeTmpDir = ({ leaseKey } = {}) =>
   path.join(
@@ -701,22 +740,31 @@ const buildBrokerServerEnv = ({
   host,
   port,
   distDir,
+  bundler,
   runtimeTmpDir,
   agentId,
   leaseKey,
   preferredBrowserNodeBinDir,
-}) => ({
-  ...env,
-  HOST: host,
-  PORT: String(port),
-  NEXT_DIST_DIR: distDir,
-  PLAYWRIGHT_RUNTIME_AGENT_ID: agentId,
-  PLAYWRIGHT_RUNTIME_LEASE_KEY: leaseKey,
-  TMPDIR: runtimeTmpDir,
-  TMP: runtimeTmpDir,
-  TEMP: runtimeTmpDir,
-  PATH: prependBinToPath(preferredBrowserNodeBinDir, env['PATH']),
-});
+}) => {
+  const nextEnv = {
+    ...env,
+    HOST: host,
+    PORT: String(port),
+    NEXT_DIST_DIR: distDir,
+    PLAYWRIGHT_RUNTIME_AGENT_ID: agentId,
+    PLAYWRIGHT_RUNTIME_LEASE_KEY: leaseKey,
+    TMPDIR: runtimeTmpDir,
+    TMP: runtimeTmpDir,
+    TEMP: runtimeTmpDir,
+    PATH: prependBinToPath(preferredBrowserNodeBinDir, env['PATH']),
+  };
+
+  if (bundler) {
+    nextEnv['NEXT_DEV_BUNDLER'] = bundler;
+  }
+
+  return nextEnv;
+};
 
 export const resolveExplicitPlaywrightRuntime = async ({
   env = process.env,
@@ -822,11 +870,16 @@ export const acquireRuntimeLease = async ({
   );
   const resolvedAppId = sanitizeRuntimeToken(appId, DEFAULT_APP_ID);
   const resolvedMode = sanitizeRuntimeToken(mode, DEFAULT_MODE);
+  const resolvedBundler = resolveBrokerDevBundler({
+    env,
+    mode: resolvedMode,
+  });
   const brokerDir = resolveRuntimeBrokerDir({ rootDir: resolvedRootDir, env });
   const leaseKey = buildRuntimeLeaseKey({
     rootDir: resolvedRootDir,
     appId: resolvedAppId,
     mode: resolvedMode,
+    bundler: resolvedBundler,
     agentId: resolvedAgentId,
   });
   const { leaseFilePath, logFilePath, lockFilePath } = resolveBrokerLeasePaths({ brokerDir, leaseKey });
@@ -874,6 +927,7 @@ export const acquireRuntimeLease = async ({
       resolveBrokerManagedDistDir({
         appId: resolvedAppId,
         mode: resolvedMode,
+        bundler: resolvedBundler,
         agentId: resolvedAgentId,
       });
     const managedDistDir = !(env['NEXT_DIST_DIR']?.trim());
@@ -893,6 +947,7 @@ export const acquireRuntimeLease = async ({
           host,
           port,
           distDir,
+          bundler: resolvedBundler,
           runtimeTmpDir: resolvedRuntimeTmpDir,
           agentId: resolvedAgentId,
           leaseKey,
@@ -912,6 +967,7 @@ export const acquireRuntimeLease = async ({
       rootDir: resolvedRootDir,
       appId: resolvedAppId,
       mode: resolvedMode,
+      bundler: resolvedBundler,
       agentId: resolvedAgentId,
       host,
       port,

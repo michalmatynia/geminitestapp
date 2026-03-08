@@ -36,12 +36,30 @@ vi.mock('@/shared/ui', async () => {
       children,
       className,
       style,
+      role,
+      'aria-level': ariaLevel,
+      'aria-selected': ariaSelected,
+      'aria-expanded': ariaExpanded,
+      'aria-label': ariaLabel,
     }: {
       children: React.ReactNode;
       className?: string;
       style?: React.CSSProperties;
+      role?: string;
+      'aria-level'?: number;
+      'aria-selected'?: boolean;
+      'aria-expanded'?: boolean;
+      'aria-label'?: string;
     }): React.JSX.Element => (
-      <div className={className} style={style}>
+      <div
+        className={className}
+        style={style}
+        role={role}
+        aria-level={ariaLevel}
+        aria-selected={ariaSelected}
+        aria-expanded={ariaExpanded}
+        aria-label={ariaLabel}
+      >
         {children}
       </div>
     ),
@@ -146,7 +164,11 @@ describe('Image Studio slot tree accessibility', () => {
     const expandButton = screen.getByRole('button', { name: 'Expand Folder A' });
     const selectButton = screen.getByRole('button', { name: 'Folder A' });
     const deleteButton = screen.getByRole('button', { name: 'Delete Folder A' });
+    const treeItem = screen.getByRole('treeitem', { name: 'Folder A' });
 
+    expect(treeItem).toHaveAttribute('aria-level', '1');
+    expect(treeItem).toHaveAttribute('aria-expanded', 'false');
+    expect(treeItem).toHaveAttribute('aria-selected', 'false');
     expect(within(selectButton).queryByRole('button')).not.toBeInTheDocument();
 
     fireEvent.click(expandButton);
@@ -200,7 +222,10 @@ describe('Image Studio slot tree accessibility', () => {
 
     const selectButton = screen.getByRole('button', { name: /Hero card.*mask/i });
     const deleteButton = screen.getByRole('button', { name: 'Delete Hero card' });
+    const treeItem = screen.getByRole('treeitem', { name: 'Hero card' });
 
+    expect(treeItem).toHaveAttribute('aria-level', '2');
+    expect(treeItem).toHaveAttribute('aria-selected', 'false');
     expect(within(selectButton).queryByRole('button')).not.toBeInTheDocument();
 
     fireEvent.click(deleteButton);

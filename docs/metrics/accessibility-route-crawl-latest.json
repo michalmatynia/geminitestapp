@@ -1,18 +1,18 @@
 {
-  "generatedAt": "2026-03-08T17:59:51.409Z",
+  "generatedAt": "2026-03-08T19:10:15.636Z",
   "status": "passed",
   "runtime": {
     "source": "broker",
     "reused": false,
-    "baseUrl": "http://127.0.0.1:57179",
-    "agentId": "route-crawl-final-6",
-    "leaseKey": "web-dev-route-crawl-final-6-ed58ad7e"
+    "baseUrl": "http://127.0.0.1:62093",
+    "agentId": "michalmatynia-route-crawl",
+    "leaseKey": "web-dev-michalmatynia-route-crawl-ed58ad7e"
   },
   "summary": {
     "total": 17,
     "passed": 17,
     "failed": 0,
-    "durationMs": 193071.734,
+    "durationMs": 141381.454,
     "unexpected": 0,
     "flaky": 0,
     "skipped": 0,
@@ -30,7 +30,7 @@
       "contextSelector": null,
       "title": "[public-home] / passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 16246,
+      "durationMs": 18759,
       "errors": []
     },
     {
@@ -42,7 +42,7 @@
       "contextSelector": null,
       "title": "[auth-signin] /auth/signin passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 1654,
+      "durationMs": 1370,
       "errors": []
     },
     {
@@ -54,7 +54,7 @@
       "contextSelector": null,
       "title": "[auth-register] /auth/register passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 2524,
+      "durationMs": 1862,
       "errors": []
     },
     {
@@ -66,7 +66,7 @@
       "contextSelector": null,
       "title": "[admin-dashboard] /admin passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 8496,
+      "durationMs": 9465,
       "errors": []
     },
     {
@@ -78,7 +78,7 @@
       "contextSelector": null,
       "title": "[admin-products] /admin/products passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 9711,
+      "durationMs": 9013,
       "errors": []
     },
     {
@@ -90,7 +90,7 @@
       "contextSelector": null,
       "title": "[admin-notes] /admin/notes passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 6005,
+      "durationMs": 7326,
       "errors": []
     },
     {
@@ -102,7 +102,7 @@
       "contextSelector": null,
       "title": "[admin-integrations] /admin/integrations passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 6557,
+      "durationMs": 4366,
       "errors": []
     },
     {
@@ -114,7 +114,7 @@
       "contextSelector": null,
       "title": "[admin-case-resolver] /admin/case-resolver passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 9673,
+      "durationMs": 10585,
       "errors": []
     },
     {
@@ -126,7 +126,7 @@
       "contextSelector": null,
       "title": "[admin-cms] /admin/cms passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 35078,
+      "durationMs": 3283,
       "errors": []
     },
     {
@@ -138,7 +138,7 @@
       "contextSelector": null,
       "title": "[admin-ai-paths] /admin/ai-paths passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 17946,
+      "durationMs": 15217,
       "errors": []
     },
     {
@@ -150,7 +150,7 @@
       "contextSelector": null,
       "title": "[admin-image-studio] /admin/image-studio passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 36860,
+      "durationMs": 14468,
       "errors": []
     },
     {
@@ -162,7 +162,7 @@
       "contextSelector": null,
       "title": "[admin-chatbot] /admin/chatbot passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 6451,
+      "durationMs": 4647,
       "errors": []
     },
     {
@@ -174,7 +174,7 @@
       "contextSelector": null,
       "title": "[admin-agentcreator] /admin/agentcreator passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 3400,
+      "durationMs": 3505,
       "errors": []
     },
     {
@@ -186,7 +186,7 @@
       "contextSelector": null,
       "title": "[admin-prompt-engine-validation] /admin/prompt-engine/validation passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 3301,
+      "durationMs": 3308,
       "errors": []
     },
     {
@@ -198,7 +198,7 @@
       "contextSelector": null,
       "title": "[admin-kangur] /admin/kangur passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 6046,
+      "durationMs": 6554,
       "errors": []
     },
     {
@@ -210,7 +210,7 @@
       "contextSelector": null,
       "title": "[admin-databases] /admin/databases/engine passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 13210,
+      "durationMs": 13767,
       "errors": []
     },
     {
@@ -222,11 +222,11 @@
       "contextSelector": null,
       "title": "[admin-brain-settings] /admin/brain?tab=routing passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 8075,
+      "durationMs": 9583,
       "errors": []
     }
   ],
   "stderr": "",
-  "durationMs": 210762,
+  "durationMs": 159737,
   "exitCode": 0
 }

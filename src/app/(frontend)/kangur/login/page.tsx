@@ -1,8 +1,8 @@
-import type { JSX } from 'react';
+import { Suspense, type JSX } from 'react';
 import { redirect } from 'next/navigation';
 
 import { getKangurCanonicalPublicHref } from '@/features/kangur/config/routing';
-import { KangurLoginPage } from '@/features/kangur/ui/KangurLoginPage';
+import { KangurFeatureRouteShell } from '@/features/kangur/ui/KangurFeatureRouteShell';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
 
 import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '../../home-helpers';
@@ -23,5 +23,9 @@ export default async function Page({
     }
   }
 
-  return <KangurLoginPage defaultCallbackUrl='/kangur' backHref='/kangur' />;
+  return (
+    <Suspense fallback={<div className='sr-only'>Ladowanie Kangura...</div>}>
+      <KangurFeatureRouteShell />
+    </Suspense>
+  );
 }

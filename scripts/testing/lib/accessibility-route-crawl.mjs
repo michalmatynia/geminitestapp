@@ -1,3 +1,5 @@
+import { sanitizeRuntimeToken } from './runtime-broker.mjs';
+
 const VALID_AUDIENCES = new Set(['public', 'admin']);
 
 const normalizeString = (value) => (typeof value === 'string' ? value.trim() : '');
@@ -9,6 +11,20 @@ const normalizeOptionalString = (value) => {
 
 export const buildAccessibilityRouteCrawlTitle = (routeEntry) =>
   `[${routeEntry.id}] ${routeEntry.route} passes the route-crawl accessibility scan`;
+
+export const resolveAccessibilityRouteCrawlAgentId = ({
+  env = process.env,
+  defaultAgentId = 'local',
+} = {}) => {
+  const override = normalizeString(
+    env['PLAYWRIGHT_ROUTE_CRAWL_AGENT_ID'] ?? env['PLAYWRIGHT_RUNTIME_AGENT_ID']
+  );
+  if (override) {
+    return sanitizeRuntimeToken(override, 'route-crawl');
+  }
+
+  return sanitizeRuntimeToken(`${defaultAgentId}-route-crawl`, 'route-crawl');
+};
 
 export const normalizeAccessibilityRouteEntries = (entries) => {
   if (!Array.isArray(entries)) {

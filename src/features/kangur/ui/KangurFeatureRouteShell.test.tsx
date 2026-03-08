@@ -105,6 +105,23 @@ describe('KangurFeatureRouteShell', () => {
     });
   });
 
+  it('uses the main page behind the compatibility login route so the shell can show the modal', () => {
+    usePathnameMock.mockReturnValue('/kangur/login');
+
+    render(<KangurFeatureRouteShell />);
+
+    expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
+      pageKey: 'Game',
+      requestedPath: '/kangur',
+      basePath: '/kangur',
+      embedded: false,
+    });
+    expect(setKangurClientObservabilityContextMock).toHaveBeenCalledWith({
+      pageKey: 'Game',
+      requestedPath: '/kangur',
+    });
+  });
+
   it('clears the client observability context on unmount', () => {
     const { unmount } = render(<KangurFeatureRouteShell />);
 

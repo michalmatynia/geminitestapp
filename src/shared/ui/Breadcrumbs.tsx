@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn, getMotionSafeScrollBehavior } from '@/shared/utils';
 import { Button } from './button';
 
 export interface BreadcrumbItem {
@@ -62,7 +62,7 @@ export function Breadcrumbs({
     const el = scrollRef.current;
     if (!el) return;
     const offset = direction === 'left' ? -140 : 140;
-    el.scrollBy({ left: offset, behavior: 'smooth' });
+    el.scrollBy({ left: offset, behavior: getMotionSafeScrollBehavior('smooth') });
   };
 
   if (items.length === 0) return <></>;

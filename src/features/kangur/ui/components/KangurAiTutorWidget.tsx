@@ -39,7 +39,7 @@ import type {
   KangurAiTutorPromptMode,
   KangurAiTutorSurface,
 } from '@/shared/contracts/kangur-ai-tutor';
-import { cn, sanitizeSvg } from '@/shared/utils';
+import { cn, getMotionSafeScrollBehavior, sanitizeSvg } from '@/shared/utils';
 
 import {
   ATTACHED_AVATAR_EDGE_INSET,
@@ -1166,7 +1166,9 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
   }, [isOpen]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({
+      behavior: getMotionSafeScrollBehavior('smooth'),
+    });
     if (!isOpen && messages.length > 0 && messages[messages.length - 1]?.role === 'assistant') {
       setHasNewMessage(true);
     }

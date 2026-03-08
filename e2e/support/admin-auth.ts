@@ -1,5 +1,11 @@
 import type { Page } from '@playwright/test';
 
+type EnsureAdminSessionOptions = {
+  initialNavigationTimeoutMs?: number;
+  destinationNavigationTimeoutMs?: number;
+  transitionTimeoutMs?: number;
+};
+
 const credentialCandidates = [
   {
     email: process.env['PLAYWRIGHT_E2E_ADMIN_EMAIL'],
@@ -28,13 +34,19 @@ const credentialCandidates = [
 
 export async function ensureAdminSession(
   page: Page,
-  destination = '/admin'
+  destination = '/admin',
+  options: EnsureAdminSessionOptions = {}
 ): Promise<void> {
+  const {
+    initialNavigationTimeoutMs = 60_000,
+    destinationNavigationTimeoutMs = 60_000,
+    transitionTimeoutMs = 30_000,
+  } = options;
   const destinationUrl = new URL(destination, 'http://localhost');
 
   await page.goto(`/auth/signin?callbackUrl=${encodeURIComponent(destination)}`, {
     waitUntil: 'domcontentloaded',
-    timeout: 60_000,
+    timeout: initialNavigationTimeoutMs,
   });
   const signInHeading = page.getByRole('heading', { name: /sign in/i });
   if (!(await signInHeading.isVisible().catch(() => false))) {
@@ -50,7 +62,7 @@ export async function ensureAdminSession(
     const landingPath = await page
       .waitForURL(
         (url) => url.pathname !== '/auth/signin',
-        { timeout: 30_000 }
+        { timeout: transitionTimeoutMs }
       )
       .then(() => new URL(page.url(), 'http://localhost').pathname)
       .catch(() => null);
@@ -62,13 +74,13 @@ export async function ensureAdminSession(
     if (landingPath === '/admin') {
       await page.goto(destination, {
         waitUntil: 'domcontentloaded',
-        timeout: 60_000,
+        timeout: destinationNavigationTimeoutMs,
       });
       await page.waitForURL(
         (url) =>
           url.pathname === destinationUrl.pathname &&
           (destinationUrl.search ? url.search === destinationUrl.search : true),
-        { timeout: 30_000 }
+        { timeout: transitionTimeoutMs }
       );
       return;
     }

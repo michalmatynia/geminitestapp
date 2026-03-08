@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { HISTORICAL_RUNTIME_COMPATIBILITY_ALIAS } from '../../../../../../scripts/db/ai-paths-runtime-compatibility-normalization';
+import { HISTORICAL_RUNTIME_COMPATIBILITY_ALIAS } from '@/dev/ai-paths-runtime-compatibility-normalization';
 
 import {
   buildPersistedRuntimeState,

@@ -15,5 +15,3 @@ export const POST = apiHandler(POST_handler, {
   source: 'settings.POST',
   rateLimitKey: disableSettingsRateLimit ? false : 'write',
 });
-
-export { GET_handler };

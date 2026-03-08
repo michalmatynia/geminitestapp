@@ -196,14 +196,15 @@ test.describe.serial('Front Manage', () => {
         waitUntil: 'domcontentloaded',
       });
       await expect(page).toHaveURL(/\/login\?callbackUrl=%2Fkangur%2Ftests$/);
-      await expect(page.locator('[data-testid="kangur-login-shell"]')).toBeVisible();
+      await expect(page.locator('[data-testid="kangur-feature-page-shell"]')).toBeVisible();
+      await expect(page.locator('[data-testid="kangur-login-modal"]')).toBeVisible();
       await expect(page.getByTestId('kangur-login-form')).toHaveAttribute(
-        'data-login-mode',
-        'parent'
+        'data-login-kind',
+        'unknown'
       );
-      await expect(page.getByTestId('kangur-login-form').getByLabel('Email rodzica')).toBeVisible();
-      await expect(page.getByLabel('Nick ucznia')).toHaveCount(0);
-      await expect(page.getByRole('link', { name: /Przejdz do logowania rodzica/i })).toHaveCount(0);
+      await expect(
+        page.getByTestId('kangur-login-form').getByLabel('Email rodzica lub nick ucznia')
+      ).toBeVisible();
     } finally {
       await page.goto('/admin/front-manage', { waitUntil: 'domcontentloaded' }).catch(() => {});
       if (originalValue === 'products') {
@@ -231,13 +232,15 @@ test.describe.serial('Front Manage', () => {
         waitUntil: 'domcontentloaded',
       });
       await expect(page).toHaveURL(/\/kangur\/login\?callbackUrl=%2Fkangur%2Ftests$/);
-      await expect(page.locator('[data-testid="kangur-login-shell"]')).toBeVisible();
+      await expect(page.locator('[data-testid="kangur-route-shell"]')).toBeVisible();
+      await expect(page.locator('[data-testid="kangur-login-modal"]')).toBeVisible();
       await expect(page.getByTestId('kangur-login-form')).toHaveAttribute(
-        'data-login-mode',
-        'parent'
+        'data-login-kind',
+        'unknown'
       );
-      await expect(page.getByTestId('kangur-login-form').getByLabel('Email rodzica')).toBeVisible();
-      await expect(page.getByLabel('Nick ucznia')).toHaveCount(0);
+      await expect(
+        page.getByTestId('kangur-login-form').getByLabel('Email rodzica lub nick ucznia')
+      ).toBeVisible();
     } finally {
       await page.goto('/admin/front-manage', { waitUntil: 'domcontentloaded' }).catch(() => {});
       if (originalValue === 'products') {

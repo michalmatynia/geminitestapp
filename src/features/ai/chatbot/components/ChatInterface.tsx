@@ -20,6 +20,7 @@ import {
   useChatbotSessions,
   useChatbotSettings,
 } from '../context/ChatbotContext';
+import { getMotionSafeScrollBehavior } from '@/shared/utils';
 
 export function ChatInterface(): React.JSX.Element {
   const { messages, input, setInput, isSending, sendMessage } = useChatbotMessages();
@@ -30,7 +31,9 @@ export function ChatInterface(): React.JSX.Element {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect((): void => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({
+      behavior: getMotionSafeScrollBehavior('smooth'),
+    });
   }, [messages]);
 
   const activeSessionPersonaId = useMemo(() => {

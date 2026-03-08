@@ -382,6 +382,9 @@ export const resolveKangurPageKeyFromSlug = (slug: string | null | undefined): s
   if (!slug) {
     return KANGUR_MAIN_PAGE_KEY;
   }
+  if (slug.trim().toLowerCase() === 'login') {
+    return KANGUR_MAIN_PAGE_KEY;
+  }
   return KANGUR_SLUG_TO_PAGE[slug.toLowerCase()] ?? null;
 };
 

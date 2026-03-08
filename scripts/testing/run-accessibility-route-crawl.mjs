@@ -13,6 +13,7 @@ import {
 } from './lib/runtime-broker.mjs';
 import {
   normalizeAccessibilityRouteEntries,
+  resolveAccessibilityRouteCrawlAgentId,
   summarizeAccessibilityRouteCrawlReport,
 } from './lib/accessibility-route-crawl.mjs';
 
@@ -21,7 +22,11 @@ const root = process.cwd();
 const routeEntries = normalizeAccessibilityRouteEntries(accessibilityRouteCrawlRoutes);
 const playwrightHost = process.env['HOST'] || '127.0.0.1';
 const playwrightBaseUrl = process.env['PLAYWRIGHT_BASE_URL'] || `http://${playwrightHost}:3000`;
-const playwrightAgentId = resolveRuntimeAgentId({ env: process.env });
+const defaultPlaywrightAgentId = resolveRuntimeAgentId({ env: process.env });
+const playwrightAgentId = resolveAccessibilityRouteCrawlAgentId({
+  env: process.env,
+  defaultAgentId: defaultPlaywrightAgentId,
+});
 const shouldStopPlaywrightRuntime = process.env['PLAYWRIGHT_RUNTIME_KEEP_ALIVE'] !== 'true';
 
 const toMarkdown = (payload) => {

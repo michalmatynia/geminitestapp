@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
-import { GET_handler } from '../route';
+import { GET_handler } from '../handler';
 
 export const disableSettingsRateLimit = process.env['NODE_ENV'] !== 'production';
 

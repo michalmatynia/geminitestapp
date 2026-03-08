@@ -262,7 +262,7 @@ export const deleteVariantFromCenterPreview = async ({
             domain: 'image_studio',
             queryKey: studioKeys.slots(projectId),
             tags: ['image-studio', 'slots', 'fetch'],
-          },
+            description: 'Loads image studio slots.'},
         })();
       },
       rootVariantSourceSlotId,
@@ -354,7 +354,7 @@ export const deleteVariantFromCenterPreview = async ({
           domain: 'image_studio',
           queryKey: studioKeys.slots(projectId),
           tags: ['image-studio', 'slots', 'fetch'],
-        },
+          description: 'Loads image studio slots.'},
       })();
       const refreshedSlots = Array.isArray(refreshed?.slots) ? refreshed.slots : [];
       const refreshedIdSet = new Set(

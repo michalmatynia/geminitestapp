@@ -134,7 +134,7 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
       resource: 'ai-paths.settings',
       domain: 'ai_paths',
       tags: ['ai-paths', 'node-config', 'regex'],
-    },
+      description: 'Loads ai paths settings.'},
   });
   const updateSettingMutation = createUpdateMutationV2<void, { key: string; value: string }>({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('regex.update-setting'),
@@ -147,7 +147,7 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
       resource: 'ai-paths.settings.regex',
       domain: 'global',
       tags: ['ai-paths', 'node-config', 'regex'],
-    },
+      description: 'Updates ai paths settings regex.'},
   });
   const globalTemplatesRaw = React.useMemo(() => {
     const map = new Map((settingsQuery.data ?? []).map((item) => [item.key, item.value]));

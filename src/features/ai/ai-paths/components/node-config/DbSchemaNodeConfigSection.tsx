@@ -135,7 +135,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
       resource: 'databases.schema',
       domain: 'global',
       tags: ['ai-paths', 'node-config', 'db-schema'],
-    },
+      description: 'Loads databases schema.'},
   });
 
   const browseQueryResult = createListQueryV2<
@@ -177,7 +177,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
       resource: 'databases.preview',
       domain: 'global',
       tags: ['ai-paths', 'node-config', 'db-schema'],
-    },
+      description: 'Loads databases preview.'},
   });
 
   const fetchedDbSchema = schemaQuery.data ?? null;

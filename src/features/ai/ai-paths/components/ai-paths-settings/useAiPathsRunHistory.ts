@@ -352,7 +352,7 @@ export function useAiPathsRunHistory({ activePathId, toast }: UseAiPathsRunHisto
       resource: 'ai-paths.runs',
       domain: 'global',
       tags: ['ai-paths', 'run-history'],
-    },
+      description: 'Loads ai paths runs.'},
   });
 
   const runList = useMemo((): AiPathRunRecord[] => {

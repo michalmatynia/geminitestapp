@@ -346,7 +346,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
       resource: 'image-studio.folders',
       domain: 'image_studio',
       tags: ['image-studio', 'folders'],
-    },
+      description: 'Creates image studio folders.'},
   });
 
   const handleMoveFolder = useCallback(async (_source: string, _target: string): Promise<void> => {

@@ -167,6 +167,34 @@ describe('check-factory-meta script', () => {
     expect(issues).toEqual([]);
   });
 
+  it('allows multi-query descriptors that use shorthand queryKey properties', () => {
+    const issues = inspectFactoryMetaSourceFile(
+      `
+      createMultiQueryV2({
+        queries: ids.map((id) => {
+          const queryKey = ['products', id] as const;
+          return {
+            queryKey,
+            queryFn: async () => [],
+            meta: {
+              source: 'products.hooks.useMultiProducts',
+              operation: 'detail',
+              resource: 'products',
+              description: 'Loads products for the selected ids.',
+              domain: 'products',
+              queryKey,
+            },
+          };
+        }),
+      });
+      `,
+      'src/features/products/hooks/useProductsQuery.ts',
+      ts.ScriptKind.TS
+    );
+
+    expect(issues).toEqual([]);
+  });
+
   it('flags top-level queryKey on multi-query factories and missing nested descriptions', () => {
     const issues = inspectFactoryMetaSourceFile(
       `

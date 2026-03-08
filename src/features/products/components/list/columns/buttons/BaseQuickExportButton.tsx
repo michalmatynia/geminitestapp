@@ -73,7 +73,7 @@ export function BaseQuickExportButton(props: {
             domain: 'integrations',
             queryKey: normalizeQueryKey(integrationSelectionQueryKeys.defaultConnection),
             tags: ['integrations', 'default-connection', 'fetch'],
-          },
+            description: 'Loads integrations default connection.'},
         })(),
         fetchQueryV2<{ inventoryId?: string | null }>(queryClient, {
           queryKey: normalizeQueryKey(defaultExportInventoryQueryKey),
@@ -89,7 +89,7 @@ export function BaseQuickExportButton(props: {
             domain: 'integrations',
             queryKey: normalizeQueryKey(defaultExportInventoryQueryKey),
             tags: ['integrations', 'default-inventory', 'fetch'],
-          },
+            description: 'Loads integrations default inventory.'},
         })(),
       ]);
 

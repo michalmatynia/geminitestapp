@@ -213,14 +213,17 @@ const collectQueryDescriptorObjects = (expression, acc = []) => {
 const inspectMultiQueryDescriptor = (descriptorObject, sourceFile, relFilePath, callName, issues) => {
   const line = getLineNumber(sourceFile, descriptorObject);
   const queryKeyProperty = findObjectProperty(descriptorObject, 'queryKey');
-  if (!queryKeyProperty || !ts.isPropertyAssignment(queryKeyProperty)) {
+  if (!queryKeyProperty) {
     issues.push({
       file: relFilePath,
       line,
       callName,
       message: 'multi-query descriptors must define `queryKey`.',
     });
-  } else if (isFactoryMetaPlaceholderQueryKey(queryKeyProperty.initializer)) {
+  } else if (
+    ts.isPropertyAssignment(queryKeyProperty) &&
+    isFactoryMetaPlaceholderQueryKey(queryKeyProperty.initializer)
+  ) {
     issues.push({
       file: relFilePath,
       line,

@@ -215,7 +215,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       resource: 'ai-paths.trigger-buttons',
       domain: 'ai_paths',
       tags: ['ai-paths', 'trigger-buttons'],
-    },
+      description: 'Loads ai paths trigger buttons.'},
   });
 
   useEffect(() => {
@@ -248,7 +248,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       resource: 'ai-paths.trigger-buttons',
       domain: 'ai_paths',
       tags: ['ai-paths', 'trigger-buttons'],
-    },
+      description: 'Creates ai paths trigger buttons.'},
     invalidateKeys: [QUERY_KEYS.ai.aiPaths.triggerButtons()],
     onSuccess: () => {
       toast('Trigger button created.', { variant: 'success' });
@@ -296,7 +296,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       resource: 'ai-paths.trigger-buttons',
       domain: 'ai_paths',
       tags: ['ai-paths', 'trigger-buttons'],
-    },
+      description: 'Updates ai paths trigger buttons.'},
     invalidateKeys: [QUERY_KEYS.ai.aiPaths.triggerButtons()],
     onSuccess: () => {
       toast('Trigger button updated.', { variant: 'success' });
@@ -325,7 +325,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       resource: 'ai-paths.trigger-buttons',
       domain: 'ai_paths',
       tags: ['ai-paths', 'trigger-buttons'],
-    },
+      description: 'Deletes ai paths trigger buttons.'},
     invalidateKeys: [QUERY_KEYS.ai.aiPaths.triggerButtons()],
     onSuccess: () => {
       toast('Trigger button deleted.', { variant: 'success' });
@@ -354,7 +354,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       resource: 'ai-paths.trigger-buttons.order',
       domain: 'ai_paths',
       tags: ['ai-paths', 'trigger-buttons'],
-    },
+      description: 'Updates ai paths trigger buttons order.'},
     invalidateKeys: [QUERY_KEYS.ai.aiPaths.triggerButtons()],
     onSuccess: () => {
       toast('Trigger button order updated.', { variant: 'success' });

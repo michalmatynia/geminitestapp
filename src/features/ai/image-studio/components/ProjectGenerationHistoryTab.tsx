@@ -256,7 +256,7 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
       resource: 'image-studio.runs',
       domain: 'image_studio',
       tags: ['image-studio', 'history'],
-    },
+      description: 'Loads image studio runs.'},
   });
 
   const runs = useMemo(

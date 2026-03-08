@@ -268,7 +268,7 @@ export function SequencingPanel(): React.JSX.Element {
                 domain: 'image_studio',
                 queryKey: studioKeys.slots(normalizedProjectId),
                 tags: ['image-studio', 'slots', 'fetch'],
-              },
+                description: 'Loads image studio slots.'},
             })();
             cachedSlots = Array.isArray(fresh?.slots) ? fresh.slots : [];
           } catch {
@@ -696,7 +696,7 @@ export function SequencingPanel(): React.JSX.Element {
               domain: 'image_studio',
               queryKey: studioKeys.slots(normalizedProjectId),
               tags: ['image-studio', 'slots', 'fetch', 'sync'],
-            },
+              description: 'Loads image studio slots.'},
           })();
         } catch {
           // Best effort

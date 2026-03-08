@@ -201,7 +201,7 @@ export function usePageAiAssistant() {
       resource: 'cms.pages.ai',
       domain: 'cms' as const,
       tags: ['cms', 'pages', 'ai'],
-    },
+      description: 'Runs cms pages ai.'},
   });
 
   const handleGeneratePageAi = useCallback(async (): Promise<void> => {

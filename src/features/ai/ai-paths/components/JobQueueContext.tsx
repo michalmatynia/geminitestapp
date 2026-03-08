@@ -234,7 +234,7 @@ export function JobQueueProvider({
       queryKey: QUERY_KEYS.ai.aiPaths.settings(),
       domain: 'global',
       criticality: 'normal',
-    },
+      description: 'Loads ai paths settings.'},
   });
   const heavyMap = useMemo(
     () => new Map((aiPathsSettingsQuery.data ?? []).map((item) => [item.key, item.value])),
@@ -388,7 +388,7 @@ export function JobQueueProvider({
       }),
       domain: 'global',
       criticality: 'high',
-    },
+      description: 'Loads ai path runs.'},
   });
 
   const queueStatusQuery = createListQueryV2<{ status: QueueStatus }, { status: QueueStatus }>({
@@ -421,7 +421,7 @@ export function JobQueueProvider({
       }),
       domain: 'global',
       criticality: 'normal',
-    },
+      description: 'Polls ai path runs queue status.'},
   });
 
   const refetchRuns = runsQuery.refetch;
@@ -502,7 +502,7 @@ export function JobQueueProvider({
       mutationKey: QUERY_KEYS.ai.aiPaths.mutation('job-queue.clear-runs'),
       domain: 'global',
       criticality: 'high',
-    },
+      description: 'Deletes ai path runs.'},
   });
 
   const cancelRunMutation = createMutationV2({
@@ -523,7 +523,7 @@ export function JobQueueProvider({
       mutationKey: QUERY_KEYS.ai.aiPaths.mutation('job-queue.cancel-run'),
       domain: 'global',
       criticality: 'high',
-    },
+      description: 'Runs ai path run cancel.'},
   });
 
   const deleteRunMutation = createDeleteMutationV2({
@@ -544,7 +544,7 @@ export function JobQueueProvider({
       mutationKey: QUERY_KEYS.ai.aiPaths.mutation('job-queue.delete-run'),
       domain: 'global',
       criticality: 'high',
-    },
+      description: 'Deletes ai path run.'},
   });
 
   const loadRunDetail = useCallback(async (runId: string): Promise<void> => {

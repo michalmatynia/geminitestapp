@@ -34,7 +34,7 @@ export const useImageRetryPresets = (): ImageRetryPreset[] => {
       resource: 'integrations.image-retry-presets',
       domain: 'integrations',
       tags: ['integrations', 'image-retry-presets'],
-    },
+      description: 'Loads integrations image retry presets.'},
   });
 
   return presets;

@@ -213,18 +213,29 @@ export function useAiPathsRunHistory({ activePathId, toast }: UseAiPathsRunHisto
     const source = new EventSource(url);
     runHistoryActions.setRunStreamStatus('connecting');
 
-    source.addEventListener('ready', () => {
+    const stopStream = (): void => {
+      source.removeEventListener('ready', handleReadyEvent);
+      source.removeEventListener('run', handleRunEvent);
+      source.removeEventListener('nodes', handleNodesEvent);
+      source.removeEventListener('events', handleEventsEvent);
+      source.removeEventListener('done', handleDoneEvent);
+      source.removeEventListener('error', handleErrorEvent);
+      source.close();
+      runHistoryActions.setRunStreamStatus('stopped');
+    };
+
+    const handleReadyEvent = (): void => {
       runHistoryActions.setRunStreamStatus('live');
-    });
-    source.addEventListener('run', (event: MessageEvent) => {
+    };
+    const handleRunEvent = (event: MessageEvent): void => {
       try {
         const payload = JSON.parse(event.data as string) as AiPathRunRecord;
         runHistoryActions.setRunDetail((prev) => (prev ? { ...prev, run: payload } : prev));
       } catch {
         // ignore parse errors
       }
-    });
-    source.addEventListener('nodes', (event: MessageEvent) => {
+    };
+    const handleNodesEvent = (event: MessageEvent): void => {
       try {
         const payload = JSON.parse(event.data as string) as unknown;
         const nodes = normalizeRunNodes(payload);
@@ -232,8 +243,8 @@ export function useAiPathsRunHistory({ activePathId, toast }: UseAiPathsRunHisto
       } catch {
         // ignore parse errors
       }
-    });
-    source.addEventListener('events', (event: MessageEvent) => {
+    };
+    const handleEventsEvent = (event: MessageEvent): void => {
       try {
         const payload = JSON.parse(event.data as string) as
           | AiPathRunEventRecord[]
@@ -257,18 +268,23 @@ export function useAiPathsRunHistory({ activePathId, toast }: UseAiPathsRunHisto
       } catch {
         // ignore parse errors
       }
-    });
-    source.addEventListener('done', () => {
+    };
+    const handleDoneEvent = (): void => {
+      stopStream();
+    };
+    const handleErrorEvent = (): void => {
       runHistoryActions.setRunStreamStatus('stopped');
-      source.close();
-    });
-    source.addEventListener('error', () => {
-      runHistoryActions.setRunStreamStatus('stopped');
-    });
+    };
+
+    source.addEventListener('ready', handleReadyEvent);
+    source.addEventListener('run', handleRunEvent);
+    source.addEventListener('nodes', handleNodesEvent);
+    source.addEventListener('events', handleEventsEvent);
+    source.addEventListener('done', handleDoneEvent);
+    source.addEventListener('error', handleErrorEvent);
 
     return (): void => {
-      source.close();
-      runHistoryActions.setRunStreamStatus('stopped');
+      stopStream();
     };
   }, [runDetailOpen, runDetail?.run?.id, runStreamPaused, runDetail?.events, runHistoryActions]);
 

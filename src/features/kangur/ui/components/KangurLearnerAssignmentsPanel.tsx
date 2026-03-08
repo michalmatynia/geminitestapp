@@ -27,7 +27,7 @@ const getLatestAssignmentTimestamp = (value: string | null, fallback: string): n
 
 export function KangurLearnerAssignmentsPanel({
   basePath,
-  enabled = true,
+  enabled = false,
 }: KangurLearnerAssignmentsPanelProps): React.JSX.Element {
   const { assignments, isLoading, error } = useKangurAssignments({
     enabled,

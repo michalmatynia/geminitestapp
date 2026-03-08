@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useMemo } from 'react';
 import { useAdminCaseResolverPageState } from '../hooks/useAdminCaseResolverPageState';
+import { internalError } from '@/shared/errors/app-error';
 
 export type AdminCaseResolverPageContextValue = ReturnType<typeof useAdminCaseResolverPageState>;
 
@@ -48,7 +49,7 @@ export function AdminCaseResolverPageProvider({
 export function useAdminCaseResolverPageStateContext(): AdminCaseResolverPageStateValue {
   const context = useContext(AdminCaseResolverPageStateContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useAdminCaseResolverPageStateContext must be used within AdminCaseResolverPageProvider'
     );
   }
@@ -58,7 +59,7 @@ export function useAdminCaseResolverPageStateContext(): AdminCaseResolverPageSta
 export function useAdminCaseResolverPageActionsContext(): AdminCaseResolverPageActionsValue {
   const context = useContext(AdminCaseResolverPageActionsContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useAdminCaseResolverPageActionsContext must be used within AdminCaseResolverPageProvider'
     );
   }

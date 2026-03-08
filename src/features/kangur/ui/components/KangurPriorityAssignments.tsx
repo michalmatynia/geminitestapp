@@ -22,7 +22,7 @@ const PRIORITY_ASSIGNMENTS_EMPTY_DESCRIPTION = 'Brak aktywnych zadan od rodzica.
 
 export function KangurPriorityAssignments({
   basePath,
-  enabled = true,
+  enabled = false,
   limit = 3,
   title,
   emptyLabel,

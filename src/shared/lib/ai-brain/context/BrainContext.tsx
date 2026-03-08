@@ -64,6 +64,7 @@ import {
   type AiBrainProviderCatalog,
   type AiBrainSettings,
 } from '../settings';
+import { internalError } from '@/shared/errors/app-error';
 
 type BrainTab = 'operations' | 'routing' | 'providers' | 'reports' | 'metrics';
 
@@ -220,7 +221,7 @@ const BrainContext = createContext<BrainContextType | undefined>(undefined);
 export function useBrain(): BrainContextType {
   const context = useContext(BrainContext);
   if (!context) {
-    throw new Error('useBrain must be used within a BrainProvider');
+    throw internalError('useBrain must be used within a BrainProvider');
   }
   return context;
 }

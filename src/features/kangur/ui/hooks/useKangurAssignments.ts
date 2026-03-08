@@ -77,6 +77,14 @@ export const useKangurAssignments = (
   }, [refresh]);
 
   useEffect(() => {
+    if (!enabled) {
+      setAssignments([]);
+      setError(null);
+      setIsLoading(false);
+    }
+  }, [enabled]);
+
+  useEffect(() => {
     if (!enabled || typeof window === 'undefined') {
       return;
     }
@@ -119,9 +127,9 @@ export const useKangurAssignments = (
   );
 
   return {
-    assignments,
-    isLoading,
-    error,
+    assignments: enabled ? assignments : [],
+    isLoading: enabled ? isLoading : false,
+    error: enabled ? error : null,
     refresh,
     createAssignment,
     updateAssignment,

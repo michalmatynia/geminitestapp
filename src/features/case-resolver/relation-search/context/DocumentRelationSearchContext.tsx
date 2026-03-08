@@ -20,6 +20,7 @@ import { useDocumentRelationSearch } from '../hooks/useDocumentRelationSearch';
 import type { RelationTreeLookup } from '../types';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import { logCaseResolverWorkspaceEvent } from '../../workspace-persistence';
+import { internalError } from '@/shared/errors/app-error';
 
 export type DocumentSearchScope = NodeFileDocumentSearchScope;
 type SelectOption = {
@@ -121,7 +122,7 @@ const DocumentRelationSearchActionsContext =
 export function useDocumentRelationSearchStateContext(): DocumentRelationSearchStateValue {
   const context = useContext(DocumentRelationSearchStateContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useDocumentRelationSearchStateContext must be used within a DocumentRelationSearchProvider'
     );
   }
@@ -131,7 +132,7 @@ export function useDocumentRelationSearchStateContext(): DocumentRelationSearchS
 export function useDocumentRelationSearchActionsContext(): DocumentRelationSearchActionsValue {
   const context = useContext(DocumentRelationSearchActionsContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useDocumentRelationSearchActionsContext must be used within a DocumentRelationSearchProvider'
     );
   }

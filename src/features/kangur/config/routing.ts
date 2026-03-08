@@ -289,6 +289,9 @@ export const getKangurPageHref = (
   return joinKangurPath(normalizedBasePath, slug);
 };
 
+export const getKangurHomeHref = (basePath: string = KANGUR_BASE_PATH): string =>
+  normalizeKangurRequestedPath([], basePath);
+
 export const resolveKangurPageKeyFromSlug = (slug: string | null | undefined): string | null => {
   if (!slug) {
     return KANGUR_MAIN_PAGE_KEY;

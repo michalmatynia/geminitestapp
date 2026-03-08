@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createDefaultKangurProgressState, type KangurAssignment } from '@/shared/contracts/kangur';
+import { authError } from '@/shared/errors/app-error';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
@@ -47,6 +48,9 @@ const createRequestContext = (): ApiHandlerContext =>
     correlationId: 'corr-kangur-assignments-1',
     startTime: Date.now(),
     getElapsedMs: () => 1,
+    query: {
+      includeArchived: false,
+    },
   }) as ApiHandlerContext;
 
 const createAssignment = (overrides: Partial<KangurAssignment> = {}): KangurAssignment => ({
@@ -125,8 +129,12 @@ describe('kangur assignments handler', () => {
       createRequestContext()
     );
 
-    expect(listAssignmentsMock).toHaveBeenCalledWith({
+    expect(listAssignmentsMock).toHaveBeenNthCalledWith(1, {
       learnerKey: 'learner-1',
+      includeArchived: false,
+    });
+    expect(listAssignmentsMock).toHaveBeenNthCalledWith(2, {
+      learnerKey: 'ada@example.com',
       includeArchived: false,
     });
     expect(response.status).toBe(200);
@@ -139,6 +147,19 @@ describe('kangur assignments handler', () => {
         }),
       }),
     ]);
+  });
+
+  it('does not list assignments without an authenticated Kangur actor', async () => {
+    resolveKangurActorMock.mockRejectedValueOnce(authError('Authentication required.'));
+
+    await expect(
+      getKangurAssignmentsHandler(
+        new NextRequest('http://localhost/api/kangur/assignments'),
+        createRequestContext()
+      )
+    ).rejects.toThrow('Authentication required.');
+    expect(listAssignmentsMock).not.toHaveBeenCalled();
+    expect(getProgressMock).not.toHaveBeenCalled();
   });
 
   it('creates a lesson assignment with the current completion baseline', async () => {

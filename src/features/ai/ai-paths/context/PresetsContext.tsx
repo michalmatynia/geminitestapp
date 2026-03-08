@@ -17,6 +17,7 @@ import type {
   DatabaseConfig,
 } from '@/shared/lib/ai-paths';
 import { createPresetId, databaseConfigSchema } from '@/shared/lib/ai-paths';
+import { internalError } from '@/shared/errors/app-error';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 // ---------------------------------------------------------------------------
@@ -329,7 +330,7 @@ export function PresetsProvider({
 export function usePresetsState(): PresetsState {
   const context = useContext(PresetsStateContext);
   if (!context) {
-    throw new Error('usePresetsState must be used within a PresetsProvider');
+    throw internalError('usePresetsState must be used within a PresetsProvider');
   }
   return context;
 }
@@ -341,7 +342,7 @@ export function usePresetsState(): PresetsState {
 export function usePresetsActions(): PresetsActions {
   const context = useContext(PresetsActionsContext);
   if (!context) {
-    throw new Error('usePresetsActions must be used within a PresetsProvider');
+    throw internalError('usePresetsActions must be used within a PresetsProvider');
   }
   return context;
 }

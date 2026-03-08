@@ -22,7 +22,7 @@ type KangurAssignmentSpotlightProps = {
 
 export function KangurAssignmentSpotlight({
   basePath,
-  enabled = true,
+  enabled = false,
 }: KangurAssignmentSpotlightProps): React.JSX.Element | null {
   const { assignments, isLoading, error } = useKangurAssignments({
     enabled,

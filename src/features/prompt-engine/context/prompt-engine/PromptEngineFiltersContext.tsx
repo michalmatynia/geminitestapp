@@ -5,6 +5,7 @@ import type {
   PromptValidationSeverity,
   PromptValidationScope,
 } from '@/shared/lib/prompt-engine/settings';
+import { internalError } from '@/shared/errors/app-error';
 
 export type SeverityFilter = PromptValidationSeverity | 'all';
 export type ScopeFilter = PromptValidationScope | 'all';
@@ -24,6 +25,6 @@ export const FiltersContext = createContext<PromptEngineFilters | null>(null);
 
 export const usePromptEngineFilters = () => {
   const context = useContext(FiltersContext);
-  if (!context) throw new Error('usePromptEngineFilters must be used within PromptEngineProvider');
+  if (!context) throw internalError('usePromptEngineFilters must be used within PromptEngineProvider');
   return context;
 };

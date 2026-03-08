@@ -9,6 +9,7 @@ import type {
   ProductParameter,
   ProductTag,
 } from '@/shared/contracts/products';
+import { internalError } from '@/shared/errors/app-error';
 
 type ProductSettingsContextValue = {
   loadingCatalogs: boolean;
@@ -166,7 +167,7 @@ export function ProductSettingsProvider({
 export function useProductSettingsCatalogsContext(): ProductSettingsCatalogsSection {
   const context = React.useContext(ProductSettingsCatalogsContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useProductSettingsCatalogsContext must be used inside ProductSettingsProvider'
     );
   }
@@ -176,7 +177,7 @@ export function useProductSettingsCatalogsContext(): ProductSettingsCatalogsSect
 export function useProductSettingsPriceGroupsContext(): ProductSettingsPriceGroupsSection {
   const context = React.useContext(ProductSettingsPriceGroupsContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useProductSettingsPriceGroupsContext must be used inside ProductSettingsProvider'
     );
   }
@@ -186,7 +187,7 @@ export function useProductSettingsPriceGroupsContext(): ProductSettingsPriceGrou
 export function useProductSettingsCategoriesContext(): ProductSettingsCategoriesSection {
   const context = React.useContext(ProductSettingsCategoriesContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useProductSettingsCategoriesContext must be used inside ProductSettingsProvider'
     );
   }
@@ -196,7 +197,7 @@ export function useProductSettingsCategoriesContext(): ProductSettingsCategories
 export function useProductSettingsTagsContext(): ProductSettingsTagsSection {
   const context = React.useContext(ProductSettingsTagsContext);
   if (!context) {
-    throw new Error('useProductSettingsTagsContext must be used inside ProductSettingsProvider');
+    throw internalError('useProductSettingsTagsContext must be used inside ProductSettingsProvider');
   }
   return context;
 }
@@ -204,7 +205,7 @@ export function useProductSettingsTagsContext(): ProductSettingsTagsSection {
 export function useProductSettingsParametersContext(): ProductSettingsParametersSection {
   const context = React.useContext(ProductSettingsParametersContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useProductSettingsParametersContext must be used inside ProductSettingsProvider'
     );
   }

@@ -5,6 +5,7 @@ import React from 'react';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 import type { VersionEdge, VersionNode } from '../context/VersionGraphContext';
+import { internalError } from '@/shared/errors/app-error';
 
 type VersionNodeMapContextValue = {
   nodes: VersionNode[];
@@ -54,7 +55,7 @@ export function VersionNodeMapProvider({
 export function useVersionNodeMapContext(): VersionNodeMapContextValue {
   const context = React.useContext(VersionNodeMapContext);
   if (!context) {
-    throw new Error('useVersionNodeMapContext must be used inside VersionNodeMapProvider');
+    throw internalError('useVersionNodeMapContext must be used inside VersionNodeMapProvider');
   }
   return context;
 }

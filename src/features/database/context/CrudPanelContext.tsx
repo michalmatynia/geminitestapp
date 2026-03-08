@@ -3,6 +3,7 @@
 import { createContext, useContext, type ReactNode } from 'react';
 
 import type { DatabaseTableDetail } from '@/shared/contracts/database';
+import { internalError } from '@/shared/errors/app-error';
 
 export interface CrudPanelContextValue {
   selectedTable: string;
@@ -42,7 +43,7 @@ const CrudPanelActionsContext = createContext<CrudPanelActionsContextValue | nul
 export function useCrudPanelStateContext(): CrudPanelStateContextValue {
   const context = useContext(CrudPanelStateContext);
   if (!context) {
-    throw new Error('useCrudPanelStateContext must be used within a CrudPanelProvider');
+    throw internalError('useCrudPanelStateContext must be used within a CrudPanelProvider');
   }
   return context;
 }
@@ -50,7 +51,7 @@ export function useCrudPanelStateContext(): CrudPanelStateContextValue {
 export function useCrudPanelActionsContext(): CrudPanelActionsContextValue {
   const context = useContext(CrudPanelActionsContext);
   if (!context) {
-    throw new Error('useCrudPanelActionsContext must be used within a CrudPanelProvider');
+    throw internalError('useCrudPanelActionsContext must be used within a CrudPanelProvider');
   }
   return context;
 }

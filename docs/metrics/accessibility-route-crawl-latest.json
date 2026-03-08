@@ -1,18 +1,20 @@
 {
-  "generatedAt": "2026-03-07T22:29:17.317Z",
-  "status": "passed",
+  "generatedAt": "2026-03-08T12:58:54.969Z",
+  "status": "failed",
   "summary": {
-    "total": 11,
-    "passed": 11,
-    "failed": 0,
-    "durationMs": 40234.665,
+    "total": 17,
+    "passed": 0,
+    "failed": 17,
+    "durationMs": 120056.535,
     "unexpected": 0,
     "flaky": 0,
     "skipped": 0,
-    "errorCount": 0
+    "errorCount": 18
   },
   "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/accessibility-route-crawl.spec.ts --reporter=json",
-  "externalErrors": [],
+  "externalErrors": [
+    "Error: Timed out waiting 120000ms from config.webServer."
+  ],
   "results": [
     {
       "id": "public-home",
@@ -22,9 +24,11 @@
       "readySelector": null,
       "contextSelector": null,
       "title": "[public-home] / passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 5053,
-      "errors": []
+      "status": "fail",
+      "durationMs": 0,
+      "errors": [
+        "No Playwright result was recorded for [public-home] / passes the route-crawl accessibility scan."
+      ]
     },
     {
       "id": "auth-signin",
@@ -34,9 +38,11 @@
       "readySelector": null,
       "contextSelector": null,
       "title": "[auth-signin] /auth/signin passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 1697,
-      "errors": []
+      "status": "fail",
+      "durationMs": 0,
+      "errors": [
+        "No Playwright result was recorded for [auth-signin] /auth/signin passes the route-crawl accessibility scan."
+      ]
     },
     {
       "id": "auth-register",
@@ -46,9 +52,11 @@
       "readySelector": null,
       "contextSelector": null,
       "title": "[auth-register] /auth/register passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 2783,
-      "errors": []
+      "status": "fail",
+      "durationMs": 0,
+      "errors": [
+        "No Playwright result was recorded for [auth-register] /auth/register passes the route-crawl accessibility scan."
+      ]
     },
     {
       "id": "admin-dashboard",
@@ -58,9 +66,11 @@
       "readySelector": null,
       "contextSelector": null,
       "title": "[admin-dashboard] /admin passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 3173,
-      "errors": []
+      "status": "fail",
+      "durationMs": 0,
+      "errors": [
+        "No Playwright result was recorded for [admin-dashboard] /admin passes the route-crawl accessibility scan."
+      ]
     },
     {
       "id": "admin-products",
@@ -70,9 +80,67 @@
       "readySelector": null,
       "contextSelector": null,
       "title": "[admin-products] /admin/products passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 3874,
-      "errors": []
+      "status": "fail",
+      "durationMs": 0,
+      "errors": [
+        "No Playwright result was recorded for [admin-products] /admin/products passes the route-crawl accessibility scan."
+      ]
+    },
+    {
+      "id": "admin-notes",
+      "name": "Admin Notes",
+      "route": "/admin/notes",
+      "audience": "admin",
+      "readySelector": null,
+      "contextSelector": null,
+      "title": "[admin-notes] /admin/notes passes the route-crawl accessibility scan",
+      "status": "fail",
+      "durationMs": 0,
+      "errors": [
+        "No Playwright result was recorded for [admin-notes] /admin/notes passes the route-crawl accessibility scan."
+      ]
+    },
+    {
+      "id": "admin-integrations",
+      "name": "Admin Integrations",
+      "route": "/admin/integrations",
+      "audience": "admin",
+      "readySelector": null,
+      "contextSelector": null,
+      "title": "[admin-integrations] /admin/integrations passes the route-crawl accessibility scan",
+      "status": "fail",
+      "durationMs": 0,
+      "errors": [
+        "No Playwright result was recorded for [admin-integrations] /admin/integrations passes the route-crawl accessibility scan."
+      ]
+    },
+    {
+      "id": "admin-case-resolver",
+      "name": "Admin Case Resolver",
+      "route": "/admin/case-resolver",
+      "audience": "admin",
+      "readySelector": null,
+      "contextSelector": null,
+      "title": "[admin-case-resolver] /admin/case-resolver passes the route-crawl accessibility scan",
+      "status": "fail",
+      "durationMs": 0,
+      "errors": [
+        "No Playwright result was recorded for [admin-case-resolver] /admin/case-resolver passes the route-crawl accessibility scan."
+      ]
+    },
+    {
+      "id": "admin-cms",
+      "name": "Admin CMS",
+      "route": "/admin/cms",
+      "audience": "admin",
+      "readySelector": null,
+      "contextSelector": null,
+      "title": "[admin-cms] /admin/cms passes the route-crawl accessibility scan",
+      "status": "fail",
+      "durationMs": 0,
+      "errors": [
+        "No Playwright result was recorded for [admin-cms] /admin/cms passes the route-crawl accessibility scan."
+      ]
     },
     {
       "id": "admin-ai-paths",
@@ -82,9 +150,11 @@
       "readySelector": null,
       "contextSelector": null,
       "title": "[admin-ai-paths] /admin/ai-paths passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 3079,
-      "errors": []
+      "status": "fail",
+      "durationMs": 0,
+      "errors": [
+        "No Playwright result was recorded for [admin-ai-paths] /admin/ai-paths passes the route-crawl accessibility scan."
+      ]
     },
     {
       "id": "admin-image-studio",
@@ -94,9 +164,11 @@
       "readySelector": null,
       "contextSelector": null,
       "title": "[admin-image-studio] /admin/image-studio passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 3044,
-      "errors": []
+      "status": "fail",
+      "durationMs": 0,
+      "errors": [
+        "No Playwright result was recorded for [admin-image-studio] /admin/image-studio passes the route-crawl accessibility scan."
+      ]
     },
     {
       "id": "admin-chatbot",
@@ -106,9 +178,39 @@
       "readySelector": null,
       "contextSelector": null,
       "title": "[admin-chatbot] /admin/chatbot passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 2720,
-      "errors": []
+      "status": "fail",
+      "durationMs": 0,
+      "errors": [
+        "No Playwright result was recorded for [admin-chatbot] /admin/chatbot passes the route-crawl accessibility scan."
+      ]
+    },
+    {
+      "id": "admin-agentcreator",
+      "name": "Admin Agent Creator",
+      "route": "/admin/agentcreator",
+      "audience": "admin",
+      "readySelector": null,
+      "contextSelector": null,
+      "title": "[admin-agentcreator] /admin/agentcreator passes the route-crawl accessibility scan",
+      "status": "fail",
+      "durationMs": 0,
+      "errors": [
+        "No Playwright result was recorded for [admin-agentcreator] /admin/agentcreator passes the route-crawl accessibility scan."
+      ]
+    },
+    {
+      "id": "admin-prompt-engine-validation",
+      "name": "Admin Prompt Engine Validation",
+      "route": "/admin/prompt-engine/validation",
+      "audience": "admin",
+      "readySelector": null,
+      "contextSelector": null,
+      "title": "[admin-prompt-engine-validation] /admin/prompt-engine/validation passes the route-crawl accessibility scan",
+      "status": "fail",
+      "durationMs": 0,
+      "errors": [
+        "No Playwright result was recorded for [admin-prompt-engine-validation] /admin/prompt-engine/validation passes the route-crawl accessibility scan."
+      ]
     },
     {
       "id": "admin-kangur",
@@ -118,9 +220,11 @@
       "readySelector": null,
       "contextSelector": null,
       "title": "[admin-kangur] /admin/kangur passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 3092,
-      "errors": []
+      "status": "fail",
+      "durationMs": 0,
+      "errors": [
+        "No Playwright result was recorded for [admin-kangur] /admin/kangur passes the route-crawl accessibility scan."
+      ]
     },
     {
       "id": "admin-databases",
@@ -130,9 +234,11 @@
       "readySelector": null,
       "contextSelector": null,
       "title": "[admin-databases] /admin/databases/engine passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 2427,
-      "errors": []
+      "status": "fail",
+      "durationMs": 0,
+      "errors": [
+        "No Playwright result was recorded for [admin-databases] /admin/databases/engine passes the route-crawl accessibility scan."
+      ]
     },
     {
       "id": "admin-brain-settings",
@@ -142,12 +248,14 @@
       "readySelector": null,
       "contextSelector": null,
       "title": "[admin-brain-settings] /admin/brain?tab=routing passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 4180,
-      "errors": []
+      "status": "fail",
+      "durationMs": 0,
+      "errors": [
+        "No Playwright result was recorded for [admin-brain-settings] /admin/brain?tab=routing passes the route-crawl accessibility scan."
+      ]
     }
   ],
   "stderr": "",
-  "durationMs": 41719,
-  "exitCode": 0
+  "durationMs": 120883,
+  "exitCode": 1
 }

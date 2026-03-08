@@ -15,6 +15,7 @@ import {
   type FileUploadEventRecord,
 } from '@/features/files/hooks/useFileUploadEvents';
 import { useToast } from '@/shared/ui';
+import { internalError } from '@/shared/errors/app-error';
 
 export const statusOptions = [
   { value: 'all', label: 'All statuses' },
@@ -157,7 +158,7 @@ export function FileUploadEventsProvider({ children }: { children: ReactNode }):
 export function useFileUploadEventsContext(): FileUploadEventsContextState {
   const context = useContext(FileUploadEventsContext);
   if (context === undefined) {
-    throw new Error('useFileUploadEventsContext must be used within a FileUploadEventsProvider');
+    throw internalError('useFileUploadEventsContext must be used within a FileUploadEventsProvider');
   }
   return context;
 }

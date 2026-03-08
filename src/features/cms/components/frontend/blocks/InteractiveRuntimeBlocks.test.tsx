@@ -141,6 +141,20 @@ describe('interactive CMS runtime blocks', () => {
     expect(handleStartGame).toHaveBeenCalledWith('Ewa');
   });
 
+  it('uses explicit accessible labels for Input blocks when provided', () => {
+    renderRuntimeBlock(
+      <InputBlock />,
+      {
+        inputPlaceholder: 'Type here',
+        inputAriaLabel: 'Search products',
+        inputValue: '',
+      },
+      {}
+    );
+
+    expect(screen.getByRole('textbox', { name: 'Search products' })).toBeInTheDocument();
+  });
+
   it('renders Progress blocks from connected numeric runtime values', () => {
     renderRuntimeBlock(
       <ProgressBlock />,

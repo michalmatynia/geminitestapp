@@ -8,14 +8,14 @@ import {
   DELETE_metadata_id_handler,
 } from './handler';
 
-export const GET = apiHandlerWithParams(GET_metadata_id_handler, {
-  source: 'metadata-id.GET',
+export const GET = apiHandlerWithParams<{ type: string; id: string }>(GET_metadata_id_handler, {
+  source: 'v2.metadata.[type].[id].GET',
 });
 
-export const PUT = apiHandlerWithParams(PUT_metadata_id_handler, {
-  source: 'metadata-id.PUT',
+export const PUT = apiHandlerWithParams<{ type: string; id: string }>(PUT_metadata_id_handler, {
+  source: 'v2.metadata.[type].[id].PUT',
 });
 
-export const DELETE = apiHandlerWithParams(DELETE_metadata_id_handler, {
-  source: 'metadata-id.DELETE',
+export const DELETE = apiHandlerWithParams<{ type: string; id: string }>(DELETE_metadata_id_handler, {
+  source: 'v2.metadata.[type].[id].DELETE',
 });

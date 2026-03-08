@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext } from 'react';
+import { internalError } from '@/shared/errors/app-error';
 
 export interface DocumentRelationSearchUiContextValue {
   showSortControl: boolean;
@@ -28,7 +29,7 @@ export function DocumentRelationSearchUiProvider({
 export function useDocumentRelationSearchUiContext(): DocumentRelationSearchUiContextValue {
   const context = useContext(DocumentRelationSearchUiContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useDocumentRelationSearchUiContext must be used within a DocumentRelationSearchUiProvider'
     );
   }

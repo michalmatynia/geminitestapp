@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext } from 'react';
+import { internalError } from '@/shared/errors/app-error';
 
 export interface IntegrationsApiConsole {
   baseApiMethod: string;
@@ -31,6 +32,6 @@ export const IntegrationsApiConsoleContext = createContext<IntegrationsApiConsol
 export const useIntegrationsApiConsole = () => {
   const context = useContext(IntegrationsApiConsoleContext);
   if (!context)
-    throw new Error('useIntegrationsApiConsole must be used within IntegrationsProvider');
+    throw internalError('useIntegrationsApiConsole must be used within IntegrationsProvider');
   return context;
 };

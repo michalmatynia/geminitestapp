@@ -11,6 +11,7 @@ import type {
 
 import { createPanelIllustration } from '../../test-questions';
 import { useKangurTestQuestionEditorContext } from './KangurTestQuestionEditorContext';
+import { internalError } from '@/shared/errors/app-error';
 
 const createPanelId = (): string => `panel_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
 
@@ -192,7 +193,7 @@ export function KangurQuestionIllustrationProvider({
 export function useKangurQuestionIllustrationContext(): KangurQuestionIllustrationContextValue {
   const context = useContext(KangurQuestionIllustrationContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useKangurQuestionIllustrationContext must be used within a KangurQuestionIllustrationProvider'
     );
   }
@@ -272,7 +273,7 @@ export function KangurIllustrationPanelProvider({
 export function useKangurIllustrationPanelContext(): KangurIllustrationPanelContextValue {
   const context = useContext(KangurIllustrationPanelContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useKangurIllustrationPanelContext must be used within a KangurIllustrationPanelProvider'
     );
   }

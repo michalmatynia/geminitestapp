@@ -29,6 +29,37 @@ export const querySchema = z.object({
   learner_id: optionalTrimmedQueryString(),
 });
 
+const resolveOptionalTrimmedString = (value: unknown): string | undefined => {
+  const normalized = normalizeOptionalQueryString(value);
+  return normalized ?? undefined;
+};
+
+const resolveKangurScoresQuery = (
+  req: Request,
+  ctx: ApiHandlerContext
+): {
+  sort?: string;
+  limit?: number;
+  player_name?: string;
+  operation?: string;
+  created_by?: string;
+  learner_id?: string;
+} => {
+  const rawQuery = {
+    ...Object.fromEntries(new URL(req.url).searchParams.entries()),
+    ...((ctx.query ?? {}) as Record<string, unknown>),
+  };
+
+  return {
+    sort: normalizeOptionalQueryString(rawQuery['sort']),
+    limit: parseOptionalIntegerQueryValue(rawQuery['limit']),
+    player_name: resolveOptionalTrimmedString(rawQuery['player_name']),
+    operation: resolveOptionalTrimmedString(rawQuery['operation']),
+    created_by: resolveOptionalTrimmedString(rawQuery['created_by']),
+    learner_id: resolveOptionalTrimmedString(rawQuery['learner_id']),
+  };
+};
+
 const readBodyJson = async (request: NextRequest): Promise<unknown> => {
   const rawBody = await request.text();
   if (!rawBody) {
@@ -43,21 +74,24 @@ const readBodyJson = async (request: NextRequest): Promise<unknown> => {
 };
 
 export async function getKangurScoresHandler(
-  _req: NextRequest,
+  req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<Response> {
-  const query = (ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const query = resolveKangurScoresQuery(req, ctx);
 
   const repository = await getKangurScoreRepository();
+  const filters = {
+    player_name: query.player_name,
+    operation: query.operation,
+    created_by: query.created_by,
+    ...(query.learner_id !== undefined || query.player_name || query.operation || query.created_by
+      ? { learner_id: query.learner_id }
+      : {}),
+  };
   const rows = await repository.listScores({
     sort: normalizeKangurSort(query.sort),
     limit: query.limit,
-    filters: {
-      player_name: query.player_name,
-      operation: query.operation,
-      created_by: query.created_by,
-      learner_id: query.learner_id,
-    },
+    filters,
   });
 
   return NextResponse.json(rows);

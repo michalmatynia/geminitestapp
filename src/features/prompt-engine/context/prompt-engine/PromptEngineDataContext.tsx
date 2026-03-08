@@ -2,6 +2,7 @@
 
 import { createContext, useContext } from 'react';
 import type { RuleDraft } from '../prompt-engine-context-utils';
+import { internalError } from '@/shared/errors/app-error';
 
 export interface PromptEngineData {
   drafts: RuleDraft[];
@@ -19,6 +20,6 @@ export const DataContext = createContext<PromptEngineData | null>(null);
 
 export const usePromptEngineData = () => {
   const context = useContext(DataContext);
-  if (!context) throw new Error('usePromptEngineData must be used within PromptEngineProvider');
+  if (!context) throw internalError('usePromptEngineData must be used within PromptEngineProvider');
   return context;
 };

@@ -47,6 +47,14 @@ export const querySchema = z.object({
   to: optionalTrimmedQueryString(),
   cursor: optionalTrimmedQueryString(),
 });
+
+const resolveTrendSnapshotsQueryInput = (
+  req: Request,
+  ctx: ApiHandlerContext
+): Record<string, unknown> => ({
+  ...Object.fromEntries(new URL(req.url).searchParams.entries()),
+  ...((ctx.query ?? {}) as Record<string, unknown>),
+});
 const DEAD_LETTER_REPLAY_POLICY_SKIP_REASONS = new Set<string>([
   'dead_letter_endpoint_missing',
   'dead_letter_endpoint_invalid',
@@ -302,10 +310,10 @@ const buildRunExecutionSummary = (): {
   }
 };
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireAiPathsAccess();
 
-  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const query = querySchema.parse(resolveTrendSnapshotsQueryInput(req, _ctx));
   const limit = parseTrendSnapshotLimit(query.limit ?? null);
   const trigger = parseTrendSnapshotTrigger(query.trigger ?? null);
   const from = parseTrendSnapshotTimestamp('from', query.from ?? null);

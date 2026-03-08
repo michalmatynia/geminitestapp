@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext } from 'react';
+import { internalError } from '@/shared/errors/app-error';
 import { useAdminAiPathsValidationState } from '../hooks/useAdminAiPathsValidationState';
 
 export type AdminAiPathsValidationContextValue = ReturnType<typeof useAdminAiPathsValidationState>;
@@ -25,7 +26,7 @@ export function AdminAiPathsValidationProvider({
 export function useAdminAiPathsValidationContext(): AdminAiPathsValidationContextValue {
   const context = useContext(AdminAiPathsValidationContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useAdminAiPathsValidationContext must be used within AdminAiPathsValidationProvider'
     );
   }

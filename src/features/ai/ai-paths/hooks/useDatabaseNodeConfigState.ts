@@ -263,13 +263,13 @@ export function useDatabaseNodeConfigState() {
 
       applyQueryTemplateUpdate(nextQuery);
 
-      window.setTimeout(() => {
+      window.requestAnimationFrame((): void => {
         const node = queryTemplateRef?.current;
         if (!node) return;
         const cursorPosition = rangeStart + placeholder.length;
         node.focus();
         node.setSelectionRange(cursorPosition, cursorPosition);
-      }, 0);
+      });
     },
     [applyQueryTemplateUpdate, queryTemplateValue]
   );
@@ -296,13 +296,13 @@ export function useDatabaseNodeConfigState() {
         },
       });
 
-      window.setTimeout(() => {
+      window.requestAnimationFrame((): void => {
         const node = aiPromptRef?.current;
         if (!node) return;
         const cursorPosition = rangeStart + placeholder.length;
         node.focus();
         node.setSelectionRange(cursorPosition, cursorPosition);
-      }, 0);
+      });
     },
     [databaseConfig, updateSelectedNodeConfig]
   );

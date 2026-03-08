@@ -36,6 +36,7 @@ export function SegmentedControl<T extends string>({
 
   return (
     <div
+      role='group'
       className={cn(
         'flex items-center rounded-md border border-border/60 bg-card/40 p-0.5',
         className
@@ -50,6 +51,7 @@ export function SegmentedControl<T extends string>({
             key={option.value}
             type='button'
             onClick={() => onChange(option.value)}
+            aria-pressed={isActive}
             className={cn(
               'flex items-center gap-1.5 rounded font-medium transition-all duration-200',
               sizeStyles[size],

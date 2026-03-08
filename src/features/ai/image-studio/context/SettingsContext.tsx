@@ -25,6 +25,7 @@ import {
   type ImageStudioSettings,
   defaultImageStudioSettings,
 } from '@/features/ai/image-studio/utils/studio-settings';
+import { internalError } from '@/shared/errors/app-error';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -174,7 +175,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
         const persistedMap = refreshed.data ?? new Map<string, string>();
         const persistedRaw = persistedMap.get(targetKey);
         if (!persistedRaw || persistedRaw.trim().length === 0) {
-          throw new Error(`Settings write completed but verification failed for "${targetKey}".`);
+          throw internalError(`Settings write completed but verification failed for "${targetKey}".`);
         }
         const persisted = parsePersistedImageStudioSettings(persistedRaw);
         const expectedSnapshotHash =
@@ -200,7 +201,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
           expectedSnapshotHash === null || expectedSnapshotHash === persistedSnapshotHash;
         const snapshotStepCountMatches = expectedStepCount === persistedStepCount;
         if (!sequencingEnabledMatches || !snapshotHashMatches || !snapshotStepCountMatches) {
-          throw new Error(
+          throw internalError(
             `Settings write for "${targetKey}" could not be verified. Reload and retry.`
           );
         }
@@ -254,12 +255,12 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
 
 export function useSettingsState(): SettingsState {
   const ctx = useContext(SettingsStateContext);
-  if (!ctx) throw new Error('useSettingsState must be used within a SettingsProvider');
+  if (!ctx) throw internalError('useSettingsState must be used within a SettingsProvider');
   return ctx;
 }
 
 export function useSettingsActions(): SettingsActions {
   const ctx = useContext(SettingsActionsContext);
-  if (!ctx) throw new Error('useSettingsActions must be used within a SettingsProvider');
+  if (!ctx) throw internalError('useSettingsActions must be used within a SettingsProvider');
   return ctx;
 }

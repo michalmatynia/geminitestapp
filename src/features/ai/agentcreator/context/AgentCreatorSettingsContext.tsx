@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
 
 import { DEFAULT_AGENT_SETTINGS } from '@/features/ai/agentcreator/utils/constants';
+import { internalError } from '@/shared/errors/app-error';
 
 // --- Granular Contexts ---
 
@@ -14,7 +15,7 @@ const ModesContext = createContext<AgentCreatorModes | null>(null);
 export const useAgentCreatorModes = () => {
   const context = useContext(ModesContext);
   if (!context)
-    throw new Error('useAgentCreatorModes must be used within AgentCreatorSettingsProvider');
+    throw internalError('useAgentCreatorModes must be used within AgentCreatorSettingsProvider');
   return context;
 };
 
@@ -40,7 +41,9 @@ const PerformanceContext = createContext<AgentCreatorPerformance | null>(null);
 export const useAgentCreatorPerformance = () => {
   const context = useContext(PerformanceContext);
   if (!context)
-    throw new Error('useAgentCreatorPerformance must be used within AgentCreatorSettingsProvider');
+    throw internalError(
+      'useAgentCreatorPerformance must be used within AgentCreatorSettingsProvider'
+    );
   return context;
 };
 
@@ -58,7 +61,9 @@ const OperationsContext = createContext<AgentCreatorOperations | null>(null);
 export const useAgentCreatorOperations = () => {
   const context = useContext(OperationsContext);
   if (!context)
-    throw new Error('useAgentCreatorOperations must be used within AgentCreatorSettingsProvider');
+    throw internalError(
+      'useAgentCreatorOperations must be used within AgentCreatorSettingsProvider'
+    );
   return context;
 };
 

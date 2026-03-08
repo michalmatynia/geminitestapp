@@ -46,6 +46,7 @@ import type { ImportExportContextType } from './ImportExportContext.types';
 import { useImportExportPreferences } from './import-export/useImportExportPreferences';
 import { useImportExportTemplates } from './import-export/useImportExportTemplates';
 import { useImportExportData as useImportExportDataSource } from './import-export/useImportExportData';
+import { internalError } from '@/shared/errors/app-error';
 
 export type ImportExportStateContextType = Pick<
   ImportExportContextType,
@@ -861,7 +862,7 @@ export function ImportExportProvider({
 export function useImportExportState(): ImportExportStateContextType {
   const context = useContext(ImportExportStateContext);
   if (context === undefined) {
-    throw new Error('useImportExportState must be used within an ImportExportProvider');
+    throw internalError('useImportExportState must be used within an ImportExportProvider');
   }
   return context;
 }
@@ -869,7 +870,7 @@ export function useImportExportState(): ImportExportStateContextType {
 export function useImportExportData(): ImportExportDataContextType {
   const context = useContext(ImportExportDataContext);
   if (context === undefined) {
-    throw new Error('useImportExportData must be used within an ImportExportProvider');
+    throw internalError('useImportExportData must be used within an ImportExportProvider');
   }
   return context;
 }
@@ -877,7 +878,7 @@ export function useImportExportData(): ImportExportDataContextType {
 export function useImportExportActions(): ImportExportActionsContextType {
   const context = useContext(ImportExportActionsContext);
   if (context === undefined) {
-    throw new Error('useImportExportActions must be used within an ImportExportProvider');
+    throw internalError('useImportExportActions must be used within an ImportExportProvider');
   }
   return context;
 }

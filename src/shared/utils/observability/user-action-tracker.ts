@@ -33,6 +33,7 @@ const getSafeText = (element: Element | null): string | undefined => {
 };
 
 let isInitialized = false;
+let disposeUserActionTrackerListeners: (() => void) | null = null;
 
 export const initUserActionTracker = (): void => {
   if (typeof window === 'undefined' || isInitialized) return;
@@ -71,6 +72,17 @@ export const initUserActionTracker = (): void => {
   window.addEventListener('click', handler, { capture: true, passive: true });
   window.addEventListener('submit', handler, { capture: true, passive: true });
   window.addEventListener('change', handler, { capture: true, passive: true });
+  disposeUserActionTrackerListeners = (): void => {
+    window.removeEventListener('click', handler, { capture: true });
+    window.removeEventListener('submit', handler, { capture: true });
+    window.removeEventListener('change', handler, { capture: true });
+  };
+};
+
+export const resetUserActionTracker = (): void => {
+  disposeUserActionTrackerListeners?.();
+  disposeUserActionTrackerListeners = null;
+  isInitialized = false;
 };
 
 export const getLastUserAction = (): UserAction | null => lastAction;

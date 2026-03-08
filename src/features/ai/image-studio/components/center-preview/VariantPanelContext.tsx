@@ -3,6 +3,7 @@
 import React, { createContext, useContext } from 'react';
 
 import type { VariantThumbnailInfo } from './preview-utils';
+import { internalError } from '@/shared/errors/app-error';
 
 export type VariantPanelContextValue = {
   activeRunError: string | null;
@@ -45,7 +46,7 @@ export function VariantPanelProvider({
 export function useVariantPanelContext() {
   const context = useContext(VariantPanelContext);
   if (!context) {
-    throw new Error('useVariantPanelContext must be used within VariantPanelProvider');
+    throw internalError('useVariantPanelContext must be used within VariantPanelProvider');
   }
   return context;
 }

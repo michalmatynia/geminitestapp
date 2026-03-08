@@ -3,6 +3,7 @@
 import { createContext, useContext } from 'react';
 
 import type { RelationBrowserMode, RelationTreeLookup } from '../types';
+import { internalError } from '@/shared/errors/app-error';
 
 export interface RelationTreeNodeRuntimeContextValue {
   mode: RelationBrowserMode;
@@ -37,7 +38,7 @@ export function RelationTreeNodeRuntimeProvider({
 export function useRelationTreeNodeRuntimeContext(): RelationTreeNodeRuntimeContextValue {
   const context = useContext(RelationTreeNodeRuntimeContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useRelationTreeNodeRuntimeContext must be used within a RelationTreeNodeRuntimeProvider'
     );
   }

@@ -3,6 +3,7 @@
 import React, { createContext, useContext } from 'react';
 import type { SequenceRunStatus, SequencerDisplayState } from './sequencing-types';
 import type { ImageStudioSequenceStep } from '@/features/ai/image-studio/utils/studio-settings';
+import { internalError } from '@/shared/errors/app-error';
 
 export interface SequencingPanelContextValue {
   // Actions
@@ -58,7 +59,7 @@ export function SequencingPanelProvider({
 export function useSequencingPanelContext() {
   const context = useContext(SequencingPanelContext);
   if (!context) {
-    throw new Error('useSequencingPanelContext must be used within SequencingPanelProvider');
+    throw internalError('useSequencingPanelContext must be used within SequencingPanelProvider');
   }
   return context;
 }

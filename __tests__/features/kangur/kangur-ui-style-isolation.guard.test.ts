@@ -10,9 +10,15 @@ const KANGUR_VISUAL_CONTRACTS = [
   {
     file: 'src/features/kangur/ui/KangurFeatureApp.tsx',
     requiredTokens: [
-      'absolute inset-0 z-20 flex items-center justify-center',
-      'w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin',
+      'KangurPageTransitionSkeleton pageKey={pageKey ?? KANGUR_MAIN_PAGE} reason=\'boot\'',
       'data-testid=\'kangur-route-content\'',
+    ],
+  },
+  {
+    file: 'src/features/kangur/ui/components/KangurPageTransitionSkeleton.tsx',
+    requiredTokens: [
+      'data-testid=\'kangur-page-transition-skeleton\'',
+      'cursor-progress overflow-hidden bg-white/44 backdrop-blur-[10px]',
     ],
   },
   {

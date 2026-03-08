@@ -5,6 +5,6 @@ import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import { POST_handler } from './handler';
 
 export const POST = apiHandlerWithParams<{ runId: string }>(POST_handler, {
-  source: 'integrations.imports.base.runs.[runId].cancel.POST',
+  source: 'v2.integrations.imports.base.runs.[runId].cancel.POST',
   requireCsrf: false,
 });

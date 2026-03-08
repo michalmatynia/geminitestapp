@@ -4,6 +4,7 @@ import { createContext, useContext } from 'react';
 
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 import type { CaseResolverTreeIconComponent as FolderIconComponent } from '../../tree-node-icon';
+import { internalError } from '@/shared/errors/app-error';
 
 export type { FolderIconComponent };
 
@@ -59,7 +60,7 @@ export function CaseListNodeRuntimeProvider({
 export function useCaseListNodeRuntimeContext(): CaseListNodeRuntimeContextValue {
   const context = useContext(CaseListNodeRuntimeContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useCaseListNodeRuntimeContext must be used within a CaseListNodeRuntimeProvider'
     );
   }

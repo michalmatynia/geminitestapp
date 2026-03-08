@@ -9,12 +9,13 @@ import type {
   ChatbotSessionsData,
   ChatbotUIData,
 } from '@/shared/contracts/chatbot';
+import { internalError } from '@/shared/errors/app-error';
 
 // --- Messages Context ---
 const MessagesContext = createContext<ChatbotMessagesData | null>(null);
 export const useChatbotMessages = () => {
   const context = useContext(MessagesContext);
-  if (!context) throw new Error('useChatbotMessages must be used within ChatbotProvider');
+  if (!context) throw internalError('useChatbotMessages must be used within ChatbotProvider');
   return context;
 };
 
@@ -22,7 +23,7 @@ export const useChatbotMessages = () => {
 const SettingsContext = createContext<ChatbotSettingsData | null>(null);
 export const useChatbotSettings = () => {
   const context = useContext(SettingsContext);
-  if (!context) throw new Error('useChatbotSettings must be used within ChatbotProvider');
+  if (!context) throw internalError('useChatbotSettings must be used within ChatbotProvider');
   return context;
 };
 
@@ -30,7 +31,7 @@ export const useChatbotSettings = () => {
 const SessionsContext = createContext<ChatbotSessionsData | null>(null);
 export const useChatbotSessions = () => {
   const context = useContext(SessionsContext);
-  if (!context) throw new Error('useChatbotSessions must be used within ChatbotProvider');
+  if (!context) throw internalError('useChatbotSessions must be used within ChatbotProvider');
   return context;
 };
 
@@ -38,7 +39,7 @@ export const useChatbotSessions = () => {
 const UIContext = createContext<ChatbotUIData | null>(null);
 export const useChatbotUI = () => {
   const context = useContext(UIContext);
-  if (!context) throw new Error('useChatbotUI must be used within ChatbotProvider');
+  if (!context) throw internalError('useChatbotUI must be used within ChatbotProvider');
   return context;
 };
 

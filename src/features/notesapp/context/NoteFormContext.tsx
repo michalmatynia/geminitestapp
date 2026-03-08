@@ -585,14 +585,14 @@ export function NoteFormProvider({
         const newContent: string =
           content.slice(0, selectionStart) + formattedText + content.slice(selectionEnd);
         setContent(newContent);
-        setTimeout((): void => {
+        window.requestAnimationFrame((): void => {
           if (textarea) {
             const newPosition: number = selectionStart + formattedText.length;
             textarea.selectionStart = newPosition;
             textarea.selectionEnd = newPosition;
             textarea.focus();
           }
-        }, 0);
+        });
       }
       return;
     }

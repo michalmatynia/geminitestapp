@@ -244,12 +244,15 @@ export default function Lessons() {
   const router = useRouter();
   const { basePath } = useKangurRouting();
   const routeTransition = useOptionalKangurRouteTransition();
-  const { user, navigateToLogin, logout } = useKangurAuth();
+  const auth = useKangurAuth();
+  const { user, navigateToLogin, logout } = auth;
+  const canAccessParentAssignments =
+    auth.canAccessParentAssignments ?? Boolean(user?.activeLearner?.id);
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('lessons');
   const settingsStore = useSettingsStore();
   const progress = useKangurProgressState();
   const { assignments } = useKangurAssignments({
-    enabled: Boolean(user),
+    enabled: canAccessParentAssignments,
     query: {
       includeArchived: false,
     },

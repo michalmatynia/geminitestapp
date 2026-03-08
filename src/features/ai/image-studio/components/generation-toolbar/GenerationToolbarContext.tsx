@@ -13,6 +13,7 @@ import type {
   ImageStudioCenterDetectionMode,
   ImageStudioCenterShadowPolicy,
 } from '../../contracts/center';
+import { internalError } from '@/shared/errors/app-error';
 
 export type MaskAttachMode = 'client_canvas_polygon' | 'server_polygon';
 export type UpscaleMode = 'client_canvas' | 'server_sharp';
@@ -325,7 +326,7 @@ export function GenerationToolbarProvider({
 export function useGenerationToolbarContext(): GenerationToolbarContextValue {
   const context = useContext(GenerationToolbarContext);
   if (!context) {
-    throw new Error('useGenerationToolbarContext must be used within a GenerationToolbarProvider');
+    throw internalError('useGenerationToolbarContext must be used within a GenerationToolbarProvider');
   }
   return context;
 }

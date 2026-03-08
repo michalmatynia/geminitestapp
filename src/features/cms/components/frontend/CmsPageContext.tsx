@@ -3,6 +3,7 @@
 import React, { createContext, useContext } from 'react';
 
 import type { ColorSchemeColors } from './theme-styles';
+import { internalError } from '@/shared/errors/app-error';
 
 interface CmsPageContextValue {
   colorSchemes: Record<string, ColorSchemeColors>;
@@ -24,7 +25,7 @@ export function CmsPageProvider({
 export function useCmsPageContext() {
   const context = useContext(CmsPageContext);
   if (!context) {
-    throw new Error('useCmsPageContext must be used within a CmsPageProvider');
+    throw internalError('useCmsPageContext must be used within a CmsPageProvider');
   }
   return context;
 }

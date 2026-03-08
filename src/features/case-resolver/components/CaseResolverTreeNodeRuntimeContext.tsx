@@ -2,6 +2,7 @@
 
 import { createContext, useContext } from 'react';
 import type { CaseResolverTreeIconComponent as CaseResolverTreeNodeIconComponent } from './tree-node-icon';
+import { internalError } from '@/shared/errors/app-error';
 
 export type { CaseResolverTreeNodeIconComponent };
 
@@ -42,7 +43,7 @@ export function CaseResolverTreeNodeRuntimeProvider({
 export function useCaseResolverTreeNodeRuntimeContext(): CaseResolverTreeNodeRuntimeContextValue {
   const context = useContext(CaseResolverTreeNodeRuntimeContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useCaseResolverTreeNodeRuntimeContext must be used within a CaseResolverTreeNodeRuntimeProvider'
     );
   }

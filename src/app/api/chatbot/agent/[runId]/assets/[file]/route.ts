@@ -1,4 +1,6 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export { AgentCreatorAgentRunAssetsGET as GET } from '@/features/ai/agentcreator/server';
+import { AgentCreatorAgentRunAssetsGET } from '@/features/ai/agentcreator/server';
+
+export const GET = AgentCreatorAgentRunAssetsGET;

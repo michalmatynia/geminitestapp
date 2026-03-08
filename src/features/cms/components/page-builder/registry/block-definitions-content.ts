@@ -836,6 +836,7 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
     defaultSettings: {
       inputValue: '',
       inputPlaceholder: 'Type here',
+      inputAriaLabel: '',
       inputType: 'text',
       inputAutoComplete: '',
       inputMaxLength: 0,
@@ -856,6 +857,7 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
     },
     settingsSchema: [
       { key: 'inputPlaceholder', label: 'Placeholder', type: 'text', defaultValue: 'Type here' },
+      { key: 'inputAriaLabel', label: 'Accessible label', type: 'text', defaultValue: '' },
       {
         key: 'inputType',
         label: 'Input type',

@@ -14,6 +14,7 @@ import { useAutoExpand } from './useAutoExpand';
 import { usePageBuilder } from './usePageBuilderContext';
 
 import type { PageZone, SectionInstance } from '../types/page-builder';
+import { internalError } from '@/shared/errors/app-error';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -611,7 +612,7 @@ export function TreeActionsProvider({
 export function useTreeActions(): TreeActionsContextValue {
   const context = useContext(TreeActionsContext);
   if (!context) {
-    throw new Error('useTreeActions must be used within a TreeActionsProvider');
+    throw internalError('useTreeActions must be used within a TreeActionsProvider');
   }
   return context;
 }

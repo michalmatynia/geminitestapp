@@ -219,26 +219,37 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
       });
     };
 
-    source.addEventListener('ready', (): void => {
+    const stopStream = (): void => {
+      source.removeEventListener('ready', handleReadyEvent);
+      source.removeEventListener('run', handleRunEvent);
+      source.removeEventListener('nodes', handleNodesEvent);
+      source.removeEventListener('events', handleEventsEvent);
+      source.removeEventListener('done', handleDoneEvent);
+      source.removeEventListener('error', handleErrorEvent);
+      source.close();
+      setStreamStatus('stopped');
+    };
+
+    const handleReadyEvent = (): void => {
       setStreamStatus('live');
-    });
-    source.addEventListener('run', (event: MessageEvent): void => {
+    };
+    const handleRunEvent = (event: MessageEvent): void => {
       try {
         const payload = JSON.parse(event.data as string) as AiPathRunRecord;
         setDetail((prev: RunDetail): RunDetail => (prev ? { ...prev, run: payload } : prev));
       } catch {
         // ignore parse errors
       }
-    });
-    source.addEventListener('nodes', (event: MessageEvent): void => {
+    };
+    const handleNodesEvent = (event: MessageEvent): void => {
       try {
         const payload = JSON.parse(event.data as string) as AiPathRunNodeRecord[];
         setDetail((prev: RunDetail): RunDetail => (prev ? { ...prev, nodes: payload } : prev));
       } catch {
         // ignore parse errors
       }
-    });
-    source.addEventListener('events', (event: MessageEvent): void => {
+    };
+    const handleEventsEvent = (event: MessageEvent): void => {
       try {
         const payload = JSON.parse(event.data as string) as
           | AiPathRunEventRecord[]
@@ -262,18 +273,23 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
       } catch {
         // ignore parse errors
       }
-    });
-    source.addEventListener('done', (): void => {
+    };
+    const handleDoneEvent = (): void => {
+      stopStream();
+    };
+    const handleErrorEvent = (): void => {
       setStreamStatus('stopped');
-      source.close();
-    });
-    source.addEventListener('error', (): void => {
-      setStreamStatus('stopped');
-    });
+    };
+
+    source.addEventListener('ready', handleReadyEvent);
+    source.addEventListener('run', handleRunEvent);
+    source.addEventListener('nodes', handleNodesEvent);
+    source.addEventListener('events', handleEventsEvent);
+    source.addEventListener('done', handleDoneEvent);
+    source.addEventListener('error', handleErrorEvent);
 
     return (): void => {
-      source.close();
-      setStreamStatus('stopped');
+      stopStream();
     };
   }, [detailOpen, detail?.run?.id, streamPaused, detail?.events]);
 

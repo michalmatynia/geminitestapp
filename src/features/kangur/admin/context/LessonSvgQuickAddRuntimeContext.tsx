@@ -3,6 +3,7 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 
 import type { KangurLesson } from '@/shared/contracts/kangur';
+import { internalError } from '@/shared/errors/app-error';
 
 type LessonSvgQuickAddRuntimeContextValue = {
   lesson: KangurLesson | null;
@@ -51,7 +52,7 @@ export function LessonSvgQuickAddRuntimeProvider({
 export function useLessonSvgQuickAddRuntimeContext(): LessonSvgQuickAddRuntimeContextValue {
   const context = useContext(LessonSvgQuickAddRuntimeContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useLessonSvgQuickAddRuntimeContext must be used within a LessonSvgQuickAddRuntimeProvider'
     );
   }

@@ -2,6 +2,7 @@
 
 import { createContext, useContext } from 'react';
 import type { SessionCookie } from '@/shared/contracts/integrations';
+import { internalError } from '@/shared/errors/app-error';
 
 export interface IntegrationsSession {
   showSessionModal: boolean;
@@ -17,6 +18,6 @@ export const IntegrationsSessionContext = createContext<IntegrationsSession | nu
 
 export const useIntegrationsSession = () => {
   const context = useContext(IntegrationsSessionContext);
-  if (!context) throw new Error('useIntegrationsSession must be used within IntegrationsProvider');
+  if (!context) throw internalError('useIntegrationsSession must be used within IntegrationsProvider');
   return context;
 };

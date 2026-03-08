@@ -4,6 +4,7 @@ import React from 'react';
 
 import type { RequestPreviewImage } from '@/features/ai/image-studio/utils/run-request-preview';
 import type { ParamLeaf } from '@/shared/contracts/prompt-engine';
+import { internalError } from '@/shared/errors/app-error';
 
 export interface ActionHistoryEntrySummary {
   id: string;
@@ -90,7 +91,7 @@ export function RightSidebarProvider({
 export function useRightSidebarContext(): RightSidebarContextValue {
   const context = React.useContext(RightSidebarContext);
   if (!context) {
-    throw new Error('useRightSidebarContext must be used inside RightSidebarProvider');
+    throw internalError('useRightSidebarContext must be used inside RightSidebarProvider');
   }
   return context;
 }

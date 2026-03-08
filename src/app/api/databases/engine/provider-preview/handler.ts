@@ -9,8 +9,16 @@ export const querySchema = z.object({
   collections: optionalCsvQueryStringArray(),
 });
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+const resolveProviderPreviewQueryInput = (
+  req: Request,
+  ctx: ApiHandlerContext
+): Record<string, unknown> => ({
+  ...Object.fromEntries(new URL(req.url).searchParams.entries()),
+  ...((ctx.query ?? {}) as Record<string, unknown>),
+});
+
+export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const query = querySchema.parse(resolveProviderPreviewQueryInput(req, _ctx));
   const collections = query.collections;
   const payload = await getDatabaseEngineProviderPreview(collections ? { collections } : {});
   return NextResponse.json(payload, {

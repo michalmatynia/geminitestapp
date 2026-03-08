@@ -4,6 +4,7 @@ import React, { createContext, useContext } from 'react';
 import type { UseAiPathsSettingsStateReturn } from './types';
 import type { AiPathsValidationConfig, DataContractPreflightReport } from '@/shared/lib/ai-paths';
 import type { StatusVariant } from '@/shared/ui';
+import { internalError } from '@/shared/errors/app-error';
 
 export type AiPathsSettingsPageContextValue = UseAiPathsSettingsStateReturn & {
   activeTab: 'canvas' | 'paths' | 'docs';
@@ -70,7 +71,7 @@ export function AiPathsSettingsPageProvider({
 export function useAiPathsSettingsPageContext(): AiPathsSettingsPageContextValue {
   const context = useContext(AiPathsSettingsPageContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useAiPathsSettingsPageContext must be used within AiPathsSettingsPageProvider'
     );
   }

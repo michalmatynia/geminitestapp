@@ -5,6 +5,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { useIntegrationsWithConnections } from '@/features/integrations/hooks/useIntegrationQueries';
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations';
 import { useToast } from '@/shared/ui';
+import { internalError } from '@/shared/errors/app-error';
 
 const BASE_MARKETPLACE_SLUGS = new Set(['baselinker', 'base', 'base-com']);
 const CATEGORY_MAPPING_MARKETPLACE_SLUGS = new Set([...BASE_MARKETPLACE_SLUGS, 'tradera']);
@@ -25,7 +26,7 @@ const DataContext = createContext<CategoryMapperPageData | null>(null);
 export const useCategoryMapperPageData = () => {
   const context = useContext(DataContext);
   if (!context)
-    throw new Error('useCategoryMapperPageData must be used within CategoryMapperPageProvider');
+    throw internalError('useCategoryMapperPageData must be used within CategoryMapperPageProvider');
   return context;
 };
 
@@ -39,7 +40,7 @@ const SelectionContext = createContext<CategoryMapperPageSelection | null>(null)
 export const useCategoryMapperPageSelection = () => {
   const context = useContext(SelectionContext);
   if (!context)
-    throw new Error(
+    throw internalError(
       'useCategoryMapperPageSelection must be used within CategoryMapperPageProvider'
     );
   return context;

@@ -69,6 +69,7 @@ import type {
   LinkedMaskSlotViewModel,
 } from './slot-inline-edit-tab-types';
 import type { ImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
+import { internalError } from '@/shared/errors/app-error';
 
 export type EditCardTab = 'card' | 'generations' | 'environment' | 'masks' | 'composites';
 
@@ -806,7 +807,7 @@ export function StudioInlineEditProvider({
 export function useStudioInlineEdit() {
   const context = useContext(StudioInlineEditContext);
   if (!context) {
-    throw new Error('useStudioInlineEdit must be used within StudioInlineEditProvider');
+    throw internalError('useStudioInlineEdit must be used within StudioInlineEditProvider');
   }
   return context;
 }

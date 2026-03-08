@@ -110,6 +110,7 @@ export function NoteDetailPreview(): React.JSX.Element | null {
 
   const contentRenderer = renderMarkdownToHtml as (val: string) => string;
   const previewContentRef = React.useRef<HTMLDivElement | null>(null);
+  const copyResetTimeoutRef = React.useRef<number | null>(null);
 
   React.useEffect(() => {
     const previewContent = previewContentRef.current;
@@ -138,7 +139,11 @@ export function NoteDetailPreview(): React.JSX.Element | null {
         .writeText(decodeURIComponent(encoded))
         .then((): void => {
           copyButton.textContent = 'Copied';
-          window.setTimeout((): void => {
+          if (copyResetTimeoutRef.current !== null) {
+            window.clearTimeout(copyResetTimeoutRef.current);
+          }
+          copyResetTimeoutRef.current = window.setTimeout((): void => {
+            copyResetTimeoutRef.current = null;
             copyButton.textContent = originalLabel ?? 'Copy';
           }, 1500);
         })
@@ -158,6 +163,10 @@ export function NoteDetailPreview(): React.JSX.Element | null {
       previewContent.removeEventListener('mouseover', handleMouseOver);
       previewContent.removeEventListener('mouseout', handleMouseOut);
       previewContent.removeEventListener('click', handleClick);
+      if (copyResetTimeoutRef.current !== null) {
+        window.clearTimeout(copyResetTimeoutRef.current);
+        copyResetTimeoutRef.current = null;
+      }
     };
   }, [toast]);
 

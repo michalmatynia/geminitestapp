@@ -6,7 +6,6 @@ import { GET_handler, PATCH_handler, updateSchema } from './handler';
 
 export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, {
   source: 'auth.users.[id].security.GET',
-  requireCsrf: false,
 });
 
 export const PATCH = apiHandlerWithParams<{ id: string }>(PATCH_handler, {

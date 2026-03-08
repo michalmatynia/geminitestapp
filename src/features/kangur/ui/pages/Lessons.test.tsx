@@ -107,8 +107,8 @@ vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
-  useKangurAssignments: () => ({
-    assignments: assignmentsState.value,
+  useKangurAssignments: ({ enabled = true }: { enabled?: boolean } = {}) => ({
+    assignments: enabled ? assignmentsState.value : [],
     isLoading: false,
     error: null,
     refresh: vi.fn(),
@@ -196,6 +196,7 @@ describe('Lessons', () => {
     };
     authState.value = {
       user: null,
+      canAccessParentAssignments: false,
       navigateToLogin: vi.fn(),
       logout: vi.fn(),
     };
@@ -380,6 +381,17 @@ describe('Lessons', () => {
   });
 
   it('uses shared chips for lesson library document and assignment states', () => {
+    authState.value = {
+      user: {
+        id: 'parent-1',
+        activeLearner: {
+          id: 'learner-1',
+        },
+      },
+      canAccessParentAssignments: true,
+      navigateToLogin: vi.fn(),
+      logout: vi.fn(),
+    };
     assignmentsState.value = [
       {
         id: 'assignment-priority',
@@ -458,6 +470,48 @@ describe('Lessons', () => {
     expect(screen.getAllByText('Priorytet rodzica')[0]).toHaveClass('border-rose-200', 'bg-rose-100');
     expect(screen.getByText('Opanowane 92%')).toHaveClass('border-emerald-200', 'bg-emerald-100');
     expect(screen.getByText('Priorytet wysoki')).toHaveClass('border-rose-200', 'bg-rose-100');
+  });
+
+  it('hides parent assignment markers in local mode even if stale assignment data exists', () => {
+    assignmentsState.value = [
+      {
+        id: 'assignment-priority',
+        learnerKey: 'jan@example.com',
+        title: 'Powtorz nauke zegara',
+        description: 'Skup sie na odczytywaniu godzin.',
+        priority: 'high',
+        archived: false,
+        target: {
+          type: 'lesson',
+          lessonComponentId: 'clock',
+          requiredCompletions: 1,
+          baselineCompletions: 0,
+        },
+        assignedByName: 'Rodzic',
+        assignedByEmail: 'rodzic@example.com',
+        createdAt: '2026-03-06T10:00:00.000Z',
+        updatedAt: '2026-03-06T10:00:00.000Z',
+        progress: {
+          status: 'in_progress',
+          percent: 40,
+          summary: 'Powtorki: 0/1',
+          attemptsCompleted: 0,
+          attemptsRequired: 1,
+          lastActivityAt: null,
+          completedAt: null,
+        },
+      },
+    ];
+
+    setSettingsStore({
+      lessons: [createLesson()],
+    });
+
+    render(<Lessons />);
+
+    expect(screen.queryByText('Priorytet rodzica')).toBeNull();
+    expect(screen.queryByText('Ukonczone dla rodzica')).toBeNull();
+    expect(screen.queryByText('Powtorz nauke zegara')).toBeNull();
   });
 
   it('uses the shared empty-state surface when no lessons are enabled', () => {

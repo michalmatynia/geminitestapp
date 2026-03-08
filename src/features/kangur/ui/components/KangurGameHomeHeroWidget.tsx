@@ -11,6 +11,7 @@ import {
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 
 export function KangurGameHomeHeroWidget(): React.JSX.Element | null {
+  const runtime = useKangurGameRuntime();
   const {
     basePath,
     handleStartGame,
@@ -19,14 +20,16 @@ export function KangurGameHomeHeroWidget(): React.JSX.Element | null {
     screen,
     setPlayerName,
     user,
-  } = useKangurGameRuntime();
+  } = runtime;
+  const canAccessParentAssignments =
+    runtime.canAccessParentAssignments ?? Boolean(user?.activeLearner?.id);
 
   if (screen !== 'home') {
     return null;
   }
 
-  if (user) {
-    return <KangurAssignmentSpotlight basePath={basePath} />;
+  if (canAccessParentAssignments) {
+    return <KangurAssignmentSpotlight basePath={basePath} enabled={canAccessParentAssignments} />;
   }
 
   const playerNameInputId = 'kangur-home-player-name';

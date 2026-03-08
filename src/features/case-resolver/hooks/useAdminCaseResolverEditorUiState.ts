@@ -17,6 +17,7 @@ export function useAdminCaseResolverEditorUiState({
   const [editorContentRevisionSeed, setEditorContentRevisionSeed] = useState(0);
   const editorSplitRef = useRef<HTMLDivElement | null>(null);
   const editorTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const preserveWorkspaceViewFrameRef = useRef<number | null>(null);
   const scanDraftUploadInputRef = useRef<HTMLInputElement | null>(null);
   const [isScanDraftDropActive, setIsScanDraftDropActive] = useState(false);
 
@@ -27,10 +28,22 @@ export function useAdminCaseResolverEditorUiState({
     setEditorContentRevisionSeed((value) => value + 1);
   }, [editingDocumentDraft?.id]);
 
+  useEffect(() => {
+    return (): void => {
+      if (preserveWorkspaceViewFrameRef.current === null) return;
+      window.cancelAnimationFrame(preserveWorkspaceViewFrameRef.current);
+      preserveWorkspaceViewFrameRef.current = null;
+    };
+  }, []);
+
   const preserveWorkspaceView = useCallback((view: WorkspaceView): void => {
-    window.setTimeout((): void => {
+    if (preserveWorkspaceViewFrameRef.current !== null) {
+      window.cancelAnimationFrame(preserveWorkspaceViewFrameRef.current);
+    }
+    preserveWorkspaceViewFrameRef.current = window.requestAnimationFrame((): void => {
+      preserveWorkspaceViewFrameRef.current = null;
       setWorkspaceView((current: WorkspaceView) => (current === view ? current : view));
-    }, 0);
+    });
   }, []);
 
   return {

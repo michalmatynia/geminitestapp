@@ -151,9 +151,17 @@ export const deleteQuerySchema = z.object({
   }, z.enum(['include', 'exclude'])).default('include'),
 });
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+const resolveAiPathRunsQueryInput = (
+  req: Request,
+  ctx: ApiHandlerContext
+): Record<string, unknown> => ({
+  ...Object.fromEntries(new URL(req.url).searchParams.entries()),
+  ...((ctx.query ?? {}) as Record<string, unknown>),
+});
+
+export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const access = await requireAiPathsRunAccess();
-  const query = (_ctx.query ?? {}) as z.infer<typeof listQuerySchema>;
+  const query = listQuerySchema.parse(resolveAiPathRunsQueryInput(req, _ctx));
   const visibility = query.visibility;
   const pathId = query.pathId ?? undefined;
   const nodeId = query.nodeId ?? undefined;
@@ -225,10 +233,10 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   });
 }
 
-export async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const access = await requireAiPathsAccess();
   await enforceAiPathsActionRateLimit(access, 'runs-clear');
-  const query = (_ctx.query ?? {}) as z.infer<typeof deleteQuerySchema>;
+  const query = deleteQuerySchema.parse(resolveAiPathRunsQueryInput(req, _ctx));
   const scope = query.scope;
   const pathId = query.pathId ?? undefined;
   const source = query.source ?? undefined;

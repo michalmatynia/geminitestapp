@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { internalError } from '@/shared/errors/app-error';
 
 type FileUploadEventsPanelContextValue = {
   title: string;
@@ -30,7 +31,7 @@ export function FileUploadEventsPanelProvider({
 export function useFileUploadEventsPanelContext(): FileUploadEventsPanelContextValue {
   const context = React.useContext(FileUploadEventsPanelContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useFileUploadEventsPanelContext must be used within FileUploadEventsPanelProvider'
     );
   }

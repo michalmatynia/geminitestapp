@@ -20,7 +20,10 @@ import type {
 } from '@/shared/contracts/integrations';
 import type { ImageRetryPreset, ImageTransformOptions } from '@/shared/contracts/integrations';
 import type { ProductWithImages } from '@/shared/contracts/products';
-import { badRequestError } from '@/shared/errors/app-error';
+import {
+  badRequestError,
+  internalError,
+} from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
 
@@ -37,7 +40,7 @@ const DataContext = createContext<ProductListingsData | null>(null);
 export const useProductListingsData = () => {
   const context = useContext(DataContext);
   if (!context)
-    throw new Error('useProductListingsData must be used within ProductListingsProvider');
+    throw internalError('useProductListingsData must be used within ProductListingsProvider');
   return context;
 };
 
@@ -58,7 +61,7 @@ const UIStateContext = createContext<ProductListingsUIState | null>(null);
 export const useProductListingsUIState = () => {
   const context = useContext(UIStateContext);
   if (!context)
-    throw new Error('useProductListingsUIState must be used within ProductListingsProvider');
+    throw internalError('useProductListingsUIState must be used within ProductListingsProvider');
   return context;
 };
 
@@ -77,7 +80,7 @@ const ModalsContext = createContext<ProductListingsModals | null>(null);
 export const useProductListingsModals = () => {
   const context = useContext(ModalsContext);
   if (!context)
-    throw new Error('useProductListingsModals must be used within ProductListingsProvider');
+    throw internalError('useProductListingsModals must be used within ProductListingsProvider');
   return context;
 };
 
@@ -91,7 +94,7 @@ const LogsContext = createContext<ProductListingsLogs | null>(null);
 export const useProductListingsLogs = () => {
   const context = useContext(LogsContext);
   if (!context)
-    throw new Error('useProductListingsLogs must be used within ProductListingsProvider');
+    throw internalError('useProductListingsLogs must be used within ProductListingsProvider');
   return context;
 };
 
@@ -115,7 +118,7 @@ const ActionsContext = createContext<ProductListingsActions | null>(null);
 export const useProductListingsActions = () => {
   const context = useContext(ActionsContext);
   if (!context)
-    throw new Error('useProductListingsActions must be used within ProductListingsProvider');
+    throw internalError('useProductListingsActions must be used within ProductListingsProvider');
   return context;
 };
 

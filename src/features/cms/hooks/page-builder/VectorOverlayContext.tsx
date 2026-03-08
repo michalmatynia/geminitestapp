@@ -6,6 +6,7 @@ import type {
   VectorOverlayRequest,
   VectorOverlayValue,
 } from '@/shared/contracts/vector';
+import { internalError } from '@/shared/errors/app-error';
 
 export type { VectorOverlayResult, VectorOverlayRequest, VectorOverlayValue };
 
@@ -14,7 +15,7 @@ export const VectorOverlayContext = createContext<VectorOverlayValue | undefined
 export function useVectorOverlay(): VectorOverlayValue {
   const context = useContext(VectorOverlayContext);
   if (!context) {
-    throw new Error('useVectorOverlay must be used within PageBuilderProvider');
+    throw internalError('useVectorOverlay must be used within PageBuilderProvider');
   }
   return context;
 }

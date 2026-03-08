@@ -4,6 +4,7 @@ import type { CSSProperties } from 'react';
 import { createContext, useContext } from 'react';
 
 import type { PreviewBlockProps } from '@/shared/contracts/cms';
+import { internalError } from '@/shared/errors/app-error';
 
 type BlockRenderContextValue = {
   block: PreviewBlockProps['block'];
@@ -23,7 +24,7 @@ export function useBlockSettings(): Record<string, unknown> | null {
 export function useRequiredBlockSettings(): Record<string, unknown> {
   const context = useContext(BlockSettingsContext);
   if (!context) {
-    throw new Error('Block sub-components must be used within a BlockSettingsContext.Provider');
+    throw internalError('Block sub-components must be used within a BlockSettingsContext.Provider');
   }
   return context;
 }
@@ -31,7 +32,7 @@ export function useRequiredBlockSettings(): Record<string, unknown> {
 export function useRequiredBlockRenderContext(): BlockRenderContextValue {
   const context = useContext(BlockRenderContext);
   if (!context) {
-    throw new Error('Block sub-components must be used within a BlockRenderContext.Provider');
+    throw internalError('Block sub-components must be used within a BlockRenderContext.Provider');
   }
   return context;
 }

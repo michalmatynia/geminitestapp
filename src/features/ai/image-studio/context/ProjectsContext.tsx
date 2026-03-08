@@ -38,6 +38,7 @@ import {
   loadImageStudioActiveProjectLocal,
   saveImageStudioActiveProjectLocal,
 } from '@/features/ai/image-studio/utils/project-session';
+import { internalError } from '@/shared/errors/app-error';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -231,10 +232,10 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
       const sourceId = id.trim();
       const targetId = nextId.trim();
       if (!sourceId) {
-        throw new Error('Project id is required.');
+        throw internalError('Project id is required.');
       }
       if (!targetId) {
-        throw new Error('New project id is required.');
+        throw internalError('New project id is required.');
       }
 
       try {
@@ -266,10 +267,10 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
     async (payload: ResizeStudioProjectCanvasPayload): Promise<ResizeStudioProjectCanvasResult> => {
       const normalizedProjectId = payload.projectId.trim();
       if (!normalizedProjectId) {
-        throw new Error('Project id is required.');
+        throw internalError('Project id is required.');
       }
       if (typeof payload.canvasWidthPx !== 'number' && typeof payload.canvasHeightPx !== 'number') {
-        throw new Error('Enter at least one canvas dimension.');
+        throw internalError('Enter at least one canvas dimension.');
       }
 
       try {
@@ -349,12 +350,12 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
 
 export function useProjectsState(): ProjectsState {
   const ctx = useContext(ProjectsStateContext);
-  if (!ctx) throw new Error('useProjectsState must be used within a ProjectsProvider');
+  if (!ctx) throw internalError('useProjectsState must be used within a ProjectsProvider');
   return ctx;
 }
 
 export function useProjectsActions(): ProjectsActions {
   const ctx = useContext(ProjectsActionsContext);
-  if (!ctx) throw new Error('useProjectsActions must be used within a ProjectsProvider');
+  if (!ctx) throw internalError('useProjectsActions must be used within a ProjectsProvider');
   return ctx;
 }

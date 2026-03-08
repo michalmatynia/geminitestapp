@@ -31,6 +31,7 @@ describe('KangurGameHomeHeroWidget', () => {
 
     useKangurGameRuntimeMock.mockReturnValue({
       basePath: '/kangur',
+      canAccessParentAssignments: false,
       handleStartGame,
       navigateToLogin,
       playerName: 'Ala',
@@ -66,6 +67,7 @@ describe('KangurGameHomeHeroWidget', () => {
   it('shows the assignment spotlight for signed-in users on home', () => {
     useKangurGameRuntimeMock.mockReturnValue({
       basePath: '/kangur',
+      canAccessParentAssignments: true,
       handleStartGame: vi.fn(),
       navigateToLogin: vi.fn(),
       playerName: '',
@@ -78,5 +80,23 @@ describe('KangurGameHomeHeroWidget', () => {
 
     expect(screen.getByText('spotlight:/kangur')).toBeInTheDocument();
     expect(screen.queryByPlaceholderText('Wpisz swoje imie...')).toBeNull();
+  });
+
+  it('keeps parent assignments hidden when assignment access is disabled', () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      basePath: '/kangur',
+      canAccessParentAssignments: false,
+      handleStartGame: vi.fn(),
+      navigateToLogin: vi.fn(),
+      playerName: '',
+      screen: 'home',
+      setPlayerName: vi.fn(),
+      user: { id: 'user-1' },
+    });
+
+    render(<KangurGameHomeHeroWidget />);
+
+    expect(screen.queryByText('spotlight:/kangur')).toBeNull();
+    expect(screen.getByPlaceholderText('Wpisz swoje imie...')).toBeInTheDocument();
   });
 });

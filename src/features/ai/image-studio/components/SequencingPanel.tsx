@@ -63,7 +63,10 @@ const ENABLE_ROBUST_SEQUENCE_SYNC =
 
 const wait = async (ms: number): Promise<void> =>
   new Promise((resolve) => {
-    setTimeout(resolve, ms);
+    const timer = window.setTimeout((): void => {
+      window.clearTimeout(timer);
+      resolve();
+    }, ms);
   });
 
 const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));

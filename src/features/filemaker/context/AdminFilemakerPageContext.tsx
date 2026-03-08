@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext } from 'react';
 import { useAdminFilemakerPageState } from '../hooks/useAdminFilemakerPageState';
+import { internalError } from '@/shared/errors/app-error';
 
 export type AdminFilemakerPageContextValue = ReturnType<typeof useAdminFilemakerPageState>;
 
@@ -105,7 +106,7 @@ export function AdminFilemakerPageProvider({
 export function useAdminFilemakerPageStateContext(): AdminFilemakerPageStateContextValue {
   const context = useContext(AdminFilemakerPageStateContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useAdminFilemakerPageStateContext must be used within AdminFilemakerPageProvider'
     );
   }
@@ -115,7 +116,7 @@ export function useAdminFilemakerPageStateContext(): AdminFilemakerPageStateCont
 export function useAdminFilemakerPageActionsContext(): AdminFilemakerPageActionsContextValue {
   const context = useContext(AdminFilemakerPageActionsContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useAdminFilemakerPageActionsContext must be used within AdminFilemakerPageProvider'
     );
   }

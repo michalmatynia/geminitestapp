@@ -1,6 +1,6 @@
 'use client';
 
-import { useQueryClient, type UseQueryResult } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import React, { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
 
 import {
@@ -9,7 +9,6 @@ import {
   useDeleteStudioSlot,
   useUploadStudioAssets,
   useImportStudioAssetsFromDrive,
-  type StudioAssetImportResult,
 } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
 import { studioKeys, useStudioSlots } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import type { ImageFileSelection } from '@/shared/contracts/files';
@@ -18,7 +17,6 @@ import type {
   StudioSlotsResponse,
   ImageStudioAssetDto as ImageStudioUploadedAsset,
 } from '@/shared/contracts/image-studio';
-import type { CreateMutation, DeleteMutation, UpdateMutation } from '@/shared/contracts/ui';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { api } from '@/shared/lib/api-client';
 import { createCreateMutationV2 } from '@/shared/lib/query-factories-v2';
@@ -32,110 +30,14 @@ import {
   resolveImageStudioProjectSession,
 } from '@/features/ai/image-studio/utils/project-session';
 import { type StudioUploadMode } from '../components/studio-modals/StudioImportContext';
+import { internalError } from '@/shared/errors/app-error';
+import type {
+  SlotsContextType,
+  StudioFolderMutation,
+  StudioPreviewMode,
+} from './SlotsContext.types';
 
-export type StudioPreviewMode = 'image' | '3d';
-
-type StudioFolderMutation = CreateMutation<string, string>;
-type StudioUpdateSlotMutation = UpdateMutation<
-  ImageStudioSlotRecord,
-  { id: string; data: Partial<ImageStudioSlotRecord> }
->;
-type StudioDeleteSlotMutation = DeleteMutation<void, string>;
-type StudioUploadMutation = CreateMutation<
-  StudioAssetImportResult,
-  { files: File[]; folder: string }
->;
-type StudioDriveImportMutation = CreateMutation<
-  StudioAssetImportResult,
-  { files: ImageFileSelection[]; folder: string }
->;
-
-export type SlotsContextType = {
-  // State
-  slots: ImageStudioSlotRecord[];
-  isLoading: boolean;
-  isFetching: boolean;
-  slotsQuery: UseQueryResult<StudioSlotsResponse>;
-  error: Error | null;
-  selectedSlotId: string | null;
-  workingSlotId: string | null;
-  previewMode: StudioPreviewMode;
-  slotSelectionLocked: boolean;
-  captureRef: React.MutableRefObject<(() => string | null) | null>;
-  temporaryObjectUpload: ImageStudioUploadedAsset | null;
-
-  // UI State
-  slotCreateOpen: boolean;
-  driveImportOpen: boolean;
-  driveImportMode: StudioUploadMode;
-  driveImportTargetId: string | null;
-  slotInlineEditOpen: boolean;
-  slotImageUrlDraft: string;
-  slotBase64Draft: string;
-  slotUpdateBusy: boolean;
-
-  // Selected Data
-  selectedSlot: ImageStudioSlotRecord | null;
-  workingSlot: ImageStudioSlotRecord | null;
-  compositeSlot: ImageStudioSlotRecord | null;
-  compositeAssets: ImageStudioSlotRecord[];
-  compositeAssetIds: string[];
-  compositeAssetOptions: Array<{ value: string; label: string }>;
-
-  // Folders
-  virtualFolders: string[];
-  selectedFolder: string;
-
-  // Actions
-  setSelectedSlotId: (id: string | null) => void;
-  setWorkingSlotId: (id: string | null) => void;
-  setPreviewMode: (mode: StudioPreviewMode) => void;
-  setSlotSelectionLocked: (locked: boolean) => void;
-  setTemporaryObjectUpload: (asset: ImageStudioUploadedAsset | null) => void;
-  setCompositeAssetIds: (ids: string[]) => void;
-  setSelectedFolder: (folder: string) => void;
-
-  setSlotCreateOpen: (open: boolean) => void;
-  setDriveImportOpen: (open: boolean) => void;
-  setDriveImportMode: (mode: StudioUploadMode) => void;
-  setDriveImportTargetId: (id: string | null) => void;
-  setSlotInlineEditOpen: (open: boolean) => void;
-  setSlotImageUrlDraft: (url: string) => void;
-  setSlotBase64Draft: (base64: string) => void;
-  setSlotUpdateBusy: (busy: boolean) => void;
-
-  expandFolderPath: (path: string) => string[];
-  createFolder: (folder: string) => Promise<string>;
-  deleteFolder: (folder: string) => Promise<void>;
-  createSlots: (slots: Array<Partial<ImageStudioSlotRecord>>) => Promise<ImageStudioSlotRecord[]>;
-  updateSlot: (id: string, data: Partial<ImageStudioSlotRecord>) => Promise<ImageStudioSlotRecord>;
-  deleteSlot: (id: string) => Promise<void>;
-  moveSlot: (input: { slot: ImageStudioSlotRecord; targetFolder: string }) => Promise<void>;
-
-  handleMoveFolder: (source: string, target: string) => Promise<void>;
-  handleRenameFolder: (source: string, nextName: string) => Promise<void>;
-  handleDeleteFolder: (source: string) => Promise<void>;
-
-  uploadAssets: (
-    files: File[],
-    options?: { folder?: string; slotId?: string }
-  ) => Promise<ImageStudioUploadedAsset[]>;
-  importAssetsFromDrive: (
-    selection: ImageFileSelection,
-    options?: { folder?: string; slotId?: string }
-  ) => Promise<StudioAssetImportResult>;
-
-  // Mutations
-  createFolderMutation: StudioFolderMutation;
-  updateSlotMutation: StudioUpdateSlotMutation;
-  deleteSlotMutation: StudioDeleteSlotMutation;
-  uploadMutation: StudioUploadMutation;
-  importFromDriveMutation: StudioDriveImportMutation;
-
-  isUploading: boolean;
-  isImporting: boolean;
-  refreshSlots: () => Promise<void>;
-};
+export type { SlotsContextType, StudioPreviewMode } from './SlotsContext.types';
 
 const SlotsContext = createContext<SlotsContextType | null>(null);
 
@@ -363,7 +265,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
   const handleDeleteFolder = useCallback(
     async (source: string): Promise<void> => {
       const target = 'Root';
-      if (source === 'Root') throw new Error('Cannot delete Root folder.');
+      if (source === 'Root') throw internalError('Cannot delete Root folder.');
 
       const affectedSlots = slots.filter((slot: ImageStudioSlotRecord) =>
         isTreePathWithin(slot.folderPath || 'Root', source)
@@ -402,7 +304,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
       if ((response.failedRootSlotIds ?? []).length > 0) {
         const failedCount = response.failedRootSlotIds.length;
         const noun = failedCount === 1 ? 'card' : 'cards';
-        throw new Error(`Failed to delete ${failedCount} ${noun} in folder "${source}".`);
+        throw internalError(`Failed to delete ${failedCount} ${noun} in folder "${source}".`);
       }
     },
     [
@@ -556,7 +458,7 @@ export type SlotsActions = SlotsState;
 export function useSlotsState(): SlotsContextType {
   const context = useContext(SlotsContext);
   if (!context) {
-    throw new Error('useSlotsState must be used within a SlotsProvider');
+    throw internalError('useSlotsState must be used within a SlotsProvider');
   }
   return context;
 }

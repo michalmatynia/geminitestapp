@@ -5,6 +5,6 @@ import { GET_handler } from './handler';
 export const runtime = 'nodejs';
 
 export const GET = apiHandler(GET_handler, {
-  source: 'api.health',
+  source: 'health.GET',
   fallbackMessage: 'Database ping failed',
 });

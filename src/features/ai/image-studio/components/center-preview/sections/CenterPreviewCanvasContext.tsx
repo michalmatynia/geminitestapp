@@ -8,6 +8,7 @@ import type {
   PreviewCanvasCropRect,
   PreviewCanvasImageContentFrame,
 } from '@/features/ai/image-studio/context/UiContext';
+import { internalError } from '@/shared/errors/app-error';
 
 export interface CenterPreviewCanvasContextValue {
   vectorContextValue: VectorDrawingContextValue;
@@ -51,7 +52,7 @@ export function CenterPreviewCanvasSectionProvider({
 export function useCenterPreviewCanvasContext(): CenterPreviewCanvasContextValue {
   const context = useContext(CenterPreviewCanvasContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useCenterPreviewCanvasContext must be used within CenterPreviewCanvasSectionProvider'
     );
   }

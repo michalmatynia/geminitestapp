@@ -6,6 +6,7 @@ import {
   type VectorCanvasImageContentFrame,
   type VectorCanvasViewCropRect,
 } from '../vector-canvas.geometry';
+import { internalError } from '@/shared/errors/app-error';
 
 export interface VectorCanvasContextValue {
   // Props
@@ -73,7 +74,7 @@ export function VectorCanvasProvider({
 export function useVectorCanvasContext() {
   const context = useContext(VectorCanvasContext);
   if (!context) {
-    throw new Error('useVectorCanvasContext must be used within VectorCanvasProvider');
+    throw internalError('useVectorCanvasContext must be used within VectorCanvasProvider');
   }
   return context;
 }

@@ -6,6 +6,7 @@ import type {
   PromptExploderBinding,
   PromptExploderSegment,
 } from '../../types';
+import { internalError } from '@/shared/errors/app-error';
 
 export interface DocumentCoreState {
   documentState: PromptExploderDocument | null;
@@ -18,6 +19,6 @@ export const DocumentCoreContext = createContext<DocumentCoreState | null>(null)
 
 export function useDocumentCore(): DocumentCoreState {
   const context = useContext(DocumentCoreContext);
-  if (!context) throw new Error('useDocumentCore must be used within DocumentProvider');
+  if (!context) throw internalError('useDocumentCore must be used within DocumentProvider');
   return context;
 }

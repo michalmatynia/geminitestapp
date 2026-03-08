@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, ReactNode, useMemo, useEffe
 
 import { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import { AgentAuditLog, AgentBrowserLog, AgentSnapshot } from '@/shared/contracts/chatbot';
+import { internalError } from '@/shared/errors/app-error';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {
@@ -24,7 +25,7 @@ export interface AgentRunListData {
 const RunListContext = createContext<AgentRunListData | null>(null);
 export const useAgentRunList = () => {
   const context = useContext(RunListContext);
-  if (!context) throw new Error('useAgentRunList must be used within AgentRunProvider');
+  if (!context) throw internalError('useAgentRunList must be used within AgentRunProvider');
   return context;
 };
 
@@ -36,7 +37,7 @@ export interface AgentRunSelectionData {
 const RunSelectionContext = createContext<AgentRunSelectionData | null>(null);
 export const useAgentRunSelection = () => {
   const context = useContext(RunSelectionContext);
-  if (!context) throw new Error('useAgentRunSelection must be used within AgentRunProvider');
+  if (!context) throw internalError('useAgentRunSelection must be used within AgentRunProvider');
   return context;
 };
 
@@ -50,7 +51,7 @@ export interface AgentRunDetailData {
 const RunDetailContext = createContext<AgentRunDetailData | null>(null);
 export const useAgentRunDetail = () => {
   const context = useContext(RunDetailContext);
-  if (!context) throw new Error('useAgentRunDetail must be used within AgentRunProvider');
+  if (!context) throw internalError('useAgentRunDetail must be used within AgentRunProvider');
   return context;
 };
 

@@ -8,6 +8,7 @@ import type {
   ProductCategoryWithChildren,
   ProductTag,
 } from '@/shared/contracts/products';
+import { internalError } from '@/shared/errors/app-error';
 
 // --- Granular Contexts ---
 
@@ -23,7 +24,7 @@ const CategoriesContext = createContext<ProductSettingsCategoriesSection | null>
 export const useProductSettingsCategoriesSection = () => {
   const context = useContext(CategoriesContext);
   if (!context)
-    throw new Error(
+    throw internalError(
       'useProductSettingsCategoriesSection must be used within ProductSettingsPageProvider'
     );
   return context;
@@ -41,7 +42,7 @@ const TagsContext = createContext<ProductSettingsTagsSection | null>(null);
 export const useProductSettingsTagsSection = () => {
   const context = useContext(TagsContext);
   if (!context)
-    throw new Error(
+    throw internalError(
       'useProductSettingsTagsSection must be used within ProductSettingsPageProvider'
     );
   return context;
@@ -61,7 +62,7 @@ const PriceGroupsContext = createContext<ProductSettingsPriceGroupsSection | nul
 export const useProductSettingsPriceGroupsSection = () => {
   const context = useContext(PriceGroupsContext);
   if (!context)
-    throw new Error(
+    throw internalError(
       'useProductSettingsPriceGroupsSection must be used within ProductSettingsPageProvider'
     );
   return context;
@@ -78,7 +79,7 @@ const CatalogsContext = createContext<ProductSettingsCatalogsSection | null>(nul
 export const useProductSettingsCatalogsSection = () => {
   const context = useContext(CatalogsContext);
   if (!context)
-    throw new Error(
+    throw internalError(
       'useProductSettingsCatalogsSection must be used within ProductSettingsPageProvider'
     );
   return context;
@@ -97,7 +98,7 @@ const CatalogModalContext = createContext<ProductSettingsCatalogModalSection | n
 export const useProductSettingsCatalogModalSection = () => {
   const context = useContext(CatalogModalContext);
   if (!context)
-    throw new Error(
+    throw internalError(
       'useProductSettingsCatalogModalSection must be used within ProductSettingsPageProvider'
     );
   return context;
@@ -114,7 +115,7 @@ const PriceGroupModalContext = createContext<ProductSettingsPriceGroupModalSecti
 export const useProductSettingsPriceGroupModalSection = () => {
   const context = useContext(PriceGroupModalContext);
   if (!context)
-    throw new Error(
+    throw internalError(
       'useProductSettingsPriceGroupModalSection must be used within ProductSettingsPageProvider'
     );
   return context;

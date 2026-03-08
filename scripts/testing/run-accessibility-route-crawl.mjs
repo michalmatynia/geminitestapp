@@ -31,6 +31,8 @@ const preferredBrowserNodeBinDir = (() => {
 })();
 
 const routeEntries = normalizeAccessibilityRouteEntries(accessibilityRouteCrawlRoutes);
+const playwrightHost = process.env['HOST'] || '127.0.0.1';
+const playwrightBaseUrl = process.env['PLAYWRIGHT_BASE_URL'] || `http://${playwrightHost}:3000`;
 
 const toMarkdown = (payload) => {
   const lines = [];
@@ -87,6 +89,7 @@ const toMarkdown = (payload) => {
   lines.push('');
   lines.push('- This crawl scans representative public and admin routes with the same axe helper used by the browser accessibility smoke suites.');
   lines.push('- Admin routes establish a signed-in session through the shared Playwright admin auth helper before scanning.');
+  lines.push('- Run `npm run test:accessibility:gate` to execute component policies, smoke suites, and this route crawl together.');
   lines.push('- Strict mode fails when any route scan fails.');
   return `${lines.join('\n')}\n`;
 };
@@ -106,6 +109,8 @@ const runPlaywrightRouteCrawl = () =>
       env: {
         ...process.env,
         FORCE_COLOR: '0',
+        HOST: playwrightHost,
+        PLAYWRIGHT_BASE_URL: playwrightBaseUrl,
         ...(preferredBrowserNodeBinDir
           ? {
               PATH: `${preferredBrowserNodeBinDir}${path.delimiter}${process.env['PATH'] ?? ''}`,

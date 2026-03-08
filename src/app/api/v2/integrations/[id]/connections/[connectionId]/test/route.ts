@@ -7,5 +7,5 @@ import { postTestConnectionHandler } from './handler';
 
 export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(
   postTestConnectionHandler,
-  { source: 'integrations.[id].connections.[connectionId].test.POST', requireCsrf: false }
+  { source: 'v2.integrations.[id].connections.[connectionId].test.POST', requireCsrf: false }
 );

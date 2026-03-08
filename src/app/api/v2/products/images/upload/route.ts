@@ -1,4 +1,6 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export { ProductsImagesUploadPOST as POST } from '@/features/products/server';
+import { ProductsImagesUploadPOST } from '@/features/products/server';
+
+export const POST = ProductsImagesUploadPOST;

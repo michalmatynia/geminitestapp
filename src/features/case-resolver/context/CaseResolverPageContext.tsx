@@ -15,6 +15,7 @@ import type {
   CaseResolverWorkspace,
   CaseMetadataDraft,
 } from '@/shared/contracts/case-resolver';
+import { internalError } from '@/shared/errors/app-error';
 
 type CaseResolverAssetPatch = Partial<
   Pick<CaseResolverAssetFile, 'textContent' | 'description' | 'metadata'>
@@ -270,7 +271,7 @@ export function CaseResolverPageProvider({
 export function useCaseResolverPageState(): CaseResolverPageStateValue {
   const context = React.useContext(CaseResolverPageStateContext);
   if (!context) {
-    throw new Error('useCaseResolverPageState must be used within CaseResolverPageProvider');
+    throw internalError('useCaseResolverPageState must be used within CaseResolverPageProvider');
   }
   return context;
 }
@@ -278,7 +279,7 @@ export function useCaseResolverPageState(): CaseResolverPageStateValue {
 export function useCaseResolverPageActions(): CaseResolverPageActionsValue {
   const context = React.useContext(CaseResolverPageActionsContext);
   if (!context) {
-    throw new Error('useCaseResolverPageActions must be used within CaseResolverPageProvider');
+    throw internalError('useCaseResolverPageActions must be used within CaseResolverPageProvider');
   }
   return context;
 }

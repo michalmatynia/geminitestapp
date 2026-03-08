@@ -13,6 +13,7 @@ import type {
   ProductTag,
 } from '@/shared/contracts/products';
 import type { ProductDraftOpenFormTab } from '@/shared/contracts/products';
+import { internalError } from '@/shared/errors/app-error';
 
 // --- Basic Info Context ---
 export interface DraftCreatorBasicInfo {
@@ -39,7 +40,7 @@ const BasicInfoContext = createContext<DraftCreatorBasicInfo | null>(null);
 export const useDraftCreatorBasicInfo = () => {
   const context = useContext(BasicInfoContext);
   if (!context)
-    throw new Error('useDraftCreatorBasicInfo must be used within DraftCreatorFormProvider');
+    throw internalError('useDraftCreatorBasicInfo must be used within DraftCreatorFormProvider');
   return context;
 };
 
@@ -92,7 +93,7 @@ const ProductDataContext = createContext<DraftCreatorProductData | null>(null);
 export const useDraftCreatorProductData = () => {
   const context = useContext(ProductDataContext);
   if (!context)
-    throw new Error('useDraftCreatorProductData must be used within DraftCreatorFormProvider');
+    throw internalError('useDraftCreatorProductData must be used within DraftCreatorFormProvider');
   return context;
 };
 
@@ -118,7 +119,7 @@ const MetadataContext = createContext<DraftCreatorMetadata | null>(null);
 export const useDraftCreatorMetadata = () => {
   const context = useContext(MetadataContext);
   if (!context)
-    throw new Error('useDraftCreatorMetadata must be used within DraftCreatorFormProvider');
+    throw internalError('useDraftCreatorMetadata must be used within DraftCreatorFormProvider');
   return context;
 };
 
@@ -133,7 +134,7 @@ const ImagesContext = createContext<DraftCreatorImages | null>(null);
 export const useDraftCreatorImages = () => {
   const context = useContext(ImagesContext);
   if (!context)
-    throw new Error('useDraftCreatorImages must be used within DraftCreatorFormProvider');
+    throw internalError('useDraftCreatorImages must be used within DraftCreatorFormProvider');
   return context;
 };
 
@@ -151,7 +152,7 @@ const ParametersContext = createContext<DraftCreatorParameters | null>(null);
 export const useDraftCreatorParameters = () => {
   const context = useContext(ParametersContext);
   if (!context)
-    throw new Error('useDraftCreatorParameters must be used within DraftCreatorFormProvider');
+    throw internalError('useDraftCreatorParameters must be used within DraftCreatorFormProvider');
   return context;
 };
 

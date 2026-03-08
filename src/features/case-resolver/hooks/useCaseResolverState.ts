@@ -535,9 +535,9 @@ export function useCaseResolverState(): CaseResolverStateValue {
       message: `requested_file_id=${normalizedRequestedFileId}`,
     });
     settingsStoreRef.current.refetch();
-    window.setTimeout((): void => {
+    queueMicrotask((): void => {
       handleRetryCaseContext();
-    }, 0);
+    });
   }, [handleRetryCaseContext, requestedCaseIssue, requestedCaseStatus, requestedFileId]);
 
   const creationActions = useCaseResolverStateCreationActions({

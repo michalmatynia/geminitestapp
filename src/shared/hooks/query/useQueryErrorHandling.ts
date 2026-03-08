@@ -149,6 +149,7 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
   const queryClient = useQueryClient();
   const errorToastSignaturesRef = useRef<Map<string, number>>(new Map());
   const autoRetryCountByQueryRef = useRef<Map<string, number>>(new Map());
+  const autoRetryTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   const showToast = config.showToast ?? false;
   const logErrors = config.logErrors !== false;
@@ -170,6 +171,11 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
 
       if (event.query.state.status === 'success') {
         autoRetryCountByQueryRef.current.delete(queryKeySignature);
+        const retryTimer = autoRetryTimersRef.current.get(queryKeySignature);
+        if (retryTimer !== undefined) {
+          clearTimeout(retryTimer);
+          autoRetryTimersRef.current.delete(queryKeySignature);
+        }
         return;
       }
 
@@ -250,17 +256,27 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
             return;
           }
           autoRetryCountByQueryRef.current.set(queryKeySignature, retriesPerformed + 1);
-          setTimeout(
-            (): void => {
-              void queryClient.invalidateQueries({ queryKey });
-            },
-            Math.max(0, retryDelayMs)
-          );
+          const existingRetryTimer = autoRetryTimersRef.current.get(queryKeySignature);
+          if (existingRetryTimer !== undefined) {
+            clearTimeout(existingRetryTimer);
+          }
+          const retryTimer = setTimeout((): void => {
+            clearTimeout(retryTimer);
+            autoRetryTimersRef.current.delete(queryKeySignature);
+            void queryClient.invalidateQueries({ queryKey });
+          }, Math.max(0, retryDelayMs));
+          autoRetryTimersRef.current.set(queryKeySignature, retryTimer);
         }
       }
     });
 
-    return (): void => unsubscribe();
+    return (): void => {
+      unsubscribe();
+      autoRetryTimersRef.current.forEach((timerId: ReturnType<typeof setTimeout>): void => {
+        clearTimeout(timerId);
+      });
+      autoRetryTimersRef.current.clear();
+    };
   }, [
     logErrors,
     maxAutoRetriesPerQuery,

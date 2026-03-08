@@ -3,6 +3,7 @@
 import React from 'react';
 
 import type { ImageRetryPreset } from '@/shared/contracts/integrations';
+import { internalError } from '@/shared/errors/app-error';
 
 type ListProductModalFormContextValue = {
   error: string | null;
@@ -33,7 +34,7 @@ export function ListProductModalFormProvider({
 export function useListProductModalFormContext(): ListProductModalFormContextValue {
   const context = React.useContext(ListProductModalFormContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useListProductModalFormContext must be used within ListProductModalFormProvider'
     );
   }

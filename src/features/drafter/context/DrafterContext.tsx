@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useMemo, useRef, useState } from 'react';
+import { internalError } from '@/shared/errors/app-error';
 
 interface DrafterStateContextType {
   isCreatorOpen: boolean;
@@ -65,7 +66,7 @@ export function DrafterProvider({ children }: { children: React.ReactNode }): Re
 export function useDrafterState(): DrafterStateContextType {
   const context = useContext(DrafterStateContext);
   if (context === undefined) {
-    throw new Error('useDrafterState must be used within a DrafterProvider');
+    throw internalError('useDrafterState must be used within a DrafterProvider');
   }
   return context;
 }
@@ -73,7 +74,7 @@ export function useDrafterState(): DrafterStateContextType {
 export function useDrafterActions(): DrafterActionsContextType {
   const context = useContext(DrafterActionsContext);
   if (context === undefined) {
-    throw new Error('useDrafterActions must be used within a DrafterProvider');
+    throw internalError('useDrafterActions must be used within a DrafterProvider');
   }
   return context;
 }

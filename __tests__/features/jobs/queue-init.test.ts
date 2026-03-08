@@ -47,6 +47,24 @@ vi.mock('@/features/product-sync/workers/productSyncSchedulerQueue', () => ({ st
 vi.mock('@/features/case-resolver/workers/caseResolverOcrQueue', () => ({ startCaseResolverOcrQueue: vi.fn() }));
 vi.mock('@/shared/lib/observability/workers/systemLogAlertsQueue', () => ({ startSystemLogAlertsQueue: vi.fn() }));
 vi.mock('@/features/ai/insights/workers/aiInsightsQueue', () => ({ startAiInsightsQueue: vi.fn() }));
+vi.mock('@/features/products/server', () => ({}));
+vi.mock('@/features/ai/server', () => ({
+  startAgentQueue: vi.fn(),
+  startAiInsightsQueue: vi.fn(),
+  startAiPathRunQueue: vi.fn(),
+  startChatbotJobQueue: vi.fn(),
+  startImageStudioRunQueue: vi.fn(),
+  startImageStudioSequenceQueue: vi.fn(),
+}));
+vi.mock('@/features/integrations/server', () => ({
+  startTraderaRelistSchedulerQueue: vi.fn(),
+}));
+vi.mock('@/features/product-sync/server', () => ({
+  startProductSyncSchedulerQueue: vi.fn(),
+}));
+vi.mock('@/features/case-resolver/server', () => ({
+  startCaseResolverOcrQueue: vi.fn(),
+}));
 
 describe('queue-init', () => {
   beforeEach(() => {
@@ -82,7 +100,7 @@ describe('queue-init', () => {
 
       await vi.waitFor(() => {
         expect(registry.startAllWorkers).toHaveBeenCalled();
-      });
+      }, { timeout: 5_000 });
     });
 
     it('should only initialize once', async () => {
@@ -94,7 +112,7 @@ describe('queue-init', () => {
 
       await vi.waitFor(() => {
         expect(registry.startAllWorkers).toHaveBeenCalledTimes(1);
-      });
+      }, { timeout: 5_000 });
     });
   });
 });

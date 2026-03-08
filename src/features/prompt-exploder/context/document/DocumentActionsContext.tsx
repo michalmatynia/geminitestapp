@@ -6,6 +6,7 @@ import type {
   PromptExploderBinding,
   PromptExploderSegment,
 } from '../../types';
+import { internalError } from '@/shared/errors/app-error';
 
 export interface DocumentActions {
   setPromptText: (text: string) => void;
@@ -32,6 +33,6 @@ export const DocumentActionsContext = createContext<DocumentActions | null>(null
 
 export function useDocumentActions(): DocumentActions {
   const context = useContext(DocumentActionsContext);
-  if (!context) throw new Error('useDocumentActions must be used within DocumentProvider');
+  if (!context) throw internalError('useDocumentActions must be used within DocumentProvider');
   return context;
 }

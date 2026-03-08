@@ -3,6 +3,7 @@
 import React, { createContext, useContext } from 'react';
 
 import type { DocumentEditorMode } from '../types';
+import { internalError } from '@/shared/errors/app-error';
 
 export type MarkdownToolbarActionHandlers = {
   onApplyWrap: (prefix: string, suffix: string, placeholder: string) => void;
@@ -53,7 +54,7 @@ export function MarkdownToolbarProvider({
 export function useMarkdownToolbarContext(): MarkdownToolbarContextValue {
   const context = useContext(MarkdownToolbarContext);
   if (!context) {
-    throw new Error('useMarkdownToolbarContext must be used within MarkdownToolbarProvider');
+    throw internalError('useMarkdownToolbarContext must be used within MarkdownToolbarProvider');
   }
   return context;
 }

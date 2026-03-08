@@ -7,6 +7,7 @@ import type {
   AgentTeachingAgentRecord,
   AgentTeachingEmbeddingCollectionRecord,
 } from '@/shared/contracts/agent-teaching';
+import { internalError } from '@/shared/errors/app-error';
 
 import { useTeachingAgents, useTeachingCollections } from '../hooks/useAgentTeachingQueries';
 
@@ -25,7 +26,9 @@ const AgentTeachingContext = createContext<AgentTeachingContextType | null>(null
 export const useAgentTeachingQueriesContext = (): AgentTeachingContextType => {
   const context = useContext(AgentTeachingContext);
   if (!context) {
-    throw new Error('useAgentTeachingQueriesContext must be used within an AgentTeachingProvider');
+    throw internalError(
+      'useAgentTeachingQueriesContext must be used within an AgentTeachingProvider'
+    );
   }
   return context;
 };

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
-import { auth } from '@/features/auth/server';
+import { auth } from '@/features/auth/edge';
 import { CSRF_COOKIE_NAME, ensureCsrfCookie } from '@/shared/lib/security/csrf';
 
 const baseProxy = (request: NextRequest): NextResponse => {

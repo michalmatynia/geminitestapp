@@ -6,6 +6,5 @@ import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import { GET_handler } from './handler';
 
 export const GET = apiHandlerWithParams<{ runId: string }>(GET_handler, {
-  source: 'integrations.imports.base.runs.[runId].GET',
-  requireCsrf: false,
+  source: 'v2.integrations.imports.base.runs.[runId].GET',
 });

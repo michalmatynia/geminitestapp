@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { JSX } from 'react';
 
 import { PageLayout } from '@/shared/ui/PageLayout';
-import { Card, CardHeader, CardTitle, CardDescription } from '@/shared/ui/card';
+import { Card, CardHeader, CardDescription } from '@/shared/ui/card';
 
 export default function AgentTeachingLandingPage(): JSX.Element {
   const cards = [
@@ -28,18 +28,25 @@ export default function AgentTeachingLandingPage(): JSX.Element {
       title='Learner Agents'
       description='Build knowledge bases (embeddings) and connect them to learner agents.'
     >
-      <div className='grid gap-4 md:grid-cols-3'>
-        {cards.map((card) => (
-          <Link key={card.href} href={card.href}>
-            <Card className='h-full transition hover:border-gray-600 hover:bg-white/5'>
-              <CardHeader>
-                <CardTitle className='text-lg'>{card.title}</CardTitle>
-                <CardDescription>{card.description}</CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
-        ))}
-      </div>
+      <section aria-labelledby='learner-agents-sections-heading' className='space-y-4'>
+        <h2 id='learner-agents-sections-heading' className='text-lg font-semibold tracking-tight'>
+          Learner Agents sections
+        </h2>
+        <div className='grid gap-4 md:grid-cols-3'>
+          {cards.map((card) => (
+            <Link key={card.href} href={card.href}>
+              <Card className='h-full transition hover:border-gray-600 hover:bg-white/5'>
+                <CardHeader>
+                  <div className='text-lg font-semibold leading-none tracking-tight'>
+                    {card.title}
+                  </div>
+                  <CardDescription>{card.description}</CardDescription>
+                </CardHeader>
+              </Card>
+            </Link>
+          ))}
+        </div>
+      </section>
     </PageLayout>
   );
 }

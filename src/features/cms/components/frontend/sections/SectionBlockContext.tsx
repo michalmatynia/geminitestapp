@@ -3,6 +3,7 @@
 import React, { createContext, useContext } from 'react';
 
 import type { BlockInstance } from '@/features/cms/types/page-builder';
+import { internalError } from '@/shared/errors/app-error';
 
 type SectionBlockData = {
   sectionId?: string | undefined;
@@ -28,7 +29,7 @@ export function SectionBlockProvider({
 export function useSectionBlockData(): SectionBlockData {
   const context = useContext(SectionBlockContext);
   if (!context) {
-    throw new Error('useSectionBlockData must be used within a SectionBlockProvider');
+    throw internalError('useSectionBlockData must be used within a SectionBlockProvider');
   }
   return context;
 }

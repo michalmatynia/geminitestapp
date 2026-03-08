@@ -4,6 +4,7 @@ import React from 'react';
 
 import type { Language } from '@/shared/contracts/internationalization';
 import type { PriceGroup } from '@/shared/contracts/products';
+import { internalError } from '@/shared/errors/app-error';
 
 type CatalogFormState = {
   name: string;
@@ -51,7 +52,7 @@ export function CatalogModalProvider({
 export function useCatalogModalContext(): CatalogModalContextValue {
   const context = React.useContext(CatalogModalContext);
   if (!context) {
-    throw new Error('useCatalogModalContext must be used within CatalogModalProvider');
+    throw internalError('useCatalogModalContext must be used within CatalogModalProvider');
   }
   return context;
 }

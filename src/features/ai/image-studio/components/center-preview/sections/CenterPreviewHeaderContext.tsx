@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext } from 'react';
+import { internalError } from '@/shared/errors/app-error';
 
 export interface CenterPreviewHeaderContextValue {
   onSaveScreenshot: () => void;
@@ -25,7 +26,7 @@ export function CenterPreviewHeaderSectionProvider({
 export function useCenterPreviewHeaderContext(): CenterPreviewHeaderContextValue {
   const context = useContext(CenterPreviewHeaderContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useCenterPreviewHeaderContext must be used within CenterPreviewHeaderSectionProvider'
     );
   }

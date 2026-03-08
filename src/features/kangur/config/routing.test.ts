@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   appendKangurUrlParams,
   buildKangurEmbeddedBasePath,
+  getKangurHomeHref,
   getKangurPageHref,
   getKangurInternalQueryParamKeys,
   getKangurInternalQueryParamName,
@@ -22,6 +23,13 @@ describe('kangur routing config', () => {
     expect(getKangurPageHref('Tests')).toBe('/kangur/tests');
     expect(resolveKangurPageKeyFromSlug('tests')).toBe('Tests');
     expect(resolveKangurPageKeyFromSlug('TESTS')).toBe('Tests');
+  });
+
+  it('uses the canonical Kangur home path for home navigation', () => {
+    const embeddedBasePath = buildKangurEmbeddedBasePath('/home?preview=1');
+
+    expect(getKangurHomeHref('/kangur')).toBe('/kangur');
+    expect(getKangurHomeHref(embeddedBasePath)).toBe('/home?preview=1');
   });
 
   it('builds embedded host-page links for cms-mounted kangur routes', () => {

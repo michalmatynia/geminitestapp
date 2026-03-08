@@ -18,6 +18,7 @@ import type {
   CaseResolverCaptureDocumentDateAction,
 } from '@/features/case-resolver-capture';
 import type { CaseResolverCaptureAction } from '@/features/case-resolver-capture';
+import { internalError } from '@/shared/errors/app-error';
 export type { EditorDetailsTab };
 
 type WorkspaceView = CaseResolverWorkspaceView;
@@ -193,7 +194,7 @@ export function CaseResolverViewProvider({
 export function useCaseResolverViewStateContext(): CaseResolverViewStateValue {
   const context = useContext(CaseResolverViewStateContext);
   if (!context) {
-    throw new Error('useCaseResolverViewStateContext must be used within CaseResolverViewProvider');
+    throw internalError('useCaseResolverViewStateContext must be used within CaseResolverViewProvider');
   }
   return context;
 }
@@ -201,7 +202,7 @@ export function useCaseResolverViewStateContext(): CaseResolverViewStateValue {
 export function useCaseResolverViewActionsContext(): CaseResolverViewActionsValue {
   const context = useContext(CaseResolverViewActionsContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useCaseResolverViewActionsContext must be used within CaseResolverViewProvider'
     );
   }

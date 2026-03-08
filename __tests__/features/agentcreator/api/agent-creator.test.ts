@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { GET, POST, DELETE } from '@/app/api/agentcreator/agent/route';
-import { startAgentQueue } from '@/features/jobs/server';
+import { startAgentQueue } from '@/features/ai/server';
 import prisma from '@/shared/lib/db/prisma';
 
 vi.mock('@/shared/lib/db/prisma', () => ({
@@ -15,13 +15,48 @@ vi.mock('@/shared/lib/db/prisma', () => ({
   },
 }));
 
-vi.mock('@/features/jobs/server', () => ({
+vi.mock('@/features/ai/server', () => ({
   startAgentQueue: vi.fn(),
 }));
 
-vi.mock('@/features/ai/agent-runtime/server', () => ({
+vi.mock('@/features/ai/agent-runtime/audit', () => ({
   logAgentAudit: vi.fn().mockResolvedValue(undefined),
 }));
+
+vi.mock('@/shared/lib/ai-brain/server', () => ({
+  getBrainAssignmentForFeature: vi.fn().mockResolvedValue({ enabled: true }),
+}));
+
+vi.mock('@/shared/lib/api/api-handler', async () => {
+  const { NextResponse } = await import('next/server');
+
+  return {
+    apiHandler:
+      (
+        handler: (req: NextRequest, ctx: { getElapsedMs: () => number }) => Promise<Response>
+      ) =>
+      async (req: NextRequest): Promise<Response> => {
+        try {
+          return await handler(req, {
+            getElapsedMs: () => 0,
+          });
+        } catch (error) {
+          const status =
+            typeof error === 'object' &&
+            error !== null &&
+            'httpStatus' in error &&
+            typeof error.httpStatus === 'number'
+              ? error.httpStatus
+              : 500;
+
+          return NextResponse.json(
+            { error: error instanceof Error ? error.message : 'Internal server error' },
+            { status }
+          );
+        }
+      },
+  };
+});
 
 describe('Agent Creator API', () => {
   beforeEach(() => {

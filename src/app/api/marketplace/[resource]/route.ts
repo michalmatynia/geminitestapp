@@ -30,7 +30,7 @@ export const GET = apiHandlerWithParams<ResourceParams>(
   async (req: NextRequest, ctx: ApiHandlerContext, params: ResourceParams): Promise<Response> =>
     resolveHandler(params.resource)(req, ctx),
   {
-    source: 'marketplace.resource.GET',
+    source: 'marketplace.[resource].GET',
     cacheControl: 'no-store',
   }
 );

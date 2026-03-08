@@ -9,6 +9,7 @@ import {
 } from '@/features/prompt-exploder/context/SettingsContext';
 import type { PromptExploderParserTuningRuleDraft } from '@/shared/contracts/prompt-exploder';
 import { promptExploderValidatorScopeFromStack } from '@/features/prompt-exploder/validation-stack';
+import { internalError } from '@/shared/errors/app-error';
 
 type PromptExploderParserTuningContextValue = {
   drafts: PromptExploderParserTuningRuleDraft[];
@@ -40,7 +41,7 @@ export function PromptExploderParserTuningProvider({
     if (value) return value;
 
     if (!settingsState || !settingsActions) {
-      throw new Error(
+      throw internalError(
         'PromptExploderParserTuningProvider requires either an explicit value prop or SettingsProvider context.'
       );
     }
@@ -73,7 +74,7 @@ export function PromptExploderParserTuningProvider({
 export function usePromptExploderParserTuningContext(): PromptExploderParserTuningContextValue {
   const context = React.useContext(PromptExploderParserTuningContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'usePromptExploderParserTuningContext must be used inside PromptExploderParserTuningProvider'
     );
   }

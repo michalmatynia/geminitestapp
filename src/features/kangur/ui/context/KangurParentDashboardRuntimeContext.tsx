@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from 'react';
 
+import { internalError } from '@/shared/errors/app-error';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurLearnerProfile, KangurUser } from '@/features/kangur/services/ports';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
@@ -263,7 +264,7 @@ export const useKangurParentDashboardRuntime =
   (): KangurParentDashboardRuntimeContextValue => {
     const context = useContext(KangurParentDashboardRuntimeContext);
     if (!context) {
-      throw new Error(
+      throw internalError(
         'useKangurParentDashboardRuntime must be used within a KangurParentDashboardRuntimeProvider'
       );
     }

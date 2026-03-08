@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { internalError } from '@/shared/errors/app-error';
 
 type RuleListDragContextValue = {
   draggableEnabled: boolean;
@@ -27,7 +28,7 @@ export function RuleListDragProvider({
 function useRuleListDragContext(): RuleListDragContextValue {
   const context = React.useContext(RuleListDragContext);
   if (!context) {
-    throw new Error('useRuleListDragContext must be used within RuleListDragProvider');
+    throw internalError('useRuleListDragContext must be used within RuleListDragProvider');
   }
   return context;
 }

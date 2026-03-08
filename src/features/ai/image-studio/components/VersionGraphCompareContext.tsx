@@ -5,6 +5,7 @@ import React from 'react';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 import type { VersionNode } from '../context/VersionGraphContext';
+import { internalError } from '@/shared/errors/app-error';
 
 type VersionGraphCompareContextValue = {
   compareNodes: readonly [VersionNode, VersionNode];
@@ -35,7 +36,7 @@ export function VersionGraphCompareProvider({
 export function useVersionGraphCompareContext(): VersionGraphCompareContextValue {
   const context = React.useContext(VersionGraphCompareContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useVersionGraphCompareContext must be used inside VersionGraphCompareProvider'
     );
   }

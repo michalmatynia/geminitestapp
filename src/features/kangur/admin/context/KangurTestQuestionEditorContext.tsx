@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useMemo, type ReactNode } from 'react';
 import type { QuestionFormData } from '../../test-questions';
 import type { KangurQuestionIllustration, KangurTestChoice } from '@/shared/contracts/kangur-tests';
+import { internalError } from '@/shared/errors/app-error';
 
 type KangurTestQuestionEditorContextValue = {
   formData: QuestionFormData;
@@ -97,7 +98,7 @@ export function KangurTestQuestionEditorProvider({
 export function useKangurTestQuestionEditorContext(): KangurTestQuestionEditorContextValue {
   const context = useContext(KangurTestQuestionEditorContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useKangurTestQuestionEditorContext must be used within a KangurTestQuestionEditorProvider'
     );
   }

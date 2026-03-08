@@ -3,6 +3,7 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 
 import type { KangurTestSuite } from '@/shared/contracts/kangur-tests';
+import { internalError } from '@/shared/errors/app-error';
 
 type KangurQuestionsManagerRuntimeContextValue = {
   suite: KangurTestSuite;
@@ -39,7 +40,7 @@ export function KangurQuestionsManagerRuntimeProvider({
 export function useKangurQuestionsManagerRuntimeContext(): KangurQuestionsManagerRuntimeContextValue {
   const context = useContext(KangurQuestionsManagerRuntimeContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useKangurQuestionsManagerRuntimeContext must be used within a KangurQuestionsManagerRuntimeProvider'
     );
   }

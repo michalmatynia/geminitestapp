@@ -3,6 +3,7 @@
 import React from 'react';
 
 import type { ProductWithImages } from '@/shared/contracts/products';
+import { internalError } from '@/shared/errors/app-error';
 
 type ProductListingsModalViewContextValue = {
   product: ProductWithImages;
@@ -34,7 +35,7 @@ export function ProductListingsModalViewProvider({
 export function useProductListingsModalViewContext(): ProductListingsModalViewContextValue {
   const context = React.useContext(ProductListingsModalViewContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useProductListingsModalViewContext must be used within ProductListingsModalViewProvider'
     );
   }

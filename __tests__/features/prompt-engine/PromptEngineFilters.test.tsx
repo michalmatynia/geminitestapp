@@ -24,6 +24,19 @@ vi.mock('@/features/prompt-engine/context/prompt-engine/PromptEngineActionsConte
 }));
 
 vi.mock('@/shared/ui', () => ({
+  SegmentedControl: ({
+    options,
+  }: {
+    options: Array<{ label: React.ReactNode; value: string }>;
+  }) => (
+    <div>
+      {options.map((option) => (
+        <button key={option.value} data-value={option.value}>
+          {option.label}
+        </button>
+      ))}
+    </div>
+  ),
   Tabs: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   TabsList: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   TabsTrigger: ({ children, value }: { children: React.ReactNode; value: string }) => (

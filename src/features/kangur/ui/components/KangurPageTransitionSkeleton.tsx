@@ -1,7 +1,6 @@
 'use client';
 
 import { KangurPageContainer, KangurPageShell } from '@/features/kangur/ui/design/primitives';
-import { Skeleton } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 type KangurSkeletonPageKey =
@@ -29,8 +28,12 @@ const isKangurSkeletonPageKey = (value: string | null | undefined): value is Kan
   value === 'ParentDashboard' ||
   value === 'Tests';
 
+const SkeletonBlock = ({ className }: { className?: string }): React.JSX.Element => (
+  <div aria-hidden='true' className={cn('animate-pulse bg-slate-200/80', className)} />
+);
+
 const SkeletonChip = ({ className }: { className?: string }): React.JSX.Element => (
-  <Skeleton
+  <SkeletonBlock
     className={cn(
       'rounded-full border border-white/70 bg-white/85 shadow-[0_18px_36px_-28px_rgba(91,106,170,0.24)]',
       className
@@ -56,7 +59,7 @@ const SkeletonPanel = ({
 );
 
 const SkeletonLine = ({ className }: { className?: string }): React.JSX.Element => (
-  <Skeleton className={cn('h-4 rounded-full bg-slate-200/85', className)} />
+  <SkeletonBlock className={cn('h-4 rounded-full bg-slate-200/85', className)} />
 );
 
 const GameSkeleton = (): React.JSX.Element => (
@@ -83,19 +86,19 @@ const GameSkeleton = (): React.JSX.Element => (
           <SkeletonLine className='w-5/6' />
           <SkeletonLine className='w-4/6' />
           <div className='space-y-3 pt-3'>
-            <Skeleton className='h-16 rounded-[22px] bg-slate-200/78' />
-            <Skeleton className='h-16 rounded-[22px] bg-slate-200/78' />
-            <Skeleton className='h-16 rounded-[22px] bg-slate-200/78' />
+            <SkeletonBlock className='h-16 rounded-[22px] bg-slate-200/78' />
+            <SkeletonBlock className='h-16 rounded-[22px] bg-slate-200/78' />
+            <SkeletonBlock className='h-16 rounded-[22px] bg-slate-200/78' />
           </div>
         </div>
       </SkeletonPanel>
       <SkeletonPanel className='min-h-[320px]'>
         <div className='space-y-4'>
           <SkeletonChip className='h-7 w-28' />
-          <Skeleton className='h-44 rounded-[28px] bg-slate-200/80' />
+          <SkeletonBlock className='h-44 rounded-[28px] bg-slate-200/80' />
           <div className='grid grid-cols-2 gap-3'>
-            <Skeleton className='h-20 rounded-[22px] bg-slate-200/76' />
-            <Skeleton className='h-20 rounded-[22px] bg-slate-200/76' />
+            <SkeletonBlock className='h-20 rounded-[22px] bg-slate-200/76' />
+            <SkeletonBlock className='h-20 rounded-[22px] bg-slate-200/76' />
           </div>
         </div>
       </SkeletonPanel>
@@ -128,10 +131,10 @@ const LessonsSkeleton = (): React.JSX.Element => (
       </SkeletonPanel>
       <SkeletonPanel className='min-h-[220px]'>
         <div className='grid gap-3 sm:grid-cols-2'>
-          <Skeleton className='h-24 rounded-[24px] bg-slate-200/76' />
-          <Skeleton className='h-24 rounded-[24px] bg-slate-200/76' />
-          <Skeleton className='h-24 rounded-[24px] bg-slate-200/76' />
-          <Skeleton className='h-24 rounded-[24px] bg-slate-200/76' />
+          <SkeletonBlock className='h-24 rounded-[24px] bg-slate-200/76' />
+          <SkeletonBlock className='h-24 rounded-[24px] bg-slate-200/76' />
+          <SkeletonBlock className='h-24 rounded-[24px] bg-slate-200/76' />
+          <SkeletonBlock className='h-24 rounded-[24px] bg-slate-200/76' />
         </div>
       </SkeletonPanel>
     </div>
@@ -145,9 +148,9 @@ const LearnerProfileSkeleton = (): React.JSX.Element => (
         <SkeletonChip className='h-8 w-36' />
         <SkeletonLine className='h-10 w-2/3 max-w-[460px]' />
         <div className='grid gap-3 sm:grid-cols-3'>
-          <Skeleton className='h-20 rounded-[24px] bg-slate-200/76' />
-          <Skeleton className='h-20 rounded-[24px] bg-slate-200/76' />
-          <Skeleton className='h-20 rounded-[24px] bg-slate-200/76' />
+          <SkeletonBlock className='h-20 rounded-[24px] bg-slate-200/76' />
+          <SkeletonBlock className='h-20 rounded-[24px] bg-slate-200/76' />
+          <SkeletonBlock className='h-20 rounded-[24px] bg-slate-200/76' />
         </div>
       </div>
     </SkeletonPanel>
@@ -176,11 +179,11 @@ const ParentDashboardSkeleton = (): React.JSX.Element => (
       </div>
     </SkeletonPanel>
     <SkeletonPanel className='min-h-[120px]'>
-      <div className='flex flex-wrap gap-3'>
-        <SkeletonChip className='h-12 w-28' />
-        <SkeletonChip className='h-12 w-28' />
-        <SkeletonChip className='h-12 w-28' />
-        <SkeletonChip className='h-12 w-28' />
+        <div className='flex flex-wrap gap-3'>
+          <SkeletonChip className='h-12 w-28' />
+          <SkeletonChip className='h-12 w-28' />
+          <SkeletonChip className='h-12 w-28' />
+          <SkeletonChip className='h-12 w-28' />
       </div>
     </SkeletonPanel>
     <div className='grid gap-4 lg:grid-cols-2'>
@@ -200,9 +203,9 @@ const TestsSkeleton = (): React.JSX.Element => (
           <SkeletonLine className='w-full max-w-[420px]' />
         </div>
         <div className='space-y-3 pt-4'>
-          <Skeleton className='h-24 rounded-[26px] bg-slate-200/76' />
-          <Skeleton className='h-24 rounded-[26px] bg-slate-200/76' />
-          <Skeleton className='h-24 rounded-[26px] bg-slate-200/76' />
+          <SkeletonBlock className='h-24 rounded-[26px] bg-slate-200/76' />
+          <SkeletonBlock className='h-24 rounded-[26px] bg-slate-200/76' />
+          <SkeletonBlock className='h-24 rounded-[26px] bg-slate-200/76' />
         </div>
       </div>
     </SkeletonPanel>

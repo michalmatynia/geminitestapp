@@ -13,6 +13,7 @@ import type {
 } from '@/shared/contracts/integrations';
 import { useBaseComSettings } from '../components/listings/hooks/useBaseComSettings';
 import { useIntegrationSelection } from '../components/listings/hooks/useIntegrationSelection';
+import { internalError } from '@/shared/errors/app-error';
 
 // --- Granular Contexts ---
 
@@ -30,7 +31,7 @@ export interface ListingSelection {
 const SelectionContext = createContext<ListingSelection | null>(null);
 export const useListingSelection = () => {
   const context = useContext(SelectionContext);
-  if (!context) throw new Error('useListingSelection must be used within ListingSettingsProvider');
+  if (!context) throw internalError('useListingSelection must be used within ListingSettingsProvider');
   return context;
 };
 export const useOptionalListingSelection = (): ListingSelection | null =>
@@ -51,7 +52,7 @@ const BaseComSettingsContext = createContext<ListingBaseComSettings | null>(null
 export const useListingBaseComSettings = () => {
   const context = useContext(BaseComSettingsContext);
   if (!context)
-    throw new Error('useListingBaseComSettings must be used within ListingSettingsProvider');
+    throw internalError('useListingBaseComSettings must be used within ListingSettingsProvider');
   return context;
 };
 
@@ -69,7 +70,7 @@ const TraderaSettingsContext = createContext<ListingTraderaSettings | null>(null
 export const useListingTraderaSettings = () => {
   const context = useContext(TraderaSettingsContext);
   if (!context)
-    throw new Error('useListingTraderaSettings must be used within ListingSettingsProvider');
+    throw internalError('useListingTraderaSettings must be used within ListingSettingsProvider');
   return context;
 };
 

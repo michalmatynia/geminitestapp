@@ -358,7 +358,7 @@ export function JobQueueProvider({
         ...(fresh ? { fresh: true } : {}),
       };
       const response = await listAiPathRuns(options);
-      if (!response.ok) throw new Error(response.error);
+      if (!response.ok) throw internalError(response.error);
       const payload = response.data as { runs: AiPathRunRecord[]; total: number };
       return mergeAiPathQueuePayloadWithOptimisticRuns(payload, {
         pathId: normalizedPathFilter || undefined,
@@ -402,7 +402,7 @@ export function JobQueueProvider({
         visibility: normalizedVisibility as AiPathRunVisibility,
         ...(fresh ? { fresh: true } : {}),
       });
-      if (!response.ok) throw new Error(response.error);
+      if (!response.ok) throw internalError(response.error);
       const payload = response.data as { status: QueueStatus };
       return {
         status: patchQueuedCountWithOptimisticRuns(payload.status),
@@ -487,7 +487,7 @@ export function JobQueueProvider({
         source: normalizedSourceFilter || undefined,
         sourceMode,
       });
-      if (!res.ok) throw new Error(res.error);
+      if (!res.ok) throw internalError(res.error);
       return res.data as { deleted: number; scope: 'all' | 'terminal' };
     },
     onSuccess: (res) => {
@@ -509,7 +509,7 @@ export function JobQueueProvider({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('job-queue.cancel-run'),
     mutationFn: async (id: string) => {
       const res = await cancelAiPathRun(id);
-      if (!res.ok) throw new Error(res.error);
+      if (!res.ok) throw internalError(res.error);
       return res.data;
     },
     onSuccess: () => {
@@ -530,7 +530,7 @@ export function JobQueueProvider({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('job-queue.delete-run'),
     mutationFn: async (id: string) => {
       const res = await removeAiPathRun(id);
-      if (!res.ok) throw new Error(res.error);
+      if (!res.ok) throw internalError(res.error);
     },
     onSuccess: (_, _runId) => {
       setRunToDelete(null);
@@ -556,9 +556,9 @@ export function JobQueueProvider({
     setRunDetailLoading((prev) => new Set(prev).add(runId));
     try {
       const response = await getAiPathRun(runId);
-      if (!response.ok) throw new Error(response.error || 'Failed to load run details.');
+      if (!response.ok) throw internalError(response.error || 'Failed to load run details.');
       const data = normalizeRunDetail(response.data);
-      if (!data) throw new Error('Failed to load run details.');
+      if (!data) throw internalError('Failed to load run details.');
       setRunDetails((prev) => ({ ...prev, [runId]: data }));
     } catch (error) {
       setRunDetailErrors((prev) => ({
@@ -713,9 +713,10 @@ export function JobQueueProvider({
     window.addEventListener(AI_PATH_RUN_ENQUEUED_EVENT_NAME, handleWindowEvent as EventListener);
 
     let channel: BroadcastChannel | null = null;
-    if (typeof BroadcastChannel !== 'undefined') {
+    const BroadcastChannelCtor = window.BroadcastChannel;
+    if (typeof BroadcastChannelCtor === 'function') {
       try {
-        channel = new BroadcastChannel(AI_PATH_RUN_QUEUE_CHANNEL);
+        channel = new BroadcastChannelCtor(AI_PATH_RUN_QUEUE_CHANNEL);
         channel.onmessage = (event) => {
           const payload = parseAiPathRunEnqueuedEventPayload(event.data);
           if (!payload) return;

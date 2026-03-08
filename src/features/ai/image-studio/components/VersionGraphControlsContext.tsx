@@ -4,6 +4,7 @@ import React from 'react';
 
 import type { VersionNode } from '../context/VersionGraphContext';
 import type { LayoutMode } from '@/features/ai/image-studio/utils/version-graph';
+import { internalError } from '@/shared/errors/app-error';
 
 type VersionGraphControlsContextValue = {
   nodeCount: number;
@@ -69,7 +70,7 @@ export function VersionGraphControlsProvider({
 export function useVersionGraphControlsContext(): VersionGraphControlsContextValue {
   const context = React.useContext(VersionGraphControlsContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useVersionGraphControlsContext must be used inside VersionGraphControlsProvider'
     );
   }

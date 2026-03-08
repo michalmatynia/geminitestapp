@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext } from 'react';
 import { useAdmin3DAssetsState } from '../hooks/useAdmin3DAssetsState';
+import { internalError } from '@/shared/errors/app-error';
 
 type Admin3DAssetsContextValue = ReturnType<typeof useAdmin3DAssetsState>;
 
@@ -15,7 +16,7 @@ export function Admin3DAssetsProvider({ children }: { children: React.ReactNode 
 export function useAdmin3DAssetsContext() {
   const context = useContext(Admin3DAssetsContext);
   if (!context) {
-    throw new Error('useAdmin3DAssetsContext must be used within Admin3DAssetsProvider');
+    throw internalError('useAdmin3DAssetsContext must be used within Admin3DAssetsProvider');
   }
   return context;
 }

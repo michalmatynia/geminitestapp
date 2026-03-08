@@ -3,6 +3,7 @@
 import React, { createContext, useContext } from 'react';
 
 import type { BlockInstance, SectionInstance } from '@/shared/contracts/cms';
+import { internalError } from '@/shared/errors/app-error';
 
 export interface PreviewSectionContextValue {
   section: SectionInstance;
@@ -30,7 +31,7 @@ export function PreviewSectionProvider({
 export function usePreviewSectionContext() {
   const context = useContext(PreviewSectionContext);
   if (!context) {
-    throw new Error('usePreviewSectionContext must be used within PreviewSectionProvider');
+    throw internalError('usePreviewSectionContext must be used within PreviewSectionProvider');
   }
   return context;
 }

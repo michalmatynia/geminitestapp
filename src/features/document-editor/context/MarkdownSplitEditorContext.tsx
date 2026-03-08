@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext } from 'react';
+import { internalError } from '@/shared/errors/app-error';
 
 export interface MarkdownSplitEditorContextValue {
   value: string;
@@ -49,7 +50,7 @@ export function MarkdownSplitEditorProvider({
 export function useMarkdownSplitEditorContext() {
   const context = useContext(MarkdownSplitEditorContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useMarkdownSplitEditorContext must be used within MarkdownSplitEditorProvider'
     );
   }

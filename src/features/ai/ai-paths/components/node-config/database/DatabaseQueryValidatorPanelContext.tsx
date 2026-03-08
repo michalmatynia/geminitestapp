@@ -3,6 +3,7 @@
 import React from 'react';
 
 import type { DatabaseConfig, DatabaseOperation, DbQueryConfig } from '@/shared/lib/ai-paths';
+import { internalError } from '@/shared/errors/app-error';
 
 import type { QueryValidationResult } from './query-utils';
 
@@ -35,7 +36,7 @@ export function DatabaseQueryValidatorPanelContextProvider({
 export function useDatabaseQueryValidatorPanelContext(): DatabaseQueryValidatorPanelContextValue {
   const context = React.useContext(DatabaseQueryValidatorPanelContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useDatabaseQueryValidatorPanelContext must be used within DatabaseQueryValidatorPanelContextProvider'
     );
   }

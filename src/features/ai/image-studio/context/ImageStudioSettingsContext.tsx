@@ -237,7 +237,7 @@ export function ImageStudioSettingsProvider({
       });
       const parsedRules = parsePromptValidationRules(promptValidationRulesText);
       if (!parsedRules.ok) {
-        throw new Error(parsedRules.error);
+        throw internalError(parsedRules.error);
       }
       await updateSetting.mutateAsync({
         key: PROMPT_ENGINE_SETTINGS_KEY,

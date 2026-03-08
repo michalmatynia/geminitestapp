@@ -30,6 +30,8 @@ export function InputBlock(): React.ReactNode {
   const controlledValue = resolveInputValue(settings['inputValue']);
   const placeholder =
     typeof settings['inputPlaceholder'] === 'string' ? settings['inputPlaceholder'] : '';
+  const inputAriaLabel =
+    typeof settings['inputAriaLabel'] === 'string' ? settings['inputAriaLabel'].trim() : '';
   const inputType = typeof settings['inputType'] === 'string' ? settings['inputType'] : 'text';
   const autoComplete =
     typeof settings['inputAutoComplete'] === 'string'
@@ -96,7 +98,7 @@ export function InputBlock(): React.ReactNode {
       autoComplete={autoComplete || undefined}
       maxLength={maxLength}
       disabled={disabled}
-      aria-label={placeholder || 'Input'}
+      aria-label={inputAriaLabel || placeholder || 'Input field'}
       className='w-full'
       style={customStyles}
       onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {

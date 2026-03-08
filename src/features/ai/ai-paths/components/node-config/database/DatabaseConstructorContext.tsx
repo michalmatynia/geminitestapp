@@ -10,6 +10,7 @@ import type {
   UpdaterSampleState,
 } from '@/shared/lib/ai-paths';
 import type { AiQuery, DatabasePresetOption, SchemaData } from '@/shared/contracts/database';
+import { internalError } from '@/shared/errors/app-error';
 
 export type DatabaseConstructorContextValue = {
   pendingAiQuery: string;
@@ -246,7 +247,7 @@ export function DatabaseConstructorContextProvider({
 export function useDatabaseConstructorStateContext(): DatabaseConstructorStateContextValue {
   const context = React.useContext(DatabaseConstructorStateContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useDatabaseConstructorStateContext must be used within DatabaseConstructorContextProvider'
     );
   }
@@ -256,7 +257,7 @@ export function useDatabaseConstructorStateContext(): DatabaseConstructorStateCo
 export function useDatabaseConstructorActionsContext(): DatabaseConstructorActionsContextValue {
   const context = React.useContext(DatabaseConstructorActionsContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useDatabaseConstructorActionsContext must be used within DatabaseConstructorContextProvider'
     );
   }

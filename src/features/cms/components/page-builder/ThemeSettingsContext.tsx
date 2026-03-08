@@ -19,6 +19,7 @@ import {
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
+import { internalError } from '@/shared/errors/app-error';
 
 interface ThemeSettingsStateContextValue {
   theme: ThemeSettings;
@@ -126,7 +127,7 @@ export function ThemeSettingsProvider({
 export function useThemeSettingsValue(): ThemeSettings {
   const ctx = useContext(ThemeSettingsStateContext);
   if (!ctx) {
-    throw new Error('useThemeSettingsValue must be used within ThemeSettingsProvider');
+    throw internalError('useThemeSettingsValue must be used within ThemeSettingsProvider');
   }
   return ctx.theme;
 }
@@ -134,7 +135,7 @@ export function useThemeSettingsValue(): ThemeSettings {
 export function useThemeSettingsActions(): ThemeSettingsActionsContextValue {
   const ctx = useContext(ThemeSettingsActionsContext);
   if (!ctx) {
-    throw new Error('useThemeSettingsActions must be used within ThemeSettingsProvider');
+    throw internalError('useThemeSettingsActions must be used within ThemeSettingsProvider');
   }
   return ctx;
 }

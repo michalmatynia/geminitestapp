@@ -6,6 +6,7 @@ import type { FolderTreePlaceholderClassSet } from '@/shared/utils';
 import type { ClipboardData } from '@/shared/contracts/cms';
 
 import type { PageZone } from '@/features/cms/types/page-builder';
+import { internalError } from '@/shared/errors/app-error';
 
 type ComponentTreeClipboard = ClipboardData | null;
 
@@ -101,7 +102,7 @@ export function ComponentTreePanelProvider({
 export function useComponentTreePanelState(): ComponentTreePanelStateContextValue {
   const context = useContext(ComponentTreePanelStateContext);
   if (!context) {
-    throw new Error('useComponentTreePanelState must be used within ComponentTreePanelProvider');
+    throw internalError('useComponentTreePanelState must be used within ComponentTreePanelProvider');
   }
   return context;
 }
@@ -109,7 +110,7 @@ export function useComponentTreePanelState(): ComponentTreePanelStateContextValu
 export function useComponentTreePanelActions(): ComponentTreePanelActionsContextValue {
   const context = useContext(ComponentTreePanelActionsContext);
   if (!context) {
-    throw new Error('useComponentTreePanelActions must be used within ComponentTreePanelProvider');
+    throw internalError('useComponentTreePanelActions must be used within ComponentTreePanelProvider');
   }
   return context;
 }

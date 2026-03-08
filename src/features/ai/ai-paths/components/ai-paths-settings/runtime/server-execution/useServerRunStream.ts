@@ -35,8 +35,11 @@ export function useServerRunStream(
   finalizeRun: (status: 'completed' | 'failed' | 'canceled', options?: ServerRunFinalizeOptions) => void
 ) {
   const eventSourceRef = useRef<EventSource | null>(null);
+  const removeListenersRef = useRef<(() => void) | null>(null);
 
   const stopServerRunStream = useCallback((): void => {
+    removeListenersRef.current?.();
+    removeListenersRef.current = null;
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
       eventSourceRef.current = null;
@@ -47,11 +50,16 @@ export function useServerRunStream(
 
   const startStream = useCallback((ctx: ServerRunStreamContext) => {
     const { runId, runStartedAt, runtimeNodeById, historyLimit } = ctx;
-    
+
+    removeListenersRef.current?.();
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+    }
+
     const eventSource = streamAiPathRun(runId);
     eventSourceRef.current = eventSource;
 
-    eventSource.addEventListener('run', (event: Event): void => {
+    const handleRunEvent = (event: Event): void => {
       try {
         if (!(event instanceof MessageEvent)) return;
         const payload = parseSsePayload(event);
@@ -101,9 +109,9 @@ export function useServerRunStream(
           },
         });
       }
-    });
+    };
 
-    eventSource.addEventListener('nodes', (event: Event): void => {
+    const handleNodesEvent = (event: Event): void => {
       try {
         if (!(event instanceof MessageEvent)) return;
         const payload = parseSsePayload(event);
@@ -233,9 +241,9 @@ export function useServerRunStream(
           },
         });
       }
-    });
+    };
 
-    eventSource.addEventListener('events', (event: Event): void => {
+    const handleEventsEvent = (event: Event): void => {
       try {
         if (!(event instanceof MessageEvent)) return;
         const payload = parseSsePayload(event);
@@ -295,9 +303,9 @@ export function useServerRunStream(
           },
         });
       }
-    });
+    };
 
-    eventSource.addEventListener('done', (event: Event): void => {
+    const handleDoneEvent = (event: Event): void => {
       try {
         if (!(event instanceof MessageEvent)) return;
         const payload = parseSsePayload(event);
@@ -325,9 +333,9 @@ export function useServerRunStream(
           },
         });
       }
-    });
+    };
 
-    eventSource.addEventListener('error', (event: Event): void => {
+    const handleErrorEvent = (event: Event): void => {
       if (!(event instanceof MessageEvent)) return;
       try {
         const payload = parseSsePayload(event);
@@ -346,9 +354,9 @@ export function useServerRunStream(
           },
         });
       }
-    });
+    };
 
-    eventSource.onerror = (err: Event): void => {
+    const handleStreamError = (err: Event): void => {
       if (!serverRunActiveRef.current) return;
       if (eventSource.readyState === EventSource.CONNECTING) {
         logClientError(new Error('Server run stream disconnected — reconnecting'), {
@@ -377,6 +385,21 @@ export function useServerRunStream(
         },
       });
       finalizeRun('failed', { message: 'Server stream connection lost.' });
+    };
+
+    eventSource.addEventListener('run', handleRunEvent);
+    eventSource.addEventListener('nodes', handleNodesEvent);
+    eventSource.addEventListener('events', handleEventsEvent);
+    eventSource.addEventListener('done', handleDoneEvent);
+    eventSource.addEventListener('error', handleErrorEvent);
+    eventSource.onerror = handleStreamError;
+    removeListenersRef.current = (): void => {
+      eventSource.removeEventListener('run', handleRunEvent);
+      eventSource.removeEventListener('nodes', handleNodesEvent);
+      eventSource.removeEventListener('events', handleEventsEvent);
+      eventSource.removeEventListener('done', handleDoneEvent);
+      eventSource.removeEventListener('error', handleErrorEvent);
+      eventSource.onerror = null;
     };
   }, [args, finalizeRun, serverRunActiveRef]);
 

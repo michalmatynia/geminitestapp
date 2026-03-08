@@ -27,6 +27,7 @@ import type {
   RuntimeControlHandlers,
   RuntimeNodeConfigHandlers,
 } from '@/shared/contracts/ai-paths';
+import { internalError } from '@/shared/errors/app-error';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export type { LastErrorInfo, RuntimeRunStatus, RuntimeControlHandlers, RuntimeNodeConfigHandlers };
@@ -672,7 +673,7 @@ export function RuntimeProvider({
 export function useRuntimeState(): RuntimeStateData {
   const context = useContext(RuntimeStateContext);
   if (!context) {
-    throw new Error('useRuntimeState must be used within a RuntimeProvider');
+    throw internalError('useRuntimeState must be used within a RuntimeProvider');
   }
   return context;
 }
@@ -684,7 +685,7 @@ export function useRuntimeState(): RuntimeStateData {
 export function useRuntimeActions(): RuntimeActions {
   const context = useContext(RuntimeActionsContext);
   if (!context) {
-    throw new Error('useRuntimeActions must be used within a RuntimeProvider');
+    throw internalError('useRuntimeActions must be used within a RuntimeProvider');
   }
   return context;
 }

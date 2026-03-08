@@ -3,6 +3,7 @@
 import { createContext, useContext } from 'react';
 import type { IntegrationConnection } from '@/shared/contracts/integrations';
 import type { IntegrationDefinition, SaveConnectionOptions } from '../integrations-context-types';
+import { internalError } from '@/shared/errors/app-error';
 
 export interface IntegrationsActions {
   handleIntegrationClick: (definition: IntegrationDefinition) => Promise<void>;
@@ -29,6 +30,6 @@ export const IntegrationsActionsContext = createContext<IntegrationsActions | nu
 
 export const useIntegrationsActions = () => {
   const context = useContext(IntegrationsActionsContext);
-  if (!context) throw new Error('useIntegrationsActions must be used within IntegrationsProvider');
+  if (!context) throw internalError('useIntegrationsActions must be used within IntegrationsProvider');
   return context;
 };

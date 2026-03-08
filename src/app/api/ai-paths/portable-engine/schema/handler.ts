@@ -15,6 +15,7 @@ import {
 
 const SCHEMA_KIND_VALUES = ['all', ...PORTABLE_PATH_JSON_SCHEMA_KINDS] as const;
 type SchemaKindQueryValue = (typeof SCHEMA_KIND_VALUES)[number];
+const SCHEMA_KIND_VALUE_SET = new Set<string>(SCHEMA_KIND_VALUES);
 const SCHEMA_CACHE_CONTROL = 'private, max-age=300, stale-while-revalidate=900';
 
 export const querySchema = z.object({
@@ -46,11 +47,30 @@ const matchesIfNoneMatch = (headerValue: string | null, etag: string): boolean =
   return tokens.some((token) => normalizeEtagToken(token) === normalizedEtag);
 };
 
+const resolveSchemaQueryInput = (
+  req: NextRequest,
+  ctx: ApiHandlerContext
+): Record<string, unknown> => ({
+  ...Object.fromEntries(req.nextUrl.searchParams.entries()),
+  ...((ctx.query ?? {}) as Record<string, unknown>),
+});
+
+const parseSchemaKindQuery = (value: unknown): SchemaKindQueryValue => {
+  const normalized = normalizeOptionalQueryString(value)?.toLowerCase();
+  if (!normalized) {
+    return 'all';
+  }
+  if (SCHEMA_KIND_VALUE_SET.has(normalized)) {
+    return normalized as SchemaKindQueryValue;
+  }
+  throw new Error('Invalid portable schema kind.');
+};
+
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireAiPathsAccess();
 
-  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
-  const kindRaw: SchemaKindQueryValue = query.kind ?? 'all';
+  const query = resolveSchemaQueryInput(req, _ctx) as z.infer<typeof querySchema>;
+  const kindRaw = parseSchemaKindQuery(query.kind);
 
   const schemas = buildPortablePathJsonSchemaCatalog();
   const payload =

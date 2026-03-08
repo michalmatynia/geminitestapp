@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useMemo, type ReactNode } from 'react';
 
 import type { AiNode } from '@/shared/lib/ai-paths';
+import { internalError } from '@/shared/errors/app-error';
 
 export type SelectionToolMode = 'pan' | 'select';
 export type SelectionScopeMode = 'portion' | 'wiring';
@@ -213,7 +214,7 @@ export function SelectionProvider({
 export function useSelectionState(): SelectionState {
   const context = useContext(SelectionStateContext);
   if (!context) {
-    throw new Error('useSelectionState must be used within a SelectionProvider');
+    throw internalError('useSelectionState must be used within a SelectionProvider');
   }
   return context;
 }
@@ -225,7 +226,7 @@ export function useSelectionState(): SelectionState {
 export function useSelectionActions(): SelectionActions {
   const context = useContext(SelectionActionsContext);
   if (!context) {
-    throw new Error('useSelectionActions must be used within a SelectionProvider');
+    throw internalError('useSelectionActions must be used within a SelectionProvider');
   }
   return context;
 }

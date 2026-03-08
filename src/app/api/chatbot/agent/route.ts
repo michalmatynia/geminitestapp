@@ -1,8 +1,12 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export {
-  AgentCreatorAgentGET as GET,
-  AgentCreatorAgentPOST as POST,
-  AgentCreatorAgentDELETE as DELETE,
+import {
+  AgentCreatorAgentDELETE,
+  AgentCreatorAgentGET,
+  AgentCreatorAgentPOST,
 } from '@/features/ai/agentcreator/server';
+
+export const GET = AgentCreatorAgentGET;
+export const POST = AgentCreatorAgentPOST;
+export const DELETE = AgentCreatorAgentDELETE;

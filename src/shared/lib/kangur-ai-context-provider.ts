@@ -14,6 +14,7 @@ import {
 import {
   buildKangurAssignmentContextRuntimeDocument,
   buildKangurLearnerSnapshotRuntimeDocument,
+  buildKangurLoginActivityRuntimeDocument,
   buildKangurLessonContextRuntimeDocument,
   buildKangurTestContextRuntimeDocument,
   loadKangurRegistryBaseData,
@@ -133,6 +134,11 @@ export const kangurRuntimeContextProvider: RuntimeContextProvider = {
           switch (parsed.kind) {
             case 'learner':
               return await buildKangurLearnerSnapshotRuntimeDocument({
+                learnerId: parsed.learnerId,
+                data,
+              });
+            case 'loginActivity':
+              return await buildKangurLoginActivityRuntimeDocument({
                 learnerId: parsed.learnerId,
                 data,
               });

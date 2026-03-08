@@ -14,7 +14,7 @@ import {
   useTagMappings,
   useExternalTags,
 } from '@/features/integrations/hooks/useMarketplaceQueries';
-import { useTags } from '@/features/products';
+import { useIntegrationProductTags } from '@/features/integrations/hooks/useIntegrationProductQueries';
 import { type TagMapping, type ExternalTag } from '@/shared/contracts/integrations';
 import { type ProductTag } from '@/shared/contracts/products';
 import { GenericMapper, type GenericItemMapperConfig } from '@/shared/ui';
@@ -23,7 +23,7 @@ export function BaseTagMapper(): React.JSX.Element {
   const { connectionId, connectionName } = useCategoryMapperConfig();
   const { selectedCatalogId: catalogId } = useCategoryMapperData();
 
-  const tagsQuery = useTags(catalogId ?? null);
+  const tagsQuery = useIntegrationProductTags(catalogId ?? undefined);
   const externalTagsQuery = useExternalTags(connectionId ?? '');
   const mappingsQuery = useTagMappings(connectionId ?? '');
 

@@ -1,43 +1,64 @@
 # Accessibility Route Crawl Report
 
-Generated at: 2026-03-08T19:47:38.238Z
+Generated at: 2026-03-08T21:54:13.648Z
 
 ## Summary
 
-- Status: PASSED
+- Status: FAILED
 - Routes: 17
-- Passed: 17
-- Failed: 0
-- Unexpected Playwright failures: 0
+- Passed: 0
+- Failed: 17
+- Unexpected Playwright failures: 1
 - Flaky results: 0
-- Skipped: 0
-- Error messages captured: 0
+- Skipped: 16
+- Error messages captured: 1
 
 ## Route Status
 
 | Route | Audience | Status | Duration | Errors |
 | --- | --- | --- | ---: | ---: |
-| / | public | PASS | 17.8s | 0 |
-| /auth/signin | public | PASS | 1.3s | 0 |
-| /auth/register | public | PASS | 1.8s | 0 |
-| /admin | admin | PASS | 7.6s | 0 |
-| /admin/products | admin | PASS | 7.5s | 0 |
-| /admin/notes | admin | PASS | 5.0s | 0 |
-| /admin/integrations | admin | PASS | 3.9s | 0 |
-| /admin/case-resolver | admin | PASS | 8.9s | 0 |
-| /admin/cms | admin | PASS | 3.2s | 0 |
-| /admin/ai-paths | admin | PASS | 14.6s | 0 |
-| /admin/image-studio | admin | PASS | 14.4s | 0 |
-| /admin/chatbot | admin | PASS | 4.8s | 0 |
-| /admin/agentcreator | admin | PASS | 3.1s | 0 |
-| /admin/prompt-engine/validation | admin | PASS | 3.8s | 0 |
-| /admin/kangur | admin | PASS | 6.7s | 0 |
-| /admin/databases/engine | admin | PASS | 14.7s | 0 |
-| /admin/brain?tab=routing | admin | PASS | 1.1m | 0 |
+| / | public | FAIL | 26.3s | 1 |
+| /auth/signin | public | FAIL | 0ms | 0 |
+| /auth/register | public | FAIL | 0ms | 0 |
+| /admin | admin | FAIL | 0ms | 0 |
+| /admin/products | admin | FAIL | 0ms | 0 |
+| /admin/notes | admin | FAIL | 0ms | 0 |
+| /admin/integrations | admin | FAIL | 0ms | 0 |
+| /admin/case-resolver | admin | FAIL | 0ms | 0 |
+| /admin/cms | admin | FAIL | 0ms | 0 |
+| /admin/ai-paths | admin | FAIL | 0ms | 0 |
+| /admin/image-studio | admin | FAIL | 0ms | 0 |
+| /admin/chatbot | admin | FAIL | 0ms | 0 |
+| /admin/agentcreator | admin | FAIL | 0ms | 0 |
+| /admin/prompt-engine/validation | admin | FAIL | 0ms | 0 |
+| /admin/kangur | admin | FAIL | 0ms | 0 |
+| /admin/databases/engine | admin | FAIL | 0ms | 0 |
+| /admin/brain?tab=routing | admin | FAIL | 0ms | 0 |
 
 ## Errors
 
-No route crawl errors detected.
+### Public Home
+
+- Error: Accessibility violations detected:
+
+[moderate] region: All page content should be contained by landmarks
+Ensure all page content is contained by landmarks
+- .items-start
+Fix any of the following:
+  Some page content is not contained by landmarks
+https://dequeuniversity.com/rules/axe/4.11/region?application=axeAPI
+
+   at support/accessibility.ts:100
+
+   98 |   if (violations.length === 0) return;
+   99 |
+> 100 |   throw new Error(`Accessibility violations detected:\n\n${formatViolations(violations)}`);
+      |         ^
+  101 | }
+  102 |
+    at expectPageToHaveNoAxeViolations (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/support/accessibility.ts:100:9)
+    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/accessibility-route-crawl.spec.ts:50:5
+
 ## Notes
 
 - This crawl scans representative public and admin routes with the same axe helper used by the browser accessibility smoke suites.

@@ -179,6 +179,14 @@ describe('KangurParentDashboardAiTutorWidget', () => {
       'focus:border-amber-300',
       'focus:ring-amber-200/70'
     );
+    expect(screen.getByLabelText(/glebokosc wskazowek/i)).toHaveClass(
+      'focus:border-amber-300',
+      'focus:ring-amber-200/70'
+    );
+    expect(screen.getByLabelText(/aktywnosc tutora/i)).toHaveClass(
+      'focus:border-amber-300',
+      'focus:ring-amber-200/70'
+    );
 
     fireEvent.click(lessonsToggle);
     fireEvent.change(screen.getByLabelText(/tryb interfejsu tutora/i), {
@@ -187,9 +195,18 @@ describe('KangurParentDashboardAiTutorWidget', () => {
     fireEvent.change(screen.getByLabelText(/tryb pomocy w testach/i), {
       target: { value: 'review_after_answer' },
     });
+    fireEvent.change(screen.getByLabelText(/glebokosc wskazowek/i), {
+      target: { value: 'step_by_step' },
+    });
+    fireEvent.change(screen.getByLabelText(/aktywnosc tutora/i), {
+      target: { value: 'coach' },
+    });
     fireEvent.click(screen.getByRole('checkbox', { name: /pokazuj źródła odpowiedzi/i }));
     fireEvent.click(screen.getByRole('checkbox', { name: /pozwól pytać o zaznaczony fragment/i }));
     fireEvent.click(screen.getByRole('checkbox', { name: /zachowuj rozmowę po zmianie miejsca/i }));
+    expect(
+      screen.getByRole('checkbox', { name: /zapamietuj ostatnie wskazowki/i })
+    ).toBeDisabled();
     const saveButton = screen.getByRole('button', { name: /zapisz ustawienia ai tutora/i });
     expect(saveButton).toHaveClass(
       'kangur-cta-pill',
@@ -207,10 +224,13 @@ describe('KangurParentDashboardAiTutorWidget', () => {
             enabled: true,
             uiMode: 'static',
             allowCrossPagePersistence: false,
+            rememberTutorContext: false,
             allowLessons: false,
             testAccessMode: 'review_after_answer',
             showSources: false,
             allowSelectedTextSupport: false,
+            hintDepth: 'step_by_step',
+            proactiveNudges: 'coach',
           },
         }),
       })

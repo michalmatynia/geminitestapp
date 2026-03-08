@@ -4,6 +4,7 @@ import { z } from 'zod';
 
 import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/features/playwright';
 import { normalizePlaywrightPersonas } from '@/features/playwright';
+export { useIntegrationsWithConnections } from '@/shared/hooks/useIntegrationQueries';
 import { fetchSettingsCached } from '@/shared/api/settings-client';
 import {
   importExportTemplateSchema,
@@ -14,7 +15,6 @@ import {
 import type {
   Integration,
   IntegrationConnection,
-  IntegrationWithConnections,
   BaseInventory,
 } from '@/shared/contracts/integrations';
 import type { PlaywrightPersona } from '@/shared/contracts/playwright';
@@ -98,25 +98,6 @@ export function useConnectionSession(
       queryKey,
       tags: ['integrations', 'session'],
       description: 'Loads integrations connection session.'},
-  });
-}
-
-export function useIntegrationsWithConnections(): ListQuery<IntegrationWithConnections> {
-  const queryKey = integrationKeys.withConnections();
-  const queryFn = async (): Promise<IntegrationWithConnections[]> =>
-    api.get<IntegrationWithConnections[]>('/api/v2/integrations/with-connections');
-
-  return createListQueryV2({
-    queryKey,
-    queryFn,
-    meta: {
-      source: 'integrations.hooks.useIntegrationsWithConnections',
-      operation: 'list',
-      resource: 'integrations.with-connections',
-      domain: 'integrations',
-      queryKey,
-      tags: ['integrations', 'with-connections'],
-      description: 'Loads integrations with connections.'},
   });
 }
 

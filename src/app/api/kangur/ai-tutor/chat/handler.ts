@@ -20,6 +20,8 @@ import {
   resolveKangurAiTutorAvailability,
   resolveKangurAiTutorAppSettings,
   type KangurAiTutorAvailabilityReason,
+  type KangurAiTutorHintDepth,
+  type KangurAiTutorProactiveNudges,
 } from '@/features/kangur/settings-ai-tutor';
 import { consumeKangurAiTutorDailyUsage } from '@/features/kangur/server/ai-tutor-usage';
 import {
@@ -39,6 +41,7 @@ import {
   type KangurAiTutorCoachingMode,
   type KangurAiTutorConversationContext,
   type KangurAiTutorInteractionIntent,
+  type KangurAiTutorLearnerMemory,
   type KangurAiTutorPromptMode,
 } from '@/shared/contracts/kangur-ai-tutor';
 import { createDefaultKangurAiTutorLearnerMood } from '@/shared/contracts/kangur-ai-tutor-mood';
@@ -82,6 +85,21 @@ const INTERACTION_INTENT_INSTRUCTIONS: Record<KangurAiTutorInteractionIntent, st
   explain: 'Prioritize a short, clear explanation before suggesting the next step.',
   review: 'Prioritize reviewing what happened, why, and what to try next time.',
   next_step: 'Prioritize the learner’s next best practice step.',
+};
+
+const HINT_DEPTH_INSTRUCTIONS: Record<KangurAiTutorHintDepth, string> = {
+  brief: 'Parent preference: keep hints very short and stop after one small nudge.',
+  guided: 'Parent preference: give one hint plus one quick checkpoint question when helpful.',
+  step_by_step:
+    'Parent preference: guide the learner step by step without giving the final answer.',
+};
+
+const PROACTIVE_NUDGE_INSTRUCTIONS: Record<KangurAiTutorProactiveNudges, string> = {
+  off: 'Parent preference: do not proactively push extra practice unless the learner asks.',
+  gentle:
+    'Parent preference: it is okay to gently suggest one next step or one small review activity.',
+  coach:
+    'Parent preference: be comfortable proactively recommending the next practice move when the learner seems stuck.',
 };
 
 const AVAILABILITY_ERROR_MESSAGES: Record<KangurAiTutorAvailabilityReason, string> = {
@@ -176,6 +194,49 @@ const buildRegistryPolicyInstructions = (
     .map((node) => node.description.trim())
     .filter(Boolean);
 
+const buildParentPreferenceInstructions = (input: {
+  hintDepth: KangurAiTutorHintDepth;
+  proactiveNudges: KangurAiTutorProactiveNudges;
+  rememberTutorContext: boolean;
+}): string =>
+  [
+    HINT_DEPTH_INSTRUCTIONS[input.hintDepth],
+    PROACTIVE_NUDGE_INSTRUCTIONS[input.proactiveNudges],
+    input.rememberTutorContext
+      ? 'Parent preference: you may use compact learner memory from recent tutor sessions when it is provided.'
+      : 'Parent preference: do not rely on memory from previous tutor sessions.',
+  ].join('\n');
+
+const buildLearnerMemoryInstructions = (
+  memory: KangurAiTutorLearnerMemory | null | undefined
+): string => {
+  if (!memory) {
+    return '';
+  }
+
+  const lines = ['Compact learner memory from recent Kangur tutor sessions:'];
+  if (memory.lastSurface) {
+    lines.push(`Recent surface: ${memory.lastSurface}.`);
+  }
+  if (memory.lastFocusLabel) {
+    lines.push(`Recent focus: ${memory.lastFocusLabel}`);
+  }
+  if (memory.lastUnresolvedBlocker) {
+    lines.push(`Last unresolved blocker: ${memory.lastUnresolvedBlocker}`);
+  }
+  if (memory.lastRecommendedAction) {
+    lines.push(`Last recommended action: ${memory.lastRecommendedAction}`);
+  }
+  if (memory.lastSuccessfulIntervention) {
+    lines.push(`Last successful intervention: ${memory.lastSuccessfulIntervention}`);
+  }
+  if (memory.lastCoachingMode) {
+    lines.push(`Previous coaching mode: ${memory.lastCoachingMode}.`);
+  }
+
+  return lines.length > 1 ? lines.join('\n') : '';
+};
+
 const buildContextInstructions = (input: {
   context: KangurAiTutorConversationContext | undefined;
   registryBundle: ContextRegistryResolutionBundle | null;
@@ -188,7 +249,7 @@ const buildContextInstructions = (input: {
     return '';
   }
 
-  const { learnerSnapshot, surfaceContext, assignmentContext } =
+  const { learnerSnapshot, loginActivity, surfaceContext, assignmentContext } =
     resolveKangurAiTutorRuntimeDocuments(registryBundle, context);
   const policyInstructions = buildRegistryPolicyInstructions(registryBundle);
   const surfaceLabel =
@@ -215,6 +276,11 @@ const buildContextInstructions = (input: {
   const learnerSummary = readStringFact(learnerSnapshot, 'learnerSummary');
   if (learnerSummary) {
     lines.push(`Learner snapshot: ${learnerSummary}`);
+  }
+
+  const loginActivitySummary = readStringFact(loginActivity, 'recentLoginActivitySummary');
+  if (loginActivitySummary) {
+    lines.push(`Recent Kangur login activity: ${loginActivitySummary}`);
   }
 
   const masterySummary =
@@ -305,7 +371,7 @@ export async function postKangurAiTutorChatHandler(
   });
   if (!parsed.ok) return parsed.response;
 
-  const { messages, context } = parsed.data;
+  const { messages, context, memory } = parsed.data;
   const resolvedPromptMode = context?.promptMode ?? 'chat';
 
   const rawSettings = await readStoredSettingValue(KANGUR_AI_TUTOR_SETTINGS_KEY);
@@ -446,6 +512,17 @@ export async function postKangurAiTutorChatHandler(
       },
     });
     if (contextInstructions) systemParts.push(contextInstructions);
+    systemParts.push(
+      buildParentPreferenceInstructions({
+        hintDepth: tutorSettings.hintDepth,
+        proactiveNudges: tutorSettings.proactiveNudges,
+        rememberTutorContext: tutorSettings.rememberTutorContext,
+      })
+    );
+    const learnerMemoryInstructions = buildLearnerMemoryInstructions(memory);
+    if (learnerMemoryInstructions) {
+      systemParts.push(learnerMemoryInstructions);
+    }
     const adaptiveGuidance = await buildKangurAiTutorAdaptiveGuidance({
       learnerId,
       context,
@@ -625,11 +702,15 @@ export async function postKangurAiTutorChatHandler(
         allowSelectedTextSupport: tutorSettings.allowSelectedTextSupport,
         allowLessons: tutorSettings.allowLessons,
         testAccessMode: tutorSettings.testAccessMode,
+        hintDepth: tutorSettings.hintDepth,
+        proactiveNudges: tutorSettings.proactiveNudges,
+        rememberTutorContext: tutorSettings.rememberTutorContext,
         adaptiveGuidanceApplied,
         contextRegistryRefCount: contextRegistryBundle?.refs.length ?? 0,
         contextRegistryDocumentCount: contextRegistryBundle?.documents.length ?? 0,
         followUpActionCount: adaptiveGuidance.followUpActions.length,
         coachingMode: adaptiveCoachingMode,
+        hasLearnerMemory: Boolean(memory),
         personaId: tutorSettings.agentPersonaId,
         suggestedPersonaMoodId,
         personaMemorySessionId,
@@ -678,9 +759,13 @@ export async function postKangurAiTutorChatHandler(
         allowSelectedTextSupport: tutorSettings.allowSelectedTextSupport,
         allowLessons: tutorSettings.allowLessons,
         testAccessMode: tutorSettings.testAccessMode,
+        hintDepth: tutorSettings.hintDepth,
+        proactiveNudges: tutorSettings.proactiveNudges,
+        rememberTutorContext: tutorSettings.rememberTutorContext,
         adaptiveGuidanceApplied,
         contextRegistryRefCount: context ? buildKangurAiTutorContextRegistryRefs({ learnerId, context }).length : 0,
         coachingMode: adaptiveCoachingMode,
+        hasLearnerMemory: Boolean(memory),
         personaId: tutorSettings.agentPersonaId,
         dailyMessageLimit: tutorSettings.dailyMessageLimit,
         messageCount: messages.length,

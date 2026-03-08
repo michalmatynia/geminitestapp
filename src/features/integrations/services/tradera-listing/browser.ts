@@ -23,7 +23,7 @@ import {
   parsePersistedStorageState,
   resolveConnectionPlaywrightSettings,
 } from '@/features/integrations/services/tradera-playwright-settings';
-import { getProductRepository } from '@/features/products/server';
+import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 
 export const ensureLoggedIn = async (
   page: Page,

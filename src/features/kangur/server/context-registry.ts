@@ -42,7 +42,7 @@ import {
   KANGUR_CONTEXT_ROOT_IDS,
   KANGUR_RUNTIME_ENTITY_TYPES,
 } from '@/features/kangur/context-registry/refs';
-
+import { listKangurLoginActivity } from '@/features/kangur/server/kangur-login-activity';
 const KANGUR_AI_TUTOR_DAILY_GOAL_GAMES = 3;
 const KANGUR_AI_TUTOR_RECENT_SCORE_LIMIT = 24;
 const QUICK_START_OPERATIONS = new Set([
@@ -66,7 +66,6 @@ type KangurRecommendationSectionItem = {
   actionPage: string;
   actionQuery?: Record<string, string>;
 };
-
 type KangurAssignmentSectionItem = {
   id: string;
   title: string;
@@ -82,6 +81,7 @@ type KangurAssignmentSectionItem = {
 type KangurRegistryBaseData = {
   learnerId: string;
   learnerDisplayName: string | null;
+  ownerUserId: string | null;
   progress: Awaited<ReturnType<Awaited<ReturnType<typeof getKangurProgressRepository>>['getProgress']>>;
   scores: Awaited<ReturnType<Awaited<ReturnType<typeof getKangurScoreRepository>>['listScores']>>;
   snapshot: KangurLearnerProfileSnapshot;
@@ -95,13 +95,11 @@ type KangurRegistryBaseData = {
   activeAssignments: KangurAssignmentSnapshot[];
   masteryInsights: ReturnType<typeof buildLessonMasteryInsights>;
 };
-
 const ASSIGNMENT_PRIORITY_ORDER = {
   high: 0,
   medium: 1,
   low: 2,
 } as const;
-
 const ASSIGNMENT_STATUS_ORDER = {
   not_started: 0,
   in_progress: 1,
@@ -116,10 +114,8 @@ const readTrimmedString = (value: unknown): string | null => {
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
 };
-
 const truncate = (value: string, maxLength: number): string =>
   value.length > maxLength ? `${value.slice(0, maxLength - 3)}...` : value;
-
 const sortAssignments = (
   left: KangurAssignmentSnapshot,
   right: KangurAssignmentSnapshot
@@ -252,6 +248,35 @@ const buildWeakLessonItem = (lesson: KangurLessonMasteryInsight): Record<string,
   lastScorePercent: lesson.lastScorePercent,
   lastCompletedAt: lesson.lastCompletedAt,
 });
+
+const buildLoginActivitySummary = (input: {
+  learnerDisplayName: string | null;
+  parentLoginCount7d: number;
+  learnerSignInCount7d: number;
+  lastParentLoginAt: string | null;
+  lastLearnerSignInAt: string | null;
+}): string => {
+  const learnerLabel = input.learnerDisplayName ?? 'This learner';
+  const lines: string[] = [];
+
+  if (input.lastLearnerSignInAt) {
+    lines.push(`${learnerLabel} last signed into Kangur at ${input.lastLearnerSignInAt}.`);
+  } else {
+    lines.push(`No recent Kangur learner sign-in was recorded for ${learnerLabel}.`);
+  }
+
+  if (input.lastParentLoginAt) {
+    lines.push(`The parent last logged into Kangur at ${input.lastParentLoginAt}.`);
+  } else {
+    lines.push('No recent Kangur parent login was recorded.');
+  }
+
+  lines.push(
+    `In the last 7 days there were ${input.learnerSignInCount7d} learner sign-ins and ${input.parentLoginCount7d} parent Kangur logins.`
+  );
+
+  return lines.join(' ');
+};
 
 const buildLearnerSummary = (
   snapshot: KangurLearnerProfileSnapshot,
@@ -424,6 +449,7 @@ export const loadKangurRegistryBaseData = async (learnerId: string): Promise<Kan
   return {
     learnerId,
     learnerDisplayName: learner?.displayName ?? null,
+    ownerUserId: learner?.ownerUserId ?? null,
     progress,
     scores,
     snapshot,
@@ -513,6 +539,75 @@ export const buildKangurLearnerSnapshotRuntimeDocument = async (input: {
         items: data.activeAssignments.slice(0, 4).map((assignment) =>
           toAssignmentItem(assignment, data.snapshot.averageAccuracy)
         ),
+      },
+    ],
+    provenance: {
+      providerId: 'kangur',
+      source: 'kangur-runtime-context',
+    },
+  };
+};
+
+export const buildKangurLoginActivityRuntimeDocument = async (input: {
+  learnerId: string;
+  data?: KangurRegistryBaseData;
+}): Promise<ContextRuntimeDocument | null> => {
+  const data = input.data ?? (await loadKangurRegistryBaseData(input.learnerId));
+  if (!data.ownerUserId) {
+    return null;
+  }
+
+  const activity = await listKangurLoginActivity({
+    ownerUserId: data.ownerUserId,
+    learnerId: data.learnerId,
+  });
+  const lastParentLoginAt = activity.lastParentLogin?.occurredAt ?? null;
+  const lastLearnerSignInAt = activity.lastLearnerSignIn?.occurredAt ?? null;
+  const summary = buildLoginActivitySummary({
+    learnerDisplayName: data.learnerDisplayName,
+    parentLoginCount7d: activity.parentLoginCount7d,
+    learnerSignInCount7d: activity.learnerSignInCount7d,
+    lastParentLoginAt,
+    lastLearnerSignInAt,
+  });
+
+  return {
+    id: `runtime:kangur:login-activity:${data.learnerId}`,
+    kind: 'runtime_document',
+    entityType: KANGUR_RUNTIME_ENTITY_TYPES.loginActivity,
+    title: data.learnerDisplayName
+      ? `Kangur login activity: ${data.learnerDisplayName}`
+      : `Kangur login activity: ${data.learnerId}`,
+    summary,
+    status: activity.events.length > 0 ? 'active' : 'ready',
+    tags: ['kangur', 'login', 'activity', 'ai-tutor'],
+    relatedNodeIds: [...KANGUR_CONTEXT_ROOT_IDS.loginActivity],
+    timestamps: {
+      updatedAt: activity.events[0]?.occurredAt ?? null,
+    },
+    facts: {
+      learnerId: data.learnerId,
+      ownerUserId: data.ownerUserId,
+      learnerDisplayName: data.learnerDisplayName,
+      recentLoginActivitySummary: summary,
+      lastParentKangurLoginAt: lastParentLoginAt,
+      lastParentKangurLoginMethod: activity.lastParentLogin?.loginMethod ?? null,
+      lastLearnerSignInAt,
+      parentLoginCount7d: activity.parentLoginCount7d,
+      learnerSignInCount7d: activity.learnerSignInCount7d,
+    },
+    sections: [
+      {
+        id: 'recent_login_activity',
+        kind: 'items',
+        title: 'Recent Kangur login activity',
+        items: activity.events.map((event) => ({
+          actorType: event.actorType,
+          activityType: event.activityType,
+          loginMethod: event.loginMethod,
+          occurredAt: event.occurredAt,
+          summary: event.summary,
+        })),
       },
     ],
     provenance: {
@@ -874,6 +969,7 @@ export const resolveKangurAiTutorRuntimeDocuments = (
   context?: KangurAiTutorConversationContext | null
 ): {
   learnerSnapshot: ContextRuntimeDocument | null;
+  loginActivity: ContextRuntimeDocument | null;
   surfaceContext: ContextRuntimeDocument | null;
   assignmentContext: ContextRuntimeDocument | null;
 } => {
@@ -883,6 +979,9 @@ export const resolveKangurAiTutorRuntimeDocuments = (
   return {
     learnerSnapshot:
       documents.find((document) => document.entityType === KANGUR_RUNTIME_ENTITY_TYPES.learnerSnapshot) ??
+      null,
+    loginActivity:
+      documents.find((document) => document.entityType === KANGUR_RUNTIME_ENTITY_TYPES.loginActivity) ??
       null,
     surfaceContext:
       documents.find(

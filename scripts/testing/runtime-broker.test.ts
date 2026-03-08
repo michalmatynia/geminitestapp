@@ -179,6 +179,7 @@ describe('buildBrokeredPlaywrightEnv', () => {
         HOST: '127.0.0.1',
         PLAYWRIGHT_BASE_URL: 'http://127.0.0.1:3173',
         PLAYWRIGHT_USE_EXISTING_SERVER: 'true',
+        NEXT_PUBLIC_ENABLE_KANGUR_EVENT_ANALYTICS_IN_DEV: 'true',
         PLAYWRIGHT_OUTPUT_DIR: artifacts.outputDir,
         PLAYWRIGHT_HTML_REPORT_DIR: artifacts.htmlReportDir,
         PLAYWRIGHT_JUNIT_OUTPUT_FILE: artifacts.junitOutputFile,

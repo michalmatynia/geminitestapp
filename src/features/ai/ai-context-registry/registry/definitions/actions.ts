@@ -87,6 +87,7 @@ export const actionNodes: ContextNode[] = [
       { type: 'reads', targetId: 'collection:kangur-progress' },
       { type: 'reads', targetId: 'collection:kangur-scores' },
       { type: 'reads', targetId: 'collection:kangur-assignments' },
+      { type: 'reads', targetId: 'collection:kangur-login-activity' },
       { type: 'reads', targetId: 'collection:kangur-lessons' },
       { type: 'reads', targetId: 'collection:kangur-test-suites' },
       { type: 'governed_by', targetId: 'policy:kangur-ai-tutor-socratic' },
@@ -100,7 +101,7 @@ export const actionNodes: ContextNode[] = [
       classification: 'internal',
     },
     version: '1.0.0',
-    updatedAtISO: '2026-03-07T00:00:00.000Z',
+    updatedAtISO: '2026-03-08T00:00:00.000Z',
     source: { type: 'code', ref: SOURCE_REF },
   },
 ];

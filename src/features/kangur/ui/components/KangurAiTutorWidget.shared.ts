@@ -18,6 +18,7 @@ export const PROTECTED_CONTENT_GAP = 20;
 export const BUBBLE_MIN_HEIGHT = 280;
 export const BUBBLE_MAX_HEIGHT = 460;
 export const KANGUR_AI_TUTOR_WIDGET_STORAGE_KEY = 'kangur-ai-tutor-widget-v1';
+export const KANGUR_AI_TUTOR_GUEST_INTRO_STORAGE_KEY = 'kangur-ai-tutor-guest-intro-v1';
 
 export type TutorMotionPosition = {
   left?: number | string;

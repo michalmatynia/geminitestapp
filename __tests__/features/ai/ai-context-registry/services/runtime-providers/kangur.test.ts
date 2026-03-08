@@ -3,12 +3,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   loadKangurRegistryBaseDataMock,
   buildKangurLearnerSnapshotRuntimeDocumentMock,
+  buildKangurLoginActivityRuntimeDocumentMock,
   buildKangurLessonContextRuntimeDocumentMock,
   buildKangurTestContextRuntimeDocumentMock,
   buildKangurAssignmentContextRuntimeDocumentMock,
 } = vi.hoisted(() => ({
   loadKangurRegistryBaseDataMock: vi.fn(),
   buildKangurLearnerSnapshotRuntimeDocumentMock: vi.fn(),
+  buildKangurLoginActivityRuntimeDocumentMock: vi.fn(),
   buildKangurLessonContextRuntimeDocumentMock: vi.fn(),
   buildKangurTestContextRuntimeDocumentMock: vi.fn(),
   buildKangurAssignmentContextRuntimeDocumentMock: vi.fn(),
@@ -18,6 +20,8 @@ vi.mock('@/features/kangur/server', () => ({
   loadKangurRegistryBaseData: loadKangurRegistryBaseDataMock,
   buildKangurLearnerSnapshotRuntimeDocument:
     buildKangurLearnerSnapshotRuntimeDocumentMock,
+  buildKangurLoginActivityRuntimeDocument:
+    buildKangurLoginActivityRuntimeDocumentMock,
   buildKangurLessonContextRuntimeDocument: buildKangurLessonContextRuntimeDocumentMock,
   buildKangurTestContextRuntimeDocument: buildKangurTestContextRuntimeDocumentMock,
   buildKangurAssignmentContextRuntimeDocument:
@@ -29,6 +33,7 @@ import {
   createKangurAssignmentContextRef,
   createKangurLearnerSnapshotRef,
   createKangurLessonContextRef,
+  createKangurLoginActivityRef,
   createKangurTestContextRef,
 } from '@/features/kangur/context-registry/refs';
 
@@ -62,6 +67,12 @@ describe('kangurRuntimeContextProvider', () => {
     loadKangurRegistryBaseDataMock.mockResolvedValue(baseData);
     buildKangurLearnerSnapshotRuntimeDocumentMock.mockImplementation(async ({ learnerId }) =>
       createRuntimeDocument('kangur_learner_snapshot', `runtime:kangur:learner:${learnerId}`)
+    );
+    buildKangurLoginActivityRuntimeDocumentMock.mockImplementation(async ({ learnerId }) =>
+      createRuntimeDocument(
+        'kangur_login_activity',
+        `runtime:kangur:login-activity:${learnerId}`
+      )
     );
     buildKangurLessonContextRuntimeDocumentMock.mockImplementation(
       async ({ learnerId, lessonId }) =>
@@ -99,6 +110,7 @@ describe('kangurRuntimeContextProvider', () => {
     expect(kangurRuntimeContextProvider.canInferRefs(input)).toBe(true);
     expect(kangurRuntimeContextProvider.inferRefs(input)).toEqual([
       createKangurLearnerSnapshotRef('learner-1'),
+      createKangurLoginActivityRef('learner-1'),
       createKangurLessonContextRef('learner-1', 'adding'),
       createKangurAssignmentContextRef('learner-1', 'assignment-1'),
     ]);
@@ -117,6 +129,7 @@ describe('kangurRuntimeContextProvider', () => {
 
     expect(kangurRuntimeContextProvider.inferRefs(input)).toEqual([
       createKangurLearnerSnapshotRef('learner-1'),
+      createKangurLoginActivityRef('learner-1'),
       createKangurTestContextRef({
         learnerId: 'learner-1',
         suiteId: 'suite-2026',
@@ -129,6 +142,7 @@ describe('kangurRuntimeContextProvider', () => {
   it('loads canonical Kangur data once per learner and reuses it across resolved refs', async () => {
     const refs = [
       createKangurLearnerSnapshotRef('learner-1'),
+      createKangurLoginActivityRef('learner-1'),
       createKangurLessonContextRef('learner-1', 'adding'),
       createKangurAssignmentContextRef('learner-1', 'assignment-1'),
     ];
@@ -150,6 +164,12 @@ describe('kangurRuntimeContextProvider', () => {
         learnerId: 'learner-1',
       }),
     });
+    expect(buildKangurLoginActivityRuntimeDocumentMock).toHaveBeenCalledWith({
+      learnerId: 'learner-1',
+      data: expect.objectContaining({
+        learnerId: 'learner-1',
+      }),
+    });
     expect(buildKangurAssignmentContextRuntimeDocumentMock).toHaveBeenCalledWith({
       learnerId: 'learner-1',
       assignmentId: 'assignment-1',
@@ -160,6 +180,9 @@ describe('kangurRuntimeContextProvider', () => {
     expect(documents).toEqual([
       expect.objectContaining({
         entityType: 'kangur_learner_snapshot',
+      }),
+      expect.objectContaining({
+        entityType: 'kangur_login_activity',
       }),
       expect.objectContaining({
         entityType: 'kangur_lesson_context',

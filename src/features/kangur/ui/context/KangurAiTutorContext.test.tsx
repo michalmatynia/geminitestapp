@@ -771,6 +771,147 @@ describe('KangurAiTutorContext', () => {
     );
   });
 
+  it('stores compact learner memory and reuses it on the next tutor request when allowed', async () => {
+    apiPostMock
+      .mockResolvedValueOnce({
+        message: 'Skup się na rozbiciu zadania na dwa kroki.',
+        sources: [],
+        followUpActions: [
+          {
+            id: 'recommendation:strengthen_lesson_mastery',
+            label: 'Otworz lekcje',
+            page: 'Lessons',
+            query: {
+              focus: 'adding',
+            },
+            reason: 'Powtorz lekcje: Dodawanie',
+          },
+        ],
+        coachingFrame: {
+          mode: 'hint_ladder',
+          label: 'Jeden trop',
+          description:
+            'Daj tylko jeden maly krok albo pytanie kontrolne, bez pelnego rozwiazania.',
+          rationale: 'Uczen jest w trakcie proby, wiec tutor powinien prowadzic bardzo malymi krokami.',
+        },
+      })
+      .mockResolvedValueOnce({
+        message: 'Wroc do dodawania i sprobuj najpierw dojsc do pelnej dziesiatki.',
+        sources: [],
+      });
+
+    render(
+      <KangurAiTutorProvider
+        learnerId='learner-1'
+        sessionContext={{
+          surface: 'lesson',
+          contentId: 'lesson-1',
+          title: 'Dodawanie',
+        }}
+      >
+        <Harness />
+      </KangurAiTutorProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+    await waitFor(() => expect(apiPostMock).toHaveBeenCalledTimes(1));
+    expect((apiPostMock.mock.calls[0] ?? [])[1]).not.toHaveProperty('memory');
+    await waitFor(() =>
+      expect(screen.getByTestId('messages')).toHaveTextContent(
+        'Pomóż mi z tym zadaniem. | Skup się na rozbiciu zadania na dwa kroki.'
+      )
+    );
+
+    await waitFor(() => {
+      const persisted = JSON.parse(
+        window.sessionStorage.getItem('kangur-ai-tutor-runtime-v1') ?? '{}'
+      ) as {
+        learnerMemories?: Record<string, Record<string, unknown>>;
+      };
+
+      expect(persisted.learnerMemories?.['learner-1']).toMatchObject({
+        lastSurface: 'lesson',
+        lastFocusLabel: 'Dodawanie',
+        lastUnresolvedBlocker: 'Pomóż mi z tym zadaniem.',
+        lastRecommendedAction: 'Otworz lekcje: Powtorz lekcje: Dodawanie',
+        lastSuccessfulIntervention: 'Skup się na rozbiciu zadania na dwa kroki.',
+        lastCoachingMode: 'hint_ladder',
+      });
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+    await waitFor(() => expect(apiPostMock).toHaveBeenCalledTimes(2));
+    expect((apiPostMock.mock.calls[1] ?? [])[1]).toMatchObject({
+      memory: {
+        lastSurface: 'lesson',
+        lastFocusLabel: 'Dodawanie',
+        lastUnresolvedBlocker: 'Pomóż mi z tym zadaniem.',
+        lastRecommendedAction: 'Otworz lekcje: Powtorz lekcje: Dodawanie',
+        lastSuccessfulIntervention: 'Skup się na rozbiciu zadania na dwa kroki.',
+        lastCoachingMode: 'hint_ladder',
+      },
+    });
+  });
+
+  it('does not persist compact learner memory when tutor memory is disabled', async () => {
+    settingsStoreMock.get.mockImplementation((key: string) => {
+      if (key === KANGUR_AI_TUTOR_SETTINGS_KEY) {
+        return JSON.stringify({
+          'learner-1': {
+            enabled: true,
+            agentPersonaId: 'persona-1',
+            motionPresetId: null,
+            allowCrossPagePersistence: true,
+            rememberTutorContext: false,
+            allowLessons: true,
+            testAccessMode: 'guided',
+            showSources: true,
+            allowSelectedTextSupport: true,
+            dailyMessageLimit: null,
+          },
+        });
+      }
+      return undefined;
+    });
+    apiPostMock.mockResolvedValue({
+      message: 'Skup się na pierwszym kroku.',
+      sources: [],
+      coachingFrame: {
+        mode: 'hint_ladder',
+        label: 'Jeden trop',
+        description:
+          'Daj tylko jeden maly krok albo pytanie kontrolne, bez pelnego rozwiazania.',
+      },
+    });
+
+    render(
+      <KangurAiTutorProvider
+        learnerId='learner-1'
+        sessionContext={{
+          surface: 'lesson',
+          contentId: 'lesson-1',
+          title: 'Dodawanie',
+        }}
+      >
+        <Harness />
+      </KangurAiTutorProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+    await waitFor(() => expect(apiPostMock).toHaveBeenCalledTimes(1));
+    expect((apiPostMock.mock.calls[0] ?? [])[1]).not.toHaveProperty('memory');
+
+    await waitFor(() => {
+      const persisted = JSON.parse(
+        window.sessionStorage.getItem('kangur-ai-tutor-runtime-v1') ?? '{}'
+      ) as {
+        learnerMemories?: Record<string, Record<string, unknown>>;
+      };
+
+      expect(persisted.learnerMemories ?? {}).toEqual({});
+    });
+  });
+
   it('closes the tutor and drops session history across switches when cross-page persistence is disabled', async () => {
     settingsStoreMock.get.mockImplementation((key: string) => {
       if (key === KANGUR_AI_TUTOR_SETTINGS_KEY) {

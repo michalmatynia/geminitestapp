@@ -525,7 +525,7 @@ const buildAdaptiveGuidanceFromRegistry = (input: {
   context?: KangurAiTutorConversationContext;
   registryBundle: ContextRegistryResolutionBundle;
 }): KangurAiTutorAdaptiveGuidance => {
-  const { learnerSnapshot, surfaceContext, assignmentContext } =
+  const { learnerSnapshot, loginActivity, surfaceContext, assignmentContext } =
     resolveKangurAiTutorRuntimeDocuments(input.registryBundle, input.context);
   const weakLessons = readSectionItems(learnerSnapshot, 'weak_lessons');
   const recentSessions = readSectionItems(learnerSnapshot, 'recent_sessions');
@@ -551,6 +551,8 @@ const buildAdaptiveGuidanceFromRegistry = (input: {
   const dailyGoalGames = readNumberFact(learnerSnapshot, 'dailyGoalGames') ?? 0;
   const currentStreakDays = readNumberFact(learnerSnapshot, 'currentStreakDays') ?? 0;
   const learnerSummary = readStringFact(learnerSnapshot, 'learnerSummary');
+  const learnerSignInCount7d = readNumberFact(loginActivity, 'learnerSignInCount7d');
+  const parentLoginCount7d = readNumberFact(loginActivity, 'parentLoginCount7d');
   const assignmentSummary =
     (typeof relevantAssignment?.['assignmentSummary'] === 'string'
       ? String(relevantAssignment['assignmentSummary']).trim()
@@ -573,6 +575,18 @@ const buildAdaptiveGuidanceFromRegistry = (input: {
   } else {
     lines.push(
       `Adaptive learner snapshot: average accuracy ${averageAccuracy}%, daily goal ${todayGames}/${dailyGoalGames}, streak ${currentStreakDays} days.`
+    );
+  }
+
+  if (learnerSignInCount7d !== null && learnerSignInCount7d <= 1) {
+    lines.push(
+      'Engagement signal: the learner has signed into Kangur at most once in the last 7 days, so prefer a very small restart step.'
+    );
+  }
+
+  if (parentLoginCount7d !== null && parentLoginCount7d === 0) {
+    lines.push(
+      'Support signal: the parent has not logged into Kangur in the last 7 days, so avoid depending on immediate parent follow-up.'
     );
   }
 

@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createDefaultKangurProgressState, type KangurAssignment, type KangurScore } from '@/shared/contracts/kangur';
+import {
+  createDefaultKangurProgressState,
+  type KangurAssignment,
+  type KangurScore,
+} from '@/shared/contracts/kangur';
 import type { ContextRegistryResolutionBundle } from '@/shared/contracts/ai-context-registry';
 
 const {
@@ -37,6 +41,12 @@ const createRegistryBundle = (): ContextRegistryResolutionBundle => ({
       providerId: 'kangur',
       entityType: 'kangur_learner_snapshot',
     },
+    {
+      id: 'runtime:kangur:login-activity:learner-1',
+      kind: 'runtime_document',
+      providerId: 'kangur',
+      entityType: 'kangur_login_activity',
+    },
   ],
   nodes: [],
   documents: [
@@ -55,6 +65,25 @@ const createRegistryBundle = (): ContextRegistryResolutionBundle => ({
         todayGames: 2,
         dailyGoalGames: 3,
         currentStreakDays: 4,
+      },
+      sections: [],
+      provenance: {
+        providerId: 'kangur',
+        source: 'test',
+      },
+    },
+    {
+      id: 'runtime:kangur:login-activity:learner-1',
+      kind: 'runtime_document',
+      entityType: 'kangur_login_activity',
+      title: 'Login activity',
+      summary: 'Recent Kangur login activity',
+      status: 'active',
+      tags: ['kangur', 'login', 'ai-tutor'],
+      relatedNodeIds: [],
+      facts: {
+        learnerSignInCount7d: 1,
+        parentLoginCount7d: 0,
       },
       sections: [],
       provenance: {
@@ -225,6 +254,12 @@ describe('buildKangurAiTutorAdaptiveGuidance', () => {
 
     expect(guidance.instructions).toContain(
       'Adaptive learner snapshot: Average accuracy 81%. 1 active assignment.'
+    );
+    expect(guidance.instructions).toContain(
+      'Engagement signal: the learner has signed into Kangur at most once in the last 7 days, so prefer a very small restart step.'
+    );
+    expect(guidance.instructions).toContain(
+      'Support signal: the parent has not logged into Kangur in the last 7 days, so avoid depending on immediate parent follow-up.'
     );
     expect(guidance.instructions).toContain(
       'Relevant active assignment: Trening: dodawanie do 20.'

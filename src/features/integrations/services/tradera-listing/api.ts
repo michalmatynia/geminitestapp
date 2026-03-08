@@ -11,7 +11,7 @@ import {
   addTraderaShopItem,
   TraderaApiCredentials,
 } from '@/features/integrations/services/tradera-api-client';
-import { getProductRepository } from '@/features/products/server';
+import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 
 export const resolveTraderaApiCredentials = (
   connection: IntegrationConnectionRecord

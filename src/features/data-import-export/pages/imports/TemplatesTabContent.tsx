@@ -23,9 +23,9 @@ import {
   PRODUCT_PARAMETER_TARGET_TRANSLATED_PATTERN,
 } from '@/features/data-import-export/components/imports/constants';
 import {
-  useParameters as useProductParameters,
-  useSimpleParameters as useProductSimpleParameters,
-} from '@/features/products';
+  useProductParameters,
+  useProductSimpleParameters,
+} from '@/features/data-import-export/hooks/useImportQueries';
 import {
   useImportExportActions,
   useImportExportData,

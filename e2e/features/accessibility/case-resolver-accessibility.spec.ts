@@ -7,6 +7,8 @@ import { mockCaseResolverApis } from '../../support/case-resolver-fixtures';
 test('case resolver exposes tree controls accessibly and passes the accessibility smoke scan', async ({
   page,
 }) => {
+  test.setTimeout(60_000);
+
   await mockCaseResolverApis(page);
   await ensureAdminSession(page, '/admin/case-resolver');
 

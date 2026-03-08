@@ -1,0 +1,226 @@
+
+> libapp2@0.1.0 predev
+> node scripts/runtime/check-node-version.cjs
+
+
+> libapp2@0.1.0 dev
+> node --max-old-space-size=8192 server.cjs
+
+○ Compiling instrumentation Node.js ...
+
+  We detected TypeScript in your project and reconfigured your tsconfig.json file for you.
+  The following suggested values were added to your tsconfig.json. These values can be changed to fit your project's needs:
+
+  	- include was updated to add '.next-dev-web-dev-route-crawl-final-2/types/**/*.ts'
+  	- include was updated to add '.next-dev-web-dev-route-crawl-final-2/dev/types/**/*.ts'
+
+[ai-paths.portable-engine.envelope-verification] Portable envelope verification audit sink health probe sinkId=portable-envelope-verification-log-forwarding {
+  category: 'ai_path_portable_envelope_verification_audit_sink_health',
+  kind: 'ai-paths.portable-envelope-verification-audit-sink-health.v1',
+  sinkId: 'portable-envelope-verification-log-forwarding',
+  stage: 'probe',
+  service: 'ai-paths.portable-engine'
+}
+[ai-paths.portable-engine.envelope-verification.sink-bootstrap] Portable envelope verification audit sink startup health summary sinkId=all {
+  category: 'ai_path_portable_envelope_verification_audit_sink_health',
+  kind: 'ai-paths.portable-envelope-verification-audit-sink-health.v1',
+  profile: 'dev',
+  policy: 'warn',
+  timeoutMs: 3000,
+  status: 'healthy',
+  failedSinkIds: [],
+  diagnostics: [
+    {
+      sinkId: 'portable-envelope-verification-log-forwarding',
+      status: 'healthy',
+      checkedAt: '2026-03-08T15:35:20.978Z',
+      durationMs: 153,
+      message: 'Health check passed.',
+      error: null
+    }
+  ],
+  service: 'ai-paths.portable-engine'
+}
+[queue-factory] [queue-factory:database-backup-scheduler] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:product-sync-scheduler] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:system-log-alerts] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-init] Starting BullMQ workers... { service: 'queue-init' }
+[queue-registry] [queue-registry] Starting queue worker: base-import { queueName: 'base-import', service: 'queue-registry' }
+[queue-factory] [queue-factory:base-import] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: database-backup-scheduler { queueName: 'database-backup-scheduler', service: 'queue-registry' }
+[queue-registry] [queue-registry] Starting queue worker: system-log-alerts { queueName: 'system-log-alerts', service: 'queue-registry' }
+[queue-registry] [queue-registry] Starting queue worker: tradera-listings { queueName: 'tradera-listings', service: 'queue-registry' }
+[queue-factory] [queue-factory:tradera-listings] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-ai { queueName: 'product-ai', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-ai] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync { queueName: 'product-sync', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-sync] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync-backfill { queueName: 'product-sync-backfill', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-sync-backfill] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync-scheduler { queueName: 'product-sync-scheduler', service: 'queue-registry' }
+[queue-factory] [queue-factory:case-resolver-ocr] BullMQ worker started (concurrency: 2) { concurrency: 2, service: 'queue-factory' }
+[queue-factory] [queue-factory:ai-path-run] BullMQ worker started (concurrency: 3) { concurrency: 3, service: 'queue-factory' }
+[queue-factory] [queue-factory:chatbot] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:agent] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:image-studio-run] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:tradera-relist-scheduler] Worker stopped { service: 'queue-factory' }
+Ready on http://localhost:51536 { port: 51536, host: '127.0.0.1' }
+[queue-factory] [queue-factory:image-studio-sequence] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+ GET /api/health 200 in 1495ms (compile: 810ms, proxy.ts: 38ms, render: 647ms)
+[health.GET] health.GET completed successfully {
+  durationMs: 847,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: 'fd884981d1dad1af36ed963525def985',
+  otelSpanId: 'f523541558571999',
+  otelTraceFlags: '01',
+  service: 'health',
+  traceId: '3e09daa6-116f-470f-8a3e-20f1f6a5f147',
+  correlationId: '9276f31e-9f49-49e6-a591-749f9a5533f3'
+}
+○ Compiling / ...
+[health.GET] health.GET completed successfully {
+  durationMs: 783,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: 'd259c383858cae09764bec43be89ee9a',
+  otelSpanId: 'ace302b067839b89',
+  otelTraceFlags: '01',
+  service: 'health',
+  traceId: '18121d22-f1b5-4df4-abb5-79742e7880ee',
+  correlationId: '10c02985-794b-4c5f-b556-f61b2e057693'
+}
+ GET /api/health 200 in 807ms (compile: 5ms, proxy.ts: 12ms, render: 790ms)
+[system] [timing] home {
+  frontPageSetting: 1057.2131670000017,
+  total: 1057.3630000000012,
+  otelTraceId: '898e752ce74122665be77e6a90474459',
+  otelSpanId: '308ce8d961f9a81e',
+  otelTraceFlags: '01'
+}
+[system] [timing] home {
+  frontPageSetting: 1090.138750000002,
+  total: 1090.1807499999995,
+  otelTraceId: '8fc9efa4fc49bea6cb24ff71b415c506',
+  otelSpanId: 'b8c36b82ed4d9e6b',
+  otelTraceFlags: '01'
+}
+ GET / 200 in 6.6s (compile: 4.7s, render: 1901ms)
+[kangur.auth.me.GET] Authentication required. {
+  errorId: 'c86e0a40-8f62-4caa-87eb-09c1638d9613',
+  code: 'UNAUTHORIZED',
+  category: 'AUTH',
+  durationMs: 6,
+  source: 'kangur.auth.me.GET',
+  route: '/api/kangur/auth/me',
+  method: 'GET',
+  traceId: '8e3b72e0-b03b-46c6-ade3-1498ff607c06',
+  correlationId: 'c0d4db2e-9786-4484-ae5a-16a36234e59c',
+  otelTraceId: '0ca0029cc68da30772aee971005c0368',
+  otelSpanId: 'd0d61364bb4070f4',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  expected: true,
+  critical: false,
+  retryable: false,
+  error: {
+    message: 'Authentication required.',
+    stack: 'AppError: Authentication required.\n' +
+      '    at authError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-final-2/dev/server/chunks/src_shared_fdaf7903._.js:167:53)\n' +
+      '    at resolveKangurActor (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-final-2/dev/server/chunks/src_features_58eba39a._.js:6348:170)\n' +
+      '    at async getKangurAuthMeHandler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-final-2/dev/server/chunks/src_app_api_kangur_auth_me_629d727f._.js:25:19)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-final-2/dev/server/chunks/src_shared_fdaf7903._.js:2352:34\n' +
+      '    at async AppRouteRouteModule.do (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:37866)\n' +
+      '    at async AppRouteRouteModule.handle (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:45156)\n' +
+      '    at async responseGenerator (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-final-2/dev/server/chunks/node_modules_next_c632bd6c._.js:17157:38)\n' +
+      '    at async AppRouteRouteModule.handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:1:191938)\n' +
+      '    at async handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-final-2/dev/server/chunks/node_modules_next_c632bd6c._.js:17220:32)\n' +
+      '    at async Module.handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-final-2/dev/server/chunks/node_modules_next_c632bd6c._.js:17271:13)\n' +
+      '    at async DevServer.renderToResponseWithComponentsImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1442:9)\n' +
+      '    at async DevServer.renderPageComponent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1494:24)\n' +
+      '    at async DevServer.renderToResponseImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1544:32)\n' +
+      '    at async DevServer.pipeImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1038:25)\n' +
+      '    at async NextNodeServer.handleCatchallRenderRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/next-server.js:395:17)\n' +
+      '    at async DevServer.handleRequestImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:929:17)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:387:20\n' +
+      '    at async Span.traceAsyncFn (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/trace/trace.js:157:20)\n' +
+      '    at async DevServer.handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:383:24)\n' +
+      '    at async invokeRender (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:248:21)\n' +
+      '    at async handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:447:24)\n' +
+      '    at async NextCustomServer.requestHandlerImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:496:13)',
+    name: 'AppError',
+    code: 'UNAUTHORIZED',
+    httpStatus: 401,
+    expected: true,
+    critical: false,
+    retryable: false
+  },
+  errorCode: 'UNAUTHORIZED',
+  errorName: 'AppError',
+  fingerprint: '97c79b9c4ee78a02'
+}
+ GET /api/kangur/auth/me 401 in 1289ms (compile: 1268ms, proxy.ts: 9ms, render: 12ms)
+ GET /api/settings/lite 200 in 1987ms (compile: 1723ms, proxy.ts: 8ms, render: 256ms)
+[kangur.scores.GET] kangur.scores.GET completed successfully {
+  durationMs: 55,
+  successPolicy: 'all',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '6c3a69be421ad13e35d640375fd29c50',
+  otelSpanId: 'a51686793e1e3ccc',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  traceId: '7257bd02-cab0-48de-8c24-40eef56ce0d8',
+  correlationId: 'ebd72d67-44c9-4c03-bb8b-198c9e73ea26'
+}
+ GET /api/kangur/scores?sort=-score&limit=100 200 in 982ms (compile: 921ms, proxy.ts: 3ms, render: 59ms)
+ GET /api/auth/session 200 in 2.7s (compile: 2.7s, proxy.ts: 8ms, render: 13ms)
+ GET /api/auth/session 200 in 162ms (compile: 51ms, proxy.ts: 3ms, render: 108ms)
+○ Compiling /api/settings ...
+[api/settings] [api/settings] [settings] cache fallback {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'timeout-prisma-fallback',
+  reason: '[settings] cache miss fetch timed out after 3000ms',
+  category: 'SYSTEM',
+  otelTraceId: 'a48dc1382142bee6648b83c2513b3c29',
+  otelSpanId: 'e2e5b34138213b9d',
+  otelTraceFlags: '01',
+  fingerprint: '772884b32ff22fd8'
+}
+[settings.GET] settings.GET completed successfully {
+  durationMs: 3072,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: 'a48dc1382142bee6648b83c2513b3c29',
+  otelSpanId: 'e2e5b34138213b9d',
+  otelTraceFlags: '01',
+  service: 'settings',
+  traceId: '2951c4e4-78de-4e54-9a29-b389f5bb5d3f',
+  correlationId: 'cf9d5621-4bd8-42ca-94d8-2682f1558423'
+}
+ GET /api/settings?scope=heavy 200 in 6.6s (compile: 3.5s, proxy.ts: 10ms, render: 3.1s)
+○ Compiling /auth/signin ...
+ GET /auth/signin 200 in 8.0s (compile: 7.5s, render: 476ms)
+[api/settings] [api/settings] [timing] settings.fetch {
+  service: 'api/settings',
+  scope: 'heavy',
+  provider: 0.6866250000020955,
+  mongo: 12301.481458000002,
+  total: 12305.758958000002,
+  category: 'NETWORK',
+  otelTraceId: 'a48dc1382142bee6648b83c2513b3c29',
+  otelSpanId: 'e2e5b34138213b9d',
+  otelTraceFlags: '01'
+}
+ GET /api/settings/lite 200 in 78ms (compile: 9ms, proxy.ts: 62ms, render: 7ms)
+ GET /api/auth/session 200 in 87ms (compile: 21ms, proxy.ts: 55ms, render: 12ms)
+ GET /api/auth/session 200 in 23ms (compile: 10ms, proxy.ts: 4ms, render: 9ms)
+ GET /auth/register 200 in 3.0s (compile: 2.7s, render: 237ms)
+ GET /api/settings/lite 200 in 31ms (compile: 8ms, proxy.ts: 6ms, render: 17ms)
+ GET /api/auth/session 200 in 55ms (compile: 28ms, proxy.ts: 7ms, render: 19ms)
+ GET /api/auth/session 200 in 21ms (compile: 8ms, proxy.ts: 3ms, render: 11ms)
+ GET /auth/signin?callbackUrl=%2Fadmin 200 in 351ms (compile: 12ms, render: 340ms)
+ GET /auth/signin 200 in 730ms (compile: 27ms, render: 703ms)
+ GET /api/settings/lite 200 in 181ms (compile: 49ms, proxy.ts: 66ms, render: 66ms)
+ GET /api/auth/session 200 in 223ms (compile: 127ms, proxy.ts: 90ms, render: 6ms)
+ GET /api/auth/session 200 in 242ms (compile: 212ms, proxy.ts: 17ms, render: 13ms)

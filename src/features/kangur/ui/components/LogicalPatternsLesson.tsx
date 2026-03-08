@@ -5,6 +5,7 @@ import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
+import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 
 type SectionId = 'intro' | 'ciagi_arytm' | 'ciagi_geom' | 'strategie';
 
@@ -220,12 +221,15 @@ export const HUB_SECTIONS = [
 
 export default function LogicalPatternsLesson(): React.JSX.Element {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
+  const { markSectionOpened, markSectionViewedCount, sectionProgress } =
+    useLessonHubProgress(SLIDES);
 
   if (activeSection) {
     return (
       <LessonSlideSection
         slides={SLIDES[activeSection]}
         onBack={() => setActiveSection(null)}
+        onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
         dotActiveClass='bg-violet-500'
         dotDoneClass='bg-violet-300'
         gradientClass='from-violet-500 to-purple-600'
@@ -238,8 +242,15 @@ export default function LogicalPatternsLesson(): React.JSX.Element {
       lessonEmoji='🔢'
       lessonTitle='Wzorce i ciagi'
       gradientClass='from-violet-500 to-purple-600'
-      sections={HUB_SECTIONS}
-      onSelect={(id) => setActiveSection(id as SectionId)}
+      progressDotClassName='bg-violet-300'
+      sections={HUB_SECTIONS.map((section) => ({
+        ...section,
+        progress: sectionProgress[section.id as SectionId],
+      }))}
+      onSelect={(id) => {
+        markSectionOpened(id as SectionId);
+        setActiveSection(id as SectionId);
+      }}
     />
   );
 }

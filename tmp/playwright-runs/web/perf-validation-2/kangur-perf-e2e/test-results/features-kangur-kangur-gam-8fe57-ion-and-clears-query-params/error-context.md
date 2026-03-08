@@ -1,0 +1,51 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#app-content"
+  - main [ref=e3]:
+    - generic [ref=e4]:
+      - status [ref=e5]
+      - navigation "Glowna nawigacja Kangur" [ref=e9]:
+        - button "Strona glowna" [ref=e10] [cursor=pointer]:
+          - img [ref=e12]
+          - generic [ref=e21]: Strona glowna
+        - link "Lekcje" [ref=e22] [cursor=pointer]:
+          - /url: /kangur/lessons
+          - img [ref=e23]
+          - generic [ref=e25]: Lekcje
+        - link "Testy" [ref=e26] [cursor=pointer]:
+          - /url: /kangur/tests
+          - img [ref=e27]
+          - generic [ref=e33]: Testy
+        - button "Zaloguj się" [ref=e35] [cursor=pointer]:
+          - img [ref=e36]
+          - generic [ref=e39]: Zaloguj się
+      - generic [ref=e41]:
+        - link "Przejdz do glownej tresci" [ref=e42] [cursor=pointer]:
+          - /url: "#kangur-game-main"
+        - generic [ref=e43]:
+          - status [ref=e44]: "Widok: Pytanie do rozwiazania"
+          - main "Sprycio Pytanie do rozwiazania" [ref=e45]:
+            - heading "Sprycio" [level=1] [ref=e46]
+            - generic [ref=e47]:
+              - heading "Pytanie do rozwiazania" [level=2] [ref=e48]
+              - generic [ref=e49]:
+                - generic [ref=e50]:
+                  - generic [ref=e51]: "⭐ Wynik: 0"
+                  - generic [ref=e52]: 🟢 Latwy
+                - region "16 ÷ 4 = ?" [ref=e53]:
+                  - generic [ref=e54]: Pytanie 1 z 10
+                  - progressbar "Pozostaly czas" [ref=e55]
+                  - generic [ref=e57]: ⏱ 19s
+                  - generic [ref=e58]:
+                    - heading "16 ÷ 4 = ?" [level=3] [ref=e59]
+                    - generic [ref=e60]: Jaka jest odpowiedz?
+                  - group "16 ÷ 4 = ?" [ref=e61]:
+                    - button "Odpowiedz 4" [ref=e63] [cursor=pointer]: "4"
+                    - button "Odpowiedz 5" [ref=e65] [cursor=pointer]: "5"
+                    - button "Odpowiedz 2" [ref=e67] [cursor=pointer]: "2"
+                    - button "Odpowiedz 1" [ref=e69] [cursor=pointer]: "1"
+  - alert [ref=e70]
+```

@@ -1,32 +1,23 @@
 # Context Health Check
 
-Generated at: 2026-03-08T14:34:31.994Z
+Generated at: 2026-03-08T15:33:40.510Z
 
 ## Summary
 
-- Status: WARN
+- Status: PASSED
 - Context files scanned: 237
 - Errors: 0
-- Warnings: 7
+- Warnings: 0
 - Info: 0
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| context-oversized | 0 | 7 | 0 |
 
 ## Issues
 
-| Severity | Rule | Location | Message |
-| --- | --- | --- | --- |
-| WARN | context-oversized | src/features/ai/ai-paths/components/JobQueueContext.tsx | Context file is 1069 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
-| WARN | context-oversized | src/features/ai/image-studio/context/GenerationContext.tsx | Context file is 857 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
-| WARN | context-oversized | src/features/ai/image-studio/context/VersionGraphContext.tsx | Context file is 865 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
-| WARN | context-oversized | src/features/case-resolver/context/AdminCaseResolverCasesContext.tsx | Context file is 865 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
-| WARN | context-oversized | src/features/case-resolver/context/CaseResolverFolderTreeContext.tsx | Context file is 851 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
-| WARN | context-oversized | src/features/data-import-export/context/ImportExportContext.tsx | Context file is 885 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
-| WARN | context-oversized | src/shared/lib/ai-brain/context/BrainContext.tsx | Context file is 957 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
+All contexts are healthy.
 
 ## Notes
 

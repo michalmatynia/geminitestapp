@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { KangurProgressState } from '@/features/kangur/ui/types';
@@ -159,5 +159,49 @@ describe('Game delegated quick starts', () => {
       expect(window.location.pathname).toBe('/kangur/game');
       expect(window.location.search).toBe('');
     });
+  });
+
+  it('opens the training setup from a bare training quick-start url and clears query params', async () => {
+    window.history.replaceState({}, '', '/kangur/game?quickStart=training');
+
+    render(<Game />);
+
+    expect(await screen.findByTestId('kangur-game-training-top-section')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Trening mieszany' })).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(window.location.pathname).toBe('/kangur/game');
+      expect(window.location.search).toBe('');
+    });
+
+    fireEvent.click(
+      within(screen.getByTestId('kangur-game-training-top-section')).getByRole('button', {
+        name: 'Wróć do poprzedniej strony',
+      })
+    );
+
+    expect(await screen.findByTestId('kangur-home-actions-shell')).toBeInTheDocument();
+  });
+
+  it('opens the operation setup from a bare operation quick-start url and clears query params', async () => {
+    window.history.replaceState({}, '', '/kangur/game?quickStart=operation');
+
+    render(<Game />);
+
+    expect(await screen.findByTestId('kangur-game-operation-top-section')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Grajmy!' })).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(window.location.pathname).toBe('/kangur/game');
+      expect(window.location.search).toBe('');
+    });
+
+    fireEvent.click(
+      within(screen.getByTestId('kangur-game-operation-top-section')).getByRole('button', {
+        name: 'Wróć do poprzedniej strony',
+      })
+    );
+
+    expect(await screen.findByTestId('kangur-home-actions-shell')).toBeInTheDocument();
   });
 });

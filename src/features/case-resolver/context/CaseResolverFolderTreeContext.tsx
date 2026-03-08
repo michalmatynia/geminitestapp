@@ -10,14 +10,6 @@ import type {
   CaseResolverFolderTreeUiContextValue,
   CaseResolverFolderTreeUiStateContextValue,
 } from './CaseResolverFolderTreeContext.types';
-import {
-  isCaseResolverVirtualSectionNode,
-  isChildCaseStructureFolderPath,
-  isChildCaseStructureNode,
-  isUnassignedFolderPath,
-  isUnassignedNode,
-  resolveCaseResolverRootTreeNodes,
-} from './case-resolver-folder-tree-utils';
 import { useCaseResolverFolderTreeRuntime } from './useCaseResolverFolderTreeRuntime';
 
 export type {

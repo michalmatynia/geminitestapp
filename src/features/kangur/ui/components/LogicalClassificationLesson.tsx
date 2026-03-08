@@ -8,6 +8,7 @@ import {
   KangurLessonCallout,
   KangurLessonInset,
 } from '@/features/kangur/ui/design/lesson-primitives';
+import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 
 type SectionId = 'intro' | 'diagram' | 'intruz' | 'podsumowanie';
 
@@ -248,12 +249,15 @@ export const HUB_SECTIONS = [
 
 export default function LogicalClassificationLesson(): React.JSX.Element {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
+  const { markSectionOpened, markSectionViewedCount, sectionProgress } =
+    useLessonHubProgress(SLIDES);
 
   if (activeSection) {
     return (
       <LessonSlideSection
         slides={SLIDES[activeSection]}
         onBack={() => setActiveSection(null)}
+        onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
         dotActiveClass='bg-teal-500'
         dotDoneClass='bg-teal-300'
         gradientClass='from-teal-500 to-cyan-500'
@@ -266,8 +270,15 @@ export default function LogicalClassificationLesson(): React.JSX.Element {
       lessonEmoji='📦'
       lessonTitle='Klasyfikacja'
       gradientClass='from-teal-500 to-cyan-500'
-      sections={HUB_SECTIONS}
-      onSelect={(id) => setActiveSection(id as SectionId)}
+      progressDotClassName='bg-teal-300'
+      sections={HUB_SECTIONS.map((section) => ({
+        ...section,
+        progress: sectionProgress[section.id as SectionId],
+      }))}
+      onSelect={(id) => {
+        markSectionOpened(id as SectionId);
+        setActiveSection(id as SectionId);
+      }}
     />
   );
 }

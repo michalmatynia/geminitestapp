@@ -87,7 +87,7 @@ describe('Arithmetic lessons shared surfaces', () => {
     const { unmount } = renderLesson(<AddingLesson />);
 
     fireEvent.click(screen.getByRole('button', { name: /podstawy dodawania/i }));
-    fireEvent.click(screen.getByRole('button', { name: /nastepny/i }));
+    fireEvent.click(screen.getByTestId('lesson-slide-indicator-1'));
 
     expect(screen.getByTestId('adding-lesson-single-digit-equation')).toHaveClass(
       'text-3xl',
@@ -111,7 +111,7 @@ describe('Arithmetic lessons shared surfaces', () => {
     const { unmount } = renderLesson(<SubtractingLesson />);
 
     fireEvent.click(screen.getByRole('button', { name: /podstawy odejmowania/i }));
-    fireEvent.click(screen.getByRole('button', { name: /nastepny/i }));
+    fireEvent.click(screen.getByTestId('lesson-slide-indicator-1'));
 
     expect(screen.getByTestId('subtracting-lesson-single-digit-equation')).toHaveClass(
       'text-3xl',
@@ -165,7 +165,7 @@ describe('Arithmetic lessons shared surfaces', () => {
     );
     expect(screen.getByText(/3 grupy po 3 cukierki/i)).toHaveClass('text-slate-500');
 
-    fireEvent.click(screen.getByRole('button', { name: /menu/i }));
+    fireEvent.click(screen.getByRole('button', { name: /wróć do tematów/i }));
     fireEvent.click(screen.getByRole('button', { name: /tabliczka × 2 i × 3/i }));
 
     expect(screen.getByText('× 2')).toHaveClass('border-violet-200', 'bg-violet-100');

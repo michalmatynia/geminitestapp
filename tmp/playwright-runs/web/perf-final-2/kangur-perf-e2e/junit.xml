@@ -1,0 +1,74 @@
+<testsuites id="" name="" tests="10" failures="1" skipped="0" errors="0" time="61.520123">
+<testsuite name="features/kangur/kangur-game-quickstart.spec.ts" timestamp="2026-03-08T15:21:27.895Z" hostname="" tests="3" failures="1" skipped="0" time="22.836" errors="0">
+<testcase name="Kangur Game Quick Start › opens training setup from quickStart=training and clears query params" classname="features/kangur/kangur-game-quickstart.spec.ts" time="12.125">
+</testcase>
+<testcase name="Kangur Game Quick Start › starts operation run from quickStart=operation and clears query params" classname="features/kangur/kangur-game-quickstart.spec.ts" time="6.871">
+<failure message="kangur-game-quickstart.spec.ts:47:3 starts operation run from quickStart=operation and clears query params" type="FAILURE">
+<![CDATA[  features/kangur/kangur-game-quickstart.spec.ts:47:3 › Kangur Game Quick Start › starts operation run from quickStart=operation and clears query params 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText(/Pytanie 1 z 10/i)
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for getByText(/Pytanie 1 z 10/i)
+
+
+      52 |
+      53 |     await expect(page).toHaveURL(/\/kangur\/game/);
+    > 54 |     await expect(page.getByText(/Pytanie 1 z 10/i)).toBeVisible();
+         |                                                     ^
+      55 |     await expect
+      56 |       .poll(
+      57 |         () => {
+        at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/kangur/kangur-game-quickstart.spec.ts:54:53
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../tmp/playwright-runs/web/perf-final-2/kangur-perf-e2e/test-results/features-kangur-kangur-gam-8fe57-ion-and-clears-query-params/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../tmp/playwright-runs/web/perf-final-2/kangur-perf-e2e/test-results/features-kangur-kangur-gam-8fe57-ion-and-clears-query-params/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../tmp/playwright-runs/web/perf-final-2/kangur-perf-e2e/test-results/features-kangur-kangur-gam-8fe57-ion-and-clears-query-params/trace.zip
+    Usage:
+
+        npx playwright show-trace ../tmp/playwright-runs/web/perf-final-2/kangur-perf-e2e/test-results/features-kangur-kangur-gam-8fe57-ion-and-clears-query-params/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/features-kangur-kangur-gam-8fe57-ion-and-clears-query-params/test-failed-1.png]]
+
+[[ATTACHMENT|test-results/features-kangur-kangur-gam-8fe57-ion-and-clears-query-params/error-context.md]]
+
+[[ATTACHMENT|test-results/features-kangur-kangur-gam-8fe57-ion-and-clears-query-params/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Kangur Game Quick Start › opens operation setup from bare quickStart=operation and clears query params" classname="features/kangur/kangur-game-quickstart.spec.ts" time="3.84">
+</testcase>
+</testsuite>
+<testsuite name="features/kangur/kangur-profile.spec.ts" timestamp="2026-03-08T15:21:27.895Z" hostname="" tests="7" failures="0" skipped="0" time="20.831" errors="0">
+<testcase name="Kangur Learner Profile › renders learner profile shell and baseline sections" classname="features/kangur/kangur-profile.spec.ts" time="1.532">
+</testcase>
+<testcase name="Kangur Learner Profile › supports navigation from game screen to learner profile" classname="features/kangur/kangur-profile.spec.ts" time="2.548">
+</testcase>
+<testcase name="Kangur Learner Profile › renders deterministic learner metrics from mocked auth, progress, and scores" classname="features/kangur/kangur-profile.spec.ts" time="4.69">
+</testcase>
+<testcase name="Kangur Learner Profile › shows the persisted AI tutor mood on the learner profile" classname="features/kangur/kangur-profile.spec.ts" time="1.699">
+</testcase>
+<testcase name="Kangur Learner Profile › opens focused lesson from recommendation deep link" classname="features/kangur/kangur-profile.spec.ts" time="4.528">
+</testcase>
+<testcase name="Kangur Learner Profile › quick-start training works from profile in local mode" classname="features/kangur/kangur-profile.spec.ts" time="2.881">
+</testcase>
+<testcase name="Kangur Learner Profile › quick-start operation works from operation performance links" classname="features/kangur/kangur-profile.spec.ts" time="2.953">
+</testcase>
+</testsuite>
+</testsuites>

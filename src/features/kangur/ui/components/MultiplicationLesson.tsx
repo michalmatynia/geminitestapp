@@ -7,6 +7,7 @@ import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
+import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 import {
   KangurDisplayEmoji,
   KangurEquationDisplay,
@@ -168,6 +169,8 @@ export const HUB_SECTIONS = [
 
 export default function MultiplicationLesson(): React.JSX.Element {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
+  const { markSectionOpened, markSectionViewedCount, sectionProgress } =
+    useLessonHubProgress(SLIDES);
 
   if (activeSection === 'game_array') {
     return (
@@ -192,6 +195,7 @@ export default function MultiplicationLesson(): React.JSX.Element {
       <LessonSlideSection
         slides={SLIDES[activeSection]}
         onBack={() => setActiveSection(null)}
+        onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
         dotActiveClass='bg-purple-500'
         dotDoneClass='bg-purple-300'
         gradientClass='from-purple-500 to-indigo-500'
@@ -204,8 +208,21 @@ export default function MultiplicationLesson(): React.JSX.Element {
       lessonEmoji='✖️'
       lessonTitle='Mnozenie'
       gradientClass='from-purple-500 to-indigo-500'
-      sections={HUB_SECTIONS}
-      onSelect={(id) => setActiveSection(id as SectionId)}
+      progressDotClassName='bg-purple-300'
+      sections={HUB_SECTIONS.map((section) =>
+        section.isGame
+          ? section
+          : {
+              ...section,
+              progress: sectionProgress[section.id as keyof typeof SLIDES],
+            }
+      )}
+      onSelect={(id) => {
+        if (id !== 'game_array' && id !== 'game_quiz') {
+          markSectionOpened(id as keyof typeof SLIDES);
+        }
+        setActiveSection(id as SectionId);
+      }}
     />
   );
 }

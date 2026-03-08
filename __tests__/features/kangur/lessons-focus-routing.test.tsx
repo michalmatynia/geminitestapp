@@ -133,10 +133,11 @@ describe('Lessons page focus query support', () => {
 
     render(<Lessons />);
 
-    expect(await screen.findByText('Ukonczone zadanie od rodzica')).toBeInTheDocument();
-    expect(
-      screen.getByText('To zadanie zostalo juz wykonane. Powtorki po przydziale: 1/1.')
-    ).toBeInTheDocument();
+    expect(await screen.findByTestId('active-lesson-header')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Dzielenie' })).toBeInTheDocument();
+    expect(screen.getByTestId('active-lesson-parent-completed-chip')).toHaveTextContent(
+      'Ukonczone dla rodzica'
+    );
     expect(window.location.search).toBe('');
   });
 

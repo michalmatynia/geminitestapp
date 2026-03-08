@@ -11,7 +11,7 @@ const {
   notFoundMock,
   redirectMock,
   resolveSlugToPageMock,
-  shouldUseFrontPageAppRedirectMock,
+  shouldApplyFrontPageAppSelectionMock,
 } = vi.hoisted(() => ({
   buildSlugMetadataMock: vi.fn(),
   getFrontPagePublicOwnerMock: vi.fn(),
@@ -22,7 +22,7 @@ const {
   notFoundMock: vi.fn(),
   redirectMock: vi.fn(),
   resolveSlugToPageMock: vi.fn(),
-  shouldUseFrontPageAppRedirectMock: vi.fn(),
+  shouldApplyFrontPageAppSelectionMock: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({
@@ -32,7 +32,7 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/app/(frontend)/home-helpers', () => ({
   getFrontPageSetting: getFrontPageSettingMock,
-  shouldUseFrontPageAppRedirect: shouldUseFrontPageAppRedirectMock,
+  shouldApplyFrontPageAppSelection: shouldApplyFrontPageAppSelectionMock,
 }));
 
 vi.mock('@/shared/lib/front-page-app', () => ({
@@ -74,7 +74,7 @@ describe('kangur public-owner frontend routes', () => {
     getFrontPagePublicOwnerMock.mockImplementation((value: string | null | undefined) =>
       value === 'kangur' ? 'kangur' : 'cms'
     );
-    shouldUseFrontPageAppRedirectMock.mockReturnValue(true);
+    shouldApplyFrontPageAppSelectionMock.mockReturnValue(true);
     redirectMock.mockImplementation((target: string) => {
       throw new Error(`redirect:${target}`);
     });

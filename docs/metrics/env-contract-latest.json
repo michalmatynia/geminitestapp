@@ -1,0 +1,42 @@
+{
+  "generatedAt": "2026-03-08T14:45:50.514Z",
+  "status": "failed",
+  "summary": {
+    "total": 1,
+    "errorCount": 1,
+    "warningCount": 0,
+    "infoCount": 0,
+    "status": "failed"
+  },
+  "environment": {
+    "nodeEnv": "development",
+    "hasDatabaseUrl": false,
+    "hasMongoUri": false,
+    "appDbProvider": null,
+    "hasAuthSecret": false,
+    "hasNextAuthSecret": false,
+    "hasRedisUrl": false,
+    "hasFastCometConfig": false
+  },
+  "issues": [
+    {
+      "severity": "error",
+      "ruleId": "database-provider-missing",
+      "message": "No database provider is configured. Set DATABASE_URL or MONGODB_URI.",
+      "file": null,
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    }
+  ],
+  "rules": [
+    {
+      "ruleId": "database-provider-missing",
+      "errorCount": 1,
+      "warningCount": 0,
+      "infoCount": 0
+    }
+  ],
+  "durationMs": 1
+}

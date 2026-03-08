@@ -1,15 +1,11 @@
 import { motion } from 'framer-motion';
-import { ChevronLeft } from 'lucide-react';
-
+import { KangurLessonProgressDots } from '@/features/kangur/ui/components/KangurLessonProgressDots';
+import type { LessonHubSectionProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 import {
-  KangurButton,
-  KangurDisplayEmoji,
-  KangurGradientHeading,
   KangurIconBadge,
   KangurOptionCardButton,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { useKangurLessonBackAction } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 
 export type HubSection = {
   id: string;
@@ -17,44 +13,31 @@ export type HubSection = {
   title: string;
   description: string;
   isGame?: boolean;
+  progress?: LessonHubSectionProgress;
 };
 
 type LessonHubProps = {
   lessonEmoji: string;
   lessonTitle: string;
   gradientClass: string;
+  progressDotClassName?: string;
   sections: HubSection[];
   onSelect: (id: string) => void;
   onBack?: () => void;
 };
 
 export default function LessonHub({
-  lessonEmoji,
-  lessonTitle,
-  gradientClass,
+  progressDotClassName = 'bg-slate-300',
   sections,
   onSelect,
-  onBack,
 }: LessonHubProps): React.JSX.Element {
-  const handleBack = useKangurLessonBackAction(onBack);
-
   return (
-    <div className='flex w-full max-w-md flex-col items-center gap-4'>
+    <div className='flex w-full max-w-md flex-col items-center'>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className='flex w-full flex-col gap-3'
       >
-        <div className='text-center mb-2'>
-          <KangurDisplayEmoji className='mb-1' size='md'>
-            {lessonEmoji}
-          </KangurDisplayEmoji>
-          <KangurGradientHeading gradientClass={gradientClass} size='md'>
-            {lessonTitle}
-          </KangurGradientHeading>
-          <p className='mt-1 text-sm text-slate-500'>Wybierz temat</p>
-        </div>
-
         {sections.map((section, i) => {
           const accent = section.isGame ? 'indigo' : 'slate';
 
@@ -90,23 +73,27 @@ export default function LessonHub({
                   </p>
                   <p className='mt-0.5 text-sm text-slate-500'>{section.description}</p>
                 </div>
-                <KangurStatusChip
-                  accent={accent}
-                  className='ml-auto uppercase tracking-[0.14em]'
-                  size='sm'
-                >
-                  {section.isGame ? 'Gra' : 'Lekcja'}
-                </KangurStatusChip>
+                <div className='ml-auto flex shrink-0 flex-col items-end gap-2 self-start'>
+                  <KangurStatusChip accent={accent} className='uppercase tracking-[0.14em]' size='sm'>
+                    {section.isGame ? 'Gra' : 'Lekcja'}
+                  </KangurStatusChip>
+                  {!section.isGame && section.progress && section.progress.totalCount > 0 ? (
+                    <KangurLessonProgressDots
+                      activeDotClassName={progressDotClassName}
+                      className='self-end'
+                      dotTestIdPrefix={`lesson-hub-progress-dot-${section.id}`}
+                      srLabel={`Obejrzano ${section.progress.viewedCount} z ${section.progress.totalCount} ekranow sekcji.`}
+                      testId={`lesson-hub-progress-${section.id}`}
+                      totalCount={section.progress.totalCount}
+                      viewedCount={section.progress.viewedCount}
+                    />
+                  ) : null}
+                </div>
               </KangurOptionCardButton>
             </motion.div>
           );
         })}
       </motion.div>
-
-      <KangurButton onClick={handleBack} variant='surface' size='sm'>
-        <ChevronLeft className='w-4 h-4' />
-        Wróc do listy
-      </KangurButton>
     </div>
   );
 }

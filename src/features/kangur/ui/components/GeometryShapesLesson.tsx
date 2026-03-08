@@ -12,6 +12,7 @@ import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
+import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 import { KangurButton, KangurGlassPanel } from '@/features/kangur/ui/design/primitives';
 
 type SectionId = 'podstawowe' | 'ile_bokow' | 'game';
@@ -94,6 +95,8 @@ export const HUB_SECTIONS = [
 export default function GeometryShapesLesson(): React.JSX.Element {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
   const [rewarded, setRewarded] = useState(false);
+  const { markSectionOpened, markSectionViewedCount, sectionProgress } =
+    useLessonHubProgress(SLIDES);
 
   const handleGameStart = (): void => {
     if (!rewarded) {
@@ -117,11 +120,11 @@ export default function GeometryShapesLesson(): React.JSX.Element {
           type='button'
           variant='surface'
         >
-          Wróc do menu
+          Wróć do menu
         </KangurButton>
         <KangurGlassPanel data-testid='geometry-shapes-game-shell' className='w-full' padding='xl' surface='solid'>
           <h2 className='mb-4 text-center text-xl font-extrabold text-slate-800'>
-            🔷 Trening figur
+            🔷 Ćwiczenia z Figurami
           </h2>
           <GeometryDrawingGame onFinish={() => setActiveSection(null)} />
         </KangurGlassPanel>
@@ -134,6 +137,7 @@ export default function GeometryShapesLesson(): React.JSX.Element {
       <LessonSlideSection
         slides={SLIDES[activeSection]}
         onBack={() => setActiveSection(null)}
+        onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
         dotActiveClass='bg-fuchsia-500'
         dotDoneClass='bg-fuchsia-300'
         gradientClass='from-fuchsia-500 to-violet-500'
@@ -146,11 +150,20 @@ export default function GeometryShapesLesson(): React.JSX.Element {
       lessonEmoji='🔷'
       lessonTitle='Figury geometryczne'
       gradientClass='from-fuchsia-500 to-violet-500'
-      sections={HUB_SECTIONS}
+      progressDotClassName='bg-fuchsia-300'
+      sections={HUB_SECTIONS.map((section) =>
+        section.isGame
+          ? section
+          : {
+              ...section,
+              progress: sectionProgress[section.id as keyof typeof SLIDES],
+            }
+      )}
       onSelect={(id) => {
         if (id === 'game') {
           handleGameStart();
         } else {
+          markSectionOpened(id as keyof typeof SLIDES);
           setActiveSection(id as SectionId);
         }
       }}

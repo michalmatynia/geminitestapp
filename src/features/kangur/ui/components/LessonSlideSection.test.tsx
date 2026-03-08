@@ -29,6 +29,9 @@ describe('LessonSlideSection', () => {
   });
 
   it('renders slide indicators as clickable Kangur micro pills', async () => {
+    const onComplete = vi.fn();
+    const onProgressChange = vi.fn();
+
     render(
       <LessonSlideSection
         slides={[
@@ -36,6 +39,8 @@ describe('LessonSlideSection', () => {
           { title: 'Slajd 2', content: <div>Drugi</div> },
         ]}
         onBack={vi.fn()}
+        onComplete={onComplete}
+        onProgressChange={onProgressChange}
         dotActiveClass='bg-orange-400'
         dotDoneClass='bg-orange-200'
         gradientClass='from-orange-400 to-yellow-400'
@@ -53,11 +58,19 @@ describe('LessonSlideSection', () => {
     expect(firstIndicator).toHaveClass('kangur-cta-pill', 'bg-orange-400');
     expect(firstIndicator).toHaveClass('cursor-pointer');
     expect(firstIndicator).toHaveAttribute('aria-current', 'step');
+    expect(screen.getByRole('button', { name: 'Wróć do tematów' })).toHaveClass(
+      'kangur-cta-pill',
+      'surface-cta'
+    );
+    expect(screen.queryByRole('button', { name: /nastepny/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /poprzedni/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /gotowe!/i })).not.toBeInTheDocument();
     expect(secondIndicator).toHaveClass(
       'kangur-cta-pill',
       'kangur-step-pill-pending',
       'cursor-pointer'
     );
+    expect(onProgressChange).toHaveBeenLastCalledWith(1, 2);
 
     fireEvent.click(secondIndicator);
 
@@ -65,10 +78,12 @@ describe('LessonSlideSection', () => {
     expect(firstIndicator).not.toHaveAttribute('aria-current');
     expect(secondIndicator).toHaveClass('bg-orange-400');
     expect(secondIndicator).toHaveAttribute('aria-current', 'step');
+    expect(onProgressChange).toHaveBeenLastCalledWith(2, 2);
+    expect(onComplete).toHaveBeenCalledTimes(1);
     expect(await screen.findByText('Drugi')).toBeInTheDocument();
   });
 
-  it('uses the lesson navigation context for the menu action', () => {
+  it('uses the lesson navigation context for the top back action', () => {
     const onBack = vi.fn();
 
     render(
@@ -82,9 +97,9 @@ describe('LessonSlideSection', () => {
       </KangurLessonNavigationProvider>
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Menu' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Wróć do tematów' }));
 
-    expect(screen.getByRole('button', { name: 'Menu' })).toHaveClass(
+    expect(screen.getByRole('button', { name: 'Wróć do tematów' })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
     );

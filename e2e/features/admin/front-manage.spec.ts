@@ -136,9 +136,9 @@ test.describe.serial('Front Manage', () => {
     await expect(main.getByRole('heading', { level: 1, name: /front manage/i })).toBeVisible({
       timeout: 30_000,
     });
-    await expect(
-      main.getByText('Pick which app should open when users land on the home page.')
-    ).toBeVisible({ timeout: 30_000 });
+    await expect(main.getByText('Pick which app should own the public home route.')).toBeVisible({
+      timeout: 30_000,
+    });
   });
 
   test('should display the available front page options', async ({ page }) => {
@@ -150,11 +150,11 @@ test.describe.serial('Front Manage', () => {
     const kangurBtn = main.getByRole('button', { name: /Kangur/i });
     await kangurBtn.click();
 
-    await expect(kangurBtn.getByText('/kangur')).toBeVisible();
+    await expect(kangurBtn.getByText('/', { exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Save Selection' })).toBeEnabled();
   });
 
-  test('should redirect HOME to Kangur when selected and restore the previous setting', async ({
+  test('should mount Kangur on HOME when selected and restore the previous setting', async ({
     page,
   }) => {
     test.setTimeout(120_000);
@@ -166,8 +166,65 @@ test.describe.serial('Front Manage', () => {
       await saveFrontPageSelectionFromUi(page, 'kangur');
 
       await page.goto('/', { waitUntil: 'domcontentloaded' });
-      await page.waitForURL(/\/kangur(?:\/|$)?/);
+      await expect(page).toHaveURL(/\/$/);
+      await expect(page.locator('[data-testid="kangur-feature-page-shell"]')).toBeVisible();
+    } finally {
+      await page.goto('/admin/front-manage', { waitUntil: 'domcontentloaded' }).catch(() => {});
+      if (originalValue === 'products') {
+        await writeFrontPageAppSetting(page, originalValue);
+      } else {
+        await saveFrontPageSelectionFromUi(page, restoreOption);
+      }
+    }
+  });
+
+  test('should redirect legacy /kangur routes to root-owned Kangur routes when selected', async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+
+    const originalValue = await readFrontPageAppSetting(page);
+    const restoreOption = normalizeFrontPageApp(originalValue) ?? 'cms';
+
+    try {
+      await saveFrontPageSelectionFromUi(page, 'kangur');
+
+      await page.goto('/kangur/tests', { waitUntil: 'domcontentloaded' });
+      await expect(page).toHaveURL(/\/tests$/);
+
+      await page.goto('/kangur/login?callbackUrl=%2Fkangur%2Ftests', {
+        waitUntil: 'domcontentloaded',
+      });
+      await expect(page).toHaveURL(/\/login\?callbackUrl=%2Fkangur%2Ftests$/);
+      await expect(page.locator('[data-testid="kangur-login-shell"]')).toBeVisible();
+    } finally {
+      await page.goto('/admin/front-manage', { waitUntil: 'domcontentloaded' }).catch(() => {});
+      if (originalValue === 'products') {
+        await writeFrontPageAppSetting(page, originalValue);
+      } else {
+        await saveFrontPageSelectionFromUi(page, restoreOption);
+      }
+    }
+  });
+
+  test('should keep legacy /kangur routes when CMS owns the frontend', async ({ page }) => {
+    test.setTimeout(120_000);
+
+    const originalValue = await readFrontPageAppSetting(page);
+    const restoreOption = normalizeFrontPageApp(originalValue) ?? 'cms';
+
+    try {
+      await saveFrontPageSelectionFromUi(page, 'cms');
+
+      await page.goto('/kangur/tests', { waitUntil: 'domcontentloaded' });
+      await expect(page).toHaveURL(/\/kangur\/tests$/);
       await expect(page.locator('[data-testid="kangur-route-shell"]')).toBeVisible();
+
+      await page.goto('/kangur/login?callbackUrl=%2Fkangur%2Ftests', {
+        waitUntil: 'domcontentloaded',
+      });
+      await expect(page).toHaveURL(/\/kangur\/login\?callbackUrl=%2Fkangur%2Ftests$/);
+      await expect(page.locator('[data-testid="kangur-login-shell"]')).toBeVisible();
     } finally {
       await page.goto('/admin/front-manage', { waitUntil: 'domcontentloaded' }).catch(() => {});
       if (originalValue === 'products') {

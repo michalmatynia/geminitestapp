@@ -11,6 +11,7 @@ import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
+import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 
 type SectionId = 'intro' | 'os' | 'figury' | 'podsumowanie';
 
@@ -128,6 +129,8 @@ export const HUB_SECTIONS = [
 
 export default function GeometrySymmetryLesson(): React.JSX.Element {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
+  const { markSectionOpened, markSectionViewedCount, sectionProgress } =
+    useLessonHubProgress(SLIDES);
 
   const handleComplete = (): void => {
     const progress = loadProgress();
@@ -143,6 +146,7 @@ export default function GeometrySymmetryLesson(): React.JSX.Element {
         slides={SLIDES[activeSection]}
         onBack={() => setActiveSection(null)}
         onComplete={activeSection === 'podsumowanie' ? handleComplete : undefined}
+        onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
         dotActiveClass='bg-emerald-500'
         dotDoneClass='bg-emerald-300'
         gradientClass='from-emerald-500 to-lime-500'
@@ -155,8 +159,15 @@ export default function GeometrySymmetryLesson(): React.JSX.Element {
       lessonEmoji='🪞'
       lessonTitle='Symetria'
       gradientClass='from-emerald-500 to-lime-500'
-      sections={HUB_SECTIONS}
-      onSelect={(id) => setActiveSection(id as SectionId)}
+      progressDotClassName='bg-emerald-300'
+      sections={HUB_SECTIONS.map((section) => ({
+        ...section,
+        progress: sectionProgress[section.id as SectionId],
+      }))}
+      onSelect={(id) => {
+        markSectionOpened(id as SectionId);
+        setActiveSection(id as SectionId);
+      }}
     />
   );
 }

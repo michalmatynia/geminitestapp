@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 
@@ -22,6 +22,7 @@ import {
   KANGUR_PENDING_STEP_PILL_CLASSNAME,
   KANGUR_STEP_PILL_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 import { cn } from '@/shared/utils';
 
 type SectionId = 'intro' | 'dni' | 'miesiace' | 'data' | 'game';
@@ -233,10 +234,12 @@ function SectionView({
   sectionId,
   onBack,
   onGameStart,
+  onProgressChange,
 }: {
   sectionId: Exclude<SectionId, 'game'>;
   onBack: () => void;
   onGameStart: () => void;
+  onProgressChange?: (viewedCount: number, totalCount: number) => void;
 }): React.JSX.Element {
   const slides = SECTION_SLIDES[sectionId];
   const [slide, setSlide] = useState(0);
@@ -244,6 +247,10 @@ function SectionView({
   const activeSlide = slides[slide];
 
   if (!activeSlide) return <div />;
+
+  useEffect(() => {
+    onProgressChange?.(slide + 1, slides.length);
+  }, [onProgressChange, slide, slides.length]);
 
   const handleNext = (): void => {
     if (isLast) {
@@ -321,7 +328,7 @@ function SectionView({
             variant='primary'
           >
             {isLast ? (
-              'Gra z kalendarzem 📅'
+              'Ćwiczenia z Kalendarzem 📅'
             ) : (
               <>
                 <span>Dalej</span>
@@ -348,7 +355,7 @@ export const HUB_SECTIONS = [
   {
     id: 'game',
     emoji: '🎮',
-    title: 'Gra z kalendarzem',
+    title: 'Ćwiczenia z Kalendarzem',
     description: 'Cwicz w interaktywnej grze',
     isGame: true,
   },
@@ -356,6 +363,8 @@ export const HUB_SECTIONS = [
 
 export default function CalendarLesson(): React.JSX.Element {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
+  const { markSectionOpened, markSectionViewedCount, sectionProgress } =
+    useLessonHubProgress(SECTION_SLIDES);
 
   const handleGameStart = (): void => {
     const prog = loadProgress();
@@ -376,7 +385,7 @@ export default function CalendarLesson(): React.JSX.Element {
           type='button'
           variant='surface'
         >
-          <ArrowLeft className='w-4 h-4' /> Wróc do menu
+          <ArrowLeft className='w-4 h-4' /> Wróć do menu
         </KangurButton>
         <KangurGlassPanel
           className='flex w-full flex-col items-center gap-5'
@@ -390,7 +399,7 @@ export default function CalendarLesson(): React.JSX.Element {
             data-testid='calendar-lesson-game-header'
             headingSize='sm'
             icon='📅'
-            title='Gra z kalendarzem'
+            title='Ćwiczenia z Kalendarzem'
           />
           <CalendarInteractiveGame onFinish={() => setActiveSection(null)} />
         </KangurGlassPanel>
@@ -398,12 +407,13 @@ export default function CalendarLesson(): React.JSX.Element {
     );
   }
 
-  if (activeSection && (activeSection as SectionId) !== 'game') {
+  if (activeSection) {
     return (
       <SectionView
         sectionId={activeSection}
         onBack={() => setActiveSection(null)}
         onGameStart={handleGameStart}
+        onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
       />
     );
   }
@@ -413,11 +423,20 @@ export default function CalendarLesson(): React.JSX.Element {
       lessonEmoji='📅'
       lessonTitle='Nauka kalendarza'
       gradientClass='from-green-400 to-teal-500'
-      sections={HUB_SECTIONS}
+      progressDotClassName='bg-emerald-200'
+      sections={HUB_SECTIONS.map((section) =>
+        section.isGame
+          ? section
+          : {
+              ...section,
+              progress: sectionProgress[section.id as keyof typeof SECTION_SLIDES],
+            }
+      )}
       onSelect={(id) => {
         if (id === 'game') {
           handleGameStart();
         } else {
+          markSectionOpened(id as keyof typeof SECTION_SLIDES);
           setActiveSection(id as SectionId);
         }
       }}

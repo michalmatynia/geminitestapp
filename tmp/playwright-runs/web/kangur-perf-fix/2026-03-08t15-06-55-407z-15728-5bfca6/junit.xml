@@ -1,0 +1,26 @@
+<testsuites id="" name="" tests="10" failures="0" skipped="0" errors="0" time="46.878488999999995">
+<testsuite name="features/kangur/kangur-game-quickstart.spec.ts" timestamp="2026-03-08T15:07:13.171Z" hostname="" tests="3" failures="0" skipped="0" time="23.399" errors="0">
+<testcase name="Kangur Game Quick Start › opens training setup from quickStart=training and clears query params" classname="features/kangur/kangur-game-quickstart.spec.ts" time="16.111">
+</testcase>
+<testcase name="Kangur Game Quick Start › starts operation run from quickStart=operation and clears query params" classname="features/kangur/kangur-game-quickstart.spec.ts" time="4.006">
+</testcase>
+<testcase name="Kangur Game Quick Start › opens operation setup from bare quickStart=operation and clears query params" classname="features/kangur/kangur-game-quickstart.spec.ts" time="3.282">
+</testcase>
+</testsuite>
+<testsuite name="features/kangur/kangur-profile.spec.ts" timestamp="2026-03-08T15:07:13.171Z" hostname="" tests="7" failures="0" skipped="0" time="21.091" errors="0">
+<testcase name="Kangur Learner Profile › renders learner profile shell and baseline sections" classname="features/kangur/kangur-profile.spec.ts" time="1.48">
+</testcase>
+<testcase name="Kangur Learner Profile › supports navigation from game screen to learner profile" classname="features/kangur/kangur-profile.spec.ts" time="4.083">
+</testcase>
+<testcase name="Kangur Learner Profile › renders deterministic learner metrics from mocked auth, progress, and scores" classname="features/kangur/kangur-profile.spec.ts" time="2.835">
+</testcase>
+<testcase name="Kangur Learner Profile › shows the persisted AI tutor mood on the learner profile" classname="features/kangur/kangur-profile.spec.ts" time="2.493">
+</testcase>
+<testcase name="Kangur Learner Profile › opens focused lesson from recommendation deep link" classname="features/kangur/kangur-profile.spec.ts" time="4.01">
+</testcase>
+<testcase name="Kangur Learner Profile › quick-start training works from profile in local mode" classname="features/kangur/kangur-profile.spec.ts" time="3.999">
+</testcase>
+<testcase name="Kangur Learner Profile › quick-start operation works from operation performance links" classname="features/kangur/kangur-profile.spec.ts" time="2.191">
+</testcase>
+</testsuite>
+</testsuites>

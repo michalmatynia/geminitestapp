@@ -1,27 +1,27 @@
 # Kangur Performance Baseline
 
-Generated at: 2026-03-08T14:30:04.343Z
+Generated at: 2026-03-08T15:24:18.717Z
 
 ## Execution Summary
 
 - Unit test suite status: PASS
-- Unit test suite duration: 6.7s
-- E2E suite status: FAIL
-- E2E suite duration: 1.2m
+- Unit test suite duration: 6.9s
+- E2E suite status: PASS
+- E2E suite duration: 40.4s
 
 ## Bundle Risk Snapshot
 
 | File | Lines | Bytes |
 | --- | ---: | ---: |
-| `src/features/kangur/ui/pages/Lessons.tsx` | 790 | 32185 |
+| `src/features/kangur/ui/pages/Lessons.tsx` | 772 | 31564 |
 | `src/features/kangur/ui/services/kangur-questions-data.js` | 329 | 21289 |
 | `src/features/kangur/ui/components/KangurGame.tsx` | 373 | 11848 |
 | `src/features/kangur/ui/pages/Game.tsx` | 250 | 9356 |
 | `src/features/kangur/ui/pages/LearnerProfile.tsx` | 70 | 3509 |
 | `src/features/kangur/ui/components/KangurIllustrations.ts` | 14 | 853 |
 
-- Total bytes (tracked files): 79040
-- Total lines (tracked files): 1826
+- Total bytes (tracked files): 78419
+- Total lines (tracked files): 1808
 
 ## Commands
 

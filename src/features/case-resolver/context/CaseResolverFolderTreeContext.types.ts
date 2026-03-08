@@ -1,7 +1,6 @@
 import type { Dispatch, SetStateAction } from 'react';
 
 import type {
-  CaseResolverAssetFile,
   CaseResolverFile,
   CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';

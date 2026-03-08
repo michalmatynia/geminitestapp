@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowLeft, ArrowRight, ChevronDown, ChevronRight, Lock } from 'lucide-react';
 
 import ClockTrainingGame from './ClockTrainingGame';
+import { KangurLessonProgressDots } from '@/features/kangur/ui/components/KangurLessonProgressDots';
 import {
   addXp,
   buildLessonMasteryUpdate,
@@ -10,7 +11,6 @@ import {
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import {
-  KANGUR_PENDING_STEP_PILL_CLASSNAME,
   KANGUR_STEP_PILL_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
@@ -51,6 +51,7 @@ type LessonSection = {
 };
 
 const LOCKED_SECTION_HINT = 'Najpierw ukończ poprzednią sekcję, aby odblokować ten etap.';
+const KANGUR_PENDING_SECTION_STEP_PILL_CLASSNAME = 'kangur-step-pill-pending w-[14px]';
 
 function AnalogClock({
   hours,
@@ -594,7 +595,7 @@ export default function ClockLesson(): React.JSX.Element {
           Wszystkie sekcje są zwinięte. Kliknij nagłówek sekcji, aby kontynuować naukę.
         </KangurLessonCallout>
 
-        {LESSON_SECTIONS.map((section, sectionIndex) => (
+      {LESSON_SECTIONS.map((section, sectionIndex) => (
           <KangurGlassPanel
             key={section.id}
             className='flex w-full flex-col gap-3'
@@ -605,6 +606,7 @@ export default function ClockLesson(): React.JSX.Element {
             {(() => {
               const status = getSectionStatus(sectionIndex, false);
               const isLocked = !unlockedSections[sectionIndex];
+              const viewedCount = isLocked ? 0 : Math.min((sectionSlides[sectionIndex] ?? 0) + 1, section.slides.length);
               return (
                 <KangurOptionCardButton
                   accent='indigo'
@@ -635,6 +637,15 @@ export default function ClockLesson(): React.JSX.Element {
                     >
                       {status.label}
                     </KangurStatusChip>
+                    <KangurLessonProgressDots
+                      activeDotClassName='bg-indigo-200'
+                      className='mt-2'
+                      dotTestIdPrefix={`clock-lesson-section-progress-dot-${section.id}`}
+                      srLabel={`Obejrzano ${viewedCount} z ${section.slides.length} ekranow sekcji.`}
+                      testId={`clock-lesson-section-progress-${section.id}`}
+                      totalCount={section.slides.length}
+                      viewedCount={viewedCount}
+                    />
                     {isLocked && (
                       <p
                         data-testid={`clock-lesson-section-locked-hint-${section.id}`}
@@ -673,9 +684,9 @@ export default function ClockLesson(): React.JSX.Element {
       {LESSON_SECTIONS.map((section, sectionIndex) => {
         const isOpen = sectionIndex === openSection;
         const sectionSlideIndex = sectionSlides[sectionIndex] ?? 0;
-        const sectionProgressText = `${sectionSlideIndex + 1}/${section.slides.length}`;
         const status = getSectionStatus(sectionIndex, isOpen);
         const isLocked = !unlockedSections[sectionIndex];
+        const viewedCount = isLocked ? 0 : Math.min(sectionSlideIndex + 1, section.slides.length);
 
         return (
           <KangurGlassPanel
@@ -714,6 +725,15 @@ export default function ClockLesson(): React.JSX.Element {
                 >
                   {status.label}
                 </KangurStatusChip>
+                <KangurLessonProgressDots
+                  activeDotClassName='bg-indigo-200'
+                  className='mt-2'
+                  dotTestIdPrefix={`clock-lesson-section-progress-dot-${section.id}`}
+                  srLabel={`Obejrzano ${viewedCount} z ${section.slides.length} ekranow sekcji.`}
+                  testId={`clock-lesson-section-progress-${section.id}`}
+                  totalCount={section.slides.length}
+                  viewedCount={viewedCount}
+                />
                 {isLocked && (
                   <p
                     data-testid={`clock-lesson-section-locked-hint-${section.id}`}
@@ -722,9 +742,6 @@ export default function ClockLesson(): React.JSX.Element {
                     {LOCKED_SECTION_HINT}
                   </p>
                 )}
-                <p className='text-xs font-semibold text-indigo-500 mt-1'>
-                  Postęp sekcji: {sectionProgressText}
-                </p>
               </div>
               {isLocked ? (
                 <Lock className='w-5 h-5 text-slate-500 flex-shrink-0' />
@@ -760,7 +777,7 @@ export default function ClockLesson(): React.JSX.Element {
                           ? 'w-8 scale-[1.04] bg-indigo-500'
                           : slideIndex < sectionSlideIndex
                             ? 'w-6 bg-indigo-200'
-                            : KANGUR_PENDING_STEP_PILL_CLASSNAME
+                            : KANGUR_PENDING_SECTION_STEP_PILL_CLASSNAME
                       )}
                       data-testid={`clock-lesson-section-slide-${section.id}-${slideIndex}`}
                     />

@@ -7,9 +7,9 @@ import {
   fromCaseResolverCaseNodeId,
   fromCaseResolverFileNodeId,
   fromCaseResolverFolderNodeId,
-  parseString,
   toCaseResolverFolderNodeId,
 } from '../master-tree';
+import { parseString } from '../components/CaseResolverFolderTree.helpers';
 
 const CHILD_CASE_STRUCTURE_FOLDER_PATH = '__case_resolver_children_case_structure__';
 export const CHILD_CASE_STRUCTURE_NODE_ID = toCaseResolverFolderNodeId(
@@ -64,7 +64,7 @@ export const resolveRequestedCaseResolverFileId = (requestedFileIdRaw: string | 
   const decodedCaseNodeId = fromCaseResolverCaseNodeId(normalizedRequestedFileId);
   if (decodedCaseNodeId) return decodedCaseNodeId;
   const decodedFileNodeId = fromCaseResolverFileNodeId(normalizedRequestedFileId);
-  if (decodedFileNodeId) return decodedFileId;
+  if (decodedFileNodeId) return decodedFileNodeId;
   return normalizedRequestedFileId;
 };
 

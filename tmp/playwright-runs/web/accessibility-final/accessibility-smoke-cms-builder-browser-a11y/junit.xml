@@ -1,0 +1,6 @@
+<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="0" time="8.777962">
+<testsuite name="features/accessibility/cms-builder-accessibility.spec.ts" timestamp="2026-03-08T15:11:14.482Z" hostname="" tests="1" failures="0" skipped="0" time="7.262" errors="0">
+<testcase name="cms builder exposes shell controls accessibly and passes the accessibility smoke scan" classname="features/accessibility/cms-builder-accessibility.spec.ts" time="7.262">
+</testcase>
+</testsuite>
+</testsuites>

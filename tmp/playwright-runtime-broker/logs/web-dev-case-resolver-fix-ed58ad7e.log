@@ -1,0 +1,240 @@
+
+> libapp2@0.1.0 predev
+> node scripts/runtime/check-node-version.cjs
+
+
+> libapp2@0.1.0 dev
+> node --max-old-space-size=8192 server.cjs
+
+○ Compiling instrumentation Node.js ...
+
+  We detected TypeScript in your project and reconfigured your tsconfig.json file for you.
+  The following suggested values were added to your tsconfig.json. These values can be changed to fit your project's needs:
+
+  	- include was updated to add '.next-dev-web-dev-case-resolver-fix/types/**/*.ts'
+  	- include was updated to add '.next-dev-web-dev-case-resolver-fix/dev/types/**/*.ts'
+
+[ai-paths.portable-engine.envelope-verification] Portable envelope verification audit sink health probe sinkId=portable-envelope-verification-log-forwarding {
+  category: 'ai_path_portable_envelope_verification_audit_sink_health',
+  kind: 'ai-paths.portable-envelope-verification-audit-sink-health.v1',
+  sinkId: 'portable-envelope-verification-log-forwarding',
+  stage: 'probe',
+  service: 'ai-paths.portable-engine'
+}
+[ai-paths.portable-engine.envelope-verification.sink-bootstrap] Portable envelope verification audit sink startup health summary sinkId=all {
+  category: 'ai_path_portable_envelope_verification_audit_sink_health',
+  kind: 'ai-paths.portable-envelope-verification-audit-sink-health.v1',
+  profile: 'dev',
+  policy: 'warn',
+  timeoutMs: 3000,
+  status: 'healthy',
+  failedSinkIds: [],
+  diagnostics: [
+    {
+      sinkId: 'portable-envelope-verification-log-forwarding',
+      status: 'healthy',
+      checkedAt: '2026-03-08T15:07:04.343Z',
+      durationMs: 96,
+      message: 'Health check passed.',
+      error: null
+    }
+  ],
+  service: 'ai-paths.portable-engine'
+}
+[queue-factory] [queue-factory:database-backup-scheduler] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:product-sync-scheduler] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:system-log-alerts] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-init] Starting BullMQ workers... { service: 'queue-init' }
+[queue-registry] [queue-registry] Starting queue worker: base-import { queueName: 'base-import', service: 'queue-registry' }
+[queue-factory] [queue-factory:base-import] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: database-backup-scheduler { queueName: 'database-backup-scheduler', service: 'queue-registry' }
+[queue-registry] [queue-registry] Starting queue worker: system-log-alerts { queueName: 'system-log-alerts', service: 'queue-registry' }
+[queue-registry] [queue-registry] Starting queue worker: tradera-listings { queueName: 'tradera-listings', service: 'queue-registry' }
+[queue-factory] [queue-factory:tradera-listings] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-ai { queueName: 'product-ai', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-ai] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync { queueName: 'product-sync', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-sync] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync-backfill { queueName: 'product-sync-backfill', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-sync-backfill] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync-scheduler { queueName: 'product-sync-scheduler', service: 'queue-registry' }
+[queue-factory] [queue-factory:case-resolver-ocr] BullMQ worker started (concurrency: 2) { concurrency: 2, service: 'queue-factory' }
+[queue-factory] [queue-factory:ai-path-run] BullMQ worker started (concurrency: 3) { concurrency: 3, service: 'queue-factory' }
+[queue-factory] [queue-factory:chatbot] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:agent] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:image-studio-run] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:image-studio-sequence] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:tradera-relist-scheduler] Worker stopped { service: 'queue-factory' }
+Ready on http://localhost:63261 { port: 63261, host: '127.0.0.1' }
+ GET /api/health 200 in 1714ms (compile: 1614ms, proxy.ts: 51ms, render: 49ms)
+[health.GET] health.GET completed successfully {
+  durationMs: 932,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '0373878931d4053a05a78c6e1ce5c251',
+  otelSpanId: '8ab315d40171d354',
+  otelTraceFlags: '01',
+  service: 'health',
+  traceId: '38d345f0-8238-4f26-966c-0d92de2a6a1a',
+  correlationId: 'a848d02d-8c95-4d09-bca7-a863c2262dc9'
+}
+ GET /api/health 200 in 665ms (compile: 4ms, proxy.ts: 5ms, render: 656ms)
+○ Compiling / ...
+ GET /auth/signin?callbackUrl=%2Fadmin%2Fcase-resolver 200 in 5.5s (compile: 5.1s, render: 404ms)
+ GET /auth/signin 200 in 57ms (compile: 7ms, render: 49ms)
+ GET /api/auth/session 200 in 2.7s (compile: 2.7s, proxy.ts: 9ms, render: 12ms)
+ GET /api/auth/session 200 in 51ms (compile: 22ms, proxy.ts: 5ms, render: 25ms)
+[system] [timing] home {
+  cmsRepository: 1039.663999999997,
+  headers: 0.4952499999999418,
+  cmsDomain: 56.2824580000015,
+  cmsSlugs: 188.6465840000019,
+  total: 1285.6212499999965,
+  otelTraceId: 'bb669d102d15afb81116690e51d126db',
+  otelSpanId: '27c0585a1f2097b8',
+  otelTraceFlags: '01'
+}
+✓ Compiled in 824ms
+ GET /api/auth/providers 200 in 104ms (compile: 37ms, proxy.ts: 41ms, render: 25ms)
+ GET /api/auth/csrf 200 in 77ms (compile: 55ms, proxy.ts: 11ms, render: 11ms)
+[system] [AUTH-REPO] Finding user e2e.admin@example.com using mongodb {
+  email: 'e2e.admin@example.com',
+  provider: 'mongodb',
+  otelTraceId: '895c4aebc65c993d85bd8395d620ad2b',
+  otelSpanId: 'a880567538316655',
+  otelTraceFlags: '01'
+}
+[auth.[...nextauth].POST] auth.[...nextauth].POST completed successfully {
+  durationMs: 1451,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  params: { nextauth: [ 'callback', 'credentials' ] },
+  otelTraceId: '895c4aebc65c993d85bd8395d620ad2b',
+  otelSpanId: 'a880567538316655',
+  otelTraceFlags: '01',
+  service: 'auth.[',
+  traceId: '5a7b7b38-53cc-4d26-96a2-942d6801b22d',
+  correlationId: '148a1ecb-c7ea-4ce1-a7ae-5bdc73af3fac'
+}
+ POST /api/auth/callback/credentials 200 in 1481ms (compile: 7ms, proxy.ts: 17ms, render: 1456ms)
+[auth.security] User signed in successfully {
+  email: 'e2e.admin@example.com',
+  ip: '127.0.0.1',
+  service: 'auth.security',
+  otelTraceId: '895c4aebc65c993d85bd8395d620ad2b',
+  otelSpanId: 'a880567538316655',
+  otelTraceFlags: '01'
+}
+[user] Activity: auth.login - User logged in: e2e.admin@example.com {
+  activityId: '69ad90cc98bc686a5b67146c',
+  activityType: 'auth.login',
+  userId: '69a9bc1e2d43c3d631e76018',
+  entityId: '69a9bc1e2d43c3d631e76018',
+  entityType: 'user',
+  metadata: null,
+  service: 'user',
+  otelTraceId: '895c4aebc65c993d85bd8395d620ad2b',
+  otelSpanId: 'a880567538316655',
+  otelTraceFlags: '01'
+}
+ GET /api/auth/session 200 in 134ms (compile: 8ms, proxy.ts: 8ms, render: 117ms)
+ GET /admin 200 in 2.5s (compile: 2.2s, proxy.ts: 86ms, render: 177ms)
+ GET /api/auth/session 200 in 118ms (compile: 31ms, proxy.ts: 38ms, render: 49ms)
+ GET /api/auth/session 200 in 51ms (compile: 14ms, proxy.ts: 6ms, render: 31ms)
+ GET /api/auth/session 200 in 55ms (compile: 12ms, proxy.ts: 6ms, render: 37ms)
+[agent-queue] [agent-queue] 
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$instrumentation$5d$__$28$ecmascript$29$__["default"].chatbotAgentRun.findFirst()` invocation in
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-case-resolver-fix/dev/server/chunks/src_features_ai_agent-runtime_6c936d39._.js:7491:192
+
+  7488 async function processNextQueuedAgentRun() {
+  7489     if (!('chatbotAgentRun' in __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$instrumentation$5d$__$28$ecmascript$29$__["default"])) return;
+  7490     await recoverStuckRuns();
+→ 7491     const nextRun = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$instrumentation$5d$__$28$ecmascript$29$__["default"].chatbotAgentRun.findFirst(
+The column `(not available)` does not exist in the current database. {
+  service: 'agent-queue',
+  runId: '__recovery__',
+  category: 'VALIDATION',
+  jobId: undefined,
+  productId: undefined,
+  error: {
+    message: '\n' +
+      'Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$instrumentation$5d$__$28$ecmascript$29$__["default"].chatbotAgentRun.findFirst()` invocation in\n' +
+      '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-case-resolver-fix/dev/server/chunks/src_features_ai_agent-runtime_6c936d39._.js:7491:192\n' +
+      '\n' +
+      '  7488 async function processNextQueuedAgentRun() {\n' +
+      `  7489     if (!('chatbotAgentRun' in __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$instrumentation$5d$__$28$ecmascript$29$__["default"])) return;\n` +
+      '  7490     await recoverStuckRuns();\n' +
+      '→ 7491     const nextRun = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$instrumentation$5d$__$28$ecmascript$29$__["default"].chatbotAgentRun.findFirst(\n' +
+      'The column `(not available)` does not exist in the current database.',
+    stack: 'PrismaClientKnownRequestError: \n' +
+      'Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$instrumentation$5d$__$28$ecmascript$29$__["default"].chatbotAgentRun.findFirst()` invocation in\n' +
+      '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-case-resolver-fix/dev/server/chunks/src_features_ai_agent-runtime_6c936d39._.js:7491:192\n' +
+      '\n' +
+      '  7488 async function processNextQueuedAgentRun() {\n' +
+      `  7489     if (!('chatbotAgentRun' in __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$instrumentation$5d$__$28$ecmascript$29$__["default"])) return;\n` +
+      '  7490     await recoverStuckRuns();\n' +
+      '→ 7491     const nextRun = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$instrumentation$5d$__$28$ecmascript$29$__["default"].chatbotAgentRun.findFirst(\n' +
+      'The column `(not available)` does not exist in the current database.\n' +
+      '    at zr.handleRequestError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@prisma/client/runtime/client.js:65:8286)\n' +
+      '    at zr.handleAndLogRequestError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@prisma/client/runtime/client.js:65:7581)\n' +
+      '    at zr.request (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@prisma/client/runtime/client.js:65:7288)\n' +
+      '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+      '    at async a (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@prisma/client/runtime/client.js:75:5816)\n' +
+      '    at async processNextQueuedAgentRun (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-case-resolver-fix/dev/server/chunks/src_features_ai_agent-runtime_6c936d39._.js:7491:21)\n' +
+      '    at async Object.processor (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-case-resolver-fix/dev/server/chunks/src_features_ai_agent-runtime_6c936d39._.js:7610:13)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/bullmq/dist/cjs/classes/worker.js:571:32',
+    name: 'PrismaClientKnownRequestError',
+    code: 'P2022',
+    meta: { modelName: 'ChatbotAgentRun', driverAdapterError: [Object] }
+  },
+  errorCode: 'P2022',
+  errorName: 'PrismaClientKnownRequestError',
+  fingerprint: 'd31119f585792e5d'
+}
+ GET /api/system/activity?page=1&pageSize=5 200 in 834ms (compile: 731ms, proxy.ts: 22ms, render: 81ms)
+[system] [timing] user.preferences.GET {
+  auth: 33.42674999999872,
+  cache: 0.12916699999914272,
+  repository: 63.719542000006186,
+  total: 97.70929199999955,
+  databaseConfigured: true,
+  otelTraceId: '1fe8ec7aa6b8e37524dc713b435ccb82',
+  otelSpanId: '10725ebaefafccb6',
+  otelTraceFlags: '01'
+}
+ GET /api/user/preferences 200 in 1089ms (compile: 706ms, proxy.ts: 44ms, render: 339ms)
+[health.GET] health.GET completed successfully {
+  durationMs: 1110,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: 'baedb885de1bd9804312604f0c702522',
+  otelSpanId: '87edc31e9007ba7f',
+  otelTraceFlags: '01',
+  service: 'health',
+  traceId: 'b627750d-2941-4305-b069-b1036871c5d8',
+  correlationId: '2e230594-a178-4764-8951-4232fcac0b79'
+}
+ GET /api/health 200 in 1182ms (compile: 46ms, proxy.ts: 21ms, render: 1114ms)
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 1,
+  reason: 'idle',
+  address: 'cluster0-shard-00-00.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 1,
+  reason: 'idle',
+  address: 'cluster0-shard-00-02.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 1,
+  reason: 'idle',
+  address: 'cluster0-shard-00-01.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+Received SIGTERM, shutting down gracefully... { signal: 'SIGTERM' }
+Server closed undefined

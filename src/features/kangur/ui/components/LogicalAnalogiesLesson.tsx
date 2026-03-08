@@ -8,6 +8,7 @@ import {
   KangurLessonCallout,
   KangurLessonInset,
 } from '@/features/kangur/ui/design/lesson-primitives';
+import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 
 type SectionId = 'intro' | 'liczby_ksztalty' | 'relacje' | 'podsumowanie';
 
@@ -260,12 +261,15 @@ export const HUB_SECTIONS = [
 
 export default function LogicalAnalogiesLesson(): React.JSX.Element {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
+  const { markSectionOpened, markSectionViewedCount, sectionProgress } =
+    useLessonHubProgress(SLIDES);
 
   if (activeSection) {
     return (
       <LessonSlideSection
         slides={SLIDES[activeSection]}
         onBack={() => setActiveSection(null)}
+        onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
         dotActiveClass='bg-pink-500'
         dotDoneClass='bg-pink-300'
         gradientClass='from-pink-500 to-rose-500'
@@ -278,8 +282,15 @@ export default function LogicalAnalogiesLesson(): React.JSX.Element {
       lessonEmoji='🔗'
       lessonTitle='Analogie'
       gradientClass='from-pink-500 to-rose-500'
-      sections={HUB_SECTIONS}
-      onSelect={(id) => setActiveSection(id as SectionId)}
+      progressDotClassName='bg-pink-300'
+      sections={HUB_SECTIONS.map((section) => ({
+        ...section,
+        progress: sectionProgress[section.id as SectionId],
+      }))}
+      onSelect={(id) => {
+        markSectionOpened(id as SectionId);
+        setActiveSection(id as SectionId);
+      }}
     />
   );
 }

@@ -25,7 +25,11 @@ const focusKangurMainRegion = (): void => {
     return;
   }
 
-  mainRegion.focus();
+  try {
+    mainRegion.focus({ preventScroll: true });
+  } catch {
+    mainRegion.focus();
+  }
 };
 
 const resolveAnnouncementLabel = (pageKey: string | null | undefined): string =>

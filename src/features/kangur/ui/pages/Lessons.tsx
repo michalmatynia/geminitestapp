@@ -28,11 +28,11 @@ import {
   parseKangurLessonDocumentStore,
 } from '@/features/kangur/lesson-documents';
 import { KANGUR_LESSONS_SETTING_KEY, parseKangurLessons } from '@/features/kangur/settings';
-import { KangurLessonNarrator } from '@/features/kangur/ui/components/KangurLessonNarrator';
 import { KangurLessonDocumentRenderer } from '@/features/kangur/ui/components/KangurLessonDocumentRenderer';
 import { KangurLessonsWordmark } from '@/features/kangur/ui/components/KangurLessonsWordmark';
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
+import { KangurActiveLessonHeader } from '@/features/kangur/ui/components/KangurActiveLessonHeader';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 import { useOptionalKangurRouteTransition } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
@@ -487,37 +487,20 @@ export default function Lessons() {
                 exit={{ opacity: 0, y: -20 }}
                 className='w-full flex flex-col items-center gap-4'
               >
-                {activeLessonAssignment ? (
-                  <div ref={activeLessonAssignmentRef} className='w-full max-w-2xl'>
-                    <KangurSummaryPanel
-                      accent='rose'
-                      className='w-full'
-                      description={activeLessonAssignment.description}
-                      label='Priorytet rodzica'
-                      labelAccent='rose'
-                      padding='md'
-                      title={activeLessonAssignment.title}
-                      tone='accent'
-                    />
-                  </div>
-                ) : completedActiveLessonAssignment ? (
-                  <KangurSummaryPanel
-                    accent='emerald'
-                    className='w-full max-w-2xl'
-                    description={`To zadanie zostalo juz wykonane. ${completedActiveLessonAssignment.progress.summary}`}
-                    label='Ukonczone zadanie od rodzica'
-                    labelAccent='emerald'
-                    padding='md'
-                    title={completedActiveLessonAssignment.title}
-                    tone='accent'
-                  />
-                ) : null}
                 <div ref={activeLessonHeaderRef} className='w-full max-w-5xl'>
-                  <KangurLessonNarrator
+                  <KangurActiveLessonHeader
                     lesson={activeLesson}
                     lessonDocument={activeLessonDocument}
                     lessonContentRef={activeLessonContentRef}
-                    readLabel='Read lesson'
+                    activeLessonAssignment={activeLessonAssignment}
+                    completedActiveLessonAssignment={completedActiveLessonAssignment}
+                    assignmentRef={activeLessonAssignmentRef}
+                    headerTestId='active-lesson-header'
+                    headerActionsTestId='active-lesson-header-icon-actions'
+                    iconTestId={`active-lesson-icon-${activeLesson.id}`}
+                    priorityChipTestId='active-lesson-parent-priority-chip'
+                    completedChipTestId='active-lesson-parent-completed-chip'
+                    onBack={(): void => setActiveLessonId(null)}
                   />
                 </div>
                 <div
@@ -536,19 +519,7 @@ export default function Lessons() {
                         padding='lg'
                         title={activeLesson.title}
                         tone='accent'
-                      >
-                        <div className='mt-4 flex justify-start md:justify-end'>
-                          <KangurButton
-                            type='button'
-                            onClick={(): void => setActiveLessonId(null)}
-                            size='sm'
-                            variant='surface'
-                            data-doc-id='lessons_back_button'
-                          >
-                            Wroc do listy lekcji
-                          </KangurButton>
-                        </div>
-                      </KangurSummaryPanel>
+                      />
                       <KangurLessonDocumentRenderer document={activeLessonDocument} />
                     </div>
                   ) : activeLesson?.contentMode === 'document' &&
@@ -564,18 +535,7 @@ export default function Lessons() {
                       padding='xl'
                       title={activeLesson.title}
                       tone='accent'
-                    >
-                      <KangurButton
-                        type='button'
-                        onClick={(): void => setActiveLessonId(null)}
-                        className='mt-5'
-                        size='sm'
-                        variant='surface'
-                        data-doc-id='lessons_back_button'
-                      >
-                        Wroc do listy lekcji
-                      </KangurButton>
-                    </KangurSummaryPanel>
+                    />
                   ) : ActiveLessonComponent ? (
                     <KangurLessonNavigationProvider onBack={() => setActiveLessonId(null)}>
                       <ActiveLessonComponent />

@@ -1,0 +1,813 @@
+'use client';
+
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import { useRunStudio } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
+import { buildRunRequestPreview } from '@/features/ai/image-studio/utils/run-request-preview';
+import type { ImageFileRecord } from '@/shared/contracts/files';
+import type {
+  ImageStudioRunDetailResponse,
+  ImageStudioRunOutputRecord,
+  ImageStudioRunRecord,
+  ImageStudioRunsResponse,
+  ImageStudioRunStatus,
+} from '@/shared/contracts/image-studio';
+import { api } from '@/shared/lib/api-client';
+import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
+import { useToast } from '@/shared/ui';
+
+import { useMaskingActions, useMaskingState } from './MaskingContext';
+import { useProjectsState } from './ProjectsContext';
+import { usePromptActions, usePromptState } from './PromptContext';
+import { useSettingsState } from './SettingsContext';
+import { useSlotsActions, useSlotsState } from './SlotsContext';
+import type {
+  GenerationActions,
+  GenerationLandingSlot,
+  GenerationRecord,
+  GenerationState,
+} from './GenerationContext.types';
+
+type PollToken = {
+  runId: string;
+  cancelled: boolean;
+  settled: boolean;
+  eventSource: EventSource | null;
+};
+
+const POLL_INTERVAL_MS = 1200;
+const SSE_FALLBACK_POLL_INTERVAL_MS = 5000;
+const POLL_MAX_ATTEMPTS = 600;
+
+const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => {
+    const timer = window.setTimeout((): void => {
+      window.clearTimeout(timer);
+      resolve();
+    }, ms);
+  });
+
+const asRecord = (value: unknown): Record<string, unknown> | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+  return value as Record<string, unknown>;
+};
+
+const readCreatedSlotIdsFromPayload = (payload: unknown): string[] => {
+  const payloadRecord = asRecord(payload);
+  if (!payloadRecord) {
+    return [];
+  }
+
+  const createdIds: string[] = [];
+  const pushIds = (value: unknown): void => {
+    if (!Array.isArray(value)) {
+      return;
+    }
+    value.forEach((entry: unknown) => {
+      if (typeof entry !== 'string') {
+        return;
+      }
+      const normalized = entry.trim();
+      if (!normalized) {
+        return;
+      }
+      createdIds.push(normalized);
+    });
+  };
+
+  pushIds(payloadRecord['createdSlotIds']);
+  const callbackPayload = asRecord(payloadRecord['callbackPayload']);
+  if (callbackPayload) {
+    pushIds(callbackPayload['createdSlotIds']);
+  }
+
+  return createdIds;
+};
+
+const extractCreatedSlotIdsFromRun = (runRecord: ImageStudioRunRecord): string[] => {
+  const historyEvents = Array.isArray(runRecord.historyEvents)
+    ? [...runRecord.historyEvents].reverse()
+    : [];
+  const createdSlotIds: string[] = [];
+  const seen = new Set<string>();
+
+  for (const event of historyEvents) {
+    const nextIds = readCreatedSlotIdsFromPayload(event.payload);
+    nextIds.forEach((slotId) => {
+      if (seen.has(slotId)) {
+        return;
+      }
+      seen.add(slotId);
+      createdSlotIds.push(slotId);
+    });
+
+    if (event.type === 'completed' && createdSlotIds.length > 0) {
+      break;
+    }
+  }
+
+  return createdSlotIds;
+};
+
+const normalizeExpectedOutputs = (value: unknown, fallback = 1): number => {
+  const parsed = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+  return Math.max(1, Math.min(10, Math.floor(parsed)));
+};
+
+const buildPendingLandingSlots = (
+  runId: string,
+  expectedOutputs: number
+): GenerationLandingSlot[] => {
+  const count = normalizeExpectedOutputs(expectedOutputs, 1);
+  return Array.from({ length: count }, (_value, index) => ({
+    id: `${runId}:${index + 1}`,
+    index: index + 1,
+    status: 'pending',
+    output: null,
+  }));
+};
+
+const toImageFileRecord = (
+  output: ImageStudioRunOutputRecord,
+  timestamp: string
+): ImageFileRecord => ({
+  ...output,
+  filename: output.filename || output.filepath.split('/').pop() || output.id,
+  mimetype: output.mimetype || 'image/png',
+  size: Number.isFinite(output.size) ? output.size : 0,
+  tags: Array.isArray(output.tags) ? output.tags : [],
+  createdAt: output.createdAt ?? timestamp,
+  updatedAt: output.updatedAt ?? timestamp,
+});
+
+const toImageFileRecords = (outputs: ImageStudioRunOutputRecord[]): ImageFileRecord[] => {
+  const timestamp = new Date().toISOString();
+  return outputs.map((output) => toImageFileRecord(output, timestamp));
+};
+
+const buildLandingSlotsFromRun = (run: ImageStudioRunRecord): GenerationLandingSlot[] => {
+  const outputs = Array.isArray(run.outputs) ? run.outputs : [];
+  const slotCount = Math.max(normalizeExpectedOutputs(run.expectedOutputs, 1), outputs.length);
+  return Array.from({ length: slotCount }, (_value, index) => {
+    const rawOutput = outputs[index] ?? null;
+    const output = rawOutput ? toImageFileRecord(rawOutput, new Date().toISOString()) : null;
+    const status: GenerationLandingSlot['status'] = output
+      ? 'completed'
+      : run.status === 'failed' || run.status === 'completed'
+        ? 'failed'
+        : 'pending';
+    return {
+      id: `${run.id}:${index + 1}`,
+      index: index + 1,
+      status,
+      output,
+    };
+  });
+};
+
+const cloneLandingSlots = (slots: GenerationLandingSlot[]): GenerationLandingSlot[] =>
+  slots.map((slot) => ({ ...slot }));
+
+const markLandingSlotsAsFailed = (
+  slots: GenerationLandingSlot[],
+  runId: string,
+  expectedOutputs: number
+): GenerationLandingSlot[] => {
+  const baseSlots =
+    slots.length > 0 ? cloneLandingSlots(slots) : buildPendingLandingSlots(runId, expectedOutputs);
+  return baseSlots.map((slot) => ({
+    ...slot,
+    status: slot.output ? 'completed' : 'failed',
+  }));
+};
+
+const toGenerationRecordFromRun = (runRecord: ImageStudioRunRecord): GenerationRecord | null => {
+  const outputs = Array.isArray(runRecord.outputs) ? runRecord.outputs : [];
+  if (outputs.length === 0) {
+    return null;
+  }
+
+  const requestMask = runRecord.request?.mask;
+  const maskShapeCount =
+    requestMask?.type === 'polygons'
+      ? Array.isArray(requestMask.polygons)
+        ? requestMask.polygons.length
+        : 0
+      : requestMask?.type === 'polygon'
+        ? Array.isArray(requestMask.points) && requestMask.points.length >= 3
+          ? 1
+          : 0
+        : 0;
+  const maskInvert = requestMask?.type === 'polygons' ? Boolean(requestMask.invert) : false;
+  const maskFeather = requestMask?.type === 'polygons' ? Number(requestMask.feather ?? 0) || 0 : 0;
+
+  return {
+    id: runRecord.id,
+    timestamp: runRecord.finishedAt ?? runRecord.updatedAt ?? runRecord.createdAt,
+    prompt: runRecord.request?.prompt ?? '',
+    maskShapeCount,
+    maskInvert,
+    maskFeather,
+    outputs: toImageFileRecords(outputs),
+    slotId: runRecord.request?.asset?.id ?? '',
+    slotName: runRecord.request?.asset?.id ?? runRecord.request?.asset?.filepath ?? runRecord.id,
+  };
+};
+
+export function useGenerationRuntime(): {
+  state: GenerationState;
+  actions: GenerationActions;
+} {
+  const { toast } = useToast();
+  const { projectId } = useProjectsState();
+  const { workingSlot, slots, compositeAssetIds } = useSlotsState();
+  const { setSelectedSlotId, setWorkingSlotId } = useSlotsActions();
+  const { maskShapes, maskInvert, maskFeather } = useMaskingState();
+  const { setMaskInvert, setMaskFeather } = useMaskingActions();
+  const { promptText, paramsState } = usePromptState();
+  const { setPromptText } = usePromptActions();
+  const { studioSettings } = useSettingsState();
+  const generationModel = useBrainAssignment({
+    capability: 'image_studio.general',
+  });
+
+  const runMutation = useRunStudio();
+  const [runOutputs, setRunOutputs] = useState<ImageFileRecord[]>([]);
+  const [generationHistory, setGenerationHistory] = useState<GenerationRecord[]>([]);
+  const [activeRunId, setActiveRunId] = useState<string | null>(null);
+  const [activeRunSourceSlotId, setActiveRunSourceSlotId] = useState<string | null>(null);
+  const [activeRunStatus, setActiveRunStatus] = useState<ImageStudioRunStatus | null>(null);
+  const [activeRunError, setActiveRunError] = useState<string | null>(null);
+  const [landingSlots, setLandingSlots] = useState<GenerationLandingSlot[]>([]);
+  const [pendingSourceSlotId, setPendingSourceSlotId] = useState<string | null>(null);
+
+  const pollTokenRef = useRef<PollToken | null>(null);
+  const lastSseHandledAtRef = useRef(0);
+  const generationHistoryRef = useRef(generationHistory);
+  generationHistoryRef.current = generationHistory;
+
+  const maskEligibleCount = useMemo(
+    () =>
+      maskShapes.filter(
+        (shape) =>
+          shape.visible &&
+          shape.closed &&
+          (shape.type === 'polygon' || shape.type === 'lasso') &&
+          shape.points.length >= 3
+      ).length,
+    [maskShapes]
+  );
+
+  const isRunInFlight = activeRunStatus === 'queued' || activeRunStatus === 'running';
+
+  const cancelCurrentPoll = useCallback((): void => {
+    if (pollTokenRef.current) {
+      pollTokenRef.current.cancelled = true;
+      if (pollTokenRef.current.eventSource) {
+        pollTokenRef.current.eventSource.close();
+        pollTokenRef.current.eventSource = null;
+      }
+      pollTokenRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      cancelCurrentPoll();
+    };
+  }, [cancelCurrentPoll]);
+
+  useEffect(() => {
+    if (!pendingSourceSlotId) {
+      return;
+    }
+    const sourceSlotExists = slots.some((slot) => slot.id === pendingSourceSlotId);
+    if (!sourceSlotExists) {
+      return;
+    }
+
+    setSelectedSlotId(pendingSourceSlotId);
+    setWorkingSlotId(pendingSourceSlotId);
+    setPendingSourceSlotId(null);
+  }, [pendingSourceSlotId, setSelectedSlotId, setWorkingSlotId, slots]);
+
+  const pollRunUntilFinished = useCallback(
+    async (params: {
+      runId: string;
+      resolvedPrompt: string;
+      maskShapeCount: number;
+      submittedMaskInvert: boolean;
+      submittedMaskFeather: number;
+      submittedSlotId: string;
+      submittedSlotName: string;
+      submittedSlotFolderPath: string;
+      expectedOutputs: number;
+    }): Promise<void> => {
+      const token: PollToken = {
+        runId: params.runId,
+        cancelled: false,
+        settled: false,
+        eventSource: null,
+      };
+      cancelCurrentPoll();
+      pollTokenRef.current = token;
+
+      let sseConnected = false;
+
+      const closeEventSource = (): void => {
+        if (token.eventSource) {
+          token.eventSource.close();
+          token.eventSource = null;
+        }
+      };
+
+      const settle = (): void => {
+        if (token.settled) {
+          return;
+        }
+        token.settled = true;
+        closeEventSource();
+        if (pollTokenRef.current === token) {
+          pollTokenRef.current = null;
+        }
+      };
+
+      const applyRunSnapshot = (runRecord: ImageStudioRunRecord): boolean => {
+        if (token.cancelled || token.settled || pollTokenRef.current !== token) {
+          return true;
+        }
+
+        setActiveRunId(runRecord.id);
+        setActiveRunSourceSlotId(runRecord.request?.asset?.id?.trim() || null);
+        setActiveRunStatus(runRecord.status);
+        setActiveRunError(runRecord.errorMessage ?? null);
+
+        const expectedOutputs = normalizeExpectedOutputs(
+          runRecord.expectedOutputs,
+          params.expectedOutputs
+        );
+        if (runRecord.status === 'completed') {
+          const outputs = Array.isArray(runRecord.outputs)
+            ? toImageFileRecords(runRecord.outputs)
+            : [];
+          if (outputs.length === 0) {
+            const message =
+              runRecord.errorMessage?.trim() || 'Generation completed but returned no images.';
+            setActiveRunStatus('failed');
+            setActiveRunError(message);
+            setRunOutputs([]);
+            setLandingSlots(markLandingSlotsAsFailed([], runRecord.id, expectedOutputs));
+            settle();
+            toast(message, { variant: 'error' });
+            return true;
+          }
+
+          const createdSlotIds = extractCreatedSlotIdsFromRun(runRecord);
+          const generatedSourceSlotId = createdSlotIds[0] ?? null;
+          const shouldPromoteGeneratedSource = params.submittedSlotId.trim().length === 0;
+
+          setRunOutputs(outputs);
+          if (generatedSourceSlotId && shouldPromoteGeneratedSource) {
+            setPendingSourceSlotId(generatedSourceSlotId);
+          }
+          setLandingSlots(
+            buildLandingSlotsFromRun({
+              ...runRecord,
+              expectedOutputs,
+            })
+          );
+
+          const record: GenerationRecord = {
+            id: runRecord.id,
+            timestamp: runRecord.finishedAt ?? new Date().toISOString(),
+            prompt: params.resolvedPrompt,
+            maskShapeCount: params.maskShapeCount,
+            maskInvert: params.submittedMaskInvert,
+            maskFeather: params.submittedMaskFeather,
+            outputs,
+            slotId: params.submittedSlotId,
+            slotName: params.submittedSlotName,
+          };
+          setGenerationHistory((previous) => {
+            const deduped = previous.filter((entry) => entry.id !== record.id);
+            return [record, ...deduped].slice(0, 50);
+          });
+          settle();
+          toast(`Generated ${outputs.length} image(s).`, { variant: 'success' });
+          return true;
+        }
+
+        if (runRecord.status === 'failed') {
+          const failedOutputs = Array.isArray(runRecord.outputs)
+            ? toImageFileRecords(runRecord.outputs)
+            : [];
+          const failedLandingSlots = buildLandingSlotsFromRun({
+            ...runRecord,
+            expectedOutputs,
+          });
+          setRunOutputs(failedOutputs);
+          setLandingSlots(
+            markLandingSlotsAsFailed(failedLandingSlots, runRecord.id, expectedOutputs)
+          );
+          settle();
+          toast(runRecord.errorMessage || 'Generation failed.', { variant: 'error' });
+          return true;
+        }
+
+        return false;
+      };
+
+      const fetchAndApplyRunStatus = async (): Promise<boolean> => {
+        const response = await api.get<ImageStudioRunDetailResponse>(
+          `/api/image-studio/runs/${encodeURIComponent(params.runId)}`
+        );
+        return applyRunSnapshot(response.run);
+      };
+
+      if (typeof EventSource !== 'undefined') {
+        try {
+          const source = new EventSource(
+            `/api/image-studio/runs/${encodeURIComponent(params.runId)}/stream`
+          );
+          token.eventSource = source;
+
+          source.onopen = () => {
+            if (token.cancelled || token.settled || pollTokenRef.current !== token) {
+              source.close();
+              return;
+            }
+            sseConnected = true;
+          };
+
+          source.onmessage = (event: MessageEvent) => {
+            if (token.cancelled || token.settled || pollTokenRef.current !== token) {
+              return;
+            }
+            try {
+              const payload = JSON.parse(event.data as string) as { type?: string };
+              if (payload?.type === 'heartbeat') {
+                return;
+              }
+            } catch {
+              // Continue with status refresh for unknown event payloads.
+            }
+            lastSseHandledAtRef.current = Date.now();
+            void fetchAndApplyRunStatus().catch(() => {
+              // Polling fallback handles transient failures.
+            });
+          };
+
+          source.onerror = () => {
+            sseConnected = false;
+            if (token.eventSource === source) {
+              source.close();
+              token.eventSource = null;
+            }
+          };
+        } catch {
+          // Polling fallback remains active.
+        }
+      }
+
+      for (let attempt = 0; attempt < POLL_MAX_ATTEMPTS; attempt += 1) {
+        if (token.cancelled || token.settled || pollTokenRef.current !== token) {
+          return;
+        }
+
+        const sseHandledRecently =
+          sseConnected && Date.now() - lastSseHandledAtRef.current < SSE_FALLBACK_POLL_INTERVAL_MS;
+
+        if (!sseHandledRecently) {
+          try {
+            const finished = await fetchAndApplyRunStatus();
+            if (finished) {
+              return;
+            }
+          } catch (error) {
+            if (attempt === 0 && !sseConnected) {
+              toast(
+                error instanceof Error ? error.message : 'Failed to receive generation callback.',
+                {
+                  variant: 'error',
+                }
+              );
+            }
+          }
+        }
+
+        const nextDelay = sseConnected ? SSE_FALLBACK_POLL_INTERVAL_MS : POLL_INTERVAL_MS;
+        await sleep(nextDelay);
+      }
+
+      if (token.cancelled || token.settled || pollTokenRef.current !== token) {
+        return;
+      }
+      setActiveRunStatus('failed');
+      setActiveRunError('Generation callback timed out.');
+      setRunOutputs([]);
+      setLandingSlots((previous) =>
+        markLandingSlotsAsFailed(previous, params.runId, params.expectedOutputs)
+      );
+      settle();
+      toast('Generation callback timed out.', { variant: 'error' });
+    },
+    [cancelCurrentPoll, toast]
+  );
+
+  const pollRunUntilFinishedRef = useRef(pollRunUntilFinished);
+  useEffect(() => {
+    pollRunUntilFinishedRef.current = pollRunUntilFinished;
+  }, [pollRunUntilFinished]);
+
+  useEffect(() => {
+    cancelCurrentPoll();
+
+    if (!projectId) {
+      setRunOutputs([]);
+      setGenerationHistory([]);
+      setLandingSlots([]);
+      setActiveRunId(null);
+      setActiveRunSourceSlotId(null);
+      setActiveRunStatus(null);
+      setActiveRunError(null);
+      setPendingSourceSlotId(null);
+      return;
+    }
+
+    let cancelled = false;
+    const hydrationAbortController = new AbortController();
+
+    const hydrateLatestRun = async (): Promise<void> => {
+      try {
+        const response = await api.get<ImageStudioRunsResponse>(
+          `/api/image-studio/runs?projectId=${encodeURIComponent(projectId)}&limit=25`,
+          { signal: hydrationAbortController.signal }
+        );
+        if (cancelled) {
+          return;
+        }
+
+        const runs = Array.isArray(response.runs) ? response.runs : [];
+        const historyRecords = runs
+          .map((run) => toGenerationRecordFromRun(run))
+          .filter((record): record is GenerationRecord => Boolean(record))
+          .slice(0, 50);
+        setGenerationHistory(historyRecords);
+
+        const latestRunInFlight =
+          runs.find((run) => run.status === 'queued' || run.status === 'running') ?? null;
+        const latestRun = latestRunInFlight ?? runs[0] ?? null;
+        if (!latestRun) {
+          setRunOutputs([]);
+          setGenerationHistory([]);
+          setLandingSlots([]);
+          setActiveRunId(null);
+          setActiveRunSourceSlotId(null);
+          setActiveRunStatus(null);
+          setActiveRunError(null);
+          return;
+        }
+
+        setRunOutputs(Array.isArray(latestRun.outputs) ? toImageFileRecords(latestRun.outputs) : []);
+        setLandingSlots(buildLandingSlotsFromRun(latestRun));
+        setActiveRunId(latestRun.id);
+        setActiveRunSourceSlotId(latestRun.request?.asset?.id?.trim() || null);
+        setActiveRunStatus(latestRun.status);
+        const latestSelectedRunInFlight =
+          latestRun.status === 'queued' || latestRun.status === 'running';
+        setActiveRunError(latestSelectedRunInFlight ? (latestRun.errorMessage ?? null) : null);
+
+        if (!latestSelectedRunInFlight) {
+          return;
+        }
+
+        const requestMask = latestRun.request?.mask;
+        const maskShapeCount =
+          requestMask?.type === 'polygons'
+            ? Array.isArray(requestMask.polygons)
+              ? requestMask.polygons.length
+              : 0
+            : requestMask?.type === 'polygon'
+              ? Array.isArray(requestMask.points) && requestMask.points.length >= 3
+                ? 1
+                : 0
+              : 0;
+
+        const submittedMaskInvert =
+          requestMask?.type === 'polygons' ? Boolean(requestMask.invert) : false;
+        const submittedMaskFeather =
+          requestMask?.type === 'polygons' ? Number(requestMask.feather ?? 0) || 0 : 0;
+
+        void pollRunUntilFinishedRef.current({
+          runId: latestRun.id,
+          resolvedPrompt: latestRun.request?.prompt ?? '',
+          maskShapeCount,
+          submittedMaskInvert,
+          submittedMaskFeather,
+          submittedSlotId: latestRun.request?.asset?.id ?? '',
+          submittedSlotName:
+            latestRun.request?.asset?.id ?? latestRun.request?.asset?.filepath ?? latestRun.id,
+          submittedSlotFolderPath: '',
+          expectedOutputs: normalizeExpectedOutputs(latestRun.expectedOutputs, 1),
+        });
+      } catch {
+        // Keep current UI state on hydration failures.
+      }
+    };
+
+    void hydrateLatestRun();
+
+    return () => {
+      cancelled = true;
+      hydrationAbortController.abort();
+      cancelCurrentPoll();
+    };
+  }, [projectId, cancelCurrentPoll]);
+
+  const handleRunGeneration = useCallback(() => {
+    if (!projectId) {
+      toast('Select a project before generating.', { variant: 'info' });
+      return;
+    }
+    if (!promptText.trim()) {
+      toast('Enter a prompt before generating.', { variant: 'info' });
+      return;
+    }
+
+    const requestPreview = buildRunRequestPreview({
+      projectId,
+      workingSlot,
+      slots,
+      compositeAssetIds,
+      promptText,
+      paramsState,
+      maskShapes,
+      maskInvert,
+      maskFeather,
+      selectedModelId: generationModel.effectiveModelId,
+      studioSettings,
+    });
+    if (!requestPreview.payload) {
+      toast(requestPreview.errors[0] || 'Request payload is not valid.', { variant: 'info' });
+      return;
+    }
+
+    const resolvedPrompt = requestPreview.resolvedPrompt;
+    const submittedSlotId = workingSlot?.id ?? '';
+    const submittedSlotName = workingSlot?.name ?? workingSlot?.id ?? '';
+    const submittedMaskInvert = maskInvert;
+    const submittedMaskFeather = maskFeather;
+    const expectedOutputs = normalizeExpectedOutputs(studioSettings.targetAi.openai.image.n, 1);
+
+    cancelCurrentPoll();
+    setActiveRunError(null);
+    setActiveRunId('pending');
+    setActiveRunSourceSlotId(submittedSlotId || null);
+    setActiveRunStatus('queued');
+    setPendingSourceSlotId(null);
+    setLandingSlots(buildPendingLandingSlots('pending', expectedOutputs));
+
+    runMutation.mutate(requestPreview.payload, {
+      onSuccess: (data) => {
+        const queuedExpected = normalizeExpectedOutputs(data.expectedOutputs, expectedOutputs);
+        setActiveRunId(data.runId);
+        setActiveRunSourceSlotId(submittedSlotId || null);
+        setActiveRunStatus(data.status);
+        setActiveRunError(null);
+        setLandingSlots(buildPendingLandingSlots(data.runId, queuedExpected));
+        if (data.dispatchMode === 'inline') {
+          toast('Redis queue unavailable, generation is running inline.', { variant: 'info' });
+        }
+
+        void pollRunUntilFinished({
+          runId: data.runId,
+          resolvedPrompt,
+          maskShapeCount: requestPreview.maskShapeCount,
+          submittedMaskInvert,
+          submittedMaskFeather,
+          submittedSlotId,
+          submittedSlotName,
+          submittedSlotFolderPath: workingSlot?.folderPath ?? '',
+          expectedOutputs: queuedExpected,
+        });
+      },
+      onError: (error) => {
+        setActiveRunStatus('failed');
+        setActiveRunError(error.message || 'Generation failed.');
+        setRunOutputs([]);
+        setLandingSlots((previous) =>
+          markLandingSlotsAsFailed(previous, 'pending', expectedOutputs)
+        );
+        toast(error.message || 'Generation failed.', { variant: 'error' });
+      },
+    });
+  }, [
+    cancelCurrentPoll,
+    compositeAssetIds,
+    generationModel.effectiveModelId,
+    maskFeather,
+    maskInvert,
+    maskShapes,
+    paramsState,
+    pollRunUntilFinished,
+    projectId,
+    promptText,
+    runMutation,
+    slots,
+    studioSettings,
+    toast,
+    workingSlot,
+  ]);
+
+  const restoreGeneration = useCallback(
+    (record: GenerationRecord) => {
+      setPromptText(record.prompt);
+      setMaskInvert(record.maskInvert);
+      setMaskFeather(record.maskFeather);
+      setRunOutputs(record.outputs);
+      setLandingSlots(
+        record.outputs.map((output, index) => ({
+          id: `${record.id}:${index + 1}`,
+          index: index + 1,
+          status: 'completed',
+          output,
+        }))
+      );
+      setActiveRunId(null);
+      setActiveRunSourceSlotId(record.slotId || null);
+      setActiveRunStatus('completed');
+      setActiveRunError(null);
+      toast('Restored generation settings.', { variant: 'info' });
+    },
+    [setPromptText, setMaskInvert, setMaskFeather, toast]
+  );
+
+  const clearActiveRunError = useCallback((): void => {
+    setActiveRunError(null);
+  }, []);
+
+  const removeGenerationRecord = useCallback(
+    async (recordId: string): Promise<void> => {
+      const record = generationHistoryRef.current.find((entry) => entry.id === recordId);
+      if (record && projectId && record.outputs.length > 0) {
+        await Promise.allSettled(
+          record.outputs.map((output) =>
+            api
+              .post(`/api/image-studio/projects/${encodeURIComponent(projectId)}/variants/delete`, {
+                assetId: output.id,
+                generationRunId: record.id,
+                sourceSlotId: record.slotId,
+              })
+              .catch(() => {})
+          )
+        );
+      }
+      setGenerationHistory((previous) => previous.filter((entry) => entry.id !== recordId));
+    },
+    [projectId]
+  );
+
+  const state = useMemo<GenerationState>(
+    () => ({
+      runMutation,
+      runOutputs,
+      maskEligibleCount,
+      generationHistory,
+      activeRunId,
+      activeRunSourceSlotId,
+      activeRunStatus,
+      activeRunError,
+      isRunInFlight,
+      landingSlots,
+    }),
+    [
+      runMutation,
+      runOutputs,
+      maskEligibleCount,
+      generationHistory,
+      activeRunId,
+      activeRunSourceSlotId,
+      activeRunStatus,
+      activeRunError,
+      isRunInFlight,
+      landingSlots,
+    ]
+  );
+
+  const actions = useMemo<GenerationActions>(
+    () => ({
+      handleRunGeneration,
+      restoreGeneration,
+      clearActiveRunError,
+      removeGenerationRecord,
+    }),
+    [handleRunGeneration, restoreGeneration, clearActiveRunError, removeGenerationRecord]
+  );
+
+  return { state, actions };
+}

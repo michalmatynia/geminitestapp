@@ -333,8 +333,35 @@ describe('Lessons', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /classic clock/i }));
 
+    const headerActions = screen.getByTestId('active-lesson-header-icon-actions');
+
+    expect(screen.getByTestId('active-lesson-header')).toHaveClass(
+      'glass-panel',
+      'border-white/78',
+      'bg-white/68'
+    );
+    expect(headerActions.firstElementChild).toBe(screen.getByTestId('active-lesson-icon-clock-component'));
+    expect(headerActions).toContainElement(screen.getByTestId('kangur-lesson-narrator'));
+    expect(screen.getByRole('button', { name: 'Wroc do listy lekcji' })).toHaveClass(
+      'kangur-cta-pill',
+      'surface-cta'
+    );
     expect(screen.getByTestId('legacy-lesson')).toBeInTheDocument();
     expect(screen.queryByTestId('lesson-document-renderer')).not.toBeInTheDocument();
+  });
+
+  it('returns from an active lesson to the lessons library via the shared header back button', () => {
+    setSettingsStore({
+      lessons: [createLesson()],
+    });
+
+    render(<Lessons />);
+
+    fireEvent.click(screen.getByRole('button', { name: /nauka zegara/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Wroc do listy lekcji' }));
+
+    expect(screen.getByRole('button', { name: /nauka zegara/i })).toBeInTheDocument();
+    expect(screen.queryByTestId('legacy-lesson')).not.toBeInTheDocument();
   });
 
   it('shows the empty-document warning when a document-mode lesson has no saved content', () => {
@@ -474,6 +501,85 @@ describe('Lessons', () => {
     expect(screen.getAllByText('Priorytet rodzica')[0]).toHaveClass('border-rose-200', 'bg-rose-100');
     expect(screen.getByText('Opanowane 92%')).toHaveClass('border-emerald-200', 'bg-emerald-100');
     expect(screen.getByText('Priorytet wysoki')).toHaveClass('border-rose-200', 'bg-rose-100');
+
+    fireEvent.click(screen.getByRole('button', { name: /nauka zegara/i }));
+
+    expect(screen.getByTestId('active-lesson-parent-priority-chip')).toHaveClass(
+      'border-rose-200',
+      'bg-rose-100'
+    );
+    expect(screen.getByTestId('active-lesson-parent-priority-chip')).toHaveTextContent(
+      'Priorytet Rodzica'
+    );
+    expect(screen.queryByText('Powtorz nauke zegara')).toBeNull();
+    expect(screen.queryByText('Skup sie na odczytywaniu godzin.')).toBeNull();
+  });
+
+  it('shows a compact completed parent-assignment pill in the active lesson header', () => {
+    authState.value = {
+      user: {
+        id: 'parent-1',
+        activeLearner: {
+          id: 'learner-1',
+        },
+      },
+      canAccessParentAssignments: true,
+      navigateToLogin: vi.fn(),
+      logout: vi.fn(),
+    };
+    assignmentsState.value = [
+      {
+        id: 'assignment-completed',
+        learnerKey: 'jan@example.com',
+        title: 'Powtorz dodawanie',
+        description: 'Wykonane wczoraj.',
+        priority: 'medium',
+        archived: false,
+        target: {
+          type: 'lesson',
+          lessonComponentId: 'adding',
+          requiredCompletions: 1,
+          baselineCompletions: 1,
+        },
+        assignedByName: 'Rodzic',
+        assignedByEmail: 'rodzic@example.com',
+        createdAt: '2026-03-06T10:00:00.000Z',
+        updatedAt: '2026-03-07T10:00:00.000Z',
+        progress: {
+          status: 'completed',
+          percent: 100,
+          summary: 'Powtorki: 1/1',
+          attemptsCompleted: 1,
+          attemptsRequired: 1,
+          lastActivityAt: '2026-03-07T10:00:00.000Z',
+          completedAt: '2026-03-07T10:00:00.000Z',
+        },
+      },
+    ];
+
+    setSettingsStore({
+      lessons: [
+        createLesson({
+          id: 'adding-completed',
+          componentId: 'adding',
+          title: 'Dodawanie',
+        }),
+      ],
+    });
+
+    render(<Lessons />);
+
+    fireEvent.click(screen.getByRole('button', { name: /dodawanie/i }));
+
+    expect(screen.getByTestId('active-lesson-parent-completed-chip')).toHaveClass(
+      'border-emerald-200',
+      'bg-emerald-100'
+    );
+    expect(screen.getByTestId('active-lesson-parent-completed-chip')).toHaveTextContent(
+      'Ukonczone dla rodzica'
+    );
+    expect(screen.queryByText('Powtorz dodawanie')).toBeNull();
+    expect(screen.queryByText('Wykonane wczoraj.')).toBeNull();
   });
 
   it('hides parent assignment markers in local mode even if stale assignment data exists', () => {

@@ -1,8 +1,8 @@
-<testsuites id="" name="" tests="2" failures="0" skipped="0" errors="0" time="3.1630589999999996">
-<testsuite name="features/accessibility/public-auth-accessibility.spec.ts" timestamp="2026-03-08T14:15:27.550Z" hostname="" tests="2" failures="0" skipped="0" time="1.954" errors="0">
-<testcase name="/auth/signin exposes skip navigation and passes the accessibility smoke scan" classname="features/accessibility/public-auth-accessibility.spec.ts" time="0.724">
+<testsuites id="" name="" tests="2" failures="0" skipped="0" errors="0" time="19.805797">
+<testsuite name="features/accessibility/public-auth-accessibility.spec.ts" timestamp="2026-03-08T14:57:13.811Z" hostname="" tests="2" failures="0" skipped="0" time="11.311" errors="0">
+<testcase name="/auth/signin exposes skip navigation and passes the accessibility smoke scan" classname="features/accessibility/public-auth-accessibility.spec.ts" time="5.528">
 </testcase>
-<testcase name="/auth/register exposes skip navigation and passes the accessibility smoke scan" classname="features/accessibility/public-auth-accessibility.spec.ts" time="1.23">
+<testcase name="/auth/register exposes skip navigation and passes the accessibility smoke scan" classname="features/accessibility/public-auth-accessibility.spec.ts" time="5.783">
 </testcase>
 </testsuite>
 </testsuites>

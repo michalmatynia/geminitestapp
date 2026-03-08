@@ -20,7 +20,8 @@ describe('KangurRouteAccessibilityAnnouncer', () => {
     vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
   });
 
-  it('announces the next Kangur page and focuses the main region after route changes', async () => {
+  it('announces the next Kangur page and focuses the main region without scrolling', async () => {
+    const focusSpy = vi.spyOn(HTMLElement.prototype, 'focus');
     const { rerender } = render(
       <KangurRoutingProvider
         basePath='/kangur'
@@ -57,5 +58,6 @@ describe('KangurRouteAccessibilityAnnouncer', () => {
       expect(screen.getByRole('status')).toHaveTextContent('Widok: Lekcje');
     });
     expect(screen.getByRole('main')).toHaveFocus();
+    expect(focusSpy).toHaveBeenCalledWith({ preventScroll: true });
   });
 });

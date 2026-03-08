@@ -1,0 +1,31 @@
+{
+  "generatedAt": "2026-03-08T15:07:15.057Z",
+  "runtime": {
+    "source": "broker",
+    "managed": true,
+    "reused": false,
+    "rootDir": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp",
+    "appId": "web",
+    "mode": "dev",
+    "agentId": "case-resolver-fix",
+    "host": "127.0.0.1",
+    "port": 63261,
+    "baseUrl": "http://127.0.0.1:63261",
+    "pid": 15785,
+    "distDir": ".next-dev-web-dev-case-resolver-fix",
+    "leaseKey": "web-dev-case-resolver-fix-ed58ad7e",
+    "leaseFilePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/tmp/playwright-runtime-broker/leases/web-dev-case-resolver-fix-ed58ad7e.json",
+    "logFilePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/tmp/playwright-runtime-broker/logs/web-dev-case-resolver-fix-ed58ad7e.log",
+    "startedAt": "2026-03-08T15:06:56.314Z",
+    "preferredBrowserNodeBinDir": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin"
+  },
+  "playwrightArgs": [
+    "test",
+    "e2e/features/accessibility/case-resolver-accessibility.spec.ts",
+    "--workers=1"
+  ],
+  "runId": "2026-03-08t15-06-56-305z-15784-06cb82",
+  "outputDir": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/tmp/playwright-runs/web/case-resolver-fix/2026-03-08t15-06-56-305z-15784-06cb82/test-results",
+  "htmlReportDir": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/tmp/playwright-runs/web/case-resolver-fix/2026-03-08t15-06-56-305z-15784-06cb82/html-report",
+  "junitOutputFile": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/tmp/playwright-runs/web/case-resolver-fix/2026-03-08t15-06-56-305z-15784-06cb82/junit.xml"
+}

@@ -1,0 +1,6 @@
+<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="0" time="4.491939">
+<testsuite name="features/accessibility/admin-dashboard-accessibility.spec.ts" timestamp="2026-03-08T15:10:48.783Z" hostname="" tests="1" failures="0" skipped="0" time="3.012" errors="0">
+<testcase name="admin dashboard exposes shell landmarks and passes the accessibility smoke scan" classname="features/accessibility/admin-dashboard-accessibility.spec.ts" time="3.012">
+</testcase>
+</testsuite>
+</testsuites>

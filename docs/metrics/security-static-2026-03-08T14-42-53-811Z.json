@@ -1,0 +1,171 @@
+{
+  "generatedAt": "2026-03-08T14:42:53.811Z",
+  "status": "failed",
+  "summary": {
+    "total": 12,
+    "errorCount": 7,
+    "warningCount": 5,
+    "infoCount": 0,
+    "status": "failed",
+    "fileCount": 4386
+  },
+  "scope": {
+    "root": "src",
+    "unsafeCodeAllowlist": [
+      "src/shared/lib/ai-paths/core/runtime/handlers/function-node.ts"
+    ],
+    "documentCookieAllowlist": [
+      "src/shared/lib/analytics/components/PageAnalyticsTracker.tsx",
+      "src/shared/lib/security/csrf-client.ts"
+    ]
+  },
+  "issues": [
+    {
+      "severity": "error",
+      "ruleId": "jsx-target-blank-missing-rel",
+      "message": "JSX target=\"_blank\" is missing rel=\"noopener noreferrer\".",
+      "file": "src/app/(frontend)/home-fallback-content.tsx",
+      "line": 204,
+      "column": 23,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "window-open-missing-isolation",
+      "message": "window.open should include both noopener and noreferrer features.",
+      "file": "src/features/admin/components/menu/NavTree.tsx",
+      "line": 84,
+      "column": 51,
+      "snippet": "window.open(itemHref, '_blank', 'noopener')",
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "jsx-target-blank-missing-rel",
+      "message": "JSX target=\"_blank\" is missing rel=\"noopener noreferrer\".",
+      "file": "src/features/case-resolver/components/page/CaseResolverScanFileEditor.tsx",
+      "line": 355,
+      "column": 39,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "window-open-missing-isolation",
+      "message": "window.open should include both noopener and noreferrer features.",
+      "file": "src/features/case-resolver/hooks/useAdminCaseResolverDocumentActions.ts",
+      "line": 275,
+      "column": 36,
+      "snippet": "window.open(previewUrl, '_blank')",
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "jsx-target-blank-missing-rel",
+      "message": "JSX target=\"_blank\" is missing rel=\"noopener noreferrer\".",
+      "file": "src/features/cms/components/frontend/CmsMenu.tsx",
+      "line": 379,
+      "column": 21,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "window-open-missing-isolation",
+      "message": "window.open should include both noopener and noreferrer features.",
+      "file": "src/features/cms/components/page-builder/PagePreviewPanel.tsx",
+      "line": 269,
+      "column": 34,
+      "snippet": "window.open(initialTarget, '_blank')",
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "jsx-target-blank-missing-rel",
+      "message": "JSX target=\"_blank\" is missing rel=\"noopener noreferrer\".",
+      "file": "src/features/kangur/admin/AdminKangurObservabilityPage.tsx",
+      "line": 702,
+      "column": 17,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "document-cookie-review",
+      "message": "Direct document.cookie access should stay isolated to reviewed helpers/components.",
+      "file": "src/features/admin/layout/AdminLayout.tsx",
+      "line": 53,
+      "column": 16,
+      "snippet": "document.cookie = `${ADMIN_MENU_COLLAPSED_COOKIE_KEY}=${collapsed ? '1' : '0'}; Path=/; Max-Age=31536000; SameSite=Lax`",
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "dangerouslysetinnerhtml-review",
+      "message": "dangerouslySetInnerHTML is used without an obvious sanitize/safe marker in the inline expression.",
+      "file": "src/features/document-editor/components/MarkdownSplitEditor.tsx",
+      "line": 196,
+      "column": 15,
+      "snippet": "{{ __html: debouncedHtml }}",
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "document-cookie-review",
+      "message": "Direct document.cookie access should stay isolated to reviewed helpers/components.",
+      "file": "src/features/kangur/observability/client.ts",
+      "line": 37,
+      "column": 26,
+      "snippet": "document.cookie.split",
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "document-cookie-review",
+      "message": "Direct document.cookie access should stay isolated to reviewed helpers/components.",
+      "file": "src/features/kangur/observability/client.ts",
+      "line": 46,
+      "column": 12,
+      "snippet": "document.cookie = `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=${maxAgeSeconds}; SameSite=Lax`",
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "dangerouslysetinnerhtml-review",
+      "message": "dangerouslySetInnerHTML is used without an obvious sanitize/safe marker in the inline expression.",
+      "file": "src/features/notesapp/components/list/NoteCardContent.tsx",
+      "line": 44,
+      "column": 9,
+      "snippet": "{{ __html: contentHtml }}",
+      "context": null
+    }
+  ],
+  "rules": [
+    {
+      "ruleId": "jsx-target-blank-missing-rel",
+      "errorCount": 4,
+      "warningCount": 0,
+      "infoCount": 0
+    },
+    {
+      "ruleId": "window-open-missing-isolation",
+      "errorCount": 3,
+      "warningCount": 0,
+      "infoCount": 0
+    },
+    {
+      "ruleId": "document-cookie-review",
+      "errorCount": 0,
+      "warningCount": 3,
+      "infoCount": 0
+    },
+    {
+      "ruleId": "dangerouslysetinnerhtml-review",
+      "errorCount": 0,
+      "warningCount": 2,
+      "infoCount": 0
+    }
+  ],
+  "durationMs": 1838
+}

@@ -184,7 +184,13 @@ test.describe('Kangur Learner Profile', () => {
 
     await playNowLink.click();
     await expect(page).toHaveURL(/\/kangur\/game/);
-    await expect(page.getByText(/Tryb treningowy/i)).toBeVisible();
+    await expect(page.getByTestId('kangur-game-training-top-section')).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Trening mieszany/i })).toBeVisible();
+    await page
+      .getByTestId('kangur-game-training-top-section')
+      .getByRole('button', { name: 'Wróć do poprzedniej strony' })
+      .click();
+    await expect(page.getByTestId('kangur-home-actions-shell')).toBeVisible();
   });
 
   test('shows the persisted AI tutor mood on the learner profile', async ({ page }) => {
@@ -310,7 +316,9 @@ test.describe('Kangur Learner Profile', () => {
 
     await expect(page).toHaveURL(/\/kangur\/lessons/);
     await expect(page).not.toHaveURL(/focus=/);
-    await expect(page.getByRole('heading', { name: 'Dzielenie' })).toBeVisible();
+    await expect(
+      page.getByTestId('active-lesson-header').getByRole('heading', { name: 'Dzielenie' })
+    ).toBeVisible();
     await expect(page.getByTestId('lesson-hub-section-intro')).toBeVisible();
   });
 
@@ -342,7 +350,13 @@ test.describe('Kangur Learner Profile', () => {
     await playNowLink.click();
 
     await expect(page).toHaveURL(/\/kangur\/game/);
-    await expect(page.getByText(/Tryb treningowy/i)).toBeVisible();
+    await expect(page.getByTestId('kangur-game-training-top-section')).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Trening mieszany/i })).toBeVisible();
+    await page
+      .getByTestId('kangur-game-training-top-section')
+      .getByRole('button', { name: 'Wróć do poprzedniej strony' })
+      .click();
+    await expect(page.getByTestId('kangur-home-actions-shell')).toBeVisible();
   });
 
   test('quick-start operation works from operation performance links', async ({ page }) => {

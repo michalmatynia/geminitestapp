@@ -13,7 +13,7 @@ const {
   kangurPublicAppMock,
   redirectMock,
   resolveCmsDomainFromHeadersMock,
-  shouldUseFrontPageAppRedirectMock,
+  shouldApplyFrontPageAppSelectionMock,
 } = vi.hoisted(() => ({
   flushMock: vi.fn(),
   frontPageAllowed: new Set(['cms', 'products', 'kangur', 'chatbot', 'notes']),
@@ -27,7 +27,7 @@ const {
   kangurPublicAppMock: vi.fn(),
   redirectMock: vi.fn(),
   resolveCmsDomainFromHeadersMock: vi.fn(),
-  shouldUseFrontPageAppRedirectMock: vi.fn(),
+  shouldApplyFrontPageAppSelectionMock: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({
@@ -69,11 +69,11 @@ vi.mock('@/app/(frontend)/home-helpers', () => {
   return {
     FRONT_PAGE_ALLOWED: frontPageAllowed,
     getFrontPageSetting: getFrontPageSettingMock,
-    shouldUseFrontPageAppRedirect: shouldUseFrontPageAppRedirectMock,
+    shouldApplyFrontPageAppSelection: shouldApplyFrontPageAppSelectionMock,
   };
 });
 
-describe('front page app redirects', () => {
+describe('front page app selection', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
@@ -86,7 +86,7 @@ describe('front page app redirects', () => {
     homeContentMock.mockReturnValue(null);
     kangurPublicAppMock.mockReturnValue(null);
     resolveCmsDomainFromHeadersMock.mockResolvedValue({ id: 'default-domain' });
-    shouldUseFrontPageAppRedirectMock.mockReturnValue(true);
+    shouldApplyFrontPageAppSelectionMock.mockReturnValue(true);
     getFrontPagePublicOwnerMock.mockImplementation((value: string | null | undefined) =>
       value === 'kangur' ? 'kangur' : 'cms'
     );
@@ -161,10 +161,10 @@ describe('front page app redirects', () => {
     expect(flushMock).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps HOME on the CMS flow when redirect feature flag is disabled', async () => {
+  it('keeps HOME on the CMS flow when Front Manage routing is explicitly disabled', async () => {
     const { Home } = await loadHomeModule();
     getFrontPageSettingMock.mockResolvedValue('kangur');
-    shouldUseFrontPageAppRedirectMock.mockReturnValue(false);
+    shouldApplyFrontPageAppSelectionMock.mockReturnValue(false);
 
     const result = await Home();
 

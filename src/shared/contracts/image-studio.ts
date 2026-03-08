@@ -53,12 +53,6 @@ export type MaskShapeForExport = {
 };
 
 /**
- * @deprecated Use AI Brain global provider credentials instead. This key remains only as a
- * temporary migration fallback for older installs.
- */
-export const IMAGE_STUDIO_OPENAI_API_KEY_KEY = 'image_studio_openai_api_key';
-
-/**
  * Image Studio DTOs
  */
 export * from './image-studio-transform-contracts';

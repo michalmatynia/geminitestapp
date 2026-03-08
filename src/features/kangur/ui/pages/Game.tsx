@@ -43,7 +43,10 @@ const GAME_SCREEN_LABELS: Record<KangurGameScreen, string> = {
 };
 
 function GameContent(): React.JSX.Element {
-  const { basePath, progress, screen, user, xpToast } = useKangurGameRuntime();
+  const runtime = useKangurGameRuntime();
+  const { basePath, progress, screen, user, xpToast } = runtime;
+  const canAccessParentAssignments =
+    runtime.canAccessParentAssignments ?? Boolean(user?.activeLearner?.id);
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('home');
   const prefersReducedMotion = useReducedMotion();
   const screenHeadingRef = useRef<HTMLHeadingElement>(null);
@@ -133,14 +136,14 @@ function GameContent(): React.JSX.Element {
                   <KangurGameHomeActionsWidget />
                 </section>
 
-                {user ? (
+                {canAccessParentAssignments ? (
                   <section className='mx-auto w-full max-w-[900px]' aria-labelledby='kangur-home-assignments-heading'>
                     <h3 id='kangur-home-assignments-heading' className='sr-only'>
                       Priorytetowe zadania
                     </h3>
                     <KangurPriorityAssignments
                       basePath={basePath}
-                      enabled={Boolean(user)}
+                      enabled={canAccessParentAssignments}
                       title='Priorytetowe zadania'
                       emptyLabel='Brak aktywnych zadan od rodzica.'
                     />

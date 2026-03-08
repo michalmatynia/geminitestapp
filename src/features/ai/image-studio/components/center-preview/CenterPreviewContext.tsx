@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 
 import type { VariantTooltipState } from './VariantTooltipPortal';
+import { internalError } from '@/shared/errors/app-error';
 
 type Pane = 'left' | 'right';
 
@@ -103,7 +104,7 @@ export function CenterPreviewProvider({
 export function useCenterPreviewContext(): CenterPreviewContextValue {
   const context = useContext(CenterPreviewContext);
   if (!context) {
-    throw new Error('useCenterPreviewContext must be used within a CenterPreviewProvider');
+    throw internalError('useCenterPreviewContext must be used within a CenterPreviewProvider');
   }
   return context;
 }

@@ -26,9 +26,7 @@ export function QueryDevPanel({
   const [showInactive, setShowInactive] = useState(false);
 
   useEffect((): void => {
-    setTimeout(() => {
-      setIsMounted(true);
-    }, 0);
+    setIsMounted(true);
   }, []);
 
   // Avoid subscribing to query-cache updates (and doing work) until we've mounted,

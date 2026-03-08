@@ -30,6 +30,30 @@ export const accessibilityRouteCrawlRoutes = [
     audience: 'admin',
   },
   {
+    id: 'admin-notes',
+    name: 'Admin Notes',
+    route: '/admin/notes',
+    audience: 'admin',
+  },
+  {
+    id: 'admin-integrations',
+    name: 'Admin Integrations',
+    route: '/admin/integrations',
+    audience: 'admin',
+  },
+  {
+    id: 'admin-case-resolver',
+    name: 'Admin Case Resolver',
+    route: '/admin/case-resolver',
+    audience: 'admin',
+  },
+  {
+    id: 'admin-cms',
+    name: 'Admin CMS',
+    route: '/admin/cms',
+    audience: 'admin',
+  },
+  {
     id: 'admin-ai-paths',
     name: 'Admin AI Paths',
     route: '/admin/ai-paths',
@@ -45,6 +69,18 @@ export const accessibilityRouteCrawlRoutes = [
     id: 'admin-chatbot',
     name: 'Admin Chatbot',
     route: '/admin/chatbot',
+    audience: 'admin',
+  },
+  {
+    id: 'admin-agentcreator',
+    name: 'Admin Agent Creator',
+    route: '/admin/agentcreator',
+    audience: 'admin',
+  },
+  {
+    id: 'admin-prompt-engine-validation',
+    name: 'Admin Prompt Engine Validation',
+    route: '/admin/prompt-engine/validation',
     audience: 'admin',
   },
   {

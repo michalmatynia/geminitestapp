@@ -4,6 +4,7 @@ import React, { createContext, useContext } from 'react';
 
 import type { ProductCategoryWithChildren } from '@/shared/contracts/products';
 import type { FolderTreePlaceholderClassSet } from '@/shared/utils';
+import { internalError } from '@/shared/errors/app-error';
 
 export type CategoryTreeNodeRuntimeContextValue = {
   categoryById: Map<string, ProductCategoryWithChildren>;
@@ -35,7 +36,7 @@ export function CategoryTreeNodeRuntimeProvider({
 export function useCategoryTreeNodeRuntimeContext(): CategoryTreeNodeRuntimeContextValue {
   const context = useContext(CategoryTreeNodeRuntimeContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useCategoryTreeNodeRuntimeContext must be used within CategoryTreeNodeRuntimeProvider'
     );
   }

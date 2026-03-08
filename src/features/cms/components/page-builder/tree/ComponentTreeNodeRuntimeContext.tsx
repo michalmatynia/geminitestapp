@@ -3,6 +3,7 @@
 import React, { createContext, useContext } from 'react';
 
 import type { PageZone, SectionInstance } from '@/shared/contracts/cms';
+import { internalError } from '@/shared/errors/app-error';
 
 export type ComponentTreeNodeRuntimeContextValue = {
   rootSectionsByZone: Record<PageZone, SectionInstance[]>;
@@ -31,7 +32,7 @@ export function ComponentTreeNodeRuntimeProvider({
 export function useComponentTreeNodeRuntimeContext(): ComponentTreeNodeRuntimeContextValue {
   const context = useContext(ComponentTreeNodeRuntimeContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useComponentTreeNodeRuntimeContext must be used within ComponentTreeNodeRuntimeProvider'
     );
   }

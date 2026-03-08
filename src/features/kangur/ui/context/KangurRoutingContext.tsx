@@ -3,6 +3,7 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 
 import { KANGUR_BASE_PATH, normalizeKangurBasePath } from '@/features/kangur/config/routing';
+import { internalError } from '@/shared/errors/app-error';
 
 type KangurRoutingContextValue = {
   pageKey?: string | null;
@@ -45,7 +46,7 @@ export const KangurRoutingProvider = ({
 export const useKangurRouting = (): KangurRoutingContextValue => {
   const context = useContext(KangurRoutingContext);
   if (!context) {
-    throw new Error('useKangurRouting must be used within a KangurRoutingProvider');
+    throw internalError('useKangurRouting must be used within a KangurRoutingProvider');
   }
   return context;
 };

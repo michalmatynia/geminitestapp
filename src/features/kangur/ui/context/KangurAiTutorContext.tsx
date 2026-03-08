@@ -51,6 +51,7 @@ import {
   type KangurTutorMoodId,
 } from '@/shared/contracts/kangur-ai-tutor-mood';
 import { kangurAiTutorUsageSummarySchema } from '@/shared/contracts/kangur-ai-tutor';
+import { internalError } from '@/shared/errors/app-error';
 import { useAgentPersonas } from '@/shared/hooks/useAgentPersonas';
 import { ApiError, api } from '@/shared/lib/api-client';
 import { resolveAgentPersonaMood } from '@/shared/lib/agent-personas';
@@ -1000,7 +1001,7 @@ export function KangurAiTutorSessionSync({
 export function useKangurAiTutor(): KangurAiTutorContextValue {
   const ctx = useContext(KangurAiTutorContext);
   if (!ctx) {
-    throw new Error('useKangurAiTutor must be used within a KangurAiTutorProvider');
+    throw internalError('useKangurAiTutor must be used within a KangurAiTutorProvider');
   }
   return ctx;
 }

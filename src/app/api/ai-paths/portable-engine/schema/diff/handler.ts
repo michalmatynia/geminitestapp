@@ -15,6 +15,7 @@ import {
 
 const SCHEMA_DIFF_KIND_VALUES = ['all', ...PORTABLE_PATH_JSON_SCHEMA_KINDS] as const;
 type SchemaDiffKindQueryValue = (typeof SCHEMA_DIFF_KIND_VALUES)[number];
+const SCHEMA_DIFF_KIND_VALUE_SET = new Set<string>(SCHEMA_DIFF_KIND_VALUES);
 const SCHEMA_DIFF_CACHE_CONTROL = 'private, max-age=300, stale-while-revalidate=900';
 
 export const querySchema = z.object({
@@ -46,11 +47,30 @@ const matchesIfNoneMatch = (headerValue: string | null, etag: string): boolean =
   return tokens.some((token) => normalizeEtagToken(token) === normalizedEtag);
 };
 
+const resolveSchemaDiffQueryInput = (
+  req: NextRequest,
+  ctx: ApiHandlerContext
+): Record<string, unknown> => ({
+  ...Object.fromEntries(req.nextUrl.searchParams.entries()),
+  ...((ctx.query ?? {}) as Record<string, unknown>),
+});
+
+const parseSchemaDiffKindQuery = (value: unknown): SchemaDiffKindQueryValue => {
+  const normalized = normalizeOptionalQueryString(value)?.toLowerCase();
+  if (!normalized) {
+    return 'all';
+  }
+  if (SCHEMA_DIFF_KIND_VALUE_SET.has(normalized)) {
+    return normalized as SchemaDiffKindQueryValue;
+  }
+  throw new Error('Invalid portable schema diff kind.');
+};
+
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireAiPathsAccess();
 
-  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
-  const kindRaw: SchemaDiffKindQueryValue = query.kind ?? 'all';
+  const query = resolveSchemaDiffQueryInput(req, _ctx) as z.infer<typeof querySchema>;
+  const kindRaw = parseSchemaDiffKindQuery(query.kind);
 
   const diff = buildPortablePathJsonSchemaDiffReport();
   const nodeCodeObjectContractsHash = getPortableNodeCodeObjectContractsHash();

@@ -1,6 +1,5 @@
 'use client';
 
-import { type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
@@ -23,166 +22,20 @@ import type {
   MongoCollectionIndexStatusDto as MongoCollectionIndexStatus,
   SystemLogLevelDto as SystemLogLevel,
 } from '@/shared/contracts/observability';
-import type {
-  SystemLogRecordDto as SystemLogRecord,
-  SystemLogMetricsDto as SystemLogMetrics,
-} from '@/shared/contracts/observability';
 import { internalError } from '@/shared/errors/app-error';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
-import { useToast, type FilterField } from '@/shared/ui';
-
-const levelOptions: Array<{ value: SystemLogLevel | 'all'; label: string }> = [
-  { value: 'all', label: 'All levels' },
-  { value: 'error', label: 'Errors' },
-  { value: 'warn', label: 'Warnings' },
-  { value: 'info', label: 'Info' },
-];
-
-const filterFields: FilterField[] = [
-  { key: 'level', label: 'Level', type: 'select', options: [...levelOptions] },
-  { key: 'query', label: 'Search', type: 'text', placeholder: 'Message or source' },
-  { key: 'source', label: 'Source', type: 'text', placeholder: 'api/products, auth, etc.' },
-  { key: 'service', label: 'Service', type: 'text', placeholder: 'domain.feature' },
-  { key: 'method', label: 'Method', type: 'text', placeholder: 'GET, POST, PATCH...' },
-  { key: 'statusCode', label: 'Status', type: 'number', placeholder: '500' },
-  { key: 'minDurationMs', label: 'Min Duration', type: 'number', placeholder: '750' },
-  { key: 'requestId', label: 'Request ID', type: 'text', placeholder: 'x-request-id' },
-  { key: 'traceId', label: 'Trace ID', type: 'text', placeholder: 'x-trace-id' },
-  { key: 'correlationId', label: 'Correlation ID', type: 'text', placeholder: 'request scope id' },
-  { key: 'userId', label: 'User ID', type: 'text', placeholder: 'auth user id' },
-  { key: 'fingerprint', label: 'Fingerprint', type: 'text', placeholder: 'error fingerprint' },
-  { key: 'category', label: 'Category', type: 'text', placeholder: 'validation, db, network...' },
-  { key: 'fromDate', label: 'From', type: 'date' },
-  { key: 'toDate', label: 'To', type: 'date' },
-];
-
-interface MongoDiagnosticsData {
-  collections?: MongoCollectionIndexStatus[];
-  generatedAt?: string;
-}
-
-const formatDateParam = (value: string, endOfDay: boolean = false): string | null => {
-  if (!value) return null;
-  const suffix = endOfDay ? 'T23:59:59.999' : 'T00:00:00.000';
-  const date = new Date(`${value}${suffix}`);
-  if (Number.isNaN(date.getTime())) return null;
-  return date.toISOString();
-};
-
-const parseStatusCodeInput = (value: string): number | null => {
-  if (!value.trim()) return null;
-  const parsed = Number.parseInt(value, 10);
-  if (!Number.isFinite(parsed)) return null;
-  return parsed;
-};
-
-const parseMinDurationInput = (value: string): number | null => {
-  if (!value.trim()) return null;
-  const parsed = Number.parseInt(value, 10);
-  if (!Number.isFinite(parsed) || parsed < 0) return null;
-  return parsed;
-};
-
-type ToastFn = (
-  message: string,
-  options?: { variant?: 'success' | 'error' | 'info' | 'warning' }
-) => void;
-
-type SystemLogsContextValue = {
-  level: SystemLogLevel | 'all';
-  query: string;
-  source: string;
-  service: string;
-  method: string;
-  statusCode: string;
-  minDurationMs: string;
-  requestId: string;
-  traceId: string;
-  correlationId: string;
-  userId: string;
-  fingerprint: string;
-  category: string;
-  fromDate: string;
-  toDate: string;
-  page: number;
-  pageSize: number;
-  filterFields: FilterField[];
-  setPage: React.Dispatch<React.SetStateAction<number>>;
-  handleFilterChange: (key: string, value: string) => void;
-  handleResetFilters: () => void;
-  logs: SystemLogRecord[];
-  logsJson: string;
-  total: number;
-  totalPages: number;
-  metrics: SystemLogMetrics | null;
-  levels: { error: number; warn: number; info: number };
-  diagnostics: MongoCollectionIndexStatus[];
-  diagnosticsUpdatedAt: string | null;
-  logInterpretations: Record<string, AiInsightRecord>;
-  logsQuery: UseQueryResult<
-    {
-      logs?: SystemLogRecord[] | undefined;
-      total?: number | undefined;
-      page?: number | undefined;
-      pageSize?: number | undefined;
-    },
-    Error
-  >;
-  metricsQuery: UseQueryResult<{ metrics?: SystemLogMetrics | undefined }, Error>;
-  mongoDiagnosticsQuery: UseQueryResult<unknown, Error>;
-  insightsQuery: UseQueryResult<{ insights: AiInsightRecord[] }, Error>;
-  runInsightMutation: UseMutationResult<{ insight: AiInsightRecord }, Error, void>;
-  interpretLogMutation: UseMutationResult<{ insight: AiInsightRecord }, Error, string>;
-  clearLogsMutation: UseMutationResult<{ deleted: number }, Error, void>;
-  rebuildIndexesMutation: UseMutationResult<unknown, Error, void>;
-  confirmAction: (config: {
-    title: string;
-    message: string;
-    onConfirm: () => void | Promise<void>;
-    confirmText?: string;
-    isDangerous?: boolean;
-  }) => void;
-  ConfirmationModal: React.ComponentType;
-  handleClearLogs: () => Promise<void>;
-  handleRebuildMongoIndexes: () => Promise<void>;
-  handleRunInsight: () => Promise<void>;
-  handleInterpretLog: (logId: string) => Promise<void>;
-  isClearLogsConfirmOpen: boolean;
-  setIsClearLogsConfirmOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  isRebuildIndexesConfirmOpen: boolean;
-  setIsRebuildIndexesConfirmOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  toast: ToastFn;
-};
-
-type SystemLogsStateContextValue = Omit<
-  SystemLogsContextValue,
-  | 'setPage'
-  | 'handleFilterChange'
-  | 'handleResetFilters'
-  | 'confirmAction'
-  | 'handleClearLogs'
-  | 'handleRebuildMongoIndexes'
-  | 'handleRunInsight'
-  | 'handleInterpretLog'
-  | 'setIsClearLogsConfirmOpen'
-  | 'setIsRebuildIndexesConfirmOpen'
-  | 'toast'
->;
-
-type SystemLogsActionsContextValue = Pick<
-  SystemLogsContextValue,
-  | 'setPage'
-  | 'handleFilterChange'
-  | 'handleResetFilters'
-  | 'confirmAction'
-  | 'handleClearLogs'
-  | 'handleRebuildMongoIndexes'
-  | 'handleRunInsight'
-  | 'handleInterpretLog'
-  | 'setIsClearLogsConfirmOpen'
-  | 'setIsRebuildIndexesConfirmOpen'
-  | 'toast'
->;
+import { useToast } from '@/shared/ui';
+import {
+  formatDateParam,
+  parseMinDurationInput,
+  parseStatusCodeInput,
+  systemLogFilterFields,
+} from './SystemLogsContext.shared';
+import type {
+  MongoDiagnosticsData,
+  SystemLogsActionsContextValue,
+  SystemLogsStateContextValue,
+} from './SystemLogsContext.shared';
 
 const SystemLogsStateContext = createContext<SystemLogsStateContextValue | null>(null);
 const SystemLogsActionsContext = createContext<SystemLogsActionsContextValue | null>(null);
@@ -538,7 +391,7 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
     toDate,
     page,
     pageSize,
-    filterFields,
+    filterFields: systemLogFilterFields,
     logs,
     logsJson,
     total,

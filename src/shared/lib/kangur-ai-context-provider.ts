@@ -10,7 +10,7 @@ import {
   buildKangurAiTutorContextRegistryRefs,
   KANGUR_RUNTIME_PROVIDER_ID,
   parseKangurRuntimeRef,
-} from '@/features/kangur/public';
+} from '@/features/kangur/context-registry/refs';
 import {
   buildKangurAssignmentContextRuntimeDocument,
   buildKangurLearnerSnapshotRuntimeDocument,

@@ -7,171 +7,56 @@ import {
   useMemo,
   useCallback,
   useRef,
-  type ReactNode,
 } from 'react';
 
 import type {
   AiNode,
+  AiPathsValidationConfig,
   Edge,
-  PathMeta,
-  PathConfig,
+  NodeConfig,
   PathBlockedRunPolicy,
+  PathConfig,
   PathExecutionMode,
   PathFlowIntensity,
-  AiPathsValidationConfig,
+  PathMeta,
   PathRunMode,
-  NodeConfig,
 } from '@/shared/lib/ai-paths';
 import {
   initialNodes,
   initialEdges,
   normalizeNodes,
   sanitizeEdges,
-  AI_PATHS_HISTORY_RETENTION_DEFAULT,
-  AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT,
-  DEFAULT_AI_PATHS_VALIDATION_CONFIG,
 } from '@/shared/lib/ai-paths';
+import { internalError } from '@/shared/errors/app-error';
+import {
+  DEFAULT_AI_PATHS_VALIDATION,
+  DEFAULT_BLOCKED_RUN_POLICY,
+  DEFAULT_EXECUTION_MODE,
+  DEFAULT_FLOW_INTENSITY,
+  DEFAULT_HISTORY_RETENTION_OPTIONS_MAX,
+  DEFAULT_HISTORY_RETENTION_PASSES,
+  DEFAULT_PATH_DESCRIPTION,
+  DEFAULT_PATH_NAME,
+  DEFAULT_RUN_MODE,
+  DEFAULT_STRICT_FLOW_MODE,
+  DEFAULT_TRIGGER,
+} from './GraphContext.shared';
+import type {
+  GraphActions,
+  GraphMutationMeta,
+  GraphMutationReason,
+  GraphMutationRecord,
+  GraphProviderProps,
+  GraphState,
+} from './GraphContext.shared';
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
-export type GraphMutationReason =
-  | 'drop'
-  | 'drag'
-  | 'select'
-  | 'delete'
-  | 'load_path'
-  | 'update'
-  | 'unknown';
-
-export interface GraphMutationMeta {
-  reason?: GraphMutationReason;
-  source?: string;
-  allowNodeCountDecrease?: boolean;
-}
-
-export interface GraphMutationRecord {
-  revision: number;
-  reason: GraphMutationReason;
-  source: string | null;
-  timestamp: string;
-  changedNodes: boolean;
-  changedEdges: boolean;
-}
-
-export interface GraphState {
-  // Core graph data
-  nodes: AiNode[];
-  edges: Edge[];
-
-  // Path management
-  paths: PathMeta[];
-  pathConfigs: Record<string, PathConfig>;
-  activePathId: string | null;
-
-  // Active path metadata
-  pathName: string;
-  pathDescription: string;
-  activeTrigger: string;
-  executionMode: PathExecutionMode;
-  flowIntensity: PathFlowIntensity;
-  runMode: PathRunMode;
-  strictFlowMode: boolean;
-  blockedRunPolicy: PathBlockedRunPolicy;
-  aiPathsValidation: AiPathsValidationConfig;
-  historyRetentionPasses: number;
-  historyRetentionOptionsMax: number;
-
-  // Path flags
-  isPathLocked: boolean;
-  isPathActive: boolean;
-  graphRevision: number;
-  lastMutation: GraphMutationRecord | null;
-}
-
-export interface GraphActions {
-  // Node actions
-  setNodes: (
-    nodes: AiNode[] | ((prev: AiNode[]) => AiNode[]),
-    mutationMeta?: GraphMutationMeta
-  ) => void;
-  addNode: (node: AiNode) => void;
-  updateNode: (nodeId: string, update: Partial<AiNode>) => void;
-  updateNodeConfig: (nodeId: string, config: NodeConfig) => void;
-  removeNode: (nodeId: string) => void;
-
-  // Edge actions
-  setEdges: (edges: Edge[] | ((prev: Edge[]) => Edge[]), mutationMeta?: GraphMutationMeta) => void;
-  addEdge: (edge: Edge) => void;
-  removeEdge: (edgeId: string) => void;
-  clearEdges: () => void;
-
-  // Path management
-  setPaths: (paths: PathMeta[] | ((prev: PathMeta[]) => PathMeta[])) => void;
-  setPathConfigs: (
-    configs:
-      | Record<string, PathConfig>
-      | ((prev: Record<string, PathConfig>) => Record<string, PathConfig>)
-  ) => void;
-  setActivePathId: (pathId: string | null) => void;
-
-  // Path metadata
-  setPathName: (name: string) => void;
-  setPathDescription: (description: string) => void;
-  setActiveTrigger: (trigger: string) => void;
-  setExecutionMode: (mode: PathExecutionMode) => void;
-  setFlowIntensity: (intensity: PathFlowIntensity) => void;
-  setRunMode: (mode: PathRunMode) => void;
-  setStrictFlowMode: (enabled: boolean) => void;
-  setBlockedRunPolicy: (policy: PathBlockedRunPolicy) => void;
-  setAiPathsValidation: (config: AiPathsValidationConfig) => void;
-  setHistoryRetentionPasses: (passes: number) => void;
-  setHistoryRetentionOptionsMax: (max: number) => void;
-
-  // Path flags
-  setIsPathLocked: (locked: boolean) => void;
-  togglePathLock: () => void;
-  setIsPathActive: (active: boolean) => void;
-  togglePathActive: () => void;
-
-  // Bulk operations
-  loadGraph: (data: {
-    nodes: AiNode[];
-    edges: Edge[];
-    pathName?: string | undefined;
-    pathDescription?: string | undefined;
-    activeTrigger?: string | undefined;
-    executionMode?: PathExecutionMode | undefined;
-    flowIntensity?: PathFlowIntensity | undefined;
-    runMode?: PathRunMode | undefined;
-    strictFlowMode?: boolean | undefined;
-    blockedRunPolicy?: PathBlockedRunPolicy | undefined;
-    aiPathsValidation?: AiPathsValidationConfig | undefined;
-    historyRetentionPasses?: number | undefined;
-    historyRetentionOptionsMax?: number | undefined;
-    isPathLocked?: boolean | undefined;
-    isPathActive?: boolean | undefined;
-  }) => void;
-  resetGraph: () => void;
-}
-
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
-const DEFAULT_PATH_NAME = 'AI Description Path';
-const DEFAULT_PATH_DESCRIPTION =
-  'Visual analysis + description generation with structured updates.';
-const DEFAULT_TRIGGER = 'Product Modal - Context Filter';
-const DEFAULT_EXECUTION_MODE: PathExecutionMode = 'server';
-const DEFAULT_FLOW_INTENSITY: PathFlowIntensity = 'medium';
-const DEFAULT_RUN_MODE: PathRunMode = 'manual';
-const DEFAULT_STRICT_FLOW_MODE = true;
-const DEFAULT_BLOCKED_RUN_POLICY: PathBlockedRunPolicy = 'fail_run';
-const DEFAULT_AI_PATHS_VALIDATION: AiPathsValidationConfig = DEFAULT_AI_PATHS_VALIDATION_CONFIG;
-const DEFAULT_HISTORY_RETENTION_PASSES = AI_PATHS_HISTORY_RETENTION_DEFAULT;
-const DEFAULT_HISTORY_RETENTION_OPTIONS_MAX = AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT;
+export type {
+  GraphActions,
+  GraphMutationMeta,
+  GraphMutationReason,
+  GraphMutationRecord,
+  GraphState,
+} from './GraphContext.shared';
 
 // ---------------------------------------------------------------------------
 // Contexts (split for re-render optimization)
@@ -179,19 +64,6 @@ const DEFAULT_HISTORY_RETENTION_OPTIONS_MAX = AI_PATHS_HISTORY_RETENTION_OPTIONS
 
 const GraphStateContext = createContext<GraphState | null>(null);
 const GraphActionsContext = createContext<GraphActions | null>(null);
-
-// ---------------------------------------------------------------------------
-// Provider
-// ---------------------------------------------------------------------------
-
-interface GraphProviderProps {
-  children: ReactNode;
-  initialNodesData?: AiNode[] | undefined;
-  initialEdgesData?: Edge[] | undefined;
-  initialPaths?: PathMeta[] | undefined;
-  initialPathConfigs?: Record<string, PathConfig> | undefined;
-  initialActivePathId?: string | null | undefined;
-}
 
 export function GraphProvider({
   children,
@@ -609,7 +481,7 @@ export function GraphProvider({
 export function useGraphState(): GraphState {
   const context = useContext(GraphStateContext);
   if (!context) {
-    throw new Error('useGraphState must be used within a GraphProvider');
+    throw internalError('useGraphState must be used within a GraphProvider');
   }
   return context;
 }
@@ -621,45 +493,7 @@ export function useGraphState(): GraphState {
 export function useGraphActions(): GraphActions {
   const context = useContext(GraphActionsContext);
   if (!context) {
-    throw new Error('useGraphActions must be used within a GraphProvider');
+    throw internalError('useGraphActions must be used within a GraphProvider');
   }
   return context;
-}
-
-// ---------------------------------------------------------------------------
-// Selector Hooks (for fine-grained subscriptions)
-// ---------------------------------------------------------------------------
-
-/**
- * Get just the nodes array.
- */
-export function useNodes(): AiNode[] {
-  const { nodes } = useGraphState();
-  return nodes;
-}
-
-/**
- * Get just the edges array.
- */
-export function useEdges(): Edge[] {
-  const { edges } = useGraphState();
-  return edges;
-}
-
-/**
- * Get a specific node by ID.
- */
-export function useNode(nodeId: string | null): AiNode | null {
-  const { nodes } = useGraphState();
-  if (!nodeId) return null;
-  return nodes.find((node) => node.id === nodeId) ?? null;
-}
-
-/**
- * Get the active path configuration.
- */
-export function useActivePathConfig(): PathConfig | null {
-  const { activePathId, pathConfigs } = useGraphState();
-  if (!activePathId) return null;
-  return pathConfigs[activePathId] ?? null;
 }

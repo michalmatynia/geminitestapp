@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useMemo, useState, useCallback } from 'react';
 
 import type { AgentTeachingEmbeddingCollectionRecord } from '@/shared/contracts/agent-teaching';
+import { internalError } from '@/shared/errors/app-error';
 import { useToast } from '@/shared/ui';
 
 import { useAgentTeachingQueriesContext } from './AgentTeachingContext';
@@ -44,7 +45,7 @@ const AgentTeachingCollectionsContext = createContext<AgentTeachingCollectionsCo
 export function useAgentTeachingCollectionsContext(): AgentTeachingCollectionsContextValue {
   const context = useContext(AgentTeachingCollectionsContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useAgentTeachingCollectionsContext must be used within AgentTeachingCollectionsProvider'
     );
   }

@@ -7,7 +7,6 @@ import { GET_handler, PUT_handler, DELETE_handler } from './handler';
 
 export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, {
   source: 'drafts.[id].GET',
-  requireCsrf: false,
   cacheControl: 'no-store',
 });
 

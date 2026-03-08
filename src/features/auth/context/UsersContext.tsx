@@ -9,6 +9,7 @@ import type {
   AuthUserSecurityProfile,
 } from '@/shared/contracts/auth';
 import type { AuthUserRoleMap } from '@/features/auth/utils/auth-management';
+import { internalError } from '@/shared/errors/app-error';
 
 // --- Granular Contexts ---
 
@@ -29,7 +30,7 @@ export interface UsersData {
 const DataContext = createContext<UsersData | null>(null);
 export const useUsersData = () => {
   const context = useContext(DataContext);
-  if (!context) throw new Error('useUsersData must be used within UsersProvider');
+  if (!context) throw internalError('useUsersData must be used within UsersProvider');
   return context;
 };
 
@@ -40,7 +41,7 @@ export interface UsersSearch {
 const SearchContext = createContext<UsersSearch | null>(null);
 export const useUsersSearch = () => {
   const context = useContext(SearchContext);
-  if (!context) throw new Error('useUsersSearch must be used within UsersProvider');
+  if (!context) throw internalError('useUsersSearch must be used within UsersProvider');
   return context;
 };
 
@@ -53,7 +54,7 @@ export interface UsersRoles {
 const RolesContext = createContext<UsersRoles | null>(null);
 export const useUsersRoles = () => {
   const context = useContext(RolesContext);
-  if (!context) throw new Error('useUsersRoles must be used within UsersProvider');
+  if (!context) throw internalError('useUsersRoles must be used within UsersProvider');
   return context;
 };
 
@@ -77,7 +78,7 @@ export interface UsersDialogs {
 const DialogsContext = createContext<UsersDialogs | null>(null);
 export const useUsersDialogs = () => {
   const context = useContext(DialogsContext);
-  if (!context) throw new Error('useUsersDialogs must be used within UsersProvider');
+  if (!context) throw internalError('useUsersDialogs must be used within UsersProvider');
   return context;
 };
 

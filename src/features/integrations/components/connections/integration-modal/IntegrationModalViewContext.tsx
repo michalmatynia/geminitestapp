@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { internalError } from '@/shared/errors/app-error';
 
 export type IntegrationModalViewContextValue = {
   integrationName: string;
@@ -39,7 +40,7 @@ export function IntegrationModalViewProvider({
 export function useIntegrationModalViewContext(): IntegrationModalViewContextValue {
   const context = React.useContext(IntegrationModalViewContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useIntegrationModalViewContext must be used within IntegrationModalViewProvider'
     );
   }

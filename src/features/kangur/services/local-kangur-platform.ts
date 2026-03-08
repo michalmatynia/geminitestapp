@@ -105,6 +105,10 @@ const createActorAwareHeaders = (headers?: HeadersInit): Headers => {
 };
 
 const cacheResolvedUser = (user: KangurUser | null, anonymous = false): void => {
+  if (!user || anonymous) {
+    clearStoredActiveLearnerId();
+  }
+
   sessionUserCache = {
     user,
     isAnonymous: anonymous,

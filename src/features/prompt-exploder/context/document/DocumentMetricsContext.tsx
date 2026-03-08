@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext } from 'react';
+import { internalError } from '@/shared/errors/app-error';
 
 export interface DocumentMetricsState {
   explosionMetrics: {
@@ -17,6 +18,6 @@ export const DocumentMetricsContext = createContext<DocumentMetricsState | null>
 
 export function useDocumentMetrics(): DocumentMetricsState {
   const context = useContext(DocumentMetricsContext);
-  if (!context) throw new Error('useDocumentMetrics must be used within DocumentProvider');
+  if (!context) throw internalError('useDocumentMetrics must be used within DocumentProvider');
   return context;
 }

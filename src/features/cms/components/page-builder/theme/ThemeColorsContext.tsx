@@ -12,64 +12,11 @@ import { useToast } from '@/shared/ui';
 import { DEFAULT_SCHEME_COLORS } from './theme-constants';
 import { parseColorSchemeFromText } from './theme-utils';
 import { useThemeSettingsActions, useThemeSettingsValue } from '../ThemeSettingsContext';
-
-interface ThemeColorsContextValue {
-  schemeView: 'list' | 'edit';
-  setSchemeView: (view: 'list' | 'edit') => void;
-  editingSchemeId: string | null;
-  setEditingSchemeId: (id: string | null) => void;
-  activeScheme: { id: string; name: string; colors: ColorSchemeColors } | null;
-  startAddScheme: () => void;
-  startEditScheme: (schemeId: string) => void;
-  handleSaveScheme: () => void;
-  newSchemeName: string;
-  setNewSchemeName: (value: string) => void;
-  newSchemeColors: ColorSchemeColors;
-  updateSchemeColor: (key: keyof ColorSchemeColors) => (value: string) => void;
-  isGlobalPaletteOpen: boolean;
-  toggleGlobalPalette: () => void;
-  schemeAiPrompt: string;
-  setSchemeAiPrompt: (value: string) => void;
-  schemeAiLoading: boolean;
-  schemeAiError: string | null;
-  schemeAiOutput: string;
-  schemeAiPreview: { name?: string | undefined; colors: Partial<ColorSchemeColors> } | null;
-  brainAiProvider: 'model' | 'agent';
-  brainAiModelId: string;
-  brainAiAgentId: string;
-  handleGenerateScheme: () => Promise<void>;
-  handleCancelSchemeAi: () => void;
-}
-
-type ThemeColorsStateContextValue = Omit<
-  ThemeColorsContextValue,
-  | 'setSchemeView'
-  | 'setEditingSchemeId'
-  | 'startAddScheme'
-  | 'startEditScheme'
-  | 'handleSaveScheme'
-  | 'setNewSchemeName'
-  | 'updateSchemeColor'
-  | 'toggleGlobalPalette'
-  | 'setSchemeAiPrompt'
-  | 'handleGenerateScheme'
-  | 'handleCancelSchemeAi'
->;
-
-type ThemeColorsActionsContextValue = Pick<
-  ThemeColorsContextValue,
-  | 'setSchemeView'
-  | 'setEditingSchemeId'
-  | 'startAddScheme'
-  | 'startEditScheme'
-  | 'handleSaveScheme'
-  | 'setNewSchemeName'
-  | 'updateSchemeColor'
-  | 'toggleGlobalPalette'
-  | 'setSchemeAiPrompt'
-  | 'handleGenerateScheme'
-  | 'handleCancelSchemeAi'
->;
+import { internalError } from '@/shared/errors/app-error';
+import type {
+  ThemeColorsActionsContextValue,
+  ThemeColorsStateContextValue,
+} from './ThemeColorsContext.types';
 
 const ThemeColorsStateContext = createContext<ThemeColorsStateContextValue | undefined>(undefined);
 const ThemeColorsActionsContext = createContext<ThemeColorsActionsContextValue | undefined>(
@@ -277,7 +224,7 @@ ${schemeContext}`;
       });
       if (!res.ok || !res.body) {
         const data = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(data?.error || 'Streaming request failed.');
+        throw internalError(data?.error || 'Streaming request failed.');
       }
 
       const reader = res.body.getReader();
@@ -296,7 +243,7 @@ ${schemeContext}`;
           error?: string;
         };
         if (responsePayload.error) {
-          throw new Error(responsePayload.error);
+          throw internalError(responsePayload.error);
         }
         if (responsePayload.delta) {
           accumulated += responsePayload.delta;
@@ -350,7 +297,7 @@ ${schemeContext}`;
     try {
       const prompt = buildSchemeAiPrompt();
       if (!prompt.trim()) {
-        throw new Error('Prompt is empty.');
+        throw internalError('Prompt is empty.');
       }
 
       const sessionId = `color-ai-${Date.now()}`;
@@ -377,10 +324,10 @@ ${schemeContext}`;
       const modelId = provider === 'model' ? brainAiModelId : '';
       const agentId = provider === 'agent' ? brainAiAgentId : '';
       if (provider === 'model' && !modelId) {
-        throw new Error('Configure CMS CSS Stream in AI Brain first.');
+        throw internalError('Configure CMS CSS Stream in AI Brain first.');
       }
       if (provider === 'agent' && !agentId) {
-        throw new Error('Configure a CMS CSS Stream agent in AI Brain first.');
+        throw internalError('Configure a CMS CSS Stream agent in AI Brain first.');
       }
 
       const accumulated = await generateSchemeMutation.mutateAsync({
@@ -392,7 +339,7 @@ ${schemeContext}`;
 
       const parsed = parseColorSchemeFromText(accumulated);
       if (!parsed || !Object.values(parsed.colors).some(Boolean)) {
-        throw new Error('AI response did not include a color scheme.');
+        throw internalError('AI response did not include a color scheme.');
       }
       applySchemeFromAi(parsed);
       toast(`Scheme generated from ${provider}.`, { variant: 'success' });
@@ -500,7 +447,7 @@ ${schemeContext}`;
 export function useThemeColorsState(): ThemeColorsStateContextValue {
   const context = useContext(ThemeColorsStateContext);
   if (context === undefined) {
-    throw new Error('useThemeColorsState must be used within a ThemeColorsProvider');
+    throw internalError('useThemeColorsState must be used within a ThemeColorsProvider');
   }
   return context;
 }
@@ -508,7 +455,7 @@ export function useThemeColorsState(): ThemeColorsStateContextValue {
 export function useThemeColorsActions(): ThemeColorsActionsContextValue {
   const context = useContext(ThemeColorsActionsContext);
   if (context === undefined) {
-    throw new Error('useThemeColorsActions must be used within a ThemeColorsProvider');
+    throw internalError('useThemeColorsActions must be used within a ThemeColorsProvider');
   }
   return context;
 }

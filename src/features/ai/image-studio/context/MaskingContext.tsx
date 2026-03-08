@@ -9,6 +9,7 @@ import { useToast } from '@/shared/ui';
 import { useProjectsState } from './ProjectsContext';
 import { useSlotsState } from './SlotsContext';
 import { sanitizeStudioProjectId } from '@/features/ai/image-studio/utils/project-session';
+import { internalError } from '@/shared/errors/app-error';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -615,7 +616,7 @@ export function MaskingProvider({ children }: { children: React.ReactNode }): Re
             canvas.width = sampledWidth;
             canvas.height = sampledHeight;
             const ctx = canvas.getContext('2d');
-            if (!ctx) throw new Error('Canvas context unavailable.');
+            if (!ctx) throw internalError('Canvas context unavailable.');
             ctx.drawImage(image, 0, 0, sampledWidth, sampledHeight);
             const imageData = ctx.getImageData(0, 0, sampledWidth, sampledHeight);
             const bounds =
@@ -780,12 +781,12 @@ export function MaskingProvider({ children }: { children: React.ReactNode }): Re
 
 export function useMaskingState(): MaskingState {
   const ctx = useContext(MaskingStateContext);
-  if (!ctx) throw new Error('useMaskingState must be used within a MaskingProvider');
+  if (!ctx) throw internalError('useMaskingState must be used within a MaskingProvider');
   return ctx;
 }
 
 export function useMaskingActions(): MaskingActions {
   const ctx = useContext(MaskingActionsContext);
-  if (!ctx) throw new Error('useMaskingActions must be used within a MaskingProvider');
+  if (!ctx) throw internalError('useMaskingActions must be used within a MaskingProvider');
   return ctx;
 }

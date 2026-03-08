@@ -167,9 +167,10 @@ export function useProductAiPathsRunSync(): void {
     window.addEventListener(AI_PATH_RUN_ENQUEUED_EVENT_NAME, handler);
 
     let channel: BroadcastChannel | null = null;
-    if (typeof BroadcastChannel !== 'undefined') {
+    const BroadcastChannelCtor = window.BroadcastChannel;
+    if (typeof BroadcastChannelCtor === 'function') {
       try {
-        channel = new BroadcastChannel(AI_PATH_RUN_QUEUE_CHANNEL);
+        channel = new BroadcastChannelCtor(AI_PATH_RUN_QUEUE_CHANNEL);
         channel.onmessage = (event: MessageEvent<unknown>): void => {
           handlePayload(event.data);
         };

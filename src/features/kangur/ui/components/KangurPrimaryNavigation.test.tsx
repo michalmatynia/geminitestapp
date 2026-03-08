@@ -89,7 +89,7 @@ describe('KangurPrimaryNavigation', () => {
     expect(logo.className).not.toContain('translate-x-');
     expect(screen.getByRole('link', { name: /strona glowna/i })).toHaveAttribute(
       'href',
-      '/kangur/game'
+      '/kangur'
     );
   });
 

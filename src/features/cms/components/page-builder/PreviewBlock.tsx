@@ -755,6 +755,10 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
       typeof resolvedSettings['inputPlaceholder'] === 'string'
         ? resolvedSettings['inputPlaceholder']
         : '';
+    const inputAriaLabel =
+      typeof resolvedSettings['inputAriaLabel'] === 'string'
+        ? resolvedSettings['inputAriaLabel'].trim()
+        : '';
 
     return wrapBlock(
       <div
@@ -769,7 +773,7 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
           readOnly
           value={value}
           placeholder={placeholder || 'Input'}
-          aria-label={placeholder || 'Input'}
+          aria-label={inputAriaLabel || placeholder || 'Input field'}
           className='pointer-events-none w-full'
         />
       </div>

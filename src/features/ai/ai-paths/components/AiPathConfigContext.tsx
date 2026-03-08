@@ -15,6 +15,7 @@ import type {
 } from '@/shared/lib/ai-paths';
 import { useToast } from '@/shared/ui';
 import type { Toast } from '@/shared/contracts/ui';
+import { internalError } from '@/shared/errors/app-error';
 
 import {
   useGraphState,
@@ -38,7 +39,7 @@ export interface AiPathSelectionData {
 const AiPathSelectionContext = createContext<AiPathSelectionData | null>(null);
 export const useAiPathSelection = (): AiPathSelectionData => {
   const context = useContext(AiPathSelectionContext);
-  if (!context) throw new Error('useAiPathSelection must be used within AiPathConfigProvider');
+  if (!context) throw internalError('useAiPathSelection must be used within AiPathConfigProvider');
   return context;
 };
 
@@ -52,7 +53,7 @@ export interface AiPathGraphData {
 const AiPathGraphContext = createContext<AiPathGraphData | null>(null);
 export const useAiPathGraph = (): AiPathGraphData => {
   const context = useContext(AiPathGraphContext);
-  if (!context) throw new Error('useAiPathGraph must be used within AiPathConfigProvider');
+  if (!context) throw internalError('useAiPathGraph must be used within AiPathConfigProvider');
   return context;
 };
 
@@ -82,7 +83,7 @@ export interface AiPathRuntimeData {
 const AiPathRuntimeContext = createContext<AiPathRuntimeData | null>(null);
 export const useAiPathRuntime = (): AiPathRuntimeData => {
   const context = useContext(AiPathRuntimeContext);
-  if (!context) throw new Error('useAiPathRuntime must be used within AiPathConfigProvider');
+  if (!context) throw internalError('useAiPathRuntime must be used within AiPathConfigProvider');
   return context;
 };
 
@@ -98,7 +99,7 @@ export interface AiPathPresetsData {
 const AiPathPresetsContext = createContext<AiPathPresetsData | null>(null);
 export const useAiPathPresets = (): AiPathPresetsData => {
   const context = useContext(AiPathPresetsContext);
-  if (!context) throw new Error('useAiPathPresets must be used within AiPathConfigProvider');
+  if (!context) throw internalError('useAiPathPresets must be used within AiPathConfigProvider');
   return context;
 };
 
@@ -120,7 +121,9 @@ export interface AiPathOrchestratorData {
 const AiPathOrchestratorContext = createContext<AiPathOrchestratorData | null>(null);
 export const useAiPathOrchestrator = (): AiPathOrchestratorData => {
   const context = useContext(AiPathOrchestratorContext);
-  if (!context) throw new Error('useAiPathOrchestrator must be used within AiPathConfigProvider');
+  if (!context) {
+    throw internalError('useAiPathOrchestrator must be used within AiPathConfigProvider');
+  }
   return context;
 };
 

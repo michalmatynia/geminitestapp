@@ -3,6 +3,7 @@
 import React, { useMemo } from 'react';
 
 import type { DatabasePresetOption } from '@/shared/contracts/database';
+import { internalError } from '@/shared/errors/app-error';
 
 export type DatabasePresetsTabContextValue = {
   builtInPresets?: DatabasePresetOption[];
@@ -67,7 +68,7 @@ export function DatabasePresetsTabContextProvider({
 export function useDatabasePresetsTabStateContext(): DatabasePresetsTabStateContextValue {
   const context = React.useContext(DatabasePresetsTabStateContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useDatabasePresetsTabStateContext must be used within DatabasePresetsTabContextProvider'
     );
   }
@@ -77,7 +78,7 @@ export function useDatabasePresetsTabStateContext(): DatabasePresetsTabStateCont
 export function useDatabasePresetsTabActionsContext(): DatabasePresetsTabActionsContextValue {
   const context = React.useContext(DatabasePresetsTabActionsContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useDatabasePresetsTabActionsContext must be used within DatabasePresetsTabContextProvider'
     );
   }

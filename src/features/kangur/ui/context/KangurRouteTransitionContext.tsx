@@ -10,6 +10,7 @@ import {
   useState,
 } from 'react';
 
+import { internalError } from '@/shared/errors/app-error';
 import { useKangurRouting } from './KangurRoutingContext';
 
 type KangurRouteTransitionState = {
@@ -101,7 +102,7 @@ export function KangurRouteTransitionProvider({
 export const useKangurRouteTransition = (): KangurRouteTransitionContextValue => {
   const context = useContext(KangurRouteTransitionContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useKangurRouteTransition must be used within a KangurRouteTransitionProvider'
     );
   }
@@ -110,4 +111,3 @@ export const useKangurRouteTransition = (): KangurRouteTransitionContextValue =>
 
 export const useOptionalKangurRouteTransition = (): KangurRouteTransitionContextValue | null =>
   useContext(KangurRouteTransitionContext);
-

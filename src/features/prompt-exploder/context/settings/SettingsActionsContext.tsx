@@ -6,6 +6,7 @@ import { useUpdateSetting, useUpdateSettingsBulk } from '@/shared/hooks/use-sett
 import type { PromptExploderParserTuningRuleDraft } from '@/shared/contracts/prompt-exploder';
 import type { PromptExploderLearnedTemplate } from '../../types';
 import type { LearningDraft } from './SettingsDraftsContext';
+import { internalError } from '@/shared/errors/app-error';
 
 export interface SettingsActions {
   setLearningDraft: React.Dispatch<React.SetStateAction<LearningDraft>>;
@@ -42,6 +43,6 @@ export const SettingsActionsContext = createContext<SettingsActions | null>(null
 
 export function useSettingsActions(): SettingsActions {
   const context = useContext(SettingsActionsContext);
-  if (!context) throw new Error('useSettingsActions must be used within SettingsProvider');
+  if (!context) throw internalError('useSettingsActions must be used within SettingsProvider');
   return context;
 }

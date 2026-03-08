@@ -24,11 +24,13 @@ export { useRunHistoryState, useRunHistoryActions } from './RunHistoryContext';
 export {
   useGraphState,
   useGraphActions,
+} from './GraphContext';
+export {
   useNodes,
   useEdges,
   useNode,
   useActivePathConfig,
-} from './GraphContext';
+} from './GraphContext.selectors';
 
 // Consumer Hooks - Runtime
 export { useRuntimeState, useRuntimeActions, useNodeRuntime } from './RuntimeContext';
@@ -69,7 +71,13 @@ export type {
 } from './RunHistoryContext';
 
 // Types - Graph
-export type { GraphState, GraphActions } from './GraphContext';
+export type {
+  GraphActions,
+  GraphMutationMeta,
+  GraphMutationReason,
+  GraphMutationRecord,
+  GraphState,
+} from './GraphContext';
 
 // Types - Runtime
 export type {

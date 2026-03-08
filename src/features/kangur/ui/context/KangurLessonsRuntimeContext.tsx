@@ -21,6 +21,7 @@ import {
   type RefObject,
 } from 'react';
 
+import { internalError } from '@/shared/errors/app-error';
 import {
   getKangurInternalQueryParamName,
   readKangurUrlParam,
@@ -156,11 +157,14 @@ export function KangurLessonsRuntimeProvider({
   children: ReactNode;
 }): JSX.Element {
   const { basePath } = useKangurRouting();
-  const { user } = useKangurAuth();
+  const auth = useKangurAuth();
+  const { user } = auth;
+  const canAccessParentAssignments =
+    auth.canAccessParentAssignments ?? Boolean(user?.activeLearner?.id);
   const settingsStore = useSettingsStore();
   const progress = useKangurProgressState();
   const { assignments } = useKangurAssignments({
-    enabled: Boolean(user),
+    enabled: canAccessParentAssignments,
     query: {
       includeArchived: false,
     },
@@ -311,7 +315,7 @@ export function KangurLessonsRuntimeBoundary({
 export const useKangurLessonsRuntime = (): KangurLessonsRuntimeContextValue => {
   const context = useContext(KangurLessonsRuntimeContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useKangurLessonsRuntime must be used within a KangurLessonsRuntimeProvider'
     );
   }

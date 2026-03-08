@@ -218,6 +218,7 @@
     "test:accessibility-smoke:strict": "node scripts/testing/run-accessibility-smoke-tests.mjs --strict",
     "test:accessibility:route-crawl": "node scripts/testing/run-accessibility-route-crawl.mjs",
     "test:accessibility:route-crawl:strict": "node scripts/testing/run-accessibility-route-crawl.mjs --strict",
+    "test:accessibility:gate": "npm run check:accessibility:component-policies:strict && npm run test:accessibility-smoke:strict && npm run test:accessibility:route-crawl:strict",
     "test:accessibility-smoke:kangur": "npx vitest run --project unit __tests__/features/kangur/kangur-accessibility-smoke.test.tsx",
     "test:security-smoke": "node scripts/testing/run-security-smoke-tests.mjs",
     "test:security-smoke:strict": "node scripts/testing/run-security-smoke-tests.mjs --strict",

@@ -12,6 +12,7 @@ import {
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { PathConfig, PathMeta } from '@/shared/lib/ai-paths';
+import { internalError } from '@/shared/errors/app-error';
 import type { PathSaveOptions as SavePathConfigOptions } from '../components/ai-paths-settings/useAiPathsPersistence.types';
 
 // ---------------------------------------------------------------------------
@@ -300,7 +301,7 @@ export function PersistenceProvider({
 export function usePersistenceState(): PersistenceState {
   const context = useContext(PersistenceStateContext);
   if (!context) {
-    throw new Error('usePersistenceState must be used within a PersistenceProvider');
+    throw internalError('usePersistenceState must be used within a PersistenceProvider');
   }
   return context;
 }
@@ -312,7 +313,7 @@ export function usePersistenceState(): PersistenceState {
 export function usePersistenceActions(): PersistenceActions {
   const context = useContext(PersistenceActionsContext);
   if (!context) {
-    throw new Error('usePersistenceActions must be used within a PersistenceProvider');
+    throw internalError('usePersistenceActions must be used within a PersistenceProvider');
   }
   return context;
 }

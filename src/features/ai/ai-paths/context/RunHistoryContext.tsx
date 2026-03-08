@@ -16,6 +16,7 @@ import {
   type RunDetail as RunDetailData,
   type StreamConnectionStatus as RunStreamStatus,
 } from '../components/job-queue-panel-utils';
+import { internalError } from '@/shared/errors/app-error';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -348,7 +349,7 @@ export function RunHistoryProvider({ children }: RunHistoryProviderProps): React
 export function useRunHistoryState(): RunHistoryState {
   const context = useContext(RunHistoryStateContext);
   if (!context) {
-    throw new Error('useRunHistoryState must be used within a RunHistoryProvider');
+    throw internalError('useRunHistoryState must be used within a RunHistoryProvider');
   }
   return context;
 }
@@ -360,7 +361,7 @@ export function useRunHistoryState(): RunHistoryState {
 export function useRunHistoryActions(): RunHistoryActions {
   const context = useContext(RunHistoryActionsContext);
   if (!context) {
-    throw new Error('useRunHistoryActions must be used within a RunHistoryProvider');
+    throw internalError('useRunHistoryActions must be used within a RunHistoryProvider');
   }
   return context;
 }

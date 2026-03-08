@@ -7,5 +7,4 @@ import { GET_handler } from './handler';
 
 export const GET = apiHandler(GET_handler, {
   source: 'auth.users.GET',
-  requireCsrf: false,
 });

@@ -17,6 +17,12 @@ type CmsMenuProps = {
   animationsEnabled?: boolean;
 };
 
+const normalizePathname = (value: string): string => {
+  if (!value) return '/';
+  if (value === '/') return '/';
+  return value.endsWith('/') ? value.slice(0, -1) : value;
+};
+
 export function CmsMenu({
   menu,
   colorSchemes,
@@ -24,10 +30,12 @@ export function CmsMenu({
 }: CmsMenuProps): React.ReactNode {
   const pathname = usePathname();
   const [hydrated, setHydrated] = useState(false);
-  const itemsRef = useRef<HTMLDivElement | null>(null);
+  const itemsRef = useRef<HTMLUListElement | null>(null);
+  const itemsId = React.useId();
   const [collapsed, setCollapsed] = useState<boolean>(
     menu.collapsible ? menu.collapsedByDefault : false
   );
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const positionMode = menu.positionMode ?? (menu.stickyEnabled ? 'sticky' : 'static');
   const isSide = menu.menuPlacement === 'left' || menu.menuPlacement === 'right';
   const isStickyMode = positionMode === 'sticky';
@@ -45,6 +53,27 @@ export function CmsMenu({
 
   useEffect(() => {
     setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const handleChange = (): void => {
+      setPrefersReducedMotion(mediaQuery.matches);
+    };
+
+    handleChange();
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handleChange);
+      return (): void => {
+        mediaQuery.removeEventListener('change', handleChange);
+      };
+    }
+
+    mediaQuery.addListener(handleChange);
+    return (): void => {
+      mediaQuery.removeListener(handleChange);
+    };
   }, []);
 
   useEffect(() => {
@@ -103,16 +132,19 @@ export function CmsMenu({
     };
   }, [menu, colorSchemes]);
 
+  const allowAnimations = animationsEnabled && !prefersReducedMotion;
+
   useEffect(() => {
-    if (!animationsEnabled) return;
+    if (!allowAnimations) return;
     if (menu.menuEntryAnimation === 'none') return;
     let ctx: { revert?: () => void } | null = null;
     let cancelled = false;
     void import('gsap').then((module: typeof import('gsap')) => {
       const { gsap } = module;
       if (cancelled) return;
-      const items = itemsRef.current?.querySelectorAll('[data-menu-item]');
-      if (!items || items.length === 0) return;
+      const scope = itemsRef.current;
+      const items = scope?.querySelectorAll('[data-menu-item]');
+      if (!scope || !items || items.length === 0) return;
       const vars: GSAPTweenVars = getGsapFromVars(menu.menuEntryAnimation);
       if (!vars) return;
       const entryVars: GSAPTweenVars = {
@@ -123,16 +155,16 @@ export function CmsMenu({
       };
       ctx = gsap.context(() => {
         gsap.from(items, entryVars);
-      }, itemsRef);
+      }, scope);
     });
     return (): void => {
       cancelled = true;
       ctx?.revert?.();
     };
-  }, [menu.menuEntryAnimation, menu.items.length, animationsEnabled]);
+  }, [menu.menuEntryAnimation, menu.items.length, allowAnimations]);
 
   useEffect(() => {
-    if (!animationsEnabled) return;
+    if (!allowAnimations) return;
     if (menu.menuHoverAnimation === 'none') return;
     const fromVars: GSAPTweenVars = getGsapFromVars(menu.menuHoverAnimation);
     if (!fromVars) return;
@@ -177,7 +209,7 @@ export function CmsMenu({
       cancelled = true;
       cleanups.forEach((fn: () => void) => fn());
     };
-  }, [menu.menuHoverAnimation, menu.items.length, animationsEnabled]);
+  }, [menu.menuHoverAnimation, menu.items.length, allowAnimations]);
 
   if (!menu.showMenu) return null;
 
@@ -188,8 +220,8 @@ export function CmsMenu({
       : 'translateX(-110%)'
     : 'translateY(-110%)';
   const transitions = [
-    menu.collapsible ? 'width 200ms ease' : null,
-    allowHideOnScroll ? 'transform 220ms ease, opacity 220ms ease' : null,
+    prefersReducedMotion ? null : menu.collapsible ? 'width 200ms ease' : null,
+    prefersReducedMotion ? null : allowHideOnScroll ? 'transform 220ms ease, opacity 220ms ease' : null,
   ]
     .filter(Boolean)
     .join(', ');
@@ -255,20 +287,41 @@ export function CmsMenu({
   };
 
   return (
-    <nav style={navStyle}>
+    <nav
+      aria-label='Site navigation'
+      style={navStyle}
+      onFocusCapture={() => {
+        if (isHiddenOnScroll) {
+          setIsHiddenOnScroll(false);
+        }
+      }}
+    >
       <div style={containerStyle}>
         {menu.collapsible && (
           <button
             type='button'
             onClick={(): void => setCollapsed((prev: boolean) => !prev)}
+            aria-controls={itemsId}
+            aria-expanded={!collapsed}
+            aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
             className='mb-2 inline-flex items-center gap-2 rounded border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-white/80 hover:bg-white/10'
           >
-            {collapsed ? 'Expand' : 'Collapse'}
+            {collapsed ? 'Expand navigation' : 'Collapse navigation'}
           </button>
         )}
-        <div style={itemsStyle} ref={itemsRef}>
+        <ul
+          id={itemsId}
+          style={itemsStyle}
+          ref={(node) => {
+            itemsRef.current = node;
+          }}
+          className='list-none p-0 m-0'
+        >
           {menu.items.map((item: { id: string; url: string; label: string; imageUrl?: string }) => {
-            const isActive = hydrated ? pathname === item.url : false;
+            const isExternal = isExternalUrl(item.url);
+            const isActive = hydrated
+              ? !isExternal && normalizePathname(pathname) === normalizePathname(item.url)
+              : false;
             const color = isActive ? resolvedColors.accent : resolvedColors.text;
             const activeStyles: React.CSSProperties = {};
             if (isActive) {
@@ -298,45 +351,52 @@ export function CmsMenu({
                   <Image
                     src={item.imageUrl}
                     alt=''
+                    aria-hidden='true'
                     width={menu.itemImageSize}
                     height={menu.itemImageSize}
                     style={{ objectFit: 'cover', borderRadius: 6 }}
                   />
                 )}
                 <span>{item.label}</span>
+                {isExternal ? <span className='sr-only'> (opens in a new tab)</span> : null}
               </>
             );
             const className = 'inline-flex items-center gap-2';
             const style = {
               color,
-              transition: `color ${menu.transitionSpeed}ms ease`,
+              transition: prefersReducedMotion
+                ? undefined
+                : `color ${menu.transitionSpeed}ms ease`,
               ...activeStyles,
             } as React.CSSProperties;
-            return isExternalUrl(item.url) ? (
-              <a
-                key={item.id}
-                href={item.url}
-                className={className}
-                style={style}
-                target='_blank'
-                rel='noreferrer'
-                data-menu-item
-              >
-                {content}
-              </a>
-            ) : (
-              <Link
-                key={item.id}
-                href={item.url || '/'}
-                className={className}
-                style={style}
-                data-menu-item
-              >
-                {content}
-              </Link>
+            return (
+              <li key={item.id}>
+                {isExternal ? (
+                  <a
+                    href={item.url}
+                    className={className}
+                    style={style}
+                    target='_blank'
+                    rel='noreferrer'
+                    data-menu-item
+                  >
+                    {content}
+                  </a>
+                ) : (
+                  <Link
+                    href={item.url || '/'}
+                    className={className}
+                    style={style}
+                    data-menu-item
+                    aria-current={isActive ? 'page' : undefined}
+                  >
+                    {content}
+                  </Link>
+                )}
+              </li>
             );
           })}
-        </div>
+        </ul>
       </div>
     </nav>
   );

@@ -3,6 +3,7 @@
 import { createContext, useContext } from 'react';
 import type { PatternCollectionTab, ExploderPatternSubTab } from './PromptEngineConfigContext';
 import type { RulePatch } from '../prompt-engine-context-utils';
+import { internalError } from '@/shared/errors/app-error';
 
 export interface PromptEngineActions {
   setPatternTab: (tab: PatternCollectionTab) => void;
@@ -32,6 +33,6 @@ export const ActionsContext = createContext<PromptEngineActions | null>(null);
 
 export const usePromptEngineActions = () => {
   const context = useContext(ActionsContext);
-  if (!context) throw new Error('usePromptEngineActions must be used within PromptEngineProvider');
+  if (!context) throw internalError('usePromptEngineActions must be used within PromptEngineProvider');
   return context;
 };

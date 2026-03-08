@@ -3,6 +3,7 @@
 import React from 'react';
 
 import type { VersionNode } from '../context/VersionGraphContext';
+import { internalError } from '@/shared/errors/app-error';
 
 type VersionGraphContextMenuValue = {
   menu: { nodeId: string; x: number; y: number };
@@ -38,7 +39,7 @@ export function VersionGraphContextMenuProvider({
 export function useVersionGraphContextMenuContext(): VersionGraphContextMenuValue {
   const context = React.useContext(VersionGraphContextMenuContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useVersionGraphContextMenuContext must be used inside VersionGraphContextMenuProvider'
     );
   }

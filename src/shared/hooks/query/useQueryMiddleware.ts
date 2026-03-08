@@ -55,6 +55,26 @@ const ENABLE_LOGGING_MIDDLEWARE = isEnabled(
 const queryStartTimes = new WeakMap<Query<unknown, Error, unknown, readonly unknown[]>, number>();
 const slowQueryLastReportedAt = new Map<string, number>();
 const queryWarningLastReportedAt = new Map<string, number>();
+const errorRecoveryTimerByQuery = new WeakMap<
+  Query<unknown, Error, unknown, readonly unknown[]>,
+  ReturnType<typeof setTimeout>
+>();
+
+const scheduleErrorRecoveryRetry = (
+  query: Query<unknown, Error, unknown, readonly unknown[]>,
+  delayMs: number
+): void => {
+  const existingTimer = errorRecoveryTimerByQuery.get(query);
+  if (existingTimer !== undefined) {
+    clearTimeout(existingTimer);
+  }
+  const retryTimer = setTimeout((): void => {
+    clearTimeout(retryTimer);
+    errorRecoveryTimerByQuery.delete(query);
+    void query.fetch();
+  }, delayMs);
+  errorRecoveryTimerByQuery.set(query, retryTimer);
+};
 
 const getQueryKeyLabel = (query: Query<unknown, Error, unknown, readonly unknown[]>): string => {
   try {
@@ -203,9 +223,7 @@ export const errorRecoveryMiddleware: QueryMiddleware = {
       message.includes('networkerror') ||
       message.includes('network request failed');
     if (!isNetworkError) return;
-    setTimeout((): void => {
-      void query.fetch();
-    }, 5000);
+    scheduleErrorRecoveryRetry(query, 5000);
   },
 };
 

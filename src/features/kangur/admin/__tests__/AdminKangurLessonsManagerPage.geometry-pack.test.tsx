@@ -34,11 +34,7 @@ vi.mock('@/features/foldertree', async (importOriginal) => {
   return {
     ...actual,
     createMasterFolderTreeTransactionAdapter: vi.fn(() => ({ apply: vi.fn() })),
-    FolderTreeSearchBar: (props: {
-      placeholder?: string;
-      value?: string;
-      onChange?: (value: string) => void;
-    }) => {
+    FolderTreeSearchBar: (props: { placeholder?: string }) => {
       folderTreeSearchBarMock(props);
       return <div data-testid='folder-tree-search'>{props.placeholder}</div>;
     },

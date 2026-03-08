@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useMemo } from 'react';
 
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import type { AgentAuditLog, AgentBrowserLog, AgentSnapshot } from '@/shared/contracts/chatbot';
+import { internalError } from '@/shared/errors/app-error';
 import {
   useAgentAudits,
   useAgentLogs,
@@ -96,7 +97,7 @@ export function AgentRunsProvider({ children }: { children: React.ReactNode }): 
 export function useAgentRunsContext(): AgentRunsContextValue {
   const context = useContext(AgentRunsContext);
   if (!context) {
-    throw new Error('useAgentRunsContext must be used within AgentRunsProvider');
+    throw internalError('useAgentRunsContext must be used within AgentRunsProvider');
   }
   return context;
 }

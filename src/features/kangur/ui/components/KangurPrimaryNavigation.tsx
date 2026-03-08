@@ -2,7 +2,10 @@
 
 import { BookOpen, LayoutGrid, LogIn, LogOut, Trophy } from 'lucide-react';
 
-import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
+import {
+  getKangurHomeHref,
+  getKangurPageHref as createPageUrl,
+} from '@/features/kangur/config/routing';
 import { KangurHomeLogo } from '@/features/kangur/ui/components/KangurHomeLogo';
 import { KangurProfileMenu } from '@/features/kangur/ui/components/KangurProfileMenu';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
@@ -133,7 +136,7 @@ export function KangurPrimaryNavigation({
             active={homeActive}
             className='px-3 sm:px-4'
             docId='top_nav_home'
-            href={onHomeClick ? undefined : createPageUrl('Game', basePath)}
+            href={onHomeClick ? undefined : getKangurHomeHref(basePath)}
             onClick={onHomeClick}
             targetPageKey='Game'
             testId='kangur-primary-nav-home'

@@ -3,6 +3,7 @@
 import { createContext, useContext } from 'react';
 
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
+import { internalError } from '@/shared/errors/app-error';
 
 export interface CaseListSearchActionsContextValue {
   onPrefetchCase: (caseId: string) => void;
@@ -30,7 +31,7 @@ export function CaseListSearchActionsProvider({
 export function useCaseListSearchActionsContext(): CaseListSearchActionsContextValue {
   const context = useContext(CaseListSearchActionsContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useCaseListSearchActionsContext must be used within a CaseListSearchActionsProvider'
     );
   }

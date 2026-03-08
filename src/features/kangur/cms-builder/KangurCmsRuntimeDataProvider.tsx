@@ -109,7 +109,9 @@ export function KangurCmsRuntimeDataProvider({
   });
   const { assignments: delegatedAssignments, error: assignmentsError, isLoading: isLoadingAssignments } =
     useKangurAssignments({
-      enabled: routing?.pageKey === 'Game' && auth.isAuthenticated,
+      enabled:
+        routing?.pageKey === 'Game' &&
+        (auth.canAccessParentAssignments ?? Boolean(auth.user?.activeLearner?.id)),
       query: {
         includeArchived: false,
       },

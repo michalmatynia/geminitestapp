@@ -15,18 +15,20 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type { ProductDbProvider } from '@/shared/lib/products/services/product-provider';
 import type { ImageFileRecord } from '@/shared/contracts/files';
 import {
-  uploadsRoot,
-  productsRoot,
-  notesRoot,
-  studioRoot,
-  caseResolverRoot,
-  agentCreatorRoot,
   tempFolderName,
-  publicRoot,
   MAX_IMAGE_BYTES,
   MAX_STUDIO_IMAGE_BYTES,
   ALLOWED_MIME_EXACT,
 } from './constants';
+import {
+  agentCreatorRoot,
+  caseResolverRoot,
+  notesRoot,
+  productsRoot,
+  publicRoot,
+  studioRoot,
+  uploadsRoot,
+} from './server-constants';
 
 function isAllowedMimeType(mime: string | null | undefined): boolean {
   const normalized = (mime ?? '').trim().toLowerCase();

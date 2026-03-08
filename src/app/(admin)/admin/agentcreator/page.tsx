@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { JSX } from 'react';
 
 import { PageLayout } from '@/shared/ui/PageLayout';
-import { Card, CardHeader, CardTitle, CardDescription } from '@/shared/ui/card';
+import { Card, CardHeader, CardDescription } from '@/shared/ui/card';
 
 export default function AgentCreatorPage(): JSX.Element {
   const cards = [
@@ -25,18 +25,25 @@ export default function AgentCreatorPage(): JSX.Element {
 
   return (
     <PageLayout title='Agent Creator' description='Configure and monitor multi-step agent runs.'>
-      <div className='grid gap-4 md:grid-cols-3'>
-        {cards.map((card) => (
-          <Link key={card.href} href={card.href}>
-            <Card className='h-full transition hover:border-gray-600 hover:bg-white/5'>
-              <CardHeader>
-                <CardTitle className='text-lg'>{card.title}</CardTitle>
-                <CardDescription>{card.description}</CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
-        ))}
-      </div>
+      <section aria-labelledby='agent-creator-sections-heading' className='space-y-4'>
+        <h2 id='agent-creator-sections-heading' className='text-lg font-semibold tracking-tight'>
+          Agent Creator sections
+        </h2>
+        <div className='grid gap-4 md:grid-cols-3'>
+          {cards.map((card) => (
+            <Link key={card.href} href={card.href}>
+              <Card className='h-full transition hover:border-gray-600 hover:bg-white/5'>
+                <CardHeader>
+                  <div className='text-lg font-semibold leading-none tracking-tight'>
+                    {card.title}
+                  </div>
+                  <CardDescription>{card.description}</CardDescription>
+                </CardHeader>
+              </Card>
+            </Link>
+          ))}
+        </div>
+      </section>
     </PageLayout>
   );
 }

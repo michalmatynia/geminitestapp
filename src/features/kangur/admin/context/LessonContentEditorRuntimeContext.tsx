@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
+import { internalError } from '@/shared/errors/app-error';
 
 type LessonContentEditorRuntimeContextValue = {
   isSaving: boolean;
@@ -46,7 +47,7 @@ export function LessonContentEditorRuntimeProvider({
 export function useLessonContentEditorRuntimeContext(): LessonContentEditorRuntimeContextValue {
   const context = useContext(LessonContentEditorRuntimeContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useLessonContentEditorRuntimeContext must be used within a LessonContentEditorRuntimeProvider'
     );
   }

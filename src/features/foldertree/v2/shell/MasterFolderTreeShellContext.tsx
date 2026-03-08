@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext } from 'react';
 import type { MasterFolderTreeShell } from './useMasterFolderTreeShell';
+import { internalError } from '@/shared/errors/app-error';
 
 export const MasterFolderTreeShellContext = createContext<MasterFolderTreeShell | null>(null);
 
@@ -22,7 +23,7 @@ export function MasterFolderTreeShellProvider({
 export function useMasterFolderTreeShellContext() {
   const context = useContext(MasterFolderTreeShellContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useMasterFolderTreeShellContext must be used within MasterFolderTreeShellProvider'
     );
   }

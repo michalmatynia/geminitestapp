@@ -4,6 +4,7 @@ import React, { createContext, useContext, useMemo } from 'react';
 
 import type { InspectorSettings } from '@/features/cms/types/page-builder';
 import type { MediaReplaceTarget } from '../preview-utils';
+import { internalError } from '@/shared/errors/app-error';
 
 export interface PreviewEditorContextValue {
   selectedNodeId: string | null;
@@ -100,7 +101,7 @@ export function PreviewEditorProvider({
 export function usePreviewEditorState(): PreviewEditorStateContextValue {
   const context = useContext(PreviewEditorStateContext);
   if (context === undefined) {
-    throw new Error('usePreviewEditorState must be used within a PreviewEditorProvider');
+    throw internalError('usePreviewEditorState must be used within a PreviewEditorProvider');
   }
   return context;
 }
@@ -108,7 +109,7 @@ export function usePreviewEditorState(): PreviewEditorStateContextValue {
 export function usePreviewEditorActions(): PreviewEditorActionsContextValue {
   const context = useContext(PreviewEditorActionsContext);
   if (context === undefined) {
-    throw new Error('usePreviewEditorActions must be used within a PreviewEditorProvider');
+    throw internalError('usePreviewEditorActions must be used within a PreviewEditorProvider');
   }
   return context;
 }

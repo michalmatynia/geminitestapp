@@ -11,6 +11,7 @@ import type {
   RuntimeState,
   SvgDetailLevel,
 } from '@/shared/lib/ai-paths';
+import { internalError } from '@/shared/errors/app-error';
 
 import type { ConnectorInfo } from './canvas-board-connectors';
 
@@ -125,7 +126,7 @@ export function CanvasBoardUIProvider({
 export function useCanvasBoardUI() {
   const context = useContext(CanvasBoardUIContext);
   if (!context) {
-    throw new Error('useCanvasBoardUI must be used within CanvasBoardUIProvider');
+    throw internalError('useCanvasBoardUI must be used within CanvasBoardUIProvider');
   }
   return context;
 }

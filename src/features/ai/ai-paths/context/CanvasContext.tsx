@@ -12,6 +12,7 @@ import {
 } from 'react';
 
 import { clampScale } from '@/shared/lib/ai-paths';
+import { internalError } from '@/shared/errors/app-error';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -255,7 +256,7 @@ export function CanvasProvider({
 export function useCanvasState(): CanvasState {
   const context = useContext(CanvasStateContext);
   if (!context) {
-    throw new Error('useCanvasState must be used within a CanvasProvider');
+    throw internalError('useCanvasState must be used within a CanvasProvider');
   }
   return context;
 }
@@ -267,7 +268,7 @@ export function useCanvasState(): CanvasState {
 export function useCanvasActions(): CanvasActions {
   const context = useContext(CanvasActionsContext);
   if (!context) {
-    throw new Error('useCanvasActions must be used within a CanvasProvider');
+    throw internalError('useCanvasActions must be used within a CanvasProvider');
   }
   return context;
 }
@@ -278,7 +279,7 @@ export function useCanvasActions(): CanvasActions {
 export function useCanvasRefs(): CanvasRefs {
   const context = useContext(CanvasRefsContext);
   if (!context) {
-    throw new Error('useCanvasRefs must be used within a CanvasProvider');
+    throw internalError('useCanvasRefs must be used within a CanvasProvider');
   }
   return context;
 }

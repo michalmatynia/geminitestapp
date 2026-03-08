@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from 'react';
 
+import { internalError } from '@/shared/errors/app-error';
 import {
   appendKangurUrlParams,
   getKangurPageHref as createPageUrl,
@@ -283,7 +284,7 @@ export function KangurLearnerProfileRuntimeBoundary({
 export const useKangurLearnerProfileRuntime = (): KangurLearnerProfileRuntimeContextValue => {
   const context = useContext(KangurLearnerProfileRuntimeContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useKangurLearnerProfileRuntime must be used within a KangurLearnerProfileRuntimeProvider'
     );
   }

@@ -7,6 +7,7 @@ import type {
   PositiveRectBoundsDto as PreviewCanvasCropRect,
   PositiveRectBoundsDto as PreviewCanvasImageContentFrame,
 } from '@/shared/contracts/geometry';
+import { internalError } from '@/shared/errors/app-error';
 
 export type { CanvasImageOffset, PreviewCanvasCropRect, PreviewCanvasImageContentFrame };
 
@@ -244,30 +245,30 @@ export function UiProvider({ children }: { children: React.ReactNode }): React.J
 
 export function useUiLayoutState(): UiLayoutState {
   const ctx = useContext(UiLayoutContext);
-  if (!ctx) throw new Error('useUiLayoutState must be used within a UiProvider');
+  if (!ctx) throw internalError('useUiLayoutState must be used within a UiProvider');
   return ctx;
 }
 
 export function useUiCanvasState(): UiCanvasState {
   const ctx = useContext(UiCanvasContext);
-  if (!ctx) throw new Error('useUiCanvasState must be used within a UiProvider');
+  if (!ctx) throw internalError('useUiCanvasState must be used within a UiProvider');
   return ctx;
 }
 
 export function useUiToolsState(): UiToolsState {
   const ctx = useContext(UiToolsContext);
-  if (!ctx) throw new Error('useUiToolsState must be used within a UiProvider');
+  if (!ctx) throw internalError('useUiToolsState must be used within a UiProvider');
   return ctx;
 }
 
 export function useUiState(): UiState {
   const ctx = useContext(UiStateContext);
-  if (!ctx) throw new Error('useUiState must be used within a UiProvider');
+  if (!ctx) throw internalError('useUiState must be used within a UiProvider');
   return ctx;
 }
 
 export function useUiActions(): UiActions {
   const ctx = useContext(UiActionsContext);
-  if (!ctx) throw new Error('useUiActions must be used within a UiProvider');
+  if (!ctx) throw internalError('useUiActions must be used within a UiProvider');
   return ctx;
 }

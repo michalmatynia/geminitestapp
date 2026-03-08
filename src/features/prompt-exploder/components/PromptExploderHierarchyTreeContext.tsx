@@ -3,6 +3,7 @@
 import React from 'react';
 
 import type { PromptExploderListItem } from '../types';
+import { internalError } from '@/shared/errors/app-error';
 
 type PromptExploderHierarchyTreeContextValue = {
   items: PromptExploderListItem[];
@@ -34,7 +35,7 @@ export function PromptExploderHierarchyTreeProvider({
 export function usePromptExploderHierarchyTreeContext(): PromptExploderHierarchyTreeContextValue {
   const context = React.useContext(PromptExploderHierarchyTreeContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'usePromptExploderHierarchyTreeContext must be used inside PromptExploderHierarchyTreeProvider'
     );
   }

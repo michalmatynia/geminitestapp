@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useMemo } from 'react';
+import { internalError } from '@/shared/errors/app-error';
 
 type TreeColumnContextValue = {
   columnId: string;
@@ -32,7 +33,7 @@ export function useOptionalTreeColumnId(explicitColumnId?: string): string | und
 export function useTreeColumnId(explicitColumnId?: string): string {
   const columnId = useOptionalTreeColumnId(explicitColumnId);
   if (!columnId) {
-    throw new Error(
+    throw internalError(
       'useTreeColumnId must be used within TreeColumnProvider or receive a columnId prop'
     );
   }

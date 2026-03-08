@@ -5,6 +5,6 @@ import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import { POST_handler } from './handler';
 
 export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(POST_handler, {
-  source: 'integrations.[id].connections.[connectionId].base.products.POST',
+  source: 'v2.integrations.[id].connections.[connectionId].base.products.POST',
   requireCsrf: false,
 });

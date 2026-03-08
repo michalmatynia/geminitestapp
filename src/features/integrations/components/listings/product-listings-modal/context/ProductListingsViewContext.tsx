@@ -3,6 +3,7 @@
 import React from 'react';
 
 import type { ProductListingWithDetails } from '@/shared/contracts/integrations';
+import { internalError } from '@/shared/errors/app-error';
 
 export type ProductListingsViewContextValue = {
   filteredListings: ProductListingWithDetails[];
@@ -35,7 +36,7 @@ export function ProductListingsViewProvider({
 export function useProductListingsViewContext(): ProductListingsViewContextValue {
   const context = React.useContext(ProductListingsViewContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useProductListingsViewContext must be used within ProductListingsViewProvider'
     );
   }

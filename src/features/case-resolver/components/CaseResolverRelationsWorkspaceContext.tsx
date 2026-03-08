@@ -7,6 +7,7 @@ import type {
   CaseResolverFile,
   CaseResolverRelationGraph,
 } from '@/shared/contracts/case-resolver';
+import { internalError } from '@/shared/errors/app-error';
 
 export interface CaseResolverRelationsWorkspaceContextValue {
   relationGraph: CaseResolverRelationGraph;
@@ -38,7 +39,7 @@ export function CaseResolverRelationsWorkspaceProvider({
 export function useCaseResolverRelationsWorkspaceContext() {
   const context = useContext(CaseResolverRelationsWorkspaceContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useCaseResolverRelationsWorkspaceContext must be used within CaseResolverRelationsWorkspaceProvider'
     );
   }

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
+import { internalError } from '@/shared/errors/app-error';
 
 export type DatabaseSaveQueryPresetDialogContextValue = {
   open: boolean;
@@ -78,7 +79,7 @@ export function DatabaseSaveQueryPresetDialogContextProvider({
 export function useDatabaseSaveQueryPresetDialogStateContext(): DatabaseSaveQueryPresetDialogStateContextValue {
   const context = React.useContext(DatabaseSaveQueryPresetDialogStateContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useDatabaseSaveQueryPresetDialogStateContext must be used within DatabaseSaveQueryPresetDialogContextProvider'
     );
   }
@@ -88,7 +89,7 @@ export function useDatabaseSaveQueryPresetDialogStateContext(): DatabaseSaveQuer
 export function useDatabaseSaveQueryPresetDialogActionsContext(): DatabaseSaveQueryPresetDialogActionsContextValue {
   const context = React.useContext(DatabaseSaveQueryPresetDialogActionsContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useDatabaseSaveQueryPresetDialogActionsContext must be used within DatabaseSaveQueryPresetDialogContextProvider'
     );
   }

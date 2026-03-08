@@ -29,6 +29,7 @@ import type {
   CategoryMapperActions,
 } from '@/shared/contracts/integrations';
 import { useToast } from '@/shared/ui';
+import { internalError } from '@/shared/errors/app-error';
 
 // --- Granular Contexts ---
 
@@ -40,14 +41,14 @@ const ConfigContext = createContext<CategoryMapperConfig | null>(null);
 export const useCategoryMapperConfig = () => {
   const context = useContext(ConfigContext);
   if (!context)
-    throw new Error('useCategoryMapperConfig must be used within CategoryMapperProvider');
+    throw internalError('useCategoryMapperConfig must be used within CategoryMapperProvider');
   return context;
 };
 
 const DataContext = createContext<CategoryMapperData | null>(null);
 export const useCategoryMapperData = () => {
   const context = useContext(DataContext);
-  if (!context) throw new Error('useCategoryMapperData must be used within CategoryMapperProvider');
+  if (!context) throw internalError('useCategoryMapperData must be used within CategoryMapperProvider');
   return context;
 };
 
@@ -61,7 +62,7 @@ const UIStateContext = createContext<CategoryMapperUIState | null>(null);
 export const useCategoryMapperUIState = () => {
   const context = useContext(UIStateContext);
   if (!context)
-    throw new Error('useCategoryMapperUIState must be used within CategoryMapperProvider');
+    throw internalError('useCategoryMapperUIState must be used within CategoryMapperProvider');
   return context;
 };
 
@@ -69,7 +70,7 @@ const ActionsContext = createContext<CategoryMapperActions | null>(null);
 export const useCategoryMapperActions = () => {
   const context = useContext(ActionsContext);
   if (!context)
-    throw new Error('useCategoryMapperActions must be used within CategoryMapperProvider');
+    throw internalError('useCategoryMapperActions must be used within CategoryMapperProvider');
   return context;
 };
 

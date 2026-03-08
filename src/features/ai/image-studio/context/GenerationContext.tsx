@@ -32,6 +32,7 @@ import { usePromptState, usePromptActions } from './PromptContext';
 import { useSettingsState } from './SettingsContext';
 import { useSlotsState, useSlotsActions } from './SlotsContext';
 import { buildRunRequestPreview } from '@/features/ai/image-studio/utils/run-request-preview';
+import { internalError } from '@/shared/errors/app-error';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -90,7 +91,13 @@ const POLL_INTERVAL_MS = 1200;
 const SSE_FALLBACK_POLL_INTERVAL_MS = 5000;
 const POLL_MAX_ATTEMPTS = 600;
 
-const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => {
+    const timer = window.setTimeout((): void => {
+      window.clearTimeout(timer);
+      resolve();
+    }, ms);
+  });
 
 const asRecord = (value: unknown): Record<string, unknown> | null => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
@@ -838,12 +845,12 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
 
 export function useGenerationState(): GenerationState {
   const ctx = useContext(GenerationStateContext);
-  if (!ctx) throw new Error('useGenerationState must be used within a GenerationProvider');
+  if (!ctx) throw internalError('useGenerationState must be used within a GenerationProvider');
   return ctx;
 }
 
 export function useGenerationActions(): GenerationActions {
   const ctx = useContext(GenerationActionsContext);
-  if (!ctx) throw new Error('useGenerationActions must be used within a GenerationProvider');
+  if (!ctx) throw internalError('useGenerationActions must be used within a GenerationProvider');
   return ctx;
 }

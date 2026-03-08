@@ -8,7 +8,7 @@ import OpenAI from 'openai';
 
 import { readBrainProviderCredential } from '@/shared/lib/ai-brain/provider-credentials';
 import { readStoredSettingValue, upsertStoredSettingValue } from '@/shared/lib/ai-brain/server';
-import { uploadsRoot } from '@/shared/lib/files/constants';
+import { uploadsRoot } from '@/shared/lib/files/server-constants';
 import { getDiskPathFromPublicPath } from '@/shared/lib/files/services/image-file-service';
 import { uploadToConfiguredStorage } from '@/shared/lib/files/services/storage/file-storage-service';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';

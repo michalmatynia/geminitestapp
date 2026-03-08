@@ -18,147 +18,22 @@ import {
 } from '../hooks/useProductStudioMutations';
 
 import type { ImageStudioSlotDto as ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+import { internalError } from '@/shared/errors/app-error';
 import type {
-  ProductStudioExecutionRoute,
-  ProductStudioSequenceGenerationMode,
-  ProductStudioSequenceReadiness,
-  ProductStudioSequenceStepPlanEntry,
-} from '@/shared/contracts/products';
+  ProductImageSlotPreview,
+  ProductStudioAuditEntry,
+  ProductStudioContextValue,
+  ProductStudioRunStatus,
+  ProductStudioVariantsResponse,
+} from './ProductStudioContext.types';
 
-// --- Types ---
-
-export type ProductStudioVariantsResponse = {
-  sequencing: {
-    persistedEnabled: boolean;
-    enabled: boolean;
-    runViaSequence: boolean;
-    sequenceStepCount: number;
-    snapshotSavedAt: string | null;
-    snapshotMatchesCurrent: boolean;
-    needsSaveDefaults: boolean;
-    needsSaveDefaultsReason: string | null;
-  };
-  sequencingDiagnostics: {
-    projectId: string | null;
-    projectSettingsKey: string | null;
-    selectedSettingsKey: string | null;
-    selectedScope: 'project' | 'global' | 'default';
-    hasProjectSettings: boolean;
-    hasGlobalSettings: boolean;
-    projectSequencingEnabled: boolean;
-    globalSequencingEnabled: boolean;
-    selectedSequencingEnabled: boolean;
-    selectedSnapshotHash: string | null;
-    selectedSnapshotSavedAt: string | null;
-    selectedSnapshotStepCount: number;
-    selectedSnapshotModelId: string | null;
-  };
-  sequenceReadiness: ProductStudioSequenceReadiness;
-  sequenceStepPlan: ProductStudioSequenceStepPlanEntry[];
-  sequenceGenerationMode: ProductStudioSequenceGenerationMode;
-  projectId: string | null;
-  sourceSlotId: string | null;
-  sourceSlot: ImageStudioSlotRecord | null;
-  variants: ImageStudioSlotRecord[];
-};
-
-export type ProductStudioAuditEntry = {
-  id: string;
-  createdAt: string;
-  status: 'completed' | 'failed';
-  imageSlotIndex: number;
-  executionRoute: ProductStudioExecutionRoute;
-  requestedSequenceMode: ProductStudioSequenceGenerationMode;
-  resolvedSequenceMode: ProductStudioSequenceGenerationMode;
-  runKind: 'generation' | 'sequence';
-  runId: string | null;
-  sequenceRunId: string | null;
-  dispatchMode: 'queued' | 'inline' | null;
-  fallbackReason: string | null;
-  warnings: string[];
-  settingsScope: 'project' | 'global' | 'default';
-  settingsKey: string | null;
-  projectSettingsKey: string | null;
-  settingsScopeValid: boolean;
-  sequenceSnapshotHash: string | null;
-  stepOrderUsed: string[];
-  resolvedCropRect: { x: number; y: number; width: number; height: number } | null;
-  sourceImageSize: { width: number; height: number } | null;
-  timings: {
-    importMs: number | null;
-    sourceSlotUpsertMs: number | null;
-    routeDecisionMs: number | null;
-    dispatchMs: number | null;
-    totalMs: number;
-  };
-  errorMessage: string | null;
-};
-
-export type ProductStudioRunStatus = 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
-
-export type ProductImageSlotPreview = {
-  index: number;
-  label: string;
-  src: string;
-};
-
-export interface ProductStudioContextValue {
-  // Global / Setting Data
-  studioProjectId: string | null;
-  setStudioProjectId: (id: string | null) => void;
-  studioProjectOptions: Array<{ value: string; label: string }>;
-  isStudioLoading: boolean;
-
-  // Image Selection
-  imageSlotPreviews: ProductImageSlotPreview[];
-  selectedImageIndex: number | null;
-  setSelectedImageIndex: (index: number | null) => void;
-  selectedSourcePreview: ProductImageSlotPreview | null;
-
-  // Variants Data
-  variants: ImageStudioSlotRecord[];
-  variantsLoading: boolean;
-  selectedVariantSlotId: string | null;
-  setSelectedVariantSlotId: (id: string | null) => void;
-  selectedVariant: ImageStudioSlotRecord | null;
-  pendingVariantPlaceholderCount: number;
-
-  // Preview State
-  sourceImageSrc: string | null;
-  variantImageSrc: string | null;
-  canCompareWithSource: boolean;
-
-  // Sequencing & Diagnostics
-  variantsData: ProductStudioVariantsResponse | null;
-  sequenceReadinessMessage: string | null;
-  blockSendForSequenceReadiness: boolean;
-
-  // Audit
-  auditEntries: ProductStudioAuditEntry[];
-  auditLoading: boolean;
-  auditError: string | null;
-  refreshAudit: () => Promise<void>;
-
-  // Run Status
-  activeRunId: string | null;
-  runStatus: ProductStudioRunStatus | null;
-
-  // Actions
-  handleSendToStudio: () => Promise<void>;
-  handleOpenInImageStudio: () => Promise<void>;
-  handleAcceptVariant: () => Promise<void>;
-  handleDeleteVariant: (slot: ImageStudioSlotRecord) => Promise<void>;
-  handleRotateImageSlot: (direction: 'left' | 'right') => Promise<void>;
-  refreshVariants: () => Promise<ProductStudioVariantsResponse | null>;
-
-  // Flags
-  sending: boolean;
-  accepting: boolean;
-  openingInImageStudio: boolean;
-  rotatingDirection: 'left' | 'right' | null;
-  deletingVariantId: string | null;
-  studioActionError: string | null;
-}
+export type {
+  ProductImageSlotPreview,
+  ProductStudioAuditEntry,
+  ProductStudioContextValue,
+  ProductStudioRunStatus,
+  ProductStudioVariantsResponse,
+} from './ProductStudioContext.types';
 
 const ProductStudioContext = createContext<ProductStudioContextValue | null>(null);
 
@@ -382,7 +257,7 @@ export function ProductStudioProvider({
         }
       );
       const sourceSlotId = response.sourceSlot?.id;
-      if (!sourceSlotId) throw new Error('Source slot not found.');
+      if (!sourceSlotId) throw internalError('Source slot not found.');
       window.location.href = `/admin/image-studio?projectId=${response.projectId}&slotId=${sourceSlotId}`;
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to open.', { variant: 'error' });
@@ -530,7 +405,7 @@ export function ProductStudioProvider({
 export function useProductStudioContext(): ProductStudioContextValue {
   const context = useContext(ProductStudioContext);
   if (!context) {
-    throw new Error('useProductStudioContext must be used within ProductStudioProvider');
+    throw internalError('useProductStudioContext must be used within ProductStudioProvider');
   }
   return context;
 }

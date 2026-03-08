@@ -16,6 +16,14 @@ import { pruneSingleCardinalityIncomingEdges } from './edge-cardinality-repair';
 
 import type { UseAiPathsRuntimeArgs, UseAiPathsRuntimeResult, QueuedRun } from './runtime/types';
 
+const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => {
+    const timer = window.setTimeout((): void => {
+      window.clearTimeout(timer);
+      resolve();
+    }, ms);
+  });
+
 export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntimeResult {
   const runtimeContextState = useRuntimeState();
   const runtimeContextActions = useRuntimeActions();
@@ -320,7 +328,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
         if (statusRes.data.status === 'failed') {
           throw new Error(statusRes.data.error || 'AI job failed.');
         }
-        await new Promise((r) => setTimeout(r, 2000));
+        await sleep(2000);
         attempts++;
       }
 

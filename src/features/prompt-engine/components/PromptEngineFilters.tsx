@@ -2,16 +2,12 @@
 
 import React from 'react';
 
-import { Tabs, TabsList, TabsTrigger } from '@/shared/ui';
+import { SegmentedControl } from '@/shared/ui';
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
 import type { FilterField } from '@/shared/ui/templates/panels';
 
 import { usePromptEngineActions } from '../context/prompt-engine/PromptEngineActionsContext';
-import {
-  type ExploderPatternSubTab,
-  type PatternCollectionTab,
-  usePromptEngineConfig,
-} from '../context/prompt-engine/PromptEngineConfigContext';
+import { usePromptEngineConfig } from '../context/prompt-engine/PromptEngineConfigContext';
 import { usePromptEngineData } from '../context/prompt-engine/PromptEngineDataContext';
 import {
   type ScopeFilter,
@@ -94,37 +90,33 @@ export function PromptEngineFilters(): React.JSX.Element {
   return (
     <div className='space-y-3'>
       {showPatternTabSwitch ? (
-        <Tabs
+        <SegmentedControl
+          size='md'
+          className='w-full max-w-md'
           value={patternTab}
-          onValueChange={(value: string) => {
-            setPatternTab(value as PatternCollectionTab);
+          onChange={(value) => {
+            setPatternTab(value);
           }}
-        >
-          <TabsList
-            className='grid w-full max-w-md grid-cols-2'
-            aria-label='Pattern collection tabs'
-          >
-            <TabsTrigger value='core'>Core Patterns</TabsTrigger>
-            <TabsTrigger value='prompt_exploder'>Exploder</TabsTrigger>
-          </TabsList>
-        </Tabs>
+          options={[
+            { value: 'core', label: 'Core Patterns' },
+            { value: 'prompt_exploder', label: 'Exploder' },
+          ]}
+        />
       ) : null}
       {showExploderSubTabSwitch ? (
-        <Tabs
+        <SegmentedControl
+          size='md'
+          className='w-full max-w-2xl'
           value={exploderSubTab}
-          onValueChange={(value: string) => {
-            setExploderSubTab(value as ExploderPatternSubTab);
+          onChange={(value) => {
+            setExploderSubTab(value);
           }}
-        >
-          <TabsList
-            className='grid w-full max-w-2xl grid-cols-3'
-            aria-label='Exploder rule tabs'
-          >
-            <TabsTrigger value='prompt_exploder_rules'>Prompt Exploder</TabsTrigger>
-            <TabsTrigger value='image_studio_rules'>Image Studio</TabsTrigger>
-            <TabsTrigger value='case_resolver_rules'>Case Resolver</TabsTrigger>
-          </TabsList>
-        </Tabs>
+          options={[
+            { value: 'prompt_exploder_rules', label: 'Prompt Exploder' },
+            { value: 'image_studio_rules', label: 'Image Studio' },
+            { value: 'case_resolver_rules', label: 'Case Resolver' },
+          ]}
+        />
       ) : null}
 
       <div className='text-xs text-gray-400'>

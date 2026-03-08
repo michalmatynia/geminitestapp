@@ -7,7 +7,7 @@ import { postKangurLearnerSignInHandler } from './handler';
 import { KANGUR_MOBILE_WEB_CORS_ORIGINS } from '../../shared/cors';
 
 export const POST = apiHandler(postKangurLearnerSignInHandler, {
-  source: 'kangur.auth.learnerSignIn.POST',
+  source: 'kangur.auth.learner-signin.POST',
   service: 'kangur.api',
   successLogging: 'all',
   corsOrigins: [...KANGUR_MOBILE_WEB_CORS_ORIGINS],

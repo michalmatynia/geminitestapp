@@ -630,9 +630,9 @@ export function useCaseResolverPromptExploder({
     }
 
     if (result.workspaceChanged) {
-      window.setTimeout((): void => {
+      queueMicrotask((): void => {
         flushWorkspacePersist();
-      }, 0);
+      });
       toast('Prompt Exploder output applied to the bound document.', { variant: 'success' });
     } else {
       toast('Prompt Exploder output already matches the bound document.', { variant: 'info' });

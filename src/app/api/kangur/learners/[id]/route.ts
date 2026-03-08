@@ -6,7 +6,7 @@ import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import { patchKangurLearnerHandler } from './handler';
 
 export const PATCH = apiHandlerWithParams<{ id: string }>(patchKangurLearnerHandler, {
-  source: 'kangur.learners.PATCH',
+  source: 'kangur.learners.[id].PATCH',
   service: 'kangur.api',
   successLogging: 'all',
 });

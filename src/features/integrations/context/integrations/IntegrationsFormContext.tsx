@@ -3,6 +3,7 @@
 import { createContext, useContext } from 'react';
 import type { IntegrationConnection } from '@/shared/contracts/integrations';
 import type { PlaywrightSettings } from '@/shared/contracts/playwright';
+import { internalError } from '@/shared/errors/app-error';
 
 export interface IntegrationsForm {
   isModalOpen: boolean;
@@ -21,6 +22,6 @@ export const IntegrationsFormContext = createContext<IntegrationsForm | null>(nu
 
 export const useIntegrationsForm = () => {
   const context = useContext(IntegrationsFormContext);
-  if (!context) throw new Error('useIntegrationsForm must be used within IntegrationsProvider');
+  if (!context) throw internalError('useIntegrationsForm must be used within IntegrationsProvider');
   return context;
 };

@@ -1,1 +1,25 @@
-export * from '@prisma/client';
+export { AiPathRunEventLevel, CurrencyCode, Prisma } from '@prisma/client';
+export type {
+  Catalog,
+  CmsDomain,
+  CmsTheme,
+  Currency,
+  FileUploadEvent,
+  ImageFile,
+  Notebook,
+  Page,
+  PageComponent,
+  Producer,
+  Product,
+  ProductAiJob,
+  ProductCatalog,
+  ProductCategory,
+  ProductImage,
+  ProductParameter,
+  ProductTag,
+  ProductValidationPattern,
+  Slug,
+  SystemLog,
+  Tag,
+  Theme,
+} from '@prisma/client';

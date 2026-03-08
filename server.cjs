@@ -77,12 +77,14 @@ async function getLoggingTools() {
   return loggingToolsCache;
 }
 
-const next = require('next');
-const app = next({ dev });
-const handle = app.getRequestHandler();
-
 const port = process.env.PORT ? Number(process.env.PORT) : 3000;
 const host = process.env.HOST || '::';
+const hasExplicitHost = typeof process.env.HOST === 'string' && process.env.HOST.length > 0;
+const nextHostname = host === '::' ? undefined : host;
+
+const next = require('next');
+const app = next({ dev, hostname: nextHostname, port });
+const handle = app.getRequestHandler();
 
 const SCRAPER_GUARD = createScraperGuard({
   enabled: process.env.SCRAPER_GUARD_ENABLED ? process.env.SCRAPER_GUARD_ENABLED !== 'false' : !dev,
@@ -418,7 +420,7 @@ app.prepare().then(async () => {
         ipv6Only: false,
       });
     } catch (error) {
-      if (host === '0.0.0.0') {
+      if (hasExplicitHost || host === '0.0.0.0') {
         throw error;
       }
       await listenWithOptions({ port, host: '0.0.0.0' });

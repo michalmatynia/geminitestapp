@@ -6,11 +6,10 @@ import { apiHandler } from '@/shared/lib/api/api-handler';
 import { GET_handler, POST_handler } from './handler';
 
 export const GET = apiHandler(GET_handler, {
-  source: 'integrations.GET',
-  requireCsrf: false,
+  source: 'v2.integrations.GET',
 });
 
 export const POST = apiHandler(POST_handler, {
-  source: 'integrations.POST',
+  source: 'v2.integrations.POST',
   requireCsrf: false,
 });

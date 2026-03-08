@@ -5,6 +5,7 @@ import {
   useAdminFilemakerPersonEditPageState,
   type AdminFilemakerPersonEditPageContextValue,
 } from '../hooks/useAdminFilemakerPersonEditPageState';
+import { internalError } from '@/shared/errors/app-error';
 
 type AdminFilemakerPersonEditPageFunctionKeys = {
   [Key in keyof AdminFilemakerPersonEditPageContextValue]-?: AdminFilemakerPersonEditPageContextValue[Key] extends (
@@ -71,7 +72,7 @@ export function AdminFilemakerPersonEditPageProvider({
 export function useAdminFilemakerPersonEditPageStateContext(): AdminFilemakerPersonEditPageStateContextValue {
   const context = useContext(AdminFilemakerPersonEditPageStateContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useAdminFilemakerPersonEditPageStateContext must be used within AdminFilemakerPersonEditPageProvider'
     );
   }
@@ -81,7 +82,7 @@ export function useAdminFilemakerPersonEditPageStateContext(): AdminFilemakerPer
 export function useAdminFilemakerPersonEditPageActionsContext(): AdminFilemakerPersonEditPageActionsContextValue {
   const context = useContext(AdminFilemakerPersonEditPageActionsContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useAdminFilemakerPersonEditPageActionsContext must be used within AdminFilemakerPersonEditPageProvider'
     );
   }

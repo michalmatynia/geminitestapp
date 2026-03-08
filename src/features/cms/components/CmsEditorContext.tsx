@@ -3,6 +3,7 @@
 import React from 'react';
 
 import type { Page } from '@/shared/contracts/cms';
+import { internalError } from '@/shared/errors/app-error';
 
 type CmsEditorContextValue = {
   page: Page | null;
@@ -23,7 +24,7 @@ export function CmsEditorProvider({ value, children }: CmsEditorProviderProps): 
 export function useCmsEditor(): CmsEditorContextValue {
   const context = React.useContext(CmsEditorContext);
   if (!context) {
-    throw new Error('useCmsEditor must be used within CmsEditorProvider');
+    throw internalError('useCmsEditor must be used within CmsEditorProvider');
   }
   return context;
 }

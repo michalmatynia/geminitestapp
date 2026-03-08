@@ -2,6 +2,7 @@
 
 import { createContext, useContext } from 'react';
 import type { PromptEngineSettings } from '@/shared/lib/prompt-engine/settings';
+import { internalError } from '@/shared/errors/app-error';
 
 export type PatternCollectionTab = 'core' | 'prompt_exploder';
 export type ExploderPatternSubTab =
@@ -23,6 +24,6 @@ export const ConfigContext = createContext<PromptEngineConfig | null>(null);
 
 export const usePromptEngineConfig = () => {
   const context = useContext(ConfigContext);
-  if (!context) throw new Error('usePromptEngineConfig must be used within PromptEngineProvider');
+  if (!context) throw internalError('usePromptEngineConfig must be used within PromptEngineProvider');
   return context;
 };

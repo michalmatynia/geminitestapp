@@ -2,6 +2,7 @@
 
 import { createContext, useContext } from 'react';
 import type { SectionInstance, BlockInstance } from '@/shared/contracts/cms';
+import { internalError } from '@/shared/errors/app-error';
 
 export interface PageSelectionValue {
   selectedSection: SectionInstance | null;
@@ -19,7 +20,7 @@ export const PageSelectionContext = createContext<PageSelectionValue | undefined
 export function usePageBuilderSelection(): PageSelectionValue {
   const context = useContext(PageSelectionContext);
   if (!context) {
-    throw new Error('usePageBuilderSelection must be used within PageBuilderProvider');
+    throw internalError('usePageBuilderSelection must be used within PageBuilderProvider');
   }
   return context;
 }

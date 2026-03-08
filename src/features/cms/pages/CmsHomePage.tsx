@@ -10,58 +10,63 @@ export default function CmsPage(): React.ReactNode {
         description='Welcome to the Content Management System.'
         className='mb-6'
       />
-      <div className='mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
-        <Link href='/admin/cms/slugs'>
-          <Card className='h-full transition-colors hover:bg-gray-700/50'>
-            <CardHeader>
-              <CardTitle className='text-xl font-bold'>Manage Slugs</CardTitle>
-              <CardDescription className='mt-2 text-gray-400'>
-                Create and manage URL slugs for your pages.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </Link>
-        <Link href='/admin/cms/zones'>
-          <Card className='h-full transition-colors hover:bg-gray-700/50'>
-            <CardHeader>
-              <CardTitle className='text-xl font-bold'>Zones (Domains)</CardTitle>
-              <CardDescription className='mt-2 text-gray-400'>
-                Map domains to their slug sets and defaults.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </Link>
-        <Link href='/admin/cms/pages'>
-          <Card className='h-full transition-colors hover:bg-gray-700/50'>
-            <CardHeader>
-              <CardTitle className='text-xl font-bold'>Manage Pages</CardTitle>
-              <CardDescription className='mt-2 text-gray-400'>
-                Create and manage the content of your pages.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </Link>
-        <Link href='/admin/cms/builder'>
-          <Card className='h-full transition-colors hover:bg-gray-700/50'>
-            <CardHeader>
-              <CardTitle className='text-xl font-bold'>Page Builder</CardTitle>
-              <CardDescription className='mt-2 text-gray-400'>
-                Visual editor for building pages with components.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </Link>
-        <Link href='/admin/cms/themes'>
-          <Card className='h-full transition-colors hover:bg-gray-700/50'>
-            <CardHeader>
-              <CardTitle className='text-xl font-bold'>Themes</CardTitle>
-              <CardDescription className='mt-2 text-gray-400'>
-                Manage color palettes, typography, and spacing presets.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </Link>
-      </div>
+      <section aria-labelledby='cms-tools-heading' className='mt-6 space-y-4'>
+        <h2 id='cms-tools-heading' className='text-lg font-semibold tracking-tight'>
+          CMS tools
+        </h2>
+        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+          <Link href='/admin/cms/slugs'>
+            <Card className='h-full transition-colors hover:bg-gray-700/50'>
+              <CardHeader>
+                <CardTitle className='text-xl font-bold'>Manage Slugs</CardTitle>
+                <CardDescription className='mt-2 text-gray-400'>
+                  Create and manage URL slugs for your pages.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+          <Link href='/admin/cms/zones'>
+            <Card className='h-full transition-colors hover:bg-gray-700/50'>
+              <CardHeader>
+                <CardTitle className='text-xl font-bold'>Zones (Domains)</CardTitle>
+                <CardDescription className='mt-2 text-gray-400'>
+                  Map domains to their slug sets and defaults.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+          <Link href='/admin/cms/pages'>
+            <Card className='h-full transition-colors hover:bg-gray-700/50'>
+              <CardHeader>
+                <CardTitle className='text-xl font-bold'>Manage Pages</CardTitle>
+                <CardDescription className='mt-2 text-gray-400'>
+                  Create and manage the content of your pages.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+          <Link href='/admin/cms/builder'>
+            <Card className='h-full transition-colors hover:bg-gray-700/50'>
+              <CardHeader>
+                <CardTitle className='text-xl font-bold'>Page Builder</CardTitle>
+                <CardDescription className='mt-2 text-gray-400'>
+                  Visual editor for building pages with components.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+          <Link href='/admin/cms/themes'>
+            <Card className='h-full transition-colors hover:bg-gray-700/50'>
+              <CardHeader>
+                <CardTitle className='text-xl font-bold'>Themes</CardTitle>
+                <CardDescription className='mt-2 text-gray-400'>
+                  Manage color palettes, typography, and spacing presets.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+        </div>
+      </section>
     </div>
   );
 }

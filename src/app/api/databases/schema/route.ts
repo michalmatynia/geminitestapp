@@ -6,7 +6,7 @@ import { apiHandler } from '@/shared/lib/api/api-handler';
 import { getDatabasesSchemaHandler, querySchema } from './handler';
 
 export const GET = apiHandler(getDatabasesSchemaHandler, {
-  source: 'database.schema.GET',
+  source: 'databases.schema.GET',
   cacheControl: 'public, s-maxage=86400, stale-while-revalidate=3600',
   querySchema,
 });

@@ -3,6 +3,7 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 
 import type { KangurMode } from '@/features/kangur/ui/types';
+import { internalError } from '@/shared/errors/app-error';
 
 type KangurGameContextValue = {
   mode: KangurMode | null;
@@ -36,7 +37,7 @@ export const KangurGameProvider = ({
 export const useKangurGameContext = (): KangurGameContextValue => {
   const context = useContext(KangurGameContext);
   if (!context) {
-    throw new Error('useKangurGameContext must be used within a KangurGameProvider');
+    throw internalError('useKangurGameContext must be used within a KangurGameProvider');
   }
   return context;
 };

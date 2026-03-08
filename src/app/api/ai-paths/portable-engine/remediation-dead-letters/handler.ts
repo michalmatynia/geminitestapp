@@ -44,6 +44,21 @@ export const querySchema = z.object({
   endpoint: optionalTrimmedQueryString(),
 });
 
+const parseDeadLetterLimit = (value: unknown): number => {
+  if (value === undefined || value === null) return DEFAULT_DEAD_LETTER_LIMIT;
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    throw badRequestError('Invalid remediation dead-letter limit.');
+  }
+  const normalized = Math.floor(numeric);
+  if (normalized <= 0 || normalized > MAX_DEAD_LETTER_LIMIT) {
+    throw badRequestError(
+      `Remediation dead-letter limit must be between 1 and ${MAX_DEAD_LETTER_LIMIT}.`
+    );
+  }
+  return normalized;
+};
+
 const parseDeadLetterReplayLimit = (value: unknown): number => {
   if (value === undefined || value === null) return DEFAULT_DEAD_LETTER_REPLAY_LIMIT;
   const numeric = Number(value);
@@ -60,10 +75,10 @@ const parseDeadLetterReplayLimit = (value: unknown): number => {
 };
 
 const parseDeadLetterChannel = (
-  value: string | null | undefined
+  value: unknown
 ): PortablePathAuditSinkAutoRemediationNotificationChannel | null => {
-  if (!value) return null;
-  const normalized = value.trim().toLowerCase();
+  const normalized = normalizeOptionalQueryString(value)?.toLowerCase();
+  if (!normalized) return null;
   if (normalized === 'webhook' || normalized === 'email') return normalized;
   throw badRequestError('Remediation dead-letter channel must be one of: webhook, email.');
 };
@@ -72,6 +87,21 @@ const parseDeadLetterEndpoint = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
   const normalized = value.trim();
   return normalized.length > 0 ? normalized : null;
+};
+
+const resolveDeadLetterQueryInput = (
+  req: NextRequest,
+  ctx: ApiHandlerContext
+): Record<string, unknown> => {
+  if (ctx.query && Object.keys(ctx.query).length > 0) {
+    return ctx.query as Record<string, unknown>;
+  }
+
+  return {
+    limit: req.nextUrl.searchParams.get('limit'),
+    channel: req.nextUrl.searchParams.get('channel'),
+    endpoint: req.nextUrl.searchParams.get('endpoint'),
+  };
 };
 
 type ReplayRequestBody = {
@@ -125,13 +155,13 @@ const parseReplayRequestBody = (
   };
 };
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   await requireAiPathsAccess();
 
-  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
-  const limit = query.limit ?? DEFAULT_DEAD_LETTER_LIMIT;
-  const channel = parseDeadLetterChannel(query.channel);
-  const endpoint = parseDeadLetterEndpoint(query.endpoint);
+  const query = resolveDeadLetterQueryInput(req, ctx);
+  const limit = parseDeadLetterLimit(query['limit']);
+  const channel = parseDeadLetterChannel(query['channel']);
+  const endpoint = parseDeadLetterEndpoint(query['endpoint']);
   const deadLetterMaxEntries =
     resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironment() ??
     DEFAULT_AUTO_REMEDIATION_DEAD_LETTER_MAX_ENTRIES;

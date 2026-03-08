@@ -3,6 +3,7 @@
 import React, { createContext, useContext } from 'react';
 
 import { useDatabaseBackupsState } from '../hooks/useDatabaseBackupsState';
+import { internalError } from '@/shared/errors/app-error';
 
 type DatabaseBackupsContextValue = ReturnType<typeof useDatabaseBackupsState>;
 
@@ -116,7 +117,7 @@ export function DatabaseBackupsProvider({
 export function useDatabaseBackupsStateContext(): DatabaseBackupsStateContextValue {
   const context = useContext(DatabaseBackupsStateContext);
   if (!context) {
-    throw new Error('useDatabaseBackupsStateContext must be used within a DatabaseBackupsProvider');
+    throw internalError('useDatabaseBackupsStateContext must be used within a DatabaseBackupsProvider');
   }
   return context;
 }
@@ -124,7 +125,7 @@ export function useDatabaseBackupsStateContext(): DatabaseBackupsStateContextVal
 export function useDatabaseBackupsActionsContext(): DatabaseBackupsActionsContextValue {
   const context = useContext(DatabaseBackupsActionsContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useDatabaseBackupsActionsContext must be used within a DatabaseBackupsProvider'
     );
   }

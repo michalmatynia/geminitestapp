@@ -13,15 +13,18 @@ import {
 } from '@/features/ai/agentcreator/hooks/useAgentPersonas';
 import {
   fetchAgentPersonas,
+  normalizeAgentPersonas,
 } from '@/shared/lib/agent-personas';
-import { normalizeAgentPersonas } from '@/shared/lib/agent-personas';
 import { invalidateSettingsCache } from '@/shared/api/settings-client';
 import type { AgentPersona } from '@/shared/contracts/agents';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-vi.mock('@/shared/lib/agent-personas', async (importOriginal) => {
-  const actual = await importOriginal();
+vi.mock('@/shared/lib/agent-personas', async () => {
+  const actual = await vi.importActual<typeof import('@/shared/lib/agent-personas')>(
+    '@/shared/lib/agent-personas'
+  );
+
   return {
     ...actual,
     fetchAgentPersonas: vi.fn(),

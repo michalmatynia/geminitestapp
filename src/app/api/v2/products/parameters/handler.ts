@@ -48,6 +48,14 @@ export const querySchema = catalogIdQuerySchema.extend({
   fresh: freshQuerySchema,
 });
 
+const resolveParametersQueryInput = (
+  req: Request,
+  ctx: ApiHandlerContext
+): Record<string, unknown> => ({
+  ...Object.fromEntries(new URL(req.url).searchParams.entries()),
+  ...((ctx.query ?? {}) as Record<string, unknown>),
+});
+
 const normalizeOptionLabels = (input: unknown): string[] => {
   if (!Array.isArray(input)) return [];
   const seen = new Set<string>();
@@ -91,8 +99,10 @@ export const productParameterCreateSchema = z
  * Query params:
  * - catalogId: Filter by catalog (required)
  */
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const query = _ctx.query as (CatalogIdQuery & { fresh?: boolean }) | undefined;
+export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const query = querySchema.parse(resolveParametersQueryInput(req, _ctx)) as CatalogIdQuery & {
+    fresh?: boolean;
+  };
   const catalogId = query?.catalogId ?? '';
 
   if (!catalogId) {

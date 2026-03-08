@@ -5,6 +5,7 @@ import React from 'react';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 import type { VersionNode } from '../context/VersionGraphContext';
+import { internalError } from '@/shared/errors/app-error';
 
 type VersionGraphInspectorContextValue = {
   selectedNode: VersionNode | null;
@@ -43,7 +44,7 @@ export function VersionGraphInspectorProvider({
 export function useVersionGraphInspectorContext(): VersionGraphInspectorContextValue {
   const context = React.useContext(VersionGraphInspectorContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useVersionGraphInspectorContext must be used inside VersionGraphInspectorProvider'
     );
   }

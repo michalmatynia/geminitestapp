@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from 'react';
 
+import { internalError } from '@/shared/errors/app-error';
 import {
   getKangurInternalQueryParamName,
   readKangurUrlParam,
@@ -52,6 +53,7 @@ type KangurGameRuntimeContextValue = {
   basePath: string;
   user: KangurUser | null;
   isAuthenticated: boolean;
+  canAccessParentAssignments: boolean;
   isLoadingAuth: boolean;
   progress: KangurProgressState;
   screen: KangurGameScreen;
@@ -112,7 +114,10 @@ export function KangurGameRuntimeProvider({
   children: ReactNode;
 }): JSX.Element {
   const { basePath } = useKangurRouting();
-  const { isAuthenticated, isLoadingAuth, logout, navigateToLogin, user } = useKangurAuth();
+  const auth = useKangurAuth();
+  const { isAuthenticated, isLoadingAuth, logout, navigateToLogin, user } = auth;
+  const canAccessParentAssignments =
+    auth.canAccessParentAssignments ?? (isAuthenticated && Boolean(user?.activeLearner?.id));
   const progress = useKangurProgressState();
   const quickStartConsumedRef = useRef(false);
   const xpToastTimeoutRef = useRef<number | null>(null);
@@ -133,7 +138,7 @@ export function KangurGameRuntimeProvider({
   });
 
   const { assignments: delegatedAssignments, refresh: refreshAssignments } = useKangurAssignments({
-    enabled: Boolean(user),
+    enabled: canAccessParentAssignments,
     query: {
       includeArchived: false,
     },
@@ -290,7 +295,7 @@ export function KangurGameRuntimeProvider({
           time_taken: taken,
         })
         .finally(() => {
-          if (user) {
+          if (canAccessParentAssignments) {
             void refreshAssignments();
           }
         });
@@ -373,6 +378,7 @@ export function KangurGameRuntimeProvider({
     basePath,
     user,
     isAuthenticated,
+    canAccessParentAssignments,
     isLoadingAuth,
     progress,
     screen,
@@ -429,7 +435,7 @@ export function KangurGameRuntimeBoundary({
 export const useKangurGameRuntime = (): KangurGameRuntimeContextValue => {
   const context = useContext(KangurGameRuntimeContext);
   if (!context) {
-    throw new Error('useKangurGameRuntime must be used within a KangurGameRuntimeProvider');
+    throw internalError('useKangurGameRuntime must be used within a KangurGameRuntimeProvider');
   }
 
   return context;

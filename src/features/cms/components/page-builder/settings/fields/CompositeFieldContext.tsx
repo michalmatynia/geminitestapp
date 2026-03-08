@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext } from 'react';
+import { internalError } from '@/shared/errors/app-error';
 
 export type CompositeFieldContextValue = {
   value: unknown;
@@ -14,7 +15,7 @@ export const CompositeFieldContext = createContext<CompositeFieldContextValue | 
 export function useCompositeFieldContext(): CompositeFieldContextValue {
   const context = useContext(CompositeFieldContext);
   if (!context) {
-    throw new Error('Composite field must be used inside CompositeFieldProvider');
+    throw internalError('Composite field must be used inside CompositeFieldProvider');
   }
   return context;
 }

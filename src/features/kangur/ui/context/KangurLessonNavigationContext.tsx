@@ -2,6 +2,8 @@
 
 import { createContext, useContext, type ReactNode } from 'react';
 
+import { internalError } from '@/shared/errors/app-error';
+
 type KangurLessonBackAction = () => void;
 
 const KangurLessonNavigationContext = createContext<KangurLessonBackAction | null>(null);
@@ -44,7 +46,7 @@ export const useKangurLessonBackAction = (
   }
 
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useKangurLessonBackAction must be used within a KangurLessonNavigationProvider'
     );
   }

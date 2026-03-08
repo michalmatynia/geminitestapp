@@ -16,6 +16,7 @@ import {
   addAutofixOperationToRule,
 } from '../rule-item-mutations';
 import { usePromptEngineActions } from '../../context/prompt-engine/PromptEngineActionsContext';
+import { internalError } from '@/shared/errors/app-error';
 
 interface RuleItemContextValue {
   draft: RuleDraft;
@@ -34,7 +35,7 @@ const RuleItemContext = createContext<RuleItemContextValue | null>(null);
 export function useRuleItemContext(): RuleItemContextValue {
   const context = useContext(RuleItemContext);
   if (!context) {
-    throw new Error('useRuleItemContext must be used within a RuleItemProvider');
+    throw internalError('useRuleItemContext must be used within a RuleItemProvider');
   }
   return context;
 }

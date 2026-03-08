@@ -48,6 +48,14 @@ const attachTimingHeaders = (
   }
 };
 
+const resolvePagedProductsQueryInput = (
+  req: NextRequest,
+  ctx: ApiHandlerContext
+): Record<string, unknown> => ({
+  ...Object.fromEntries(req.nextUrl.searchParams.entries()),
+  ...((ctx.query ?? {}) as Record<string, unknown>),
+});
+
 /**
  * GET /api/v2/products/paged
  * Returns { products: ProductWithImages[], total: number } in a single request,
@@ -56,9 +64,10 @@ const attachTimingHeaders = (
  * unfiltered path on the indexed list query + estimatedDocumentCount fast path.
  * Prisma continues to use parallel findMany + count queries.
  */
-export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const timings: Record<string, number | null | undefined> = {};
-  const query = ctx.query as ProductFiltersParsed & { fresh?: boolean };
+  const query = querySchema.parse(resolvePagedProductsQueryInput(req, ctx)) as ProductFiltersParsed &
+    { fresh?: boolean };
   const { fresh, ...filters } = query;
   const forceFresh = fresh === true;
   const serviceStart = performance.now();

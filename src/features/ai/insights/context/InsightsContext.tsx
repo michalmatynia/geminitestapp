@@ -12,6 +12,7 @@ import {
   useRunRuntimeAnalyticsInsightMutation,
   useRunLogInsightMutation,
 } from '../hooks/useInsightQueries';
+import { internalError } from '@/shared/errors/app-error';
 
 interface InsightsContextValue {
   analyticsQuery: ReturnType<typeof useAnalyticsInsightsQuery>;
@@ -37,7 +38,7 @@ const InsightsActionsContext = createContext<InsightsActionsContextValue | undef
 export function useInsightsState(): InsightsStateContextValue {
   const context = useContext(InsightsStateContext);
   if (!context) {
-    throw new Error('useInsightsState must be used within an InsightsProvider');
+    throw internalError('useInsightsState must be used within an InsightsProvider');
   }
   return context;
 }
@@ -45,7 +46,7 @@ export function useInsightsState(): InsightsStateContextValue {
 export function useInsightsActions(): InsightsActionsContextValue {
   const context = useContext(InsightsActionsContext);
   if (!context) {
-    throw new Error('useInsightsActions must be used within an InsightsProvider');
+    throw internalError('useInsightsActions must be used within an InsightsProvider');
   }
   return context;
 }

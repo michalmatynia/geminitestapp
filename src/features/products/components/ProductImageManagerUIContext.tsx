@@ -11,83 +11,19 @@ import { api } from '@/shared/lib/api-client';
 import { useProductSettings } from '@/features/products/hooks/useProductSettings';
 
 import { useOptionalProductImageManagerController } from './ProductImageManagerControllerContext';
+import { internalError } from '@/shared/errors/app-error';
+import type {
+  ProductImageManagerUIActionsContextValue,
+  ProductImageManagerUIStateContextValue,
+  SlotViewMode,
+} from './ProductImageManagerUIContext.types';
 
-export type SlotViewMode = 'upload' | 'link' | 'base64';
-
-export interface ProductImageManagerUIContextValue {
-  // State
-  slotViewModes: SlotViewMode[];
-  base64LoadingSlots: Record<number, boolean>;
-  linkToFileLoadingSlots: Record<number, boolean>;
-  draggedIndex: number | null;
-  dragOverIndex: number | null;
-  isReordering: boolean;
-  debugInfo: DebugInfo | null;
-  showDebug: boolean;
-
-  // Settings
-  externalBaseUrl: string;
-  minimalUi: boolean;
-  showDragHandle: boolean;
-  minimalSingleSlotAlign: 'left' | 'center';
-
-  // Resolved Controller Props
-  controller: ProductImageManagerController;
-
-  // Handlers
-  setSlotViewMode: (index: number, mode: SlotViewMode) => void;
-  setShowDebug: (show: boolean) => void;
-  pushDebug: (info: Omit<DebugInfo, 'timestamp'>) => void;
-  convertSlotToBase64: (index: number) => Promise<void>;
-  convertAllSlotsToBase64: () => Promise<void>;
-  convertLinkToFile: (index: number) => Promise<void>;
-  triggerFileManager: (index: number) => void;
-  handleSlotFileUpload: (index: number, files: File[]) => void;
-  clearVisibleImage: (index: number) => Promise<void>;
-
-  // Drag and Drop
-  handleDragStart: (e: React.DragEvent<HTMLDivElement>, index: number) => void;
-  handleDragEnd: () => void;
-  handleDragOver: (e: React.DragEvent<HTMLDivElement>, index: number) => void;
-  handleDragLeave: (e: React.DragEvent<HTMLDivElement>) => void;
-  handleDrop: (e: React.DragEvent<HTMLDivElement>, toIndex: number) => void;
-}
-
-export type ProductImageManagerUIStateContextValue = Omit<
+export type {
+  ProductImageManagerUIActionsContextValue,
   ProductImageManagerUIContextValue,
-  | 'setSlotViewMode'
-  | 'setShowDebug'
-  | 'pushDebug'
-  | 'convertSlotToBase64'
-  | 'convertAllSlotsToBase64'
-  | 'convertLinkToFile'
-  | 'triggerFileManager'
-  | 'handleSlotFileUpload'
-  | 'clearVisibleImage'
-  | 'handleDragStart'
-  | 'handleDragEnd'
-  | 'handleDragOver'
-  | 'handleDragLeave'
-  | 'handleDrop'
->;
-
-export type ProductImageManagerUIActionsContextValue = Pick<
-  ProductImageManagerUIContextValue,
-  | 'setSlotViewMode'
-  | 'setShowDebug'
-  | 'pushDebug'
-  | 'convertSlotToBase64'
-  | 'convertAllSlotsToBase64'
-  | 'convertLinkToFile'
-  | 'triggerFileManager'
-  | 'handleSlotFileUpload'
-  | 'clearVisibleImage'
-  | 'handleDragStart'
-  | 'handleDragEnd'
-  | 'handleDragOver'
-  | 'handleDragLeave'
-  | 'handleDrop'
->;
+  ProductImageManagerUIStateContextValue,
+  SlotViewMode,
+} from './ProductImageManagerUIContext.types';
 
 const ProductImageManagerUIStateContext =
   createContext<ProductImageManagerUIStateContextValue | null>(null);
@@ -115,7 +51,7 @@ export function ProductImageManagerUIProvider({
     explicitController ?? controllerContext ?? formImagesController ?? null;
 
   if (!controller) {
-    throw new Error(
+    throw internalError(
       'ProductImageManagerUIProvider requires ProductFormImageContext or an explicit controller.'
     );
   }
@@ -507,7 +443,7 @@ export function ProductImageManagerUIProvider({
 export function useProductImageManagerUIState(): ProductImageManagerUIStateContextValue {
   const context = useContext(ProductImageManagerUIStateContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useProductImageManagerUIState must be used within ProductImageManagerUIProvider'
     );
   }
@@ -517,7 +453,7 @@ export function useProductImageManagerUIState(): ProductImageManagerUIStateConte
 export function useProductImageManagerUIActions(): ProductImageManagerUIActionsContextValue {
   const context = useContext(ProductImageManagerUIActionsContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useProductImageManagerUIActions must be used within ProductImageManagerUIProvider'
     );
   }

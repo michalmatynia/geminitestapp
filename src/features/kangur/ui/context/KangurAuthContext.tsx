@@ -7,6 +7,7 @@ import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurUser } from '@/features/kangur/services/ports';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { logKangurClientError } from '@/features/kangur/observability/client';
+import { internalError } from '@/shared/errors/app-error';
 
 type KangurAuthError = {
   type: 'unknown' | 'auth_required' | 'user_not_registered';
@@ -16,6 +17,7 @@ type KangurAuthError = {
 type KangurAuthContextValue = {
   user: KangurUser | null;
   isAuthenticated: boolean;
+  canAccessParentAssignments: boolean;
   isLoadingAuth: boolean;
   isLoadingPublicSettings: boolean;
   authError: KangurAuthError | null;
@@ -28,6 +30,11 @@ type KangurAuthContextValue = {
 
 const KangurAuthContext = createContext<KangurAuthContextValue | null>(null);
 const kangurPlatform = getKangurPlatform();
+
+const resolveCanAccessParentAssignments = (
+  user: KangurUser | null,
+  isAuthenticated: boolean
+): boolean => isAuthenticated && Boolean(user?.activeLearner?.id);
 
 const resolveErrorMessage = (value: unknown): string => {
   if (value instanceof Error && value.message.trim().length > 0) {
@@ -44,6 +51,7 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
   const [isLoadingPublicSettings] = useState(false);
   const [authError, setAuthError] = useState<KangurAuthError | null>(null);
   const [appPublicSettings] = useState<null>(null);
+  const canAccessParentAssignments = resolveCanAccessParentAssignments(user, isAuthenticated);
 
   const checkAppState = async (): Promise<void> => {
     setAuthError(null);
@@ -119,6 +127,7 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
     () => ({
       user,
       isAuthenticated,
+      canAccessParentAssignments,
       isLoadingAuth,
       isLoadingPublicSettings,
       authError,
@@ -128,7 +137,15 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
       checkAppState,
       selectLearner,
     }),
-    [user, isAuthenticated, isLoadingAuth, isLoadingPublicSettings, authError, appPublicSettings]
+    [
+      user,
+      isAuthenticated,
+      canAccessParentAssignments,
+      isLoadingAuth,
+      isLoadingPublicSettings,
+      authError,
+      appPublicSettings,
+    ]
   );
 
   return <KangurAuthContext.Provider value={value}>{children}</KangurAuthContext.Provider>;
@@ -137,7 +154,7 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
 export const useKangurAuth = (): KangurAuthContextValue => {
   const context = useContext(KangurAuthContext);
   if (!context) {
-    throw new Error('useKangurAuth must be used within a KangurAuthProvider');
+    throw internalError('useKangurAuth must be used within a KangurAuthProvider');
   }
   return context;
 };

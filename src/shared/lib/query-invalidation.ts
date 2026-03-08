@@ -718,9 +718,10 @@ export const notifyAiPathRunEnqueued = (
 
   window.dispatchEvent(new CustomEvent(AI_PATH_RUN_ENQUEUED_EVENT_NAME, { detail: payload }));
 
-  if (typeof BroadcastChannel === 'undefined') return;
+  const BroadcastChannelCtor = window.BroadcastChannel;
+  if (typeof BroadcastChannelCtor !== 'function') return;
   try {
-    const channel = new BroadcastChannel(AI_PATH_RUN_QUEUE_CHANNEL);
+    const channel = new BroadcastChannelCtor(AI_PATH_RUN_QUEUE_CHANNEL);
     channel.postMessage(payload);
     channel.close();
   } catch {

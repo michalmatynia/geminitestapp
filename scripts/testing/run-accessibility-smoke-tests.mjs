@@ -33,6 +33,8 @@ const preferredBrowserNodeBinDir = (() => {
 
   return latestNode22Dir ? path.join(nvmVersionsDir, latestNode22Dir, 'bin') : null;
 })();
+const playwrightHost = process.env['HOST'] || '127.0.0.1';
+const playwrightBaseUrl = process.env['PLAYWRIGHT_BASE_URL'] || `http://${playwrightHost}:3000`;
 
 const suites = [
   {
@@ -142,9 +144,14 @@ const resolveSuiteCommand = (suite) => {
       env:
         preferredBrowserNodeBinDir !== null
           ? {
+              HOST: playwrightHost,
+              PLAYWRIGHT_BASE_URL: playwrightBaseUrl,
               PATH: `${preferredBrowserNodeBinDir}${path.delimiter}${process.env['PATH'] ?? ''}`,
             }
-          : {},
+          : {
+              HOST: playwrightHost,
+              PLAYWRIGHT_BASE_URL: playwrightBaseUrl,
+            },
     };
   }
 
@@ -254,7 +261,7 @@ const toMarkdown = (payload) => {
   lines.push('');
   lines.push('- This smoke suite tracks keyboard/focus/label checks plus axe-core scans across critical user flows.');
   lines.push('- Unit suites cover shared semantics and component states; Playwright suites cover browser-rendered routes.');
-  lines.push('- Run `npm run test:accessibility-smoke` before UI-facing changes.');
+  lines.push('- Run `npm run test:accessibility:gate` before UI-facing changes.');
   lines.push('- Use `--fail-on-warning-budget-exceed` in strict mode to fail when warning budget is exceeded.');
   return `${lines.join('\n')}\n`;
 };

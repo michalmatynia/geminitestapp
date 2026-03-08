@@ -6,6 +6,7 @@ import {
   useDatabaseEngineState,
   type UseDatabaseEngineStateReturn,
 } from '../hooks/useDatabaseEngineState';
+import { internalError } from '@/shared/errors/app-error';
 
 type DatabaseEngineContextValue = UseDatabaseEngineStateReturn;
 
@@ -78,7 +79,7 @@ export function DatabaseEngineProvider({
 export function useDatabaseEngineStateContext(): DatabaseEngineStateContextValue {
   const context = useContext(DatabaseEngineStateContext);
   if (!context) {
-    throw new Error('useDatabaseEngineStateContext must be used within a DatabaseEngineProvider');
+    throw internalError('useDatabaseEngineStateContext must be used within a DatabaseEngineProvider');
   }
   return context;
 }
@@ -86,7 +87,7 @@ export function useDatabaseEngineStateContext(): DatabaseEngineStateContextValue
 export function useDatabaseEngineActionsContext(): DatabaseEngineActionsContextValue {
   const context = useContext(DatabaseEngineActionsContext);
   if (!context) {
-    throw new Error('useDatabaseEngineActionsContext must be used within a DatabaseEngineProvider');
+    throw internalError('useDatabaseEngineActionsContext must be used within a DatabaseEngineProvider');
   }
   return context;
 }

@@ -77,4 +77,24 @@ describe('createLocalKangurPlatform auth navigation', () => {
       `/kangur/login?callbackUrl=${encodeURIComponent(window.location.href)}`
     );
   });
+
+  it('clears the stored active learner when auth resolves anonymous', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { KANGUR_ACTIVE_LEARNER_STORAGE_KEY } = await import(
+      '@/features/kangur/services/kangur-active-learner'
+    );
+    window.localStorage.setItem(KANGUR_ACTIVE_LEARNER_STORAGE_KEY, 'learner-stale');
+
+    const { createLocalKangurPlatform } =
+      await import('@/features/kangur/services/local-kangur-platform');
+    const platform = createLocalKangurPlatform();
+
+    await expect(platform.auth.me()).rejects.toMatchObject({ status: 401 });
+    expect(window.localStorage.getItem(KANGUR_ACTIVE_LEARNER_STORAGE_KEY)).toBeNull();
+  });
 });

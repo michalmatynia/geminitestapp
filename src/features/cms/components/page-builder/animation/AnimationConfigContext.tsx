@@ -6,6 +6,7 @@ import type { GsapAnimationConfig } from '@/features/gsap';
 import type { VectorShape } from '@/shared/ui';
 
 import type { VectorOverlayResult } from '@/features/cms/hooks/usePageBuilderContext';
+import { internalError } from '@/shared/errors/app-error';
 
 export type OpenVectorOverlay = (options: {
   title: string;
@@ -66,7 +67,7 @@ export function AnimationConfigProvider({
 export function useAnimationConfigState(): AnimationConfigStateContextValue {
   const context = useContext(AnimationConfigStateContext);
   if (!context) {
-    throw new Error('useAnimationConfigState must be used within AnimationConfigProvider');
+    throw internalError('useAnimationConfigState must be used within AnimationConfigProvider');
   }
   return context;
 }
@@ -74,7 +75,7 @@ export function useAnimationConfigState(): AnimationConfigStateContextValue {
 export function useAnimationConfigActions(): AnimationConfigActionsContextValue {
   const context = useContext(AnimationConfigActionsContext);
   if (!context) {
-    throw new Error('useAnimationConfigActions must be used within AnimationConfigProvider');
+    throw internalError('useAnimationConfigActions must be used within AnimationConfigProvider');
   }
   return context;
 }

@@ -74,7 +74,9 @@ export function FrontendCarousel(): React.ReactNode {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const transitionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const carouselId = React.useId();
 
   const autoPlay = parseBoolSetting(settings['autoPlay'], true);
   const autoPlaySpeed = (settings['autoPlaySpeed'] as number) || 5000;
@@ -88,31 +90,49 @@ export function FrontendCarousel(): React.ReactNode {
   const fixedHeight = (settings['height'] as number) || 400;
 
   const frameCount = frames.length;
+  const accessibleLabel =
+    typeof settings['carouselAriaLabel'] === 'string' && settings['carouselAriaLabel'].trim().length > 0
+      ? settings['carouselAriaLabel'].trim()
+      : 'Carousel';
+  const liveMode = autoPlay && !isPaused ? 'off' : 'polite';
+  const clearTransitionTimeout = useCallback((): void => {
+    if (transitionTimeoutRef.current === null) return;
+    clearTimeout(transitionTimeoutRef.current);
+    transitionTimeoutRef.current = null;
+  }, []);
+
+  const scheduleTransitionEnd = useCallback((): void => {
+    clearTransitionTimeout();
+    transitionTimeoutRef.current = setTimeout((): void => {
+      clearTransitionTimeout();
+      setIsTransitioning(false);
+    }, transitionDuration);
+  }, [clearTransitionTimeout, transitionDuration]);
 
   const goToNext = useCallback((): void => {
     if (frameCount === 0) return;
     if (!loop && currentIndex >= frameCount - 1) return;
     setIsTransitioning(true);
     setCurrentIndex((prev: number) => (prev + 1) % frameCount);
-    setTimeout(() => setIsTransitioning(false), transitionDuration);
-  }, [frameCount, loop, currentIndex, transitionDuration]);
+    scheduleTransitionEnd();
+  }, [currentIndex, frameCount, loop, scheduleTransitionEnd]);
 
   const goToPrev = useCallback((): void => {
     if (frameCount === 0) return;
     if (!loop && currentIndex <= 0) return;
     setIsTransitioning(true);
     setCurrentIndex((prev: number) => (prev - 1 + frameCount) % frameCount);
-    setTimeout(() => setIsTransitioning(false), transitionDuration);
-  }, [frameCount, loop, currentIndex, transitionDuration]);
+    scheduleTransitionEnd();
+  }, [currentIndex, frameCount, loop, scheduleTransitionEnd]);
 
   const goToIndex = useCallback(
     (index: number) => {
       if (index === currentIndex) return;
       setIsTransitioning(true);
       setCurrentIndex(index);
-      setTimeout(() => setIsTransitioning(false), transitionDuration);
+      scheduleTransitionEnd();
     },
-    [currentIndex, transitionDuration]
+    [currentIndex, scheduleTransitionEnd]
   );
 
   // Auto play
@@ -134,6 +154,8 @@ export function FrontendCarousel(): React.ReactNode {
     };
   }, [autoPlay, autoPlaySpeed, isPaused, frameCount, goToNext]);
 
+  useEffect(() => clearTransitionTimeout, [clearTransitionTimeout]);
+
   if (frameCount === 0) {
     return (
       <div className='flex items-center justify-center p-8 text-gray-400 border border-dashed border-gray-300 rounded'>
@@ -151,9 +173,16 @@ export function FrontendCarousel(): React.ReactNode {
       <div
         className='relative w-full overflow-hidden'
         style={containerStyle}
+        role='region'
+        aria-roledescription='carousel'
+        aria-label={accessibleLabel}
+        aria-live={liveMode}
         onMouseEnter={() => pauseOnHover && setIsPaused(true)}
         onMouseLeave={() => pauseOnHover && setIsPaused(false)}
       >
+        <div className='sr-only' aria-live={liveMode} aria-atomic='true'>
+          {`Slide ${currentIndex + 1} of ${frameCount}`}
+        </div>
         {/* Frames container */}
         <div
           className='relative w-full h-full'
@@ -181,6 +210,7 @@ export function FrontendCarousel(): React.ReactNode {
             const animationDuration = (frameSettings['animationDuration'] as number) || 500;
             const animationDelay = (frameSettings['animationDelay'] as number) || 0;
             const animationEasing = (frameSettings['animationEasing'] as string) || 'ease-out';
+            const frameId = `${carouselId}-slide-${index}`;
 
             const frameStyle: React.CSSProperties = {
               backgroundColor: backgroundColor || undefined,
@@ -213,8 +243,14 @@ export function FrontendCarousel(): React.ReactNode {
             return (
               <div
                 key={frame.id}
+                id={frameId}
                 className={`flex flex-col ${getAlignmentClass(contentAlignment)} ${getVerticalAlignmentClass(verticalAlignment)}`}
                 style={frameStyle}
+                role='group'
+                aria-roledescription='slide'
+                aria-label={`Slide ${index + 1} of ${frameCount}`}
+                aria-hidden={!isActive}
+                inert={!isActive}
               >
                 <div style={contentAnimationStyles}>
                   {(frame.blocks ?? []).map((block: BlockInstance) => (
@@ -235,6 +271,7 @@ export function FrontendCarousel(): React.ReactNode {
               disabled={!loop && currentIndex === 0}
               className='absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed'
               aria-label='Previous slide'
+              aria-controls={`${carouselId}-slide-${currentIndex}`}
             >
               <ChevronLeft className='w-6 h-6' />
             </button>
@@ -244,6 +281,7 @@ export function FrontendCarousel(): React.ReactNode {
               disabled={!loop && currentIndex === frameCount - 1}
               className='absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed'
               aria-label='Next slide'
+              aria-controls={`${carouselId}-slide-${currentIndex}`}
             >
               <ChevronRight className='w-6 h-6' />
             </button>
@@ -261,7 +299,9 @@ export function FrontendCarousel(): React.ReactNode {
                 className={`w-2.5 h-2.5 rounded-full transition-colors ${
                   index === currentIndex ? 'bg-white' : 'bg-white/40 hover:bg-white/60'
                 }`}
-                aria-label={`Go to slide ${index + 1}`}
+                aria-label={`Go to slide ${index + 1} of ${frameCount}`}
+                aria-controls={`${carouselId}-slide-${index}`}
+                aria-current={index === currentIndex ? 'step' : undefined}
               />
             ))}
           </div>

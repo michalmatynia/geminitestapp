@@ -30,6 +30,7 @@ import type {
   VersionGraphFilterType,
   VersionGraphState,
 } from './version-graph-context-types';
+import { internalError } from '@/shared/errors/app-error';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -307,7 +308,7 @@ export function VersionGraphProvider({
 
           const created = createdSlots[0];
           if (!created) {
-            throw new Error('detached copy failed');
+            throw internalError('detached copy failed');
           }
 
           idMap.set(node.id, created.id);
@@ -463,7 +464,7 @@ export function VersionGraphProvider({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ layers }),
         });
-        if (!res.ok) throw new Error('Composite API failed');
+        if (!res.ok) throw internalError('Composite API failed');
         const data = (await res.json()) as { resultImageBase64: string };
         setCompositeResultCache((prev) => {
           const next = new Map(prev);
@@ -606,7 +607,7 @@ export function VersionGraphProvider({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ layers, flatten: true }),
         });
-        if (!res.ok) throw new Error('Composite flatten API failed');
+        if (!res.ok) throw internalError('Composite flatten API failed');
         const data = (await res.json()) as { resultImageBase64: string };
 
         // Create a new independent node with the flattened image
@@ -852,12 +853,12 @@ export function VersionGraphProvider({
 
 export function useVersionGraphState(): VersionGraphState {
   const ctx = useContext(VersionGraphStateContext);
-  if (!ctx) throw new Error('useVersionGraphState must be used within a VersionGraphProvider');
+  if (!ctx) throw internalError('useVersionGraphState must be used within a VersionGraphProvider');
   return ctx;
 }
 
 export function useVersionGraphActions(): VersionGraphActions {
   const ctx = useContext(VersionGraphActionsContext);
-  if (!ctx) throw new Error('useVersionGraphActions must be used within a VersionGraphProvider');
+  if (!ctx) throw internalError('useVersionGraphActions must be used within a VersionGraphProvider');
   return ctx;
 }

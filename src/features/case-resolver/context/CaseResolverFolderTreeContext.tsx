@@ -35,6 +35,7 @@ import {
   type FolderCaseFileStats,
   parseString,
 } from '../components/CaseResolverFolderTree.helpers';
+import { internalError } from '@/shared/errors/app-error';
 
 const CHILD_CASE_STRUCTURE_FOLDER_PATH = '__case_resolver_children_case_structure__';
 const CHILD_CASE_STRUCTURE_NODE_ID = toCaseResolverFolderNodeId(CHILD_CASE_STRUCTURE_FOLDER_PATH);
@@ -114,7 +115,7 @@ const CaseResolverFolderTreeUiActionsContext =
 export function useCaseResolverFolderTreeDataContext(): CaseResolverFolderTreeDataContextValue {
   const context = useContext(CaseResolverFolderTreeDataContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useCaseResolverFolderTreeDataContext must be used within CaseResolverFolderTreeProvider'
     );
   }
@@ -124,7 +125,7 @@ export function useCaseResolverFolderTreeDataContext(): CaseResolverFolderTreeDa
 export function useCaseResolverFolderTreeUiStateContext(): CaseResolverFolderTreeUiStateContextValue {
   const context = useContext(CaseResolverFolderTreeUiStateContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useCaseResolverFolderTreeUiStateContext must be used within CaseResolverFolderTreeProvider'
     );
   }
@@ -134,7 +135,7 @@ export function useCaseResolverFolderTreeUiStateContext(): CaseResolverFolderTre
 export function useCaseResolverFolderTreeUiActionsContext(): CaseResolverFolderTreeUiActionsContextValue {
   const context = useContext(CaseResolverFolderTreeUiActionsContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useCaseResolverFolderTreeUiActionsContext must be used within CaseResolverFolderTreeProvider'
     );
   }

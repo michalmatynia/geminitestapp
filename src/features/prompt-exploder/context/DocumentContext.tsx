@@ -58,6 +58,7 @@ import {
   type DocumentMetricsState,
 } from './document/DocumentMetricsContext';
 import { DocumentActionsContext, type DocumentActions } from './document/DocumentActionsContext';
+import { internalError } from '@/shared/errors/app-error';
 
 export { DocumentActionsContext };
 export type { DocumentActions };
@@ -703,42 +704,42 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
 
 export function useDocumentPrompt(): DocumentPromptState {
   const context = useContext(DocumentPromptContext);
-  if (!context) throw new Error('useDocumentPrompt must be used within DocumentProvider');
+  if (!context) throw internalError('useDocumentPrompt must be used within DocumentProvider');
   return context;
 }
 
 export function useDocumentCore(): DocumentCoreState {
   const context = useContext(DocumentCoreContext);
-  if (!context) throw new Error('useDocumentCore must be used within DocumentProvider');
+  if (!context) throw internalError('useDocumentCore must be used within DocumentProvider');
   return context;
 }
 
 export function useDocumentSelection(): DocumentSelectionState {
   const context = useContext(DocumentSelectionContext);
-  if (!context) throw new Error('useDocumentSelection must be used within DocumentProvider');
+  if (!context) throw internalError('useDocumentSelection must be used within DocumentProvider');
   return context;
 }
 
 export function useDocumentParams(): DocumentParamsState {
   const context = useContext(DocumentParamsContext);
-  if (!context) throw new Error('useDocumentParams must be used within DocumentProvider');
+  if (!context) throw internalError('useDocumentParams must be used within DocumentProvider');
   return context;
 }
 
 export function useDocumentMetrics(): DocumentMetricsState {
   const context = useContext(DocumentMetricsContext);
-  if (!context) throw new Error('useDocumentMetrics must be used within DocumentProvider');
+  if (!context) throw internalError('useDocumentMetrics must be used within DocumentProvider');
   return context;
 }
 
 export function useDocumentState(): DocumentState {
   const context = useContext(DocumentStateContext);
-  if (!context) throw new Error('useDocumentState must be used within DocumentProvider');
+  if (!context) throw internalError('useDocumentState must be used within DocumentProvider');
   return context;
 }
 
 export function useDocumentActions(): DocumentActions {
   const context = useContext(DocumentActionsContext);
-  if (!context) throw new Error('useDocumentActions must be used within DocumentProvider');
+  if (!context) throw internalError('useDocumentActions must be used within DocumentProvider');
   return context;
 }

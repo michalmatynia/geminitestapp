@@ -27,6 +27,7 @@ import {
   getImageStudioProjectSessionKey,
   resolveImageStudioProjectSession,
 } from '@/features/ai/image-studio/utils/project-session';
+import { internalError } from '@/shared/errors/app-error';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -235,12 +236,12 @@ export function PromptProvider({ children }: { children: React.ReactNode }): Rea
 
 export function usePromptState(): PromptState {
   const ctx = useContext(PromptStateContext);
-  if (!ctx) throw new Error('usePromptState must be used within a PromptProvider');
+  if (!ctx) throw internalError('usePromptState must be used within a PromptProvider');
   return ctx;
 }
 
 export function usePromptActions(): PromptActions {
   const ctx = useContext(PromptActionsContext);
-  if (!ctx) throw new Error('usePromptActions must be used within a PromptProvider');
+  if (!ctx) throw internalError('usePromptActions must be used within a PromptProvider');
   return ctx;
 }

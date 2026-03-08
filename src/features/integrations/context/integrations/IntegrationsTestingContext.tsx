@@ -3,6 +3,7 @@
 import { createContext, useContext } from 'react';
 import type { TestLogEntry } from '@/shared/contracts/integrations';
 import type { StepWithResult } from '../integrations-context-types';
+import { internalError } from '@/shared/errors/app-error';
 
 export interface IntegrationsTesting {
   isTesting: boolean;
@@ -28,6 +29,6 @@ export const IntegrationsTestingContext = createContext<IntegrationsTesting | nu
 
 export const useIntegrationsTesting = () => {
   const context = useContext(IntegrationsTestingContext);
-  if (!context) throw new Error('useIntegrationsTesting must be used within IntegrationsProvider');
+  if (!context) throw internalError('useIntegrationsTesting must be used within IntegrationsProvider');
   return context;
 };

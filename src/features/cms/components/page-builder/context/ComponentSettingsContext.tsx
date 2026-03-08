@@ -7,74 +7,24 @@ import {
   DEFAULT_CUSTOM_CSS_AI_CONFIG,
   type CustomCssAiConfig,
   type CssAnimationConfig,
-  type CmsEventEffectsConfig,
 } from '@/shared/contracts/cms';
 import { getEventEffectsConfig } from '@/features/cms/utils/event-effects';
 
 import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
 import { getSectionDefinition, getBlockDefinition } from '../section-registry';
+import { internalError } from '@/shared/errors/app-error';
+import type {
+  ComponentSettingsActionsContextValue,
+  ComponentSettingsStateContextValue,
+  ConnectionSettings,
+} from './ComponentSettingsContext.types';
 
-interface ConnectionSettings {
-  enabled: boolean;
-  source: string;
-  path: string;
-  fallback: string;
-}
-
-export interface ComponentSettingsContextValue {
-  hasSelection: boolean;
-  selectedLabel: string;
-  selectedTitle: string;
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
-  currentAnimationConfig: GsapAnimationConfig;
-  handleAnimationChange: (updates: Partial<GsapAnimationConfig>) => void;
-  currentCssAnimationConfig: CssAnimationConfig | undefined;
-  handleCssAnimationChange: (updates: Partial<CssAnimationConfig>) => void;
-  customCssValue: string;
-  handleCustomCssChange: (value: string) => void;
-  customCssAiConfig: CustomCssAiConfig;
-  handleCustomCssAiChange: (patch: Partial<CustomCssAiConfig>) => void;
-  handleApplyAiSettings: (patch: Record<string, unknown>) => void;
-  contentAiAllowedKeys: string[];
-  connectionSettings: ConnectionSettings;
-  updateConnectionSetting: (patch: Partial<ConnectionSettings>) => void;
-  eventConfig: CmsEventEffectsConfig | null;
-  handleEventSettingChange: (key: string, value: unknown) => void;
-  handleBlockSettingChange: (key: string, value: unknown) => void;
-  handleSectionSettingChange: (key: string, value: unknown) => void;
-  handleColumnSettingChange: (key: string, value: unknown) => void;
-}
-
-export type ComponentSettingsStateContextValue = Omit<
+export type {
+  ComponentSettingsActionsContextValue,
   ComponentSettingsContextValue,
-  | 'setActiveTab'
-  | 'handleAnimationChange'
-  | 'handleCssAnimationChange'
-  | 'handleCustomCssChange'
-  | 'handleCustomCssAiChange'
-  | 'handleApplyAiSettings'
-  | 'updateConnectionSetting'
-  | 'handleEventSettingChange'
-  | 'handleBlockSettingChange'
-  | 'handleSectionSettingChange'
-  | 'handleColumnSettingChange'
->;
-
-export type ComponentSettingsActionsContextValue = Pick<
-  ComponentSettingsContextValue,
-  | 'setActiveTab'
-  | 'handleAnimationChange'
-  | 'handleCssAnimationChange'
-  | 'handleCustomCssChange'
-  | 'handleCustomCssAiChange'
-  | 'handleApplyAiSettings'
-  | 'updateConnectionSetting'
-  | 'handleEventSettingChange'
-  | 'handleBlockSettingChange'
-  | 'handleSectionSettingChange'
-  | 'handleColumnSettingChange'
->;
+  ComponentSettingsStateContextValue,
+  ConnectionSettings,
+} from './ComponentSettingsContext.types';
 
 const ComponentSettingsStateContext = createContext<ComponentSettingsStateContextValue | null>(
   null
@@ -86,7 +36,7 @@ const ComponentSettingsActionsContext = createContext<ComponentSettingsActionsCo
 export function useComponentSettingsState(): ComponentSettingsStateContextValue {
   const context = useContext(ComponentSettingsStateContext);
   if (!context) {
-    throw new Error('useComponentSettingsState must be used within a ComponentSettingsProvider');
+    throw internalError('useComponentSettingsState must be used within a ComponentSettingsProvider');
   }
   return context;
 }
@@ -94,7 +44,7 @@ export function useComponentSettingsState(): ComponentSettingsStateContextValue 
 export function useComponentSettingsActions(): ComponentSettingsActionsContextValue {
   const context = useContext(ComponentSettingsActionsContext);
   if (!context) {
-    throw new Error('useComponentSettingsActions must be used within a ComponentSettingsProvider');
+    throw internalError('useComponentSettingsActions must be used within a ComponentSettingsProvider');
   }
   return context;
 }

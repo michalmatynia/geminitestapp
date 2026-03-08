@@ -16,6 +16,7 @@ import {
 } from './CaseResolverNodeFileUtils';
 import type { RelationTreeLookup } from '../relation-search/types';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
+import { internalError } from '@/shared/errors/app-error';
 
 export type NodeFileWorkspaceContextValue = {
   // State from useNodeFileWorkspaceState
@@ -149,7 +150,7 @@ export function NodeFileWorkspaceProvider({
 export function useNodeFileWorkspaceStateContext(): NodeFileWorkspaceStateValue {
   const context = useContext(NodeFileWorkspaceStateContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useNodeFileWorkspaceStateContext must be used within NodeFileWorkspaceProvider'
     );
   }
@@ -159,7 +160,7 @@ export function useNodeFileWorkspaceStateContext(): NodeFileWorkspaceStateValue 
 export function useNodeFileWorkspaceActionsContext(): NodeFileWorkspaceActionsValue {
   const context = useContext(NodeFileWorkspaceActionsContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useNodeFileWorkspaceActionsContext must be used within NodeFileWorkspaceProvider'
     );
   }

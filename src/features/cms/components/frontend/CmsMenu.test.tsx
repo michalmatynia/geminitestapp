@@ -1,0 +1,111 @@
+/**
+ * @vitest-environment jsdom
+ */
+
+import React from 'react';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const { usePathnameMock } = vi.hoisted(() => ({
+  usePathnameMock: vi.fn(),
+}));
+
+vi.mock('next/navigation', () => ({
+  usePathname: usePathnameMock,
+}));
+
+vi.mock('next/link', () => ({
+  default: ({
+    children,
+    href,
+    ...rest
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
+  ),
+}));
+
+vi.mock('next/image', () => ({
+  default: ({
+    alt,
+    src,
+    ...rest
+  }: React.ImgHTMLAttributes<HTMLImageElement> & { src: string }) => (
+    <img alt={alt} src={src} {...rest} />
+  ),
+}));
+
+import { CmsMenu } from '@/features/cms/components/frontend/CmsMenu';
+import { DEFAULT_MENU_SETTINGS } from '@/shared/contracts/cms-menu';
+
+describe('CmsMenu accessibility', () => {
+  beforeEach(() => {
+    usePathnameMock.mockReturnValue('/about');
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    });
+  });
+
+  it('announces site navigation, current page state, and external link behavior', () => {
+    render(
+      <CmsMenu
+        menu={{
+          ...DEFAULT_MENU_SETTINGS,
+          items: [
+            { id: 'home', label: 'Home', url: '/', imageUrl: '' },
+            { id: 'about', label: 'About', url: '/about/', imageUrl: '/about.png' },
+            { id: 'docs', label: 'Docs', url: 'https://example.com/docs', imageUrl: '' },
+          ],
+          showItemImages: true,
+        }}
+      />
+    );
+
+    expect(screen.getByRole('navigation', { name: 'Site navigation' })).toBeInTheDocument();
+    expect(screen.getByRole('list')).toBeInTheDocument();
+    expect(screen.getAllByRole('listitem')).toHaveLength(3);
+    expect(screen.getByRole('link', { name: 'About' })).toHaveAttribute('aria-current', 'page');
+    expect(
+      screen.getByRole('link', { name: /Docs.*opens in a new tab/i })
+    ).toHaveAttribute('target', '_blank');
+  });
+
+  it('exposes the collapsible navigation state to assistive tech', () => {
+    render(
+      <CmsMenu
+        menu={{
+          ...DEFAULT_MENU_SETTINGS,
+          collapsible: true,
+          collapsedByDefault: false,
+          items: [
+            { id: 'home', label: 'Home', url: '/', imageUrl: '' },
+            { id: 'about', label: 'About', url: '/about', imageUrl: '' },
+          ],
+        }}
+      />
+    );
+
+    const toggle = screen.getByRole('button', { name: 'Collapse navigation' });
+    const list = screen.getByRole('list');
+
+    expect(toggle).toHaveAttribute('aria-controls', list.id);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+
+    fireEvent.click(toggle);
+
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(toggle).toHaveAccessibleName('Expand navigation');
+    expect(screen.queryByRole('link', { name: 'Home' })).not.toBeInTheDocument();
+  });
+});

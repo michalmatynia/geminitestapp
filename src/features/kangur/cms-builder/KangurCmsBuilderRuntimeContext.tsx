@@ -5,6 +5,7 @@ import { createContext, useContext, useMemo, type ReactNode } from 'react';
 import type { SectionInstance } from '@/shared/contracts/cms';
 
 import type { KangurCmsProject, KangurCmsScreenKey } from './project';
+import { internalError } from '@/shared/errors/app-error';
 
 type KangurCmsBuilderRuntimeContextValue = {
   draftProject: KangurCmsProject;
@@ -53,7 +54,7 @@ export const useKangurCmsBuilderRuntime = (): KangurCmsBuilderRuntimeContextValu
   const context = useContext(KangurCmsBuilderRuntimeContext);
 
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useKangurCmsBuilderRuntime must be used within a KangurCmsBuilderRuntimeProvider'
     );
   }

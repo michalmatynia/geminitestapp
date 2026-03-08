@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from 'react';
 
+import { internalError } from '@/shared/errors/app-error';
 import type {
   KangurTutorAnchorKind,
   KangurTutorAnchorMetadata,
@@ -56,7 +57,7 @@ export function KangurTutorAnchorProvider({ children }: { children: ReactNode })
 export function useKangurTutorAnchors(): KangurTutorAnchorContextValue {
   const context = useContext(KangurTutorAnchorContext);
   if (!context) {
-    throw new Error('useKangurTutorAnchors must be used within a KangurTutorAnchorProvider');
+    throw internalError('useKangurTutorAnchors must be used within a KangurTutorAnchorProvider');
   }
   return context;
 }

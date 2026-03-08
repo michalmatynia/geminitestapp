@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useMemo } from 'react';
+import { internalError } from '@/shared/errors/app-error';
 
 type TreeSectionContextValue = {
   sectionId: string;
@@ -27,7 +28,7 @@ export function useTreeSectionId(explicitSectionId?: string): string {
   }
   const context = useContext(TreeSectionContext);
   if (!context?.sectionId) {
-    throw new Error(
+    throw internalError(
       'useTreeSectionId must be used within TreeSectionProvider or receive a sectionId prop'
     );
   }

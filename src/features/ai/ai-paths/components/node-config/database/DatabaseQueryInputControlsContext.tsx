@@ -3,6 +3,7 @@
 import React, { useMemo } from 'react';
 
 import type { DatabaseAction, DatabaseActionCategory, DbQueryConfig } from '@/shared/lib/ai-paths';
+import { internalError } from '@/shared/errors/app-error';
 
 import type { QueryValidationResult } from './query-utils';
 
@@ -189,7 +190,7 @@ export function DatabaseQueryInputControlsContextProvider({
 export function useDatabaseQueryInputControlsStateContext(): DatabaseQueryInputControlsStateContextValue {
   const context = React.useContext(DatabaseQueryInputControlsStateContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useDatabaseQueryInputControlsStateContext must be used within DatabaseQueryInputControlsContextProvider'
     );
   }
@@ -199,7 +200,7 @@ export function useDatabaseQueryInputControlsStateContext(): DatabaseQueryInputC
 export function useDatabaseQueryInputControlsActionsContext(): DatabaseQueryInputControlsActionsContextValue {
   const context = React.useContext(DatabaseQueryInputControlsActionsContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useDatabaseQueryInputControlsActionsContext must be used within DatabaseQueryInputControlsContextProvider'
     );
   }

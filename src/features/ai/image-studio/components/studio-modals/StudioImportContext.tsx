@@ -3,6 +3,7 @@
 import React, { createContext, useContext } from 'react';
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+import { internalError } from '@/shared/errors/app-error';
 
 export type StudioUploadMode =
   | 'create'
@@ -47,7 +48,7 @@ export function StudioImportProvider({
 export function useStudioImportContext(): StudioImportContextValue {
   const context = useContext(StudioImportContext);
   if (!context) {
-    throw new Error('useStudioImportContext must be used within StudioImportProvider');
+    throw internalError('useStudioImportContext must be used within StudioImportProvider');
   }
   return context;
 }

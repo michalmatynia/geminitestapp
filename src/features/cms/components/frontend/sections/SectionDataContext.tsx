@@ -5,6 +5,7 @@ import React, { createContext, useContext } from 'react';
 import { useOptionalCmsPageContext } from '../CmsPageContext';
 
 import type { ColorSchemeColors } from '../theme-styles';
+import { internalError } from '@/shared/errors/app-error';
 
 interface SectionData {
   settings: Record<string, unknown>;
@@ -31,7 +32,7 @@ export function SectionDataProvider({
 export function useSectionData(): SectionData {
   const context = useContext(SectionDataContext);
   if (!context) {
-    throw new Error('useSectionData must be used within a SectionDataProvider');
+    throw internalError('useSectionData must be used within a SectionDataProvider');
   }
   return context;
 }

@@ -106,6 +106,7 @@ export function useMasterFolderTreeShell({
   });
 
   const scrollToNodeRef = useRef<((nodeId: MasterTreeId) => void) | null>(null);
+  const revealNodeFrameRef = useRef<number | null>(null);
   const scrollToNode = React.useCallback((nodeId: MasterTreeId): void => {
     scrollToNodeRef.current?.(nodeId);
   }, []);
@@ -114,12 +115,24 @@ export function useMasterFolderTreeShell({
     (nodeId: MasterTreeId): void => {
       controller.expandToNode?.(nodeId);
       controller.selectNode(nodeId);
-      setTimeout((): void => {
+      if (revealNodeFrameRef.current !== null) {
+        window.cancelAnimationFrame(revealNodeFrameRef.current);
+      }
+      revealNodeFrameRef.current = window.requestAnimationFrame((): void => {
+        revealNodeFrameRef.current = null;
         scrollToNode(nodeId);
-      }, 0);
+      });
     },
     [controller, scrollToNode]
   );
+
+  useEffect(() => {
+    return (): void => {
+      if (revealNodeFrameRef.current === null) return;
+      window.cancelAnimationFrame(revealNodeFrameRef.current);
+      revealNodeFrameRef.current = null;
+    };
+  }, []);
 
   useFolderTreeKeyboardNav({
     controller,

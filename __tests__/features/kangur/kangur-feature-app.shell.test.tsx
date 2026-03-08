@@ -15,6 +15,7 @@ vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: useKangurRoutingMock,
+  useOptionalKangurRouting: () => null,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurProgressSyncProvider', () => ({
@@ -96,30 +97,10 @@ describe('KangurFeatureApp shell behavior', () => {
       })
     );
 
-    const { container } = render(<KangurFeatureApp />);
-    const loadingShell = container.firstElementChild as HTMLElement | null;
+    render(<KangurFeatureApp />);
 
-    expect(loadingShell).not.toBeNull();
-    expect(loadingShell).toHaveClass(
-      'absolute',
-      'inset-0',
-      'z-20',
-      'flex',
-      'items-center',
-      'justify-center'
-    );
-
-    const spinner = loadingShell?.querySelector('div');
-    expect(spinner).not.toBeNull();
-    expect(spinner).toHaveClass(
-      'w-8',
-      'h-8',
-      'border-4',
-      'border-slate-200',
-      'border-t-slate-800',
-      'rounded-full',
-      'animate-spin'
-    );
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-route-content')).not.toBeInTheDocument();
   });
 
   it('renders nothing when auth is required', async () => {

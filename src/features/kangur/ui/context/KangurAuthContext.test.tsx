@@ -72,14 +72,20 @@ const AUTHENTICATED_USER = {
 };
 
 const AuthProbe = (): React.JSX.Element => {
-  const { isLoadingAuth, navigateToLogin } = useKangurAuth();
+  const { canAccessParentAssignments, isLoadingAuth, logout, navigateToLogin } = useKangurAuth();
 
   return (
     <div>
       <button type='button' onClick={navigateToLogin}>
         Open login
       </button>
+      <button type='button' onClick={() => logout(false)}>
+        Logout
+      </button>
       <div data-testid='kangur-auth-loading'>{String(isLoadingAuth)}</div>
+      <div data-testid='kangur-parent-assignment-access'>
+        {String(canAccessParentAssignments)}
+      </div>
     </div>
   );
 };
@@ -91,9 +97,23 @@ describe('KangurAuthContext', () => {
       push: routerPushMock,
     });
     meMock.mockResolvedValue(AUTHENTICATED_USER);
+    logoutMock.mockResolvedValue(undefined);
     prepareLoginHrefMock.mockImplementation(
       (returnUrl: string) => `/kangur/login?callbackUrl=${encodeURIComponent(returnUrl)}`
     );
+  });
+
+  it('exposes parent-assignment access only when auth resolves an active learner', async () => {
+    render(
+      <KangurAuthProvider>
+        <AuthProbe />
+      </KangurAuthProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
+      expect(screen.getByTestId('kangur-parent-assignment-access')).toHaveTextContent('true');
+    });
   });
 
   it('routes login navigation through the Next router using the prepared Kangur login href', async () => {
@@ -117,5 +137,42 @@ describe('KangurAuthContext', () => {
       `/kangur/login?callbackUrl=${encodeURIComponent(window.location.href)}`
     );
     expect(redirectToLoginMock).not.toHaveBeenCalled();
+  });
+
+  it('drops parent-assignment access in anonymous mode', async () => {
+    meMock.mockRejectedValueOnce({ status: 401 });
+
+    render(
+      <KangurAuthProvider>
+        <AuthProbe />
+      </KangurAuthProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
+      expect(screen.getByTestId('kangur-parent-assignment-access')).toHaveTextContent('false');
+    });
+  });
+
+  it('drops parent-assignment access immediately after logout', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <KangurAuthProvider>
+        <AuthProbe />
+      </KangurAuthProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('kangur-parent-assignment-access')).toHaveTextContent('true');
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Logout' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('kangur-parent-assignment-access')).toHaveTextContent('false');
+    });
+    expect(logoutMock).toHaveBeenCalledTimes(1);
+    expect(logoutMock).toHaveBeenCalledWith();
   });
 });

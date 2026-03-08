@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 import type { KangurLesson, KangurLessonDocument } from '@/shared/contracts/kangur';
+import { internalError } from '@/shared/errors/app-error';
 
 type LessonContentEditorContextValue = {
   lesson: KangurLesson | null;
@@ -43,7 +44,7 @@ export function LessonContentEditorProvider({
 export function useLessonContentEditorContext(): LessonContentEditorContextValue {
   const context = useContext(LessonContentEditorContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useLessonContentEditorContext must be used within a LessonContentEditorProvider'
     );
   }

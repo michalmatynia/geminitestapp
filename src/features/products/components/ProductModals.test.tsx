@@ -68,19 +68,19 @@ vi.mock('@/features/products/components/ProductForm', () => ({
   default: () => <div data-testid='product-form' />,
 }));
 
-vi.mock('@/features/integrations', () => ({
+vi.mock('@/shared/lib/product-integrations-adapter', () => ({
   ListProductModal: () => null,
 }));
 
-vi.mock('@/features/integrations', () => ({
+vi.mock('@/shared/lib/product-integrations-adapter', () => ({
   MassListProductModal: () => null,
 }));
 
-vi.mock('@/features/integrations', () => ({
+vi.mock('@/shared/lib/product-integrations-adapter', () => ({
   ProductListingsModal: () => null,
 }));
 
-vi.mock('@/features/integrations', () => ({
+vi.mock('@/shared/lib/product-integrations-adapter', () => ({
   __esModule: true,
   default: () => null,
 }));

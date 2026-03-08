@@ -18,6 +18,7 @@ import type { UploadedClientAnalysisImage } from '@/shared/contracts/image-studi
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, isAppError, notFoundError } from '@/shared/errors/app-error';
+import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 
 const SOURCE_FETCH_TIMEOUT_MS = 15_000;
 const ANALYSIS_PIPELINE_VERSION =
@@ -62,11 +63,11 @@ async function parseAnalysisRequestPayload(
 ): Promise<{ body: unknown; uploadedClientImage: UploadedClientAnalysisImage | null }> {
   const contentType = req.headers.get('content-type')?.toLowerCase() ?? '';
   if (!contentType.includes('multipart/form-data')) {
-    const jsonBody = (await req.json().catch(() => null)) as unknown;
-    if (jsonBody !== null) {
-      return { body: jsonBody, uploadedClientImage: null };
-    }
-    return { body: {}, uploadedClientImage: null };
+    const parsed = await parseObjectJsonBody(req, {
+      allowEmpty: true,
+      logPrefix: 'image-studio.slots.analysis',
+    });
+    return { body: parsed.ok ? parsed.data : {}, uploadedClientImage: null };
   }
 
   const form = await req.formData().catch(() => null);

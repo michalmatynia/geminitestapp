@@ -3,10 +3,10 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
-import { draftKeys } from '@/features/drafter';
 import type { ProductDraft } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
+import { draftKeys } from '@/shared/lib/query-key-exports';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';

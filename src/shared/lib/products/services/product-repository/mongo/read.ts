@@ -84,7 +84,7 @@ export const mongoProductReadImpl = {
         : undefined;
       const docs = await collection.aggregate(pipeline, aggregateOptions).toArray();
 
-      return docs.map((doc) => toProductResponse(doc as unknown as WithId<ProductDocument>));
+      return docs.map((doc) => toProductResponse(doc as WithId<ProductDocument>));
     }
 
     let cursor = collection.find(searchFilter).sort({ createdAt: -1 });
@@ -94,7 +94,7 @@ export const mongoProductReadImpl = {
     cursor = cursor.skip(skip).limit(limit);
     const docs = await cursor.toArray();
 
-    return docs.map((doc) => toProductResponse(doc as unknown as WithId<ProductDocument>));
+    return docs.map((doc) => toProductResponse(doc as WithId<ProductDocument>));
   },
 
   async countProducts(
@@ -146,7 +146,7 @@ export const mongoProductReadImpl = {
       ]);
 
       return {
-        products: docs.map((doc) => toProductResponse(doc as unknown as WithId<ProductDocument>)),
+        products: docs.map((doc) => toProductResponse(doc as WithId<ProductDocument>)),
         total,
       };
     }
@@ -176,7 +176,7 @@ export const mongoProductReadImpl = {
     const total = (result?.['meta']?.[0]?.['total'] as number) ?? 0;
 
     return {
-      products: docs.map((doc) => toProductResponse(doc as unknown as WithId<ProductDocument>)),
+      products: docs.map((doc) => toProductResponse(doc as WithId<ProductDocument>)),
       total,
     };
   },
@@ -188,14 +188,14 @@ export const mongoProductReadImpl = {
     const collection = await getCollection();
     const doc = await collection.findOne(buildProductIdFilter(id));
     if (!doc) return null;
-    return toProductResponse(doc as unknown as WithId<ProductDocument>);
+    return toProductResponse(doc as WithId<ProductDocument>);
   },
 
   async getProductBySku(sku: string, getCollection: () => Promise<Collection<ProductDocument>>) {
     const collection = await getCollection();
     const doc = await collection.findOne({ sku } as Filter<ProductDocument>);
     if (!doc) return null;
-    return toProductResponse(doc as unknown as WithId<ProductDocument>);
+    return toProductResponse(doc as WithId<ProductDocument>);
   },
 
   async getProductsBySkus(
@@ -204,7 +204,7 @@ export const mongoProductReadImpl = {
   ) {
     const collection = await getCollection();
     const docs = await collection.find({ sku: { $in: skus } } as Filter<ProductDocument>).toArray();
-    return docs.map((doc) => toProductResponse(doc as unknown as WithId<ProductDocument>));
+    return docs.map((doc) => toProductResponse(doc as WithId<ProductDocument>));
   },
 
   async findProductByBaseId(
@@ -214,7 +214,7 @@ export const mongoProductReadImpl = {
     const collection = await getCollection();
     const doc = await collection.findOne({ baseProductId } as Filter<ProductDocument>);
     if (!doc) return null;
-    return toProductResponse(doc as unknown as WithId<ProductDocument>);
+    return toProductResponse(doc as WithId<ProductDocument>);
   },
 
   async findProductsByBaseIds(
@@ -225,6 +225,6 @@ export const mongoProductReadImpl = {
     const docs = await collection
       .find({ baseProductId: { $in: baseIds } } as Filter<ProductDocument>)
       .toArray();
-    return docs.map((doc) => toProductResponse(doc as unknown as WithId<ProductDocument>));
+    return docs.map((doc) => toProductResponse(doc as WithId<ProductDocument>));
   },
 };

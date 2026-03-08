@@ -15,6 +15,11 @@ const normalizeParameters = (value: unknown): Record<string, unknown> => {
   return value as Record<string, unknown>;
 };
 
+const normalizeNumericObjectKey = (value: string): string | null => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? String(parsed) : null;
+};
+
 const requestSchema = z
   .object({
     method: z.string().trim().min(1),
@@ -128,9 +133,10 @@ export async function POST_handler(
         }) ?? rawProducts[0];
     } else if (rawProducts && typeof rawProducts === 'object') {
       const recordMap = rawProducts as Record<string, unknown>;
+      const numericProductIdKey = normalizeNumericObjectKey(productId);
       product =
         recordMap[productId] ??
-        recordMap[Number(productId) as unknown as keyof typeof recordMap] ??
+        (numericProductIdKey ? recordMap[numericProductIdKey] : undefined) ??
         Object.values(recordMap)[0] ??
         null;
     }

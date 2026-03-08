@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { randomUUID } from 'crypto';
+import { ObjectId } from 'mongodb';
 import {
   getCurrencyRepository,
   getInternationalizationProvider,
@@ -8,6 +8,7 @@ import {
 import { type CurrencyCreateInput } from '@/shared/contracts/internationalization';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
+import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import { type CountryCode } from '@prisma/client';
@@ -15,11 +16,6 @@ import type {
   MongoCountryDoc,
   MongoLanguageDoc,
 } from '@/shared/lib/db/services/database-sync-types';
-
-const asRecord = (value: unknown): Record<string, unknown> => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
-  return value as Record<string, unknown>;
-};
 
 const readString = (record: Record<string, unknown>, key: string): string | undefined => {
   const raw = record[key];
@@ -226,7 +222,13 @@ export async function POST_intl_handler(
   params: { type: string }
 ): Promise<Response> {
   const { type } = params;
-  const data = asRecord(await req.json());
+  const parsed = await parseObjectJsonBody(req, {
+    logPrefix: 'metadata.[type].POST',
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+  const data = parsed.data;
   const provider = await getInternationalizationProvider();
 
   if (type === 'currencies') {
@@ -261,10 +263,11 @@ export async function POST_intl_handler(
         createdAt: now,
         updatedAt: now,
       };
-      await mongo.collection<MongoCountryDoc>('countries').insertOne({
-        _id: randomUUID(),
+      const insertDoc: MongoCountryDoc = {
+        _id: new ObjectId(),
         ...countryDoc,
-      } as unknown as MongoCountryDoc);
+      };
+      await mongo.collection<MongoCountryDoc>('countries').insertOne(insertDoc);
       return NextResponse.json(mapMongoCountry(countryDoc));
     }
 
@@ -303,10 +306,11 @@ export async function POST_intl_handler(
         createdAt: now,
         updatedAt: now,
       };
-      await mongo.collection<MongoLanguageDoc>('languages').insertOne({
-        _id: randomUUID(),
+      const insertDoc: MongoLanguageDoc = {
+        _id: new ObjectId(),
         ...languageDoc,
-      } as unknown as MongoLanguageDoc);
+      };
+      await mongo.collection<MongoLanguageDoc>('languages').insertOne(insertDoc);
 
       const countryDocs = (await mongo
         .collection<MongoCountryDoc>('countries')

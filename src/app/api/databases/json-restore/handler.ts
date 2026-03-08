@@ -5,12 +5,20 @@ import { assertDatabaseEngineOperationEnabled } from '@/shared/lib/db/services/d
 import { restorePrismaJsonBackup } from '@/shared/lib/db/services/database-json-backup';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
+import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertDatabaseEngineManageAccess();
   await assertDatabaseEngineOperationEnabled('allowManualBackupMaintenance');
 
-  const body = (await req.json()) as { backupName?: string };
+  const parsed = await parseObjectJsonBody(req, {
+    logPrefix: 'databases.json-restore',
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+
+  const body = parsed.data as { backupName?: string };
   const backupName = body.backupName;
 
   if (!backupName) {

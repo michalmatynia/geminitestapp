@@ -55,7 +55,9 @@ const isDmmfDatamodel = (value: unknown): value is DmmfDatamodel => {
 const getPrismaCountFn = (value: unknown): ((args?: unknown) => Promise<number>) | null => {
   const record = asRecord(value);
   const count = record?.['count'];
-  return typeof count === 'function' ? count : null;
+  return typeof count === 'function'
+    ? (count as (args?: unknown) => Promise<number>)
+    : null;
 };
 
 const toSchemaSource = (schema: SchemaResponse): Record<string, unknown> => ({

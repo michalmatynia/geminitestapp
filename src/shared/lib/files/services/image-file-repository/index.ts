@@ -13,7 +13,7 @@ export const getImageFileRepository = async (
 ): Promise<ImageFileRepository> => {
   const provider = providerOverride ?? (await getProductDataProvider());
   if (provider === 'mongodb') {
-    return mongoImageFileRepository as unknown as ImageFileRepository;
+    return mongoImageFileRepository;
   }
-  return prismaImageFileRepository as unknown as ImageFileRepository;
+  return prismaImageFileRepository;
 };

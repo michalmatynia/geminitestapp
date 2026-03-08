@@ -8,7 +8,7 @@ export const syncNotebooks: SyncHandler = async ({ mongo, prisma, normalizeId })
   const seenNames = new Set<string>();
   const data = docs
     .map((doc: Record<string, unknown>): Prisma.NotebookCreateManyInput | null => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc);
       if (!id) return null;
       const name = (doc as { name?: string }).name ?? id;
       if (seenNames.has(name)) {
@@ -46,7 +46,7 @@ export const syncThemes: SyncHandler = async ({ mongo, prisma, normalizeId }) =>
   const docs = await mongo.collection('themes').find({}).toArray();
   const data = docs
     .map((doc: Record<string, unknown>): Prisma.ThemeCreateManyInput | null => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc);
       if (!id) return null;
       const rawNotebookId = (doc as { notebookId?: string | null }).notebookId ?? null;
       const resolvedNotebookId =
@@ -100,7 +100,7 @@ export const syncTags: SyncHandler = async ({ mongo, prisma, normalizeId }) => {
   const seenTags = new Set<string>();
   const data = docs
     .map((doc: Record<string, unknown>): Prisma.TagCreateManyInput | null => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc);
       if (!id) return null;
       const name = (doc as { name?: string }).name ?? id;
       const rawNotebookId = (doc as { notebookId?: string | null }).notebookId ?? null;
@@ -148,7 +148,7 @@ export const syncCategories: SyncHandler = async ({ mongo, prisma, normalizeId }
   );
   const raw = docs
     .map((doc: Record<string, unknown>): Prisma.CategoryCreateManyInput | null => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc);
       if (!id) return null;
       return {
         id,
@@ -251,7 +251,7 @@ export const syncNotes: SyncHandler = async ({ mongo, prisma }) => {
     relationsFrom?: MongoNoteRelation[];
   }
 
-  const data = (docs as unknown as MongoNoteDoc[]).map(
+  const data = (docs as MongoNoteDoc[]).map(
     (
       doc
     ): Prisma.NoteCreateManyInput & {
@@ -332,7 +332,7 @@ export const syncNoteFiles: SyncHandler = async ({ mongo, prisma, normalizeId })
   );
   const data = docs
     .map((doc: Record<string, unknown>): Prisma.NoteFileCreateManyInput | null => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc);
       const noteId = (doc as { noteId?: string }).noteId;
       if (!id || !noteId || !availableNoteIds.has(noteId)) return null;
       return {

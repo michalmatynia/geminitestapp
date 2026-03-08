@@ -9,7 +9,7 @@ export const syncCurrencies: SyncHandler = async ({ mongo, prisma, currencyCodes
   const docs = (await mongo
     .collection('currencies')
     .find({})
-    .toArray()) as unknown as MongoCurrencyDoc[];
+    .toArray()) as MongoCurrencyDoc[];
   const warnings: string[] = [];
   const data = docs
     .map((doc: MongoCurrencyDoc): Prisma.CurrencyCreateManyInput | null => {
@@ -43,7 +43,7 @@ export const syncCountries: SyncHandler = async ({ mongo, prisma, countryCodes }
   const docs = (await mongo
     .collection('countries')
     .find({})
-    .toArray()) as unknown as MongoCountryDoc[];
+    .toArray()) as MongoCountryDoc[];
   const warnings: string[] = [];
   const data = docs
     .map((doc: MongoCountryDoc) => {
@@ -96,7 +96,7 @@ export const syncLanguages: SyncHandler = async ({ mongo, prisma }) => {
   const docs = (await mongo
     .collection('languages')
     .find({})
-    .toArray()) as unknown as MongoLanguageDoc[];
+    .toArray()) as MongoLanguageDoc[];
   const data = docs
     .map((doc: MongoLanguageDoc) => {
       const code = String(doc.code ?? '').toUpperCase();

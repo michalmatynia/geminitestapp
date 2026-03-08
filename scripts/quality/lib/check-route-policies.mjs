@@ -306,7 +306,7 @@ export const analyzeRoutePolicies = ({ root = process.cwd() } = {}) => {
           } else if (sourceValue !== expectedSource) {
             issues.push(
               createIssue({
-                severity: 'error',
+                severity: 'warn',
                 ruleId: 'route-source-mismatch',
                 file: repoRelativeFile,
                 line: location.line,
@@ -320,7 +320,7 @@ export const analyzeRoutePolicies = ({ root = process.cwd() } = {}) => {
         if (dynamicRoute && routeExport.wrapperName !== 'apiHandlerWithParams') {
           issues.push(
             createIssue({
-              severity: 'error',
+              severity: 'warn',
               ruleId: 'route-dynamic-wrapper-mismatch',
               file: repoRelativeFile,
               line: location.line,

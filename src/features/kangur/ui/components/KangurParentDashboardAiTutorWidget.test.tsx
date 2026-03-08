@@ -308,6 +308,47 @@ describe('KangurParentDashboardAiTutorWidget', () => {
     );
   });
 
+  it('updates the mood summary when the active learner changes', () => {
+    const { rerender } = render(<KangurParentDashboardAiTutorWidget />);
+
+    expect(screen.getByTestId('parent-dashboard-ai-tutor-mood-current')).toHaveTextContent(
+      'Wspierajacy'
+    );
+
+    runtimeState.value = {
+      activeLearner: {
+        id: 'learner-2',
+        displayName: 'Ola',
+        aiTutor: {
+          currentMoodId: 'reflective',
+          baselineMoodId: 'patient',
+          confidence: 0.58,
+          lastComputedAt: '2026-03-08T09:30:00.000Z',
+          lastReasonCode: 'post_answer_review',
+        },
+      },
+      activeTab: 'ai-tutor',
+      canAccessDashboard: true,
+    };
+
+    rerender(<KangurParentDashboardAiTutorWidget />);
+
+    expect(screen.getByText('AI Tutor dla Ola')).toBeInTheDocument();
+    expect(screen.getByTestId('parent-dashboard-ai-tutor-mood-current')).toHaveTextContent(
+      'Refleksyjny'
+    );
+    expect(screen.getByTestId('parent-dashboard-ai-tutor-mood-current')).toHaveAttribute(
+      'data-mood-id',
+      'reflective'
+    );
+    expect(screen.getByTestId('parent-dashboard-ai-tutor-mood-baseline')).toHaveTextContent(
+      'Cierpliwy'
+    );
+    expect(screen.getByTestId('parent-dashboard-ai-tutor-mood-confidence')).toHaveTextContent(
+      '58%'
+    );
+  });
+
   it('shows a fallback message when live usage cannot be loaded', () => {
     usageQueryState.value = {
       data: undefined,

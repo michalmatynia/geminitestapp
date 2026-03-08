@@ -31,6 +31,7 @@ import type { UploadedClientCropImage } from '@/shared/contracts/image-studio';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, isAppError, notFoundError } from '@/shared/errors/app-error';
+import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio', 'crops');
 const SOURCE_FETCH_TIMEOUT_MS = 15_000;
@@ -100,12 +101,12 @@ async function parseCropRequestPayload(
 ): Promise<{ body: unknown; uploadedClientImage: UploadedClientCropImage | null }> {
   const contentType = req.headers.get('content-type')?.toLowerCase() ?? '';
   if (!contentType.includes('multipart/form-data')) {
-    const jsonBody = (await req.json().catch(() => null)) as unknown;
-    if (jsonBody !== null) {
-      return { body: jsonBody, uploadedClientImage: null };
-    }
+    const parsed = await parseObjectJsonBody(req, {
+      allowEmpty: true,
+      logPrefix: 'image-studio.slots.crop',
+    });
     // Keep payload object-like so downstream normalization can infer mode from cropRect/polygon.
-    return { body: {}, uploadedClientImage: null };
+    return { body: parsed.ok ? parsed.data : {}, uploadedClientImage: null };
   }
 
   const form = await req.formData().catch(() => null);

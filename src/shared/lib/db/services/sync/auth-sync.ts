@@ -13,7 +13,7 @@ export const syncUsers: SyncHandler = async ({ mongo, prisma, normalizeId, toDat
   const docs = await mongo.collection('users').find({}).toArray();
   const data: Prisma.UserCreateManyInput[] = docs
     .map((doc: MongoUserDoc) => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc as Record<string, unknown>);
       if (!id) return null;
       return {
         id,
@@ -40,7 +40,7 @@ export const syncAccounts: SyncHandler = async ({ mongo, prisma, normalizeId }) 
   const docs = await mongo.collection('accounts').find({}).toArray();
   const data: Prisma.AccountCreateManyInput[] = docs
     .map((doc: MongoAccountDoc) => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc as Record<string, unknown>);
       const userIdRaw = doc.userId;
       const userId = userIdRaw instanceof ObjectId ? userIdRaw.toString() : String(userIdRaw ?? '');
       if (!id || !userId) return null;
@@ -70,10 +70,10 @@ export const syncSessions: SyncHandler = async ({ mongo, prisma, normalizeId, to
   const docs = (await mongo
     .collection('sessions')
     .find({})
-    .toArray()) as unknown as MongoSessionDoc[];
+    .toArray()) as MongoSessionDoc[];
   const data = docs
     .map((doc: MongoSessionDoc): Prisma.SessionCreateManyInput | null => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc as Record<string, unknown>);
       const userIdRaw = doc.userId;
       const userId = userIdRaw instanceof ObjectId ? userIdRaw.toString() : String(userIdRaw ?? '');
       const sessionToken = doc.sessionToken;
@@ -97,7 +97,7 @@ export const syncVerificationTokens: SyncHandler = async ({ mongo, prisma, toDat
   const docs = (await mongo
     .collection('verification_tokens')
     .find({})
-    .toArray()) as unknown as MongoVerificationTokenDoc[];
+    .toArray()) as MongoVerificationTokenDoc[];
   const data = docs
     .map((doc: MongoVerificationTokenDoc): Prisma.VerificationTokenCreateManyInput | null => {
       const identifier = doc.identifier;
@@ -122,7 +122,7 @@ export const syncAuthSecurityProfiles: SyncHandler = async ({
   const docs = await mongo.collection('auth_security_profiles').find({}).toArray();
   const data = docs
     .map((doc: MongoAuthSecurityProfileDoc): Prisma.AuthSecurityProfileCreateManyInput | null => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc as Record<string, unknown>);
       const userId = doc.userId ?? id;
       if (!userId) return null;
       return {

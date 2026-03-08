@@ -10,13 +10,13 @@ export const syncChatbotSessions: SyncHandler = async ({ mongo, prisma, normaliz
   const docs: MongoChatbotSessionDoc[] = (await mongo
     .collection('chatbot_sessions')
     .find({})
-    .toArray()) as unknown as MongoChatbotSessionDoc[];
+    .toArray()) as MongoChatbotSessionDoc[];
   const sessions = docs
     .map(
       (
         doc
       ): (Prisma.ChatbotSessionCreateManyInput & { messages: MongoChatbotMessageDoc[] }) | null => {
-        const id = normalizeId(doc as unknown as Record<string, unknown>);
+        const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
         return {
           id,
@@ -78,7 +78,7 @@ export const syncChatbotJobs: SyncHandler = async ({
   const docs: MongoChatbotJobDoc[] = await mongo.collection('chatbot_jobs').find({}).toArray();
   const data = docs
     .map((doc): Prisma.ChatbotJobCreateManyInput | null => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc as Record<string, unknown>);
       const sessionId = doc.sessionId;
       if (!id || !sessionId) return null;
       return {

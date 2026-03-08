@@ -7,7 +7,7 @@ export const syncIntegrations: SyncHandler = async ({ mongo, prisma, normalizeId
   const seenSlugs = new Set<string>();
   const data = docs
     .map((doc: Record<string, unknown>): Prisma.IntegrationCreateManyInput | null => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc);
       if (!id) return null;
       const rawName =
         typeof (doc as { name?: string }).name === 'string'
@@ -69,7 +69,7 @@ export const syncIntegrationConnections: SyncHandler = async ({
   const warnings: string[] = [];
   const byIntegration = new Map<string, { doc: Record<string, unknown>; updatedAt: Date }>();
   docs.forEach((doc: Record<string, unknown>) => {
-    const id = normalizeId(doc as unknown as Record<string, unknown>);
+    const id = normalizeId(doc);
     const integrationId = (doc as { integrationId?: string }).integrationId ?? '';
     if (!id || !integrationId) {
       warnings.push('Skipped integration connection with missing id/integrationId');
@@ -91,7 +91,7 @@ export const syncIntegrationConnections: SyncHandler = async ({
     byIntegration.set(integrationId, { doc, updatedAt });
   });
   const data = Array.from(byIntegration.values()).map(({ doc }) => ({
-    id: normalizeId(doc as unknown as Record<string, unknown>),
+    id: normalizeId(doc),
     integrationId: (doc as { integrationId?: string }).integrationId ?? '',
     name: (doc as { name?: string }).name ?? 'Connection',
     username: (doc as { username?: string }).username ?? '',
@@ -191,7 +191,7 @@ export const syncProductListings: SyncHandler = async ({
   const warnings: string[] = [];
   const byKey = new Map<string, { doc: Record<string, unknown>; updatedAt: Date }>();
   docs.forEach((doc: Record<string, unknown>) => {
-    const id = normalizeId(doc as unknown as Record<string, unknown>);
+    const id = normalizeId(doc);
     const productId = (doc as { productId?: string }).productId ?? '';
     const connectionId = (doc as { connectionId?: string }).connectionId ?? '';
     if (!id || !productId || !connectionId) {
@@ -230,11 +230,11 @@ export const syncProductListings: SyncHandler = async ({
       (doc as { integrationId?: string }).integrationId !== resolvedIntegrationId
     ) {
       warnings.push(
-        `Product listing ${normalizeId(doc as unknown as Record<string, unknown>)}: corrected integrationId to match connection`
+        `Product listing ${normalizeId(doc)}: corrected integrationId to match connection`
       );
     }
     return {
-      id: normalizeId(doc as unknown as Record<string, unknown>),
+      id: normalizeId(doc),
       productId: (doc as { productId?: string }).productId ?? '',
       integrationId: resolvedIntegrationId,
       connectionId,

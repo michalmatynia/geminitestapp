@@ -9,7 +9,7 @@ import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import {
   fetchProductListings,
   productListingsQueryKey,
-} from '@/features/integrations';
+} from '@/shared/lib/product-integrations-adapter';
 import { ProductImageCell } from '@/features/products/components/cells/ProductImageCell';
 import { EditableCell } from '@/features/products/components/EditableCell';
 import { useProductListActionsContext } from '@/features/products/context/ProductListContext';

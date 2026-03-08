@@ -47,7 +47,7 @@ export const mongoProductWriteImpl = {
       length: data.length ?? null,
       published: true,
       categoryId: data.categoryId || null,
-      catalogId: (data as unknown as { catalogId?: string }).catalogId || 'default',
+      catalogId: (data as ProductCreateInput & { catalogId?: string }).catalogId || 'default',
       createdAt: now,
       updatedAt: now,
       images: [],
@@ -61,7 +61,7 @@ export const mongoProductWriteImpl = {
     };
 
     await collection.insertOne(doc);
-    return toProductResponse(doc as unknown as WithId<ProductDocument>);
+    return toProductResponse(doc as WithId<ProductDocument>);
   },
 
   async updateProduct(
@@ -132,7 +132,7 @@ export const mongoProductWriteImpl = {
     });
 
     if (!result) return null;
-    return toProductResponse(result as unknown as WithId<ProductDocument>);
+    return toProductResponse(result as WithId<ProductDocument>);
   },
 
   async deleteProduct(
@@ -145,7 +145,7 @@ export const mongoProductWriteImpl = {
     if (!doc) return null;
 
     await collection.deleteOne(filter);
-    return toProductResponse(doc as unknown as WithId<ProductDocument>);
+    return toProductResponse(doc as WithId<ProductDocument>);
   },
 
   async bulkCreateProducts(
@@ -184,6 +184,6 @@ export const mongoProductWriteImpl = {
     return await createProduct({
       ...rest,
       sku: newSku,
-    } as unknown as ProductCreateInput);
+    } as ProductCreateInput);
   },
 };

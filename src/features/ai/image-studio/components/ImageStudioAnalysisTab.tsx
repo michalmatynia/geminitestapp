@@ -612,7 +612,7 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
     setLayoutPresetDraftName,
     onCenterLayoutPresetChange: (value: string) => {
       const presetValues = getObjectLayoutPresetValuesFromOption(
-        value as unknown as ObjectLayoutPresetOptionValue,
+        value as ObjectLayoutPresetOptionValue,
         layoutCustomPresets
       );
       if (!presetValues) return;

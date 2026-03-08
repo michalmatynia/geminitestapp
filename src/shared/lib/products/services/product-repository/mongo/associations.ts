@@ -134,7 +134,7 @@ export const mongoProductAssociationsImpl = {
         images: newImages,
         updatedAt: new Date(),
       },
-    } as unknown as UpdateFilter<ProductDocument>);
+    } as UpdateFilter<ProductDocument>);
   },
 
   async removeProductImage(
@@ -180,7 +180,7 @@ export const mongoProductAssociationsImpl = {
         catalogs: newCatalogs,
         updatedAt: new Date(),
       },
-    } as unknown as UpdateFilter<ProductDocument>);
+    } as UpdateFilter<ProductDocument>);
   },
 
   async replaceProductCategory(
@@ -224,7 +224,7 @@ export const mongoProductAssociationsImpl = {
         tags: newTags,
         updatedAt: new Date(),
       },
-    } as unknown as UpdateFilter<ProductDocument>);
+    } as UpdateFilter<ProductDocument>);
   },
 
   async replaceProductProducers(
@@ -251,7 +251,7 @@ export const mongoProductAssociationsImpl = {
         producers: newProducers,
         updatedAt: new Date(),
       },
-    } as unknown as UpdateFilter<ProductDocument>);
+    } as UpdateFilter<ProductDocument>);
   },
 
   async replaceProductNotes(
@@ -265,7 +265,7 @@ export const mongoProductAssociationsImpl = {
         noteIds,
         updatedAt: new Date(),
       },
-    } as unknown as UpdateFilter<ProductDocument>);
+    } as UpdateFilter<ProductDocument>);
   },
 
   async bulkReplaceProductCatalogs(
@@ -295,7 +295,7 @@ export const mongoProductAssociationsImpl = {
     }));
 
     if (bulkOps.length > 0) {
-      await collection.bulkWrite(bulkOps as unknown as AnyBulkWriteOperation<ProductDocument>[]);
+      await collection.bulkWrite(bulkOps as AnyBulkWriteOperation<ProductDocument>[]);
     }
   },
 
@@ -328,7 +328,7 @@ export const mongoProductAssociationsImpl = {
     }));
 
     if (bulkOps.length > 0) {
-      await collection.bulkWrite(bulkOps as unknown as AnyBulkWriteOperation<ProductDocument>[]);
+      await collection.bulkWrite(bulkOps as AnyBulkWriteOperation<ProductDocument>[]);
     }
   },
 
@@ -344,9 +344,9 @@ export const mongoProductAssociationsImpl = {
         update: {
           $pull: {
             catalogs: { catalogId: { $in: catalogIds } },
-          } as unknown as UpdateFilter<ProductDocument>,
+          },
           $set: { updatedAt: new Date() },
-        },
+        } as UpdateFilter<ProductDocument>,
       },
     }));
 

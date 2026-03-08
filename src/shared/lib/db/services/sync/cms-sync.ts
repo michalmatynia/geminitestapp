@@ -6,7 +6,7 @@ export const syncCmsSlugs: SyncHandler = async ({ mongo, prisma, normalizeId }) 
   const docs = await mongo.collection('cms_slugs').find({}).toArray();
   const data = docs
     .map((doc: Record<string, unknown>): Prisma.SlugCreateManyInput | null => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc);
       if (!id) return null;
       return {
         id,
@@ -26,7 +26,7 @@ export const syncCmsThemes: SyncHandler = async ({ mongo, prisma, normalizeId })
   const docs = await mongo.collection('cms_themes').find({}).toArray();
   const data = docs
     .map((doc: Record<string, unknown>): Prisma.CmsThemeCreateManyInput | null => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc);
       if (!id) return null;
       return {
         id,
@@ -49,7 +49,7 @@ export const syncCmsPages: SyncHandler = async ({ mongo, prisma, normalizeId, to
   const docs = await mongo.collection('cms_pages').find({}).toArray();
   const data = docs
     .map((doc: Record<string, unknown>) => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc);
       if (!id) return null;
       return {
         id,
@@ -124,7 +124,7 @@ export const syncCmsDomains: SyncHandler = async ({ mongo, prisma, normalizeId }
   const docs = await mongo.collection('cms_domains').find({}).toArray();
   const data = docs
     .map((doc: Record<string, unknown>): Prisma.CmsDomainCreateManyInput | null => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc);
       if (!id) return null;
       return {
         id,

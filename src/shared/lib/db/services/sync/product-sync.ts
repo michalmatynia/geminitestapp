@@ -12,10 +12,10 @@ export const syncProducts: SyncHandler = async ({ mongo, prisma, normalizeId, to
   const docs = (await mongo
     .collection('products')
     .find({})
-    .toArray()) as unknown as MongoProductDoc[];
+    .toArray()) as MongoProductDoc[];
   const data = docs
     .map((doc: MongoProductDoc) => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc as Record<string, unknown>);
       if (!id) return null;
       const producers = Array.isArray(doc.producers) ? (doc.producers ?? []) : [];
       return {
@@ -161,7 +161,7 @@ export const syncProductDrafts: SyncHandler = async ({ mongo, prisma, normalizeI
   const docs = await mongo.collection('product_drafts').find({}).toArray();
   const data = docs
     .map((doc: Record<string, unknown>): Prisma.ProductDraftCreateManyInput | null => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc);
       if (!id) return null;
       return {
         id,

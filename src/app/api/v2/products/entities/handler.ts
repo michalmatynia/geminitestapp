@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   getCatalogRepository,
   getProductDataProvider,
-  type CatalogUpdateInput,
 } from '@/features/products/server';
 import { getCatalogsHandler, postCatalogsHandler } from '@/features/products/api/catalogs/handlers';
+import { updateCatalogSchema } from '@/shared/contracts/products/catalogs';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 import prisma from '@/shared/lib/db/prisma';
 
 export async function GET_products_entities_handler(
@@ -61,12 +62,24 @@ export async function PUT_products_entity_handler(
   params: { type: string; id: string }
 ): Promise<Response> {
   const { type, id } = params;
-  const data = (await req.json()) as Record<string, unknown>;
+  const parsed = await parseObjectJsonBody(req, {
+    logPrefix: 'products.entities.[type].[id].PUT',
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+  const data = parsed.data;
 
   if (type === 'catalogs') {
+    const validated = updateCatalogSchema.safeParse(data);
+    if (!validated.success) {
+      throw badRequestError('Invalid catalog payload.', {
+        errors: validated.error.flatten(),
+      });
+    }
     const provider = await getProductDataProvider();
     const repo = await getCatalogRepository(provider);
-    return NextResponse.json(await repo.updateCatalog(id, data as unknown as CatalogUpdateInput));
+    return NextResponse.json(await repo.updateCatalog(id, validated.data));
   }
 
   throw badRequestError(`Invalid products entity type for PUT: ${type}`);

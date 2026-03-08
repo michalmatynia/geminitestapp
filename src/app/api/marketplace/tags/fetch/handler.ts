@@ -6,6 +6,7 @@ import { getIntegrationRepository } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 
 type FetchMarketplaceTagsRequest = {
   connectionId: string;
@@ -21,7 +22,14 @@ export async function POST_handler(
   request: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {
-  const body = (await request.json()) as FetchMarketplaceTagsRequest;
+  const parsed = await parseObjectJsonBody(request, {
+    logPrefix: 'marketplace.tags.fetch',
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+
+  const body = parsed.data as FetchMarketplaceTagsRequest;
   const { connectionId } = body;
 
   if (!connectionId) {

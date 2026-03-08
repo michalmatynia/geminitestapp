@@ -8,6 +8,7 @@ import {
 import { assertDatabaseEngineOperationEnabled } from '@/shared/lib/db/services/database-engine-operation-guards';
 import type { DatabaseSyncDirection } from '@/shared/contracts/database';
 import { authError, badRequestError } from '@/shared/errors/app-error';
+import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 
 const SAFE_NAME_RE = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
 
@@ -19,7 +20,14 @@ export async function POST_handler(req: NextRequest): Promise<Response> {
     throw authError('Unauthorized.');
   }
 
-  const body = (await req.json()) as {
+  const parsed = await parseObjectJsonBody(req, {
+    logPrefix: 'databases.copy-collection',
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+
+  const body = parsed.data as {
     collection?: string;
     direction?: DatabaseSyncDirection;
   };

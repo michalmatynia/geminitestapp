@@ -7,6 +7,7 @@ import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
 import type { CmsCssAiRequest as CssAiRequest } from '@/shared/contracts/cms';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
+import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 
 const isValidMessages = (messages: ChatMessage[]): boolean =>
   messages.length > 0 &&
@@ -18,10 +19,13 @@ const isValidMessages = (messages: ChatMessage[]): boolean =>
   );
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const body = (await req.json().catch(() => null)) as CssAiRequest | null;
-  if (!body) {
-    throw badRequestError('Invalid JSON payload.');
+  const parsed = await parseObjectJsonBody(req, {
+    logPrefix: 'cms.css-ai.stream',
+  });
+  if (!parsed.ok) {
+    return parsed.response;
   }
+  const body = parsed.data as CssAiRequest;
 
   const messages = Array.isArray(body.messages) ? body.messages : [];
   if (!isValidMessages(messages)) {

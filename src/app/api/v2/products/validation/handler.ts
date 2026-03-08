@@ -3,10 +3,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { validateProductsBatch } from '@/shared/lib/products/validations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
+import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 
 // POST /api/v2/products/validation - Batch validation
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const data = (await req.json()) as { products: unknown[] };
+  const parsed = await parseObjectJsonBody(req, {
+    logPrefix: 'products.validation',
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+
+  const data = parsed.data as { products: unknown[] };
   const products = data.products;
 
   if (!Array.isArray(products)) {

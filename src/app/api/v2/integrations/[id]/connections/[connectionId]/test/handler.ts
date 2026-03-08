@@ -13,6 +13,7 @@ import type { TestLogEntry } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { internalError } from '@/shared/errors/app-error';
 import { mapStatusToAppError } from '@/shared/errors/error-mapper';
+import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 
 import type { Browser, BrowserContext, Page, BrowserContextOptions } from 'playwright';
 
@@ -51,13 +52,12 @@ export async function postTestConnectionHandler(
   const steps: TestLogEntry[] = [];
 
   let requestBody: TraderaConnectionTestRequest = {};
-  try {
-    const parsed = (await req.json()) as unknown;
-    if (parsed && typeof parsed === 'object') {
-      requestBody = parsed as TraderaConnectionTestRequest;
-    }
-  } catch {
-    requestBody = {};
+  const parsedBody = await parseObjectJsonBody(req, {
+    allowEmpty: true,
+    logPrefix: 'integrations.connections.test',
+  });
+  if (parsedBody.ok) {
+    requestBody = parsedBody.data as TraderaConnectionTestRequest;
   }
 
   const mode = requestBody.mode === 'manual' ? 'manual' : 'auto';

@@ -48,7 +48,11 @@ vi.mock('@/shared/lib/api-client', () => ({
   },
 }));
 
-vi.mock('@/features/integrations', () => ({
+vi.mock('@/shared/lib/product-integrations-adapter', () => ({
+  fetchPreferredBaseConnection: () => Promise.resolve({ connectionId: 'conn-base-1' }),
+  integrationSelectionQueryKeys: {
+    defaultConnection: ['integrations', 'default-connection'],
+  },
   useGenericExportToBaseMutation: () => ({
     isPending: false,
     mutateAsync: mutateAsyncMock,

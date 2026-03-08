@@ -69,8 +69,12 @@ export function EventEffectsWrapper({
   const clickEnabled = isEventClickEnabled(config, disableClick);
   const childIsInteractive = isInteractiveElement(children);
 
-  const handleClick = useCallback(
-    (event: React.MouseEvent): void => {
+  const runClickAction = useCallback(
+    (event: {
+      target: EventTarget | null;
+      preventDefault: () => void;
+      stopPropagation: () => void;
+    }): void => {
       if (!clickEnabled) return;
       if (isInteractiveTarget(event.target)) return;
 
@@ -101,14 +105,25 @@ export function EventEffectsWrapper({
     [clickEnabled, config]
   );
 
+  const handleClick = useCallback(
+    (event: React.MouseEvent): void => {
+      runClickAction(event);
+    },
+    [runClickAction]
+  );
+
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent): void => {
       if (!clickEnabled) return;
       if (event.key !== 'Enter' && event.key !== ' ') return;
       event.preventDefault();
-      handleClick(event as unknown as React.MouseEvent);
+      runClickAction({
+        target: event.target,
+        preventDefault: () => event.preventDefault(),
+        stopPropagation: () => event.stopPropagation(),
+      });
     },
-    [clickEnabled, handleClick]
+    [clickEnabled, runClickAction]
   );
 
   if (children === null || children === undefined) return children;

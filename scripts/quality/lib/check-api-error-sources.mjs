@@ -12,6 +12,13 @@ import {
 const API_ROOT = path.join('src', 'app', 'api');
 const HTTP_METHOD_EXPORT_REGEX = /export const (GET|POST|PUT|PATCH|DELETE)\b/g;
 const WRAPPED_HANDLER_REGEX = /\bapiHandler(?:WithParams)?(?:\s*<[\s\S]*?>)?\s*\(/;
+const ALLOWED_RAW_RESPONSE_PATTERNS = [
+  /status\s*:\s*204\b/,
+  /text\/event-stream/i,
+  /application\/x-ndjson/i,
+  /text\/csv/i,
+  /Content-Disposition/i,
+];
 
 const listRouteFiles = (absoluteDir, acc = []) => {
   if (!fs.existsSync(absoluteDir)) return acc;
@@ -122,6 +129,13 @@ const isDelegatedHttpExport = (block, namedImports, namespaceImports) => {
   return delegatedMethod === method && Boolean(namespaceSource && isDelegatedImportSource(namespaceSource));
 };
 
+const isAllowedRawResponseUsage = (text, index) => {
+  const start = Math.max(0, index - 900);
+  const end = Math.min(text.length, index + 500);
+  const neighborhood = text.slice(start, end);
+  return ALLOWED_RAW_RESPONSE_PATTERNS.some((pattern) => pattern.test(neighborhood));
+};
+
 export const analyzeApiErrorSources = ({ root = process.cwd() } = {}) => {
   const issues = [];
   const apiDir = path.join(root, API_ROOT);
@@ -211,6 +225,7 @@ export const analyzeApiErrorSources = ({ root = process.cwd() } = {}) => {
       const lineStart = text.lastIndexOf('\n', match.index) + 1;
       const lineContent = text.slice(lineStart, match.index);
       if (lineContent.includes('//') || lineContent.includes('*')) continue;
+      if (isAllowedRawResponseUsage(text, match.index)) continue;
 
       const line = getLineNumber(text, match.index);
       issues.push(
@@ -262,6 +277,7 @@ export const analyzeApiErrorSources = ({ root = process.cwd() } = {}) => {
       const lineStart = text.lastIndexOf('\n', match.index) + 1;
       const lineContent = text.slice(lineStart, match.index);
       if (lineContent.includes('//') || lineContent.includes('*')) continue;
+      if (isAllowedRawResponseUsage(text, match.index)) continue;
 
       const line = getLineNumber(text, match.index);
       issues.push(

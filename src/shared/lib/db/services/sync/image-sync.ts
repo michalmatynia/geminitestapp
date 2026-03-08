@@ -6,10 +6,10 @@ export const syncImageFiles: SyncHandler = async ({ mongo, prisma, normalizeId }
   const docs = (await mongo
     .collection('image_files')
     .find({})
-    .toArray()) as unknown as MongoImageFileDoc[];
+    .toArray()) as MongoImageFileDoc[];
   const data = docs
     .map((doc: MongoImageFileDoc): Prisma.ImageFileCreateManyInput | null => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc as Record<string, unknown>);
       if (!id) return null;
       return {
         id,
@@ -50,11 +50,11 @@ export const syncImageStudioSlots: SyncHandler = async ({
   const docs = (await mongo
     .collection('image_studio_slots')
     .find({})
-    .toArray()) as unknown as MongoImageStudioSlotDoc[];
+    .toArray()) as MongoImageStudioSlotDoc[];
   const warnings: string[] = [];
   const data = docs
     .map((doc: MongoImageStudioSlotDoc): Prisma.ImageStudioSlotCreateManyInput | null => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc as Record<string, unknown>);
       if (!id) return null;
       const projectId = doc.projectId ?? '';
       if (!projectId) {

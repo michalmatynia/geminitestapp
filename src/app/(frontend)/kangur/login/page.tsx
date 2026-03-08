@@ -10,7 +10,7 @@ import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 
 const DEFAULT_CALLBACK_URL = '/kangur';
 
-export const resolveKangurLoginCallbackNavigation = (
+const resolveKangurLoginCallbackNavigation = (
   callbackUrl: string,
   currentOrigin: string
 ): { kind: 'router' | 'location'; href: string } | null => {

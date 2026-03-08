@@ -128,7 +128,7 @@ export const resolveStudioSettingsBundle = async (
   const modelId = trimString(generationConfig.modelId) ?? '';
   return {
     parsedStudioSettings: parsedSettings,
-    studioSettings: parsedSettings as unknown as Record<string, unknown>,
+    studioSettings: parsedSettings as Record<string, unknown>,
     sequencing: resolveSequencingFromStudioSettings(parsedSettings, modelId),
     sequencingDiagnostics,
     sequenceGenerationMode,

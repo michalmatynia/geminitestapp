@@ -167,7 +167,7 @@ export function useRightSidebarSequence({
         paramsState,
         referenceSlotIds: compositeAssetIds,
         mask,
-        studioSettings: studioSettings as unknown as Record<string, unknown>,
+        studioSettings: studioSettings as Record<string, unknown>,
         steps: resolvedSteps,
         metadata: {
           source: 'right-sidebar-sequence-generate',
@@ -284,7 +284,7 @@ export function useRightSidebarSequence({
               feather: maskFeather,
             }
             : null,
-        studioSettings: studioSettings as unknown as Record<string, unknown>,
+        studioSettings: studioSettings as Record<string, unknown>,
         steps: resolvedSteps,
         metadata: {
           source: 'right-sidebar-sequence-generate',

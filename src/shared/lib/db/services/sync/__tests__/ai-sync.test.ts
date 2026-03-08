@@ -4,6 +4,7 @@ import { syncProductAiJobs } from '@/shared/lib/db/services/sync/ai-sync';
 
 describe('syncProductAiJobs', () => {
   it('uses canonical unknown type fallback when source type is missing', async () => {
+    type SyncContext = Parameters<typeof syncProductAiJobs>[0];
     const docs = [
       {
         _id: 'job-1',
@@ -19,17 +20,17 @@ describe('syncProductAiJobs', () => {
 
     const deleteMany = vi.fn().mockResolvedValue({ count: 0 });
     const createMany = vi.fn().mockResolvedValue({ count: 1 });
+    const mongo = { collection } satisfies Pick<SyncContext['mongo'], 'collection'>;
+    const prisma = {
+      productAiJob: {
+        deleteMany,
+        createMany,
+      },
+    } satisfies Pick<SyncContext['prisma'], 'productAiJob'>;
 
     const result = await syncProductAiJobs({
-      mongo: {
-        collection,
-      } as unknown as Parameters<typeof syncProductAiJobs>[0]['mongo'],
-      prisma: {
-        productAiJob: {
-          deleteMany,
-          createMany,
-        },
-      } as unknown as Parameters<typeof syncProductAiJobs>[0]['prisma'],
+      mongo: mongo as SyncContext['mongo'],
+      prisma: prisma as SyncContext['prisma'],
       normalizeId: (doc: Record<string, unknown>): string =>
         typeof doc['_id'] === 'string' ? doc['_id'] : '',
       toDate: (): Date | null => null,

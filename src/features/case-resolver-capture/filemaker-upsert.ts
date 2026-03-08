@@ -3,8 +3,8 @@ import {
   findExistingFilemakerAddressId,
   findExistingFilemakerPartyReference,
   normalizeCaseResolverComparable,
-} from '@/features/case-resolver';
-import { createId } from '@/features/case-resolver';
+  createId,
+} from '@/shared/lib/case-resolver-capture-adapter';
 import {
   createFilemakerAddress,
   createFilemakerOrganization,

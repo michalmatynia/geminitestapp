@@ -11,7 +11,7 @@ export const syncProductAiJobs: SyncHandler = async ({ mongo, prisma, normalizeI
   const docs = await mongo.collection('product_ai_jobs').find({}).toArray();
   const data = docs
     .map((doc: Record<string, unknown>): Prisma.ProductAiJobCreateManyInput | null => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc);
       const productId = (doc as { productId?: string }).productId;
       if (!id || !productId) return null;
       const rawType = (doc as { type?: unknown }).type;
@@ -44,7 +44,7 @@ export const syncAiPathRuns: SyncHandler = async ({
   const docs = await mongo.collection('ai_path_runs').find({}).toArray();
   const data = docs
     .map((doc: Record<string, unknown>): Prisma.AiPathRunCreateManyInput | null => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc);
       if (!id) return null;
       return {
         id,
@@ -93,7 +93,7 @@ export const syncAiPathRunNodes: SyncHandler = async ({
   const docs = await mongo.collection('ai_path_run_nodes').find({}).toArray();
   const data = docs
     .map((doc: Record<string, unknown>): Prisma.AiPathRunNodeCreateManyInput | null => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc);
       const runId = (doc as { runId?: string }).runId;
       if (!id || !runId) return null;
       return {
@@ -130,7 +130,7 @@ export const syncAiPathRunEvents: SyncHandler = async ({
   const docs = await mongo.collection('ai_path_run_events').find({}).toArray();
   const data = docs
     .map((doc: Record<string, unknown>): Prisma.AiPathRunEventCreateManyInput | null => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc);
       const runId = (doc as { runId?: string }).runId;
       if (!id || !runId) return null;
       return {

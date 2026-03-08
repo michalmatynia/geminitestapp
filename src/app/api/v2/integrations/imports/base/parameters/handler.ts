@@ -41,6 +41,11 @@ const extractProductIdFromRecord = (record: Record<string, unknown>): string | n
 
 const normalizeProductId = (value: unknown): string => toStringId(value)?.trim() ?? '';
 
+const normalizeNumericObjectKey = (value: string): string | null => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? String(parsed) : null;
+};
+
 const extractProductIdsFromListPayload = (payload: unknown, limit: number): string[] => {
   const ids: string[] = [];
   const seen = new Set<string>();
@@ -169,8 +174,9 @@ const extractProductRecord = (
   }
   if (products && typeof products === 'object') {
     const recordMap = products as Record<string, unknown>;
+    const numericProductIdKey = normalizeNumericObjectKey(productId);
     return (recordMap[productId] ??
-      recordMap[Number(productId) as unknown as keyof typeof recordMap] ??
+      (numericProductIdKey ? recordMap[numericProductIdKey] : undefined) ??
       Object.values(recordMap)[0]) as Record<string, unknown> | null;
   }
   return null;

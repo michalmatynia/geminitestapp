@@ -4,6 +4,14 @@ import type { JsonParseResult, ParseJsonOptions } from '@/shared/contracts/ui';
 import { badRequestError, validationError } from '@/shared/errors/app-error';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
 
+const asRecord = (value: unknown): Record<string, unknown> => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return {};
+  }
+
+  return value as Record<string, unknown>;
+};
+
 export async function parseJsonBody<T>(
   req: Request,
   schema: z.ZodSchema<T>,
@@ -40,4 +48,19 @@ export async function parseJsonBody<T>(
   }
 
   return { ok: true, data: result.data };
+}
+
+export async function parseObjectJsonBody(
+  req: Request,
+  options?: ParseJsonOptions
+): Promise<JsonParseResult<Record<string, unknown>>> {
+  const result = await parseJsonBody(req, z.unknown(), options);
+  if (!result.ok) {
+    return result;
+  }
+
+  return {
+    ok: true,
+    data: asRecord(result.data),
+  };
 }

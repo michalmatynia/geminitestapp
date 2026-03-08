@@ -3,7 +3,6 @@ import { type ChatCompletionContentPart } from 'openai/resources/chat/completion
 import { resolveBrainProviderCredential } from '@/shared/lib/ai-brain/provider-credentials';
 import { REMOTE_OCR_TIMEOUT_MS } from '../config';
 import { parseOpenAiResponseText } from '../response-parsers';
-import { type OpenAiChatCompletionPayload } from '../types';
 import { buildOcrPromptContent, withPromiseTimeout } from '../utils';
 
 export const runOpenAiOcrRequest = async (input: {
@@ -53,7 +52,7 @@ export const runOpenAiOcrRequest = async (input: {
       REMOTE_OCR_TIMEOUT_MS,
       'OpenAI OCR'
     );
-    return parseOpenAiResponseText(completion as unknown as OpenAiChatCompletionPayload);
+    return parseOpenAiResponseText(completion);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : '';
     if (!/max_completion_tokens/i.test(errorMessage)) {
@@ -68,6 +67,6 @@ export const runOpenAiOcrRequest = async (input: {
       REMOTE_OCR_TIMEOUT_MS,
       'OpenAI OCR'
     );
-    return parseOpenAiResponseText(completion as unknown as OpenAiChatCompletionPayload);
+    return parseOpenAiResponseText(completion);
   }
 };

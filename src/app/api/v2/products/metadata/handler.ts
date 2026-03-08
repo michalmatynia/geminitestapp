@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
 import { CurrencyCode } from '@prisma/client';
+import { ObjectId } from 'mongodb';
 import {
   getProducerRepository,
   getTagRepository,
@@ -10,6 +11,7 @@ import {
 import { listSimpleParameters } from '@/shared/lib/products/services/simple-parameter-service';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
+import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import type {
@@ -17,11 +19,10 @@ import type {
   MongoPriceGroupDoc,
 } from '@/shared/lib/db/services/database-sync-types';
 
-const parseObjectPayload = async (req: NextRequest): Promise<Record<string, unknown>> => {
-  const value: unknown = await req.json();
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
-  return value as Record<string, unknown>;
-};
+const parseObjectPayload = async (req: NextRequest) =>
+  await parseObjectJsonBody(req, {
+    logPrefix: 'products.metadata.[type]',
+  });
 
 const readString = (record: Record<string, unknown>, key: string): string | null => {
   const raw = record[key];
@@ -266,7 +267,11 @@ export async function POST_products_metadata_handler(
     const provider = await getProductDataProvider();
     if (provider === 'mongodb') {
       const mongo = await getMongoDb();
-      const payload = await parseObjectPayload(req);
+      const parsed = await parseObjectPayload(req);
+      if (!parsed.ok) {
+        return parsed.response;
+      }
+      const payload = parsed.data;
 
       const explicitCurrencyId = readString(payload, 'currencyId');
       const currencyCodeFromPayload = readString(payload, 'currencyCode')?.toUpperCase() ?? null;
@@ -327,10 +332,11 @@ export async function POST_products_metadata_handler(
         createdAt: now,
         updatedAt: now,
       };
-      await mongo.collection<MongoPriceGroupDoc>('price_groups').insertOne({
-        _id: created.id,
+      const insertDoc: MongoPriceGroupDoc = {
+        _id: new ObjectId(),
         ...created,
-      } as unknown as MongoPriceGroupDoc);
+      };
+      await mongo.collection<MongoPriceGroupDoc>('price_groups').insertOne(insertDoc);
 
       const currencyById = new Map([
         [String(currencyDoc.id ?? currencyDoc.code ?? ''), currencyDoc],
@@ -338,7 +344,11 @@ export async function POST_products_metadata_handler(
       return NextResponse.json(mapMongoPriceGroupResponse(created, currencyById));
     }
 
-    const payload = await parseObjectPayload(req);
+    const parsed = await parseObjectPayload(req);
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    const payload = parsed.data;
     const currencyId = await resolveCurrencyId(payload);
     const sourceGroupId = readString(payload, 'sourceGroupId');
     const typeValue = readString(payload, 'type');

@@ -1,0 +1,4216 @@
+{
+  "generatedAt": "2026-03-08T10:19:10.158Z",
+  "status": "failed",
+  "summary": {
+    "total": 415,
+    "errorCount": 229,
+    "warningCount": 0,
+    "infoCount": 186,
+    "status": "failed",
+    "fileCount": 4307
+  },
+  "scope": {
+    "root": "src",
+    "includeTests": false,
+    "doubleAssertionAllowlist": []
+  },
+  "trendCounters": {
+    "doubleAssertionCount": 229,
+    "anyCount": 66,
+    "eslintDisableCount": 99,
+    "nonNullAssertionCount": 21,
+    "tsIgnoreCount": 0,
+    "tsExpectErrorCount": 0
+  },
+  "eslintDisabledRules": {
+    "@typescript-eslint/no-explicit-any": 32,
+    "@typescript-eslint/no-unsafe-assignment": 20,
+    "@next/next/no-img-element": 18,
+    "@typescript-eslint/no-unsafe-member-access": 12,
+    "no-restricted-syntax": 8,
+    "@typescript-eslint/no-unsafe-call": 7,
+    "@typescript-eslint/no-unsafe-argument": 6,
+    "@typescript-eslint/no-unsafe-return": 4,
+    "no-control-regex": 1,
+    "@typescript-eslint/no-unused-vars": 1
+  },
+  "issues": [
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/ai/image-studio/components/ImageStudioAnalysisTab.tsx",
+      "line": 615,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/ai/image-studio/components/right-sidebar/useRightSidebarSequence.ts",
+      "line": 170,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/ai/image-studio/components/right-sidebar/useRightSidebarSequence.ts",
+      "line": 287,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/ai/image-studio/components/SequencingPanel.tsx",
+      "line": 620,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/ai/image-studio/components/VersionNodeMapPanel.tsx",
+      "line": 472,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/ai/image-studio/product-studio/product-studio-service.settings.ts",
+      "line": 131,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/ai/image-studio/server/card-link-backfill.ts",
+      "line": 99,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/ai/image-studio/server/card-link-backfill.ts",
+      "line": 105,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/ai/image-studio/server/handlers/generation-handler.ts",
+      "line": 192,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/ai/image-studio/server/handlers/generation-handler.ts",
+      "line": 201,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/ai/image-studio/server/sequence-runtime.ts",
+      "line": 122,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/ai/image-studio/server/sequence-runtime.ts",
+      "line": 132,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/ai/image-studio/utils/run-request-preview.ts",
+      "line": 273,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/auth/services/auth-login-challenge.ts",
+      "line": 37,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/auth/services/auth-security-profile.ts",
+      "line": 164,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/auth/services/auth-security-profile.ts",
+      "line": 189,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/auth/services/auth-security.ts",
+      "line": 147,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/auth/services/user-preferences-repository.ts",
+      "line": 320,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/case-resolver/components/CaseResolverCanvasWorkspace.tsx",
+      "line": 424,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/case-resolver/components/CaseResolverCanvasWorkspace.tsx",
+      "line": 442,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/case-resolver/components/CaseResolverRelationsWorkspace.tsx",
+      "line": 247,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/case-resolver/components/CaseResolverRelationsWorkspace.tsx",
+      "line": 277,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/case-resolver/components/CaseResolverRelationsWorkspace.tsx",
+      "line": 278,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/case-resolver/components/CaseResolverRelationsWorkspace.tsx",
+      "line": 308,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/case-resolver/components/CaseResolverRelationsWorkspace.tsx",
+      "line": 312,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/case-resolver/components/CaseResolverRelationsWorkspace.tsx",
+      "line": 316,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/case-resolver/components/CaseResolverRelationsWorkspace.tsx",
+      "line": 409,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/case-resolver/components/CaseResolverRelationsWorkspace.tsx",
+      "line": 502,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/case-resolver/components/CaseResolverRelationsWorkspace.tsx",
+      "line": 502,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/case-resolver/components/modals/CaseResolverEntitySettingsModal.tsx",
+      "line": 50,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/case-resolver/composer.ts",
+      "line": 238,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/case-resolver/composer.ts",
+      "line": 239,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/case-resolver/settings-relation-graph.ts",
+      "line": 708,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/case-resolver/settings-relation-graph.ts",
+      "line": 709,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/case-resolver/settings.workspace.ts",
+      "line": 134,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/case-resolver/settings.workspace.ts",
+      "line": 155,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/case-resolver/workers/case-resolver-ocr/processors/openai.ts",
+      "line": 56,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/case-resolver/workers/case-resolver-ocr/processors/openai.ts",
+      "line": 71,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/case-resolver/workspace-persistence-detached-documents.ts",
+      "line": 246,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/case-resolver/workspace-persistence-detached-documents.ts",
+      "line": 336,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/case-resolver/workspace-persistence-detached-history.ts",
+      "line": 122,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/case-resolver/workspace-persistence-save.ts",
+      "line": 142,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/case-resolver/workspace-persistence-save.ts",
+      "line": 175,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/case-resolver/workspace-persistence-save.ts",
+      "line": 197,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/case-resolver/workspace-persistence-save.ts",
+      "line": 213,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/case-resolver/workspace-persistence-save.ts",
+      "line": 225,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/cms/api/themes.ts",
+      "line": 23,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/cms/api/themes.ts",
+      "line": 40,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/cms/components/shared/EventEffectsWrapper.tsx",
+      "line": 109,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/cms/hooks/useCmsQueries.ts",
+      "line": 124,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/cms/services/cms-repository/prisma-cms-repository.ts",
+      "line": 63,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/cms/services/cms-repository/prisma-cms-repository.ts",
+      "line": 64,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/cms/services/cms-repository/prisma-cms-repository.ts",
+      "line": 65,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/cms/services/cms-repository/prisma-cms-repository.ts",
+      "line": 77,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/cms/services/cms-repository/prisma-cms-repository.ts",
+      "line": 378,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/cms/services/cms-repository/prisma-cms-repository.ts",
+      "line": 379,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/cms/services/cms-repository/prisma-cms-repository.ts",
+      "line": 380,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/cms/services/cms-repository/prisma-cms-repository.ts",
+      "line": 390,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/cms/services/cms-repository/prisma-cms-repository.ts",
+      "line": 391,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/cms/services/cms-repository/prisma-cms-repository.ts",
+      "line": 392,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/drafter/services/draft-repository.ts",
+      "line": 352,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/foldertree/v2/shell/useFolderTreeProfileConfig.ts",
+      "line": 13,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/integrations/services/base-image-sync.ts",
+      "line": 89,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/integrations/services/exports/base-exporter/product-resolvers.ts",
+      "line": 99,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/integrations/services/exports/base-exporter/product-resolvers.ts",
+      "line": 137,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/integrations/services/exports/base-exporter/product-resolvers.ts",
+      "line": 181,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/integrations/services/exports/base-exporter/value-resolvers.ts",
+      "line": 112,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/integrations/services/imports/base-import-run-repository.ts",
+      "line": 288,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/integrations/services/integration-repository/prisma-impl.ts",
+      "line": 271,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/integrations/services/integration-repository/prisma-impl.ts",
+      "line": 286,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/integrations/services/product-listing-repository.ts",
+      "line": 133,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/integrations/services/product-listing-repository.ts",
+      "line": 136,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/integrations/services/product-listing-repository.ts",
+      "line": 144,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/integrations/services/product-listing-repository.ts",
+      "line": 169,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/integrations/services/product-listing-repository.ts",
+      "line": 206,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/integrations/services/product-listing-repository.ts",
+      "line": 240,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/integrations/services/product-listing-repository.ts",
+      "line": 316,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/integrations/services/product-listing-repository.ts",
+      "line": 332,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/integrations/services/product-listing-repository.ts",
+      "line": 423,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/integrations/services/product-listing-repository.ts",
+      "line": 431,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/integrations/services/product-listing-repository.ts",
+      "line": 494,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/integrations/services/product-listing-repository.ts",
+      "line": 509,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/integrations/services/product-listing-repository.ts",
+      "line": 552,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/integrations/services/product-listing-repository.ts",
+      "line": 583,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/internationalization/services/currency-repository/mongo-currency-repository.ts",
+      "line": 105,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/notesapp/api/useNoteQueries.ts",
+      "line": 116,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/notesapp/api/useNoteQueries.ts",
+      "line": 123,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/notesapp/api/useNoteQueries.ts",
+      "line": 149,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/notesapp/components/detail/NoteDetailActions.tsx",
+      "line": 87,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/notesapp/components/tree/NotesAppTreeNode.tsx",
+      "line": 58,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/notesapp/services/notes/note-repository/mongo-note-repository-utils.ts",
+      "line": 145,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/notesapp/services/notes/note-repository/mongo/notes.ts",
+      "line": 433,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/notesapp/services/notes/note-repository/prisma/theme-impl.ts",
+      "line": 18,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/notesapp/services/notes/note-repository/prisma/theme-impl.ts",
+      "line": 29,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/notesapp/services/notes/note-repository/prisma/theme-impl.ts",
+      "line": 77,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/notesapp/services/notes/note-repository/prisma/theme-impl.ts",
+      "line": 129,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/products/components/list/ProductColumns.tsx",
+      "line": 378,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/products/components/ProductModals.tsx",
+      "line": 69,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/products/components/ProductModals.tsx",
+      "line": 70,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/products/hooks/useAiPathTrigger.ts",
+      "line": 66,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/products/hooks/useAiPathTrigger.ts",
+      "line": 70,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/products/hooks/useProductFormValidator.ts",
+      "line": 453,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/products/security/rate-limiting.ts",
+      "line": 102,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/products/workers/productAiQueue.ts",
+      "line": 74,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/products/workers/productAiQueue.ts",
+      "line": 208,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/viewer3d/components/Viewer3D.tsx",
+      "line": 503,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/proxy.ts",
+      "line": 19,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/hooks/offline/useOfflineMutation.ts",
+      "line": 208,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/hooks/query/useAdvancedQueries.ts",
+      "line": 58,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/hooks/query/useQueryDiagnostics.ts",
+      "line": 38,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/hooks/query/useQueryDiagnostics.ts",
+      "line": 39,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/hooks/query/useQueryErrorHandling.ts",
+      "line": 426,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/hooks/useOptimisticMutation.ts",
+      "line": 32,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/ai-paths/core/runtime/__tests__/engine-core.runtime-kernel-parity.builders.ts",
+      "line": 165,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/analytics/components/PageAnalyticsTracker.tsx",
+      "line": 183,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/api/rate-limit.ts",
+      "line": 147,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/prisma.ts",
+      "line": 8,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/prisma.ts",
+      "line": 30,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/database-collection-copy.ts",
+      "line": 75,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/database-collection-copy.ts",
+      "line": 99,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/database-engine-status.ts",
+      "line": 104,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/database-json-backup.ts",
+      "line": 50,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/database-json-backup.ts",
+      "line": 136,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/database-json-backup.ts",
+      "line": 214,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/database-sync.ts",
+      "line": 289,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/database-sync.ts",
+      "line": 315,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/ai-sync.ts",
+      "line": 14,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/ai-sync.ts",
+      "line": 47,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/ai-sync.ts",
+      "line": 96,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/ai-sync.ts",
+      "line": 133,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/auth-sync.ts",
+      "line": 16,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/auth-sync.ts",
+      "line": 43,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/auth-sync.ts",
+      "line": 73,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/auth-sync.ts",
+      "line": 76,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/auth-sync.ts",
+      "line": 100,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/auth-sync.ts",
+      "line": 125,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/catalog-sync.ts",
+      "line": 22,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/catalog-sync.ts",
+      "line": 25,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/catalog-sync.ts",
+      "line": 30,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/catalog-sync.ts",
+      "line": 90,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/catalog-sync.ts",
+      "line": 93,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/catalog-sync.ts",
+      "line": 174,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/catalog-sync.ts",
+      "line": 177,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/catalog-sync.ts",
+      "line": 200,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/catalog-sync.ts",
+      "line": 203,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/catalog-sync.ts",
+      "line": 224,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/catalog-sync.ts",
+      "line": 229,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/catalog-sync.ts",
+      "line": 263,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/catalog-sync.ts",
+      "line": 266,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/chatbot-sync.ts",
+      "line": 13,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/chatbot-sync.ts",
+      "line": 19,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/chatbot-sync.ts",
+      "line": 81,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/cms-sync.ts",
+      "line": 9,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/cms-sync.ts",
+      "line": 29,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/cms-sync.ts",
+      "line": 52,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/cms-sync.ts",
+      "line": 127,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/geo-sync.ts",
+      "line": 12,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/geo-sync.ts",
+      "line": 46,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/geo-sync.ts",
+      "line": 99,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/image-sync.ts",
+      "line": 9,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/image-sync.ts",
+      "line": 12,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/image-sync.ts",
+      "line": 53,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/image-sync.ts",
+      "line": 57,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/integration-sync.ts",
+      "line": 10,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/integration-sync.ts",
+      "line": 72,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/integration-sync.ts",
+      "line": 94,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/integration-sync.ts",
+      "line": 194,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/integration-sync.ts",
+      "line": 237,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/notes-sync.ts",
+      "line": 11,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/notes-sync.ts",
+      "line": 49,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/notes-sync.ts",
+      "line": 103,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/notes-sync.ts",
+      "line": 151,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/notes-sync.ts",
+      "line": 254,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/notes-sync.ts",
+      "line": 335,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/product-sync.ts",
+      "line": 15,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/product-sync.ts",
+      "line": 18,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/product-sync.ts",
+      "line": 164,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/system-sync.ts",
+      "line": 44,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/system-sync.ts",
+      "line": 47,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/system-sync.ts",
+      "line": 86,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/system-sync.ts",
+      "line": 89,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/system-sync.ts",
+      "line": 121,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/system-sync.ts",
+      "line": 125,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/system-sync.ts",
+      "line": 165,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/db/services/sync/system-sync.ts",
+      "line": 168,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/env.ts",
+      "line": 105,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/files/services/image-file-repository/index.ts",
+      "line": 16,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/files/services/image-file-repository/index.ts",
+      "line": 18,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/observability/system-log-repository.ts",
+      "line": 84,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/offline-support.ts",
+      "line": 37,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/products/services/parameter-repository/prisma-parameter-repository.ts",
+      "line": 52,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/products/services/parameter-repository/prisma-parameter-repository.ts",
+      "line": 55,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/products/services/product-repository/mongo/associations.ts",
+      "line": 137,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/products/services/product-repository/mongo/associations.ts",
+      "line": 183,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/products/services/product-repository/mongo/associations.ts",
+      "line": 227,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/products/services/product-repository/mongo/associations.ts",
+      "line": 254,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/products/services/product-repository/mongo/associations.ts",
+      "line": 268,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/products/services/product-repository/mongo/associations.ts",
+      "line": 298,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/products/services/product-repository/mongo/associations.ts",
+      "line": 331,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/products/services/product-repository/mongo/associations.ts",
+      "line": 347,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/products/services/product-repository/mongo/read.ts",
+      "line": 87,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/products/services/product-repository/mongo/read.ts",
+      "line": 97,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/products/services/product-repository/mongo/read.ts",
+      "line": 149,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/products/services/product-repository/mongo/read.ts",
+      "line": 179,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/products/services/product-repository/mongo/read.ts",
+      "line": 191,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/products/services/product-repository/mongo/read.ts",
+      "line": 198,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/products/services/product-repository/mongo/read.ts",
+      "line": 207,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/products/services/product-repository/mongo/read.ts",
+      "line": 217,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/products/services/product-repository/mongo/read.ts",
+      "line": 228,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/products/services/product-repository/mongo/write.ts",
+      "line": 50,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/products/services/product-repository/mongo/write.ts",
+      "line": 64,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/products/services/product-repository/mongo/write.ts",
+      "line": 135,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/products/services/product-repository/mongo/write.ts",
+      "line": 148,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/products/services/product-repository/mongo/write.ts",
+      "line": 187,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/products/services/productService.ts",
+      "line": 53,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/products/services/validation-pattern-repository/prisma-validation-pattern-repository.ts",
+      "line": 177,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/products/services/validation-pattern-repository/prisma-validation-pattern-repository.ts",
+      "line": 308,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/products/services/validation-pattern-repository/prisma-validation-pattern-repository.ts",
+      "line": 309,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 183,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 245,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/redis.ts",
+      "line": 37,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/tanstack-factory-v2/guards.ts",
+      "line": 72,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/tanstack-factory-v2/guards.ts",
+      "line": 113,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/vector-drawing/components/VectorDrawingCanvas.tsx",
+      "line": 114,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/ui/badge.tsx",
+      "line": 65,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/ui/badge.tsx",
+      "line": 70,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/ui/badge.tsx",
+      "line": 153,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/utils/retry.ts",
+      "line": 32,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/validations/kangur.ts",
+      "line": 51,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any",
+      "file": "src/app/api/image-studio/slots/[slotId]/upscale/handler.ts",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/app/api/image-studio/slots/[slotId]/upscale/handler.ts",
+      "line": 411,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/features/ai/agent-runtime/planning/llm.ts",
+      "line": 3,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment",
+      "file": "src/features/ai/agent-runtime/planning/llm.ts",
+      "line": 4,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-argument",
+      "file": "src/features/ai/agent-runtime/planning/llm.ts",
+      "line": 5,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-call",
+      "file": "src/features/ai/agent-runtime/planning/llm.ts",
+      "line": 6,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-member-access",
+      "file": "src/features/ai/agent-runtime/planning/llm.ts",
+      "line": 8,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/ai/agent-runtime/planning/llm.ts",
+      "line": 236,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/ai/agent-runtime/planning/llm.ts",
+      "line": 351,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "non-null-assertion",
+      "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
+      "file": "src/features/ai/agent-runtime/tools/playwright/actions.ts",
+      "line": 102,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "non-null-assertion",
+      "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
+      "file": "src/features/ai/agent-runtime/tools/playwright/inventory.ts",
+      "line": 38,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: no-restricted-syntax",
+      "file": "src/features/ai/ai-paths/components/CanvasControlPanel.tsx",
+      "line": 57,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: no-restricted-syntax",
+      "file": "src/features/ai/ai-paths/components/CanvasControlPanel.tsx",
+      "line": 72,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: no-restricted-syntax",
+      "file": "src/features/ai/ai-paths/components/CanvasControlPanel.tsx",
+      "line": 89,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: no-restricted-syntax",
+      "file": "src/features/ai/ai-paths/components/CanvasControlPanel.tsx",
+      "line": 101,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: no-restricted-syntax",
+      "file": "src/features/ai/ai-paths/components/CanvasControlPanel.tsx",
+      "line": 113,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment",
+      "file": "src/features/ai/ai-paths/workers/ai-path-run-queue/status.ts",
+      "line": 89,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/ai/ai-paths/workers/ai-path-run-queue/status.ts",
+      "line": 89,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @next/next/no-img-element",
+      "file": "src/features/ai/image-studio/components/center-preview/SplitVariantPreview.tsx",
+      "line": 234,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @next/next/no-img-element",
+      "file": "src/features/ai/image-studio/components/center-preview/SplitVariantPreview.tsx",
+      "line": 304,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @next/next/no-img-element",
+      "file": "src/features/ai/image-studio/components/right-sidebar/__tests__/rightSidebarRuntimeMockComponents.tsx",
+      "line": 103,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @next/next/no-img-element",
+      "file": "src/features/ai/image-studio/components/studio-modals/__tests__/studioInlineEditRuntimeMockComponents.tsx",
+      "line": 262,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @next/next/no-img-element",
+      "file": "src/features/ai/image-studio/components/studio-modals/InlineImagePreviewCanvas.tsx",
+      "line": 198,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @next/next/no-img-element",
+      "file": "src/features/ai/image-studio/components/studio-modals/SlotInlineEditCardTab.tsx",
+      "line": 201,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @next/next/no-img-element",
+      "file": "src/features/ai/image-studio/components/studio-modals/SlotInlineEditCompositesTab.tsx",
+      "line": 29,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @next/next/no-img-element",
+      "file": "src/features/ai/image-studio/components/studio-modals/SlotInlineEditCompositesTab.tsx",
+      "line": 100,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @next/next/no-img-element",
+      "file": "src/features/ai/image-studio/components/studio-modals/SlotInlineEditMasksTab.tsx",
+      "line": 35,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @next/next/no-img-element",
+      "file": "src/features/ai/image-studio/components/VersionGraphComparePanel.tsx",
+      "line": 60,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @next/next/no-img-element",
+      "file": "src/features/ai/image-studio/components/VersionGraphInspector.tsx",
+      "line": 81,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @next/next/no-img-element",
+      "file": "src/features/ai/image-studio/components/VersionNodeDetailsModal.tsx",
+      "line": 323,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment",
+      "file": "src/features/ai/image-studio/server/run-repository.ts",
+      "line": 277,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/features/ai/image-studio/server/run-repository.ts",
+      "line": 282,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/ai/image-studio/server/run-repository.ts",
+      "line": 283,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment",
+      "file": "src/features/ai/image-studio/server/run-repository.ts",
+      "line": 355,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/features/ai/image-studio/server/run-repository.ts",
+      "line": 360,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/ai/image-studio/server/run-repository.ts",
+      "line": 361,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/features/ai/insights/generator/settings-service.ts",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment",
+      "file": "src/features/ai/insights/generator/settings-service.ts",
+      "line": 2,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-call",
+      "file": "src/features/ai/insights/generator/settings-service.ts",
+      "line": 3,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-member-access",
+      "file": "src/features/ai/insights/generator/settings-service.ts",
+      "line": 4,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-return",
+      "file": "src/features/ai/insights/generator/settings-service.ts",
+      "line": 5,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/ai/insights/generator/settings-service.ts",
+      "line": 13,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/ai/insights/generator/settings-service.ts",
+      "line": 17,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @next/next/no-img-element",
+      "file": "src/features/case-resolver/components/CaseResolverFileViewer.tsx",
+      "line": 186,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @next/next/no-img-element",
+      "file": "src/features/case-resolver/components/page/CaseResolverScanFileEditor.tsx",
+      "line": 338,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "non-null-assertion",
+      "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
+      "file": "src/features/case-resolver/hooks/capture-actions/useApplyCaptureProposal.ts",
+      "line": 112,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "non-null-assertion",
+      "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
+      "file": "src/features/case-resolver/hooks/capture-actions/useApplyCaptureProposal.ts",
+      "line": 143,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "non-null-assertion",
+      "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
+      "file": "src/features/case-resolver/hooks/capture-actions/useApplyCaptureProposal.ts",
+      "line": 179,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "non-null-assertion",
+      "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
+      "file": "src/features/case-resolver/hooks/capture-actions/useApplyCaptureProposal.ts",
+      "line": 181,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "non-null-assertion",
+      "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
+      "file": "src/features/case-resolver/hooks/capture-actions/useApplyCaptureProposal.ts",
+      "line": 182,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "non-null-assertion",
+      "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
+      "file": "src/features/case-resolver/hooks/capture-actions/useApplyCaptureProposal.ts",
+      "line": 183,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "non-null-assertion",
+      "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
+      "file": "src/features/case-resolver/hooks/capture-actions/useApplyCaptureProposal.ts",
+      "line": 188,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "non-null-assertion",
+      "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
+      "file": "src/features/case-resolver/hooks/capture-actions/useApplyCaptureProposal.ts",
+      "line": 190,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "non-null-assertion",
+      "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
+      "file": "src/features/case-resolver/hooks/capture-actions/useApplyCaptureProposal.ts",
+      "line": 191,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "non-null-assertion",
+      "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
+      "file": "src/features/case-resolver/hooks/capture-actions/useApplyCaptureProposal.ts",
+      "line": 192,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "non-null-assertion",
+      "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
+      "file": "src/features/case-resolver/hooks/capture-actions/useApplyCaptureProposal.ts",
+      "line": 197,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "non-null-assertion",
+      "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
+      "file": "src/features/case-resolver/hooks/capture-actions/useApplyCaptureProposal.ts",
+      "line": 199,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "non-null-assertion",
+      "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
+      "file": "src/features/cms/hooks/page-builder/page-builder-reducer-move-actions.ts",
+      "line": 121,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "non-null-assertion",
+      "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
+      "file": "src/features/cms/hooks/page-builder/page-builder-reducer-move-actions.ts",
+      "line": 511,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "non-null-assertion",
+      "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
+      "file": "src/features/cms/hooks/page-builder/page-builder-reducer-move-actions.ts",
+      "line": 526,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any",
+      "file": "src/features/foldertree/v2/hooks/folder-tree-instance/useFolderTreeEngineActions.ts",
+      "line": 62,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/foldertree/v2/hooks/folder-tree-instance/useFolderTreeEngineActions.ts",
+      "line": 75,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any",
+      "file": "src/features/foldertree/v2/hooks/folder-tree-instance/useFolderTreeEngineActions.ts",
+      "line": 99,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/foldertree/v2/hooks/folder-tree-instance/useFolderTreeEngineActions.ts",
+      "line": 112,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any",
+      "file": "src/features/foldertree/v2/hooks/folder-tree-instance/useFolderTreeEngineActions.ts",
+      "line": 131,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/foldertree/v2/hooks/folder-tree-instance/useFolderTreeEngineActions.ts",
+      "line": 144,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any",
+      "file": "src/features/foldertree/v2/hooks/folder-tree-instance/useFolderTreeEngineActions.ts",
+      "line": 207,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/foldertree/v2/hooks/folder-tree-instance/useFolderTreeEngineActions.ts",
+      "line": 219,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "non-null-assertion",
+      "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
+      "file": "src/features/integrations/components/marketplaces/category-mapper/category-table/utils.ts",
+      "line": 30,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/features/integrations/context/integrations/useIntegrationsActionsImpl.ts",
+      "line": 3,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment",
+      "file": "src/features/integrations/context/integrations/useIntegrationsActionsImpl.ts",
+      "line": 4,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-member-access",
+      "file": "src/features/integrations/context/integrations/useIntegrationsActionsImpl.ts",
+      "line": 6,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/integrations/context/integrations/useIntegrationsActionsImpl.ts",
+      "line": 167,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/integrations/context/integrations/useIntegrationsActionsImpl.ts",
+      "line": 286,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/integrations/context/integrations/useIntegrationsActionsImpl.ts",
+      "line": 300,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/features/integrations/services/category-mapping/prisma-impl.ts",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment",
+      "file": "src/features/integrations/services/category-mapping/prisma-impl.ts",
+      "line": 2,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/integrations/services/category-mapping/prisma-impl.ts",
+      "line": 184,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/integrations/services/category-mapping/prisma-impl.ts",
+      "line": 200,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/features/integrations/services/imports/base-import-service.ts",
+      "line": 3,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment",
+      "file": "src/features/integrations/services/imports/base-import-service.ts",
+      "line": 4,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-member-access",
+      "file": "src/features/integrations/services/imports/base-import-service.ts",
+      "line": 5,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/integrations/services/imports/base-import-service.ts",
+      "line": 424,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/features/integrations/services/tradera-listing-service.ts",
+      "line": 3,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment",
+      "file": "src/features/integrations/services/tradera-listing-service.ts",
+      "line": 4,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-argument",
+      "file": "src/features/integrations/services/tradera-listing-service.ts",
+      "line": 5,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-member-access",
+      "file": "src/features/integrations/services/tradera-listing-service.ts",
+      "line": 7,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/integrations/services/tradera-listing-service.ts",
+      "line": 80,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/integrations/services/tradera-listing-service.ts",
+      "line": 110,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/integrations/services/tradera-listing-service.ts",
+      "line": 111,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/integrations/services/tradera-listing-service.ts",
+      "line": 135,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/integrations/services/tradera-listing-service.ts",
+      "line": 142,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/integrations/services/tradera-listing-service.ts",
+      "line": 159,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "non-null-assertion",
+      "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
+      "file": "src/features/kangur/config/routing.ts",
+      "line": 67,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @next/next/no-img-element",
+      "file": "src/features/kangur/ui/components/KangurLessonDocumentRenderer.tsx",
+      "line": 240,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/features/notesapp/services/notes/note-repository/mongo/notes.ts",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment",
+      "file": "src/features/notesapp/services/notes/note-repository/mongo/notes.ts",
+      "line": 2,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-member-access",
+      "file": "src/features/notesapp/services/notes/note-repository/mongo/notes.ts",
+      "line": 4,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @next/next/no-img-element",
+      "file": "src/features/products/components/form/studio/StudioPreviewCanvas.tsx",
+      "line": 36,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @next/next/no-img-element",
+      "file": "src/features/products/components/ProductImageSlot.tsx",
+      "line": 183,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/features/products/components/settings/validator-settings/sequence-actions/group-actions.ts",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-argument",
+      "file": "src/features/products/components/settings/validator-settings/sequence-actions/group-actions.ts",
+      "line": 3,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/products/components/settings/validator-settings/sequence-actions/group-actions.ts",
+      "line": 98,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/products/components/settings/validator-settings/sequence-actions/group-actions.ts",
+      "line": 141,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: no-control-regex",
+      "file": "src/features/products/security/file-upload.ts",
+      "line": 189,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "non-null-assertion",
+      "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
+      "file": "src/shared/lib/ai-paths/core/runtime/engine-modules/engine-execution-node.ts",
+      "line": 319,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/shared/lib/ai-paths/core/runtime/handlers/advanced-api/routing.ts",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment",
+      "file": "src/shared/lib/ai-paths/core/runtime/handlers/advanced-api/routing.ts",
+      "line": 2,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-call",
+      "file": "src/shared/lib/ai-paths/core/runtime/handlers/advanced-api/routing.ts",
+      "line": 3,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-return",
+      "file": "src/shared/lib/ai-paths/core/runtime/handlers/advanced-api/routing.ts",
+      "line": 4,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-member-access",
+      "file": "src/shared/lib/ai-paths/core/runtime/handlers/advanced-api/routing.ts",
+      "line": 5,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/ai-paths/core/runtime/handlers/advanced-api/routing.ts",
+      "line": 18,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/ai-paths/core/runtime/handlers/advanced-api/routing.ts",
+      "line": 90,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/ai-paths/core/runtime/handlers/advanced-api/routing.ts",
+      "line": 107,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/shared/lib/ai-paths/core/runtime/handlers/integration-api-advanced-handler.ts",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-argument",
+      "file": "src/shared/lib/ai-paths/core/runtime/handlers/integration-api-advanced-handler.ts",
+      "line": 2,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-call",
+      "file": "src/shared/lib/ai-paths/core/runtime/handlers/integration-api-advanced-handler.ts",
+      "line": 3,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/ai-paths/core/runtime/handlers/integration-api-advanced-handler.ts",
+      "line": 83,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/ai-paths/core/runtime/handlers/integration-api-advanced-handler.ts",
+      "line": 89,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/ai-paths/core/runtime/handlers/integration-api-advanced-handler.ts",
+      "line": 95,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/shared/lib/ai-paths/portable-engine/sinks-settings-store.server.ts",
+      "line": 12,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/ai-paths/portable-engine/sinks-settings-store.server.ts",
+      "line": 13,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/shared/lib/ai-paths/portable-engine/sinks-settings-store.server.ts",
+      "line": 30,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/ai-paths/portable-engine/sinks-settings-store.server.ts",
+      "line": 31,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/shared/lib/ai-paths/services/runtime-analytics-service.ts",
+      "line": 3,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment",
+      "file": "src/shared/lib/ai-paths/services/runtime-analytics-service.ts",
+      "line": 4,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/ai-paths/services/runtime-analytics-service.ts",
+      "line": 117,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/ai-paths/services/runtime-analytics-service.ts",
+      "line": 171,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access",
+      "file": "src/shared/lib/db/mongo-client.ts",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/shared/lib/db/mongo-client.ts",
+      "line": 51,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/mongo-client.ts",
+      "line": 52,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/shared/lib/db/mongo-client.ts",
+      "line": 59,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/mongo-client.ts",
+      "line": 60,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/shared/lib/db/mongo-client.ts",
+      "line": 69,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/mongo-client.ts",
+      "line": 70,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/shared/lib/db/mongo-client.ts",
+      "line": 80,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/mongo-client.ts",
+      "line": 81,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/shared/lib/db/mongo-client.ts",
+      "line": 97,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/mongo-client.ts",
+      "line": 98,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/shared/lib/db/mongo-client.ts",
+      "line": 111,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/mongo-client.ts",
+      "line": 112,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "non-null-assertion",
+      "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
+      "file": "src/shared/lib/offline-support.ts",
+      "line": 24,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-member-access",
+      "file": "src/shared/lib/products/services/product-repository/mongo/read.ts",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 3,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 4,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-argument",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 5,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-call",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 6,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-return",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 7,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 108,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 142,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 142,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 163,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 183,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 188,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 191,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 225,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 233,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 245,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 250,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 253,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 319,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 395,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 403,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 409,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any",
+      "file": "src/shared/lib/queue/queue-factory.ts",
+      "line": 60,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/queue/queue-factory.ts",
+      "line": 61,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any",
+      "file": "src/shared/lib/queue/queue-factory.ts",
+      "line": 174,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/queue/queue-factory.ts",
+      "line": 175,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: no-restricted-syntax",
+      "file": "src/shared/lib/tanstack-factory-v2/executors.ts",
+      "line": 93,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: no-restricted-syntax",
+      "file": "src/shared/lib/tanstack-factory-v2/executors.ts",
+      "line": 117,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: no-restricted-syntax",
+      "file": "src/shared/lib/tanstack-factory-v2/executors.ts",
+      "line": 141,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/shared/lib/tanstack-factory-v2/hooks.ts",
+      "line": 3,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-argument",
+      "file": "src/shared/lib/tanstack-factory-v2/hooks.ts",
+      "line": 5,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-return",
+      "file": "src/shared/lib/tanstack-factory-v2/hooks.ts",
+      "line": 7,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/tanstack-factory-v2/hooks.ts",
+      "line": 181,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/tanstack-factory-v2/hooks.ts",
+      "line": 195,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/tanstack-factory-v2/hooks.ts",
+      "line": 244,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/tanstack-factory-v2/hooks.ts",
+      "line": 257,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unused-vars",
+      "file": "src/shared/ui/data-table.tsx",
+      "line": 88,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @next/next/no-img-element",
+      "file": "src/shared/ui/vector-canvas/components/CanvasImageLayer.tsx",
+      "line": 11,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/shared/utils/prompt-params/inference.ts",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment",
+      "file": "src/shared/utils/prompt-params/inference.ts",
+      "line": 2,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-call",
+      "file": "src/shared/utils/prompt-params/inference.ts",
+      "line": 4,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-member-access",
+      "file": "src/shared/utils/prompt-params/inference.ts",
+      "line": 6,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/utils/prompt-params/inference.ts",
+      "line": 43,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/utils/prompt-params/inference.ts",
+      "line": 63,
+      "column": null,
+      "snippet": null,
+      "context": null
+    }
+  ],
+  "rules": [
+    {
+      "ruleId": "double-assertion",
+      "errorCount": 229,
+      "warningCount": 0,
+      "infoCount": 0
+    },
+    {
+      "ruleId": "eslint-disable",
+      "errorCount": 0,
+      "warningCount": 0,
+      "infoCount": 99
+    },
+    {
+      "ruleId": "explicit-any",
+      "errorCount": 0,
+      "warningCount": 0,
+      "infoCount": 66
+    },
+    {
+      "ruleId": "non-null-assertion",
+      "errorCount": 0,
+      "warningCount": 0,
+      "infoCount": 21
+    }
+  ],
+  "durationMs": 1011
+}

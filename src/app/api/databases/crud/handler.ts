@@ -4,6 +4,7 @@ import { Client } from 'pg';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, forbiddenError } from '@/shared/errors/app-error';
+import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 import { resolveCollectionProviderForRequest } from '@/shared/lib/db/collection-provider-map';
 import { getMongoClient } from '@/shared/lib/db/mongo-client';
 
@@ -15,7 +16,14 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     throw forbiddenError('Database operations are disabled in production.');
   }
 
-  const parsed = (await req.json()) as {
+  const parsedBody = await parseObjectJsonBody(req, {
+    logPrefix: 'databases.crud',
+  });
+  if (!parsedBody.ok) {
+    return parsedBody.response;
+  }
+
+  const parsed = parsedBody.data as {
     table?: string;
     operation?: 'insert' | 'update' | 'delete';
     type?: 'postgresql' | 'mongodb' | 'auto';

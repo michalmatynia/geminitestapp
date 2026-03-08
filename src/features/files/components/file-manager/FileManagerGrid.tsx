@@ -4,8 +4,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import React, { useCallback } from 'react';
 
-import type { ExpandedImageFile } from '@/features/products';
 import { ImageFileSelection } from '@/shared/contracts/files';
+import type { ExpandedImageFile } from '@/shared/contracts/products';
 import { Button, Card, Badge } from '@/shared/ui';
 
 import {

@@ -30,7 +30,6 @@ import type {
   ProductRecord,
   ProductFilters,
   ProductRepository,
-  CreateProduct,
   ProductCreateInput,
 } from '@/shared/contracts/products';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
@@ -50,8 +49,7 @@ const resolveProductRepository = async (
   providerOverride?: ProductDbProvider
 ): Promise<ProductRepository> => getProductRepository(providerOverride);
 
-const resolveImageFileRepository = async (): Promise<ImageFileRepository> =>
-  getImageFileRepository() as unknown as Promise<ImageFileRepository>;
+const resolveImageFileRepository = async (): Promise<ImageFileRepository> => getImageFileRepository();
 
 const normalizeCreateProductPayloadForStorage = <TData extends Record<string, unknown>>(
   data: TData
@@ -358,7 +356,7 @@ async function createProduct(
 }
 
 async function bulkCreateProducts(
-  data: CreateProduct[],
+  data: ProductCreateInput[],
   options?: { provider?: ProductDbProvider; userId?: string }
 ): Promise<number> {
   if (data.length === 0) return 0;

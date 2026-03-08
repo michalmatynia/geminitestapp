@@ -19,6 +19,7 @@ import type {
 } from '@/shared/contracts/chatbot';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
+import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
@@ -214,16 +215,18 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
         }
       }
     } else {
-      let body: {
+      const parsed = await parseObjectJsonBody(req, {
+        logPrefix: 'chatbot.POST',
+      });
+      if (!parsed.ok) {
+        return parsed.response;
+      }
+
+      const body = parsed.data as {
         messages?: IncomingChatMessage[];
         sessionId?: string;
         model?: unknown;
       };
-      try {
-        body = (await req.json()) as typeof body;
-      } catch {
-        throw badRequestError('Invalid JSON payload.');
-      }
       if (Object.prototype.hasOwnProperty.call(body, 'model')) {
         throw badRequestError('Chatbot payload contains unsupported model override.');
       }

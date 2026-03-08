@@ -97,6 +97,7 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
     }
     onDragEnd();
   };
+  const noteLabel = note.title.trim() || 'Untitled note';
 
   // Use provided theme or fall back to dark mode theme
   const effectiveTheme = getThemeForNote(note) ?? FALLBACK_THEME;
@@ -153,11 +154,25 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
     <div
       ref={cardRef}
       key={note.id}
+      role='button'
+      tabIndex={0}
+      aria-label={`Open note ${noteLabel}`}
       onClick={(event: React.MouseEvent<HTMLElement>): void => {
         if (shouldIgnoreSelectionTarget(event.target, event.currentTarget)) {
           return;
         }
         if (event.defaultPrevented) return;
+        onSelectNote(note);
+      }}
+      onKeyDown={(event: React.KeyboardEvent<HTMLElement>): void => {
+        if (shouldIgnoreSelectionTarget(event.target, event.currentTarget)) {
+          return;
+        }
+        if (event.defaultPrevented) return;
+        if (event.key !== 'Enter' && event.key !== ' ') {
+          return;
+        }
+        event.preventDefault();
         onSelectNote(note);
       }}
       style={{

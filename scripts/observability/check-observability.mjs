@@ -425,6 +425,72 @@ const collectCoreContractViolations = (root, allowPartial) => {
   return violations;
 };
 
+const collectConsoleLogViolations = (root, srcDir) => {
+  const srcRoot = path.join(root, srcDir);
+  const CONSOLE_ALLOWLIST = new Set([
+    'src/shared/utils/logger.ts',
+    'src/shared/lib/observability/log-system-event.ts',
+  ]);
+  const files = listFiles(
+    srcRoot,
+    (file) =>
+      /\.(ts|tsx|js|jsx)$/.test(file) &&
+      !CONSOLE_ALLOWLIST.has(toRelative(root, file)) &&
+      !/\.test\./.test(file) &&
+      !/\.spec\./.test(file) &&
+      !/__tests__/.test(file) &&
+      !/scripts\//.test(toRelative(root, file))
+  );
+  const violations = [];
+  const consolePattern = /\bconsole\.(log|warn|error|debug|info)\s*\(/g;
+
+  for (const file of files) {
+    const text = fs.readFileSync(file, 'utf8');
+    let match = consolePattern.exec(text);
+    while (match) {
+      violations.push({
+        file: toRelative(root, file),
+        line: toLine(text, match.index),
+        method: match[1],
+        message: `console.${match[1]}() should use logSystemEvent() or logger for structured logging`,
+      });
+      match = consolePattern.exec(text);
+    }
+  }
+
+  return violations;
+};
+
+const collectEmptyCatchBlockViolations = (root, srcDir) => {
+  const srcRoot = path.join(root, srcDir);
+  const files = listFiles(
+    srcRoot,
+    (file) =>
+      /\.(ts|tsx|js|jsx)$/.test(file) &&
+      !/\.test\./.test(file) &&
+      !/\.spec\./.test(file) &&
+      !/__tests__/.test(file)
+  );
+  const violations = [];
+  // Match catch blocks that are empty or only contain whitespace/comments
+  const emptyCatchPattern = /\bcatch\s*\([^)]*\)\s*\{\s*(?:\/\/[^\n]*)?\s*\}/g;
+
+  for (const file of files) {
+    const text = fs.readFileSync(file, 'utf8');
+    let match = emptyCatchPattern.exec(text);
+    while (match) {
+      violations.push({
+        file: toRelative(root, file),
+        line: toLine(text, match.index),
+        message: 'Empty catch block swallows errors silently. Log the error or re-throw it.',
+      });
+      match = emptyCatchPattern.exec(text);
+    }
+  }
+
+  return violations;
+};
+
 const collectLegacyCompatibilityViolations = (root, srcDir) => {
   const srcRoot = path.join(root, srcDir);
   const files = listFiles(
@@ -792,6 +858,8 @@ const buildSummaryPayload = (report) => ({
     loggerViolations: report.logger.totalViolations,
     eventSourceViolations: report.eventSource.totalViolations,
     coreViolations: report.core.totalViolations,
+    consoleLogViolations: report.consoleLogs.totalViolations,
+    emptyCatchBlockViolations: report.emptyCatchBlocks.totalViolations,
     legacyCompatibilityViolations: report.legacyCompatibility.totalViolations,
     runtimeErrors: report.runtimeLogs.totalErrors,
   },
@@ -807,7 +875,7 @@ const buildSummaryPayload = (report) => ({
 });
 
 const buildSummaryLine = (report) =>
-  `[observability:v${LOG_SCHEMA_VERSION}:${report.status}] routes=${report.routeCoverage.totalRoutes} wrapped=${report.routeCoverage.wrappedRoutes} delegated=${report.routeCoverage.delegatedRoutes} uncovered=${report.routeCoverage.uncoveredRoutes} loggerViolations=${report.logger.totalViolations} eventSourceViolations=${report.eventSource.totalViolations} coreViolations=${report.core.totalViolations} legacyCompatViolations=${report.legacyCompatibility.totalViolations} runtimeErrors=${report.runtimeLogs.totalErrors}`;
+  `[observability:v${LOG_SCHEMA_VERSION}:${report.status}] routes=${report.routeCoverage.totalRoutes} wrapped=${report.routeCoverage.wrappedRoutes} delegated=${report.routeCoverage.delegatedRoutes} uncovered=${report.routeCoverage.uncoveredRoutes} loggerViolations=${report.logger.totalViolations} eventSourceViolations=${report.eventSource.totalViolations} coreViolations=${report.core.totalViolations} consoleLogs=${report.consoleLogs.totalViolations} emptyCatches=${report.emptyCatchBlocks.totalViolations} legacyCompatViolations=${report.legacyCompatibility.totalViolations} runtimeErrors=${report.runtimeLogs.totalErrors}`;
 
 const buildErrorComment = (report, errorLogFile) => {
   if (report.runtimeLogs.totalErrors > 0) {
@@ -898,6 +966,8 @@ const persistReportLogs = (
           logger: report.logger.violations,
           eventSource: report.eventSource.violations,
           core: report.core.violations,
+          consoleLogs: report.consoleLogs.violations,
+          emptyCatchBlocks: report.emptyCatchBlocks.violations,
           legacyCompatibility: report.legacyCompatibility.violations,
           runtimeLogErrors: report.runtimeLogs.errors,
           runtimeErrorFingerprints: report.runtimeLogs.fingerprints ?? [],
@@ -961,6 +1031,22 @@ const emitCiAnnotations = (report) => {
     });
   }
 
+  for (const violation of report.consoleLogs.violations.slice(0, 50)) {
+    emitGithubError({
+      file: violation.file,
+      line: violation.line,
+      message: `[observability.check] ${violation.message}`,
+    });
+  }
+
+  for (const violation of report.emptyCatchBlocks.violations.slice(0, 50)) {
+    emitGithubError({
+      file: violation.file,
+      line: violation.line,
+      message: `[observability.check] ${violation.message}`,
+    });
+  }
+
   for (const violation of report.legacyCompatibility.violations.slice(0, 50)) {
     emitGithubError({
       file: violation.file,
@@ -1004,6 +1090,8 @@ export const runObservabilityCheck = ({
   const loggerViolations = collectLoggerServiceViolations(root, srcDir);
   const eventSourceViolations = collectLogSystemEventSourceViolations(root, srcDir);
   const coreViolations = collectCoreContractViolations(root, allowPartial);
+  const consoleLogViolations = collectConsoleLogViolations(root, srcDir);
+  const emptyCatchBlockViolations = collectEmptyCatchBlockViolations(root, srcDir);
   const legacyCompatibilityViolations = collectLegacyCompatibilityViolations(root, srcDir);
   const runtimeLogs = scanRuntimeLogs
     ? collectRuntimeLogErrors(root, logsDir, {
@@ -1044,6 +1132,14 @@ export const runObservabilityCheck = ({
     core: {
       totalViolations: coreViolations.length,
       violations: coreViolations,
+    },
+    consoleLogs: {
+      totalViolations: consoleLogViolations.length,
+      violations: consoleLogViolations,
+    },
+    emptyCatchBlocks: {
+      totalViolations: emptyCatchBlockViolations.length,
+      violations: emptyCatchBlockViolations,
     },
     legacyCompatibility: {
       totalViolations: legacyCompatibilityViolations.length,

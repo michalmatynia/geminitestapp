@@ -93,7 +93,7 @@ describe('sanitizeTriggerPathConfig', () => {
   it('keeps canonical trigger configs unchanged', () => {
     const config = createDefaultPathConfig('path_translation_v2');
 
-    const snapshotBeforeSanitize = JSON.parse(JSON.stringify(config));
+    const snapshotBeforeSanitize = structuredClone(config);
     const sanitized = sanitizeTriggerPathConfig(config);
 
     expect(sanitized).toEqual(snapshotBeforeSanitize);

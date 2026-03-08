@@ -257,11 +257,24 @@ export function useAiPathsSettingsState({
   });
 
   useEffect(() => {
-    setOperationHandlers({ savePathConfig: handleSave });
+    setOperationHandlers({
+      savePathConfig: handleSave,
+      persistPathSettings,
+      persistSettingsBulk,
+      persistActivePathPreference,
+      savePathIndex,
+    });
     return () => {
       setOperationHandlers({});
     };
-  }, [handleSave, setOperationHandlers]);
+  }, [
+    handleSave,
+    persistPathSettings,
+    persistSettingsBulk,
+    persistActivePathPreference,
+    savePathIndex,
+    setOperationHandlers,
+  ]);
 
   const { selectedNode, pathFlagsById, autoSaveLabel, autoSaveClasses } =
     useAiPathsSettingsDerivedState({
@@ -363,6 +376,7 @@ export function useAiPathsSettingsState({
       stepActiveRun: runtime.handleStepRun,
       cancelActiveRun: runtime.handleCancelRun,
       clearWires: cleanup.handleClearWires,
+      resetRuntimeDiagnostics: runtime.resetRuntimeDiagnostics,
     });
     return () => {
       setRunControlHandlers({});
@@ -375,6 +389,7 @@ export function useAiPathsSettingsState({
     runtime.handlePauseRun,
     runtime.handleResumeRun,
     runtime.handleStepRun,
+    runtime.resetRuntimeDiagnostics,
     setRunControlHandlers,
   ]);
 

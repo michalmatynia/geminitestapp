@@ -17,6 +17,7 @@ export { GET as AgentCreatorAgentRunAuditsGET } from './api/agent/[runId]/audits
 export { GET as AgentCreatorAgentRunSnapshotsGET } from './api/agent/[runId]/snapshots/route';
 export { GET as AgentCreatorAgentRunStreamGET } from './api/agent/[runId]/stream/route';
 export { GET as AgentCreatorAgentRunAssetsGET } from './api/agent/[runId]/assets/[file]/route';
+export * from './server/persona-memory';
 
 // Teaching & Embedding services
 export * from './teaching/server/repository';

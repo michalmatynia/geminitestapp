@@ -4,14 +4,15 @@ import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { BrainCircuit } from 'lucide-react';
 
-import { useAgentPersonas } from '@/features/ai/agentcreator/hooks/useAgentPersonas';
-import { getTeachingAgents } from '@/features/ai/agentcreator/teaching/api';
 import {
+  KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
   KANGUR_AI_TUTOR_SETTINGS_KEY,
   getKangurAiTutorSettingsForLearner,
   parseKangurAiTutorSettings,
+  resolveKangurAiTutorAppSettings,
+  type KangurAiTutorLearnerStoredSettings,
   type KangurAiTutorTestAccessMode,
-  type KangurAiTutorLearnerSettings,
+  type KangurAiTutorUiMode,
 } from '@/features/kangur/settings-ai-tutor';
 import {
   type KangurParentDashboardPanelDisplayMode,
@@ -24,11 +25,9 @@ import {
   KangurGlassPanel,
   KangurSelectField,
   KangurSurfacePanel,
-  KangurTextField,
 } from '@/features/kangur/ui/design/primitives';
-import { usePlaywrightPersonas } from '@/features/playwright/hooks/usePlaywrightPersonas';
 import { invalidateSettingsCache } from '@/shared/api/settings-client';
-import { agentTeachingKeys, kangurKeys } from '@/shared/lib/query-key-exports';
+import { kangurKeys } from '@/shared/lib/query-key-exports';
 import { invalidateAllSettings } from '@/shared/lib/query-invalidation';
 import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -54,7 +53,11 @@ function TutorToggleField({
       htmlFor={controlId}
       aria-label={label}
       className={`flex items-start gap-3 rounded-2xl border px-3 py-3 transition-colors ${
-        disabled ? 'cursor-not-allowed border-slate-100 bg-slate-50/60 opacity-70' : 'cursor-pointer border-slate-200 bg-white/70'
+        disabled
+          ? 'cursor-not-allowed border-slate-100 bg-slate-50/60 opacity-70'
+          : checked
+            ? 'cursor-pointer border-amber-200 bg-amber-50/65'
+            : 'cursor-pointer border-slate-200 bg-white/70'
       }`}
     >
       <div className='relative mt-0.5'>
@@ -67,7 +70,11 @@ function TutorToggleField({
           onChange={(event) => onChange(event.target.checked)}
         />
         <div
-          className={`h-5 w-10 rounded-full transition-colors ${checked ? 'bg-indigo-500' : 'bg-slate-300'}`}
+          className={`h-5 w-10 rounded-full transition-all ${
+            checked
+              ? 'bg-gradient-to-r from-amber-400 to-orange-400 shadow-[0_8px_18px_-14px_rgba(249,115,22,0.72)]'
+              : 'bg-slate-300'
+          }`}
         />
         <div
           className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${checked ? 'translate-x-5' : 'translate-x-0'}`}
@@ -88,26 +95,30 @@ function AiTutorConfigPanel(): React.JSX.Element {
   const activeLearnerId = activeLearner?.id ?? null;
 
   const rawSettings = settingsStore.get(KANGUR_AI_TUTOR_SETTINGS_KEY);
+  const rawAppSettings = settingsStore.get(KANGUR_AI_TUTOR_APP_SETTINGS_KEY);
   const settingsStoreMap = useMemo(
     () => parseKangurAiTutorSettings(rawSettings),
     [rawSettings]
   );
+  const appSettings = useMemo(
+    () => resolveKangurAiTutorAppSettings(rawAppSettings, settingsStoreMap),
+    [rawAppSettings, settingsStoreMap]
+  );
   const currentSettings = useMemo(
     () =>
-      activeLearnerId ? getKangurAiTutorSettingsForLearner(settingsStoreMap, activeLearnerId) : null,
-    [settingsStoreMap, activeLearnerId]
+      activeLearnerId
+        ? getKangurAiTutorSettingsForLearner(settingsStoreMap, activeLearnerId, appSettings)
+        : null,
+    [appSettings, settingsStoreMap, activeLearnerId]
   );
   const shouldLoadUsage = canAccessDashboard && Boolean(activeLearnerId) && currentSettings?.enabled;
 
   const [enabled, setEnabled] = useState(currentSettings?.enabled ?? false);
-  const [teachingAgentId, setTeachingAgentId] = useState<string>(
-    currentSettings?.teachingAgentId ?? ''
+  const [uiMode, setUiMode] = useState<KangurAiTutorUiMode>(
+    currentSettings?.uiMode ?? 'anchored'
   );
-  const [agentPersonaId, setAgentPersonaId] = useState<string>(
-    currentSettings?.agentPersonaId ?? ''
-  );
-  const [motionPresetId, setMotionPresetId] = useState<string>(
-    currentSettings?.motionPresetId ?? ''
+  const [allowCrossPagePersistence, setAllowCrossPagePersistence] = useState(
+    currentSettings?.allowCrossPagePersistence ?? true
   );
   const [allowLessons, setAllowLessons] = useState(currentSettings?.allowLessons ?? true);
   const [testAccessMode, setTestAccessMode] = useState<KangurAiTutorTestAccessMode>(
@@ -117,40 +128,20 @@ function AiTutorConfigPanel(): React.JSX.Element {
   const [allowSelectedTextSupport, setAllowSelectedTextSupport] = useState(
     currentSettings?.allowSelectedTextSupport ?? true
   );
-  const [dailyMessageLimitInput, setDailyMessageLimitInput] = useState(
-    currentSettings?.dailyMessageLimit ? String(currentSettings.dailyMessageLimit) : ''
-  );
 
   useEffect(() => {
     setEnabled(currentSettings?.enabled ?? false);
-    setTeachingAgentId(currentSettings?.teachingAgentId ?? '');
-    setAgentPersonaId(currentSettings?.agentPersonaId ?? '');
-    setMotionPresetId(currentSettings?.motionPresetId ?? '');
+    setUiMode(currentSettings?.uiMode ?? 'anchored');
+    setAllowCrossPagePersistence(currentSettings?.allowCrossPagePersistence ?? true);
     setAllowLessons(currentSettings?.allowLessons ?? true);
     setTestAccessMode(currentSettings?.testAccessMode ?? 'guided');
     setShowSources(currentSettings?.showSources ?? true);
     setAllowSelectedTextSupport(currentSettings?.allowSelectedTextSupport ?? true);
-    setDailyMessageLimitInput(
-      currentSettings?.dailyMessageLimit ? String(currentSettings.dailyMessageLimit) : ''
-    );
   }, [activeLearner?.id, currentSettings]);
   const [isSaving, setIsSaving] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
-  const teachingAgentFieldId = useId();
-  const agentPersonaFieldId = useId();
-  const motionPresetFieldId = useId();
+  const uiModeFieldId = useId();
   const testAccessModeFieldId = useId();
-  const dailyMessageLimitFieldId = useId();
-
-  const { data: agentPersonas = [] } = useAgentPersonas();
-  const { data: playwrightPersonas = [] } = usePlaywrightPersonas();
-  const { data: teachingAgents = [] } = useQuery({
-    queryKey: agentTeachingKeys.agents(),
-    queryFn: getTeachingAgents,
-    staleTime: 120_000,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-  });
   const {
     data: tutorUsageResponse,
     isLoading: isUsageLoading,
@@ -181,20 +172,14 @@ function AiTutorConfigPanel(): React.JSX.Element {
     setIsSaving(true);
     setFeedback(null);
 
-    const parsedDailyMessageLimit = Number.parseInt(dailyMessageLimitInput, 10);
-    const next: KangurAiTutorLearnerSettings = {
+    const next: KangurAiTutorLearnerStoredSettings = {
       enabled,
-      teachingAgentId: teachingAgentId || null,
-      agentPersonaId: agentPersonaId || null,
-      motionPresetId: motionPresetId || null,
+      uiMode,
+      allowCrossPagePersistence,
       allowLessons,
       testAccessMode,
       showSources,
       allowSelectedTextSupport,
-      dailyMessageLimit:
-        Number.isFinite(parsedDailyMessageLimit) && parsedDailyMessageLimit > 0
-          ? Math.min(parsedDailyMessageLimit, 200)
-          : null,
     };
 
     const nextStore = {
@@ -224,14 +209,12 @@ function AiTutorConfigPanel(): React.JSX.Element {
     activeLearner,
     canAccessDashboard,
     enabled,
-    teachingAgentId,
-    agentPersonaId,
-    motionPresetId,
+    uiMode,
+    allowCrossPagePersistence,
     allowLessons,
     testAccessMode,
     showSources,
     allowSelectedTextSupport,
-    dailyMessageLimitInput,
     settingsStoreMap,
     queryClient,
   ]);
@@ -246,25 +229,25 @@ function AiTutorConfigPanel(): React.JSX.Element {
 
   return (
     <KangurSurfacePanel
-      accent='indigo'
+      accent='amber'
       padding='lg'
       className='w-full flex flex-col gap-5'
     >
       <div className='flex items-center gap-3'>
-        <BrainCircuit className='h-5 w-5 text-indigo-500' />
+        <BrainCircuit className='h-5 w-5 text-orange-500' />
         <div>
           <div className='text-sm font-bold text-slate-800'>AI Tutor dla {activeLearner.displayName}</div>
           <div className='text-xs text-slate-500'>
-            Ustaw dostępność, ograniczenia i sposób działania pomocy AI dla tego ucznia
+            Ustaw dostępność i guardrails pomocy AI dla tego ucznia
           </div>
         </div>
       </div>
 
       {currentSettings?.enabled ? (
-        <div className='rounded-2xl border border-indigo-100 bg-indigo-50/70 px-4 py-3'>
+        <div className='rounded-2xl border border-amber-100 bg-amber-50/75 px-4 py-3'>
           <div className='flex items-start justify-between gap-3'>
             <div className='min-w-0'>
-              <div className='text-xs font-semibold uppercase tracking-wide text-indigo-700'>
+              <div className='text-xs font-semibold uppercase tracking-wide text-amber-700'>
                 Wykorzystanie dzisiaj
               </div>
               <div className='mt-1 text-sm font-semibold text-slate-800'>
@@ -278,7 +261,7 @@ function AiTutorConfigPanel(): React.JSX.Element {
               </div>
             </div>
             {!isUsageLoading && !hasUsageError && usageSummary ? (
-              <div className='shrink-0 rounded-full bg-white/85 px-3 py-1 text-xs font-semibold text-indigo-700'>
+              <div className='shrink-0 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-amber-700'>
                 {usageSummary.dailyMessageLimit === null
                   ? 'Bez limitu'
                   : usageSummary.remainingMessages === 0
@@ -293,6 +276,11 @@ function AiTutorConfigPanel(): React.JSX.Element {
         </div>
       ) : null}
 
+      <div className='rounded-2xl border border-slate-200 bg-white/75 px-4 py-3 text-xs leading-relaxed text-slate-500'>
+        Globalna persona tutora, agent nauczający, dzienny limit wiadomości i preset urządzenia są
+        zarządzane w <span className='font-semibold text-slate-700'>Kangur Settings</span>.
+      </div>
+
       {/* Enable toggle */}
       <label className='flex items-center gap-3 cursor-pointer select-none'>
         <div className='relative'>
@@ -303,7 +291,11 @@ function AiTutorConfigPanel(): React.JSX.Element {
             onChange={(e) => setEnabled(e.target.checked)}
           />
           <div
-            className={`w-10 h-5 rounded-full transition-colors ${enabled ? 'bg-indigo-500' : 'bg-slate-300'}`}
+            className={`w-10 h-5 rounded-full transition-all ${
+              enabled
+                ? 'bg-gradient-to-r from-amber-400 to-orange-400 shadow-[0_8px_18px_-14px_rgba(249,115,22,0.72)]'
+                : 'bg-slate-300'
+            }`}
           />
           <div
             className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${enabled ? 'translate-x-5' : 'translate-x-0'}`}
@@ -336,7 +328,7 @@ function AiTutorConfigPanel(): React.JSX.Element {
             id={testAccessModeFieldId}
             value={testAccessMode}
             onChange={(event) => setTestAccessMode(event.target.value as KangurAiTutorTestAccessMode)}
-            accent='indigo'
+            accent='amber'
             size='md'
             disabled={!enabled}
           >
@@ -363,111 +355,36 @@ function AiTutorConfigPanel(): React.JSX.Element {
           description='Udostępnia akcję "Zapytaj o to" i tryb pracy na wskazanym fragmencie.'
           onChange={setAllowSelectedTextSupport}
         />
-        <div className='flex flex-col gap-1'>
-          <label
-            htmlFor={dailyMessageLimitFieldId}
-            className='text-xs font-semibold text-slate-600 uppercase tracking-wide'
-          >
-            Dzienny limit wiadomości
-          </label>
-          <KangurTextField
-            id={dailyMessageLimitFieldId}
-            type='number'
-            min={1}
-            max={200}
-            inputMode='numeric'
-            value={dailyMessageLimitInput}
-            onChange={(event) => setDailyMessageLimitInput(event.target.value)}
-            accent='indigo'
-            size='md'
-            disabled={!enabled}
-            placeholder='Puste = bez limitu'
-          />
-          <p className='text-xs leading-relaxed text-slate-500'>
-            Każda wysłana wiadomość do tutora zużywa 1 punkt limitu. Puste pole oznacza brak limitu.
-          </p>
-        </div>
+        <TutorToggleField
+          checked={allowCrossPagePersistence}
+          disabled={!enabled}
+          label='Zachowuj rozmowę po zmianie miejsca'
+          description='Tutor może pozostać otwarty i wrócić do poprzedniego wątku po przejściu między lekcjami, testami i podsumowaniami.'
+          onChange={setAllowCrossPagePersistence}
+        />
       </div>
 
-      {/* Teaching agent */}
       <div className='flex flex-col gap-1'>
         <label
-          htmlFor={teachingAgentFieldId}
+          htmlFor={uiModeFieldId}
           className='text-xs font-semibold text-slate-600 uppercase tracking-wide'
         >
-          Agent nauczający (z bazą wiedzy)
+          Tryb interfejsu tutora
         </label>
         <KangurSelectField
-          id={teachingAgentFieldId}
-          value={teachingAgentId}
-          onChange={(e) => setTeachingAgentId(e.target.value)}
-          accent='indigo'
+          id={uiModeFieldId}
+          value={uiMode}
+          onChange={(event) => setUiMode(event.target.value as KangurAiTutorUiMode)}
+          accent='amber'
           size='md'
           disabled={!enabled}
         >
-          <option value=''>— Bez agenta (tylko Brain) —</option>
-          {teachingAgents.map((agent) => (
-            <option key={agent.id} value={agent.id}>
-              {agent.name}
-            </option>
-          ))}
-        </KangurSelectField>
-      </div>
-
-      {/* Agent persona */}
-      <div className='flex flex-col gap-1'>
-        <label
-          htmlFor={agentPersonaFieldId}
-          className='text-xs font-semibold text-slate-600 uppercase tracking-wide'
-        >
-          Persona (charakter tutora)
-        </label>
-        <KangurSelectField
-          id={agentPersonaFieldId}
-          value={agentPersonaId}
-          onChange={(e) => setAgentPersonaId(e.target.value)}
-          accent='indigo'
-          size='md'
-          disabled={!enabled}
-        >
-          <option value=''>— Domyślna persona —</option>
-          {agentPersonas.map((persona) => (
-            <option key={persona.id} value={persona.id}>
-              {persona.name}{persona.role ? ` · ${persona.role}` : ''}
-            </option>
-          ))}
-        </KangurSelectField>
-      </div>
-
-      {/* Motion preset */}
-      <div className='flex flex-col gap-1'>
-        <label
-          htmlFor={motionPresetFieldId}
-          className='text-xs font-semibold text-slate-600 uppercase tracking-wide'
-        >
-          Preset ruchu i zakotwiczenia
-        </label>
-        <KangurSelectField
-          id={motionPresetFieldId}
-          value={motionPresetId}
-          onChange={(e) => setMotionPresetId(e.target.value)}
-          accent='indigo'
-          size='md'
-          disabled={!enabled}
-        >
-          <option value=''>— Brak —</option>
-          {playwrightPersonas.map((persona) => (
-            <option key={persona.id} value={persona.id}>
-              {persona.name}
-              {persona.settings.emulateDevice && persona.settings.deviceName
-                ? ` (${persona.settings.deviceName})`
-                : ''}
-            </option>
-          ))}
+          <option value='anchored'>Ruchomy i zakotwiczony przy treści</option>
+          <option value='static'>Statyczny w rogu ekranu</option>
         </KangurSelectField>
         <p className='text-xs leading-relaxed text-slate-500'>
-          Opcjonalny preset wizualny dla ruchu avatara i sposobu zakotwiczenia dymku. Dane
-          pochodzą z katalogu presetów Playwright, ale nie uruchamiają automatyzacji przeglądarki.
+          Tryb ruchomy podąża za zaznaczeniem i aktywnym zadaniem. Tryb statyczny zachowuje chat w
+          stałym miejscu, ale nadal używa bieżącego kontekstu lekcji lub testu.
         </p>
       </div>
 

@@ -18,7 +18,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('next/navigation', () => ({
-  usePathname: (...args: unknown[]) => mocks.usePathnameMock(...args),
+  usePathname: mocks.usePathnameMock as typeof import('next/navigation').usePathname,
 }));
 
 vi.mock('@/shared/ui', () => ({
@@ -26,9 +26,12 @@ vi.mock('@/shared/ui', () => ({
 }));
 
 vi.mock('@/shared/lib/query-factories-v2', () => ({
-  createListQueryV2: (...args: unknown[]) => mocks.createListQueryV2Mock(...args),
-  createMutationV2: (...args: unknown[]) => mocks.createMutationV2Mock(...args),
-  createDeleteMutationV2: (...args: unknown[]) => mocks.createDeleteMutationV2Mock(...args),
+  createListQueryV2:
+    mocks.createListQueryV2Mock as typeof import('@/shared/lib/query-factories-v2').createListQueryV2,
+  createMutationV2:
+    mocks.createMutationV2Mock as typeof import('@/shared/lib/query-factories-v2').createMutationV2,
+  createDeleteMutationV2:
+    mocks.createDeleteMutationV2Mock as typeof import('@/shared/lib/query-factories-v2').createDeleteMutationV2,
 }));
 
 const renderProvider = () =>

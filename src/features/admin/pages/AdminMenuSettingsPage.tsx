@@ -316,14 +316,6 @@ function MenuBuilderSection(): React.JSX.Element {
             input.isDragging && 'opacity-50'
           )}
           style={{ paddingLeft: `${input.depth * 16 + 8}px` }}
-          onClick={input.select}
-          role='button'
-          tabIndex={0}
-          onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
-            if (event.key !== 'Enter' && event.key !== ' ') return;
-            event.preventDefault();
-            input.select();
-          }}
         >
           {input.hasChildren ? (
             <button
@@ -335,6 +327,7 @@ function MenuBuilderSection(): React.JSX.Element {
                 input.toggleExpand();
               }}
               aria-label={input.isExpanded ? 'Collapse node' : 'Expand node'}
+              aria-expanded={input.isExpanded}
             >
               {input.isExpanded ? (
                 <ChevronDown className='size-3.5 text-gray-400' />
@@ -346,20 +339,27 @@ function MenuBuilderSection(): React.JSX.Element {
             <span className='inline-flex size-4 items-center justify-center text-gray-500'>•</span>
           )}
 
-          <span className='min-w-0 flex-1 truncate'>{input.node.name}</span>
+          <button
+            type='button'
+            onClick={input.select}
+            aria-pressed={input.isSelected}
+            className='flex min-w-0 flex-1 items-center gap-2 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
+          >
+            <span className='min-w-0 flex-1 truncate'>{input.node.name}</span>
 
-          <StatusBadge
-            status={semantic === 'link' ? 'Link' : 'Group'}
-            variant='info'
-            size='sm'
-            className='font-bold'
-          />
-          <StatusBadge
-            status={isBuiltIn ? 'Built-in' : 'Custom'}
-            variant={isBuiltIn ? 'warning' : 'success'}
-            size='sm'
-            className='font-bold'
-          />
+            <StatusBadge
+              status={semantic === 'link' ? 'Link' : 'Group'}
+              variant='info'
+              size='sm'
+              className='font-bold'
+            />
+            <StatusBadge
+              status={isBuiltIn ? 'Built-in' : 'Custom'}
+              variant={isBuiltIn ? 'warning' : 'success'}
+              size='sm'
+              className='font-bold'
+            />
+          </button>
         </div>
       );
     },

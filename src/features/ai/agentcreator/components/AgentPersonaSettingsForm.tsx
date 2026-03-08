@@ -1,12 +1,14 @@
 'use client';
 
+import Link from 'next/link';
 import { useMemo } from 'react';
 
 import { AgentPersonaMoodEditor } from '@/features/ai/agentcreator/components/AgentPersonaMoodEditor';
+import { buildAgentPersonaSettings } from '@/features/ai/agentcreator/utils/personas';
 import type { AgentPersona } from '@/shared/contracts/agents';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import type { AiBrainCapabilityKey } from '@/shared/lib/ai-brain/settings';
-import { FormField, Input } from '@/shared/ui';
+import { Button, FormField, FormSection, Input, ToggleRow } from '@/shared/ui';
 
 type ModelField = {
   label: string;
@@ -16,6 +18,7 @@ type ModelField = {
 
 type AgentPersonaSettingsFormProps = {
   item: Partial<AgentPersona>;
+  originalItem?: Partial<AgentPersona> | null;
   onChange: (updates: Partial<AgentPersona>) => void;
 };
 
@@ -117,8 +120,28 @@ function BrainManagedModelField({
 
 export function AgentPersonaSettingsForm({
   item,
+  originalItem,
   onChange,
 }: AgentPersonaSettingsFormProps): React.JSX.Element {
+  const resolvedSettings = buildAgentPersonaSettings(item.settings ?? originalItem?.settings);
+  const resolvedMemorySettings = resolvedSettings.memory ?? {};
+  const personaId = item.id ?? originalItem?.id ?? null;
+
+  const updateMemorySettings = (
+    updates: Partial<NonNullable<typeof resolvedSettings.memory>>
+  ): void => {
+    const nextSettings = buildAgentPersonaSettings(item.settings ?? originalItem?.settings);
+    onChange({
+      settings: {
+        ...nextSettings,
+        memory: {
+          ...nextSettings.memory,
+          ...updates,
+        },
+      },
+    });
+  };
+
   return (
     <div className='space-y-4'>
       <div className='rounded-md border border-border/60 bg-card/35 px-3 py-2 text-xs text-gray-400'>
@@ -128,8 +151,67 @@ export function AgentPersonaSettingsForm({
 
       <AgentPersonaMoodEditor
         moods={item.moods}
+        originalMoods={originalItem?.moods}
+        personaId={personaId}
         onChange={(updates) => onChange(updates)}
       />
+
+      <FormSection
+        title='Memory bank'
+        description='Each persona owns a searchable memory bank with provenance, chat history, and mood signals.'
+        variant='subtle'
+        className='p-4'
+        actions={
+          personaId ? (
+            <Button variant='outline' size='sm' asChild>
+              <Link href={`/admin/agentcreator/personas/${personaId}/memory`}>Open memory</Link>
+            </Button>
+          ) : null
+        }
+      >
+        <div className='grid gap-4 md:grid-cols-2 mt-4'>
+          <FormField label='Default search limit'>
+            <Input
+              type='number'
+              min={1}
+              max={50}
+              value={String(resolvedMemorySettings.defaultSearchLimit ?? 20)}
+              onChange={(event) =>
+                updateMemorySettings({
+                  defaultSearchLimit: Math.min(
+                    50,
+                    Math.max(1, Number.parseInt(event.target.value || '20', 10) || 20)
+                  ),
+                })
+              }
+            />
+          </FormField>
+          <div className='rounded-md border border-border/60 bg-card/25 px-3 py-2 text-xs text-gray-400'>
+            Memories preserve source, source time, capture time, tags, topic hints, and mood hints.
+            Chat history is stored in the same bank and can be searched alongside durable memories.
+          </div>
+        </div>
+        <div className='mt-4 flex flex-wrap gap-4'>
+          <ToggleRow
+            label='Memory enabled'
+            checked={resolvedMemorySettings.enabled !== false}
+            onCheckedChange={(checked) => updateMemorySettings({ enabled: checked })}
+            className='border-none bg-transparent hover:bg-transparent p-0'
+          />
+          <ToggleRow
+            label='Include chat history'
+            checked={resolvedMemorySettings.includeChatHistory !== false}
+            onCheckedChange={(checked) => updateMemorySettings({ includeChatHistory: checked })}
+            className='border-none bg-transparent hover:bg-transparent p-0'
+          />
+          <ToggleRow
+            label='Use mood signals'
+            checked={resolvedMemorySettings.useMoodSignals !== false}
+            onCheckedChange={(checked) => updateMemorySettings({ useMoodSignals: checked })}
+            className='border-none bg-transparent hover:bg-transparent p-0'
+          />
+        </div>
+      </FormSection>
 
       <div className='grid gap-4 md:grid-cols-2'>
         {MODEL_FIELDS.map((field: ModelField) => (

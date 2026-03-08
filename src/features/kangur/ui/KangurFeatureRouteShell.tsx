@@ -78,13 +78,18 @@ export function KangurFeatureRouteShell({
   }, [pageKey, requestedPath]);
 
   return (
-    <KangurRoutingProvider
-      pageKey={pageKey}
-      requestedPath={requestedPath}
-      basePath={normalizedBasePath}
-      embedded={embedded}
+    <div
+      className='relative min-h-screen w-full kangur-premium-bg text-slate-800'
+      data-testid='kangur-route-shell'
     >
-      <KangurFeatureApp />
-    </KangurRoutingProvider>
+      <KangurRoutingProvider
+        pageKey={pageKey}
+        requestedPath={requestedPath}
+        basePath={normalizedBasePath}
+        embedded={embedded}
+      >
+        <KangurFeatureApp />
+      </KangurRoutingProvider>
+    </div>
   );
 }

@@ -20,6 +20,7 @@ import {
   notesRoot,
   studioRoot,
   caseResolverRoot,
+  agentCreatorRoot,
   tempFolderName,
   publicRoot,
   MAX_IMAGE_BYTES,
@@ -99,7 +100,14 @@ function getUploadTarget({
   projectId,
   folder,
 }: {
-  category?: 'products' | 'notes' | 'cms' | 'studio' | 'case_resolver' | undefined;
+  category?:
+    | 'products'
+    | 'notes'
+    | 'cms'
+    | 'studio'
+    | 'case_resolver'
+    | 'agentcreator'
+    | undefined;
   sku?: string | null | undefined;
   noteId?: string | null | undefined;
   projectId?: string | null | undefined;
@@ -148,13 +156,29 @@ function getUploadTarget({
     return { diskDir, publicDir };
   }
 
+  if (category === 'agentcreator') {
+    const safeFolder = folder?.trim() ? sanitizeFolderPath(folder) : '';
+    const diskDir = safeFolder ? path.join(agentCreatorRoot, safeFolder) : agentCreatorRoot;
+    const publicDir = safeFolder
+      ? `/uploads/agentcreator/${safeFolder}`
+      : '/uploads/agentcreator';
+    return { diskDir, publicDir };
+  }
+
   return { diskDir: uploadsRoot, publicDir: '/uploads' };
 }
 
 export async function uploadFile(
   file: File,
   options?: {
-    category?: 'products' | 'notes' | 'cms' | 'studio' | 'case_resolver' | undefined;
+    category?:
+      | 'products'
+      | 'notes'
+      | 'cms'
+      | 'studio'
+      | 'case_resolver'
+      | 'agentcreator'
+      | undefined;
     sku?: string | null | undefined;
     noteId?: string | null | undefined;
     projectId?: string | null | undefined;

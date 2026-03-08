@@ -45,6 +45,15 @@ const makeRequest = (body: Record<string, unknown>): NextRequest =>
     body: JSON.stringify(body),
   });
 
+const parseResponseBody = async (response: Response): Promise<Record<string, unknown>> => {
+  const bodyText = await response.text();
+  const parsed: unknown = bodyText ? JSON.parse(bodyText) : {};
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error('Expected a JSON object response body.');
+  }
+  return parsed;
+};
+
 describe('ai-paths runs enqueue handler', () => {
   beforeEach(() => {
     requireAiPathsRunAccessMock.mockReset().mockResolvedValue({ userId: 'user-1' });
@@ -141,21 +150,28 @@ describe('ai-paths runs enqueue handler', () => {
     );
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({
+    await expect(parseResponseBody(response)).resolves.toEqual({
       run: { id: 'run-1', status: 'queued' },
       runId: 'run-1',
     });
-    expect(enqueuePathRunMock).toHaveBeenCalledWith(
+    const enqueueArgs = enqueuePathRunMock.mock.calls[0]?.[0] as
+      | {
+        pathId?: string;
+        pathName?: string;
+        nodes?: unknown;
+        edges?: unknown;
+        meta?: Record<string, unknown>;
+      }
+      | undefined;
+    expect(enqueueArgs).toEqual(
       expect.objectContaining({
         pathId: config.id,
         pathName: config.name,
         nodes: config.nodes,
         edges: config.edges,
-        meta: expect.not.objectContaining({
-          identityRepair: expect.anything(),
-        }),
       })
     );
+    expect(enqueueArgs?.meta).not.toHaveProperty('identityRepair');
   });
 
   it('loads stored path config when nodes and edges are omitted', async () => {
@@ -186,14 +202,11 @@ describe('ai-paths runs enqueue handler', () => {
         edges: config.edges,
       })
     );
-    expect(logSystemEventMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        source: 'ai-paths.runs.enqueue',
-        context: expect.objectContaining({
-          graphSource: 'settings',
-        }),
-      })
-    );
+    const logInvocation = logSystemEventMock.mock.calls[0]?.[0] as
+      | { source?: string; context?: Record<string, unknown> }
+      | undefined;
+    expect(logInvocation?.source).toBe('ai-paths.runs.enqueue');
+    expect(logInvocation?.context?.['graphSource']).toBe('settings');
   });
 
   it('derives runId from legacy _id run payloads', async () => {
@@ -216,7 +229,7 @@ describe('ai-paths runs enqueue handler', () => {
     );
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({
+    await expect(parseResponseBody(response)).resolves.toEqual({
       run: { _id: 'run-legacy-1', status: 'queued' },
       runId: 'run-legacy-1',
     });

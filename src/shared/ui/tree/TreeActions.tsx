@@ -24,7 +24,7 @@ export function TreeActionSlot({
       ? 'opacity-100'
       : isVisible
         ? 'opacity-100'
-        : 'opacity-0 group-hover:opacity-100';
+        : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100';
   return (
     <div
       className={cn(

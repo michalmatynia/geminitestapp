@@ -6,8 +6,10 @@ import { cn, sanitizeSvg } from '@/shared/utils';
 
 type AgentPersonaMoodAvatarProps = {
   svgContent?: string | null;
+  avatarImageUrl?: string | null;
   label: string;
   className?: string;
+  imgClassName?: string;
   svgClassName?: string;
   fallbackIconClassName?: string;
   'data-testid'?: string;
@@ -15,12 +17,15 @@ type AgentPersonaMoodAvatarProps = {
 
 export function AgentPersonaMoodAvatar({
   svgContent,
+  avatarImageUrl,
   label,
   className,
+  imgClassName,
   svgClassName,
   fallbackIconClassName,
   'data-testid': dataTestId,
 }: AgentPersonaMoodAvatarProps): React.JSX.Element {
+  const hasImage = typeof avatarImageUrl === 'string' && avatarImageUrl.trim().length > 0;
   const hasSvg = typeof svgContent === 'string' && svgContent.trim().length > 0;
 
   return (
@@ -30,7 +35,14 @@ export function AgentPersonaMoodAvatar({
       data-testid={dataTestId}
       role='img'
     >
-      {hasSvg ? (
+      {hasImage ? (
+        <img
+          src={avatarImageUrl ?? undefined}
+          alt={label}
+          className={cn('h-full w-full object-cover', imgClassName)}
+          loading='lazy'
+        />
+      ) : hasSvg ? (
         <div
           className={cn(
             'h-full w-full [&_svg]:h-full [&_svg]:w-full [&_svg]:overflow-visible',

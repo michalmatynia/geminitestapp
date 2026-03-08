@@ -24,9 +24,22 @@ export const agentPersonaMoodSchema = z.object({
   label: z.string().trim().min(1).max(40),
   description: z.string().trim().max(160).optional(),
   svgContent: z.string().max(100_000).default(''),
+  avatarImageUrl: z.string().trim().max(2_048).nullable().optional(),
+  avatarImageFileId: z.string().trim().max(256).nullable().optional(),
 });
 
 export type AgentPersonaMood = z.infer<typeof agentPersonaMoodSchema>;
+
+export const agentPersonaMemorySettingsSchema = z
+  .object({
+    enabled: z.boolean().optional(),
+    includeChatHistory: z.boolean().optional(),
+    useMoodSignals: z.boolean().optional(),
+    defaultSearchLimit: z.number().int().min(1).max(50).optional(),
+  })
+  .strict();
+
+export type AgentPersonaMemorySettings = z.infer<typeof agentPersonaMemorySettingsSchema>;
 
 export const agentPersonaSchema = namedDtoSchema.extend({
   description: z.string().optional(),
@@ -45,6 +58,7 @@ export const agentPersonaSettingsSchema = z
   .object({
     personaId: z.string().optional(),
     customInstructions: z.string().optional(),
+    memory: agentPersonaMemorySettingsSchema.optional(),
   })
   .strict();
 
@@ -52,7 +66,14 @@ export type AgentPersonaSettings = z.infer<typeof agentPersonaSettingsSchema>;
 
 export const AGENT_PERSONA_SETTINGS_KEY = 'agent_personas';
 
-export const DEFAULT_AGENT_PERSONA_SETTINGS: AgentPersonaSettings = {};
+export const DEFAULT_AGENT_PERSONA_SETTINGS: AgentPersonaSettings = {
+  memory: {
+    enabled: true,
+    includeChatHistory: true,
+    useMoodSignals: true,
+    defaultSearchLimit: 20,
+  },
+};
 
 export const createAgentPersonaSchema = agentPersonaSchema.omit({
   id: true,

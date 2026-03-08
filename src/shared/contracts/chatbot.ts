@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { dtoBaseSchema } from './base';
+import { agentPersonaMoodIdSchema } from './agents';
 
 /**
  * Chatbot Settings & Config
@@ -11,7 +12,7 @@ export const chatbotSettingsSchema = z.object({
   defaultModelId: z.string().optional(),
   welcomeMessage: z.string().optional(),
   systemPrompt: z.string().optional(),
-  personaId: z.string().optional(),
+  personaId: z.string().nullable().optional(),
   temperature: z.number().optional(),
   maxTokens: z.number().optional(),
   topP: z.number().optional(),
@@ -153,6 +154,7 @@ export interface SimpleChatMessage<
 export const chatSessionSchema = dtoBaseSchema.extend({
   title: z.string().nullable(),
   userId: z.string().nullable(),
+  personaId: z.string().nullable().optional(),
   settings: chatbotSettingsSchema.optional(),
   lastMessageAt: z.string().nullable().optional(),
   messageCount: z.number().optional(),
@@ -168,6 +170,7 @@ export type ChatSession = ChatbotSessionDto;
 export const chatbotSessionListItemSchema = z.object({
   id: z.string(),
   title: z.string().nullable(),
+  personaId: z.string().nullable().optional(),
   lastMessageAt: z.string().nullable().optional(),
   messageCount: z.number().optional(),
   isActive: z.boolean().optional(),
@@ -198,6 +201,15 @@ export const sendMessageSchema = z.object({
 });
 
 export type SendMessageDto = z.infer<typeof sendMessageSchema>;
+
+export const chatbotChatResponseSchema = z.object({
+  message: z.string().optional(),
+  sessionId: z.string().nullable().optional(),
+  suggestedMoodId: agentPersonaMoodIdSchema.nullable().optional(),
+  brainApplied: z.record(z.string(), z.unknown()).optional(),
+});
+
+export type ChatbotChatResponseDto = z.infer<typeof chatbotChatResponseSchema>;
 
 /**
  * Chatbot Job Contract
@@ -454,6 +466,8 @@ export interface ChatbotMessagesData {
 export interface ChatbotSettingsData {
   model: string;
   setModel: React.Dispatch<React.SetStateAction<string>>;
+  personaId: string | null;
+  setPersonaId: (id: string | null) => void;
   webSearchEnabled: boolean;
   setWebSearchEnabled: React.Dispatch<React.SetStateAction<boolean>>;
   useGlobalContext: boolean;

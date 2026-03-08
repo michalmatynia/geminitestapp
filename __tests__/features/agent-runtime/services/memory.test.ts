@@ -64,6 +64,7 @@ describe('Agent Runtime - Memory', () => {
       expect(prisma.agentMemoryItem.create).toHaveBeenCalledWith({
         data: {
           runId: 'run-123',
+          personaId: null,
           scope: 'session',
           content: 'test content',
         },

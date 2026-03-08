@@ -47,61 +47,61 @@ export function PresetsDialog(): React.JSX.Element {
 
   return (
     <>
-    <DetailModal
-      isOpen={isOpen}
-      onClose={onClose}
-      title='Export / Import Presets'
-      subtitle='Share Cluster Presets as JSON across projects.'
-      size='md'
-    >
-      <div className='space-y-4'>
-        <Textarea
-          className='min-h-[240px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
-          value={presetsJson}
-          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
-            setPresetsJson(event.target.value)
-          }
-        />
-        <div className='flex flex-wrap items-center gap-2'>
-          <Button
-            type='button'
-            variant='outline'
-            onClick={() => setPresetsJson(JSON.stringify(clusterPresets, null, 2))}
-          >
-            Load Export
-          </Button>
-          <Button
-            type='button'
-            variant='default'
-            onClick={() => {
-              void onImport('merge');
-            }}
-          >
-            Import (Merge)
-          </Button>
-          <Button
-            type='button'
-            variant='destructive'
-            onClick={() => {
-              void onImport('replace');
-            }}
-          >
-            Replace Existing
-          </Button>
-          <Button
-            type='button'
-            variant='outline'
-            onClick={() => {
-              const value = presetsJson || JSON.stringify(clusterPresets, null, 2);
-              handleCopyJson(value);
-            }}
-          >
-            Copy JSON
-          </Button>
+      <DetailModal
+        isOpen={isOpen}
+        onClose={onClose}
+        title='Export / Import Presets'
+        subtitle='Share Cluster Presets as JSON across projects.'
+        size='md'
+      >
+        <div className='space-y-4'>
+          <Textarea
+            className='min-h-[240px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
+            value={presetsJson}
+            onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
+              setPresetsJson(event.target.value)
+            }
+          />
+          <div className='flex flex-wrap items-center gap-2'>
+            <Button
+              type='button'
+              variant='outline'
+              onClick={() => setPresetsJson(JSON.stringify(clusterPresets, null, 2))}
+            >
+              Load Export
+            </Button>
+            <Button
+              type='button'
+              variant='default'
+              onClick={() => {
+                void onImport('merge');
+              }}
+            >
+              Import (Merge)
+            </Button>
+            <Button
+              type='button'
+              variant='destructive'
+              onClick={() => {
+                void onImport('replace');
+              }}
+            >
+              Replace Existing
+            </Button>
+            <Button
+              type='button'
+              variant='outline'
+              onClick={() => {
+                const value = presetsJson || JSON.stringify(clusterPresets, null, 2);
+                handleCopyJson(value);
+              }}
+            >
+              Copy JSON
+            </Button>
+          </div>
         </div>
-      </div>
-    </DetailModal>
-    <ConfirmationModal />
+      </DetailModal>
+      <ConfirmationModal />
     </>
   );
 }

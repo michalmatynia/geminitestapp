@@ -2,14 +2,23 @@ import 'server-only';
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { runTeachingChat } from '@/features/ai/agentcreator/teaching/server/chat';
+import {
+  buildPersonaChatMemoryContext,
+  persistAgentPersonaExchangeMemory,
+} from '@/features/ai/agentcreator/server/persona-memory';
+import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
+import { chatbotSessionRepository } from '@/features/ai/chatbot/server';
+import { buildKangurAiTutorContextRegistryRefs } from '@/features/kangur/context-registry/refs';
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import { buildKangurAiTutorAdaptiveGuidance } from '@/features/kangur/server/ai-tutor-adaptive';
+import { resolveKangurAiTutorRuntimeDocuments } from '@/features/kangur/server/context-registry';
 import {
+  KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
   parseKangurAiTutorSettings,
   getKangurAiTutorSettingsForLearner,
   KANGUR_AI_TUTOR_SETTINGS_KEY,
   resolveKangurAiTutorAvailability,
+  resolveKangurAiTutorAppSettings,
   type KangurAiTutorAvailabilityReason,
 } from '@/features/kangur/settings-ai-tutor';
 import { consumeKangurAiTutorDailyUsage } from '@/features/kangur/server/ai-tutor-usage';
@@ -18,6 +27,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import {
   AGENT_PERSONA_SETTINGS_KEY,
   type AgentPersona,
+  type AgentPersonaMoodId,
 } from '@/shared/contracts/agents';
 import {
   kangurAiTutorChatRequestSchema,
@@ -38,7 +48,9 @@ import {
 } from '@/shared/lib/ai-brain/server-runtime-client';
 import { readStoredSettingValue } from '@/shared/lib/ai-brain/server';
 import { isAppError } from '@/shared/errors/app-error';
+import prisma from '@/shared/lib/db/prisma';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
+import type { ContextRegistryResolutionBundle, ContextRuntimeDocument } from '@/shared/contracts/ai-context-registry';
 
 const SOCRATIC_CONSTRAINT = [
   'You are a friendly AI tutor helping a child (age 6–12) learn.',
@@ -74,6 +86,7 @@ const AVAILABILITY_ERROR_MESSAGES: Record<KangurAiTutorAvailabilityReason, strin
   review_after_answer_only:
     'AI tutor is available in tests only after the answer has been revealed.',
 };
+const KANGUR_AI_TUTOR_BRAIN_CAPABILITY = 'kangur_ai_tutor.chat';
 
 const resolvePersonaInstructions = async (agentPersonaId: string | null): Promise<string> => {
   if (!agentPersonaId) return '';
@@ -92,31 +105,111 @@ const resolvePersonaInstructions = async (agentPersonaId: string | null): Promis
   }
 };
 
-const buildContextInstructions = (
-  context: KangurAiTutorConversationContext | undefined,
+const buildKangurPersonaSessionTitle = (learnerId: string, personaName: string | null): string => {
+  const label = personaName?.trim() || 'Tutor persona';
+  return `Kangur AI Tutor · ${label} · learner:${learnerId}`;
+};
+
+const resolveKangurPersonaSessionId = async (input: {
+  learnerId: string;
+  personaId: string | null;
+  personaName: string | null;
+}): Promise<string | null> => {
+  if (!input.personaId) {
+    return null;
+  }
+
+  const title = buildKangurPersonaSessionTitle(input.learnerId, input.personaName);
+  const existing = await prisma.chatbotSession.findFirst({
+    where: {
+      personaId: input.personaId,
+      title,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (existing?.id) {
+    return existing.id;
+  }
+
+  const created = await prisma.chatbotSession.create({
+    data: {
+      title,
+      personaId: input.personaId,
+      settings: {
+        personaId: input.personaId,
+      } as never,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  return created.id;
+};
+
+const readStringFact = (
+  document: ContextRuntimeDocument | null | undefined,
+  key: string
+): string | null => {
+  const value = document?.facts?.[key];
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+};
+
+const buildRegistryPolicyInstructions = (
+  bundle: ContextRegistryResolutionBundle | null | undefined
+): string[] =>
+  (bundle?.nodes ?? [])
+    .filter((node) => node.kind === 'policy' && node.id.startsWith('policy:kangur-ai-tutor'))
+    .map((node) => node.description.trim())
+    .filter(Boolean);
+
+const buildContextInstructions = (input: {
+  context: KangurAiTutorConversationContext | undefined;
+  registryBundle: ContextRegistryResolutionBundle | null;
   options?: {
     testAccessMode?: 'disabled' | 'guided' | 'review_after_answer';
-  }
-): string => {
+  };
+}): string => {
+  const { context, registryBundle, options } = input;
   if (!context) {
     return '';
   }
 
+  const { learnerSnapshot, surfaceContext, assignmentContext } =
+    resolveKangurAiTutorRuntimeDocuments(registryBundle);
+  const policyInstructions = buildRegistryPolicyInstructions(registryBundle);
   const lines: string[] = [
     `Current Kangur surface: ${context.surface === 'test' ? 'test practice' : 'lesson learning'}.`,
   ];
 
-  if (context.title) {
-    lines.push(`Current title: ${context.title}`);
+  const title = readStringFact(surfaceContext, 'title');
+  if (title) {
+    lines.push(`Current title: ${title}`);
   }
-  if (context.description) {
-    lines.push(`Current description: ${context.description}`);
+
+  const description = readStringFact(surfaceContext, 'description');
+  if (description) {
+    lines.push(`Current description: ${description}`);
   }
-  if (context.masterySummary) {
-    lines.push(`Learner mastery snapshot: ${context.masterySummary}`);
+
+  const learnerSummary = readStringFact(learnerSnapshot, 'learnerSummary');
+  if (learnerSummary) {
+    lines.push(`Learner snapshot: ${learnerSummary}`);
   }
-  if (context.assignmentSummary) {
-    lines.push(`Active assignment or focus: ${context.assignmentSummary}`);
+
+  const masterySummary = readStringFact(surfaceContext, 'masterySummary');
+  if (masterySummary) {
+    lines.push(`Learner mastery snapshot: ${masterySummary}`);
+  }
+
+  const assignmentSummary =
+    readStringFact(assignmentContext, 'assignmentSummary') ??
+    readStringFact(surfaceContext, 'assignmentSummary');
+  if (assignmentSummary) {
+    lines.push(`Active assignment or focus: ${assignmentSummary}`);
   }
   if (context.focusKind) {
     lines.push(`Tutor visual focus: ${context.focusKind}.`);
@@ -127,11 +220,20 @@ const buildContextInstructions = (
   if (context.assignmentId) {
     lines.push(`Assignment id in focus: ${context.assignmentId}`);
   }
-  if (context.currentQuestion) {
-    lines.push(`Current question: ${context.currentQuestion}`);
+
+  const currentQuestion = readStringFact(surfaceContext, 'currentQuestion');
+  if (currentQuestion) {
+    lines.push(`Current question: ${currentQuestion}`);
   }
-  if (context.questionProgressLabel) {
-    lines.push(`Question progress: ${context.questionProgressLabel}`);
+
+  const questionProgressLabel = readStringFact(surfaceContext, 'questionProgressLabel');
+  if (questionProgressLabel) {
+    lines.push(`Question progress: ${questionProgressLabel}`);
+  }
+
+  const revealedExplanation = readStringFact(surfaceContext, 'revealedExplanation');
+  if (context.answerRevealed && revealedExplanation) {
+    lines.push(`Review context: ${revealedExplanation}`);
   }
   if (context.selectedText) {
     lines.push(`Learner selected this text: """${context.selectedText}"""`);
@@ -142,6 +244,9 @@ const buildContextInstructions = (
   if (context.interactionIntent) {
     lines.push(INTERACTION_INTENT_INSTRUCTIONS[context.interactionIntent]);
   }
+  policyInstructions.forEach((instruction) => {
+    lines.push(`Registry policy: ${instruction}`);
+  });
   if (context.surface === 'test') {
     if (options?.testAccessMode === 'review_after_answer' && context.answerRevealed) {
       lines.push(
@@ -175,7 +280,9 @@ export async function postKangurAiTutorChatHandler(
 
   const rawSettings = await readStoredSettingValue(KANGUR_AI_TUTOR_SETTINGS_KEY);
   const settingsStore = parseKangurAiTutorSettings(rawSettings);
-  const tutorSettings = getKangurAiTutorSettingsForLearner(settingsStore, learnerId);
+  const rawAppSettings = await readStoredSettingValue(KANGUR_AI_TUTOR_APP_SETTINGS_KEY);
+  const appSettings = resolveKangurAiTutorAppSettings(rawAppSettings, settingsStore);
+  const tutorSettings = getKangurAiTutorSettingsForLearner(settingsStore, learnerId, appSettings);
   const sessionId = `kangur-ai-tutor:${learnerId}`;
   const baseTimestamp = new Date().toISOString();
   const chatMessages: ChatMessage[] = messages.map((message, index) => ({
@@ -186,6 +293,8 @@ export async function postKangurAiTutorChatHandler(
     timestamp: baseTimestamp,
   }));
   let adaptiveGuidanceApplied = false;
+  const latestUserMessage =
+    [...messages].reverse().find((message) => message.role === 'user')?.content ?? null;
 
   try {
     const availability = resolveKangurAiTutorAvailability(tutorSettings, context);
@@ -206,17 +315,69 @@ export async function postKangurAiTutorChatHandler(
       learnerId,
       dailyMessageLimit: tutorSettings.dailyMessageLimit,
     });
+    const contextRegistryBundle = context
+      ? await contextRegistryEngine.resolveRefs({
+        refs: buildKangurAiTutorContextRegistryRefs({
+          learnerId,
+          context,
+        }),
+        maxNodes: 24,
+        depth: 1,
+      })
+      : null;
 
     const personaInstructions = await resolvePersonaInstructions(tutorSettings.agentPersonaId);
     const systemParts: string[] = [SOCRATIC_CONSTRAINT];
     if (personaInstructions) systemParts.push(personaInstructions);
-    const contextInstructions = buildContextInstructions(context, {
-      testAccessMode: tutorSettings.testAccessMode,
+    let personaMemorySessionId: string | null = null;
+    let suggestedPersonaMoodId: AgentPersonaMoodId | null = null;
+    if (tutorSettings.agentPersonaId) {
+      try {
+        const personaContext = await buildPersonaChatMemoryContext({
+          personaId: tutorSettings.agentPersonaId,
+          latestUserMessage,
+        });
+        if (personaContext.systemPrompt) {
+          systemParts.push(personaContext.systemPrompt);
+        }
+        suggestedPersonaMoodId = personaContext.suggestedMoodId ?? null;
+        personaMemorySessionId = await resolveKangurPersonaSessionId({
+          learnerId,
+          personaId: tutorSettings.agentPersonaId,
+          personaName: personaContext.persona.name ?? null,
+        });
+      } catch (error) {
+        await logKangurServerEvent({
+          source: 'kangur.ai-tutor.chat.persona-memory.failed',
+          service: 'kangur.ai-tutor',
+          message: 'Failed to resolve Kangur tutor persona memory context.',
+          level: 'warn',
+          request: req,
+          requestContext: ctx,
+          actor,
+          error,
+          statusCode: 500,
+          context: {
+            learnerId,
+            personaId: tutorSettings.agentPersonaId,
+            surface: context?.surface ?? null,
+            contentId: context?.contentId ?? null,
+          },
+        });
+      }
+    }
+    const contextInstructions = buildContextInstructions({
+      context,
+      registryBundle: contextRegistryBundle,
+      options: {
+        testAccessMode: tutorSettings.testAccessMode,
+      },
     });
     if (contextInstructions) systemParts.push(contextInstructions);
     const adaptiveGuidance = await buildKangurAiTutorAdaptiveGuidance({
       learnerId,
       context,
+      registryBundle: contextRegistryBundle,
     });
     const adaptiveInstructions = adaptiveGuidance.instructions;
     if (adaptiveInstructions) {
@@ -225,67 +386,14 @@ export async function postKangurAiTutorChatHandler(
     }
     const systemPrompt = systemParts.join('\n\n');
 
-    if (tutorSettings.teachingAgentId) {
-      // Use RAG-backed teaching agent — inject system prompt as first message
-      const augmentedMessages: ChatMessage[] = [
-        {
-          id: `${sessionId}:system`,
-          sessionId,
-          role: 'system',
-          content: systemPrompt,
-          timestamp: baseTimestamp,
-        },
-        ...chatMessages.filter((m) => m.role !== 'system'),
-      ];
-      const result = await runTeachingChat({
-        agentId: tutorSettings.teachingAgentId,
-        messages: augmentedMessages,
-      });
-      const visibleSources = tutorSettings.showSources ? result.sources : [];
-      await logKangurServerEvent({
-        source: 'kangur.ai-tutor.chat.completed',
-        service: 'kangur.ai-tutor',
-        message: 'Kangur AI tutor chat completed with teaching agent.',
-        request: req,
-        requestContext: ctx,
-        actor,
-        statusCode: 200,
-        context: {
-          surface: context?.surface ?? null,
-          contentId: context?.contentId ?? null,
-          promptMode: resolvedPromptMode,
-          focusKind: context?.focusKind ?? null,
-          interactionIntent: context?.interactionIntent ?? null,
-          usedTeachingAgent: true,
-          retrievedSourceCount: result.sources.length,
-          returnedSourceCount: visibleSources.length,
-          showSources: tutorSettings.showSources,
-          allowSelectedTextSupport: tutorSettings.allowSelectedTextSupport,
-          allowLessons: tutorSettings.allowLessons,
-          testAccessMode: tutorSettings.testAccessMode,
-          adaptiveGuidanceApplied,
-          followUpActionCount: adaptiveGuidance.followUpActions.length,
-          dailyMessageLimit: usage.dailyMessageLimit,
-          dailyUsageCount: usage.messageCount,
-          dailyUsageRemaining: usage.remainingMessages,
-          usageDateKey: usage.dateKey,
-          messageCount: messages.length,
-        },
-      });
-      return NextResponse.json({
-        message: result.message,
-        sources: visibleSources,
-        followUpActions: adaptiveGuidance.followUpActions,
-        usage,
-      } satisfies KangurAiTutorChatResponse);
-    }
-
-    // Fallback: direct Brain call with agent_teaching.chat capability
-    const brainConfig = await resolveBrainExecutionConfigForCapability('agent_teaching.chat', {
-      defaultTemperature: 0.4,
-      defaultMaxTokens: 600,
-      runtimeKind: 'chat',
-    });
+    const brainConfig = await resolveBrainExecutionConfigForCapability(
+      KANGUR_AI_TUTOR_BRAIN_CAPABILITY,
+      {
+        defaultTemperature: 0.4,
+        defaultMaxTokens: 600,
+        runtimeKind: 'chat',
+      }
+    );
 
     const combinedSystemPrompt = [brainConfig.systemPrompt.trim(), systemPrompt]
       .filter(Boolean)
@@ -306,10 +414,101 @@ export async function postKangurAiTutorChatHandler(
       ],
     });
 
+    if (personaMemorySessionId && tutorSettings.agentPersonaId) {
+      try {
+        if (latestUserMessage) {
+          await chatbotSessionRepository.addMessage(personaMemorySessionId, {
+            role: 'user',
+            content: latestUserMessage,
+            metadata: {
+              source: 'kangur_ai_tutor',
+              learnerId,
+              surface: context?.surface ?? null,
+              contentId: context?.contentId ?? null,
+              questionId: context?.questionId ?? null,
+              promptMode: resolvedPromptMode,
+              interactionIntent: context?.interactionIntent ?? null,
+            },
+          });
+        }
+
+        await chatbotSessionRepository.addMessage(personaMemorySessionId, {
+          role: 'assistant',
+          content: res.text.trim(),
+          model: brainConfig.modelId,
+          metadata: {
+            source: 'kangur_ai_tutor',
+            learnerId,
+            surface: context?.surface ?? null,
+            contentId: context?.contentId ?? null,
+            questionId: context?.questionId ?? null,
+            promptMode: resolvedPromptMode,
+            interactionIntent: context?.interactionIntent ?? null,
+            ...(suggestedPersonaMoodId ? { moodHints: [suggestedPersonaMoodId] } : {}),
+            ...(suggestedPersonaMoodId ? { suggestedPersonaMoodId } : {}),
+          },
+        });
+
+        await persistAgentPersonaExchangeMemory({
+          personaId: tutorSettings.agentPersonaId,
+          sourceType: 'chat_message',
+          sourceId: `kangur:${learnerId}:${context?.surface ?? 'lesson'}:${context?.contentId ?? 'unknown'}:${Date.now()}`,
+          sourceLabel:
+            context?.surface === 'test'
+              ? `Kangur test${context?.contentId ? ` · ${context.contentId}` : ''}`
+              : `Kangur lesson${context?.contentId ? ` · ${context.contentId}` : ''}`,
+          sourceCreatedAt: new Date().toISOString(),
+          sessionId: personaMemorySessionId,
+          userMessage: latestUserMessage,
+          assistantMessage: res.text.trim(),
+          tags: [
+            'kangur',
+            context?.surface ?? 'lesson',
+            resolvedPromptMode,
+            ...(context?.interactionIntent ? [context.interactionIntent] : []),
+          ],
+          topicHints: [
+            ...(context?.selectedText ? [context.selectedText] : []),
+            ...(context?.contentId ? [context.contentId] : []),
+            ...(context?.questionId ? [context.questionId] : []),
+          ],
+          moodHints: suggestedPersonaMoodId ? [suggestedPersonaMoodId] : [],
+          metadata: {
+            source: 'kangur_ai_tutor',
+            learnerId,
+            surface: context?.surface ?? null,
+            contentId: context?.contentId ?? null,
+            questionId: context?.questionId ?? null,
+            promptMode: resolvedPromptMode,
+            interactionIntent: context?.interactionIntent ?? null,
+          },
+        });
+      } catch (error) {
+        await logKangurServerEvent({
+          source: 'kangur.ai-tutor.chat.persona-memory.persist-failed',
+          service: 'kangur.ai-tutor',
+          message: 'Failed to persist Kangur tutor chat into persona memory.',
+          level: 'warn',
+          request: req,
+          requestContext: ctx,
+          actor,
+          error,
+          statusCode: 500,
+          context: {
+            learnerId,
+            personaId: tutorSettings.agentPersonaId,
+            personaMemorySessionId,
+            surface: context?.surface ?? null,
+            contentId: context?.contentId ?? null,
+          },
+        });
+      }
+    }
+
     await logKangurServerEvent({
       source: 'kangur.ai-tutor.chat.completed',
       service: 'kangur.ai-tutor',
-      message: 'Kangur AI tutor chat completed with Brain fallback.',
+      message: 'Kangur AI tutor chat completed through Brain routing.',
       request: req,
       requestContext: ctx,
       actor,
@@ -320,7 +519,7 @@ export async function postKangurAiTutorChatHandler(
         promptMode: resolvedPromptMode,
         focusKind: context?.focusKind ?? null,
         interactionIntent: context?.interactionIntent ?? null,
-        usedTeachingAgent: false,
+        brainCapability: KANGUR_AI_TUTOR_BRAIN_CAPABILITY,
         retrievedSourceCount: 0,
         returnedSourceCount: 0,
         showSources: tutorSettings.showSources,
@@ -328,7 +527,12 @@ export async function postKangurAiTutorChatHandler(
         allowLessons: tutorSettings.allowLessons,
         testAccessMode: tutorSettings.testAccessMode,
         adaptiveGuidanceApplied,
+        contextRegistryRefCount: contextRegistryBundle?.refs.length ?? 0,
+        contextRegistryDocumentCount: contextRegistryBundle?.documents.length ?? 0,
         followUpActionCount: adaptiveGuidance.followUpActions.length,
+        personaId: tutorSettings.agentPersonaId,
+        suggestedPersonaMoodId,
+        personaMemorySessionId,
         dailyMessageLimit: usage.dailyMessageLimit,
         dailyUsageCount: usage.messageCount,
         dailyUsageRemaining: usage.remainingMessages,
@@ -341,6 +545,7 @@ export async function postKangurAiTutorChatHandler(
       message: res.text.trim(),
       sources: [],
       followUpActions: adaptiveGuidance.followUpActions,
+      ...(suggestedPersonaMoodId ? { suggestedMoodId: suggestedPersonaMoodId } : {}),
       usage,
     } satisfies KangurAiTutorChatResponse);
   } catch (error) {
@@ -360,12 +565,14 @@ export async function postKangurAiTutorChatHandler(
         promptMode: resolvedPromptMode,
         focusKind: context?.focusKind ?? null,
         interactionIntent: context?.interactionIntent ?? null,
-        usedTeachingAgent: Boolean(tutorSettings.teachingAgentId),
+        brainCapability: KANGUR_AI_TUTOR_BRAIN_CAPABILITY,
         showSources: tutorSettings.showSources,
         allowSelectedTextSupport: tutorSettings.allowSelectedTextSupport,
         allowLessons: tutorSettings.allowLessons,
         testAccessMode: tutorSettings.testAccessMode,
         adaptiveGuidanceApplied,
+        contextRegistryRefCount: context ? buildKangurAiTutorContextRegistryRefs({ learnerId, context }).length : 0,
+        personaId: tutorSettings.agentPersonaId,
         dailyMessageLimit: tutorSettings.dailyMessageLimit,
         messageCount: messages.length,
       },

@@ -1053,6 +1053,87 @@ const checkExceptionRegister = (register, sourceFileMap) => {
   }
 };
 
+const checkHardcodedSecrets = (sourceFileMap) => {
+  const SECRET_PATTERNS = [
+    { pattern: /(?:password|secret|apiKey|api_key|token)\s*[:=]\s*['"][^'"]{8,}['"]/gi, reason: 'potential hardcoded secret/credential' },
+    { pattern: /sk-[a-zA-Z0-9]{20,}/g, reason: 'potential hardcoded API key (sk-...)' },
+    { pattern: /ghp_[a-zA-Z0-9]{36}/g, reason: 'potential hardcoded GitHub PAT' },
+  ];
+  const SECRETS_ALLOWLIST = new Set([
+    'src/shared/lib/security/csrf-client.ts',
+  ]);
+
+  for (const [relativeFile, content] of sourceFileMap.entries()) {
+    if (SECRETS_ALLOWLIST.has(relativeFile)) continue;
+    // Skip type definitions and test mock files
+    if (relativeFile.endsWith('.d.ts')) continue;
+    if (relativeFile.includes('__mocks__')) continue;
+
+    for (const { pattern, reason } of SECRET_PATTERNS) {
+      pattern.lastIndex = 0;
+      if (pattern.test(content)) {
+        // Double-check it's not in a type annotation or interface
+        pattern.lastIndex = 0;
+        const match = pattern.exec(content);
+        if (match) {
+          const context = content.slice(Math.max(0, match.index - 30), match.index + match[0].length + 30);
+          // Skip obvious type declarations
+          if (/interface\s|type\s|:\s*string/.test(context)) continue;
+          // Skip env references
+          if (/process\.env|env\.|getEnv/.test(context)) continue;
+          reportViolation(`${reason} detected in: ${relativeFile}`);
+        }
+      }
+    }
+  }
+};
+
+const checkDeprecatedNodeApis = (sourceFileMap) => {
+  const DEPRECATED_PATTERNS = [
+    { pattern: /\brequire\s*\(\s*['"][^'"]+['"]\s*\)/g, reason: 'CommonJS require() in TypeScript source — use ESM import', extensions: ['.ts', '.tsx'] },
+    { pattern: /\b__dirname\b/g, reason: '__dirname usage — use import.meta.url with fileURLToPath', extensions: ['.ts', '.tsx', '.mjs'] },
+    { pattern: /\b__filename\b/g, reason: '__filename usage — use import.meta.url with fileURLToPath', extensions: ['.ts', '.tsx', '.mjs'] },
+  ];
+  const DEPRECATED_ALLOWLIST = new Set([
+    'src/shared/lib/files/file-uploader.ts',
+  ]);
+
+  for (const [relativeFile, content] of sourceFileMap.entries()) {
+    if (DEPRECATED_ALLOWLIST.has(relativeFile)) continue;
+    const ext = path.extname(relativeFile);
+
+    for (const { pattern, reason, extensions } of DEPRECATED_PATTERNS) {
+      if (!extensions.includes(ext)) continue;
+      pattern.lastIndex = 0;
+      if (pattern.test(content)) {
+        reportViolation(`${reason}: ${relativeFile}`);
+      }
+    }
+  }
+};
+
+const checkTodoFixmeAccumulation = (sourceFileMap) => {
+  let todoCount = 0;
+  let fixmeCount = 0;
+  let hackCount = 0;
+  const THRESHOLD = 100;
+
+  for (const [, content] of sourceFileMap.entries()) {
+    const todoMatches = content.match(/\/\/\s*TODO\b/gi);
+    const fixmeMatches = content.match(/\/\/\s*FIXME\b/gi);
+    const hackMatches = content.match(/\/\/\s*HACK\b/gi);
+    if (todoMatches) todoCount += todoMatches.length;
+    if (fixmeMatches) fixmeCount += fixmeMatches.length;
+    if (hackMatches) hackCount += hackMatches.length;
+  }
+
+  if (todoCount + fixmeCount + hackCount > THRESHOLD) {
+    reportViolation(
+      `accumulated code debt markers exceed threshold (${THRESHOLD}): TODO=${todoCount} FIXME=${fixmeCount} HACK=${hackCount}`
+    );
+  }
+};
+
 const main = () => {
   loadCanonicalArtifactsManifest();
   checkRequiredDocs();
@@ -1082,6 +1163,9 @@ const main = () => {
   checkForbiddenRuntimeGuardTokens(sourceFileMap);
   checkLegacyCsrfHeaderAliasPrune(sourceFileMap);
   checkPromptExploderExtractionModeKeyCanonicalization(sourceFileMap);
+  checkHardcodedSecrets(sourceFileMap);
+  checkDeprecatedNodeApis(sourceFileMap);
+  checkTodoFixmeAccumulation(sourceFileMap);
 
   const register = readExceptionRegister();
   if (register) {

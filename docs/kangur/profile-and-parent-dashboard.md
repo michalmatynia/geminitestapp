@@ -34,7 +34,7 @@ The parent dashboard exposes separate tabs for:
 
 Each tab needs a stable documentation entry because the same shell is reused while the content focus changes.
 
-The `AI Tutor` tab is the learner-specific tutoring control surface. It is where the parent enables or disables the tutor, selects the teaching agent or persona, and configures guardrails for the selected learner.
+The `AI Tutor` tab is the learner-specific tutoring control surface. It is where the parent enables or disables the tutor and configures guardrails for the selected learner.
 
 Those guardrails currently include:
 
@@ -42,9 +42,11 @@ Those guardrails currently include:
 - how the tutor behaves during tests
 - whether retrieved sources are shown back to the learner
 - whether the learner can ask about highlighted text fragments
-- optional daily message caps per learner
+- whether the tutor conversation should persist across pages
 
-When the tutor is enabled, the same tab also shows the current day's tutor usage for the selected learner, including the consumed message count and the remaining quota when a daily cap is active.
+Global tutor behavior such as the tutor persona, Brain chat routing, tutor motion preset, and daily message cap is managed in `Kangur Settings` and applies across the whole app.
+
+When the tutor is enabled, the same tab also shows the current day's tutor usage for the selected learner, including the consumed message count and the remaining quota when the global daily cap is active.
 
 ## Documentation requirement
 

@@ -65,25 +65,9 @@ export function PatternNodeItem(props: PatternNodeItemProps): React.JSX.Element 
         className={cn('relative h-8 text-xs', isDragging && 'opacity-50')}
       >
         <div
-          role='row'
-          tabIndex={0}
-          className='flex h-full w-full min-w-0 cursor-pointer items-center gap-1 text-left'
-          onClick={(event: React.MouseEvent<HTMLDivElement>): void => {
-            event.stopPropagation();
-            select(event);
-          }}
-          onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
-            if (event.key !== 'Enter' && event.key !== ' ') {
-              return;
-            }
-
-            event.preventDefault();
-            event.stopPropagation();
-            select();
-          }}
-          title={pattern.label || pattern.id}
+          className='flex h-full w-full min-w-0 items-center gap-1 text-left'
         >
-          <span className='inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center opacity-0 transition-opacity group-hover:opacity-100'>
+          <span className='inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100'>
             <GripVertical className='size-3.5 shrink-0 cursor-grab text-gray-500' />
           </span>
           <TreeCaret
@@ -95,8 +79,18 @@ export function PatternNodeItem(props: PatternNodeItemProps): React.JSX.Element 
             buttonClassName='hover:bg-gray-700'
             placeholderClassName='w-3'
           />
-          <span className='min-w-0 flex-1 truncate font-medium text-white'>{pattern.label}</span>
-          <span className='ml-1 flex shrink-0 items-center gap-1'>
+          <button
+            type='button'
+            onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+              event.stopPropagation();
+              select(event);
+            }}
+            aria-label={pattern.label || pattern.id}
+            aria-pressed={isSelected}
+            title={pattern.label || pattern.id}
+            className='flex min-w-0 flex-1 items-center gap-1 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
+          >
+            <span className='min-w-0 flex-1 truncate font-medium text-white'>{pattern.label}</span>
             <StatusBadge status={pattern.target} variant='info' size='sm' />
             {showLocale && <StatusBadge status={localeLabel} variant='processing' size='sm' />}
             <StatusBadge
@@ -104,6 +98,8 @@ export function PatternNodeItem(props: PatternNodeItemProps): React.JSX.Element 
               variant={pattern.severity === 'warning' ? 'warning' : 'error'}
               size='sm'
             />
+          </button>
+          <span className='ml-1 flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100'>
             <span
               onMouseDownCapture={(event: React.MouseEvent<HTMLSpanElement>): void => {
                 event.stopPropagation();
@@ -120,60 +116,66 @@ export function PatternNodeItem(props: PatternNodeItemProps): React.JSX.Element 
                 }}
               />
             </span>
-            <span
+            <button
+              type='button'
               className={cn(
                 'inline-flex items-center justify-center rounded p-0.5 text-gray-400 transition',
-                'opacity-0 group-hover:opacity-100 hover:bg-gray-700/60',
+                'hover:bg-gray-700/60',
                 isPending && 'pointer-events-none opacity-40'
               )}
-              onMouseDown={(event: React.MouseEvent<HTMLSpanElement>): void => {
+              onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => {
                 event.stopPropagation();
               }}
-              onClick={(event: React.MouseEvent<HTMLSpanElement>): void => {
+              onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
                 event.stopPropagation();
                 onDuplicatePattern(pattern);
               }}
               title='Duplicate pattern'
-              aria-hidden='true'
+              aria-label='Duplicate pattern'
+              disabled={isPending}
             >
               <Copy className='size-3' />
-            </span>
-            <span
+            </button>
+            <button
+              type='button'
               className={cn(
                 'inline-flex items-center justify-center rounded p-0.5 text-gray-400 transition',
-                'opacity-0 group-hover:opacity-100 hover:bg-gray-700/60',
+                'hover:bg-gray-700/60',
                 isPending && 'pointer-events-none opacity-40'
               )}
-              onMouseDown={(event: React.MouseEvent<HTMLSpanElement>): void => {
+              onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => {
                 event.stopPropagation();
               }}
-              onClick={(event: React.MouseEvent<HTMLSpanElement>): void => {
+              onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
                 event.stopPropagation();
                 onEditPattern(pattern);
               }}
               title='Edit pattern'
-              aria-hidden='true'
+              aria-label='Edit pattern'
+              disabled={isPending}
             >
               <Pencil className='size-3' />
-            </span>
-            <span
+            </button>
+            <button
+              type='button'
               className={cn(
                 'inline-flex items-center justify-center rounded p-0.5 text-gray-400 transition',
-                'opacity-0 group-hover:opacity-100 hover:bg-red-500/20 hover:text-red-300',
+                'hover:bg-red-500/20 hover:text-red-300',
                 isPending && 'pointer-events-none opacity-40'
               )}
-              onMouseDown={(event: React.MouseEvent<HTMLSpanElement>): void => {
+              onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => {
                 event.stopPropagation();
               }}
-              onClick={(event: React.MouseEvent<HTMLSpanElement>): void => {
+              onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
                 event.stopPropagation();
                 onDeletePattern(pattern);
               }}
               title='Delete pattern'
-              aria-hidden='true'
+              aria-label='Delete pattern'
+              disabled={isPending}
             >
               <Trash2 className='size-3' />
-            </span>
+            </button>
           </span>
         </div>
       </TreeRow>

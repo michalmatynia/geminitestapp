@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 import {
   KangurAccentDot,
   KangurActivityColumn,
+  KangurButton,
   KangurDivider,
   KangurDisplayEmoji,
   KangurEmptyState,
@@ -23,6 +24,7 @@ import {
   KangurMetricCard,
   KangurMenuItem,
   KangurOptionCardButton,
+  KangurPageContainer,
   KangurProgressBar,
   KangurProse,
   KangurResultBadge,
@@ -33,6 +35,7 @@ import {
   KangurSurfacePanel,
   KangurTextField,
 } from '@/features/kangur/ui/design/primitives';
+import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';
 
 describe('Kangur shared primitives', () => {
   it('renders shared badge, summary, and empty-state styling tokens', () => {
@@ -136,6 +139,12 @@ describe('Kangur shared primitives', () => {
         <KangurOptionCardButton data-testid='kangur-option-muted' state='muted'>
           Muted option
         </KangurOptionCardButton>
+        <KangurButton data-testid='kangur-button-primary' variant='primary'>
+          Primary CTA
+        </KangurButton>
+        <KangurButton data-testid='kangur-button-surface' variant='surface'>
+          Surface CTA
+        </KangurButton>
         <KangurSurfacePanel accent='sky' data-testid='kangur-surface-panel' fillHeight>
           Shared surface
         </KangurSurfacePanel>
@@ -165,6 +174,8 @@ describe('Kangur shared primitives', () => {
         </KangurGlassPanel>
         <KangurMenuItem data-testid='kangur-menu-item'>Shared menu item</KangurMenuItem>
         <KangurMediaFrame accent='amber' data-testid='kangur-media-frame' mediaType='image'>
+          {/* Intentional raw image element to assert frame styling without Next.js image behavior. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img alt='Example' src='/example.png' />
         </KangurMediaFrame>
         <KangurResultBadge data-testid='kangur-result-badge' tone='success'>
@@ -174,7 +185,7 @@ describe('Kangur shared primitives', () => {
           accent='indigo'
           data-testid='kangur-prose'
           dangerouslySetInnerHTML={{
-            __html: '<p>Shared <a href=\"#\">content</a></p><blockquote>Quote</blockquote>',
+            __html: '<p>Shared <a href="#">content</a></p><blockquote>Quote</blockquote>',
           }}
         />
         <KangurTextField
@@ -274,6 +285,16 @@ describe('Kangur shared primitives', () => {
       'text-slate-400',
       'opacity-70'
     );
+    expect(screen.getByTestId('kangur-button-primary')).toHaveClass(
+      'kangur-cta-pill',
+      'primary-cta',
+      'focus-visible:ring-amber-300/70'
+    );
+    expect(screen.getByTestId('kangur-button-surface')).toHaveClass(
+      'kangur-cta-pill',
+      'surface-cta',
+      'focus-visible:ring-indigo-300/70'
+    );
     expect(screen.getByTestId('kangur-surface-panel')).toHaveClass(
       'glass-panel',
       'border-sky-200/80',
@@ -352,5 +373,23 @@ describe('Kangur shared primitives', () => {
       'from-red-400',
       'to-pink-400'
     );
+  });
+
+  it('renders the page container as a focusable div for embedded Kangur surfaces', () => {
+    render(
+      <KangurRoutingProvider
+        basePath='/admin/kangur'
+        embedded
+        pageKey='Game'
+        requestedPath='/admin/kangur'
+      >
+        <KangurPageContainer id='embedded-kangur-main'>Embedded Kangur</KangurPageContainer>
+      </KangurRoutingProvider>
+    );
+
+    const container = screen.getByText('Embedded Kangur');
+    expect(container.tagName).toBe('DIV');
+    expect(container).toHaveAttribute('id', 'embedded-kangur-main');
+    expect(container).toHaveAttribute('tabindex', '-1');
   });
 });

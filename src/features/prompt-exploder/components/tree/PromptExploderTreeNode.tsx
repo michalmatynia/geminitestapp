@@ -83,16 +83,6 @@ export function PromptExploderTreeNode(props: PromptExploderTreeNodeProps): Reac
         stateClassName
       )}
       style={{ paddingLeft: `${depth * 16 + 8}px` }}
-      role='button'
-      tabIndex={0}
-      onClick={(event): void => {
-        select(event);
-      }}
-      onKeyDown={(event): void => {
-        if (event.key !== 'Enter' && event.key !== ' ') return;
-        event.preventDefault();
-        select();
-      }}
     >
       <button
         type='button'
@@ -128,16 +118,23 @@ export function PromptExploderTreeNode(props: PromptExploderTreeNodeProps): Reac
       ) : (
         <span className='inline-flex size-4 items-center justify-center text-xs opacity-40'>•</span>
       )}
-      <Icon className='size-4 shrink-0 text-sky-200/80' />
-      <span className='min-w-0 flex-1 truncate'>{node.name}</span>
-      {badgeLabel ? (
-        <Badge
-          variant='neutral'
-          className='shrink-0 border-border/60 bg-card/40 text-[10px] h-4 px-1 uppercase tracking-wider'
-        >
-          {badgeLabel}
-        </Badge>
-      ) : null}
+      <button
+        type='button'
+        onClick={select}
+        aria-pressed={isSelected}
+        className='flex min-w-0 flex-1 items-center gap-2 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
+      >
+        <Icon className='size-4 shrink-0 text-sky-200/80' />
+        <span className='min-w-0 flex-1 truncate'>{node.name}</span>
+        {badgeLabel ? (
+          <Badge
+            variant='neutral'
+            className='shrink-0 border-border/60 bg-card/40 text-[10px] h-4 px-1 uppercase tracking-wider'
+          >
+            {badgeLabel}
+          </Badge>
+        ) : null}
+      </button>
     </div>
   );
 }

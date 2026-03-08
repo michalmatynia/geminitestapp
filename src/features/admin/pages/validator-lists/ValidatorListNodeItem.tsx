@@ -66,38 +66,24 @@ export function ValidatorListNodeItem(props: ValidatorListNodeItemProps): React.
       >
         <div
           className='flex h-full w-full min-w-0 items-center gap-1.5 text-left'
-          onClick={(event: React.MouseEvent<HTMLDivElement>): void => {
-            event.stopPropagation();
-            select(event);
-          }}
-          onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
-            if (event.target !== event.currentTarget) {
-              return;
-            }
-            if (event.key === 'Enter' || event.key === ' ') {
-              event.preventDefault();
-              event.stopPropagation();
-              select(event as unknown as React.MouseEvent<HTMLDivElement>);
-            }
-          }}
-          role='button'
-          tabIndex={0}
         >
           <span className='inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center opacity-0 transition-opacity group-hover:opacity-100'>
             <GripVertical className='size-3.5 shrink-0 cursor-grab text-gray-500' />
           </span>
 
-          {/* List name — linked to the validator page for this list */}
-          <Link
-            href={`/admin/validator?list=${encodeURIComponent(listId)}`}
-            className='min-w-0 flex-1 truncate font-medium text-gray-100 hover:text-white hover:underline'
-            onClick={(event: React.MouseEvent): void => event.stopPropagation()}
-            title={list.name || 'Unnamed List'}
+          <button
+            type='button'
+            onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+              event.stopPropagation();
+              select(event);
+            }}
+            aria-pressed={isSelected}
+            aria-label={`Select validator list ${list.name.trim() || 'Unnamed List'}`}
+            className='flex min-w-0 flex-1 items-center gap-1.5 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
           >
-            {list.name.trim() || 'Unnamed List'}
-          </Link>
-
-          <span className='ml-1 flex shrink-0 items-center gap-1'>
+            <span className='min-w-0 flex-1 truncate font-medium text-gray-100'>
+              {list.name.trim() || 'Unnamed List'}
+            </span>
             <Badge
               variant='outline'
               className='h-4 px-1 text-[10px] text-gray-400 border-gray-600/50'
@@ -119,73 +105,79 @@ export function ValidatorListNodeItem(props: ValidatorListNodeItemProps): React.
                 Unlocked
               </Badge>
             )}
+          </button>
 
-            {/* Action icons — shown on hover */}
-            <span
+          <span className='ml-1 flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100'>
+            <button
+              type='button'
               className={cn(
                 'inline-flex items-center justify-center rounded p-0.5 transition',
-                'opacity-0 group-hover:opacity-100 hover:bg-gray-700/60 text-gray-400',
+                'hover:bg-gray-700/60 text-gray-400',
                 isPending && 'pointer-events-none opacity-40'
               )}
-              onMouseDown={(event: React.MouseEvent<HTMLSpanElement>): void => {
+              onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => {
                 event.stopPropagation();
               }}
-              onClick={(event: React.MouseEvent<HTMLSpanElement>): void => {
+              onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
                 event.stopPropagation();
                 onEdit(list);
               }}
               title='Edit list'
-              aria-hidden='true'
+              aria-label='Edit list'
+              disabled={isPending}
             >
               <Pencil className='size-3' />
-            </span>
-            <span
+            </button>
+            <button
+              type='button'
               className={cn(
                 'inline-flex items-center justify-center rounded p-0.5 transition',
-                'opacity-0 group-hover:opacity-100 text-gray-400',
+                'text-gray-400',
                 list.deletionLocked
                   ? 'hover:bg-emerald-500/15 hover:text-emerald-300'
                   : 'hover:bg-amber-500/15 hover:text-amber-300',
                 isPending && 'pointer-events-none opacity-40'
               )}
-              onMouseDown={(event: React.MouseEvent<HTMLSpanElement>): void => {
+              onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => {
                 event.stopPropagation();
               }}
-              onClick={(event: React.MouseEvent<HTMLSpanElement>): void => {
+              onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
                 event.stopPropagation();
                 onToggleLock(listId);
               }}
               title={list.deletionLocked ? 'Unlock' : 'Lock'}
-              aria-hidden='true'
+              aria-label={list.deletionLocked ? 'Unlock list' : 'Lock list'}
+              disabled={isPending}
             >
               {list.deletionLocked ? <Unlock className='size-3' /> : <Lock className='size-3' />}
-            </span>
-            <span
+            </button>
+            <button
+              type='button'
               className={cn(
                 'inline-flex items-center justify-center rounded p-0.5 transition',
-                'opacity-0 group-hover:opacity-100',
                 list.deletionLocked
                   ? 'text-gray-600 cursor-not-allowed'
                   : 'text-gray-400 hover:bg-red-500/20 hover:text-red-300',
                 isPending && 'pointer-events-none opacity-40'
               )}
-              onMouseDown={(event: React.MouseEvent<HTMLSpanElement>): void => {
+              onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => {
                 event.stopPropagation();
               }}
-              onClick={(event: React.MouseEvent<HTMLSpanElement>): void => {
+              onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
                 event.stopPropagation();
                 if (!list.deletionLocked) onRemove(list);
               }}
               title={list.deletionLocked ? 'Unlock list before removing' : 'Remove list'}
-              aria-hidden='true'
+              aria-label={list.deletionLocked ? 'Unlock list before removing' : 'Remove list'}
+              disabled={list.deletionLocked || isPending}
             >
               <Trash2 className='size-3' />
-            </span>
+            </button>
             <Link
               href={`/admin/validator?list=${encodeURIComponent(listId)}`}
               className={cn(
                 'inline-flex items-center justify-center rounded p-0.5 transition',
-                'opacity-0 group-hover:opacity-100 text-gray-400 hover:bg-sky-500/15 hover:text-sky-300'
+                'text-gray-400 hover:bg-sky-500/15 hover:text-sky-300'
               )}
               onMouseDown={(event: React.MouseEvent): void => {
                 event.stopPropagation();
@@ -194,7 +186,7 @@ export function ValidatorListNodeItem(props: ValidatorListNodeItemProps): React.
                 event.stopPropagation();
               }}
               title='Enter list'
-              aria-hidden='true'
+              aria-label='Enter list'
             >
               <ExternalLink className='size-3' />
             </Link>

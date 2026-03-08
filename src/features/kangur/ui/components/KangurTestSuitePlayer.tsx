@@ -113,7 +113,7 @@ export function KangurTestSuitePlayer({ suite, questions, learnerId, onFinish }:
       surface: 'test' as const,
       contentId: suite.id,
       title: suite.title,
-      description: suite.description,
+      questionId: currentQuestion?.id,
       currentQuestion: currentQuestion?.prompt,
       questionProgressLabel:
         totalQuestions > 0 ? `Pytanie ${currentIndex + 1}/${totalQuestions}` : undefined,
@@ -121,9 +121,9 @@ export function KangurTestSuitePlayer({ suite, questions, learnerId, onFinish }:
     }),
     [
       currentIndex,
+      currentQuestion?.id,
       currentQuestion?.prompt,
       showAnswer,
-      suite.description,
       suite.id,
       suite.title,
       totalQuestions,
@@ -134,13 +134,11 @@ export function KangurTestSuitePlayer({ suite, questions, learnerId, onFinish }:
       surface: 'test' as const,
       contentId: suite.id,
       title: suite.title,
-      description:
-        suite.description ||
-        `Wynik ${score}/${maxScore} punktów. Możesz poprosić o wyjaśnienie po zakończonym teście.`,
-      questionProgressLabel: `Ukończono ${totalQuestions}/${totalQuestions}`,
+      questionProgressLabel:
+        totalQuestions > 0 ? `Ukonczono ${totalQuestions}/${totalQuestions}` : undefined,
       answerRevealed: true,
     }),
-    [maxScore, score, suite.description, suite.id, suite.title, totalQuestions]
+    [suite.id, suite.title, totalQuestions]
   );
   useKangurTutorAnchor({
     id: `kangur-test-question:${suite.id}:${currentQuestion?.id ?? 'none'}`,

@@ -51,6 +51,11 @@ const createPathConfigValue = (pathId: string, triggerEventId: string): string =
     edges: [],
   });
 
+const parseTriggerButtons = (value: string): AiTriggerButtonRecord[] => {
+  const parsed: unknown = JSON.parse(value);
+  return Array.isArray(parsed) ? (parsed as AiTriggerButtonRecord[]) : [];
+};
+
 describe('AI Paths maintenance trigger button binding repairs', () => {
   it('surfaces a maintenance action when a trigger button points at a stale path id', () => {
     const records: AiPathsSettingRecord[] = [
@@ -121,7 +126,7 @@ describe('AI Paths maintenance trigger button binding repairs', () => {
     const triggerButtonsRecord = result.nextRecords.find(
       (entry) => entry.key === AI_PATHS_TRIGGER_BUTTONS_KEY
     );
-    const parsed = triggerButtonsRecord ? JSON.parse(triggerButtonsRecord.value) : null;
+    const parsed = triggerButtonsRecord ? parseTriggerButtons(triggerButtonsRecord.value) : null;
     expect(parsed).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -165,7 +170,7 @@ describe('AI Paths maintenance trigger button binding repairs', () => {
     const triggerButtonsRecord = result.nextRecords.find(
       (entry) => entry.key === AI_PATHS_TRIGGER_BUTTONS_KEY
     );
-    const parsed = triggerButtonsRecord ? JSON.parse(triggerButtonsRecord.value) : null;
+    const parsed = triggerButtonsRecord ? parseTriggerButtons(triggerButtonsRecord.value) : null;
     expect(parsed).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

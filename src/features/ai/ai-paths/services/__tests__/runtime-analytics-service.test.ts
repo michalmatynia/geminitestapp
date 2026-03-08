@@ -575,7 +575,9 @@ describe('runtime analytics service', () => {
       timestamp: '2026-03-06T00:00:00.000Z',
     });
 
-    const incrementedFields = multi.hincrby.mock.calls.map((call) => call[1]);
+    const incrementedFields = multi.hincrby.mock.calls.map(
+      (call: [string, string, number]): string => call[1]
+    );
     expect(incrementedFields).toContain('brain_analytics_reports');
     expect(incrementedFields).toContain('brain_reports_total');
     expect(incrementedFields).toContain('brain_error_reports');
@@ -593,7 +595,9 @@ describe('runtime analytics service', () => {
       timestamp: '2026-03-06T00:00:00.000Z',
     });
 
-    const incrementedFields = multi.hincrby.mock.calls.map((call) => call[1]);
+    const incrementedFields = multi.hincrby.mock.calls.map(
+      (call: [string, string, number]): string => call[1]
+    );
     expect(incrementedFields).toContain('brain_analytics_reports');
     expect(incrementedFields).toContain('brain_reports_total');
     expect(incrementedFields).not.toContain('brain_error_reports');

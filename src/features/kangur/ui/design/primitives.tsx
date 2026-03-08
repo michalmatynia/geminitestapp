@@ -25,30 +25,37 @@ import {
 } from './tokens';
 
 const kangurButtonVariants = cva(
-  'inline-flex cursor-pointer items-center justify-center gap-2 border text-sm font-bold tracking-tight transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300/70 focus-visible:ring-offset-2 ring-offset-white disabled:pointer-events-none disabled:opacity-40 disabled:shadow-none',
+  'inline-flex cursor-pointer items-center justify-center gap-2 border text-sm font-bold tracking-tight transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ring-offset-white disabled:pointer-events-none disabled:opacity-40 disabled:shadow-none',
   {
     variants: {
       variant: {
-        primary: 'kangur-cta-pill border-transparent play-cta text-white hover:brightness-[1.02]',
-        warm: 'kangur-cta-pill border-transparent primary-cta text-white hover:brightness-[1.02]',
+        primary:
+          'kangur-cta-pill border-transparent primary-cta text-white hover:brightness-[1.02] focus-visible:ring-amber-300/70',
         secondary:
-          'kangur-cta-pill border-transparent soft-cta text-[#2f467e] hover:text-[#24386e]',
+          'kangur-cta-pill border-transparent soft-cta text-[#2f467e] hover:text-[#24386e] focus-visible:ring-indigo-300/70',
         surface:
-          'kangur-cta-pill border-transparent surface-cta text-[#2f4db5] hover:text-[#233e99]',
+          'kangur-cta-pill border-transparent surface-cta text-[#2f4db5] hover:text-[#233e99] focus-visible:ring-indigo-300/70',
         success:
-          'kangur-cta-pill border-transparent success-cta text-emerald-800 hover:text-emerald-900',
+          'kangur-cta-pill border-transparent success-cta text-emerald-800 hover:text-emerald-900 focus-visible:ring-emerald-300/70',
         warning:
-          'kangur-cta-pill border-transparent warning-cta text-[#9a5418] hover:text-[#7f4310]',
-        segment: cn('border-transparent text-sm shadow-none', KANGUR_SEGMENTED_CONTROL_ITEM_CLASSNAME),
+          'kangur-cta-pill border-transparent warning-cta text-[#9a5418] hover:text-[#7f4310] focus-visible:ring-amber-300/70',
+        segment: cn(
+          'border-transparent text-sm shadow-none focus-visible:ring-indigo-300/70',
+          KANGUR_SEGMENTED_CONTROL_ITEM_CLASSNAME
+        ),
         segmentActive: cn(
-          'border-transparent text-sm shadow-none',
+          'border-transparent text-sm shadow-none focus-visible:ring-indigo-300/70',
           KANGUR_SEGMENTED_CONTROL_ITEM_CLASSNAME,
           KANGUR_SEGMENTED_CONTROL_ITEM_ACTIVE_CLASSNAME
         ),
-        navigation: KANGUR_TOP_NAV_ITEM_CLASSNAME,
-        navigationActive: cn(KANGUR_TOP_NAV_ITEM_CLASSNAME, KANGUR_TOP_NAV_ITEM_ACTIVE_CLASSNAME),
+        navigation: cn(KANGUR_TOP_NAV_ITEM_CLASSNAME, 'focus-visible:ring-indigo-300/70'),
+        navigationActive: cn(
+          KANGUR_TOP_NAV_ITEM_CLASSNAME,
+          KANGUR_TOP_NAV_ITEM_ACTIVE_CLASSNAME,
+          'focus-visible:ring-indigo-300/70'
+        ),
         ghost:
-          'border-transparent bg-transparent text-[#6e7ee7] hover:bg-white/70 hover:text-[#4f63d8]',
+          'border-transparent bg-transparent text-[#6e7ee7] hover:bg-white/70 hover:text-[#4f63d8] focus-visible:ring-indigo-300/70',
       },
       size: {
         sm: 'h-[44px] px-4 text-sm',
@@ -1434,15 +1441,20 @@ export const KangurPageContainer = ({
   children,
   tabIndex,
   ...props
-}: KangurPageContainerProps): React.JSX.Element => (
-  <Comp
-    className={cn(KANGUR_PAGE_CONTAINER_CLASSNAME, className)}
-    tabIndex={Comp === 'main' ? tabIndex ?? -1 : tabIndex}
-    {...props}
-  >
-    {children}
-  </Comp>
-);
+}: KangurPageContainerProps): React.JSX.Element => {
+  const routing = useOptionalKangurRouting();
+  const ResolvedComp = routing?.embedded && Comp === 'main' ? 'div' : Comp;
+
+  return (
+    <ResolvedComp
+      className={cn(KANGUR_PAGE_CONTAINER_CLASSNAME, className)}
+      tabIndex={tabIndex ?? -1}
+      {...props}
+    >
+      {children}
+    </ResolvedComp>
+  );
+};
 
 type KangurTopNavGroupProps = React.HTMLAttributes<HTMLElement> & {
   label?: string;

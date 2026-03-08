@@ -219,22 +219,20 @@ export function NoteMetadata({ showTitle = true }: NoteMetadataProps): React.JSX
               (related: { id: string; title: string; color: string | null; content: string }) => (
                 <div
                   key={related.id}
-                  className='relative flex min-w-[180px] max-w-[240px] cursor-pointer flex-col gap-1 rounded-md border p-2 text-left transition'
+                  className='relative flex min-w-[180px] max-w-[240px] flex-col gap-1 rounded-md border p-2 text-left transition'
                   style={relatedNoteStyle}
-                  role='button'
-                  tabIndex={0}
-                  onClick={(): void => handleSelectRelatedNote(related.id)}
-                  onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault();
-                      handleSelectRelatedNote(related.id);
-                    }
-                  }}
                 >
-                  <div className='text-xs font-semibold truncate pr-4'>{related.title}</div>
-                  <div className='text-[11px] leading-snug max-h-8 overflow-hidden opacity-80'>
-                    {related.content ? related.content : 'No content'}
-                  </div>
+                  <button
+                    type='button'
+                    onClick={(): void => handleSelectRelatedNote(related.id)}
+                    className='flex min-w-0 flex-1 flex-col gap-1 rounded-sm pr-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
+                    aria-label={`Open related note ${related.title}`}
+                  >
+                    <div className='truncate text-xs font-semibold'>{related.title}</div>
+                    <div className='max-h-8 overflow-hidden text-[11px] leading-snug opacity-80'>
+                      {related.content ? related.content : 'No content'}
+                    </div>
+                  </button>
                   <Button
                     type='button'
                     onClick={(event: React.MouseEvent): void => {

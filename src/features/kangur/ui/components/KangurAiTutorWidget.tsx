@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { createPortal } from 'react-dom';
 import {
@@ -9,14 +10,14 @@ import {
   useState,
   type CSSProperties,
 } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { X, Send, BrainCircuit } from 'lucide-react';
 
 import { KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
+import { resolveKangurAiTutorMotionPresetKind } from '@/features/kangur/settings-ai-tutor';
 import {
   buildKangurRecommendationHref,
-  getKangurRecommendationButtonVariant,
 } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import {
@@ -31,86 +32,40 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { useKangurTextHighlight } from '@/features/kangur/ui/hooks/useKangurTextHighlight';
-import { usePlaywrightPersonas } from '@/features/playwright/hooks/usePlaywrightPersonas';
 import type {
   KangurAiTutorFollowUpAction,
   KangurAiTutorPromptMode,
 } from '@/shared/contracts/kangur-ai-tutor';
-import type { PlaywrightPersona } from '@/shared/contracts/playwright';
 import { cn, sanitizeSvg } from '@/shared/utils';
 
-const EDGE_GAP = 16;
-const AVATAR_SIZE = 56;
-const CTA_WIDTH = 124;
-const CTA_HEIGHT = 40;
-const DESKTOP_BUBBLE_WIDTH = 384;
-const MOBILE_BUBBLE_WIDTH = 320;
-const KANGUR_AI_TUTOR_WIDGET_STORAGE_KEY = 'kangur-ai-tutor-widget-v1';
-
-type TutorMotionPosition = {
-  left?: number | string;
-  top?: number | string;
-  right?: number | string;
-  bottom?: number | string;
-};
-
-type ActiveTutorFocus = {
-  rect: DOMRect | null;
-  kind: KangurTutorAnchorKind | 'selection' | null;
-  id: string | null;
-  label: string | null;
-  assignmentId: string | null;
-};
-
-type TutorQuickAction = {
-  id: string;
-  label: string;
-  prompt: string;
-  promptMode: KangurAiTutorPromptMode;
-  interactionIntent?: 'hint' | 'explain' | 'review' | 'next_step';
-};
-
-type TutorMotionPresetKind = 'default' | 'desktop' | 'tablet' | 'mobile';
-
-type TutorMotionProfile = {
-  kind: TutorMotionPresetKind;
-  sheetBreakpoint: number;
-  avatarTransition: {
-    type: 'spring';
-    stiffness: number;
-    damping: number;
-  };
-  bubbleTransition: {
-    type: 'spring';
-    stiffness: number;
-    damping: number;
-  };
-  hoverScale: number;
-  tapScale: number;
-  motionCompletedDelayMs: number;
-  desktopBubbleWidth: number;
-  mobileBubbleWidth: number;
-};
-
-type TutorMoodAvatarProps = {
-  svgContent?: string | null;
-  label: string;
-  className?: string;
-  svgClassName?: string;
-  fallbackIconClassName?: string;
-  'data-testid'?: string;
-};
-
+import {
+  AVATAR_SIZE,
+  CTA_HEIGHT,
+  CTA_WIDTH,
+  DESKTOP_BUBBLE_WIDTH,
+  EDGE_GAP,
+  KANGUR_AI_TUTOR_WIDGET_STORAGE_KEY,
+  MOBILE_BUBBLE_WIDTH,
+  type ActiveTutorFocus,
+  type TutorMoodAvatarProps,
+  type TutorMotionPosition,
+  type TutorMotionProfile,
+  type TutorMotionPresetKind,
+  type TutorQuickAction,
+} from './KangurAiTutorWidget.shared';
 const clamp = (value: number, min: number, max: number): number => Math.min(Math.max(value, min), max);
 
 const TutorMoodAvatar = ({
   svgContent,
+  avatarImageUrl,
   label,
   className,
+  imgClassName,
   svgClassName,
   fallbackIconClassName,
   'data-testid': dataTestId,
 }: TutorMoodAvatarProps): React.JSX.Element => {
+  const hasImage = typeof avatarImageUrl === 'string' && avatarImageUrl.trim().length > 0;
   const hasSvg = typeof svgContent === 'string' && svgContent.trim().length > 0;
 
   return (
@@ -120,7 +75,16 @@ const TutorMoodAvatar = ({
       data-testid={dataTestId}
       role='img'
     >
-      {hasSvg ? (
+      {hasImage ? (
+        <Image
+          src={avatarImageUrl ?? undefined}
+          alt={label}
+          width={96}
+          height={96}
+          className={cn('h-full w-full object-cover', imgClassName)}
+          unoptimized
+        />
+      ) : hasSvg ? (
         <div
           className={cn(
             'h-full w-full [&_svg]:h-full [&_svg]:w-full [&_svg]:overflow-visible',
@@ -215,6 +179,18 @@ const persistTutorSessionKey = (sessionKey: string | null): void => {
     );
   } catch {
     // Ignore storage write failures so the widget remains functional without storage.
+  }
+};
+
+const clearPersistedTutorSessionKey = (): void => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    window.sessionStorage.removeItem(KANGUR_AI_TUTOR_WIDGET_STORAGE_KEY);
+  } catch {
+    // Ignore storage cleanup failures so the widget remains functional without storage.
   }
 };
 
@@ -556,9 +532,12 @@ const getTutorSessionKey = (
 
 const getContextSwitchNotice = (input: {
   surface: 'lesson' | 'test' | null | undefined;
-  title: string | null | undefined;
-  questionProgressLabel: string | null | undefined;
-  assignmentSummary: string | null | undefined;
+  title?: string | null | undefined;
+  contentId: string | null | undefined;
+  questionProgressLabel?: string | null | undefined;
+  questionId: string | null | undefined;
+  assignmentSummary?: string | null | undefined;
+  assignmentId: string | null | undefined;
 }): {
   title: string;
   target: string;
@@ -568,16 +547,23 @@ const getContextSwitchNotice = (input: {
     return null;
   }
 
+  const surfaceLabel = input.surface === 'test' ? 'Test' : 'Lekcja';
   const targetLabel = input.title?.trim()
-    ? `${input.surface === 'test' ? 'Test' : 'Lekcja'}: ${input.title.trim()}`
-    : input.surface === 'test'
-      ? 'Nowe pytanie testowe'
-      : 'Nowy fragment lekcji';
+    ? `${surfaceLabel}: ${input.title.trim()}`
+    : input.contentId?.trim()
+      ? `${surfaceLabel}: ${input.contentId.trim()}`
+      : input.surface === 'test'
+        ? 'Nowe pytanie testowe'
+        : 'Nowy fragment lekcji';
   const detail = input.questionProgressLabel?.trim()
     ? input.questionProgressLabel.trim()
-    : input.assignmentSummary?.trim()
-      ? 'Tutor ustawia się pod aktywne zadanie.'
-      : null;
+    : input.questionId?.trim()
+      ? 'Tutor ustawia się pod aktualne pytanie.'
+      : input.assignmentSummary?.trim()
+        ? 'Tutor ustawia się pod aktywne zadanie.'
+        : input.assignmentId?.trim()
+          ? 'Tutor ustawia się pod aktywne zadanie.'
+          : null;
 
   return {
     title: 'Nowe miejsce pomocy',
@@ -587,38 +573,15 @@ const getContextSwitchNotice = (input: {
 };
 
 const getMotionPresetKind = (
-  motionPreset: PlaywrightPersona | null | undefined
+  motionPresetId: string | null | undefined
 ): TutorMotionPresetKind => {
-  if (!motionPreset) {
-    return 'default';
-  }
-
-  const deviceName = motionPreset.settings.deviceName?.trim().toLowerCase() ?? '';
-  const isTablet =
-    deviceName.includes('ipad') ||
-    deviceName.includes('tablet') ||
-    deviceName.includes('galaxy tab');
-  const isMobile =
-    deviceName.includes('iphone') ||
-    deviceName.includes('pixel') ||
-    deviceName.includes('android') ||
-    deviceName.includes('phone');
-
-  if (isMobile) {
-    return 'mobile';
-  }
-
-  if (isTablet) {
-    return 'tablet';
-  }
-
-  return motionPreset.settings.emulateDevice ? 'tablet' : 'desktop';
+  return resolveKangurAiTutorMotionPresetKind(motionPresetId);
 };
 
 const getTutorMotionProfile = (
-  motionPreset: PlaywrightPersona | null | undefined
+  motionPresetId: string | null | undefined
 ): TutorMotionProfile => {
-  switch (getMotionPresetKind(motionPreset)) {
+  switch (getMotionPresetKind(motionPresetId)) {
     case 'mobile':
       return {
         kind: 'mobile',
@@ -699,10 +662,11 @@ const getFocusTelemetryKey = (
 };
 
 export function KangurAiTutorWidget(): React.JSX.Element | null {
+  const prefersReducedMotion = useReducedMotion();
+  const tutorRuntime = useKangurAiTutor();
   const {
     enabled,
     tutorSettings,
-    sessionContext,
     isOpen,
     messages,
     isLoading,
@@ -710,13 +674,15 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     tutorName,
     tutorMoodId,
     tutorAvatarSvg,
+    tutorAvatarImageUrl,
     highlightedText,
     usageSummary,
     openChat,
     closeChat,
     sendMessage,
     setHighlightedText,
-  } = useKangurAiTutor();
+  } = tutorRuntime;
+  const sessionContext = tutorRuntime.sessionContext;
   const { selectedText, selectionRect, clearSelection } = useKangurTextHighlight();
   const tutorAnchorContext = useOptionalKangurTutorAnchors();
   const routing = useOptionalKangurRouting();
@@ -737,9 +703,11 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
   const lastShownSelectionKeyRef = useRef<string | null>(null);
   const lastTrackedFocusKeyRef = useRef<string | null>(null);
   const motionTimeoutRef = useRef<number | null>(null);
+  const uiMode = tutorSettings?.uiMode ?? 'anchored';
+  const isAnchoredUiMode = uiMode !== 'static';
+  const allowCrossPagePersistence = tutorSettings?.allowCrossPagePersistence ?? true;
   const allowSelectedTextSupport = tutorSettings?.allowSelectedTextSupport ?? true;
   const showSources = tutorSettings?.showSources ?? true;
-  const { data: motionPresets = [] } = usePlaywrightPersonas();
   const activeSelectedText = allowSelectedTextSupport
     ? (selectedText ?? highlightedText)?.trim() || null
     : null;
@@ -757,16 +725,17 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     [sessionContext]
   );
   const viewport = useMemo(() => getViewport(), [mounted, viewportTick]);
-  const selectedMotionPreset = useMemo(
-    () =>
-      tutorSettings?.motionPresetId
-        ? motionPresets.find((preset) => preset.id === tutorSettings.motionPresetId) ?? null
-        : null,
-    [motionPresets, tutorSettings?.motionPresetId]
-  );
   const motionProfile = useMemo(
-    () => getTutorMotionProfile(selectedMotionPreset),
-    [selectedMotionPreset]
+    () => getTutorMotionProfile(tutorSettings?.motionPresetId),
+    [tutorSettings?.motionPresetId]
+  );
+  const reducedMotionTransitions = useMemo(
+    () => ({
+      instant: { duration: 0 },
+      stableState: { opacity: 1, y: 0, scale: 1 },
+      staticSheetState: { opacity: 1, y: 0 },
+    }),
+    []
   );
   const selectionTelemetryKey = useMemo(
     () =>
@@ -832,7 +801,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
       return;
     }
 
-    const previousSessionKey = previousSessionKeyRef.current;
+    const previousSessionKey = allowCrossPagePersistence ? previousSessionKeyRef.current : null;
     if (previousSessionKey && previousSessionKey !== tutorSessionKey) {
       setInputValue('');
       setPersistedSelectionRect(null);
@@ -841,23 +810,43 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
           ? getContextSwitchNotice({
             surface: sessionContext?.surface,
             title: sessionContext?.title ?? null,
+            contentId: sessionContext?.contentId ?? null,
             questionProgressLabel: sessionContext?.questionProgressLabel ?? null,
+            questionId: sessionContext?.questionId ?? null,
             assignmentSummary: sessionContext?.assignmentSummary ?? null,
+            assignmentId: sessionContext?.assignmentId ?? null,
           })
           : null
       );
     }
 
     previousSessionKeyRef.current = tutorSessionKey;
-    persistTutorSessionKey(tutorSessionKey);
+    if (allowCrossPagePersistence) {
+      persistTutorSessionKey(tutorSessionKey);
+    } else {
+      clearPersistedTutorSessionKey();
+    }
   }, [
+    allowCrossPagePersistence,
     isOpen,
     sessionContext?.assignmentSummary,
+    sessionContext?.assignmentId,
     sessionContext?.questionProgressLabel,
+    sessionContext?.questionId,
+    sessionContext?.contentId,
     sessionContext?.surface,
     sessionContext?.title,
     tutorSessionKey,
   ]);
+
+  useEffect(() => {
+    if (allowCrossPagePersistence) {
+      return;
+    }
+
+    clearPersistedTutorSessionKey();
+    previousSessionKeyRef.current = tutorSessionKey;
+  }, [allowCrossPagePersistence, tutorSessionKey]);
 
   useEffect(() => {
     if (!contextSwitchNotice || !isOpen) {
@@ -957,11 +946,12 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
 
   const focusChipLabel = getFocusChipLabel(activeFocus, activeSelectedText);
   const selectionActionStyle = selectionRect ? getSelectionActionStyle(selectionRect) : null;
+  const displayFocusRect = isAnchoredUiMode ? activeFocus.rect : null;
   const avatarStyle =
-    isOpen && activeFocus.rect ? getAnchorAvatarStyle(activeFocus.rect) : getDockAvatarStyle();
+    isOpen && displayFocusRect ? getAnchorAvatarStyle(displayFocusRect) : getDockAvatarStyle();
   const isMobileSheet = viewport.width < motionProfile.sheetBreakpoint;
   const bubblePlacement = getBubblePlacement(
-    isOpen && !isMobileSheet ? activeFocus.rect : null,
+    isOpen && !isMobileSheet ? displayFocusRect : null,
     viewport,
     isMobileSheet ? 'sheet' : 'bubble',
     {
@@ -974,8 +964,12 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     [activeFocus, isOpen, tutorSessionKey]
   );
   const selectedTextPreview = activeSelectedText?.slice(0, 140) ?? null;
-  const hasCurrentQuestion = Boolean(sessionContext?.currentQuestion?.trim());
-  const hasAssignmentSummary = Boolean(sessionContext?.assignmentSummary?.trim());
+  const hasCurrentQuestion = Boolean(
+    sessionContext?.questionId?.trim() || sessionContext?.currentQuestion?.trim()
+  );
+  const hasAssignmentSummary = Boolean(
+    sessionContext?.assignmentId?.trim() || sessionContext?.assignmentSummary?.trim()
+  );
   const quickActions = buildQuickActions({
     surface: sessionContext?.surface,
     answerRevealed: sessionContext?.answerRevealed,
@@ -1039,7 +1033,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
         hasSelectedText: Boolean(activeSelectedText),
       });
       motionTimeoutRef.current = null;
-    }, motionProfile.motionCompletedDelayMs);
+    }, prefersReducedMotion ? 0 : motionProfile.motionCompletedDelayMs);
 
     return () => {
       if (motionTimeoutRef.current !== null) {
@@ -1055,6 +1049,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     focusTelemetryKey,
     isOpen,
     motionProfile.motionCompletedDelayMs,
+    prefersReducedMotion,
     sessionContext?.contentId,
     sessionContext?.surface,
     sessionContext?.title,
@@ -1187,9 +1182,18 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
           <motion.div
             key='highlight-tooltip'
             data-testid='kangur-ai-tutor-selection-action'
-            initial={{ opacity: 0, y: 4, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 4, scale: 0.96 }}
+            initial={
+              prefersReducedMotion
+                ? reducedMotionTransitions.stableState
+                : { opacity: 0, y: 4, scale: 0.96 }
+            }
+            animate={reducedMotionTransitions.stableState}
+            exit={
+              prefersReducedMotion
+                ? reducedMotionTransitions.stableState
+                : { opacity: 0, y: 4, scale: 0.96 }
+            }
+            transition={prefersReducedMotion ? reducedMotionTransitions.instant : undefined}
             style={selectionActionStyle}
             className='z-[70]'
           >
@@ -1210,25 +1214,28 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
 
       <motion.button
         data-testid='kangur-ai-tutor-avatar'
-        data-anchor-kind={isOpen ? activeFocus.kind ?? 'dock' : 'dock'}
+        data-anchor-kind={isOpen && isAnchoredUiMode ? activeFocus.kind ?? 'dock' : 'dock'}
         data-motion-preset={motionProfile.kind}
+        data-motion-behavior={prefersReducedMotion ? 'reduced' : 'animated'}
+        data-ui-mode={uiMode}
         type='button'
         onClick={(): void => (isOpen ? handleCloseChat('toggle') : handleOpenChat('toggle'))}
         initial={false}
         animate={avatarStyle}
-        transition={motionProfile.avatarTransition}
-        whileHover={{ scale: motionProfile.hoverScale }}
-        whileTap={{ scale: motionProfile.tapScale }}
+        transition={prefersReducedMotion ? reducedMotionTransitions.instant : motionProfile.avatarTransition}
+        whileHover={prefersReducedMotion ? undefined : { scale: motionProfile.hoverScale }}
+        whileTap={prefersReducedMotion ? undefined : { scale: motionProfile.tapScale }}
         className={cn(
           'fixed z-[60] flex h-14 w-14 items-center justify-center rounded-full',
-          'border-2 border-slate-900 bg-gradient-to-br from-indigo-500 via-fuchsia-500 to-amber-400',
-          'shadow-[6px_6px_0_rgba(15,23,42,0.18)]',
-          'focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2'
+          'border-2 border-amber-900 bg-gradient-to-br from-amber-300 via-orange-400 to-orange-500',
+          'shadow-[6px_6px_0_rgba(154,82,24,0.18)] hover:brightness-[1.03]',
+          'focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2'
         )}
         aria-label={isOpen ? 'Zamknij pomocnika' : 'Otwórz pomocnika AI'}
       >
         <TutorMoodAvatar
           svgContent={tutorAvatarSvg}
+          avatarImageUrl={tutorAvatarImageUrl}
           label={`${tutorName} avatar (${tutorMoodId})`}
           className='h-12 w-12 border border-white/25 bg-white/12 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]'
           svgClassName='[&_svg]:drop-shadow-[0_1px_1px_rgba(15,23,42,0.1)]'
@@ -1247,10 +1254,10 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
                 key='chat-backdrop'
                 type='button'
                 aria-label='Zamknij pomocnika'
-                initial={{ opacity: 0 }}
+                initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
                 animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.18 }}
+                exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+                transition={prefersReducedMotion ? reducedMotionTransitions.instant : { duration: 0.18 }}
                 className='fixed inset-0 z-[62] bg-slate-900/18'
                 onClick={(): void => handleCloseChat('toggle')}
               />
@@ -1259,11 +1266,17 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
               key='chat-panel'
               data-testid='kangur-ai-tutor-panel'
               data-layout={bubblePlacement.mode}
+              data-motion-behavior={prefersReducedMotion ? 'reduced' : 'animated'}
               data-motion-preset={motionProfile.kind}
+              data-ui-mode={uiMode}
               initial={
-                bubblePlacement.mode === 'sheet'
-                  ? { opacity: 0, y: 28 }
-                  : { opacity: 0, y: 16, scale: 0.97 }
+                prefersReducedMotion
+                  ? bubblePlacement.mode === 'sheet'
+                    ? reducedMotionTransitions.staticSheetState
+                    : reducedMotionTransitions.stableState
+                  : bubblePlacement.mode === 'sheet'
+                    ? { opacity: 0, y: 28 }
+                    : { opacity: 0, y: 16, scale: 0.97 }
               }
               animate={{
                 ...bubblePlacement.style,
@@ -1272,11 +1285,15 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
                 ...(bubblePlacement.mode === 'sheet' ? {} : { scale: 1 }),
               }}
               exit={
-                bubblePlacement.mode === 'sheet'
-                  ? { opacity: 0, y: 28 }
-                  : { opacity: 0, y: 16, scale: 0.97 }
+                prefersReducedMotion
+                  ? bubblePlacement.mode === 'sheet'
+                    ? reducedMotionTransitions.staticSheetState
+                    : reducedMotionTransitions.stableState
+                  : bubblePlacement.mode === 'sheet'
+                    ? { opacity: 0, y: 28 }
+                    : { opacity: 0, y: 16, scale: 0.97 }
               }
-              transition={motionProfile.bubbleTransition}
+              transition={prefersReducedMotion ? reducedMotionTransitions.instant : motionProfile.bubbleTransition}
               className='fixed z-[65]'
               style={bubblePlacement.width ? { width: bubblePlacement.width } : undefined}
             >
@@ -1309,10 +1326,14 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
                   </div>
                 ) : null}
 
-                <div className='flex items-center justify-between bg-[linear-gradient(135deg,#2f4df6_0%,#e84694_55%,#fbbf24_100%)] px-4 py-3'>
+                <div
+                  data-testid='kangur-ai-tutor-header'
+                  className='flex items-center justify-between bg-gradient-to-r from-amber-300 via-orange-400 to-orange-500 px-4 py-3'
+                >
                   <div className='flex items-center gap-2'>
                     <TutorMoodAvatar
                       svgContent={tutorAvatarSvg}
+                      avatarImageUrl={tutorAvatarImageUrl}
                       label={`${tutorName} header avatar (${tutorMoodId})`}
                       className='h-9 w-9 border border-white/20 bg-white/14'
                       svgClassName='[&_svg]:drop-shadow-[0_1px_1px_rgba(15,23,42,0.08)]'
@@ -1322,9 +1343,10 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
                       <span className='text-sm font-black uppercase tracking-[0.08em] text-white'>
                         {tutorName}
                       </span>
-                      {sessionContext?.title ? (
+                      {sessionContext?.title || sessionContext?.contentId ? (
                         <span className='text-[11px] text-white/85'>
-                          {sessionContext.surface === 'test' ? 'Test' : 'Lekcja'}: {sessionContext.title}
+                          {sessionContext.surface === 'test' ? 'Test' : 'Lekcja'}:{' '}
+                          {sessionContext.title ?? sessionContext.contentId}
                         </span>
                       ) : null}
                     </div>
@@ -1383,12 +1405,12 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
 
                 <div className='flex flex-wrap gap-2 border-b border-slate-100 px-3 py-3'>
                   {usageSummary && usageSummary.dailyMessageLimit !== null ? (
-                    <div className='w-full rounded-2xl border border-indigo-100 bg-indigo-50/80 px-3 py-2 text-[11px] text-indigo-900'>
+                    <div className='w-full rounded-2xl border border-amber-100 bg-amber-50/80 px-3 py-2 text-[11px] text-amber-900'>
                       <div className='flex items-center justify-between gap-3'>
                         <span className='font-semibold'>
                         Limit dzisiaj: {usageSummary.messageCount}/{usageSummary.dailyMessageLimit}
                         </span>
-                        <span className='text-indigo-700'>
+                        <span className='text-amber-700'>
                           {isUsageLoading
                             ? 'Aktualizuję…'
                             : remainingMessages === 0
@@ -1423,7 +1445,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
                     messages.map((msg, index) =>
                       msg.role === 'user' ? (
                         <div key={index} className='flex justify-end'>
-                          <div className='max-w-[80%] rounded-[22px] border border-indigo-500 bg-indigo-500 px-3 py-2 text-sm leading-relaxed text-white shadow-sm'>
+                          <div className='max-w-[80%] rounded-[22px] border border-orange-400 bg-gradient-to-br from-orange-400 to-amber-500 px-3 py-2 text-sm leading-relaxed text-white shadow-[0_16px_28px_-20px_rgba(249,115,22,0.58)]'>
                             {msg.content}
                           </div>
                         </div>
@@ -1442,7 +1464,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
                                   {msg.followUpActions.map((action) => (
                                     <div
                                       key={action.id}
-                                      className='rounded-2xl border border-indigo-100 bg-indigo-50/70 px-3 py-3'
+                                      className='rounded-2xl border border-amber-100 bg-amber-50/70 px-3 py-3'
                                     >
                                       {action.reason ? (
                                         <div className='text-xs font-medium leading-relaxed text-slate-700'>
@@ -1452,7 +1474,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
                                       <KangurButton
                                         asChild
                                         size='sm'
-                                        variant={getKangurRecommendationButtonVariant(action.page)}
+                                        variant='primary'
                                         className={cn('mt-2 w-full', action.reason ? '' : 'mt-0')}
                                       >
                                         <Link
@@ -1514,7 +1536,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
                     value={inputValue}
                     onChange={(event) => setInputValue(event.target.value)}
                     onKeyDown={handleKeyDown}
-                    accent='indigo'
+                    accent='amber'
                     size='sm'
                     className='flex-1'
                     disabled={isLoading || !canSendMessages}

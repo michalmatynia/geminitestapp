@@ -3,35 +3,70 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { AGENT_PERSONA_SETTINGS_KEY } from '@/shared/contracts/agents';
-import { KANGUR_AI_TUTOR_SETTINGS_KEY } from '@/features/kangur/settings-ai-tutor';
+import {
+  KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
+  KANGUR_AI_TUTOR_SETTINGS_KEY,
+} from '@/features/kangur/settings-ai-tutor';
 import { KANGUR_AI_TUTOR_USAGE_SETTINGS_KEY } from '@/features/kangur/server/ai-tutor-usage';
 
 const {
-  runTeachingChatMock,
   resolveKangurActorMock,
   resolveBrainExecutionConfigForCapabilityMock,
   runBrainChatCompletionMock,
+  contextRegistryResolveRefsMock,
+  buildPersonaChatMemoryContextMock,
+  persistAgentPersonaExchangeMemoryMock,
+  chatbotSessionAddMessageMock,
+  prismaChatbotSessionFindFirstMock,
+  prismaChatbotSessionCreateMock,
   readStoredSettingValueMock,
   upsertStoredSettingValueMock,
   logKangurServerEventMock,
   buildKangurAiTutorAdaptiveGuidanceMock,
 } = vi.hoisted(() => ({
-  runTeachingChatMock: vi.fn(),
   resolveKangurActorMock: vi.fn(),
   resolveBrainExecutionConfigForCapabilityMock: vi.fn(),
   runBrainChatCompletionMock: vi.fn(),
+  contextRegistryResolveRefsMock: vi.fn(),
+  buildPersonaChatMemoryContextMock: vi.fn(),
+  persistAgentPersonaExchangeMemoryMock: vi.fn(),
+  chatbotSessionAddMessageMock: vi.fn(),
+  prismaChatbotSessionFindFirstMock: vi.fn(),
+  prismaChatbotSessionCreateMock: vi.fn(),
   readStoredSettingValueMock: vi.fn(),
   upsertStoredSettingValueMock: vi.fn(),
   logKangurServerEventMock: vi.fn(),
   buildKangurAiTutorAdaptiveGuidanceMock: vi.fn(),
 }));
 
-vi.mock('@/features/ai/agentcreator/teaching/server/chat', () => ({
-  runTeachingChat: runTeachingChatMock,
-}));
-
 vi.mock('@/features/kangur/server', () => ({
   resolveKangurActor: resolveKangurActorMock,
+}));
+
+vi.mock('@/features/ai/agentcreator/server/persona-memory', () => ({
+  buildPersonaChatMemoryContext: buildPersonaChatMemoryContextMock,
+  persistAgentPersonaExchangeMemory: persistAgentPersonaExchangeMemoryMock,
+}));
+
+vi.mock('@/features/ai/chatbot/server', () => ({
+  chatbotSessionRepository: {
+    addMessage: chatbotSessionAddMessageMock,
+  },
+}));
+
+vi.mock('@/shared/lib/db/prisma', () => ({
+  default: {
+    chatbotSession: {
+      findFirst: prismaChatbotSessionFindFirstMock,
+      create: prismaChatbotSessionCreateMock,
+    },
+  },
+}));
+
+vi.mock('@/features/ai/ai-context-registry/server', () => ({
+  contextRegistryEngine: {
+    resolveRefs: contextRegistryResolveRefsMock,
+  },
 }));
 
 vi.mock('@/shared/lib/ai-brain/server', () => ({
@@ -55,6 +90,114 @@ vi.mock('@/features/kangur/server/ai-tutor-adaptive', () => ({
 vi.unmock('@/features/kangur/settings-ai-tutor');
 
 import { postKangurAiTutorChatHandler } from './handler';
+
+const KANGUR_AI_TUTOR_BRAIN_CAPABILITY = 'kangur_ai_tutor.chat';
+
+const createRuntimeDocument = (input: {
+  entityType: string;
+  id: string;
+  title: string;
+  summary?: string;
+  facts?: Record<string, unknown>;
+}) => ({
+  id: input.id,
+  kind: 'runtime_document' as const,
+  entityType: input.entityType,
+  title: input.title,
+  summary: input.summary ?? input.title,
+  status: 'active',
+  tags: ['kangur', 'test'],
+  relatedNodeIds: [],
+  facts: input.facts ?? {},
+  sections: [],
+  provenance: {
+    providerId: 'kangur',
+    source: 'test',
+  },
+});
+
+const createContextRegistryBundle = (input?: {
+  learnerSummary?: string;
+  lessonFacts?: Record<string, unknown>;
+  testFacts?: Record<string, unknown>;
+  assignmentFacts?: Record<string, unknown>;
+}) => {
+  const documents = [
+    createRuntimeDocument({
+      id: 'runtime:kangur:learner:learner-1',
+      entityType: 'kangur_learner_snapshot',
+      title: 'Learner snapshot',
+      summary: input?.learnerSummary ?? 'Average accuracy 74%.',
+      facts: {
+        learnerSummary: input?.learnerSummary ?? 'Average accuracy 74%.',
+      },
+    }),
+  ];
+
+  if (input?.lessonFacts) {
+    documents.push(
+      createRuntimeDocument({
+        id: 'runtime:kangur:lesson:learner-1:lesson-1',
+        entityType: 'kangur_lesson_context',
+        title: String(input.lessonFacts['title'] ?? 'Lesson context'),
+        summary: String(
+          input.lessonFacts['description'] ?? input.lessonFacts['assignmentSummary'] ?? 'Lesson context'
+        ),
+        facts: input.lessonFacts,
+      })
+    );
+  }
+
+  if (input?.testFacts) {
+    documents.push(
+      createRuntimeDocument({
+        id: 'runtime:kangur:test:learner-1:suite-1:q-1:active',
+        entityType: 'kangur_test_context',
+        title: String(input.testFacts['title'] ?? 'Test context'),
+        summary: String(
+          input.testFacts['description'] ?? input.testFacts['currentQuestion'] ?? 'Test context'
+        ),
+        facts: input.testFacts,
+      })
+    );
+  }
+
+  if (input?.assignmentFacts) {
+    documents.push(
+      createRuntimeDocument({
+        id: 'runtime:kangur:assignment:learner-1:assignment-1',
+        entityType: 'kangur_assignment_context',
+        title: String(input.assignmentFacts['title'] ?? 'Assignment context'),
+        summary: String(input.assignmentFacts['assignmentSummary'] ?? 'Assignment context'),
+        facts: input.assignmentFacts,
+      })
+    );
+  }
+
+  return {
+    refs: documents.map((document) => ({
+      id: document.id,
+      kind: 'runtime_document' as const,
+      providerId: 'kangur',
+      entityType: document.entityType,
+    })),
+    nodes: [
+      {
+        id: 'policy:kangur-ai-tutor-socratic',
+        kind: 'policy' as const,
+        description: 'Use short Socratic guidance grounded in the resolved Kangur context.',
+      },
+      {
+        id: 'policy:kangur-ai-tutor-test-guardrails',
+        kind: 'policy' as const,
+        description: 'Protect active test integrity and avoid giving away answers.',
+      },
+    ],
+    documents,
+    truncated: false,
+    engineVersion: 'test-engine',
+  };
+};
 
 const createRequestContext = (): ApiHandlerContext =>
   ({
@@ -83,6 +226,47 @@ describe('kangur ai tutor chat handler', () => {
         id: 'learner-1',
       },
     });
+    contextRegistryResolveRefsMock.mockResolvedValue(
+      createContextRegistryBundle({
+        lessonFacts: {
+          title: 'Dodawanie',
+          description: 'Ćwiczenia z podstaw dodawania.',
+        },
+      })
+    );
+    resolveBrainExecutionConfigForCapabilityMock.mockResolvedValue({
+      modelId: 'brain-model-1',
+      temperature: 0.2,
+      maxTokens: 500,
+      systemPrompt: 'Base brain prompt',
+    });
+    runBrainChatCompletionMock.mockResolvedValue({
+      text: 'Spróbuj policzyć po kolei i sprawdź każdą cyfrę.',
+    });
+    buildPersonaChatMemoryContextMock.mockResolvedValue({
+      persona: {
+        id: 'persona-1',
+        name: 'Mila',
+      },
+      memory: {
+        items: [],
+        summary: {
+          personaId: 'persona-1',
+          suggestedMoodId: 'encouraging',
+          totalRecords: 0,
+          memoryEntryCount: 0,
+          conversationMessageCount: 0,
+        },
+      },
+      systemPrompt: 'Relevant persona memory:\n- Mila remembers the learner benefits from short checkpoints.',
+      suggestedMoodId: 'encouraging',
+    });
+    persistAgentPersonaExchangeMemoryMock.mockResolvedValue(undefined);
+    chatbotSessionAddMessageMock.mockResolvedValue(null);
+    prismaChatbotSessionFindFirstMock.mockResolvedValue(null);
+    prismaChatbotSessionCreateMock.mockResolvedValue({
+      id: 'kangur-persona-session-1',
+    });
     upsertStoredSettingValueMock.mockResolvedValue(true);
     buildKangurAiTutorAdaptiveGuidanceMock.mockResolvedValue({
       instructions: '',
@@ -94,7 +278,7 @@ describe('kangur ai tutor chat handler', () => {
         return JSON.stringify({
           'learner-1': {
             enabled: true,
-            teachingAgentId: 'teacher-1',
+            teachingAgentId: 'legacy-teacher',
             agentPersonaId: 'persona-1',
             playwrightPersonaId: null,
             allowLessons: true,
@@ -103,6 +287,14 @@ describe('kangur ai tutor chat handler', () => {
             allowSelectedTextSupport: true,
             dailyMessageLimit: null,
           },
+        });
+      }
+      if (key === KANGUR_AI_TUTOR_APP_SETTINGS_KEY) {
+        return JSON.stringify({
+          teachingAgentId: 'legacy-teacher',
+          agentPersonaId: 'persona-1',
+          motionPresetId: null,
+          dailyMessageLimit: null,
         });
       }
       if (key === KANGUR_AI_TUTOR_USAGE_SETTINGS_KEY) {
@@ -126,25 +318,24 @@ describe('kangur ai tutor chat handler', () => {
     vi.useRealTimers();
   });
 
-  it('passes structured test context into the teaching-agent chat and returns retrieved sources', async () => {
+  it('routes tutor chat through Brain with persona instructions and structured Kangur context', async () => {
     buildKangurAiTutorAdaptiveGuidanceMock.mockResolvedValue({
       instructions: 'Adaptive learner guidance:\nTop recommendation: Powtorz lekcje: Dodawanie.',
       followUpActions: [],
     });
-
-    runTeachingChatMock.mockResolvedValue({
-      message: 'Spójrz najpierw na to, co oznacza znak plus.',
-      sources: [
-        {
-          documentId: 'doc-1',
-          collectionId: 'collection-1',
-          score: 0.91,
-          text: 'Dodawanie łączy dwie liczby w jedną sumę.',
-          metadata: {
-            title: 'Dodawanie podstawy',
-          },
+    contextRegistryResolveRefsMock.mockResolvedValue(
+      createContextRegistryBundle({
+        learnerSummary: 'Average accuracy 74%. 2 active assignments. 1 lesson needs practice.',
+        testFacts: {
+          title: 'Kangur Mini',
+          description: 'Krótki zestaw próbny.',
+          currentQuestion: 'Ile to 2 + 2?',
+          questionProgressLabel: 'Pytanie 1/10',
         },
-      ],
+      })
+    );
+    runBrainChatCompletionMock.mockResolvedValue({
+      text: 'Spójrz najpierw na to, co oznacza znak plus.',
     });
 
     const response = await postKangurAiTutorChatHandler(
@@ -154,10 +345,7 @@ describe('kangur ai tutor chat handler', () => {
           context: {
             surface: 'test',
             contentId: 'suite-2026',
-            title: 'Kangur Mini',
-            description: 'Krótki zestaw próbny.',
-            currentQuestion: 'Ile to 2 + 2?',
-            questionProgressLabel: 'Pytanie 1/10',
+            questionId: 'q-1',
             selectedText: '2 + 2',
             answerRevealed: false,
             promptMode: 'hint',
@@ -167,25 +355,72 @@ describe('kangur ai tutor chat handler', () => {
       createRequestContext()
     );
 
-    expect(runTeachingChatMock).toHaveBeenCalledTimes(1);
+    expect(contextRegistryResolveRefsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        depth: 1,
+        maxNodes: 24,
+        refs: expect.arrayContaining([
+          expect.objectContaining({
+            providerId: 'kangur',
+            entityType: 'kangur_learner_snapshot',
+          }),
+          expect.objectContaining({
+            providerId: 'kangur',
+            entityType: 'kangur_test_context',
+          }),
+        ]),
+      })
+    );
+    expect(buildKangurAiTutorAdaptiveGuidanceMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        learnerId: 'learner-1',
+        registryBundle: expect.objectContaining({
+          documents: expect.arrayContaining([
+            expect.objectContaining({ entityType: 'kangur_test_context' }),
+          ]),
+        }),
+      })
+    );
+    expect(resolveBrainExecutionConfigForCapabilityMock).toHaveBeenCalledWith(
+      KANGUR_AI_TUTOR_BRAIN_CAPABILITY,
+      expect.objectContaining({
+        defaultTemperature: 0.4,
+        defaultMaxTokens: 600,
+      })
+    );
+    expect(runBrainChatCompletionMock).toHaveBeenCalledTimes(1);
 
-    const chatInput = runTeachingChatMock.mock.calls[0]?.[0];
-    expect(chatInput.agentId).toBe('teacher-1');
-    expect(chatInput.messages[0]).toMatchObject({
+    const brainInput = runBrainChatCompletionMock.mock.calls[0]?.[0];
+    expect(brainInput.modelId).toBe('brain-model-1');
+    expect(brainInput.messages[0]).toMatchObject({
       role: 'system',
     });
-    expect(chatInput.messages[0].content).toContain('friendly AI tutor helping a child');
-    expect(chatInput.messages[0].content).toContain('Current Kangur surface: test practice.');
-    expect(chatInput.messages[0].content).toContain('Current question: Ile to 2 + 2?');
-    expect(chatInput.messages[0].content).toContain('Question progress: Pytanie 1/10');
-    expect(chatInput.messages[0].content).toContain('Learner selected this text: """2 + 2"""');
-    expect(chatInput.messages[0].content).toContain(
+    expect(brainInput.messages[0].content).toContain('Base brain prompt');
+    expect(brainInput.messages[0].content).toContain('You are Mila.');
+    expect(brainInput.messages[0].content).toContain('Role: Math coach.');
+    expect(brainInput.messages[0].content).toContain('Use a calm, playful tone.');
+    expect(brainInput.messages[0].content).toContain(
+      'Relevant persona memory:\n- Mila remembers the learner benefits from short checkpoints.'
+    );
+    expect(brainInput.messages[0].content).toContain('Current Kangur surface: test practice.');
+    expect(brainInput.messages[0].content).toContain('Current title: Kangur Mini');
+    expect(brainInput.messages[0].content).toContain('Current description: Krótki zestaw próbny.');
+    expect(brainInput.messages[0].content).toContain(
+      'Learner snapshot: Average accuracy 74%. 2 active assignments. 1 lesson needs practice.'
+    );
+    expect(brainInput.messages[0].content).toContain('Current question: Ile to 2 + 2?');
+    expect(brainInput.messages[0].content).toContain('Question progress: Pytanie 1/10');
+    expect(brainInput.messages[0].content).toContain('Learner selected this text: """2 + 2"""');
+    expect(brainInput.messages[0].content).toContain(
+      'Registry policy: Use short Socratic guidance grounded in the resolved Kangur context.'
+    );
+    expect(brainInput.messages[0].content).toContain(
       'The learner asked for a hint. Give only the next helpful step or one guiding question.'
     );
-    expect(chatInput.messages[0].content).toContain(
+    expect(brainInput.messages[0].content).toContain(
       'Do not reveal the final answer, the correct option label, or solve the problem outright.'
     );
-    expect(chatInput.messages[0].content).toContain(
+    expect(brainInput.messages[0].content).toContain(
       'Adaptive learner guidance:\nTop recommendation: Powtorz lekcje: Dodawanie.'
     );
     expect(logKangurServerEventMock).toHaveBeenCalledWith(
@@ -197,14 +432,82 @@ describe('kangur ai tutor chat handler', () => {
           surface: 'test',
           contentId: 'suite-2026',
           promptMode: 'hint',
-          usedTeachingAgent: true,
-          retrievedSourceCount: 1,
-          returnedSourceCount: 1,
+          brainCapability: KANGUR_AI_TUTOR_BRAIN_CAPABILITY,
+          retrievedSourceCount: 0,
+          returnedSourceCount: 0,
           showSources: true,
           adaptiveGuidanceApplied: true,
+          contextRegistryRefCount: 2,
+          contextRegistryDocumentCount: 2,
+          personaId: 'persona-1',
+          suggestedPersonaMoodId: 'encouraging',
+          personaMemorySessionId: 'kangur-persona-session-1',
           dailyUsageCount: 0,
           usageDateKey: '2026-03-07',
         }),
+      })
+    );
+    expect(prismaChatbotSessionFindFirstMock).toHaveBeenCalledWith({
+      where: {
+        personaId: 'persona-1',
+        title: 'Kangur AI Tutor · Mila · learner:learner-1',
+      },
+      select: {
+        id: true,
+      },
+    });
+    expect(prismaChatbotSessionCreateMock).toHaveBeenCalledWith({
+      data: {
+        title: 'Kangur AI Tutor · Mila · learner:learner-1',
+        personaId: 'persona-1',
+        settings: {
+          personaId: 'persona-1',
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+    expect(chatbotSessionAddMessageMock).toHaveBeenCalledTimes(2);
+    expect(chatbotSessionAddMessageMock).toHaveBeenNthCalledWith(
+      1,
+      'kangur-persona-session-1',
+      expect.objectContaining({
+        role: 'user',
+        content: 'Pomóż mi z tym pytaniem.',
+        metadata: expect.objectContaining({
+          source: 'kangur_ai_tutor',
+          learnerId: 'learner-1',
+          contentId: 'suite-2026',
+          questionId: 'q-1',
+          promptMode: 'hint',
+        }),
+      })
+    );
+    expect(chatbotSessionAddMessageMock).toHaveBeenNthCalledWith(
+      2,
+      'kangur-persona-session-1',
+      expect.objectContaining({
+        role: 'assistant',
+        content: 'Spójrz najpierw na to, co oznacza znak plus.',
+        metadata: expect.objectContaining({
+          source: 'kangur_ai_tutor',
+          learnerId: 'learner-1',
+          suggestedPersonaMoodId: 'encouraging',
+          moodHints: ['encouraging'],
+        }),
+      })
+    );
+    expect(persistAgentPersonaExchangeMemoryMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        personaId: 'persona-1',
+        sourceType: 'chat_message',
+        sourceLabel: 'Kangur test · suite-2026',
+        sessionId: 'kangur-persona-session-1',
+        userMessage: 'Pomóż mi z tym pytaniem.',
+        assistantMessage: 'Spójrz najpierw na to, co oznacza znak plus.',
+        tags: ['kangur', 'test', 'hint'],
+        moodHints: ['encouraging'],
       })
     );
     expect(upsertStoredSettingValueMock).not.toHaveBeenCalled();
@@ -212,18 +515,9 @@ describe('kangur ai tutor chat handler', () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
       message: 'Spójrz najpierw na to, co oznacza znak plus.',
-      sources: [
-        {
-          documentId: 'doc-1',
-          collectionId: 'collection-1',
-          score: 0.91,
-          text: 'Dodawanie łączy dwie liczby w jedną sumę.',
-          metadata: {
-            title: 'Dodawanie podstawy',
-          },
-        },
-      ],
+      sources: [],
       followUpActions: [],
+      suggestedMoodId: 'encouraging',
       usage: {
         dateKey: '2026-03-07',
         messageCount: 0,
@@ -249,10 +543,19 @@ describe('kangur ai tutor chat handler', () => {
         },
       ],
     });
-
-    runTeachingChatMock.mockResolvedValue({
-      message: 'Wroc teraz do lekcji z dodawania i zrob jedna krotka powtorke.',
-      sources: [],
+    contextRegistryResolveRefsMock.mockResolvedValue(
+      createContextRegistryBundle({
+        learnerSummary: 'Average accuracy 79%. 1 active assignment.',
+        lessonFacts: {
+          title: 'Dodawanie',
+          description: 'Ćwiczenia z podstaw dodawania.',
+          assignmentSummary: 'Powtorz lekcje: Dodawanie.',
+          masterySummary: 'Dodawanie mastery 65% after 2 attempts.',
+        },
+      })
+    );
+    runBrainChatCompletionMock.mockResolvedValue({
+      text: 'Wroc teraz do lekcji z dodawania i zrob jedna krotka powtorke.',
     });
 
     const response = await postKangurAiTutorChatHandler(
@@ -262,7 +565,6 @@ describe('kangur ai tutor chat handler', () => {
           context: {
             surface: 'lesson',
             contentId: 'adding',
-            title: 'Dodawanie',
             promptMode: 'chat',
             interactionIntent: 'next_step',
           },
@@ -294,6 +596,7 @@ describe('kangur ai tutor chat handler', () => {
           reason: 'Powtorz lekcje: Dodawanie',
         },
       ],
+      suggestedMoodId: 'encouraging',
       usage: {
         dateKey: '2026-03-07',
         messageCount: 0,
@@ -303,37 +606,9 @@ describe('kangur ai tutor chat handler', () => {
     });
   });
 
-  it('falls back to the Brain chat runtime when no teaching agent is configured', async () => {
-    readStoredSettingValueMock.mockImplementation(async (key: string) => {
-      if (key === KANGUR_AI_TUTOR_SETTINGS_KEY) {
-        return JSON.stringify({
-          'learner-1': {
-            enabled: true,
-            teachingAgentId: null,
-            agentPersonaId: null,
-            playwrightPersonaId: null,
-            allowLessons: true,
-            testAccessMode: 'guided',
-            showSources: true,
-            allowSelectedTextSupport: true,
-            dailyMessageLimit: null,
-          },
-        });
-      }
-      if (key === KANGUR_AI_TUTOR_USAGE_SETTINGS_KEY) {
-        return JSON.stringify({});
-      }
-      return null;
-    });
-
-    resolveBrainExecutionConfigForCapabilityMock.mockResolvedValue({
-      modelId: 'brain-model-1',
-      temperature: 0.2,
-      maxTokens: 500,
-      systemPrompt: 'Base brain prompt',
-    });
+  it('ignores legacy teaching-agent ids and still uses the direct Brain runtime', async () => {
     runBrainChatCompletionMock.mockResolvedValue({
-      text: 'Spróbuj policzyć po kolei i sprawdź każdą cyfrę.',
+      text: 'Skup sie na zaznaczonym fragmencie i policz krok po kroku.',
     });
 
     const response = await postKangurAiTutorChatHandler(
@@ -343,10 +618,6 @@ describe('kangur ai tutor chat handler', () => {
           context: {
             surface: 'lesson',
             contentId: 'lesson-adding',
-            title: 'Dodawanie',
-            description: 'Ćwiczenia z podstaw dodawania.',
-            masterySummary: 'Ukończono 2× · ostatni wynik 65%',
-            assignmentSummary: 'Powtórz tę lekcję jeszcze raz.',
             selectedText: '3 + 4',
             promptMode: 'selected_text',
           },
@@ -355,9 +626,8 @@ describe('kangur ai tutor chat handler', () => {
       createRequestContext()
     );
 
-    expect(runTeachingChatMock).not.toHaveBeenCalled();
     expect(resolveBrainExecutionConfigForCapabilityMock).toHaveBeenCalledWith(
-      'agent_teaching.chat',
+      KANGUR_AI_TUTOR_BRAIN_CAPABILITY,
       expect.objectContaining({
         defaultTemperature: 0.4,
         defaultMaxTokens: 600,
@@ -366,44 +636,17 @@ describe('kangur ai tutor chat handler', () => {
     expect(runBrainChatCompletionMock).toHaveBeenCalledTimes(1);
 
     const brainInput = runBrainChatCompletionMock.mock.calls[0]?.[0];
-    expect(brainInput.modelId).toBe('brain-model-1');
-    expect(brainInput.messages[0].content).toContain('Base brain prompt');
-    expect(brainInput.messages[0].content).toContain('Current Kangur surface: lesson learning.');
-    expect(brainInput.messages[0].content).toContain('Current title: Dodawanie');
-    expect(brainInput.messages[0].content).toContain(
-      'Learner mastery snapshot: Ukończono 2× · ostatni wynik 65%'
-    );
-    expect(brainInput.messages[0].content).toContain(
-      'Active assignment or focus: Powtórz tę lekcję jeszcze raz.'
-    );
     expect(brainInput.messages[0].content).toContain('Learner selected this text: """3 + 4"""');
     expect(brainInput.messages[0].content).toContain(
       'The learner selected a specific excerpt. Focus on that excerpt first and relate your response back to it.'
     );
-    expect(logKangurServerEventMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        source: 'kangur.ai-tutor.chat.completed',
-        service: 'kangur.ai-tutor',
-        statusCode: 200,
-        context: expect.objectContaining({
-          surface: 'lesson',
-          contentId: 'lesson-adding',
-          promptMode: 'selected_text',
-          usedTeachingAgent: false,
-          retrievedSourceCount: 0,
-          returnedSourceCount: 0,
-          showSources: true,
-          dailyUsageCount: 0,
-          usageDateKey: '2026-03-07',
-        }),
-      })
-    );
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
-      message: 'Spróbuj policzyć po kolei i sprawdź każdą cyfrę.',
+      message: 'Skup sie na zaznaczonym fragmencie i policz krok po kroku.',
       sources: [],
       followUpActions: [],
+      suggestedMoodId: 'encouraging',
       usage: {
         dateKey: '2026-03-07',
         messageCount: 0,
@@ -414,7 +657,7 @@ describe('kangur ai tutor chat handler', () => {
   });
 
   it('logs failed tutor runs for observability', async () => {
-    runTeachingChatMock.mockRejectedValue(new Error('Tutor provider failed.'));
+    runBrainChatCompletionMock.mockRejectedValue(new Error('Tutor provider failed.'));
 
     await expect(
       postKangurAiTutorChatHandler(
@@ -424,7 +667,6 @@ describe('kangur ai tutor chat handler', () => {
             context: {
               surface: 'lesson',
               contentId: 'lesson-1',
-              title: 'Dodawanie',
               promptMode: 'chat',
             },
           })
@@ -442,7 +684,7 @@ describe('kangur ai tutor chat handler', () => {
           surface: 'lesson',
           contentId: 'lesson-1',
           promptMode: 'chat',
-          usedTeachingAgent: true,
+          brainCapability: KANGUR_AI_TUTOR_BRAIN_CAPABILITY,
         }),
       })
     );
@@ -454,7 +696,6 @@ describe('kangur ai tutor chat handler', () => {
         return JSON.stringify({
           'learner-1': {
             enabled: true,
-            teachingAgentId: 'teacher-1',
             agentPersonaId: 'persona-1',
             playwrightPersonaId: null,
             allowLessons: true,
@@ -489,8 +730,7 @@ describe('kangur ai tutor chat handler', () => {
             context: {
               surface: 'test',
               contentId: 'suite-2026',
-              title: 'Kangur Mini',
-              currentQuestion: 'Ile to 2 + 2?',
+              questionId: 'q-1',
               answerRevealed: false,
               promptMode: 'hint',
             },
@@ -503,7 +743,7 @@ describe('kangur ai tutor chat handler', () => {
       httpStatus: 400,
     });
 
-    expect(runTeachingChatMock).not.toHaveBeenCalled();
+    expect(runBrainChatCompletionMock).not.toHaveBeenCalled();
     expect(logKangurServerEventMock).toHaveBeenCalledWith(
       expect.objectContaining({
         source: 'kangur.ai-tutor.chat.failed',
@@ -518,108 +758,12 @@ describe('kangur ai tutor chat handler', () => {
     );
   });
 
-  it('strips sources when the parent disables source visibility', async () => {
-    readStoredSettingValueMock.mockImplementation(async (key: string) => {
-      if (key === KANGUR_AI_TUTOR_SETTINGS_KEY) {
-        return JSON.stringify({
-          'learner-1': {
-            enabled: true,
-            teachingAgentId: 'teacher-1',
-            agentPersonaId: 'persona-1',
-            playwrightPersonaId: null,
-            allowLessons: true,
-            testAccessMode: 'guided',
-            showSources: false,
-            allowSelectedTextSupport: true,
-            dailyMessageLimit: 2,
-          },
-        });
-      }
-      if (key === KANGUR_AI_TUTOR_USAGE_SETTINGS_KEY) {
-        return JSON.stringify({
-          'learner-1': {
-            dateKey: '2026-03-07',
-            messageCount: 1,
-            updatedAt: '2026-03-07T08:00:00.000Z',
-          },
-        });
-      }
-      if (key === AGENT_PERSONA_SETTINGS_KEY) {
-        return JSON.stringify([
-          {
-            id: 'persona-1',
-            name: 'Mila',
-            role: 'Math coach',
-            instructions: 'Use a calm, playful tone.',
-          },
-        ]);
-      }
-      return null;
-    });
-
-    runTeachingChatMock.mockResolvedValue({
-      message: 'Sprawdź znak działania i policz jeszcze raz.',
-      sources: [
-        {
-          documentId: 'doc-1',
-          collectionId: 'collection-1',
-          score: 0.91,
-          text: 'Dodawanie łączy dwie liczby w jedną sumę.',
-          metadata: {
-            title: 'Dodawanie podstawy',
-          },
-        },
-      ],
-    });
-
-    const response = await postKangurAiTutorChatHandler(
-      createPostRequest(
-        JSON.stringify({
-          messages: [{ role: 'user', content: 'Pomóż mi z tym pytaniem.' }],
-          context: {
-            surface: 'lesson',
-            contentId: 'lesson-1',
-            title: 'Dodawanie',
-            promptMode: 'chat',
-          },
-        })
-      ),
-      createRequestContext()
-    );
-
-    await expect(response.json()).resolves.toEqual({
-      message: 'Sprawdź znak działania i policz jeszcze raz.',
-      sources: [],
-      followUpActions: [],
-      usage: {
-        dateKey: '2026-03-07',
-        messageCount: 2,
-        dailyMessageLimit: 2,
-        remainingMessages: 0,
-      },
-    });
-    expect(logKangurServerEventMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        source: 'kangur.ai-tutor.chat.completed',
-        context: expect.objectContaining({
-          returnedSourceCount: 0,
-          retrievedSourceCount: 1,
-          showSources: false,
-          dailyMessageLimit: 2,
-          dailyUsageCount: 2,
-          dailyUsageRemaining: 0,
-        }),
-      })
-    );
-  });
-
   it('rejects requests after the learner reaches the daily tutor message limit', async () => {
     readStoredSettingValueMock.mockImplementation(async (key: string) => {
       if (key === KANGUR_AI_TUTOR_SETTINGS_KEY) {
         return JSON.stringify({
           'learner-1': {
             enabled: true,
-            teachingAgentId: 'teacher-1',
             agentPersonaId: 'persona-1',
             playwrightPersonaId: null,
             allowLessons: true,
@@ -660,7 +804,6 @@ describe('kangur ai tutor chat handler', () => {
             context: {
               surface: 'lesson',
               contentId: 'lesson-1',
-              title: 'Dodawanie',
               promptMode: 'chat',
             },
           })
@@ -672,7 +815,7 @@ describe('kangur ai tutor chat handler', () => {
       httpStatus: 429,
     });
 
-    expect(runTeachingChatMock).not.toHaveBeenCalled();
+    expect(runBrainChatCompletionMock).not.toHaveBeenCalled();
     expect(upsertStoredSettingValueMock).not.toHaveBeenCalled();
     expect(logKangurServerEventMock).toHaveBeenCalledWith(
       expect.objectContaining({

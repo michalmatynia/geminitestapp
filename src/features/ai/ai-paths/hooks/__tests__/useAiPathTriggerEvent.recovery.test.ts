@@ -28,14 +28,10 @@ describe('recoverEnqueuedRunByRequestId', () => {
       retryDelaysMs: [0, 0],
     });
 
-    expect(result).toEqual({
-      runId: 'run-recovered-1',
-      runRecord: expect.objectContaining({
-        id: 'run-recovered-1',
-        status: 'queued',
-        pathId: 'path-recovery',
-      }),
-    });
+    expect(result?.runId).toBe('run-recovered-1');
+    expect(result?.runRecord?.id).toBe('run-recovered-1');
+    expect(result?.runRecord?.status).toBe('queued');
+    expect(result?.runRecord?.pathId).toBe('path-recovery');
     expect(lookupRuns).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({

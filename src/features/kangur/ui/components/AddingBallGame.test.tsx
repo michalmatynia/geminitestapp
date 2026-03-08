@@ -88,7 +88,7 @@ describe('AddingBallGame', () => {
     );
     expect(screen.getByRole('button', { name: /sprawdź/i })).toHaveClass(
       'kangur-cta-pill',
-      'play-cta'
+      'primary-cta'
     );
   });
 });

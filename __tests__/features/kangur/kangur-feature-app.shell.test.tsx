@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -100,7 +100,14 @@ describe('KangurFeatureApp shell behavior', () => {
     const loadingShell = container.firstElementChild as HTMLElement | null;
 
     expect(loadingShell).not.toBeNull();
-    expect(loadingShell).toHaveClass('fixed', 'inset-0', 'flex', 'items-center', 'justify-center');
+    expect(loadingShell).toHaveClass(
+      'absolute',
+      'inset-0',
+      'z-20',
+      'flex',
+      'items-center',
+      'justify-center'
+    );
 
     const spinner = loadingShell?.querySelector('div');
     expect(spinner).not.toBeNull();
@@ -170,6 +177,9 @@ describe('KangurFeatureApp shell behavior', () => {
     render(<KangurFeatureApp />);
 
     expect(screen.getByTestId('kangur-lessons-page')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-route-content')).toHaveClass(
+      'kangur-route-content-enter-a'
+    );
   });
 
   it('renders learner profile shell when route resolves to LearnerProfile', () => {
@@ -182,5 +192,33 @@ describe('KangurFeatureApp shell behavior', () => {
     render(<KangurFeatureApp />);
 
     expect(screen.getByTestId('kangur-profile-page')).toBeInTheDocument();
+  });
+
+  it('replays the content transition when the requested path changes', async () => {
+    useKangurRoutingMock.mockReturnValue({
+      pageKey: 'game',
+      requestedPath: '/kangur/game',
+    });
+    resolveKangurPageKeyMock.mockReturnValue('Game');
+
+    const { rerender } = render(<KangurFeatureApp />);
+
+    expect(screen.getByTestId('kangur-route-content')).toHaveClass(
+      'kangur-route-content-enter-a'
+    );
+
+    useKangurRoutingMock.mockReturnValue({
+      pageKey: 'lessons',
+      requestedPath: '/kangur/lessons',
+    });
+    resolveKangurPageKeyMock.mockReturnValue('Lessons');
+
+    rerender(<KangurFeatureApp />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('kangur-route-content')).toHaveClass(
+        'kangur-route-content-enter-b'
+      );
+    });
   });
 });

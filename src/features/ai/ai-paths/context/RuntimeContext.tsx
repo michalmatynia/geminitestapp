@@ -134,6 +134,7 @@ export interface RuntimeActions {
     status: RuntimeRunStatus | ((prev: RuntimeRunStatus) => RuntimeRunStatus)
   ) => void;
   setRunControlHandlers: (handlers: RuntimeControlHandlers) => void;
+  resetRuntimeDiagnostics: () => void;
   fireTrigger: (node: AiNode, event?: React.MouseEvent<Element>) => Promise<void>;
   fireTriggerPersistent: (node: AiNode, event?: React.MouseEvent<Element>) => Promise<void>;
   pauseActiveRun: () => void;
@@ -460,6 +461,12 @@ export function RuntimeProvider({
     }
   }, [reportMissingRunControlHandler]);
 
+  const resetRuntimeDiagnostics = useCallback(() => {
+    const handler = runControlHandlersRef.current.resetRuntimeDiagnostics;
+    if (!handler) return;
+    handler();
+  }, []);
+
   const setRuntimeNodeConfigHandlers = useCallback((handlers: RuntimeNodeConfigHandlers) => {
     runtimeNodeConfigHandlersRef.current = handlers;
   }, []);
@@ -564,6 +571,7 @@ export function RuntimeProvider({
       stepActiveRun,
       cancelActiveRun,
       clearWires,
+      resetRuntimeDiagnostics,
       setRuntimeNodeConfigHandlers,
       fetchParserSample,
       fetchUpdaterSample,
@@ -600,6 +608,7 @@ export function RuntimeProvider({
       stepActiveRun,
       cancelActiveRun,
       clearWires,
+      resetRuntimeDiagnostics,
       setRuntimeNodeConfigHandlers,
       fetchParserSample,
       fetchUpdaterSample,

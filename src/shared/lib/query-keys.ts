@@ -435,6 +435,10 @@ export const QUERY_KEYS = {
   agentPersonas: {
     all: ['agent-personas'] as const,
     lists: () => [...QUERY_KEYS.agentPersonas.all, 'list'] as const,
+    details: () => [...QUERY_KEYS.agentPersonas.all, 'detail'] as const,
+    detail: (id: string) => [...QUERY_KEYS.agentPersonas.details(), id] as const,
+    memory: (id: string, filters: unknown) =>
+      [...QUERY_KEYS.agentPersonas.detail(id), 'memory', { filters }] as const,
     mutations: () => [...QUERY_KEYS.agentPersonas.all, 'mutation'] as const,
     mutation: (name: string) => [...QUERY_KEYS.agentPersonas.mutations(), name] as const,
   },

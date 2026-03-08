@@ -58,33 +58,15 @@ function Badge({
   ...props
 }: BadgeProps) {
   const isClickable = !!onClick;
-  const handleKeyDown = React.useCallback(
-    (event: React.KeyboardEvent<HTMLDivElement>) => {
-      onKeyDown?.(event);
-      if (event.defaultPrevented || !isClickable) {
-        return;
-      }
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        onClick?.(event as unknown as React.MouseEvent<HTMLDivElement>);
-      }
-    },
-    [isClickable, onClick, onKeyDown]
+  const isNativeButton = isClickable && !onRemove;
+  const sharedClassName = cn(
+    badgeVariants({ variant }),
+    isClickable && 'cursor-pointer hover:brightness-110 active:opacity-80 transition-all',
+    className
   );
 
-  return (
-    <div
-      role={isClickable ? 'button' : undefined}
-      tabIndex={isClickable ? 0 : undefined}
-      className={cn(
-        badgeVariants({ variant }),
-        isClickable && 'cursor-pointer hover:brightness-110 active:opacity-80 transition-all',
-        className
-      )}
-      onClick={onClick}
-      onKeyDown={handleKeyDown}
-      {...props}
-    >
+  const content = (
+    <>
       {icon && <span className='mr-1.5 shrink-0'>{icon}</span>}
       {children}
       {onRemove && (
@@ -100,6 +82,42 @@ function Badge({
           <X className='size-3' />
         </button>
       )}
+    </>
+  );
+
+  if (isNativeButton) {
+    return (
+      <button
+        type='button'
+        className={sharedClassName}
+        onClick={onClick as React.MouseEventHandler<HTMLButtonElement> | undefined}
+        onKeyDown={onKeyDown as React.KeyboardEventHandler<HTMLButtonElement> | undefined}
+        {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <div
+      role={isClickable ? 'button' : undefined}
+      tabIndex={isClickable ? 0 : undefined}
+      className={sharedClassName}
+      onClick={onClick}
+      onKeyDown={(event) => {
+        onKeyDown?.(event);
+        if (event.defaultPrevented || !isClickable) {
+          return;
+        }
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onClick?.(event as unknown as React.MouseEvent<HTMLDivElement>);
+        }
+      }}
+      {...props}
+    >
+      {content}
     </div>
   );
 }

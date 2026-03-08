@@ -1,7 +1,11 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createDefaultPathConfig, type PathConfig } from '@/shared/lib/ai-paths';
+import {
+  createDefaultPathConfig,
+  type PathConfig,
+  type RuntimeState,
+} from '@/shared/lib/ai-paths';
 import { PATH_CONFIG_PREFIX } from '@/shared/lib/ai-paths';
 import { fetchAiPathsSettingsByKeysCached } from '@/shared/lib/ai-paths/settings-store-client';
 
@@ -128,6 +132,26 @@ vi.mock('@/features/ai/ai-paths/context/PersistenceContext', () => ({
 
 const mockedFetchAiPathsSettingsByKeysCached = vi.mocked(fetchAiPathsSettingsByKeysCached);
 
+const emptyRuntimeState = (): RuntimeState => ({
+  status: 'idle',
+  nodeStatuses: {},
+  nodeOutputs: {},
+  variables: {},
+  events: [],
+  currentRun: null,
+  inputs: {},
+  outputs: {},
+});
+
+const buildPathMeta = (
+  config: Pick<PathConfig, 'id' | 'name'>
+): UseAiPathsPersistenceArgs['paths'][number] => ({
+  id: config.id,
+  name: config.name,
+  createdAt: '2026-03-01T00:00:00.000Z',
+  updatedAt: '2026-03-01T00:00:00.000Z',
+});
+
 describe('useAiPathsPersistence idle prefetch', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -191,14 +215,7 @@ describe('useAiPathsPersistence idle prefetch', () => {
       pathConfigs: { [activePathId]: activeConfig },
       pathDescription: activeConfig.description,
       pathName: activeConfig.name,
-      paths: [
-        {
-          id: activePathId,
-          name: activeConfig.name,
-          createdAt: activeConfig.createdAt,
-          updatedAt: activeConfig.updatedAt,
-        },
-      ],
+      paths: [buildPathMeta(activeConfig)],
       executionMode: 'server',
       flowIntensity: 'medium',
       runMode: 'manual',
@@ -206,7 +223,7 @@ describe('useAiPathsPersistence idle prefetch', () => {
       blockedRunPolicy: 'fail_run',
       aiPathsValidation: { enabled: true },
       selectedNodeId: null,
-      runtimeState: {} as UseAiPathsPersistenceArgs['runtimeState'],
+      runtimeState: emptyRuntimeState(),
       updaterSamples: {},
       normalizeTriggerLabel: (value?: string | null) => value ?? 'Product Modal - Context Filter',
       reportAiPathsError: vi.fn(),
@@ -272,20 +289,7 @@ describe('useAiPathsPersistence idle prefetch', () => {
       pathConfigs: pathConfigsState,
       pathDescription: activeConfig.description,
       pathName: activeConfig.name,
-      paths: [
-        {
-          id: activePathId,
-          name: activeConfig.name,
-          createdAt: activeConfig.createdAt,
-          updatedAt: activeConfig.updatedAt,
-        },
-        {
-          id: secondaryPathId,
-          name: secondaryConfig.name,
-          createdAt: secondaryConfig.createdAt,
-          updatedAt: secondaryConfig.updatedAt,
-        },
-      ],
+      paths: [buildPathMeta(activeConfig), buildPathMeta(secondaryConfig)],
       executionMode: 'server',
       flowIntensity: 'medium',
       runMode: 'manual',
@@ -293,7 +297,7 @@ describe('useAiPathsPersistence idle prefetch', () => {
       blockedRunPolicy: 'fail_run',
       aiPathsValidation: { enabled: true },
       selectedNodeId: null,
-      runtimeState: {} as UseAiPathsPersistenceArgs['runtimeState'],
+      runtimeState: emptyRuntimeState(),
       updaterSamples: {},
       normalizeTriggerLabel: (value?: string | null) => value ?? 'Product Modal - Context Filter',
       reportAiPathsError: vi.fn(),
@@ -366,20 +370,7 @@ describe('useAiPathsPersistence idle prefetch', () => {
       pathConfigs: pathConfigsState,
       pathDescription: activeConfig.description,
       pathName: activeConfig.name,
-      paths: [
-        {
-          id: activePathId,
-          name: activeConfig.name,
-          createdAt: activeConfig.createdAt,
-          updatedAt: activeConfig.updatedAt,
-        },
-        {
-          id: secondaryPathId,
-          name: secondaryConfig.name,
-          createdAt: secondaryConfig.createdAt,
-          updatedAt: secondaryConfig.updatedAt,
-        },
-      ],
+      paths: [buildPathMeta(activeConfig), buildPathMeta(secondaryConfig)],
       executionMode: 'server',
       flowIntensity: 'medium',
       runMode: 'manual',
@@ -387,7 +378,7 @@ describe('useAiPathsPersistence idle prefetch', () => {
       blockedRunPolicy: 'fail_run',
       aiPathsValidation: { enabled: true },
       selectedNodeId: null,
-      runtimeState: {} as UseAiPathsPersistenceArgs['runtimeState'],
+      runtimeState: emptyRuntimeState(),
       updaterSamples: {},
       normalizeTriggerLabel: (value?: string | null) => value ?? 'Product Modal - Context Filter',
       reportAiPathsError: vi.fn(),

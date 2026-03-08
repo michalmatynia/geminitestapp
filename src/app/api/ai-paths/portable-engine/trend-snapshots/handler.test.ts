@@ -324,7 +324,8 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
       latestNotificationDeadLetterAt: '2026-03-05T00:10:00.000Z',
       notificationDeadLetterTopErrors: [{ reason: 'notification_http_502', count: 1 }],
     });
-    expect(payload['autoRemediation']).toEqual(
+    const autoRemediation = payload['autoRemediation'] as Record<string, unknown>;
+    expect(autoRemediation).toEqual(
       expect.objectContaining({
         enabled: true,
         strategy: 'degrade_to_log_only',
@@ -332,27 +333,30 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
         cooldownSeconds: 120,
         rateLimitWindowSeconds: 1800,
         rateLimitMaxActions: 2,
-        notifications: expect.objectContaining({
-          enabled: true,
-          webhookConfigured: true,
-          webhookSigningConfigured: true,
-          webhookSignatureKeyId: 'webhook-key-id',
-          emailWebhookConfigured: true,
-          emailWebhookSigningConfigured: true,
-          emailWebhookSignatureKeyId: 'email-key-id',
-          emailRecipients: ['ops@example.test'],
-          timeoutMs: 5000,
-          deadLetter: {
-            maxEntries: 100,
-            queuedCount: 1,
-            latestQueuedAt: '2026-03-05T00:10:00.000Z',
-            topErrors: [{ reason: 'notification_http_502', count: 1 }],
-            replayPolicySkipsTotal: 0,
-            replayPolicySkipReasons: [],
-          },
-        }),
       })
     );
+    const notifications = (autoRemediation['notifications'] as Record<string, unknown> | undefined) ?? {};
+    expect(notifications).toEqual(
+      expect.objectContaining({
+        enabled: true,
+        webhookConfigured: true,
+        webhookSigningConfigured: true,
+        webhookSignatureKeyId: 'webhook-key-id',
+        emailWebhookConfigured: true,
+        emailWebhookSigningConfigured: true,
+        emailWebhookSignatureKeyId: 'email-key-id',
+        emailRecipients: ['ops@example.test'],
+        timeoutMs: 5000,
+      })
+    );
+    expect((notifications['deadLetter'] as Record<string, unknown> | undefined) ?? {}).toEqual({
+      maxEntries: 100,
+      queuedCount: 1,
+      latestQueuedAt: '2026-03-05T00:10:00.000Z',
+      topErrors: [{ reason: 'notification_http_502', count: 1 }],
+      replayPolicySkipsTotal: 0,
+      replayPolicySkipReasons: [],
+    });
     expect(payload['runExecution']).toEqual({
       source: 'in_memory',
       totals: {
@@ -576,7 +580,8 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
 
     expect(response.status).toBe(200);
     const payload = (await response.json()) as Record<string, unknown>;
-    expect(payload['autoRemediation']).toEqual(
+    const autoRemediation = payload['autoRemediation'] as Record<string, unknown>;
+    expect(autoRemediation).toEqual(
       expect.objectContaining({
         enabled: true,
         strategy: 'unregister_all',
@@ -584,27 +589,30 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
         cooldownSeconds: 300,
         rateLimitWindowSeconds: 3600,
         rateLimitMaxActions: 3,
-        notifications: expect.objectContaining({
-          enabled: true,
-          webhookConfigured: false,
-          webhookSigningConfigured: false,
-          webhookSignatureKeyId: null,
-          emailWebhookConfigured: false,
-          emailWebhookSigningConfigured: false,
-          emailWebhookSignatureKeyId: null,
-          emailRecipients: [],
-          timeoutMs: 8000,
-          deadLetter: {
-            maxEntries: 200,
-            queuedCount: 0,
-            latestQueuedAt: null,
-            topErrors: [],
-            replayPolicySkipsTotal: 0,
-            replayPolicySkipReasons: [],
-          },
-        }),
       })
     );
+    const notifications = (autoRemediation['notifications'] as Record<string, unknown> | undefined) ?? {};
+    expect(notifications).toEqual(
+      expect.objectContaining({
+        enabled: true,
+        webhookConfigured: false,
+        webhookSigningConfigured: false,
+        webhookSignatureKeyId: null,
+        emailWebhookConfigured: false,
+        emailWebhookSigningConfigured: false,
+        emailWebhookSignatureKeyId: null,
+        emailRecipients: [],
+        timeoutMs: 8000,
+      })
+    );
+    expect((notifications['deadLetter'] as Record<string, unknown> | undefined) ?? {}).toEqual({
+      maxEntries: 200,
+      queuedCount: 0,
+      latestQueuedAt: null,
+      topErrors: [],
+      replayPolicySkipsTotal: 0,
+      replayPolicySkipReasons: [],
+    });
   });
 
   it('summarizes dead-letter replay policy skip reasons', async () => {
@@ -656,17 +664,15 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
         ],
       })
     );
-    expect(payload['autoRemediation']).toEqual(
+    const autoRemediation = payload['autoRemediation'] as Record<string, unknown>;
+    const notifications = (autoRemediation['notifications'] as Record<string, unknown> | undefined) ?? {};
+    expect((notifications['deadLetter'] as Record<string, unknown> | undefined) ?? {}).toEqual(
       expect.objectContaining({
-        notifications: expect.objectContaining({
-          deadLetter: expect.objectContaining({
-            replayPolicySkipsTotal: 3,
-            replayPolicySkipReasons: [
-              { reason: 'dead_letter_outside_replay_window', count: 2 },
-              { reason: 'dead_letter_endpoint_disallowed', count: 1 },
-            ],
-          }),
-        }),
+        replayPolicySkipsTotal: 3,
+        replayPolicySkipReasons: [
+          { reason: 'dead_letter_outside_replay_window', count: 2 },
+          { reason: 'dead_letter_endpoint_disallowed', count: 1 },
+        ],
       })
     );
   });

@@ -1,7 +1,12 @@
 import 'server-only';
 
+import type {
+  ContextRegistryResolutionBundle,
+  ContextRuntimeDocument,
+} from '@/shared/contracts/ai-context-registry';
 import { getKangurAssignmentRepository, getKangurProgressRepository, getKangurScoreRepository } from '@/features/kangur/server';
 import { evaluateKangurAssignment } from '@/features/kangur/services/kangur-assignments';
+import { resolveKangurAiTutorRuntimeDocuments } from '@/features/kangur/server/context-registry';
 import {
   buildKangurLearnerProfileSnapshot,
   buildLessonMasteryInsights,
@@ -15,6 +20,7 @@ import type {
 } from '@/shared/contracts/kangur';
 import type {
   KangurAiTutorConversationContext,
+  KangurAiTutorActionPage,
   KangurAiTutorFollowUpAction,
 } from '@/shared/contracts/kangur-ai-tutor';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -292,14 +298,276 @@ const buildFollowUpActions = (input: {
   return deduped;
 };
 
+const asRecord = (value: unknown): Record<string, unknown> | null =>
+  value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+
+const readStringFact = (
+  document: ContextRuntimeDocument | null | undefined,
+  key: string
+): string | null => {
+  const value = document?.facts?.[key];
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+};
+
+const readNumberFact = (
+  document: ContextRuntimeDocument | null | undefined,
+  key: string
+): number | null => {
+  const value = document?.facts?.[key];
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+};
+
+const readSectionItems = (
+  document: ContextRuntimeDocument | null | undefined,
+  sectionId: string
+): Record<string, unknown>[] => {
+  const section = document?.sections?.find((entry) => entry.id === sectionId);
+  return Array.isArray(section?.items)
+    ? section.items.filter((item): item is Record<string, unknown> => Boolean(asRecord(item)))
+    : [];
+};
+
+const readActionPage = (value: unknown): KangurAiTutorActionPage | null => {
+  switch (value) {
+    case 'Game':
+    case 'Lessons':
+    case 'ParentDashboard':
+    case 'LearnerProfile':
+      return value;
+    default:
+      return null;
+  }
+};
+
+const toFollowUpActionFromItem = (
+  item: Record<string, unknown> | null,
+  options?: {
+    idPrefix?: string;
+    labelKey?: string;
+    pageKey?: string;
+    queryKey?: string;
+    reasonKey?: string;
+  }
+): KangurAiTutorFollowUpAction | null => {
+  if (!item) {
+    return null;
+  }
+
+  const label = typeof item[options?.labelKey ?? 'actionLabel'] === 'string'
+    ? String(item[options?.labelKey ?? 'actionLabel']).trim()
+    : '';
+  const page = readActionPage(item[options?.pageKey ?? 'actionPage']);
+  if (!label || !page) {
+    return null;
+  }
+
+  const reasonRaw = item[options?.reasonKey ?? 'title'];
+  const queryRaw = item[options?.queryKey ?? 'actionQuery'];
+  const queryRecord = asRecord(queryRaw);
+  const queryEntries = queryRecord ? Object.entries(queryRecord) : [];
+  const query = queryEntries.length > 0
+    ? queryEntries.reduce<Record<string, string>>((acc, [key, value]) => {
+      if (typeof value !== 'string') {
+        return acc;
+      }
+
+      const trimmedValue = value.trim();
+      if (!trimmedValue) {
+        return acc;
+      }
+
+      acc[key] = trimmedValue;
+      return acc;
+    }, {})
+    : undefined;
+  const rawId =
+    typeof item['id'] === 'string' && item['id'].trim().length > 0
+      ? item['id'].trim()
+      : `${options?.idPrefix ?? 'context'}:${page}:${label.toLowerCase()}`;
+
+  return {
+    id: `${options?.idPrefix ?? 'context'}:${rawId}`,
+    label,
+    page,
+    ...(query && Object.keys(query).length > 0 ? { query } : {}),
+    ...(typeof reasonRaw === 'string' && reasonRaw.trim().length > 0
+      ? { reason: reasonRaw.trim() }
+      : {}),
+  };
+};
+
+const formatRecommendationItem = (item: Record<string, unknown>): string => {
+  const title = typeof item['title'] === 'string' ? item['title'].trim() : '';
+  const description = typeof item['description'] === 'string' ? item['description'].trim() : '';
+  const action = toFollowUpActionFromItem(item, {
+    idPrefix: 'recommendation',
+  });
+
+  return [
+    title,
+    description,
+    action ? `Action: ${action.label} on ${action.page}.` : null,
+    action?.query
+      ? `Route focus: ${Object.entries(action.query)
+        .map(([key, value]) => `${key}=${value}`)
+        .join(', ')}.`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(' ');
+};
+
+const buildAdaptiveGuidanceFromRegistry = (input: {
+  context?: KangurAiTutorConversationContext;
+  registryBundle: ContextRegistryResolutionBundle;
+}): KangurAiTutorAdaptiveGuidance => {
+  const { learnerSnapshot, surfaceContext, assignmentContext } =
+    resolveKangurAiTutorRuntimeDocuments(input.registryBundle);
+  const weakLessons = readSectionItems(learnerSnapshot, 'weak_lessons');
+  const recentSessions = readSectionItems(learnerSnapshot, 'recent_sessions');
+  const recommendations = readSectionItems(learnerSnapshot, 'recommendations');
+  const activeAssignments = readSectionItems(learnerSnapshot, 'active_assignments');
+  const relevantWeakLesson =
+    weakLessons.find((lesson) =>
+      matchesLessonComponent(String(lesson['componentId'] ?? ''), [
+        input.context?.contentId,
+        input.context?.focusId,
+      ])
+    ) ??
+    weakLessons[0] ??
+    null;
+  const latestSession = recentSessions[0] ?? null;
+  const topRecommendation = recommendations[0] ?? null;
+  const relevantAssignment =
+    (assignmentContext ? asRecord(assignmentContext.facts) : null) ??
+    activeAssignments[0] ??
+    null;
+  const averageAccuracy = readNumberFact(learnerSnapshot, 'averageAccuracy') ?? 0;
+  const todayGames = readNumberFact(learnerSnapshot, 'todayGames') ?? 0;
+  const dailyGoalGames = readNumberFact(learnerSnapshot, 'dailyGoalGames') ?? 0;
+  const currentStreakDays = readNumberFact(learnerSnapshot, 'currentStreakDays') ?? 0;
+  const learnerSummary = readStringFact(learnerSnapshot, 'learnerSummary');
+  const assignmentSummary =
+    (typeof relevantAssignment?.['assignmentSummary'] === 'string'
+      ? String(relevantAssignment['assignmentSummary']).trim()
+      : null) ?? readStringFact(surfaceContext, 'assignmentSummary');
+  const followUpActions =
+    input.context?.interactionIntent === 'next_step' || input.context?.interactionIntent === 'review'
+      ? [
+        toFollowUpActionFromItem(relevantAssignment, {
+          idPrefix: 'assignment',
+        }),
+        toFollowUpActionFromItem(topRecommendation, {
+          idPrefix: 'recommendation',
+        }),
+      ].filter((action): action is KangurAiTutorFollowUpAction => Boolean(action))
+      : [];
+  const lines: string[] = [];
+
+  if (learnerSummary) {
+    lines.push(`Adaptive learner snapshot: ${learnerSummary}`);
+  } else {
+    lines.push(
+      `Adaptive learner snapshot: average accuracy ${averageAccuracy}%, daily goal ${todayGames}/${dailyGoalGames}, streak ${currentStreakDays} days.`
+    );
+  }
+
+  if (relevantWeakLesson) {
+    const title = typeof relevantWeakLesson['title'] === 'string' ? relevantWeakLesson['title'] : '';
+    const masteryPercent =
+      typeof relevantWeakLesson['masteryPercent'] === 'number'
+        ? relevantWeakLesson['masteryPercent']
+        : null;
+    if (title && masteryPercent !== null) {
+      lines.push(
+        matchesLessonComponent(String(relevantWeakLesson['componentId'] ?? ''), [
+          input.context?.contentId,
+          input.context?.focusId,
+        ])
+          ? `Current lesson is a weaker area: ${title} at ${masteryPercent}% mastery.`
+          : `Weak lesson area: ${title} at ${masteryPercent}% mastery.`
+      );
+    }
+  }
+
+  if (latestSession) {
+    const operationLabel =
+      typeof latestSession['operationLabel'] === 'string' ? latestSession['operationLabel'] : '';
+    const accuracyPercent =
+      typeof latestSession['accuracyPercent'] === 'number' ? latestSession['accuracyPercent'] : null;
+    if (operationLabel && accuracyPercent !== null) {
+      lines.push(
+        `Most recent practice: ${operationLabel} at ${accuracyPercent}% accuracy.`
+      );
+    }
+  }
+
+  if (topRecommendation) {
+    lines.push(`Top adaptive recommendation: ${formatRecommendationItem(topRecommendation)}`);
+  }
+
+  if (assignmentSummary) {
+    lines.push(`Relevant active assignment: ${assignmentSummary}`);
+  }
+
+  const weakMasteryPercent =
+    typeof relevantWeakLesson?.['masteryPercent'] === 'number'
+      ? relevantWeakLesson['masteryPercent']
+      : 100;
+  if (averageAccuracy < 70 || weakMasteryPercent < 60) {
+    lines.push(
+      'Adaptive tutoring stance: use smaller reasoning steps, ask one checkpoint question at a time, and confirm understanding before moving on.'
+    );
+  } else if (averageAccuracy >= 85) {
+    lines.push(
+      'Adaptive tutoring stance: keep hints concise, let the learner do more of the work, and use challenge-style follow-up questions.'
+    );
+  }
+
+  if (input.context?.interactionIntent === 'next_step') {
+    lines.push(
+      relevantAssignment
+        ? `When suggesting the next step, anchor it to this assignment and give exactly one concrete Kangur action: ${String(relevantAssignment['title'] ?? 'current assignment')}.`
+        : topRecommendation
+          ? 'When suggesting the next step, anchor it to the top recommendation and give exactly one concrete Kangur action.'
+          : 'When suggesting the next step, give exactly one concrete Kangur action that targets the weakest area.'
+    );
+  }
+
+  if (
+    input.context?.interactionIntent === 'review' &&
+    typeof latestSession?.['operationLabel'] === 'string'
+  ) {
+    lines.push(
+      `When reviewing mistakes, connect the explanation to the learner's recent ${String(latestSession['operationLabel'])} result and point out one thing to retry next.`
+    );
+  }
+
+  return {
+    instructions: lines.join('\n'),
+    followUpActions,
+  };
+};
+
 export async function buildKangurAiTutorAdaptiveGuidance({
   learnerId,
   context,
+  registryBundle,
 }: {
   learnerId: string;
   context?: KangurAiTutorConversationContext;
+  registryBundle?: ContextRegistryResolutionBundle | null;
 }): Promise<KangurAiTutorAdaptiveGuidance> {
   try {
+    if (registryBundle?.documents.length) {
+      return buildAdaptiveGuidanceFromRegistry({
+        context,
+        registryBundle,
+      });
+    }
+
     const [progressRepository, scoreRepository, assignmentRepository] = await Promise.all([
       getKangurProgressRepository(),
       getKangurScoreRepository(),
@@ -428,6 +696,7 @@ export async function buildKangurAiTutorAdaptiveGuidance({
 export async function buildKangurAiTutorAdaptiveInstructions(input: {
   learnerId: string;
   context?: KangurAiTutorConversationContext;
+  registryBundle?: ContextRegistryResolutionBundle | null;
 }): Promise<string> {
   const guidance = await buildKangurAiTutorAdaptiveGuidance(input);
   return guidance.instructions;

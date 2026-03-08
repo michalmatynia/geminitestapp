@@ -2,7 +2,10 @@ import { NextRequest } from 'next/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { KANGUR_AI_TUTOR_SETTINGS_KEY } from '@/features/kangur/settings-ai-tutor';
+import {
+  KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
+  KANGUR_AI_TUTOR_SETTINGS_KEY,
+} from '@/features/kangur/settings-ai-tutor';
 import { KANGUR_AI_TUTOR_USAGE_SETTINGS_KEY } from '@/features/kangur/server/ai-tutor-usage';
 
 const {
@@ -49,15 +52,18 @@ describe('kangur ai tutor usage handler', () => {
         return JSON.stringify({
           'learner-1': {
             enabled: true,
-            teachingAgentId: 'teacher-1',
-            agentPersonaId: 'persona-1',
-            playwrightPersonaId: null,
             allowLessons: true,
             testAccessMode: 'guided',
             showSources: true,
             allowSelectedTextSupport: true,
-            dailyMessageLimit: 5,
           },
+        });
+      }
+      if (key === KANGUR_AI_TUTOR_APP_SETTINGS_KEY) {
+        return JSON.stringify({
+          agentPersonaId: 'persona-1',
+          motionPresetId: 'tablet',
+          dailyMessageLimit: 5,
         });
       }
       if (key === KANGUR_AI_TUTOR_USAGE_SETTINGS_KEY) {
@@ -100,14 +106,10 @@ describe('kangur ai tutor usage handler', () => {
         return JSON.stringify({
           'learner-1': {
             enabled: false,
-            teachingAgentId: null,
-            agentPersonaId: null,
-            playwrightPersonaId: null,
             allowLessons: true,
             testAccessMode: 'guided',
             showSources: true,
             allowSelectedTextSupport: true,
-            dailyMessageLimit: null,
           },
         });
       }

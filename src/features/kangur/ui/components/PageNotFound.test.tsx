@@ -3,13 +3,20 @@
  */
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { authMeMock, useKangurRoutingMock } = vi.hoisted(() => ({
+const { authMeMock, useKangurRoutingMock, routerPushMock } = vi.hoisted(() => ({
   authMeMock: vi.fn(),
   useKangurRoutingMock: vi.fn(),
+  routerPushMock: vi.fn(),
+}));
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: routerPushMock,
+  }),
 }));
 
 vi.mock('@/features/kangur/services/kangur-platform', () => ({
@@ -43,6 +50,7 @@ const createWrapper = (): React.FC<{ children: ReactNode }> => {
 
 describe('PageNotFound', () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     authMeMock.mockResolvedValue({ role: 'student' });
     useKangurRoutingMock.mockReturnValue({
       basePath: '/kangur',
@@ -55,8 +63,17 @@ describe('PageNotFound', () => {
 
     const homeButton = await screen.findByRole('button', { name: 'Go Home' });
 
-    expect(homeButton).toHaveClass('kangur-cta-pill', 'play-cta');
+    expect(screen.getByTestId('page-not-found-shell')).toHaveClass('kangur-premium-bg');
+    expect(homeButton).toHaveClass('kangur-cta-pill', 'primary-cta');
     expect(screen.getByTestId('page-not-found-divider')).toHaveClass('h-0.5', 'w-16', 'bg-slate-200');
+  });
+
+  it('routes home through the app router instead of forcing a document reload', async () => {
+    render(<PageNotFound />, { wrapper: createWrapper() });
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Go Home' }));
+
+    expect(routerPushMock).toHaveBeenCalledWith('/kangur/game');
   });
 
   it('uses shared Kangur summary and dot primitives for the admin note', async () => {

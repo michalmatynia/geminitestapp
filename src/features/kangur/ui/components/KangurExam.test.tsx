@@ -60,7 +60,7 @@ describe('KangurExam', () => {
     );
     expect(screen.getByRole('button', { name: /zakończ test/i })).toHaveClass(
       'kangur-cta-pill',
-      'play-cta'
+      'primary-cta'
     );
 
     await userEvent.click(screen.getByRole('button', { name: /odpowiedz b\. 4/i }));

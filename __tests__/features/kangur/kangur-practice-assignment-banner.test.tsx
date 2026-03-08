@@ -66,6 +66,10 @@ describe('KangurPracticeAssignmentBanner', () => {
       'href',
       '/kangur/game?quickStart=operation&operation=division&difficulty=medium'
     );
+    expect(screen.getByRole('link', { name: 'Trenuj teraz' })).toHaveClass(
+      'kangur-cta-pill',
+      'primary-cta'
+    );
   });
 
   it('shows a completion message when the delegated task was finished in the current session', () => {

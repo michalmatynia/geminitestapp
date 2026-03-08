@@ -1,8 +1,6 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION } from '@/shared/lib/ai-paths/portable-engine';
-
 const builders = vi.hoisted(() => ({
   requireAiPathsAccessMock: vi.fn(),
   getPortablePathRunExecutionSnapshotMock: vi.fn(),
@@ -293,9 +291,9 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
       expect.objectContaining({
         hasMore: true,
         cursor: null,
-        nextCursor: expect.any(String),
       })
     );
+    expect(typeof (payload['pagination'] as Record<string, unknown>)['nextCursor']).toBe('string');
     expect((payload['snapshots'] as Array<{ at: string }>).map((entry) => entry.at)).toEqual([
       '2026-03-05T00:20:00.000Z',
     ]);

@@ -540,6 +540,7 @@ export interface RuntimeControlHandlers {
   stepActiveRun?: (triggerNode?: AiNode) => void;
   cancelActiveRun?: () => void;
   clearWires?: () => void | Promise<void>;
+  resetRuntimeDiagnostics?: () => void;
 }
 
 export interface RuntimeNodeConfigHandlers {

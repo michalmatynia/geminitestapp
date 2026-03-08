@@ -1,0 +1,155 @@
+{
+  "generatedAt": "2026-03-07T22:20:07.129Z",
+  "status": "failed",
+  "summary": {
+    "total": 11,
+    "passed": 8,
+    "failed": 3,
+    "durationMs": 71632.034,
+    "unexpected": 1,
+    "flaky": 0,
+    "skipped": 2,
+    "errorCount": 1
+  },
+  "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/accessibility-route-crawl.spec.ts --reporter=json",
+  "externalErrors": [],
+  "results": [
+    {
+      "id": "public-home",
+      "name": "Public Home",
+      "route": "/",
+      "audience": "public",
+      "readySelector": null,
+      "contextSelector": null,
+      "title": "[public-home] / passes the route-crawl accessibility scan",
+      "status": "pass",
+      "durationMs": 9292,
+      "errors": []
+    },
+    {
+      "id": "auth-signin",
+      "name": "Auth Sign In",
+      "route": "/auth/signin",
+      "audience": "public",
+      "readySelector": null,
+      "contextSelector": null,
+      "title": "[auth-signin] /auth/signin passes the route-crawl accessibility scan",
+      "status": "pass",
+      "durationMs": 1379,
+      "errors": []
+    },
+    {
+      "id": "auth-register",
+      "name": "Auth Register",
+      "route": "/auth/register",
+      "audience": "public",
+      "readySelector": null,
+      "contextSelector": null,
+      "title": "[auth-register] /auth/register passes the route-crawl accessibility scan",
+      "status": "pass",
+      "durationMs": 1649,
+      "errors": []
+    },
+    {
+      "id": "admin-dashboard",
+      "name": "Admin Dashboard",
+      "route": "/admin",
+      "audience": "admin",
+      "readySelector": null,
+      "contextSelector": null,
+      "title": "[admin-dashboard] /admin passes the route-crawl accessibility scan",
+      "status": "pass",
+      "durationMs": 2910,
+      "errors": []
+    },
+    {
+      "id": "admin-products",
+      "name": "Admin Products",
+      "route": "/admin/products",
+      "audience": "admin",
+      "readySelector": null,
+      "contextSelector": null,
+      "title": "[admin-products] /admin/products passes the route-crawl accessibility scan",
+      "status": "pass",
+      "durationMs": 3327,
+      "errors": []
+    },
+    {
+      "id": "admin-ai-paths",
+      "name": "Admin AI Paths",
+      "route": "/admin/ai-paths",
+      "audience": "admin",
+      "readySelector": null,
+      "contextSelector": null,
+      "title": "[admin-ai-paths] /admin/ai-paths passes the route-crawl accessibility scan",
+      "status": "pass",
+      "durationMs": 6501,
+      "errors": []
+    },
+    {
+      "id": "admin-image-studio",
+      "name": "Admin Image Studio",
+      "route": "/admin/image-studio",
+      "audience": "admin",
+      "readySelector": null,
+      "contextSelector": null,
+      "title": "[admin-image-studio] /admin/image-studio passes the route-crawl accessibility scan",
+      "status": "pass",
+      "durationMs": 5814,
+      "errors": []
+    },
+    {
+      "id": "admin-chatbot",
+      "name": "Admin Chatbot",
+      "route": "/admin/chatbot",
+      "audience": "admin",
+      "readySelector": null,
+      "contextSelector": null,
+      "title": "[admin-chatbot] /admin/chatbot passes the route-crawl accessibility scan",
+      "status": "pass",
+      "durationMs": 3401,
+      "errors": []
+    },
+    {
+      "id": "admin-kangur",
+      "name": "Admin Kangur",
+      "route": "/admin/kangur",
+      "audience": "admin",
+      "readySelector": null,
+      "contextSelector": null,
+      "title": "[admin-kangur] /admin/kangur passes the route-crawl accessibility scan",
+      "status": "fail",
+      "durationMs": 4801,
+      "errors": [
+        "Error: Accessibility violations detected:\n\n[moderate] landmark-main-is-top-level: Main landmark should not be contained in another landmark\nEnsure the main landmark is at top level\n- #kangur-game-main\nFix any of the following:\n  The main landmark is contained in another landmark.\nhttps://dequeuniversity.com/rules/axe/4.11/landmark-main-is-top-level?application=axeAPI\n\n[moderate] landmark-no-duplicate-main: Document should not have more than one main landmark\nEnsure the document has at most one main landmark\n- #app-content\nFix any of the following:\n  Document has more than one main landmark\nhttps://dequeuniversity.com/rules/axe/4.11/landmark-no-duplicate-main?application=axeAPI\n\n   at support/accessibility.ts:100\n\n   98 |   if (violations.length === 0) return;\n   99 |\n> 100 |   throw new Error(`Accessibility violations detected:\\n\\n${formatViolations(violations)}`);\n      |         ^\n  101 | }\n  102 |\n    at expectPageToHaveNoAxeViolations (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/support/accessibility.ts:100:9)\n    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/accessibility-route-crawl.spec.ts:39:5"
+      ]
+    },
+    {
+      "id": "admin-databases",
+      "name": "Admin Databases",
+      "route": "/admin/databases",
+      "audience": "admin",
+      "readySelector": null,
+      "contextSelector": null,
+      "title": "[admin-databases] /admin/databases passes the route-crawl accessibility scan",
+      "status": "fail",
+      "durationMs": 0,
+      "errors": []
+    },
+    {
+      "id": "admin-brain-settings",
+      "name": "Admin Brain Settings",
+      "route": "/admin/settings/brain",
+      "audience": "admin",
+      "readySelector": null,
+      "contextSelector": null,
+      "title": "[admin-brain-settings] /admin/settings/brain passes the route-crawl accessibility scan",
+      "status": "fail",
+      "durationMs": 0,
+      "errors": []
+    }
+  ],
+  "stderr": "",
+  "durationMs": 74505,
+  "exitCode": 1
+}

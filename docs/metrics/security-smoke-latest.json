@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-07T18:17:57.710Z",
+  "generatedAt": "2026-03-07T22:10:54.318Z",
   "strictMode": true,
   "summary": {
     "total": 5,
@@ -16,8 +16,8 @@
       "command": "npx vitest run --project unit __tests__/features/auth/utils/auth-security.test.ts",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 1642,
-      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/auth/utils/auth-security.test.ts (4 tests) 10ms\n\n Test Files  1 passed (1)\n      Tests  4 passed (4)\n   Start at  19:17:50\n   Duration  567ms (transform 66ms, setup 163ms, import 9ms, tests 10ms, environment 291ms)"
+      "durationMs": 1741,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/auth/utils/auth-security.test.ts (4 tests) 10ms\n\n Test Files  1 passed (1)\n      Tests  4 passed (4)\n   Start at  23:10:45\n   Duration  787ms (transform 68ms, setup 151ms, import 9ms, tests 10ms, environment 522ms)"
     },
     {
       "id": "auth-encryption",
@@ -28,8 +28,8 @@
       "command": "npx vitest run --project unit __tests__/features/auth/utils/auth-encryption.test.ts",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 1697,
-      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/auth/utils/auth-encryption.test.ts (4 tests) 27ms\n\n Test Files  1 passed (1)\n      Tests  4 passed (4)\n   Start at  19:17:51\n   Duration  580ms (transform 77ms, setup 165ms, import 7ms, tests 27ms, environment 286ms)"
+      "durationMs": 1736,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/auth/utils/auth-encryption.test.ts (4 tests) 24ms\n\n Test Files  1 passed (1)\n      Tests  4 passed (4)\n   Start at  23:10:46\n   Duration  812ms (transform 74ms, setup 146ms, import 7ms, tests 24ms, environment 546ms)"
     },
     {
       "id": "auth-verify-credentials",
@@ -40,8 +40,8 @@
       "command": "npx vitest run --project unit __tests__/features/auth/api/verify-credentials.test.ts",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 1708,
-      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/auth/api/verify-credentials.test.ts (2 tests) 14ms\n\n Test Files  1 passed (1)\n      Tests  2 passed (2)\n   Start at  19:17:53\n   Duration  644ms (transform 100ms, setup 169ms, import 92ms, tests 14ms, environment 282ms)"
+      "durationMs": 2178,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/auth/api/verify-credentials.test.ts (2 tests) 13ms\n\n Test Files  1 passed (1)\n      Tests  2 passed (2)\n   Start at  23:10:48\n   Duration  735ms (transform 103ms, setup 166ms, import 72ms, tests 13ms, environment 317ms)"
     },
     {
       "id": "rate-limit",
@@ -52,8 +52,8 @@
       "command": "npx vitest run --project unit src/features/ai/ai-paths/server/__tests__/access.rate-limit.test.ts",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 1816,
-      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/ai/ai-paths/server/__tests__/access.rate-limit.test.ts (4 tests) 14ms\n\n Test Files  1 passed (1)\n      Tests  4 passed (4)\n   Start at  19:17:55\n   Duration  758ms (transform 139ms, setup 158ms, import 197ms, tests 14ms, environment 297ms)"
+      "durationMs": 2741,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/ai/ai-paths/server/__tests__/access.rate-limit.test.ts (4 tests) 14ms\n\n Test Files  1 passed (1)\n      Tests  4 passed (4)\n   Start at  23:10:51\n   Duration  780ms (transform 150ms, setup 164ms, import 209ms, tests 14ms, environment 305ms)"
     },
     {
       "id": "log-redaction",
@@ -64,8 +64,8 @@
       "command": "npx vitest run --project unit __tests__/shared/lib/observability/log-redaction.test.ts",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 1629,
-      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/shared/lib/observability/log-redaction.test.ts (5 tests) 10ms\n\n Test Files  1 passed (1)\n      Tests  5 passed (5)\n   Start at  19:17:57\n   Duration  572ms (transform 69ms, setup 162ms, import 12ms, tests 10ms, environment 291ms)"
+      "durationMs": 1800,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/shared/lib/observability/log-redaction.test.ts (5 tests) 11ms\n\n Test Files  1 passed (1)\n      Tests  5 passed (5)\n   Start at  23:10:53\n   Duration  638ms (transform 72ms, setup 153ms, import 11ms, tests 11ms, environment 350ms)"
     }
   ]
 }

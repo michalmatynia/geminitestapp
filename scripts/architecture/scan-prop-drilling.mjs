@@ -1296,6 +1296,47 @@ const run = async () => {
     forwardingScopeCounts.set(entry.feature, (forwardingScopeCounts.get(entry.feature) ?? 0) + 1);
   }
 
+  // --- New: High prop-count components (components with too many destructured props) ---
+  const HIGH_PROP_COUNT_THRESHOLD = 12;
+  const highPropCountComponents = [];
+  for (const fileInfo of fileInfos.values()) {
+    for (const component of fileInfo.components.values()) {
+      const propCount = component.propsMeta?.knownSourceProps?.size ?? 0;
+      const restCount = component.propsMeta?.restIdentifiers?.size ?? 0;
+      if (propCount >= HIGH_PROP_COUNT_THRESHOLD) {
+        highPropCountComponents.push({
+          name: component.name,
+          relativePath: component.relativePath,
+          feature: component.feature,
+          propCount,
+          hasRestSpread: restCount > 0,
+        });
+      }
+    }
+  }
+  highPropCountComponents.sort((a, b) => b.propCount - a.propCount);
+
+  // --- New: Components that both receive AND forward many props (pass-through hotspots) ---
+  const passThroughHotspots = [];
+  for (const [componentId, stats] of componentForwardingStats.entries()) {
+    const component = componentById.get(componentId);
+    if (!component) continue;
+    const receivedCount = component.propsMeta?.knownSourceProps?.size ?? 0;
+    const forwardedCount = stats.forwardedProps.size;
+    if (receivedCount >= 5 && forwardedCount >= 3) {
+      const forwardRatio = forwardedCount / receivedCount;
+      passThroughHotspots.push({
+        name: component.name,
+        relativePath: component.relativePath,
+        feature: component.feature,
+        receivedCount,
+        forwardedCount,
+        forwardRatio: Math.round(forwardRatio * 100),
+      });
+    }
+  }
+  passThroughHotspots.sort((a, b) => b.forwardRatio - a.forwardRatio || b.forwardedCount - a.forwardedCount);
+
   const summary = {
     generatedAt: new Date().toISOString(),
     scannedSourceFiles: scanInputs.length,
@@ -1308,6 +1349,8 @@ const run = async () => {
     candidateChainCount: chains.length,
     highPriorityChainCount: chains.filter((chain) => chain.depth >= 4).length,
     unknownSpreadForwardingCount,
+    highPropCountComponentCount: highPropCountComponents.length,
+    passThroughHotspotCount: passThroughHotspots.length,
     topFeatureScopes: [...forwardingScopeCounts.entries()]
       .map(([scope, count]) => ({ scope, count }))
       .sort((left, right) => right.count - left.count)

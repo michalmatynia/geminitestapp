@@ -50,48 +50,53 @@ export function LessonTreeRow(props: {
       >
         <div
           className='flex h-full w-full min-w-0 items-center gap-2 text-left'
-          onClick={input.select}
-          role='button'
-          tabIndex={0}
-          onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
-            if (event.key !== 'Enter' && event.key !== ' ') return;
-            event.preventDefault();
-            input.select();
-          }}
         >
-          <button
-            type='button'
-            className='inline-flex size-5 shrink-0 items-center justify-center rounded text-gray-400 hover:bg-muted/40 hover:text-gray-200'
-            onClick={(event): void => {
-              event.preventDefault();
-              event.stopPropagation();
-              input.toggleExpand();
-            }}
-            aria-label={input.isExpanded ? 'Collapse group' : 'Expand group'}
-          >
-            {input.hasChildren ? (
-              input.isExpanded ? (
+          {input.hasChildren ? (
+            <button
+              type='button'
+              className='inline-flex size-5 shrink-0 items-center justify-center rounded text-gray-400 hover:bg-muted/40 hover:text-gray-200'
+              onClick={(event): void => {
+                event.preventDefault();
+                event.stopPropagation();
+                input.toggleExpand();
+              }}
+              aria-label={
+                input.isExpanded ? `Collapse ${input.node.name}` : `Expand ${input.node.name}`
+              }
+              aria-expanded={input.isExpanded}
+            >
+              {input.isExpanded ? (
                 <ChevronDown className='size-3.5' />
               ) : (
                 <ChevronRight className='size-3.5' />
-              )
-            ) : (
-              <span className='text-[10px] opacity-60'>•</span>
-            )}
-          </button>
-          {input.isExpanded ? (
-            <FolderOpen className='size-4 shrink-0 text-sky-300/90' />
+              )}
+            </button>
           ) : (
-            <Folder className='size-4 shrink-0 text-sky-300/70' />
+            <span className='inline-flex size-5 shrink-0 items-center justify-center text-[10px] opacity-60'>
+              •
+            </span>
           )}
-          <div className='min-w-0 flex-1 truncate text-[12px] font-medium text-gray-200'>
-            {input.node.name}
-          </div>
-          {lessonCount !== null ? (
-            <Badge variant='outline' className='h-5 px-1.5 text-[10px]'>
-              {lessonCount}
-            </Badge>
-          ) : null}
+          <button
+            type='button'
+            onClick={input.select}
+            aria-pressed={input.isSelected}
+            aria-label={`Select lesson group ${input.node.name}`}
+            className='flex min-w-0 flex-1 items-center gap-2 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
+          >
+            {input.isExpanded ? (
+              <FolderOpen className='size-4 shrink-0 text-sky-300/90' />
+            ) : (
+              <Folder className='size-4 shrink-0 text-sky-300/70' />
+            )}
+            <div className='min-w-0 flex-1 truncate text-[12px] font-medium text-gray-200'>
+              {input.node.name}
+            </div>
+            {lessonCount !== null ? (
+              <Badge variant='outline' className='h-5 px-1.5 text-[10px]'>
+                {lessonCount}
+              </Badge>
+            ) : null}
+          </button>
         </div>
       </TreeRow>
     );
@@ -109,58 +114,61 @@ export function LessonTreeRow(props: {
     >
       <div
         className='flex h-full w-full min-w-0 items-center gap-2 text-left'
-        onClick={input.select}
-        role='button'
-        tabIndex={0}
-        onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
-          if (event.key !== 'Enter' && event.key !== ' ') return;
-          event.preventDefault();
-          input.select();
-        }}
       >
         <span className='inline-flex h-4 w-4 shrink-0 items-center justify-center opacity-0 transition-opacity group-hover:opacity-100'>
           <GripVertical className='size-3.5 cursor-grab text-gray-500' />
         </span>
 
-        <span className='text-base leading-none'>{lesson.emoji}</span>
-
-        <div className='min-w-0 flex-1'>
-          <div className='truncate font-medium text-gray-100'>{lesson.title}</div>
-          <div className='truncate text-[11px] text-gray-400'>{lesson.description}</div>
-        </div>
-
-        <Badge variant='outline' className='h-5 px-1.5 text-[10px] uppercase tracking-wide'>
-          {lesson.componentId}
-        </Badge>
-        <Badge
-          variant='outline'
-          className={cn(
-            'h-5 px-1.5 text-[10px] uppercase tracking-wide',
-            lesson.contentMode === 'document'
-              ? 'border-sky-400/40 text-sky-300'
-              : 'border-gray-500/40 text-gray-300'
-          )}
+        <button
+          type='button'
+          onClick={input.select}
+          aria-pressed={input.isSelected}
+          aria-label={`Select lesson ${lesson.title}`}
+          className='flex min-w-0 flex-1 items-center gap-2 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
         >
-          {lesson.contentMode}
-        </Badge>
-        {hasContent(lesson.id) ? (
-          <Badge
-            variant='outline'
-            className='h-5 px-1.5 text-[10px] border-sky-400/40 text-sky-300'
-          >
-            Custom content
-          </Badge>
-        ) : null}
-        {!lesson.enabled ? (
-          <Badge
-            variant='outline'
-            className='h-5 px-1.5 text-[10px] border-amber-400/40 text-amber-300'
-          >
-            Hidden
-          </Badge>
-        ) : null}
+          <span className='text-base leading-none'>{lesson.emoji}</span>
 
-        <div className='inline-flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100'>
+          <div className='min-w-0 flex-1'>
+            <div className='truncate font-medium text-gray-100'>{lesson.title}</div>
+            <div className='truncate text-[11px] text-gray-400'>{lesson.description}</div>
+          </div>
+
+          <Badge
+            variant='outline'
+            className='h-5 px-1.5 text-[10px] uppercase tracking-wide'
+          >
+            {lesson.componentId}
+          </Badge>
+          <Badge
+            variant='outline'
+            className={cn(
+              'h-5 px-1.5 text-[10px] uppercase tracking-wide',
+              lesson.contentMode === 'document'
+                ? 'border-sky-400/40 text-sky-300'
+                : 'border-gray-500/40 text-gray-300'
+            )}
+          >
+            {lesson.contentMode}
+          </Badge>
+          {hasContent(lesson.id) ? (
+            <Badge
+              variant='outline'
+              className='h-5 px-1.5 text-[10px] border-sky-400/40 text-sky-300'
+            >
+              Custom content
+            </Badge>
+          ) : null}
+          {!lesson.enabled ? (
+            <Badge
+              variant='outline'
+              className='h-5 px-1.5 text-[10px] border-amber-400/40 text-amber-300'
+            >
+              Hidden
+            </Badge>
+          ) : null}
+        </button>
+
+        <div className='inline-flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100'>
           <button
             type='button'
             className='inline-flex items-center justify-center rounded p-1 text-gray-400 hover:bg-violet-500/20 hover:text-violet-300'

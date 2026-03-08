@@ -162,6 +162,23 @@ const inspectFactoryMetaCallExpression = (callExpression, sourceFile, relFilePat
     return;
   }
 
+  // Check for missing queryKey (queries only)
+  const isQueryFactory = callName.includes('Query') || callName.includes('query');
+  if (isQueryFactory) {
+    const queryKeyProperty = findObjectProperty(configArg, 'queryKey');
+    if (!queryKeyProperty) {
+      const keyProperty = findObjectProperty(configArg, 'key');
+      if (!keyProperty) {
+        issues.push({
+          file: relFilePath,
+          line,
+          callName,
+          message: 'missing `queryKey` in factory config. Queries must have an explicit cache key.',
+        });
+      }
+    }
+  }
+
   const metaProperty = findObjectProperty(configArg, 'meta');
   if (!metaProperty && callName !== 'createMultiQueryV2' && callName !== 'createSuspenseMultiQueryV2') {
     issues.push({
@@ -186,6 +203,17 @@ const inspectFactoryMetaCallExpression = (callExpression, sourceFile, relFilePat
         line,
         callName,
         message: 'missing `domain` in `meta`.',
+      });
+    }
+
+    // Check for missing description in meta (warn — not blocking)
+    const descriptionProperty = findObjectProperty(metaObject, 'description');
+    if (!descriptionProperty) {
+      issues.push({
+        file: relFilePath,
+        line,
+        callName,
+        message: 'missing `description` in `meta`. Adding a description improves debugging and monitoring.',
       });
     }
   } else {

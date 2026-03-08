@@ -30,6 +30,7 @@ export const aiBrainFeatureSchema = z.enum([
   'image_studio',
   'ai_paths',
   'chatbot',
+  'kangur_ai_tutor',
   'products',
   'case_resolver',
   'agent_runtime',
@@ -41,6 +42,7 @@ export type AiBrainFeature = z.infer<typeof aiBrainFeatureSchema>;
 export const aiBrainCapabilityKeySchema = z.enum([
   'ai_paths.model',
   'chatbot.reply',
+  'kangur_ai_tutor.chat',
   'prompt_engine.prompt_exploder',
   'product.description.vision',
   'product.description.generation',

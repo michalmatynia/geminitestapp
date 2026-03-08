@@ -18,6 +18,8 @@ import { useSaveChatbotSettings } from './useChatbotMutations';
 export interface UseChatbotSettingsStateReturn {
   model: string;
   setModel: React.Dispatch<React.SetStateAction<string>>;
+  personaId: string | null;
+  setPersonaId: (id: string | null) => void;
   webSearchEnabled: boolean;
   setWebSearchEnabled: React.Dispatch<React.SetStateAction<boolean>>;
   useGlobalContext: boolean;
@@ -77,6 +79,7 @@ export function useChatbotSettingsState(): UseChatbotSettingsStateReturn {
 
   // Base settings
   const [model, setModel] = useState<string>('');
+  const [personaId, setPersonaId] = useState<string | null>(null);
   const [webSearchEnabled, setWebSearchEnabled] = useState<boolean>(false);
   const [useGlobalContext, setUseGlobalContext] = useState<boolean>(false);
   const [useLocalContext, setUseLocalContext] = useState<boolean>(false);
@@ -142,6 +145,7 @@ export function useChatbotSettingsState(): UseChatbotSettingsStateReturn {
       temperature: DEFAULT_CHATBOT_SETTINGS.temperature,
       maxTokens: DEFAULT_CHATBOT_SETTINGS.maxTokens,
       systemPrompt: DEFAULT_CHATBOT_SETTINGS.systemPrompt,
+      personaId,
       enableMemory: DEFAULT_CHATBOT_SETTINGS.enableMemory,
       enableContext: DEFAULT_CHATBOT_SETTINGS.enableContext,
       webSearchEnabled,
@@ -166,6 +170,7 @@ export function useChatbotSettingsState(): UseChatbotSettingsStateReturn {
     }),
     [
       model,
+      personaId,
       webSearchEnabled,
       useGlobalContext,
       useLocalContext,
@@ -204,6 +209,7 @@ export function useChatbotSettingsState(): UseChatbotSettingsStateReturn {
       setUseLocalContext(Boolean(resolved.useLocalContext));
       setLocalContextMode((resolved.localContextMode as 'append' | 'override') ?? 'override');
       setSearchProvider(resolved.searchProvider ?? 'serpapi');
+      setPersonaId(resolved.personaId ?? null);
       setPlaywrightPersonaId(resolved.playwrightPersonaId ?? null);
 
       setAgentModeEnabled(Boolean(resolved.agentModeEnabled));
@@ -285,6 +291,8 @@ export function useChatbotSettingsState(): UseChatbotSettingsStateReturn {
   return {
     model,
     setModel,
+    personaId,
+    setPersonaId,
     webSearchEnabled,
     setWebSearchEnabled,
     useGlobalContext,

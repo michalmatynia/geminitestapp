@@ -4,10 +4,6 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { AiNode } from '@/shared/contracts/ai-paths';
 
-const orchestratorMock = vi.hoisted(() => ({
-  handleClearNodeHistory: vi.fn(),
-}));
-
 const nodeConfigActionsMock = vi.hoisted(() => ({
   updateSelectedNode: vi.fn(),
   updateSelectedNodeConfig: vi.fn(),
@@ -85,10 +81,6 @@ vi.mock(
     useAiPathsNodeConfigActions: () => nodeConfigActionsMock,
   })
 );
-
-vi.mock('../ai-paths-settings/AiPathsSettingsOrchestratorContext', () => ({
-  useAiPathsSettingsOrchestrator: () => orchestratorMock,
-}));
 
 vi.mock('@/shared/ui', () => ({
   useToast: () => ({ toast: vi.fn() }),

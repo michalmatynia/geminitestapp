@@ -25,7 +25,8 @@ import {
   useRuntimeState,
   useRuntimeActions,
 } from '../context';
-import { useAiPathsSettingsOrchestrator } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
+import { usePaletteWithTriggerButtons } from './ai-paths-settings/hooks/usePaletteWithTriggerButtons';
+import { useCanvasSidebarActions } from './hooks/useCanvasSidebarActions';
 import { formatPlaceholderLabel, formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 
 type PaletteMode = 'data' | 'sound';
@@ -105,7 +106,6 @@ const SOUND_PALETTE_GROUPS: PaletteGroup[] = [
 
 export function CanvasSidebar(): React.JSX.Element {
   // --- Context Hooks ---
-  const orchestrator = useAiPathsSettingsOrchestrator();
   const { nodes, edges, executionMode } = useGraphState();
   const { savePathConfig } = usePersistenceActions();
   const { runtimeRunStatus, runtimeState } = useRuntimeState();
@@ -122,11 +122,14 @@ export function CanvasSidebar(): React.JSX.Element {
   const { setPaletteCollapsed, togglePaletteGroup } = usePresetsActions();
   const { selectedNodeId, selectedEdgeId } = useSelectionState();
   const { selectEdge, setConfigOpen, setSimulationOpenNodeId } = useSelectionActions();
-  const palette: NodeDefinition[] = orchestrator.palette;
-  const handleDragStart = orchestrator.handleDragStart;
-  const updateSelectedNode = orchestrator.updateSelectedNode;
-  const deleteSelectedNode = orchestrator.handleDeleteSelectedNode;
-  const handleRemoveEdge = orchestrator.handleRemoveEdge;
+  const palette: NodeDefinition[] = usePaletteWithTriggerButtons();
+  const {
+    handleDragStart,
+    updateSelectedNode,
+    handleDeleteSelectedNode: deleteSelectedNode,
+    handleRemoveEdge,
+    ConfirmationModal,
+  } = useCanvasSidebarActions();
   const runStatus = runtimeRunStatus;
 
   // --- Derived ---
@@ -190,280 +193,280 @@ export function CanvasSidebar(): React.JSX.Element {
   );
 
   return (
-    <div className='space-y-4'>
-      <Card className='border-border/60 bg-card/40 p-4' data-edge-panel>
-        <div className='mb-3 flex items-center justify-between'>
-          <Hint size='xs' uppercase={false} className='font-semibold text-white'>
+    <>
+      <div className='space-y-4'>
+        <Card className='border-border/60 bg-card/40 p-4' data-edge-panel>
+          <div className='mb-3 flex items-center justify-between'>
+            <Hint size='xs' uppercase={false} className='font-semibold text-white'>
             Node Palette
-          </Hint>
-          <button
-            data-doc-id='palette_toggle'
-            type='button'
-            className='rounded border px-2 py-1 text-[10px] text-gray-300 hover:bg-muted/60'
-            onClick={() => setPaletteCollapsed(!paletteCollapsed)}
-          >
-            {paletteCollapsed ? 'Expand' : 'Collapse'}
-          </button>
-        </div>
-        <div className='mb-3 flex items-center gap-2'>
-          <button
-            data-doc-id='palette_mode_data'
-            type='button'
-            onClick={() => setPaletteMode('data')}
-          >
-            <StatusBadge
-              status='Data Signal'
-              variant={paletteMode === 'data' ? 'info' : 'neutral'}
-              size='sm'
-              className={cn('font-medium cursor-pointer', paletteMode !== 'data' && 'opacity-60')}
-            />
-          </button>
-          <button
-            data-doc-id='palette_mode_sound'
-            type='button'
-            onClick={() => setPaletteMode('sound')}
-          >
-            <StatusBadge
-              status='Sound Signal'
-              variant={paletteMode === 'sound' ? 'processing' : 'neutral'}
-              size='sm'
-              className={cn('font-medium cursor-pointer', paletteMode !== 'sound' && 'opacity-60')}
-            />
-          </button>
-        </div>
-        <div className='mb-3'>
-          <Input
-            data-doc-id='palette_search'
-            value={paletteSearch}
-            onChange={(event) => setPaletteSearch(event.target.value)}
-            placeholder='Search nodes...'
-            aria-label='Search node palette'
-            className='h-8 w-full rounded-md border bg-card/70 px-3 text-xs text-white placeholder:text-gray-500'
-          />
-          {isPaletteSearchActive ? (
-            <p className='mt-1 text-[10px] text-gray-500'>
-              {totalFilteredPaletteItems > 0
-                ? `${totalFilteredPaletteItems} matching node${totalFilteredPaletteItems === 1 ? '' : 's'}`
-                : 'No matching nodes'}
-            </p>
-          ) : null}
-        </div>
-        {paletteCollapsed ? (
-          <EmptyState
-            title='Palette collapsed'
-            description='Expand to add nodes.'
-            variant='compact'
-            className='border-dashed border-border/60 bg-transparent py-4'
-          />
-        ) : (
-          <div className='max-h-[520px] space-y-1 overflow-y-auto pr-1'>
-            {filteredPaletteGroups.length === 0 ? (
-              <EmptyState
-                title='No matches'
-                description='No nodes match your search.'
-                variant='compact'
-                className='border-dashed border-border/60 bg-transparent py-4'
+            </Hint>
+            <button
+              data-doc-id='palette_toggle'
+              type='button'
+              className='rounded border px-2 py-1 text-[10px] text-gray-300 hover:bg-muted/60'
+              onClick={() => setPaletteCollapsed(!paletteCollapsed)}
+            >
+              {paletteCollapsed ? 'Expand' : 'Collapse'}
+            </button>
+          </div>
+          <div className='mb-3 flex items-center gap-2'>
+            <button
+              data-doc-id='palette_mode_data'
+              type='button'
+              onClick={() => setPaletteMode('data')}
+            >
+              <StatusBadge
+                status='Data Signal'
+                variant={paletteMode === 'data' ? 'info' : 'neutral'}
+                size='sm'
+                className={cn('font-medium cursor-pointer', paletteMode !== 'data' && 'opacity-60')}
               />
-            ) : (
-              filteredPaletteGroups.map(({ group, items }) => {
-                const isExpanded = isPaletteSearchActive || expandedPaletteGroups.has(group.title);
-                return (
-                  <div key={group.title} className='rounded-md border border-border/60'>
-                    <button
-                      type='button'
-                      onClick={() => {
-                        if (isPaletteSearchActive) return;
-                        togglePaletteGroup(group.title);
-                      }}
-                      className='flex w-full items-center justify-between px-3 py-2 text-left transition hover:bg-muted/40'
-                    >
-                      <div className='flex items-center gap-2'>
-                        <span className='text-sm'>{group.icon}</span>
-                        <Hint size='xs' uppercase className='font-medium text-gray-300'>
-                          {group.title}
-                        </Hint>
-                        <span className='rounded-full bg-muted/60 px-1.5 py-0.5 text-[10px] text-gray-400'>
-                          {items.length}
-                        </span>
-                      </div>
-                      <svg
-                        className={`h-4 w-4 text-gray-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                        fill='none'
-                        viewBox='0 0 24 24'
-                        stroke='currentColor'
+            </button>
+            <button
+              data-doc-id='palette_mode_sound'
+              type='button'
+              onClick={() => setPaletteMode('sound')}
+            >
+              <StatusBadge
+                status='Sound Signal'
+                variant={paletteMode === 'sound' ? 'processing' : 'neutral'}
+                size='sm'
+                className={cn('font-medium cursor-pointer', paletteMode !== 'sound' && 'opacity-60')}
+              />
+            </button>
+          </div>
+          <div className='mb-3'>
+            <Input
+              data-doc-id='palette_search'
+              value={paletteSearch}
+              onChange={(event) => setPaletteSearch(event.target.value)}
+              placeholder='Search nodes...'
+              aria-label='Search node palette'
+              className='h-8 w-full rounded-md border bg-card/70 px-3 text-xs text-white placeholder:text-gray-500'
+            />
+            {isPaletteSearchActive ? (
+              <p className='mt-1 text-[10px] text-gray-500'>
+                {totalFilteredPaletteItems > 0
+                  ? `${totalFilteredPaletteItems} matching node${totalFilteredPaletteItems === 1 ? '' : 's'}`
+                  : 'No matching nodes'}
+              </p>
+            ) : null}
+          </div>
+          {paletteCollapsed ? (
+            <EmptyState
+              title='Palette collapsed'
+              description='Expand to add nodes.'
+              variant='compact'
+              className='border-dashed border-border/60 bg-transparent py-4'
+            />
+          ) : (
+            <div className='max-h-[520px] space-y-1 overflow-y-auto pr-1'>
+              {filteredPaletteGroups.length === 0 ? (
+                <EmptyState
+                  title='No matches'
+                  description='No nodes match your search.'
+                  variant='compact'
+                  className='border-dashed border-border/60 bg-transparent py-4'
+                />
+              ) : (
+                filteredPaletteGroups.map(({ group, items }) => {
+                  const isExpanded = isPaletteSearchActive || expandedPaletteGroups.has(group.title);
+                  return (
+                    <div key={group.title} className='rounded-md border border-border/60'>
+                      <button
+                        type='button'
+                        onClick={() => {
+                          if (isPaletteSearchActive) return;
+                          togglePaletteGroup(group.title);
+                        }}
+                        className='flex w-full items-center justify-between px-3 py-2 text-left transition hover:bg-muted/40'
                       >
-                        <path
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                          strokeWidth={2}
-                          d='M19 9l-7 7-7-7'
-                        />
-                      </svg>
-                    </button>
-                    {isExpanded && (
-                      <div className='space-y-2 px-3 pb-3'>
-                        {items.map((node) => (
-                          <div
-                            key={node.title}
-                            draggable
-                            role='button'
-                            tabIndex={0}
-                            data-doc-id={`node_palette_${node.type}`}
-                            onDragStart={(event) => handleDragStart(event, node)}
-                            className='cursor-grab rounded-md border border-border/60 bg-card/30 p-2 text-xs text-gray-300 transition hover:border-border/80 hover:bg-muted/50 active:cursor-grabbing'
-                          >
-                            {((): React.JSX.Element => {
-                              const isScheduledTrigger =
+                        <div className='flex items-center gap-2'>
+                          <span className='text-sm'>{group.icon}</span>
+                          <Hint size='xs' uppercase className='font-medium text-gray-300'>
+                            {group.title}
+                          </Hint>
+                          <span className='rounded-full bg-muted/60 px-1.5 py-0.5 text-[10px] text-gray-400'>
+                            {items.length}
+                          </span>
+                        </div>
+                        <svg
+                          className={`h-4 w-4 text-gray-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                          fill='none'
+                          viewBox='0 0 24 24'
+                          stroke='currentColor'
+                        >
+                          <path
+                            strokeLinecap='round'
+                            strokeLinejoin='round'
+                            strokeWidth={2}
+                            d='M19 9l-7 7-7-7'
+                          />
+                        </svg>
+                      </button>
+                      {isExpanded && (
+                        <div className='space-y-2 px-3 pb-3'>
+                          {items.map((node) => (
+                            <div
+                              key={node.title}
+                              draggable
+                              data-doc-id={`node_palette_${node.type}`}
+                              onDragStart={(event) => handleDragStart(event, node)}
+                              title={`Drag ${node.title} to the canvas`}
+                              className='cursor-grab rounded-md border border-border/60 bg-card/30 p-2 text-xs text-gray-300 transition hover:border-border/80 hover:bg-muted/50 active:cursor-grabbing'
+                            >
+                              {((): React.JSX.Element => {
+                                const isScheduledTrigger =
                                 node.type === 'trigger' &&
                                 node.config?.trigger?.event === 'scheduled_run';
-                              return (
-                                <div className='flex items-center justify-between gap-2'>
-                                  <Hint
-                                    size='xs'
-                                    uppercase={false}
-                                    className='font-semibold text-white'
-                                  >
-                                    {node.title}
-                                  </Hint>
-                                  <div className='flex items-center gap-1'>
-                                    {isScheduledTrigger ? (
-                                      <StatusBadge
-                                        status='Scheduled'
-                                        variant='warning'
-                                        size='sm'
-                                        className='font-bold h-4 px-1.5'
-                                      />
-                                    ) : null}
-                                    <span className='text-[10px] uppercase text-gray-500'>
-                                      {node.type}
-                                    </span>
+                                return (
+                                  <div className='flex items-center justify-between gap-2'>
+                                    <Hint
+                                      size='xs'
+                                      uppercase={false}
+                                      className='font-semibold text-white'
+                                    >
+                                      {node.title}
+                                    </Hint>
+                                    <div className='flex items-center gap-1'>
+                                      {isScheduledTrigger ? (
+                                        <StatusBadge
+                                          status='Scheduled'
+                                          variant='warning'
+                                          size='sm'
+                                          className='font-bold h-4 px-1.5'
+                                        />
+                                      ) : null}
+                                      <span className='text-[10px] uppercase text-gray-500'>
+                                        {node.type}
+                                      </span>
+                                    </div>
                                   </div>
-                                </div>
-                              );
-                            })()}
-                            <p className='mt-1 text-[11px] text-gray-400'>{node.description}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })
-            )}
-          </div>
-        )}
-      </Card>
+                                );
+                              })()}
+                              <p className='mt-1 text-[11px] text-gray-400'>{node.description}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          )}
+        </Card>
 
-      {!selectedEdgeId && (
-        <Card className='border-border/60 bg-card/40 p-4'>
-          <Hint size='xs' uppercase={false} className='mb-3 font-semibold text-white'>
+        {!selectedEdgeId && (
+          <Card className='border-border/60 bg-card/40 p-4'>
+            <Hint size='xs' uppercase={false} className='mb-3 font-semibold text-white'>
             Inspector
-          </Hint>{' '}
-          {selectedNode ? (
-            <div className='space-y-3 text-xs text-gray-300'>
-              <Card
-                variant='subtle-compact'
-                padding='sm'
-                className='border-border/60 bg-card/50 text-[11px] text-gray-400'
-              >
-                <div className='flex items-center justify-between'>
-                  <span className='uppercase text-gray-500'>Type</span>
-                  <div className='flex items-center gap-1'>
-                    {selectedIsScheduledTrigger ? (
-                      <StatusBadge
-                        status='Scheduled'
-                        variant='warning'
-                        size='sm'
-                        className='font-bold h-4 px-1.5'
-                      />
-                    ) : null}
-                    <span className='text-[10px] uppercase text-gray-300'>{selectedNode.type}</span>
+            </Hint>{' '}
+            {selectedNode ? (
+              <div className='space-y-3 text-xs text-gray-300'>
+                <Card
+                  variant='subtle-compact'
+                  padding='sm'
+                  className='border-border/60 bg-card/50 text-[11px] text-gray-400'
+                >
+                  <div className='flex items-center justify-between'>
+                    <span className='uppercase text-gray-500'>Type</span>
+                    <div className='flex items-center gap-1'>
+                      {selectedIsScheduledTrigger ? (
+                        <StatusBadge
+                          status='Scheduled'
+                          variant='warning'
+                          size='sm'
+                          className='font-bold h-4 px-1.5'
+                        />
+                      ) : null}
+                      <span className='text-[10px] uppercase text-gray-300'>{selectedNode.type}</span>
+                    </div>
                   </div>
-                </div>
-              </Card>
-              {selectedNode.type === 'trigger' && (
-                <div className='space-y-2'>
-                  <Button
-                    className='w-full'
-                    variant='success'
-                    size='sm'
-                    type='button'
-                    onClick={(event) => {
-                      void fireTrigger(selectedNode, event);
-                    }}
-                  >
-                    Fire Trigger
-                  </Button>
-                  {fireTriggerPersistent && (
+                </Card>
+                {selectedNode.type === 'trigger' && (
+                  <div className='space-y-2'>
                     <Button
                       className='w-full'
-                      variant='info'
+                      variant='success'
                       size='sm'
                       type='button'
                       onClick={(event) => {
-                        void fireTriggerPersistent(selectedNode, event);
+                        void fireTrigger(selectedNode, event);
                       }}
                     >
-                      Queue Persistent Run
+                    Fire Trigger
                     </Button>
-                  )}
-                </div>
-              )}
-              {selectedNode.type === 'simulation' && (
-                <Button
-                  className='w-full'
-                  variant='info'
-                  size='sm'
-                  type='button'
-                  onClick={() => setSimulationOpenNodeId(selectedNode.id)}
-                >
+                    {fireTriggerPersistent && (
+                      <Button
+                        className='w-full'
+                        variant='info'
+                        size='sm'
+                        type='button'
+                        onClick={(event) => {
+                          void fireTriggerPersistent(selectedNode, event);
+                        }}
+                      >
+                      Queue Persistent Run
+                      </Button>
+                    )}
+                  </div>
+                )}
+                {selectedNode.type === 'simulation' && (
+                  <Button
+                    className='w-full'
+                    variant='info'
+                    size='sm'
+                    type='button'
+                    onClick={() => setSimulationOpenNodeId(selectedNode.id)}
+                  >
                   Open Simulation
-                </Button>
-              )}
-              <div>
-                <Label className='text-[10px] uppercase text-gray-500'>Title</Label>
-                <Input
-                  data-doc-id='inspector_node_title'
-                  className='mt-2 w-full rounded-md border bg-card/70 px-3 py-2 text-xs text-white'
-                  value={selectedNode.title ?? ''}
-                  onChange={(event) => {
-                    const patch: Partial<AiNode> = { title: event.target.value };
-                    updateSelectedNode(patch, { nodeId: selectedNode.id });
-                  }}
-                  onBlur={() => {
-                    void savePathConfig({ silent: true, includeNodeConfig: true, force: true });
-                  }}
-                />
-              </div>
-              <div>
-                <Label className='text-[10px] uppercase text-gray-500'>Description</Label>
-                <Textarea
-                  data-doc-id='inspector_node_description'
-                  className='mt-2 min-h-[64px] w-full rounded-md border bg-card/70 text-xs text-white'
-                  value={selectedNode.description ?? ''}
-                  onChange={(event) => {
-                    const patch: Partial<AiNode> = { description: event.target.value };
-                    updateSelectedNode(patch, { nodeId: selectedNode.id });
-                  }}
-                  onBlur={() => {
-                    void savePathConfig({ silent: true, includeNodeConfig: true, force: true });
-                  }}
-                />
-              </div>
-              <Card
-                variant='subtle-compact'
-                padding='sm'
-                className='border-border/60 bg-card/50 text-[11px] text-gray-400'
-              >
+                  </Button>
+                )}
+                <div>
+                  <Label className='text-[10px] uppercase text-gray-500'>Title</Label>
+                  <Input
+                    data-doc-id='inspector_node_title'
+                    className='mt-2 w-full rounded-md border bg-card/70 px-3 py-2 text-xs text-white'
+                    value={selectedNode.title ?? ''}
+                    onChange={(event) => {
+                      const patch: Partial<AiNode> = { title: event.target.value };
+                      updateSelectedNode(patch, { nodeId: selectedNode.id });
+                    }}
+                    onBlur={() => {
+                      void savePathConfig({ silent: true, includeNodeConfig: true, force: true });
+                    }}
+                  />
+                </div>
+                <div>
+                  <Label className='text-[10px] uppercase text-gray-500'>Description</Label>
+                  <Textarea
+                    data-doc-id='inspector_node_description'
+                    className='mt-2 min-h-[64px] w-full rounded-md border bg-card/70 text-xs text-white'
+                    value={selectedNode.description ?? ''}
+                    onChange={(event) => {
+                      const patch: Partial<AiNode> = { description: event.target.value };
+                      updateSelectedNode(patch, { nodeId: selectedNode.id });
+                    }}
+                    onBlur={() => {
+                      void savePathConfig({ silent: true, includeNodeConfig: true, force: true });
+                    }}
+                  />
+                </div>
+                <Card
+                  variant='subtle-compact'
+                  padding='sm'
+                  className='border-border/60 bg-card/50 text-[11px] text-gray-400'
+                >
                 Inputs:{' '}
-                {selectedNode.inputs.map((port: string) => formatPortLabel(port)).join(', ') ||
+                  {selectedNode.inputs.map((port: string) => formatPortLabel(port)).join(', ') ||
                   'None'}{' '}
-                <br />
+                  <br />
                 Outputs:{' '}
-                {selectedNode.outputs.map((port: string) => formatPortLabel(port)).join(', ') ||
+                  {selectedNode.outputs.map((port: string) => formatPortLabel(port)).join(', ') ||
                   'None'}
-              </Card>
-              {selectedNode.type === 'prompt' &&
+                </Card>
+                {selectedNode.type === 'prompt' &&
                 ((): React.JSX.Element | null => {
                   const incomingEdges = edges.filter((edge) => edge.to === selectedNode.id);
                   const inputPorts = incomingEdges
@@ -526,81 +529,106 @@ export function CanvasSidebar(): React.JSX.Element {
                     </Card>
                   );
                 })()}
-              <Button
-                data-doc-id='inspector_open_node_config'
-                className='w-full rounded-md border text-xs text-white hover:bg-muted/60'
-                onClick={() => setConfigOpen(true)}
-              >
+                <Button
+                  data-doc-id='inspector_open_node_config'
+                  className='w-full rounded-md border text-xs text-white hover:bg-muted/60'
+                  onClick={() => setConfigOpen(true)}
+                >
                 Open Node Config
-              </Button>
-              <Button
-                data-doc-id='inspector_remove_node'
-                className='w-full rounded-md border border-rose-500/40 text-xs text-rose-200 hover:bg-rose-500/10'
-                type='button'
-                onClick={() => deleteSelectedNode()}
-              >
+                </Button>
+                <Button
+                  data-doc-id='inspector_remove_node'
+                  className='w-full rounded-md border border-rose-500/40 text-xs text-rose-200 hover:bg-rose-500/10'
+                  type='button'
+                  onClick={() => deleteSelectedNode()}
+                >
                 Remove Node
-              </Button>
-            </div>
-          ) : (
-            <div className='text-xs text-gray-500'>
+                </Button>
+              </div>
+            ) : (
+              <div className='text-xs text-gray-500'>
               Select a node to inspect inputs, outputs, and configuration.
-            </div>
-          )}
-        </Card>
-      )}
+              </div>
+            )}
+          </Card>
+        )}
 
-      {showRunControls && (
-        <Card className='border-border/60 bg-card/40 p-4'>
-          <div className='mb-3 flex items-center justify-between'>
-            <span className='text-sm font-semibold text-white'>Run Controls</span>
-            <StatusBadge
-              status={runStatusLabel}
-              variant={
-                runStatus === 'running' || runStatus === 'stepping'
-                  ? 'processing'
-                  : runStatus === 'paused'
-                    ? 'warning'
-                    : 'neutral'
-              }
-              size='sm'
-              className='font-bold'
-            />
-          </div>
-          <div className='grid grid-cols-2 gap-2'>
-            {runStatus === 'running' || runStatus === 'stepping' ? (
-              <>
-                <Button
-                  variant='warning'
-                  size='sm'
-                  type='button'
-                  onClick={pauseRun}
-                  disabled={!pauseRun}
-                >
+        {showRunControls && (
+          <Card className='border-border/60 bg-card/40 p-4'>
+            <div className='mb-3 flex items-center justify-between'>
+              <span className='text-sm font-semibold text-white'>Run Controls</span>
+              <StatusBadge
+                status={runStatusLabel}
+                variant={
+                  runStatus === 'running' || runStatus === 'stepping'
+                    ? 'processing'
+                    : runStatus === 'paused'
+                      ? 'warning'
+                      : 'neutral'
+                }
+                size='sm'
+                className='font-bold'
+              />
+            </div>
+            <div className='grid grid-cols-2 gap-2'>
+              {runStatus === 'running' || runStatus === 'stepping' ? (
+                <>
+                  <Button
+                    variant='warning'
+                    size='sm'
+                    type='button'
+                    onClick={pauseRun}
+                    disabled={!pauseRun}
+                  >
                   Pause
-                </Button>
-                <Button
-                  variant='destructive'
-                  size='sm'
-                  type='button'
-                  onClick={cancelRun}
-                  disabled={!cancelRun}
-                >
+                  </Button>
+                  <Button
+                    variant='destructive'
+                    size='sm'
+                    type='button'
+                    onClick={cancelRun}
+                    disabled={!cancelRun}
+                  >
                   Cancel
-                </Button>
-              </>
-            ) : runStatus === 'paused' ? (
-              <>
-                <Button
-                  variant='success'
-                  size='sm'
-                  type='button'
-                  onClick={resumeRun}
-                  disabled={!resumeRun}
-                >
+                  </Button>
+                </>
+              ) : runStatus === 'paused' ? (
+                <>
+                  <Button
+                    variant='success'
+                    size='sm'
+                    type='button'
+                    onClick={resumeRun}
+                    disabled={!resumeRun}
+                  >
                   Resume
-                </Button>
+                  </Button>
+                  <Button
+                    variant='info'
+                    size='sm'
+                    type='button'
+                    onClick={() => {
+                      const node = selectedNode?.type === 'trigger' ? selectedNode : undefined;
+                      stepRun(node);
+                    }}
+                    disabled={!stepRun}
+                  >
+                  Step
+                  </Button>
+                  <Button
+                    className='col-span-2'
+                    variant='destructive'
+                    size='sm'
+                    type='button'
+                    onClick={cancelRun}
+                    disabled={!cancelRun}
+                  >
+                  Cancel
+                  </Button>
+                </>
+              ) : (
                 <Button
+                  className='col-span-2'
                   variant='info'
                   size='sm'
                   type='button'
@@ -610,202 +638,179 @@ export function CanvasSidebar(): React.JSX.Element {
                   }}
                   disabled={!stepRun}
                 >
-                  Step
-                </Button>
-                <Button
-                  className='col-span-2'
-                  variant='destructive'
-                  size='sm'
-                  type='button'
-                  onClick={cancelRun}
-                  disabled={!cancelRun}
-                >
-                  Cancel
-                </Button>
-              </>
-            ) : (
-              <Button
-                className='col-span-2'
-                variant='info'
-                size='sm'
-                type='button'
-                onClick={() => {
-                  const node = selectedNode?.type === 'trigger' ? selectedNode : undefined;
-                  stepRun(node);
-                }}
-                disabled={!stepRun}
-              >
                 Step Run
-              </Button>
-            )}
-          </div>
-        </Card>
-      )}
+                </Button>
+              )}
+            </div>
+          </Card>
+        )}
 
-      <Card className='border-border/60 bg-card/40 p-4'>
-        <Hint size='xs' uppercase={false} className='mb-3 font-semibold text-white'>
+        <Card className='border-border/60 bg-card/40 p-4'>
+          <Hint size='xs' uppercase={false} className='mb-3 font-semibold text-white'>
           Connections
-        </Hint>
-        <div className='space-y-2 text-xs text-gray-400'>
-          <div>Active wires: {edges.length}</div>
-          {selectedEdgeId ? (
-            ((): React.JSX.Element | null => {
-              const selectedEdge = edges.find((edge) => edge.id === selectedEdgeId);
-              const fromNodeId = selectedEdge?.from;
-              const toNodeId = selectedEdge?.to;
-              const fromNode = fromNodeId ? nodes.find((n) => n.id === fromNodeId) : null;
-              const toNode = toNodeId ? nodes.find((n) => n.id === toNodeId) : null;
-              const sourceOutputs = fromNodeId ? runtimeState.outputs?.[fromNodeId] : undefined;
-              const targetInputs = toNodeId ? runtimeState.inputs?.[toNodeId] : undefined;
-              const sourceValue = selectedEdge
-                ? readPortRuntimeValue(sourceOutputs, selectedEdge.fromPort)
-                : undefined;
-              const targetValue = selectedEdge
-                ? readPortRuntimeValue(targetInputs, selectedEdge.toPort)
-                : undefined;
-              return selectedEdge ? (
-                <Card
-                  variant='info'
-                  padding='sm'
-                  className='space-y-3 border-blue-500/30 bg-blue-500/5'
-                >
-                  <Hint size='xs' uppercase={false} className='font-medium text-blue-300'>
-                    Selected Wire
-                  </Hint>
-                  <div className='space-y-2'>
-                    <Card
-                      variant='subtle-compact'
-                      padding='sm'
-                      className='border-border/60 bg-card/50'
-                    >
-                      <Hint size='xxs' uppercase className='text-gray-500'>
-                        From
-                      </Hint>
-                      <div className='text-sm text-white'>
-                        {fromNode?.title ?? selectedEdge.from}
-                      </div>
-                      <div className='text-[11px] text-gray-400'>
-                        Type: <span className='text-amber-300'>{fromNode?.type ?? 'unknown'}</span>
-                      </div>
-                      <div className='text-[11px] text-gray-400'>
-                        Port:{' '}
-                        <span className='text-amber-300'>{selectedEdge.fromPort ?? 'default'}</span>
-                      </div>
-                    </Card>
-                    <div className='flex justify-center text-gray-500'>↓</div>
-                    <Card
-                      variant='subtle-compact'
-                      padding='sm'
-                      className='border-border/60 bg-card/50'
-                    >
-                      <Hint size='xxs' uppercase className='text-gray-500'>
-                        To
-                      </Hint>
-                      <div className='text-sm text-white'>{toNode?.title ?? selectedEdge.to}</div>
-                      <div className='text-[11px] text-gray-400'>
-                        Type: <span className='text-sky-300'>{toNode?.type ?? 'unknown'}</span>
-                      </div>
-                      <div className='text-[11px] text-gray-400'>
-                        Port:{' '}
-                        <span className='text-sky-300'>{selectedEdge.toPort ?? 'default'}</span>
-                      </div>
-                    </Card>
-                  </div>
+          </Hint>
+          <div className='space-y-2 text-xs text-gray-400'>
+            <div>Active wires: {edges.length}</div>
+            {selectedEdgeId ? (
+              ((): React.JSX.Element | null => {
+                const selectedEdge = edges.find((edge) => edge.id === selectedEdgeId);
+                const fromNodeId = selectedEdge?.from;
+                const toNodeId = selectedEdge?.to;
+                const fromNode = fromNodeId ? nodes.find((n) => n.id === fromNodeId) : null;
+                const toNode = toNodeId ? nodes.find((n) => n.id === toNodeId) : null;
+                const sourceOutputs = fromNodeId ? runtimeState.outputs?.[fromNodeId] : undefined;
+                const targetInputs = toNodeId ? runtimeState.inputs?.[toNodeId] : undefined;
+                const sourceValue = selectedEdge
+                  ? readPortRuntimeValue(sourceOutputs, selectedEdge.fromPort)
+                  : undefined;
+                const targetValue = selectedEdge
+                  ? readPortRuntimeValue(targetInputs, selectedEdge.toPort)
+                  : undefined;
+                return selectedEdge ? (
                   <Card
-                    variant='subtle-compact'
+                    variant='info'
                     padding='sm'
-                    className='space-y-2 border-border/60 bg-card/40'
+                    className='space-y-3 border-blue-500/30 bg-blue-500/5'
                   >
-                    <Hint size='xxs' uppercase className='text-gray-500'>
-                      Connector Data
+                    <Hint size='xs' uppercase={false} className='font-medium text-blue-300'>
+                    Selected Wire
                     </Hint>
-                    <div>
-                      <div className='text-[10px] text-amber-300'>
-                        Source ({selectedEdge.fromPort ?? 'default'})
-                      </div>
-                      <pre className='mt-1 max-h-28 overflow-auto whitespace-pre-wrap rounded border border-border/50 bg-black/30 px-2 py-1 text-[10px] text-gray-200'>
-                        {sourceValue === undefined
-                          ? 'No runtime output yet.'
-                          : formatRuntimeValue(sourceValue)}
-                      </pre>
+                    <div className='space-y-2'>
+                      <Card
+                        variant='subtle-compact'
+                        padding='sm'
+                        className='border-border/60 bg-card/50'
+                      >
+                        <Hint size='xxs' uppercase className='text-gray-500'>
+                        From
+                        </Hint>
+                        <div className='text-sm text-white'>
+                          {fromNode?.title ?? selectedEdge.from}
+                        </div>
+                        <div className='text-[11px] text-gray-400'>
+                        Type: <span className='text-amber-300'>{fromNode?.type ?? 'unknown'}</span>
+                        </div>
+                        <div className='text-[11px] text-gray-400'>
+                        Port:{' '}
+                          <span className='text-amber-300'>{selectedEdge.fromPort ?? 'default'}</span>
+                        </div>
+                      </Card>
+                      <div className='flex justify-center text-gray-500'>↓</div>
+                      <Card
+                        variant='subtle-compact'
+                        padding='sm'
+                        className='border-border/60 bg-card/50'
+                      >
+                        <Hint size='xxs' uppercase className='text-gray-500'>
+                        To
+                        </Hint>
+                        <div className='text-sm text-white'>{toNode?.title ?? selectedEdge.to}</div>
+                        <div className='text-[11px] text-gray-400'>
+                        Type: <span className='text-sky-300'>{toNode?.type ?? 'unknown'}</span>
+                        </div>
+                        <div className='text-[11px] text-gray-400'>
+                        Port:{' '}
+                          <span className='text-sky-300'>{selectedEdge.toPort ?? 'default'}</span>
+                        </div>
+                      </Card>
                     </div>
-                    <div>
-                      <div className='text-[10px] text-sky-300'>
-                        Target ({selectedEdge.toPort ?? 'default'})
+                    <Card
+                      variant='subtle-compact'
+                      padding='sm'
+                      className='space-y-2 border-border/60 bg-card/40'
+                    >
+                      <Hint size='xxs' uppercase className='text-gray-500'>
+                      Connector Data
+                      </Hint>
+                      <div>
+                        <div className='text-[10px] text-amber-300'>
+                        Source ({selectedEdge.fromPort ?? 'default'})
+                        </div>
+                        <pre className='mt-1 max-h-28 overflow-auto whitespace-pre-wrap rounded border border-border/50 bg-black/30 px-2 py-1 text-[10px] text-gray-200'>
+                          {sourceValue === undefined
+                            ? 'No runtime output yet.'
+                            : formatRuntimeValue(sourceValue)}
+                        </pre>
                       </div>
-                      <pre className='mt-1 max-h-28 overflow-auto whitespace-pre-wrap rounded border border-border/50 bg-black/30 px-2 py-1 text-[10px] text-gray-200'>
-                        {targetValue === undefined
-                          ? 'No runtime input yet.'
-                          : formatRuntimeValue(targetValue)}
-                      </pre>
+                      <div>
+                        <div className='text-[10px] text-sky-300'>
+                        Target ({selectedEdge.toPort ?? 'default'})
+                        </div>
+                        <pre className='mt-1 max-h-28 overflow-auto whitespace-pre-wrap rounded border border-border/50 bg-black/30 px-2 py-1 text-[10px] text-gray-200'>
+                          {targetValue === undefined
+                            ? 'No runtime input yet.'
+                            : formatRuntimeValue(targetValue)}
+                        </pre>
+                      </div>
+                    </Card>
+                    <div className='flex gap-2'>
+                      <Button
+                        className='flex-1'
+                        variant='outline'
+                        size='sm'
+                        type='button'
+                        onClick={() => selectEdge(null)}
+                      >
+                      Deselect
+                      </Button>
+                      <Button
+                        className='flex-1'
+                        variant='destructive'
+                        size='sm'
+                        type='button'
+                        onClick={() => handleRemoveEdge(selectedEdgeId)}
+                      >
+                      Remove
+                      </Button>
                     </div>
                   </Card>
-                  <div className='flex gap-2'>
-                    <Button
-                      className='flex-1'
-                      variant='outline'
-                      size='sm'
-                      type='button'
-                      onClick={() => selectEdge(null)}
-                    >
-                      Deselect
-                    </Button>
-                    <Button
-                      className='flex-1'
-                      variant='destructive'
-                      size='sm'
-                      type='button'
-                      onClick={() => handleRemoveEdge(selectedEdgeId)}
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                </Card>
-              ) : null;
-            })()
-          ) : (
-            <div className='text-[11px] text-gray-500'>Click a wire to select it.</div>
-          )}
-          <Button
-            className='w-full'
-            variant='destructive'
-            size='sm'
-            type='button'
-            onClick={clearWires}
-          >
+                ) : null;
+              })()
+            ) : (
+              <div className='text-[11px] text-gray-500'>Click a wire to select it.</div>
+            )}
+            <Button
+              className='w-full'
+              variant='destructive'
+              size='sm'
+              type='button'
+              onClick={clearWires}
+            >
             Clear All Wires
-          </Button>
-        </div>
-        {edges.length > 0 && (
-          <div className='mt-3 space-y-2 text-[11px] text-gray-500'>
-            {edges.map((edge): React.JSX.Element => {
-              const fromNode = nodes.find((node) => node.id === edge.from);
-              const toNode = nodes.find((node) => node.id === edge.to);
-              const label = `${fromNode?.title ?? edge.from}.${edge.fromPort ?? '?'} → ${toNode?.title ?? edge.to}.${edge.toPort ?? '?'}`;
-              const isSelected = edge.id === selectedEdgeId;
-              return (
-                <div
-                  key={edge.id}
-                  className={`flex items-center justify-between gap-2 rounded-md border px-2 py-1 text-[11px] ${
-                    isSelected
-                      ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200'
-                      : 'border-border/60 bg-card/40'
-                  }`}
-                >
-                  <span className='truncate'>{label}</span>
-                  <button
-                    type='button'
-                    className='rounded border border-border/60 px-1.5 py-0.5 text-[9px] text-gray-400 hover:bg-muted/50'
-                    onClick={() => selectEdge(edge.id)}
-                  >
-                    Select
-                  </button>
-                </div>
-              );
-            })}
+            </Button>
           </div>
-        )}
-      </Card>
-    </div>
+          {edges.length > 0 && (
+            <div className='mt-3 space-y-2 text-[11px] text-gray-500'>
+              {edges.map((edge): React.JSX.Element => {
+                const fromNode = nodes.find((node) => node.id === edge.from);
+                const toNode = nodes.find((node) => node.id === edge.to);
+                const label = `${fromNode?.title ?? edge.from}.${edge.fromPort ?? '?'} → ${toNode?.title ?? edge.to}.${edge.toPort ?? '?'}`;
+                const isSelected = edge.id === selectedEdgeId;
+                return (
+                  <div
+                    key={edge.id}
+                    className={`flex items-center justify-between gap-2 rounded-md border px-2 py-1 text-[11px] ${
+                      isSelected
+                        ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200'
+                        : 'border-border/60 bg-card/40'
+                    }`}
+                  >
+                    <span className='truncate'>{label}</span>
+                    <button
+                      type='button'
+                      className='rounded border border-border/60 px-1.5 py-0.5 text-[9px] text-gray-400 hover:bg-muted/50'
+                      onClick={() => selectEdge(edge.id)}
+                    >
+                    Select
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Card>
+      </div>
+      <ConfirmationModal />
+    </>
   );
 }

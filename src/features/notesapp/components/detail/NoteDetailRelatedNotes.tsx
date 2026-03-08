@@ -127,24 +127,22 @@ export function NoteDetailRelatedNotes(): React.JSX.Element | null {
               return (
                 <div
                   key={related.id}
-                  className='relative w-40 cursor-pointer rounded-md border border-border/60 bg-card/30 p-2 text-left text-xs transition hover:bg-muted/40'
+                  className='relative w-40 rounded-md border border-border/60 bg-card/30 p-2 text-left text-xs transition hover:bg-muted/40'
                   style={relatedPreviewStyle}
-                  role='button'
-                  tabIndex={0}
-                  onClick={(): void => onSelectRelatedNote(related.id)}
-                  onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault();
-                      onSelectRelatedNote(related.id);
-                    }
-                  }}
                 >
-                  <div className='truncate font-semibold'>
-                    {relatedNote?.title ?? related.title}
-                  </div>
-                  <div className='line-clamp-2 text-[11px] opacity-80'>
-                    {relatedNote?.content ?? 'No content'}
-                  </div>
+                  <button
+                    type='button'
+                    onClick={(): void => onSelectRelatedNote(related.id)}
+                    className='flex w-full flex-col rounded-sm pr-6 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
+                    aria-label={`Open related note ${relatedNote?.title ?? related.title}`}
+                  >
+                    <div className='truncate font-semibold'>
+                      {relatedNote?.title ?? related.title}
+                    </div>
+                    <div className='line-clamp-2 text-[11px] opacity-80'>
+                      {relatedNote?.content ?? 'No content'}
+                    </div>
+                  </button>
                   <Button
                     type='button'
                     onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {

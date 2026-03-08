@@ -7,7 +7,7 @@ import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { render } from '@/__tests__/test-utils';
-const { settingsStoreMock, authState, assignmentsState, progressState } = vi.hoisted(() => ({
+const { settingsStoreMock, authState, assignmentsState, progressState, routerPushMock } = vi.hoisted(() => ({
   settingsStoreMock: {
     get: vi.fn<(key: string) => string | undefined>(),
   },
@@ -26,6 +26,13 @@ const { settingsStoreMock, authState, assignmentsState, progressState } = vi.hoi
       lessonMastery: {},
     },
   },
+  routerPushMock: vi.fn(),
+}));
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: routerPushMock,
+  }),
 }));
 
 vi.mock('next/dynamic', () => ({
@@ -263,6 +270,34 @@ describe('Lessons', () => {
       'title',
       'Lesson Card: Opens a lesson from the Kangur lesson library and shows its progress state.'
     );
+  });
+
+  it('uses app-router navigation when the fallback back action has no browser history entry', () => {
+    setSettingsStore({
+      lessons: [createLesson()],
+    });
+
+    const historyBackSpy = vi.spyOn(window.history, 'back').mockImplementation(() => undefined);
+    const originalHistoryLength = window.history.length;
+    Object.defineProperty(window.history, 'length', {
+      configurable: true,
+      value: 1,
+    });
+
+    try {
+      render(<Lessons />);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
+
+      expect(historyBackSpy).not.toHaveBeenCalled();
+      expect(routerPushMock).toHaveBeenCalledWith('/kangur/game');
+    } finally {
+      Object.defineProperty(window.history, 'length', {
+        configurable: true,
+        value: originalHistoryLength,
+      });
+      historyBackSpy.mockRestore();
+    }
   });
 
   it('keeps using the legacy component renderer when the lesson stays in component mode', () => {

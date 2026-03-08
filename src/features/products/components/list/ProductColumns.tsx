@@ -198,7 +198,12 @@ const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCe
           |
         </span>
         <Tooltip content={categoryLabel}>
-          <span className='max-w-[14rem] truncate' aria-label={categoryLabel} title={categoryLabel}>
+          <span
+            tabIndex={0}
+            className='max-w-[14rem] truncate rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
+            aria-label={categoryLabel}
+            title={categoryLabel}
+          >
             {categoryLabel}
           </span>
         </Tooltip>
@@ -211,8 +216,13 @@ const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCe
               ) ?? 'Imported product'
             }
           >
-            <span>
-              <Download className='size-3 text-blue-400' aria-label='Imported product' />
+            <span
+              tabIndex={0}
+              aria-label='Imported product'
+              title='Imported product'
+              className='inline-flex rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
+            >
+              <Download className='size-3 text-blue-400' aria-hidden='true' />
             </span>
           </Tooltip>
         )}
@@ -273,7 +283,8 @@ const PriceCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function Price
       {showCurrencyIndicator && displayPrice !== product.price && (
         <Tooltip content={`Converted: ${displayPrice?.toFixed(2)} ${actualCurrency}`}>
           <span
-            className='text-xs text-muted-foreground'
+            tabIndex={0}
+            className='rounded-sm text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
             aria-label={`Converted price: ${displayPrice?.toFixed(2)} ${actualCurrency}`}
             title={`Converted: ${displayPrice?.toFixed(2)} ${actualCurrency}`}
           >

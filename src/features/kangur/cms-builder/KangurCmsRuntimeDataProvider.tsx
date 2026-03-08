@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 
 import { CmsRuntimeProvider } from '@/features/cms/components/frontend/CmsRuntimeContext';
 import { getKangurPageHref } from '@/features/kangur/config/routing';
@@ -83,6 +84,7 @@ export function KangurCmsRuntimeDataProvider({
 }: {
   children: React.ReactNode;
 }): React.ReactNode {
+  const router = useRouter();
   const auth = useKangurAuth();
   const routing = useOptionalKangurRouting();
   const progress = useKangurProgressState();
@@ -156,46 +158,36 @@ export function KangurCmsRuntimeDataProvider({
         description: assignment.description,
         id: assignment.id,
         openAssignment: (): void => {
-          if (typeof window === 'undefined') {
-            return;
-          }
-
-          window.location.href = buildKangurAssignmentHref(routing?.basePath ?? '', assignment);
+          router.push(buildKangurAssignmentHref(routing?.basePath ?? '', assignment));
         },
         priorityLabel: resolveAssignmentPriorityLabel(assignment.priority),
         progressLabel: assignment.progress.summary,
         progressPercent: assignment.progress.percent,
         title: assignment.title,
       })),
-    [priorityAssignments, routing?.basePath]
+    [priorityAssignments, router, routing?.basePath]
   );
   const openHomeSpotlightAssignment = useCallback((): void => {
-    if (typeof window === 'undefined' || !homeSpotlightAssignment) {
+    if (!homeSpotlightAssignment) {
       return;
     }
 
-    window.location.href = buildKangurAssignmentHref(routing?.basePath ?? '', homeSpotlightAssignment);
-  }, [homeSpotlightAssignment, routing?.basePath]);
+    router.push(buildKangurAssignmentHref(routing?.basePath ?? '', homeSpotlightAssignment));
+  }, [homeSpotlightAssignment, router, routing?.basePath]);
   const openResultAssignment = useCallback((): void => {
-    if (typeof window === 'undefined' || !game?.resultPracticeAssignment) {
+    if (!game?.resultPracticeAssignment) {
       return;
     }
 
-    window.location.href = buildKangurAssignmentHref(
-      routing?.basePath ?? '',
-      game.resultPracticeAssignment
-    );
-  }, [game?.resultPracticeAssignment, routing?.basePath]);
+    router.push(buildKangurAssignmentHref(routing?.basePath ?? '', game.resultPracticeAssignment));
+  }, [game?.resultPracticeAssignment, router, routing?.basePath]);
   const openActivePracticeAssignment = useCallback((): void => {
-    if (typeof window === 'undefined' || !game?.activePracticeAssignment) {
+    if (!game?.activePracticeAssignment) {
       return;
     }
 
-    window.location.href = buildKangurAssignmentHref(
-      routing?.basePath ?? '',
-      game.activePracticeAssignment
-    );
-  }, [game?.activePracticeAssignment, routing?.basePath]);
+    router.push(buildKangurAssignmentHref(routing?.basePath ?? '', game.activePracticeAssignment));
+  }, [game?.activePracticeAssignment, router, routing?.basePath]);
   const gameRuntime = useMemo(() => {
     if (!game) {
       return null;
@@ -391,13 +383,13 @@ export function KangurCmsRuntimeDataProvider({
   ]);
   const navigateToPage = useCallback(
     (pageKey: unknown): void => {
-      if (typeof window === 'undefined' || typeof pageKey !== 'string' || pageKey.trim().length === 0) {
+      if (typeof pageKey !== 'string' || pageKey.trim().length === 0) {
         return;
       }
 
-      window.location.href = getKangurPageHref(pageKey.trim(), routing?.basePath);
+      router.push(getKangurPageHref(pageKey.trim(), routing?.basePath));
     },
-    [routing?.basePath]
+    [router, routing?.basePath]
   );
 
   const page = useMemo(

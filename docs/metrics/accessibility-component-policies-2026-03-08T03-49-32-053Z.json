@@ -1,0 +1,114 @@
+{
+  "generatedAt": "2026-03-08T03:49:32.053Z",
+  "durationMs": 784,
+  "status": "warn",
+  "summary": {
+    "fileCount": 68,
+    "dialogCount": 4,
+    "alertDialogCount": 1,
+    "tabsListCount": 33,
+    "tooltipCount": 73,
+    "errorCount": 0,
+    "warningCount": 9
+  },
+  "issues": [
+    {
+      "severity": "warn",
+      "ruleId": "tooltip-trigger-not-focusable",
+      "message": "Tooltip wraps a non-focusable <span> trigger. Use a focusable trigger or add keyboard focus support.",
+      "file": "src/features/ai/ai-paths/components/node-config/dialog/regex/RegexAiPromptSection.tsx",
+      "line": 81,
+      "column": 11,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "tooltip-trigger-not-focusable",
+      "message": "Tooltip wraps a non-focusable <span> trigger. Use a focusable trigger or add keyboard focus support.",
+      "file": "src/features/ai/ai-paths/components/node-config/dialog/regex/RegexAiPromptSection.tsx",
+      "line": 89,
+      "column": 11,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "tooltip-trigger-not-focusable",
+      "message": "Tooltip wraps a non-focusable <span> trigger. Use a focusable trigger or add keyboard focus support.",
+      "file": "src/features/ai/ai-paths/components/node-config/dialog/regex/RegexAiPromptSection.tsx",
+      "line": 97,
+      "column": 11,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "tooltip-trigger-not-focusable",
+      "message": "Tooltip wraps a non-focusable <span> trigger. Use a focusable trigger or add keyboard focus support.",
+      "file": "src/features/ai/ai-paths/components/run-timeline.tsx",
+      "line": 375,
+      "column": 17,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "tooltip-trigger-not-focusable",
+      "message": "Tooltip wraps a non-focusable <span> trigger. Use a focusable trigger or add keyboard focus support.",
+      "file": "src/features/ai/ai-paths/components/run-timeline.tsx",
+      "line": 397,
+      "column": 17,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "tooltip-trigger-not-focusable",
+      "message": "Tooltip wraps a non-focusable <span> trigger. Use a focusable trigger or add keyboard focus support.",
+      "file": "src/features/data-import-export/components/imports/sections/ImportListPreviewSection.tsx",
+      "line": 156,
+      "column": 17,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "tooltip-trigger-not-focusable",
+      "message": "Tooltip wraps a non-focusable <span> trigger. Use a focusable trigger or add keyboard focus support.",
+      "file": "src/features/observability/components/EventStreamPanel.tsx",
+      "line": 90,
+      "column": 17,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "tooltip-trigger-not-focusable",
+      "message": "Tooltip wraps a non-focusable <span> trigger. Use a focusable trigger or add keyboard focus support.",
+      "file": "src/features/products/components/list/ProductColumns.tsx",
+      "line": 201,
+      "column": 11,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "tooltip-trigger-not-focusable",
+      "message": "Tooltip wraps a non-focusable <span> trigger. Use a focusable trigger or add keyboard focus support.",
+      "file": "src/features/products/components/list/ProductColumns.tsx",
+      "line": 283,
+      "column": 11,
+      "snippet": null,
+      "context": null
+    }
+  ],
+  "rules": [
+    {
+      "ruleId": "tooltip-trigger-not-focusable",
+      "errorCount": 0,
+      "warningCount": 9,
+      "infoCount": 0
+    }
+  ]
+}

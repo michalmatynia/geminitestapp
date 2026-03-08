@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
-import type { AiNode, Edge, PathConfig, PathMeta } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge, PathConfig, PathMeta, RuntimeState } from '@/shared/lib/ai-paths';
 import {
   PATH_CONFIG_PREFIX,
   PATH_INDEX_KEY,
@@ -157,7 +157,8 @@ export function usePathPersistence(
       updatedAt: string,
       nodesOverride?: AiNode[],
       nameOverride?: string,
-      edgesOverride?: Edge[]
+      edgesOverride?: Edge[],
+      runtimeStateOverride?: RuntimeState
     ): PathConfig => {
       const existingVersionRaw = args.activePathId
         ? pathConfigsRef.current[args.activePathId]?.version
@@ -191,7 +192,7 @@ export function usePathPersistence(
         isActive: args.isPathActive,
         parserSamples: args.parserSamples,
         updaterSamples: args.updaterSamples,
-        runtimeState: args.runtimeState,
+        runtimeState: runtimeStateOverride ?? args.runtimeState,
         lastRunAt: args.lastRunAt,
         runCount:
           args.activePathId &&
@@ -322,7 +323,8 @@ export function usePathPersistence(
           updatedAt,
           nodesForSave,
           resolvedName,
-          edgesForSaveResolved
+          edgesForSaveResolved,
+          options?.runtimeStateOverride
         );
         const nextPaths = pathsRef.current.map(
           (path: PathMeta): PathMeta =>

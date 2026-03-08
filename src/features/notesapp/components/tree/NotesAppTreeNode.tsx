@@ -54,6 +54,16 @@ export function NotesAppTreeNode(props: NotesAppTreeNodeProps): React.JSX.Elemen
   const isFolder = Boolean(folderId);
   const canToggle = isFolder && hasChildren;
   const Icon = isFolder ? (isExpanded ? FolderOpenIcon : FolderClosedIcon) : FileIcon;
+  const handleSelectNode = (event: React.MouseEvent<HTMLElement>): void => {
+    select(event as unknown as React.MouseEvent<HTMLDivElement>);
+    if (folderId) {
+      setSelectedFolderId(folderId);
+      setSelectedNote(null);
+      setIsEditing(false);
+    } else if (noteId) {
+      void handleSelectNoteFromTree(noteId);
+    }
+  };
 
   return (
     <div
@@ -62,35 +72,6 @@ export function NotesAppTreeNode(props: NotesAppTreeNodeProps): React.JSX.Elemen
         isSelected ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-300 hover:bg-muted/40'
       )}
       style={{ marginLeft: `${depth * 16}px` }}
-      onClick={(event): void => {
-        select(event);
-        if (folderId) {
-          setSelectedFolderId(folderId);
-          setSelectedNote(null);
-          setIsEditing(false);
-        } else if (noteId) {
-          void handleSelectNoteFromTree(noteId);
-        }
-      }}
-      onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
-        if (event.target !== event.currentTarget) {
-          return;
-        }
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          select(event as unknown as React.MouseEvent<HTMLDivElement>);
-          if (folderId) {
-            setSelectedFolderId(folderId);
-            setSelectedNote(null);
-            setIsEditing(false);
-          } else if (noteId) {
-            void handleSelectNoteFromTree(noteId);
-          }
-        }
-      }}
-      role='button'
-      tabIndex={0}
-      aria-pressed={isSelected}
     >
       <DragHandleIcon className='size-3 shrink-0 text-gray-500 opacity-0 transition-opacity group-hover:opacity-100' />
       {canToggle ? (
@@ -109,7 +90,6 @@ export function NotesAppTreeNode(props: NotesAppTreeNodeProps): React.JSX.Elemen
       ) : (
         <span className='inline-flex size-4 items-center justify-center text-xs opacity-30'>•</span>
       )}
-      <Icon className='size-3.5 shrink-0' />
       {isRenaming ? (
         <Input
           ref={(node) => {
@@ -135,7 +115,15 @@ export function NotesAppTreeNode(props: NotesAppTreeNodeProps): React.JSX.Elemen
           className='h-7 min-w-0 flex-1 border-blue-500 bg-gray-800 px-1 py-0.5 text-sm text-white outline-none'
         />
       ) : (
-        <span className='flex-1 truncate'>{node.name}</span>
+        <button
+          type='button'
+          onClick={handleSelectNode}
+          aria-pressed={isSelected}
+          className='flex min-w-0 flex-1 items-center gap-2 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
+        >
+          <Icon className='size-3.5 shrink-0' />
+          <span className='truncate'>{node.name}</span>
+        </button>
       )}
 
       {!isRenaming && (

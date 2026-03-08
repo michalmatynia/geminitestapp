@@ -86,4 +86,99 @@ export const collectionNodes: ContextNode[] = [
     updatedAtISO: '2026-01-01T00:00:00.000Z',
     source: { type: 'code', ref: SOURCE_REF },
   },
+  {
+    id: 'collection:kangur-progress',
+    kind: 'collection',
+    name: 'kangur_progress',
+    description:
+      'Learner progress state for Kangur including XP, badges, lesson mastery, and aggregated counters.',
+    tags: ['kangur', 'progress', 'education', 'database'],
+    relationships: [
+      { type: 'related_to', targetId: 'collection:kangur-scores' },
+      { type: 'related_to', targetId: 'collection:kangur-assignments' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'low',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-07T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'collection:kangur-scores',
+    kind: 'collection',
+    name: 'kangur_scores',
+    description:
+      'Historical practice and test results for Kangur learners including operation, accuracy, score, and timestamps.',
+    tags: ['kangur', 'scores', 'education', 'database'],
+    relationships: [
+      { type: 'related_to', targetId: 'collection:kangur-progress' },
+      { type: 'related_to', targetId: 'collection:kangur-assignments' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'low',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-07T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'collection:kangur-assignments',
+    kind: 'collection',
+    name: 'kangur_assignments',
+    description:
+      'Delegated Kangur lesson and practice assignments, including progress state and parent-created targets.',
+    tags: ['kangur', 'assignments', 'education', 'database'],
+    relationships: [
+      { type: 'related_to', targetId: 'collection:kangur-progress' },
+      { type: 'related_to', targetId: 'collection:kangur-scores' },
+      { type: 'related_to', targetId: 'collection:kangur-lessons' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'low',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-07T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'collection:kangur-lessons',
+    kind: 'collection',
+    name: 'kangur_lessons',
+    description:
+      'Kangur lesson catalog and lesson document content authored in settings-backed storage.',
+    tags: ['kangur', 'lessons', 'content', 'education'],
+    relationships: [{ type: 'related_to', targetId: 'collection:kangur-assignments' }],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'low',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-07T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'collection:kangur-test-suites',
+    kind: 'collection',
+    name: 'kangur_test_suites',
+    description:
+      'Settings-backed Kangur test suites and question banks used by learner test practice and tutor review flows.',
+    tags: ['kangur', 'tests', 'questions', 'education'],
+    relationships: [{ type: 'related_to', targetId: 'policy:kangur-ai-tutor-test-guardrails' }],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'low',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-07T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
 ];

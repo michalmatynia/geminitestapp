@@ -113,7 +113,7 @@ export function KangurAssignmentSpotlight({
           asChild
           className='mt-5 rounded-[22px] py-3.5 text-lg font-extrabold shadow-[0_24px_58px_-30px_rgba(255,133,72,0.56)]'
           fullWidth
-          variant='warm'
+          variant='primary'
         >
           <Link href={buildKangurAssignmentHref(basePath, assignment)}>
             {getKangurAssignmentActionLabel(assignment)}

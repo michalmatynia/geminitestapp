@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { createContext, useCallback, useContext, useMemo } from 'react';
 
 import type {
   AiNode,
@@ -26,7 +26,6 @@ import {
   useSelectionState,
   usePersistenceActions,
 } from '../context';
-import { useAiPathsSettingsOrchestrator } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
 import { useAiPathsNodeConfigActions } from './ai-paths-settings/hooks/useAiPathsNodeConfigActions';
 
 // --- Selection Context ---
@@ -132,7 +131,6 @@ type AiPathConfigValue = AiPathSelectionData &
   AiPathOrchestratorData;
 
 const useAiPathConfigDefaults = () => {
-  const { handleClearNodeHistory } = useAiPathsSettingsOrchestrator();
   const { toast } = useToast();
   const { selectedNodeId, configOpen } = useSelectionState();
   const selectionActions = useSelectionActions();
@@ -143,6 +141,41 @@ const useAiPathConfigDefaults = () => {
   const presetsActions = usePresetsActions();
   const { savePathConfig } = usePersistenceActions();
   const nodeConfigActions = useAiPathsNodeConfigActions({ selectedNodeId });
+
+  const handleClearNodeHistory = useCallback(
+    async (nodeId: string): Promise<void> => {
+      if (!graphState.activePathId) return;
+      if (graphState.isPathLocked) {
+        toast('This path is locked. Unlock it to clear history.', { variant: 'info' });
+        return;
+      }
+      const currentHistory = runtimeState.runtimeState.history ?? {};
+      if (!currentHistory[nodeId] || currentHistory[nodeId].length === 0) {
+        toast('No history recorded for this node yet.', { variant: 'info' });
+        return;
+      }
+      const { [nodeId]: _removed, ...restHistory } = currentHistory;
+      const nextRuntimeState: RuntimeState = {
+        ...runtimeState.runtimeState,
+        history: Object.keys(restHistory).length > 0 ? restHistory : undefined,
+      };
+      runtimeActions.setRuntimeState(nextRuntimeState);
+      const ok = await savePathConfig({ force: true, silent: true, runtimeStateOverride: nextRuntimeState });
+      if (ok) {
+        toast('Node history cleared.', { variant: 'success' });
+      } else {
+        toast('Failed to clear node history.', { variant: 'error' });
+      }
+    },
+    [
+      graphState.activePathId,
+      graphState.isPathLocked,
+      runtimeState.runtimeState,
+      runtimeActions,
+      savePathConfig,
+      toast,
+    ]
+  );
 
   const selectedNode = useMemo(
     () =>

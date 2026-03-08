@@ -88,7 +88,8 @@ export function EventStreamPanel(): React.JSX.Element {
             <div className='flex flex-col gap-1 max-w-[500px]'>
               <Tooltip content={row.original.message} className='w-full'>
                 <span
-                  className='text-sm text-gray-200 font-medium truncate block'
+                  tabIndex={0}
+                  className='block truncate rounded-sm text-sm font-medium text-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
                   aria-label={row.original.message}
                   title={row.original.message}
                 >

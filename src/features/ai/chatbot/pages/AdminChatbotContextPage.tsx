@@ -194,6 +194,7 @@ function ChatbotContextPageInner(): React.JSX.Element {
                   await handlePdfUpload(file, helpers);
                 }}
                 asChild
+                preserveChildSemantics
               >
                 <Button variant='outline' size='sm' className='h-9 gap-2'>
                   <FileUp className={cn('size-4', uploading && 'animate-bounce')} />

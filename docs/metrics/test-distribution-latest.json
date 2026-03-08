@@ -1,0 +1,341 @@
+{
+  "generatedAt": "2026-03-08T04:48:37.466Z",
+  "status": "passed",
+  "summary": {
+    "total": 19,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 19,
+    "status": "passed",
+    "featureCount": 28,
+    "featuresWithTestCount": 28,
+    "featuresWithoutTestCount": 0,
+    "totalTestFiles": 1110,
+    "onlyCount": 0,
+    "skipCount": 19
+  },
+  "scope": {
+    "featuresDir": "src/features",
+    "testDirs": [
+      "src",
+      "__tests__",
+      "e2e"
+    ]
+  },
+  "featuresWithTests": [
+    {
+      "feature": "ai",
+      "testCount": 186
+    },
+    {
+      "feature": "kangur",
+      "testCount": 134
+    },
+    {
+      "feature": "case-resolver",
+      "testCount": 78
+    },
+    {
+      "feature": "products",
+      "testCount": 71
+    },
+    {
+      "feature": "cms",
+      "testCount": 56
+    },
+    {
+      "feature": "prompt-exploder",
+      "testCount": 47
+    },
+    {
+      "feature": "integrations",
+      "testCount": 34
+    },
+    {
+      "feature": "foldertree",
+      "testCount": 27
+    },
+    {
+      "feature": "observability",
+      "testCount": 19
+    },
+    {
+      "feature": "notesapp",
+      "testCount": 15
+    },
+    {
+      "feature": "admin",
+      "testCount": 14
+    },
+    {
+      "feature": "database",
+      "testCount": 12
+    },
+    {
+      "feature": "auth",
+      "testCount": 8
+    },
+    {
+      "feature": "viewer3d",
+      "testCount": 8
+    },
+    {
+      "feature": "filemaker",
+      "testCount": 7
+    },
+    {
+      "feature": "jobs",
+      "testCount": 6
+    },
+    {
+      "feature": "drafter",
+      "testCount": 5
+    },
+    {
+      "feature": "files",
+      "testCount": 5
+    },
+    {
+      "feature": "internationalization",
+      "testCount": 5
+    },
+    {
+      "feature": "case-resolver-capture",
+      "testCount": 4
+    },
+    {
+      "feature": "document-editor",
+      "testCount": 4
+    },
+    {
+      "feature": "playwright",
+      "testCount": 3
+    },
+    {
+      "feature": "prompt-engine",
+      "testCount": 3
+    },
+    {
+      "feature": "data-import-export",
+      "testCount": 2
+    },
+    {
+      "feature": "tooltip-engine",
+      "testCount": 2
+    },
+    {
+      "feature": "app-embeds",
+      "testCount": 1
+    },
+    {
+      "feature": "gsap",
+      "testCount": 1
+    },
+    {
+      "feature": "product-sync",
+      "testCount": 1
+    }
+  ],
+  "featuresWithoutTests": [],
+  "issues": [
+    {
+      "severity": "info",
+      "ruleId": "test-skip-left",
+      "message": ".skip() in test file. Consider removing or adding a TODO comment.",
+      "file": "e2e/features/ai-paths/ai-paths-runtime-kernel.spec.ts",
+      "line": 52,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "test-skip-left",
+      "message": ".skip() in test file. Consider removing or adding a TODO comment.",
+      "file": "e2e/features/ai-paths/ai-paths.spec.ts",
+      "line": 527,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "test-skip-left",
+      "message": ".skip() in test file. Consider removing or adding a TODO comment.",
+      "file": "e2e/features/case-resolver/case-resolver.spec.ts",
+      "line": 274,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "test-skip-left",
+      "message": ".skip() in test file. Consider removing or adding a TODO comment.",
+      "file": "e2e/features/case-resolver/case-resolver.spec.ts",
+      "line": 295,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "test-skip-left",
+      "message": ".skip() in test file. Consider removing or adding a TODO comment.",
+      "file": "e2e/features/case-resolver/case-resolver.spec.ts",
+      "line": 387,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "test-skip-left",
+      "message": ".skip() in test file. Consider removing or adding a TODO comment.",
+      "file": "e2e/features/case-resolver/case-resolver.spec.ts",
+      "line": 471,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "test-skip-left",
+      "message": ".skip() in test file. Consider removing or adding a TODO comment.",
+      "file": "e2e/features/case-resolver/case-resolver.spec.ts",
+      "line": 524,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "test-skip-left",
+      "message": ".skip() in test file. Consider removing or adding a TODO comment.",
+      "file": "e2e/features/products/products-freshness.spec.ts",
+      "line": 141,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "test-skip-left",
+      "message": ".skip() in test file. Consider removing or adding a TODO comment.",
+      "file": "e2e/features/products/products-freshness.spec.ts",
+      "line": 182,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "test-skip-left",
+      "message": ".skip() in test file. Consider removing or adding a TODO comment.",
+      "file": "e2e/features/products/products-trigger-queue-integration.spec.ts",
+      "line": 696,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "test-skip-left",
+      "message": ".skip() in test file. Consider removing or adding a TODO comment.",
+      "file": "e2e/features/products/products-trigger-queue-integration.spec.ts",
+      "line": 711,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "test-skip-left",
+      "message": ".skip() in test file. Consider removing or adding a TODO comment.",
+      "file": "e2e/features/products/products-trigger-queue-integration.spec.ts",
+      "line": 727,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "test-skip-left",
+      "message": ".skip() in test file. Consider removing or adding a TODO comment.",
+      "file": "e2e/features/products/products-trigger-queue-integration.spec.ts",
+      "line": 734,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "test-skip-left",
+      "message": ".skip() in test file. Consider removing or adding a TODO comment.",
+      "file": "e2e/features/products/products-trigger-queue-integration.spec.ts",
+      "line": 751,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "test-skip-left",
+      "message": ".skip() in test file. Consider removing or adding a TODO comment.",
+      "file": "e2e/features/products/products-trigger-queue-integration.spec.ts",
+      "line": 767,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "test-skip-left",
+      "message": ".skip() in test file. Consider removing or adding a TODO comment.",
+      "file": "e2e/features/products/products-trigger-queue-integration.spec.ts",
+      "line": 785,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "test-skip-left",
+      "message": ".skip() in test file. Consider removing or adding a TODO comment.",
+      "file": "e2e/features/products/products-trigger-queue-integration.spec.ts",
+      "line": 797,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "test-skip-left",
+      "message": ".skip() in test file. Consider removing or adding a TODO comment.",
+      "file": "e2e/features/products/products-trigger-queue-integration.spec.ts",
+      "line": 814,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "test-skip-left",
+      "message": ".skip() in test file. Consider removing or adding a TODO comment.",
+      "file": "e2e/features/products/products.spec.ts",
+      "line": 34,
+      "column": null,
+      "snippet": null,
+      "context": null
+    }
+  ],
+  "rules": [
+    {
+      "ruleId": "test-skip-left",
+      "errorCount": 0,
+      "warningCount": 0,
+      "infoCount": 19
+    }
+  ],
+  "durationMs": 162
+}

@@ -45,4 +45,48 @@ export const policyNodes: ContextNode[] = [
     updatedAtISO: '2026-01-01T00:00:00.000Z',
     source: { type: 'code', ref: SOURCE_REF },
   },
+  {
+    id: 'policy:kangur-ai-tutor-socratic',
+    kind: 'policy',
+    name: 'Kangur AI Tutor Socratic Policy',
+    description:
+      'Kangur tutor responses must guide the learner without directly solving exercises. ' +
+      'The tutor should ask short reasoning questions, reinforce correct thinking, and avoid giving final answers.',
+    tags: ['kangur', 'ai', 'tutor', 'policy', 'safety'],
+    relationships: [
+      { type: 'governed_by', targetId: 'action:kangur-ai-tutor-chat' },
+      { type: 'governed_by', targetId: 'page:kangur-lessons' },
+      { type: 'governed_by', targetId: 'page:kangur-tests' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'low',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-07T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'policy:kangur-ai-tutor-test-guardrails',
+    kind: 'policy',
+    name: 'Kangur AI Tutor Test Guardrails',
+    description:
+      'During active test questions the tutor must not reveal the final answer or correct option. ' +
+      'Full reasoning review is allowed only after the question has been answered or revealed.',
+    tags: ['kangur', 'ai', 'tutor', 'tests', 'policy', 'safety'],
+    relationships: [
+      { type: 'governed_by', targetId: 'action:kangur-ai-tutor-chat' },
+      { type: 'governed_by', targetId: 'page:kangur-tests' },
+      { type: 'governed_by', targetId: 'collection:kangur-test-suites' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'low',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-07T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
 ];

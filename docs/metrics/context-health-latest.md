@@ -1,0 +1,320 @@
+# Context Health Check
+
+Generated at: 2026-03-08T04:48:37.095Z
+
+## Summary
+
+- Status: WARN
+- Context files scanned: 234
+- Errors: 0
+- Warnings: 192
+- Info: 96
+
+## Rule Breakdown
+
+| Rule | Errors | Warnings | Info |
+| --- | ---: | ---: | ---: |
+| context-generic-error | 0 | 155 | 0 |
+| context-oversized | 0 | 30 | 0 |
+| context-monolith | 0 | 7 | 0 |
+| context-missing-split | 0 | 0 | 96 |
+
+## Issues
+
+| Severity | Rule | Location | Message |
+| --- | --- | --- | --- |
+| WARN | context-generic-error | src/features/admin/context/AdminLayoutContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-monolith | src/features/admin/context/AdminMenuSettingsContext.tsx | Context provider value has ~36 fields (threshold: 15). Consider splitting into domain-specific contexts. |
+| WARN | context-oversized | src/features/admin/context/AdminMenuSettingsContext.tsx | Context file is 773 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
+| WARN | context-generic-error | src/features/ai/agentcreator/context/AgentCreatorSettingsContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/agentcreator/context/AgentRunContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/agentcreator/context/AgentRunsContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/agentcreator/teaching/context/AgentTeachingCollectionsContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/agentcreator/teaching/context/AgentTeachingContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsPageContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/ai-paths/components/AiPathConfigContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/ai-paths/components/CanvasBoardUIContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/ai-paths/components/JobQueueContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-oversized | src/features/ai/ai-paths/components/JobQueueContext.tsx | Context file is 1068 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
+| WARN | context-generic-error | src/features/ai/ai-paths/components/node-config/database/DatabaseConstructorContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/ai-paths/components/node-config/database/DatabasePresetsTabContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/ai-paths/components/node-config/database/DatabaseQueryInputControlsContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/ai-paths/components/node-config/database/DatabaseQueryValidatorPanelContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/ai-paths/components/node-config/database/DatabaseSaveQueryPresetDialogContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/ai-paths/context/AdminAiPathsValidationContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/ai-paths/context/CanvasContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/ai-paths/context/GraphContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-oversized | src/features/ai/ai-paths/context/GraphContext.tsx | Context file is 666 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
+| WARN | context-generic-error | src/features/ai/ai-paths/context/PersistenceContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/ai-paths/context/PresetsContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/ai-paths/context/RunHistoryContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/ai-paths/context/RuntimeContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-oversized | src/features/ai/ai-paths/context/RuntimeContext.tsx | Context file is 711 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
+| WARN | context-generic-error | src/features/ai/ai-paths/context/SelectionContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/chatbot/context/ChatbotContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/image-studio/components/center-preview/CenterPreviewContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/image-studio/components/center-preview/sections/CenterPreviewCanvasContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/image-studio/components/center-preview/sections/CenterPreviewHeaderContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/image-studio/components/center-preview/VariantPanelContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/image-studio/components/generation-toolbar/GenerationToolbarContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/image-studio/components/RightSidebarContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/image-studio/components/sequencing/SequencingPanelContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/image-studio/components/slot-tree/SlotTreeContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/image-studio/components/studio-modals/StudioImportContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/image-studio/components/studio-modals/StudioInlineEditContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-monolith | src/features/ai/image-studio/components/studio-modals/StudioInlineEditContext.tsx | Context provider value has ~73 fields (threshold: 15). Consider splitting into domain-specific contexts. |
+| WARN | context-oversized | src/features/ai/image-studio/components/studio-modals/StudioInlineEditContext.tsx | Context file is 813 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
+| WARN | context-generic-error | src/features/ai/image-studio/components/VersionGraphCompareContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/image-studio/components/VersionGraphContextMenuContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/image-studio/components/VersionGraphControlsContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/image-studio/components/VersionGraphInspectorContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/image-studio/components/VersionNodeMapContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/image-studio/context/GenerationContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-oversized | src/features/ai/image-studio/context/GenerationContext.tsx | Context file is 850 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
+| WARN | context-generic-error | src/features/ai/image-studio/context/ImageStudioSettingsContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/image-studio/context/MaskingContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-oversized | src/features/ai/image-studio/context/MaskingContext.tsx | Context file is 792 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
+| WARN | context-generic-error | src/features/ai/image-studio/context/ProjectsContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/image-studio/context/PromptContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/image-studio/context/SettingsContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/image-studio/context/SlotsContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-oversized | src/features/ai/image-studio/context/SlotsContext.tsx | Context file is 567 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
+| WARN | context-generic-error | src/features/ai/image-studio/context/UiContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/ai/image-studio/context/VersionGraphContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-oversized | src/features/ai/image-studio/context/VersionGraphContext.tsx | Context file is 864 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
+| WARN | context-generic-error | src/features/ai/insights/context/InsightsContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/auth/context/UsersContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/case-resolver/components/CaseResolverRelationsWorkspaceContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/case-resolver/components/CaseResolverTreeNodeRuntimeContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/case-resolver/components/CaseResolverViewContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/case-resolver/components/list/search/CaseListSearchActionsContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/case-resolver/components/list/sections/CaseListNodeRuntimeContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/case-resolver/components/NodeFileWorkspaceContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-oversized | src/features/case-resolver/context/AdminCaseResolverCasesContext.tsx | Context file is 865 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
+| WARN | context-generic-error | src/features/case-resolver/context/AdminCaseResolverPageContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/case-resolver/context/CaseResolverFolderTreeContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-oversized | src/features/case-resolver/context/CaseResolverFolderTreeContext.tsx | Context file is 850 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
+| WARN | context-generic-error | src/features/case-resolver/context/CaseResolverPageContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/case-resolver/relation-search/components/DocumentRelationSearchUiContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/case-resolver/relation-search/components/RelationTreeNodeRuntimeContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/case-resolver/relation-search/context/DocumentRelationSearchContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/cms/components/CmsEditorContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/cms/components/frontend/blocks/BlockContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/cms/components/frontend/CmsPageContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/cms/components/frontend/sections/SectionBlockContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/cms/components/frontend/sections/SectionDataContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/cms/components/page-builder/animation/AnimationConfigContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/cms/components/page-builder/context/ComponentSettingsContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-oversized | src/features/cms/components/page-builder/context/ComponentSettingsContext.tsx | Context file is 516 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
+| WARN | context-oversized | src/features/cms/components/page-builder/context/InspectorAiContext.tsx | Context file is 868 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
+| WARN | context-generic-error | src/features/cms/components/page-builder/preview/context/PreviewEditorContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/cms/components/page-builder/preview/context/PreviewSectionContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/cms/components/page-builder/settings/fields/CompositeFieldContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/cms/components/page-builder/theme/ThemeColorsContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-oversized | src/features/cms/components/page-builder/theme/ThemeColorsContext.tsx | Context file is 515 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
+| WARN | context-generic-error | src/features/cms/components/page-builder/ThemeSettingsContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/cms/components/page-builder/tree/ComponentTreeNodeRuntimeContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/cms/components/page-builder/tree/ComponentTreePanelContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/cms/components/page-builder/tree/TreeColumnContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/cms/components/page-builder/tree/TreeSectionContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/cms/hooks/page-builder/PageDispatchContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/cms/hooks/page-builder/PageSelectionContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/cms/hooks/page-builder/PageStateContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/cms/hooks/page-builder/VectorOverlayContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/cms/hooks/useDragStateContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/cms/hooks/useTreeActionsContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-oversized | src/features/cms/hooks/useTreeActionsContext.tsx | Context file is 618 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
+| WARN | context-generic-error | src/features/data-import-export/context/ImportExportContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-oversized | src/features/data-import-export/context/ImportExportContext.tsx | Context file is 884 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
+| WARN | context-generic-error | src/features/database/context/CrudPanelContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/database/context/DatabaseBackupsContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/database/context/DatabaseEngineContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/document-editor/context/MarkdownSplitEditorContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/document-editor/context/MarkdownToolbarContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/drafter/components/DraftCreatorFormContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-monolith | src/features/drafter/components/DraftCreatorFormContext.tsx | Context provider value has ~18 fields (threshold: 15). Consider splitting into domain-specific contexts. |
+| WARN | context-generic-error | src/features/drafter/context/DrafterContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/filemaker/context/AdminFilemakerOrganizationEditPageContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/filemaker/context/AdminFilemakerPageContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/filemaker/context/AdminFilemakerPersonEditPageContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/files/components/file-upload-events/context/FileUploadEventsPanelContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/files/contexts/FileManagerContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-oversized | src/features/files/contexts/FileManagerContext.tsx | Context file is 512 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
+| WARN | context-generic-error | src/features/files/contexts/FileUploadEventsContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/foldertree/v2/shell/MasterFolderTreeShellContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/integrations/components/connections/integration-modal/IntegrationModalViewContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/integrations/components/listings/list-product-modal/context/ListProductModalFormContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/integrations/components/listings/product-listings-modal/context/ProductListingsModalViewContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/integrations/components/listings/product-listings-modal/context/ProductListingsViewContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/integrations/context/CategoryMapperContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/integrations/context/CategoryMapperPageContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/integrations/context/integrations/IntegrationsActionsContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/integrations/context/integrations/IntegrationsApiConsoleContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/integrations/context/integrations/IntegrationsDataContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/integrations/context/integrations/IntegrationsFormContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/integrations/context/integrations/IntegrationsSessionContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/integrations/context/integrations/IntegrationsTestingContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/integrations/context/ListingSettingsContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/integrations/context/ProductListingsContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-oversized | src/features/integrations/context/ProductListingsContext.tsx | Context file is 642 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
+| WARN | context-generic-error | src/features/kangur/admin/context/KangurQuestionIllustrationContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/kangur/admin/context/KangurQuestionsManagerRuntimeContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/kangur/admin/context/KangurTestQuestionEditorContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/kangur/admin/context/LessonContentEditorContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/kangur/admin/context/LessonContentEditorRuntimeContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/kangur/admin/context/LessonSvgQuickAddRuntimeContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/kangur/cms-builder/KangurCmsBuilderRuntimeContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/kangur/ui/context/KangurAiTutorContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-oversized | src/features/kangur/ui/context/KangurAiTutorContext.tsx | Context file is 884 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
+| WARN | context-generic-error | src/features/kangur/ui/context/KangurAuthContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/kangur/ui/context/KangurGameContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/kangur/ui/context/KangurGameRuntimeContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/kangur/ui/context/KangurLearnerProfileRuntimeContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/kangur/ui/context/KangurLessonNavigationContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/kangur/ui/context/KangurLessonsRuntimeContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/kangur/ui/context/KangurParentDashboardRuntimeContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/kangur/ui/context/KangurRoutingContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/kangur/ui/context/KangurTutorAnchorContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-oversized | src/features/notesapp/context/NoteFormContext.tsx | Context file is 918 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
+| WARN | context-monolith | src/features/notesapp/hooks/NotesAppContext.tsx | Context provider value has ~26 fields (threshold: 15). Consider splitting into domain-specific contexts. |
+| WARN | context-oversized | src/features/notesapp/hooks/NotesAppContext.tsx | Context file is 676 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
+| WARN | context-monolith | src/features/observability/context/SystemLogsContext.tsx | Context provider value has ~18 fields (threshold: 15). Consider splitting into domain-specific contexts. |
+| WARN | context-oversized | src/features/observability/context/SystemLogsContext.tsx | Context file is 585 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
+| WARN | context-generic-error | src/features/products/components/ProductImageManagerUIContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-oversized | src/features/products/components/ProductImageManagerUIContext.tsx | Context file is 526 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
+| WARN | context-generic-error | src/features/products/components/settings/CategoryTreeNodeRuntimeContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/products/components/settings/modals/catalog-modal/context/CatalogModalContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/products/components/settings/ProductSettingsContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-monolith | src/features/products/context/ProductFormCoreContext.tsx | Context provider value has ~24 fields (threshold: 15). Consider splitting into domain-specific contexts. |
+| WARN | context-monolith | src/features/products/context/ProductFormImageContext.tsx | Context provider value has ~23 fields (threshold: 15). Consider splitting into domain-specific contexts. |
+| WARN | context-oversized | src/features/products/context/ProductListContext.tsx | Context file is 634 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
+| WARN | context-generic-error | src/features/products/context/ProductSettingsPageContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/products/context/ProductStudioContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-oversized | src/features/products/context/ProductStudioContext.tsx | Context file is 537 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
+| WARN | context-generic-error | src/features/prompt-engine/components/context/RuleItemContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/prompt-engine/components/context/RuleListDragContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/prompt-engine/context/prompt-engine/PromptEngineActionsContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/prompt-engine/context/prompt-engine/PromptEngineConfigContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/prompt-engine/context/prompt-engine/PromptEngineDataContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/prompt-engine/context/prompt-engine/PromptEngineFiltersContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/prompt-exploder/components/PromptExploderHierarchyTreeContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/prompt-exploder/components/PromptExploderParserTuningContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-oversized | src/features/prompt-exploder/context/BenchmarkContext.tsx | Context file is 568 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
+| WARN | context-generic-error | src/features/prompt-exploder/context/document/DocumentActionsContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/prompt-exploder/context/document/DocumentCoreContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/prompt-exploder/context/document/DocumentMetricsContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/prompt-exploder/context/document/DocumentParamsContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/prompt-exploder/context/document/DocumentPromptContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/prompt-exploder/context/document/DocumentSelectionContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/prompt-exploder/context/DocumentContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-oversized | src/features/prompt-exploder/context/DocumentContext.tsx | Context file is 745 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
+| WARN | context-oversized | src/features/prompt-exploder/context/LibraryContext.tsx | Context file is 556 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
+| WARN | context-oversized | src/features/prompt-exploder/context/SegmentEditorContext.tsx | Context file is 548 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
+| WARN | context-generic-error | src/features/prompt-exploder/context/settings/SettingsActionsContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/features/viewer3d/context/Admin3DAssetsContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-generic-error | src/shared/lib/ai-brain/context/BrainContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| WARN | context-oversized | src/shared/lib/ai-brain/context/BrainContext.tsx | Context file is 894 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
+| WARN | context-generic-error | src/shared/ui/vector-canvas/VectorCanvasContext.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| INFO | context-missing-split | src/features/admin/context/AdminMenuSettingsContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/ai/agentcreator/context/AgentCreatorSettingsContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/ai/agentcreator/context/AgentRunContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/ai/agentcreator/context/AgentRunsContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/ai/ai-paths/components/AiPathConfigContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/ai/ai-paths/components/CanvasBoardUIContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/ai/ai-paths/components/JobQueueContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/ai/ai-paths/components/node-config/database/DatabaseConstructorContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/ai/ai-paths/components/node-config/database/DatabaseQueryInputControlsContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/ai/ai-paths/context/CanvasContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/ai/ai-paths/context/GraphContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/ai/ai-paths/context/PersistenceContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/ai/ai-paths/context/PresetsContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/ai/ai-paths/context/RunHistoryContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/ai/ai-paths/context/RuntimeContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/ai/ai-paths/context/SelectionContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/ai/chatbot/context/ChatbotContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/ai/image-studio/components/analysis/sections/ImageStudioAnalysisRuntimeContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/ai/image-studio/components/center-preview/CenterPreviewContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/ai/image-studio/components/studio-modals/StudioInlineEditContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/ai/image-studio/context/GenerationContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/ai/image-studio/context/ImageStudioSettingsContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/ai/image-studio/context/MaskingContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/ai/image-studio/context/ProjectsContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/ai/image-studio/context/PromptContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/ai/image-studio/context/SettingsContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/ai/image-studio/context/SlotsContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/ai/image-studio/context/UiContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/ai/image-studio/context/VersionGraphContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/ai/insights/context/InsightsContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/auth/context/AuthContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/case-resolver/components/CaseResolverViewContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/case-resolver/context/CaseResolverFolderTreeContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/case-resolver/context/CaseResolverPageContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/case-resolver/relation-search/context/DocumentRelationSearchContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/cms/components/page-builder/context/ComponentSettingsContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/cms/components/page-builder/context/InspectorAiContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/cms/components/page-builder/preview/context/PreviewEditorContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/cms/components/page-builder/theme/ThemeColorsContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/cms/components/page-builder/ThemeSettingsContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/cms/components/page-builder/tree/ComponentTreePanelContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/cms/hooks/useDragStateContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/cms/hooks/usePageBuilderContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/cms/hooks/useTreeActionsContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/data-import-export/context/ImportExportContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/database/context/DatabaseContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/drafter/components/DraftCreatorFormContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/files/contexts/FileManagerContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/files/contexts/FileUploadEventsContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/integrations/context/CategoryMapperContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/integrations/context/CategoryMapperPageContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/integrations/context/IntegrationsContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/integrations/context/ListingSettingsContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/integrations/context/ProductListingsContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/internationalization/context/InternationalizationContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/kangur/admin/context/KangurQuestionIllustrationContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/kangur/admin/context/KangurTestQuestionEditorContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/kangur/admin/context/LessonContentEditorRuntimeContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/kangur/admin/context/LessonSvgQuickAddRuntimeContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/kangur/ui/context/KangurAiTutorContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/kangur/ui/context/KangurAuthContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/kangur/ui/context/KangurGameRuntimeContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/kangur/ui/context/KangurLearnerProfileRuntimeContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/kangur/ui/context/KangurLessonsRuntimeContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/kangur/ui/context/KangurParentDashboardRuntimeContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/kangur/ui/context/KangurRoutingContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/kangur/ui/context/KangurTutorAnchorContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/notesapp/context/NoteFormContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/notesapp/hooks/NotesAppContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/notesapp/hooks/NoteSettingsContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/observability/context/SystemLogsContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/products/components/form/ProductImagesTabContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/products/components/form/ProductMetadataFieldContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/products/components/ProductImageManagerUIContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/products/components/settings/ProductSettingsContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/products/context/ProductFormContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/products/context/ProductFormCoreContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/products/context/ProductFormImageContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/products/context/ProductFormMetadataContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/products/context/ProductFormParameterContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/products/context/ProductFormStudioContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/products/context/ProductSettingsPageContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/products/context/ProductStudioContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/products/context/ProductValidationSettingsContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/prompt-engine/components/context/RuleItemContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/prompt-engine/context/PromptEngineContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/prompt-exploder/context/BenchmarkContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/prompt-exploder/context/BindingsContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/prompt-exploder/context/DocumentContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/prompt-exploder/context/LibraryContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/prompt-exploder/context/SegmentEditorContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/prompt-exploder/context/SettingsContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/viewer3d/context/Viewer3DContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/shared/lib/ai-brain/context/BrainContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/shared/lib/analytics/context/AnalyticsContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/shared/lib/jobs/context/JobsContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+
+## Notes
+
+- `context-generic-error` (warn): Use structured AppError classes for better observability.
+- `context-monolith` (warn): Contexts with >15 fields should be split.
+- `context-oversized` (warn): Context files over 500 LOC need refactoring.
+- `context-missing-split` (info): Consider useXxxState/useXxxActions pattern for re-render optimization.

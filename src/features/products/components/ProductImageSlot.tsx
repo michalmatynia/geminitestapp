@@ -101,6 +101,7 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
           accept='image/*'
           onFilesSelected={(files) => handleSlotFileUpload(index, files)}
           asChild
+          preserveChildSemantics
         >
           <DropdownMenuItem>Upload image</DropdownMenuItem>
         </FileUploadTrigger>

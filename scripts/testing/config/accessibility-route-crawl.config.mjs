@@ -56,13 +56,13 @@ export const accessibilityRouteCrawlRoutes = [
   {
     id: 'admin-databases',
     name: 'Admin Databases',
-    route: '/admin/databases',
+    route: '/admin/databases/engine',
     audience: 'admin',
   },
   {
     id: 'admin-brain-settings',
     name: 'Admin Brain Settings',
-    route: '/admin/settings/brain',
+    route: '/admin/brain?tab=routing',
     audience: 'admin',
   },
 ];

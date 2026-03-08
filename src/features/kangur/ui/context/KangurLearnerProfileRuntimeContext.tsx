@@ -125,10 +125,6 @@ export const buildKangurRecommendationHref = (
   return action.query ? appendKangurUrlParams(baseHref, action.query, basePath) : baseHref;
 };
 
-export const getKangurRecommendationButtonVariant = (
-  page: KangurLearnerRecommendationAction['page']
-): 'primary' | 'warm' => (page === 'Lessons' ? 'warm' : 'primary');
-
 type KangurLearnerProfileRuntimeContextValue = {
   basePath: string;
   user: KangurUser | null;

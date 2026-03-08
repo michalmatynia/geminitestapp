@@ -78,16 +78,7 @@ export function SectionBlockNodeItem(props: SectionBlockNodeItemProps): React.Re
       <TreeContextMenu items={sectionBlockMenuItems}>
         <TreeRow
           tone='none'
-          role='button'
-          tabIndex={0}
           draggable
-          onClick={() => selectNode(block.id)}
-          onKeyDown={(e: React.KeyboardEvent) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              selectNode(block.id);
-            }
-          }}
           onDragStart={(e: React.DragEvent) => {
             setBlockDragData(e.dataTransfer, {
               id: block.id,
@@ -221,7 +212,7 @@ export function SectionBlockNodeItem(props: SectionBlockNodeItemProps): React.Re
               endBlockDrag();
             }}
             onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
-            className='flex items-center justify-center opacity-0 group-hover/sblock:opacity-100'
+            className='flex items-center justify-center opacity-0 group-hover/sblock:opacity-100 group-focus-within/sblock:opacity-100'
             aria-hidden='true'
           >
             <GripVertical className='size-3 shrink-0 text-gray-600 cursor-grab active:cursor-grabbing' />
@@ -234,8 +225,16 @@ export function SectionBlockNodeItem(props: SectionBlockNodeItemProps): React.Re
             iconClassName='size-3'
             placeholderClassName='block size-3 shrink-0'
           />
-          <Icon className='size-3.5 shrink-0' />
-          <span className='flex-1 truncate text-left'>{blockLabel}</span>
+          <button
+            type='button'
+            onClick={() => selectNode(block.id)}
+            aria-pressed={isSelected}
+            aria-label={`Select block ${blockLabel}`}
+            className='flex min-w-0 flex-1 items-center gap-1.5 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
+          >
+            <Icon className='size-3.5 shrink-0' />
+            <span className='min-w-0 flex-1 truncate text-left'>{blockLabel}</span>
+          </button>
           {!isTextAtom && (
             <TreeActionSlot show='always' align='inline'>
               <ColumnBlockPicker

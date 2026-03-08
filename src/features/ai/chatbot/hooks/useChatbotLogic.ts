@@ -30,6 +30,8 @@ export interface UseChatbotLogicReturn {
   setIsSending: React.Dispatch<React.SetStateAction<boolean>>;
   model: string;
   setModel: React.Dispatch<React.SetStateAction<string>>;
+  personaId: string | null;
+  setPersonaId: (id: string | null) => void;
   webSearchEnabled: boolean;
   setWebSearchEnabled: React.Dispatch<React.SetStateAction<boolean>>;
   useGlobalContext: boolean;
@@ -99,6 +101,7 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
   const [attachments, setAttachments] = useState<File[]>([]);
   const [isSending, setIsSending] = useState<boolean>(false);
   const [model, setModelState] = useState<string>('');
+  const [personaId, setPersonaId] = useState<string | null>(null);
   const [webSearchEnabled, setWebSearchEnabled] = useState<boolean>(false);
   const [useGlobalContext, setUseGlobalContext] = useState<boolean>(false);
   const [useLocalContext, setUseLocalContext] = useState<boolean>(false);
@@ -173,6 +176,7 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
     () => ({
       enableMemory: DEFAULT_CHATBOT_SETTINGS.enableMemory,
       enableContext: DEFAULT_CHATBOT_SETTINGS.enableContext,
+      personaId,
       webSearchEnabled,
       useGlobalContext,
       useLocalContext,
@@ -194,6 +198,7 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
       loopBackoffMaxMs: agentLoopBackoffMaxMs,
     }),
     [
+      personaId,
       webSearchEnabled,
       useGlobalContext,
       useLocalContext,
@@ -249,7 +254,7 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
     try {
       const data = await chatbotApi.createChatbotSession({
         title: `Chat ${new Date().toLocaleString()}`,
-        settings: { webSearchEnabled, useGlobalContext, useLocalContext },
+        settings: currentSettings,
       });
       await fetchSessions();
       setCurrentSessionId(data.sessionId);
@@ -258,7 +263,7 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
       logClientError(error, { context: { source: 'useChatbotLogic.createNewSession' } });
       toast('Failed to create new chat session', { variant: 'error' });
     }
-  }, [webSearchEnabled, useGlobalContext, useLocalContext, fetchSessions, toast]);
+  }, [currentSettings, fetchSessions, toast]);
 
   const deleteSession = useCallback(
     async (id: string): Promise<void> => {
@@ -315,6 +320,7 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
       setUseLocalContext(Boolean(resolved.useLocalContext));
       setLocalContextMode((resolved.localContextMode as 'append' | 'override') ?? 'override');
       setSearchProvider(resolved.searchProvider ?? 'serpapi');
+      setPersonaId(resolved.personaId ?? null);
       setPlaywrightPersonaId(resolved.playwrightPersonaId ?? null);
 
       setAgentModeEnabled(Boolean(resolved.agentModeEnabled));
@@ -351,6 +357,7 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
     setUseLocalContext,
     setLocalContextMode,
     setSearchProvider,
+    setPersonaId,
     setPlaywrightPersonaId,
     setAgentModeEnabled,
     setAgentBrowser,
@@ -431,6 +438,13 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
           role: 'assistant',
           content: data.message,
           timestamp: new Date().toISOString(),
+          ...(data.suggestedMoodId
+            ? {
+                metadata: {
+                  suggestedPersonaMoodId: data.suggestedMoodId,
+                },
+              }
+            : {}),
         };
         setMessages((prev: ChatMessage[]): ChatMessage[] => [...prev, assistantMessage]);
       }
@@ -454,6 +468,8 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
     setIsSending: setIsSending,
     model: model,
     setModel: setModel,
+    personaId: personaId,
+    setPersonaId: setPersonaId,
     webSearchEnabled: webSearchEnabled,
     setWebSearchEnabled: setWebSearchEnabled,
     useGlobalContext: useGlobalContext,

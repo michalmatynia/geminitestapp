@@ -3,6 +3,8 @@
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 import { Button } from './button';
 import { ConfirmDialog } from './confirm-dialog';
 import { EmptyState } from './empty-state';
@@ -28,13 +30,22 @@ interface ItemLibraryProps<T extends LibraryItem> {
   isLoading: boolean;
   onSave: (item: Partial<T>) => Promise<void>;
   onDelete: (item: T) => Promise<void>;
-  renderExtraFields?: (item: T, onChange: (updates: Partial<T>) => void) => React.ReactNode;
+  renderExtraFields?: (
+    item: T,
+    onChange: (updates: Partial<T>) => void,
+    context: { originalItem: T | null }
+  ) => React.ReactNode;
   renderItemTags?: (item: T) => string[];
   buildDefaultItem: () => Partial<T>;
   entityName: string;
   backLink?: React.ReactNode;
   headerActions?: React.ReactNode;
   isSaving?: boolean;
+  onEditorClose?: (args: {
+    draft: Partial<T>;
+    originalItem: T | null;
+    saved: boolean;
+  }) => Promise<void> | void;
 }
 
 export function ItemLibrary<T extends LibraryItem>(props: ItemLibraryProps<T>): React.JSX.Element {
@@ -52,6 +63,7 @@ export function ItemLibrary<T extends LibraryItem>(props: ItemLibraryProps<T>): 
     backLink,
     headerActions,
     isSaving = false,
+    onEditorClose,
   } = props;
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -81,17 +93,33 @@ export function ItemLibrary<T extends LibraryItem>(props: ItemLibraryProps<T>): 
     setModalOpen(true);
   };
 
-  const closeModal = () => {
+  const closeModal = (saved = false) => {
+    const currentDraft = draft;
+    const originalItem = editingItem;
     setModalOpen(false);
     setEditingItem(null);
     setDraft({});
+    if (!onEditorClose) {
+      return;
+    }
+    void Promise.resolve(onEditorClose({ draft: currentDraft, originalItem, saved })).catch(
+      (error) => {
+        logClientError(error, {
+          context: { source: 'ItemLibrary', action: 'onEditorClose' },
+        });
+      }
+    );
   };
 
   const handleSave = (): void => {
     if (!draft.name?.trim()) return;
-    void onSave(draft).then((): void => {
-      closeModal();
-    });
+    void onSave(draft)
+      .then((): void => {
+        closeModal(true);
+      })
+      .catch(() => {
+        // Per-screen save handlers surface the error to users; keep the modal open here.
+      });
   };
 
   const formatTime = (value: string | Date | null | undefined): string => {
@@ -252,7 +280,11 @@ export function ItemLibrary<T extends LibraryItem>(props: ItemLibraryProps<T>): 
             </div>
           </div>
 
-          {renderExtraFields?.(draft as T, (updates) => setDraft({ ...draft, ...updates }))}
+          {renderExtraFields?.(
+            draft as T,
+            (updates) => setDraft({ ...draft, ...updates }),
+            { originalItem: editingItem }
+          )}
         </div>
       </FormModal>
     </div>

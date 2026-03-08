@@ -3,12 +3,20 @@ import path from 'path';
 
 import { NextRequest, NextResponse } from 'next/server';
 
+import {
+  buildPersonaChatMemoryContext,
+  persistAgentPersonaExchangeMemory,
+} from '@/features/ai/agentcreator/server/persona-memory';
 import { resolveBrainModelExecutionConfig } from '@/shared/lib/ai-brain/server';
 import { listBrainModels } from '@/shared/lib/ai-brain/server-model-catalog';
 import { runChatbotModel } from '@/shared/lib/ai/chatbot/server-model-runtime';
 import { chatbotSessionRepository } from '@/features/ai/chatbot/server';
 import { logSystemError, logSystemEvent } from '@/shared/lib/observability/system-logger';
-import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
+import type { AgentPersonaMoodId } from '@/shared/contracts/agents';
+import type {
+  ChatMessageDto as ChatMessage,
+  ChatbotChatResponseDto,
+} from '@/shared/contracts/chatbot';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 
@@ -251,6 +259,37 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
       defaultMaxTokens: 800,
       defaultSystemPrompt: DEFAULT_CHATBOT_SYSTEM_PROMPT,
     });
+    const latestUserMessage =
+      [...messages].reverse().find((message: IncomingChatMessage) => message.role === 'user')
+        ?.content ?? null;
+    const session = sessionId ? await chatbotSessionRepository.findById(sessionId) : null;
+    const personaId = session?.personaId ?? session?.settings?.personaId ?? null;
+    let personaPrompt: string | null = null;
+    let suggestedPersonaMoodId: AgentPersonaMoodId | null = null;
+
+    if (personaId) {
+      try {
+        const personaContext = await buildPersonaChatMemoryContext({
+          personaId,
+          latestUserMessage,
+        });
+        personaPrompt = personaContext.systemPrompt || null;
+        suggestedPersonaMoodId = personaContext.suggestedMoodId ?? null;
+      } catch (error) {
+        await logSystemError({
+          message: '[chatbot][chat] Failed to load persona memory context',
+          error,
+          source: 'api/chatbot',
+          context: {
+            action: 'load_persona_memory_context',
+            sessionId,
+            personaId,
+            requestId: ctx.requestId,
+          },
+        });
+      }
+    }
+    const systemPrompt = [brainConfig.systemPrompt, personaPrompt].filter(Boolean).join('\n\n');
 
     if (DEBUG_CHATBOT) {
       await logSystemEvent({
@@ -270,6 +309,8 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
           durationMs: Date.now() - requestStart,
           requestId: ctx.requestId,
           brainApplied: brainConfig.brainApplied,
+          personaId,
+          suggestedPersonaMoodId,
         },
       });
     }
@@ -279,7 +320,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
       modelId: brainConfig.modelId,
       temperature: brainConfig.temperature,
       maxTokens: brainConfig.maxTokens,
-      systemPrompt: brainConfig.systemPrompt,
+      systemPrompt,
     });
 
     if (sessionId) {
@@ -290,6 +331,13 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
             role: userMessage.role,
             content: userMessage.content,
             images: userMessage.images,
+            ...(personaId
+              ? {
+                  metadata: {
+                    personaId,
+                  },
+                }
+              : {}),
           });
         }
 
@@ -299,6 +347,27 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
             content: result.message,
             model: brainConfig.modelId,
             metadata: {
+              brainApplied: brainConfig.brainApplied,
+              ...(personaId ? { personaId } : {}),
+              ...(suggestedPersonaMoodId ? { suggestedPersonaMoodId } : {}),
+            },
+          });
+        }
+
+        if (personaId && result.message) {
+          await persistAgentPersonaExchangeMemory({
+            personaId,
+            sourceType: 'chat_message',
+            sourceId: `chatbot:${sessionId}:${requestStart}:assistant`,
+            sourceLabel: session?.title ?? 'Chatbot session',
+            sourceCreatedAt: new Date().toISOString(),
+            sessionId,
+            userMessage: latestUserMessage,
+            assistantMessage: result.message,
+            tags: ['chatbot'],
+            moodHints: suggestedPersonaMoodId ? [suggestedPersonaMoodId] : [],
+            metadata: {
+              source: 'chatbot',
               brainApplied: brainConfig.brainApplied,
             },
           });
@@ -331,8 +400,9 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
     return NextResponse.json({
       message: result.message,
       sessionId,
+      ...(suggestedPersonaMoodId ? { suggestedMoodId: suggestedPersonaMoodId } : {}),
       brainApplied: brainConfig.brainApplied,
-    });
+    } satisfies ChatbotChatResponseDto);
   } finally {
     if (tempFiles.length > 0) {
       await Promise.all(

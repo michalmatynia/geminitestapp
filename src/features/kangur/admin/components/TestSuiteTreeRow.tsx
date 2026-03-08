@@ -55,42 +55,48 @@ export function TestSuiteTreeRow(props: {
       >
         <div
           className='flex h-full w-full min-w-0 items-center gap-2 text-left'
-          onClick={input.select}
-          role='button'
-          tabIndex={0}
-          onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>): void => {
-            if (e.key !== 'Enter' && e.key !== ' ') return;
-            e.preventDefault();
-            input.select();
-          }}
         >
-          <button
-            type='button'
-            className='inline-flex size-5 shrink-0 items-center justify-center rounded text-gray-400 hover:bg-muted/40'
-            onClick={(e): void => {
-              e.preventDefault();
-              e.stopPropagation();
-              input.toggleExpand();
-            }}
-          >
-            {input.hasChildren ? (
-              input.isExpanded ? (
+          {input.hasChildren ? (
+            <button
+              type='button'
+              className='inline-flex size-5 shrink-0 items-center justify-center rounded text-gray-400 hover:bg-muted/40'
+              onClick={(e): void => {
+                e.preventDefault();
+                e.stopPropagation();
+                input.toggleExpand();
+              }}
+              aria-label={
+                input.isExpanded ? `Collapse ${input.node.name}` : `Expand ${input.node.name}`
+              }
+              aria-expanded={input.isExpanded}
+            >
+              {input.isExpanded ? (
                 <ChevronDown className='size-3.5' />
               ) : (
                 <ChevronRight className='size-3.5' />
-              )
-            ) : (
-              <span className='text-[10px] opacity-60'>•</span>
-            )}
-          </button>
-          {input.isExpanded ? (
-            <FolderOpen className='size-4 shrink-0 text-sky-300/90' />
+              )}
+            </button>
           ) : (
-            <Folder className='size-4 shrink-0 text-sky-300/70' />
+            <span className='inline-flex size-5 shrink-0 items-center justify-center text-[10px] opacity-60'>
+              •
+            </span>
           )}
-          <div className='min-w-0 flex-1 truncate text-[12px] font-medium text-gray-200'>
-            {input.node.name}
-          </div>
+          <button
+            type='button'
+            onClick={input.select}
+            aria-pressed={input.isSelected}
+            aria-label={`Select test suite group ${input.node.name}`}
+            className='flex min-w-0 flex-1 items-center gap-2 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
+          >
+            {input.isExpanded ? (
+              <FolderOpen className='size-4 shrink-0 text-sky-300/90' />
+            ) : (
+              <Folder className='size-4 shrink-0 text-sky-300/70' />
+            )}
+            <div className='min-w-0 flex-1 truncate text-[12px] font-medium text-gray-200'>
+              {input.node.name}
+            </div>
+          </button>
         </div>
       </TreeRow>
     );
@@ -110,46 +116,46 @@ export function TestSuiteTreeRow(props: {
     >
       <div
         className='flex h-full w-full min-w-0 items-center gap-2 text-left'
-        onClick={input.select}
-        role='button'
-        tabIndex={0}
-        onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>): void => {
-          if (e.key !== 'Enter' && e.key !== ' ') return;
-          e.preventDefault();
-          input.select();
-        }}
       >
         <span className='inline-flex h-4 w-4 shrink-0 items-center justify-center opacity-0 transition-opacity group-hover:opacity-100'>
           <GripVertical className='size-3.5 cursor-grab text-gray-500' />
         </span>
 
-        <div className='min-w-0 flex-1'>
-          <div className='truncate font-medium text-gray-100'>{suite.title}</div>
-          <div className='flex items-center gap-1.5 text-[11px] text-gray-400'>
-            {suite.year ? <span>{suite.year}</span> : null}
-            {suite.gradeLevel ? <span>· {suite.gradeLevel}</span> : null}
-            {suite.category ? (
-              <Badge variant='outline' className='h-4 px-1 text-[9px]'>
-                {suite.category}
-              </Badge>
-            ) : null}
+        <button
+          type='button'
+          onClick={input.select}
+          aria-pressed={input.isSelected}
+          aria-label={`Select test suite ${suite.title}`}
+          className='flex min-w-0 flex-1 items-center gap-2 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
+        >
+          <div className='min-w-0 flex-1'>
+            <div className='truncate font-medium text-gray-100'>{suite.title}</div>
+            <div className='flex items-center gap-1.5 text-[11px] text-gray-400'>
+              {suite.year ? <span>{suite.year}</span> : null}
+              {suite.gradeLevel ? <span>· {suite.gradeLevel}</span> : null}
+              {suite.category ? (
+                <Badge variant='outline' className='h-4 px-1 text-[9px]'>
+                  {suite.category}
+                </Badge>
+              ) : null}
+            </div>
           </div>
-        </div>
 
-        <Badge variant='outline' className='h-5 px-1.5 text-[10px]'>
-          {questionCount}Q
-        </Badge>
-
-        {!suite.enabled ? (
-          <Badge
-            variant='outline'
-            className='h-5 px-1.5 text-[10px] border-amber-400/40 text-amber-300'
-          >
-            Disabled
+          <Badge variant='outline' className='h-5 px-1.5 text-[10px]'>
+            {questionCount}Q
           </Badge>
-        ) : null}
 
-        <div className='inline-flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100'>
+          {!suite.enabled ? (
+            <Badge
+              variant='outline'
+              className='h-5 px-1.5 text-[10px] border-amber-400/40 text-amber-300'
+            >
+              Disabled
+            </Badge>
+          ) : null}
+        </button>
+
+        <div className='inline-flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100'>
           <button
             type='button'
             className='inline-flex items-center justify-center rounded p-1 text-gray-400 hover:bg-sky-500/20 hover:text-sky-200'
@@ -159,6 +165,7 @@ export function TestSuiteTreeRow(props: {
               onManageQuestions(suite);
             }}
             title='Manage questions'
+            aria-label='Manage questions'
             disabled={isUpdating}
           >
             <ListChecks className='size-3.5' />
@@ -172,6 +179,7 @@ export function TestSuiteTreeRow(props: {
               onEdit(suite);
             }}
             title='Edit suite'
+            aria-label='Edit suite'
             disabled={isUpdating}
           >
             <Pencil className='size-3.5' />
@@ -185,6 +193,7 @@ export function TestSuiteTreeRow(props: {
               onDelete(suite);
             }}
             title='Delete suite'
+            aria-label='Delete suite'
             disabled={isUpdating}
           >
             <Trash2 className='size-3.5' />

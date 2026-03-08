@@ -6,10 +6,13 @@ import type { AiPathsValidationRule } from '@/shared/lib/ai-paths';
 
 import { ValidationRulesEditor } from '../ValidationRulesEditor';
 
-const useAdminAiPathsValidationContextMock = vi.fn();
+const validationRulesEditorMocks = vi.hoisted(() => ({
+  useAdminAiPathsValidationContextMock: vi.fn(),
+}));
 
 vi.mock('../../../context/AdminAiPathsValidationContext', () => ({
-  useAdminAiPathsValidationContext: () => useAdminAiPathsValidationContextMock(),
+  useAdminAiPathsValidationContext:
+    validationRulesEditorMocks.useAdminAiPathsValidationContextMock as typeof import('../../../context/AdminAiPathsValidationContext').useAdminAiPathsValidationContext,
 }));
 
 const buildRule = (overrides: Partial<AiPathsValidationRule> = {}): AiPathsValidationRule =>
@@ -38,7 +41,7 @@ describe('ValidationRulesEditor stage controls', () => {
   });
 
   it('defaults stage selection to graph_parse when appliesToStages is not set', () => {
-    useAdminAiPathsValidationContextMock.mockReturnValue({
+    validationRulesEditorMocks.useAdminAiPathsValidationContextMock.mockReturnValue({
       rulesDraft: '[]',
       setRulesDraft: vi.fn(),
       rulesDraftError: null,
@@ -60,7 +63,7 @@ describe('ValidationRulesEditor stage controls', () => {
 
   it('invokes stage toggle handler when stage checkbox is clicked', () => {
     const handleRuleStageToggle = vi.fn();
-    useAdminAiPathsValidationContextMock.mockReturnValue({
+    validationRulesEditorMocks.useAdminAiPathsValidationContextMock.mockReturnValue({
       rulesDraft: '[]',
       setRulesDraft: vi.fn(),
       rulesDraftError: null,

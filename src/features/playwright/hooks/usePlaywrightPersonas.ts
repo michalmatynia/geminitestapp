@@ -10,11 +10,14 @@ import { createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-fa
 import { playwrightKeys } from '@/shared/lib/query-key-exports';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
-export function usePlaywrightPersonas(): ListQuery<PlaywrightPersona> {
+export function usePlaywrightPersonas(options?: {
+  enabled?: boolean;
+}): ListQuery<PlaywrightPersona> {
   const queryKey = playwrightKeys.personas();
   return createListQueryV2({
     queryKey,
     queryFn: fetchPlaywrightPersonas,
+    ...(options?.enabled !== undefined ? { enabled: options.enabled } : {}),
     meta: {
       source: 'playwright.hooks.usePlaywrightPersonas',
       operation: 'list',

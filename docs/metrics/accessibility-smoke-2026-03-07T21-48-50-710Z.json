@@ -1,0 +1,212 @@
+{
+  "generatedAt": "2026-03-07T21:48:50.710Z",
+  "strictMode": false,
+  "failOnWarningBudgetExceed": false,
+  "summary": {
+    "total": 14,
+    "passed": 7,
+    "failed": 7,
+    "actWarnings": 0,
+    "warningBudget": 10,
+    "warningBudgetStatus": "ok",
+    "warningBudgetEnforcement": "telemetry-only"
+  },
+  "results": [
+    {
+      "id": "app-shell-a11y",
+      "name": "App Shell Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "src/app/__tests__/shell-accessibility.test.tsx"
+      ],
+      "command": "npx vitest run --project unit src/app/__tests__/shell-accessibility.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 3225,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/app/__tests__/shell-accessibility.test.tsx (2 tests) 179ms\n\n Test Files  1 passed (1)\n      Tests  2 passed (2)\n   Start at  22:47:57\n   Duration  1.71s (transform 388ms, setup 284ms, import 539ms, tests 179ms, environment 519ms)"
+    },
+    {
+      "id": "auth-signin-a11y",
+      "name": "Auth Sign-In Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "__tests__/features/auth/pages/signin-page.test.tsx"
+      ],
+      "command": "npx vitest run --project unit __tests__/features/auth/pages/signin-page.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 3784,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/auth/pages/signin-page.test.tsx (10 tests) 845ms\n\n Test Files  1 passed (1)\n      Tests  10 passed (10)\n   Start at  22:48:00\n   Duration  2.85s (transform 859ms, setup 188ms, import 1.30s, tests 845ms, environment 412ms)"
+    },
+    {
+      "id": "products-edit-a11y",
+      "name": "Products Edit Form Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "__tests__/features/products/pages/product-edit-page.test.tsx"
+      ],
+      "command": "npx vitest run --project unit __tests__/features/products/pages/product-edit-page.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 5466,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/products/pages/product-edit-page.test.tsx (7 tests) 2006ms\n     ✓ renders the form with product data in the General tab  748ms\n     ✓ has no obvious accessibility violations in the default edit form view  305ms\n     ✓ submits the updated product when Update is clicked  425ms\n\n Test Files  1 passed (1)\n      Tests  7 passed (7)\n   Start at  22:48:04\n   Duration  4.56s (transform 1.43s, setup 164ms, import 2.01s, tests 2.01s, environment 286ms)"
+    },
+    {
+      "id": "image-studio-a11y",
+      "name": "Image Studio UI Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx"
+      ],
+      "command": "npx vitest run --project unit src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 3744,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx (7 tests) 501ms\n\n Test Files  1 passed (1)\n      Tests  7 passed (7)\n   Start at  22:48:09\n   Duration  2.72s (transform 1.10s, setup 168ms, import 1.62s, tests 501ms, environment 337ms)"
+    },
+    {
+      "id": "ai-paths-a11y",
+      "name": "AI Paths Canvas Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx"
+      ],
+      "command": "npx vitest run --project unit src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 5961,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx (4 tests) 195ms\n\n Test Files  1 passed (1)\n      Tests  4 passed (4)\n   Start at  22:48:14\n   Duration  4.50s (transform 2.68s, setup 257ms, import 3.53s, tests 195ms, environment 396ms)"
+    },
+    {
+      "id": "case-resolver-a11y",
+      "name": "Case Resolver Header Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx"
+      ],
+      "command": "npx vitest run --project unit src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 4414,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx (10 tests) 343ms\n\n Test Files  1 passed (1)\n      Tests  10 passed (10)\n   Start at  22:48:19\n   Duration  3.23s (transform 1.40s, setup 222ms, import 2.18s, tests 343ms, environment 346ms)"
+    },
+    {
+      "id": "case-resolver-browser-a11y",
+      "name": "Case Resolver Accessibility",
+      "runner": "playwright",
+      "tests": [
+        "e2e/features/accessibility/case-resolver-accessibility.spec.ts"
+      ],
+      "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/case-resolver-accessibility.spec.ts",
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 4609,
+      "actWarnings": 0,
+      "output": "[WebServer] ⨯ Unable to acquire lock at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev/dev/lock, is another instance of next dev running?\nError: Process from config.webServer was not able to start. Exit code: 1"
+    },
+    {
+      "id": "kangur-profile-a11y",
+      "name": "Kangur Profile Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "__tests__/features/kangur/kangur-accessibility-smoke.test.tsx"
+      ],
+      "command": "npx vitest run --project unit __tests__/features/kangur/kangur-accessibility-smoke.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 3655,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/kangur/kangur-accessibility-smoke.test.tsx (4 tests) 785ms\n     ✓ exposes profile landmarks and action links by accessible role/name  316ms\n     ✓ has no obvious accessibility violations in the learner profile shell  335ms\n\n Test Files  1 passed (1)\n      Tests  4 passed (4)\n   Start at  22:48:28\n   Duration  2.54s (transform 738ms, setup 233ms, import 1.04s, tests 785ms, environment 374ms)"
+    },
+    {
+      "id": "public-auth-routes-browser-a11y",
+      "name": "Public Auth Route Accessibility",
+      "runner": "playwright",
+      "tests": [
+        "e2e/features/accessibility/public-auth-accessibility.spec.ts"
+      ],
+      "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/public-auth-accessibility.spec.ts",
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 3442,
+      "actWarnings": 0,
+      "output": "[WebServer] ⨯ Unable to acquire lock at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev/dev/lock, is another instance of next dev running?\nError: Process from config.webServer was not able to start. Exit code: 1"
+    },
+    {
+      "id": "admin-dashboard-browser-a11y",
+      "name": "Admin Dashboard Accessibility",
+      "runner": "playwright",
+      "tests": [
+        "e2e/features/accessibility/admin-dashboard-accessibility.spec.ts"
+      ],
+      "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/admin-dashboard-accessibility.spec.ts",
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 3473,
+      "actWarnings": 0,
+      "output": "[WebServer] ⨯ Unable to acquire lock at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev/dev/lock, is another instance of next dev running?\nError: Process from config.webServer was not able to start. Exit code: 1"
+    },
+    {
+      "id": "products-list-browser-a11y",
+      "name": "Products List Accessibility",
+      "runner": "playwright",
+      "tests": [
+        "e2e/features/accessibility/products-list-accessibility.spec.ts"
+      ],
+      "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/products-list-accessibility.spec.ts",
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 3073,
+      "actWarnings": 0,
+      "output": "[WebServer] ⨯ Unable to acquire lock at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev/dev/lock, is another instance of next dev running?\nError: Process from config.webServer was not able to start. Exit code: 1"
+    },
+    {
+      "id": "cms-pages-browser-a11y",
+      "name": "CMS Pages Accessibility",
+      "runner": "playwright",
+      "tests": [
+        "e2e/features/accessibility/cms-pages-accessibility.spec.ts"
+      ],
+      "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/cms-pages-accessibility.spec.ts",
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 3357,
+      "actWarnings": 0,
+      "output": "[WebServer] ⨯ Unable to acquire lock at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev/dev/lock, is another instance of next dev running?\nError: Process from config.webServer was not able to start. Exit code: 1"
+    },
+    {
+      "id": "notes-workspace-browser-a11y",
+      "name": "Notes Workspace Accessibility",
+      "runner": "playwright",
+      "tests": [
+        "e2e/features/accessibility/notes-workspace-accessibility.spec.ts"
+      ],
+      "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/notes-workspace-accessibility.spec.ts",
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 3082,
+      "actWarnings": 0,
+      "output": "[WebServer] ⨯ Unable to acquire lock at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev/dev/lock, is another instance of next dev running?\nError: Process from config.webServer was not able to start. Exit code: 1"
+    },
+    {
+      "id": "cms-builder-browser-a11y",
+      "name": "CMS Builder Accessibility",
+      "runner": "playwright",
+      "tests": [
+        "e2e/features/accessibility/cms-builder-accessibility.spec.ts"
+      ],
+      "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/cms-builder-accessibility.spec.ts",
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 2953,
+      "actWarnings": 0,
+      "output": "[WebServer] ⨯ Unable to acquire lock at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev/dev/lock, is another instance of next dev running?\nError: Process from config.webServer was not able to start. Exit code: 1"
+    }
+  ]
+}

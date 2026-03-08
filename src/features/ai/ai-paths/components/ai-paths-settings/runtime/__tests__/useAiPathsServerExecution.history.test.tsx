@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type React from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type {
   AiNode,
@@ -112,6 +112,10 @@ const buildFetcherNode = (): AiNode =>
 const normalizeNodeStatus = normalizeAiPathRuntimeNodeStatus;
 
 describe('useAiPathsServerExecution history streaming', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('appends node history entries when SSE node updates arrive', async () => {
     let runtimeState: RuntimeState = {
       status: 'idle',
@@ -211,17 +215,18 @@ describe('useAiPathsServerExecution history streaming', () => {
     await act(async () => {
       await result.current.runServerStream(triggerNode, 'manual', {});
     });
-    expect(enqueueAiPathRunMock).toHaveBeenCalledWith(
+    const enqueueArgs = enqueueAiPathRunMock.mock.calls[0]?.[0] as
+      | { meta?: Record<string, unknown> }
+      | undefined;
+    expect(enqueueArgs?.meta).toEqual(
       expect.objectContaining({
-        meta: expect.objectContaining({
-          runtimeKernelConfig: {
-            nodeTypes: ['template'],
-            codeObjectResolverIds: ['resolver.path'],
-          },
-        }),
-      }),
-      { timeoutMs: 90_000 }
+        runtimeKernelConfig: {
+          nodeTypes: ['template'],
+          codeObjectResolverIds: ['resolver.path'],
+        },
+      })
     );
+    expect(enqueueAiPathRunMock.mock.calls[0]?.[1]).toEqual({ timeoutMs: 90_000 });
 
     const nodePayload = [
       {
@@ -357,14 +362,11 @@ describe('useAiPathsServerExecution history streaming', () => {
       await result.current.runServerStream(triggerNode, 'manual', {});
     });
 
-    expect(enqueueAiPathRunMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        meta: expect.not.objectContaining({
-          runtimeKernelConfig: expect.anything(),
-        }),
-      }),
-      { timeoutMs: 90_000 }
-    );
+    const enqueueArgs = enqueueAiPathRunMock.mock.calls[0]?.[0] as
+      | { meta?: Record<string, unknown> }
+      | undefined;
+    expect(enqueueArgs?.meta).not.toHaveProperty('runtimeKernelConfig');
+    expect(enqueueAiPathRunMock.mock.calls[0]?.[1]).toEqual({ timeoutMs: 90_000 });
   });
 
   it('recovers queued server runs after a transport failure', async () => {
@@ -473,15 +475,12 @@ describe('useAiPathsServerExecution history streaming', () => {
       entityType: 'custom',
       entityId: null,
     });
-    expect(enqueueAiPathRunMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        requestId: 'trigger:path-main:req-1',
-        meta: expect.objectContaining({
-          requestId: 'trigger:path-main:req-1',
-        }),
-      }),
-      { timeoutMs: 90_000 }
-    );
+    const enqueueArgs = enqueueAiPathRunMock.mock.calls[0]?.[0] as
+      | { requestId?: string; meta?: Record<string, unknown> }
+      | undefined;
+    expect(enqueueArgs?.requestId).toBe('trigger:path-main:req-1');
+    expect(enqueueArgs?.meta?.['requestId']).toBe('trigger:path-main:req-1');
+    expect(enqueueAiPathRunMock.mock.calls[0]?.[1]).toEqual({ timeoutMs: 90_000 });
     expect(recoverEnqueuedRunByRequestIdMock).toHaveBeenCalledWith({
       pathId: 'path-main',
       requestId: 'trigger:path-main:req-1',

@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Home } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 import {
   getKangurEmbeddedHostPath,
@@ -28,6 +29,7 @@ type PageNotFoundAuthState = {
 };
 
 export function PageNotFound(): React.JSX.Element {
+  const router = useRouter();
   const { requestedPath, basePath, embedded } = useKangurRouting();
 
   const pageName = useMemo(() => {
@@ -67,7 +69,12 @@ export function PageNotFound(): React.JSX.Element {
 
   return (
     <div
-      className={embedded ? 'min-h-full flex items-center justify-center p-6 bg-slate-50' : 'min-h-screen flex items-center justify-center p-6 bg-slate-50'}
+      className={
+        embedded
+          ? 'kangur-premium-bg min-h-full flex items-center justify-center p-6'
+          : 'kangur-premium-bg min-h-screen flex items-center justify-center p-6'
+      }
+      data-testid='page-not-found-shell'
     >
       <div className='max-w-md w-full'>
         <div className='text-center space-y-6'>
@@ -114,7 +121,7 @@ export function PageNotFound(): React.JSX.Element {
           <div className='pt-6'>
             <KangurButton
               onClick={() => {
-                window.location.href = getKangurPageHref('Game', basePath);
+                router.push(getKangurPageHref('Game', basePath));
               }}
               size='lg'
               type='button'

@@ -98,7 +98,7 @@ function GameContent(): React.JSX.Element {
   );
 
   return (
-    <KangurPageShell tone='play' className='min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100' id='kangur-game-page' skipLinkTargetId={GAME_MAIN_ID}>
+    <KangurPageShell tone='play' id='kangur-game-page' skipLinkTargetId={GAME_MAIN_ID}>
       <KangurDocsTooltipEnhancer enabled={docsTooltipsEnabled} rootId='kangur-game-page' />
       <XpToast
         xpGained={xpToast.xpGained}

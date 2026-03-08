@@ -88,6 +88,10 @@ export const buildAgentPersonaMood = (
   overrides?: Partial<AgentPersonaMood> | null
 ): AgentPersonaMood => {
   const preset = getAgentPersonaMoodPreset(moodId);
+  const avatarImageUrl =
+    typeof overrides?.avatarImageUrl === 'string' ? overrides.avatarImageUrl.trim() : '';
+  const avatarImageFileId =
+    typeof overrides?.avatarImageFileId === 'string' ? overrides.avatarImageFileId.trim() : '';
 
   return {
     id: moodId,
@@ -97,6 +101,8 @@ export const buildAgentPersonaMood = (
       typeof overrides?.svgContent === 'string' ? overrides.svgContent : '',
       { viewBox: '0 0 100 100' }
     ),
+    avatarImageUrl: avatarImageUrl || null,
+    avatarImageFileId: avatarImageFileId || null,
   };
 };
 
@@ -262,6 +268,10 @@ const toCanonicalAgentPersonaMoods = (value: unknown, index: number): AgentPerso
         description:
           typeof rawMood['description'] === 'string' ? rawMood['description'] : undefined,
         svgContent: typeof rawMood['svgContent'] === 'string' ? rawMood['svgContent'] : '',
+        avatarImageUrl:
+          typeof rawMood['avatarImageUrl'] === 'string' ? rawMood['avatarImageUrl'] : null,
+        avatarImageFileId:
+          typeof rawMood['avatarImageFileId'] === 'string' ? rawMood['avatarImageFileId'] : null,
       })
     );
   });
@@ -400,4 +410,33 @@ export const fetchAgentPersonas = async (): Promise<AgentPersona[]> => {
   const map = new Map(data.map((item: { key: string; value: string }) => [item.key, item.value]));
   const stored = parseStoredAgentPersonas(map.get(AGENT_PERSONA_SETTINGS_KEY));
   return normalizeAgentPersonas(stored);
+};
+
+const collectAgentPersonaMoodAvatarFileIds = (
+  moods: AgentPersonaMood[] | null | undefined
+): string[] => {
+  if (!Array.isArray(moods) || moods.length === 0) return [];
+  return Array.from(
+    new Set(
+      moods
+        .map((mood) =>
+          typeof mood.avatarImageFileId === 'string' ? mood.avatarImageFileId.trim() : ''
+        )
+        .filter(Boolean)
+    )
+  );
+};
+
+export const collectAgentPersonaAvatarFileIds = (
+  persona: Pick<AgentPersona, 'moods'> | Partial<AgentPersona> | null | undefined
+): string[] => collectAgentPersonaMoodAvatarFileIds(persona?.moods);
+
+export const diffRemovedAgentPersonaAvatarFileIds = (
+  previousPersona: Pick<AgentPersona, 'moods'> | Partial<AgentPersona> | null | undefined,
+  nextPersona: Pick<AgentPersona, 'moods'> | Partial<AgentPersona> | null | undefined
+): string[] => {
+  const previousIds = new Set(collectAgentPersonaAvatarFileIds(previousPersona));
+  const nextIds = new Set(collectAgentPersonaAvatarFileIds(nextPersona));
+
+  return Array.from(previousIds).filter((fileId) => !nextIds.has(fileId));
 };

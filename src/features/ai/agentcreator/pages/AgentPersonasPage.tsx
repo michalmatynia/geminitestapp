@@ -10,9 +10,12 @@ import {
 import {
   buildDefaultAgentPersonaMoods,
   buildAgentPersonaSettings,
+  collectAgentPersonaAvatarFileIds,
   createAgentPersonaId,
+  diffRemovedAgentPersonaAvatarFileIds,
   normalizeAgentPersonas,
 } from '@/features/ai/agentcreator/utils/personas';
+import { deletePersonaAvatar } from '@/features/ai/agentcreator/utils/avatar-input';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
   DEFAULT_AGENT_PERSONA_MOOD_ID,
@@ -26,11 +29,31 @@ export function AgentPersonasPage(): React.JSX.Element {
   const { data: personas = [], isLoading: loading } = useAgentPersonas();
   const { mutateAsync: savePersonas, isPending: saving } = useSaveAgentPersonasMutation();
 
+  const deleteAvatarFiles = async (fileIds: string[]): Promise<void> => {
+    const uniqueFileIds = Array.from(new Set(fileIds.map((fileId) => fileId.trim()).filter(Boolean)));
+    if (uniqueFileIds.length === 0) {
+      return;
+    }
+
+    const results = await Promise.allSettled(uniqueFileIds.map((fileId) => deletePersonaAvatar(fileId)));
+    results.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        logClientError(result.reason, {
+          context: {
+            source: 'AgentPersonasPage',
+            action: 'deleteAvatarFile',
+            fileId: uniqueFileIds[index],
+          },
+        });
+      }
+    });
+  };
+
   const handleSavePersona = async (draft: Partial<AgentPersona>): Promise<void> => {
     const name = draft.name?.trim();
     if (!name) {
       toast('Persona name is required.', { variant: 'error' });
-      return;
+      throw new Error('Persona name is required.');
     }
 
     const now = new Date().toISOString();
@@ -39,7 +62,9 @@ export function AgentPersonasPage(): React.JSX.Element {
       {
         ...existing,
         ...draft,
-        id: existing?.id ?? createAgentPersonaId(),
+        id:
+          existing?.id ??
+          (typeof draft.id === 'string' && draft.id.trim() ? draft.id.trim() : createAgentPersonaId()),
         name,
         description: draft.description?.trim() || null,
         settings: buildAgentPersonaSettings(draft.settings),
@@ -56,6 +81,7 @@ export function AgentPersonasPage(): React.JSX.Element {
 
     try {
       await savePersonas({ personas: next });
+      await deleteAvatarFiles(diffRemovedAgentPersonaAvatarFileIds(existing, nextPersona));
       toast(existing ? 'Persona updated.' : 'Persona created.', { variant: 'success' });
     } catch (error) {
       logClientError(error, {
@@ -64,6 +90,7 @@ export function AgentPersonasPage(): React.JSX.Element {
       toast(error instanceof Error ? error.message : 'Failed to save personas.', {
         variant: 'error',
       });
+      throw (error instanceof Error ? error : new Error('Failed to save personas.'));
     }
   };
 
@@ -71,6 +98,7 @@ export function AgentPersonasPage(): React.JSX.Element {
     const next = personas.filter((p) => p.id !== persona.id);
     try {
       await savePersonas({ personas: next });
+      await deleteAvatarFiles(collectAgentPersonaAvatarFileIds(persona));
       toast('Persona deleted.', { variant: 'success' });
     } catch (error) {
       logClientError(error, {
@@ -79,13 +107,14 @@ export function AgentPersonasPage(): React.JSX.Element {
       toast(error instanceof Error ? error.message : 'Failed to delete persona.', {
         variant: 'error',
       });
+      throw (error instanceof Error ? error : new Error('Failed to delete persona.'));
     }
   };
 
   return (
     <ItemLibrary<AgentPersona & { description: string | null }>
       title='Agent Personas'
-      description='Manage visible tutor personas, SVG mood avatars, and AI Brain-backed persona routing.'
+      description='Manage tutor personas, memory-bank behavior, mood avatars, and AI Brain-backed routing.'
       entityName='Persona'
       items={personas as (AgentPersona & { description: string | null })[]}
       isLoading={loading}
@@ -102,15 +131,22 @@ export function AgentPersonasPage(): React.JSX.Element {
         </Button>
       }
       buildDefaultItem={() => ({
+        id: createAgentPersonaId(),
         name: '',
         description: '',
         defaultMoodId: DEFAULT_AGENT_PERSONA_MOOD_ID,
         moods: buildDefaultAgentPersonaMoods(),
         settings: buildAgentPersonaSettings(),
       })}
+      onEditorClose={({ draft, originalItem, saved }) => {
+        if (saved) {
+          return;
+        }
+        return deleteAvatarFiles(diffRemovedAgentPersonaAvatarFileIds(draft, originalItem));
+      }}
       renderItemTags={() => ['Routing: AI Brain']}
-      renderExtraFields={(item, onChange) => (
-        <AgentPersonaSettingsForm item={item} onChange={onChange} />
+      renderExtraFields={(item, onChange, { originalItem }) => (
+        <AgentPersonaSettingsForm item={item} originalItem={originalItem} onChange={onChange} />
       )}
     />
   );

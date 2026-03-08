@@ -90,7 +90,9 @@ describe('CanvasSvgNode trigger regression interactions', () => {
       </CanvasBoardUIProvider>
     );
 
-    const triggerActionRect = container.querySelector('[data-node-action="fire-trigger"]');
+    const triggerActionRect = container.querySelector<SVGElement>(
+      '[data-node-action="fire-trigger"]'
+    );
     expect(triggerActionRect).toBeTruthy();
     if (!triggerActionRect) return;
 

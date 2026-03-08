@@ -10,7 +10,7 @@ export function AdminKangurPageShell({ slug = [] }: { slug?: string[] }): React.
   return (
     <>
       <KangurAdminMenuToggle />
-      <KangurFeaturePage slug={slug} basePath={KANGUR_ADMIN_BASE_PATH} />
+      <KangurFeaturePage slug={slug} basePath={KANGUR_ADMIN_BASE_PATH} embedded />
     </>
   );
 }

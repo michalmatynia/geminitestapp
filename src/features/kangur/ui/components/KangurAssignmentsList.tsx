@@ -168,7 +168,7 @@ export function KangurAssignmentsList({
                       <KangurButton
                         asChild
                         size='sm'
-                        variant={assignment.target.type === 'lesson' ? 'warm' : 'surface'}
+                        variant={assignment.target.type === 'lesson' ? 'primary' : 'surface'}
                       >
                         <Link href={buildKangurAssignmentHref(basePath, assignment)}>{actionLabel}</Link>
                       </KangurButton>
@@ -240,7 +240,7 @@ export function KangurAssignmentsList({
                 </KangurSummaryPanel>
 
                 <div className='mt-5 flex flex-wrap items-center gap-2'>
-                  <KangurButton asChild size='sm' variant={compact ? 'warm' : 'surface'}>
+                  <KangurButton asChild size='sm' variant={compact ? 'primary' : 'surface'}>
                     <Link href={buildKangurAssignmentHref(basePath, assignment)}>
                       {actionLabel}
                     </Link>

@@ -39,15 +39,12 @@ describe('PersistenceContext savePathConfig guard', () => {
       expect(result.current.autoSaveStatus).toBe('error');
     });
     expect(logClientErrorMock).toHaveBeenCalledTimes(1);
-    expect(logClientErrorMock).toHaveBeenCalledWith(
-      expect.any(Error),
-      expect.objectContaining({
-        context: expect.objectContaining({
-          source: 'ai-paths.persistence-context',
-          action: 'savePathConfig',
-        }),
-      })
-    );
+    const errorArgs = logClientErrorMock.mock.calls[0] as
+      | [Error, { context?: Record<string, unknown> }]
+      | undefined;
+    expect(errorArgs?.[0]).toBeInstanceOf(Error);
+    expect(errorArgs?.[1].context?.['source']).toBe('ai-paths.persistence-context');
+    expect(errorArgs?.[1].context?.['action']).toBe('savePathConfig');
   });
 
   it('delegates to registered save handler', async () => {

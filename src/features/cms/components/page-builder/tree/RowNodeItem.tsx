@@ -85,19 +85,6 @@ export function RowNodeItem(props: RowNodeItemProps): React.ReactNode {
       <TreeContextMenu items={rowMenuItems}>
         <TreeRow
           tone='none'
-          role='button'
-          tabIndex={0}
-          onClick={(e: React.MouseEvent) => {
-            e.stopPropagation();
-            selectNode(row.id);
-          }}
-          onKeyDown={(e: React.KeyboardEvent) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              e.stopPropagation();
-              selectNode(row.id);
-            }
-          }}
           onDragOver={(e: React.DragEvent) => {
             const blockDrag = readBlockDragData(e.dataTransfer, {
               id: draggedBlockId,
@@ -220,7 +207,18 @@ export function RowNodeItem(props: RowNodeItemProps): React.ReactNode {
             iconClassName='size-3'
             placeholderClassName='block size-3 shrink-0'
           />
-          <span className='flex-1 truncate text-left'>{rowLabel}</span>
+          <button
+            type='button'
+            onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+              e.stopPropagation();
+              selectNode(row.id);
+            }}
+            aria-pressed={isSelected}
+            aria-label={`Select ${rowLabel}`}
+            className='flex min-w-0 flex-1 items-center rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
+          >
+            <span className='min-w-0 flex-1 truncate text-left'>{rowLabel}</span>
+          </button>
           <TreeActionSlot show='always' align='inline'>
             <TreeActionButton
               onClick={(e: React.MouseEvent) => {

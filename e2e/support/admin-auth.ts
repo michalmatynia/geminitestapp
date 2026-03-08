@@ -30,6 +30,8 @@ export async function ensureAdminSession(
   page: Page,
   destination = '/admin'
 ): Promise<void> {
+  const destinationUrl = new URL(destination, 'http://localhost');
+
   await page.goto(`/auth/signin?callbackUrl=${encodeURIComponent(destination)}`, {
     waitUntil: 'networkidle',
   });
@@ -44,7 +46,12 @@ export async function ensureAdminSession(
     await page.getByRole('button', { name: /sign in/i }).click();
 
     const signedIn = await page
-      .waitForURL((url) => url.pathname === destination, { timeout: 10_000 })
+      .waitForURL(
+        (url) =>
+          url.pathname === destinationUrl.pathname &&
+          (destinationUrl.search ? url.search === destinationUrl.search : true),
+        { timeout: 30_000 }
+      )
       .then(() => true)
       .catch(() => false);
 

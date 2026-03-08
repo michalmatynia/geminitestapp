@@ -153,28 +153,12 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
     <div
       ref={cardRef}
       key={note.id}
-      role='button'
-      tabIndex={0}
-      aria-label={`Open note ${note.title}`}
       onClick={(event: React.MouseEvent<HTMLElement>): void => {
         if (shouldIgnoreSelectionTarget(event.target, event.currentTarget)) {
           return;
         }
         if (event.defaultPrevented) return;
         onSelectNote(note);
-      }}
-      onKeyDown={(event: React.KeyboardEvent<HTMLElement>): void => {
-        if (
-          event.target !== event.currentTarget ||
-          shouldIgnoreSelectionTarget(event.target, event.currentTarget)
-        ) {
-          return;
-        }
-        if (event.defaultPrevented) return;
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          onSelectNote(note);
-        }
       }}
       style={{
         backgroundColor,

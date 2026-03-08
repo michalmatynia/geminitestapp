@@ -50,16 +50,12 @@ const HOME_ACTION_TONE_STYLES: Record<
   },
 };
 
-const KANGUR_ADMIN_BASE_PATH = '/admin/kangur';
-
 const resolveHomeActionDocId = (actionId: string): string => {
   switch (actionId) {
     case 'lessons':
       return 'home_lessons_action';
     case 'kangur':
       return 'home_kangur_exam_action';
-    case 'observability':
-      return 'home_admin_observability_action';
     default:
       return 'home_quick_practice_action';
   }
@@ -81,7 +77,7 @@ function KangurHomeActionCard({
   );
   const sharedClassName = cn(
     'relative z-10 w-full cursor-pointer text-center',
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300/70 focus-visible:ring-offset-2 ring-offset-white',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
     'disabled:cursor-not-allowed',
     'home-action-featured'
   );
@@ -166,7 +162,6 @@ function KangurHomeActionCard({
 export function KangurGameHomeActionsWidget(): React.JSX.Element | null {
   const { basePath, canStartFromHome, handleStartGame, screen, setScreen } =
     useKangurGameRuntime();
-  const isAdminStudio = basePath.startsWith(KANGUR_ADMIN_BASE_PATH);
 
   if (screen !== 'home') {
     return null;
@@ -207,17 +202,6 @@ export function KangurGameHomeActionsWidget(): React.JSX.Element | null {
     },
   ];
 
-  if (isAdminStudio) {
-    actions.push({
-      id: 'observability',
-      label: 'Obserwowalność',
-      symbol: '📡',
-      trailingSymbol: '🧭',
-      tone: 'mist',
-      href: `${KANGUR_ADMIN_BASE_PATH}/observability`,
-    });
-  }
-
   return (
     <KangurGlassPanel
       className='w-full shadow-[0_18px_40px_-28px_rgba(168,175,216,0.18)]'
@@ -230,7 +214,7 @@ export function KangurGameHomeActionsWidget(): React.JSX.Element | null {
         <h3 id='kangur-home-actions-heading' className='sr-only'>
           Wybierz aktywnosc
         </h3>
-        <div className='space-y-3'>
+        <div className='space-y-6 sm:space-y-7' data-testid='kangur-home-actions-list'>
           {actions.map((action, index) => (
             <KangurHomeActionCard key={action.id} action={action} index={index} />
           ))}

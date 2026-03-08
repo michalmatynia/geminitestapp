@@ -1,8 +1,5 @@
 import 'server-only';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-
 import {
   getRuntimeAnalyticsSummary,
   recordBrainInsightAnalytics,
@@ -39,13 +36,7 @@ import {
   buildRuntimeKernelParityMetadata,
   buildRuntimeKernelParityPrompt,
 } from './generator/runtime-analytics-prompt';
-import {
-  getClient,
-  isAnthropicModel,
-  isGeminiModel,
-  runAnthropicChat,
-  runGeminiChat,
-} from './generator/llm-client';
+import { callInsightChatModel } from './generator/chat-runtime';
 import { sanitizeEvents, stripCodeFence } from './generator/utils';
 
 const AI_INSIGHTS_MODEL_MAX_RETRIES = Math.max(
@@ -116,36 +107,18 @@ export async function getScheduleSettings(): Promise<InsightScheduleSettings> {
 
 async function callChatModel(params: {
   model: string;
-  apiKey: string | null;
   messages: ChatMessage[];
   temperature?: number;
 }): Promise<string> {
   let lastError: unknown = null;
   for (let attempt = 0; attempt <= AI_INSIGHTS_MODEL_MAX_RETRIES; attempt += 1) {
     try {
-      if (isAnthropicModel(params.model) && params.apiKey) {
-        return await runAnthropicChat({
-          model: params.model,
-          apiKey: params.apiKey,
-          messages: params.messages,
-        });
-      }
-      if (isGeminiModel(params.model) && params.apiKey) {
-        return await runGeminiChat({
-          model: params.model,
-          apiKey: params.apiKey,
-          messages: params.messages,
-        });
-      }
-
-      const client = getClient(params.model, params.apiKey);
-      const completion = await client.openai.chat.completions.create({
+      return await callInsightChatModel({
         model: params.model,
-        messages: params.messages as any,
+        messages: params.messages,
         temperature: params.temperature ?? 0.7,
-        max_tokens: 1000,
+        maxTokens: 1000,
       });
-      return completion.choices[0]?.message?.content?.trim() ?? '';
     } catch (error) {
       lastError = error;
       if (attempt < AI_INSIGHTS_MODEL_MAX_RETRIES) {
@@ -180,7 +153,6 @@ export async function generateAiInsightByType(
   }
 
   const { modelId } = assignment;
-  const apiKey = null; // API key is handled by getClient internally
   let systemPrompt = '';
   let userPrompt = '';
   const source: AiInsightSource = options?.source ?? 'manual';
@@ -261,7 +233,7 @@ Analyze performance and success rates of AI Path executions. Include migration r
   ];
 
   try {
-    const content = await callChatModel({ model: modelId, apiKey, messages });
+    const content = await callChatModel({ model: modelId, messages });
     const insight = await appendAiInsight(type, {
       name: insightName,
       source,
@@ -325,7 +297,6 @@ export async function generateLogInterpretation(options: {
   }
 
   const { modelId } = assignment;
-  const apiKey = null;
   const source: AiInsightSource = options.source ?? 'manual';
   const systemPrompt =
     (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsPromptSystem)) ||
@@ -355,7 +326,7 @@ ${JSON.stringify(options.log, null, 2)}`;
     },
   ];
 
-  const content = await callChatModel({ model: modelId, apiKey, messages });
+  const content = await callChatModel({ model: modelId, messages });
   return appendAiInsight('logs', {
     name: `Log Interpretation - ${new Date().toLocaleDateString()}`,
     source,

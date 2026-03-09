@@ -14,7 +14,7 @@ export type {
   CaseViewMode,
 } from './admin-cases/types';
 
-const ADMIN_CASE_RESOLVER_CASES_ACTION_KEYS = [
+export const ADMIN_CASE_RESOLVER_CASES_ACTION_KEYS = [
   'setWorkspace',
   'setCaseDraft',
   'setIsCreateCaseModalOpen',

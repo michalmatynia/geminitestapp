@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "generatedOn": "2026-03-05",
   "requiredDocs": [
-    "docs/site-wide-canonical-migration-plan-2026-03-05.md",
-    "docs/canonical-contract-matrix-2026-03-05.md",
-    "docs/legacy-compatibility-exception-register-2026-03-05.md",
-    "docs/legacy-compatibility-exception-register-2026-03-05.json"
+    "docs/plans/site-wide-canonical-migration-plan-2026-03-05.md",
+    "docs/decisions/canonical-contract-matrix-2026-03-05.md",
+    "docs/decisions/legacy-compatibility-exception-register-2026-03-05.md",
+    "docs/decisions/legacy-compatibility-exception-register-2026-03-05.json"
   ],
-  "exceptionRegisterPath": "docs/legacy-compatibility-exception-register-2026-03-05.json"
+  "exceptionRegisterPath": "docs/decisions/legacy-compatibility-exception-register-2026-03-05.json"
 }

@@ -127,6 +127,46 @@ export const collectionNodes: ContextNode[] = [
     source: { type: 'code', ref: SOURCE_REF },
   },
   {
+    id: 'collection:agent-teaching-agents',
+    kind: 'collection',
+    name: 'agent_teaching_agents',
+    description:
+      'Stored learner agent configurations including system prompts, retrieval settings, and linked embedding collections.',
+    tags: ['agent-creator', 'teaching', 'agents', 'database'],
+    relationships: [
+      { type: 'related_to', targetId: 'collection:agent-teaching-embedding-collections' },
+      { type: 'related_to', targetId: 'action:agent-teaching-chat' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'low',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'collection:agent-teaching-embedding-collections',
+    kind: 'collection',
+    name: 'agent_teaching_embedding_collections',
+    description:
+      'Embedding-backed collections used by learner agents for retrieval-augmented responses and source grounding.',
+    tags: ['agent-creator', 'teaching', 'embeddings', 'database'],
+    relationships: [
+      { type: 'related_to', targetId: 'collection:agent-teaching-agents' },
+      { type: 'related_to', targetId: 'action:agent-teaching-chat' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'low',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
     id: 'collection:kangur-progress',
     kind: 'collection',
     name: 'kangur_progress',

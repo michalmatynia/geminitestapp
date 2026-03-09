@@ -853,7 +853,7 @@ const filterConfig = useMemo(() => {
 
 ### Core Documentation
 
-- **Component Patterns Guide:** `docs/COMPONENT_PATTERNS.md`
+- **Component Patterns Guide:** `docs/platform/component-patterns.md`
 - **TypeScript Types:** `src/shared/contracts/ui.ts` (re-exported by `src/shared/ui/templates/pickers/index.ts`)
 - **Shared UI Exports:** `src/shared/ui/index.ts`
 

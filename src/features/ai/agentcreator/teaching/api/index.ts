@@ -1,9 +1,12 @@
 import type {
   AgentTeachingAgentDto as AgentTeachingAgentRecord,
+  AgentTeachingChatRequest,
+  AgentTeachingChatMessage,
   AgentTeachingCollectionDto as AgentTeachingEmbeddingCollectionRecord,
   AgentTeachingDocumentDto as AgentTeachingEmbeddingDocumentListItem,
   AgentTeachingChatSourceDto as AgentTeachingChatSource,
 } from '@/shared/contracts/agent-teaching';
+import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
 import { api } from '@/shared/lib/api-client';
 
@@ -147,10 +150,24 @@ export async function searchEmbeddingCollection(
  */
 export async function teachingChat(
   agentId: string,
-  messages: ChatMessage[]
+  messages: ChatMessage[],
+  contextRegistry?: ContextRegistryConsumerEnvelope | null
 ): Promise<{ message: string; sources: AgentTeachingChatSource[] }> {
+  const normalizedMessages: AgentTeachingChatMessage[] = messages
+    .map((message): AgentTeachingChatMessage | null => {
+      if (message.role === 'user' || message.role === 'assistant' || message.role === 'system') {
+        return { role: message.role, content: message.content };
+      }
+      return null;
+    })
+    .filter((message): message is AgentTeachingChatMessage => message !== null);
+  const payload: AgentTeachingChatRequest = {
+    agentId,
+    messages: normalizedMessages,
+    ...(contextRegistry ? { contextRegistry } : {}),
+  };
   return api.post<{ message: string; sources: AgentTeachingChatSource[] }>(
     '/api/agentcreator/teaching/chat',
-    { agentId, messages }
+    payload
   );
 }

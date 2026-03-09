@@ -76,7 +76,10 @@ export const inferLoginCandidates = async (
 ): Promise<LoginCandidates | null> => {
   if (!page) return null;
   try {
-    const candidates = await page.evaluate(() => {
+    /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
+    const candidates = await page.evaluate<LoginCandidates>(() => {
+      const documentRef = document;
+
       const cssPath = (el: Element): string | null => {
         if (!(el instanceof Element)) return null;
         if (el.id) {
@@ -84,8 +87,8 @@ export const inferLoginCandidates = async (
         }
         const parts: string[] = [];
         let node: Element | null = el;
-        while (node?.nodeType === 1 && node !== document.documentElement) {
-          const currentNode = node;
+        while (node && node.nodeType === 1 && node !== documentRef.documentElement) {
+          const currentNode: Element = node;
           let part = currentNode.tagName.toLowerCase();
           const name = currentNode.getAttribute('name');
           const dataTest =
@@ -99,7 +102,7 @@ export const inferLoginCandidates = async (
           }
           const parent = currentNode.parentElement;
           if (parent) {
-            const siblings = Array.from(parent.children, (child) => child);
+            const siblings = Array.from(parent.children as HTMLCollectionOf<Element>, (child) => child);
             const matchingSiblings = siblings.filter((child) => child.tagName === currentNode.tagName);
             if (matchingSiblings.length > 1) {
               const index = matchingSiblings.indexOf(currentNode) + 1;
@@ -154,7 +157,9 @@ export const inferLoginCandidates = async (
         selector: cssPath(el),
       });
 
-      const inputs = Array.from(document.querySelectorAll('input, textarea, select'))
+      const inputs = Array.from(
+        documentRef.querySelectorAll('input, textarea, select')
+      )
         .filter((el: Element) => (el as HTMLElement).offsetParent !== null)
         .map((el: Element) => ({
           ...describe(el),
@@ -164,7 +169,7 @@ export const inferLoginCandidates = async (
         .slice(0, 12);
 
       const buttons = Array.from(
-        document.querySelectorAll('button, input[type=\'submit\'], input[type=\'button\']')
+        documentRef.querySelectorAll('button, input[type=\'submit\'], input[type=\'button\']')
       )
         .filter((el: Element) => (el as HTMLElement).offsetParent !== null)
         .map((el: Element) => ({
@@ -180,6 +185,7 @@ export const inferLoginCandidates = async (
 
       return { inputs, buttons };
     });
+    /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
 
     if (log) {
       await log('info', 'Inferred login candidates.', {
@@ -187,7 +193,7 @@ export const inferLoginCandidates = async (
         candidates,
       });
     }
-    return candidates as LoginCandidates;
+    return candidates;
   } catch (error) {
     if (log) {
       await log('warning', 'Failed to infer login candidates.', {
@@ -257,9 +263,10 @@ export const checkForChallenge = async (
 ): Promise<boolean> => {
   if (!page) return false;
   const html = await page.content();
-  const text = await page.evaluate(
-    () => document.body?.innerText || document.documentElement?.innerText || ''
-  );
+  const text = await page.evaluate<string>(() => {
+    const documentRef = document;
+    return documentRef.body?.innerText || documentRef.documentElement?.innerText || '';
+  });
   const detectChallenge = (t: string): boolean =>
     /cloudflare|attention required|cf-browser-verification|challenge-platform|cf-turnstile/i.test(
       t

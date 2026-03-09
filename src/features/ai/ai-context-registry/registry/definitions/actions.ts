@@ -130,4 +130,29 @@ export const actionNodes: ContextNode[] = [
     updatedAtISO: '2026-03-09T00:00:00.000Z',
     source: { type: 'code', ref: SOURCE_REF },
   },
+  {
+    id: 'action:agent-teaching-chat',
+    kind: 'action',
+    name: 'Agent Teaching Chat',
+    description:
+      'Runs a retrieval-augmented chat turn for a learner agent using embedding collections, ' +
+      'Knowledge Base sources, and the current page context registry envelope.',
+    tags: ['agent-creator', 'teaching', 'chat', 'rag'],
+    relationships: [
+      { type: 'uses', targetId: 'page:agent-teaching-chat' },
+      { type: 'uses', targetId: 'component:agent-teaching-chat-panel' },
+      { type: 'reads', targetId: 'collection:agent-teaching-agents' },
+      { type: 'reads', targetId: 'collection:agent-teaching-embedding-collections' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      proposeScopes: ['ctx:propose'],
+      executeScopes: ['ctx:execute'],
+      riskTier: 'low',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
 ];

@@ -47,6 +47,29 @@ export const pageNodes: ContextNode[] = [
     source: { type: 'code', ref: SOURCE_REF },
   },
   {
+    id: 'page:agent-teaching-chat',
+    kind: 'page',
+    name: 'Agent Creator Teaching Chat',
+    description:
+      'Admin chat surface for conversing with learner agents backed by embedding collections and ' +
+      'retrieval-augmented generation.',
+    tags: ['agent-creator', 'teaching', 'chat', 'ai', 'admin'],
+    relationships: [
+      { type: 'reads', targetId: 'collection:agent-teaching-agents' },
+      { type: 'reads', targetId: 'collection:agent-teaching-embedding-collections' },
+      { type: 'uses', targetId: 'component:agent-teaching-chat-panel' },
+      { type: 'uses', targetId: 'action:agent-teaching-chat' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
     id: 'page:products',
     kind: 'page',
     name: 'Products Listing Page',

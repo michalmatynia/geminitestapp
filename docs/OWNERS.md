@@ -61,6 +61,8 @@ when the doc is touched meaningfully.
    entrypoints, governance docs, or agent overlays.
 5. Generated docs should be updated through their scripts whenever possible, not
    by hand-editing outputs.
+6. Machine-readable companions should live beside their canonical doc, and any
+   retained compatibility copy must be updated in the same change.
 
 ## AI Update Protocol
 
@@ -71,3 +73,5 @@ When an AI adds or rewrites docs, it should:
 3. Update metadata and ownership fields.
 4. Update the relevant hub page and cross-links.
 5. Mark superseded docs explicitly instead of leaving ambiguous duplicates.
+6. If a JSON or other machine-readable companion exists, update the canonical
+   file first and keep any compatibility copy in sync.

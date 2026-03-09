@@ -301,12 +301,8 @@ function KangurLoginPageContent({
   }, []);
 
   useEffect(() => {
-    if (loginKind === 'student') {
-      return;
-    }
-
     setParentAuthMode(requestedParentAuthMode);
-  }, [loginKind, requestedParentAuthMode]);
+  }, [requestedParentAuthMode]);
 
   useEffect(() => {
     if (loginKind !== 'student') {

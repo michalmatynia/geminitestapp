@@ -1,5 +1,4 @@
 'use client';
-import type { RowData as TableCoreRowData } from '@tanstack/table-core';
 import { useQueryClient, QueryClient } from '@tanstack/react-query';
 import {
   ColumnDef,
@@ -85,7 +84,7 @@ export function DataTableSortableHeader<TData, TValue>({
 }
 
 declare module '@tanstack/table-core' {
-  interface TableMeta<TData extends TableCoreRowData> {
+  interface TableMeta<TData = unknown> {
     queryClient?: QueryClient;
   }
 }

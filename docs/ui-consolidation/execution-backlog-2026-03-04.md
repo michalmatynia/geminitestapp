@@ -7,7 +7,7 @@ Source scan: `docs/ui-consolidation/scan-latest.md`
 
 - Convert scan output into execution waves.
 - Prioritize low-risk/high-impact migrations first.
-- Keep migrations aligned with `docs/COMPONENT_PATTERNS.md`.
+- Keep migrations aligned with `docs/platform/component-patterns.md`.
 
 ## Baseline snapshot before migration
 
@@ -169,7 +169,7 @@ Source scan: `docs/ui-consolidation/scan-latest.md`
    - LOC delta
    - files removed/merged
    - updated opportunity rank from `scan-latest.md`
-3. Keep `docs/COMPONENT_PATTERNS.md` updated when introducing new shared patterns.
+3. Keep `docs/platform/component-patterns.md` updated when introducing new shared patterns.
 
 ## Exit criteria for first cycle
 

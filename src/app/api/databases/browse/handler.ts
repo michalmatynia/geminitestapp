@@ -27,6 +27,9 @@ const asRecord = (value: unknown): Record<string, unknown> | null =>
     ? (value as Record<string, unknown>)
     : null;
 
+const getRecordValue = (value: unknown, key: string): unknown | undefined =>
+  value && typeof value === 'object' ? (value as Record<string, unknown>)[key] : undefined;
+
 const isPrismaBrowseModel = (value: unknown): value is PrismaBrowseModel => {
   const record = asRecord(value);
   return (
@@ -113,7 +116,8 @@ async function browsePrismaCollection(params: BrowseParams): Promise<BrowseRespo
 
   // Get the Prisma model dynamically
   const modelName = collection.charAt(0).toLowerCase() + collection.slice(1);
-  const model = Reflect.get(prisma, modelName);
+  const modelCandidate = getRecordValue(prisma, modelName);
+  const model = isPrismaBrowseModel(modelCandidate) ? modelCandidate : null;
 
   if (!isPrismaBrowseModel(model)) {
     return {

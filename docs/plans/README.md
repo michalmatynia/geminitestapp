@@ -32,3 +32,5 @@ Use this directory for cross-feature or repo-wide:
 - [`master-folder-tree-shell-phase1-parity-2026-03-05.md`](./master-folder-tree-shell-phase1-parity-2026-03-05.md)
 - [`master-folder-tree-shell-phase2-runtime-lifecycle-2026-03-05.md`](./master-folder-tree-shell-phase2-runtime-lifecycle-2026-03-05.md)
 - [`master-folder-tree-shell-phase3-browser-lifecycle-2026-03-05.md`](./master-folder-tree-shell-phase3-browser-lifecycle-2026-03-05.md)
+- [`site-wide-canonical-migration-plan-2026-03-04.md`](./site-wide-canonical-migration-plan-2026-03-04.md)
+- [`site-wide-canonical-migration-plan-2026-03-05.md`](./site-wide-canonical-migration-plan-2026-03-05.md)

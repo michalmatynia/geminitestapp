@@ -61,6 +61,10 @@ stubs until references are cleaned up naturally:
 | `docs/master-folder-tree-shell-phase2-runtime-lifecycle-2026-03-05.md` | `docs/plans/master-folder-tree-shell-phase2-runtime-lifecycle-2026-03-05.md` |
 | `docs/master-folder-tree-shell-phase3-browser-lifecycle-2026-03-05.md` | `docs/plans/master-folder-tree-shell-phase3-browser-lifecycle-2026-03-05.md` |
 | `docs/prompt-exploder-migration-plan-2026-03-04.md` | `docs/prompt-exploder/migration-plan-2026-03-04.md` |
+| `docs/site-wide-canonical-migration-plan-2026-03-04.md` | `docs/plans/site-wide-canonical-migration-plan-2026-03-04.md` |
+| `docs/legacy-compatibility-exception-register-2026-03-04.md` | `docs/decisions/legacy-compatibility-exception-register-2026-03-04.md` |
+| `docs/site-wide-canonical-migration-plan-2026-03-05.md` | `docs/plans/site-wide-canonical-migration-plan-2026-03-05.md` |
+| `docs/legacy-compatibility-exception-register-2026-03-05.md` | `docs/decisions/legacy-compatibility-exception-register-2026-03-05.md` |
 
 ## Root Legacy Entry Points Still Intentionally Active
 
@@ -77,35 +81,30 @@ feature-folder equivalents are promoted hard enough.
 
 ## Pending Migration Candidates
 
-These should move out of the root when touched next.
+No root-level markdown docs remain pending migration.
+The remaining root surface is now compatibility-only.
 
-| Root Doc | Proposed Canonical Location | Notes |
+## Non-Markdown Compatibility Copies
+
+This root artifact now has a canonical home elsewhere and remains only as a
+compatibility mirror:
+
+| Root Copy | Canonical Location | Notes |
 | --- | --- | --- |
-| `docs/legacy-compatibility-exception-register-2026-03-04.md` | `docs/decisions/legacy-compatibility-exception-register-2026-03-04.md` | keep root stub if moved |
-| `docs/legacy-compatibility-exception-register-2026-03-05.md` | `docs/decisions/legacy-compatibility-exception-register-2026-03-05.md` | script-adjacent; move with stub only |
-| `docs/site-wide-canonical-migration-plan-2026-03-04.md` | `docs/plans/site-wide-canonical-migration-plan-2026-03-04.md` | program plan |
-| `docs/site-wide-canonical-migration-plan-2026-03-05.md` | `docs/plans/site-wide-canonical-migration-plan-2026-03-05.md` | script-adjacent; move with stub only |
+| `docs/legacy-compatibility-exception-register-2026-03-04.json` | `docs/decisions/legacy-compatibility-exception-register-2026-03-04.json` | keep byte-identical until root consumers are cleaned up |
+| `docs/legacy-compatibility-exception-register-2026-03-05.json` | `docs/decisions/legacy-compatibility-exception-register-2026-03-05.json` | keep byte-identical until root consumers are cleaned up |
 
-## Script-Adjacent Root Docs
+When retaining compatibility copies:
 
-These are higher-risk migrations because scripts or manifests currently point at
-their root paths:
-
-- `docs/site-wide-canonical-migration-plan-2026-03-05.md`
-- `docs/legacy-compatibility-exception-register-2026-03-05.md`
-- `docs/legacy-compatibility-exception-register-2026-03-05.json`
-
-When migrating these:
-
-1. move the full content to the canonical folder
-2. leave a root compatibility stub
-3. update any manifests or scripts that should learn the new canonical path
-4. keep the root path available until downstream references are cleaned up
+1. update the canonical file first
+2. update the root compatibility copy in the same change
+3. point manifests and scripts at the canonical path
+4. remove the compatibility copy only after downstream references are cleaned up
 
 ## Next Suggested Batch
 
 If continuing from this point, the next low-risk moves are:
 
-1. `docs/site-wide-canonical-migration-plan-2026-03-04.md`
-2. `docs/legacy-compatibility-exception-register-2026-03-04.md`
-3. `docs/site-wide-canonical-migration-plan-2026-03-05.md` after reference review
+1. update downstream historical docs only when they are already being touched for other work
+2. decide whether the root JSON compatibility copies still have external consumers
+3. remove those root JSON copies once those consumers are gone

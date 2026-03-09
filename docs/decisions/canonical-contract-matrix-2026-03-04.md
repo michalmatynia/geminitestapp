@@ -33,7 +33,7 @@ Single source of truth for canonical runtime contracts during legacy-compatibili
 
 1. New runtime compatibility behavior is blocked by default.
 2. Temporary compatibility is allowed only when added to the exception register:
-   - `docs/legacy-compatibility-exception-register-2026-03-04.json`
+   - `docs/decisions/legacy-compatibility-exception-register-2026-03-04.json`
 3. Any new temporary exception must include:
    - owner
    - sunset date

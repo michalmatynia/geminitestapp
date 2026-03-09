@@ -125,6 +125,7 @@ export function KangurPrimaryNavigation({
     ? Boolean(auth.user.canManageLearners)
     : canManageLearners;
   const effectiveShowParentDashboard = effectiveCanManageLearners && showParentDashboard;
+  const mobileAuthActionClassName = 'max-sm:min-w-0 max-sm:flex-1 max-sm:justify-center';
 
   const authAction = effectiveIsAuthenticated ? (
     <NavAction docId='profile_logout' onClick={onLogout}>
@@ -134,13 +135,22 @@ export function KangurPrimaryNavigation({
   ) : onLogin || onCreateAccount ? (
     <>
       {onCreateAccount ? (
-        <NavAction docId='profile_create_account' onClick={onCreateAccount} testId='kangur-primary-nav-create-account'>
+        <NavAction
+          className={mobileAuthActionClassName}
+          docId='profile_create_account'
+          onClick={onCreateAccount}
+          testId='kangur-primary-nav-create-account'
+        >
           <UserPlus className={ICON_CLASSNAME} strokeWidth={2.15} />
           <span>Utworz konto</span>
         </NavAction>
       ) : null}
       {onLogin ? (
-        <NavAction docId='profile_login' onClick={onLogin}>
+        <NavAction
+          className={mobileAuthActionClassName}
+          docId='profile_login'
+          onClick={onLogin}
+        >
           <LogIn className={ICON_CLASSNAME} strokeWidth={2.15} />
           <span>Zaloguj się</span>
         </NavAction>
@@ -217,7 +227,7 @@ export function KangurPrimaryNavigation({
           ) : null}
 
           {rightAccessory || authAction ? (
-            <div className='ml-auto flex w-full items-center justify-end gap-2 sm:w-auto'>
+            <div className='ml-auto flex w-full flex-wrap items-center justify-stretch gap-2 sm:w-auto sm:justify-end'>
               {rightAccessory}
               {authAction}
             </div>

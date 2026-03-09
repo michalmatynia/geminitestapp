@@ -89,6 +89,12 @@ const AuthProbe = (): React.JSX.Element => {
       <button type='button' onClick={navigateToLogin}>
         Open login
       </button>
+      <button
+        type='button'
+        onClick={() => navigateToLogin({ authMode: 'create-account' })}
+      >
+        Open create-account
+      </button>
       <button type='button' onClick={() => logout(false)}>
         Logout
       </button>
@@ -144,6 +150,30 @@ describe('KangurAuthContext', () => {
     await user.click(screen.getByRole('button', { name: 'Open login' }));
 
     expect(openLoginModalMock).toHaveBeenCalledWith(window.location.href);
+    expect(prepareLoginHrefMock).not.toHaveBeenCalled();
+    expect(routerPushMock).not.toHaveBeenCalled();
+    expect(redirectToLoginMock).not.toHaveBeenCalled();
+  });
+
+  it('opens the Kangur login modal directly in create-account mode when requested', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <KangurAuthProvider>
+        <AuthProbe />
+      </KangurAuthProvider>
+    );
+
+    await waitFor(() => {
+      expect(meMock).toHaveBeenCalledTimes(1);
+      expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Open create-account' }));
+
+    expect(openLoginModalMock).toHaveBeenCalledWith(window.location.href, {
+      authMode: 'create-account',
+    });
     expect(prepareLoginHrefMock).not.toHaveBeenCalled();
     expect(routerPushMock).not.toHaveBeenCalled();
     expect(redirectToLoginMock).not.toHaveBeenCalled();

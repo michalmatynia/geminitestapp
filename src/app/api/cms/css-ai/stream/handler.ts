@@ -5,6 +5,7 @@ import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server'
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 import { streamBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 import { runTeachingChat } from '@/features/ai/agentcreator/teaching/server/chat';
+import type { AgentTeachingChatMessage } from '@/shared/contracts/agent-teaching';
 import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
 import {
   cmsCssAiRequestSchema,
@@ -47,6 +48,12 @@ const buildMessagesWithRegistryContext = (
   ];
 };
 
+const toTeachingChatMessages = (messages: ChatMessage[]): AgentTeachingChatMessage[] =>
+  messages.map((message: ChatMessage) => ({
+    role: message.role === 'assistant' || message.role === 'system' ? message.role : 'user',
+    content: message.content,
+  }));
+
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseObjectJsonBody(req, {
     logPrefix: 'cms.css-ai.stream',
@@ -78,6 +85,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   );
   const contextRegistryPrompt = buildCmsContextRegistrySystemPrompt(contextRegistryBundle);
   const messagesWithContext = buildMessagesWithRegistryContext(messages, contextRegistryPrompt);
+  const teachingMessages = toTeachingChatMessages(messagesWithContext);
   const brainConfig = await resolveBrainExecutionConfigForCapability('cms.css_stream', {
     defaultTemperature: 0.2,
     defaultMaxTokens: 1200,
@@ -102,7 +110,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
           }
           const result = await runTeachingChat({
             agentId: brainConfig.agentId,
-            messages: messagesWithContext,
+            messages: teachingMessages,
           });
           send({ delta: result.message, done: true });
           controller.close();
@@ -113,10 +121,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
           modelId: brainConfig.modelId,
           temperature: brainConfig.temperature,
           maxTokens: brainConfig.maxTokens,
-          messages: messagesWithContext.map((message: ChatMessage) => ({
-            role: message.role === 'assistant' || message.role === 'system' ? message.role : 'user',
-            content: message.content,
-          })),
+          messages: teachingMessages,
         });
         const reader = upstream.stream.getReader();
         const decoder = new TextDecoder();

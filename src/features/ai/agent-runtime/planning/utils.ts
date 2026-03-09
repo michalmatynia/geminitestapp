@@ -181,13 +181,13 @@ export function buildPlanStepsFromSpecs(
   stepSpecs: Array<{
     title?: string;
     tool?: string;
-    expectedObservation?: string | null;
-    successCriteria?: string | null;
-    phase?: string | null;
-    priority?: number | null;
-    dependsOn?: number[] | string[] | null;
-    goalId?: string | null;
-    subgoalId?: string | null;
+    expectedObservation?: string | null | undefined;
+    successCriteria?: string | null | undefined;
+    phase?: string | null | undefined;
+    priority?: number | null | undefined;
+    dependsOn?: number[] | string[] | null | undefined;
+    goalId?: string | null | undefined;
+    subgoalId?: string | null | undefined;
   }>,
   meta?: PlannerMeta | null,
   includeSafety: boolean = false,
@@ -201,13 +201,13 @@ export function buildPlanStepsFromSpecs(
       step: {
         title?: string;
         tool?: string;
-        expectedObservation?: string | null;
-        successCriteria?: string | null;
-        phase?: string | null;
-        priority?: number | null;
-        dependsOn?: number[] | string[] | null;
-        goalId?: string | null;
-        subgoalId?: string | null;
+        expectedObservation?: string | null | undefined;
+        successCriteria?: string | null | undefined;
+        phase?: string | null | undefined;
+        priority?: number | null | undefined;
+        dependsOn?: number[] | string[] | null | undefined;
+        goalId?: string | null | undefined;
+        subgoalId?: string | null | undefined;
       },
       _index: number
     ) => ({

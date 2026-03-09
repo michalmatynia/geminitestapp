@@ -26,7 +26,7 @@ export function KangurLearnerProfileHeroWidget(): React.JSX.Element {
             Statystyki ucznia: <span className='font-semibold text-slate-700'>{displayName}</span>.
           </>
         ) : (
-          'Zaloguj sie, aby synchronizowac postep ucznia miedzy urzadzeniami. Jesli nie masz jeszcze konta rodzica, zaloz je bez opuszczania Kangura.'
+          'Zaloguj sie, aby synchronizowac postep ucznia miedzy urzadzeniami. Jesli nie masz jeszcze konta rodzica, zaloz je tutaj.'
         )
       }
       headingAs='h1'
@@ -35,10 +35,12 @@ export function KangurLearnerProfileHeroWidget(): React.JSX.Element {
       title='Profil ucznia'
     >
       {!user ? (
-        <div className='flex w-full flex-col gap-3 sm:w-auto sm:flex-row'>
+        <div className='grid w-full gap-3 sm:flex sm:w-auto sm:flex-row'>
           <KangurButton
             className='w-full sm:w-auto'
-            onClick={navigateToLogin}
+            onClick={() => {
+              navigateToLogin();
+            }}
             size='sm'
             variant='surface'
             data-doc-id='profile_login'
@@ -47,7 +49,9 @@ export function KangurLearnerProfileHeroWidget(): React.JSX.Element {
           </KangurButton>
           <KangurButton
             className='w-full sm:w-auto'
-            onClick={() => navigateToLogin({ authMode: 'create-account' })}
+            onClick={() => {
+              navigateToLogin({ authMode: 'create-account' });
+            }}
             size='sm'
             type='button'
             variant='primary'

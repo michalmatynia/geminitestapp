@@ -51,7 +51,7 @@ the canonical repo references.
 - Do not assume Prisma-only persistence.
 - Do not assume Redis is always available; several queues support inline
   fallback behavior.
-- Treat `docs/ARCHITECTURE_GUARDRAILS.md` and query-factory metadata checks as
+- Treat `docs/platform/architecture-guardrails.md` and query-factory metadata checks as
   active engineering constraints.
 
 ## Sensitive / Avoid-By-Default Areas

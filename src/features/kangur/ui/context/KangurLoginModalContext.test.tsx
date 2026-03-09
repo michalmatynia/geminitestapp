@@ -27,6 +27,7 @@ import {
 
 function LoginModalProbe(): JSX.Element {
   const {
+    authMode,
     callbackUrl,
     closeLoginModal,
     dismissLoginModal,
@@ -38,12 +39,21 @@ function LoginModalProbe(): JSX.Element {
 
   return (
     <div>
+      <div data-testid='kangur-login-modal-auth-mode'>{authMode}</div>
       <div data-testid='kangur-login-modal-callback'>{callbackUrl}</div>
       <div data-testid='kangur-login-modal-home'>{homeHref}</div>
       <div data-testid='kangur-login-modal-open'>{String(isOpen)}</div>
       <div data-testid='kangur-login-modal-route-driven'>{String(isRouteDriven)}</div>
       <button type='button' onClick={() => openLoginModal('/kangur/tests?focus=division')}>
         Open tests modal
+      </button>
+      <button
+        type='button'
+        onClick={() =>
+          openLoginModal('/kangur/tests?focus=division', { authMode: 'create-account' })
+        }
+      >
+        Open create-account modal
       </button>
       <button type='button' onClick={() => openLoginModal()}>
         Open current page modal
@@ -100,6 +110,7 @@ describe('KangurLoginModalProvider', () => {
 
     expect(screen.getByTestId('kangur-login-modal-open')).toHaveTextContent('true');
     expect(screen.getByTestId('kangur-login-modal-route-driven')).toHaveTextContent('true');
+    expect(screen.getByTestId('kangur-login-modal-auth-mode')).toHaveTextContent('sign-in');
     expect(screen.getByTestId('kangur-login-modal-home')).toHaveTextContent('/kangur');
     expect(screen.getByTestId('kangur-login-modal-callback')).toHaveTextContent(
       '/kangur/tests?focus=division'
@@ -115,6 +126,7 @@ describe('KangurLoginModalProvider', () => {
 
     expect(screen.getByTestId('kangur-login-modal-open')).toHaveTextContent('false');
     expect(screen.getByTestId('kangur-login-modal-route-driven')).toHaveTextContent('false');
+    expect(screen.getByTestId('kangur-login-modal-auth-mode')).toHaveTextContent('sign-in');
     expect(screen.getByTestId('kangur-login-modal-callback')).toHaveTextContent(
       '/kangur/lessons'
     );
@@ -132,6 +144,20 @@ describe('KangurLoginModalProvider', () => {
     expect(routerPushMock).not.toHaveBeenCalled();
   });
 
+  it('opens inline in create-account mode when requested explicitly', () => {
+    renderHarness({});
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open create-account modal' }));
+
+    expect(screen.getByTestId('kangur-login-modal-open')).toHaveTextContent('true');
+    expect(screen.getByTestId('kangur-login-modal-auth-mode')).toHaveTextContent(
+      'create-account'
+    );
+    expect(screen.getByTestId('kangur-login-modal-callback')).toHaveTextContent(
+      '/kangur/tests?focus=division'
+    );
+  });
+
   it('falls back to the current browser URL when opening inline without an explicit callback', () => {
     renderHarness({
       pageKey: 'Tests',
@@ -144,6 +170,21 @@ describe('KangurLoginModalProvider', () => {
     expect(screen.getByTestId('kangur-login-modal-open')).toHaveTextContent('true');
     expect(screen.getByTestId('kangur-login-modal-callback')).toHaveTextContent(
       window.location.href
+    );
+  });
+
+  it('reads create-account mode from the compatibility login route query', () => {
+    renderHarness({
+      pageKey: 'Game',
+      pathname: '/kangur/login',
+      requestedPath: '/kangur',
+      search: 'callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&authMode=create-account',
+    });
+
+    expect(screen.getByTestId('kangur-login-modal-open')).toHaveTextContent('true');
+    expect(screen.getByTestId('kangur-login-modal-route-driven')).toHaveTextContent('true');
+    expect(screen.getByTestId('kangur-login-modal-auth-mode')).toHaveTextContent(
+      'create-account'
     );
   });
 });

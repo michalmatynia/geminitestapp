@@ -1,6 +1,6 @@
 # Lint Domain Checks Report
 
-Generated at: 2026-03-09T05:34:58.716Z
+Generated at: 2026-03-09T05:48:50.405Z
 
 ## Summary
 
@@ -9,7 +9,7 @@ Generated at: 2026-03-09T05:34:58.716Z
 - Failed: 0
 - Timed out: 0
 - Skipped: 0
-- Total duration: 2.7m
+- Total duration: 2.8m
 - Include test probes: no
 - Include test tree: yes
 
@@ -17,11 +17,11 @@ Generated at: 2026-03-09T05:34:58.716Z
 
 | Domain | Status | Duration | Exit | Targets | Test Trees | Test Probes |
 | --- | --- | ---: | ---: | --- | --- | --- |
-| Auth | PASS | 22.0s | 0 | `src/features/auth`, `src/app/api/auth` | `__tests__/features/auth` | - |
-| Products | PASS | 33.8s | 0 | `src/features/products`, `src/app/api/v2/products` | `__tests__/features/products` | - |
-| AI Paths | PASS | 40.0s | 0 | `src/features/ai/ai-paths`, `src/app/api/ai-paths` | `src/features/ai/ai-paths/__tests__`, `src/features/ai/ai-paths/components/__tests__` | - |
-| Image Studio | PASS | 35.2s | 0 | `src/features/ai/image-studio`, `src/app/api/image-studio` | `src/features/ai/image-studio/components/__tests__` | - |
-| Case Resolver | PASS | 33.1s | 0 | `src/features/case-resolver`, `src/features/case-resolver-capture`, `src/app/api/case-resolver` | `src/features/case-resolver/__tests__`, `src/features/case-resolver-capture/__tests__` | - |
+| Auth | PASS | 19.5s | 0 | `src/features/auth`, `src/app/api/auth` | `__tests__/features/auth` | - |
+| Products | PASS | 34.9s | 0 | `src/features/products`, `src/app/api/v2/products` | `__tests__/features/products` | - |
+| AI Paths | PASS | 41.1s | 0 | `src/features/ai/ai-paths`, `src/app/api/ai-paths` | `src/features/ai/ai-paths/__tests__`, `src/features/ai/ai-paths/components/__tests__` | - |
+| Image Studio | PASS | 41.4s | 0 | `src/features/ai/image-studio`, `src/app/api/image-studio` | `src/features/ai/image-studio/components/__tests__` | - |
+| Case Resolver | PASS | 32.6s | 0 | `src/features/case-resolver`, `src/features/case-resolver-capture`, `src/app/api/case-resolver` | `src/features/case-resolver/__tests__`, `src/features/case-resolver-capture/__tests__` | - |
 
 ## Notes
 

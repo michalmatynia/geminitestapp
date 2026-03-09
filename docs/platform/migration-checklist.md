@@ -652,12 +652,12 @@ npm run dev
 
 ## Need Help?
 
-1. **Stuck?** Check docs/DEVELOPER_HANDBOOK.md
-2. **Best practices?** Read docs/BEST_PRACTICES.md
+1. **Stuck?** Check docs/platform/developer-handbook.md
+2. **Best practices?** Read docs/platform/best-practices.md
 3. **See real examples?** Check src/features/products/components/list/ProductFilters.tsx
 4. **Test examples?** Check **tests**/shared/ui/FilterPanel.test.tsx
 
 ---
 
 **Last Updated:** February 13, 2026
-**Next Candidates:** Review COMPONENT_PATTERNS.md section "Consolidation Opportunities"
+**Next Candidates:** Review docs/platform/component-patterns.md section "Consolidation Opportunities"

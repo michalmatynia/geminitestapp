@@ -69,8 +69,30 @@ describe('LearnerProfile page placeholder', () => {
       snapshot: { level: { level: 1 }, totalXp: 1200, recommendations: [], missions: [], weeklyActivity: [] },
       isLoadingScores: false,
     });
-    useKangurAuthMock.mockReturnValue({ user: { id: 'u1', activeLearner: { id: 'l1', name: 'Jan' } } });
-    useKangurAssignmentsMock.mockReturnValue({ assignments: [], isLoading: false });
+
+    render(<LearnerProfile />);
+
+    expect(scoreFilterMock).not.toHaveBeenCalled();
+    expect(
+      screen.getByText(
+        'Zaloguj sie, aby synchronizowac postep ucznia miedzy urzadzeniami. Jesli nie masz jeszcze konta rodzica, zaloz je tutaj.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('learner-profile-operation-empty')).toHaveClass(
+      'soft-card',
+      'border-dashed',
+      'border-slate-200/80'
+    );
+    expect(screen.getByText('Brak danych o operacjach.')).toBeInTheDocument();
+
+    const loginButton = screen.getByRole('button', { name: 'Zaloguj sie, aby synchronizowac postep' });
+    const createAccountButton = screen.getByRole('button', { name: 'Utworz konto rodzica' });
+    await userEvent.click(loginButton);
+    await userEvent.click(createAccountButton);
+    expect(navigateToLoginMock).toHaveBeenCalledTimes(2);
+    expect(navigateToLoginMock).toHaveBeenLastCalledWith({
+      authMode: 'create-account',
+    });
   });
 
   it('renders without crashing', () => {

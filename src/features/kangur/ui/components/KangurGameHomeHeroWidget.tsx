@@ -73,17 +73,19 @@ export function KangurGameHomeHeroWidget({
           value={playerName}
         />
         {!user ? (
-          <div className='mt-5 rounded-[1.5rem] border border-indigo-200/80 bg-indigo-50/70 p-4 text-sm text-slate-700'>
+          <div className='mt-5 rounded-[1.5rem] border border-indigo-200/80 bg-indigo-50/70 p-4 text-sm text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)] sm:p-5'>
             <p className='font-bold text-slate-900'>Grasz jako gosc</p>
-            <p className='mt-1 leading-6'>
-              Lokalna gra dziala od razu. Jesli rodzic chce synchronizowac postep i zarzadzac
-              uczniami, moze zalogowac sie albo utworzyc konto bez opuszczania Kangura.
+            <p className='mt-1 leading-6 sm:max-w-2xl'>
+              Lokalna gra rusza od razu. Konto rodzica przyda sie dopiero wtedy, gdy chcesz
+              synchronizowac postep i zarzadzac uczniami.
             </p>
-            <div className='mt-4 flex flex-col gap-3 sm:flex-row'>
+            <div className='mt-4 grid gap-3 sm:flex sm:flex-row'>
               <KangurButton
                 className='w-full sm:w-auto'
                 data-doc-id='home_parent_login'
-                onClick={navigateToLogin}
+                onClick={() => {
+                  navigateToLogin();
+                }}
                 size='sm'
                 type='button'
                 variant='surface'
@@ -93,7 +95,9 @@ export function KangurGameHomeHeroWidget({
               <KangurButton
                 className='w-full sm:w-auto'
                 data-doc-id='home_parent_create_account'
-                onClick={() => navigateToLogin({ authMode: 'create-account' })}
+                onClick={() => {
+                  navigateToLogin({ authMode: 'create-account' });
+                }}
                 size='sm'
                 type='button'
                 variant='primary'

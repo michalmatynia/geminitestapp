@@ -75,7 +75,6 @@ export function JsonViewer({
       <div
         role='region'
         aria-label={accessibleLabel}
-        tabIndex={0}
         className='overflow-auto rounded bg-black/40'
         style={{ maxHeight }}
       >

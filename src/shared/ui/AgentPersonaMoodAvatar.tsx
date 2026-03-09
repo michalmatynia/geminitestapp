@@ -1,5 +1,6 @@
 'use client';
 
+import NextImage from 'next/image';
 import { BrainCircuit } from 'lucide-react';
 
 import { cn, sanitizeSvg } from '@/shared/utils';
@@ -31,14 +32,17 @@ export function AgentPersonaMoodAvatar({
   return (
     <div
       aria-label={label}
-      className={cn('flex items-center justify-center overflow-hidden rounded-full', className)}
+      className={cn('relative flex items-center justify-center overflow-hidden rounded-full', className)}
       data-testid={dataTestId}
       role='img'
     >
       {hasImage ? (
-        <img
-          src={avatarImageUrl ?? undefined}
+        <NextImage
+          src={avatarImageUrl}
           alt={label}
+          fill
+          sizes='100%'
+          unoptimized
           className={cn('h-full w-full object-cover', imgClassName)}
           loading='lazy'
         />

@@ -12,7 +12,7 @@ canonical: true
 Date opened: 2026-03-05  
 Status: Draft (stabilization window in progress)  
 Owner: Platform Architecture + Domain Maintainers  
-Scope source: `docs/site-wide-canonical-migration-plan-2026-03-05.md`
+Scope source: `docs/plans/site-wide-canonical-migration-plan-2026-03-05.md`
 
 ## Executive Summary
 
@@ -24,7 +24,7 @@ All tracked compatibility-debt items for this wave are resolved, and the remaini
 1. Backlog state:
    - `docs/canonical-prune-backlog-2026-03-05.csv` shows `0` open compatibility-debt items.
 2. Exception state:
-   - `docs/legacy-compatibility-exception-register-2026-03-05.json` shows `0` active exceptions.
+   - `docs/decisions/legacy-compatibility-exception-register-2026-03-05.json` shows `0` active exceptions.
 3. Guardrail status:
    - `npm run canonical:check:sitewide` passed (`3815` runtime source files, `4` docs).
    - `npm run ai-paths:check:canonical` passed (`4216` source files under `src/`).

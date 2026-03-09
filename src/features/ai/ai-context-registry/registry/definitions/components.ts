@@ -88,6 +88,28 @@ export const componentNodes: ContextNode[] = [
     source: { type: 'code', ref: SOURCE_REF },
   },
   {
+    id: 'component:agent-teaching-chat-panel',
+    kind: 'component',
+    name: 'AgentTeachingChatPanel',
+    description:
+      'Chat workspace in Agent Creator used to select learner agents, send questions, and inspect retrieved sources.',
+    tags: ['agent-creator', 'teaching', 'chat', 'rag'],
+    relationships: [
+      { type: 'uses', targetId: 'page:agent-teaching-chat' },
+      { type: 'uses', targetId: 'action:agent-teaching-chat' },
+      { type: 'reads', targetId: 'collection:agent-teaching-agents' },
+      { type: 'reads', targetId: 'collection:agent-teaching-embedding-collections' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
     id: 'component:product-filters',
     kind: 'component',
     name: 'ProductFilters',

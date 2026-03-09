@@ -1,7 +1,16 @@
 'use client';
 
 import { signOut } from 'next-auth/react';
-import { Suspense, useEffect, useMemo, useRef, useState, type FormEvent, type JSX } from 'react';
+import {
+  Suspense,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type JSX,
+} from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
@@ -237,6 +246,12 @@ function KangurLoginPageContent({
   const router = useRouter();
   const searchParams = useSearchParams();
   const auth = useOptionalKangurAuth();
+  const titleId = useId();
+  const identifierInputId = useId();
+  const passwordInputId = useId();
+  const helperTextId = useId();
+  const noticeId = useId();
+  const errorId = useId();
   const callbackUrl = useMemo(() => {
     const explicitCallbackUrl = callbackUrlProp?.trim();
     if (explicitCallbackUrl) {
@@ -260,6 +275,9 @@ function KangurLoginPageContent({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const processedVerificationTokenRef = useRef<string | null>(null);
   const loginKind = resolveKangurLoginKind(identifier);
+  const formDescribedBy = [helperTextId, notice ? noticeId : null, error ? errorId : null]
+    .filter(Boolean)
+    .join(' ');
 
   useEffect(() => {
     setIsHydrated(true);
@@ -562,11 +580,17 @@ function KangurLoginPageContent({
 
   return (
     <div
+      aria-labelledby={titleId}
       className='overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/97 shadow-[0_30px_120px_rgba(15,23,42,0.22)] backdrop-blur'
       data-testid='kangur-login-shell'
     >
       <div className='p-6 sm:p-8'>
+        <h1 className='sr-only' id={titleId}>
+          Logowanie Kangur
+        </h1>
         <form
+          aria-busy={isSubmitting ? 'true' : 'false'}
+          aria-describedby={formDescribedBy || undefined}
           className='flex flex-col gap-4'
           data-hydrated={isHydrated ? 'true' : 'false'}
           data-login-kind={loginKind}
@@ -577,8 +601,10 @@ function KangurLoginPageContent({
             Email rodzica lub nick ucznia
             <input
               autoComplete='username'
+              aria-describedby={formDescribedBy || undefined}
               className='rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:opacity-60'
               disabled={!isHydrated || isSubmitting}
+              id={identifierInputId}
               name='identifier'
               onChange={(event) => setIdentifier(event.target.value)}
               placeholder='rodzic@example.com lub janek123'
@@ -592,8 +618,10 @@ function KangurLoginPageContent({
             Haslo
             <input
               autoComplete='current-password'
+              aria-describedby={formDescribedBy || undefined}
               className='rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:opacity-60'
               disabled={!isHydrated || isSubmitting}
+              id={passwordInputId}
               name='password'
               onChange={(event) => setPassword(event.target.value)}
               placeholder={loginKind === 'parent' ? 'Haslo rodzica' : 'Haslo'}
@@ -603,8 +631,28 @@ function KangurLoginPageContent({
             />
           </label>
 
-          {notice ? <div className='text-sm text-emerald-600'>{notice}</div> : null}
-          {error ? <div className='text-sm text-rose-500'>{error}</div> : null}
+          {notice ? (
+            <div
+              aria-atomic='true'
+              aria-live='polite'
+              className='text-sm text-emerald-600'
+              id={noticeId}
+              role='status'
+            >
+              {notice}
+            </div>
+          ) : null}
+          {error ? (
+            <div
+              aria-atomic='true'
+              aria-live='assertive'
+              className='text-sm text-rose-500'
+              id={errorId}
+              role='alert'
+            >
+              {error}
+            </div>
+          ) : null}
 
           {loginKind === 'parent' ? (
             <div className='grid gap-3 sm:grid-cols-2'>
@@ -647,7 +695,7 @@ function KangurLoginPageContent({
             </button>
           )}
 
-          <p className='text-xs leading-5 text-slate-500'>
+          <p className='text-xs leading-5 text-slate-500' id={helperTextId}>
             Email z symbolem @ uruchamia logowanie rodzica. Rodzic loguje sie haslem, a nowe konto
             tworzysz emailem i haslem. Po potwierdzeniu emaila rodzic moze sie zalogowac, a AI
             Tutor zostaje odblokowany. Kazdy inny identyfikator traktujemy jako nick ucznia i

@@ -1,9 +1,8 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { getProducts } from '@/features/products/api';
-import { getProductListQueryKey } from '@/features/products/hooks/productCache';
+import { getProductIds } from '@/features/products/api';
 import { useBulkDeleteProductsMutation } from '@/features/products/hooks/useProductData';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
@@ -31,59 +30,53 @@ export function useProductListSelection({
 
   const bulkDeleteMutation = useBulkDeleteProductsMutation();
 
-  const selectedCount = useMemo(
-    () => Object.keys(rowSelection).filter((key) => rowSelection[key]).length,
-    [rowSelection]
-  );
-
   const handleSelectPage = useCallback(() => {
-    const newSelection = { ...rowSelection };
-    data.forEach((item) => {
-      newSelection[item.id] = true;
+    setRowSelection((previousSelection) => {
+      const nextSelection = { ...previousSelection };
+      data.forEach((item) => {
+        nextSelection[item.id] = true;
+      });
+      return nextSelection;
     });
-    setRowSelection(newSelection);
-  }, [data, rowSelection]);
+  }, [data]);
 
   const handleDeselectPage = useCallback(() => {
-    const newSelection = { ...rowSelection };
-    data.forEach((item) => {
-      delete newSelection[item.id];
+    setRowSelection((previousSelection) => {
+      const nextSelection = { ...previousSelection };
+      data.forEach((item) => {
+        delete nextSelection[item.id];
+      });
+      return nextSelection;
     });
-    setRowSelection(newSelection);
-  }, [data, rowSelection]);
+  }, [data]);
 
   const handleSelectAllGlobal = useCallback(
     async (filters: ProductFilters) => {
       setLoadingGlobalSelection(true);
       try {
-        const queryKey = normalizeQueryKey(getProductListQueryKey({ scope: 'all', ...filters }));
-        const allProducts = await fetchQueryV2<ProductWithImages[]>(queryClient, {
+        const { page: _page, pageSize: _pageSize, ...selectionFilters } = filters;
+        const queryKey = normalizeQueryKey(['products', 'ids', { scope: 'all', ...selectionFilters }]);
+        const productIds = await fetchQueryV2<string[]>(queryClient, {
           queryKey,
-          queryFn: () =>
-            getProducts({
-              ...filters,
-              page: filters.page ?? 1,
-              pageSize: filters.pageSize ?? 50,
-              advancedFilter: undefined,
-              baseExported: undefined,
-            }),
+          queryFn: () => getProductIds({ page: 1, pageSize: 20, ...selectionFilters }),
           staleTime: 5000,
           meta: {
             source: 'products.hooks.useProductListSelection.selectAllGlobal',
             operation: 'list',
-            resource: 'products.list.all',
+            resource: 'products.ids.all',
             domain: 'products',
             queryKey,
-            tags: ['products', 'list', 'select-all'],
-            description: 'Loads products list all.'},
+            tags: ['products', 'ids', 'select-all'],
+            description: 'Loads matching product ids for global selection.',
+          },
         })();
 
         const newSelection: RowSelectionState = {};
-        allProducts.forEach((p: ProductWithImages) => {
-          newSelection[p.id] = true;
+        productIds.forEach((id: string) => {
+          newSelection[id] = true;
         });
         setRowSelection(newSelection);
-        toast(`Selected ${allProducts.length} products.`, { variant: 'success' });
+        toast(`Selected ${productIds.length} products.`, { variant: 'success' });
       } catch (error) {
         logClientError(error, {
           context: { source: 'useProductListSelection', action: 'selectAllGlobal' },
@@ -144,7 +137,6 @@ export function useProductListSelection({
   return {
     rowSelection,
     setRowSelection,
-    selectedCount,
     handleSelectPage,
     handleDeselectPage,
     handleSelectAllGlobal,

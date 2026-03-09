@@ -1050,11 +1050,11 @@ Progress (2026-03-04):
       5. target-path field is read-only and pinned to canonical value.
    2. Enforced canonical target-path rejection during path-config sanitization:
       1. `src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts`
-      2. `src/features/products/hooks/useAiPathSettings.ts`
-      3. both sanitizers now reject non-canonical `parameterInferenceGuard.targetPath` with `deprecated_parameter_inference_target_path`.
+      2. `src/shared/lib/ai-paths/core/normalization/trigger-normalization.ts`
+      3. the admin and shared trigger-payload sanitizers now reject non-canonical `parameterInferenceGuard.targetPath` with `unsupported_parameter_inference_target_path`.
    3. Updated regression coverage:
       1. `src/features/ai/ai-paths/components/__tests__/AiPathsSettingsUtils.sanitize-path-config.test.ts`
-      2. `src/features/products/hooks/__tests__/useAiPathSettings.sanitize-loaded-path-config.test.ts`
+      2. `src/features/ai/ai-paths/hooks/__tests__/useAiPathTriggerEvent.sanitize.test.ts`
       3. both suites now assert rejection of `targetPath: 'simpleParameters'`.
    4. Extended AI Paths canonical guardrails:
       1. `scripts/ai-paths/check-canonical.mjs`
@@ -1063,24 +1063,24 @@ Progress (2026-03-04):
          2. `checkParameterInferenceTargetPathSanitizationPrune`
       3. guardrails now enforce canonical UI edit-time behavior and sanitizer rejection snippets.
    5. Validation:
-      1. `npx vitest run src/features/ai/ai-paths/components/__tests__/AiPathsSettingsUtils.sanitize-path-config.test.ts src/features/products/hooks/__tests__/useAiPathSettings.sanitize-loaded-path-config.test.ts` -> passed.
+      1. `npx vitest run src/features/ai/ai-paths/components/__tests__/AiPathsSettingsUtils.sanitize-path-config.test.ts src/features/ai/ai-paths/hooks/__tests__/useAiPathTriggerEvent.sanitize.test.ts` -> passed.
       2. `npm run ai-paths:check:canonical` -> passed (`4232` files scanned).
       3. `npm run typecheck` -> passed.
 47. Pruned loaded-config edge alias fallback in seam 177 and re-validated canonical guards:
-   1. Enforced canonical edge source parsing in product-path loaded-config sanitizer:
-      1. `src/features/products/hooks/useAiPathSettings.ts`
+   1. Enforced canonical edge source parsing in shared trigger-payload sanitizer:
+      1. `src/shared/lib/ai-paths/core/normalization/trigger-normalization.ts`
       2. `resolveEdgeSourceNodeId` now reads only canonical `from`.
       3. `resolveEdgeSourcePort` now reads only canonical `fromPort`.
    2. Updated regression coverage:
-      1. `src/features/products/hooks/__tests__/useAiPathSettings.sanitize-loaded-path-config.test.ts`
+      1. `src/features/ai/ai-paths/components/__tests__/AiPathsSettingsUtils.sanitize-path-config.test.ts`
       2. added alias-only edge shape rejection coverage (`source` / `target` / `sourceHandle` / `targetHandle`) to enforce canonical edge contracts.
    3. Extended AI Paths canonical guardrails:
       1. `scripts/ai-paths/check-canonical.mjs`
       2. added `checkLoadedPathSettingsEdgeAliasCompatibilityPrune`:
-         1. blocks reintroduction of loaded-config `source` / `sourceHandle` fallback snippets in `useAiPathSettings.ts`.
+         1. blocks reintroduction of loaded-config `source` / `sourceHandle` fallback snippets in `trigger-normalization.ts`.
          2. requires canonical `from` / `fromPort` parsing snippets.
    4. Validation:
-      1. `npx vitest run src/features/products/hooks/__tests__/useAiPathSettings.sanitize-loaded-path-config.test.ts` -> passed.
+      1. `npx vitest run src/features/ai/ai-paths/components/__tests__/AiPathsSettingsUtils.sanitize-path-config.test.ts` -> passed.
       2. `npm run ai-paths:check:canonical` -> passed (`4232` files scanned).
       3. `npm run typecheck` -> passed.
 48. Pruned semantic-grammar edge alias compatibility in seam 178 and re-validated canonical guards:

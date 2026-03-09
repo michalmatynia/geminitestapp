@@ -122,6 +122,13 @@ describe('KangurLessonNarrationPanel', () => {
     expect(
       screen.getByText((content) => content.includes('To jest opis narracyjny ilustracji.'))
     ).toBeInTheDocument();
+    expect(screen.getByText('Narration coverage')).toBeInTheDocument();
+    expect(screen.getByText('2 explicit overrides')).toBeInTheDocument();
+    expect(screen.getByText('1 visual block')).toBeInTheDocument();
+    expect(screen.getByText('0 activities')).toBeInTheDocument();
+    expect(
+      screen.getByText('Narration overrides and descriptive content are in good shape for this draft.')
+    ).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Narration voice'), {
       target: { value: 'sage' },
@@ -331,5 +338,84 @@ describe('KangurLessonNarrationPanel', () => {
     expect(screen.getByRole('button', { name: /refresh preview/i })).toBeInTheDocument();
     const audio = container.querySelector('audio');
     expect(audio?.getAttribute('src')).toBe('/uploads/kangur/tts/cached.mp3');
+  });
+
+  it('suggests narration improvements when the draft relies on defaults', async () => {
+    apiPostMock.mockImplementation(async (endpoint: string) => {
+      if (endpoint === '/api/kangur/tts/status') {
+        return {
+          state: 'missing',
+          voice: 'coral',
+          latestCreatedAt: null,
+          message: 'Audio has not been generated for this lesson draft yet.',
+          segments: [],
+        };
+      }
+
+      throw new Error('Generate endpoint should not be called in this scenario.');
+    });
+
+    render(
+      <StatefulNarrationPanelHarness
+        lesson={{
+          id: 'clock',
+          title: 'Nauka zegara',
+          description: 'Czytamy godziny i minuty.',
+        }}
+        document={{
+          version: 1,
+          narration: {
+            voice: 'coral',
+            locale: 'pl-PL',
+          },
+          blocks: [
+            {
+              id: 'svg-1',
+              type: 'svg',
+              title: '',
+              markup: '<svg viewBox="0 0 100 100"></svg>',
+              viewBox: '0 0 100 100',
+              align: 'center',
+              fit: 'contain',
+              maxWidth: 420,
+            },
+            {
+              id: 'activity-1',
+              type: 'activity',
+              activityId: 'clock-training',
+              title: '',
+              description: '',
+            },
+          ],
+        }}
+      />
+    );
+
+    await waitFor(() =>
+      expect(apiPostMock.mock.calls.some((call) => call[0] === '/api/kangur/tts/status')).toBe(true)
+    );
+
+    expect(screen.getByText('0 explicit overrides')).toBeInTheDocument();
+    expect(screen.getByText('1 visual block')).toBeInTheDocument();
+    expect(screen.getByText('1 activity')).toBeInTheDocument();
+    expect(
+      screen.getByText((content) =>
+        content.includes('Narration is fully auto-derived from visible lesson content right now.')
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText((content) =>
+        content.includes(
+          'Add narration descriptions to 1 visual block so the illustration is explained aloud.'
+        )
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText((content) =>
+        content.includes(
+          '1 activity still uses generic default narration. Add a custom description if the task needs more guidance.'
+        )
+      )
+    ).toBeInTheDocument();
   });
 });

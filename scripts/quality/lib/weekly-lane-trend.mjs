@@ -49,6 +49,64 @@ const STRUCTURED_SUMMARY_CONFIG = Object.freeze({
       artifactsRetained: 'artifacts',
     },
   },
+  guardrails: {
+    passedKey: 'okMetrics',
+    totalKey: 'totalMetrics',
+    failedKey: 'failedMetrics',
+    fields: ['hardLimitFailures', 'warnMetrics', 'infoMetrics', 'updatedBaseline'],
+    labels: {
+      hardLimitFailures: 'hard',
+      warnMetrics: 'warn',
+      infoMetrics: 'info',
+      updatedBaseline: 'baseline',
+    },
+  },
+  uiConsolidation: {
+    passedKey: 'passedRules',
+    totalKey: 'totalRules',
+    failedKey: 'failedRules',
+    fields: [
+      'propForwardingCount',
+      'propDepthGte4ChainCount',
+      'totalOpportunityCount',
+      'highPriorityOpportunityCount',
+      'configurationError',
+    ],
+    labels: {
+      propForwardingCount: 'forwarded',
+      propDepthGte4ChainCount: 'depth4',
+      totalOpportunityCount: 'opps',
+      highPriorityOpportunityCount: 'high',
+      configurationError: 'config',
+    },
+  },
+  observability: {
+    fields: [
+      'mode',
+      'totalRoutes',
+      'uncoveredRoutes',
+      'loggerViolations',
+      'eventSourceViolations',
+      'coreViolations',
+      'consoleLogViolations',
+      'emptyCatchBlockViolations',
+      'legacyCompatibilityViolations',
+      'runtimeErrors',
+      'logWriteErrors',
+    ],
+    labels: {
+      totalRoutes: 'routes',
+      uncoveredRoutes: 'uncovered',
+      loggerViolations: 'logger',
+      eventSourceViolations: 'event',
+      coreViolations: 'core',
+      consoleLogViolations: 'console',
+      emptyCatchBlockViolations: 'catches',
+      legacyCompatibilityViolations: 'legacy',
+      runtimeErrors: 'runtime',
+      logWriteErrors: 'logWrites',
+    },
+  },
 });
 
 const OMITTED_SUMMARY_KEYS = new Set(['totalDurationMs', 'argumentCount', 'signal']);
@@ -234,7 +292,7 @@ export const toWeeklyLaneTrendMarkdown = (payload) => {
   lines.push('## Notes');
   lines.push('');
   lines.push('- This trend report summarizes historical `weekly-quality-*.json` runs.');
-  lines.push('- Structured gate summaries are preserved for the weekly testing checks when available.');
+  lines.push('- Structured gate summaries are preserved for weekly testing, architecture, and observability checks when available.');
   lines.push('- Use this to tune per-check timeouts and detect weekly lane runtime drift.');
   return `${lines.join('\n')}\n`;
 };

@@ -37,11 +37,11 @@ import {
   stableStringify,
   validateCanonicalPathNodeIdentities,
 } from '@/shared/lib/ai-paths';
-import { buildAiPathErrorReport } from '@/shared/lib/ai-paths/error-reporting';
 import {
   findRemovedLegacyTriggerContextModes,
   formatRemovedLegacyTriggerContextModesMessage,
 } from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
+import { buildAiPathErrorReport } from '@/shared/lib/ai-paths/error-reporting';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -191,14 +191,16 @@ const buildRunGraphValidationConfig = (
 
 const assertCanonicalRunGraph = ({
   input,
+  rawNodes,
   nodes,
   edges,
 }: {
   input: EnqueueRunInput;
+  rawNodes: AiNode[];
   nodes: AiNode[];
   edges: Edge[];
 }): Edge[] => {
-  const removedLegacyNodes = findRemovedLegacyAiPathNodes(nodes);
+  const removedLegacyNodes = findRemovedLegacyAiPathNodes(rawNodes);
   if (removedLegacyNodes.length > 0) {
     throw validationError(formatRemovedLegacyAiPathNodesMessage(removedLegacyNodes, {
       surface: 'run graph',
@@ -209,7 +211,7 @@ const assertCanonicalRunGraph = ({
       removedNodes: removedLegacyNodes,
     });
   }
-  const removedLegacyTriggerContextModes = findRemovedLegacyTriggerContextModes(nodes);
+  const removedLegacyTriggerContextModes = findRemovedLegacyTriggerContextModes(rawNodes);
   if (removedLegacyTriggerContextModes.length > 0) {
     throw validationError(
       formatRemovedLegacyTriggerContextModesMessage(removedLegacyTriggerContextModes, {
@@ -271,11 +273,13 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
       }
     }
 
+    const rawNodes = (input.nodes ?? []) as AiNode[];
     const rawEdges = input.edges ?? [];
-    const normalizedNodes = normalizeNodes(input.nodes ?? []);
+    const normalizedNodes = normalizeNodes(rawNodes);
     const nodes = normalizedNodes;
     const edges = assertCanonicalRunGraph({
       input,
+      rawNodes,
       nodes,
       edges: rawEdges,
     });

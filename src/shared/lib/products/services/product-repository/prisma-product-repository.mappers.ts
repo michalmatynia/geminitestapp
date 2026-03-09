@@ -61,18 +61,54 @@ export type FullPrismaProduct = PrismaProduct & {
   producers?: Prisma.ProductProducerAssignmentGetPayload<{}>[];
 };
 
+export type SlimPrismaListProduct = Pick<
+  PrismaProduct,
+  | 'id'
+  | 'sku'
+  | 'baseProductId'
+  | 'defaultPriceGroupId'
+  | 'ean'
+  | 'gtin'
+  | 'asin'
+  | 'name_en'
+  | 'name_pl'
+  | 'name_de'
+  | 'description_en'
+  | 'description_pl'
+  | 'description_de'
+  | 'supplierName'
+  | 'supplierLink'
+  | 'priceComment'
+  | 'stock'
+  | 'price'
+  | 'sizeLength'
+  | 'sizeWidth'
+  | 'weight'
+  | 'length'
+  | 'published'
+  | 'catalogId'
+  | 'parameters'
+  | 'imageLinks'
+  | 'noteIds'
+  | 'createdAt'
+  | 'updatedAt'
+> & {
+  images?: (PrismaProductImage & { imageFile: PrismaImageFile | null })[];
+  categories?: { categoryId: string } | { categoryId: string }[] | null;
+};
+
 const toTrimmedString = (value: unknown): string => {
   if (typeof value !== 'string') return '';
   return value.trim();
 };
 
-export const resolveCategoryId = (product: FullPrismaProduct): string | null => {
-  const direct = toTrimmedString(
-    (product as FullPrismaProduct & { categoryId?: unknown }).categoryId
-  );
+export const resolveCategoryId = (
+  product: (FullPrismaProduct | SlimPrismaListProduct) & { categoryId?: unknown }
+): string | null => {
+  const direct = toTrimmedString(product.categoryId);
   if (direct) return direct;
 
-  const relation = (product as FullPrismaProduct & { categories?: unknown }).categories;
+  const relation = product.categories;
   if (Array.isArray(relation)) {
     for (const entry of relation) {
       if (!entry || typeof entry !== 'object') continue;
@@ -91,6 +127,57 @@ export const resolveCategoryId = (product: FullPrismaProduct): string | null => 
 
   return null;
 };
+
+export const toProductListRecord = (product: SlimPrismaListProduct): ProductWithImages => ({
+  id: product.id,
+  sku: product.sku ?? null,
+  baseProductId: product.baseProductId ?? null,
+  defaultPriceGroupId: product.defaultPriceGroupId ?? null,
+  ean: product.ean ?? null,
+  gtin: product.gtin ?? null,
+  asin: product.asin ?? null,
+  name: {
+    en: product.name_en ?? '',
+    pl: product.name_pl ?? null,
+    de: product.name_de ?? null,
+  },
+  description: {
+    en: product.description_en ?? '',
+    pl: product.description_pl ?? null,
+    de: product.description_de ?? null,
+  },
+  name_en: product.name_en ?? null,
+  name_pl: product.name_pl ?? null,
+  name_de: product.name_de ?? null,
+  description_en: product.description_en ?? null,
+  description_pl: product.description_pl ?? null,
+  description_de: product.description_de ?? null,
+  supplierName: product.supplierName ?? null,
+  supplierLink: product.supplierLink ?? null,
+  priceComment: product.priceComment ?? null,
+  stock: product.stock ?? null,
+  price: product.price ?? null,
+  sizeLength: product.sizeLength ?? null,
+  sizeWidth: product.sizeWidth ?? null,
+  weight: product.weight ?? null,
+  length: product.length ?? null,
+  published: (product.published as boolean | null | undefined) ?? true,
+  catalogId: (product.catalogId as string | null | undefined) ?? '',
+  parameters: normalizeProductParameterValues(product.parameters),
+  imageLinks: product.imageLinks?.slice(0, 1) ?? [],
+  imageBase64s: [],
+  noteIds: product.noteIds ?? [],
+  createdAt: product.createdAt.toISOString(),
+  updatedAt: product.updatedAt.toISOString(),
+  categoryId: resolveCategoryId(product) ?? null,
+  tags: [],
+  producers: [],
+  images:
+    product.images
+      ?.map(toProductImageRecord)
+      .filter((image): image is ProductImageRecord => image !== null) ?? [],
+  catalogs: [],
+});
 
 export const toProductRecord = (product: FullPrismaProduct): ProductWithImages => {
   const catalogs =

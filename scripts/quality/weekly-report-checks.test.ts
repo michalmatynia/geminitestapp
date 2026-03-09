@@ -181,13 +181,14 @@ describe('weekly report check helpers', () => {
       commandArgs: ['fixture.mjs'],
       timeoutMs: 5_000,
       enabled: false,
+      disabledOutput: 'Skipped by selection.',
       cwd: process.cwd(),
       env: process.env,
       sourceName: 'fixture-scan',
     });
 
     expect(result.status).toBe('skipped');
-    expect(result.output).toBe('Skipped by configuration.');
+    expect(result.output).toBe('Skipped by selection.');
     expect(result.scanSummary).toBeUndefined();
   });
 });

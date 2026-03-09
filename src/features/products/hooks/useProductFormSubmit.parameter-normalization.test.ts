@@ -6,7 +6,7 @@ import { PRODUCT_SIMPLE_PARAMETER_ID_PREFIX } from '@/shared/contracts/products'
 import { normalizeProductParametersForSubmission } from './useProductFormSubmit';
 
 describe('normalizeProductParametersForSubmission', () => {
-  it('prefers localized values over stale direct value when localized map exists', () => {
+  it('does not fall back to another locale when a stale direct value no longer matches', () => {
     const input: ProductParameterValue[] = [
       {
         parameterId: 'condition',
@@ -21,8 +21,38 @@ describe('normalizeProductParametersForSubmission', () => {
     expect(normalizeProductParametersForSubmission(input)).toEqual([
       {
         parameterId: 'condition',
-        value: 'Uzywany',
+        value: '',
         valuesByLanguage: {
+          pl: 'Uzywany',
+        },
+      },
+    ]);
+  });
+
+  it('merges duplicate localized entries by parameter id instead of replacing siblings', () => {
+    const input: ProductParameterValue[] = [
+      {
+        parameterId: 'condition',
+        value: 'Nowy',
+        valuesByLanguage: {
+          en: 'Nowy',
+        },
+      },
+      {
+        parameterId: 'condition',
+        value: '',
+        valuesByLanguage: {
+          pl: 'Uzywany',
+        },
+      },
+    ];
+
+    expect(normalizeProductParametersForSubmission(input)).toEqual([
+      {
+        parameterId: 'condition',
+        value: 'Nowy',
+        valuesByLanguage: {
+          en: 'Nowy',
           pl: 'Uzywany',
         },
       },

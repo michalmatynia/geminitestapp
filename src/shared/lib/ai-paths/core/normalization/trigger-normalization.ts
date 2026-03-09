@@ -7,6 +7,7 @@ import {
   type PathMeta,
 } from '@/shared/contracts/ai-paths';
 import { validationError } from '@/shared/errors/app-error';
+
 import { palette } from '../definitions';
 import { backfillPathConfigNodeContracts } from './normalization.helpers';
 import { normalizeNodes } from './normalization.nodes';
@@ -18,12 +19,12 @@ import {
 } from '../constants';
 import { findPathConfigCollectionAliasIssues } from '../utils/collection-names';
 import { sanitizeEdges } from '../utils/graph.edges';
-import { validateCanonicalPathNodeIdentities } from '../utils/node-identity';
-import { stableStringify } from '../utils/runtime';
 import {
   findRemovedLegacyTriggerContextModesInPathConfig,
   formatRemovedLegacyTriggerContextModesMessage,
 } from '../utils/legacy-trigger-context-mode';
+import { validateCanonicalPathNodeIdentities } from '../utils/node-identity';
+import { stableStringify } from '../utils/runtime';
 
 export const normalizeLoadedPathName = (_pathId: string, name: unknown): string => {
   return typeof name === 'string' ? name.trim() : '';
@@ -197,19 +198,8 @@ const assertNoUnsupportedTriggerDataGraph = (nodes: AiNode[], edges: Edge[]): vo
 };
 
 export const sanitizeTriggerPathConfig = (config: PathConfig): PathConfig => {
-  const collectionAliasIssues = findPathConfigCollectionAliasIssues(config);
-  if (collectionAliasIssues.length > 0) {
-    throw validationError('AI Path config contains unsupported collection aliases.', {
-      source: 'ai_paths.trigger_payload',
-      reason: 'unsupported_collection_aliases',
-      pathId: config.id,
-      issues: collectionAliasIssues,
-    });
-  }
-
-  const contractBackfilledConfig = backfillPathConfigNodeContracts(config).config;
   const removedLegacyTriggerContextModes =
-    findRemovedLegacyTriggerContextModesInPathConfig(contractBackfilledConfig);
+    findRemovedLegacyTriggerContextModesInPathConfig(config);
   if (removedLegacyTriggerContextModes.length > 0) {
     throw validationError(
       formatRemovedLegacyTriggerContextModesMessage(removedLegacyTriggerContextModes, {
@@ -223,6 +213,17 @@ export const sanitizeTriggerPathConfig = (config: PathConfig): PathConfig => {
       }
     );
   }
+  const collectionAliasIssues = findPathConfigCollectionAliasIssues(config);
+  if (collectionAliasIssues.length > 0) {
+    throw validationError('AI Path config contains unsupported collection aliases.', {
+      source: 'ai_paths.trigger_payload',
+      reason: 'unsupported_collection_aliases',
+      pathId: config.id,
+      issues: collectionAliasIssues,
+    });
+  }
+
+  const contractBackfilledConfig = backfillPathConfigNodeContracts(config).config;
   const graphNodes = (
     Array.isArray(contractBackfilledConfig.nodes) ? contractBackfilledConfig.nodes : []
   ).map((node: AiNode, index: number): AiNode => {

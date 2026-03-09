@@ -4,6 +4,7 @@ import {
   appendMissingGeometryKangurLessons,
   appendMissingLogicalThinkingKangurLessons,
   createDefaultKangurLessons,
+  KANGUR_LESSON_LIBRARY,
   KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_SECONDS,
   parseKangurNarratorSettings,
   parseKangurParentVerificationEmailSettings,
@@ -12,6 +13,12 @@ import {
 import { KANGUR_TTS_DEFAULT_VOICE } from '@/features/kangur/tts/contracts';
 
 describe('kangur lesson settings', () => {
+  it('describes the clock lesson as segmented hour and minute reading', () => {
+    expect(KANGUR_LESSON_LIBRARY.clock.description).toBe(
+      'Godziny, minuty i pełny czas na zegarze analogowym'
+    );
+  });
+
   it('includes geometry lessons in default library', () => {
     const lessons = createDefaultKangurLessons();
     const componentIds = lessons.map((lesson) => lesson.componentId);

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import { BookOpen, LayoutGrid, LogIn, LogOut, Trophy, UserPlus } from 'lucide-react';
+import { BookOpen, LayoutGrid, LogIn, LogOut, UserPlus } from 'lucide-react';
 
 import {
   getKangurHomeHref,
@@ -23,8 +23,7 @@ type KangurPrimaryNavigationPage =
   | 'Game'
   | 'Lessons'
   | 'LearnerProfile'
-  | 'ParentDashboard'
-  | 'Tests';
+  | 'ParentDashboard';
 
 type NavActionProps = {
   active?: boolean;
@@ -55,7 +54,6 @@ type KangurPrimaryNavigationProps = {
   onLogout: () => void;
   rightAccessory?: React.ReactNode;
   showParentDashboard?: boolean;
-  showTests?: boolean;
 };
 
 export type { KangurPrimaryNavigationProps };
@@ -126,7 +124,6 @@ export function KangurPrimaryNavigation({
   onLogout,
   rightAccessory,
   showParentDashboard = canManageLearners,
-  showTests = true,
 }: KangurPrimaryNavigationProps): React.JSX.Element {
   const auth = useOptionalKangurAuth();
   const effectiveIsAuthenticated = auth?.isAuthenticated ?? isAuthenticated;
@@ -272,19 +269,6 @@ export function KangurPrimaryNavigation({
             <BookOpen className={ICON_CLASSNAME} strokeWidth={2.15} />
             <span>Lekcje</span>
           </NavAction>
-
-          {showTests ? (
-            <NavAction
-              active={currentPage === 'Tests'}
-              docId='top_nav_tests'
-              href={createPageUrl('Tests', basePath)}
-              targetPageKey='Tests'
-              testId='kangur-primary-nav-tests'
-            >
-              <Trophy className={ICON_CLASSNAME} strokeWidth={2.15} />
-              <span>Testy</span>
-            </NavAction>
-          ) : null}
 
           {effectiveIsAuthenticated ? (
             <KangurProfileMenu

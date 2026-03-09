@@ -453,7 +453,7 @@
     "nodeType": "trigger",
     "title": "Trigger: Image Studio Analysis",
     "file": "docs/ai-paths/semantic-grammar/nodes/trigger.json",
-    "nodeHash": "233c29f92acbe95972897af33d008a92c8026fc82bb6a1b721b60e0320116431",
+    "nodeHash": "fb32646a0464e68e236519ec6ceab11b53fe46ae97158cbf699fa515725209cd",
     "nodeHashAlgorithm": "sha256",
     "inputCount": 0,
     "outputCount": 2,

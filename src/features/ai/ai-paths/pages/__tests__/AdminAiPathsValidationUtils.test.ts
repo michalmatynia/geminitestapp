@@ -122,6 +122,38 @@ describe('AdminAiPathsValidationUtils', () => {
     ).toThrowError(/path config id does not match its settings key/i);
   });
 
+  it('rejects removed legacy trigger context modes in stored validation payloads', () => {
+    const config = toCanonicalPathConfig('path_legacy_trigger_mode');
+    const seedNode = config.nodes[0];
+    expect(seedNode).toBeDefined();
+    if (!seedNode) return;
+    config.nodes = [
+      {
+        ...seedNode,
+        type: 'trigger',
+        title: 'Trigger',
+        inputs: ['context'],
+        outputs: ['trigger', 'context', 'entityId', 'entityType'],
+        config: {
+          trigger: {
+            event: 'manual',
+            contextMode: 'simulation_preferred',
+          },
+        },
+      },
+    ];
+    config.edges = [];
+
+    expect(() =>
+      parseAiPathsSettings([
+        {
+          key: `${PATH_CONFIG_PREFIX}${config.id}`,
+          value: JSON.stringify(config),
+        },
+      ])
+    ).toThrowError(/removed legacy trigger context/i);
+  });
+
   it('parses canonical entity:collection lines in collection-map draft', () => {
     expect(parseCollectionMapText('product:product_parameters\nnote:notes')).toEqual({
       product: 'product_parameters',

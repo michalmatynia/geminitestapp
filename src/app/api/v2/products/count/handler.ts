@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { productService } from '@/features/products/server';
+import { CachedProductService } from '@/features/products/performance';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { ProductFiltersParsed } from '@/shared/lib/products/validations';
 
@@ -11,6 +11,6 @@ import { ProductFiltersParsed } from '@/shared/lib/products/validations';
 export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const filters = ctx.query as ProductFiltersParsed;
 
-  const count = await productService.countProducts(filters);
+  const count = await CachedProductService.getProductCount(filters);
   return NextResponse.json({ count });
 }

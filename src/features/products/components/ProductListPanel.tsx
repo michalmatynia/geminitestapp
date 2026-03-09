@@ -2,11 +2,14 @@
 import dynamic from 'next/dynamic';
 import { Profiler, memo, useMemo } from 'react';
 
-import { useProductListTableContext } from '@/features/products/context/ProductListContext';
+import {
+  useProductListAlertsContext,
+  useProductListModalsContext,
+  useProductListTableContext,
+} from '@/features/products/context/ProductListContext';
 import { useProductsTableProps } from '@/features/products/hooks/useProductsTableProps';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import { Alert, Button, StandardDataTablePanel } from '@/shared/ui';
-import { PromptModal } from '@/shared/ui/templates/modals';
 
 import type { Row } from '@tanstack/react-table';
 
@@ -37,18 +40,33 @@ const ProductSelectionActions = dynamic(
   { ssr: false }
 );
 
-export const ProductListPanel = memo(function ProductListPanel() {
-  const {
-    loadError,
-    actionError,
-    onDismissActionError,
-    handleProductsTableRender,
-    isPromptOpen,
-    setIsPromptOpen,
-    handleConfirmSku,
-  } = useProductListTableContext();
+const PromptModal = dynamic(
+  () =>
+    import('@/shared/ui/templates/modals').then(
+      (mod: typeof import('@/shared/ui/templates/modals')) => mod.PromptModal
+    ),
+  { ssr: false }
+);
 
-  const tableProps = useProductsTableProps();
+const ProductCreatePromptModal = memo(function ProductCreatePromptModal() {
+  const { isPromptOpen, setIsPromptOpen, handleConfirmSku } = useProductListModalsContext();
+  if (!isPromptOpen) return null;
+
+  return (
+    <PromptModal
+      open={isPromptOpen}
+      onClose={() => setIsPromptOpen(false)}
+      onConfirm={handleConfirmSku}
+      title='Create New Product'
+      label='Enter a new unique SKU'
+      placeholder='e.g. ABC-123'
+      required
+    />
+  );
+});
+
+const ProductListAlerts = memo(function ProductListAlerts() {
+  const { loadError, actionError, onDismissActionError } = useProductListAlertsContext();
 
   const alerts = useMemo(() => {
     if (!loadError && !actionError) return null;
@@ -73,38 +91,48 @@ export const ProductListPanel = memo(function ProductListPanel() {
     );
   }, [actionError, loadError, onDismissActionError]);
 
+  return alerts;
+});
+
+const ProductListTableSurface = memo(function ProductListTableSurface() {
+  const { handleProductsTableRender } = useProductListTableContext();
+  const tableProps = useProductsTableProps();
+  const headerContent = useMemo(
+    () => <ProductListHeader filtersContent={<ProductFilters />} />,
+    []
+  );
+  const actionsContent = useMemo(() => <ProductSelectionActions />, []);
+  const alertsContent = useMemo(() => <ProductListAlerts />, []);
+
   return (
     <Profiler id='ProductsTable' onRender={handleProductsTableRender}>
-      <>
-        <StandardDataTablePanel
-          header={<ProductListHeader filtersContent={<ProductFilters />} />}
-          alerts={alerts}
-          actions={<ProductSelectionActions />}
-          columns={tableProps.columns}
-          data={tableProps.data}
-          isLoading={tableProps.isLoading}
-          getRowId={tableProps.getRowId}
-          getRowClassName={
-            tableProps.getRowClassName as (row: Row<ProductWithImages>) => string | undefined
-          }
-          rowSelection={tableProps.rowSelection}
-          onRowSelectionChange={tableProps.onRowSelectionChange}
-          skeletonRows={tableProps.skeletonRows}
-          maxHeight={tableProps.maxHeight}
-          stickyHeader={tableProps.stickyHeader}
-          enableVirtualization={true}
-        />
-
-        <PromptModal
-          open={isPromptOpen}
-          onClose={() => setIsPromptOpen(false)}
-          onConfirm={handleConfirmSku}
-          title='Create New Product'
-          label='Enter a new unique SKU'
-          placeholder='e.g. ABC-123'
-          required
-        />
-      </>
+      <StandardDataTablePanel
+        header={headerContent}
+        alerts={alertsContent}
+        actions={actionsContent}
+        columns={tableProps.columns}
+        data={tableProps.data}
+        isLoading={tableProps.isLoading}
+        getRowId={tableProps.getRowId}
+        getRowClassName={
+          tableProps.getRowClassName as (row: Row<ProductWithImages>) => string | undefined
+        }
+        rowSelection={tableProps.rowSelection}
+        onRowSelectionChange={tableProps.onRowSelectionChange}
+        skeletonRows={tableProps.skeletonRows}
+        maxHeight={tableProps.maxHeight}
+        stickyHeader={tableProps.stickyHeader}
+        enableVirtualization={true}
+      />
     </Profiler>
+  );
+});
+
+export const ProductListPanel = memo(function ProductListPanel() {
+  return (
+    <>
+      <ProductListTableSurface />
+      <ProductCreatePromptModal />
+    </>
   );
 });

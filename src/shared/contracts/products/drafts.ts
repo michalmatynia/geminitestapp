@@ -201,6 +201,7 @@ export type ProductFilters = Partial<ProductFilter> & {
 
 export type TransactionalProductRepository = {
   getProducts(filters: ProductFilters): Promise<ProductWithImages[]>;
+  getProductIds(filters: ProductFilters): Promise<string[]>;
   countProducts(filters: ProductFilters): Promise<number>;
   getProductById(id: string): Promise<ProductWithImages | null>;
   getProductBySku(sku: string): Promise<ProductRecord | null>;
@@ -227,6 +228,7 @@ export type TransactionalProductRepository = {
   bulkRemoveProductCatalogs(productIds: string[], catalogIds: string[]): Promise<void>;
 };
 export type ProductRepository = TransactionalProductRepository & {
+  getProductIds(filters: ProductFilters): Promise<string[]>;
   getProductsWithCount(
     filters: ProductFilters
   ): Promise<{ products: ProductWithImages[]; total: number }>;

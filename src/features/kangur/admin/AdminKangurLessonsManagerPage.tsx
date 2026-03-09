@@ -62,6 +62,12 @@ import { LessonContentEditorDialog } from './components/LessonContentEditorDialo
 import { LessonMetadataForm } from './components/LessonMetadataForm';
 import { LessonSvgQuickAddModal } from './components/LessonSvgQuickAddModal';
 import { LessonTreeRow } from './components/LessonTreeRow';
+import {
+  getKangurLessonAuthoringFilterCounts,
+  getKangurLessonAuthoringStatus,
+  matchesKangurLessonAuthoringFilter,
+  type KangurLessonAuthoringFilter,
+} from './content-creator-insights';
 import { TREE_MODE_STORAGE_KEY, CATALOG_TREE_INSTANCE, ORDERED_TREE_INSTANCE } from './constants';
 import { LessonSvgQuickAddRuntimeProvider } from './context/LessonSvgQuickAddRuntimeContext';
 import {
@@ -127,6 +133,7 @@ export function AdminKangurLessonsManagerPage({
   const [svgModalInitialMarkup, setSvgModalInitialMarkup] = useState('');
   const [orderedTreeSearchQuery, setOrderedTreeSearchQuery] = useState('');
   const [catalogTreeSearchQuery, setCatalogTreeSearchQuery] = useState('');
+  const [authoringFilter, setAuthoringFilter] = useState<KangurLessonAuthoringFilter>('all');
   const isCatalogMode = treeMode === 'catalog';
   const activeTreeInstance = isCatalogMode ? CATALOG_TREE_INSTANCE : ORDERED_TREE_INSTANCE;
   const treeSearchQuery = isCatalogMode ? catalogTreeSearchQuery : orderedTreeSearchQuery;
@@ -162,12 +169,24 @@ export function AdminKangurLessonsManagerPage({
     }
   }, [treeMode]);
 
+  const filteredLessons = useMemo(
+    () =>
+      lessons.filter((lesson) =>
+        matchesKangurLessonAuthoringFilter(authoringFilter, lesson, lessonDocuments)
+      ),
+    [authoringFilter, lessonDocuments, lessons]
+  );
+  const filterCounts = useMemo(
+    () => getKangurLessonAuthoringFilterCounts(lessons, lessonDocuments),
+    [lessonDocuments, lessons]
+  );
+
   const masterNodes = useMemo(
     () =>
       isCatalogMode
-        ? buildKangurLessonCatalogMasterNodes(lessons)
-        : buildKangurLessonMasterNodes(lessons),
-    [isCatalogMode, lessons]
+        ? buildKangurLessonCatalogMasterNodes(filteredLessons)
+        : buildKangurLessonMasterNodes(filteredLessons),
+    [filteredLessons, isCatalogMode]
   );
 
   const geometryPackAddedCount = useMemo(
@@ -240,12 +259,6 @@ export function AdminKangurLessonsManagerPage({
     setEditingContentLesson(lesson);
     const existing = lessonDocuments[lesson.id];
     const starter = createStarterKangurLessonDocument(lesson.componentId);
-    console.log('openContentModal:', {
-      lessonId: lesson.id,
-      componentId: lesson.componentId,
-      existing: !!existing,
-      starterBlocks: starter.blocks.length,
-    });
     setContentDraft(existing ?? starter);
     setShowContentModal(true);
   };
@@ -529,7 +542,7 @@ export function AdminKangurLessonsManagerPage({
       <LessonTreeRow
         input={input}
         lessonById={lessonById}
-        hasContent={(id): boolean => hasKangurLessonDocumentContent(lessonDocuments[id])}
+        authoringStatus={(lesson) => getKangurLessonAuthoringStatus(lesson, lessonDocuments)}
         onEdit={openEditModal}
         onEditContent={openContentModal}
         onQuickSvg={openSvgModal}
@@ -604,6 +617,27 @@ export function AdminKangurLessonsManagerPage({
               </div>
             </div>
             <div className='flex flex-wrap items-center gap-1'>
+              {filterCounts.map((filter) => (
+                <Button
+                  key={filter.id}
+                  type='button'
+                  size='sm'
+                  variant='outline'
+                  className={cn(
+                    'h-7 border px-2 text-[11px] font-semibold tracking-wide',
+                    authoringFilter === filter.id
+                      ? 'border-emerald-300/60 bg-emerald-500/15 text-emerald-100'
+                      : 'text-gray-300 hover:bg-muted/40'
+                  )}
+                  onClick={(): void => setAuthoringFilter(filter.id)}
+                  disabled={updateSetting.isPending}
+                >
+                  {filter.label}
+                  <span className='ml-1 text-[10px] text-current/75'>{filter.count}</span>
+                </Button>
+              ))}
+            </div>
+            <div className='flex flex-wrap items-center gap-1'>
               <Button
                 type='button'
                 size='sm'
@@ -640,6 +674,9 @@ export function AdminKangurLessonsManagerPage({
                 {isCatalogMode
                   ? 'Catalog mode groups lessons by visibility and type.'
                   : 'Ordered mode supports drag-and-drop reordering.'}
+                {authoringFilter !== 'all'
+                  ? ` Showing ${filteredLessons.length} matching lessons.`
+                  : ''}
               </span>
             </div>
             {capabilities.search.enabled ? (
@@ -677,8 +714,12 @@ export function AdminKangurLessonsManagerPage({
               searchState={searchState}
               rootDropUi={isCatalogMode ? { ...rootDropUi, enabled: false } : rootDropUi}
               renderNode={renderNode}
-              enableDnd={!isCatalogMode && !updateSetting.isPending}
-              emptyLabel='No lessons yet. Add the first lesson to start.'
+              enableDnd={!isCatalogMode && authoringFilter === 'all' && !updateSetting.isPending}
+              emptyLabel={
+                authoringFilter === 'all'
+                  ? 'No lessons yet. Add the first lesson to start.'
+                  : 'No lessons match the current authoring filter.'
+              }
             />
           </div>
         )}
@@ -740,6 +781,7 @@ export function AdminKangurLessonsManagerPage({
           setShowContentModal(false);
           setEditingContentLesson(null);
         }}
+        onLessonChange={(nextLesson): void => setEditingContentLesson(nextLesson)}
         onChange={setContentDraft}
         onSave={(): void => {
           void handleSaveLessonContent();

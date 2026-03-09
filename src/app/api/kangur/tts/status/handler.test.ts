@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { authError } from '@/shared/errors/app-error';
 
 const {
   inspectKangurLessonNarrationAudioMock,
@@ -145,5 +146,27 @@ describe('kangur tts status handler', () => {
     await expect(
       postKangurTtsStatusHandler(createPostRequest('{invalid-json'), createRequestContext())
     ).rejects.toThrow('Invalid JSON payload.');
+  });
+
+  it('allows unauthenticated narration status requests', async () => {
+    resolveKangurActorMock.mockRejectedValueOnce(authError('Authentication required.'));
+
+    const response = await postKangurTtsStatusHandler(
+      createPostRequest(
+        JSON.stringify({
+          script: {
+            lessonId: 'clock',
+            title: 'Nauka zegara',
+            locale: 'pl-PL',
+            segments: [{ id: 'clock-segment-1', text: 'Nauka zegara.' }],
+          },
+          voice: 'coral',
+        })
+      ),
+      createRequestContext()
+    );
+
+    expect(response.status).toBe(200);
+    expect(inspectKangurLessonNarrationAudioMock).toHaveBeenCalledTimes(1);
   });
 });

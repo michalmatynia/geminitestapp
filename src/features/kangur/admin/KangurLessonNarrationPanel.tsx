@@ -20,7 +20,13 @@ import {
   buildKangurLessonDocumentNarrationScript,
   hasKangurLessonNarrationContent,
 } from '@/features/kangur/tts/script';
+import { resolveKangurLessonDocumentPages } from '@/features/kangur/lesson-documents';
 import { api } from '@/shared/lib/api-client';
+import type {
+  KangurLessonDocument,
+  KangurLessonInlineBlock,
+  KangurLessonRootBlock,
+} from '@/shared/contracts/kangur';
 import { cn } from '@/shared/utils';
 
 import { useLessonContentEditorContext } from './context/LessonContentEditorContext';
@@ -54,6 +60,89 @@ const getLatestAudioCreatedAt = (response: KangurLessonTtsResponse | null): stri
     (latest, segment) => (!latest || segment.createdAt > latest ? segment.createdAt : latest),
     null
   );
+};
+
+type NarrationCoverageSummary = {
+  explicitOverrideCount: number;
+  visualBlockCount: number;
+  activityBlockCount: number;
+  visualBlocksNeedingDescriptions: number;
+  activityBlocksUsingDefaultNarration: number;
+};
+
+const collectInlineBlocks = (block: KangurLessonRootBlock): KangurLessonInlineBlock[] => {
+  if (block.type === 'grid') {
+    return block.items.map((item) => item.block);
+  }
+  if (block.type === 'text' || block.type === 'svg' || block.type === 'image') {
+    return [block];
+  }
+  return [];
+};
+
+const summarizeNarrationCoverage = (
+  document: KangurLessonDocument
+): NarrationCoverageSummary => {
+  let explicitOverrideCount = 0;
+  let visualBlockCount = 0;
+  let activityBlockCount = 0;
+  let visualBlocksNeedingDescriptions = 0;
+  let activityBlocksUsingDefaultNarration = 0;
+
+  for (const page of resolveKangurLessonDocumentPages(document)) {
+    for (const block of page.blocks) {
+      if (block.type === 'activity') {
+        activityBlockCount += 1;
+        if (block.ttsDescription?.trim()) {
+          explicitOverrideCount += 1;
+        } else {
+          activityBlocksUsingDefaultNarration += 1;
+        }
+      } else if (block.type === 'callout' || block.type === 'quiz') {
+        if (block.ttsText?.trim()) {
+          explicitOverrideCount += 1;
+        }
+      }
+
+      for (const inlineBlock of collectInlineBlocks(block)) {
+        if (inlineBlock.type === 'text') {
+          if (inlineBlock.ttsText?.trim()) {
+            explicitOverrideCount += 1;
+          }
+          continue;
+        }
+
+        if (inlineBlock.type === 'svg') {
+          visualBlockCount += 1;
+          if (inlineBlock.ttsDescription?.trim()) {
+            explicitOverrideCount += 1;
+          } else if (inlineBlock.title.trim().length === 0) {
+            visualBlocksNeedingDescriptions += 1;
+          }
+          continue;
+        }
+
+        visualBlockCount += 1;
+        if (inlineBlock.ttsDescription?.trim()) {
+          explicitOverrideCount += 1;
+        } else if (
+          (inlineBlock.caption?.trim().length ?? 0) === 0 &&
+          (inlineBlock.altText?.trim().length ?? 0) === 0 &&
+          inlineBlock.title.trim().length === 0
+        ) {
+          visualBlocksNeedingDescriptions += 1;
+        }
+      }
+    }
+  }
+
+  return {
+    explicitOverrideCount,
+    visualBlockCount,
+    activityBlockCount,
+    visualBlocksNeedingDescriptions,
+    activityBlocksUsingDefaultNarration,
+  };
 };
 
 export function KangurLessonNarrationPanel(): React.JSX.Element {
@@ -109,6 +198,30 @@ export function KangurLessonNarrationPanel(): React.JSX.Element {
   );
 
   const hasScriptContent = hasKangurLessonNarrationContent(script);
+  const coverage = useMemo(() => summarizeNarrationCoverage(document), [document]);
+  const coverageRecommendations = useMemo(() => {
+    const recommendations: string[] = [];
+
+    if (coverage.explicitOverrideCount === 0 && hasScriptContent) {
+      recommendations.push('Narration is fully auto-derived from visible lesson content right now.');
+    }
+    if (coverage.visualBlocksNeedingDescriptions > 0) {
+      recommendations.push(
+        coverage.visualBlocksNeedingDescriptions === 1
+          ? 'Add narration descriptions to 1 visual block so the illustration is explained aloud.'
+          : `Add narration descriptions to ${coverage.visualBlocksNeedingDescriptions} visual blocks so the illustrations are explained aloud.`
+      );
+    }
+    if (coverage.activityBlocksUsingDefaultNarration > 0) {
+      recommendations.push(
+        coverage.activityBlocksUsingDefaultNarration === 1
+          ? '1 activity still uses generic default narration. Add a custom description if the task needs more guidance.'
+          : `${coverage.activityBlocksUsingDefaultNarration} activities still use generic default narration. Add custom descriptions if the tasks need more guidance.`
+      );
+    }
+
+    return recommendations;
+  }, [coverage, hasScriptContent]);
   const scriptKey = useMemo(
     () =>
       JSON.stringify({
@@ -343,6 +456,34 @@ export function KangurLessonNarrationPanel(): React.JSX.Element {
               Add lesson text or narration overrides to generate a preview.
             </div>
           ) : null}
+          <div className='rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3'>
+            <div className='text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500'>
+              Narration coverage
+            </div>
+            <div className='mt-2 flex flex-wrap gap-2 text-xs text-slate-600'>
+              <span className='rounded-full bg-white px-2.5 py-1'>
+                {coverage.explicitOverrideCount} explicit override
+                {coverage.explicitOverrideCount === 1 ? '' : 's'}
+              </span>
+              <span className='rounded-full bg-white px-2.5 py-1'>
+                {coverage.visualBlockCount} visual block{coverage.visualBlockCount === 1 ? '' : 's'}
+              </span>
+              <span className='rounded-full bg-white px-2.5 py-1'>
+                {coverage.activityBlockCount} activit{coverage.activityBlockCount === 1 ? 'y' : 'ies'}
+              </span>
+            </div>
+            {coverageRecommendations.length > 0 ? (
+              <ul className='mt-3 space-y-1 text-xs leading-relaxed text-slate-600'>
+                {coverageRecommendations.map((recommendation) => (
+                  <li key={recommendation}>• {recommendation}</li>
+                ))}
+              </ul>
+            ) : (
+              <div className='mt-3 text-xs leading-relaxed text-emerald-700'>
+                Narration overrides and descriptive content are in good shape for this draft.
+              </div>
+            )}
+          </div>
           {errorMessage ? (
             <div className='rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700'>
               {errorMessage}

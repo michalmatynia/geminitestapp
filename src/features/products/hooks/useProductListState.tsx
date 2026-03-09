@@ -127,15 +127,16 @@ export function useProductListState(): ProductListContextType & {
     priceGroups,
     searchLanguage: preferences.nameLocale,
   });
+  const visibleData = useMemo(() => (isMounted ? data : []), [data, isMounted]);
 
   const visibleProductIdSet = useMemo(
-    () => new Set(data.map((product: ProductWithImages) => product.id)),
-    [data]
+    () => new Set(visibleData.map((product: ProductWithImages) => product.id)),
+    [visibleData]
   );
   const visibleProductIds = useMemo(() => Array.from(visibleProductIdSet), [visibleProductIdSet]);
 
   const { categoryNameById } = useProductListCategories({
-    data,
+    data: visibleData,
     nameLocale: preferences.nameLocale,
   });
 
@@ -179,7 +180,7 @@ export function useProductListState(): ProductListContextType & {
   } = useProductOperations(setRefreshTrigger);
 
   const selection = useProductListSelection({
-    data,
+    data: visibleData,
     setRefreshTrigger,
     setActionError,
   });
@@ -268,7 +269,7 @@ export function useProductListState(): ProductListContextType & {
   const { jobCompletionHighlights, triggerJobCompletionHighlight } = highlights;
 
   useProductListListingStatuses({
-    data,
+    data: visibleData,
     integrationBadgeStatuses,
     traderaBadgeStatuses,
     visibleProductIdSet,
@@ -340,10 +341,103 @@ export function useProductListState(): ProductListContextType & {
   );
 
   const { handleSetPageSize, handleSetAdvancedFilter, handleSetAdvancedFilterState } = filters;
+  const handleCreateFromDraftOpen = useCallback(
+    (draftId: string): void => {
+      void handleCreateFromDraft(draftId);
+    },
+    [handleCreateFromDraft]
+  );
+  const handleSetNameLocale = useCallback(
+    (locale: 'name_en' | 'name_pl' | 'name_de'): void => {
+      void updateNameLocale(locale);
+    },
+    [updateNameLocale]
+  );
+  const handleSetCurrencyPreference = useCallback(
+    (code: string): void => {
+      setCurrencyCode(code);
+      void updateCurrencyCode(code);
+    },
+    [setCurrencyCode, updateCurrencyCode]
+  );
+  const handleSetCatalogPreference = useCallback(
+    (filter: string): void => {
+      setCatalogFilter(filter);
+      void updateCatalogFilter(filter);
+    },
+    [setCatalogFilter, updateCatalogFilter]
+  );
+  const handleDismissActionError = useCallback((): void => {
+    setActionError(null);
+  }, []);
+  const handleSelectAllVisibleProducts = useCallback(async (): Promise<void> => {
+    await handleSelectAllGlobal({
+      search,
+      id: productId || undefined,
+      idMatchMode: productId ? idMatchMode : undefined,
+      sku,
+      description,
+      categoryId: categoryId || undefined,
+      minPrice,
+      maxPrice,
+      stockValue,
+      stockOperator: stockValue !== undefined ? stockOperator || 'eq' : undefined,
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
+      advancedFilter: advancedFilter || undefined,
+      catalogId: catalogFilter === 'all' ? undefined : catalogFilter,
+      searchLanguage: preferences.nameLocale,
+      baseExported: baseExported === 'true' ? true : baseExported === 'false' ? false : undefined,
+    });
+  }, [
+    advancedFilter,
+    baseExported,
+    catalogFilter,
+    categoryId,
+    description,
+    endDate,
+    handleSelectAllGlobal,
+    idMatchMode,
+    maxPrice,
+    minPrice,
+    preferences.nameLocale,
+    productId,
+    search,
+    sku,
+    startDate,
+    stockOperator,
+    stockValue,
+  ]);
+  const handleDeleteSelectedOpen = useCallback((): Promise<void> => {
+    setIsMassDeleteConfirmOpen(true);
+    return Promise.resolve();
+  }, []);
+  const handleDuplicateProduct = useCallback(
+    (product: ProductWithImages): void => {
+      setEditingProduct(product);
+      handleOpenCreateModal();
+    },
+    [handleOpenCreateModal, setEditingProduct]
+  );
+  const getProductRowId = useCallback((row: ProductWithImages): string => row.id, []);
+  const handleCloseCreateModal = useCallback((): void => {
+    setIsCreateOpen(false);
+    setCreateDraft(null);
+  }, [setCreateDraft, setIsCreateOpen]);
+  const handleCreateSuccessWithDraftReset = useCallback((): void => {
+    handleCreateSuccess();
+    setCreateDraft(null);
+  }, [handleCreateSuccess, setCreateDraft]);
+  const handleCloseExportSettingsModal = useCallback((): void => {
+    setExportSettingsProduct(null);
+  }, [setExportSettingsProduct]);
+  const handleListingsUpdated = useCallback((): void => {
+    void refreshListingBadges();
+  }, [refreshListingBadges]);
 
   return {
     onCreateProduct: handleOpenCreate,
-    onCreateFromDraft: (draftId: string) => void handleCreateFromDraft(draftId),
+    onCreateFromDraft: handleCreateFromDraftOpen,
     activeDrafts,
     page,
     totalPages,
@@ -351,26 +445,20 @@ export function useProductListState(): ProductListContextType & {
     pageSize,
     setPageSize: handleSetPageSize,
     nameLocale: preferences.nameLocale,
-    setNameLocale: (locale) => void updateNameLocale(locale),
+    setNameLocale: handleSetNameLocale,
     languageOptions,
     currencyCode,
-    setCurrencyCode: (code) => {
-      setCurrencyCode(code);
-      void updateCurrencyCode(code);
-    },
+    setCurrencyCode: handleSetCurrencyPreference,
     currencyOptions,
     filtersCollapsedByDefault: preferences.filtersCollapsedByDefault ?? false,
     catalogFilter,
-    setCatalogFilter: (filter) => {
-      setCatalogFilter(filter);
-      void updateCatalogFilter(filter);
-    },
+    setCatalogFilter: handleSetCatalogPreference,
     baseExported,
     setBaseExported,
     catalogs,
     loadError: loadError?.message || null,
     actionError,
-    onDismissActionError: () => setActionError(null),
+    onDismissActionError: handleDismissActionError,
     search,
     setSearch,
     productId,
@@ -399,33 +487,12 @@ export function useProductListState(): ProductListContextType & {
     activeAdvancedFilterPresetId,
     setAdvancedFilter: handleSetAdvancedFilter,
     setAdvancedFilterState: handleSetAdvancedFilterState,
-    data: isMounted ? data : [],
+    data: visibleData,
     rowSelection,
     setRowSelection,
-    onSelectAllGlobal: async (): Promise<void> => {
-      await handleSelectAllGlobal({
-        search,
-        id: productId || undefined,
-        idMatchMode: productId ? idMatchMode : undefined,
-        sku,
-        description,
-        categoryId: categoryId || undefined,
-        minPrice,
-        maxPrice,
-        stockValue,
-        stockOperator: stockValue !== undefined ? stockOperator || 'eq' : undefined,
-        startDate: startDate || undefined,
-        endDate: endDate || undefined,
-        advancedFilter: advancedFilter || undefined,
-        catalogId: catalogFilter === 'all' ? undefined : catalogFilter,
-        searchLanguage: preferences.nameLocale,
-        baseExported: baseExported === 'true' ? true : baseExported === 'false' ? false : undefined,
-      });
-    },
+    onSelectAllGlobal: handleSelectAllVisibleProducts,
     loadingGlobal: loadingGlobalSelection,
-    onDeleteSelected: async (): Promise<void> => {
-      setIsMassDeleteConfirmOpen(true);
-    },
+    onDeleteSelected: handleDeleteSelectedOpen,
     onAddToMarketplace: handleAddToMarketplace,
     handleProductsTableRender,
     tableColumns: columns,
@@ -437,10 +504,7 @@ export function useProductListState(): ProductListContextType & {
     onProductNameClick: handleOpenEditModal,
     onProductEditClick: handleOpenEditModal,
     onProductDeleteClick: setProductToDelete,
-    onDuplicateProduct: (product: ProductWithImages) => {
-      setEditingProduct(product);
-      handleOpenCreateModal();
-    },
+    onDuplicateProduct: handleDuplicateProduct,
     onIntegrationsClick: handleOpenIntegrationsModal,
     onExportSettingsClick: handleOpenExportSettings,
     integrationBadgeIds,
@@ -451,7 +515,7 @@ export function useProductListState(): ProductListContextType & {
     categoryNameById,
     thumbnailSource: preferences.thumbnailSource ?? 'file',
     imageExternalBaseUrl,
-    getRowId: (row) => row.id,
+    getRowId: getProductRowId,
     isLoading: !isMounted || isLoading,
     skeletonRows: tableSkeleton,
     maxHeight: 'calc(100vh - 280px)',
@@ -464,14 +528,8 @@ export function useProductListState(): ProductListContextType & {
     createDraft,
     initialCatalogId:
       catalogFilter !== 'all' && catalogFilter !== 'unassigned' ? catalogFilter : null,
-    onCloseCreate: () => {
-      setIsCreateOpen(false);
-      setCreateDraft(null);
-    },
-    onCreateSuccess: () => {
-      handleCreateSuccess();
-      setCreateDraft(null);
-    },
+    onCloseCreate: handleCloseCreateModal,
+    onCreateSuccess: handleCreateSuccessWithDraftReset,
     editingProduct,
     isEditHydrating,
     onCloseEdit: handleCloseEdit,
@@ -485,8 +543,8 @@ export function useProductListState(): ProductListContextType & {
     onListProductSuccess: handleListProductSuccess,
     listProductPreset,
     exportSettingsProduct,
-    onCloseExportSettings: () => setExportSettingsProduct(null),
-    onListingsUpdated: () => void refreshListingBadges(),
+    onCloseExportSettings: handleCloseExportSettingsModal,
+    onListingsUpdated: handleListingsUpdated,
     massListIntegration,
     massListProductIds,
     onCloseMassList: handleCloseMassList,

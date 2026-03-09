@@ -25,7 +25,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 ## Node Contract Files
 
 - Semantic node contract: `docs/ai-paths/semantic-grammar/nodes/trigger.json`
-- Semantic hash: `233c29f92acbe95972897af33d008a92c8026fc82bb6a1b721b60e0320116431`
+- Semantic hash: `fb32646a0464e68e236519ec6ceab11b53fe46ae97158cbf699fa515725209cd`
 - v2 code object: `docs/ai-paths/node-code-objects-v2/trigger.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/trigger.scaffold.json`
 - v3 object id: `node_obj_trigger_portable_v3`

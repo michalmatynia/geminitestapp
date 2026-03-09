@@ -16,19 +16,28 @@ import { cn } from '@/shared/utils';
 import type { KangurLesson } from '@/shared/contracts/kangur';
 import { fromKangurLessonNodeId } from '../kangur-lessons-master-tree';
 import { readLessonGroupCount } from '../utils';
+import type { KangurLessonAuthoringStatus } from '../content-creator-insights';
 
 export function LessonTreeRow(props: {
   input: FolderTreeViewportRenderNodeInput;
   lessonById: Map<string, KangurLesson>;
-  hasContent: (lessonId: string) => boolean;
+  authoringStatus: (lesson: KangurLesson) => KangurLessonAuthoringStatus;
   onEdit: (lesson: KangurLesson) => void;
   onEditContent: (lesson: KangurLesson) => void;
   onQuickSvg: (lesson: KangurLesson) => void;
   onDelete: (lesson: KangurLesson) => void;
   isUpdating?: boolean;
 }): React.JSX.Element {
-  const { input, lessonById, hasContent, onEdit, onEditContent, onQuickSvg, onDelete, isUpdating } =
-    props;
+  const {
+    input,
+    lessonById,
+    authoringStatus,
+    onEdit,
+    onEditContent,
+    onQuickSvg,
+    onDelete,
+    isUpdating,
+  } = props;
   const lessonId = fromKangurLessonNodeId(input.node.id);
   const lesson = lessonId ? (lessonById.get(lessonId) ?? null) : null;
 
@@ -102,6 +111,8 @@ export function LessonTreeRow(props: {
     );
   }
 
+  const status = authoringStatus(lesson);
+
   return (
     <TreeRow
       depth={input.depth}
@@ -150,7 +161,7 @@ export function LessonTreeRow(props: {
           >
             {lesson.contentMode}
           </Badge>
-          {hasContent(lesson.id) ? (
+          {status.hasContent ? (
             <Badge
               variant='outline'
               className='h-5 px-1.5 text-[10px] border-sky-400/40 text-sky-300'
@@ -158,7 +169,23 @@ export function LessonTreeRow(props: {
               Custom content
             </Badge>
           ) : null}
-          {!lesson.enabled ? (
+          {status.hasStructuralWarnings || status.hasBlockingIssues ? (
+            <Badge
+              variant='outline'
+              className='h-5 px-1.5 text-[10px] border-rose-400/40 text-rose-300'
+            >
+              Needs fixes
+            </Badge>
+          ) : null}
+          {status.isMissingNarration ? (
+            <Badge
+              variant='outline'
+              className='h-5 px-1.5 text-[10px] border-violet-400/40 text-violet-300'
+            >
+              Missing narration
+            </Badge>
+          ) : null}
+          {status.isHidden ? (
             <Badge
               variant='outline'
               className='h-5 px-1.5 text-[10px] border-amber-400/40 text-amber-300'
@@ -168,10 +195,10 @@ export function LessonTreeRow(props: {
           ) : null}
         </button>
 
-        <div className='inline-flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100'>
+        <div className='inline-flex items-center gap-1 opacity-100'>
           <button
             type='button'
-            className='inline-flex items-center justify-center rounded p-1 text-gray-400 hover:bg-violet-500/20 hover:text-violet-300'
+            className='inline-flex cursor-pointer items-center justify-center rounded p-1 text-gray-400 hover:bg-violet-500/20 hover:text-violet-300'
             onMouseDown={(event): void => event.stopPropagation()}
             onClick={(event): void => {
               event.stopPropagation();
@@ -185,7 +212,7 @@ export function LessonTreeRow(props: {
           </button>
           <button
             type='button'
-            className='inline-flex items-center justify-center rounded p-1 text-gray-400 hover:bg-sky-500/20 hover:text-sky-200'
+            className='inline-flex cursor-pointer items-center justify-center rounded p-1 text-gray-400 hover:bg-sky-500/20 hover:text-sky-200'
             onMouseDown={(event): void => event.stopPropagation()}
             onClick={(event): void => {
               event.stopPropagation();
@@ -199,7 +226,7 @@ export function LessonTreeRow(props: {
           </button>
           <button
             type='button'
-            className='inline-flex items-center justify-center rounded p-1 text-gray-400 hover:bg-gray-700/60 hover:text-white'
+            className='inline-flex cursor-pointer items-center justify-center rounded p-1 text-gray-400 hover:bg-gray-700/60 hover:text-white'
             onMouseDown={(event): void => event.stopPropagation()}
             onClick={(event): void => {
               event.stopPropagation();
@@ -213,7 +240,7 @@ export function LessonTreeRow(props: {
           </button>
           <button
             type='button'
-            className='inline-flex items-center justify-center rounded p-1 text-gray-400 hover:bg-red-500/20 hover:text-red-300'
+            className='inline-flex cursor-pointer items-center justify-center rounded p-1 text-gray-400 hover:bg-red-500/20 hover:text-red-300'
             onMouseDown={(event): void => event.stopPropagation()}
             onClick={(event): void => {
               event.stopPropagation();

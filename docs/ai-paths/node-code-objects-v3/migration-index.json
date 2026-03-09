@@ -1559,7 +1559,7 @@
       "configFieldCount": 5,
       "docs": {
         "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/trigger.json",
-        "semanticNodeHash": "233c29f92acbe95972897af33d008a92c8026fc82bb6a1b721b60e0320116431",
+        "semanticNodeHash": "fb32646a0464e68e236519ec6ceab11b53fe46ae97158cbf699fa515725209cd",
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/trigger.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/trigger.scaffold.json",
         "v3ObjectId": "node_obj_trigger_portable_v3",

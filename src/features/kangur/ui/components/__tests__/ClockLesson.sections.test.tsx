@@ -1,8 +1,7 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import ClockLesson from '../ClockLesson';
-import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 
 const addXpMock = vi.fn();
 const loadProgressMock = vi.fn(() => ({
@@ -12,8 +11,19 @@ const loadProgressMock = vi.fn(() => ({
 
 vi.mock('@/features/kangur/ui/components/ClockTrainingGame', () => ({
   __esModule: true,
-  default: (): React.JSX.Element => (
-    <div data-testid='mock-clock-training-game'>Mock Clock Training</div>
+  default: ({
+    onFinish,
+    section,
+  }: {
+    onFinish: () => void;
+    section?: string;
+  }): React.JSX.Element => (
+    <div data-testid='mock-clock-training-game'>
+      <span data-testid='mock-clock-training-section'>{section ?? 'mixed'}</span>
+      <button type='button' onClick={onFinish}>
+        Finish training
+      </button>
+    </div>
   ),
 }));
 
@@ -29,234 +39,143 @@ vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
   };
 });
 
-describe('ClockLesson sectioned structure', () => {
+describe('ClockLesson section hub layout', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  const renderClockLesson = (): ReturnType<typeof render> =>
-    render(
-      <KangurLessonNavigationProvider onBack={vi.fn()}>
-        <ClockLesson />
-      </KangurLessonNavigationProvider>
-    );
+  it('renders clock sections as lesson hub cards like Dodawanie', () => {
+    render(<ClockLesson />);
 
-  const openMinutesSection = (): void => {
-    fireEvent.click(screen.getByTestId('clock-lesson-section-slide-hours-2'));
-    fireEvent.click(screen.getByTestId('clock-lesson-section-toggle-minutes'));
-  };
-
-  const openCombinedSection = (): void => {
-    openMinutesSection();
-    fireEvent.click(screen.getByTestId('clock-lesson-section-slide-minutes-2'));
-    fireEvent.click(screen.getByTestId('clock-lesson-section-toggle-combined'));
-  };
-
-  it('renders three collapsible sections and opens the hours section by default', () => {
-    renderClockLesson();
-
-    expect(screen.getByTestId('clock-lesson-section-toggle-hours')).toBeInTheDocument();
-    expect(screen.getByTestId('clock-lesson-section-toggle-minutes')).toBeInTheDocument();
-    expect(screen.getByTestId('clock-lesson-section-toggle-combined')).toBeInTheDocument();
-    expect(screen.getByTestId('clock-lesson-section-shell-hours')).toHaveClass(
-      'glass-panel',
-      'border-white/88',
-      'bg-white/94'
-    );
-    expect(screen.getByTestId('clock-lesson-section-toggle-hours')).toHaveClass(
-      'soft-card',
-      'border-indigo-300'
-    );
-    expect(screen.getByTestId('clock-lesson-section-divider-hours')).toHaveClass(
-      'h-px',
-      'w-full',
-      'bg-indigo-200'
-    );
-    expect(screen.getByTestId('clock-lesson-section-slide-hours-0')).toHaveClass(
-      'kangur-cta-pill',
-      'bg-indigo-500',
-      'cursor-pointer'
-    );
-    expect(screen.getByTestId('clock-lesson-section-slide-hours-1')).toHaveClass(
-      'kangur-cta-pill',
-      'kangur-step-pill-pending',
-      'cursor-pointer'
-    );
-    expect(screen.getByTestId('clock-lesson-section-progress-hours')).toBeInTheDocument();
-    expect(screen.getByTestId('clock-lesson-section-progress-dot-hours-0')).toHaveClass(
-      'bg-indigo-200'
-    );
-    expect(screen.getByTestId('clock-lesson-section-progress-dot-hours-1')).toHaveClass(
+    expect(screen.getByTestId('lesson-hub-section-hours')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-hub-section-minutes')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-hub-section-combined')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-hub-section-game_hours')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-hub-section-game_minutes')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-hub-section-game_combined')).toBeInTheDocument();
+    expect(screen.getByText('Godziny')).toBeInTheDocument();
+    expect(screen.getByText('Minuty')).toBeInTheDocument();
+    expect(screen.getByText('Łączenie wskazówek')).toBeInTheDocument();
+    expect(screen.getByText('Ćwiczenie: Godziny')).toBeInTheDocument();
+    expect(screen.getByText('Ćwiczenie: Minuty')).toBeInTheDocument();
+    expect(screen.getByText('Ćwiczenie: Pełny czas')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-hub-progress-hours')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-hub-progress-minutes')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-hub-progress-combined')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-hub-progress-dot-hours-0')).toHaveClass(
       'kangur-step-pill-pending'
     );
-    expect(screen.getByTestId('clock-lesson-section-progress-dot-minutes-0')).toHaveClass(
+    expect(screen.getByTestId('lesson-hub-progress-dot-minutes-0')).toHaveClass(
       'kangur-step-pill-pending'
     );
-    expect(screen.getByTestId('clock-lesson-section-toggle-minutes')).toHaveClass(
-      'soft-card',
-      'bg-slate-100/85'
-    );
-
-    expect(screen.getByText('Co pokazuje krótka wskazówka?')).toBeInTheDocument();
-    expect(screen.queryByText('Co pokazuje długa wskazówka?')).toBeNull();
-    expect(screen.queryAllByTestId('clock-lesson-hour-hand').length).toBeGreaterThan(0);
-    expect(screen.queryAllByTestId('clock-lesson-minute-hand')).toHaveLength(0);
-    expect(screen.getByRole('button', { name: 'Wróć do tematów' })).toHaveClass(
-      'kangur-cta-pill',
-      'surface-cta'
-    );
-    expect(screen.queryByRole('button', { name: /dalej/i })).toBeNull();
-    expect(screen.queryByRole('button', { name: /wstecz/i })).toBeNull();
-    expect(screen.queryByRole('button', { name: /czytaj/i })).toBeNull();
-    expect(screen.getByTestId('clock-lesson-section-status-hours')).toHaveTextContent('W trakcie');
-    expect(screen.getByTestId('clock-lesson-section-status-minutes')).toHaveTextContent(
-      'Zablokowana'
-    );
-    expect(screen.getByTestId('clock-lesson-section-locked-hint-minutes')).toBeInTheDocument();
-    expect(screen.getByTestId('clock-lesson-section-locked-hint-combined')).toBeInTheDocument();
+    expect(screen.queryByTestId('lesson-hub-progress-game_hours')).toBeNull();
   });
 
-  it('does not open locked sections before finishing prior section', async () => {
-    renderClockLesson();
+  it('opens the selected section and returns to topics', async () => {
+    render(<ClockLesson />);
 
-    fireEvent.click(screen.getByTestId('clock-lesson-section-toggle-minutes'));
+    fireEvent.click(screen.getByTestId('lesson-hub-section-hours'));
 
     await waitFor(() => {
       expect(screen.getByText('Co pokazuje krótka wskazówka?')).toBeInTheDocument();
     });
-    expect(screen.queryByText('Co pokazuje długa wskazówka?')).toBeNull();
-  });
+    expect(screen.getByTestId('lesson-slide-shell')).toBeInTheDocument();
 
-  it('opens the minutes section after completing the hours section', async () => {
-    renderClockLesson();
-
-    openMinutesSection();
+    fireEvent.click(screen.getByTestId('lesson-slide-indicator-1'));
 
     await waitFor(() => {
-      expect(screen.getByText('Co pokazuje długa wskazówka?')).toBeInTheDocument();
+      expect(screen.getByText('Pełne godziny (:00)')).toBeInTheDocument();
     });
-    expect(screen.queryByText('Co pokazuje krótka wskazówka?')).toBeNull();
-    expect(screen.queryAllByTestId('clock-lesson-minute-hand').length).toBeGreaterThan(0);
-    expect(screen.queryAllByTestId('clock-lesson-hour-hand')).toHaveLength(0);
-    expect(screen.getByTestId('clock-lesson-section-toggle-minutes')).toHaveClass(
-      'soft-card',
-      'border-indigo-300'
-    );
-  });
 
-  it('collapses the active section when clicking its header again', async () => {
-    renderClockLesson();
-
-    fireEvent.click(screen.getByTestId('clock-lesson-section-toggle-hours'));
+    fireEvent.click(screen.getByRole('button', { name: 'Wróć do tematów' }));
 
     await waitFor(() => {
-      expect(screen.getByTestId('clock-lesson-collapsed-hint')).toBeInTheDocument();
+      expect(screen.getByTestId('lesson-hub-section-hours')).toBeInTheDocument();
     });
-    expect(screen.queryByText('Co pokazuje krótka wskazówka?')).toBeNull();
-    expect(screen.getByTestId('clock-lesson-section-progress-hours')).toBeInTheDocument();
-    expect(screen.getByTestId('clock-lesson-section-progress-dot-hours-0')).toHaveClass(
-      'bg-indigo-200'
-    );
-    expect(screen.getByTestId('clock-lesson-section-progress-dot-hours-1')).toHaveClass(
+  });
+
+  it('updates hub progress after viewing more slides in a section', async () => {
+    render(<ClockLesson />);
+
+    fireEvent.click(screen.getByTestId('lesson-hub-section-hours'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Co pokazuje krótka wskazówka?')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('lesson-slide-indicator-2'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Szybki test godzin')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Wróć do tematów' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('lesson-hub-section-hours')).toBeInTheDocument();
+    });
+
+    expect(screen.getByTestId('lesson-hub-progress-dot-hours-0')).toHaveClass('bg-indigo-200');
+    expect(screen.getByTestId('lesson-hub-progress-dot-hours-1')).toHaveClass('bg-indigo-200');
+    expect(screen.getByTestId('lesson-hub-progress-dot-hours-2')).toHaveClass('bg-indigo-200');
+    expect(screen.getByTestId('lesson-hub-progress-dot-minutes-0')).toHaveClass(
       'kangur-step-pill-pending'
     );
   });
 
-  it('shows training CTA only on the last slide of the combined section', async () => {
-    renderClockLesson();
+  it('lets learners open the combined section directly from the hub', async () => {
+    render(<ClockLesson />);
 
-    openCombinedSection();
+    fireEvent.click(screen.getByTestId('lesson-hub-section-combined'));
 
     await waitFor(() => {
       expect(screen.getByText('Jak łączyć obie wskazówki?')).toBeInTheDocument();
     });
+  });
 
-    expect(screen.queryByRole('button', { name: 'Ćwiczenie z zegarem 🕐' })).toBeNull();
+  it('opens the dedicated training cards and returns to the hub on finish', async () => {
+    render(<ClockLesson />);
 
-    fireEvent.click(screen.getByTestId('clock-lesson-section-slide-combined-1'));
-    await waitFor(() => {
-      expect(screen.getByText('Kwadrans po i kwadrans do')).toBeInTheDocument();
-    });
-
-    fireEvent.click(screen.getByTestId('clock-lesson-section-slide-combined-2'));
-    await waitFor(() => {
-      expect(screen.getByText('Gotowy/a na ćwiczenie')).toBeInTheDocument();
-    });
-
-    const trainingButton = screen.getByRole('button', { name: 'Ćwiczenie z zegarem 🕐' });
-    expect(trainingButton).toBeInTheDocument();
-    expect(addXpMock).not.toHaveBeenCalled();
-
-    fireEvent.click(trainingButton);
+    fireEvent.click(screen.getByTestId('lesson-hub-section-game_minutes'));
 
     await waitFor(() => {
-      expect(screen.getByTestId('mock-clock-training-game')).toBeInTheDocument();
+      expect(screen.getByTestId('clock-lesson-training-shell')).toBeInTheDocument();
     });
-    const header = screen.getByTestId('clock-lesson-training-header');
-    expect(screen.getByTestId('clock-lesson-training-shell')).toHaveClass(
-      'glass-panel',
-      'border-white/88',
-      'bg-white/94'
-    );
-    expect(within(header).getByRole('heading', { name: /ćwiczenie z zegarem/i })).toHaveClass(
-      'text-xl',
-      'text-indigo-700'
-    );
-    expect(within(header).getByText('🕐')).toHaveClass(
-      'h-12',
-      'w-12',
-      'bg-indigo-100',
-      'text-indigo-700'
-    );
-    expect(loadProgressMock).toHaveBeenCalled();
+    expect(screen.getByTestId('clock-lesson-training-header')).toBeInTheDocument();
+    expect(screen.getByText('Ćwiczenie: Minuty')).toBeInTheDocument();
+    expect(screen.getByTestId('mock-clock-training-game')).toBeInTheDocument();
+    expect(screen.getByTestId('mock-clock-training-section')).toHaveTextContent('minutes');
+    expect(loadProgressMock).toHaveBeenCalledTimes(1);
     expect(addXpMock).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Finish training' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('lesson-hub-section-game_minutes')).toBeInTheDocument();
+    });
   });
 
-  it('marks previous section as completed when moving to next section', async () => {
-    renderClockLesson();
+  it('does not award lesson completion xp twice when switching training sections', async () => {
+    render(<ClockLesson />);
 
-    openMinutesSection();
-
-    await waitFor(() => {
-      expect(screen.getByText('Co pokazuje długa wskazówka?')).toBeInTheDocument();
-    });
-    expect(screen.getByTestId('clock-lesson-section-status-hours')).toHaveTextContent('Ukończono');
-    expect(screen.getByTestId('clock-lesson-section-status-minutes')).toHaveTextContent(
-      'W trakcie'
-    );
-  });
-
-  it('unlocks the combined section only after completing the minutes section', async () => {
-    renderClockLesson();
-
-    expect(screen.getByTestId('clock-lesson-section-status-combined')).toHaveTextContent(
-      'Zablokowana'
-    );
-
-    openMinutesSection();
+    fireEvent.click(screen.getByTestId('lesson-hub-section-game_hours'));
 
     await waitFor(() => {
-      expect(screen.getByText('Co pokazuje długa wskazówka?')).toBeInTheDocument();
+      expect(screen.getByTestId('mock-clock-training-section')).toHaveTextContent('hours');
     });
 
-    expect(screen.getByTestId('clock-lesson-section-status-combined')).toHaveTextContent(
-      'Zablokowana'
-    );
-    expect(screen.queryByTestId('clock-lesson-section-locked-hint-minutes')).toBeNull();
-    expect(screen.getByTestId('clock-lesson-section-locked-hint-combined')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByTestId('clock-lesson-section-slide-minutes-2'));
-    fireEvent.click(screen.getByTestId('clock-lesson-section-toggle-combined'));
+    fireEvent.click(screen.getByRole('button', { name: 'Finish training' }));
 
     await waitFor(() => {
-      expect(screen.getByText('Jak łączyć obie wskazówki?')).toBeInTheDocument();
+      expect(screen.getByTestId('lesson-hub-section-game_combined')).toBeInTheDocument();
     });
 
-    expect(screen.getByTestId('clock-lesson-section-status-minutes')).toHaveTextContent(
-      'Ukończono'
-    );
-    expect(screen.getByTestId('clock-lesson-section-status-combined')).toHaveTextContent(
-      'W trakcie'
-    );
+    fireEvent.click(screen.getByTestId('lesson-hub-section-game_combined'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mock-clock-training-section')).toHaveTextContent('combined');
+    });
+
+    expect(addXpMock).toHaveBeenCalledTimes(1);
   });
 });

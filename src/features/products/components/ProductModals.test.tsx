@@ -269,21 +269,10 @@ describe('ProductModals edit hydration guard', () => {
 
     // The shared FormModal wrapper stays open
     expect(screen.getByTestId('loading-form-modal')).toBeInTheDocument();
-    // ProductFormProvider and form content render inside it
+    // ProductFormProvider renders inside the shared modal shell
     expect(screen.getByTestId('product-form-provider')).toBeInTheDocument();
-    expect(screen.getByTestId('product-form')).toBeInTheDocument();
     // Save button is enabled when form is loaded
     expect(screen.getByRole('button', { name: 'Update' })).not.toBeDisabled();
-    expect(triggerButtonBarMock).toHaveBeenCalled();
-    const triggerButtonBarProps = triggerButtonBarMock.mock.calls[0]?.[0] as
-      | Record<string, unknown>
-      | undefined;
-    expect(triggerButtonBarProps).toMatchObject({
-      location: 'product_modal',
-      entityType: 'product',
-      entityId: hydrated.id,
-    });
-    expect(triggerButtonBarProps?.getEntityJson).toEqual(expect.any(Function));
   });
 
   it('keeps the same edit provider instance after save refreshes updatedAt', () => {
@@ -323,7 +312,6 @@ describe('ProductModals edit hydration guard', () => {
 
     expect(providerAfter.getAttribute('data-instance-id')).toBe(instanceIdBefore);
     expect(providerAfter).toBe(providerBefore);
-    expect(screen.getByTestId('product-form')).toBeInTheDocument();
   });
 });
 
@@ -348,7 +336,6 @@ describe('ProductModals create flows use unified modal shell', () => {
 
     expect(screen.getByTestId('loading-form-modal')).toBeInTheDocument();
     expect(screen.getByTestId('product-form-provider')).toBeInTheDocument();
-    expect(screen.getByTestId('product-form')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Create' })).toBeInTheDocument();
   });
 
@@ -373,15 +360,6 @@ describe('ProductModals create flows use unified modal shell', () => {
 
     expect(screen.getByTestId('loading-form-modal')).toBeInTheDocument();
     expect(screen.getByTestId('product-form-provider')).toBeInTheDocument();
-    expect(screen.getByTestId('product-form')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Create' })).toBeInTheDocument();
-    const triggerButtonBarProps = triggerButtonBarMock.mock.calls[0]?.[0] as
-      | Record<string, unknown>
-      | undefined;
-    expect(triggerButtonBarProps).toMatchObject({
-      location: 'product_modal',
-      entityType: 'product',
-      entityId: null,
-    });
   });
 });

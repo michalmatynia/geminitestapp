@@ -4,21 +4,20 @@ import { MousePointer2, Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useAiPathsSettingsQuery } from '@/shared/lib/ai-paths/hooks/useAiPathQueries';
+import {
+  aiTriggerButtonCreateSchema,
+  type AiTriggerButtonCreatePayload,
+} from '@/features/ai/ai-paths/validations/trigger-buttons';
+import type { AiTriggerButtonLocation } from '@/shared/contracts/ai-trigger-buttons';
 import {
   PATH_CONFIG_PREFIX,
   PATH_INDEX_KEY,
   resolvePortablePathInput,
   triggerButtonsApi,
 } from '@/shared/lib/ai-paths';
-import {
-  aiTriggerButtonCreateSchema,
-  type AiTriggerButtonCreatePayload,
-} from '@/features/ai/ai-paths/validations/trigger-buttons';
-import { ICON_LIBRARY, IconSelector } from '@/shared/lib/icons';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { AiTriggerButtonLocation } from '@/shared/contracts/ai-trigger-buttons';
+import { useAiPathsSettingsQuery } from '@/shared/lib/ai-paths/hooks/useAiPathQueries';
 import { api } from '@/shared/lib/api-client';
+import { ICON_LIBRARY, IconSelector } from '@/shared/lib/icons';
 import {
   createCreateMutationV2,
   createDeleteMutationV2,
@@ -42,6 +41,7 @@ import {
   type SettingsField,
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 import { cn } from '@/shared/utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 import {

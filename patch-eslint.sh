@@ -675,7 +675,6 @@ export default defineConfig([
       'src/features/ai/ai-paths/context/hooks/index.ts',
       'src/features/ai/ai-paths/context/index.ts',
       'src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsPersistence.ts',
-      'src/features/products/hooks/useAiPathSettings.ts',
       'src/shared/lib/ai-paths/hooks/useAiPathTriggerEvent.ts',
     ],
     rules: {

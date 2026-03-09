@@ -1,7 +1,4 @@
-import {
-  type ProductWithImages,
-  type ProductsPagedResult,
-} from '@/shared/contracts/products/product';
+import { type ProductWithImages, type ProductsPagedResult } from '@/shared/contracts/products/product';
 import { type ProductFilter } from '@/shared/contracts/products/filters';
 import { api, type ApiClientOptions } from '@/shared/lib/api-client';
 
@@ -41,6 +38,22 @@ export async function countProducts(filters: ProductFilter, signal?: AbortSignal
   } catch (_error) {
     return 0;
   }
+}
+
+export async function getProductIds(
+  filters: ProductFilter,
+  signal?: AbortSignal
+): Promise<string[]> {
+  const options: ApiClientOptions = {
+    params: {
+      ...filters,
+    },
+    cache: 'no-store',
+  };
+  if (signal) options.signal = signal;
+  options.timeout = PRODUCT_READ_TIMEOUT_MS;
+  const data = await api.get<{ ids?: string[] }>('/api/v2/products/ids', options);
+  return Array.isArray(data.ids) ? data.ids : [];
 }
 
 /**

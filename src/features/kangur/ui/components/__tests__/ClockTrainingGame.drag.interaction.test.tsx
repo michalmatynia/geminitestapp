@@ -222,6 +222,82 @@ describe('ClockTrainingGame drag interactions', () => {
     });
   });
 
+  it('locks the minute hand in the hours section and shows section guidance', async () => {
+    const { container } = render(<ClockTrainingGame onFinish={vi.fn()} section='hours' />);
+    const hourHand = getHourHand(container);
+    const minuteHand = getMinuteHand(container);
+
+    expect(screen.getByTestId('clock-training-section-badge')).toHaveTextContent('Sekcja: Godziny');
+    expect(screen.getByTestId('clock-training-guidance-title')).toHaveTextContent(
+      'Trening godzin'
+    );
+    expect(screen.getByText('Ustaw pełną godzinę')).toBeInTheDocument();
+    expect(screen.queryByTestId('clock-snap-mode-switch')).toBeNull();
+    expect(screen.getByTestId('clock-interaction-hint')).toHaveTextContent(
+      'Długa wskazówka jest zablokowana na 12.'
+    );
+
+    dragHandToAngle(minuteHand, 180);
+    await waitFor(() => {
+      expect(getClockDisplay()).toHaveTextContent('12:00');
+    });
+
+    dragHandToAngle(hourHand, 90);
+    await waitFor(() => {
+      expect(getClockDisplay()).toHaveTextContent('3:00');
+    });
+  });
+
+  it('locks the hour hand in the minutes section and keeps minute controls visible', async () => {
+    const { container } = render(<ClockTrainingGame onFinish={vi.fn()} section='minutes' />);
+    const hourHand = getHourHand(container);
+    const minuteHand = getMinuteHand(container);
+
+    expect(screen.getByTestId('clock-training-section-badge')).toHaveTextContent('Sekcja: Minuty');
+    expect(screen.getByTestId('clock-training-guidance-title')).toHaveTextContent(
+      'Trening minut'
+    );
+    expect(screen.getByText('Ustaw minuty na tarczy')).toBeInTheDocument();
+    expect(screen.getByTestId('clock-task-prompt')).toHaveTextContent(
+      'Krótka wskazówka zostaje na 12'
+    );
+    expect(screen.getByTestId('clock-snap-mode-switch')).toBeInTheDocument();
+    expect(screen.getByTestId('clock-interaction-hint')).toHaveTextContent(
+      'Krótka wskazówka jest zablokowana na 12.'
+    );
+
+    dragHandToAngle(hourHand, 90);
+    await waitFor(() => {
+      expect(getClockDisplay()).toHaveTextContent('12:00');
+    });
+
+    dragHandToAngle(minuteHand, 180);
+    await waitFor(() => {
+      expect(getClockDisplay()).toHaveTextContent('12:30');
+    });
+  });
+
+  it('shows minute-specific coaching after a near miss in the minutes section', async () => {
+    const { container } = render(<ClockTrainingGame onFinish={vi.fn()} section='minutes' />);
+    const minuteHand = getMinuteHand(container);
+    const taskLabel = screen.getByText('Ustaw minuty na tarczy');
+    const taskValueText = taskLabel.nextElementSibling?.textContent ?? '12:05';
+    const target = parseDisplayedTime(taskValueText);
+    const nearMinutes = (target.minutes + 5) % 60;
+
+    dragHandToAngle(minuteHand, minuteToAngle(nearMinutes));
+    fireEvent.click(screen.getByRole('button', { name: 'Sprawdź! ✅' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('clock-feedback')).toHaveTextContent(
+        'Prawie! Minuty są blisko.'
+      );
+    });
+    expect(screen.getByTestId('clock-feedback')).toHaveTextContent(
+      'Przesuń ją jeszcze o jedną kreskę.'
+    );
+  });
+
   it('shows contextual detailed feedback after wrong submission', async () => {
     const { container } = render(<ClockTrainingGame onFinish={vi.fn()} />);
     const hourHand = getHourHand(container);

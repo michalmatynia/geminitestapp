@@ -95,6 +95,77 @@ describe('trend report scripts summary-json mode', () => {
             notes: ['fixture'],
           },
         },
+        {
+          id: 'guardrails',
+          status: 'fail',
+          durationMs: 5_400,
+          exitCode: 1,
+          scanSummary: {
+            scanner: { name: 'architecture-guardrails', version: '1.0.0' },
+            status: 'failed',
+            summary: {
+              totalMetrics: 14,
+              okMetrics: 10,
+              failedMetrics: 4,
+              hardLimitFailures: 4,
+              warnMetrics: 0,
+              infoMetrics: 0,
+              updatedBaseline: false,
+            },
+            filters: { strict: true },
+            paths: null,
+            notes: ['fixture'],
+          },
+        },
+        {
+          id: 'uiConsolidation',
+          status: 'pass',
+          durationMs: 1_300,
+          exitCode: 0,
+          scanSummary: {
+            scanner: { name: 'ui-consolidation-guardrail', version: '1.0.0' },
+            status: 'ok',
+            summary: {
+              totalRules: 7,
+              passedRules: 7,
+              failedRules: 0,
+              propForwardingCount: 43,
+              propDepthGte4ChainCount: 0,
+              totalOpportunityCount: 0,
+              highPriorityOpportunityCount: 0,
+              configurationError: false,
+            },
+            filters: { strict: true },
+            paths: null,
+            notes: ['fixture'],
+          },
+        },
+        {
+          id: 'observability',
+          status: 'pass',
+          durationMs: 2_100,
+          exitCode: 0,
+          scanSummary: {
+            scanner: { name: 'observability-check', version: '2' },
+            status: 'ok',
+            summary: {
+              mode: 'check',
+              totalRoutes: 343,
+              uncoveredRoutes: 0,
+              loggerViolations: 0,
+              eventSourceViolations: 0,
+              coreViolations: 0,
+              consoleLogViolations: 44,
+              emptyCatchBlockViolations: 4,
+              legacyCompatibilityViolations: 0,
+              runtimeErrors: 0,
+              logWriteErrors: 0,
+            },
+            filters: { mode: 'check' },
+            paths: null,
+            notes: ['fixture'],
+          },
+        },
       ],
     });
 
@@ -103,10 +174,19 @@ describe('trend report scripts summary-json mode', () => {
     expect(payload.scanner.name).toBe('weekly-quality-trend');
     expect(payload.summary).toMatchObject({
       runCount: 1,
-      latestTotalDurationMs: 23_678,
-      structuredCheckCount: 1,
+      latestTotalDurationMs: 32_478,
+      structuredCheckCount: 4,
     });
     expect(payload.details.runs[0].checks.criticalFlows.structuredSummaryText).toBe('pass=5/6 fail=1');
+    expect(payload.details.runs[0].checks.guardrails.structuredSummaryText).toBe(
+      'pass=10/14 fail=4 hard=4 warn=0 info=0 baseline=no'
+    );
+    expect(payload.details.runs[0].checks.uiConsolidation.structuredSummaryText).toBe(
+      'pass=7/7 fail=0 forwarded=43 depth4=0 opps=0 high=0 config=no'
+    );
+    expect(payload.details.runs[0].checks.observability.structuredSummaryText).toBe(
+      'mode=check routes=343 uncovered=0 logger=0 event=0 core=0 console=44 catches=4 legacy=0 runtime=0 logWrites=0'
+    );
     expect(payload.paths).toBeNull();
     expect(fs.existsSync(path.join(root, 'docs/metrics/weekly-quality-trend-latest.json'))).toBe(false);
   });

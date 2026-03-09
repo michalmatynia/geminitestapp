@@ -1,8 +1,7 @@
 // @ts-nocheck
-import { useCallback, useEffect, useRef, useState } from 'react';
-import type { MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle, RefreshCw, XCircle } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
   KangurAccentDot,
@@ -26,8 +25,11 @@ import {
 } from '@/features/kangur/ui/services/progress';
 import { cn } from '@/shared/utils';
 
+import type { MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from 'react';
+
 type ClockTrainingGameProps = {
   onFinish: () => void;
+  section?: ClockTrainingTaskPoolId;
 };
 
 type ClockTask = {
@@ -39,6 +41,8 @@ type Feedback = 'correct' | 'wrong' | null;
 type Hand = 'hour' | 'minute';
 type MinuteSnapMode = '5min' | '1min';
 type ClockGameMode = 'practice' | 'challenge';
+export type ClockTrainingSectionId = 'hours' | 'minutes' | 'combined';
+export type ClockTrainingTaskPoolId = ClockTrainingSectionId | 'mixed';
 
 type ClockFeedback = {
   kind: Feedback;
@@ -52,27 +56,125 @@ type DraggableClockProps = {
   showChallengeRing?: boolean;
   challengeTimeLeft?: number;
   challengeTimeLimit?: number;
+  section?: ClockTrainingTaskPoolId;
 };
 
-const TASKS: ClockTask[] = [
-  { hours: 3, minutes: 0 },
-  { hours: 7, minutes: 30 },
-  { hours: 1, minutes: 15 },
-  { hours: 10, minutes: 45 },
-  { hours: 6, minutes: 0 },
-  { hours: 4, minutes: 20 },
-  { hours: 9, minutes: 35 },
-  { hours: 12, minutes: 0 },
-  { hours: 2, minutes: 50 },
-  { hours: 11, minutes: 25 },
-];
+type ClockTrainingSectionContent = {
+  accent: 'amber' | 'emerald' | 'indigo' | 'rose';
+  guidance: string;
+  guidanceTitle: string;
+  legend: string;
+  promptLabel: string;
+};
+
+export const CLOCK_TRAINING_TASKS: Record<ClockTrainingTaskPoolId, ClockTask[]> = {
+  mixed: [
+    { hours: 3, minutes: 0 },
+    { hours: 7, minutes: 30 },
+    { hours: 1, minutes: 15 },
+    { hours: 10, minutes: 45 },
+    { hours: 6, minutes: 0 },
+    { hours: 4, minutes: 20 },
+    { hours: 9, minutes: 35 },
+    { hours: 12, minutes: 0 },
+    { hours: 2, minutes: 50 },
+    { hours: 11, minutes: 25 },
+  ],
+  hours: [
+    { hours: 1, minutes: 0 },
+    { hours: 3, minutes: 0 },
+    { hours: 4, minutes: 0 },
+    { hours: 6, minutes: 0 },
+    { hours: 7, minutes: 0 },
+    { hours: 9, minutes: 0 },
+    { hours: 11, minutes: 0 },
+    { hours: 12, minutes: 0 },
+  ],
+  minutes: [
+    { hours: 12, minutes: 5 },
+    { hours: 12, minutes: 10 },
+    { hours: 12, minutes: 15 },
+    { hours: 12, minutes: 20 },
+    { hours: 12, minutes: 25 },
+    { hours: 12, minutes: 30 },
+    { hours: 12, minutes: 35 },
+    { hours: 12, minutes: 40 },
+    { hours: 12, minutes: 45 },
+    { hours: 12, minutes: 50 },
+    { hours: 12, minutes: 55 },
+  ],
+  combined: [
+    { hours: 1, minutes: 15 },
+    { hours: 2, minutes: 50 },
+    { hours: 4, minutes: 20 },
+    { hours: 5, minutes: 45 },
+    { hours: 7, minutes: 30 },
+    { hours: 8, minutes: 10 },
+    { hours: 9, minutes: 35 },
+    { hours: 10, minutes: 25 },
+    { hours: 11, minutes: 40 },
+    { hours: 12, minutes: 5 },
+  ],
+};
 
 function shuffle<T>(items: T[]): T[] {
   return [...items].sort(() => Math.random() - 0.5);
 }
 
-function createClockTaskSet(): ClockTask[] {
-  return shuffle(TASKS).slice(0, INITIAL_TASK_COUNT);
+export function getClockTrainingSectionLabel(section: ClockTrainingTaskPoolId): string {
+  switch (section) {
+    case 'hours':
+      return 'Godziny';
+    case 'minutes':
+      return 'Minuty';
+    case 'combined':
+      return 'Pełny czas';
+    default:
+      return 'Mieszane';
+  }
+}
+
+export function getClockTrainingSectionContent(
+  section: ClockTrainingTaskPoolId
+): ClockTrainingSectionContent {
+  switch (section) {
+    case 'hours':
+      return {
+        accent: 'rose',
+        guidance: 'Skup się na krótkiej wskazówce. Długa wskazówka zostaje na 12, więc ustawiasz tylko pełne godziny.',
+        guidanceTitle: 'Trening godzin',
+        legend: 'Przesuwasz tylko krótką wskazówkę. Minuty są zablokowane na :00.',
+        promptLabel: 'Ustaw pełną godzinę',
+      };
+    case 'minutes':
+      return {
+        accent: 'emerald',
+        guidance: 'Skup się na długiej wskazówce. Krótka wskazówka stoi na 12, więc liczysz tylko minuty.',
+        guidanceTitle: 'Trening minut',
+        legend: 'Przesuwasz tylko długą wskazówkę. Godzina zostaje ustawiona na 12.',
+        promptLabel: 'Ustaw minuty na tarczy',
+      };
+    case 'combined':
+      return {
+        accent: 'indigo',
+        guidance: 'Najpierw ustaw godzinę krótką wskazówką, potem dopracuj minuty długą wskazówką.',
+        guidanceTitle: 'Pełny odczyt czasu',
+        legend: 'Ćwiczysz oba ruchy naraz: godziny i minuty.',
+        promptLabel: 'Ustaw pełny czas',
+      };
+    default:
+      return {
+        accent: 'amber',
+        guidance: 'Raz ćwiczysz pełne godziny, raz minuty, a raz cały odczyt czasu. Korzystaj z obu wskazówek.',
+        guidanceTitle: 'Mieszany trening zegara',
+        legend: 'Łącz krótką i długą wskazówkę zależnie od zadania.',
+        promptLabel: 'Ustaw zegar na godzinę',
+      };
+  }
+}
+
+function createClockTaskSet(section: ClockTrainingTaskPoolId): ClockTask[] {
+  return shuffle(CLOCK_TRAINING_TASKS[section]).slice(0, INITIAL_TASK_COUNT);
 }
 
 function pad(value: number): string {
@@ -197,7 +299,8 @@ export function buildClockWrongFeedback(
   actualHours: number,
   actualMinutes: number,
   expectedHours: number,
-  expectedMinutes: number
+  expectedMinutes: number,
+  section: ClockTrainingTaskPoolId = 'mixed'
 ): ClockFeedback {
   const totalMinuteDistance = getClockDistanceInMinutes(
     actualHours,
@@ -207,17 +310,46 @@ export function buildClockWrongFeedback(
   );
   const minuteRingDistance = getMinuteRingDistance(actualMinutes, expectedMinutes);
 
+  if (section === 'hours') {
+    const hourDistance = Math.max(1, Math.round(totalMinuteDistance / 60));
+    const title =
+      hourDistance === 1
+        ? 'Prawie! To sąsiednia godzina.'
+        : hourDistance <= 2
+          ? 'Blisko!'
+          : 'Spróbuj jeszcze raz!';
+    const hint =
+      actualMinutes !== 0
+        ? 'W treningu godzin dłuższa wskazówka zostaje na 12, więc minuty powinny być równe :00.'
+        : 'Sprawdź pozycję krótkiej wskazówki i wybierz pełną godzinę.';
+
+    return {
+      kind: 'wrong',
+      title,
+      tone: hourDistance === 1 ? 'near' : 'far',
+      details: `Twoja odpowiedź: ${actualHours}:${pad(actualMinutes)}. Poprawna: ${expectedHours}:${pad(expectedMinutes)}. Pomyłka o ${hourDistance} godz. ${hint}`,
+    };
+  }
+
   let title = 'Spróbuj jeszcze raz!';
   let tone: 'near' | 'far' = 'far';
   if (totalMinuteDistance < 5) {
-    title = 'Bardzo blisko!';
+    title = section === 'minutes' ? 'Bardzo blisko z minutami!' : 'Bardzo blisko!';
     tone = 'near';
   } else if (totalMinuteDistance <= 15) {
-    title = 'Prawie!';
+    title = section === 'minutes' ? 'Prawie! Minuty są blisko.' : 'Prawie!';
   }
 
   let hint = 'Sprawdź obie wskazówki.';
-  if (minuteRingDistance <= 5) {
+  if (section === 'minutes') {
+    if (minuteRingDistance <= 5) {
+      hint = 'Długa wskazówka jest prawie dobrze. Przesuń ją jeszcze o jedną kreskę.';
+    } else if (minuteRingDistance <= 15) {
+      hint = 'Policz kreski po 5 minut i popraw długą wskazówkę.';
+    } else {
+      hint = 'Skup się tylko na długiej wskazówce. Krótka zostaje na 12.';
+    }
+  } else if (minuteRingDistance <= 5) {
     hint = 'Długa wskazówka jest prawie dobrze. Dopracuj krótką wskazówkę (godziny).';
   } else if (minuteRingDistance <= 15) {
     hint = 'Skup się na długiej wskazówce (minuty).';
@@ -235,7 +367,25 @@ export function taskToKey(task: ClockTask): string {
   return `${task.hours}:${task.minutes}`;
 }
 
-export function buildClockTaskPrompt(task: ClockTask): string {
+export function buildClockTaskPrompt(
+  task: ClockTask,
+  section: ClockTrainingTaskPoolId = 'mixed'
+): string {
+  if (section === 'hours') {
+    return 'Pełna godzina. Ustaw krótką wskazówkę, a minuty zostają na 00.';
+  }
+  if (section === 'minutes') {
+    if (task.minutes === 15) {
+      return 'Kwadrans. Krótka wskazówka zostaje na 12.';
+    }
+    if (task.minutes === 30) {
+      return 'Pół godziny. Krótka wskazówka zostaje na 12.';
+    }
+    if (task.minutes === 45) {
+      return '45 minut. Krótka wskazówka zostaje na 12.';
+    }
+    return 'Skup się na długiej wskazówce. Krótka wskazówka zostaje na 12.';
+  }
   if (task.minutes === 0) {
     return 'Pełna godzina (minuty = 00).';
   }
@@ -249,6 +399,111 @@ export function buildClockTaskPrompt(task: ClockTask): string {
     return `Kwadrans do ${task.hours === 12 ? 1 : task.hours + 1}.`;
   }
   return 'Wskazówka godzin przesuwa się razem z minutami.';
+}
+
+export function buildClockCorrectFeedback(
+  section: ClockTrainingTaskPoolId,
+  task: ClockTask,
+  options: { gameMode?: ClockGameMode; streak?: number } = {}
+): ClockFeedback {
+  const gameMode = options.gameMode ?? 'practice';
+  const streak = options.streak ?? 0;
+  const time = `${task.hours}:${pad(task.minutes)}`;
+
+  let title = 'Brawo! Dobrze!';
+  let details = `Ustawiłeś/aś poprawnie: ${time}.`;
+
+  if (section === 'hours') {
+    title = 'Brawo! To dobra godzina!';
+    details = `Ustawiłeś/aś poprawną pełną godzinę: ${time}.`;
+  } else if (section === 'minutes') {
+    title = 'Brawo! Minuty się zgadzają!';
+    details = `Ustawiłeś/aś poprawne minuty: ${time}.`;
+  } else if (section === 'combined') {
+    title = 'Brawo! Pełny czas ustawiony!';
+    details = `Ustawiłeś/aś poprawny pełny czas: ${time}.`;
+  }
+
+  if (gameMode === 'challenge') {
+    details = `${details} Seria: ${streak}.`;
+  }
+
+  return {
+    kind: 'correct',
+    title,
+    details,
+  };
+}
+
+export function buildClockTimeoutFeedback(
+  section: ClockTrainingTaskPoolId,
+  task: ClockTask
+): ClockFeedback {
+  const time = `${task.hours}:${pad(task.minutes)}`;
+
+  if (section === 'hours') {
+    return {
+      kind: 'wrong',
+      title: 'Czas minął!',
+      tone: 'far',
+      details: `Nie zdążyłeś/aś ustawić pełnej godziny. Poprawna godzina: ${time}.`,
+    };
+  }
+
+  if (section === 'minutes') {
+    return {
+      kind: 'wrong',
+      title: 'Czas minął!',
+      tone: 'far',
+      details: `Nie zdążyłeś/aś ustawić minut. Poprawny odczyt: ${time}.`,
+    };
+  }
+
+  if (section === 'combined') {
+    return {
+      kind: 'wrong',
+      title: 'Czas minął!',
+      tone: 'far',
+      details: `Nie zdążyłeś/aś ustawić pełnego czasu. Poprawna godzina: ${time}.`,
+    };
+  }
+
+  return {
+    kind: 'wrong',
+    title: 'Czas minął!',
+    tone: 'far',
+    details: `Nie zdążyłeś/aś ustawić czasu. Poprawna godzina: ${time}.`,
+  };
+}
+
+export function getClockTrainingSummaryMessage(
+  section: ClockTrainingTaskPoolId,
+  score: number,
+  totalTasks: number
+): string {
+  const isPerfect = score === totalTasks;
+
+  if (section === 'hours') {
+    return isPerfect
+      ? 'Świetnie! Pewnie odczytujesz pełne godziny.'
+      : 'Poćwicz jeszcze pełne godziny i obserwuj krótką wskazówkę.';
+  }
+
+  if (section === 'minutes') {
+    return isPerfect
+      ? 'Świetnie! Długa wskazówka i minuty są już pod kontrolą.'
+      : 'Poćwicz jeszcze minuty, licząc kreski po 5 wokół tarczy.';
+  }
+
+  if (section === 'combined') {
+    return isPerfect
+      ? 'Świetnie! Łączysz godziny i minuty w pełny odczyt czasu.'
+      : 'Poćwicz jeszcze wspólne ustawianie godzin i minut.';
+  }
+
+  return isPerfect
+    ? 'Idealnie! Świetnie znasz zegar!'
+    : 'Ćwicz dalej, a będziesz mistrzem zegara!';
 }
 
 export function scheduleRetryTask(
@@ -288,6 +543,7 @@ function DraggableClock({
   showChallengeRing = false,
   challengeTimeLeft = CHALLENGE_TIME_LIMIT_SECONDS,
   challengeTimeLimit = CHALLENGE_TIME_LIMIT_SECONDS,
+  section = 'mixed',
 }: DraggableClockProps): React.JSX.Element {
   const [cycleMinutes, setCycleMinutes] = useState(0);
   const [minuteSnapMode, setMinuteSnapMode] = useState<MinuteSnapMode>('5min');
@@ -295,6 +551,8 @@ function DraggableClock({
   const svgRef = useRef<SVGSVGElement | null>(null);
   const dragging = useRef<Hand | null>(null);
   const minuteStep = MINUTE_STEP_BY_MODE[minuteSnapMode];
+  const hourHandEnabled = section !== 'minutes';
+  const minuteHandEnabled = section !== 'hours';
 
   const getAngle = useCallback((event: MouseEvent | TouchEvent): number => {
     const svg = svgRef.current;
@@ -331,6 +589,11 @@ function DraggableClock({
   const onMouseDown =
     (hand: Hand) =>
       (event: ReactMouseEvent<SVGElement> | ReactTouchEvent<SVGElement>): void => {
+        const handEnabled =
+          (hand === 'hour' && hourHandEnabled) || (hand === 'minute' && minuteHandEnabled);
+        if (!handEnabled) {
+          return;
+        }
         event.preventDefault();
         dragging.current = hand;
         setActiveHand(hand);
@@ -394,11 +657,13 @@ function DraggableClock({
   const challengeRingColor =
     challengeProgress <= 0.2 ? '#dc2626' : challengeProgress <= 0.5 ? '#f97316' : '#f59e0b';
   const hourHandInteractionStyle = {
-    cursor: activeHand === 'hour' ? 'grabbing' : 'grab',
+    cursor: hourHandEnabled ? (activeHand === 'hour' ? 'grabbing' : 'grab') : 'not-allowed',
+    opacity: hourHandEnabled ? 1 : 0.45,
     touchAction: 'none',
   };
   const minuteHandInteractionStyle = {
-    cursor: activeHand === 'minute' ? 'grabbing' : 'grab',
+    cursor: minuteHandEnabled ? (activeHand === 'minute' ? 'grabbing' : 'grab') : 'not-allowed',
+    opacity: minuteHandEnabled ? 1 : 0.45,
     touchAction: 'none',
   };
 
@@ -412,40 +677,46 @@ function DraggableClock({
       >
         {displayHour}:{pad(displayMinutes)}
       </KangurStatusChip>
-      <div
-        className={cn(
-          KANGUR_SEGMENTED_CONTROL_CLASSNAME,
-          'inline-flex w-auto flex-wrap items-center justify-center'
-        )}
-        data-testid='clock-snap-mode-switch'
-      >
-        <KangurButton
-          type='button'
-          data-testid='clock-snap-mode-5'
-          onClick={() => setMinuteSnapMode('5min')}
-          className='h-10 px-3.5 text-xs sm:flex-none'
-          size='sm'
-          variant={minuteSnapMode === '5min' ? 'segmentActive' : 'segment'}
+      {minuteHandEnabled ? (
+        <div
+          className={cn(
+            KANGUR_SEGMENTED_CONTROL_CLASSNAME,
+            'inline-flex w-auto flex-wrap items-center justify-center'
+          )}
+          data-testid='clock-snap-mode-switch'
         >
-          Skok co 5 min
-        </KangurButton>
-        <KangurButton
-          type='button'
-          data-testid='clock-snap-mode-1'
-          onClick={() => setMinuteSnapMode('1min')}
-          className='h-10 px-3.5 text-xs sm:flex-none'
-          size='sm'
-          variant={minuteSnapMode === '1min' ? 'segmentActive' : 'segment'}
-        >
-          Dokładnie co 1 min
-        </KangurButton>
-      </div>
-      <p className='text-xs text-slate-500'>
+          <KangurButton
+            type='button'
+            data-testid='clock-snap-mode-5'
+            onClick={() => setMinuteSnapMode('5min')}
+            className='h-10 px-3.5 text-xs sm:flex-none'
+            size='sm'
+            variant={minuteSnapMode === '5min' ? 'segmentActive' : 'segment'}
+          >
+            Skok co 5 min
+          </KangurButton>
+          <KangurButton
+            type='button'
+            data-testid='clock-snap-mode-1'
+            onClick={() => setMinuteSnapMode('1min')}
+            className='h-10 px-3.5 text-xs sm:flex-none'
+            size='sm'
+            variant={minuteSnapMode === '1min' ? 'segmentActive' : 'segment'}
+          >
+            Dokładnie co 1 min
+          </KangurButton>
+        </div>
+      ) : null}
+      <p className='text-xs text-slate-500' data-testid='clock-interaction-hint'>
         {activeHand === 'hour'
           ? 'Przestawiasz krótką wskazówkę (godziny).'
           : activeHand === 'minute'
             ? 'Przestawiasz długą wskazówkę (minuty).'
-            : 'Wskazówka godzin przesuwa się płynnie razem z minutami.'}
+            : section === 'hours'
+              ? 'Długa wskazówka jest zablokowana na 12.'
+              : section === 'minutes'
+                ? 'Krótka wskazówka jest zablokowana na 12.'
+                : 'Wskazówka godzin przesuwa się płynnie razem z minutami.'}
       </p>
 
       <svg
@@ -633,9 +904,12 @@ function DraggableClock({
   );
 }
 
-export default function ClockTrainingGame({ onFinish }: ClockTrainingGameProps): React.JSX.Element {
+export default function ClockTrainingGame({
+  onFinish,
+  section = 'mixed',
+}: ClockTrainingGameProps): React.JSX.Element {
   const [gameMode, setGameMode] = useState<ClockGameMode>('practice');
-  const [tasks, setTasks] = useState<ClockTask[]>(() => createClockTaskSet());
+  const [tasks, setTasks] = useState<ClockTask[]>(() => createClockTaskSet(section));
   const [current, setCurrent] = useState(0);
   const [score, setScore] = useState(0);
   const [feedback, setFeedback] = useState<ClockFeedback | null>(null);
@@ -646,6 +920,8 @@ export default function ClockTrainingGame({ onFinish }: ClockTrainingGameProps):
   const [challengeTimeLeft, setChallengeTimeLeft] = useState(CHALLENGE_TIME_LIMIT_SECONDS);
   const [challengeStreak, setChallengeStreak] = useState(0);
   const [challengeBestStreak, setChallengeBestStreak] = useState(0);
+  const trainingSectionLabel = getClockTrainingSectionLabel(section);
+  const trainingSectionContent = getClockTrainingSectionContent(section);
 
   const task = tasks[current];
   if (!task) {
@@ -681,7 +957,7 @@ export default function ClockTrainingGame({ onFinish }: ClockTrainingGameProps):
   const resetSession = useCallback(
     (mode: ClockGameMode = gameMode): void => {
       setGameMode(mode);
-      setTasks(createClockTaskSet());
+      setTasks(createClockTaskSet(section));
       setCurrent(0);
       setScore(0);
       setFeedback(null);
@@ -693,7 +969,7 @@ export default function ClockTrainingGame({ onFinish }: ClockTrainingGameProps):
       setChallengeStreak(0);
       setChallengeBestStreak(0);
     },
-    [gameMode]
+    [gameMode, section]
   );
 
   const resolveAttempt = useCallback(
@@ -721,14 +997,11 @@ export default function ClockTrainingGame({ onFinish }: ClockTrainingGameProps):
           setChallengeBestStreak((value) => Math.max(value, nextStreak));
         }
         setFeedback(
-          feedbackOverride ?? {
-            kind: 'correct',
-            title: 'Brawo! Dobrze!',
-            details:
-              gameMode === 'challenge'
-                ? `Ustawiłeś/aś poprawnie: ${expectedTask.hours}:${pad(expectedTask.minutes)}. Seria: ${challengeStreak + 1}.`
-                : `Ustawiłeś/aś poprawnie: ${expectedTask.hours}:${pad(expectedTask.minutes)}.`,
-          }
+          feedbackOverride ??
+            buildClockCorrectFeedback(section, expectedTask, {
+              gameMode,
+              streak: challengeStreak + 1,
+            })
         );
       } else {
         if (gameMode === 'challenge') {
@@ -741,7 +1014,8 @@ export default function ClockTrainingGame({ onFinish }: ClockTrainingGameProps):
             actualHours,
             actualMinutes,
             expectedTask.hours,
-            expectedTask.minutes
+            expectedTask.minutes,
+            section
           );
 
         if (gameMode === 'practice') {
@@ -798,10 +1072,7 @@ export default function ClockTrainingGame({ onFinish }: ClockTrainingGameProps):
         actualMinutes: task.minutes,
         expectedTask: task,
         feedbackOverride: {
-          kind: 'wrong',
-          title: 'Czas minął!',
-          tone: 'far',
-          details: `Nie zdążyłeś/aś ustawić czasu. Poprawna godzina: ${task.hours}:${pad(task.minutes)}.`,
+          ...buildClockTimeoutFeedback(section, task),
         },
       });
       return;
@@ -839,6 +1110,14 @@ export default function ClockTrainingGame({ onFinish }: ClockTrainingGameProps):
           <p className='text-xs font-semibold text-indigo-600'>
             Tryb: {gameMode === 'challenge' ? 'Wyzwanie' : 'Nauka'}
           </p>
+          {section !== 'mixed' && (
+            <p
+              data-testid='clock-training-summary-section'
+              className='text-xs font-semibold text-slate-500'
+            >
+              Sekcja: {trainingSectionLabel}
+            </p>
+          )}
           {gameMode === 'challenge' && (
             <p
               data-testid='clock-challenge-summary'
@@ -858,9 +1137,7 @@ export default function ClockTrainingGame({ onFinish }: ClockTrainingGameProps):
             </KangurStatusChip>
           )}
           <p className='max-w-xs text-center text-slate-500'>
-            {score === tasks.length
-              ? 'Idealnie! Świetnie znasz zegar!'
-              : 'Ćwicz dalej, a będziesz mistrzem zegara!'}
+            {getClockTrainingSummaryMessage(section, score, tasks.length)}
           </p>
           <div className='flex gap-3'>
             <KangurButton onClick={() => resetSession(gameMode)} size='lg' variant='surface'>
@@ -903,6 +1180,35 @@ export default function ClockTrainingGame({ onFinish }: ClockTrainingGameProps):
           Tryb Wyzwanie
         </KangurButton>
       </div>
+      {section !== 'mixed' && (
+        <KangurStatusChip
+          accent='indigo'
+          className='text-xs font-semibold'
+          data-testid='clock-training-section-badge'
+        >
+          Sekcja: {trainingSectionLabel}
+        </KangurStatusChip>
+      )}
+      {section !== 'mixed' && (
+        <KangurInfoCard
+          accent={trainingSectionContent.accent}
+          className='w-full max-w-md'
+          data-testid='clock-training-guidance'
+          padding='md'
+          tone='accent'
+        >
+          <p
+            className='text-sm font-extrabold'
+            data-testid='clock-training-guidance-title'
+          >
+            {trainingSectionContent.guidanceTitle}
+          </p>
+          <p className='mt-2 text-sm font-semibold leading-relaxed'>
+            {trainingSectionContent.guidance}
+          </p>
+          <p className='mt-2 text-xs font-semibold opacity-80'>{trainingSectionContent.legend}</p>
+        </KangurInfoCard>
+      )}
       {gameMode === 'challenge' ? (
         <div className='inline-flex flex-wrap items-center gap-2'>
           <KangurStatusChip
@@ -948,13 +1254,13 @@ export default function ClockTrainingGame({ onFinish }: ClockTrainingGameProps):
         accent='amber'
         align='center'
         className='w-full max-w-md'
-        label='Ustaw zegar na godzinę'
+        label={trainingSectionContent.promptLabel}
         padding='md'
         title={`${task.hours}:${pad(task.minutes)}`}
         tone='accent'
       >
         <p data-testid='clock-task-prompt' className='text-xs font-semibold text-amber-700/80 mt-1'>
-          {buildClockTaskPrompt(task)}
+          {buildClockTaskPrompt(task, section)}
         </p>
       </KangurSummaryPanel>
 
@@ -999,6 +1305,7 @@ export default function ClockTrainingGame({ onFinish }: ClockTrainingGameProps):
           showChallengeRing={gameMode === 'challenge'}
           challengeTimeLeft={challengeTimeLeft}
           challengeTimeLimit={CHALLENGE_TIME_LIMIT_SECONDS}
+          section={section}
         />
       )}
     </div>

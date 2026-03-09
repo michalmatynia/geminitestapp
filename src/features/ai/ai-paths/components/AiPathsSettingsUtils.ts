@@ -35,13 +35,13 @@ import {
 } from '@/shared/lib/ai-paths';
 import type { DbQueryPayload } from '@/shared/lib/ai-paths/api/client';
 import {
-  findRemovedLegacyTriggerContextModesInPathConfig,
-  formatRemovedLegacyTriggerContextModesMessage,
-} from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
-import {
   findRemovedLegacyAiPathNodesInPathConfig,
   formatRemovedLegacyAiPathNodesMessage,
 } from '@/shared/lib/ai-paths/core/utils/legacy-node-removal';
+import {
+  findRemovedLegacyTriggerContextModesInPathConfig,
+  formatRemovedLegacyTriggerContextModesMessage,
+} from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
 
 type DatabaseOperation = 'query' | 'update' | 'insert' | 'delete';
 
@@ -359,6 +359,19 @@ const assertNoUnsupportedTriggerDataGraph = (nodes: AiNode[], edges: unknown[]):
 };
 
 export const sanitizePathConfig = (config: PathConfig): PathConfig => {
+  const removedLegacyTriggerContextModes =
+    findRemovedLegacyTriggerContextModesInPathConfig(config);
+  if (removedLegacyTriggerContextModes.length > 0) {
+    throw validationError(
+      formatRemovedLegacyTriggerContextModesMessage(removedLegacyTriggerContextModes),
+      {
+        source: 'ai_paths.path_config',
+        reason: 'removed_legacy_trigger_context_mode',
+        pathId: config.id,
+        removedTriggerContextModes: removedLegacyTriggerContextModes,
+      }
+    );
+  }
   const collectionAliasIssues = findPathConfigCollectionAliasIssues(config);
   if (collectionAliasIssues.length > 0) {
     throw validationError('AI Path config contains unsupported collection aliases.', {
@@ -377,19 +390,6 @@ export const sanitizePathConfig = (config: PathConfig): PathConfig => {
       pathId: config.id,
       removedNodes: removedLegacyNodes,
     });
-  }
-  const removedLegacyTriggerContextModes =
-    findRemovedLegacyTriggerContextModesInPathConfig(contractBackfilled);
-  if (removedLegacyTriggerContextModes.length > 0) {
-    throw validationError(
-      formatRemovedLegacyTriggerContextModesMessage(removedLegacyTriggerContextModes),
-      {
-        source: 'ai_paths.path_config',
-        reason: 'removed_legacy_trigger_context_mode',
-        pathId: config.id,
-        removedTriggerContextModes: removedLegacyTriggerContextModes,
-      }
-    );
   }
   const sanitizedNodes = contractBackfilled.nodes.map((node: AiNode): AiNode => {
     if (node.type !== 'database' || !node.config || typeof node.config !== 'object') {

@@ -19,7 +19,6 @@ import {
   aiNodeSchema,
   aiPathRunEnqueueResponseSchema,
   edgeSchema,
-  pathConfigSchema,
   type AiNode,
   type Edge,
   type PathConfig,
@@ -33,13 +32,14 @@ import {
   normalizeAiPathsValidationConfig,
   PATH_CONFIG_PREFIX,
   palette,
+  resolvePortablePathInput,
   sanitizeEdges,
   stableStringify,
   validateCanonicalPathNodeIdentities,
 } from '@/shared/lib/ai-paths';
 import { sanitizeTriggerPathConfig } from '@/shared/lib/ai-paths/core/normalization/trigger-normalization';
 import {
-  findRemovedLegacyTriggerContextModesInDocument,
+  findRemovedLegacyTriggerContextModes,
   formatRemovedLegacyTriggerContextModesMessage,
 } from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
@@ -119,29 +119,19 @@ const loadStoredPathConfig = async (pathId: string): Promise<PathConfig> => {
     throw badRequestError(`Stored AI Path config not found for "${pathId}".`);
   }
 
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw) as unknown;
-  } catch {
-    throw badRequestError(`Stored AI Path config for "${pathId}" is invalid JSON.`);
+  const resolvedConfig = resolvePortablePathInput(raw, {
+    repairIdentities: true,
+    includeConnections: false,
+    signingPolicyTelemetrySurface: 'api',
+    nodeCodeObjectHashVerificationMode: 'warn',
+  });
+  if (!resolvedConfig.ok) {
+    throw badRequestError(resolvedConfig.error);
   }
-  const removedLegacyTriggerContextModes = findRemovedLegacyTriggerContextModesInDocument(parsed);
-  if (removedLegacyTriggerContextModes.length > 0) {
-    throw badRequestError(
-      formatRemovedLegacyTriggerContextModesMessage(removedLegacyTriggerContextModes, {
-        surface: 'path config',
-      })
-    );
-  }
-
-  const validation = pathConfigSchema.safeParse(parsed);
-  if (!validation.success) {
-    throw badRequestError(`Stored AI Path config for "${pathId}" is invalid.`);
-  }
-  if (validation.data.id !== pathId) {
+  if (resolvedConfig.value.pathConfig.id !== pathId) {
     throw badRequestError(`Stored AI Path config id mismatch for "${pathId}".`);
   }
-  return sanitizeTriggerPathConfig(validation.data);
+  return sanitizeTriggerPathConfig(resolvedConfig.value.pathConfig);
 };
 
 export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
@@ -210,6 +200,15 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
   }
   if (!Array.isArray(resolvedNodesInput) || !Array.isArray(resolvedEdgesInput)) {
     throw badRequestError('Nodes and edges are required to enqueue a run.');
+  }
+  const removedLegacyTriggerContextModes =
+    findRemovedLegacyTriggerContextModes(resolvedNodesInput);
+  if (removedLegacyTriggerContextModes.length > 0) {
+    throw badRequestError(
+      formatRemovedLegacyTriggerContextModesMessage(removedLegacyTriggerContextModes, {
+        surface: 'run graph',
+      })
+    );
   }
 
   const normalizedNodes = normalizeNodes(resolvedNodesInput);

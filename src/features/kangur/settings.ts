@@ -1,4 +1,9 @@
 import {
+  KANGUR_TTS_DEFAULT_VOICE,
+  KANGUR_TTS_VOICE_OPTIONS,
+  type KangurLessonTtsVoice,
+} from '@/features/kangur/tts/contracts';
+import {
   KANGUR_LESSONS_SETTING_KEY,
   KANGUR_LESSON_DOCUMENTS_SETTING_KEY,
   kangurLessonContentModeSchema,
@@ -7,11 +12,6 @@ import {
   type KangurLessonComponentId,
   type KangurLessonContentMode,
 } from '@/shared/contracts/kangur';
-import {
-  KANGUR_TTS_DEFAULT_VOICE,
-  KANGUR_TTS_VOICE_OPTIONS,
-  type KangurLessonTtsVoice,
-} from '@/features/kangur/tts/contracts';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 export { KANGUR_LESSONS_SETTING_KEY, KANGUR_LESSON_DOCUMENTS_SETTING_KEY };
@@ -114,7 +114,7 @@ export const KANGUR_LESSON_LIBRARY: Record<KangurLessonComponentId, KangurLesson
     componentId: 'clock',
     label: 'Clock Lesson',
     title: 'Nauka zegara',
-    description: 'Odczytuj godziny z zegara analogowego',
+    description: 'Godziny, minuty i pełny czas na zegarze analogowym',
     emoji: '🕐',
     color: 'from-indigo-400 to-purple-500',
     activeBg: 'bg-indigo-500',

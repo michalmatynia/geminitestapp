@@ -1,13 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import {
   KangurButton,
   KangurEmptyState,
   KangurGlassPanel,
 } from '@/features/kangur/ui/design/primitives';
-import { useKangurLessonBackAction } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
+import {
+  useKangurLessonBackAction,
+  useKangurRegisterLessonSubsectionNavigation,
+} from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 import {
   KANGUR_PENDING_STEP_PILL_CLASSNAME,
   KANGUR_STEP_PILL_CLASSNAME,
@@ -38,9 +41,11 @@ export default function LessonSlideSection({
   dotDoneClass,
 }: LessonSlideSectionProps): React.JSX.Element {
   const handleBack = useKangurLessonBackAction(onBack);
+  const registerSubsectionNavigation = useKangurRegisterLessonSubsectionNavigation();
   const [slide, setSlide] = useState(0);
   const completionReportedRef = useRef(false);
   const isLast = slide === slides.length - 1;
+  const isFirst = slide === 0;
   const activeSlide = slides[slide];
 
   if (!activeSlide) {
@@ -68,6 +73,11 @@ export default function LessonSlideSection({
     completionReportedRef.current = true;
     onComplete?.();
   }, [isLast, onComplete]);
+
+  useEffect(() => {
+    const unregister = registerSubsectionNavigation();
+    return unregister;
+  }, [registerSubsectionNavigation]);
 
   return (
     <div className='flex w-full max-w-md flex-col items-center gap-4'>
@@ -121,6 +131,44 @@ export default function LessonSlideSection({
           </KangurGlassPanel>
         </motion.div>
       </AnimatePresence>
+
+      {slides.length > 1 ? (
+        <div className='flex w-full gap-3'>
+          {isFirst ? (
+            <div className='flex-1' />
+          ) : (
+            <KangurButton
+              onClick={() => setSlide((currentSlide) => Math.max(0, currentSlide - 1))}
+              className='flex-1 justify-start'
+              data-testid='lesson-slide-prev-button'
+              size='lg'
+              type='button'
+              variant='surface'
+            >
+              <ChevronLeft className='h-4 w-4 flex-shrink-0' />
+              <span>Poprzedni panel</span>
+            </KangurButton>
+          )}
+
+          {isLast ? (
+            <div className='flex-1' />
+          ) : (
+            <KangurButton
+              onClick={() =>
+                setSlide((currentSlide) => Math.min(slides.length - 1, currentSlide + 1))
+              }
+              className='flex-1 justify-end'
+              data-testid='lesson-slide-next-button'
+              size='lg'
+              type='button'
+              variant='surface'
+            >
+              <span>Nastepny panel</span>
+              <ChevronRight className='h-4 w-4 flex-shrink-0' />
+            </KangurButton>
+          )}
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -275,6 +275,35 @@ describe('sanitizePathConfig', () => {
     }
   );
 
+  it.each(['simulation_required', 'simulation_preferred'] as const)(
+    'rejects removed legacy trigger context mode %s',
+    (contextMode) => {
+      const config = createDefaultPathConfig(`path-legacy-trigger-context-${contextMode}`);
+      const seedNode = config.nodes[0] as AiNode | undefined;
+      if (!seedNode) {
+        throw new Error('Expected default path fixture to include at least one node.');
+      }
+      config.nodes = [
+        {
+          ...seedNode,
+          type: 'trigger',
+          title: 'Trigger',
+          inputs: ['context'],
+          outputs: ['trigger', 'context', 'entityId', 'entityType'],
+          config: {
+            trigger: {
+              event: 'manual',
+              contextMode,
+            },
+          },
+        } as AiNode,
+      ];
+      config.edges = [];
+
+      expect(() => sanitizePathConfig(config)).toThrowError(/removed legacy trigger context/i);
+    }
+  );
+
   it('backfills missing node createdAt/updatedAt timestamps', () => {
     const config = createDefaultPathConfig('path-missing-node-timestamps');
     const [firstNode, ...restNodes] = config.nodes;

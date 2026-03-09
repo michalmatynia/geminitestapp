@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { authError } from '@/shared/errors/app-error';
 
 const {
   ensureKangurLessonNarrationAudioMock,
@@ -205,24 +206,30 @@ describe('kangur tts handler', () => {
     );
   });
 
-  it('rejects unauthenticated access', async () => {
-    resolveKangurActorMock.mockRejectedValue(new Error('Authentication required.'));
+  it('allows unauthenticated lesson narration requests', async () => {
+    resolveKangurActorMock.mockRejectedValueOnce(authError('Authentication required.'));
 
-    await expect(
-      postKangurTtsHandler(
-        createPostRequest(
-          JSON.stringify({
-            script: {
-              lessonId: 'clock',
-              title: 'Nauka zegara',
-              locale: 'pl-PL',
-              segments: [{ id: 'clock-segment-1', text: 'Nauka zegara.' }],
-            },
-            voice: 'coral',
-          })
-        ),
-        createRequestContext()
-      )
-    ).rejects.toThrow('Authentication required.');
+    const response = await postKangurTtsHandler(
+      createPostRequest(
+        JSON.stringify({
+          script: {
+            lessonId: 'clock',
+            title: 'Nauka zegara',
+            locale: 'pl-PL',
+            segments: [{ id: 'clock-segment-1', text: 'Nauka zegara.' }],
+          },
+          voice: 'coral',
+        })
+      ),
+      createRequestContext()
+    );
+
+    expect(response.status).toBe(200);
+    expect(ensureKangurLessonNarrationAudioMock).toHaveBeenCalledTimes(1);
+    expect(logKangurServerEventMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actor: null,
+      })
+    );
   });
 });

@@ -1,5 +1,6 @@
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
+// Keep this list to explicit legacy hard-cut node types that must be rejected on load/run.
 export const REMOVED_LEGACY_AI_PATH_NODE_TYPES = [
   'description_updater',
 ] as const;

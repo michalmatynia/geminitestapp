@@ -33,7 +33,7 @@ describe('mongo product repository mappers', () => {
     expect(result.categoryId).toBe('category-1');
   });
 
-  it('normalizes duplicate parameter entries without preserving stale earlier values', () => {
+  it('normalizes duplicate parameter entries by merging sibling localized values', () => {
     const result = toProductResponse(asProductDocument({
       _id: 'product-params-1',
       id: 'product-params-1',
@@ -58,8 +58,8 @@ describe('mongo product repository mappers', () => {
     expect(result.parameters).toEqual([
       {
         parameterId: 'condition',
-        value: 'Uzywany',
-        valuesByLanguage: { pl: 'Uzywany' },
+        value: 'Nowy',
+        valuesByLanguage: { en: 'Nowy', pl: 'Uzywany' },
       },
     ]);
   });

@@ -2,6 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
+import { usePersistenceActions } from '@/features/ai/ai-paths/context/PersistenceContext';
+import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
+import { useSelectionActions } from '@/features/ai/ai-paths/context/SelectionContext';
 import type { PathConfig, PathMeta } from '@/shared/lib/ai-paths';
 import {
   AI_PATHS_HISTORY_RETENTION_KEY,
@@ -34,10 +38,9 @@ import {
   parseRuntimeState,
   sanitizePathConfig,
 } from '../AiPathsSettingsUtils';
-import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
-import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
-import { usePersistenceActions } from '@/features/ai/ai-paths/context/PersistenceContext';
-import { useSelectionActions } from '@/features/ai/ai-paths/context/SelectionContext';
+import { usePathPersistence } from './hooks/persistence/usePathPersistence';
+import { usePreferencePersistence } from './hooks/persistence/usePreferencePersistence';
+import { usePresetPersistence } from './hooks/persistence/usePresetPersistence';
 import {
   type AiPathsUiState,
   type PathSaveOptions,
@@ -46,9 +49,6 @@ import {
   resolvePreferredActivePathId,
 } from './useAiPathsPersistence.types';
 
-import { usePreferencePersistence } from './hooks/persistence/usePreferencePersistence';
-import { usePathPersistence } from './hooks/persistence/usePathPersistence';
-import { usePresetPersistence } from './hooks/persistence/usePresetPersistence';
 
 const PATH_CONFIG_PREFETCH_BATCH_SIZE = 3;
 const PATH_CONFIG_PREFETCH_IDLE_DELAY_MS = 250;

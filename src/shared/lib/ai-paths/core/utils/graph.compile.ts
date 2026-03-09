@@ -1,6 +1,6 @@
 import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 import type { DependencyInspectorOptions as CompileGraphOptions } from '@/shared/contracts/ai-paths-core/engine';
-import type { GraphCompileFinding, GraphCompileReport } from './graph.types';
+
 import { sanitizeEdges } from './graph.edges';
 import {
   getNodeInputPortCardinality,
@@ -14,6 +14,8 @@ import {
   getPortDataTypes,
   getPortDataTypesForValueKind,
 } from './port-types';
+
+import type { GraphCompileFinding, GraphCompileReport } from './graph.types';
 
 const resolvePortCompatibilityTypes = (
   node: AiNode,

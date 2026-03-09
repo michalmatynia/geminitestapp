@@ -141,6 +141,58 @@ describe('path-run-service enqueuePathRun', () => {
     expect(createRunMock).not.toHaveBeenCalled();
   });
 
+  it.each(['simulation_required', 'simulation_preferred'] as const)(
+    'rejects removed legacy trigger context mode %s during enqueue',
+    async (contextMode) => {
+      const config = createDefaultPathConfig(`path_removed_trigger_context_${contextMode}`);
+      const seedNode = config.nodes[0];
+      expect(seedNode).toBeDefined();
+      if (!seedNode) return;
+      const nodes = [
+        {
+          ...seedNode,
+          type: 'trigger',
+          title: 'Trigger',
+          inputs: ['context'],
+          outputs: ['trigger', 'context', 'entityId', 'entityType'],
+          config: {
+            trigger: {
+              event: 'manual',
+              contextMode,
+            },
+          },
+        },
+      ];
+
+      const createRunMock = vi.fn().mockResolvedValue({
+        id: `run-${contextMode}`,
+        pathId: config.id,
+        status: 'queued',
+        startedAt: null,
+        meta: null,
+      });
+      getPathRunRepositoryMock.mockResolvedValue({
+        listRuns: vi.fn().mockResolvedValue({ runs: [], total: 0 }),
+        createRun: createRunMock,
+        createRunNodes: vi.fn().mockResolvedValue(undefined),
+        createRunEvent: vi.fn().mockResolvedValue(undefined),
+        updateRunIfStatus: vi.fn().mockResolvedValue(null),
+      });
+
+      const { enqueuePathRun } = await loadModule();
+
+      await expect(
+        enqueuePathRun({
+          pathId: config.id,
+          pathName: config.name,
+          nodes,
+          edges: [],
+        })
+      ).rejects.toThrow(/removed legacy trigger context/i);
+      expect(createRunMock).not.toHaveBeenCalled();
+    }
+  );
+
   it('accepts canonical graphs without recording identity repair metadata', async () => {
     const config = createDefaultPathConfig('path_canonical_enqueue');
     const listRunsMock = vi.fn().mockResolvedValue({ runs: [], total: 0 });

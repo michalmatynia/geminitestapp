@@ -1,16 +1,19 @@
 import { useCallback, useRef } from 'react';
+
 import type { AiNode, RuntimeState, RuntimePortValues } from '@/shared/lib/ai-paths';
 import { TRIGGER_EVENTS, evaluateRunPreflight, stableStringify } from '@/shared/lib/ai-paths';
 
-import { buildTriggerContext, createRunId, mergeRuntimeNodeOutputsForStatus } from '../utils';
-
 import { evaluateLocalExecutionSecurity } from '../local-execution-security';
-import type { LocalExecutionArgs } from '../types';
 import {
+  buildSimulationOutputsFromContext,
   normalizeEntityType,
   readEntityIdFromContext,
   readEntityTypeFromContext,
 } from '../useAiPathsLocalExecution.helpers';
+import { buildTriggerContext, createRunId, mergeRuntimeNodeOutputsForStatus } from '../utils';
+
+import type { LocalExecutionArgs } from '../types';
+
 
 export function useLocalExecutionTriggers(
   args: LocalExecutionArgs,

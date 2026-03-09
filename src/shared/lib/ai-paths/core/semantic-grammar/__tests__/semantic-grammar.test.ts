@@ -45,6 +45,31 @@ describe('semantic grammar canvas serialization', () => {
     }
   });
 
+  it('rejects removed legacy trigger context modes in semantic canvas payloads', () => {
+    const config = createDefaultPathConfig('path_semantic_removed_trigger_context');
+    const semantic = serializePathConfigToSemanticCanvas(config);
+    const triggerNodeIndex = semantic.nodes.findIndex((node) => node.type === 'trigger');
+    expect(triggerNodeIndex).toBeGreaterThanOrEqual(0);
+    const triggerNode = triggerNodeIndex >= 0 ? semantic.nodes[triggerNodeIndex] : undefined;
+    expect(triggerNode).toBeDefined();
+    if (!triggerNode || triggerNodeIndex < 0) return;
+    semantic.nodes[triggerNodeIndex] = {
+      ...triggerNode,
+      config: {
+        ...(triggerNode.config ?? {}),
+        trigger: {
+          ...((triggerNode.config?.trigger as Record<string, unknown> | undefined) ?? {}),
+          contextMode: 'simulation_preferred',
+        },
+      },
+    };
+
+    const parsed = parseAndDeserializeSemanticCanvas(semantic);
+    expect(parsed.ok).toBe(false);
+    if (parsed.ok) return;
+    expect(parsed.error).toMatch(/removed legacy trigger context/i);
+  });
+
   it('does not upgrade alias-only edge fields during semantic serialization', () => {
     const config = createDefaultPathConfig('path_semantic_alias_only_edge');
     const fromNode = config.nodes[0]!;

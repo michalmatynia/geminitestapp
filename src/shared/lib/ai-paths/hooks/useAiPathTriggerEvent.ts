@@ -133,7 +133,6 @@ export function useAiPathTriggerEvent(): {
         let selectedConfig: PathConfig | null = null;
         let uiState: Record<string, unknown> | null = null;
         let missingPreferredPathId: string | null = null;
-        let usedSingleActiveFallback = false;
         try {
           const selection = await resolveTriggerSelection(settingsData, triggerEventId, {
             preferredPathId: args.preferredPathId,
@@ -144,7 +143,6 @@ export function useAiPathTriggerEvent(): {
           selectedConfig = selection.selectedConfig;
           uiState = selection.uiState;
           missingPreferredPathId = selection.missingPreferredPathId;
-          usedSingleActiveFallback = selection.usedSingleActiveFallback;
         } catch (selectionError) {
           const message =
             selectionError instanceof Error
@@ -170,13 +168,6 @@ export function useAiPathTriggerEvent(): {
           return;
         }
         const selectionDurationMs = performance.now() - selectionStartedAt;
-
-        if (usedSingleActiveFallback && selectedConfig && missingPreferredPathId) {
-          toast(
-            `Trigger button path "${missingPreferredPathId}" no longer exists. Falling back to "${selectedConfig.name}".`,
-            { variant: 'warning' }
-          );
-        }
 
         if (!selectedConfig) {
           if (missingPreferredPathId) {

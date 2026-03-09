@@ -2,6 +2,7 @@ import 'server-only';
 
 import { productService } from '@/shared/lib/products/services/productService';
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
+import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import type {
   ProductParameter,
   ProductWithImages,
@@ -176,6 +177,24 @@ export class CachedProductService {
       ttl: 300000, // 5 minutes
       tags: (filters: ProductFilterInput = {}) => [
         'products:count',
+        ...ProductCacheHelpers.getTags.productList(filters),
+      ],
+    }
+  );
+
+  // Get matching product ids with caching
+  static getProductIds: (filters?: ProductFilterInput) => Promise<string[]> = withQueryCache(
+    async (filters: ProductFilterInput = {}) => {
+      const provider = await getProductDataProvider();
+      const repository = await getProductRepository(provider);
+      return repository.getProductIds(normalizeFilters(filters));
+    },
+    {
+      keyGenerator: (filters: ProductFilterInput = {}) =>
+        `products:ids:${stableStringify(filters)}`,
+      ttl: 180000, // 3 minutes
+      tags: (filters: ProductFilterInput = {}) => [
+        'products:ids',
         ...ProductCacheHelpers.getTags.productList(filters),
       ],
     }

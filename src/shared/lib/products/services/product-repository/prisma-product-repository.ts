@@ -21,9 +21,51 @@ import {
 import { buildProductWhere } from './prisma-product-repository.filters';
 import {
   toProductRecord,
+  toProductListRecord,
   toProductImageRecord,
   type FullPrismaProduct,
+  type SlimPrismaListProduct,
 } from './prisma-product-repository.mappers';
+
+const pagedProductListSelect = Prisma.validator<Prisma.ProductSelect>()({
+  id: true,
+  sku: true,
+  baseProductId: true,
+  defaultPriceGroupId: true,
+  ean: true,
+  gtin: true,
+  asin: true,
+  name_en: true,
+  name_pl: true,
+  name_de: true,
+  description_en: true,
+  description_pl: true,
+  description_de: true,
+  supplierName: true,
+  supplierLink: true,
+  priceComment: true,
+  stock: true,
+  price: true,
+  sizeLength: true,
+  sizeWidth: true,
+  weight: true,
+  length: true,
+  published: true,
+  catalogId: true,
+  parameters: true,
+  imageLinks: true,
+  noteIds: true,
+  createdAt: true,
+  updatedAt: true,
+  categories: {
+    select: { categoryId: true },
+  },
+  images: {
+    orderBy: { assignedAt: 'desc' },
+    take: 1,
+    include: { imageFile: true },
+  },
+});
 
 // ---------------------------------------------------------------------------
 // Repository Implementation
@@ -37,29 +79,23 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
 
     const products = await tx.product.findMany({
       where,
-      include: {
-        images: {
-          include: { imageFile: true },
-          orderBy: { assignedAt: 'asc' },
-        },
-
-        catalogs: {
-          include: {
-            catalog: {
-              include: { languages: { select: { languageId: true } } },
-            },
-          },
-        },
-        categories: { select: { categoryId: true } },
-        tags: { select: { productId: true, tagId: true, assignedAt: true } },
-        producers: { select: { productId: true, producerId: true, assignedAt: true } },
-      },
+      select: pagedProductListSelect,
       orderBy: { createdAt: 'desc' },
       skip: (page - 1) * pageSize,
       take: pageSize,
     });
 
-    return products.map((p) => toProductRecord(p as FullPrismaProduct));
+    return products.map((product) => toProductListRecord(product as SlimPrismaListProduct));
+  },
+
+  getProductIds: async (filters) => {
+    const where = buildProductWhere(filters);
+    const products = await tx.product.findMany({
+      where,
+      select: { id: true },
+      orderBy: { createdAt: 'desc' },
+    });
+    return products.map((product) => product.id);
   },
 
   countProducts: (filters) => tx.product.count({ where: buildProductWhere(filters) }),
@@ -71,22 +107,7 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
     const [rawProducts, total] = await Promise.all([
       tx.product.findMany({
         where,
-        include: {
-          images: {
-            include: { imageFile: true },
-            orderBy: { assignedAt: 'desc' },
-          },
-          catalogs: {
-            include: {
-              catalog: {
-                include: { languages: { select: { languageId: true } } },
-              },
-            },
-          },
-          categories: { select: { categoryId: true } },
-          tags: { select: { productId: true, tagId: true, assignedAt: true } },
-          producers: { select: { productId: true, producerId: true, assignedAt: true } },
-        },
+        select: pagedProductListSelect,
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * pageSize,
         take: pageSize,
@@ -94,7 +115,7 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
       tx.product.count({ where }),
     ]);
     return {
-      products: rawProducts.map((p) => toProductRecord(p as FullPrismaProduct)),
+      products: rawProducts.map((product) => toProductListRecord(product as SlimPrismaListProduct)),
       total,
     };
   },
@@ -599,6 +620,10 @@ async function getProductByIdInternal(tx: Prisma.TransactionClient, id: string) 
 export const prismaProductRepository: ProductRepository = {
   async getProducts(filters: ProductFilters) {
     return createTransactionalRepository(prisma).getProducts(filters);
+  },
+
+  async getProductIds(filters: ProductFilters) {
+    return createTransactionalRepository(prisma).getProductIds(filters);
   },
 
   async countProducts(filters: ProductFilters) {

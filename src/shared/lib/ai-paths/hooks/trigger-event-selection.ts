@@ -13,7 +13,6 @@ export const selectTriggerCandidates = <T extends TriggerSelectionCandidate>(arg
   activeTriggerCandidates: T[];
   selectedConfig: T | null;
   missingPreferredPathId: string | null;
-  usedSingleActiveFallback: boolean;
 } => {
   const { triggerCandidates, preferredPathId, activePathId } = args;
   const activeTriggerCandidates: T[] = triggerCandidates.filter(
@@ -30,16 +29,6 @@ export const selectTriggerCandidates = <T extends TriggerSelectionCandidate>(arg
         activeTriggerCandidates,
         selectedConfig: preferredByButton,
         missingPreferredPathId: null,
-        usedSingleActiveFallback: false,
-      };
-    }
-
-    if (activeTriggerCandidates.length === 1) {
-      return {
-        activeTriggerCandidates,
-        selectedConfig: activeTriggerCandidates[0] ?? null,
-        missingPreferredPathId: preferredPathId,
-        usedSingleActiveFallback: true,
       };
     }
 
@@ -47,7 +36,6 @@ export const selectTriggerCandidates = <T extends TriggerSelectionCandidate>(arg
       activeTriggerCandidates,
       selectedConfig: null,
       missingPreferredPathId: preferredPathId,
-      usedSingleActiveFallback: false,
     };
   }
 
@@ -60,7 +48,6 @@ export const selectTriggerCandidates = <T extends TriggerSelectionCandidate>(arg
       activeTriggerCandidates,
       selectedConfig: null,
       missingPreferredPathId: null,
-      usedSingleActiveFallback: false,
     };
   }
 
@@ -69,7 +56,6 @@ export const selectTriggerCandidates = <T extends TriggerSelectionCandidate>(arg
     selectedConfig:
       preferredByActivePath ?? activeTriggerCandidates[0] ?? triggerCandidates[0] ?? null,
     missingPreferredPathId: null,
-    usedSingleActiveFallback: false,
   };
 };
 
@@ -86,7 +72,6 @@ export const resolveTriggerSelection = async (
   selectedConfig: PathConfig | null;
   uiState: Record<string, unknown> | null;
   missingPreferredPathId: string | null;
-  usedSingleActiveFallback: boolean;
 }> => {
   const { configs, settingsPathOrder } = await loadPathConfigsFromSettings(settingsData);
   const configsList: PathConfig[] = Object.values(configs);
@@ -145,6 +130,5 @@ export const resolveTriggerSelection = async (
     selectedConfig: selection.selectedConfig,
     uiState,
     missingPreferredPathId: selection.missingPreferredPathId,
-    usedSingleActiveFallback: selection.usedSingleActiveFallback,
   };
 };

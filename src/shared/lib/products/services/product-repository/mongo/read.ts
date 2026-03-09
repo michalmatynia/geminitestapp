@@ -45,19 +45,6 @@ export const buildListProjectStage = (filters: ProductFilters): Document | null 
         },
       },
     },
-    catalogs: {
-      $map: {
-        input: { $slice: ['$catalogs', 1] },
-        as: 'catalog',
-        in: {
-          catalogId: '$$catalog.catalogId',
-          assignedAt: '$$catalog.assignedAt',
-          catalog: {
-            id: '$$catalog.catalog.id',
-          },
-        },
-      },
-    },
   };
 };
 
@@ -98,6 +85,26 @@ export const mongoProductReadImpl = {
     const docs = await cursor.toArray();
 
     return docs.map((doc) => toProductResponse(doc));
+  },
+
+  async getProductIds(
+    filters: ProductFilters,
+    getCollection: () => Promise<Collection<ProductDocument>>
+  ): Promise<string[]> {
+    const collection = await getCollection();
+    const searchFilter = await buildMongoWhere(filters);
+    let cursor = collection
+      .find(searchFilter, { projection: { _id: 0, id: 1 } })
+      .sort({ createdAt: -1 });
+
+    if (isEmptyFilter(searchFilter)) {
+      cursor = cursor.hint({ createdAt: -1 });
+    }
+
+    const docs = await cursor.toArray();
+    return docs
+      .map((doc) => (typeof doc.id === 'string' && doc.id.trim().length > 0 ? doc.id.trim() : null))
+      .filter((id): id is string => id !== null);
   },
 
   async countProducts(

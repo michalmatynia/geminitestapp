@@ -143,11 +143,11 @@ test.describe('Products cache freshness', () => {
     const now = new Date().toISOString();
     let triggerButtonsPhase: 1 | 2 = 1;
 
-    const legacyButton = createModalTriggerButton('trigger-legacy', 'Legacy Modal Trigger', now);
+    const staleButton = createModalTriggerButton('trigger-stale', 'Stale Modal Trigger', now);
     const freshButton = createModalTriggerButton('trigger-fresh', 'Fresh Modal Trigger', now);
 
     await page.route('**/api/ai-paths/trigger-buttons**', async (route) => {
-      const payload = triggerButtonsPhase === 1 ? [legacyButton] : [freshButton];
+      const payload = triggerButtonsPhase === 1 ? [staleButton] : [freshButton];
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -160,7 +160,7 @@ test.describe('Products cache freshness', () => {
     await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible();
 
     const firstModal = await openCreateProductModal(page, `FRESH-A-${Date.now()}`);
-    await expect(firstModal.getByRole('button', { name: 'Legacy Modal Trigger' })).toBeVisible();
+    await expect(firstModal.getByRole('button', { name: 'Stale Modal Trigger' })).toBeVisible();
     await firstModal.getByRole('button', { name: 'Close', exact: true }).click();
     await expect(firstModal).not.toBeVisible({ timeout: 10_000 });
 
@@ -174,7 +174,7 @@ test.describe('Products cache freshness', () => {
     const secondModal = await openCreateProductModal(page, `FRESH-B-${Date.now()}`);
     await refetchPromise;
     await expect(secondModal.getByRole('button', { name: 'Fresh Modal Trigger' })).toBeVisible();
-    await expect(secondModal.getByRole('button', { name: 'Legacy Modal Trigger' })).toHaveCount(0);
+    await expect(secondModal.getByRole('button', { name: 'Stale Modal Trigger' })).toHaveCount(0);
   });
 
   test('shows newly available products after navigating back to All Products', async ({ page }) => {

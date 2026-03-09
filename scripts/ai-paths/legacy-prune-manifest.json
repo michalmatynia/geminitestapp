@@ -43,10 +43,10 @@
     },
     {
       "id": "loaded_path_settings_edge_alias_shape",
-      "description": "Loaded-path sanitizer must parse edges using canonical from/fromPort only.",
+      "description": "Trigger payload sanitizer must parse edges using canonical from/fromPort only.",
       "targets": [
         {
-          "file": "src/features/products/hooks/useAiPathSettings.ts",
+          "file": "src/shared/lib/ai-paths/core/normalization/trigger-normalization.ts",
           "forbiddenSnippets": [
             "const source = typeof edge['source'] === 'string' ? edge['source'].trim() : '';",
             "const sourceHandle = typeof edge['sourceHandle'] === 'string' ? edge['sourceHandle'].trim() : '';",
@@ -201,7 +201,7 @@
           ]
         },
         {
-          "file": "src/features/products/hooks/useAiPathSettings.ts",
+          "file": "src/shared/lib/ai-paths/core/normalization/trigger-normalization.ts",
           "forbiddenSnippets": [
             "AI Path config contains deprecated parameter inference target path.",
             "reason: 'deprecated_parameter_inference_target_path'"
@@ -717,7 +717,7 @@
           ]
         },
         {
-          "file": "src/features/products/hooks/useAiPathSettings.ts",
+          "file": "src/shared/lib/ai-paths/core/normalization/trigger-normalization.ts",
           "forbiddenSnippets": [
             "contains deprecated database schemaSnapshot",
             "contains deprecated database query provider \"all\"",
@@ -725,8 +725,8 @@
             "reason: 'deprecated_database_query_provider'"
           ],
           "requiredSnippets": [
-            "AI Path config contains unsupported database schemaSnapshot.",
-            "AI Path config contains unsupported database query provider \"all\".",
+            "AI Path trigger payload contains unsupported database schemaSnapshot.",
+            "AI Path trigger payload contains unsupported database query provider \"all\".",
             "reason: 'unsupported_database_schema_snapshot'",
             "reason: 'unsupported_database_query_provider'"
           ],
@@ -789,7 +789,7 @@
           ]
         },
         {
-          "file": "src/features/products/hooks/useAiPathSettings.ts",
+          "file": "src/shared/lib/ai-paths/core/normalization/trigger-normalization.ts",
           "forbiddenSnippets": [
             "reason: 'deprecated_trigger_outputs'",
             "reason: 'deprecated_trigger_data_edge'",
@@ -879,7 +879,7 @@
           ]
         },
         {
-          "file": "src/features/products/hooks/useAiPathSettings.ts",
+          "file": "src/shared/lib/ai-paths/core/normalization/trigger-normalization.ts",
           "forbiddenSnippets": [
             "reason: 'deprecated_node_identities'"
           ],
@@ -1618,7 +1618,6 @@
             "repair_path_index",
             "ensure_starter_workflow_defaults",
             "refresh_starter_workflow_configs",
-            "repair_trigger_button_bindings",
             "normalize_runtime_kernel_settings"
           ]
         }

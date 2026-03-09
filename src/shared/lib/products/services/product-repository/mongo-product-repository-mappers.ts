@@ -1,4 +1,9 @@
 import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
+import {
+  mergeProductParameterValue,
+  normalizeParameterValuesByLanguage,
+  resolveStoredParameterValue,
+} from '@/shared/lib/products/utils/parameter-values';
 import { validationError } from '@/shared/errors/app-error';
 import type {
   ProductParameterValue,
@@ -104,15 +109,6 @@ const resolveCanonicalCategoryId = (doc: ProductDocument, productId: string): st
 
 const normalizeParameterValues = (input: unknown): ProductParameterValue[] => {
   if (!Array.isArray(input)) return [];
-  const resolvePrimaryLocalizedValue = (map: Record<string, string>): string =>
-    map['default'] ||
-    map['en'] ||
-    map['pl'] ||
-    map['de'] ||
-    Object.values(map).find(
-      (entry: string): boolean => typeof entry === 'string' && entry.length > 0
-    ) ||
-    '';
   const byParameterId = new Map<string, ProductParameterValue>();
   input.forEach((entry: unknown) => {
     if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return;
@@ -122,27 +118,22 @@ const normalizeParameterValues = (input: unknown): ProductParameterValue[] => {
     );
     if (!parameterId) return;
     const value = typeof record['value'] === 'string' ? record['value'].trim() : '';
-    const valuesByLanguageRaw = record['valuesByLanguage'];
-    const valuesByLanguage =
-      valuesByLanguageRaw &&
-      typeof valuesByLanguageRaw === 'object' &&
-      !Array.isArray(valuesByLanguageRaw)
-        ? Object.entries(valuesByLanguageRaw as Record<string, unknown>).reduce(
-          (acc: Record<string, string>, [languageCode, languageValue]) => {
-            const normalizedCode = toTrimmedString(languageCode)?.toLowerCase();
-            if (!normalizedCode || typeof languageValue !== 'string') return acc;
-            acc[normalizedCode] = languageValue;
-            return acc;
-          },
-          {}
-        )
-        : {};
-    const resolvedValue = value || resolvePrimaryLocalizedValue(valuesByLanguage) || '';
-    byParameterId.set(parameterId, {
+    const valuesByLanguage = normalizeParameterValuesByLanguage(record['valuesByLanguage']);
+    const hasLocalizedValues = Object.keys(valuesByLanguage).length > 0;
+    const existingEntry = byParameterId.get(parameterId);
+    byParameterId.set(
       parameterId,
-      value: resolvedValue,
-      ...(Object.keys(valuesByLanguage).length > 0 ? { valuesByLanguage } : {}),
-    });
+      hasLocalizedValues
+        ? mergeProductParameterValue(existingEntry, {
+          parameterId,
+          value,
+          valuesByLanguage,
+        })
+        : {
+          parameterId,
+          value: resolveStoredParameterValue({}, value),
+        }
+    );
   });
   return Array.from(byParameterId.values());
 };

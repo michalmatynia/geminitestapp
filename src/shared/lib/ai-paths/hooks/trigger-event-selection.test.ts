@@ -16,7 +16,6 @@ describe('selectTriggerCandidates', () => {
     });
     expect(result.selectedConfig?.id).toBe('path-b');
     expect(result.missingPreferredPathId).toBeNull();
-    expect(result.usedSingleActiveFallback).toBe(false);
   });
 
   it('selects the preferred path even when it is inactive', () => {
@@ -28,21 +27,19 @@ describe('selectTriggerCandidates', () => {
     });
     expect(result.selectedConfig?.id).toBe('path-a');
     expect(result.missingPreferredPathId).toBeNull();
-    expect(result.usedSingleActiveFallback).toBe(false);
   });
 
-  // ── preferred path missing — single active fallback ───────────────────────
+  // ── preferred path missing — strict failure ───────────────────────────────
 
-  it('falls back to the sole active candidate when preferred path is missing', () => {
+  it('returns null when preferred path is missing even if a single active candidate exists', () => {
     const candidates = [cfg('path-a', false), cfg('path-b')];
     const result = selectTriggerCandidates({
       triggerCandidates: candidates,
       preferredPathId: 'path-missing',
       activePathId: null,
     });
-    expect(result.selectedConfig?.id).toBe('path-b');
+    expect(result.selectedConfig).toBeNull();
     expect(result.missingPreferredPathId).toBe('path-missing');
-    expect(result.usedSingleActiveFallback).toBe(true);
   });
 
   // ── preferred path missing — multiple active, ambiguous ───────────────────
@@ -56,7 +53,6 @@ describe('selectTriggerCandidates', () => {
     });
     expect(result.selectedConfig).toBeNull();
     expect(result.missingPreferredPathId).toBe('path-missing');
-    expect(result.usedSingleActiveFallback).toBe(false);
   });
 
   // ── no preferred path — activePathId resolution ───────────────────────────
@@ -70,7 +66,6 @@ describe('selectTriggerCandidates', () => {
     });
     expect(result.selectedConfig?.id).toBe('path-c');
     expect(result.missingPreferredPathId).toBeNull();
-    expect(result.usedSingleActiveFallback).toBe(false);
   });
 
   it('returns null when multiple active candidates exist and none matches activePathId', () => {

@@ -661,7 +661,7 @@ describe('compileGraph', () => {
     );
   });
 
-  it('warns when trigger requires simulation context but no simulation edge exists', () => {
+  it('does not emit trigger_context_resolution_risk for canonical trigger-only graphs', () => {
     const nodes: AiNode[] = [
       buildNode({
         id: 'trigger-1',
@@ -672,177 +672,7 @@ describe('compileGraph', () => {
         config: {
           trigger: {
             event: 'manual',
-            contextMode: 'simulation_required',
-          },
-        },
-      }),
-    ];
-    const edges: Edge[] = [];
-
-    const report = compileGraph(nodes, edges);
-    const finding = report.findings.find(
-      (item) => item.code === 'trigger_context_resolution_risk' && item.nodeId === 'trigger-1'
-    );
-    expect(finding).toBeDefined();
-    expect(finding?.message).toContain('requires simulation context');
-    expect(finding?.message).toContain('no simulation-capable source');
-  });
-
-  it('warns when trigger requires simulation context but simulation source is manual-only', () => {
-    const nodes: AiNode[] = [
-      buildNode({
-        id: 'trigger-1',
-        type: 'trigger',
-        title: 'Trigger',
-        inputs: ['context'],
-        outputs: ['trigger', 'context'],
-        config: {
-          trigger: {
-            event: 'manual',
-            contextMode: 'simulation_required',
-          },
-        },
-      }),
-      buildNode({
-        id: 'simulation-1',
-        type: 'simulation',
-        title: 'Simulation',
-        inputs: ['trigger'],
-        outputs: ['context'],
-        config: {
-          simulation: {
-            entityType: 'product',
-            entityId: 'product-1',
-            productId: 'product-1',
-            runBehavior: 'manual_only',
-          },
-        },
-      }),
-    ];
-    const edges: Edge[] = [
-      {
-        id: 'edge-simulation-to-trigger',
-        from: 'simulation-1',
-        to: 'trigger-1',
-        fromPort: 'context',
-        toPort: 'context',
-      },
-    ];
-
-    const report = compileGraph(nodes, edges);
-    const finding = report.findings.find(
-      (item) => item.code === 'trigger_context_resolution_risk' && item.nodeId === 'trigger-1'
-    );
-    expect(finding).toBeDefined();
-    expect(finding?.message).toContain('manual-only');
-    expect(finding?.message).toContain('Auto-run before connected Trigger');
-  });
-
-  it('does not warn trigger_context_resolution_risk when trigger-required simulation has an auto-run source', () => {
-    const nodes: AiNode[] = [
-      buildNode({
-        id: 'trigger-1',
-        type: 'trigger',
-        title: 'Trigger',
-        inputs: ['context'],
-        outputs: ['trigger', 'context'],
-        config: {
-          trigger: {
-            event: 'manual',
-            contextMode: 'simulation_required',
-          },
-        },
-      }),
-      buildNode({
-        id: 'simulation-1',
-        type: 'simulation',
-        title: 'Simulation',
-        inputs: ['trigger'],
-        outputs: ['context'],
-        config: {
-          simulation: {
-            entityType: 'product',
-            entityId: 'product-1',
-            productId: 'product-1',
-            runBehavior: 'before_connected_trigger',
-          },
-        },
-      }),
-    ];
-    const edges: Edge[] = [
-      {
-        id: 'edge-simulation-to-trigger',
-        from: 'simulation-1',
-        to: 'trigger-1',
-        fromPort: 'context',
-        toPort: 'context',
-      },
-    ];
-
-    const report = compileGraph(nodes, edges);
-    expect(
-      report.findings.some((finding) => finding.code === 'trigger_context_resolution_risk')
-    ).toBe(false);
-  });
-
-  it('does not warn trigger_context_resolution_risk when trigger-required simulation uses fetcher simulation mode', () => {
-    const nodes: AiNode[] = [
-      buildNode({
-        id: 'trigger-1',
-        type: 'trigger',
-        title: 'Trigger',
-        inputs: ['context'],
-        outputs: ['trigger', 'context'],
-        config: {
-          trigger: {
-            event: 'manual',
-            contextMode: 'simulation_required',
-          },
-        },
-      }),
-      buildNode({
-        id: 'fetcher-1',
-        type: 'fetcher',
-        title: 'Fetcher',
-        inputs: ['trigger'],
-        outputs: ['context'],
-        config: {
-          fetcher: {
-            sourceMode: 'simulation_id',
-            entityType: 'product',
-            entityId: 'product-1',
-          },
-        },
-      }),
-    ];
-    const edges: Edge[] = [
-      {
-        id: 'edge-trigger-fetcher',
-        from: 'trigger-1',
-        to: 'fetcher-1',
-        fromPort: 'trigger',
-        toPort: 'trigger',
-      },
-    ];
-
-    const report = compileGraph(nodes, edges);
-    expect(
-      report.findings.some((finding) => finding.code === 'trigger_context_resolution_risk')
-    ).toBe(false);
-  });
-
-  it('warns when trigger requires simulation context and only live-context fetcher is connected', () => {
-    const nodes: AiNode[] = [
-      buildNode({
-        id: 'trigger-1',
-        type: 'trigger',
-        title: 'Trigger',
-        inputs: ['context'],
-        outputs: ['trigger', 'context'],
-        config: {
-          trigger: {
-            event: 'manual',
-            contextMode: 'simulation_required',
+            contextMode: 'trigger_only',
           },
         },
       }),
@@ -870,12 +700,9 @@ describe('compileGraph', () => {
     ];
 
     const report = compileGraph(nodes, edges);
-    const finding = report.findings.find(
-      (item) => item.code === 'trigger_context_resolution_risk' && item.nodeId === 'trigger-1'
-    );
-    expect(finding).toBeDefined();
-    expect(finding?.message).toContain('no simulation-capable source');
-    expect(finding?.message).toContain('Trigger -> Fetcher');
+    expect(
+      report.findings.some((finding) => finding.code === 'trigger_context_resolution_risk')
+    ).toBe(false);
   });
 
   it('drops legacy Trigger.context -> Fetcher.context wiring and reports missing required trigger input', () => {

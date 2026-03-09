@@ -18,6 +18,7 @@ export const buildWeeklyReportSummaryJsonDetails = (
 ) => ({
   includeE2E: report.includeE2E,
   strictMode: report.strictMode,
+  checkSelection: report.checkSelection ?? null,
   passRates: report.passRates,
   durationAlerts: report.durationAlerts,
   checks: report.checks.map((check) =>

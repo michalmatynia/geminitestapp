@@ -11,19 +11,13 @@ import {
 } from '@/features/kangur/services/guest-kangur-scores';
 
 const {
-  signOutMock,
   withCsrfHeadersMock,
   logKangurClientErrorMock,
   trackKangurClientEventMock,
 } = vi.hoisted(() => ({
-  signOutMock: vi.fn(),
   withCsrfHeadersMock: vi.fn(),
   logKangurClientErrorMock: vi.fn(),
   trackKangurClientEventMock: vi.fn(),
-}));
-
-vi.mock('next-auth/react', () => ({
-  signOut: signOutMock,
 }));
 
 vi.mock('@/shared/lib/security/csrf-client', () => ({
@@ -127,7 +121,6 @@ describe('createLocalKangurPlatform auth navigation', () => {
   });
 
   it('starts a fresh guest score session on logout', async () => {
-    signOutMock.mockResolvedValue(undefined);
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
@@ -152,6 +145,35 @@ describe('createLocalKangurPlatform auth navigation', () => {
 
     expect(hasGuestKangurScores()).toBe(false);
     expect(getGuestKangurScoreSessionKey()).not.toBe(previousSessionKey);
-    expect(signOutMock).toHaveBeenCalledWith({ redirect: false });
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/kangur/auth/logout',
+      expect.objectContaining({
+        method: 'POST',
+        credentials: 'same-origin',
+      })
+    );
+  });
+
+  it('reloads the current Kangur page after server logout when a return URL is provided', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { createLocalKangurPlatform } =
+      await import('@/features/kangur/services/local-kangur-platform');
+    const platform = createLocalKangurPlatform();
+
+    await platform.auth.logout(window.location.href);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/kangur/auth/logout',
+      expect.objectContaining({
+        method: 'POST',
+        credentials: 'same-origin',
+      })
+    );
+    expect(window.location.assign).toHaveBeenCalledWith(window.location.href);
   });
 });

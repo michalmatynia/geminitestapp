@@ -47,7 +47,9 @@ export function useProducts(
     queryKey,
     queryFn,
     staleTime: PRODUCTS_STALE_MS,
-    refetchOnMount: true,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
     enabled: options?.enabled ?? true,
     transformError: (error: unknown): Error =>
       error instanceof Error ? error : new Error('Failed to load products.'),
@@ -76,7 +78,9 @@ export function useProductsCount(
     queryKey,
     queryFn,
     staleTime: PRODUCTS_STALE_MS,
-    refetchOnMount: true,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
     enabled: options?.enabled ?? true,
     transformError: (error: unknown): Error =>
       error instanceof Error ? error : new Error('Failed to load products count.'),
@@ -119,7 +123,9 @@ export function useProductsWithCount(
       return { items: products, total };
     },
     staleTime: PRODUCTS_STALE_MS,
-    refetchOnMount: true,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
     enabled,
     transformError: (error: unknown): Error =>
       error instanceof Error ? error : new Error('Failed to load products.'),

@@ -49,7 +49,11 @@ export const countLessonsRequiringLegacyImport = (
   lessons: readonly KangurLesson[],
   lessonDocuments: ReturnType<typeof parseKangurLessonDocumentStore>
 ): number =>
-  lessons.filter((lesson) => !hasKangurLessonDocumentContent(lessonDocuments[lesson.id])).length;
+  lessons.filter(
+    (lesson) =>
+      lesson.contentMode !== 'document' &&
+      !hasKangurLessonDocumentContent(lessonDocuments[lesson.id])
+  ).length;
 
 export const moveItem = <T>(items: readonly T[], fromIndex: number, toIndex: number): T[] => {
   if (toIndex < 0 || toIndex >= items.length || fromIndex === toIndex) {

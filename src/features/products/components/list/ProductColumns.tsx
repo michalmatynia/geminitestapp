@@ -1,18 +1,17 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { memo } from 'react';
 
 import { ArrowUpDown, Download } from 'lucide-react';
 
-import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
-import {
-  fetchProductListings,
-  productListingsQueryKey,
-} from '@/shared/lib/product-integrations-adapter';
 import { ProductImageCell } from '@/features/products/components/cells/ProductImageCell';
 import { EditableCell } from '@/features/products/components/EditableCell';
-import { useProductListActionsContext } from '@/features/products/context/ProductListContext';
+import {
+  useProductListRowActionsContext,
+  useProductListRowVisualsContext,
+} from '@/features/products/context/ProductListContext';
 import { resolveProductImageUrl } from '@/shared/utils/image-routing';
 import {
   calculatePriceForCurrency,
@@ -33,8 +32,52 @@ import {
   getImageFilepath,
   resolveProductCategoryId,
 } from './columns/product-column-utils';
-import { BaseQuickExportButton } from './columns/buttons/BaseQuickExportButton';
-import { TraderaStatusButton } from './columns/buttons/TraderaStatusButton';
+
+const TriggerButtonBar = dynamic(
+  () =>
+    import('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar').then(
+      (
+        mod: typeof import('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar')
+      ) => mod.TriggerButtonBar
+    ),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);
+
+type ProductIntegrationsAdapterModule = typeof import('@/shared/lib/product-integrations-adapter');
+
+let productIntegrationsAdapterPromise: Promise<ProductIntegrationsAdapterModule> | null = null;
+
+const loadProductIntegrationsAdapter = (): Promise<ProductIntegrationsAdapterModule> => {
+  if (!productIntegrationsAdapterPromise) {
+    productIntegrationsAdapterPromise = import('@/shared/lib/product-integrations-adapter');
+  }
+  return productIntegrationsAdapterPromise;
+};
+
+const BaseQuickExportButton = dynamic(
+  () =>
+    import('./columns/buttons/BaseQuickExportButton').then(
+      (mod: typeof import('./columns/buttons/BaseQuickExportButton')) => mod.BaseQuickExportButton
+    ),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);
+
+const TraderaStatusButton = dynamic(
+  () =>
+    import('./columns/buttons/TraderaStatusButton').then(
+      (mod: typeof import('./columns/buttons/TraderaStatusButton')) => mod.TraderaStatusButton
+    ),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);
 
 export type Product = ProductWithImages;
 
@@ -76,10 +119,12 @@ interface ColumnActionsProps {
   row: Row<ProductWithImages>;
 }
 
-const ActionsCell: React.FC<ColumnActionsProps> = ({ row }: ColumnActionsProps) => {
+const ActionsCell: React.FC<ColumnActionsProps> = memo(function ActionsCell({
+  row,
+}: ColumnActionsProps) {
   const product: ProductWithImages = row.original;
   const { onProductEditClick, onProductDeleteClick, onDuplicateProduct, onPrefetchProductDetail } =
-    useProductListActionsContext();
+    useProductListRowActionsContext();
 
   return (
     <div className='flex justify-end' onMouseEnter={() => onPrefetchProductDetail(product.id)}>
@@ -114,11 +159,11 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({ row }: ColumnActionsProps) 
       </ActionMenu>
     </div>
   );
-};
+});
 
 const ImageCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function ImageCell({ row }) {
   const product: ProductWithImages = row.original;
-  const { thumbnailSource, imageExternalBaseUrl } = useProductListActionsContext();
+  const { thumbnailSource, imageExternalBaseUrl } = useProductListRowVisualsContext();
 
   const firstFileImage: string | undefined = product.images
     ?.map((img) => getImageFilepath(img.imageFile))
@@ -153,8 +198,8 @@ const ImageCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function Image
 
 const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCell({ row }) {
   const product: ProductWithImages = row.original;
-  const { productNameKey, onProductNameClick, queuedProductIds, categoryNameById } =
-    useProductListActionsContext();
+  const { onProductNameClick } = useProductListRowActionsContext();
+  const { productNameKey, queuedProductIds, categoryNameById } = useProductListRowVisualsContext();
 
   const nameKey = productNameKey ?? 'name_en';
   const nameValue =
@@ -238,7 +283,7 @@ const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCe
 
 const PriceCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function PriceCell({ row }) {
   const product: ProductWithImages = row.original;
-  const { currencyCode, priceGroups } = useProductListActionsContext();
+  const { currencyCode, priceGroups } = useProductListRowVisualsContext();
 
   const {
     price: displayPrice,
@@ -317,11 +362,13 @@ const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(functio
   const product: ProductWithImages = row.original;
   const {
     onIntegrationsClick: handleClick,
+  } = useProductListRowActionsContext();
+  const {
     integrationBadgeIds,
     integrationBadgeStatuses,
     traderaBadgeIds,
     traderaBadgeStatuses,
-  } = useProductListActionsContext();
+  } = useProductListRowVisualsContext();
 
   const queryClient = useQueryClient();
 
@@ -334,19 +381,23 @@ const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(functio
   const showTraderaBadge: boolean = traderaBadgeIds?.has(product.id) ?? false;
   const traderaStatus: string = traderaBadgeStatuses?.get(product.id) ?? 'not_started';
   const prefetchListings = (): void => {
-    void prefetchQueryV2(queryClient, {
-      queryKey: productListingsQueryKey(product.id),
-      queryFn: () => fetchProductListings(product.id),
-      staleTime: 30 * 1000,
-      meta: {
-        source: 'products.columns.integrations.prefetchListings',
-        operation: 'list',
-        resource: 'integrations.listings',
-        domain: 'integrations',
-        queryKey: productListingsQueryKey(product.id),
-        tags: ['integrations', 'listings', 'prefetch'],
-        description: 'Loads integrations listings.'},
-    })();
+    void loadProductIntegrationsAdapter().then(({ fetchProductListings, productListingsQueryKey }) => {
+      const queryKey = productListingsQueryKey(product.id);
+      void prefetchQueryV2(queryClient, {
+        queryKey,
+        queryFn: () => fetchProductListings(product.id),
+        staleTime: 30 * 1000,
+        meta: {
+          source: 'products.columns.integrations.prefetchListings',
+          operation: 'list',
+          resource: 'integrations.listings',
+          domain: 'integrations',
+          queryKey,
+          tags: ['integrations', 'listings', 'prefetch'],
+          description: 'Loads integrations listings.',
+        },
+      })();
+    });
   };
   return (
     <div className='inline-flex items-center gap-1'>
@@ -375,7 +426,7 @@ const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(functio
         location='product_row'
         entityType='product'
         entityId={product.id}
-        getEntityJson={(): Record<string, unknown> => ({ ...product })}
+        getEntityJson={(): Record<string, unknown> => product as unknown as Record<string, unknown>}
         className='[&_button]:h-8 [&_button]:px-2 [&_button]:text-[10px] [&_button]:font-black [&_button]:uppercase [&_button]:tracking-tight'
       />
       {showTraderaBadge && (

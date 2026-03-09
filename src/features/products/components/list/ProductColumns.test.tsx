@@ -3,13 +3,26 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { ProductWithImages } from '@/shared/contracts/products';
 
-const { useProductListActionsContextMock } = vi.hoisted(() => ({
+const {
+  useProductListActionsContextMock,
+  useProductListRowActionsContextMock,
+  useProductListRowVisualsContextMock,
+} = vi.hoisted(() => ({
   useProductListActionsContextMock: vi.fn(),
+  useProductListRowActionsContextMock: vi.fn(),
+  useProductListRowVisualsContextMock: vi.fn(),
 }));
 
-vi.mock('@/features/products/context/ProductListContext', () => ({
-  useProductListActionsContext: () => useProductListActionsContextMock(),
-}));
+vi.mock('@/features/products/context/ProductListContext', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@/features/products/context/ProductListContext')>();
+  return {
+    ...actual,
+    useProductListActionsContext: () => useProductListActionsContextMock(),
+    useProductListRowActionsContext: () => useProductListRowActionsContextMock(),
+    useProductListRowVisualsContext: () => useProductListRowVisualsContextMock(),
+  };
+});
 
 import { getProductColumns } from './ProductColumns';
 
@@ -60,7 +73,14 @@ describe('ProductColumns queued badge', () => {
     const product = createProduct();
     useProductListActionsContextMock.mockReturnValue({
       productNameKey: 'name_en',
+      queuedProductIds: new Set(['product-1']),
+      categoryNameById: new Map([['category-1', 'Keychains']]),
+    });
+    useProductListRowActionsContextMock.mockReturnValue({
       onProductNameClick: vi.fn(),
+    });
+    useProductListRowVisualsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
       queuedProductIds: new Set(['product-1']),
       categoryNameById: new Map([['category-1', 'Keychains']]),
     });
@@ -80,7 +100,14 @@ describe('ProductColumns queued badge', () => {
     const product = createProduct();
     useProductListActionsContextMock.mockReturnValue({
       productNameKey: 'name_en',
+      queuedProductIds: new Set<string>(),
+      categoryNameById: new Map([['category-1', 'Keychains']]),
+    });
+    useProductListRowActionsContextMock.mockReturnValue({
       onProductNameClick: vi.fn(),
+    });
+    useProductListRowVisualsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
       queuedProductIds: new Set<string>(),
       categoryNameById: new Map([['category-1', 'Keychains']]),
     });

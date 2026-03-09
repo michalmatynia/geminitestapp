@@ -25,18 +25,13 @@ const TERMINAL_RUN_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_
 const resolveTrackedProductRun = (detail: unknown): { runId: string; productId: string } | null => {
   const payload = parseAiPathRunEnqueuedEventPayload(detail);
   if (!payload) return null;
-  const normalizedEntityType =
-    typeof payload.entityType === 'string' ? payload.entityType.trim().toLowerCase() : null;
-  if (normalizedEntityType !== 'product') return null;
-  const normalizedProductId =
-    typeof payload.entityId === 'string' ? payload.entityId.trim() : null;
-  const normalizedRunId = typeof payload.runId === 'string' ? payload.runId.trim() : null;
-  if (!normalizedProductId || !normalizedRunId) {
+  if (payload.entityType !== 'product') return null;
+  if (!payload.entityId || !payload.runId) {
     return null;
   }
   return {
-    runId: normalizedRunId,
-    productId: normalizedProductId,
+    runId: payload.runId,
+    productId: payload.entityId,
   };
 };
 

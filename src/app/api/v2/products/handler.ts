@@ -74,13 +74,19 @@ export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Pr
   const forceFresh = fresh === true;
 
   try {
-    const providerStart = performance.now();
-    const provider = await getProductDataProvider();
-    timings['provider'] = performance.now() - providerStart;
-
     // Use CachedProductService for better performance, unless fresh data is explicitly requested.
+    let provider: Awaited<ReturnType<typeof getProductDataProvider>> | null = null;
     const products = forceFresh
-      ? await productService.getProducts(filters as ProductFiltersParsed, { timings, provider })
+      ? await (async () => {
+        const providerStart = performance.now();
+        const freshProvider = await getProductDataProvider();
+        provider = freshProvider;
+        timings['provider'] = performance.now() - providerStart;
+        return productService.getProducts(filters as ProductFiltersParsed, {
+          timings,
+          provider: freshProvider,
+        });
+      })()
       : await CachedProductService.getProducts(filters as ProductFiltersParsed);
 
     timings['total'] = ctx.getElapsedMs();
@@ -89,7 +95,7 @@ export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Pr
       await logSystemEvent({
         level: 'info',
         message: '[timing] products.GET',
-        context: { provider, ...timings },
+        context: { ...(provider ? { provider } : {}), ...timings },
       });
     }
 

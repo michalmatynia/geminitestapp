@@ -162,7 +162,7 @@ export function useBulkConvertImagesToBase64(): UpdateMutation<{ ok: boolean }, 
       tags: ['products', 'images', 'base64', 'bulk'],
       description: 'Converts product images to base64 in bulk.',
     },
-    invalidateKeys: [QUERY_KEYS.products.all],
+    invalidateKeys: [QUERY_KEYS.products.lists()],
   });
 }
 

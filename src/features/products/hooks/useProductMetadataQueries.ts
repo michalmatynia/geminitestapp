@@ -28,6 +28,14 @@ import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 
 export { productMetadataKeys };
 
+const STABLE_METADATA_STALE_MS = 10 * 60 * 1_000;
+const STABLE_METADATA_QUERY_OPTIONS = {
+  staleTime: STABLE_METADATA_STALE_MS,
+  refetchOnMount: false as const,
+  refetchOnWindowFocus: false as const,
+  refetchOnReconnect: false as const,
+};
+
 const flattenCategoryTree = (
   nodes: ProductCategoryWithChildren[],
   parentId: string | null = null
@@ -53,6 +61,7 @@ export function useCatalogs(): ListQuery<CatalogRecord> {
     queryKey,
     queryFn: async (): Promise<CatalogRecord[]> =>
       await api.get<CatalogRecord[]>('/api/v2/products/entities/catalogs'),
+    ...STABLE_METADATA_QUERY_OPTIONS,
     meta: {
       source: 'products.hooks.useCatalogs',
       operation: 'list',
@@ -76,6 +85,7 @@ export function useCategories(catalogId?: string): ListQuery<ProductCategory> {
       return flattenCategoryTree(tree);
     },
     enabled: Boolean(catalogId),
+    ...STABLE_METADATA_QUERY_OPTIONS,
     meta: {
       source: 'products.hooks.useMetadataCategories',
       operation: 'list',
@@ -98,6 +108,7 @@ export function useTags(catalogId?: string): ListQuery<ProductTag> {
       );
     },
     enabled: Boolean(catalogId),
+    ...STABLE_METADATA_QUERY_OPTIONS,
     meta: {
       source: 'products.hooks.useMetadataTags',
       operation: 'list',
@@ -119,6 +130,7 @@ export function useMultiTags(catalogIds: string[]): UseQueryResult<ProductTag[]>
           await api.get<ProductTag[]>(
             `/api/v2/products/tags?catalogId=${encodeURIComponent(catalogId)}`
           ),
+        ...STABLE_METADATA_QUERY_OPTIONS,
         meta: {
           source: 'products.hooks.useMultiTags',
           operation: 'list',
@@ -139,6 +151,7 @@ export function useProducers(): ListQuery<Producer> {
     queryKey,
     queryFn: async (): Promise<Producer[]> =>
       await api.get<Producer[]>('/api/v2/products/producers'),
+    ...STABLE_METADATA_QUERY_OPTIONS,
     meta: {
       source: 'products.hooks.useProducers',
       operation: 'list',
@@ -208,6 +221,7 @@ export function useParameters(catalogId?: string): ListQuery<ProductParameter> {
       });
     },
     enabled: Boolean(catalogId),
+    ...STABLE_METADATA_QUERY_OPTIONS,
     meta: {
       source: 'products.hooks.useParameters',
       operation: 'list',
@@ -230,6 +244,7 @@ export function useSimpleParameters(catalogId?: string): ListQuery<ProductSimple
       );
     },
     enabled: Boolean(catalogId),
+    ...STABLE_METADATA_QUERY_OPTIONS,
     meta: {
       source: 'products.hooks.useSimpleParameters',
       operation: 'list',
@@ -246,6 +261,7 @@ export function useLanguages(): ListQuery<Language> {
   return createListQueryV2({
     queryKey,
     queryFn: async (): Promise<Language[]> => getLanguages(),
+    ...STABLE_METADATA_QUERY_OPTIONS,
     meta: {
       source: 'products.hooks.useLanguages',
       operation: 'list',

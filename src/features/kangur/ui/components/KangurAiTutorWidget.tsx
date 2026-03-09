@@ -14,7 +14,7 @@ import {
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { X, Send, BrainCircuit } from 'lucide-react';
 
-import { getKangurLoginHref, KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
+import { KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
 import { resolveKangurAiTutorMotionPresetKind } from '@/features/kangur/settings-ai-tutor';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
@@ -1311,13 +1311,6 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
   const remainingMessages = usageSummary?.remainingMessages ?? null;
   const canSendMessages = remainingMessages !== 0;
   const basePath = routing?.basePath ?? KANGUR_BASE_PATH;
-  const loginHref = useMemo(() => {
-    if (typeof window === 'undefined') {
-      return getKangurLoginHref(basePath);
-    }
-
-    return getKangurLoginHref(basePath, window.location.href);
-  }, [basePath]);
   const isAnonymousVisitor = Boolean(
     mounted && authState && !authState.isLoadingAuth && !authState.isAuthenticated
   );
@@ -2426,7 +2419,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
                   </div>
                   <div className='mt-2 text-xs leading-relaxed text-slate-600'>
                     {guestIntroHelpVisible
-                      ? 'If you already have an account, open the login flow. If not, you can keep exploring the Kangur pages as a guest.'
+                      ? 'If you already have an account, open the login flow. If not, create a parent account and verify the email when you are ready.'
                       : 'This appears only once for a first-time anonymous visit on this device and network.'}
                   </div>
                 </div>
@@ -2446,14 +2439,19 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
                     type='button'
                     size='sm'
                     variant='surface'
+                    onClick={() => {
+                      authState?.navigateToLogin?.({ authMode: 'create-account' });
+                    }}
+                  >
+                    Create parent account
+                  </KangurButton>
+                  <KangurButton
+                    type='button'
+                    size='sm'
+                    variant='surface'
                     onClick={handleGuestIntroHelpClose}
                   >
                     Continue browsing
-                  </KangurButton>
-                  <KangurButton asChild type='button' size='sm' variant='surface'>
-                    <Link href={loginHref} targetPageKey='Home'>
-                      Login page
-                    </Link>
                   </KangurButton>
                 </div>
               ) : (

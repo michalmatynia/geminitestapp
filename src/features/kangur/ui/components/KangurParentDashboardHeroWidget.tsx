@@ -50,22 +50,37 @@ export function KangurParentDashboardHeroWidget({
       <KangurPageIntroCard
         accent='indigo'
         className='mx-auto w-full max-w-2xl'
-        description='Ten widok pokazuje prywatne postepy ucznia, wiec dostep wymaga zalogowanego konta.'
+        description='Ten widok pokazuje prywatne postepy ucznia, wiec dostep wymaga zalogowanego konta. Jesli nie masz jeszcze konta rodzica, utworz je bez opuszczania Kangura.'
         headingAs='h1'
         onBack={handleGoHome}
         testId='kangur-parent-dashboard-hero'
         title='Panel Rodzica / Nauczyciela'
       >
-        <KangurButton
-          className='w-full sm:w-auto'
-          onClick={navigateToLogin}
-          size='lg'
-          variant='primary'
-          data-doc-id='profile_login'
-        >
-          <LogIn className='h-5 w-5' />
-          Zaloguj sie
-        </KangurButton>
+        <div className='flex w-full flex-col gap-3 sm:w-auto sm:flex-row'>
+          <KangurButton
+            className='w-full sm:w-auto'
+            onClick={navigateToLogin}
+            size='lg'
+            variant='primary'
+            data-doc-id='profile_login'
+          >
+            <LogIn className='h-5 w-5' />
+            Zaloguj sie
+          </KangurButton>
+          <KangurButton
+            asChild
+            className='w-full sm:w-auto'
+            size='lg'
+            variant='surface'
+          >
+            <button
+              onClick={() => navigateToLogin({ authMode: 'create-account' })}
+              type='button'
+            >
+              Utworz konto rodzica
+            </button>
+          </KangurButton>
+        </div>
       </KangurPageIntroCard>
     );
   }

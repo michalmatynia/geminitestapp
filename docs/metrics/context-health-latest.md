@@ -1,25 +1,28 @@
 # Context Health Check
 
-Generated at: 2026-03-08T19:27:16.147Z
+Generated at: 2026-03-09T05:26:07.470Z
 
 ## Summary
 
-- Status: PASSED
-- Context files scanned: 238
+- Status: WARN
+- Context files scanned: 239
 - Errors: 0
-- Warnings: 0
-- Info: 1
+- Warnings: 1
+- Info: 2
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| context-missing-split | 0 | 0 | 1 |
+| context-generic-error | 0 | 1 | 0 |
+| context-missing-split | 0 | 0 | 2 |
 
 ## Issues
 
 | Severity | Rule | Location | Message |
 | --- | --- | --- | --- |
+| WARN | context-generic-error | src/features/ai/ai-context-registry/context/page-context.tsx | Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking. |
+| INFO | context-missing-split | src/features/ai/ai-context-registry/context/page-context.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
 | INFO | context-missing-split | src/features/kangur/ui/context/KangurLoginModalContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
 
 ## Notes

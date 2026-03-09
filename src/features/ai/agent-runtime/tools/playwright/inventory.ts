@@ -20,8 +20,8 @@ export const collectUiInventory = async (
         if (el.id) return `#${CSS.escape(el.id)}`;
         const parts: string[] = [];
         let node: Element | null = el;
-        while (node && node.nodeType === 1 && node !== document.documentElement) {
-          const currentNode = node as Element;
+        while (node?.nodeType === 1 && node !== document.documentElement) {
+          const currentNode = node;
           let part = currentNode.tagName.toLowerCase();
           const name = currentNode.getAttribute('name');
           const dataTest =
@@ -35,7 +35,7 @@ export const collectUiInventory = async (
           }
           const parent = currentNode.parentElement;
           if (parent) {
-            const siblings = Array.from(parent.children, (child) => child as Element);
+            const siblings = Array.from(parent.children, (child) => child);
             const matchingSiblings = siblings.filter((child) => child.tagName === currentNode.tagName);
             if (matchingSiblings.length > 1) {
               part += `:nth-of-type(${matchingSiblings.indexOf(currentNode) + 1})`;

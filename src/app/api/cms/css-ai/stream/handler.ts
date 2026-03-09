@@ -1,11 +1,16 @@
 import { NextRequest } from 'next/server';
 
+import { mergeContextRegistryResolutionBundles } from '@/features/ai/ai-context-registry/context/page-context-shared';
+import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 import { streamBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 import { runTeachingChat } from '@/features/ai/agentcreator/teaching/server/chat';
 import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
-import type { CmsCssAiRequest as CssAiRequest } from '@/shared/contracts/cms';
+import {
+  cmsCssAiRequestSchema,
+} from '@/shared/contracts/cms';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { buildCmsContextRegistrySystemPrompt } from '@/features/cms/context-registry/system-prompt';
 import { badRequestError } from '@/shared/errors/app-error';
 import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 
@@ -18,6 +23,30 @@ const isValidMessages = (messages: ChatMessage[]): boolean =>
       message.content.trim().length > 0
   );
 
+const buildMessagesWithRegistryContext = (
+  messages: ChatMessage[],
+  contextPrompt: string
+): ChatMessage[] => {
+  if (!contextPrompt.trim()) {
+    return messages;
+  }
+
+  const anchorMessage = messages[0];
+  const sessionId = anchorMessage?.sessionId ?? `cms-css-ai-${Date.now()}`;
+  const timestamp = new Date().toISOString();
+
+  return [
+    {
+      id: `ctx-${Date.now()}`,
+      sessionId,
+      timestamp,
+      role: 'system',
+      content: contextPrompt,
+    },
+    ...messages,
+  ];
+};
+
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseObjectJsonBody(req, {
     logPrefix: 'cms.css-ai.stream',
@@ -25,12 +54,30 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   if (!parsed.ok) {
     return parsed.response;
   }
-  const body = parsed.data as CssAiRequest;
+  const bodyResult = cmsCssAiRequestSchema.safeParse(parsed.data);
+  if (!bodyResult.success) {
+    throw badRequestError('Invalid CMS CSS AI request payload.');
+  }
+  const body = bodyResult.data;
 
   const messages = Array.isArray(body.messages) ? body.messages : [];
   if (!isValidMessages(messages)) {
     throw badRequestError('Invalid messages payload.');
   }
+  const registryRefs = body.contextRegistry?.refs ?? [];
+  const resolvedRegistryBundle = registryRefs.length
+    ? await contextRegistryEngine.resolveRefs({
+      refs: registryRefs,
+      maxNodes: 24,
+      depth: 1,
+    })
+    : null;
+  const contextRegistryBundle = mergeContextRegistryResolutionBundles(
+    resolvedRegistryBundle,
+    body.contextRegistry?.resolved ?? null
+  );
+  const contextRegistryPrompt = buildCmsContextRegistrySystemPrompt(contextRegistryBundle);
+  const messagesWithContext = buildMessagesWithRegistryContext(messages, contextRegistryPrompt);
   const brainConfig = await resolveBrainExecutionConfigForCapability('cms.css_stream', {
     defaultTemperature: 0.2,
     defaultMaxTokens: 1200,
@@ -53,7 +100,10 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
             controller.close();
             return;
           }
-          const result = await runTeachingChat({ agentId: brainConfig.agentId, messages });
+          const result = await runTeachingChat({
+            agentId: brainConfig.agentId,
+            messages: messagesWithContext,
+          });
           send({ delta: result.message, done: true });
           controller.close();
           return;
@@ -63,7 +113,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
           modelId: brainConfig.modelId,
           temperature: brainConfig.temperature,
           maxTokens: brainConfig.maxTokens,
-          messages: messages.map((message: ChatMessage) => ({
+          messages: messagesWithContext.map((message: ChatMessage) => ({
             role: message.role === 'assistant' || message.role === 'system' ? message.role : 'user',
             content: message.content,
           })),

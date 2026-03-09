@@ -4,11 +4,16 @@ import { PanelLeftClose, PanelRightClose } from 'lucide-react';
 import React, { useEffect, useRef } from 'react';
 
 import { useAdminLayoutActions } from '@/features/admin';
+import { ContextRegistryPageProvider } from '@/features/ai/ai-context-registry/context/page-context';
 import { Button } from '@/shared/ui';
 
 import { PagePreviewPanel } from './PagePreviewPanel';
 import { PageBuilderPageSkeleton } from './PageBuilderPageSkeleton';
 import { ThemeSettingsProvider } from './ThemeSettingsContext';
+import {
+  buildCmsPageBuilderContextBundle,
+  CMS_PAGE_BUILDER_CONTEXT_ROOT_IDS,
+} from '../../context-registry/page-builder';
 import { useBuilderKeyboardShortcuts } from '../../hooks/useBuilderKeyboardShortcuts';
 import { useCmsDomainSelection } from '../../hooks/useCmsDomainSelection';
 import { useCmsPage, useCmsPages } from '../../hooks/useCmsQueries';
@@ -19,6 +24,52 @@ import { CmsBuilderLeftPanel } from './CmsBuilderLeftPanel';
 import { PageBuilderRightPanel } from './PageBuilderRightPanel';
 
 import type { PageBuilderState } from '../../types/page-builder';
+
+function PageBuilderContextRegistryShell(): React.JSX.Element {
+  const {
+    state,
+    selectedSection,
+    selectedBlock,
+    selectedColumn,
+    selectedParentSection,
+    selectedParentColumn,
+    selectedParentBlock,
+  } = usePageBuilder();
+
+  const resolved = React.useMemo(
+    () =>
+      buildCmsPageBuilderContextBundle({
+        state,
+        selectedNodeId: state.selectedNodeId,
+        selectedSection,
+        selectedBlock,
+        selectedColumn,
+        selectedParentSection,
+        selectedParentColumn,
+        selectedParentBlock,
+      }),
+    [
+      selectedBlock,
+      selectedColumn,
+      selectedParentBlock,
+      selectedParentColumn,
+      selectedParentSection,
+      selectedSection,
+      state,
+    ]
+  );
+
+  return (
+    <ContextRegistryPageProvider
+      pageId='cms:page-builder'
+      title='CMS Page Builder'
+      rootNodeIds={[...CMS_PAGE_BUILDER_CONTEXT_ROOT_IDS]}
+      resolved={resolved}
+    >
+      <PageBuilderInner />
+    </ContextRegistryPageProvider>
+  );
+}
 
 function PageBuilderInner(): React.JSX.Element {
   const { state, dispatch } = usePageBuilder();
@@ -131,7 +182,7 @@ export function PageBuilderLayout({
     <PageBuilderProvider {...providerProps}>
       <DragStateProvider>
         <ThemeSettingsProvider>
-          <PageBuilderInner />
+          <PageBuilderContextRegistryShell />
         </ThemeSettingsProvider>
       </DragStateProvider>
     </PageBuilderProvider>

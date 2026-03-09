@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useMemo, useRef, useState } from 'react';
+import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { useToast } from '@/shared/ui';
 import { ApiError } from '@/shared/lib/api-client';
@@ -32,6 +33,7 @@ export function usePageAiAssistant() {
   const pageAiProvider = brainAi.assignment.provider;
   const pageAiModelId = brainAi.assignment.modelId.trim();
   const pageAiAgentId = brainAi.assignment.agentId.trim();
+  const contextRegistry = useOptionalContextRegistryPageEnvelope();
 
   const pageContext = useMemo((): string => {
     if (!page) return '';
@@ -122,6 +124,7 @@ export function usePageAiAssistant() {
           modelId: pageAiModelId || undefined,
           agentId: pageAiAgentId || undefined,
           messages,
+          contextRegistry,
         }),
         signal: controller.signal,
       });
@@ -244,6 +247,7 @@ export function usePageAiAssistant() {
     pageAiProvider,
     pageAiModelId,
     pageAiAgentId,
+    contextRegistry,
     pageAiTask,
     pageAiPrompt,
     buildPageAiMessages,

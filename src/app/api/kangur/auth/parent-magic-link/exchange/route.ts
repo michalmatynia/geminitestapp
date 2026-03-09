@@ -1,10 +1,11 @@
+import { apiHandler } from '@/shared/lib/api/api-handler';
 import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export async function POST(): Promise<Response> {
-  return NextResponse.json(
+const POST_handler = async (): Promise<Response> =>
+  NextResponse.json(
     {
       ok: false,
       error: {
@@ -14,4 +15,9 @@ export async function POST(): Promise<Response> {
     },
     { status: 410 }
   );
-}
+
+export const POST = apiHandler(POST_handler, {
+  source: 'kangur.auth.parent-magic-link.exchange.POST',
+  requireCsrf: false,
+  resolveSessionUser: false,
+});

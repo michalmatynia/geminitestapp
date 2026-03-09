@@ -6,6 +6,7 @@ import {
   buildPersonaChatMemoryContext,
   persistAgentPersonaExchangeMemory,
 } from '@/features/ai/agentcreator/server/persona-memory';
+import { mergeContextRegistryRefs } from '@/features/ai/ai-context-registry/context/page-context-shared';
 import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
 import { chatbotSessionRepository } from '@/features/ai/chatbot/server';
 import { buildKangurAiTutorContextRegistryRefs } from '@/features/kangur/context-registry/refs';
@@ -371,8 +372,17 @@ export async function postKangurAiTutorChatHandler(
   });
   if (!parsed.ok) return parsed.response;
 
-  const { messages, context, memory } = parsed.data;
+  const { messages, context, contextRegistry, memory } = parsed.data;
   const resolvedPromptMode = context?.promptMode ?? 'chat';
+  const requestedContextRegistryRefs = mergeContextRegistryRefs(
+    context
+      ? buildKangurAiTutorContextRegistryRefs({
+        learnerId,
+        context,
+      })
+      : [],
+    contextRegistry?.refs ?? []
+  );
 
   const rawSettings = await readStoredSettingValue(KANGUR_AI_TUTOR_SETTINGS_KEY);
   const settingsStore = parseKangurAiTutorSettings(rawSettings);
@@ -417,12 +427,9 @@ export async function postKangurAiTutorChatHandler(
       learnerId,
       dailyMessageLimit: tutorSettings.dailyMessageLimit,
     });
-    const contextRegistryBundle = context
+    const contextRegistryBundle = requestedContextRegistryRefs.length > 0
       ? await contextRegistryEngine.resolveRefs({
-        refs: buildKangurAiTutorContextRegistryRefs({
-          learnerId,
-          context,
-        }),
+        refs: requestedContextRegistryRefs,
         maxNodes: 24,
         depth: 1,
       })
@@ -763,7 +770,7 @@ export async function postKangurAiTutorChatHandler(
         proactiveNudges: tutorSettings.proactiveNudges,
         rememberTutorContext: tutorSettings.rememberTutorContext,
         adaptiveGuidanceApplied,
-        contextRegistryRefCount: context ? buildKangurAiTutorContextRegistryRefs({ learnerId, context }).length : 0,
+        contextRegistryRefCount: requestedContextRegistryRefs.length,
         coachingMode: adaptiveCoachingMode,
         hasLearnerMemory: Boolean(memory),
         personaId: tutorSettings.agentPersonaId,

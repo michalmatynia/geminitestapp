@@ -57,7 +57,7 @@ const STOP_WORDS = new Set([
 
 const MOOD_KEYWORDS: Record<Exclude<AgentPersonaMoodId, 'neutral'>, string[]> = {
   thinking: ['think', 'consider', 'analyze', 'reason', 'step', 'reflect'],
-  encouraging: ['keep going', 'you can', 'try again', 'practice', 'let us', "let's", 'progress'],
+  encouraging: ['keep going', 'you can', 'try again', 'practice', 'let us', 'let\'s', 'progress'],
   happy: ['glad', 'happy', 'pleased', 'delighted', 'enjoyed'],
   celebrating: ['great job', 'well done', 'congrat', 'excellent', 'amazing', 'celebrate'],
 };
@@ -355,62 +355,62 @@ export async function searchAgentPersonaMemory(
   const memoryQuery =
     allowMemoryEntries && memorySettings.enabled !== false
       ? prisma.agentLongTermMemory.findMany({
-          where: {
-            personaId: params.personaId,
-            ...(sourceType ? { sourceType } : {}),
-            ...(tag ? { tags: { has: tag } } : {}),
-            ...(topic ? { topicHints: { has: topic } } : {}),
-            ...(mood ? { moodHints: { has: mood } } : {}),
-            ...(searchTerms.length > 0
-              ? {
-                  OR: searchTerms.flatMap((term) => [
-                    { content: { contains: term, mode: 'insensitive' as const } },
-                    { summary: { contains: term, mode: 'insensitive' as const } },
-                    { sourceLabel: { contains: term, mode: 'insensitive' as const } },
-                    { tags: { has: term } },
-                    { topicHints: { has: term } },
-                  ]),
-                }
-              : {}),
-          },
-          orderBy: { updatedAt: 'desc' },
-          take: candidateLimit,
-        })
+        where: {
+          personaId: params.personaId,
+          ...(sourceType ? { sourceType } : {}),
+          ...(tag ? { tags: { has: tag } } : {}),
+          ...(topic ? { topicHints: { has: topic } } : {}),
+          ...(mood ? { moodHints: { has: mood } } : {}),
+          ...(searchTerms.length > 0
+            ? {
+              OR: searchTerms.flatMap((term) => [
+                { content: { contains: term, mode: 'insensitive' as const } },
+                { summary: { contains: term, mode: 'insensitive' as const } },
+                { sourceLabel: { contains: term, mode: 'insensitive' as const } },
+                { tags: { has: term } },
+                { topicHints: { has: term } },
+              ]),
+            }
+            : {}),
+        },
+        orderBy: { updatedAt: 'desc' },
+        take: candidateLimit,
+      })
       : Promise.resolve([]);
 
   const messageQuery =
     allowMessages && memorySettings.includeChatHistory !== false && !tag
       ? prisma.chatbotMessage.findMany({
-          where: {
-            session: {
-              personaId: params.personaId,
-            },
-            ...(searchTerms.length > 0
-              ? {
-                  OR: searchTerms.flatMap((term) => [
-                    { content: { contains: term, mode: 'insensitive' as const } },
-                    {
-                      session: {
-                        title: { contains: term, mode: 'insensitive' as const },
-                      },
-                    },
-                  ]),
-                }
-              : {}),
+        where: {
+          session: {
+            personaId: params.personaId,
           },
-          include: {
-            session: {
-              select: {
-                id: true,
-                title: true,
-                createdAt: true,
-                updatedAt: true,
-              },
+          ...(searchTerms.length > 0
+            ? {
+              OR: searchTerms.flatMap((term) => [
+                { content: { contains: term, mode: 'insensitive' as const } },
+                {
+                  session: {
+                    title: { contains: term, mode: 'insensitive' as const },
+                  },
+                },
+              ]),
+            }
+            : {}),
+        },
+        include: {
+          session: {
+            select: {
+              id: true,
+              title: true,
+              createdAt: true,
+              updatedAt: true,
             },
           },
-          orderBy: { createdAt: 'desc' },
-          take: candidateLimit,
-        })
+        },
+        orderBy: { createdAt: 'desc' },
+        take: candidateLimit,
+      })
       : Promise.resolve([]);
 
   const [memoryEntries, conversationMessages] = await Promise.all([memoryQuery, messageQuery]);
@@ -586,20 +586,20 @@ export async function buildPersonaChatMemoryContext(
   const memory =
     memorySettings.enabled === false
       ? {
-          items: [],
-          summary: {
-            personaId: params.personaId,
-            suggestedMoodId: null,
-            totalRecords: 0,
-            memoryEntryCount: 0,
-            conversationMessageCount: 0,
-          },
-        }
-      : await searchAgentPersonaMemory({
+        items: [],
+        summary: {
           personaId: params.personaId,
-          q: latestUserMessage,
-          limit,
-        });
+          suggestedMoodId: null,
+          totalRecords: 0,
+          memoryEntryCount: 0,
+          conversationMessageCount: 0,
+        },
+      }
+      : await searchAgentPersonaMemory({
+        personaId: params.personaId,
+        q: latestUserMessage,
+        limit,
+      });
 
   const memoryLines = memory.items.slice(0, limit).map(formatMemoryPromptLine);
   const promptSections = [

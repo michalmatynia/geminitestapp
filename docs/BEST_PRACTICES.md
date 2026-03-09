@@ -1,82 +1,19 @@
-# Best Practices: UI Consolidation Patterns
-
-**Purpose:** Essential guidelines for using consolidated UI templates
-**Audience:** All frontend developers
-**Last Updated:** February 13, 2026
-
+---
+owner: 'Platform Team'
+last_reviewed: '2026-03-09'
+status: 'superseded'
+doc_type: 'policy'
+scope: 'platform'
+superseded_by: 'docs/platform/best-practices.md'
 ---
 
-## Table of Contents
+# Deprecated Location
 
-1. [General Principles](#general-principles)
-2. [Data Transfer Objects (DTOs) and Contracts](#data-transfer-objects-dtos-and-contracts)
-3. [FilterPanel Best Practices](#filterpanel-best-practices)
-3. [Picker Best Practices](#picker-best-practices)
-4. [State Management](#state-management)
-5. [Performance Optimization](#performance-optimization)
-6. [Accessibility Guidelines](#accessibility-guidelines)
-7. [Common Pitfalls](#common-pitfalls)
-8. [Testing Strategy](#testing-strategy)
+The canonical best practices guide moved to:
 
----
+- `docs/platform/best-practices.md`
 
-## General Principles
-
-### 1. Prefer Configuration Over Customization
-
-✅ **Good:** Use built-in props and config objects
-
-```typescript
-const filterConfig: FilterField[] = [
-  { key: 'status', label: 'Status', type: 'select', options: [...] },
-];
-<FilterPanel filters={filterConfig} />
-```
-
-❌ **Avoid:** Creating wrapper components for minor customizations
-
-```typescript
-export function CustomFilterPanel(props) {
-  return <FilterPanel {...props} className="custom" />;
-}
-```
-
-### 2. Keep Concerns Separated
-
-✅ **Good:** Separate filter logic from display logic
-
-```typescript
-// FilterPanel handles: search, filtering, sorting
-<FilterPanel filters={filterConfig} onChange={handleChange} />
-
-// Component handles: display toggles, view modes
-<Button onClick={() => setViewMode('grid')}>Grid View</Button>
-```
-
-❌ **Avoid:** Mixing everything into FilterPanel
-
-```typescript
-// Don't try to force everything into FilterPanel
-<FilterPanel filters={[...viewModeSettings, ...filterSettings]} />
-```
-
-### 3. Callback-Based APIs Over Context
-
-✅ **Good:** Use `onChange` callbacks for state management
-
-```typescript
-const handleFilterChange = (key: string, value: any) => {
-  updateFilters({ [key]: value });
-};
-<FilterPanel filters={config} onChange={handleFilterChange} />
-```
-
-❌ **Avoid:** Assuming component manages own state
-
-```typescript
-// Components don't provide context, they're pure
-<FilterPanel defaultValues={filters} />  // No effect
-```
+Please update references to the new path.
 
 ---
 

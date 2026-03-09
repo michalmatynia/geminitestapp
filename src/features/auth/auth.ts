@@ -65,17 +65,28 @@ const credentialsProvider = Credentials({
 
       const ip = extractClientIp(request);
 
+      let challengeResultPromise: Promise<{
+        challenge: Awaited<ReturnType<typeof consumeLoginChallenge>> | null;
+        user: Awaited<ReturnType<typeof findAuthUserById>> | Awaited<ReturnType<typeof findAuthUserByEmail>>;
+      }>;
+
+      if (challengeId) {
+        challengeResultPromise = consumeLoginChallenge({ id: challengeId, email, ip }).then(
+          async (challenge) => ({
+            challenge,
+            user: challenge ? await findAuthUserById(challenge.userId) : null,
+          })
+        );
+      } else {
+        challengeResultPromise = findAuthUserByEmail(email).then((user) => ({
+          challenge: null,
+          user,
+        }));
+      }
+
       const [allowed, challengeResult] = await Promise.all([
         checkLoginAllowed({ email, ip }),
-        challengeId
-          ? consumeLoginChallenge({ id: challengeId, email, ip }).then(async (challenge) => ({
-              challenge,
-              user: challenge ? await findAuthUserById(challenge.userId) : null,
-            }))
-          : findAuthUserByEmail(email).then((user) => ({
-              challenge: null,
-              user,
-            })),
+        challengeResultPromise,
       ]);
       const user = challengeResult.user;
       const challenge = challengeResult.challenge;

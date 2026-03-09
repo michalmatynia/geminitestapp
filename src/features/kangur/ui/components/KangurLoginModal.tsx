@@ -6,7 +6,8 @@ import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginMod
 import { cn } from '@/shared/utils';
 
 export function KangurLoginModal(): JSX.Element {
-  const { callbackUrl, closeLoginModal, dismissLoginModal, isOpen } = useKangurLoginModal();
+  const { authMode, callbackUrl, closeLoginModal, dismissLoginModal, isOpen } =
+    useKangurLoginModal();
 
   return (
     <DialogPrimitive.Root
@@ -55,6 +56,7 @@ export function KangurLoginModal(): JSX.Element {
           <KangurLoginPage
             defaultCallbackUrl={callbackUrl}
             onClose={dismissLoginModal}
+            parentAuthMode={authMode}
           />
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>

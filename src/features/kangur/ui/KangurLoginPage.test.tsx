@@ -127,6 +127,10 @@ describe('KangurLoginPage', () => {
               created: true,
               emailVerified: false,
               hasPassword: true,
+              debug: {
+                verificationUrl:
+                  'https://example.com/kangur/login?callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-1',
+              },
               message:
                 'Konto rodzica zostalo utworzone. Wyslalismy email potwierdzajacy. Zalogujesz sie po weryfikacji emaila, a AI Tutor odblokuje sie po potwierdzeniu adresu.',
             }),
@@ -170,7 +174,7 @@ describe('KangurLoginPage', () => {
     });
   });
 
-  it('renders a single unified login form without parent-student tabs', () => {
+  it('renders a single unified login form with explicit parent account actions', () => {
     render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
     expect(screen.getByRole('heading', { name: 'Logowanie Kangur' })).toBeInTheDocument();
@@ -180,6 +184,8 @@ describe('KangurLoginPage', () => {
     expect(screen.getByTestId('kangur-login-form')).toHaveAttribute('aria-busy', 'false');
     expect(screen.getByLabelText('Email rodzica lub nick ucznia')).toBeInTheDocument();
     expect(screen.getByLabelText('Haslo')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Mam konto rodzica' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Tworze konto rodzica' })).toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: 'Rodzic' })).not.toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: 'Uczen' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /magiczny link/i })).not.toBeInTheDocument();
@@ -190,6 +196,32 @@ describe('KangurLoginPage', () => {
 
     await screen.findByRole('heading', { name: 'Logowanie Kangur' });
     await expectNoAxeViolations(container);
+  });
+
+  it('switches the parent form into explicit create-account mode with onboarding guidance', async () => {
+    const user = userEvent.setup();
+
+    render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
+
+    await user.click(screen.getByRole('button', { name: 'Tworze konto rodzica' }));
+
+    expect(screen.getByText('Jak zalozyc konto rodzica')).toBeVisible();
+    expect(screen.getByLabelText('Ustaw haslo rodzica')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Utworz konto rodzica' })).toBeInTheDocument();
+  });
+
+  it('starts in create-account mode when the route requests it explicitly', () => {
+    useSearchParamsMock.mockReturnValue(
+      new URLSearchParams(
+        'callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&authMode=create-account'
+      )
+    );
+
+    render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
+
+    expect(screen.getByText('Jak zalozyc konto rodzica')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Utworz konto rodzica' })).toBeInTheDocument();
+    expect(screen.getByText('Nowe konto rodzica')).toBeVisible();
   });
 
   it('submits parent email credentials through the shared login form', async () => {
@@ -316,15 +348,16 @@ describe('KangurLoginPage', () => {
     expect(locationAssignMock).not.toHaveBeenCalled();
   });
 
-  it('requests parent account creation email and shows confirmation in the shared form', async () => {
+  it('requests parent account creation email and shows the verification shortcut in the shared form', async () => {
     const user = userEvent.setup();
     const fetchMock = vi.mocked(fetch);
 
     render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
+    await user.click(screen.getByRole('button', { name: 'Tworze konto rodzica' }));
     await user.type(screen.getByLabelText('Email rodzica lub nick ucznia'), 'parent@example.com');
-    await user.type(screen.getByLabelText('Haslo'), 'Strong123!');
-    await user.click(screen.getByRole('button', { name: 'Utworz konto' }));
+    await user.type(screen.getByLabelText('Ustaw haslo rodzica'), 'Strong123!');
+    await user.click(screen.getByRole('button', { name: 'Utworz konto rodzica' }));
 
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/kangur/auth/parent-account/create',
@@ -344,6 +377,11 @@ describe('KangurLoginPage', () => {
       )
     ).toBeVisible();
     expect(screen.getByRole('status')).toHaveAttribute('aria-live', 'polite');
+    expect(screen.getByText('Sprawdz skrzynke: parent@example.com')).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Potwierdz email teraz' })).toHaveAttribute(
+      'href',
+      'https://example.com/kangur/login?callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-1'
+    );
   });
 
   it('blocks parent login until the email is verified', async () => {

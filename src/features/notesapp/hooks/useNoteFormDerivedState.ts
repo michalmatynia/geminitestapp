@@ -87,11 +87,11 @@ export function useNoteFormDerivedState({
         .map((rel: NoteRelationRecord & { targetNote?: RelatedNote }) =>
           rel.targetNote
             ? {
-                id: rel.targetNote.id,
-                title: rel.targetNote.title,
-                color: rel.targetNote.color ?? null,
-                content: '',
-              }
+              id: rel.targetNote.id,
+              title: rel.targetNote.title,
+              color: rel.targetNote.color ?? null,
+              content: '',
+            }
             : null
         )
         .filter((item: RelatedNoteItem | null): item is RelatedNoteItem => Boolean(item)),
@@ -99,11 +99,11 @@ export function useNoteFormDerivedState({
         .map((rel: NoteRelationRecord & { sourceNote?: RelatedNote }) =>
           rel.sourceNote
             ? {
-                id: rel.sourceNote.id,
-                title: rel.sourceNote.title,
-                color: rel.sourceNote.color ?? null,
-                content: '',
-              }
+              id: rel.sourceNote.id,
+              title: rel.sourceNote.title,
+              color: rel.sourceNote.color ?? null,
+              content: '',
+            }
             : null
         )
         .filter((item: RelatedNoteItem | null): item is RelatedNoteItem => Boolean(item)),

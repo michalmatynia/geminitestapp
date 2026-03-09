@@ -1,82 +1,19 @@
-# Developer Handbook: UI Consolidation Patterns
-
-**Last Updated:** March 3, 2026
-**Project Status:** Production-Ready ✅
-**Framework:** Next.js 16.1.1 + React 19.2.3 + TypeScript 5.9.3
-
+---
+owner: 'Platform Team'
+last_reviewed: '2026-03-09'
+status: 'superseded'
+doc_type: 'reference'
+scope: 'platform'
+superseded_by: 'docs/platform/developer-handbook.md'
 ---
 
-## Table of Contents
+# Deprecated Location
 
-1. [Core Patterns Overview](#core-patterns-overview)
-2. [FilterPanel Pattern](#filterpanel-pattern)
-3. [Picker Components](#picker-components)
-4. [Panel Components](#panel-components)
-5. [Best Practices](#best-practices)
-6. [Migration Guide](#migration-guide)
-7. [FAQ](#faq)
+The canonical developer handbook moved to:
 
----
+- `docs/platform/developer-handbook.md`
 
-## Core Patterns Overview
-
-The consolidation project identified and standardized three core patterns used across 450+ components:
-
-### 1. FilterPanel Pattern
-
-**Used for:** Search, filtering, sorting, presets
-**Deployed in:** 5 components (ProductFilters, NotesFilters, FileManagerFilters, etc.)
-**LOC Savings:** 50-60% across filters
-**Status:** Production-ready ✅
-
-### 2. Picker Patterns
-
-**Used for:** Dropdowns, grids, modal selection
-**Deployed in:** 5 components (AnimationPresetPicker, SectionTemplatePicker, etc.)
-**LOC Savings:** 10-60% per component
-**Status:** Production-ready ✅
-
-### 3. Panel Patterns
-
-**Used for:** Headers, stats, pagination, layout structure
-**Deployed in:** Core template system (6 sub-components)
-**LOC Savings:** 25-30% potential
-**Status:** Production-ready ✅
-
----
-
-## FilterPanel Pattern
-
-### Purpose
-
-Create consistent, maintainable filter UIs with:
-
-- Search functionality
-- Multiple filter field types
-- Preset support
-- Reset buttons
-- State management hooks
-
-### Architecture
-
-```
-FilterPanel (wrapper with presets)
-  ↓
-PanelFilters (core filter renderer)
-  ├── SearchInput
-  ├── FilterField[text]
-  ├── FilterField[select]
-  ├── FilterField[number]
-  ├── FilterField[date]
-  ├── FilterField[dateRange]
-  └── FilterField[checkbox]
-```
-
-### Usage Example
-
-```typescript
-import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
-import type { FilterField } from '@/shared/ui/templates/panels';
+Please update references to the new path.
 
 export function MyFilters() {
   const [filters, setFilters] = useState({

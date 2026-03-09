@@ -1,3 +1,12 @@
+---
+owner: 'AI Paths Team'
+last_reviewed: '2026-03-09'
+status: 'active'
+doc_type: 'overview'
+scope: 'feature:ai-paths'
+canonical: true
+---
+
 # AI Paths Documentation
 
 Extended reference: `docs/AI_PATHS_EXTENDED_REFERENCE.md`
@@ -157,4 +166,4 @@ npm run ai-paths:check:canonical
 - `docs/AI_PATHS_EXTENDED_REFERENCE.md`
 - `docs/ai-paths/semantic-grammar/README.md`
 - `docs/ai-paths/playwright-node.md`
-- `docs/ARCHITECTURE_GUARDRAILS.md`
+- `docs/platform/architecture-guardrails.md`

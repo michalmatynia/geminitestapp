@@ -8,6 +8,7 @@ import type { JSX } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 type KangurLoginModalState = {
+  authMode: 'sign-in' | 'create-account';
   callbackUrl: string;
   closeLoginModal: () => void;
   dismissLoginModal: () => void;
@@ -27,6 +28,7 @@ vi.mock('@/features/kangur/ui/KangurLoginPage', () => ({
     callbackUrl?: string;
     defaultCallbackUrl: string;
     onClose?: () => void;
+    parentAuthMode?: 'sign-in' | 'create-account';
   }): JSX.Element => {
     kangurLoginPageMock(props);
     return <div data-testid='kangur-login-page' />;
@@ -43,6 +45,7 @@ describe('KangurLoginModal', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     modalStateMock.mockReturnValue({
+      authMode: 'sign-in',
       callbackUrl: '/kangur/tests?focus=division',
       closeLoginModal: closeLoginModalMock,
       dismissLoginModal: dismissLoginModalMock,
@@ -61,10 +64,12 @@ describe('KangurLoginModal', () => {
     const loginPageProps = kangurLoginPageMock.mock.calls[0]?.[0] as {
       defaultCallbackUrl: string;
       onClose?: () => void;
+      parentAuthMode?: 'sign-in' | 'create-account';
     };
 
     expect(loginPageProps.defaultCallbackUrl).toBe('/kangur/tests?focus=division');
     expect(loginPageProps.onClose).toBe(dismissLoginModalMock);
+    expect(loginPageProps.parentAuthMode).toBe('sign-in');
 
     await user.click(screen.getByRole('button', { name: 'Zamknij logowanie' }));
 

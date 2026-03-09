@@ -87,6 +87,46 @@ export const collectionNodes: ContextNode[] = [
     source: { type: 'code', ref: SOURCE_REF },
   },
   {
+    id: 'collection:cms-pages',
+    kind: 'collection',
+    name: 'cms_pages',
+    description:
+      'CMS page records including section components, SEO fields, publication state, slugs, and theme bindings.',
+    tags: ['cms', 'pages', 'content', 'database'],
+    relationships: [
+      { type: 'related_to', targetId: 'collection:cms-themes' },
+      { type: 'related_to', targetId: 'action:cms-css-ai-stream' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'low',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'collection:cms-themes',
+    kind: 'collection',
+    name: 'cms_themes',
+    description:
+      'CMS theme records including color schemes, typography, spacing, custom CSS, and brand assets.',
+    tags: ['cms', 'themes', 'design', 'database'],
+    relationships: [
+      { type: 'related_to', targetId: 'collection:cms-pages' },
+      { type: 'related_to', targetId: 'action:cms-css-ai-stream' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'low',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
     id: 'collection:kangur-progress',
     kind: 'collection',
     name: 'kangur_progress',

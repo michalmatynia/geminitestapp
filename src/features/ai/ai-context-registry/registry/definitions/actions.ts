@@ -104,4 +104,30 @@ export const actionNodes: ContextNode[] = [
     updatedAtISO: '2026-03-08T00:00:00.000Z',
     source: { type: 'code', ref: SOURCE_REF },
   },
+  {
+    id: 'action:cms-css-ai-stream',
+    kind: 'action',
+    name: 'CMS CSS AI Stream',
+    description:
+      'Runs CMS page-builder AI turns for layout generation, inspector settings help, CSS authoring, ' +
+      'and theme color generation using the current Context Registry page envelope.',
+    tags: ['cms', 'page-builder', 'theme', 'css', 'ai'],
+    relationships: [
+      { type: 'uses', targetId: 'page:cms-page-builder' },
+      { type: 'reads', targetId: 'collection:cms-pages' },
+      { type: 'reads', targetId: 'collection:cms-themes' },
+      { type: 'uses', targetId: 'component:cms-page-builder-inspector' },
+      { type: 'uses', targetId: 'component:cms-theme-settings-panel' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      proposeScopes: ['ctx:propose'],
+      executeScopes: ['ctx:execute'],
+      riskTier: 'low',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
 ];

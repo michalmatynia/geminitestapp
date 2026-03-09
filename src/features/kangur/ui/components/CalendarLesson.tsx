@@ -378,12 +378,12 @@ export default function CalendarLesson(): React.JSX.Element {
 
   if (activeSection) {
     return (
-        <SectionView
-          sectionId={activeSection}
-          onBack={() => setActiveSection(null)}
-          onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
-        />
-      );
+      <SectionView
+        sectionId={activeSection}
+        onBack={() => setActiveSection(null)}
+        onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
+      />
+    );
   }
 
   return (
@@ -396,9 +396,9 @@ export default function CalendarLesson(): React.JSX.Element {
         section.isGame
           ? section
           : {
-              ...section,
-              progress: sectionProgress[section.id as keyof typeof SECTION_SLIDES],
-            }
+            ...section,
+            progress: sectionProgress[section.id as keyof typeof SECTION_SLIDES],
+          }
       )}
       onSelect={(id) => {
         if (id === 'game') {

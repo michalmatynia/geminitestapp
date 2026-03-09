@@ -14,14 +14,21 @@ import { getKangurHomeHref, getKangurLoginHref } from '@/features/kangur/config/
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { internalError } from '@/shared/errors/app-error';
 
+export type KangurLoginModalAuthMode = 'sign-in' | 'create-account';
+
+type KangurLoginModalOpenOptions = {
+  authMode?: KangurLoginModalAuthMode;
+};
+
 type KangurLoginModalContextValue = {
+  authMode: KangurLoginModalAuthMode;
   callbackUrl: string;
   closeLoginModal: () => void;
   dismissLoginModal: () => void;
   homeHref: string;
   isOpen: boolean;
   isRouteDriven: boolean;
-  openLoginModal: (callbackUrl?: string | null) => void;
+  openLoginModal: (callbackUrl?: string | null, options?: KangurLoginModalOpenOptions) => void;
 };
 
 type KangurLoginModalProviderProps = {
@@ -29,6 +36,7 @@ type KangurLoginModalProviderProps = {
 };
 
 type InlineLoginModalState = {
+  authMode: KangurLoginModalAuthMode;
   callbackUrl: string | null;
   isOpen: boolean;
 };
@@ -48,6 +56,9 @@ const getPathnameFromHref = (href: string): string => {
   }
 };
 
+const resolveAuthMode = (value: string | null | undefined): KangurLoginModalAuthMode =>
+  value?.trim().toLowerCase() === 'create-account' ? 'create-account' : 'sign-in';
+
 export const KangurLoginModalProvider = ({
   children,
 }: KangurLoginModalProviderProps): React.JSX.Element => {
@@ -61,21 +72,28 @@ export const KangurLoginModalProvider = ({
     () => toNonEmptyString(searchParams.get('callbackUrl'), homeHref),
     [homeHref, searchParams]
   );
+  const requestedAuthMode = useMemo(
+    () => resolveAuthMode(searchParams.get('authMode')),
+    [searchParams]
+  );
   const [inlineState, setInlineState] = useState<InlineLoginModalState>({
+    authMode: 'sign-in',
     callbackUrl: null,
     isOpen: false,
   });
   const isRouteDriven = pathname === loginPathname;
   const fallbackCallbackUrl = requestedPath || homeHref;
+  const authMode = isRouteDriven ? requestedAuthMode : inlineState.authMode;
   const callbackUrl = isRouteDriven
     ? requestedCallbackUrl
     : toNonEmptyString(inlineState.callbackUrl, fallbackCallbackUrl);
 
   const openLoginModal = useCallback(
-    (nextCallbackUrl?: string | null): void => {
+    (nextCallbackUrl?: string | null, options?: KangurLoginModalOpenOptions): void => {
       const currentHref =
         typeof window === 'undefined' ? fallbackCallbackUrl : window.location.href;
       setInlineState({
+        authMode: options?.authMode ?? 'sign-in',
         callbackUrl: toNonEmptyString(nextCallbackUrl, currentHref),
         isOpen: true,
       });
@@ -108,6 +126,7 @@ export const KangurLoginModalProvider = ({
 
   const value = useMemo<KangurLoginModalContextValue>(
     () => ({
+      authMode,
       callbackUrl,
       closeLoginModal,
       dismissLoginModal,
@@ -117,6 +136,7 @@ export const KangurLoginModalProvider = ({
       openLoginModal,
     }),
     [
+      authMode,
       callbackUrl,
       closeLoginModal,
       dismissLoginModal,

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { agentPersonaMoodIdSchema } from './agents';
+import { contextRegistryConsumerEnvelopeSchema } from './ai-context-registry';
 import { agentTeachingChatSourceSchema } from './agent-teaching';
 import { kangurRouteActionQuerySchema, kangurRoutePageSchema } from './kangur';
 import { kangurAiTutorLearnerMoodSchema } from './kangur-ai-tutor-mood';
@@ -99,6 +100,7 @@ export type KangurAiTutorLearnerMemory = z.infer<typeof kangurAiTutorLearnerMemo
 export const kangurAiTutorChatRequestSchema = z.object({
   messages: z.array(kangurAiTutorChatMessageSchema).min(1),
   context: kangurAiTutorConversationContextSchema.optional(),
+  contextRegistry: contextRegistryConsumerEnvelopeSchema.optional(),
   memory: kangurAiTutorLearnerMemorySchema.optional(),
 });
 export type KangurAiTutorChatRequest = z.infer<typeof kangurAiTutorChatRequestSchema>;

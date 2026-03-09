@@ -1,3 +1,12 @@
+---
+owner: 'Products / Platform Team'
+last_reviewed: '2026-03-09'
+status: 'active'
+doc_type: 'index'
+scope: 'feature:validator'
+canonical: true
+---
+
 # Validator Docs
 
 Generated and maintained docs for the Product Validator tool.

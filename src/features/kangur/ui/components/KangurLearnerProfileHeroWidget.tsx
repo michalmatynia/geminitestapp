@@ -21,9 +21,13 @@ export function KangurLearnerProfileHeroWidget(): React.JSX.Element {
       accent='indigo'
       className='mx-auto w-full max-w-2xl'
       description={
-        <>
-          Statystyki ucznia: <span className='font-semibold text-slate-700'>{displayName}</span>.
-        </>
+        user ? (
+          <>
+            Statystyki ucznia: <span className='font-semibold text-slate-700'>{displayName}</span>.
+          </>
+        ) : (
+          'Zaloguj sie, aby synchronizowac postep ucznia miedzy urzadzeniami. Jesli nie masz jeszcze konta rodzica, zaloz je bez opuszczania Kangura.'
+        )
       }
       headingAs='h1'
       onBack={() => router.push(getKangurHomeHref(basePath))}
@@ -31,15 +35,26 @@ export function KangurLearnerProfileHeroWidget(): React.JSX.Element {
       title='Profil ucznia'
     >
       {!user ? (
-        <KangurButton
-          className='w-full sm:w-auto'
-          onClick={navigateToLogin}
-          size='sm'
-          variant='surface'
-          data-doc-id='profile_login'
-        >
-          <LogIn className='h-4 w-4' /> Zaloguj sie, aby synchronizowac postep
-        </KangurButton>
+        <div className='flex w-full flex-col gap-3 sm:w-auto sm:flex-row'>
+          <KangurButton
+            className='w-full sm:w-auto'
+            onClick={navigateToLogin}
+            size='sm'
+            variant='surface'
+            data-doc-id='profile_login'
+          >
+            <LogIn className='h-4 w-4' /> Zaloguj sie, aby synchronizowac postep
+          </KangurButton>
+          <KangurButton
+            className='w-full sm:w-auto'
+            onClick={() => navigateToLogin({ authMode: 'create-account' })}
+            size='sm'
+            type='button'
+            variant='primary'
+          >
+            Utworz konto rodzica
+          </KangurButton>
+        </div>
       ) : null}
     </KangurPageIntroCard>
   );

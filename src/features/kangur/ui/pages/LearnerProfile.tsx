@@ -32,6 +32,7 @@ export default function LearnerProfile(): React.JSX.Element {
       contentClassName: 'justify-center',
       currentPage: 'LearnerProfile' as const,
       isAuthenticated: Boolean(user),
+      onCreateAccount: () => navigateToLogin({ authMode: 'create-account' }),
       onLogin: navigateToLogin,
       onLogout: () => logout(false),
     }),

@@ -132,7 +132,7 @@ export const mongoProductWriteImpl = {
     });
 
     if (!result) return null;
-    return toProductResponse(result as unknown as WithId<ProductDocument>);
+    return toProductResponse(result);
   },
 
   async deleteProduct(
@@ -145,7 +145,7 @@ export const mongoProductWriteImpl = {
     if (!doc) return null;
 
     await collection.deleteOne(filter);
-    return toProductResponse(doc as unknown as WithId<ProductDocument>);
+    return toProductResponse(doc);
   },
 
   async bulkCreateProducts(

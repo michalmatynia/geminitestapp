@@ -347,6 +347,7 @@ export default function Lessons() {
       contentClassName: 'justify-center',
       currentPage: 'Lessons' as const,
       isAuthenticated: Boolean(user),
+      onCreateAccount: () => navigateToLogin({ authMode: 'create-account' }),
       onLogin: navigateToLogin,
       onLogout: () => logout(false),
     }),
@@ -459,14 +460,14 @@ export default function Lessons() {
                                 </div>
                                 {lesson.contentMode === 'document' &&
                                 hasKangurLessonDocumentContent(lessonDocuments[lesson.id]) ? (
-                                  <KangurStatusChip
-                                    accent='sky'
-                                    className='mt-2 uppercase tracking-[0.14em]'
-                                    size='sm'
-                                  >
+                                    <KangurStatusChip
+                                      accent='sky'
+                                      className='mt-2 uppercase tracking-[0.14em]'
+                                      size='sm'
+                                    >
                                     Wlasna zawartosc
-                                  </KangurStatusChip>
-                                ) : null}
+                                    </KangurStatusChip>
+                                  ) : null}
                                 {lessonAssignment ? (
                                   <KangurStatusChip
                                     accent='rose'
@@ -580,23 +581,23 @@ export default function Lessons() {
                     </div>
                   ) : activeLesson?.contentMode === 'document' &&
                     !hasActiveLessonDocumentContent ? (
-                    <KangurSummaryPanel
-                      accent='amber'
-                      align='center'
-                      className='w-full max-w-3xl'
-                      data-testid='lessons-empty-document-summary'
-                      description='This lesson is set to use custom document content, but no document blocks have been saved yet.'
-                      label='Lesson document'
-                      labelAccent='amber'
-                      padding='xl'
-                      title={activeLesson.title}
-                      tone='accent'
-                    />
-                  ) : ActiveLessonComponent ? (
-                    <KangurLessonNavigationProvider onBack={() => setActiveLessonId(null)}>
-                      <ActiveLessonComponent />
-                    </KangurLessonNavigationProvider>
-                  ) : null}
+                      <KangurSummaryPanel
+                        accent='amber'
+                        align='center'
+                        className='w-full max-w-3xl'
+                        data-testid='lessons-empty-document-summary'
+                        description='This lesson is set to use custom document content, but no document blocks have been saved yet.'
+                        label='Lesson document'
+                        labelAccent='amber'
+                        padding='xl'
+                        title={activeLesson.title}
+                        tone='accent'
+                      />
+                    ) : ActiveLessonComponent ? (
+                      <KangurLessonNavigationProvider onBack={() => setActiveLessonId(null)}>
+                        <ActiveLessonComponent />
+                      </KangurLessonNavigationProvider>
+                    ) : null}
                 </div>
 
                 {/* Prev / Next lesson navigation */}

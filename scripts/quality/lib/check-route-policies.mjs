@@ -29,6 +29,11 @@ const CSRF_EXEMPTION_POLICIES = [
     pattern: /^auth(\/|$)/,
   },
   {
+    id: 'deprecated-public-auth',
+    reason: 'Deprecated auth endpoints stay reachable so stale clients receive a controlled 410 response.',
+    pattern: /^kangur\/auth\/parent-magic-link(\/|$)/,
+  },
+  {
     id: 'telemetry-ingest',
     reason: 'Telemetry and client error endpoints ingest browser-originated reports.',
     pattern: /^(analytics\/events|query-telemetry|client-errors)(\/|$)/,

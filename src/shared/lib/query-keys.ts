@@ -283,6 +283,17 @@ export const QUERY_KEYS = {
           'documents',
         ] as const,
     },
+    contextRegistry: {
+      all: ['ai', 'context-registry'] as const,
+      search: (query: string, kind: string) =>
+        [...QUERY_KEYS.ai.contextRegistry.all, 'search', { query, kind }] as const,
+      related: (id: string | null) =>
+        [...QUERY_KEYS.ai.contextRegistry.all, 'related', id ?? 'none'] as const,
+      schema: (entity: string | null) =>
+        [...QUERY_KEYS.ai.contextRegistry.all, 'schema', entity ?? 'none'] as const,
+      bundle: (signature: string) =>
+        [...QUERY_KEYS.ai.contextRegistry.all, 'bundle', signature] as const,
+    },
   },
   userPreferences: {
     all: ['user-preferences'] as const,

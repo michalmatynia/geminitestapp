@@ -16,6 +16,7 @@ export function KangurGameNavigationWidget(): React.JSX.Element {
       homeActive: screen === 'home',
       isAuthenticated: Boolean(user),
       onHomeClick: handleHome,
+      onCreateAccount: () => navigateToLogin({ authMode: 'create-account' }),
       onLogin: navigateToLogin,
       onLogout: () => logout(false),
     }),

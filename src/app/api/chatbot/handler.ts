@@ -336,10 +336,10 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
             images: userMessage.images,
             ...(personaId
               ? {
-                  metadata: {
-                    personaId,
-                  },
-                }
+                metadata: {
+                  personaId,
+                },
+              }
               : {}),
           });
         }

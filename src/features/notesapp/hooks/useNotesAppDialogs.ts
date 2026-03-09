@@ -11,7 +11,7 @@ export function useNotesAppDialogs(): {
   prompt: NotesAppPromptState | null;
   setPrompt: NotesAppActionsValue['setPrompt'];
   promptAction: NotesAppActionsValue['promptAction'];
-} {
+  } {
   const [confirmation, setConfirmation] = useState<NotesAppConfirmationState | null>(null);
   const [prompt, setPrompt] = useState<NotesAppPromptState | null>(null);
 

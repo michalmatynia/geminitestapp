@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useCallback, useMemo, useRef } from 'react';
 
+import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import type { ChatMessage } from '@/shared/contracts/chatbot';
 import type { ColorSchemeColors, ColorScheme, ThemeSettings } from '@/shared/contracts/cms-theme';
@@ -47,6 +48,7 @@ export function ThemeColorsProvider({
   const { assignment: brainAssignment } = useBrainAssignment({
     capability: 'cms.css_stream',
   });
+  const contextRegistry = useOptionalContextRegistryPageEnvelope();
   const brainAiProvider = brainAssignment.provider;
   const brainAiModelId = brainAssignment.modelId.trim();
   const brainAiAgentId = brainAssignment.agentId.trim();
@@ -220,7 +222,10 @@ ${schemeContext}`;
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         signal: controller.signal,
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          ...payload,
+          contextRegistry,
+        }),
       });
       if (!res.ok || !res.body) {
         const data = (await res.json().catch(() => null)) as { error?: string } | null;
@@ -363,6 +368,7 @@ ${schemeContext}`;
     brainAiAgentId,
     applySchemeFromAi,
     toast,
+    contextRegistry,
   ]);
 
   const handleCancelSchemeAi = useCallback((): void => {

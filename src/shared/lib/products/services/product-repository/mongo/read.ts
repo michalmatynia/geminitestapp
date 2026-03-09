@@ -97,7 +97,7 @@ export const mongoProductReadImpl = {
     cursor = cursor.skip(skip).limit(limit);
     const docs = await cursor.toArray();
 
-    return docs.map((doc) => toProductResponse(doc as unknown as WithId<ProductDocument>));
+    return docs.map((doc) => toProductResponse(doc));
   },
 
   async countProducts(
@@ -194,14 +194,14 @@ export const mongoProductReadImpl = {
     const collection = await getCollection();
     const doc = await collection.findOne(buildProductIdFilter(id));
     if (!doc) return null;
-    return toProductResponse(doc as unknown as WithId<ProductDocument>);
+    return toProductResponse(doc);
   },
 
   async getProductBySku(sku: string, getCollection: () => Promise<Collection<ProductDocument>>) {
     const collection = await getCollection();
     const doc = await collection.findOne({ sku } as Filter<ProductDocument>);
     if (!doc) return null;
-    return toProductResponse(doc as unknown as WithId<ProductDocument>);
+    return toProductResponse(doc);
   },
 
   async getProductsBySkus(
@@ -210,7 +210,7 @@ export const mongoProductReadImpl = {
   ) {
     const collection = await getCollection();
     const docs = await collection.find({ sku: { $in: skus } } as Filter<ProductDocument>).toArray();
-    return docs.map((doc) => toProductResponse(doc as unknown as WithId<ProductDocument>));
+    return docs.map((doc) => toProductResponse(doc));
   },
 
   async findProductByBaseId(
@@ -220,7 +220,7 @@ export const mongoProductReadImpl = {
     const collection = await getCollection();
     const doc = await collection.findOne({ baseProductId } as Filter<ProductDocument>);
     if (!doc) return null;
-    return toProductResponse(doc as unknown as WithId<ProductDocument>);
+    return toProductResponse(doc);
   },
 
   async findProductsByBaseIds(
@@ -231,6 +231,6 @@ export const mongoProductReadImpl = {
     const docs = await collection
       .find({ baseProductId: { $in: baseIds } } as Filter<ProductDocument>)
       .toArray();
-    return docs.map((doc) => toProductResponse(doc as unknown as WithId<ProductDocument>));
+    return docs.map((doc) => toProductResponse(doc));
   },
 };

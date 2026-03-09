@@ -384,6 +384,11 @@ describe('KangurAiTutorWidget', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Open login' }));
 
     expect(navigateToLoginMock).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Create parent account' }));
+
+    expect(navigateToLoginMock).toHaveBeenNthCalledWith(2, {
+      authMode: 'create-account',
+    });
   });
 
   it('hides the guest intro after selecting No', async () => {

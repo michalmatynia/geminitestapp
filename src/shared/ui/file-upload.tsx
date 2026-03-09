@@ -388,12 +388,12 @@ export function FileUploadTrigger(props: FileUploadTriggerProps): React.JSX.Elem
             preserveChildSemantics
               ? undefined
               : (event: React.KeyboardEvent): void => {
-                  if (disabled) return;
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    inputRef.current?.click();
-                  }
+                if (disabled) return;
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  inputRef.current?.click();
                 }
+              }
           }
           onDragOver={(event: React.DragEvent<HTMLElement>): void => {
             if (!enableDrop || disabled) return;

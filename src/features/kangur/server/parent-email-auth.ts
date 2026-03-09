@@ -286,6 +286,6 @@ export const buildKangurParentAccountCreateDebugPayload = (
 } | null =>
   shouldExposeAuthEmailDebug()
     ? {
-        verificationUrl: result.verificationUrl,
-      }
+      verificationUrl: result.verificationUrl,
+    }
     : null;

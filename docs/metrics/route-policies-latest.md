@@ -1,15 +1,15 @@
 # Route Policy Report
 
-Generated at: 2026-03-08T14:42:25.289Z
+Generated at: 2026-03-09T05:09:00.793Z
 
 ## Summary
 
 - Status: PASSED
-- Routes scanned: 339
-- Method exports scanned: 487
+- Routes scanned: 345
+- Method exports scanned: 493
 - Errors: 0
 - Warnings: 0
-- CSRF exemptions: 45
+- CSRF exemptions: 47
 
 ## Rule Breakdown
 
@@ -37,6 +37,8 @@ No route policy issues detected.
 | auth/users/[id]/security | PATCH | auth-bootstrap | Auth bootstrap flows need to accept requests before app CSRF is established. |
 | auth/verify-credentials | POST | auth-bootstrap | Auth bootstrap flows need to accept requests before app CSRF is established. |
 | client-errors | POST | telemetry-ingest | Telemetry and client error endpoints ingest browser-originated reports. |
+| kangur/auth/parent-magic-link/exchange | POST | deprecated-public-auth | Deprecated auth endpoints stay reachable so stale clients receive a controlled 410 response. |
+| kangur/auth/parent-magic-link/request | POST | deprecated-public-auth | Deprecated auth endpoints stay reachable so stale clients receive a controlled 410 response. |
 | query-telemetry | POST | telemetry-ingest | Telemetry and client error endpoints ingest browser-originated reports. |
 | v2/integrations/[id]/connections/[connectionId]/allegro/disconnect | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
 | v2/integrations/[id]/connections/[connectionId]/allegro/request | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |

@@ -372,6 +372,12 @@ export const buildAdminNav = (handlers: {
         ],
       },
       {
+        id: 'ai/context-registry',
+        label: 'Context Registry',
+        href: '/admin/context-registry',
+        keywords: ['context', 'registry', 'runtime', 'nodes', 'policies', 'ai'],
+      },
+      {
         id: 'ai/prompt-engine',
         label: 'Global Validator',
         href: '/admin/validator',

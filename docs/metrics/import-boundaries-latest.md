@@ -1,14 +1,14 @@
 # Import Boundaries Check
 
-Generated at: 2026-03-08T19:27:15.223Z
+Generated at: 2026-03-09T05:26:06.707Z
 
 ## Summary
 
-- Status: PASSED
-- Files scanned: 4415
-- Features tracked: 15
+- Status: FAILED
+- Files scanned: 4461
+- Features tracked: 9
 - Circular dependencies: 0
-- Errors: 0
+- Errors: 2
 - Warnings: 0
 - Info: 0
 
@@ -16,30 +16,28 @@ Generated at: 2026-03-08T19:27:15.223Z
 
 | Feature | Dependencies | Count |
 | --- | --- | ---: |
-| ai | auth, files, foldertree, notesapp, playwright, products, prompt-engine, prompt-exploder, tooltip-engine, viewer3d | 10 |
-| case-resolver | admin, ai, auth, case-resolver-capture, document-editor, filemaker, foldertree, prompt-exploder | 8 |
-| cms | admin, files, foldertree, gsap, products, viewer3d | 6 |
-| jobs | ai, case-resolver, integrations, product-sync, products | 5 |
-| kangur | auth, cms, document-editor, foldertree, tooltip-engine | 5 |
-| admin | auth, foldertree, notesapp, prompt-engine | 4 |
-| products | files, foldertree, internationalization, tooltip-engine | 4 |
-| data-import-export | integrations, products | 2 |
-| integrations | playwright, products | 2 |
+| case-resolver | ai, case-resolver-capture, document-editor, filemaker, foldertree | 5 |
+| cms | admin, foldertree, gsap, products, viewer3d | 5 |
+| kangur | ai, cms, document-editor, foldertree | 4 |
+| ai | foldertree, products, viewer3d | 3 |
 | notesapp | document-editor, foldertree | 2 |
-| prompt-exploder | foldertree, tooltip-engine | 2 |
-| case-resolver-capture | filemaker | 1 |
+| products | foldertree, internationalization | 2 |
+| admin | foldertree | 1 |
 | drafter | products | 1 |
-| files | viewer3d | 1 |
-| product-sync | integrations | 1 |
+| prompt-exploder | foldertree | 1 |
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
+| cross-feature-internal-import | 2 | 0 | 0 |
 
 ## Issues
 
-No import boundary issues detected.
+| Severity | Rule | Location | Message |
+| --- | --- | --- | --- |
+| ERROR | cross-feature-internal-import | src/features/kangur/ui/context/KangurAiTutorRuntime.shared.ts:47 | Imports internal path from feature "ai": @/features/ai/ai-context-registry/context/page-context. Use the barrel export instead. |
+| ERROR | cross-feature-internal-import | src/features/kangur/ui/context/KangurContextRegistryPageBoundary.tsx:5 | Imports internal path from feature "ai": @/features/ai/ai-context-registry/context/page-context. Use the barrel export instead. |
 
 ## Notes
 

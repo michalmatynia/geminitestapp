@@ -4,6 +4,49 @@ const SOURCE_REF = 'src/features/ai/ai-context-registry/registry/definitions/pag
 
 export const pageNodes: ContextNode[] = [
   {
+    id: 'page:context-registry',
+    kind: 'page',
+    name: 'AI Context Registry',
+    description:
+      'Central admin workspace for searching, resolving, previewing, and validating shared AI context ' +
+      'across pages, components, collections, actions, policies, and runtime documents.',
+    tags: ['ai', 'context', 'registry', 'admin', 'runtime'],
+    relationships: [{ type: 'uses', targetId: 'component:context-registry-inspector' }],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'page:cms-page-builder',
+    kind: 'page',
+    name: 'CMS Page Builder',
+    description:
+      'Visual CMS editor for composing page sections, previewing responsive layouts, ' +
+      'editing structure, and invoking page-scoped AI assistance.',
+    tags: ['cms', 'page-builder', 'editor', 'ai', 'admin'],
+    relationships: [
+      { type: 'reads', targetId: 'collection:cms-pages' },
+      { type: 'reads', targetId: 'collection:cms-themes' },
+      { type: 'uses', targetId: 'component:cms-page-builder-preview' },
+      { type: 'uses', targetId: 'component:cms-page-builder-inspector' },
+      { type: 'uses', targetId: 'component:cms-theme-settings-panel' },
+      { type: 'uses', targetId: 'action:cms-css-ai-stream' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
     id: 'page:products',
     kind: 'page',
     name: 'Products Listing Page',

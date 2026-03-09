@@ -12,5 +12,6 @@ export const POST = apiHandler(postKangurParentAccountCreateHandler, {
   source: 'kangur.auth.parent-account.create.POST',
   service: 'kangur.api',
   successLogging: 'all',
+  parseJsonBody: true,
   bodySchema: kangurParentAccountCreateSchema,
 });

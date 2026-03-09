@@ -1,3 +1,12 @@
+---
+owner: 'Platform Team'
+last_reviewed: '2026-03-09'
+status: 'active'
+doc_type: 'agent-guide'
+scope: 'repo'
+canonical: true
+---
+
 # AGENTS.md - AI Agent Operating Guide
 
 This is the authoritative agent guide for this repository. Keep it accurate,
@@ -7,7 +16,9 @@ code-backed, and shorter than `GEMINI.md`. Other overlay docs should defer to it
 
 1. `docs/AGENTS.md` for agent rules and repo working conventions
 2. `GEMINI.md` for the deeper scanned architecture reference
-3. feature docs such as `docs/AI_PATHS.md`, `docs/case-resolver/index.md`,
+3. `docs/README.md` for the docs map
+4. `docs/documentation/README.md` when the task touches docs
+5. feature docs such as `docs/AI_PATHS.md`, `docs/case-resolver/index.md`,
    or `docs/validator/README.md` when working in those areas
 
 ## Repo Snapshot
@@ -20,6 +31,52 @@ code-backed, and shorter than `GEMINI.md`. Other overlay docs should defer to it
 - UI/data stack: Tailwind 4, local shared UI, TanStack Query, TanStack Table
 - AI stack: AI Paths, chatbot, agent runtime, AI Brain routing, image studio,
   AI insights, product AI flows
+
+## Documentation Placement Rules
+
+Use the nearest-owner rule first, then the document-type rule.
+
+- Root `docs/`: entrypoints, governance, agent overlays, and legacy docs pending
+  migration only
+- `docs/platform/`: new cross-cutting architecture, handbook, API policy,
+  shared patterns, and platform references
+- `docs/<feature>/`: feature-owned overviews, architecture, APIs, examples,
+  local runbooks, and references
+- `docs/runbooks/`: cross-feature operational procedures
+- `docs/plans/`: cross-feature implementation plans, migration plans, and
+  closeouts
+- `docs/decisions/`: cross-feature decisions, exception registers, matrices,
+  and architecture records
+- `docs/migrations/`: migration wave execution artifacts and reports
+- generated areas such as `docs/metrics/`, `docs/ai-paths/semantic-grammar/`,
+  and `docs/validator/semantic-grammar/`: generated outputs only
+
+Hard rules:
+
+- never create new dated files directly under `docs/`
+- never place generated outputs in hand-written doc folders
+- never add a new doc without updating the nearest index or hub page
+- never silently replace a canonical doc with a second doc covering the same role
+- when migrating legacy root docs, prefer canonical relocation plus a short
+  compatibility stub over silent hard cuts
+
+## AI Documentation Workflow
+
+When a task changes docs:
+
+1. Classify the scope: repo-wide, cross-feature, feature-specific, generated, or
+   migration-only.
+2. Classify the doc type: index, overview, architecture, reference, runbook,
+   plan, decision, or generated artifact.
+3. Place the file in the canonical folder from `docs/documentation/README.md`.
+4. Add or update metadata fields such as `owner`, `last_reviewed`, `status`,
+   `doc_type`, and `scope`.
+5. Update the nearest hub page and `docs/README.md` when the doc is
+   cross-cutting.
+6. If the change supersedes older material, cross-link it explicitly and mark the
+   old doc for follow-up migration or archival.
+7. Run `npm run docs:structure:check` when the change affects documentation
+   placement, metadata, or hub pages.
 
 ## Current Source Layout
 
@@ -132,7 +189,8 @@ High-signal worker areas:
 
 - Prefer feature `public.ts` / `server.ts` entrypoints from app-layer code.
 - Avoid deep cross-feature imports when a public/server entrypoint already exists.
-- Treat `docs/ARCHITECTURE_GUARDRAILS.md` as an active constraint, not optional reading.
+- Treat `docs/platform/architecture-guardrails.md` as an active constraint, not
+  optional reading.
 
 Related checks:
 
@@ -216,8 +274,10 @@ npm run check:factory-meta
   boundaries, or agent rules change.
 - Update `GEMINI.md` when the deeper architecture reference has drifted from the
   codebase.
+- Update `docs/documentation/README.md` when the documentation taxonomy or
+  placement rules change.
 - Keep `docs/CLAUDE.md` and other overlays shorter than this file.
 
 ## Last Updated
 
-Aligned to the scanned repo structure on `2026-03-02`.
+Aligned to the scanned repo structure and documentation taxonomy on `2026-03-09`.

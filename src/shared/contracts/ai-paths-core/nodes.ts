@@ -1,8 +1,7 @@
 import { z } from 'zod';
+
 import { playwrightSettingsSchema } from '../playwright';
-
 import { aiNodeTypeSchema } from './base';
-
 import {
   audioOscillatorConfigSchema,
   audioSpeakerConfigSchema,
@@ -273,15 +272,6 @@ export const delayConfigSchema = z.object({
 
 export type DelayConfigDto = z.infer<typeof delayConfigSchema>;
 export type DelayConfig = DelayConfigDto;
-
-export const descriptionConfigSchema = z.object({
-  prompt: z.string().optional(),
-  visionOutputEnabled: z.boolean().optional(),
-  generationOutputEnabled: z.boolean().optional(),
-});
-
-export type DescriptionConfigDto = z.infer<typeof descriptionConfigSchema>;
-export type DescriptionConfig = DescriptionConfigDto;
 
 export const regexModeSchema = z.enum(['group', 'extract', 'extract_json']);
 export const regexMatchModeSchema = z.enum(['first', 'first_overall', 'all']);
@@ -898,7 +888,6 @@ export const nodeConfigSchema = z.object({
   apiAdvanced: advancedApiConfigSchema.optional(),
   playwright: playwrightConfigSchema.optional(),
   db_schema: dbSchemaConfigSchema.optional(),
-  description: descriptionConfigSchema.optional(),
   parser: parserConfigSchema.optional(),
   prompt: promptConfigSchema.optional(),
   model: modelConfigSchema.optional(),

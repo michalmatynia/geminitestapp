@@ -9,6 +9,8 @@ export * from './port-types';
 export * from './provider-actions';
 export * from './collection-names';
 export * from './dependency-inspector';
+export * from './legacy-trigger-context-mode';
+export * from './legacy-node-removal';
 export * from './node-identity';
 export * from './data-contract-preflight';
 export * from './run-preflight';

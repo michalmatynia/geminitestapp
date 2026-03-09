@@ -4,7 +4,7 @@ import type {
   NodeHandlerContext,
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths-runtime';
-import { aiJobsApi, aiGenerationApi } from '@/shared/lib/ai-paths/api';
+import { aiJobsApi } from '@/shared/lib/ai-paths/api';
 import { evaluateOutboundUrlPolicy } from '@/shared/lib/security/outbound-url-policy';
 
 import {
@@ -14,7 +14,6 @@ import {
   hashRuntimeValue,
   renderTemplate,
 } from '../../utils';
-import { generateProductAiDescription } from '../server/description-generator';
 import { buildPromptOutput, extractImageUrls, pollGraphJob, resolveJobProductId } from '../utils';
 
 export const handleTemplate: NodeHandler = ({
@@ -105,7 +104,7 @@ const resolveImageUrlForOutboundPolicy = (rawUrl: string): string => {
 const filterImageUrlsByOutboundPolicy = (input: {
   imageUrls: string[];
   nodeId: string;
-  action: 'graphModel' | 'aiDescription';
+  action: 'graphModel';
   reportAiPathsError: NodeHandlerContext['reportAiPathsError'];
   toast: NodeHandlerContext['toast'];
 }): string[] => {
@@ -602,91 +601,4 @@ export const handleModel: NodeHandler = async ({
       payloadHash,
     };
   }
-};
-
-export const handleAiDescription: NodeHandler = async ({
-  node,
-  nodeInputs,
-  prevOutputs,
-  executed,
-  reportAiPathsError,
-  toast,
-}: NodeHandlerContext): Promise<RuntimePortValues> => {
-  if (executed.ai.has(node.id)) return prevOutputs;
-  const entityJson = coerceInput(nodeInputs['entityJson']) as Record<string, unknown> | undefined;
-  if (!entityJson) {
-    return {};
-  }
-  const rawImages =
-    (coerceInput(nodeInputs['images']) as unknown[] | undefined) ??
-    (entityJson['imageLinks'] as unknown[] | undefined) ??
-    (entityJson['images'] as unknown[] | undefined) ??
-    [];
-  const rawImageUrls = rawImages
-    .map((item: unknown) => {
-      if (typeof item === 'string') return item;
-      if (item && typeof item === 'object') {
-        const url = (item as { url?: string })['url'];
-        if (typeof url === 'string') return url;
-      }
-      return null;
-    })
-    .filter((item: unknown): item is string => Boolean(item));
-  const imageUrls = filterImageUrlsByOutboundPolicy({
-    imageUrls: rawImageUrls,
-    nodeId: node.id,
-    action: 'aiDescription',
-    reportAiPathsError,
-    toast,
-  });
-  try {
-    const entityProductId =
-      typeof entityJson['id'] === 'string'
-        ? entityJson['id']
-        : typeof entityJson['_id'] === 'string'
-          ? entityJson['_id']
-          : 'unknown';
-    const result = await generateProductAiDescription({
-      productId: entityProductId,
-      images: imageUrls,
-      options: {
-        visionEnabled: node.config?.description?.visionOutputEnabled,
-        generationEnabled: node.config?.description?.generationOutputEnabled,
-      },
-    });
-    executed.ai.add(node.id);
-    return { description_en: result.description ?? '' };
-  } catch (error) {
-    reportAiPathsError(
-      error,
-      { action: 'aiDescription', nodeId: node.id },
-      'AI description failed:'
-    );
-    return { description_en: '' };
-  }
-};
-
-export const handleDescriptionUpdater: NodeHandler = async ({
-  node,
-  nodeInputs,
-  prevOutputs,
-  executed,
-  reportAiPathsError,
-}: NodeHandlerContext): Promise<RuntimePortValues> => {
-  if (executed.updater.has(node.id)) return prevOutputs;
-  const productId = nodeInputs['productId'] as string | undefined;
-  const description = nodeInputs['description_en'] as string | undefined;
-  if (!productId || !description) {
-    return {};
-  }
-  const updateResult = await aiGenerationApi.updateProductDescription(productId, description);
-  executed.updater.add(node.id);
-  if (!updateResult.ok) {
-    reportAiPathsError(
-      new Error(updateResult.error),
-      { action: 'updateDescription', productId, nodeId: node.id },
-      'Failed to update description:'
-    );
-  }
-  return { description_en: description };
 };

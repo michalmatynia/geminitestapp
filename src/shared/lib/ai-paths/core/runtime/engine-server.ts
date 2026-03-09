@@ -2,17 +2,14 @@ import 'server-only';
 
 import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 import type { NodeHandler, RuntimeState } from '@/shared/contracts/ai-paths-runtime';
+import { getMongoClient } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
-import { evaluateGraphInternal } from './engine-core';
 import { resolveAiPathsRuntimeCodeObjectHandler } from './code-object-resolver-registry';
-import { createNodeRuntimeKernel, toNodeRuntimeResolutionTelemetry } from './node-runtime-kernel';
-import { createNodeCodeObjectV3ContractResolver } from './node-code-object-v3-legacy-bridge';
-import { createNodeRuntimeHandlerCatalog } from './node-runtime-handler-catalog';
-
+import { evaluateGraphInternal } from './engine-core';
 import { type EvaluateGraphArgs, type EvaluateGraphOptions } from './engine-modules/engine-types';
-
 import {
-  handleAiDescription,
   handleAudioOscillator,
   handleAudioSpeaker,
   handleAdvancedApi,
@@ -27,7 +24,6 @@ import {
   handleDatabase,
   handleDbSchema,
   handleDelay,
-  handleDescriptionUpdater,
   handleGate,
   handleHttp,
   handleMapper,
@@ -56,10 +52,10 @@ import {
   handleSwitchNode,
   handleSubgraphNode,
 } from './handlers';
+import { createNodeCodeObjectV3ContractResolver } from './node-code-object-v3-legacy-bridge';
+import { createNodeRuntimeHandlerCatalog } from './node-runtime-handler-catalog';
+import { createNodeRuntimeKernel, toNodeRuntimeResolutionTelemetry } from './node-runtime-kernel';
 
-import prisma from '@/shared/lib/db/prisma';
-import { getMongoClient } from '@/shared/lib/db/mongo-client';
-import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 // Re-export types from core
 export * from './engine-core';
@@ -92,7 +88,6 @@ const SERVER_HANDLER_CATALOG = createNodeRuntimeHandlerCatalog({
   subgraph: handleSubgraphNode,
   agent: handleAgent,
   learner_agent: handleLearnerAgent,
-  description_updater: handleDescriptionUpdater,
   template: handleTemplate,
   fetcher: handleFetcher,
   validator: handleValidator,
@@ -104,7 +99,6 @@ const SERVER_HANDLER_CATALOG = createNodeRuntimeHandlerCatalog({
   string_mutator: handleStringMutator,
   mutator: handleMutator,
   context: handleContext,
-  ai_description: handleAiDescription,
   audio_oscillator: handleAudioOscillator,
   audio_speaker: handleAudioSpeaker,
   bounds_normalizer: handleBoundsNormalizer,

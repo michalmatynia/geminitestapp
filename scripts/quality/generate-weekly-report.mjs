@@ -7,23 +7,25 @@ import { runStabilizationGates } from '../canonical/lib/stabilization-gate-runne
 import { collectMetrics } from '../architecture/lib-metrics.mjs';
 import { execScanOutput } from '../architecture/lib/exec-scan-output.mjs';
 import { writeMetricsMarkdownFile } from '../docs/metrics-frontmatter.mjs';
+import { parseCommonCheckArgs, writeSummaryJson } from '../lib/check-cli.mjs';
 import {
   createWeeklyCheckResult,
   runStructuredCommandCheck,
   truncateWeeklyCheckOutput,
 } from './lib/weekly-report-checks.mjs';
+import { buildWeeklyReportSummaryJsonDetails } from './lib/weekly-report-summary.mjs';
 
 const execFile = promisify(execFileCallback);
 
-const args = new Set(process.argv.slice(2));
+const argv = process.argv.slice(2);
+const args = new Set(argv);
 const root = process.cwd();
 const outDir = path.join(root, 'docs', 'metrics');
 
 const includeE2E = args.has('--include-e2e');
 const includeFullLint = args.has('--include-full-lint');
 const includeFullUnit = args.has('--include-full-unit');
-const strictMode = args.has('--strict');
-const shouldWriteHistory = args.has('--write-history') && !args.has('--ci') && !args.has('--no-history');
+const { strictMode, shouldWriteHistory, noWrite, summaryJson } = parseCommonCheckArgs(argv);
 
 const MAX_OUTPUT_BYTES = 160_000;
 const BUILD_LOCK_PATH = path.join(root, '.next', 'lock');
@@ -615,7 +617,6 @@ const run = async () => {
       message: `Build preflight failed: ${message}`,
     };
   }
-
   const checks = [
     {
       id: 'build',
@@ -644,8 +645,12 @@ const run = async () => {
         '--strict',
         '--ci',
         '--no-history',
+        ...(noWrite ? ['--no-write'] : []),
+        '--summary-json',
       ],
+      sourceName: 'scripts/quality/run-lint-domain-checks.mjs',
       timeoutMs: 25 * 60 * 1000,
+      structured: true,
     },
     {
       id: 'typecheck',
@@ -664,6 +669,7 @@ const run = async () => {
         '--strict',
         '--ci',
         '--no-history',
+        ...(noWrite ? ['--no-write'] : []),
         '--summary-json',
       ],
       sourceName: 'scripts/testing/run-critical-flow-tests.mjs',
@@ -679,6 +685,7 @@ const run = async () => {
         '--strict',
         '--ci',
         '--no-history',
+        ...(noWrite ? ['--no-write'] : []),
         '--summary-json',
       ],
       sourceName: 'scripts/testing/run-security-smoke-tests.mjs',
@@ -694,6 +701,7 @@ const run = async () => {
         '--strict',
         '--ci',
         '--no-history',
+        ...(noWrite ? ['--no-write'] : []),
         '--summary-json',
       ],
       sourceName: 'scripts/testing/run-unit-domain-timings.mjs',
@@ -748,42 +756,42 @@ const run = async () => {
       id: 'unsafePatterns',
       label: 'Unsafe Patterns',
       command: 'node',
-      commandArgs: ['scripts/quality/check-unsafe-patterns.mjs', '--ci', '--no-history'],
+      commandArgs: ['scripts/quality/check-unsafe-patterns.mjs', '--ci', '--no-history', ...(noWrite ? ['--no-write'] : [])],
       timeoutMs: 60 * 1000,
     },
     {
       id: 'importBoundaries',
       label: 'Import Boundaries',
       command: 'node',
-      commandArgs: ['scripts/quality/check-import-boundaries.mjs', '--ci', '--no-history'],
+      commandArgs: ['scripts/quality/check-import-boundaries.mjs', '--ci', '--no-history', ...(noWrite ? ['--no-write'] : [])],
       timeoutMs: 60 * 1000,
     },
     {
       id: 'apiInputValidation',
       label: 'API Input Validation',
       command: 'node',
-      commandArgs: ['scripts/quality/check-api-input-validation.mjs', '--ci', '--no-history'],
+      commandArgs: ['scripts/quality/check-api-input-validation.mjs', '--ci', '--no-history', ...(noWrite ? ['--no-write'] : [])],
       timeoutMs: 60 * 1000,
     },
     {
       id: 'contextHealth',
       label: 'Context Health',
       command: 'node',
-      commandArgs: ['scripts/quality/check-context-health.mjs', '--ci', '--no-history'],
+      commandArgs: ['scripts/quality/check-context-health.mjs', '--ci', '--no-history', ...(noWrite ? ['--no-write'] : [])],
       timeoutMs: 60 * 1000,
     },
     {
       id: 'timerCleanup',
       label: 'Timer Cleanup',
       command: 'node',
-      commandArgs: ['scripts/quality/check-timer-cleanup.mjs', '--ci', '--no-history'],
+      commandArgs: ['scripts/quality/check-timer-cleanup.mjs', '--ci', '--no-history', ...(noWrite ? ['--no-write'] : [])],
       timeoutMs: 60 * 1000,
     },
     {
       id: 'testDistribution',
       label: 'Test Distribution',
       command: 'node',
-      commandArgs: ['scripts/quality/check-test-distribution.mjs', '--ci', '--no-history'],
+      commandArgs: ['scripts/quality/check-test-distribution.mjs', '--ci', '--no-history', ...(noWrite ? ['--no-write'] : [])],
       timeoutMs: 60 * 1000,
     },
   ];
@@ -799,9 +807,11 @@ const run = async () => {
         output: buildPreflight.message,
       });
       checkResults.push(result);
-      console.log(
-        `[weekly-quality] ${check.label.padEnd(30, ' ')} ${result.status.toUpperCase().padEnd(7, ' ')} ${formatDuration(result.durationMs)}`
-      );
+      if (!summaryJson) {
+        console.log(
+          `[weekly-quality] ${check.label.padEnd(30, ' ')} ${result.status.toUpperCase().padEnd(7, ' ')} ${formatDuration(result.durationMs)}`
+        );
+      }
       continue;
     }
 
@@ -835,12 +845,13 @@ const run = async () => {
       result.output = output.length <= MAX_OUTPUT_BYTES ? output : output.slice(-MAX_OUTPUT_BYTES);
     }
     checkResults.push(result);
-    const statusLabel = result.status.toUpperCase();
-    console.log(
-      `[weekly-quality] ${check.label.padEnd(30, ' ')} ${statusLabel.padEnd(7, ' ')} ${formatDuration(result.durationMs)}`
-    );
+    if (!summaryJson) {
+      const statusLabel = result.status.toUpperCase();
+      console.log(
+        `[weekly-quality] ${check.label.padEnd(30, ' ')} ${statusLabel.padEnd(7, ' ')} ${formatDuration(result.durationMs)}`
+      );
+    }
   }
-
   let metrics = null;
   let metricsError = null;
   try {
@@ -931,38 +942,90 @@ const run = async () => {
     criticalFlows,
   };
 
-  await fs.mkdir(outDir, { recursive: true });
-
   const stamp = report.generatedAt.replace(/[:.]/g, '-');
   const latestJsonPath = path.join(outDir, 'weekly-quality-latest.json');
   const latestMdPath = path.join(outDir, 'weekly-quality-latest.md');
   const historicalJsonPath = path.join(outDir, `weekly-quality-${stamp}.json`);
   const historicalMdPath = path.join(outDir, `weekly-quality-${stamp}.md`);
+  const paths = noWrite
+    ? null
+    : {
+        latestJson: path.relative(root, latestJsonPath),
+        latestMarkdown: path.relative(root, latestMdPath),
+        historicalJson: shouldWriteHistory ? path.relative(root, historicalJsonPath) : null,
+        historicalMarkdown: shouldWriteHistory ? path.relative(root, historicalMdPath) : null,
+      };
 
-  await fs.writeFile(latestJsonPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
-  await writeMetricsMarkdownFile({
-    root,
-    targetPath: latestMdPath,
-    content: toMarkdown(report),
-  });
-
-  if (shouldWriteHistory) {
-    await fs.writeFile(historicalJsonPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
+  if (!noWrite) {
+    await fs.mkdir(outDir, { recursive: true });
+    await fs.writeFile(latestJsonPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
     await writeMetricsMarkdownFile({
       root,
-      targetPath: historicalMdPath,
+      targetPath: latestMdPath,
       content: toMarkdown(report),
     });
+
+    if (shouldWriteHistory) {
+      await fs.writeFile(historicalJsonPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
+      await writeMetricsMarkdownFile({
+        root,
+        targetPath: historicalMdPath,
+        content: toMarkdown(report),
+      });
+    }
+  }
+
+  if (summaryJson) {
+    writeSummaryJson({
+      scannerName: 'weekly-quality-report',
+      generatedAt: report.generatedAt,
+      status:
+        summary.failed > 0 || summary.timedOut > 0 || durationAlerts.length > 0 ? 'failed' : 'ok',
+      summary: {
+        totalChecks: summary.totalChecks,
+        passed: summary.passed,
+        failed: summary.failed,
+        timedOut: summary.timedOut,
+        skipped: summary.skipped,
+        durationAlertCount: durationAlerts.length,
+      },
+      details: buildWeeklyReportSummaryJsonDetails(report),
+      paths,
+      filters: {
+        includeE2E,
+        includeFullLint,
+        includeFullUnit,
+        strictMode,
+        historyDisabled: !shouldWriteHistory,
+        noWrite,
+        ci: args.has('--ci'),
+      },
+      notes: ['weekly quality report snapshot'],
+    });
+
+    if (strictMode && (summary.failed > 0 || summary.timedOut > 0)) {
+      process.exit(1);
+    }
+
+    if (strictMode && durationAlerts.length > 0) {
+      process.exit(1);
+    }
+
+    return;
   }
 
   console.log(
     `[weekly-quality] summary pass=${summary.passed} fail=${summary.failed} timeout=${summary.timedOut} skipped=${summary.skipped}`
   );
-  console.log(`Wrote ${path.relative(root, latestJsonPath)}`);
-  console.log(`Wrote ${path.relative(root, latestMdPath)}`);
-  if (shouldWriteHistory) {
-    console.log(`Wrote ${path.relative(root, historicalJsonPath)}`);
-    console.log(`Wrote ${path.relative(root, historicalMdPath)}`);
+  if (paths) {
+    console.log(`Wrote ${paths.latestJson}`);
+    console.log(`Wrote ${paths.latestMarkdown}`);
+    if (paths.historicalJson) {
+      console.log(`Wrote ${paths.historicalJson}`);
+      console.log(`Wrote ${paths.historicalMarkdown}`);
+    }
+  } else {
+    console.log('Skipped writing weekly quality report artifacts (--no-write).');
   }
 
   if (strictMode && (summary.failed > 0 || summary.timedOut > 0)) {

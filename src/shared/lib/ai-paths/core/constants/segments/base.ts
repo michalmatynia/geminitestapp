@@ -45,8 +45,6 @@ export const CACHEABLE_NODE_TYPES: NodeType[] = [
   'model',
   'agent',
   'database',
-  'ai_description',
-  'description_updater',
 ];
 
 export const CACHEABLE_NODE_TYPE_SET = new Set<NodeType>(CACHEABLE_NODE_TYPES);

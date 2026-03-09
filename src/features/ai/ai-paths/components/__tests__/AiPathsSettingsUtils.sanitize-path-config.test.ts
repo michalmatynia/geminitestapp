@@ -248,6 +248,33 @@ describe('sanitizePathConfig', () => {
     );
   });
 
+  it.each([
+    {
+      nodeType: 'description_updater',
+      title: 'Description Updater',
+      pathId: 'path-legacy-description-updater',
+      expectedMessage: /Database node/i,
+    },
+  ])(
+    'rejects removed legacy $nodeType nodes with a targeted error',
+    ({ nodeType, title, pathId, expectedMessage }) => {
+      const config = createDefaultPathConfig(pathId);
+      config.nodes = config.nodes.map(
+        (node: AiNode, index: number): AiNode =>
+          index === 0
+            ? ({
+                ...node,
+                type: nodeType,
+                title,
+              } as unknown as AiNode)
+            : node
+      );
+
+      expect(() => sanitizePathConfig(config)).toThrowError(/removed legacy node/i);
+      expect(() => sanitizePathConfig(config)).toThrowError(expectedMessage);
+    }
+  );
+
   it('backfills missing node createdAt/updatedAt timestamps', () => {
     const config = createDefaultPathConfig('path-missing-node-timestamps');
     const [firstNode, ...restNodes] = config.nodes;

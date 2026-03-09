@@ -1,15 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  handleAiDescription,
-  handleModel,
-} from '@/shared/lib/ai-paths/core/runtime/handlers/generation';
+import { handleModel } from '@/shared/lib/ai-paths/core/runtime/handlers/generation';
 import { aiJobsApi } from '@/shared/lib/ai-paths/api';
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import type { AiNode, Edge, ModelConfig } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
-
-import { generateProductAiDescription } from '../../server/description-generator';
 
 vi.mock('@/shared/lib/ai-paths/api', async () => {
   const actual = await vi.importActual<typeof import('@/shared/lib/ai-paths/api')>(
@@ -21,16 +16,8 @@ vi.mock('@/shared/lib/ai-paths/api', async () => {
       ...actual.aiJobsApi,
       enqueue: vi.fn(),
     },
-    aiGenerationApi: {
-      ...actual.aiGenerationApi,
-      updateProductDescription: vi.fn(),
-    },
   };
 });
-
-vi.mock('../../server/description-generator', () => ({
-  generateProductAiDescription: vi.fn(),
-}));
 
 const buildModelNode = (
   patch: Partial<AiNode> = {},
@@ -69,25 +56,6 @@ const buildPromptNode = (id: string, patch: Partial<AiNode> = {}): AiNode =>
     config: {
       prompt: {
         template: '',
-      },
-    },
-    ...(patch as Record<string, unknown>),
-  }) as AiNode;
-
-const buildDescriptionNode = (patch: Partial<AiNode> = {}): AiNode =>
-  ({
-    id: 'description-1',
-    type: 'ai_description',
-    title: 'AI Description',
-    description: '',
-    position: { x: 0, y: 0 },
-    data: {},
-    inputs: ['entityJson', 'images', 'title'],
-    outputs: ['description_en'],
-    config: {
-      description: {
-        visionOutputEnabled: true,
-        generationOutputEnabled: true,
       },
     },
     ...(patch as Record<string, unknown>),
@@ -413,53 +381,5 @@ describe('handleModel prompt routing', () => {
     expect(result['waitingOnPorts']).toEqual(['prompt']);
     expect(result['promptSourceNodeIds']).toEqual(['prompt-a']);
     expect(result['promptSourceWaitingOnPorts']).toEqual(['bundle']);
-  });
-});
-
-describe('handleAiDescription', () => {
-  afterEach(() => {
-    vi.clearAllMocks();
-    vi.restoreAllMocks();
-  });
-
-  it('calls the AI Paths description generator directly and returns description_en', async () => {
-    vi.mocked(generateProductAiDescription).mockResolvedValue({
-      analysisInitial: '',
-      analysisFinal: '',
-      descriptionInitial: 'Generated description',
-      descriptionFinal: '',
-      description: 'Generated description',
-      analysis: '',
-      visionModel: 'vision-model',
-      generationModel: 'generation-model',
-      visionOutputEnabled: true,
-      generationOutputEnabled: true,
-      visionBrainApplied: null,
-      generationBrainApplied: null,
-    });
-
-    const descriptionNode = buildDescriptionNode();
-    const context = buildContext({
-      node: descriptionNode,
-      nodes: [descriptionNode],
-      edges: [],
-      nodeInputs: {
-        entityJson: {
-          id: 'product-1',
-        },
-      },
-    });
-
-    const result = await handleAiDescription(context);
-
-    expect(generateProductAiDescription).toHaveBeenCalledWith({
-      productId: 'product-1',
-      images: [],
-      options: {
-        visionEnabled: true,
-        generationEnabled: true,
-      },
-    });
-    expect(result).toEqual({ description_en: 'Generated description' });
   });
 });

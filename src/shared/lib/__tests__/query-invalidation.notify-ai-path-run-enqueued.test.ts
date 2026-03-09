@@ -4,12 +4,14 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { AI_PATH_RUN_ENQUEUED_EVENT_NAME } from '@/shared/contracts/ai-paths';
 import {
+  clearRecentAiPathRunEnqueue,
   getRecentAiPathRunEnqueue,
   notifyAiPathRunEnqueued,
 } from '@/shared/lib/query-invalidation';
 
 describe('notifyAiPathRunEnqueued', () => {
   afterEach(() => {
+    clearRecentAiPathRunEnqueue();
     vi.unstubAllGlobals();
     window.localStorage.clear();
   });
@@ -126,5 +128,37 @@ describe('notifyAiPathRunEnqueued', () => {
     expect(windowListener).toHaveBeenCalledTimes(1);
     expect(constructorSpy).toHaveBeenCalledTimes(1);
     expect(close).not.toHaveBeenCalled();
+  });
+
+  it('still dispatches the enqueue event when recent enqueue persistence fails', () => {
+    const windowListener = vi.fn();
+    window.addEventListener(AI_PATH_RUN_ENQUEUED_EVENT_NAME, windowListener as EventListener);
+
+    const originalSetItem = window.localStorage.setItem.bind(window.localStorage);
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string
+    ): void {
+      if (key === 'ai-path-run-recent-enqueue') {
+        throw new Error('Quota exceeded');
+      }
+      return originalSetItem(key, value);
+    });
+
+    expect(() =>
+      notifyAiPathRunEnqueued('run-4', {
+        entityId: 'product-4',
+        entityType: 'product',
+      })
+    ).not.toThrow();
+
+    expect(windowListener).toHaveBeenCalledTimes(1);
+    expect(getRecentAiPathRunEnqueue()).toMatchObject({
+      type: 'run-enqueued',
+      runId: 'run-4',
+      entityId: 'product-4',
+      entityType: 'product',
+    });
   });
 });

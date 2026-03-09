@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_MS } from '@/features/kangur/config/auth';
+import {
+  KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS,
+  KANGUR_PARENT_VERIFICATION_SETTINGS_KEY,
+} from '@/features/kangur/settings';
 
 const {
   createAuthUserWithEmailMock,
@@ -17,6 +20,7 @@ const {
   markAuthUserEmailVerifiedMock,
   setAuthUserPasswordMock,
   validatePasswordStrengthMock,
+  readStoredSettingValueMock,
 } = vi.hoisted(() => ({
   createAuthUserWithEmailMock: vi.fn(),
   findAuthUserByEmailMock: vi.fn(),
@@ -32,6 +36,7 @@ const {
   markAuthUserEmailVerifiedMock: vi.fn(),
   setAuthUserPasswordMock: vi.fn(),
   validatePasswordStrengthMock: vi.fn(),
+  readStoredSettingValueMock: vi.fn(),
 }));
 
 vi.mock('@/server/auth', () => ({
@@ -55,6 +60,9 @@ vi.mock('@/server/auth', () => ({
 vi.mock('@/features/kangur/services/kangur-learner-repository', () => ({
   ensureDefaultKangurLearnerForOwner: ensureDefaultKangurLearnerForOwnerMock,
 }));
+vi.mock('@/shared/lib/ai-brain/server', () => ({
+  readStoredSettingValue: readStoredSettingValueMock,
+}));
 
 import {
   buildKangurParentAccountCreateDebugPayload,
@@ -67,6 +75,7 @@ import {
 describe('parent email auth service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    readStoredSettingValueMock.mockResolvedValue(null);
     shouldExposeAuthEmailDebugMock.mockReturnValue(true);
     getAuthSecurityProfileMock.mockResolvedValue({
       bannedAt: null,
@@ -84,6 +93,137 @@ describe('parent email auth service', () => {
       ok: true,
       errors: [],
     });
+  });
+
+  it('uses the configured parent verification cooldown from stored settings', async () => {
+    readStoredSettingValueMock.mockResolvedValue(
+      JSON.stringify({ resendCooldownSeconds: 90 })
+    );
+    findAuthUserByEmailMock.mockResolvedValue(null);
+    createEmailVerificationChallengeMock.mockResolvedValue({
+      id: 'verify-link-custom',
+      expiresAt: new Date('2026-03-15T21:00:00.000Z'),
+    });
+    sendAuthEmailMock.mockResolvedValue(undefined);
+    const expectedOrigin =
+      process.env['NEXT_PUBLIC_APP_URL']?.trim() ||
+      process.env['NEXTAUTH_URL']?.trim() ||
+      process.env['PLAYWRIGHT_BASE_URL']?.trim() ||
+      'http://localhost:3000';
+
+    const result = await createKangurParentAccount({
+      email: 'cooldown-parent@example.com',
+      password: 'Strong123!',
+      callbackUrl: '/kangur/tests',
+      request: new Request('https://example.com/api/kangur/auth/parent-account/create'),
+    });
+
+    expect(readStoredSettingValueMock).toHaveBeenCalledWith(
+      KANGUR_PARENT_VERIFICATION_SETTINGS_KEY
+    );
+    expect(result.retryAfterMs).toBe(90_000);
+    expect(result).toEqual({
+      email: 'cooldown-parent@example.com',
+      created: true,
+      emailVerified: false,
+      hasPassword: true,
+      retryAfterMs: 90_000,
+      verificationUrl: `${expectedOrigin}/kangur/login?callbackUrl=%2Fkangur%2Ftests&verifyEmailToken=verify-link-custom`,
+    });
+  });
+
+  it('falls back to the configured default when stored verification settings are invalid', async () => {
+    readStoredSettingValueMock.mockResolvedValue('not-json-at-all');
+    findAuthUserByEmailMock.mockResolvedValue(null);
+    createEmailVerificationChallengeMock.mockResolvedValue({
+      id: 'verify-link-fallback',
+      expiresAt: new Date('2026-03-15T21:00:00.000Z'),
+    });
+    sendAuthEmailMock.mockResolvedValue(undefined);
+
+    const result = await createKangurParentAccount({
+      email: 'invalid-parent@example.com',
+      password: 'Strong123!',
+      callbackUrl: '/kangur/tests',
+      request: new Request('https://example.com/api/kangur/auth/parent-account/create'),
+    });
+
+    expect(result.retryAfterMs).toBe(KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS);
+  });
+
+  it('uses the configured parent verification cooldown for verification email resend', async () => {
+    readStoredSettingValueMock.mockResolvedValue(
+      JSON.stringify({ resendCooldownSeconds: 75 })
+    );
+    findAuthUserByEmailMock.mockResolvedValue({
+      id: 'parent-resend-cooldown',
+      email: 'resend-parent@example.com',
+      name: 'Resend Parent',
+      passwordHash: 'existing-password-hash',
+      emailVerified: null,
+    });
+    createEmailVerificationChallengeMock.mockResolvedValue({
+      id: 'verify-link-resend-configured',
+      expiresAt: new Date('2026-03-15T21:00:00.000Z'),
+    });
+
+    const result = await resendKangurParentVerificationEmail({
+      email: 'resend-parent@example.com',
+      callbackUrl: '/kangur/tests',
+    });
+
+    expect(readStoredSettingValueMock).toHaveBeenCalledWith(
+      KANGUR_PARENT_VERIFICATION_SETTINGS_KEY
+    );
+    expect(result.retryAfterMs).toBe(75_000);
+    expect(result).toEqual({
+      email: 'resend-parent@example.com',
+      created: false,
+      emailVerified: false,
+      hasPassword: true,
+      retryAfterMs: 75_000,
+      verificationUrl:
+        'http://localhost:3000/kangur/login?callbackUrl=%2Fkangur%2Ftests&verifyEmailToken=verify-link-resend-configured',
+    });
+  });
+
+  it('enforces configured cooldown when rate limiting parent account creation retries', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-03-09T08:00:00.000Z'));
+      readStoredSettingValueMock.mockResolvedValue(JSON.stringify({ resendCooldownSeconds: 45 }));
+      findAuthUserByEmailMock.mockResolvedValue(null);
+      findActiveEmailVerificationChallengeByEmailMock.mockResolvedValue({
+        userId: 'pending:kangur_parent:parent%40example.com',
+        email: 'parent@example.com',
+        callbackUrl: '/kangur/tests',
+        pendingRegistration: {
+          source: 'kangur_parent',
+          name: 'Parent',
+          passwordHash: 'hashed-password',
+        },
+        createdAt: new Date('2026-03-09T07:59:30.000Z'),
+        expiresAt: new Date('2026-03-15T21:00:00.000Z'),
+      });
+
+      await expect(
+        createKangurParentAccount({
+          email: 'parent@example.com',
+          password: 'Strong123!',
+          callbackUrl: '/kangur/tests',
+        })
+      ).rejects.toMatchObject({
+        httpStatus: 429,
+        message:
+          'Email potwierdzajacy zostal juz wyslany. Poczekaj 15 s i sprobuj ponownie.',
+        retryAfterMs: 15_000,
+      });
+
+      expect(createEmailVerificationChallengeMock).not.toHaveBeenCalled();
+      expect(sendAuthEmailMock).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('stages a new parent registration until the verification link is used', async () => {
@@ -132,7 +272,7 @@ describe('parent email auth service', () => {
       created: true,
       emailVerified: false,
       hasPassword: true,
-      retryAfterMs: KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_MS,
+      retryAfterMs: KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS,
       verificationUrl: `${expectedOrigin}/kangur/login?callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-link-1`,
     });
     expect(buildKangurParentAccountCreateDebugPayload(result)).toEqual({
@@ -165,7 +305,7 @@ describe('parent email auth service', () => {
       created: false,
       emailVerified: false,
       hasPassword: true,
-      retryAfterMs: KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_MS,
+      retryAfterMs: KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS,
       verificationUrl:
         'http://localhost:3000/kangur/login?callbackUrl=%2Fkangur%2Fgame&verifyEmailToken=verify-link-2',
     });
@@ -290,7 +430,7 @@ describe('parent email auth service', () => {
       created: false,
       emailVerified: false,
       hasPassword: true,
-      retryAfterMs: KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_MS,
+      retryAfterMs: KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS,
       verificationUrl:
         'http://localhost:3000/kangur/login?callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-link-resend-1',
     });
@@ -329,7 +469,7 @@ describe('parent email auth service', () => {
       created: false,
       emailVerified: false,
       hasPassword: true,
-      retryAfterMs: KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_MS,
+      retryAfterMs: KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS,
       verificationUrl:
         'http://localhost:3000/kangur/login?callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-link-resend-2',
     });

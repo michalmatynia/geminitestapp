@@ -47,8 +47,10 @@ The current onboarding flow is:
 Important behavior:
 
 - `AI Tutor` remains locked until the parent email is verified
-- the login screen exposes `Wyslij email ponownie` whenever the parent is still waiting on verification
+- the login screen exposes `Wyslij email ponownie`, shows the remaining cooldown directly in the confirmation card, and re-enables resend only after that timer expires
+- the resend cooldown uses the current `Parent email cooldown` setting from `Kangur Settings`; the UI falls back to the default only when the API does not provide an explicit retry value
 - an attempted parent sign-in with an unverified email routes the user back into the confirmation/resend flow
+- legacy parent accounts that were created before password login existed are redirected into `Tworze konto rodzica` recovery so the parent can set a password and trigger a fresh verification email
 
 ## Tabs
 

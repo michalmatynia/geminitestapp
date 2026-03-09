@@ -3,6 +3,16 @@ import { z } from 'zod';
 import { pathConfigSchema } from '@/shared/contracts/ai-paths';
 import { parseAndDeserializeSemanticCanvas } from '@/shared/lib/ai-paths/core/semantic-grammar';
 import {
+  findRemovedLegacyTriggerContextModesInDocument,
+  formatRemovedLegacyTriggerContextModesMessage,
+} from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
+import {
+  findRemovedLegacyAiPathNodesInDocument,
+  formatRemovedLegacyAiPathNodesMessage,
+} from '@/shared/lib/ai-paths/core/utils/legacy-node-removal';
+
+import { aiPathPortablePackageVersionedSchema } from './portable-engine-contract';
+import {
   beginPortablePathMigratorAttempt,
   markPortablePathMigratorFailure,
   markPortablePathMigratorSuccess,
@@ -14,7 +24,6 @@ import {
   normalizePathConfigEdges,
 } from './portable-engine-path-canonicalization';
 
-import { aiPathPortablePackageVersionedSchema } from './portable-engine-contract';
 import type {
   MigratePortablePathInputResult,
   PortablePathMigrationWarning,
@@ -28,6 +37,24 @@ export const migratePortablePathInput = (
   input: unknown,
   options?: Pick<ResolvePortablePathInputOptions, 'includeConnections'>
 ): MigratePortablePathInputResult => {
+  const removedLegacyNodes = findRemovedLegacyAiPathNodesInDocument(input);
+  if (removedLegacyNodes.length > 0) {
+    return {
+      ok: false,
+      error: formatRemovedLegacyAiPathNodesMessage(removedLegacyNodes, {
+        surface: 'portable payload',
+      }),
+    };
+  }
+  const removedLegacyTriggerContextModes = findRemovedLegacyTriggerContextModesInDocument(input);
+  if (removedLegacyTriggerContextModes.length > 0) {
+    return {
+      ok: false,
+      error: formatRemovedLegacyTriggerContextModesMessage(removedLegacyTriggerContextModes, {
+        surface: 'portable payload',
+      }),
+    };
+  }
   const packageParsed = aiPathPortablePackageVersionedSchema.safeParse(input);
   if (packageParsed.success) {
     beginPortablePathMigratorAttempt(packageParsed.data.specVersion);

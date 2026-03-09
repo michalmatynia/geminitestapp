@@ -1,7 +1,7 @@
 {
   "schemaVersion": "ai-paths.node-code-object-index.v2",
   "generatedAt": "2026-03-05T00:00:00.000Z",
-  "totalObjects": 36,
+  "totalObjects": 34,
   "objects": [
     {
       "id": "node_obj_agent_portable_v2",
@@ -16,20 +16,6 @@
       "inputCount": 4,
       "outputCount": 2,
       "configFieldCount": 6
-    },
-    {
-      "id": "node_obj_ai_description_portable_v2",
-      "nodeType": "ai_description",
-      "title": "AI Description Generator",
-      "nodeFamily": "ai-generation",
-      "objectFile": "docs/ai-paths/node-code-objects-v2/ai_description.json",
-      "objectHashAlgorithm": "sha256",
-      "objectHash": "394ad579d2446645315cb39bd09ada121a1bb586bd967ad40558d2d627d63280",
-      "semanticNodeHashAlgorithm": "sha256",
-      "semanticNodeHash": "93b3b2422e407af85154a56198326729fba9e936f87882491f1d311ea46967e7",
-      "inputCount": 3,
-      "outputCount": 1,
-      "configFieldCount": 5
     },
     {
       "id": "node_obj_api_advanced_portable_v2",
@@ -170,20 +156,6 @@
       "inputCount": 2,
       "outputCount": 2,
       "configFieldCount": 4
-    },
-    {
-      "id": "node_obj_description_updater_portable_v2",
-      "nodeType": "description_updater",
-      "title": "Description Updater (Deprecated)",
-      "nodeFamily": "general",
-      "objectFile": "docs/ai-paths/node-code-objects-v2/description_updater.json",
-      "objectHashAlgorithm": "sha256",
-      "objectHash": "fb563a17c51dedc8243f2ff5a5686e9947ee6871b329681b37f0f70f4cd57d62",
-      "semanticNodeHashAlgorithm": "sha256",
-      "semanticNodeHash": "0140c1929e747f53a5f4f60043595787d367bdd869350012552e7cc185c69588",
-      "inputCount": 2,
-      "outputCount": 1,
-      "configFieldCount": 3
     },
     {
       "id": "node_obj_fetcher_portable_v2",

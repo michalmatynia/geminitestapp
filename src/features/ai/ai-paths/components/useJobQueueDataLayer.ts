@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useRef, type Dispatch, type SetStateAction } from 'react';
+import { useCallback, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 
 import type { Toast, ListQuery, MutationResult } from '@/shared/contracts/ui';
 import type { AiPathRunRecord, AiPathRunVisibility } from '@/shared/lib/ai-paths';
@@ -15,6 +15,7 @@ import {
   mergeAiPathQueuePayloadWithOptimisticRuns,
   patchQueuedCountWithOptimisticRuns,
   previewAiPathQueuePayloadWithOptimisticRuns,
+  rememberOptimisticAiPathRun,
 } from '@/shared/lib/ai-paths/optimistic-run-queue';
 import { fetchAiPathsSettingsCached } from '@/shared/lib/ai-paths/settings-store-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
@@ -53,6 +54,7 @@ interface JobQueueDataLayerParams {
   isBurstRefreshActive: boolean;
   isPanelActive: boolean;
   markBurstRefresh: () => void;
+  optimisticRunsHydrated: boolean;
   normalizedPathFilter: string;
   normalizedQuery: string;
   normalizedSourceFilter: string;
@@ -72,6 +74,7 @@ interface JobQueueDataLayerResult {
   clearRunsMutation: MutationResult<{ deleted: number; scope: 'all' | 'terminal' }, 'terminal' | 'all'>;
   deleteRunMutation: MutationResult<void, string>;
   heavyMap: Map<string, string>;
+  rememberVisibleOptimisticRun: (run: AiPathRunRecord) => void;
   queueStatusQuery: ListQuery<QueueStatusPayload, QueueStatusPayload>;
   refetchQueueData: JobQueueRefetchData;
   runsQuery: ListQuery<QueueRunsPayload, QueueRunsPayload>;
@@ -84,6 +87,7 @@ export function useJobQueueDataLayer({
   isBurstRefreshActive,
   isPanelActive,
   markBurstRefresh,
+  optimisticRunsHydrated,
   normalizedPathFilter,
   normalizedQuery,
   normalizedSourceFilter,
@@ -97,6 +101,7 @@ export function useJobQueueDataLayer({
   statusFilter,
   toast,
 }: JobQueueDataLayerParams): JobQueueDataLayerResult {
+  const [optimisticRunsRevision, setOptimisticRunsRevision] = useState(0);
   const aiPathsSettingsQuery = createListQueryV2<
     Array<{ key: string; value: string }>,
     Array<{ key: string; value: string }>
@@ -280,12 +285,19 @@ export function useJobQueueDataLayer({
 
   const visibleRunsPayload = useMemo(
     (): QueueRunsPayload =>
-      previewAiPathQueuePayloadWithOptimisticRuns(
-        runsQuery.data ?? { runs: [], total: 0 },
-        queuePreviewFilters
-      ),
-    [queuePreviewFilters, runsQuery.data]
+      optimisticRunsHydrated
+        ? previewAiPathQueuePayloadWithOptimisticRuns(
+          runsQuery.data ?? { runs: [], total: 0 },
+          queuePreviewFilters
+        )
+        : (runsQuery.data ?? { runs: [], total: 0 }),
+    [optimisticRunsHydrated, optimisticRunsRevision, queuePreviewFilters, runsQuery.data]
   );
+
+  const rememberVisibleOptimisticRun = useCallback((run: AiPathRunRecord): void => {
+    rememberOptimisticAiPathRun(run);
+    setOptimisticRunsRevision((prev) => prev + 1);
+  }, []);
 
   const clearRunsMutation = createDeleteMutationV2<
     { deleted: number; scope: 'all' | 'terminal' },
@@ -367,6 +379,7 @@ export function useJobQueueDataLayer({
     clearRunsMutation,
     deleteRunMutation,
     heavyMap,
+    rememberVisibleOptimisticRun,
     queueStatusQuery,
     refetchQueueData,
     runsQuery,

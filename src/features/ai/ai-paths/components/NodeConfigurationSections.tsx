@@ -7,7 +7,6 @@ import { ContextNodeConfigSection } from './node-config/ContextNodeConfigSection
 import { DatabaseNodeConfigSection } from './node-config/DatabaseNodeConfigSection';
 import { DbSchemaNodeConfigSection } from './node-config/DbSchemaNodeConfigSection';
 import { AgentNodeConfigSection } from './node-config/dialog/AgentNodeConfigSection';
-import { AiDescriptionNodeConfigSection } from './node-config/dialog/AiDescriptionNodeConfigSection';
 import { ApiAdvancedNodeConfigSection } from './node-config/dialog/ApiAdvancedNodeConfigSection';
 import { AudioOscillatorNodeConfigSection } from './node-config/dialog/AudioOscillatorNodeConfigSection';
 import { AudioSpeakerNodeConfigSection } from './node-config/dialog/AudioSpeakerNodeConfigSection';
@@ -94,7 +93,6 @@ export function NodeConfigurationSections(): React.JSX.Element | null {
       <DbSchemaNodeConfigSection />
       <ViewerNodeConfigSection />
       <RuntimeNodeConfigSection />
-      <AiDescriptionNodeConfigSection />
       <UnsupportedNodeConfigNotice selectedNode={selectedNode} />
     </div>
   );

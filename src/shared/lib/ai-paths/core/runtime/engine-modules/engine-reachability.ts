@@ -1,9 +1,5 @@
 import { AiNode, Edge } from '@/shared/contracts/ai-paths';
-import {
-  resolveEdgeFromNodeId,
-  resolveEdgeToNodeId,
-  isSimulationCapableFetcher,
-} from './engine-utils';
+import { resolveEdgeToNodeId } from './engine-utils';
 
 export function resolveScopedNodeIds(args: {
   nodes: AiNode[];
@@ -13,8 +9,7 @@ export function resolveScopedNodeIds(args: {
   incomingEdgesByNode: Map<string, Edge[]>;
   seedHashes: Record<string, string>;
 }): Set<string> {
-  const { nodes, triggerNodeId, nodeById, outgoingEdgesByNode, incomingEdgesByNode, seedHashes } =
-    args;
+  const { nodes, triggerNodeId, nodeById, outgoingEdgesByNode } = args;
 
   if (!triggerNodeId || !nodeById.has(triggerNodeId)) {
     return new Set(nodes.map((node) => node.id));
@@ -36,33 +31,5 @@ export function resolveScopedNodeIds(args: {
       }
     });
   }
-
-  // Include upstream simulation nodes if trigger requires simulation
-  const triggerNode = nodeById.get(triggerNodeId);
-  if (
-    triggerNode?.config?.trigger?.contextMode === 'simulation_required' ||
-    triggerNode?.config?.trigger?.contextMode === 'simulation_preferred'
-  ) {
-    const incoming = incomingEdgesByNode.get(triggerNodeId) ?? [];
-    incoming.forEach((edge) => {
-      const fromNodeId = resolveEdgeFromNodeId(edge);
-      if (fromNodeId) {
-        const fromNode = nodeById.get(fromNodeId);
-        if (fromNode?.type === 'simulation' || isSimulationCapableFetcher(fromNode!)) {
-          const config = fromNode?.config?.simulation;
-          // Respect manual_only behavior
-          if (
-            fromNode?.type !== 'simulation' ||
-            config?.runBehavior !== 'manual_only' ||
-            fromNodeId === triggerNodeId ||
-            seedHashes[fromNodeId]
-          ) {
-            reachable.add(fromNodeId);
-          }
-        }
-      }
-    });
-  }
-
   return reachable;
 }

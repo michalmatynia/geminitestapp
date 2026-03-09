@@ -3,12 +3,13 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 
 import { writeMetricsMarkdownFile } from '../docs/metrics-frontmatter.mjs';
+import { parseCommonCheckArgs, writeSummaryJson } from '../lib/check-cli.mjs';
 
-const args = new Set(process.argv.slice(2));
-const strictMode = args.has('--strict');
+const argv = process.argv.slice(2);
+const args = new Set(argv);
+const { strictMode, shouldWriteHistory, noWrite, summaryJson } = parseCommonCheckArgs(argv);
 const includeTestProbes = args.has('--include-test-probes');
 const includeTestTree = args.has('--include-test-tree');
-const shouldWriteHistory = args.has('--write-history') && !args.has('--ci') && !args.has('--no-history');
 
 const root = process.cwd();
 const outDir = path.join(root, 'docs', 'metrics');
@@ -225,9 +226,11 @@ const run = async () => {
   for (const domain of domains) {
     const result = await runLintDomain(domain);
     results.push(result);
-    console.log(
-      `[lint-domains] ${domain.name.padEnd(13, ' ')} ${result.status.toUpperCase().padEnd(7, ' ')} ${formatDuration(result.durationMs)}`
-    );
+    if (!summaryJson) {
+      console.log(
+        `[lint-domains] ${domain.name.padEnd(13, ' ')} ${result.status.toUpperCase().padEnd(7, ' ')} ${formatDuration(result.durationMs)}`
+      );
+    }
   }
 
   const summary = {
@@ -248,8 +251,6 @@ const run = async () => {
     results,
   };
   const reviewDate = payload.generatedAt.slice(0, 10);
-
-  await fs.mkdir(outDir, { recursive: true });
   const stamp = payload.generatedAt.replace(/[:.]/g, '-');
 
   const latestJsonPath = path.join(outDir, 'lint-domain-checks-latest.json');
@@ -257,32 +258,82 @@ const run = async () => {
   const historicalJsonPath = path.join(outDir, `lint-domain-checks-${stamp}.json`);
   const historicalMdPath = path.join(outDir, `lint-domain-checks-${stamp}.md`);
 
-  await fs.writeFile(latestJsonPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
-  await writeMetricsMarkdownFile({
-    root,
-    targetPath: latestMdPath,
-    content: toMarkdown(payload),
-    reviewDate,
-  });
+  const paths = noWrite
+    ? null
+    : {
+        latestJson: path.relative(root, latestJsonPath),
+        latestMarkdown: path.relative(root, latestMdPath),
+        historicalJson: shouldWriteHistory ? path.relative(root, historicalJsonPath) : null,
+        historicalMarkdown: shouldWriteHistory ? path.relative(root, historicalMdPath) : null,
+      };
 
-  if (shouldWriteHistory) {
-    await fs.writeFile(historicalJsonPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+  if (!noWrite) {
+    await fs.mkdir(outDir, { recursive: true });
+    await fs.writeFile(latestJsonPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
     await writeMetricsMarkdownFile({
       root,
-      targetPath: historicalMdPath,
+      targetPath: latestMdPath,
       content: toMarkdown(payload),
       reviewDate,
     });
+
+    if (shouldWriteHistory) {
+      await fs.writeFile(historicalJsonPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+      await writeMetricsMarkdownFile({
+        root,
+        targetPath: historicalMdPath,
+        content: toMarkdown(payload),
+        reviewDate,
+      });
+    }
+  }
+
+  if (summaryJson) {
+    writeSummaryJson({
+      scannerName: 'lint-domain-checks',
+      generatedAt: payload.generatedAt,
+      status: summary.failed > 0 || summary.timedOut > 0 ? 'failed' : 'ok',
+      summary: {
+        totalDomains: summary.total,
+        passedDomains: summary.passed,
+        failedDomains: summary.failed,
+        timedOutDomains: summary.timedOut,
+        skippedDomains: summary.skipped,
+        totalDurationMs: summary.totalDurationMs,
+      },
+      details: {
+        results: payload.results,
+      },
+      paths,
+      filters: {
+        strictMode,
+        includeTestProbes,
+        includeTestTree,
+        historyDisabled: !shouldWriteHistory,
+        noWrite,
+        ci: args.has('--ci'),
+      },
+      notes: ['lint domain report result'],
+    });
+
+    if (strictMode && (summary.failed > 0 || summary.timedOut > 0)) {
+      process.exit(1);
+    }
+    return;
   }
 
   console.log(
     `[lint-domains] summary pass=${summary.passed} fail=${summary.failed} timeout=${summary.timedOut} skipped=${summary.skipped}`
   );
-  console.log(`Wrote ${path.relative(root, latestJsonPath)}`);
-  console.log(`Wrote ${path.relative(root, latestMdPath)}`);
-  if (shouldWriteHistory) {
-    console.log(`Wrote ${path.relative(root, historicalJsonPath)}`);
-    console.log(`Wrote ${path.relative(root, historicalMdPath)}`);
+  if (paths) {
+    console.log(`Wrote ${paths.latestJson}`);
+    console.log(`Wrote ${paths.latestMarkdown}`);
+    if (paths.historicalJson) {
+      console.log(`Wrote ${paths.historicalJson}`);
+      console.log(`Wrote ${paths.historicalMarkdown}`);
+    }
+  } else {
+    console.log('Skipped writing lint-domain artifacts (--no-write).');
   }
 
   if (strictMode && (summary.failed > 0 || summary.timedOut > 0)) {

@@ -65,8 +65,12 @@ const resolvePrimarySubmittedParameterValue = (valuesByLanguage: Record<string, 
 export const normalizeProductParametersForSubmission = (
   parameterValues: ProductParameterValue[]
 ): NormalizedSubmittedParameterValue[] =>
-  parameterValues
-    .map((entry: ProductParameterValue): NormalizedSubmittedParameterValue => {
+  Array.from(
+    parameterValues.reduce(
+      (
+        byParameterId: Map<string, NormalizedSubmittedParameterValue>,
+        entry: ProductParameterValue
+      ): Map<string, NormalizedSubmittedParameterValue> => {
       const valuesByLanguage =
         entry.valuesByLanguage &&
         typeof entry.valuesByLanguage === 'object' &&
@@ -89,14 +93,22 @@ export const normalizeProductParametersForSubmission = (
       const normalizedParameterId = decodeSimpleParameterStorageId(
         typeof entry.parameterId === 'string' ? entry.parameterId.trim() : ''
       );
+      const resolvedValue = hasLocalizedValues ? localizedPrimaryValue : directValue;
 
-      return {
+      if (!normalizedParameterId) {
+        return byParameterId;
+      }
+
+      byParameterId.set(normalizedParameterId, {
         parameterId: normalizedParameterId,
-        value: hasLocalizedValues ? localizedPrimaryValue : directValue,
+        value: resolvedValue,
         ...(hasLocalizedValues ? { valuesByLanguage } : {}),
-      };
-    })
-    .filter((entry: NormalizedSubmittedParameterValue): boolean => !!entry.parameterId);
+      });
+      return byParameterId;
+    },
+      new Map<string, NormalizedSubmittedParameterValue>()
+    ).values()
+  );
 
 function buildFormData(
   data: ProductFormData,

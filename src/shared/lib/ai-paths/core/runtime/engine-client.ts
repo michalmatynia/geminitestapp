@@ -5,7 +5,7 @@ import type {
   NodeHandlerContext,
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths-runtime';
-import { aiGenerationApi, aiJobsApi } from '@/shared/lib/ai-paths/api';
+import { aiJobsApi } from '@/shared/lib/ai-paths/api';
 
 import { coerceInput, formatRuntimeValue, renderTemplate } from '../utils';
 import { resolveAiPathsRuntimeCodeObjectHandler } from './code-object-resolver-registry';
@@ -252,60 +252,12 @@ const handleModel: NodeHandler = async ({
   }
 };
 
-const handleAiDescription: NodeHandler = async ({
-  node,
-  nodeInputs,
-  prevOutputs,
-  executed,
-}: NodeHandlerContext): Promise<RuntimePortValues> => {
-  if (executed.ai.has(node.id)) return prevOutputs;
-  const entityJson = coerceInput(nodeInputs['entityJson']) as Record<string, unknown> | undefined;
-  if (!entityJson) {
-    return {};
-  }
-
-  const generationResult = await aiGenerationApi.generate();
-  executed.ai.add(node.id);
-
-  const generatedDescription =
-    typeof generationResult.data?.result === 'string' ? generationResult.data.result : '';
-  return { description_en: generatedDescription };
-};
-
-const handleDescriptionUpdater: NodeHandler = async ({
-  node,
-  nodeInputs,
-  prevOutputs,
-  executed,
-  reportAiPathsError,
-}: NodeHandlerContext): Promise<RuntimePortValues> => {
-  if (executed.updater.has(node.id)) return prevOutputs;
-  const productId = coerceInput(nodeInputs['productId']) as string | undefined;
-  const description = coerceInput(nodeInputs['description_en']) as string | undefined;
-  if (!productId || !description) {
-    return {};
-  }
-
-  const updateResult = await aiGenerationApi.updateProductDescription(productId, description);
-  executed.updater.add(node.id);
-  if (!updateResult.ok) {
-    reportAiPathsError(
-      new Error(updateResult.error),
-      { action: 'updateDescription', productId, nodeId: node.id },
-      'Failed to update description:'
-    );
-  }
-  return { description_en: description };
-};
-
 const CLIENT_HANDLER_CATALOG = createNodeRuntimeHandlerCatalog({
   prompt: handlePrompt,
   template: handleTemplate,
   model: handleModel,
   agent: handleAgent,
   learner_agent: handleLearnerAgent,
-  ai_description: handleAiDescription,
-  description_updater: handleDescriptionUpdater,
   trigger: handleIntegrationTrigger,
   notification: handleIntegrationNotification,
   fetcher: handleIntegrationFetcher,

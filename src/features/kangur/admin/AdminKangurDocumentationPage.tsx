@@ -4,6 +4,7 @@ import Link from 'next/link';
 
 import { KangurAdminContentShell } from '@/features/kangur/admin/components/KangurAdminContentShell';
 import { KangurDocumentationCenter } from '@/features/kangur/admin/components/KangurDocumentationCenter';
+import { KangurDocumentationTooltipSettingsPanel } from '@/features/kangur/admin/components/KangurDocumentationTooltipSettingsPanel';
 import { Badge, Button, Card, SkipToContentLink } from '@/shared/ui';
 
 const DOCUMENTATION_CONTENT_ID = 'kangur-documentation-content';
@@ -61,6 +62,7 @@ export function AdminKangurDocumentationPage(): React.JSX.Element {
               mixing the documentation browser into the settings form.
             </p>
           </Card>
+          <KangurDocumentationTooltipSettingsPanel />
           <KangurDocumentationCenter />
         </main>
       </KangurAdminContentShell>

@@ -3,10 +3,18 @@
  */
 
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { expectNoAxeViolations } from '@/testing/accessibility/axe';
+
+const { settingsStoreMock, mutateAsyncMock, toastMock } = vi.hoisted(() => ({
+  settingsStoreMock: {
+    get: vi.fn<(key: string) => string | undefined>(),
+  },
+  mutateAsyncMock: vi.fn(),
+  toastMock: vi.fn(),
+}));
 
 vi.mock('next/link', () => ({
   default: ({
@@ -20,9 +28,52 @@ vi.mock('next/link', () => ({
   ),
 }));
 
+vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
+  useSettingsStore: () => settingsStoreMock,
+}));
+
+vi.mock('@/shared/hooks/use-settings', () => ({
+  useUpdateSetting: () => ({
+    mutateAsync: mutateAsyncMock,
+    isPending: false,
+  }),
+}));
+
+vi.mock('@/shared/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/ui')>();
+  return {
+    ...actual,
+    useToast: () => ({
+      toast: toastMock,
+    }),
+  };
+});
+
 import { AdminKangurDocumentationPage } from '@/features/kangur/admin/AdminKangurDocumentationPage';
+import { KANGUR_HELP_SETTINGS_KEY } from '@/features/kangur/help-settings';
 
 describe('AdminKangurDocumentationPage', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mutateAsyncMock.mockResolvedValue({});
+    settingsStoreMock.get.mockImplementation((key: string) => {
+      if (key === KANGUR_HELP_SETTINGS_KEY) {
+        return JSON.stringify({
+          docsTooltips: {
+            enabled: true,
+            homeEnabled: true,
+            lessonsEnabled: true,
+            testsEnabled: true,
+            profileEnabled: true,
+            parentDashboardEnabled: true,
+            adminEnabled: true,
+          },
+        });
+      }
+      return undefined;
+    });
+  });
+
   it('renders the standalone Kangur documentation center with accessible navigation and search semantics', () => {
     render(<AdminKangurDocumentationPage />);
 
@@ -42,6 +93,11 @@ describe('AdminKangurDocumentationPage', () => {
       'href',
       '/admin/kangur/settings'
     );
+    expect(screen.getByRole('switch', { name: /enable kangur docs tooltips/i })).toHaveAttribute(
+      'data-state',
+      'checked'
+    );
+    expect(screen.getByRole('button', { name: /save tooltip settings/i })).toBeDisabled();
   });
 
   it('announces documentation search result changes for screen readers', () => {
@@ -66,6 +122,35 @@ describe('AdminKangurDocumentationPage', () => {
     fireEvent.click(screen.getByRole('link', { name: /skip to documentation content/i }));
 
     expect(screen.getByRole('main', { name: /documentation workspace/i })).toHaveFocus();
+  });
+
+  it('saves tooltip settings from the dedicated documentation page', async () => {
+    render(<AdminKangurDocumentationPage />);
+
+    fireEvent.click(screen.getByRole('switch', { name: /home docs tooltips/i }));
+    fireEvent.click(screen.getByRole('button', { name: /save tooltip settings/i }));
+
+    await waitFor(() =>
+      expect(mutateAsyncMock).toHaveBeenCalledWith({
+        key: KANGUR_HELP_SETTINGS_KEY,
+        value: JSON.stringify({
+          version: 1,
+          docsTooltips: {
+            enabled: true,
+            homeEnabled: false,
+            lessonsEnabled: true,
+            testsEnabled: true,
+            profileEnabled: true,
+            parentDashboardEnabled: true,
+            adminEnabled: true,
+          },
+        }),
+      })
+    );
+
+    expect(toastMock).toHaveBeenCalledWith('Kangur documentation tooltip settings saved.', {
+      variant: 'success',
+    });
   });
 
   it('has no obvious accessibility violations', async () => {

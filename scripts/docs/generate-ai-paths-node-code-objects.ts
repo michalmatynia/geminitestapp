@@ -242,7 +242,7 @@ const resolveNodeFamily = (nodeType: string): string => {
   ) {
     return 'transform';
   }
-  if (['prompt', 'model', 'agent', 'learner_agent', 'ai_description'].includes(nodeType)) {
+  if (['prompt', 'model', 'agent', 'learner_agent'].includes(nodeType)) {
     return 'ai-generation';
   }
   if (['database', 'db_schema', 'http', 'api_advanced', 'playwright', 'notification', 'viewer'].includes(nodeType)) {
@@ -255,14 +255,14 @@ const resolveNodeFamily = (nodeType: string): string => {
 };
 
 const resolveExecutionKind = (nodeType: string): 'synchronous' | 'asynchronous' =>
-  ['model', 'agent', 'learner_agent', 'ai_description', 'http', 'api_advanced', 'playwright', 'poll', 'notification'].includes(
+  ['model', 'agent', 'learner_agent', 'http', 'api_advanced', 'playwright', 'poll', 'notification'].includes(
     nodeType
   )
     ? 'asynchronous'
     : 'synchronous';
 
 const resolveWaitForResultSupport = (nodeType: string): boolean =>
-  ['model', 'agent', 'learner_agent', 'ai_description', 'playwright', 'http', 'api_advanced'].includes(nodeType);
+  ['model', 'agent', 'learner_agent', 'playwright', 'http', 'api_advanced'].includes(nodeType);
 
 const buildConfigFromFieldDefaults = (
   fields: Array<{ path: string; defaultValue?: unknown }>

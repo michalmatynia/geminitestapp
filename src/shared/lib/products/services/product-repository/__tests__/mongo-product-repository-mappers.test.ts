@@ -64,7 +64,7 @@ describe('mongo product repository mappers', () => {
     ]);
   });
 
-  it('normalizes duplicate parameter entries and allows explicit localized clears', () => {
+  it('normalizes duplicate parameter entries and keeps explicitly cleared parameters blank', () => {
     const result = toProductResponse(asProductDocument({
       _id: 'product-params-2',
       id: 'product-params-2',

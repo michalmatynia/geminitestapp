@@ -11,25 +11,32 @@ import {
 import { getAiPathRun } from '@/shared/lib/ai-paths/api/client';
 import { invalidateProductsCountsAndDetail } from '@/features/products/hooks/productCache';
 import {
-  markQueuedProductId,
-  removeQueuedProductId,
+  buildQueuedProductAiRunSource,
+  markQueuedProductSource,
+  removeQueuedProductSource,
 } from '@/features/products/state/queued-product-ops';
 
 // Keep the badge visible longer than the last scheduled product refresh (9 s).
 const AI_PATH_RUN_BADGE_TTL_MS = 30_000;
 const AI_PATH_RUN_STATUS_POLL_INTERVAL_MS = 2_000;
+const MAX_RUN_POLL_FAILURES = 3;
 const TERMINAL_RUN_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
 
 const resolveTrackedProductRun = (detail: unknown): { runId: string; productId: string } | null => {
   const payload = parseAiPathRunEnqueuedEventPayload(detail);
   if (!payload) return null;
-  if (payload.entityType !== 'product') return null;
-  if (!payload.entityId) {
+  const normalizedEntityType =
+    typeof payload.entityType === 'string' ? payload.entityType.trim().toLowerCase() : null;
+  if (normalizedEntityType !== 'product') return null;
+  const normalizedProductId =
+    typeof payload.entityId === 'string' ? payload.entityId.trim() : null;
+  const normalizedRunId = typeof payload.runId === 'string' ? payload.runId.trim() : null;
+  if (!normalizedProductId || !normalizedRunId) {
     return null;
   }
   return {
-    runId: payload.runId,
-    productId: payload.entityId,
+    runId: normalizedRunId,
+    productId: normalizedProductId,
   };
 };
 
@@ -66,6 +73,7 @@ export function useProductAiPathsRunSync(): void {
   const queryClient = useQueryClient();
   const trackedRunsRef = useRef<Map<string, string>>(new Map());
   const pollingRunIdsRef = useRef<Set<string>>(new Set());
+  const pollFailureCountsRef = useRef<Map<string, number>>(new Map());
   const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const disposedRef = useRef(false);
 
@@ -81,11 +89,19 @@ export function useProductAiPathsRunSync(): void {
     const finalizeRun = (runId: string, productId: string): void => {
       trackedRunsRef.current.delete(runId);
       pollingRunIdsRef.current.delete(runId);
+      pollFailureCountsRef.current.delete(runId);
       void invalidateProductsCountsAndDetail(queryClient, productId);
+      const source = buildQueuedProductAiRunSource(runId);
+      if (source) {
+        removeQueuedProductSource(productId, source);
+      }
       if (hasTrackedProductRuns(trackedRunsRef.current, productId)) {
-        markQueuedProductId(productId, AI_PATH_RUN_BADGE_TTL_MS);
-      } else {
-        removeQueuedProductId(productId);
+        trackedRunsRef.current.forEach((trackedProductId: string, trackedRunId: string) => {
+          if (trackedProductId !== productId) return;
+          const trackedSource = buildQueuedProductAiRunSource(trackedRunId);
+          if (!trackedSource) return;
+          markQueuedProductSource(productId, trackedSource, AI_PATH_RUN_BADGE_TTL_MS);
+        });
       }
       if (trackedRunsRef.current.size === 0) {
         stopPolling();
@@ -101,23 +117,37 @@ export function useProductAiPathsRunSync(): void {
 
       try {
         const response = await getAiPathRun(runId);
-        if (!response.ok) {
-          throw new Error(response.error);
-        }
         const currentProductId = trackedRunsRef.current.get(runId);
         if (!currentProductId || disposedRef.current) {
           return;
         }
-        const status = resolveRunStatusFromResponse(response.data);
-        if (status && TERMINAL_RUN_STATUSES.has(status)) {
+        if (!response.ok) {
           finalizeRun(runId, currentProductId);
           return;
         }
-        markQueuedProductId(currentProductId, AI_PATH_RUN_BADGE_TTL_MS);
+        const status = resolveRunStatusFromResponse(response.data);
+        if (!status || TERMINAL_RUN_STATUSES.has(status)) {
+          finalizeRun(runId, currentProductId);
+          return;
+        }
+        pollFailureCountsRef.current.delete(runId);
+        const source = buildQueuedProductAiRunSource(runId);
+        if (source) {
+          markQueuedProductSource(currentProductId, source, AI_PATH_RUN_BADGE_TTL_MS);
+        }
       } catch {
         const currentProductId = trackedRunsRef.current.get(runId);
         if (currentProductId && !disposedRef.current) {
-          markQueuedProductId(currentProductId, AI_PATH_RUN_BADGE_TTL_MS);
+          const nextFailureCount = (pollFailureCountsRef.current.get(runId) ?? 0) + 1;
+          pollFailureCountsRef.current.set(runId, nextFailureCount);
+          if (nextFailureCount >= MAX_RUN_POLL_FAILURES) {
+            finalizeRun(runId, currentProductId);
+            return;
+          }
+          const source = buildQueuedProductAiRunSource(runId);
+          if (source) {
+            markQueuedProductSource(currentProductId, source, AI_PATH_RUN_BADGE_TTL_MS);
+          }
         }
       } finally {
         pollingRunIdsRef.current.delete(runId);
@@ -147,7 +177,11 @@ export function useProductAiPathsRunSync(): void {
 
     const trackRun = (runId: string, productId: string): void => {
       trackedRunsRef.current.set(runId, productId);
-      markQueuedProductId(productId, AI_PATH_RUN_BADGE_TTL_MS);
+      pollFailureCountsRef.current.delete(runId);
+      const source = buildQueuedProductAiRunSource(runId);
+      if (source) {
+        markQueuedProductSource(productId, source, AI_PATH_RUN_BADGE_TTL_MS);
+      }
       ensurePolling();
       if (pollingRunIdsRef.current.has(runId)) return;
       pollingRunIdsRef.current.add(runId);
@@ -183,6 +217,7 @@ export function useProductAiPathsRunSync(): void {
       disposedRef.current = true;
       stopPolling();
       pollingRunIdsRef.current.clear();
+      pollFailureCountsRef.current.clear();
       trackedRunsRef.current.clear();
       window.removeEventListener(AI_PATH_RUN_ENQUEUED_EVENT_NAME, handler);
       channel?.close();

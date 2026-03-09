@@ -1,25 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import {
   buildKangurParentAccountCreateDebugPayload,
   createKangurParentAccount,
 } from '@/features/kangur/server/parent-email-auth';
+import type { KangurParentAccountCreate } from '@/shared/contracts/kangur-auth';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
-
-
-export const kangurParentAccountCreateSchema = z.object({
-  email: z.string().trim().email(),
-  password: z.string().min(1),
-  callbackUrl: z.string().trim().min(1).optional(),
-});
 
 export async function postKangurParentAccountCreateHandler(
   req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<Response> {
-  const body = ctx.body as z.infer<typeof kangurParentAccountCreateSchema> | undefined;
+  const body = ctx.body as KangurParentAccountCreate | undefined;
   if (!body) {
     throw badRequestError('Invalid payload.');
   }

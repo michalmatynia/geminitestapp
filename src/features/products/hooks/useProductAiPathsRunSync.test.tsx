@@ -11,13 +11,13 @@ import {
 const {
   getAiPathRunMock,
   invalidateProductsCountsAndDetailMock,
-  markQueuedProductIdMock,
-  removeQueuedProductIdMock,
+  markQueuedProductSourceMock,
+  removeQueuedProductSourceMock,
 } = vi.hoisted(() => ({
   getAiPathRunMock: vi.fn(),
   invalidateProductsCountsAndDetailMock: vi.fn(),
-  markQueuedProductIdMock: vi.fn(),
-  removeQueuedProductIdMock: vi.fn(),
+  markQueuedProductSourceMock: vi.fn(),
+  removeQueuedProductSourceMock: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/ai-paths/api/client', () => ({
@@ -30,8 +30,9 @@ vi.mock('@/features/products/hooks/productCache', () => ({
 }));
 
 vi.mock('@/features/products/state/queued-product-ops', () => ({
-  markQueuedProductId: (...args: unknown[]) => markQueuedProductIdMock(...args),
-  removeQueuedProductId: (...args: unknown[]) => removeQueuedProductIdMock(...args),
+  buildQueuedProductAiRunSource: (runId: string) => `ai-run:${runId.trim()}`,
+  markQueuedProductSource: (...args: unknown[]) => markQueuedProductSourceMock(...args),
+  removeQueuedProductSource: (...args: unknown[]) => removeQueuedProductSourceMock(...args),
 }));
 
 import { useProductAiPathsRunSync } from './useProductAiPathsRunSync';
@@ -60,8 +61,8 @@ describe('useProductAiPathsRunSync', () => {
     vi.useFakeTimers();
     getAiPathRunMock.mockReset();
     invalidateProductsCountsAndDetailMock.mockReset();
-    markQueuedProductIdMock.mockReset();
-    removeQueuedProductIdMock.mockReset();
+    markQueuedProductSourceMock.mockReset();
+    removeQueuedProductSourceMock.mockReset();
   });
 
   afterEach(() => {
@@ -89,9 +90,9 @@ describe('useProductAiPathsRunSync', () => {
     });
     await flushAsync();
 
-    expect(markQueuedProductIdMock).toHaveBeenCalledWith('product-1', 30_000);
+    expect(markQueuedProductSourceMock).toHaveBeenCalledWith('product-1', 'ai-run:run-1', 30_000);
     expect(getAiPathRunMock).toHaveBeenNthCalledWith(1, 'run-1');
-    expect(removeQueuedProductIdMock).not.toHaveBeenCalled();
+    expect(removeQueuedProductSourceMock).not.toHaveBeenCalled();
 
     await act(async () => {
       vi.advanceTimersByTime(2_000);
@@ -99,11 +100,11 @@ describe('useProductAiPathsRunSync', () => {
     });
 
     expect(getAiPathRunMock).toHaveBeenNthCalledWith(2, 'run-1');
-    expect(removeQueuedProductIdMock).toHaveBeenCalledWith('product-1');
+    expect(removeQueuedProductSourceMock).toHaveBeenCalledWith('product-1', 'ai-run:run-1');
     expect(invalidateProductsCountsAndDetailMock).toHaveBeenCalledWith(queryClient, 'product-1');
   });
 
-  it('keeps the queued badge until the last tracked run for a product completes', async () => {
+  it('removes only the completed run source while another run for the same product remains queued', async () => {
     const statusByRunId = new Map<string, string[]>([
       ['run-1', ['completed']],
       ['run-2', ['running', 'completed']],
@@ -136,17 +137,89 @@ describe('useProductAiPathsRunSync', () => {
     });
     await flushAsync();
 
-    expect(removeQueuedProductIdMock).not.toHaveBeenCalled();
-    expect(invalidateProductsCountsAndDetailMock).toHaveBeenCalledWith(queryClient, 'product-1');
+    expect(removeQueuedProductSourceMock).toHaveBeenCalledWith('product-1', 'ai-run:run-1');
+    expect(removeQueuedProductSourceMock).not.toHaveBeenCalledWith('product-1', 'ai-run:run-2');
 
     await act(async () => {
       vi.advanceTimersByTime(2_000);
       await Promise.resolve();
     });
 
-    expect(removeQueuedProductIdMock).toHaveBeenCalledTimes(1);
-    expect(removeQueuedProductIdMock).toHaveBeenCalledWith('product-1');
+    expect(removeQueuedProductSourceMock).toHaveBeenCalledWith('product-1', 'ai-run:run-2');
     expect(invalidateProductsCountsAndDetailMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('clears the queued source when a run reaches failed status', async () => {
+    getAiPathRunMock.mockResolvedValueOnce({ ok: true, data: { run: { status: 'failed' } } });
+
+    const queryClient = createQueryClient();
+    renderHook(() => useProductAiPathsRunSync(), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    act(() => {
+      window.dispatchEvent(
+        new CustomEvent(AI_PATH_RUN_ENQUEUED_EVENT_NAME, {
+          detail: { runId: 'run-failed', entityType: 'product', entityId: 'product-7' },
+        })
+      );
+    });
+    await flushAsync();
+
+    expect(removeQueuedProductSourceMock).toHaveBeenCalledWith('product-7', 'ai-run:run-failed');
+    expect(invalidateProductsCountsAndDetailMock).toHaveBeenCalledWith(queryClient, 'product-7');
+  });
+
+  it('clears the queued source when run details return a non-ok response', async () => {
+    getAiPathRunMock.mockResolvedValueOnce({ ok: false, error: 'run lookup failed' });
+
+    const queryClient = createQueryClient();
+    renderHook(() => useProductAiPathsRunSync(), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    act(() => {
+      window.dispatchEvent(
+        new CustomEvent(AI_PATH_RUN_ENQUEUED_EVENT_NAME, {
+          detail: { runId: 'run-missing', entityType: 'product', entityId: 'product-8' },
+        })
+      );
+    });
+    await flushAsync();
+
+    expect(removeQueuedProductSourceMock).toHaveBeenCalledWith('product-8', 'ai-run:run-missing');
+    expect(markQueuedProductSourceMock).toHaveBeenCalledWith('product-8', 'ai-run:run-missing', 30_000);
+  });
+
+  it('clears the queued source after repeated poll errors instead of renewing it forever', async () => {
+    getAiPathRunMock.mockRejectedValue(new Error('temporary failure'));
+
+    const queryClient = createQueryClient();
+    renderHook(() => useProductAiPathsRunSync(), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    act(() => {
+      window.dispatchEvent(
+        new CustomEvent(AI_PATH_RUN_ENQUEUED_EVENT_NAME, {
+          detail: { runId: 'run-error', entityType: 'product', entityId: 'product-5' },
+        })
+      );
+    });
+    await flushAsync();
+
+    await act(async () => {
+      vi.advanceTimersByTime(2_000);
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      vi.advanceTimersByTime(2_000);
+      await Promise.resolve();
+    });
+
+    expect(removeQueuedProductSourceMock).toHaveBeenCalledWith('product-5', 'ai-run:run-error');
+    expect(markQueuedProductSourceMock).toHaveBeenCalledTimes(3);
   });
 
   it('tracks product runs from broadcast enqueue events', async () => {
@@ -187,7 +260,11 @@ describe('useProductAiPathsRunSync', () => {
     });
     await flushAsync();
 
-    expect(markQueuedProductIdMock).toHaveBeenCalledWith('product-9', 30_000);
+    expect(markQueuedProductSourceMock).toHaveBeenCalledWith(
+      'product-9',
+      'ai-run:run-channel',
+      30_000
+    );
     expect(getAiPathRunMock).toHaveBeenCalledWith('run-channel');
 
     view.unmount();
@@ -209,7 +286,7 @@ describe('useProductAiPathsRunSync', () => {
     });
     await flushAsync();
 
-    expect(markQueuedProductIdMock).not.toHaveBeenCalled();
+    expect(markQueuedProductSourceMock).not.toHaveBeenCalled();
     expect(getAiPathRunMock).not.toHaveBeenCalled();
   });
 
@@ -228,7 +305,7 @@ describe('useProductAiPathsRunSync', () => {
     });
     await flushAsync();
 
-    expect(markQueuedProductIdMock).not.toHaveBeenCalled();
+    expect(markQueuedProductSourceMock).not.toHaveBeenCalled();
     expect(getAiPathRunMock).not.toHaveBeenCalled();
   });
 });

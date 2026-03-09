@@ -4,7 +4,10 @@ import { QueryClient } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
-import { listOptimisticAiPathRuns } from '@/shared/lib/ai-paths/optimistic-run-queue';
+import {
+  listOptimisticAiPathRuns,
+  removeOptimisticAiPathRuns,
+} from '@/shared/lib/ai-paths/optimistic-run-queue';
 import { optimisticallyInsertAiPathRunInQueueCache } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
@@ -24,17 +27,25 @@ const buildRun = (overrides?: Partial<AiPathRunRecord>): AiPathRunRecord =>
 
 const makeKey = (filters: Record<string, unknown>) => QUERY_KEYS.ai.aiPaths.jobQueue(filters);
 
+const resetOptimisticQueueForTests = () => {
+  const existingIds = listOptimisticAiPathRuns().map((run) => run.id);
+  if (existingIds.length > 0) {
+    removeOptimisticAiPathRuns(existingIds);
+  }
+  window.localStorage.clear();
+};
+
 describe('optimisticallyInsertAiPathRunInQueueCache', () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
     queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    window.localStorage.clear();
+    resetOptimisticQueueForTests();
   });
 
   afterEach(() => {
     queryClient.clear();
-    window.localStorage.clear();
+    resetOptimisticQueueForTests();
   });
 
   // ── core insert behaviour ────────────────────────────────────────────────

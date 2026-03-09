@@ -10,7 +10,7 @@ export const normalizeTriggerNode = (node: AiNode): AiNode => {
       ...node.config,
       trigger: {
         event: node.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id ?? 'manual',
-        contextMode: node.config?.trigger?.contextMode ?? 'trigger_only',
+        contextMode: 'trigger_only',
       },
     },
   };

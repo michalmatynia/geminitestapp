@@ -7,27 +7,23 @@ import {
   DEFAULT_CONTEXT_ROLE,
 } from '../constants';
 import { palette } from '../definitions';
+import { backfillNodePortContracts } from './normalization.helpers';
 import { createDefaultPlaywrightConfig } from '../playwright/default-config';
 import { createParserMappings, createViewerOutputs } from '../utils/graph.nodes';
 import { resolveNodeTypeId } from '../utils/node-identity';
-import { backfillNodePortContracts } from './normalization.helpers';
-
-import { normalizeContextNode } from './nodes/context';
-import { normalizeTriggerNode } from './nodes/trigger';
-import { normalizeFetcherNode, normalizeSimulationNode } from './nodes/fetcher';
-import { normalizeMapperNode, normalizeParserNode, normalizeRegexNode } from './nodes/parser';
-import { normalizeDatabaseNode, normalizeDbSchemaNode } from './nodes/database';
 import {
-  normalizeAiDescriptionNode,
-  normalizeDescriptionUpdaterNode,
   normalizeModelNode,
   normalizeAgentNode,
 } from './nodes/ai';
 import { normalizeAudioOscillatorNode, normalizeAudioSpeakerNode } from './nodes/audio';
+import { normalizeContextNode } from './nodes/context';
 import { normalizeRouterNode, normalizeDelayNode, normalizePollNode } from './nodes/control';
-import { normalizeMutatorNode, normalizeStringMutatorNode } from './nodes/mutator';
+import { normalizeDatabaseNode, normalizeDbSchemaNode } from './nodes/database';
+import { normalizeFetcherNode, normalizeSimulationNode } from './nodes/fetcher';
 import { normalizeHttpNode, normalizeApiAdvancedNode } from './nodes/http';
-import { normalizeValidationPatternNode } from './nodes/validation';
+import { normalizeMutatorNode, normalizeStringMutatorNode } from './nodes/mutator';
+import { normalizeMapperNode, normalizeParserNode, normalizeRegexNode } from './nodes/parser';
+import { normalizeTriggerNode } from './nodes/trigger';
 import {
   normalizeValidatorNode,
   normalizeConstantNode,
@@ -38,6 +34,7 @@ import {
   normalizePlaywrightNode,
   normalizeViewerNode,
 } from './nodes/utils';
+import { normalizeValidationPatternNode } from './nodes/validation';
 
 export const normalizeNodes = (items: AiNode[]): AiNode[] => {
   const normalized = items
@@ -61,10 +58,6 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] => {
           return normalizeDatabaseNode(node);
         case 'db_schema':
           return normalizeDbSchemaNode(node);
-        case 'ai_description':
-          return normalizeAiDescriptionNode(node);
-        case 'description_updater':
-          return normalizeDescriptionUpdaterNode(node);
         case 'model':
           return normalizeModelNode(node);
         case 'agent':
@@ -396,14 +389,6 @@ export const getDefaultConfigForType = (
         idempotencyHeaderName: 'Idempotency-Key',
         idempotencyKeyTemplate: '',
         errorRoutesJson: '[]',
-      },
-    };
-  }
-  if (type === 'ai_description') {
-    return {
-      description: {
-        visionOutputEnabled: true,
-        generationOutputEnabled: true,
       },
     };
   }

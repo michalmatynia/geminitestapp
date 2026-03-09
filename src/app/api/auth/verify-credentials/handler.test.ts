@@ -108,6 +108,42 @@ describe('auth verify-credentials handler', () => {
     expect(createLoginChallengeMock).not.toHaveBeenCalled();
   });
 
+  it('returns a password setup recovery code for legacy Kangur parent accounts without a password', async () => {
+    const requestContext = createRequestContext();
+    requestContext.body = {
+      email: 'parent@example.com',
+      password: 'Secret123!',
+      authFlow: 'kangur_parent',
+    };
+
+    findAuthUserByEmailMock.mockResolvedValue({
+      id: 'parent-1',
+      email: 'parent@example.com',
+      passwordHash: null,
+      emailVerified: null,
+    });
+
+    const response = await POST_handler(
+      new NextRequest('http://localhost/api/auth/verify-credentials', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(requestContext.body),
+      }),
+      requestContext
+    );
+
+    await expect(response.json()).resolves.toEqual({
+      ok: false,
+      code: 'PASSWORD_SETUP_REQUIRED',
+      message: 'Password setup is required before email verification can continue.',
+    });
+    expect(recordLoginFailureMock).toHaveBeenCalledTimes(1);
+    expect(getAuthSecurityProfileMock).not.toHaveBeenCalled();
+    expect(getAuthUserPageSettingsMock).not.toHaveBeenCalled();
+    expect(bcrypt.compare).not.toHaveBeenCalled();
+    expect(createLoginChallengeMock).not.toHaveBeenCalled();
+  });
+
   it('still allows non-Kangur credential verification when global email verification is disabled', async () => {
     const requestContext = createRequestContext();
     requestContext.body = {

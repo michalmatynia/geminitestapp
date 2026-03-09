@@ -273,13 +273,15 @@ export const pageNodes: ContextNode[] = [
     kind: 'page',
     name: 'Product Editor',
     description:
-      'Admin product editing workspace with form tabs, image management, and Product Studio ' +
-      'actions that can launch Image Studio generations using the current page context registry envelope.',
+      'Admin product editing workspace with form tabs, validation controls, image management, ' +
+      'and Product Studio actions that can launch AI flows using the current page context registry envelope.',
     tags: ['products', 'editor', 'studio', 'admin', 'ai'],
     relationships: [
       { type: 'reads', targetId: 'collection:products' },
       { type: 'uses', targetId: 'component:product-form' },
+      { type: 'uses', targetId: 'component:product-form-validation-tab' },
       { type: 'uses', targetId: 'component:product-form-studio' },
+      { type: 'uses', targetId: 'action:product-validator-runtime-evaluate' },
       { type: 'uses', targetId: 'action:product-studio-send' },
     ],
     permissions: {

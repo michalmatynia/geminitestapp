@@ -1,7 +1,7 @@
 import { type NodeType } from '@/shared/contracts/ai-paths-core';
 
 export const allowedConnections: Record<NodeType, NodeType[]> = {
-  trigger: ['fetcher', 'simulation', 'context', 'constant', 'database', 'ai_description'],
+  trigger: ['fetcher', 'simulation', 'context', 'constant', 'database'],
   fetcher: ['parser', 'regex', 'mapper', 'validator', 'template', 'bundle', 'database'],
   simulation: ['fetcher', 'context', 'constant', 'database'],
   context: ['parser', 'regex', 'mapper', 'validator', 'template', 'bundle', 'database'],
@@ -99,8 +99,6 @@ export const allowedConnections: Record<NodeType, NodeType[]> = {
     'delay',
   ],
   viewer: [],
-  ai_description: ['viewer', 'description_updater', 'bundle', 'delay', 'poll'],
-  description_updater: ['viewer', 'bundle', 'delay', 'poll'],
   notification: ['viewer', 'bundle', 'delay', 'poll'],
   bounds_normalizer: [
     'viewer',
@@ -157,8 +155,6 @@ export const typeStyles: Record<NodeType, { border: string; glow: string }> = {
   learner_agent: { border: 'border-emerald-300/40', glow: 'shadow-emerald-300/20' },
   viewer: { border: 'border-violet-500/40', glow: 'shadow-violet-500/20' },
   notification: { border: 'border-amber-400/40', glow: 'shadow-amber-500/20' },
-  ai_description: { border: 'border-indigo-500/40', glow: 'shadow-indigo-500/20' },
-  description_updater: { border: 'border-rose-400/40', glow: 'shadow-rose-400/20' },
   bounds_normalizer: { border: 'border-teal-400/40', glow: 'shadow-teal-500/20' },
   canvas_output: { border: 'border-sky-400/40', glow: 'shadow-sky-500/20' },
   function: { border: 'border-blue-400/40', glow: 'shadow-blue-500/20' },

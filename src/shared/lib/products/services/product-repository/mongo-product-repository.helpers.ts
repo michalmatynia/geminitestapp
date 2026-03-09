@@ -102,7 +102,7 @@ export const normalizeProductParameterValues = (input: unknown): ProductParamete
       typeof record['parameterId'] === 'string' ? record['parameterId'].trim() : '';
     const parameterId = decodeSimpleParameterStorageId(parameterIdRaw);
     if (!parameterId) return;
-    const value = typeof record['value'] === 'string' ? record['value'] : '';
+    const value = typeof record['value'] === 'string' ? record['value'].trim() : '';
     const valuesByLanguageRaw = record['valuesByLanguage'];
     const valuesByLanguage =
       valuesByLanguageRaw &&

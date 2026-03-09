@@ -7,6 +7,8 @@ vi.mock('../AiPathsSettingsUtils', () => ({
 }));
 
 import {
+  formatUtcDateTime,
+  formatUtcClockTime,
   normalizeRunNodes,
   resolveRunExecutionKind,
   resolveRunOrigin,
@@ -103,6 +105,32 @@ describe('normalizeRunNodes', () => {
     expect(normalizeRunNodes(null)).toEqual([]);
     expect(normalizeRunNodes(undefined)).toEqual([]);
     expect(normalizeRunNodes({})).toEqual([]);
+  });
+});
+
+describe('formatUtcClockTime', () => {
+  it('formats timestamps in a deterministic UTC clock format', () => {
+    expect(formatUtcClockTime('2026-03-09T07:27:00.000Z')).toBe('07:27:00 UTC');
+    expect(formatUtcClockTime(1741505220000)).toBe('07:27:00 UTC');
+  });
+
+  it('returns the fallback marker for missing or invalid timestamps', () => {
+    expect(formatUtcClockTime(null)).toBe('-');
+    expect(formatUtcClockTime('invalid')).toBe('-');
+  });
+});
+
+describe('formatUtcDateTime', () => {
+  it('formats timestamps in a deterministic UTC date-time format', () => {
+    expect(formatUtcDateTime('2026-03-09T07:27:00.000Z')).toBe('2026-03-09 07:27:00 UTC');
+    expect(formatUtcDateTime(Date.parse('2026-03-09T07:27:00.000Z'))).toBe(
+      '2026-03-09 07:27:00 UTC'
+    );
+  });
+
+  it('returns the fallback marker for missing or invalid date-times', () => {
+    expect(formatUtcDateTime(undefined)).toBe('-');
+    expect(formatUtcDateTime('invalid')).toBe('-');
   });
 });
 

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ReactNode } from 'react';
+import React, { type ReactNode } from 'react';
 
 import { markEditingProductHydrated } from '@/features/products/hooks/editingProductHydration';
 import type { ProductDraft, ProductWithImages } from '@/shared/contracts/products';
@@ -9,19 +9,44 @@ const { useProductListModalsContextMock } = vi.hoisted(() => ({
   useProductListModalsContextMock: vi.fn(),
 }));
 
-const { useProductFormCoreMock, triggerButtonBarMock } = vi.hoisted(() => ({
+const {
+  useProductFormCoreMock,
+  triggerButtonBarMock,
+  getNextProviderInstanceIdMock,
+  resetProviderInstanceCounterMock,
+} = vi.hoisted(() => {
+  let providerInstanceCounter = 0;
+
+  return {
   useProductFormCoreMock: vi.fn(),
   triggerButtonBarMock: vi.fn(),
-}));
+    getNextProviderInstanceIdMock: (): number => {
+      providerInstanceCounter += 1;
+      return providerInstanceCounter;
+    },
+    resetProviderInstanceCounterMock: (): void => {
+      providerInstanceCounter = 0;
+    },
+  };
+});
 
 vi.mock('@/features/products/context/ProductListContext', () => ({
   useProductListModalsContext: useProductListModalsContextMock,
 }));
 
 vi.mock('@/features/products/context/ProductFormContext', () => ({
-  ProductFormProvider: ({ children }: { children: ReactNode }) => (
-    <div data-testid='product-form-provider'>{children}</div>
-  ),
+  ProductFormProvider: ({ children }: { children: ReactNode }) => {
+    const instanceIdRef = React.useRef<number | null>(null);
+    if (instanceIdRef.current === null) {
+      instanceIdRef.current = getNextProviderInstanceIdMock();
+    }
+
+    return (
+      <div data-testid='product-form-provider' data-instance-id={String(instanceIdRef.current)}>
+        {children}
+      </div>
+    );
+  },
 }));
 
 vi.mock('@/features/products/context/ProductFormCoreContext', () => ({
@@ -176,6 +201,7 @@ const buildContext = (overrides: Record<string, unknown> = {}) => ({
 describe('ProductModals edit hydration guard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetProviderInstanceCounterMock();
     useProductFormCoreMock.mockReturnValue({
       handleSubmit: vi.fn(),
       uploading: false,
@@ -259,11 +285,52 @@ describe('ProductModals edit hydration guard', () => {
     });
     expect(triggerButtonBarProps?.getEntityJson).toEqual(expect.any(Function));
   });
+
+  it('keeps the same edit provider instance after save refreshes updatedAt', () => {
+    let editingProduct = markEditingProductHydrated(
+      createProduct({ updatedAt: '2026-01-01T00:00:00.000Z' })
+    );
+
+    useProductFormCoreMock.mockImplementation(() => ({
+      handleSubmit: vi.fn(),
+      uploading: false,
+      hasUnsavedChanges: false,
+      product: editingProduct,
+      draft: null,
+      getValues: vi.fn().mockReturnValue({ name: { en: 'Updated name' } }),
+    }));
+    useProductListModalsContextMock.mockImplementation(() =>
+      buildContext({
+        editingProduct,
+      })
+    );
+
+    const { rerender } = render(<ProductModals />);
+
+    const providerBefore = screen.getByTestId('product-form-provider');
+    const instanceIdBefore = providerBefore.getAttribute('data-instance-id');
+
+    editingProduct = markEditingProductHydrated(
+      createProduct({
+        updatedAt: '2026-01-03T00:00:00.000Z',
+        name_en: 'Product 1 saved',
+      })
+    );
+
+    rerender(<ProductModals />);
+
+    const providerAfter = screen.getByTestId('product-form-provider');
+
+    expect(providerAfter.getAttribute('data-instance-id')).toBe(instanceIdBefore);
+    expect(providerAfter).toBe(providerBefore);
+    expect(screen.getByTestId('product-form')).toBeInTheDocument();
+  });
 });
 
 describe('ProductModals create flows use unified modal shell', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetProviderInstanceCounterMock();
     useProductFormCoreMock.mockReturnValue({
       handleSubmit: vi.fn(),
       uploading: false,

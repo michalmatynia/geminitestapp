@@ -59,9 +59,11 @@ export const DOCS_OVERVIEW_SNIPPET = [
 
 export const DOCS_DESCRIPTION_SNIPPET = [
   'ContextFilter.entityJson → Parser.entityJson',
-  'Parser.title → AI Description Generator.title',
-  'Parser.images → AI Description Generator.images',
-  'AI Description Generator.description_en → Database.content_en',
+  'Parser.title → Prompt.title',
+  'Parser.images → Prompt.images',
+  'Prompt.prompt → Model.prompt',
+  'Prompt.images → Model.images',
+  'Model.result → Database.content_en',
   'Parser.productId → Database.entityId',
   'Database.result → Result Viewer.result',
 ].join('\n');

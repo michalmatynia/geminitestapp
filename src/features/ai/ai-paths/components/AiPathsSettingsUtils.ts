@@ -1,3 +1,5 @@
+import { runtimeStateSchema } from '@/shared/contracts/ai-paths-runtime';
+import { validationError } from '@/shared/errors/app-error';
 import type {
   DbQueryConfig,
   DatabaseConfig,
@@ -32,8 +34,14 @@ import {
   EMPTY_RUNTIME_STATE,
 } from '@/shared/lib/ai-paths';
 import type { DbQueryPayload } from '@/shared/lib/ai-paths/api/client';
-import { runtimeStateSchema } from '@/shared/contracts/ai-paths-runtime';
-import { validationError } from '@/shared/errors/app-error';
+import {
+  findRemovedLegacyTriggerContextModesInPathConfig,
+  formatRemovedLegacyTriggerContextModesMessage,
+} from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
+import {
+  findRemovedLegacyAiPathNodesInPathConfig,
+  formatRemovedLegacyAiPathNodesMessage,
+} from '@/shared/lib/ai-paths/core/utils/legacy-node-removal';
 
 type DatabaseOperation = 'query' | 'update' | 'insert' | 'delete';
 
@@ -361,6 +369,28 @@ export const sanitizePathConfig = (config: PathConfig): PathConfig => {
     });
   }
   const contractBackfilled = backfillPathConfigNodeContracts(config).config;
+  const removedLegacyNodes = findRemovedLegacyAiPathNodesInPathConfig(contractBackfilled);
+  if (removedLegacyNodes.length > 0) {
+    throw validationError(formatRemovedLegacyAiPathNodesMessage(removedLegacyNodes), {
+      source: 'ai_paths.path_config',
+      reason: 'removed_legacy_node_type',
+      pathId: config.id,
+      removedNodes: removedLegacyNodes,
+    });
+  }
+  const removedLegacyTriggerContextModes =
+    findRemovedLegacyTriggerContextModesInPathConfig(contractBackfilled);
+  if (removedLegacyTriggerContextModes.length > 0) {
+    throw validationError(
+      formatRemovedLegacyTriggerContextModesMessage(removedLegacyTriggerContextModes),
+      {
+        source: 'ai_paths.path_config',
+        reason: 'removed_legacy_trigger_context_mode',
+        pathId: config.id,
+        removedTriggerContextModes: removedLegacyTriggerContextModes,
+      }
+    );
+  }
   const sanitizedNodes = contractBackfilled.nodes.map((node: AiNode): AiNode => {
     if (node.type !== 'database' || !node.config || typeof node.config !== 'object') {
       return node;

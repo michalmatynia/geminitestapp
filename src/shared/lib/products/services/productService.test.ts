@@ -149,6 +149,31 @@ describe('productService parameter normalization', () => {
     expect(updatePayload).toEqual(expect.objectContaining({ parameters: [] }));
   });
 
+  it('preserves explicit parameter clearing through the FormData update path', async () => {
+    validateProductUpdateMock.mockImplementation(async (data: unknown) => {
+      expect(data).toEqual(expect.objectContaining({ parameters: '[]' }));
+      return {
+      success: true,
+      data: { parameters: [] },
+    };
+    });
+
+    const formData = new FormData();
+    formData.append('parameters', '[]');
+
+    await productService.updateProduct('product-1', formData);
+
+    expect(validateProductUpdateMock).toHaveBeenCalledTimes(1);
+
+    expect(repositoryMock.updateProduct).toHaveBeenCalledTimes(1);
+    const [, updatePayload] = repositoryMock.updateProduct.mock.calls[0] as [
+      string,
+      Record<string, unknown>,
+    ];
+
+    expect(updatePayload).toEqual(expect.objectContaining({ parameters: [] }));
+  });
+
   it('defaults create payload parameters to an empty array when omitted', async () => {
     validateProductCreateMock.mockResolvedValue({
       success: true,

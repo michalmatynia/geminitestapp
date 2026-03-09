@@ -29,7 +29,7 @@ describe('normalizeProductParametersForSubmission', () => {
     ]);
   });
 
-  it('keeps empty value when all localized values are cleared', () => {
+  it('keeps the parameter with an empty value when all localized values are cleared', () => {
     const input: ProductParameterValue[] = [
       {
         parameterId: 'condition',
@@ -38,6 +38,26 @@ describe('normalizeProductParametersForSubmission', () => {
           en: ' ',
           pl: '',
         },
+      },
+    ];
+
+    expect(normalizeProductParametersForSubmission(input)).toEqual([
+      {
+        parameterId: 'condition',
+        value: '',
+      },
+    ]);
+  });
+
+  it('lets a later empty duplicate clear an earlier stale value without removing the parameter', () => {
+    const input: ProductParameterValue[] = [
+      {
+        parameterId: 'condition',
+        value: 'Used',
+      },
+      {
+        parameterId: 'condition',
+        value: '   ',
       },
     ];
 

@@ -1,13 +1,21 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
-import { ContextRegistryPageProvider } from '@/features/ai/ai-context-registry/context/page-context';
+import {
+  ContextRegistryPageProvider,
+  useRegisterContextRegistryPageSource,
+} from '@/features/ai/ai-context-registry/context/page-context';
 import ProductFormDebugPanel from '@/features/products/components/ProductFormDebugPanel';
 import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
-import { PRODUCT_EDITOR_CONTEXT_ROOT_IDS } from '@/features/products/context-registry/workspace';
+import { useProductFormMetadataState } from '@/features/products/context/ProductFormMetadataContext';
 import { ProductValidationSettingsProvider } from '@/features/products/context/ProductValidationSettingsContext';
+import { useProductValidationState } from '@/features/products/context/ProductValidationSettingsContext';
+import {
+  buildProductEditorWorkspaceContextBundle,
+  PRODUCT_EDITOR_CONTEXT_ROOT_IDS,
+} from '@/features/products/context-registry/workspace';
 import {
   PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS,
   type ProductDraftOpenFormTab,
@@ -15,15 +23,15 @@ import {
 import type { ProductValidationDenyBehavior } from '@/shared/contracts/products';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui';
 
+import { ProductFormFooter } from './form/ProductFormFooter';
 import ProductFormGeneral from './form/ProductFormGeneral';
-import ProductFormOther from './form/ProductFormOther';
-import ProductFormParameters from './form/ProductFormParameters';
 import ProductFormImages from './form/ProductFormImages';
-import ProductFormStudio from './form/ProductFormStudio';
 import ProductFormImportInfo from './form/ProductFormImportInfo';
 import ProductFormNoteLink from './form/ProductFormNoteLink';
+import ProductFormOther from './form/ProductFormOther';
+import ProductFormParameters from './form/ProductFormParameters';
+import ProductFormStudio from './form/ProductFormStudio';
 import { ProductFormValidationTab } from './form/ProductFormValidationTab';
-import { ProductFormFooter } from './form/ProductFormFooter';
 import { useProductFormValidator } from '../hooks/useProductFormValidator';
 
 interface ProductFormProps {
@@ -41,6 +49,98 @@ const normalizeProductFormTab = (value: unknown): ProductDraftOpenFormTab => {
   if (!PRODUCT_FORM_TAB_SET.has(trimmed)) return 'general';
   return trimmed as ProductDraftOpenFormTab;
 };
+
+const resolveProductEditorTitle = ({
+  product,
+  draft,
+}: Pick<ReturnType<typeof useProductFormCore>, 'product' | 'draft'>): string | null =>
+  product?.name_en?.trim() ||
+  product?.name_pl?.trim() ||
+  product?.name_de?.trim() ||
+  product?.sku?.trim() ||
+  draft?.name_en?.trim() ||
+  draft?.name_pl?.trim() ||
+  draft?.name_de?.trim() ||
+  draft?.sku?.trim() ||
+  null;
+
+function ProductFormContextRegistrySource({
+  activeTab,
+  mountedTabs,
+}: {
+  activeTab: ProductDraftOpenFormTab;
+  mountedTabs: Set<ProductDraftOpenFormTab>;
+}): null {
+  const { product, draft, hasUnsavedChanges, uploading, uploadError, uploadSuccess } =
+    useProductFormCore();
+  const { selectedCatalogIds, selectedCategoryId, selectedTagIds, selectedProducerIds } =
+    useProductFormMetadataState();
+  const {
+    validationInstanceScope,
+    validatorEnabled,
+    formatterEnabled,
+    validationDenyBehavior,
+    validatorPatterns,
+    visibleFieldIssues,
+  } = useProductValidationState();
+
+  const registrySource = useMemo(() => {
+    const visibleIssueEntries = Object.values(visibleFieldIssues);
+    const visibleIssueCount = visibleIssueEntries.reduce(
+      (total, issues) => total + issues.length,
+      0
+    );
+
+    return {
+      label: 'Product editor workspace state',
+      refs: [],
+      resolved: buildProductEditorWorkspaceContextBundle({
+        productId: product?.id?.trim() || null,
+        draftId: draft?.id?.trim() || null,
+        productTitle: resolveProductEditorTitle({ product, draft }),
+        activeTab,
+        mountedTabs: [...mountedTabs],
+        validationInstanceScope,
+        validatorEnabled,
+        formatterEnabled,
+        validationDenyBehavior,
+        visibleIssueCount,
+        visibleIssueFieldCount: Object.keys(visibleFieldIssues).length,
+        validatorPatternCount: validatorPatterns.length,
+        selectedCategoryId,
+        selectedCatalogIds,
+        selectedTagIds,
+        selectedProducerIds,
+        hasUnsavedChanges,
+        uploading,
+        uploadError,
+        uploadSuccess,
+      }),
+    };
+  }, [
+    activeTab,
+    draft,
+    formatterEnabled,
+    hasUnsavedChanges,
+    mountedTabs,
+    product,
+    selectedCatalogIds,
+    selectedCategoryId,
+    selectedProducerIds,
+    selectedTagIds,
+    uploadError,
+    uploadSuccess,
+    uploading,
+    validationDenyBehavior,
+    validationInstanceScope,
+    validatorEnabled,
+    validatorPatterns.length,
+    visibleFieldIssues,
+  ]);
+
+  useRegisterContextRegistryPageSource('product-editor-workspace-state', registrySource);
+  return null;
+}
 
 /**
  * This component renders the product form fields and handles user interactions.
@@ -123,6 +223,7 @@ export default function ProductForm({
             visibleFieldIssues: validator.visibleFieldIssues,
           }}
         >
+          <ProductFormContextRegistrySource activeTab={activeTab} mountedTabs={mountedTabs} />
           <Tabs
             value={activeTab}
             onValueChange={(value: string): void => {

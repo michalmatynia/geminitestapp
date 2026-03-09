@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { resolveProductEditorContextRegistryEnvelope } from '@/features/products/context-registry/server';
+import { buildProductEditorContextRegistrySystemPrompt } from '@/features/products/context-registry/system-prompt';
 import { parseRuntimeConfigForEvaluation } from '@/features/products/server';
 import {
   deriveDiffSegment,
@@ -11,6 +13,7 @@ import {
   resolveFieldTargetAndLocale,
   shouldLaunchPattern,
 } from '@/features/products/validation-engine/core';
+import { contextRegistryConsumerEnvelopeSchema } from '@/shared/contracts/ai-context-registry';
 import type {
   ProductValidationPattern,
   ProductValidationPostAcceptBehavior,
@@ -40,6 +43,7 @@ export const evaluateRuntimeSchema = z.object({
   latestProductValues: z.record(z.string(), z.unknown()).nullable().optional(),
   patternIds: z.array(z.string().trim().min(1)).optional(),
   validationScope: z.enum(['draft_template', 'product_create', 'product_edit']).optional(),
+  contextRegistry: contextRegistryConsumerEnvelopeSchema.optional(),
 });
 
 const MAX_RUNTIME_VALUE_FIELDS = 120;
@@ -95,7 +99,7 @@ type RuntimeFieldEntry = {
 };
 
 type RuntimeSettingsCache = {
-  _placeholder?: null;
+  contextRegistryPrompt: string;
 };
 
 const normalizeRuntimeOperator = (value: unknown): RuntimeOperator => {
@@ -532,7 +536,7 @@ const evaluateAiRuntime = async ({
   config,
   context,
   currentValue,
-  settingsCache: _settingsCache,
+  settingsCache,
 }: {
   config: Record<string, unknown>;
   context: Record<string, unknown>;
@@ -580,7 +584,12 @@ const evaluateAiRuntime = async ({
       maxTokens: brainConfig.maxTokens,
       jsonMode: forceJson && supportsBrainJsonMode(brainConfig.modelId),
       messages: [
-        { role: 'system', content: brainConfig.systemPrompt || systemPrompt },
+        {
+          role: 'system',
+          content: [brainConfig.systemPrompt || systemPrompt, settingsCache.contextRegistryPrompt]
+            .filter(Boolean)
+            .join('\n\n'),
+        },
         { role: 'user', content: prompt },
       ],
     }),
@@ -701,6 +710,9 @@ const buildRuntimeIssue = ({
 export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const body = ctx.body as z.infer<typeof evaluateRuntimeSchema>;
   assertRuntimePayloadBounds(body);
+  const contextRegistry = await resolveProductEditorContextRegistryEnvelope(
+    body.contextRegistry ?? null
+  );
   const values = body.values;
   const latestProductValues = body.latestProductValues ?? null;
   const validationScope = normalizeProductValidationInstanceScope(
@@ -728,7 +740,9 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
   }
 
   const runtimeSettingsCache: RuntimeSettingsCache = {
-    _placeholder: null,
+    contextRegistryPrompt: buildProductEditorContextRegistrySystemPrompt(
+      contextRegistry?.resolved ?? null
+    ),
   };
 
   const issues: Record<string, RuntimeFieldIssue[]> = {};

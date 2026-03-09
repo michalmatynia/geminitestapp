@@ -54,7 +54,41 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
   }
 
   const user = await findAuthUserByEmail(email);
-  if (!user?.passwordHash) {
+  if (!user) {
+    await recordLoginFailure({ email, ip, request: req });
+    await logAuthEvent({
+      req,
+      action: 'auth.verify-credentials',
+      stage: 'failure',
+      outcome: 'invalid_credentials',
+      body: { email },
+      status: 200,
+    });
+    return NextResponse.json({
+      ok: false,
+      code: 'INVALID_CREDENTIALS',
+      message: 'Invalid email or password.',
+    });
+  }
+
+  if (!user.passwordHash && authFlow === 'kangur_parent' && !user.emailVerified) {
+    await recordLoginFailure({ email, ip, request: req });
+    await logAuthEvent({
+      req,
+      action: 'auth.verify-credentials',
+      stage: 'failure',
+      outcome: 'password_setup_required',
+      body: { email },
+      status: 200,
+    });
+    return NextResponse.json({
+      ok: false,
+      code: 'PASSWORD_SETUP_REQUIRED',
+      message: 'Password setup is required before email verification can continue.',
+    });
+  }
+
+  if (!user.passwordHash) {
     await recordLoginFailure({ email, ip, request: req });
     await logAuthEvent({
       req,

@@ -81,4 +81,48 @@ describe('kangur parent account create handler', () => {
       },
     });
   });
+
+  it('returns retryAfterMs from create service payload', async () => {
+    const requestContext = createRequestContext();
+    requestContext.body = {
+      email: 'parent@example.com',
+      password: 'Strong123!',
+      callbackUrl: '/kangur/tests?focus=division',
+    };
+
+    createKangurParentAccountMock.mockResolvedValue({
+      email: 'parent@example.com',
+      created: true,
+      emailVerified: false,
+      hasPassword: true,
+      retryAfterMs: 15_000,
+      verificationUrl: 'https://example.com/kangur/login?verifyEmailToken=verify-custom',
+    });
+    buildKangurParentAccountCreateDebugPayloadMock.mockReturnValue({
+      verificationUrl: 'https://example.com/kangur/login?verifyEmailToken=verify-custom',
+    });
+
+    const response = await postKangurParentAccountCreateHandler(
+      new NextRequest('http://localhost/api/kangur/auth/parent-account/create', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(requestContext.body),
+      }),
+      requestContext
+    );
+
+    await expect(response.json()).resolves.toEqual({
+      ok: true,
+      email: 'parent@example.com',
+      created: true,
+      emailVerified: false,
+      hasPassword: true,
+      retryAfterMs: 15_000,
+      message:
+        'Sprawdz email rodzica. Konto zostanie utworzone po potwierdzeniu adresu, a AI Tutor odblokuje sie po weryfikacji.',
+      debug: {
+        verificationUrl: 'https://example.com/kangur/login?verifyEmailToken=verify-custom',
+      },
+    });
+  });
 });

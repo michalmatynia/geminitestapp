@@ -37,7 +37,6 @@ const sideEffectNodeTypes = new Set<string>([
   'delay',
   'poll',
   'db_schema',
-  'description_updater',
 ]);
 
 export function RuntimeNodeConfigSection(): React.JSX.Element | null {

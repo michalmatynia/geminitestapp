@@ -70,11 +70,14 @@ vi.mock('@/shared/ui', async (importOriginal) => {
 });
 
 import { AdminKangurSettingsPage } from '@/features/kangur/admin/AdminKangurSettingsPage';
-import { KANGUR_HELP_SETTINGS_KEY, KANGUR_NARRATOR_SETTINGS_KEY } from '@/features/kangur/settings';
+import {
+  KANGUR_HELP_SETTINGS_KEY,
+  KANGUR_NARRATOR_SETTINGS_KEY,
+  KANGUR_PARENT_VERIFICATION_SETTINGS_KEY,
+} from '@/features/kangur/settings';
 import {
   KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
   KANGUR_AI_TUTOR_SETTINGS_KEY,
-  KANGUR_PARENT_VERIFICATION_SETTINGS_KEY,
 } from '@/features/kangur/settings-ai-tutor';
 
 const expectInitialNarratorProbe = async (): Promise<void> => {
@@ -241,49 +244,46 @@ describe('AdminKangurSettingsPage', () => {
     });
   });
 
-  it('loads persisted docs tooltip settings and saves updated Kangur help settings', async () => {
+  it('loads and saves parent verification email settings from the admin page', async () => {
     render(<AdminKangurSettingsPage />);
     await expectInitialNarratorProbe();
 
-    const masterToggle = screen.getByRole('switch', {
-      name: /enable kangur docs tooltips/i,
-    });
-    const homeToggle = screen.getByRole('switch', {
-      name: /home docs tooltips/i,
-    });
+    const cooldownInput = screen.getByLabelText(
+      /czas oczekiwania na ponowne wysłanie e-maila \(sekundy\)/i
+    );
 
-    expect(masterToggle).toHaveAttribute('data-state', 'checked');
-    expect(homeToggle).toHaveAttribute('data-state', 'checked');
+    expect(cooldownInput).toHaveValue(90);
 
-    fireEvent.click(homeToggle);
+    fireEvent.change(cooldownInput, { target: { value: '120' } });
     fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
 
     await waitFor(() =>
       expect(mutateAsyncMock).toHaveBeenCalledWith({
-        key: KANGUR_HELP_SETTINGS_KEY,
-        value: JSON.stringify({
-          version: 1,
-          docsTooltips: {
-            enabled: true,
-            homeEnabled: false,
-            lessonsEnabled: true,
-            testsEnabled: true,
-            profileEnabled: true,
-            parentDashboardEnabled: true,
-            adminEnabled: true,
-          },
-        }),
+        key: KANGUR_PARENT_VERIFICATION_SETTINGS_KEY,
+        value: JSON.stringify({ resendCooldownSeconds: 120 }),
       })
     );
 
-    expect(screen.queryByText('Kangur Documentation Index')).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /open documentation center/i })).toHaveAttribute(
+    expect(toastMock).toHaveBeenCalledWith('Kangur parent verification email settings saved.', {
+      variant: 'success',
+    });
+  });
+
+  it('keeps tooltip management on the dedicated documentation page', async () => {
+    render(<AdminKangurSettingsPage />);
+    await expectInitialNarratorProbe();
+
+    expect(screen.queryByText('Docs & Tooltips')).not.toBeInTheDocument();
+    expect(screen.queryByRole('switch', { name: /enable kangur docs tooltips/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /documentation/i })).toHaveAttribute(
       'href',
       '/admin/kangur/documentation'
     );
-    expect(toastMock).toHaveBeenCalledWith('Kangur documentation tooltip settings saved.', {
-      variant: 'success',
-    });
+    expect(mutateAsyncMock).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        key: KANGUR_HELP_SETTINGS_KEY,
+      })
+    );
   });
 
   it('renders observability shortcuts for Kangur operations', async () => {

@@ -1,5 +1,6 @@
-import type { NodeConfigDocField } from '../node-docs.types';
 import { COMMON_RUNTIME_FIELDS, dbQueryFields } from '../node-docs.constants';
+
+import type { NodeConfigDocField } from '../node-docs.types';
 
 export const databaseDocs: NodeConfigDocField[] = [
   {
@@ -184,19 +185,3 @@ export const viewerDocs: NodeConfigDocField[] = [
 ];
 
 export const notificationDocs: NodeConfigDocField[] = [...COMMON_RUNTIME_FIELDS];
-
-export const aiDescriptionDocs: NodeConfigDocField[] = [
-  {
-    path: 'description.visionOutputEnabled',
-    description: 'When enabled, include image-based analysis output.',
-    defaultValue: 'true',
-  },
-  {
-    path: 'description.generationOutputEnabled',
-    description: 'When enabled, include generated text output.',
-    defaultValue: 'true',
-  },
-  ...COMMON_RUNTIME_FIELDS,
-];
-
-export const descriptionUpdaterDocs: NodeConfigDocField[] = [...COMMON_RUNTIME_FIELDS];

@@ -260,7 +260,7 @@ export function ProductModals(): React.JSX.Element {
     ? ['create', createDraft.id, createDraft.updatedAt ?? ''].join(':')
     : 'create';
   const editProviderKey = hydratedEditingProduct
-    ? [hydratedEditingProduct.id, 'hydrated', hydratedEditingProduct.updatedAt ?? ''].join(':')
+    ? ['edit', hydratedEditingProduct.id].join(':')
     : 'edit';
 
   return (

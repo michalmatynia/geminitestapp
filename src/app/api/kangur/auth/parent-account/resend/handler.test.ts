@@ -79,4 +79,47 @@ describe('kangur parent account resend handler', () => {
       },
     });
   });
+
+  it('returns retryAfterMs from resend service payload', async () => {
+    const requestContext = createRequestContext();
+    requestContext.body = {
+      email: 'parent@example.com',
+      callbackUrl: '/kangur/tests?focus=division',
+    };
+
+    resendKangurParentVerificationEmailMock.mockResolvedValue({
+      email: 'parent@example.com',
+      created: false,
+      emailVerified: false,
+      hasPassword: true,
+      retryAfterMs: 8_000,
+      verificationUrl: 'https://example.com/kangur/login?verifyEmailToken=verify-custom',
+    });
+    buildKangurParentAccountCreateDebugPayloadMock.mockReturnValue({
+      verificationUrl: 'https://example.com/kangur/login?verifyEmailToken=verify-custom',
+    });
+
+    const response = await postKangurParentAccountResendHandler(
+      new NextRequest('http://localhost/api/kangur/auth/parent-account/resend', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(requestContext.body),
+      }),
+      requestContext
+    );
+
+    await expect(response.json()).resolves.toEqual({
+      ok: true,
+      email: 'parent@example.com',
+      created: false,
+      emailVerified: false,
+      hasPassword: true,
+      retryAfterMs: 8_000,
+      message:
+        'Wyslalismy nowy email potwierdzajacy. Konto rodzica uaktywni sie po weryfikacji adresu.',
+      debug: {
+        verificationUrl: 'https://example.com/kangur/login?verifyEmailToken=verify-custom',
+      },
+    });
+  });
 });

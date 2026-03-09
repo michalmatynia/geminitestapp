@@ -18,6 +18,7 @@ import { QUERY_KEYS } from './query-keys';
 const AI_PATHS_NODE_SOURCES = new Set<string>(AI_PATHS_RUN_SOURCE_VALUES);
 const RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY = 'ai-path-run-recent-enqueue';
 const RECENT_AI_PATH_RUN_ENQUEUE_TTL_MS = 60_000;
+let inMemoryRecentAiPathRunEnqueue: RecentAiPathRunEnqueueRecord | null = null;
 
 type RecentAiPathRunEnqueueRecord = {
   type: 'run-enqueued';
@@ -36,6 +37,34 @@ const normalizeString = (value: unknown): string | null => {
 
 const canUseLocalStorage = (): boolean =>
   typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+
+const safeLocalStorageGetItem = (key: string): string | null => {
+  if (!canUseLocalStorage()) return null;
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+
+const safeLocalStorageSetItem = (key: string, value: string): boolean => {
+  if (!canUseLocalStorage()) return false;
+  try {
+    window.localStorage.setItem(key, value);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const safeLocalStorageRemoveItem = (key: string): void => {
+  if (!canUseLocalStorage()) return;
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    // Ignore storage cleanup failures.
+  }
+};
 
 const normalizeRecentAiPathRunEnqueueRecord = (
   value: unknown
@@ -79,7 +108,6 @@ export const rememberRecentAiPathRunEnqueue = (
   payload: unknown,
   options?: { ttlMs?: number }
 ): void => {
-  if (!canUseLocalStorage()) return;
   const parsed = parseAiPathRunEnqueuedEventPayload(payload);
   if (!parsed) return;
   const ttlMs = Math.max(1_000, options?.ttlMs ?? RECENT_AI_PATH_RUN_ENQUEUE_TTL_MS);
@@ -95,7 +123,13 @@ export const rememberRecentAiPathRunEnqueue = (
     at,
     expiresAt: Date.now() + ttlMs,
   };
-  window.localStorage.setItem(RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY, JSON.stringify(record));
+  inMemoryRecentAiPathRunEnqueue = record;
+  safeLocalStorageSetItem(RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY, JSON.stringify(record));
+};
+
+export const clearRecentAiPathRunEnqueue = (): void => {
+  inMemoryRecentAiPathRunEnqueue = null;
+  safeLocalStorageRemoveItem(RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY);
 };
 
 export const getRecentAiPathRunEnqueue = (): {
@@ -105,27 +139,44 @@ export const getRecentAiPathRunEnqueue = (): {
   entityType: string | null;
   at: number;
 } | null => {
-  if (!canUseLocalStorage()) return null;
-  const raw = window.localStorage.getItem(RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY);
-  if (!raw) return null;
+  const now = Date.now();
 
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    window.localStorage.removeItem(RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY);
-    return null;
+  const memoryRecord =
+    inMemoryRecentAiPathRunEnqueue && inMemoryRecentAiPathRunEnqueue.expiresAt > now
+      ? inMemoryRecentAiPathRunEnqueue
+      : null;
+  if (!memoryRecord) {
+    inMemoryRecentAiPathRunEnqueue = null;
   }
 
-  const record = normalizeRecentAiPathRunEnqueueRecord(parsed);
-  if (!record) {
-    window.localStorage.removeItem(RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY);
-    return null;
+  let storageRecord: RecentAiPathRunEnqueueRecord | null = null;
+  const raw = safeLocalStorageGetItem(RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY);
+  if (raw) {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      safeLocalStorageRemoveItem(RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY);
+      parsed = null;
+    }
+
+    const normalized = normalizeRecentAiPathRunEnqueueRecord(parsed);
+    if (!normalized) {
+      safeLocalStorageRemoveItem(RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY);
+    } else if (normalized.expiresAt <= now) {
+      safeLocalStorageRemoveItem(RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY);
+    } else {
+      storageRecord = normalized;
+    }
   }
-  if (record.expiresAt <= Date.now()) {
-    window.localStorage.removeItem(RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY);
-    return null;
-  }
+
+  const record =
+    storageRecord && (!memoryRecord || storageRecord.at >= memoryRecord.at)
+      ? storageRecord
+      : memoryRecord;
+  if (!record) return null;
+
+  inMemoryRecentAiPathRunEnqueue = record;
   return {
     type: record.type,
     runId: record.runId,
@@ -691,6 +742,7 @@ export const notifyAiPathRunEnqueued = (
   options?: {
     entityId?: string | null;
     entityType?: string | null;
+    run?: AiPathRunRecord | null;
   }
 ): void => {
   if (typeof window === 'undefined') return;
@@ -705,13 +757,22 @@ export const notifyAiPathRunEnqueued = (
     typeof options?.entityType === 'string' && options.entityType.trim().length > 0
       ? options.entityType.trim().toLowerCase()
       : null;
-  const payload = parseAiPathRunEnqueuedEventPayload({
+  const basePayload = {
     type: 'run-enqueued',
     runId: normalizedRunId,
     entityId: normalizedEntityId,
     entityType: normalizedEntityType,
     at: Date.now(),
-  });
+  };
+  const payload =
+    parseAiPathRunEnqueuedEventPayload(
+      options?.run
+        ? {
+            ...basePayload,
+            run: options.run,
+          }
+        : basePayload
+    ) ?? parseAiPathRunEnqueuedEventPayload(basePayload);
   if (!payload) return;
 
   rememberRecentAiPathRunEnqueue(payload);

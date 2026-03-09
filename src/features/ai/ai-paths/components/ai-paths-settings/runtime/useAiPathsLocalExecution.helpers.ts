@@ -1,7 +1,7 @@
 import type { AiNode, RuntimePortValues } from '@/shared/lib/ai-paths';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
-export type TriggerContextMode = 'simulation_required' | 'simulation_preferred' | 'trigger_only';
+export type TriggerContextMode = 'trigger_only';
 export type SimulationRunBehavior = 'before_connected_trigger' | 'manual_only';
 export type FetcherSourceMode = 'live_context' | 'simulation_id' | 'live_then_simulation';
 
@@ -61,11 +61,7 @@ export const hasSimulationContextProvenance = (
 
 export const resolveTriggerContextMode = (triggerNode: AiNode): TriggerContextMode => {
   const mode = triggerNode.config?.trigger?.contextMode;
-  if (
-    mode === 'simulation_required' ||
-    mode === 'simulation_preferred' ||
-    mode === 'trigger_only'
-  ) {
+  if (mode === 'trigger_only') {
     return mode;
   }
   return DEFAULT_TRIGGER_CONTEXT_MODE;

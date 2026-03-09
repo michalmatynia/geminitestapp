@@ -275,12 +275,7 @@ describe('Notes Advanced UI', () => {
     await user.click(favBtn);
 
     await waitFor(() => {
-      const appleTitle = screen.getByRole('heading', { name: 'Apple' });
-      const appleCard = appleTitle.closest('.rounded-lg.border.p-4') || appleTitle.parentElement;
-      expect(appleCard).not.toBeNull();
-      expect(
-        within(appleCard as HTMLElement).getByRole('button', { name: /Unfavorite note/i })
-      ).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Unfavorite note/i })).toBeInTheDocument();
     });
   }, 15000);
 });

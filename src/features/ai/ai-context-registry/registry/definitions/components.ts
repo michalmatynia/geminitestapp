@@ -821,7 +821,29 @@ export const componentNodes: ContextNode[] = [
     relationships: [
       { type: 'uses', targetId: 'page:product-editor' },
       { type: 'reads', targetId: 'collection:products' },
+      { type: 'uses', targetId: 'component:product-form-validation-tab' },
       { type: 'uses', targetId: 'component:product-form-studio' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'component:product-form-validation-tab',
+    kind: 'component',
+    name: 'ProductFormValidationTab',
+    description:
+      'Validation controls tab inside the Product Editor for toggling validator behavior, reviewing the current validation scope, and driving runtime AI validation checks.',
+    tags: ['products', 'validation', 'editor', 'ai', 'admin'],
+    relationships: [
+      { type: 'uses', targetId: 'page:product-editor' },
+      { type: 'reads', targetId: 'collection:products' },
+      { type: 'uses', targetId: 'action:product-validator-runtime-evaluate' },
     ],
     permissions: {
       readScopes: ['ctx:read'],

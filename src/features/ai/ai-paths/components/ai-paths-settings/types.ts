@@ -40,7 +40,6 @@ export interface UseAiPathsSettingsStateReturn {
   autoSaveAt: string | null;
   saving: boolean;
   handleCreatePath: () => void;
-  handleCreateAiDescriptionPath: () => void;
   handleCreateFromTemplate: (templateId: string) => void;
   handleDuplicatePath: (pathId?: string) => void;
   handleSave: (options?: {

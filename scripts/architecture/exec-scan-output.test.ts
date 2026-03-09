@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -140,6 +141,157 @@ describe('execScanOutput', () => {
       details: { issues: ['a', 'b', 'c'] },
     });
     expect(result.error).toContain('Command failed');
+  });
+
+  it('recovers structured output when commands emit logs before json', async () => {
+    const root = createTempRoot();
+    const scriptPath = writeFile(
+      root,
+      'failure-with-leading-noise.mjs',
+      [
+        'console.log(\'starting fixture scan\');',
+        'console.log(JSON.stringify({',
+        '  schemaVersion: 1,',
+        '  generatedAt: \'2026-03-09T08:00:01.500Z\',',
+        '  scanner: { name: \'fixture-scan\', version: \'1.0.0\' },',
+        '  status: \'failed\',',
+        '  summary: { issueCount: 2 },',
+        '  details: { issues: [\'a\', \'b\'] },',
+        '  paths: null,',
+        '  filters: { ci: true },',
+        '  notes: [\'fixture noise\'],',
+        '}));',
+        'process.exit(1);',
+      ].join('\n')
+    );
+
+    const result = await execScanOutput({
+      commandArgs: [scriptPath],
+      cwd: root,
+      sourceName: 'fixture-scan',
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.exitCode).toBe(1);
+    expect(result.output).toMatchObject({
+      status: 'failed',
+      summary: { issueCount: 2 },
+      details: { issues: ['a', 'b'] },
+    });
+  });
+
+  it('recovers structured output when commands emit logs after json', async () => {
+    const root = createTempRoot();
+    const scriptPath = writeFile(
+      root,
+      'failure-with-trailing-noise.mjs',
+      [
+        'console.log(JSON.stringify({',
+        '  schemaVersion: 1,',
+        '  generatedAt: \'2026-03-09T08:00:01.750Z\',',
+        '  scanner: { name: \'fixture-scan\', version: \'1.0.0\' },',
+        '  status: \'failed\',',
+        '  summary: { issueCount: 1 },',
+        '  details: { issues: [\'a\'] },',
+        '  paths: null,',
+        '  filters: { ci: true },',
+        '  notes: [\'fixture trailing noise\'],',
+        '}));',
+        'console.log(\'finished fixture scan\');',
+        'process.exit(1);',
+      ].join('\n')
+    );
+
+    const result = await execScanOutput({
+      commandArgs: [scriptPath],
+      cwd: root,
+      sourceName: 'fixture-scan',
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.exitCode).toBe(1);
+    expect(result.output).toMatchObject({
+      status: 'failed',
+      summary: { issueCount: 1 },
+      details: { issues: ['a'] },
+    });
+  });
+
+  it('prefers real scan envelopes over incidental logged objects', async () => {
+    const root = createTempRoot();
+    const scriptPath = writeFile(
+      root,
+      'failure-with-incidental-json.mjs',
+      [
+        'console.log(JSON.stringify({ summary: { issueCount: 999 }, source: \'incidental-log\' }));',
+        'console.log(JSON.stringify({',
+        '  schemaVersion: 1,',
+        '  generatedAt: \'2026-03-09T08:00:01.900Z\',',
+        '  scanner: { name: \'fixture-scan\', version: \'1.0.0\' },',
+        '  status: \'failed\',',
+        '  summary: { issueCount: 4 },',
+        '  details: { issues: [\'a\', \'b\', \'c\', \'d\'] },',
+        '  paths: null,',
+        '  filters: { ci: true },',
+        '  notes: [\'fixture envelope\'],',
+        '}));',
+        'process.exit(1);',
+      ].join('\n')
+    );
+
+    const result = await execScanOutput({
+      commandArgs: [scriptPath],
+      cwd: root,
+      sourceName: 'fixture-scan',
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.exitCode).toBe(1);
+    expect(result.output).toMatchObject({
+      scanner: { name: 'fixture-scan', version: '1.0.0' },
+      status: 'failed',
+      summary: { issueCount: 4 },
+      details: { issues: ['a', 'b', 'c', 'd'] },
+    });
+  });
+
+  it('recovers full structured output when writeSummaryJson exits non-zero immediately', async () => {
+    const root = createTempRoot();
+    const checkCliUrl = pathToFileURL(path.join(process.cwd(), 'scripts/lib/check-cli.mjs')).href;
+    const scriptPath = writeFile(
+      root,
+      'failure-with-write-summary-json.mjs',
+      [
+        `import { writeSummaryJson } from ${JSON.stringify(checkCliUrl)};`,
+        'writeSummaryJson({',
+        '  scannerName: \'fixture-scan\',',
+        '  generatedAt: \'2026-03-09T08:00:02.250Z\',',
+        '  status: \'failed\',',
+        '  summary: { issueCount: 7 },',
+        '  details: { largeOutput: \'x\'.repeat(15000) },',
+        '  paths: null,',
+        '  filters: { ci: true },',
+        '  notes: [\'fixture flushed output\'],',
+        '});',
+        'process.exit(1);',
+      ].join('\n')
+    );
+
+    const result = await execScanOutput({
+      commandArgs: [scriptPath],
+      cwd: root,
+      sourceName: 'fixture-scan',
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.exitCode).toBe(1);
+    expect(result.output).toMatchObject({
+      scanner: { name: 'fixture-scan', version: '1.0.0' },
+      status: 'failed',
+      summary: { issueCount: 7 },
+      filters: { ci: true },
+    });
+    expect(result.output?.details?.largeOutput).toHaveLength(15000);
   });
 
   it('returns parse errors when failing commands do not emit valid json', async () => {

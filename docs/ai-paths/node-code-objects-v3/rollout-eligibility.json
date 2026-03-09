@@ -11,7 +11,6 @@
   ],
   "eligibleNodeTypes": [
     "agent",
-    "ai_description",
     "api_advanced",
     "audio_oscillator",
     "audio_speaker",
@@ -22,7 +21,6 @@
     "database",
     "db_schema",
     "delay",
-    "description_updater",
     "fetcher",
     "gate",
     "http",
@@ -50,16 +48,6 @@
   "nodes": [
     {
       "nodeType": "agent",
-      "stage": "rollout_approved",
-      "score": 100,
-      "eligible": true,
-      "blockers": [],
-      "parityEvidenceSuiteIds": [
-        "runtime-kernel-parity-core"
-      ]
-    },
-    {
-      "nodeType": "ai_description",
       "stage": "rollout_approved",
       "score": 100,
       "eligible": true,
@@ -160,16 +148,6 @@
     },
     {
       "nodeType": "delay",
-      "stage": "rollout_approved",
-      "score": 100,
-      "eligible": true,
-      "blockers": [],
-      "parityEvidenceSuiteIds": [
-        "runtime-kernel-parity-core"
-      ]
-    },
-    {
-      "nodeType": "description_updater",
       "stage": "rollout_approved",
       "score": 100,
       "eligible": true,

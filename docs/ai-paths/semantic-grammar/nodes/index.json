@@ -15,21 +15,6 @@
     "purposeSummary": "Run a multi-step agent persona over the prompt."
   },
   {
-    "nodeType": "ai_description",
-    "title": "AI Description Generator",
-    "file": "docs/ai-paths/semantic-grammar/nodes/ai_description.json",
-    "nodeHash": "93b3b2422e407af85154a56198326729fba9e936f87882491f1d311ea46967e7",
-    "nodeHashAlgorithm": "sha256",
-    "inputCount": 3,
-    "outputCount": 1,
-    "configFieldCount": 5,
-    "runtimeFieldCount": 3,
-    "criticalFieldCount": 0,
-    "hasDefaultConfig": false,
-    "defaultConfigKeyCount": 0,
-    "purposeSummary": "Runs the AI Description pipeline to produce description_en."
-  },
-  {
     "nodeType": "api_advanced",
     "title": "API Operation (Advanced)",
     "file": "docs/ai-paths/semantic-grammar/nodes/api_advanced.json",
@@ -178,21 +163,6 @@
     "hasDefaultConfig": false,
     "defaultConfigKeyCount": 0,
     "purposeSummary": "Delay signals to sequence flows."
-  },
-  {
-    "nodeType": "description_updater",
-    "title": "Description Updater (Deprecated)",
-    "file": "docs/ai-paths/semantic-grammar/nodes/description_updater.json",
-    "nodeHash": "0140c1929e747f53a5f4f60043595787d367bdd869350012552e7cc185c69588",
-    "nodeHashAlgorithm": "sha256",
-    "inputCount": 2,
-    "outputCount": 1,
-    "configFieldCount": 3,
-    "runtimeFieldCount": 3,
-    "criticalFieldCount": 0,
-    "hasDefaultConfig": false,
-    "defaultConfigKeyCount": 0,
-    "purposeSummary": "Writes description_en back to the product."
   },
   {
     "nodeType": "fetcher",

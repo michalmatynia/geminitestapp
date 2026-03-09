@@ -11,12 +11,18 @@ import type {
   ContextRuntimeDocument,
   ContextRuntimeDocumentSection,
 } from '@/shared/contracts/ai-context-registry';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type {
+  ProductValidationDenyBehavior,
+  ProductValidationInstanceScope,
+  ProductWithImages,
+} from '@/shared/contracts/products';
 
 export const PRODUCT_EDITOR_CONTEXT_ROOT_IDS = [
   'page:product-editor',
   'component:product-form',
+  'component:product-form-validation-tab',
   'component:product-form-studio',
+  'action:product-validator-runtime-evaluate',
   'action:product-studio-send',
   'collection:products',
   'collection:image-studio-projects',
@@ -28,6 +34,33 @@ export const PRODUCT_EDITOR_CONTEXT_ROOT_IDS = [
 export const PRODUCT_EDITOR_CONTEXT_RUNTIME_PROVIDER_ID = 'product-editor-local';
 export const PRODUCT_EDITOR_CONTEXT_RUNTIME_ENTITY_TYPE = 'product_editor_studio_state';
 export const PRODUCT_EDITOR_CONTEXT_RUNTIME_REF_PREFIX = 'runtime:product-editor:studio:';
+export const PRODUCT_EDITOR_WORKSPACE_CONTEXT_RUNTIME_PROVIDER_ID = 'product-editor-local';
+export const PRODUCT_EDITOR_WORKSPACE_CONTEXT_RUNTIME_ENTITY_TYPE = 'product_editor_workspace_state';
+export const PRODUCT_EDITOR_WORKSPACE_CONTEXT_RUNTIME_REF_PREFIX =
+  'runtime:product-editor:workspace:';
+
+interface BuildProductEditorWorkspaceContextBundleInput {
+  productId: string | null;
+  draftId: string | null;
+  productTitle: string | null;
+  activeTab: string;
+  mountedTabs: string[];
+  validationInstanceScope: ProductValidationInstanceScope;
+  validatorEnabled: boolean;
+  formatterEnabled: boolean;
+  validationDenyBehavior: ProductValidationDenyBehavior;
+  visibleIssueCount: number;
+  visibleIssueFieldCount: number;
+  validatorPatternCount: number;
+  selectedCategoryId: string | null;
+  selectedCatalogIds: string[];
+  selectedTagIds: string[];
+  selectedProducerIds: string[];
+  hasUnsavedChanges: boolean;
+  uploading: boolean;
+  uploadError: string | null;
+  uploadSuccess: boolean;
+}
 
 interface BuildProductStudioWorkspaceContextBundleInput {
   product: ProductWithImages;
@@ -66,6 +99,35 @@ const pickProductTitle = (product: ProductWithImages): string =>
   trimText(product.sku, 120) ??
   product.id;
 
+const resolveProductEditorEntityKey = ({
+  productId,
+  draftId,
+}: {
+  productId: string | null;
+  draftId: string | null;
+}): string => trimText(productId, 120) ?? trimText(draftId, 120) ?? 'unsaved';
+
+const resolveProductEditorTitle = (input: BuildProductEditorWorkspaceContextBundleInput): string =>
+  trimText(input.productTitle, 120) ??
+  trimText(input.productId, 120) ??
+  trimText(input.draftId, 120) ??
+  'Unsaved product';
+
+const createProductEditorWorkspaceRef = ({
+  productId,
+  draftId,
+}: {
+  productId: string | null;
+  draftId: string | null;
+}): ContextRegistryRef => ({
+  id: `${PRODUCT_EDITOR_WORKSPACE_CONTEXT_RUNTIME_REF_PREFIX}${encodeSegment(
+    resolveProductEditorEntityKey({ productId, draftId })
+  )}`,
+  kind: 'runtime_document',
+  providerId: PRODUCT_EDITOR_WORKSPACE_CONTEXT_RUNTIME_PROVIDER_ID,
+  entityType: PRODUCT_EDITOR_WORKSPACE_CONTEXT_RUNTIME_ENTITY_TYPE,
+});
+
 const createProductStudioWorkspaceRef = (productId: string): ContextRegistryRef => ({
   id: `${PRODUCT_EDITOR_CONTEXT_RUNTIME_REF_PREFIX}${encodeSegment(productId)}`,
   kind: 'runtime_document',
@@ -103,6 +165,118 @@ const summarizeAuditEntry = (entry: ProductStudioAuditEntry): Record<string, unk
   warningCount: entry.warnings.length,
   errorMessage: entry.errorMessage,
 });
+
+const buildProductEditorWorkspaceSections = (
+  input: BuildProductEditorWorkspaceContextBundleInput
+): ContextRuntimeDocumentSection[] => [
+  {
+    kind: 'facts',
+    title: 'Workspace snapshot',
+    items: [
+      {
+        productId: input.productId,
+        draftId: input.draftId,
+        productTitle: resolveProductEditorTitle(input),
+        activeTab: input.activeTab,
+        mountedTabs: input.mountedTabs,
+        mountedTabCount: input.mountedTabs.length,
+        hasUnsavedChanges: input.hasUnsavedChanges,
+        uploading: input.uploading,
+        uploadError: trimText(input.uploadError, 300),
+        uploadSuccess: input.uploadSuccess,
+      },
+    ],
+  },
+  {
+    kind: 'facts',
+    title: 'Validation state',
+    items: [
+      {
+        validationInstanceScope: input.validationInstanceScope,
+        validatorEnabled: input.validatorEnabled,
+        formatterEnabled: input.formatterEnabled,
+        validationDenyBehavior: input.validationDenyBehavior,
+        validatorPatternCount: input.validatorPatternCount,
+        visibleIssueCount: input.visibleIssueCount,
+        visibleIssueFieldCount: input.visibleIssueFieldCount,
+      },
+    ],
+  },
+  {
+    kind: 'facts',
+    title: 'Taxonomy selection',
+    items: [
+      {
+        selectedCategoryId: input.selectedCategoryId,
+        selectedCatalogIds: input.selectedCatalogIds.slice(0, 12),
+        selectedCatalogCount: input.selectedCatalogIds.length,
+        selectedTagIds: input.selectedTagIds.slice(0, 12),
+        selectedTagCount: input.selectedTagIds.length,
+        selectedProducerIds: input.selectedProducerIds.slice(0, 12),
+        selectedProducerCount: input.selectedProducerIds.length,
+      },
+    ],
+  },
+  {
+    kind: 'items',
+    title: 'Mounted tabs',
+    summary: 'Product editor tabs currently mounted in the client session.',
+    items: input.mountedTabs.map((tab) => ({
+      id: tab,
+      isActive: tab === input.activeTab,
+    })),
+  },
+];
+
+const buildProductEditorWorkspaceRuntimeDocument = (
+  input: BuildProductEditorWorkspaceContextBundleInput
+): ContextRuntimeDocument => {
+  const runtimeRef = createProductEditorWorkspaceRef({
+    productId: input.productId,
+    draftId: input.draftId,
+  });
+  const productTitle = resolveProductEditorTitle(input);
+  const status = input.uploadError ? 'upload_error' : input.uploading ? 'uploading' : null;
+
+  return {
+    id: runtimeRef.id,
+    kind: 'runtime_document',
+    entityType: PRODUCT_EDITOR_WORKSPACE_CONTEXT_RUNTIME_ENTITY_TYPE,
+    title: `Product Editor workspace for ${productTitle}`,
+    summary:
+      'Live Product Editor page state, including the active tab, mounted sections, taxonomy ' +
+      'selection, and current validation controls and issue counts.',
+    status,
+    tags: ['products', 'editor', 'validation', 'admin', 'live-state'],
+    relatedNodeIds: [...PRODUCT_EDITOR_CONTEXT_ROOT_IDS],
+    facts: {
+      productId: input.productId,
+      draftId: input.draftId,
+      productTitle,
+      activeTab: input.activeTab,
+      mountedTabCount: input.mountedTabs.length,
+      validationInstanceScope: input.validationInstanceScope,
+      validatorEnabled: input.validatorEnabled,
+      formatterEnabled: input.formatterEnabled,
+      validationDenyBehavior: input.validationDenyBehavior,
+      visibleIssueCount: input.visibleIssueCount,
+      visibleIssueFieldCount: input.visibleIssueFieldCount,
+      validatorPatternCount: input.validatorPatternCount,
+      selectedCategoryId: input.selectedCategoryId,
+      selectedCatalogCount: input.selectedCatalogIds.length,
+      selectedTagCount: input.selectedTagIds.length,
+      selectedProducerCount: input.selectedProducerIds.length,
+      hasUnsavedChanges: input.hasUnsavedChanges,
+      uploading: input.uploading,
+      uploadSuccess: input.uploadSuccess,
+    },
+    sections: buildProductEditorWorkspaceSections(input),
+    provenance: {
+      source: 'products.product-editor.workspace.client-state',
+      persisted: false,
+    },
+  };
+};
 
 const buildWorkspaceSections = (
   input: BuildProductStudioWorkspaceContextBundleInput
@@ -245,6 +419,23 @@ export const buildProductStudioWorkspaceContextBundle = (
     refs: [runtimeRef],
     nodes: [],
     documents: [buildProductStudioWorkspaceRuntimeDocument(input)],
+    truncated: false,
+    engineVersion: PAGE_CONTEXT_ENGINE_VERSION,
+  };
+};
+
+export const buildProductEditorWorkspaceContextBundle = (
+  input: BuildProductEditorWorkspaceContextBundleInput
+): ContextRegistryResolutionBundle => {
+  const runtimeRef = createProductEditorWorkspaceRef({
+    productId: input.productId,
+    draftId: input.draftId,
+  });
+
+  return {
+    refs: [runtimeRef],
+    nodes: [],
+    documents: [buildProductEditorWorkspaceRuntimeDocument(input)],
     truncated: false,
     engineVersion: PAGE_CONTEXT_ENGINE_VERSION,
   };

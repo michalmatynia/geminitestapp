@@ -8,20 +8,23 @@ import {
   invalidateIntegrationJobs,
 } from '@/shared/lib/query-invalidation';
 import { TriggerEventEntityType } from '@/shared/contracts/ai-trigger-buttons';
+import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 
 export const handleAiPathTriggerInvalidation = async (args: {
   queryClient: QueryClient;
   runId: string;
+  run?: AiPathRunRecord | null;
   entityType: TriggerEventEntityType;
   entityId: string | null | undefined;
 }): Promise<void> => {
-  const { queryClient, runId, entityType, entityId } = args;
+  const { queryClient, runId, run, entityType, entityId } = args;
 
   void invalidateAiPathQueue(queryClient);
 
   notifyAiPathRunEnqueued(runId, {
     entityId: entityId ?? null,
     entityType: entityType,
+    run: run ?? null,
   });
 
   if (entityType === 'product') {

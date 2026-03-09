@@ -20,6 +20,7 @@ import {
 
 import {
   formatDate,
+  formatUtcDateTime,
   getExecutionLabel,
   getExecutionVariant,
   getOriginLabel,
@@ -258,7 +259,9 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
           <div className='text-[11px] text-gray-400'>
             Run ID: <span className='font-mono'>{detailRun.id}</span>
           </div>
-          <div className='text-[11px] text-gray-500'>Created {formatDate(detailRun.createdAt)}</div>
+          <div className='text-[11px] text-gray-500'>
+            Created {formatUtcDateTime(detailRun.createdAt)}
+          </div>
           <div className='text-[11px] text-gray-500'>Stream: {streamStatus}</div>
           {(detailRun.entityType || detailRun.entityId) && (
             <div className='text-[11px] text-gray-500'>

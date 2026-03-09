@@ -152,6 +152,36 @@ describe('portable AI-path engine scaffold', () => {
     expect(parsed.value.portablePackage?.metadata?.['sourceSurface']).toBe('Canvas');
   });
 
+  it.each([
+    {
+      nodeType: 'description_updater',
+      title: 'Description Updater',
+      pathId: 'path_removed_legacy_description_updater_portable',
+      expectedMessage: /Database node/i,
+    },
+  ])(
+    'rejects removed legacy $nodeType nodes from raw path payloads with a targeted error',
+    ({ nodeType, title, pathId, expectedMessage }) => {
+      const pathConfig = createDefaultPathConfig(pathId);
+      pathConfig.nodes = pathConfig.nodes.map((node, index) =>
+        index === 0
+          ? ({
+              ...node,
+              type: nodeType,
+              title,
+            } as unknown as typeof node)
+          : node
+      );
+
+      const parsed = resolvePortablePathInput(pathConfig);
+      expect(parsed.ok).toBe(false);
+      if (parsed.ok) return;
+
+      expect(parsed.error).toMatch(/removed legacy node/i);
+      expect(parsed.error).toMatch(expectedMessage);
+    }
+  );
+
   it('embeds node code object manifest metadata when building portable package', () => {
     const pathConfig = createDefaultPathConfig('path_portable_manifest_embed');
     const portablePackage = buildPortablePathPackage(pathConfig);

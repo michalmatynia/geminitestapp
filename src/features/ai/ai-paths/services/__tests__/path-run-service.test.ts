@@ -104,6 +104,43 @@ describe('path-run-service enqueuePathRun', () => {
     expect(createRunMock).not.toHaveBeenCalled();
   });
 
+  it.each([
+    {
+      nodeType: 'description_updater',
+      title: 'Description Updater',
+      pathId: 'path_removed_legacy_description_updater',
+    },
+  ])('rejects removed legacy $nodeType nodes during enqueue', async ({ nodeType, title, pathId }) => {
+    const config = createDefaultPathConfig(pathId);
+    const nodes = config.nodes.map((node, index) =>
+      index === 0
+        ? ({
+            ...node,
+            type: nodeType,
+            title,
+          } as unknown as typeof node)
+        : node
+    );
+
+    const createRunMock = vi.fn();
+    getPathRunRepositoryMock.mockResolvedValue({
+      listRuns: vi.fn().mockResolvedValue({ runs: [], total: 0 }),
+      createRun: createRunMock,
+    });
+
+    const { enqueuePathRun } = await loadModule();
+
+    await expect(
+      enqueuePathRun({
+        pathId: config.id,
+        pathName: config.name,
+        nodes,
+        edges: config.edges,
+      })
+    ).rejects.toThrow(/removed legacy node/i);
+    expect(createRunMock).not.toHaveBeenCalled();
+  });
+
   it('accepts canonical graphs without recording identity repair metadata', async () => {
     const config = createDefaultPathConfig('path_canonical_enqueue');
     const listRunsMock = vi.fn().mockResolvedValue({ runs: [], total: 0 });

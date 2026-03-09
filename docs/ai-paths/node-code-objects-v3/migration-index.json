@@ -1,10 +1,9 @@
 {
   "schemaVersion": "ai-paths.node-migration-doc-index.v5",
   "generatedAt": "2026-03-05T00:00:00.000Z",
-  "totalNodes": 36,
+  "totalNodes": 34,
   "runtimeKernelNodeTypes": [
     "agent",
-    "ai_description",
     "api_advanced",
     "audio_oscillator",
     "audio_speaker",
@@ -15,7 +14,6 @@
     "database",
     "db_schema",
     "delay",
-    "description_updater",
     "fetcher",
     "gate",
     "http",
@@ -42,9 +40,9 @@
   ],
   "strategyTotals": {
     "compatibility": 0,
-    "code_object_v3": 36
+    "code_object_v3": 34
   },
-  "v3ContractsHash": "3c1f9408662c3f08c65268df19d15ca4aa22f3886e7ab3157ee0af290605d40e",
+  "v3ContractsHash": "ccaeb5d779cae157bfdf1a4b5cdfad63637bff6256f0a67021e147f0c50db76f",
   "readiness": {
     "averageScore": 100,
     "totalsByStage": {
@@ -53,7 +51,7 @@
       "scaffolded": 0,
       "runtime_kernel_indexed": 0,
       "rollout_candidate": 0,
-      "rollout_approved": 36
+      "rollout_approved": 34
     },
     "topBlockers": []
   },
@@ -68,7 +66,6 @@
     ],
     "validatedNodeTypes": [
       "agent",
-      "ai_description",
       "api_advanced",
       "audio_oscillator",
       "audio_speaker",
@@ -79,7 +76,6 @@
       "database",
       "db_schema",
       "delay",
-      "description_updater",
       "fetcher",
       "gate",
       "http",
@@ -111,7 +107,6 @@
     "generatedAt": "2026-03-06T00:00:00.000Z",
     "approvedNodeTypes": [
       "agent",
-      "ai_description",
       "api_advanced",
       "audio_oscillator",
       "audio_speaker",
@@ -122,7 +117,6 @@
       "database",
       "db_schema",
       "delay",
-      "description_updater",
       "fetcher",
       "gate",
       "http",
@@ -147,7 +141,7 @@
       "validator",
       "viewer"
     ],
-    "approvedCount": 36
+    "approvedCount": 34
   },
   "rolloutEligibility": {
     "sourceFile": "docs/ai-paths/node-code-objects-v3/rollout-eligibility.json",
@@ -163,7 +157,6 @@
     ],
     "eligibleNodeTypes": [
       "agent",
-      "ai_description",
       "api_advanced",
       "audio_oscillator",
       "audio_speaker",
@@ -174,7 +167,6 @@
       "database",
       "db_schema",
       "delay",
-      "description_updater",
       "fetcher",
       "gate",
       "http",
@@ -199,26 +191,20 @@
       "validator",
       "viewer"
     ],
-    "eligibleCount": 36
+    "eligibleCount": 34
   },
   "familyTotals": [
     {
       "nodeFamily": "ai-generation",
-      "total": 5,
+      "total": 4,
       "compatibility": 0,
-      "code_object_v3": 5
+      "code_object_v3": 4
     },
     {
       "nodeFamily": "audio",
       "total": 2,
       "compatibility": 0,
       "code_object_v3": 2
-    },
-    {
-      "nodeFamily": "general",
-      "total": 1,
-      "compatibility": 0,
-      "code_object_v3": 1
     },
     {
       "nodeFamily": "integration",
@@ -268,48 +254,6 @@
         "v3ObjectId": "node_obj_agent_portable_v3",
         "v3ObjectHash": "391ea94d05769318529c281fdcd3007163adbac56deabc683960d459b6e44f3b",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/agent.md"
-      },
-      "migrationChecklistTemplate": {
-        "semanticContractReviewed": true,
-        "v3CodeObjectAuthored": true,
-        "dualRunParityValidated": true,
-        "rolloutApproved": true
-      },
-      "parityEvidenceSuiteIds": [
-        "runtime-kernel-parity-core"
-      ],
-      "migrationReadiness": {
-        "stage": "rollout_approved",
-        "score": 100,
-        "blockers": []
-      }
-    },
-    {
-      "nodeType": "ai_description",
-      "title": "AI Description Generator",
-      "nodeFamily": "ai-generation",
-      "runtimeStrategy": "code_object_v3",
-      "migrationWave": "runtime_kernel",
-      "codeObjectId": "ai-paths.node-code-object.ai_description.v3",
-      "ports": {
-        "inputs": [
-          "entityJson",
-          "images",
-          "title"
-        ],
-        "outputs": [
-          "description_en"
-        ]
-      },
-      "configFieldCount": 5,
-      "docs": {
-        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/ai_description.json",
-        "semanticNodeHash": "93b3b2422e407af85154a56198326729fba9e936f87882491f1d311ea46967e7",
-        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/ai_description.json",
-        "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/ai_description.scaffold.json",
-        "v3ObjectId": "node_obj_ai_description_portable_v3",
-        "v3ObjectHash": "061517ae24c85f7985d79ed4f5fb8615e57cbfcfffbb05bcc22d3781898daf0d",
-        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/ai_description.md"
       },
       "migrationChecklistTemplate": {
         "semanticContractReviewed": true,
@@ -757,47 +701,6 @@
         "v3ObjectId": "node_obj_delay_portable_v3",
         "v3ObjectHash": "b0e3ddc142991c5842e6f96f6b3b736ecf709ec85f61a2da89e620389e5dc1ce",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/delay.md"
-      },
-      "migrationChecklistTemplate": {
-        "semanticContractReviewed": true,
-        "v3CodeObjectAuthored": true,
-        "dualRunParityValidated": true,
-        "rolloutApproved": true
-      },
-      "parityEvidenceSuiteIds": [
-        "runtime-kernel-parity-core"
-      ],
-      "migrationReadiness": {
-        "stage": "rollout_approved",
-        "score": 100,
-        "blockers": []
-      }
-    },
-    {
-      "nodeType": "description_updater",
-      "title": "Description Updater (Deprecated)",
-      "nodeFamily": "general",
-      "runtimeStrategy": "code_object_v3",
-      "migrationWave": "runtime_kernel",
-      "codeObjectId": "ai-paths.node-code-object.description_updater.v3",
-      "ports": {
-        "inputs": [
-          "productId",
-          "description_en"
-        ],
-        "outputs": [
-          "description_en"
-        ]
-      },
-      "configFieldCount": 3,
-      "docs": {
-        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/description_updater.json",
-        "semanticNodeHash": "0140c1929e747f53a5f4f60043595787d367bdd869350012552e7cc185c69588",
-        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/description_updater.json",
-        "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/description_updater.scaffold.json",
-        "v3ObjectId": "node_obj_description_updater_portable_v3",
-        "v3ObjectHash": "4706503301a91755619235ae20e8440314dbd609b5e1085744ef7c0c57dac051",
-        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/description_updater.md"
       },
       "migrationChecklistTemplate": {
         "semanticContractReviewed": true,

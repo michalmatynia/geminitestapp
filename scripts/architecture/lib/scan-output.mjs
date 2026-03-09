@@ -88,14 +88,116 @@ const collectUnmodeledDetails = (parsed) => {
   return Object.keys(details).length > 0 ? details : null;
 };
 
-export const parseScanOutput = (stdout, sourceName) => {
-  let parsed;
+const parseJsonObject = (value) => {
   try {
-    parsed = JSON.parse(stdout);
+    return JSON.parse(value);
   } catch {
-    throw new Error(`${sourceName} did not return valid JSON output.`);
+    return null;
+  }
+};
+
+const isValidScanPayload = (value) =>
+  isObject(value) &&
+  isObject(value.summary) &&
+  (Number.isInteger(value.schemaVersion) ||
+    isObject(value.scanner) ||
+    typeof value.generatedAt === 'string');
+
+const findBalancedJsonObject = (text, startIndex) => {
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  let started = false;
+
+  for (let index = startIndex; index < text.length; index += 1) {
+    const char = text[index];
+
+    if (!started) {
+      if (char === '{') {
+        started = true;
+        depth = 1;
+      }
+      continue;
+    }
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (char === '\\') {
+        escaped = true;
+      } else if (char === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (char === '"') {
+      inString = true;
+      continue;
+    }
+
+    if (char === '{' || char === '[') {
+      depth += 1;
+      continue;
+    }
+
+    if (char === '}' || char === ']') {
+      depth -= 1;
+      if (depth === 0) {
+        return text.slice(startIndex, index + 1);
+      }
+    }
   }
 
+  return null;
+};
+
+const collectCandidateStartIndexes = (stdout) => {
+  const starts = new Set();
+  const markers = ['"schemaVersion"', '"scanner"', '"summary"'];
+
+  for (const marker of markers) {
+    let markerIndex = stdout.indexOf(marker);
+    while (markerIndex !== -1) {
+      const startIndex = stdout.lastIndexOf('{', markerIndex);
+      if (startIndex !== -1) {
+        starts.add(startIndex);
+      }
+      markerIndex = stdout.indexOf(marker, markerIndex + marker.length);
+    }
+  }
+
+  const trimmedStart = stdout.search(/\S/);
+  if (trimmedStart !== -1 && stdout[trimmedStart] === '{') {
+    starts.add(trimmedStart);
+  }
+
+  return [...starts].sort((left, right) => right - left);
+};
+
+const parseStructuredScanPayload = (stdout, sourceName) => {
+  const direct = parseJsonObject(stdout);
+  if (isValidScanPayload(direct)) {
+    return direct;
+  }
+
+  for (const startIndex of collectCandidateStartIndexes(stdout)) {
+    const candidateText = findBalancedJsonObject(stdout, startIndex);
+    if (!candidateText) {
+      continue;
+    }
+
+    const candidate = parseJsonObject(candidateText);
+    if (isValidScanPayload(candidate)) {
+      return candidate;
+    }
+  }
+
+  throw new Error(`${sourceName} did not return valid JSON output.`);
+};
+
+export const parseScanOutput = (stdout, sourceName) => {
+  const parsed = parseStructuredScanPayload(stdout, sourceName);
   const parsedObject = ensureObject(parsed, null);
   if (!parsedObject) {
     throw new Error(`${sourceName} output is not an object.`);

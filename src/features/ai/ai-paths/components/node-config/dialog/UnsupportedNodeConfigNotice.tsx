@@ -38,8 +38,6 @@ const SUPPORTED_NODE_TYPES = new Set<AiNode['type']>([
   'db_schema',
   'viewer',
   'notification',
-  'ai_description',
-  'description_updater',
 ]);
 
 type UnsupportedNodeConfigNoticeProps = {

@@ -32,6 +32,12 @@ const queueStatusCache = new Map<string, { value: AiPathRunQueueStatus; expiresA
 const queueStatusInFlight = new Map<string, Promise<AiPathRunQueueStatus>>();
 let queueHotStatusCache: { value: AiPathRunQueueHotStatus; expiresAt: number } | null = null;
 let queueHotStatusInFlight: Promise<AiPathRunQueueHotStatus> | null = null;
+const ACTIVE_PERSISTED_RUN_STATUSES = [
+  'running',
+  'blocked_on_lease',
+  'handoff_ready',
+  'paused',
+] as const;
 
 const readQueueHealthSnapshot = async () => {
   return aiPathRunQueueState.workerStarted
@@ -58,22 +64,32 @@ const readAiPathRunQueueBaseStatus = async (
   const health = await readQueueHealthSnapshot();
   const repo = await getPathRunRepository();
   const visibility = options.visibility === 'scoped' ? 'scoped' : 'global';
-  const [stats, insightsQueueHealth, runtimeAnalytics] = await Promise.all([
+  const [stats, activeRunsSnapshot, insightsQueueHealth, runtimeAnalytics] = await Promise.all([
     repo.getQueueStats(
       visibility === 'scoped' && options.userId ? { userId: options.userId } : undefined
     ),
+    repo.listRuns({
+      ...(visibility === 'scoped' && options.userId ? { userId: options.userId } : {}),
+      statuses: [...ACTIVE_PERSISTED_RUN_STATUSES],
+      limit: 1,
+    }),
     getAiInsightsQueueStatusSnapshot(),
     getRuntimeAnalyticsAvailability(),
   ]);
   const oldestQueuedAt = stats.oldestQueuedAt ? stats.oldestQueuedAt.getTime() : null;
   const queueLagMs = oldestQueuedAt !== null ? Math.max(0, now - oldestQueuedAt) : null;
+  const persistedActiveRuns =
+    typeof activeRunsSnapshot.total === 'number' && Number.isFinite(activeRunsSnapshot.total)
+      ? activeRunsSnapshot.total
+      : 0;
+  const activeRuns = Math.max(health.activeCount ?? 0, persistedActiveRuns);
 
   return {
     running: health.running ?? false,
     healthy: health.healthy ?? false,
-    processing: health.processing ?? false,
+    processing: (health.processing ?? false) || activeRuns > 0,
     activeCount: health.activeCount,
-    activeRuns: health.activeCount,
+    activeRuns,
     concurrency: Math.max(1, DEFAULT_CONCURRENCY),
     lastPollTime: health.lastPollTime ?? 0,
     timeSinceLastPoll: health.timeSinceLastPoll ?? 0,

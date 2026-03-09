@@ -1,13 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
 
 import * as api from '@/shared/lib/ai-paths/api';
-import { generateProductAiDescription } from '@/shared/lib/ai-paths/core/runtime/server/description-generator';
 import {
   handleTemplate,
   handlePrompt,
   handleModel,
-  handleAiDescription,
-  handleDescriptionUpdater,
 } from '@/shared/lib/ai-paths/core/runtime/handlers/generation';
 
 import { createMockContext } from '../../test-utils';
@@ -17,13 +14,6 @@ vi.mock('@/shared/lib/ai-paths/api', () => ({
     enqueue: vi.fn(),
     poll: vi.fn(),
   },
-  aiGenerationApi: {
-    updateProductDescription: vi.fn(),
-  },
-}));
-
-vi.mock('@/shared/lib/ai-paths/core/runtime/server/description-generator', () => ({
-  generateProductAiDescription: vi.fn(),
 }));
 
 describe('Generation Handlers', () => {
@@ -187,117 +177,4 @@ describe('Generation Handlers', () => {
     });
   });
 
-  describe('handleAiDescription', () => {
-    it('should call the AI Paths description generator', async () => {
-      vi.mocked(generateProductAiDescription).mockResolvedValue({
-        analysisInitial: '',
-        analysisFinal: '',
-        descriptionInitial: 'Generated description',
-        descriptionFinal: '',
-        description: 'Generated description',
-        analysis: '',
-        visionModel: 'vision-model',
-        generationModel: 'generation-model',
-        visionOutputEnabled: true,
-        generationOutputEnabled: false,
-        visionBrainApplied: null,
-        generationBrainApplied: null,
-      });
-
-      const ctx = createMockContext({
-        node: {
-          id: 'n-description',
-          type: 'ai_description',
-          config: {
-            description: {
-              visionOutputEnabled: true,
-              generationOutputEnabled: false,
-            },
-          },
-        } as any,
-        nodeInputs: { entityJson: { id: 'p1' } },
-      });
-      const result = await handleAiDescription(ctx);
-      expect(result['description_en']).toBe('Generated description');
-      expect(generateProductAiDescription).toHaveBeenCalledWith({
-        productId: 'p1',
-        images: [],
-        options: {
-          visionEnabled: true,
-          generationEnabled: false,
-        },
-      });
-    });
-
-    it('should filter blocked image URLs by outbound policy before description generation', async () => {
-      vi.mocked(generateProductAiDescription).mockResolvedValue({
-        analysisInitial: '',
-        analysisFinal: '',
-        descriptionInitial: 'Generated description',
-        descriptionFinal: '',
-        description: 'Generated description',
-        analysis: '',
-        visionModel: 'vision-model',
-        generationModel: 'generation-model',
-        visionOutputEnabled: true,
-        generationOutputEnabled: true,
-        visionBrainApplied: null,
-        generationBrainApplied: null,
-      });
-      const reportAiPathsError = vi.fn();
-      const toast = vi.fn();
-
-      const ctx = createMockContext({
-        node: {
-          id: 'n-description',
-          type: 'ai_description',
-        } as any,
-        nodeInputs: {
-          entityJson: {
-            id: 'p1',
-            images: ['https://cdn.example.com/image-2.jpg', 'http://127.0.0.1/private.jpg'],
-          },
-        },
-        reportAiPathsError,
-        toast,
-      });
-      const result = await handleAiDescription(ctx);
-      expect(result['description_en']).toBe('Generated description');
-      expect(generateProductAiDescription).toHaveBeenCalledWith(
-        expect.objectContaining({
-          images: ['https://cdn.example.com/image-2.jpg'],
-        })
-      );
-      expect(reportAiPathsError).toHaveBeenCalledWith(
-        expect.any(Error),
-        expect.objectContaining({
-          action: 'aiDescription',
-          blockedImageUrlCount: 1,
-        }),
-        expect.stringContaining('Blocked 1 image URL')
-      );
-      expect(toast).toHaveBeenCalledWith(
-        expect.stringContaining('Blocked 1 image URL'),
-        expect.objectContaining({ variant: 'warning' })
-      );
-    });
-  });
-
-  describe('handleDescriptionUpdater', () => {
-    it('should call updateProductDescription API', async () => {
-      vi.mocked(api.aiGenerationApi.updateProductDescription).mockResolvedValue({
-        ok: true,
-      } as any);
-
-      const ctx = createMockContext({
-        nodeInputs: { productId: 'p1', description_en: 'New description' },
-      });
-      const result = await handleDescriptionUpdater(ctx);
-      expect(result['description_en']).toBe('New description');
-      expect(api.aiGenerationApi.updateProductDescription).toHaveBeenCalledWith(
-        'p1',
-        'New description'
-      );
-    });
-  });
 });

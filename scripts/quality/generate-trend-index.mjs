@@ -2,9 +2,11 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { writeMetricsMarkdownFile } from '../docs/metrics-frontmatter.mjs';
+import { parseCommonCheckArgs, writeSummaryJson } from '../lib/check-cli.mjs';
 
-const args = new Set(process.argv.slice(2));
-const shouldWriteHistory = args.has('--write-history') && !args.has('--ci') && !args.has('--no-history');
+const argv = process.argv.slice(2);
+const args = new Set(argv);
+const { noWrite, shouldWriteHistory, summaryJson } = parseCommonCheckArgs(argv);
 
 const root = process.cwd();
 const metricsDir = path.join(root, 'docs', 'metrics');
@@ -123,29 +125,68 @@ const run = async () => {
   const historicalJsonPath = path.join(metricsDir, `trend-index-${stamp}.json`);
   const historicalMdPath = path.join(metricsDir, `trend-index-${stamp}.md`);
 
-  await fs.writeFile(latestJsonPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
-  await writeMetricsMarkdownFile({
-    root,
-    targetPath: latestMdPath,
-    content: toMarkdown(payload),
-  });
+  const readyCount = entries.filter((entry) => entry.status === 'ready').length;
+  const missingCount = entries.filter((entry) => entry.status === 'missing').length;
+  const paths = noWrite
+    ? null
+    : {
+        latestJson: path.relative(root, latestJsonPath),
+        latestMarkdown: path.relative(root, latestMdPath),
+        historicalJson: shouldWriteHistory ? path.relative(root, historicalJsonPath) : null,
+        historicalMarkdown: shouldWriteHistory ? path.relative(root, historicalMdPath) : null,
+      };
 
-  if (shouldWriteHistory) {
-    await fs.writeFile(historicalJsonPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+  if (!noWrite) {
+    await fs.writeFile(latestJsonPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
     await writeMetricsMarkdownFile({
       root,
-      targetPath: historicalMdPath,
+      targetPath: latestMdPath,
       content: toMarkdown(payload),
     });
+
+    if (shouldWriteHistory) {
+      await fs.writeFile(historicalJsonPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+      await writeMetricsMarkdownFile({
+        root,
+        targetPath: historicalMdPath,
+        content: toMarkdown(payload),
+      });
+    }
   }
 
-  const readyCount = entries.filter((entry) => entry.status === 'ready').length;
+  if (summaryJson) {
+    writeSummaryJson({
+      scannerName: 'trend-index',
+      generatedAt: payload.generatedAt,
+      summary: {
+        readyCount,
+        missingCount,
+        totalEntries: entries.length,
+      },
+      details: {
+        entries,
+      },
+      paths,
+      filters: {
+        historyDisabled: !shouldWriteHistory,
+        noWrite,
+        ci: args.has('--ci'),
+      },
+      notes: ['quality trend index snapshot'],
+    });
+    return;
+  }
+
   console.log(`[trend-index] ready=${readyCount}/${entries.length}`);
-  console.log(`Wrote ${path.relative(root, latestJsonPath)}`);
-  console.log(`Wrote ${path.relative(root, latestMdPath)}`);
-  if (shouldWriteHistory) {
-    console.log(`Wrote ${path.relative(root, historicalJsonPath)}`);
-    console.log(`Wrote ${path.relative(root, historicalMdPath)}`);
+  if (paths) {
+    console.log(`Wrote ${paths.latestJson}`);
+    console.log(`Wrote ${paths.latestMarkdown}`);
+    if (paths.historicalJson) {
+      console.log(`Wrote ${paths.historicalJson}`);
+      console.log(`Wrote ${paths.historicalMarkdown}`);
+    }
+  } else {
+    console.log('Skipped writing trend index artifacts (--no-write).');
   }
 };
 

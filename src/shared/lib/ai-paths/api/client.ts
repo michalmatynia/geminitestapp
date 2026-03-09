@@ -10,8 +10,24 @@ import type {
   AgentTeachingChatSource,
 } from '@/shared/contracts/agent-teaching';
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
+import {
+  aiPathRunEnqueueResponseSchema,
+  type AiPathRunEnqueueResponse,
+  type AiPathRunRecord,
+  type AiPathRuntimeAnalyticsSummary,
+} from '@/shared/contracts/ai-paths';
 import type { ChatMessage } from '@/shared/contracts/chatbot';
+import type { SchemaResponse } from '@/shared/contracts/database';
 
+import {
+  AgentEnqueuePayload,
+  PlaywrightNodeEnqueuePayload,
+  PlaywrightNodeRunSnapshot,
+  enqueueAgentRun,
+  enqueuePlaywrightRun,
+  fetchPlaywrightRun,
+} from './client/agent';
+import { fetchRuntimeAnalyticsSummary } from './client/analytics';
 import {
   apiFetch,
   apiPost,
@@ -21,7 +37,6 @@ import {
   resolveApiUrl,
   withApiCsrfHeaders,
 } from './client/base';
-
 import {
   DbActionPayload,
   DbQueryPayload,
@@ -34,18 +49,7 @@ import {
   fetchSchema,
   browseDatabase,
 } from './client/database';
-
 import { fetchSettings, updateSetting } from './client/settings';
-
-import {
-  AgentEnqueuePayload,
-  PlaywrightNodeEnqueuePayload,
-  PlaywrightNodeRunSnapshot,
-  enqueueAgentRun,
-  enqueuePlaywrightRun,
-  fetchPlaywrightRun,
-} from './client/agent';
-
 import {
   fetchTriggerButtons,
   createTriggerButton,
@@ -54,16 +58,7 @@ import {
   reorderTriggerButtons,
 } from './client/triggers';
 
-import { fetchRuntimeAnalyticsSummary } from './client/analytics';
-
-import type { SchemaResponse } from '@/shared/contracts/database';
 export type { SchemaResponse };
-import {
-  aiPathRunEnqueueResponseSchema,
-  type AiPathRunEnqueueResponse,
-  type AiPathRunRecord,
-  type AiPathRuntimeAnalyticsSummary,
-} from '@/shared/contracts/ai-paths';
 
 export type {
   ApiResponse,
@@ -692,8 +687,6 @@ export const aiGenerationApi = {
   async generate() {
     return { ok: true, data: { result: '' } };
   },
-  updateProductDescription: async (productId: string, description: string) =>
-    apiPatch<unknown>(`/api/v2/products/${productId}`, { description }),
 };
 
 export const playwrightNodeApi = {

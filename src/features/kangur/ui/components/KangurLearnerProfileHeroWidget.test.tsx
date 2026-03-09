@@ -46,16 +46,25 @@ describe('KangurLearnerProfileHeroWidget', () => {
       'bg-white/68'
     );
     expect(screen.getByRole('heading', { name: 'Profil ucznia' })).toHaveClass('text-3xl');
-    expect(screen.getByText('Statystyki ucznia:', { exact: false })).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Zaloguj sie, aby synchronizowac postep ucznia miedzy urzadzeniami. Jesli nie masz jeszcze konta rodzica, zaloz je bez opuszczania Kangura.'
+      )
+    ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Zaloguj sie, aby synchronizowac postep' })
     ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Utworz konto rodzica' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
     fireEvent.click(screen.getByRole('button', { name: 'Zaloguj sie, aby synchronizowac postep' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Utworz konto rodzica' }));
 
     expect(routerPushMock).toHaveBeenCalledWith('/kangur');
-    expect(navigateToLogin).toHaveBeenCalledTimes(1);
+    expect(navigateToLogin).toHaveBeenCalledTimes(2);
+    expect(navigateToLogin).toHaveBeenLastCalledWith({
+      authMode: 'create-account',
+    });
   });
 
   it('keeps the shared top section without the login CTA when a learner is active', () => {

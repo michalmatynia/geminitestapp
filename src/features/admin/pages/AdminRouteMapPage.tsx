@@ -41,6 +41,8 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
   '/admin': 'Admin home dashboard with quick links and global status.',
   '/admin/routes': 'Reference map of admin routes with descriptions.',
   '/admin/ai-paths': 'Design, test, and run AI Paths workflows.',
+  '/admin/context-registry':
+    'Inspect the centralized AI context registry, runtime refs, bundles, tools, and reusable context packs.',
   '/admin/case-resolver':
     'Build case flows with folder-organized files, WYSIWYG prompt nodes, and node-map composition.',
   '/admin/case-resolver/cases': 'List, add, open, edit, and remove Case Resolver cases.',

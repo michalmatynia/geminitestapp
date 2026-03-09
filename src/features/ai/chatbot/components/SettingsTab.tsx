@@ -215,7 +215,7 @@ export function SettingsTab(): React.JSX.Element {
               <Link href='/admin/settings/playwright'>Manage personas</Link>
             </Button>
           }
-      >
+        >
           {playwrightPersonasLoading ? (
             <p className='text-xs text-gray-500 mt-4'>Loading personas...</p>
           ) : playwrightPersonas.length === 0 ? (

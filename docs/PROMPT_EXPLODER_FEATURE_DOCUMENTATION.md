@@ -1,3 +1,12 @@
+---
+owner: 'Prompt Exploder Team'
+last_reviewed: '2026-03-09'
+status: 'active'
+doc_type: 'overview'
+scope: 'feature:prompt-exploder'
+canonical: true
+---
+
 # Prompt Exploder Feature Documentation
 
 ## 1. Overview

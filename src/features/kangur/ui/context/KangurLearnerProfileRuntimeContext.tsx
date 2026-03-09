@@ -25,6 +25,7 @@ import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurScoreRecord, KangurUser } from '@/features/kangur/services/ports';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import type { KangurLoginModalAuthMode } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import {
@@ -135,7 +136,7 @@ type KangurLearnerProfileRuntimeContextValue = {
   snapshot: KangurLearnerProfileSnapshot;
   maxWeeklyGames: number;
   xpToNextLevel: number;
-  navigateToLogin: () => void;
+  navigateToLogin: (options?: { authMode?: KangurLoginModalAuthMode }) => void;
 };
 
 type KangurLearnerProfileRuntimeStateContextValue = Pick<
@@ -309,25 +310,25 @@ export function KangurLearnerProfileRuntimeBoundary({
 
 export const useKangurLearnerProfileRuntimeState =
   (): KangurLearnerProfileRuntimeStateContextValue => {
-  const context = useContext(KangurLearnerProfileRuntimeStateContext);
-  if (!context) {
-    throw internalError(
-      'useKangurLearnerProfileRuntimeState must be used within a KangurLearnerProfileRuntimeProvider'
-    );
-  }
-  return context;
-};
+    const context = useContext(KangurLearnerProfileRuntimeStateContext);
+    if (!context) {
+      throw internalError(
+        'useKangurLearnerProfileRuntimeState must be used within a KangurLearnerProfileRuntimeProvider'
+      );
+    }
+    return context;
+  };
 
 export const useKangurLearnerProfileRuntimeActions =
   (): KangurLearnerProfileRuntimeActionsContextValue => {
-  const context = useContext(KangurLearnerProfileRuntimeActionsContext);
-  if (!context) {
-    throw internalError(
-      'useKangurLearnerProfileRuntimeActions must be used within a KangurLearnerProfileRuntimeProvider'
-    );
-  }
-  return context;
-};
+    const context = useContext(KangurLearnerProfileRuntimeActionsContext);
+    if (!context) {
+      throw internalError(
+        'useKangurLearnerProfileRuntimeActions must be used within a KangurLearnerProfileRuntimeProvider'
+      );
+    }
+    return context;
+  };
 
 export const useKangurLearnerProfileRuntime = (): KangurLearnerProfileRuntimeContextValue => {
   const state = useContext(KangurLearnerProfileRuntimeStateContext);

@@ -43,7 +43,7 @@ export function KangurTopNavigationProvider({
 
   const clearNavigation = useCallback((ownerId: string): void => {
     setRegistration((current) => {
-      if (!current || current.ownerId !== ownerId) {
+      if (current?.ownerId !== ownerId) {
         return current;
       }
       return null;

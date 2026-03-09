@@ -14,6 +14,7 @@ import { internalError } from '@/shared/errors/app-error';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurLearnerProfile, KangurUser } from '@/features/kangur/services/ports';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import type { KangurLoginModalAuthMode } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
@@ -55,7 +56,7 @@ type KangurParentDashboardRuntimeStateContextValue = {
 };
 
 type KangurParentDashboardRuntimeActionsContextValue = {
-  navigateToLogin: () => void;
+  navigateToLogin: (options?: { authMode?: KangurLoginModalAuthMode }) => void;
   logout: (shouldRedirect?: boolean) => void;
   selectLearner: (learnerId: string) => Promise<void>;
   setActiveTab: (tabId: KangurParentDashboardTabId) => void;

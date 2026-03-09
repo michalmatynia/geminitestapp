@@ -1,6 +1,6 @@
 'use client';
 
-import { BookOpen, LayoutGrid, LogIn, LogOut, Trophy } from 'lucide-react';
+import { BookOpen, LayoutGrid, LogIn, LogOut, Trophy, UserPlus } from 'lucide-react';
 
 import {
   getKangurHomeHref,
@@ -43,6 +43,7 @@ type KangurPrimaryNavigationProps = {
   homeActive?: boolean;
   isAuthenticated: boolean;
   navLabel?: string;
+  onCreateAccount?: () => void;
   onHomeClick?: () => void;
   onLogin?: () => void;
   onLogout: () => void;
@@ -110,6 +111,7 @@ export function KangurPrimaryNavigation({
   homeActive = currentPage === 'Game',
   isAuthenticated,
   navLabel = 'Glowna nawigacja Kangur',
+  onCreateAccount,
   onHomeClick,
   onLogin,
   onLogout,
@@ -129,11 +131,21 @@ export function KangurPrimaryNavigation({
       <LogOut className={ICON_CLASSNAME} strokeWidth={2.15} />
       <span>Wyloguj</span>
     </NavAction>
-  ) : onLogin ? (
-    <NavAction docId='profile_login' onClick={onLogin}>
-      <LogIn className={ICON_CLASSNAME} strokeWidth={2.15} />
-      <span>Zaloguj się</span>
-    </NavAction>
+  ) : onLogin || onCreateAccount ? (
+    <>
+      {onCreateAccount ? (
+        <NavAction docId='profile_create_account' onClick={onCreateAccount} testId='kangur-primary-nav-create-account'>
+          <UserPlus className={ICON_CLASSNAME} strokeWidth={2.15} />
+          <span>Utworz konto</span>
+        </NavAction>
+      ) : null}
+      {onLogin ? (
+        <NavAction docId='profile_login' onClick={onLogin}>
+          <LogIn className={ICON_CLASSNAME} strokeWidth={2.15} />
+          <span>Zaloguj się</span>
+        </NavAction>
+      ) : null}
+    </>
   ) : null;
 
   return (

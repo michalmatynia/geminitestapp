@@ -140,9 +140,9 @@ export const chatbotSessionRepository: ChatbotSessionRepository = {
         ...(input.title !== undefined ? { title: input.title ?? null } : {}),
         ...(settings !== undefined
           ? {
-              settings,
-              personaId: input.settings?.personaId?.trim() || null,
-            }
+            settings,
+            personaId: input.settings?.personaId?.trim() || null,
+          }
           : {}),
       },
       include: {

@@ -2,6 +2,9 @@
 owner: 'Case Resolver Team'
 last_reviewed: '2026-02-20'
 status: 'active'
+doc_type: 'index'
+scope: 'feature:case-resolver'
+canonical: true
 related_components:
   - 'src/features/case-resolver'
   - 'src/app/api/case-resolver'
@@ -35,9 +38,9 @@ This section is the centralized source of truth for the Case Resolver feature.
 
 ## Related Platform Docs
 
-- [Developer Handbook](../DEVELOPER_HANDBOOK.md)
-- [API Caching](../API_CACHING.md)
-- [Architecture Guardrails](../ARCHITECTURE_GUARDRAILS.md)
+- [Developer Handbook](../platform/developer-handbook.md)
+- [API Caching](../platform/api-caching.md)
+- [Architecture Guardrails](../platform/architecture-guardrails.md)
 - [AI Paths Docs](../AI_PATHS.md)
 
 ## Ownership and Review

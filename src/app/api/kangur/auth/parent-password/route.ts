@@ -9,5 +9,6 @@ export const POST = apiHandler(postKangurParentPasswordHandler, {
   source: 'kangur.auth.parent-password.POST',
   service: 'kangur.api',
   successLogging: 'all',
+  parseJsonBody: true,
   bodySchema: kangurParentPasswordSchema,
 });

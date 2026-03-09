@@ -27,12 +27,13 @@ describe('KangurGameHomeHeroWidget', () => {
   it('uses the shared Kangur text field for anonymous home entry', () => {
     const setPlayerName = vi.fn();
     const handleStartGame = vi.fn();
+    const navigateToLogin = vi.fn();
 
     useKangurGameRuntimeMock.mockReturnValue({
       basePath: '/kangur',
       canAccessParentAssignments: false,
       handleStartGame,
-      navigateToLogin: vi.fn(),
+      navigateToLogin,
       playerName: 'Ala',
       screen: 'home',
       setPlayerName,
@@ -49,14 +50,21 @@ describe('KangurGameHomeHeroWidget', () => {
       'bg-white/58'
     );
     expect(input).toHaveClass('soft-card', 'focus:border-indigo-300');
-    expect(screen.queryByText('Zaloguj się, aby Twój wynik pojawił się na tablicy.')).toBeNull();
-    expect(screen.queryByRole('button', { name: /zaloguj się/i })).toBeNull();
+    expect(screen.getByText('Grasz jako gosc')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Zaloguj rodzica' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Utworz konto rodzica' })).toBeInTheDocument();
 
     fireEvent.change(input, { target: { value: 'Ola' } });
     fireEvent.keyDown(input, { key: 'Enter' });
+    fireEvent.click(screen.getByRole('button', { name: 'Zaloguj rodzica' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Utworz konto rodzica' }));
 
     expect(setPlayerName).toHaveBeenCalledWith('Ola');
     expect(handleStartGame).toHaveBeenCalledTimes(1);
+    expect(navigateToLogin).toHaveBeenCalledTimes(2);
+    expect(navigateToLogin).toHaveBeenLastCalledWith({
+      authMode: 'create-account',
+    });
   });
 
   it('shows the assignment spotlight for signed-in users on home', () => {

@@ -1,18 +1,18 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-09T04:34:32.495Z
+Generated at: 2026-03-09T05:09:05.300Z
 
 ## Snapshot
 
 - Source files: 5170
-- Source lines: 839582
+- Source lines: 839597
 - use client files: 1493
 - Files >= 1000 LOC: 10
 - Files >= 1500 LOC: 3
 - Largest file: `src/features/kangur/ui/components/KangurAiTutorWidget.tsx` (3073 LOC)
 - API routes: 336
-- API delegated server routes: 0
-- API routes without apiHandler/delegation: 15
+- API delegated server routes: 13
+- API routes without apiHandler/delegation: 0
 - API explicit cache policy coverage: 336/336 (100.0%)
 - Cross-feature dependency pairs: 23
 - Shared -> features imports: 76
@@ -32,13 +32,13 @@ Generated at: 2026-03-09T04:34:32.495Z
 | `src/app/api/v2/products/metadata/[type]/route.ts` | 27 |
 | `src/app/api/v2/products/sync/profiles/[id]/route.ts` | 27 |
 | `src/app/api/v2/products/categories/[id]/route.ts` | 25 |
+| `src/app/api/kangur/auth/parent-magic-link/exchange/route.ts` | 24 |
+| `src/app/api/kangur/auth/parent-magic-link/request/route.ts` | 24 |
 | `src/app/api/v2/products/categories/route.ts` | 24 |
 | `src/app/api/v2/products/parameters/route.ts` | 24 |
 | `src/app/api/auth/users/[id]/route.ts` | 23 |
 | `src/app/api/v2/products/tags/route.ts` | 23 |
 | `src/app/api/ai/schema/[entity]/route.ts` | 22 |
-| `src/app/api/v2/metadata/[type]/[id]/route.ts` | 22 |
-| `src/app/api/v2/products/ai-jobs/route.ts` | 22 |
 
 ## Top Cross-Feature Dependencies
 

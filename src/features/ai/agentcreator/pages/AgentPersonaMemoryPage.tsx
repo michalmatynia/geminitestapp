@@ -143,8 +143,8 @@ export function AgentPersonaMemoryPage({
             {row.original.tags.length === 0 &&
             row.original.topicHints.length === 0 &&
             row.original.moodHints.length === 0 ? (
-              <span className='text-xs text-gray-600'>None</span>
-            ) : null}
+                <span className='text-xs text-gray-600'>None</span>
+              ) : null}
           </div>
         ),
       },

@@ -110,13 +110,13 @@ export const useDocumentApplyAction = ({
           fileName: incomingCaseResolverContext?.fileName?.trim() || resolvedContextFileId,
           ...(resolvedContextSessionId
             ? {
-                sessionId: resolvedContextSessionId,
-              }
+              sessionId: resolvedContextSessionId,
+            }
             : {}),
           ...(typeof incomingCaseResolverContext?.documentVersionAtStart === 'number'
             ? {
-                documentVersionAtStart: incomingCaseResolverContext.documentVersionAtStart,
-              }
+              documentVersionAtStart: incomingCaseResolverContext.documentVersionAtStart,
+            }
             : {}),
         };
         savePromptExploderApplyPromptForCaseResolver(

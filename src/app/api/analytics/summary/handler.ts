@@ -38,9 +38,9 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   if (!session?.user) throw authError('Unauthorized.');
 
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
-  const range = query.range as AnalyticsRange;
+  const range = query.range;
   const scopeRaw = query.scope;
-  const scope = scopeRaw === 'all' ? undefined : (scopeRaw as AnalyticsScope);
+  const scope = scopeRaw === 'all' ? undefined : (scopeRaw);
 
   const { from, to } = getRangeWindow(range);
   const summary = await getAnalyticsSummary({

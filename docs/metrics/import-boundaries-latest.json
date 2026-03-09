@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-03-08T19:27:15.223Z",
-  "status": "passed",
+  "generatedAt": "2026-03-09T05:26:06.707Z",
+  "status": "failed",
   "summary": {
-    "total": 0,
-    "errorCount": 0,
+    "total": 2,
+    "errorCount": 2,
     "warningCount": 0,
     "infoCount": 0,
-    "status": "passed",
-    "fileCount": 4415,
-    "featureCount": 15,
+    "status": "failed",
+    "fileCount": 4461,
+    "featureCount": 9,
     "circularDependencyCount": 0
   },
   "scope": {
@@ -24,92 +24,78 @@
   },
   "featureGraph": {
     "admin": [
-      "auth",
-      "foldertree",
-      "notesapp",
-      "prompt-engine"
+      "foldertree"
     ],
     "ai": [
-      "auth",
-      "files",
       "foldertree",
-      "notesapp",
-      "playwright",
       "products",
-      "prompt-engine",
-      "prompt-exploder",
-      "tooltip-engine",
       "viewer3d"
     ],
     "case-resolver": [
-      "admin",
       "ai",
-      "auth",
       "case-resolver-capture",
       "document-editor",
       "filemaker",
-      "foldertree",
-      "prompt-exploder"
-    ],
-    "case-resolver-capture": [
-      "filemaker"
+      "foldertree"
     ],
     "cms": [
       "admin",
-      "files",
       "foldertree",
       "gsap",
       "products",
       "viewer3d"
     ],
-    "data-import-export": [
-      "integrations",
-      "products"
-    ],
     "drafter": [
       "products"
     ],
-    "files": [
-      "viewer3d"
-    ],
-    "integrations": [
-      "playwright",
-      "products"
-    ],
-    "jobs": [
-      "ai",
-      "case-resolver",
-      "integrations",
-      "product-sync",
-      "products"
-    ],
     "kangur": [
-      "auth",
+      "ai",
       "cms",
       "document-editor",
-      "foldertree",
-      "tooltip-engine"
+      "foldertree"
     ],
     "notesapp": [
       "document-editor",
       "foldertree"
     ],
-    "product-sync": [
-      "integrations"
-    ],
     "products": [
-      "files",
       "foldertree",
-      "internationalization",
-      "tooltip-engine"
+      "internationalization"
     ],
     "prompt-exploder": [
-      "foldertree",
-      "tooltip-engine"
+      "foldertree"
     ]
   },
   "circularDependencies": [],
-  "issues": [],
-  "rules": [],
-  "durationMs": 337
+  "issues": [
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"ai\": @/features/ai/ai-context-registry/context/page-context. Use the barrel export instead.",
+      "file": "src/features/kangur/ui/context/KangurAiTutorRuntime.shared.ts",
+      "line": 47,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"ai\": @/features/ai/ai-context-registry/context/page-context. Use the barrel export instead.",
+      "file": "src/features/kangur/ui/context/KangurContextRegistryPageBoundary.tsx",
+      "line": 5,
+      "column": null,
+      "snippet": null,
+      "context": null
+    }
+  ],
+  "rules": [
+    {
+      "ruleId": "cross-feature-internal-import",
+      "errorCount": 2,
+      "warningCount": 0,
+      "infoCount": 0
+    }
+  ],
+  "durationMs": 287
 }

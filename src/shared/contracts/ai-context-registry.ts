@@ -161,6 +161,13 @@ export const contextRegistryConsumerEnvelopeSchema = z.object({
 });
 export type ContextRegistryConsumerEnvelope = z.infer<typeof contextRegistryConsumerEnvelopeSchema>;
 
+export const contextBundleRequestSchema = z.object({
+  refs: z.array(contextRegistryRefSchema).min(1).max(100),
+  depth: z.number().int().min(0).max(3).optional(),
+  maxNodes: z.number().int().min(1).max(300).optional(),
+});
+export type ContextBundleRequest = z.infer<typeof contextBundleRequestSchema>;
+
 // ─── Search ───────────────────────────────────────────────────────────────────
 
 export const contextSearchRequestSchema = z.object({

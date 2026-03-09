@@ -44,13 +44,13 @@ export const useDocumentBridgeHydration = ({
     const promptFromPayload = isConsumableDraftPayload ? (payload?.prompt ?? null) : null;
     const payloadKey = payload
       ? [
-          payload.createdAt,
-          payload.source ?? '',
-          payload.target ?? '',
-          payload.caseResolverContext?.fileId ?? '',
-          payload.caseResolverContext?.sessionId ?? '',
-          String(payload.prompt.length),
-        ].join('|')
+        payload.createdAt,
+        payload.source ?? '',
+        payload.target ?? '',
+        payload.caseResolverContext?.fileId ?? '',
+        payload.caseResolverContext?.sessionId ?? '',
+        String(payload.prompt.length),
+      ].join('|')
       : null;
     if (promptFromPayload && payloadKey && lastHydratedDraftPayloadKeyRef.current !== payloadKey) {
       lastHydratedDraftPayloadKeyRef.current = payloadKey;

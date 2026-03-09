@@ -107,8 +107,8 @@ function ParentDashboardContent(): React.JSX.Element {
       typeof ResizeObserver === 'undefined'
         ? null
         : new ResizeObserver(() => {
-            releaseReserveIfSafe();
-          });
+          releaseReserveIfSafe();
+        });
     observer?.observe(tabPanelsContent);
 
     return () => {
@@ -171,6 +171,7 @@ function ParentDashboardContent(): React.JSX.Element {
       canManageLearners,
       currentPage: 'ParentDashboard' as const,
       isAuthenticated,
+      onCreateAccount: () => navigateToLogin({ authMode: 'create-account' }),
       onLogin: navigateToLogin,
       onLogout: () => logout(false),
     }),

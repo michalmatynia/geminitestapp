@@ -1,123 +1,19 @@
-# Image Studio Object Layout Improvement Plan
+---
+owner: 'Platform Team'
+last_reviewed: '2026-03-09'
+status: 'superseded'
+doc_type: 'plan'
+scope: 'cross-feature'
+superseded_by: 'docs/plans/image-studio-object-layout-improvement-plan.md'
+---
 
-Date: 2026-02-20  
-Status: In Progress (Phase A complete, Phase B foundation complete, Phase C complete, Integration Phase H complete, Phase I complete, Phase J complete, Phase K complete)
+# Deprecated Location
 
-## 1. Scope
+The canonical Image Studio object layout improvement plan moved to:
 
-This plan covers the Object Layout tool in Image Studio, including shared image analysis used by Object Layout and Auto Scaler.
+- `docs/plans/image-studio-object-layout-improvement-plan.md`
 
-Primary code surfaces:
-
-- `src/features/ai/image-studio/analysis/shared.ts`
-- `src/features/ai/image-studio/server/center-utils.ts`
-- `src/app/api/image-studio/slots/[slotId]/center/handler.ts`
-- `src/features/ai/image-studio/components/GenerationToolbar.tsx`
-- `src/features/ai/image-studio/components/generation-toolbar/GenerationToolbarCenterSection.tsx`
-- `src/features/ai/image-studio/components/ImageStudioAnalysisTab.tsx`
-
-Related contracts and tests:
-
-- `src/shared/contracts/image-studio.ts`
-- `src/features/ai/image-studio/contracts/center.ts`
-- `src/features/ai/image-studio/server/__tests__/center-utils.test.ts`
-- `src/app/api/image-studio/slots/[slotId]/center/handler.test.ts`
-
-## 2. Goals
-
-1. Improve object boundary detection robustness for product images on white or near-white backgrounds.
-2. Keep server and client behavior consistent for the same image and layout configuration.
-3. Make Object Layout easier to tune and validate in UI without trial-and-error.
-4. Increase reliability with stronger route-level and algorithmic test coverage.
-5. Graduate Object Layout modes from "Experimental" once quality thresholds are met.
-
-## 3. Non-Goals
-
-1. Full semantic segmentation or model-based background removal.
-2. New external ML dependencies.
-3. Changes to non-image-studio pipelines unrelated to layout/analysis.
-
-## 4. Current Strengths (Already Done)
-
-1. Shared analysis logic is reused across Object Layout and Auto Scaler.
-2. Detection telemetry is available (`detectionUsed`, `confidenceBefore`, `detectionDetails`, `scale`).
-3. Analysis tab exists and surfaces bounds/whitespace/plan.
-4. Route-level tests exist for center/autoscale/analysis/crop/upscale handlers.
-
-## 5. Known Gaps
-
-1. No persisted "confidence threshold" policy for deciding when to trust a detector result vs fallback detector.
-2. Limited operator controls for detection sensitivity in Object Layout UI (threshold sliders are not exposed there).
-3. No visual overlay preview of detected bounds directly in the Object Layout action flow.
-4. No golden-image regression suite with real product fixtures and expected bounds.
-5. No staged rollout gate for replacing "Experimental" labels.
-
-## 6. Target KPIs
-
-1. Detection agreement with golden labels:
-   - IoU >= 0.90 on clean white backgrounds.
-   - IoU >= 0.80 on difficult backgrounds/shadows.
-2. Center layout reproducibility:
-   - Server/client output bounds delta <= 2 px for 95% of fixture set.
-3. Error rate:
-   - `SOURCE_OBJECT_NOT_FOUND` under 1% of eligible product images.
-4. Latency:
-   - P95 server object-layout processing <= 450 ms for <= 4K source images.
-
-## 7. Phased Improvement Plan
-
-### Progress Snapshot (2026-02-20)
-
-Completed:
-
-1. Phase A fixture framework:
-   - `analysis/__fixtures__/object-layout/` synthetic fixture pack added.
-   - IoU + bounds delta helpers added.
-   - Golden regression suite (`shared.golden.test.ts`) added with KPI floor assertions.
-2. Phase B policy foundation:
-   - Detector arbitration extracted to `analysis/policy.ts`.
-   - Policy metadata (`policyVersion`, `policyReason`, `fallbackApplied`, candidate summary) carried through analysis result.
-   - Contract schema extended for policy metadata and persisted layout policy metadata.
-   - Center/Auto Scaler handlers updated to persist/read policy metadata in layout + detection details.
-   - Confidence floor and arbitration tuning are now configurable via env:
-     - `IMAGE_STUDIO_OBJECT_LAYOUT_POLICY_AUTO_CONFIDENCE_DELTA`
-     - `IMAGE_STUDIO_OBJECT_LAYOUT_POLICY_WHITE_AUTO_AREA_RATIO_BIAS`
-     - `IMAGE_STUDIO_OBJECT_LAYOUT_POLICY_WHITE_CONFIDENCE_FLOOR`
-     - `IMAGE_STUDIO_OBJECT_LAYOUT_POLICY_ALPHA_CONFIDENCE_FLOOR`
-     - client-side equivalents with `NEXT_PUBLIC_` prefix.
-3. Phase C complete (advanced controls + explainability + presets):
-   - Object Layout toolbar now supports advanced detector override and white/chroma thresholds.
-   - Analysis tab mirrors advanced detector + threshold controls.
-   - Analysis tab now surfaces policy metadata and candidate detector comparison summary.
-   - Advanced controls now support shared presets (`default product`, `with shadow`, `hard background`, `transparent PNG`).
-   - Advanced defaults are persisted per project/session and reused across Object Layout + Analysis tab.
-   - User-defined custom presets (create/update/delete) are now available and shared across Object Layout + Analysis tab.
-4. Integration Phase H complete:
-   - Auto Scaler now consumes shared detection mode and white/chroma thresholds used by Object Layout + Analysis.
-   - Auto Scaler UI now explicitly indicates it follows shared Object Layout detection settings.
-5. Phase I complete (analysis-to-action bridge):
-   - Analysis tab now persists latest analysis snapshot (layout + policy/confidence metadata) as shared bridge state.
-   - Analysis tab can queue apply intents for Object Layout or Auto Scaler.
-   - Generation toolbar consumes queued intents for matching slot and auto-applies analysis plan to target tool controls.
-   - Manual `Use Analysis Plan` controls added in Object Layout and Auto Scaler panels.
-   - Analysis snapshot/apply intent now include source image signature metadata.
-   - Stale-plan guard now validates source signature (slot image revision), not only slot id.
-   - Optional one-click apply-and-run flow is available from Analysis tab for Object Layout and Auto Scaler.
-6. Phase J complete (visual coherence and diagnostics):
-   - Shared analysis summary chip now shows detection used, confidence, fallback flag, policy version, and policy reason.
-   - Analysis summary chip is rendered in Analysis tab, Object Layout panel, and Auto Scaler panel.
-   - Runtime-vs-analysis config mismatch warning now appears when detection/threshold/shadow settings diverge.
-7. Phase K complete (end-to-end integration testing):
-   - Added deterministic analysis handler assertions for shared preset propagation and low-confidence fallback policy metadata.
-   - Added deterministic object-layout handler assertions for analysis-derived layout propagation and persisted/response fallback policy metadata.
-   - Added deterministic autoscaler handler assertions for analysis-derived layout propagation and persisted/response fallback policy metadata.
-   - Verified all three handler suites together in one Phase K run.
-
-Remaining:
-
-1. Phase B rollout hardening:
-   - policy decision metadata surfaced in all UI diagnostics where useful.
-2. Phase L onward unchanged.
+Please update references to the new path.
 
 ### Phase A: Detection Quality Framework
 

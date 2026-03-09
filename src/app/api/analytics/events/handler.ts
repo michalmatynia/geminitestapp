@@ -199,9 +199,9 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   const page = query.page;
   const pageSize = query.pageSize;
   const skip = (page - 1) * pageSize;
-  const range = query.range as AnalyticsRange;
+  const range = query.range;
   const scopeRaw = query.scope;
-  const scope = scopeRaw === 'all' ? undefined : (scopeRaw as AnalyticsScope);
+  const scope = scopeRaw === 'all' ? undefined : (scopeRaw);
 
   const { from, to } = getRangeWindow(range);
   const result = await listAnalyticsEvents({

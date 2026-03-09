@@ -227,9 +227,9 @@ export default function MultiplicationLesson(): React.JSX.Element {
         section.isGame
           ? section
           : {
-              ...section,
-              progress: sectionProgress[section.id as keyof typeof SLIDES],
-            }
+            ...section,
+            progress: sectionProgress[section.id as keyof typeof SLIDES],
+          }
       )}
       onSelect={(id) => {
         if (id !== 'game_array' && id !== 'game_quiz') {

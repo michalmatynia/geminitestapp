@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { contextRegistryConsumerEnvelopeSchema } from './ai-context-registry';
 import { dtoBaseSchema, namedDtoSchema } from './base';
 import { chatMessageSchema } from './chatbot';
 
@@ -678,6 +679,7 @@ export const cmsCssAiRequestSchema = z.object({
   modelId: z.string().optional(),
   agentId: z.string().optional(),
   messages: z.array(chatMessageSchema).optional(),
+  contextRegistry: contextRegistryConsumerEnvelopeSchema.optional(),
 });
 
 export type CmsCssAiRequest = z.infer<typeof cmsCssAiRequestSchema>;

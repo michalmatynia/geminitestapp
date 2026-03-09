@@ -223,9 +223,9 @@ export default function SubtractingLesson(): React.JSX.Element {
         section.isGame
           ? section
           : {
-              ...section,
-              progress: sectionProgress[section.id as keyof typeof SLIDES],
-            }
+            ...section,
+            progress: sectionProgress[section.id as keyof typeof SLIDES],
+          }
       )}
       onSelect={(id) => {
         if (id !== 'game') {

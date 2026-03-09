@@ -166,14 +166,14 @@ export const useKangurRouteTransitionState = (): KangurRouteTransitionStateConte
 
 export const useKangurRouteTransitionActions =
   (): KangurRouteTransitionActionsContextValue => {
-  const context = useContext(KangurRouteTransitionActionsContext);
-  if (!context) {
-    throw internalError(
-      'useKangurRouteTransitionActions must be used within a KangurRouteTransitionProvider'
-    );
-  }
-  return context;
-};
+    const context = useContext(KangurRouteTransitionActionsContext);
+    if (!context) {
+      throw internalError(
+        'useKangurRouteTransitionActions must be used within a KangurRouteTransitionProvider'
+      );
+    }
+    return context;
+  };
 
 export const useKangurRouteTransition = (): KangurRouteTransitionContextValue => {
   const state = useContext(KangurRouteTransitionStateContext);

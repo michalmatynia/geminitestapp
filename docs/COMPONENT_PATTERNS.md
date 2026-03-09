@@ -1,83 +1,19 @@
-# Component Patterns & Consolidation Guide
-
-This document describes reusable component patterns to maintain consistency and reduce duplication across features.
-
-## Table of Contents
-
-1. [Modal Templates](#modal-templates)
-2. [Settings Panel Factory](#settings-panel-factory)
-3. [Form State Hook](#form-state-hook)
-4. [Migration Guide](#migration-guide)
-
+---
+owner: 'Platform Team'
+last_reviewed: '2026-03-09'
+status: 'superseded'
+doc_type: 'reference'
+scope: 'platform'
+superseded_by: 'docs/platform/component-patterns.md'
 ---
 
-## Modal Templates
+# Deprecated Location
 
-Modal templates provide consistent, reusable patterns for common modal use cases.
+The canonical component patterns guide moved to:
 
-### Available Templates
+- `docs/platform/component-patterns.md`
 
-#### 1. SelectModal
-
-**Purpose**: Single/multi-select operations
-**Replaces**: `SelectIntegrationModal`, `SelectProductForListingModal`, custom selection modals
-
-```tsx
-import { SelectModal, type SelectOption } from '@/shared/ui/templates/modals/SelectModal';
-
-const options: SelectOption<string>[] = [
-  { id: '1', label: 'Option 1', value: 'opt1', description: 'First option' },
-  { id: '2', label: 'Option 2', value: 'opt2', description: 'Second option' },
-];
-
-<SelectModal
-  open={isOpen}
-  onClose={handleClose}
-  title='Select Integration'
-  options={options}
-  onSelect={(option) => console.log('Selected:', option)}
-  searchable={true}
-  multiple={false}
-/>;
-```
-
-**Props**:
-
-- `open: boolean` - Modal visibility
-- `onClose: () => void` - Close handler
-- `title: string` - Modal title
-- `subtitle?: string` - Optional subtitle
-- `options: SelectOption<T>[]` - Options to select from
-- `onSelect: (option: SelectOption<T>) => void` - Selection handler
-- `loading?: boolean` - Loading state
-- `searchable?: boolean` - Enable search filter (default: true)
-- `multiple?: boolean` - Allow multi-select (default: false)
-- `size?: 'sm' | 'md' | 'lg' | 'xl'` - Modal size
-
-#### 2. ConfirmModal
-
-**Purpose**: Confirmation dialogs for destructive/important actions
-**Replaces**: Custom delete/confirm modals, `*ConfirmDialog` components
-
-```tsx
-import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
-
-<ConfirmModal
-  open={isOpen}
-  onClose={handleClose}
-  onConfirm={async () => {
-    await api.delete(item);
-  }}
-  title='Delete Item'
-  message='Are you sure you want to delete this item? This action cannot be undone.'
-  confirmText='Delete'
-  isDangerous={true}
-/>;
-```
-
-**Props**:
-
-- `open: boolean` - Modal visibility
+Please update references to the new path.
 - `onClose: () => void` - Close handler
 - `onConfirm: () => void | Promise<void>` - Confirmation handler
 - `title: string` - Modal title

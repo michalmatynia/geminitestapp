@@ -18,6 +18,7 @@ import { KangurAuthProvider, useKangurAuth } from '@/features/kangur/ui/context/
 import { KangurLoginModalProvider } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import { KangurProgressSyncProvider } from '@/features/kangur/ui/context/KangurProgressSyncProvider';
 import { KangurScoreSyncProvider } from '@/features/kangur/ui/context/KangurScoreSyncProvider';
+import { KangurContextRegistryPageBoundary } from '@/features/kangur/ui/context/KangurContextRegistryPageBoundary';
 import {
   KangurRouteTransitionProvider,
   useKangurRouteTransition,
@@ -102,13 +103,15 @@ export function KangurFeatureApp(): JSX.Element {
           <KangurAuthProvider>
             <KangurProgressSyncProvider>
               <KangurScoreSyncProvider>
-                <KangurAiTutorProvider>
-                  <KangurTutorAnchorProvider>
-                    <AuthenticatedApp />
-                    <KangurAiTutorWidget />
-                    <KangurLoginModal />
-                  </KangurTutorAnchorProvider>
-                </KangurAiTutorProvider>
+                <KangurContextRegistryPageBoundary>
+                  <KangurAiTutorProvider>
+                    <KangurTutorAnchorProvider>
+                      <AuthenticatedApp />
+                      <KangurAiTutorWidget />
+                      <KangurLoginModal />
+                    </KangurTutorAnchorProvider>
+                  </KangurAiTutorProvider>
+                </KangurContextRegistryPageBoundary>
               </KangurScoreSyncProvider>
             </KangurProgressSyncProvider>
           </KangurAuthProvider>

@@ -82,16 +82,16 @@ export const useKangurCmsBuilderRuntimeState = (): KangurCmsBuilderRuntimeStateC
 
 export const useKangurCmsBuilderRuntimeActions =
   (): KangurCmsBuilderRuntimeActionsContextValue => {
-  const context = useContext(KangurCmsBuilderRuntimeActionsContext);
+    const context = useContext(KangurCmsBuilderRuntimeActionsContext);
 
-  if (!context) {
-    throw internalError(
-      'useKangurCmsBuilderRuntimeActions must be used within a KangurCmsBuilderRuntimeProvider'
-    );
-  }
+    if (!context) {
+      throw internalError(
+        'useKangurCmsBuilderRuntimeActions must be used within a KangurCmsBuilderRuntimeProvider'
+      );
+    }
 
-  return context;
-};
+    return context;
+  };
 
 export const useKangurCmsBuilderRuntime = (): KangurCmsBuilderRuntimeContextValue => {
   const state = useContext(KangurCmsBuilderRuntimeStateContext);

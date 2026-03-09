@@ -45,6 +45,11 @@ import { ApiError, api } from '@/shared/lib/api-client';
 import { resolveAgentPersonaMood } from '@/shared/lib/agent-personas';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
+  useOptionalContextRegistryPageEnvelope,
+  useRegisterContextRegistryPageSource,
+} from '@/features/ai/ai-context-registry/context/page-context';
+import { buildKangurAiTutorContextRegistryRefs } from '@/features/kangur/context-registry/refs';
+import {
   logKangurClientError,
   trackKangurClientEvent,
 } from '@/features/kangur/observability/client';
@@ -631,6 +636,21 @@ export function KangurAiTutorSessionSyncInner({
     () => buildSessionKey(learnerId, normalizedSessionContext),
     [learnerId, normalizedSessionContext]
   );
+  const registrySource = useMemo(
+    () =>
+      learnerId && normalizedSessionContext
+        ? {
+          label: 'Kangur AI tutor session',
+          refs: buildKangurAiTutorContextRegistryRefs({
+            learnerId,
+            context: normalizedSessionContext,
+          }),
+        }
+        : null,
+    [learnerId, normalizedSessionContext]
+  );
+
+  useRegisterContextRegistryPageSource('kangur-ai-tutor-session', registrySource);
 
   useLayoutEffect(() => {
     const registration =
@@ -674,6 +694,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
   );
   const authState = useOptionalKangurAuth();
   const authUser = authState?.user ?? null;
+  const pageContextRegistry = useOptionalContextRegistryPageEnvelope();
 
   const activeLearnerId = activeRegistration?.learnerId ?? null;
   const activeSessionContext = activeRegistration?.sessionContext ?? null;
@@ -1119,6 +1140,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
         promptMode: resolvedPromptMode,
         hasSelectedText: Boolean(resolvedSelectedText),
         hasLearnerMemory: Boolean(activeLearnerMemory),
+        contextRegistryRefCount: pageContextRegistry?.refs.length ?? 0,
         focusKind: options?.focusKind ?? null,
         interactionIntent: options?.interactionIntent ?? null,
         messageCount: outgoingMessages.length,
@@ -1152,6 +1174,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
             content: message.content,
           })),
           context: nextContext,
+          ...(pageContextRegistry ? { contextRegistry: pageContextRegistry } : {}),
           ...(activeLearnerMemory ? { memory: activeLearnerMemory } : {}),
         });
         const sources = showSources && Array.isArray(result.sources) ? result.sources : [];
@@ -1253,6 +1276,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
       enabled,
       highlightedText,
       messages,
+      pageContextRegistry,
       showSources,
       updateLearnerMemory,
       updateSessionState,

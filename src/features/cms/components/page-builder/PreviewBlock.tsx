@@ -716,10 +716,10 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
       resolvedSettings['buttonDisabledPath'].trim().length > 0;
     const runtimeDisabledValue = hasRuntimeDisabledBinding
       ? resolveCmsRuntimeValue(
-          runtime,
-          resolvedSettings['buttonDisabledSource'],
-          resolvedSettings['buttonDisabledPath']
-        )
+        runtime,
+        resolvedSettings['buttonDisabledSource'],
+        resolvedSettings['buttonDisabledPath']
+      )
       : undefined;
     const isDisabled = hasRuntimeDisabledBinding
       ? resolvedSettings['buttonDisabledWhen'] === 'falsy'
@@ -876,8 +876,8 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
           <div className='rounded-xl border border-dashed border-border/40 bg-card/20 p-3 text-xs text-gray-400'>
             {renderMode === 'internal-app'
               ? `Entry page: ${entryPage || 'default'}${
-                  basePath ? ` · host page override: ${basePath}` : ' · host page: current CMS page'
-                }`
+                basePath ? ` · host page override: ${basePath}` : ' · host page: current CMS page'
+              }`
               : 'Preview uses the published iframe URL at runtime.'}
           </div>
         </div>

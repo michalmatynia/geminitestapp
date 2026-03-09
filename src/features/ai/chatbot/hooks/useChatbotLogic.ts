@@ -440,10 +440,10 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
           timestamp: new Date().toISOString(),
           ...(data.suggestedMoodId
             ? {
-                metadata: {
-                  suggestedPersonaMoodId: data.suggestedMoodId,
-                },
-              }
+              metadata: {
+                suggestedPersonaMoodId: data.suggestedMoodId,
+              },
+            }
             : {}),
         };
         setMessages((prev: ChatMessage[]): ChatMessage[] => [...prev, assistantMessage]);

@@ -1,122 +1,19 @@
-# Component Migration Checklist
-
-**Purpose:** Step-by-step guide for migrating components to consolidated templates
-**Audience:** Frontend developers
-**Last Updated:** February 13, 2026
-
+---
+owner: 'Platform Team'
+last_reviewed: '2026-03-09'
+status: 'superseded'
+doc_type: 'reference'
+scope: 'platform'
+superseded_by: 'docs/platform/migration-checklist.md'
 ---
 
-## Pre-Migration Analysis
+# Deprecated Location
 
-### Identify Migration Candidate
+The canonical migration checklist moved to:
 
-**Checklist:**
+- `docs/platform/migration-checklist.md`
 
-- [ ] Component has 100+ LOC of custom filter/picker logic
-- [ ] Multiple similar fields or options
-- [ ] Duplicates patterns seen in other components
-- [ ] Team agrees on consolidation priority
-- [ ] No blockers preventing refactoring
-
-**Questions to Ask:**
-
-1. Does this component have search/filter functionality?
-2. Are there multiple similar select/option fields?
-3. Is there a grid or list picker pattern?
-4. Can the logic be separated into config + callbacks?
-5. Are there tests covering current functionality?
-
-### Create Refactoring Issue
-
-```markdown
-Title: Refactor [ComponentName] to use FilterPanel/Picker template
-
-Scope:
-
-- Current LOC: XXX
-- Expected LOC: YYY
-- Estimated savings: ZZZ (XX%)
-
-Steps:
-
-1. Extract filter configuration
-2. Build FilterPanel/Picker integration
-3. Verify all tests pass
-4. Deploy to production
-
-Risk Level: Low (templates proven in 5+ deployments)
-Backward Compatibility: 100% (no breaking changes)
-```
-
----
-
-## Step 1: Code Analysis & Measurement
-
-### Measure Current Implementation
-
-**Tasks:**
-
-- [ ] Open current component file
-- [ ] Count total LOC
-- [ ] Identify filter/picker sections
-- [ ] Count test files and test cases
-- [ ] Check for external dependencies
-
-**Template:**
-
-```
-Component: [Name]
-Current File: [path]
-Current LOC: [number]
-
-Sections to migrate:
-- [ ] Section 1: [description] (~XX LOC)
-- [ ] Section 2: [description] (~XX LOC)
-
-Sections to keep:
-- [ ] Section 1: [reason why]
-- [ ] Section 2: [reason why]
-
-Tests:
-- [ ] Unit tests: [count]
-- [ ] Integration tests: [count]
-- [ ] E2E tests: [count]
-
-Dependencies:
-- [ ] [dependency 1]: [why needed]
-```
-
-### Map to Template Pattern
-
-**For Filters (Use FilterPanel):**
-
-```
-Current             →  FilterPanel Field Type
-─────────────────────────────────────
-<SearchInput/>      →  { type: 'text' }
-<Select/>           →  { type: 'select' }
-<MultiSelect/>      →  { type: 'select', multi: true }
-<DatePicker/>       →  { type: 'date' }
-<NumberInput/>      →  { type: 'number' }
-<Checkbox/>         →  { type: 'checkbox' }
-<DateRangeInput/>   →  { type: 'dateRange' }
-```
-
-**For Pickers (Use GenericPickerDropdown/GridPicker):**
-
-```
-Current                  →  Template
-──────────────────────────────────
-<DropdownPicker/>        →  GenericPickerDropdown
-<GridPicker/>            →  GenericGridPicker
-<ModalPicker/>           →  GenericPickerDropdown + Modal
-<CategorySelect/>        →  GenericPickerDropdown w/ groups
-<ThumbnailGrid/>         →  GenericGridPicker w/ custom render
-```
-
----
-
-## Step 2: Extract Configuration
+Please update references to the new path.
 
 ### Identify Filter Fields
 

@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
+import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import type { ChatMessage } from '@/shared/contracts/chatbot';
 import type { CustomCssAiConfig } from '@/shared/contracts/cms';
 import { ApiError } from '@/shared/lib/api-client';
@@ -60,6 +62,7 @@ interface StreamInspectorAiResponseArgs {
   systemPrompt: string;
   signal: AbortSignal;
   onDelta: (value: string) => void;
+  contextRegistry?: ContextRegistryConsumerEnvelope | null;
 }
 
 const CMS_STREAM_ENDPOINT = '/api/cms/css-ai/stream';
@@ -92,6 +95,7 @@ async function streamInspectorAiResponse({
   systemPrompt,
   signal,
   onDelta,
+  contextRegistry,
 }: StreamInspectorAiResponseArgs): Promise<string> {
   const timestamp = new Date().toISOString();
   const sessionId = `${sessionPrefix}-${Date.now()}`;
@@ -116,7 +120,7 @@ async function streamInspectorAiResponse({
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     signal,
-    body: JSON.stringify({ provider, modelId, agentId, messages }),
+    body: JSON.stringify({ provider, modelId, agentId, messages, contextRegistry }),
   });
 
   if (!response.ok || !response.body) {
@@ -192,6 +196,7 @@ export function useInspectorAiGeneration({
   onUpdateSettings,
   toast,
 }: UseInspectorAiGenerationArgs): UseInspectorAiGenerationResult {
+  const contextRegistry = useOptionalContextRegistryPageEnvelope();
   const [cssAiAppend, setCssAiAppend] = useState(true);
   const [cssAiAutoApply, setCssAiAutoApply] = useState(false);
   const [cssAiLoading, setCssAiLoading] = useState(false);
@@ -251,6 +256,7 @@ export function useInspectorAiGeneration({
         systemPrompt:
           'You are a CSS assistant. Return only valid CSS without code fences or explanations.',
         onDelta: setCssAiOutput,
+        contextRegistry,
       });
       const finalCss = extractCssFromResponse(response);
       if (!finalCss) {
@@ -288,6 +294,7 @@ export function useInspectorAiGeneration({
     cssAiAutoApply,
     cssAiLoading,
     customCssValue,
+    contextRegistry,
     onUpdateCss,
     toast,
   ]);
@@ -326,14 +333,14 @@ export function useInspectorAiGeneration({
       const filtered =
         allowed.size > 0
           ? Object.entries(settingsPatch).reduce<Record<string, unknown>>(
-              (accumulator: Record<string, unknown>, [key, value]: [string, unknown]) => {
-                if (allowed.has(key)) {
-                  accumulator[key] = value;
-                }
-                return accumulator;
-              },
-              {}
-            )
+            (accumulator: Record<string, unknown>, [key, value]: [string, unknown]) => {
+              if (allowed.has(key)) {
+                accumulator[key] = value;
+              }
+              return accumulator;
+            },
+            {}
+          )
           : settingsPatch;
       if (Object.keys(filtered).length === 0) {
         setContentAiError('No valid settings keys found in AI output.');
@@ -367,6 +374,7 @@ export function useInspectorAiGeneration({
         systemPrompt:
           'You are a CMS content assistant. Return only JSON. If updating settings, output an object of key/value pairs matching allowed keys.',
         onDelta: setContentAiOutput,
+        contextRegistry,
       });
       const parsed = extractJsonFromResponse(response);
       if (!parsed) {
@@ -393,6 +401,7 @@ export function useInspectorAiGeneration({
     brainAiProvider,
     buildContentAiPrompt,
     contentAiLoading,
+    contextRegistry,
     toast,
   ]);
 

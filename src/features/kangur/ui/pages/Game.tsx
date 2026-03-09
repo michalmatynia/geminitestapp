@@ -180,117 +180,117 @@ function GameContent(): React.JSX.Element {
             {GAME_BRAND_NAME}
           </h1>
           <AnimatePresence mode='wait'>
-          {screen === 'home' ? (
-            renderScreen(
-              'home',
-              'flex w-full flex-col items-center gap-10',
-              <>
-                <section className='w-full max-w-[520px] space-y-5' aria-labelledby='kangur-home-start-heading'>
-                  <h3 id='kangur-home-start-heading' className='sr-only'>
+            {screen === 'home' ? (
+              renderScreen(
+                'home',
+                'flex w-full flex-col items-center gap-10',
+                <>
+                  <section className='w-full max-w-[520px] space-y-5' aria-labelledby='kangur-home-start-heading'>
+                    <h3 id='kangur-home-start-heading' className='sr-only'>
                     Rozpocznij gre
-                  </h3>
-                  <KangurGameHomeHeroWidget hideWhenScreenMismatch={false} />
-                  <KangurGameHomeActionsWidget hideWhenScreenMismatch={false} />
-                </section>
-
-                {canAccessParentAssignments ? (
-                  <section className='mx-auto w-full max-w-[900px]' aria-labelledby='kangur-home-assignments-heading'>
-                    <h3 id='kangur-home-assignments-heading' className='sr-only'>
-                      Priorytetowe zadania
                     </h3>
-                    <KangurPriorityAssignments
-                      basePath={basePath}
-                      enabled={canAccessParentAssignments}
-                      title='Priorytetowe zadania'
-                      emptyLabel='Brak aktywnych zadan od rodzica.'
-                    />
+                    <KangurGameHomeHeroWidget hideWhenScreenMismatch={false} />
+                    <KangurGameHomeActionsWidget hideWhenScreenMismatch={false} />
                   </section>
-                ) : null}
 
-                <section
-                  className='grid w-full max-w-5xl gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]'
-                  aria-labelledby='kangur-home-progress-heading'
-                >
-                  <h3 id='kangur-home-progress-heading' className='sr-only'>
+                  {canAccessParentAssignments ? (
+                    <section className='mx-auto w-full max-w-[900px]' aria-labelledby='kangur-home-assignments-heading'>
+                      <h3 id='kangur-home-assignments-heading' className='sr-only'>
+                      Priorytetowe zadania
+                      </h3>
+                      <KangurPriorityAssignments
+                        basePath={basePath}
+                        enabled={canAccessParentAssignments}
+                        title='Priorytetowe zadania'
+                        emptyLabel='Brak aktywnych zadan od rodzica.'
+                      />
+                    </section>
+                  ) : null}
+
+                  <section
+                    className='grid w-full max-w-5xl gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]'
+                    aria-labelledby='kangur-home-progress-heading'
+                  >
+                    <h3 id='kangur-home-progress-heading' className='sr-only'>
                     Ranking i postep
-                  </h3>
-                  <div className='order-2 xl:order-1'>
-                    <Leaderboard />
-                  </div>
-                  <div className='order-1 flex justify-center xl:order-2 xl:justify-stretch'>
-                    <PlayerProgressCard progress={progress} />
-                  </div>
-                </section>
-              </>
-            )
-          ) : null}
+                    </h3>
+                    <div className='order-2 xl:order-1'>
+                      <Leaderboard />
+                    </div>
+                    <div className='order-1 flex justify-center xl:order-2 xl:justify-stretch'>
+                      <PlayerProgressCard progress={progress} />
+                    </div>
+                  </section>
+                </>
+              )
+            ) : null}
 
-          {screen === 'training' ? (
-            renderScreen(
-              'training',
-              'w-full flex flex-col items-center',
-              <KangurGameTrainingSetupWidget />
-            )
-          ) : null}
+            {screen === 'training' ? (
+              renderScreen(
+                'training',
+                'w-full flex flex-col items-center',
+                <KangurGameTrainingSetupWidget />
+              )
+            ) : null}
 
-          {screen === 'kangur_setup' ? (
-            renderScreen(
-              'kangur_setup',
-              'w-full flex flex-col items-center',
-              <KangurGameKangurSetupWidget />
-            )
-          ) : null}
+            {screen === 'kangur_setup' ? (
+              renderScreen(
+                'kangur_setup',
+                'w-full flex flex-col items-center',
+                <KangurGameKangurSetupWidget />
+              )
+            ) : null}
 
-          {screen === 'kangur' ? (
-            renderScreen(
-              'kangur',
-              'w-full max-w-lg flex flex-col items-center',
-              <KangurGameKangurSessionWidget />
-            )
-          ) : null}
+            {screen === 'kangur' ? (
+              renderScreen(
+                'kangur',
+                'w-full max-w-lg flex flex-col items-center',
+                <KangurGameKangurSessionWidget />
+              )
+            ) : null}
 
-          {screen === 'calendar_quiz' ? (
-            renderScreen(
-              'calendar_quiz',
-              'w-full max-w-lg flex flex-col items-center gap-4',
-              <KangurGameCalendarTrainingWidget />
-            )
-          ) : null}
+            {screen === 'calendar_quiz' ? (
+              renderScreen(
+                'calendar_quiz',
+                'w-full max-w-lg flex flex-col items-center gap-4',
+                <KangurGameCalendarTrainingWidget />
+              )
+            ) : null}
 
-          {screen === 'geometry_quiz' ? (
-            renderScreen(
-              'geometry_quiz',
-              'w-full max-w-lg flex flex-col items-center gap-4',
-              <KangurGameGeometryTrainingWidget />
-            )
-          ) : null}
+            {screen === 'geometry_quiz' ? (
+              renderScreen(
+                'geometry_quiz',
+                'w-full max-w-lg flex flex-col items-center gap-4',
+                <KangurGameGeometryTrainingWidget />
+              )
+            ) : null}
 
-          {screen === 'operation' ? (
-            renderScreen(
-              'operation',
-              'w-full flex flex-col items-center',
-              <KangurGameOperationSelectorWidget />
-            )
-          ) : null}
+            {screen === 'operation' ? (
+              renderScreen(
+                'operation',
+                'w-full flex flex-col items-center',
+                <KangurGameOperationSelectorWidget />
+              )
+            ) : null}
 
-          {screen === 'playing' ? (
-            renderScreen(
-              'playing',
-              'flex w-full flex-col items-center',
-              <KangurGameQuestionWidget />
-            )
-          ) : null}
+            {screen === 'playing' ? (
+              renderScreen(
+                'playing',
+                'flex w-full flex-col items-center',
+                <KangurGameQuestionWidget />
+              )
+            ) : null}
 
-          {screen === 'result' ? (
-            renderScreen(
-              'result',
-              'flex w-full flex-col items-center gap-6',
-              <>
-                <KangurGameResultWidget />
-                <Leaderboard />
-              </>
-            )
-          ) : null}
+            {screen === 'result' ? (
+              renderScreen(
+                'result',
+                'flex w-full flex-col items-center gap-6',
+                <>
+                  <KangurGameResultWidget />
+                  <Leaderboard />
+                </>
+              )
+            ) : null}
           </AnimatePresence>
         </KangurPageContainer>
       </KangurPageShell>

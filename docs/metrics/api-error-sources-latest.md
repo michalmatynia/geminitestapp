@@ -1,12 +1,12 @@
 # API Error Sources Check
 
-Generated at: 2026-03-08T14:40:18.222Z
+Generated at: 2026-03-09T05:09:00.566Z
 
 ## Summary
 
 - Status: PASSED
-- Route files scanned: 330
-- Handler files scanned: 318
+- Route files scanned: 336
+- Handler files scanned: 322
 - Errors: 0
 - Warnings: 0
 

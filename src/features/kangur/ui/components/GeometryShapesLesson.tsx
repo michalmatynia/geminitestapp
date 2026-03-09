@@ -155,9 +155,9 @@ export default function GeometryShapesLesson(): React.JSX.Element {
         section.isGame
           ? section
           : {
-              ...section,
-              progress: sectionProgress[section.id as keyof typeof SLIDES],
-            }
+            ...section,
+            progress: sectionProgress[section.id as keyof typeof SLIDES],
+          }
       )}
       onSelect={(id) => {
         if (id === 'game') {

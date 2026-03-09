@@ -203,21 +203,25 @@ describe('KangurPrimaryNavigation', () => {
     expect(onLogout).toHaveBeenCalledTimes(1);
   });
 
-  it('shows login when the user is not authenticated', () => {
+  it('shows login and create-account actions when the user is not authenticated', () => {
     const onLogin = vi.fn();
+    const onCreateAccount = vi.fn();
 
     render(
       <KangurPrimaryNavigation
         basePath='/kangur'
         currentPage='Game'
         isAuthenticated={false}
+        onCreateAccount={onCreateAccount}
         onLogin={onLogin}
         onLogout={vi.fn()}
       />
     );
 
+    fireEvent.click(screen.getByRole('button', { name: /utworz konto/i }));
     fireEvent.click(screen.getByRole('button', { name: /zaloguj się/i }));
 
+    expect(onCreateAccount).toHaveBeenCalledTimes(1);
     expect(onLogin).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole('link', { name: /profil/i })).toBeNull();
   });

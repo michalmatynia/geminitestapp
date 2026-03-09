@@ -120,7 +120,7 @@ export function useNotes(
       const data = await api.get<NoteWithRelations[]>('/api/notes', {
         params: queryParams,
       });
-      return z.array(noteWithRelationsSchema).parse(data) as NoteWithRelations[];
+      return z.array(noteWithRelationsSchema).parse(data);
     },
     enabled: options?.enabled ?? true,
     staleTime: NOTES_STALE_MS,
@@ -146,7 +146,7 @@ export function useNote(
     queryFn: async (): Promise<NoteWithRelations | null> => {
       if (!noteId) return null;
       const data = await api.get<NoteWithRelations>(`/api/notes/${noteId}`);
-      return noteWithRelationsSchema.nullable().parse(data) as NoteWithRelations | null;
+      return noteWithRelationsSchema.nullable().parse(data);
     },
     staleTime: NOTES_STALE_MS,
     enabled: (options?.enabled ?? true) && !!noteId,

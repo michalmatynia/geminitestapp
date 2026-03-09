@@ -180,11 +180,11 @@ const ParentDashboardSkeleton = (): React.JSX.Element => (
       </div>
     </SkeletonPanel>
     <SkeletonPanel className='min-h-[120px]'>
-        <div className='flex flex-wrap gap-3'>
-          <SkeletonChip className='h-12 w-28' />
-          <SkeletonChip className='h-12 w-28' />
-          <SkeletonChip className='h-12 w-28' />
-          <SkeletonChip className='h-12 w-28' />
+      <div className='flex flex-wrap gap-3'>
+        <SkeletonChip className='h-12 w-28' />
+        <SkeletonChip className='h-12 w-28' />
+        <SkeletonChip className='h-12 w-28' />
+        <SkeletonChip className='h-12 w-28' />
       </div>
     </SkeletonPanel>
     <div className='grid gap-4 lg:grid-cols-2'>

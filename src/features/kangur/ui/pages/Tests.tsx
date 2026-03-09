@@ -66,6 +66,7 @@ export default function Tests(): React.JSX.Element {
       contentClassName: 'justify-center',
       currentPage: 'Tests' as const,
       isAuthenticated: Boolean(user),
+      onCreateAccount: () => navigateToLogin({ authMode: 'create-account' }),
       onLogin: navigateToLogin,
       onLogout: () => logout(false),
       showParentDashboard: false,

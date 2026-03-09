@@ -539,7 +539,7 @@ export default function ClockLesson(): React.JSX.Element {
           Wszystkie sekcje są zwinięte. Kliknij nagłówek sekcji, aby kontynuować naukę.
         </KangurLessonCallout>
 
-      {LESSON_SECTIONS.map((section, sectionIndex) => (
+        {LESSON_SECTIONS.map((section, sectionIndex) => (
           <KangurGlassPanel
             key={section.id}
             className='flex w-full flex-col gap-3'

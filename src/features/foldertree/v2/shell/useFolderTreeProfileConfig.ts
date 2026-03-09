@@ -10,7 +10,7 @@ export function useFolderTreeProfileConfig(instance: FolderTreeInstance): {
   profile: FolderTreeProfileV2;
   appearance: FolderTreeAppearance;
 } {
-  const profile = useFolderTreeProfile(instance) as FolderTreeProfileV2;
+  const profile = useFolderTreeProfile(instance);
   const appearance = useFolderTreeAppearance(profile);
 
   return { profile, appearance };

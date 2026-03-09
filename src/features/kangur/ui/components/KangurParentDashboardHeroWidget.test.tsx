@@ -67,9 +67,13 @@ describe('KangurParentDashboardHeroWidget', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
     fireEvent.click(screen.getByRole('button', { name: 'Zaloguj sie' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Utworz konto rodzica' }));
 
     expect(routerPushMock).toHaveBeenCalledWith('/kangur');
-    expect(navigateToLogin).toHaveBeenCalledTimes(1);
+    expect(navigateToLogin).toHaveBeenCalledTimes(2);
+    expect(navigateToLogin).toHaveBeenLastCalledWith({
+      authMode: 'create-account',
+    });
   });
 
   it('routes back to the learner profile in the authenticated dashboard view', () => {

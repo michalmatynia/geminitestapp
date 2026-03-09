@@ -144,14 +144,14 @@ export const prismaKangurScoreRepository: KangurScoreRepository = {
         });
         const existingScoreRow = typeof mapping?.value === 'string' && mapping.value.length > 0
           ? ((await prisma.setting.findUnique({
-              where: {
-                key: mapping.value,
-              },
-              select: {
-                key: true,
-                value: true,
-              },
-            })) as PrismaScoreSettingRow | null)
+            where: {
+              key: mapping.value,
+            },
+            select: {
+              key: true,
+              value: true,
+            },
+          })) as PrismaScoreSettingRow | null)
           : null;
         const existingScore = existingScoreRow ? parseScoreRow(existingScoreRow) : null;
         if (existingScore) {

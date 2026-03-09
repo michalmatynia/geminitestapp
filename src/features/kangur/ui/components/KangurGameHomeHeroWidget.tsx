@@ -1,7 +1,11 @@
 'use client';
 
 import KangurAssignmentSpotlight from '@/features/kangur/ui/components/KangurAssignmentSpotlight';
-import { KangurGlassPanel, KangurTextField } from '@/features/kangur/ui/design/primitives';
+import {
+  KangurButton,
+  KangurGlassPanel,
+  KangurTextField,
+} from '@/features/kangur/ui/design/primitives';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 
 type KangurGameHomeHeroWidgetProps = {
@@ -15,6 +19,7 @@ export function KangurGameHomeHeroWidget({
   const {
     basePath,
     handleStartGame,
+    navigateToLogin,
     playerName,
     screen,
     setPlayerName,
@@ -67,6 +72,37 @@ export function KangurGameHomeHeroWidget({
           type='text'
           value={playerName}
         />
+        {!user ? (
+          <div className='mt-5 rounded-[1.5rem] border border-indigo-200/80 bg-indigo-50/70 p-4 text-sm text-slate-700'>
+            <p className='font-bold text-slate-900'>Grasz jako gosc</p>
+            <p className='mt-1 leading-6'>
+              Lokalna gra dziala od razu. Jesli rodzic chce synchronizowac postep i zarzadzac
+              uczniami, moze zalogowac sie albo utworzyc konto bez opuszczania Kangura.
+            </p>
+            <div className='mt-4 flex flex-col gap-3 sm:flex-row'>
+              <KangurButton
+                className='w-full sm:w-auto'
+                data-doc-id='home_parent_login'
+                onClick={navigateToLogin}
+                size='sm'
+                type='button'
+                variant='surface'
+              >
+                Zaloguj rodzica
+              </KangurButton>
+              <KangurButton
+                className='w-full sm:w-auto'
+                data-doc-id='home_parent_create_account'
+                onClick={() => navigateToLogin({ authMode: 'create-account' })}
+                size='sm'
+                type='button'
+                variant='primary'
+              >
+                Utworz konto rodzica
+              </KangurButton>
+            </div>
+          </div>
+        ) : null}
       </div>
     </KangurGlassPanel>
   );

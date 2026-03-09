@@ -1,4 +1,5 @@
 import type { KangurAssignmentSnapshot, KangurUser } from '@/features/kangur/services/ports';
+import type { KangurLoginModalAuthMode } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import type {
   KangurDifficulty,
   KangurGameScreen,
@@ -38,7 +39,7 @@ export type KangurGameRuntimeStateContextValue = {
 };
 
 export type KangurGameRuntimeActionsContextValue = {
-  navigateToLogin: () => void;
+  navigateToLogin: (options?: { authMode?: KangurLoginModalAuthMode }) => void;
   logout: (shouldRedirect?: boolean) => void;
   setPlayerName: (value: string) => void;
   setScreen: (screen: KangurGameScreen) => void;

@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 const SOURCE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs']);
+const HTTP_METHODS = new Set(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']);
 
 const toPosix = (value) => value.split(path.sep).join('/');
 
@@ -18,6 +19,87 @@ const countMatches = (content, pattern) => {
     total += 1;
   }
   return total;
+};
+
+const parseNamedImports = (content) => {
+  const bindings = new Map();
+  const importRegex = /import\s*\{([\s\S]*?)\}\s*from\s*['"]([^'"]+)['"]/g;
+
+  for (const match of content.matchAll(importRegex)) {
+    const source = match[2];
+    const specifiers = match[1].split(',');
+    for (const specifier of specifiers) {
+      const cleaned = specifier.trim().replace(/^type\s+/, '');
+      if (!cleaned) continue;
+      const [importedRaw, localRaw] = cleaned.split(/\s+as\s+/);
+      const imported = importedRaw?.trim();
+      const local = (localRaw ?? importedRaw)?.trim();
+      if (!imported || !local) continue;
+      bindings.set(local, { imported, source });
+    }
+  }
+
+  return bindings;
+};
+
+const parseNamespaceImports = (content) => {
+  const bindings = new Map();
+  const importRegex = /import\s+\*\s+as\s+([A-Za-z_$][\w$]*)\s+from\s+['"]([^'"]+)['"]/g;
+
+  for (const match of content.matchAll(importRegex)) {
+    const namespace = match[1];
+    const source = match[2];
+    if (!namespace || !source) continue;
+    bindings.set(namespace, source);
+  }
+
+  return bindings;
+};
+
+const isDelegatedImportSource = (source) =>
+  /^@\/features\/[^'"]+\/(?:server|api\/[^'"]+\/(?:handler|route))$/.test(source);
+
+const isDelegatedRoute = (content) => {
+  if (
+    /export\s*{\s*[^}]+\s*}\s*from\s*['"]@\/features\/[^'"]+\/(?:server|api\/[^'"]+\/(?:handler|route))['"]/.test(
+      content
+    )
+  ) {
+    return true;
+  }
+
+  const namedImports = parseNamedImports(content);
+  const namespaceImports = parseNamespaceImports(content);
+  const methodExportRegex =
+    /export const (GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)\s*=\s*([A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)?)\s*;/g;
+
+  for (const match of content.matchAll(methodExportRegex)) {
+    const method = match[1];
+    const assignedValue = match[2];
+    if (!HTTP_METHODS.has(method)) continue;
+
+    const namedBinding = namedImports.get(assignedValue);
+    if (namedBinding) {
+      if (namedBinding.imported === method) return true;
+      if (isDelegatedImportSource(namedBinding.source) && !/_handler$/i.test(namedBinding.imported)) {
+        return true;
+      }
+    }
+
+    const namespaceAssignment = assignedValue.match(
+      /^([A-Za-z_$][\w$]*)\.(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)$/
+    );
+    if (!namespaceAssignment) continue;
+
+    const namespace = namespaceAssignment[1];
+    const delegatedMethod = namespaceAssignment[2];
+    const namespaceSource = namespaceImports.get(namespace);
+    if (delegatedMethod === method && namespaceSource && isDelegatedImportSource(namespaceSource)) {
+      return true;
+    }
+  }
+
+  return false;
 };
 
 const walk = async (directory) => {
@@ -83,11 +165,7 @@ export const collectMetrics = async ({ root = process.cwd() } = {}) => {
     /\bapiHandlerWithParams\b|\bapiHandler\s*\(/.test(record.content)
   );
 
-  const delegatedServerRoutes = apiRouteRecords.filter((record) =>
-    /export\s*{\s*[^}]+\s*}\s*from\s*['"]@\/features\/[^'"]+\/(?:server|api\/[^'"]+\/(?:handler|route))['"]/.test(
-      record.content
-    )
-  );
+  const delegatedServerRoutes = apiRouteRecords.filter((record) => isDelegatedRoute(record.content));
 
   const forceDynamicRoutes = apiRouteRecords.filter((record) =>
     /export\s+const\s+dynamic\s*=\s*['"]force-dynamic['"]/.test(record.content)

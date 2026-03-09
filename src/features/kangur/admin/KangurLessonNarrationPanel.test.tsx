@@ -142,6 +142,10 @@ describe('KangurLessonNarrationPanel', () => {
         voice: string;
         forceRegenerate: boolean;
         script: { locale: string; segments: Array<{ text: string }> };
+        contextRegistry?: {
+          refs: Array<{ id: string; kind: string }>;
+          engineVersion: string;
+        };
       },
     ];
     expect(endpoint).toBe('/api/kangur/tts');

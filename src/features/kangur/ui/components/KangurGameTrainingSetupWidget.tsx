@@ -2,6 +2,7 @@
 
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
 import KangurPracticeAssignmentBanner from '@/features/kangur/ui/components/KangurPracticeAssignmentBanner';
+import { KangurTreningWordmark } from '@/features/kangur/ui/components/KangurTreningWordmark';
 import TrainingSetup from '@/features/kangur/ui/components/TrainingSetup';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 
@@ -16,13 +17,15 @@ export function KangurGameTrainingSetupWidget(): React.JSX.Element | null {
   return (
     <div className='w-full flex flex-col items-center gap-4'>
       <KangurPageIntroCard
-        accent='sky'
         className='max-w-md'
         description='Dobierz poziom, kategorie i liczbe pytan do jednej sesji.'
         headingSize='lg'
         onBack={handleHome}
         testId='kangur-game-training-top-section'
-        title='Trening mieszany'
+        title='Trening'
+        visualTitle={
+          <KangurTreningWordmark className='mx-auto' data-testid='kangur-training-heading-art' />
+        }
       />
       {activePracticeAssignment ? (
         <div className='flex w-full justify-center px-4'>

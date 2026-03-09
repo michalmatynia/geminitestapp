@@ -15,13 +15,13 @@ import { resolveKangurPageKey } from '@/features/kangur/config/routing';
 import { KangurCmsRuntimeScreen } from '@/features/kangur/cms-builder/KangurCmsRuntimeScreen';
 import { KangurAiTutorProvider } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { KangurAuthProvider, useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import { KangurLoginModalProvider } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import { KangurProgressSyncProvider } from '@/features/kangur/ui/context/KangurProgressSyncProvider';
 import { KangurScoreSyncProvider } from '@/features/kangur/ui/context/KangurScoreSyncProvider';
 import { KangurContextRegistryPageBoundary } from '@/features/kangur/ui/context/KangurContextRegistryPageBoundary';
 import {
   KangurRouteTransitionProvider,
-  useKangurRouteTransition,
 } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import {
@@ -35,7 +35,6 @@ import { cn } from '@/shared/utils';
 const AuthenticatedApp = (): JSX.Element | null => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useKangurAuth();
   const { pageKey, embedded, requestedPath } = useKangurRouting();
-  const { isRoutePending, pendingPageKey } = useKangurRouteTransition();
   const authErrorType = authError?.type;
   const prefersReducedMotion = useReducedMotion();
   const routeContentMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
@@ -74,22 +73,13 @@ const AuthenticatedApp = (): JSX.Element | null => {
     <>
       <KangurRouteAccessibilityAnnouncer />
       <KangurTopNavigationHost />
-      {isRoutePending ? (
-        <KangurPageTransitionSkeleton
-          pageKey={pendingPageKey ?? pageKey ?? KANGUR_MAIN_PAGE}
-          reason='navigation'
-        />
-      ) : null}
       <AnimatePresence mode='wait'>
         {routeContent ? (
           <motion.div
             key={routeTransitionKey}
             {...routeContentMotionProps}
-            aria-busy={isRoutePending}
-            className={cn(
-              embedded ? 'min-h-full' : 'min-h-screen',
-              isRoutePending && 'pointer-events-none select-none'
-            )}
+            aria-busy={false}
+            className={cn(embedded ? 'min-h-full' : 'min-h-screen')}
             data-route-transition-key={routeTransitionKey}
             data-testid='kangur-route-content'
           >
@@ -105,23 +95,25 @@ export function KangurFeatureApp(): JSX.Element {
   return (
     <KangurRouteTransitionProvider>
       <KangurTopNavigationProvider>
-        <KangurLoginModalProvider>
-          <KangurAuthProvider>
-            <KangurProgressSyncProvider>
-              <KangurScoreSyncProvider>
-                <KangurContextRegistryPageBoundary>
-                  <KangurAiTutorProvider>
-                    <KangurTutorAnchorProvider>
-                      <AuthenticatedApp />
-                      <KangurAiTutorWidget />
-                      <KangurLoginModal />
-                    </KangurTutorAnchorProvider>
-                  </KangurAiTutorProvider>
-                </KangurContextRegistryPageBoundary>
-              </KangurScoreSyncProvider>
-            </KangurProgressSyncProvider>
-          </KangurAuthProvider>
-        </KangurLoginModalProvider>
+        <KangurGuestPlayerProvider>
+          <KangurLoginModalProvider>
+            <KangurAuthProvider>
+              <KangurProgressSyncProvider>
+                <KangurScoreSyncProvider>
+                  <KangurContextRegistryPageBoundary>
+                    <KangurAiTutorProvider>
+                      <KangurTutorAnchorProvider>
+                        <AuthenticatedApp />
+                        <KangurAiTutorWidget />
+                        <KangurLoginModal />
+                      </KangurTutorAnchorProvider>
+                    </KangurAiTutorProvider>
+                  </KangurContextRegistryPageBoundary>
+                </KangurScoreSyncProvider>
+              </KangurProgressSyncProvider>
+            </KangurAuthProvider>
+          </KangurLoginModalProvider>
+        </KangurGuestPlayerProvider>
       </KangurTopNavigationProvider>
     </KangurRouteTransitionProvider>
   );

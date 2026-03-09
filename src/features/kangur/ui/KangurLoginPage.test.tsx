@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -132,7 +132,26 @@ describe('KangurLoginPage', () => {
                   'https://example.com/kangur/login?callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-1',
               },
               message:
-                'Konto rodzica zostalo utworzone. Wyslalismy email potwierdzajacy. Zalogujesz sie po weryfikacji emaila, a AI Tutor odblokuje sie po potwierdzeniu adresu.',
+                'Sprawdz email rodzica. Konto zostanie utworzone po potwierdzeniu adresu, a AI Tutor odblokuje sie po weryfikacji.',
+            }),
+            ok: true,
+            status: 200,
+          };
+        }
+
+        if (url === '/api/kangur/auth/parent-account/resend') {
+          return {
+            json: vi.fn().mockResolvedValue({
+              ok: true,
+              created: false,
+              emailVerified: false,
+              hasPassword: true,
+              debug: {
+                verificationUrl:
+                  'https://example.com/kangur/login?callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-2',
+              },
+              message:
+                'Wyslalismy nowy email potwierdzajacy. Konto rodzica uaktywni sie po weryfikacji adresu.',
             }),
             ok: true,
             status: 200,
@@ -147,7 +166,7 @@ describe('KangurLoginPage', () => {
               callbackUrl: '/kangur/tests?focus=division',
               emailVerified: true,
               message:
-                'Email zostal zweryfikowany. AI Tutor jest odblokowany. Mozesz zalogowac sie emailem i haslem.',
+                'Email zostal zweryfikowany. Konto rodzica jest gotowe, AI Tutor jest odblokowany i mozesz zalogowac sie emailem oraz haslem.',
             }),
             ok: true,
             status: 200,
@@ -198,16 +217,18 @@ describe('KangurLoginPage', () => {
     await expectNoAxeViolations(container);
   });
 
-  it('switches the parent form into explicit create-account mode with onboarding guidance', async () => {
+  it('switches the parent form into explicit create-account mode with a minimal create-account layout', async () => {
     const user = userEvent.setup();
 
     render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
     await user.click(screen.getByRole('button', { name: 'Tworze konto rodzica' }));
 
-    expect(screen.getByText('Jak zalozyc konto rodzica')).toBeVisible();
+    expect(screen.getByText('Podaj email rodzica i haslo. Wyslemy link potwierdzajacy.')).toBeVisible();
+    expect(screen.getByLabelText('Email rodzica')).toBeInTheDocument();
     expect(screen.getByLabelText('Ustaw haslo rodzica')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Utworz konto rodzica' })).toBeInTheDocument();
+    expect(screen.queryByText('Jak zalozyc konto rodzica')).not.toBeInTheDocument();
   });
 
   it('starts in create-account mode when the route requests it explicitly', () => {
@@ -219,7 +240,7 @@ describe('KangurLoginPage', () => {
 
     render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
-    expect(screen.getByText('Jak zalozyc konto rodzica')).toBeVisible();
+    expect(screen.getByText('Podaj email rodzica i haslo. Wyslemy link potwierdzajacy.')).toBeVisible();
     expect(screen.getByRole('button', { name: 'Utworz konto rodzica' })).toBeInTheDocument();
     expect(screen.getByText('Nowe konto rodzica')).toBeVisible();
   });
@@ -352,10 +373,12 @@ describe('KangurLoginPage', () => {
     const user = userEvent.setup();
     const fetchMock = vi.mocked(fetch);
 
-    render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
+    render(<KangurLoginPage defaultCallbackUrl='/kangur' parentAuthMode='create-account' />);
 
-    await user.click(screen.getByRole('button', { name: 'Tworze konto rodzica' }));
-    await user.type(screen.getByLabelText('Email rodzica lub nick ucznia'), 'parent@example.com');
+    expect(screen.getByText('Podaj email rodzica i haslo. Wyslemy link potwierdzajacy.')).toBeVisible();
+    fireEvent.change(screen.getByRole('textbox', { name: /email/i }), {
+      target: { value: 'parent@example.com' },
+    });
     await user.type(screen.getByLabelText('Ustaw haslo rodzica'), 'Strong123!');
     await user.click(screen.getByRole('button', { name: 'Utworz konto rodzica' }));
 
@@ -371,17 +394,85 @@ describe('KangurLoginPage', () => {
         method: 'POST',
       })
     );
-    expect(
-      await screen.findByText(
-        'Konto rodzica zostalo utworzone. Wyslalismy email potwierdzajacy. Zalogujesz sie po weryfikacji emaila, a AI Tutor odblokuje sie po potwierdzeniu adresu.'
-      )
-    ).toBeVisible();
+    expect(await screen.findByText('Sprawdz skrzynke: parent@example.com')).toBeVisible();
     expect(screen.getByRole('status')).toHaveAttribute('aria-live', 'polite');
-    expect(screen.getByText('Sprawdz skrzynke: parent@example.com')).toBeVisible();
+    expect(
+      screen.getByText('Kliknij link potwierdzajacy w emailu. Potem zalogujesz sie tym samym emailem i haslem.')
+    ).toBeVisible();
+    expect(
+      screen.queryByText(
+        'Sprawdz email rodzica. Konto zostanie utworzone po potwierdzeniu adresu, a AI Tutor odblokuje sie po weryfikacji.'
+      )
+    ).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Potwierdz email teraz' })).toHaveAttribute(
       'href',
       'https://example.com/kangur/login?callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-1'
     );
+    expect(screen.getByRole('link', { name: 'Potwierdz email teraz' })).toHaveClass(
+      'cursor-pointer'
+    );
+    expect(screen.getByRole('button', { name: 'Wyslij email ponownie' })).toBeVisible();
+  });
+
+  it('resends the parent verification email from the compact confirmation card', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.mocked(fetch);
+
+    render(<KangurLoginPage defaultCallbackUrl='/kangur' parentAuthMode='create-account' />);
+
+    fireEvent.change(screen.getByRole('textbox', { name: /email/i }), {
+      target: { value: 'parent@example.com' },
+    });
+    await user.type(screen.getByLabelText('Ustaw haslo rodzica'), 'Strong123!');
+    await user.click(screen.getByRole('button', { name: 'Utworz konto rodzica' }));
+    await screen.findByText('Sprawdz skrzynke: parent@example.com');
+
+    await user.click(screen.getByRole('button', { name: 'Wyslij email ponownie' }));
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/kangur/auth/parent-account/resend',
+      expect.objectContaining({
+        body: JSON.stringify({
+          email: 'parent@example.com',
+          callbackUrl: '/kangur/tests?focus=division',
+        }),
+        credentials: 'same-origin',
+        method: 'POST',
+      })
+    );
+    expect(
+      await screen.findByText(
+        'Wyslalismy nowy email potwierdzajacy. Konto rodzica uaktywni sie po weryfikacji adresu.'
+      )
+    ).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Potwierdz email teraz' })).toHaveAttribute(
+      'href',
+      'https://example.com/kangur/login?callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-2'
+    );
+  });
+
+  it('clears the compact create-account confirmation when switching back to sign-in mode', async () => {
+    const user = userEvent.setup();
+
+    render(<KangurLoginPage defaultCallbackUrl='/kangur' parentAuthMode='create-account' />);
+
+    fireEvent.change(screen.getByRole('textbox', { name: /email/i }), {
+      target: { value: 'parent@example.com' },
+    });
+    await user.type(screen.getByLabelText('Ustaw haslo rodzica'), 'Strong123!');
+    await user.click(screen.getByRole('button', { name: 'Utworz konto rodzica' }));
+
+    expect(await screen.findByText('Sprawdz skrzynke: parent@example.com')).toBeVisible();
+
+    await user.click(screen.getByRole('button', { name: 'Mam konto rodzica' }));
+
+    expect(screen.queryByText('Sprawdz skrzynke: parent@example.com')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        'Kliknij link potwierdzajacy w emailu. Potem zalogujesz sie tym samym emailem i haslem.'
+      )
+    ).not.toBeInTheDocument();
+    expect(screen.getByText('Logowanie rodzica')).toBeVisible();
   });
 
   it('blocks parent login until the email is verified', async () => {
@@ -444,7 +535,7 @@ describe('KangurLoginPage', () => {
     expect(await screen.findByDisplayValue('parent@example.com')).toBeVisible();
     expect(
       screen.getByText(
-        'Email zostal zweryfikowany. AI Tutor jest odblokowany. Mozesz zalogowac sie emailem i haslem.'
+        'Email zostal zweryfikowany. Konto rodzica jest gotowe, AI Tutor jest odblokowany i mozesz zalogowac sie emailem oraz haslem.'
       )
     ).toBeVisible();
     expect(routerPushMock).not.toHaveBeenCalled();

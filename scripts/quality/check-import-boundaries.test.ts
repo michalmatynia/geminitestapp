@@ -35,9 +35,9 @@ describe('analyzeImportBoundaries', () => {
       root,
       'src/features/orders/ui/OrderPanel.ts',
       [
-        "import { PrismaClient } from '@prisma/client';",
-        "import { state } from '@/features/products/internal/state';",
-        "import helper from '../../../../shared/lib/helper';",
+        'import { PrismaClient } from \'@prisma/client\';',
+        'import { state } from \'@/features/products/internal/state\';',
+        'import helper from \'../../../../shared/lib/helper\';',
         'void PrismaClient;',
         'void state;',
         'void helper;',
@@ -70,12 +70,12 @@ describe('analyzeImportBoundaries', () => {
     writeSource(
       root,
       'src/features/orders/index.ts',
-      "import '@/features/products/index';\nexport const orders = true;\n"
+      'import \'@/features/products/index\';\nexport const orders = true;\n'
     );
     writeSource(
       root,
       'src/features/products/index.ts',
-      "import '@/features/orders/index';\nexport const products = true;\n"
+      'import \'@/features/orders/index\';\nexport const products = true;\n'
     );
 
     const report = analyzeImportBoundaries({ root });

@@ -3,6 +3,7 @@
 import NextLink from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { MouseEvent } from 'react';
+import { useEffect } from 'react';
 
 import { useOptionalKangurRouteTransition } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 
@@ -44,8 +45,19 @@ export function KangurTransitionLink({
 }: KangurTransitionLinkProps): React.JSX.Element {
   const router = useRouter();
   const routeTransition = useOptionalKangurRouteTransition();
-  const shouldUseManagedScroll = typeof href === 'string' && href.startsWith('/') && target !== '_blank';
+  const managedLocalHref =
+    typeof href === 'string' && href.startsWith('/') && target !== '_blank' ? href : null;
+  const isManagedLocalHref = managedLocalHref !== null;
+  const shouldUseManagedScroll = isManagedLocalHref;
   const resolvedScroll = scroll ?? (shouldUseManagedScroll ? false : undefined);
+
+  useEffect(() => {
+    if (!managedLocalHref) {
+      return;
+    }
+
+    void router.prefetch(managedLocalHref);
+  }, [managedLocalHref, router]);
 
   return (
     <NextLink

@@ -1955,7 +1955,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     hasSelectedText: Boolean(activeSelectedText),
   });
   const avatarButtonClassName = cn(
-    'flex h-14 w-14 items-center justify-center rounded-full',
+    'flex h-14 w-14 cursor-pointer items-center justify-center rounded-full',
     'border-2 border-amber-900 bg-gradient-to-br from-amber-300 via-orange-400 to-orange-500',
     'shadow-[0_14px_28px_-16px_rgba(154,82,24,0.26)] hover:brightness-[1.03]',
     'focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2'
@@ -2529,7 +2529,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
                 animate={{ opacity: 1 }}
                 exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
                 transition={prefersReducedMotion ? reducedMotionTransitions.instant : { duration: 0.18 }}
-                className='fixed inset-0 z-[62] bg-slate-900/18'
+                className='fixed inset-0 z-[62] cursor-pointer bg-slate-900/18'
                 onClick={(): void => handleCloseChat('outside')}
               />
             ) : null}
@@ -2741,7 +2741,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
                   <button
                     type='button'
                     onClick={(): void => handleCloseChat('header')}
-                    className='text-white/80 hover:text-white transition-colors'
+                    className='cursor-pointer text-white/80 transition-colors hover:text-white'
                     aria-label='Zamknij'
                   >
                     <X className='h-4 w-4' />

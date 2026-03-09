@@ -13,6 +13,7 @@ export { sendAuthEmail, shouldExposeAuthEmailDebug } from '@/features/auth/servi
 export {
   consumeEmailVerificationChallenge,
   createEmailVerificationChallenge,
+  findActiveEmailVerificationChallengeByEmail,
 } from '@/features/auth/services/auth-login-challenge';
 export {
   createAuthUserWithEmail,

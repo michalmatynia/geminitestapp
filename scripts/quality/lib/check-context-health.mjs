@@ -34,24 +34,6 @@ const listContextFiles = (absoluteDir, acc = []) => {
   return acc;
 };
 
-const listAllTsxFiles = (absoluteDir, acc = []) => {
-  if (!fs.existsSync(absoluteDir)) return acc;
-  for (const entry of fs.readdirSync(absoluteDir, { withFileTypes: true })) {
-    if (entry.name === 'node_modules' || entry.name === '.next') continue;
-    const absolutePath = path.join(absoluteDir, entry.name);
-    if (entry.isDirectory()) {
-      listAllTsxFiles(absolutePath, acc);
-      continue;
-    }
-    if (!entry.isFile()) continue;
-    if (/\.test\.(ts|tsx)$/.test(entry.name)) continue;
-    if (entry.name.endsWith('.ts') || entry.name.endsWith('.tsx')) {
-      acc.push(absolutePath);
-    }
-  }
-  return acc;
-};
-
 const countLines = (text) => text.split('\n').length;
 
 const createSourceFile = (filePath, text) =>

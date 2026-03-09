@@ -38,8 +38,8 @@ export async function postKangurParentAccountCreateHandler(
     emailVerified: result.emailVerified,
     hasPassword: result.hasPassword,
     message: result.created
-      ? 'Konto rodzica zostalo utworzone. Wyslalismy email potwierdzajacy. Zalogujesz sie po weryfikacji emaila, a AI Tutor odblokuje sie po potwierdzeniu adresu.'
-      : 'To konto rodzica czeka na potwierdzenie emaila. Wyslalismy nowy email potwierdzajacy. Zalogujesz sie po weryfikacji emaila.',
+      ? 'Sprawdz email rodzica. Konto zostanie utworzone po potwierdzeniu adresu, a AI Tutor odblokuje sie po weryfikacji.'
+      : 'To konto rodzica czeka na potwierdzenie emaila. Wyslalismy nowy email potwierdzajacy. Konto uaktywni sie po weryfikacji adresu.',
     debug: buildKangurParentAccountCreateDebugPayload(result),
   });
 }

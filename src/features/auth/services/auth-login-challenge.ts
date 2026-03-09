@@ -20,8 +20,23 @@ type ChallengeRecord = {
   mfaRequired: boolean;
   purpose: AuthChallengePurpose;
   callbackUrl: string | null;
+  pendingRegistration: PendingRegistrationRecord | null;
   expiresAt: Date;
   createdAt: Date;
+};
+
+type PendingRegistrationRecord = {
+  source: 'kangur_parent';
+  name: string | null;
+  passwordHash: string;
+};
+
+export type AuthEmailVerificationChallengeRecord = {
+  userId: string;
+  email: string;
+  callbackUrl: string | null;
+  pendingRegistration: PendingRegistrationRecord | null;
+  expiresAt: Date;
 };
 
 const CHALLENGES_COLLECTION = 'auth_login_challenges';
@@ -59,6 +74,27 @@ const normalizeCallbackUrl = (value: unknown): string | null => {
   return trimmed.length > 0 ? trimmed : null;
 };
 
+const normalizePendingRegistration = (value: unknown): PendingRegistrationRecord | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+  if (record['source'] !== 'kangur_parent') {
+    return null;
+  }
+
+  if (typeof record['passwordHash'] !== 'string' || record['passwordHash'].trim().length === 0) {
+    return null;
+  }
+
+  return {
+    source: 'kangur_parent',
+    name: normalizeCallbackUrl(record['name']),
+    passwordHash: record['passwordHash'].trim(),
+  };
+};
+
 const parseChallengeRecord = (value: unknown): ChallengeRecord | null => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   const record = value as Record<string, unknown>;
@@ -82,6 +118,7 @@ const parseChallengeRecord = (value: unknown): ChallengeRecord | null => {
     mfaRequired: record['mfaRequired'],
     purpose: isAuthChallengePurpose(record['purpose']) ? record['purpose'] : 'credentials',
     callbackUrl: normalizeCallbackUrl(record['callbackUrl']),
+    pendingRegistration: normalizePendingRegistration(record['pendingRegistration']),
     expiresAt,
     createdAt,
   };
@@ -131,6 +168,24 @@ const setMemoryChallenge = (record: ChallengeRecord): void => {
 };
 const deleteMemoryChallenge = (id: string): boolean => memoryChallenges.delete(id);
 
+const listMongoChallenges = async (): Promise<ChallengeRecord[]> => {
+  if (!process.env['MONGODB_URI']) return [];
+  const mongo = await getMongoDb();
+  const rows = await mongo.collection<ChallengeRecord>(CHALLENGES_COLLECTION).find({}).toArray();
+  return rows
+    .map((row) => parseChallengeRecord(row))
+    .filter((row): row is ChallengeRecord => row !== null);
+};
+
+const listPrismaChallenges = async (): Promise<ChallengeRecord[]> => {
+  const rows = await prisma.authLoginChallenge.findMany();
+  return rows
+    .map((row) => parseChallengeRecord(row.data))
+    .filter((record): record is ChallengeRecord => record !== null);
+};
+
+const listMemoryChallenges = (): ChallengeRecord[] => [...memoryChallenges.values()];
+
 const getChallenge = async (id: string): Promise<ChallengeRecord | null> => {
   const provider = requireAuthProvider(await getAuthDataProvider());
   if (provider === 'prisma') {
@@ -155,6 +210,7 @@ const setChallenge = async (record: ChallengeRecord): Promise<void> => {
         const collection = mongo.collection<ChallengeRecord>(CHALLENGES_COLLECTION);
         await collection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
         await collection.createIndex({ userId: 1 });
+        await collection.createIndex({ email: 1, purpose: 1 });
       })();
     }
     await challengeIndexesReady;
@@ -177,6 +233,61 @@ const deleteChallenge = async (id: string): Promise<void> => {
   deleteMemoryChallenge(id);
 };
 
+const listChallenges = async (): Promise<ChallengeRecord[]> => {
+  const provider = requireAuthProvider(await getAuthDataProvider());
+  if (provider === 'prisma') {
+    return listPrismaChallenges();
+  }
+  if (process.env['MONGODB_URI']) {
+    return listMongoChallenges();
+  }
+  return listMemoryChallenges();
+};
+
+const deleteChallenges = async (ids: string[]): Promise<void> => {
+  if (ids.length === 0) {
+    return;
+  }
+
+  const provider = requireAuthProvider(await getAuthDataProvider());
+  if (provider === 'prisma') {
+    await prisma.authLoginChallenge.deleteMany({
+      where: {
+        id: {
+          in: ids,
+        },
+      },
+    });
+    return;
+  }
+
+  if (process.env['MONGODB_URI']) {
+    const mongo = await getMongoDb();
+    await mongo.collection<ChallengeRecord>(CHALLENGES_COLLECTION).deleteMany({
+      _id: {
+        $in: ids,
+      },
+    });
+    return;
+  }
+
+  ids.forEach((id) => {
+    deleteMemoryChallenge(id);
+  });
+};
+
+const replaceEmailVerificationChallenges = async (email: string): Promise<void> => {
+  const normalizedEmail = email.toLowerCase();
+  const existing = (await listChallenges()).filter(
+    (record) => record.purpose === 'email_verification' && record.email === normalizedEmail
+  );
+  if (existing.length === 0) {
+    return;
+  }
+
+  await deleteChallenges(existing.map((record) => record._id));
+};
+
 export const createLoginChallenge = async (input: {
   userId: string;
   email: string;
@@ -195,6 +306,7 @@ export const createLoginChallenge = async (input: {
     mfaRequired: input.mfaRequired,
     purpose: input.purpose ?? 'credentials',
     callbackUrl: normalizeCallbackUrl(input.callbackUrl),
+    pendingRegistration: null,
     expiresAt: nowPlusMinutes(input.ttlMinutes ?? DEFAULT_LOGIN_CHALLENGE_TTL_MINUTES),
     createdAt: new Date(),
   };
@@ -210,6 +322,7 @@ const createStoredChallenge = async (input: {
   callbackUrl?: string | null;
   ip?: string | null;
   mfaRequired?: boolean;
+  pendingRegistration?: PendingRegistrationRecord | null;
 }): Promise<{ id: string; expiresAt: Date }> => {
   const record: ChallengeRecord = {
     _id: crypto.randomBytes(32).toString('hex'),
@@ -219,6 +332,7 @@ const createStoredChallenge = async (input: {
     mfaRequired: input.mfaRequired ?? false,
     purpose: input.purpose,
     callbackUrl: normalizeCallbackUrl(input.callbackUrl),
+    pendingRegistration: input.pendingRegistration ?? null,
     expiresAt: nowPlusMinutes(input.ttlMinutes),
     createdAt: new Date(),
   };
@@ -286,17 +400,35 @@ export const createMagicEmailLinkChallenge = async (input: {
   });
 
 export const createEmailVerificationChallenge = async (input: {
-  userId: string;
+  userId?: string | null;
   email: string;
   callbackUrl?: string | null;
+  pendingRegistration?: {
+    source: 'kangur_parent';
+    name?: string | null;
+    passwordHash: string;
+  } | null;
 }): Promise<{ id: string; expiresAt: Date }> =>
-  createStoredChallenge({
-    userId: input.userId,
-    email: input.email,
-    purpose: 'email_verification',
-    ttlMinutes: EMAIL_VERIFICATION_TTL_MINUTES,
-    callbackUrl: input.callbackUrl,
-  });
+  (async () => {
+    const normalizedEmail = input.email.toLowerCase();
+    await replaceEmailVerificationChallenges(normalizedEmail);
+
+    return createStoredChallenge({
+      userId:
+        input.userId?.trim() || `pending:kangur_parent:${encodeURIComponent(normalizedEmail)}`,
+      email: normalizedEmail,
+      purpose: 'email_verification',
+      ttlMinutes: EMAIL_VERIFICATION_TTL_MINUTES,
+      callbackUrl: input.callbackUrl,
+      pendingRegistration: input.pendingRegistration
+        ? {
+            source: 'kangur_parent',
+            name: normalizeCallbackUrl(input.pendingRegistration.name),
+            passwordHash: input.pendingRegistration.passwordHash.trim(),
+          }
+        : null,
+    });
+  })();
 
 export const consumeMagicEmailLinkChallenge = async (
   id: string
@@ -313,3 +445,34 @@ export const consumeEmailVerificationChallenge = async (
     id,
     allowedPurposes: ['email_verification'],
   });
+
+export const findActiveEmailVerificationChallengeByEmail = async (
+  email: string
+): Promise<AuthEmailVerificationChallengeRecord | null> => {
+  const normalizedEmail = email.toLowerCase().trim();
+  if (!normalizedEmail) {
+    return null;
+  }
+
+  const now = Date.now();
+  const match = (await listChallenges())
+    .filter(
+      (record) =>
+        record.purpose === 'email_verification' &&
+        record.email === normalizedEmail &&
+        record.expiresAt.getTime() >= now
+    )
+    .sort((left, right) => right.createdAt.getTime() - left.createdAt.getTime())[0];
+
+  if (!match) {
+    return null;
+  }
+
+  return {
+    userId: match.userId,
+    email: match.email,
+    callbackUrl: match.callbackUrl,
+    pendingRegistration: match.pendingRegistration,
+    expiresAt: match.expiresAt,
+  };
+};

@@ -161,7 +161,15 @@ vi.mock('@/features/kangur/ui/components/KangurLessonNarrator', () => ({
 
 import { KANGUR_LESSON_DOCUMENTS_SETTING_KEY } from '@/features/kangur/lesson-documents';
 import { KANGUR_HELP_SETTINGS_KEY, KANGUR_LESSONS_SETTING_KEY } from '@/features/kangur/settings';
+import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import Lessons from '@/features/kangur/ui/pages/Lessons';
+
+const renderLessonsPage = () =>
+  render(
+    <KangurGuestPlayerProvider>
+      <Lessons />
+    </KangurGuestPlayerProvider>
+  );
 
 const createLesson = (overrides: Partial<Record<string, unknown>> = {}) => ({
   id: 'kangur-lesson-clock',
@@ -243,7 +251,7 @@ describe('Lessons', () => {
       },
     });
 
-    render(<Lessons />);
+    renderLessonsPage();
 
     fireEvent.click(screen.getByRole('button', { name: /shapes with svg/i }));
 
@@ -275,7 +283,7 @@ describe('Lessons', () => {
       },
     });
 
-    render(<Lessons />);
+    renderLessonsPage();
 
     await waitFor(() =>
       expect(screen.getByRole('link', { name: 'Strona glowna' })).toHaveAttribute(
@@ -306,7 +314,7 @@ describe('Lessons', () => {
     });
 
     try {
-      render(<Lessons />);
+      renderLessonsPage();
 
       fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
 
@@ -345,7 +353,7 @@ describe('Lessons', () => {
       },
     });
 
-    render(<Lessons />);
+    renderLessonsPage();
 
     fireEvent.click(screen.getByRole('button', { name: /classic clock/i }));
 
@@ -371,7 +379,7 @@ describe('Lessons', () => {
       lessons: [createLesson()],
     });
 
-    render(<Lessons />);
+    renderLessonsPage();
 
     fireEvent.click(screen.getByRole('button', { name: /nauka zegara/i }));
     fireEvent.click(screen.getByRole('button', { name: 'Wróć do listy lekcji' }));
@@ -395,12 +403,8 @@ describe('Lessons', () => {
       ],
     });
 
-    render(<Lessons />);
+    renderLessonsPage();
 
-    expect(screen.getByTestId('lessons-list-transition')).toHaveAttribute(
-      'data-motion-transition',
-      JSON.stringify({ duration: 0.32, ease: [0.22, 1, 0.36, 1] })
-    );
     expect(screen.getByTestId('lesson-library-motion-kangur-lesson-clock')).toHaveAttribute(
       'data-motion-transition',
       JSON.stringify({ duration: 0.26, ease: [0.22, 1, 0.36, 1], delay: 0 })
@@ -411,11 +415,6 @@ describe('Lessons', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: /nauka zegara/i }));
-
-    expect(screen.getByTestId('lessons-active-transition')).toHaveAttribute(
-      'data-motion-transition',
-      JSON.stringify({ duration: 0.32, ease: [0.22, 1, 0.36, 1] })
-    );
   });
 
   it('shows the empty-document warning when a document-mode lesson has no saved content', () => {
@@ -443,7 +442,7 @@ describe('Lessons', () => {
       },
     });
 
-    render(<Lessons />);
+    renderLessonsPage();
 
     fireEvent.click(screen.getByRole('button', { name: /patterns draft/i }));
 
@@ -543,7 +542,7 @@ describe('Lessons', () => {
       },
     });
 
-    render(<Lessons />);
+    renderLessonsPage();
 
     expect(screen.getByRole('button', { name: /nauka zegara/i })).toHaveClass('soft-card');
     expect(screen.getByTestId('lesson-library-icon-clock-doc')).toHaveClass(
@@ -621,7 +620,7 @@ describe('Lessons', () => {
       ],
     });
 
-    render(<Lessons />);
+    renderLessonsPage();
 
     fireEvent.click(screen.getByRole('button', { name: /dodawanie/i }));
 
@@ -671,7 +670,7 @@ describe('Lessons', () => {
       lessons: [createLesson()],
     });
 
-    render(<Lessons />);
+    renderLessonsPage();
 
     expect(screen.queryByText('Priorytet rodzica')).toBeNull();
     expect(screen.queryByText('Ukonczone dla rodzica')).toBeNull();
@@ -683,7 +682,7 @@ describe('Lessons', () => {
       lessons: [createLesson({ enabled: false })],
     });
 
-    render(<Lessons />);
+    renderLessonsPage();
 
     const emptyTitle = screen.getByText(/Brak aktywnych lekcji/i);
     expect(emptyTitle).toBeInTheDocument();

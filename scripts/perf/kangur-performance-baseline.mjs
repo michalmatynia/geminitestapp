@@ -15,7 +15,7 @@ import { writeMetricsMarkdownFile } from '../docs/metrics-frontmatter.mjs';
 const args = new Set(process.argv.slice(2));
 const strictMode = args.has('--strict');
 const includeE2E = args.has('--include-e2e');
-const shouldWriteHistory = !args.has('--no-history');
+const shouldWriteHistory = args.has('--write-history') && !args.has('--no-history');
 const allowInfraE2EFail = args.has('--allow-infra-e2e-fail');
 
 const root = process.cwd();

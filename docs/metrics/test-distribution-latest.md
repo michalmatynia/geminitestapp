@@ -8,7 +8,7 @@ canonical: true
 ---
 # Test Distribution Check
 
-Generated at: 2026-03-09T07:50:52.211Z
+Generated at: 2026-03-09T09:07:30.799Z
 
 ## Summary
 
@@ -16,7 +16,7 @@ Generated at: 2026-03-09T07:50:52.211Z
 - Total features: 28
 - Features with tests: 28
 - Features without tests: 0
-- Total test files: 1195
+- Total test files: 1204
 - .only() occurrences: 0
 - .skip() occurrences: 19
 
@@ -25,14 +25,14 @@ Generated at: 2026-03-09T07:50:52.211Z
 | Feature | Test Files |
 | --- | ---: |
 | ai | 209 |
-| kangur | 175 |
+| kangur | 178 |
 | case-resolver | 78 |
-| products | 71 |
+| products | 72 |
 | cms | 60 |
 | prompt-exploder | 47 |
 | integrations | 34 |
 | foldertree | 27 |
-| observability | 19 |
+| observability | 22 |
 | notesapp | 15 |
 | admin | 14 |
 | database | 12 |

@@ -4,6 +4,8 @@ const {
   createAuthUserWithEmailMock,
   findAuthUserByEmailMock,
   findAuthUserByIdMock,
+  findActiveEmailVerificationChallengeByEmailMock,
+  ensureDefaultKangurLearnerForOwnerMock,
   getAuthSecurityProfileMock,
   sendAuthEmailMock,
   shouldExposeAuthEmailDebugMock,
@@ -17,6 +19,8 @@ const {
   createAuthUserWithEmailMock: vi.fn(),
   findAuthUserByEmailMock: vi.fn(),
   findAuthUserByIdMock: vi.fn(),
+  findActiveEmailVerificationChallengeByEmailMock: vi.fn(),
+  ensureDefaultKangurLearnerForOwnerMock: vi.fn(),
   getAuthSecurityProfileMock: vi.fn(),
   sendAuthEmailMock: vi.fn(),
   shouldExposeAuthEmailDebugMock: vi.fn(),
@@ -40,14 +44,20 @@ vi.mock('@/server/auth', () => ({
   consumeEmailVerificationChallenge: consumeEmailVerificationChallengeMock,
   createEmailVerificationChallenge: createEmailVerificationChallengeMock,
   createAuthUserWithEmail: createAuthUserWithEmailMock,
+  findActiveEmailVerificationChallengeByEmail: findActiveEmailVerificationChallengeByEmailMock,
   markAuthUserEmailVerified: markAuthUserEmailVerifiedMock,
   setAuthUserPassword: setAuthUserPasswordMock,
   validatePasswordStrength: validatePasswordStrengthMock,
 }));
 
+vi.mock('@/features/kangur/services/kangur-learner-repository', () => ({
+  ensureDefaultKangurLearnerForOwner: ensureDefaultKangurLearnerForOwnerMock,
+}));
+
 import {
   buildKangurParentAccountCreateDebugPayload,
   createKangurParentAccount,
+  resendKangurParentVerificationEmail,
   setKangurParentPassword,
   verifyKangurParentEmail,
 } from './parent-email-auth';
@@ -74,15 +84,8 @@ describe('parent email auth service', () => {
     });
   });
 
-  it('creates a new unverified parent account with a password and verification email', async () => {
+  it('stages a new parent registration until the verification link is used', async () => {
     findAuthUserByEmailMock.mockResolvedValue(null);
-    createAuthUserWithEmailMock.mockResolvedValue({
-      id: 'parent-1',
-      email: 'parent@example.com',
-      name: 'parent',
-      passwordHash: 'stored-password-hash',
-      emailVerified: null,
-    });
     createEmailVerificationChallengeMock.mockResolvedValue({
       id: 'verify-link-1',
       expiresAt: new Date('2026-03-15T21:00:00.000Z'),
@@ -102,18 +105,19 @@ describe('parent email auth service', () => {
     });
 
     expect(findAuthUserByEmailMock).toHaveBeenCalledWith('parent@example.com');
-    expect(createAuthUserWithEmailMock).toHaveBeenCalledWith({
-      email: 'parent@example.com',
-      name: 'parent',
-      passwordHash: expect.any(String),
-      emailVerified: null,
-    });
-    expect(createAuthUserWithEmailMock.mock.calls[0]?.[0]?.passwordHash).not.toBe('Strong123!');
+    expect(createAuthUserWithEmailMock).not.toHaveBeenCalled();
     expect(createEmailVerificationChallengeMock).toHaveBeenCalledWith({
-      userId: 'parent-1',
       email: 'parent@example.com',
       callbackUrl: '/kangur/tests?focus=division',
+      pendingRegistration: {
+        source: 'kangur_parent',
+        name: 'parent',
+        passwordHash: expect.any(String),
+      },
     });
+    expect(
+      createEmailVerificationChallengeMock.mock.calls[0]?.[0]?.pendingRegistration?.passwordHash
+    ).not.toBe('Strong123!');
     expect(sendAuthEmailMock).toHaveBeenCalledWith(
       expect.objectContaining({
         to: 'parent@example.com',
@@ -165,16 +169,35 @@ describe('parent email auth service', () => {
     expect(setAuthUserPasswordMock).not.toHaveBeenCalled();
   });
 
-  it('marks a parent email as verified from the verification token', async () => {
+  it('creates the parent account from the verification token payload', async () => {
     consumeEmailVerificationChallengeMock.mockResolvedValue({
-      userId: 'parent-1',
+      userId: 'pending:kangur_parent:parent%40example.com',
       email: 'parent@example.com',
       callbackUrl: '/kangur/lessons',
+      pendingRegistration: {
+        source: 'kangur_parent',
+        name: 'Parent',
+        passwordHash: 'hashed-password',
+      },
     });
-    markAuthUserEmailVerifiedMock.mockResolvedValue({
+    findAuthUserByEmailMock.mockResolvedValue(null);
+    createAuthUserWithEmailMock.mockResolvedValue({
       id: 'parent-1',
       email: 'parent@example.com',
+      name: 'Parent',
+      passwordHash: 'hashed-password',
       emailVerified: new Date('2026-03-08T21:10:00.000Z'),
+    });
+    ensureDefaultKangurLearnerForOwnerMock.mockResolvedValue({
+      id: 'learner-1',
+      ownerUserId: 'parent-1',
+      displayName: 'Parent',
+      loginName: 'parent',
+      status: 'active',
+      legacyUserKey: 'parent@example.com',
+      aiTutor: undefined,
+      createdAt: '2026-03-08T21:10:00.000Z',
+      updatedAt: '2026-03-08T21:10:00.000Z',
     });
 
     await expect(verifyKangurParentEmail('verify-link-1')).resolves.toEqual({
@@ -182,7 +205,133 @@ describe('parent email auth service', () => {
       callbackUrl: '/kangur/lessons',
       emailVerified: true,
     });
+    expect(createAuthUserWithEmailMock).toHaveBeenCalledWith({
+      email: 'parent@example.com',
+      name: 'Parent',
+      passwordHash: 'hashed-password',
+      emailVerified: expect.any(Date),
+    });
+    expect(markAuthUserEmailVerifiedMock).not.toHaveBeenCalled();
+    expect(ensureDefaultKangurLearnerForOwnerMock).toHaveBeenCalledWith({
+      ownerUserId: 'parent-1',
+      displayName: 'Parent',
+      preferredLoginName: 'parent',
+      legacyUserKey: 'parent@example.com',
+    });
+  });
+
+  it('verifies an existing legacy unverified parent account', async () => {
+    consumeEmailVerificationChallengeMock.mockResolvedValue({
+      userId: 'parent-1',
+      email: 'parent@example.com',
+      callbackUrl: '/kangur/lessons',
+      pendingRegistration: null,
+    });
+    markAuthUserEmailVerifiedMock.mockResolvedValue({
+      id: 'parent-1',
+      email: 'parent@example.com',
+      name: 'Parent',
+      passwordHash: 'stored-password-hash',
+      emailVerified: new Date('2026-03-08T21:10:00.000Z'),
+    });
+    ensureDefaultKangurLearnerForOwnerMock.mockResolvedValue({
+      id: 'learner-1',
+      ownerUserId: 'parent-1',
+      displayName: 'Parent',
+      loginName: 'parent',
+      status: 'active',
+      legacyUserKey: 'parent@example.com',
+      aiTutor: undefined,
+      createdAt: '2026-03-08T21:10:00.000Z',
+      updatedAt: '2026-03-08T21:10:00.000Z',
+    });
+
+    await expect(verifyKangurParentEmail('verify-link-legacy')).resolves.toEqual({
+      email: 'parent@example.com',
+      callbackUrl: '/kangur/lessons',
+      emailVerified: true,
+    });
+
     expect(markAuthUserEmailVerifiedMock).toHaveBeenCalledWith('parent-1');
+    expect(createAuthUserWithEmailMock).not.toHaveBeenCalled();
+  });
+
+  it('resends a verification email for a staged parent registration', async () => {
+    findAuthUserByEmailMock.mockResolvedValue(null);
+    findActiveEmailVerificationChallengeByEmailMock.mockResolvedValue({
+      userId: 'pending:kangur_parent:parent%40example.com',
+      email: 'parent@example.com',
+      callbackUrl: '/kangur/tests',
+      pendingRegistration: {
+        source: 'kangur_parent',
+        name: 'Parent',
+        passwordHash: 'hashed-password',
+      },
+      expiresAt: new Date('2026-03-15T21:00:00.000Z'),
+    });
+    createEmailVerificationChallengeMock.mockResolvedValue({
+      id: 'verify-link-resend-1',
+      expiresAt: new Date('2026-03-15T21:00:00.000Z'),
+    });
+
+    await expect(
+      resendKangurParentVerificationEmail({
+        email: 'parent@example.com',
+        callbackUrl: '/kangur/tests?focus=division',
+        request: new Request('https://example.com/api/kangur/auth/parent-account/resend'),
+      })
+    ).resolves.toEqual({
+      email: 'parent@example.com',
+      created: false,
+      emailVerified: false,
+      hasPassword: true,
+      verificationUrl:
+        'http://localhost:3000/kangur/login?callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-link-resend-1',
+    });
+
+    expect(createEmailVerificationChallengeMock).toHaveBeenCalledWith({
+      email: 'parent@example.com',
+      callbackUrl: '/kangur/tests?focus=division',
+      pendingRegistration: {
+        source: 'kangur_parent',
+        name: 'Parent',
+        passwordHash: 'hashed-password',
+      },
+    });
+  });
+
+  it('resends a verification email for an existing unverified parent account', async () => {
+    findAuthUserByEmailMock.mockResolvedValue({
+      id: 'parent-1',
+      email: 'parent@example.com',
+      name: 'Parent',
+      passwordHash: 'stored-password-hash',
+      emailVerified: null,
+    });
+    createEmailVerificationChallengeMock.mockResolvedValue({
+      id: 'verify-link-resend-2',
+      expiresAt: new Date('2026-03-15T21:00:00.000Z'),
+    });
+
+    await expect(
+      resendKangurParentVerificationEmail({
+        email: 'parent@example.com',
+        callbackUrl: '/kangur/tests?focus=division',
+      })
+    ).resolves.toEqual({
+      email: 'parent@example.com',
+      created: false,
+      emailVerified: false,
+      hasPassword: true,
+      verificationUrl:
+        'http://localhost:3000/kangur/login?callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-link-resend-2',
+    });
+
+    expect(createEmailVerificationChallengeMock).toHaveBeenCalledWith({
+      userId: 'parent-1',
+      email: 'parent@example.com',
+      callbackUrl: '/kangur/tests?focus=division',
+    });
   });
 
   it('rejects parent account creation when the email already belongs to a verified account', async () => {

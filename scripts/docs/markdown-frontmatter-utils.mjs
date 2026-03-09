@@ -30,7 +30,7 @@ export function getFrontmatterField(frontmatter, field) {
 
   const rawValue = match[1].trim();
   if (
-    (rawValue.startsWith("'") && rawValue.endsWith("'")) ||
+    (rawValue.startsWith('\'') && rawValue.endsWith('\'')) ||
     (rawValue.startsWith('"') && rawValue.endsWith('"'))
   ) {
     return rawValue.slice(1, -1);

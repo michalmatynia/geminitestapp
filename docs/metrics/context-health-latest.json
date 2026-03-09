@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-03-09T07:50:51.621Z",
+  "generatedAt": "2026-03-09T09:07:30.242Z",
   "status": "warn",
   "summary": {
-    "total": 3,
+    "total": 4,
     "errorCount": 0,
-    "warningCount": 1,
+    "warningCount": 2,
     "infoCount": 2,
     "status": "warn",
-    "contextFileCount": 239
+    "contextFileCount": 240
   },
   "scope": {
     "sourceDirs": [
@@ -23,6 +23,16 @@
       "ruleId": "context-generic-error",
       "message": "Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking.",
       "file": "src/features/ai/ai-context-registry/context/page-context.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 529 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/products/context/ProductStudioContext.tsx",
       "line": null,
       "column": null,
       "snippet": null,
@@ -57,11 +67,17 @@
       "infoCount": 0
     },
     {
+      "ruleId": "context-oversized",
+      "errorCount": 0,
+      "warningCount": 1,
+      "infoCount": 0
+    },
+    {
       "ruleId": "context-missing-split",
       "errorCount": 0,
       "warningCount": 0,
       "infoCount": 2
     }
   ],
-  "durationMs": 209
+  "durationMs": 216
 }

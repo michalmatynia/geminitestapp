@@ -19,7 +19,7 @@ import { writeMetricsMarkdownFile } from '../docs/metrics-frontmatter.mjs';
 const args = new Set(process.argv.slice(2));
 const strictMode = args.has('--strict');
 const failOnWarningBudgetExceed = args.has('--fail-on-warning-budget-exceed');
-const shouldWriteHistory = !args.has('--ci') && !args.has('--no-history');
+const shouldWriteHistory = args.has('--write-history') && !args.has('--ci') && !args.has('--no-history');
 const warningBudgetArg = [...args].find((arg) => arg.startsWith('--warning-budget='));
 const warningBudget = Number.parseInt(warningBudgetArg?.split('=')[1] ?? '10', 10);
 

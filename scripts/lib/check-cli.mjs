@@ -2,12 +2,25 @@ import process from 'node:process';
 
 import { buildScanOutput } from '../architecture/lib/scan-output.mjs';
 
+/**
+ * @typedef {Object} SummaryJsonOptions
+ * @property {string} scannerName
+ * @property {string} [scannerVersion]
+ * @property {string} generatedAt
+ * @property {string} [status]
+ * @property {Record<string, unknown>} summary
+ * @property {Record<string, unknown> | null} [details]
+ * @property {Record<string, unknown> | null} [paths]
+ * @property {Record<string, unknown> | null} [filters]
+ * @property {string[]} [notes]
+ */
+
 export const parseCommonCheckArgs = (argv = process.argv.slice(2)) => {
   const args = new Set(argv);
   return {
     strictMode: args.has('--strict'),
     failOnWarnings: args.has('--fail-on-warnings'),
-    shouldWriteHistory: !args.has('--ci') && !args.has('--no-history'),
+    shouldWriteHistory: args.has('--write-history') && !args.has('--ci') && !args.has('--no-history'),
     noWrite: args.has('--no-write'),
     summaryJson: args.has('--summary-json'),
   };
@@ -23,6 +36,9 @@ export const buildStaticCheckFilters = ({
   noWrite: true,
 });
 
+/**
+ * @param {SummaryJsonOptions} options
+ */
 export const writeSummaryJson = ({
   scannerName,
   scannerVersion = '1.0.0',

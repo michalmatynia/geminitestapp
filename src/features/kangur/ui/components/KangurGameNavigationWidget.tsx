@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
+import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 
 export function KangurGameNavigationWidget(): React.JSX.Element {
@@ -11,34 +12,33 @@ export function KangurGameNavigationWidget(): React.JSX.Element {
     handleHome,
     logout,
     navigateToLogin,
-    playerName,
     screen,
-    setPlayerName,
     user,
   } = useKangurGameRuntime();
+  const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
   const navigation = useMemo(
     () => ({
       basePath,
       canManageLearners: Boolean(user?.canManageLearners),
       contentClassName: 'justify-center',
       currentPage: 'Game' as const,
-      guestPlayerName: user ? undefined : playerName,
+      guestPlayerName: user ? undefined : guestPlayerName,
       homeActive: screen === 'home',
       isAuthenticated: Boolean(user),
       onHomeClick: handleHome,
       onCreateAccount: () => navigateToLogin({ authMode: 'create-account' }),
-      onGuestPlayerNameChange: user ? undefined : setPlayerName,
+      onGuestPlayerNameChange: user ? undefined : setGuestPlayerName,
       onLogin: navigateToLogin,
       onLogout: () => logout(false),
     }),
     [
       basePath,
+      guestPlayerName,
       handleHome,
       logout,
       navigateToLogin,
-      playerName,
       screen,
-      setPlayerName,
+      setGuestPlayerName,
       user,
     ]
   );

@@ -2,6 +2,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 
+import {
+  buildStaticCheckFilters,
+  parseCommonCheckArgs,
+  writeSummaryJson,
+} from '../lib/check-cli.mjs';
+
 const ROOT = process.cwd();
 const SRC_DIR = path.join(ROOT, 'src');
 const ROOT_TESTS_DIR = path.join(ROOT, '__tests__');
@@ -44,7 +50,7 @@ const FORBIDDEN_COMPAT_WRAPPER_RUNTIME_FILES = [
 ];
 const FORBIDDEN_RUNTIME_GUARD_TOKENS = [
   {
-    token: "LEGACY_PRODUCTS_PREFIX = '/api/products'",
+    token: 'LEGACY_PRODUCTS_PREFIX = \'/api/products\'',
     reason: 'products legacy gateway token reintroduced',
   },
   {
@@ -80,7 +86,7 @@ const FORBIDDEN_RUNTIME_GUARD_TOKENS = [
     reason: 'ai-brain legacy provider-catalog pool-array migration message reintroduced',
   },
   {
-    token: "legacyUnset['name'] = ''",
+    token: 'legacyUnset[\'name\'] = \'\'',
     reason: 'mongo product write legacy unset cleanup branch reintroduced',
   },
   {
@@ -212,19 +218,19 @@ const FORBIDDEN_RUNTIME_GUARD_TOKENS = [
     reason: 'ai-paths legacy product-run queued browser event channel reintroduced',
   },
   {
-    token: "asTrimmedString(edge.from) ?? asTrimmedString(edge.source)",
+    token: 'asTrimmedString(edge.from) ?? asTrimmedString(edge.source)',
     reason: 'ai-paths portable-engine path_config edge source alias-upgrade fallback reintroduced',
   },
   {
-    token: "asTrimmedString(edge.to) ?? asTrimmedString(edge.target)",
+    token: 'asTrimmedString(edge.to) ?? asTrimmedString(edge.target)',
     reason: 'ai-paths portable-engine path_config edge target alias-upgrade fallback reintroduced',
   },
   {
-    token: "resolveEdgePort(edge, 'fromPort', 'sourceHandle')",
+    token: 'resolveEdgePort(edge, \'fromPort\', \'sourceHandle\')',
     reason: 'ai-paths portable-engine path_config sourceHandle alias-upgrade fallback reintroduced',
   },
   {
-    token: "resolveEdgePort(edge, 'toPort', 'targetHandle')",
+    token: 'resolveEdgePort(edge, \'toPort\', \'targetHandle\')',
     reason: 'ai-paths portable-engine path_config targetHandle alias-upgrade fallback reintroduced',
   },
   {
@@ -292,7 +298,7 @@ const FORBIDDEN_RUNTIME_GUARD_TOKENS = [
     reason: 'ai-paths validation docs legacy fallback-manifest naming channel reintroduced',
   },
   {
-    token: "version: 'fallback.v1'",
+    token: 'version: \'fallback.v1\'',
     reason: 'ai-paths validation docs fallback-manifest legacy version channel reintroduced',
   },
   {
@@ -416,7 +422,7 @@ const FORBIDDEN_RUNTIME_GUARD_TOKENS = [
     reason: 'image-studio project settings migration legacy deleted-keys naming channel reintroduced',
   },
   {
-    token: "const deprecatedKeys = ['runId', 'runStartedAt'].filter(",
+    token: 'const deprecatedKeys = [\'runId\', \'runStartedAt\'].filter(',
     reason: 'ai-paths runtime-state deprecated-keys naming channel reintroduced',
   },
   {
@@ -436,7 +442,7 @@ const FORBIDDEN_RUNTIME_GUARD_TOKENS = [
     reason: 'prompt exploder runtime retry compatibility counter token reintroduced',
   },
   {
-    token: "@/features/cms/migrations/page-builder-contract-migration",
+    token: '@/features/cms/migrations/page-builder-contract-migration',
     reason: 'cms page-builder contract migration helper import reintroduced in runtime tree',
   },
   {
@@ -444,7 +450,7 @@ const FORBIDDEN_RUNTIME_GUARD_TOKENS = [
     reason: 'cms page-builder component migration helper usage reintroduced in runtime tree',
   },
   {
-    token: "@/features/cms/migrations/page-builder-template-contract-migration",
+    token: '@/features/cms/migrations/page-builder-template-contract-migration',
     reason: 'cms page-builder template migration helper import reintroduced in runtime tree',
   },
   {
@@ -472,15 +478,15 @@ const FORBIDDEN_RUNTIME_GUARD_TOKENS = [
     reason: 'cms page-builder grid template v1 runtime compatibility key reintroduced',
   },
   {
-    token: "import { aiNodeSchema, edgeSchema, type AiNode, type Edge } from '../ai-paths-core';",
+    token: 'import { aiNodeSchema, edgeSchema, type AiNode, type Edge } from \'../ai-paths-core\';',
     reason: 'case-resolver graph edge contract recoupled to ai-paths edge schema',
   },
   {
-    token: "import { aiNodeSchema, edgeSchema } from '../ai-paths';",
+    token: 'import { aiNodeSchema, edgeSchema } from \'../ai-paths\';',
     reason: 'case-resolver relation graph edge contract recoupled to ai-paths edge schema',
   },
   {
-    token: "import { edgeSchema, type Edge } from '@/shared/contracts/ai-paths-core/nodes';",
+    token: 'import { edgeSchema, type Edge } from \'@/shared/contracts/ai-paths-core/nodes\';',
     reason: 'case-resolver edge validation recoupled to ai-paths edge schema',
   },
 ];
@@ -489,44 +495,44 @@ const PRODUCTS_METADATA_HANDLER_FILES = [
   'src/app/api/v2/products/metadata/[type]/[id]/handler.ts',
 ];
 const FORBIDDEN_PRODUCTS_GROUP_TYPE_ALIAS_SNIPPETS = [
-  "readString(payload, 'groupType')",
-  "'groupType' in data",
-  "data['groupType']",
+  'readString(payload, \'groupType\')',
+  '\'groupType\' in data',
+  'data[\'groupType\']',
 ];
 const FORBIDDEN_LEGACY_CSRF_HEADER_ALIAS_SNIPPETS = ['x-xsrf-token', 'CSRF_HEADER_FALLBACK'];
 const FORBIDDEN_COMPAT_TEST_FILE_PATTERN = /\.compat\.test\.[tj]sx?$/;
 const FORBIDDEN_LEGACY_SHAPE_GUARD_TEST_FILE_PATTERN = /mongo-product-legacy-shape-guard\.test\.[tj]sx?$/;
 const PRODUCTS_PAGED_ROUTE_FILE = 'src/app/api/v2/products/paged/route.ts';
-const FORBIDDEN_PRODUCTS_PAGED_HANDLER_IMPORT_SNIPPET = "@/app/api/products/paged/handler";
-const REQUIRED_PRODUCTS_PAGED_HANDLER_IMPORT_SNIPPET = "import { GET_handler } from './handler';";
+const FORBIDDEN_PRODUCTS_PAGED_HANDLER_IMPORT_SNIPPET = '@/app/api/products/paged/handler';
+const REQUIRED_PRODUCTS_PAGED_HANDLER_IMPORT_SNIPPET = 'import { GET_handler } from \'./handler\';';
 const PROMPT_EXPLODER_SETTINGS_FILE = 'src/features/prompt-exploder/settings.ts';
 const PROMPT_EXPLODER_CONTRACT_SETTINGS_FILE = 'src/shared/contracts/prompt-exploder/settings.ts';
 const CHATBOT_CONTRACT_FILE = 'src/shared/contracts/chatbot.ts';
 const AGENT_PERSONAS_UTIL_FILE = 'src/features/ai/agentcreator/utils/personas.ts';
 const IMAGE_STUDIO_SETTINGS_UTIL_FILE = 'src/features/ai/image-studio/utils/studio-settings.ts';
 const FORBIDDEN_PROMPT_EXPLODER_DEPRECATED_AI_KEYS_SNIPPETS = [
-  "'deprecated_ai_keys'",
+  '\'deprecated_ai_keys\'',
   'contains deprecated AI snapshot keys',
   'deprecatedAiKeysError',
   'deprecatedKeys?: string[];',
 ];
 const REQUIRED_PROMPT_EXPLODER_UNSUPPORTED_AI_KEYS_SNIPPET =
-  "ai contains unsupported keys:";
+  'ai contains unsupported keys:';
 const FORBIDDEN_PROMPT_EXPLODER_CAPTURE_MODE_SCHEMA_SNIPPETS = [
   'promptExploderCaseResolverCaptureModeSchema',
-  "'fully-auto'",
+  '\'fully-auto\'',
 ];
 const FORBIDDEN_PROMPT_EXPLODER_CAPTURE_MODE_KEY_SNIPPET = 'caseResolverCaptureMode';
 const REQUIRED_PROMPT_EXPLODER_EXTRACTION_MODE_KEY_SNIPPET = 'caseResolverExtractionMode';
 const FORBIDDEN_CHATBOT_DEPRECATED_AGENT_KEYS_SNIPPETS = [
-  "'deprecated_agent_model_keys'",
+  '\'deprecated_agent_model_keys\'',
   'deprecated agent model snapshot keys',
 ];
 const REQUIRED_CHATBOT_UNSUPPORTED_KEYS_SNIPPET =
   'Chatbot settings payload includes unsupported keys:';
 const FORBIDDEN_AGENT_PERSONAS_DEPRECATED_SNAPSHOT_SNIPPETS = [
   'deprecated AI snapshot keys',
-  "reason: 'deprecated_snapshot_keys'",
+  'reason: \'deprecated_snapshot_keys\'',
   'stripDeprecatedSnapshotKeys',
 ];
 const REQUIRED_AGENT_PERSONAS_UNSUPPORTED_KEYS_SNIPPET =
@@ -535,7 +541,7 @@ const REQUIRED_AGENT_PERSONAS_FETCH_NORMALIZATION_SNIPPET =
   'return normalizeAgentPersonas(stored);';
 const FORBIDDEN_IMAGE_STUDIO_DEPRECATED_SNAPSHOT_SNIPPETS = [
   'Image Studio settings contain deprecated AI snapshot keys.',
-  "reason: 'deprecated_snapshot_keys'",
+  'reason: \'deprecated_snapshot_keys\'',
   'stripDeprecatedSnapshotKeys',
 ];
 const REQUIRED_IMAGE_STUDIO_UNSUPPORTED_KEYS_SNIPPET =
@@ -1135,6 +1141,9 @@ const checkTodoFixmeAccumulation = (sourceFileMap) => {
 };
 
 const main = () => {
+  const { summaryJson, strictMode, failOnWarnings } = parseCommonCheckArgs();
+  const generatedAt = new Date().toISOString();
+
   loadCanonicalArtifactsManifest();
   checkRequiredDocs();
   checkForbiddenLegacyRouteDirs();
@@ -1170,6 +1179,35 @@ const main = () => {
   const register = readExceptionRegister();
   if (register) {
     checkExceptionRegister(register, sourceFileMap);
+  }
+
+  if (summaryJson) {
+    writeSummaryJson({
+      scannerName: 'canonical-check-sitewide',
+      generatedAt,
+      status: violations.length === 0 ? 'ok' : 'failed',
+      summary: {
+        runtimeFileCount: runtimeFiles.length,
+        docsArtifactCount: requiredDocs.length,
+        violationCount: violations.length,
+      },
+      details: {
+        violations,
+        scope: {
+          srcDir: 'src',
+          rootTestsDir: '__tests__',
+          requiredDocs,
+          exceptionRegisterPath,
+          canonicalArtifactsManifest: CANONICAL_ARTIFACTS_MANIFEST_PATH,
+        },
+      },
+      filters: buildStaticCheckFilters({ strictMode, failOnWarnings }),
+      notes: ['canonical sitewide check result'],
+    });
+    if (violations.length > 0) {
+      process.exitCode = 1;
+    }
+    return;
   }
 
   if (violations.length > 0) {

@@ -20,6 +20,7 @@ import {
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
@@ -71,13 +72,16 @@ export function KangurGameRuntimeProvider({
   const { basePath } = useKangurRouting();
   const auth = useKangurAuth();
   const { isAuthenticated, isLoadingAuth, logout, navigateToLogin, user } = auth;
+  const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
   const canAccessParentAssignments =
     auth.canAccessParentAssignments ?? (isAuthenticated && Boolean(user?.activeLearner?.id));
   const progress = useKangurProgressState();
   const quickStartConsumedRef = useRef(false);
   const xpToastTimeoutRef = useRef<number | null>(null);
   const [screen, setScreen] = useState<KangurGameScreen>('home');
-  const [playerName, setPlayerName] = useState('');
+  const [sessionPlayerName, setSessionPlayerName] = useState('');
+  const playerName = user?.full_name?.trim() || sessionPlayerName || guestPlayerName;
+  const setPlayerName = setGuestPlayerName;
   const [operation, setOperation] = useState<KangurOperation | null>(null);
   const [difficulty, setDifficulty] = useState<KangurDifficulty>('medium');
   const [questions, setQuestions] = useState<KangurQuestion[]>([]);
@@ -99,14 +103,6 @@ export function KangurGameRuntimeProvider({
     },
   });
 
-  useEffect(() => {
-    const fullName = user?.full_name?.trim();
-    if (!fullName) {
-      return;
-    }
-    setPlayerName(fullName);
-  }, [user?.full_name]);
-
   useEffect(
     () => () => {
       if (xpToastTimeoutRef.current) {
@@ -115,6 +111,15 @@ export function KangurGameRuntimeProvider({
     },
     []
   );
+
+  useEffect(() => {
+    const fullName = user?.full_name?.trim();
+    if (!fullName || sessionPlayerName === fullName) {
+      return;
+    }
+
+    setSessionPlayerName(fullName);
+  }, [sessionPlayerName, user?.full_name]);
 
   const showXpToast = (xpGained: number, newBadges: string[]): void => {
     if (xpToastTimeoutRef.current) {
@@ -129,9 +134,9 @@ export function KangurGameRuntimeProvider({
   };
 
   const ensureSessionPlayerName = (): string => {
-    const nextPlayerName = playerName.trim() || user?.full_name?.trim() || 'Gracz';
-    if (playerName !== nextPlayerName) {
-      setPlayerName(nextPlayerName);
+    const nextPlayerName = guestPlayerName.trim() || user?.full_name?.trim() || 'Gracz';
+    if (sessionPlayerName !== nextPlayerName) {
+      setSessionPlayerName(nextPlayerName);
     }
     return nextPlayerName;
   };
@@ -320,9 +325,6 @@ export function KangurGameRuntimeProvider({
 
   const handleHome = (): void => {
     setScreen('home');
-    if (!user) {
-      setPlayerName('');
-    }
   };
 
   const practiceAssignmentsByOperation = useMemo(

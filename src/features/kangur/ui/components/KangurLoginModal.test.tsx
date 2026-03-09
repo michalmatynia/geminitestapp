@@ -70,6 +70,7 @@ describe('KangurLoginModal', () => {
     expect(loginPageProps.defaultCallbackUrl).toBe('/kangur/tests?focus=division');
     expect(loginPageProps.onClose).toBe(dismissLoginModalMock);
     expect(loginPageProps.parentAuthMode).toBe('sign-in');
+    expect(screen.getByRole('button', { name: 'Zamknij logowanie' })).toHaveClass('cursor-pointer');
 
     await user.click(screen.getByRole('button', { name: 'Zamknij logowanie' }));
 

@@ -36,10 +36,10 @@ describe('analyzeApiInputValidation', () => {
       root,
       'src/app/api/products/route.ts',
       [
-        "import { apiHandler } from '@/shared/lib/api/api-handler';",
-        "import { GET_handler, querySchema } from './handler';",
+        'import { apiHandler } from \'@/shared/lib/api/api-handler\';',
+        'import { GET_handler, querySchema } from \'./handler\';',
         '',
-        "export const GET = apiHandler(GET_handler, { source: 'products.GET', querySchema });",
+        'export const GET = apiHandler(GET_handler, { source: \'products.GET\', querySchema });',
         '',
       ].join('\n')
     );
@@ -49,7 +49,7 @@ describe('analyzeApiInputValidation', () => {
       [
         'export const querySchema = {};',
         'export async function GET_handler(req: Request): Promise<Response> {',
-        "  const page = new URL(req.url).searchParams.get('page');",
+        '  const page = new URL(req.url).searchParams.get(\'page\');',
         '  return Response.json({ page });',
         '}',
         '',
@@ -74,10 +74,10 @@ describe('analyzeApiInputValidation', () => {
       root,
       'src/app/api/products/[id]/route.ts',
       [
-        "import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';",
-        "import { GET_handler } from './handler';",
+        'import { apiHandlerWithParams } from \'@/shared/lib/api/api-handler\';',
+        'import { GET_handler } from \'./handler\';',
         '',
-        "export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, { source: 'products.[id].GET' });",
+        'export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, { source: \'products.[id].GET\' });',
         '',
       ].join('\n')
     );
@@ -111,7 +111,7 @@ describe('analyzeApiInputValidation', () => {
       'src/app/api/products/handler.ts',
       [
         'export async function GET_handler(req: Request): Promise<Response> {',
-        "  const page = new URL(req.url).searchParams.get('page');",
+        '  const page = new URL(req.url).searchParams.get(\'page\');',
         '  return Response.json({ page });',
         '}',
         '',

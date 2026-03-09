@@ -77,6 +77,7 @@ export function JsonViewer({
         aria-label={accessibleLabel}
         className='overflow-auto rounded bg-black/40'
         style={{ maxHeight }}
+        tabIndex={0}
       >
         <pre className='min-w-full p-2 font-mono text-[11px] text-gray-300'>{formattedJson}</pre>
       </div>

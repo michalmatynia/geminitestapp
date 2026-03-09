@@ -213,7 +213,16 @@ const TestsSkeleton = (): React.JSX.Element => (
   </div>
 );
 
-const renderPageSkeleton = (pageKey: KangurSkeletonPageKey): React.JSX.Element => {
+const NavigationSkeleton = (): React.JSX.Element => <GameSkeleton />;
+
+const renderPageSkeleton = (
+  pageKey: KangurSkeletonPageKey,
+  reason: 'boot' | 'navigation'
+): React.JSX.Element => {
+  if (reason === 'navigation') {
+    return <NavigationSkeleton />;
+  }
+
   switch (pageKey) {
     case 'Lessons':
       return <LessonsSkeleton />;
@@ -255,21 +264,8 @@ export function KangurPageTransitionSkeleton({
         tone={SKELETON_TONE_BY_PAGE[resolvedPageKey]}
       >
         <div className='w-full'>
-          <div className='sticky top-0 z-10 w-full px-4 pt-4 sm:px-6'>
-            <div className='mx-auto flex w-full max-w-6xl flex-wrap items-center gap-3 rounded-[32px] border border-white/78 bg-white/76 px-4 py-4 shadow-[0_28px_60px_-38px_rgba(91,106,170,0.24)] backdrop-blur-xl sm:px-5'>
-              <SkeletonChip className='h-12 w-28 shrink-0' />
-              <div className='flex flex-1 flex-wrap gap-3'>
-                <SkeletonChip className='h-12 w-28' />
-                <SkeletonChip className='h-12 w-24' />
-                <SkeletonChip className='h-12 w-24' />
-                <SkeletonChip className='h-12 w-28' />
-              </div>
-              <SkeletonChip className='ml-auto h-12 w-28 shrink-0' />
-            </div>
-          </div>
-
-          <KangurPageContainer className='flex flex-col gap-6 pt-6 sm:pt-8'>
-            {renderPageSkeleton(resolvedPageKey)}
+          <KangurPageContainer className='flex flex-col gap-6 pt-24 sm:pt-28'>
+            {renderPageSkeleton(resolvedPageKey, reason)}
           </KangurPageContainer>
         </div>
       </KangurPageShell>

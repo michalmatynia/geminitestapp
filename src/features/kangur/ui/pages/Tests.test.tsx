@@ -62,7 +62,15 @@ vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
 }));
 
 import { KANGUR_TEST_QUESTIONS_SETTING_KEY, KANGUR_TEST_SUITES_SETTING_KEY } from '@/shared/contracts/kangur-tests';
+import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import Tests from '@/features/kangur/ui/pages/Tests';
+
+const renderTestsPage = () =>
+  render(
+    <KangurGuestPlayerProvider>
+      <Tests />
+    </KangurGuestPlayerProvider>
+  );
 
 describe('Tests page', () => {
   beforeEach(() => {
@@ -92,7 +100,7 @@ describe('Tests page', () => {
   });
 
   it('renders the tests list with the shared intro-card top section and back navigation', () => {
-    render(<Tests />);
+    renderTestsPage();
 
     expect(screen.getByTestId('kangur-tests-list-top-section')).toHaveClass(
       'glass-panel',

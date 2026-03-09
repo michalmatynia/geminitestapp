@@ -32,7 +32,7 @@ describe('kangur parent account create handler', () => {
     vi.clearAllMocks();
   });
 
-  it('creates a parent account and returns the verification response', async () => {
+  it('stages parent account creation and returns the verification response', async () => {
     const requestContext = createRequestContext();
     requestContext.body = {
       email: 'parent@example.com',
@@ -73,7 +73,7 @@ describe('kangur parent account create handler', () => {
       emailVerified: false,
       hasPassword: true,
       message:
-        'Konto rodzica zostalo utworzone. Wyslalismy email potwierdzajacy. Zalogujesz sie po weryfikacji emaila, a AI Tutor odblokuje sie po potwierdzeniu adresu.',
+        'Sprawdz email rodzica. Konto zostanie utworzone po potwierdzeniu adresu, a AI Tutor odblokuje sie po weryfikacji.',
       debug: {
         verificationUrl: 'https://example.com/kangur/login?verifyEmailToken=verify-1',
       },

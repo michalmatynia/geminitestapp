@@ -27,7 +27,11 @@ decision is backed by JSON or another tooling-facing format.
 
 ## Current Docs
 
-- [`canonical-contract-matrix-2026-03-04.md`](./canonical-contract-matrix-2026-03-04.md)
 - [`canonical-contract-matrix-2026-03-05.md`](./canonical-contract-matrix-2026-03-05.md)
-- [`legacy-compatibility-exception-register-2026-03-04.md`](./legacy-compatibility-exception-register-2026-03-04.md)
 - [`legacy-compatibility-exception-register-2026-03-05.md`](./legacy-compatibility-exception-register-2026-03-05.md)
+
+## Structure Notes
+
+- Keep the currently enforced decision baseline here.
+- Remove older dated decision iterations once a newer canonical record replaces
+  them and tooling no longer points at the older version.

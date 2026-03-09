@@ -43,6 +43,7 @@ For AI and automation, use JSON mode:
 node scripts/architecture/scan-prop-drilling.mjs --summary-json --no-write --no-history
 node scripts/architecture/scan-ui-consolidation.mjs --summary-json --no-write --no-history
 node scripts/architecture/scan-type-clusters.mjs --summary-json --no-write --no-history
+node scripts/architecture/collect-metrics.mjs --summary-json --no-write --no-history
 node scripts/observability/check-observability.mjs --mode=check --summary-json
 ```
 

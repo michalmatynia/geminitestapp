@@ -18,12 +18,14 @@ import {
   KangurPageShell,
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import { KangurLearnerProfileRuntimeBoundary } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 
 export default function LearnerProfile(): React.JSX.Element {
   const { basePath } = useKangurRouting();
   const { user, navigateToLogin, logout } = useKangurAuth();
+  const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('profile');
   const navigation = useMemo(
     () => ({
@@ -31,12 +33,14 @@ export default function LearnerProfile(): React.JSX.Element {
       canManageLearners: Boolean(user?.canManageLearners),
       contentClassName: 'justify-center',
       currentPage: 'LearnerProfile' as const,
+      guestPlayerName: user ? undefined : guestPlayerName,
       isAuthenticated: Boolean(user),
       onCreateAccount: () => navigateToLogin({ authMode: 'create-account' }),
+      onGuestPlayerNameChange: user ? undefined : setGuestPlayerName,
       onLogin: navigateToLogin,
       onLogout: () => logout(false),
     }),
-    [basePath, logout, navigateToLogin, user]
+    [basePath, guestPlayerName, logout, navigateToLogin, setGuestPlayerName, user]
   );
 
   return (

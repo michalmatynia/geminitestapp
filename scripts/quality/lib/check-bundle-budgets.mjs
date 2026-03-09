@@ -38,17 +38,23 @@ const normalizeChunkReference = (value) => {
   return chunk;
 };
 
+const decodeChunkReference = (value) => {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+};
+
 const resolveChunkFile = (buildDir, chunkReference) => {
   const normalized = normalizeChunkReference(chunkReference);
   if (!normalized) return null;
 
   const candidates = [normalized];
-  try {
-    const decoded = decodeURIComponent(normalized);
-    if (decoded !== normalized) {
-      candidates.push(decoded);
-    }
-  } catch {}
+  const decoded = decodeChunkReference(normalized);
+  if (decoded !== normalized) {
+    candidates.push(decoded);
+  }
 
   for (const chunkPath of candidates) {
     const absolutePath = path.join(buildDir, chunkPath);

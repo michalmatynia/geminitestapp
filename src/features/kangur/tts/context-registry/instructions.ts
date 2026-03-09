@@ -1,4 +1,5 @@
 import type {
+  ContextRegistryConsumerEnvelope,
   ContextNode,
   ContextRegistryResolutionBundle,
 } from '@/shared/contracts/ai-context-registry';
@@ -38,6 +39,35 @@ export const buildKangurLessonTtsContextSignature = (
     .sort();
 
   const signature = [...surfaceIds, ...entityTypes].join('|');
+  return signature || null;
+};
+
+export const buildKangurLessonTtsEnvelopeSignature = (
+  envelope: ContextRegistryConsumerEnvelope | null | undefined
+): string | null => {
+  if (!envelope) {
+    return null;
+  }
+
+  const resolvedSignature = buildKangurLessonTtsContextSignature(envelope.resolved);
+  if (resolvedSignature) {
+    return resolvedSignature;
+  }
+
+  const surfaceIds = envelope.refs
+    .filter((ref) =>
+      ref.id.startsWith('page:kangur') ||
+      ref.id.startsWith('component:kangur') ||
+      ref.id.startsWith('action:kangur')
+    )
+    .map((ref) => ref.id)
+    .sort();
+  const runtimeEntityTypes = envelope.refs
+    .map((ref) => ref.entityType?.trim() ?? '')
+    .filter(Boolean)
+    .sort();
+  const signature = [...surfaceIds, ...runtimeEntityTypes].join('|');
+
   return signature || null;
 };
 

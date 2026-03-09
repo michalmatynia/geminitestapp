@@ -5,10 +5,12 @@ import {
   recordBrainInsightAnalytics,
   resolveRuntimeAnalyticsRangeWindow,
 } from '@/features/ai/ai-paths/services/runtime-analytics-service';
-import { getBrainAssignmentForCapability } from '@/shared/lib/ai-brain/server';
-import { type AiBrainCapabilityKey } from '@/shared/lib/ai-brain/settings';
-import { listAnalyticsEvents, getAnalyticsSummary } from '@/shared/lib/analytics/server';
-import { listSystemLogs, getSystemLogMetrics } from '@/shared/lib/observability/system-logger';
+import {
+  buildAnalyticsInsightContextRegistrySystemPrompt,
+  buildRuntimeAnalyticsInsightContextRegistrySystemPrompt,
+} from '@/features/ai/insights/context-registry/system-prompt';
+import { buildSystemLogsContextRegistrySystemPrompt } from '@/features/observability/context-registry/system-prompt';
+import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import type {
   AiInsightRecord,
   AiInsightSource,
@@ -16,8 +18,24 @@ import type {
 } from '@/shared/contracts/ai-insights';
 import type { AiPathRuntimeAnalyticsRange } from '@/shared/contracts/ai-paths';
 import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
+import { getBrainAssignmentForCapability } from '@/shared/lib/ai-brain/server';
+import { type AiBrainCapabilityKey } from '@/shared/lib/ai-brain/settings';
+import { listAnalyticsEvents, getAnalyticsSummary } from '@/shared/lib/analytics/server';
 import { sanitizeSystemLogForAi } from '@/shared/lib/observability/runtime-context/sanitize-system-log-for-ai';
+import { listSystemLogs, getSystemLogMetrics } from '@/shared/lib/observability/system-logger';
 
+import { callInsightChatModel } from './generator/chat-runtime';
+import {
+  assessRuntimeKernelParityRisk,
+  buildRuntimeKernelParityMetadata,
+  buildRuntimeKernelParityPrompt,
+} from './generator/runtime-analytics-prompt';
+import {
+  readInsightSettingValue,
+  parseBooleanSetting,
+  parseNumberSetting,
+} from './generator/settings-service';
+import { sanitizeEvents, stripCodeFence } from './generator/utils';
 import { appendAiInsight } from './repository';
 import {
   AI_INSIGHTS_SETTINGS_KEYS,
@@ -26,18 +44,7 @@ import {
   DEFAULT_RUNTIME_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
 } from './settings';
 
-import {
-  readInsightSettingValue,
-  parseBooleanSetting,
-  parseNumberSetting,
-} from './generator/settings-service';
-import {
-  assessRuntimeKernelParityRisk,
-  buildRuntimeKernelParityMetadata,
-  buildRuntimeKernelParityPrompt,
-} from './generator/runtime-analytics-prompt';
-import { callInsightChatModel } from './generator/chat-runtime';
-import { sanitizeEvents, stripCodeFence } from './generator/utils';
+
 
 const AI_INSIGHTS_MODEL_MAX_RETRIES = Math.max(
   0,
@@ -132,7 +139,12 @@ async function callChatModel(params: {
 
 export async function generateAiInsightByType(
   type: AiInsightType,
-  options?: { range?: AiPathRuntimeAnalyticsRange; force?: boolean; source?: AiInsightSource }
+  options?: {
+    range?: AiPathRuntimeAnalyticsRange;
+    force?: boolean;
+    source?: AiInsightSource;
+    contextRegistry?: ContextRegistryConsumerEnvelope | null;
+  }
 ): Promise<AiInsightRecord | null> {
   const capabilityMap: Record<AiInsightType, AiBrainCapabilityKey> = {
     analytics: 'insights.analytics',
@@ -172,8 +184,13 @@ export async function generateAiInsightByType(
     });
     const events = eventsResult.events;
     systemPrompt =
-      (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.analyticsPromptSystem)) ||
-      DEFAULT_ANALYTICS_INSIGHT_SYSTEM_PROMPT;
+      [
+        (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.analyticsPromptSystem)) ||
+          DEFAULT_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
+        buildAnalyticsInsightContextRegistrySystemPrompt(options?.contextRegistry?.resolved),
+      ]
+        .filter(Boolean)
+        .join('\n\n');
     userPrompt = `Current Analytics Summary:
 ${JSON.stringify(summary, null, 2)}
 
@@ -185,9 +202,13 @@ Analyze this data and provide actionable insights.`;
     const logsResult = await listSystemLogs({ level: 'warn' });
     const logs = logsResult.logs;
     const metrics = await getSystemLogMetrics({ level: 'warn' });
-    systemPrompt =
+    systemPrompt = [
       (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsPromptSystem)) ||
-      DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT;
+        DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT,
+      buildSystemLogsContextRegistrySystemPrompt(options?.contextRegistry?.resolved),
+    ]
+      .filter(Boolean)
+      .join('\n\n');
     userPrompt = `System Log Metrics (Last 24h):
 ${JSON.stringify(metrics, null, 2)}
 
@@ -204,8 +225,15 @@ Identify any patterns or critical issues.`;
     insightName = `${type.replace('_', ' ')} Insight [${kernelParityAssessment.riskLevel.toUpperCase()} risk] - ${now.toLocaleDateString()}`;
     insightMetadata = buildRuntimeKernelParityMetadata(summary, kernelParityAssessment);
     systemPrompt =
-      (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsPromptSystem)) ||
-      DEFAULT_RUNTIME_ANALYTICS_INSIGHT_SYSTEM_PROMPT;
+      [
+        (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsPromptSystem)) ||
+          DEFAULT_RUNTIME_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
+        buildRuntimeAnalyticsInsightContextRegistrySystemPrompt(
+          options?.contextRegistry?.resolved
+        ),
+      ]
+        .filter(Boolean)
+        .join('\n\n');
     userPrompt = `AI Path Runtime Analytics Summary (${range}):
 ${JSON.stringify(summary, null, 2)}
 
@@ -267,6 +295,7 @@ Analyze performance and success rates of AI Path executions. Include migration r
 export async function generateAnalyticsInsight(options?: {
   source?: AiInsightSource;
   force?: boolean;
+  contextRegistry?: ContextRegistryConsumerEnvelope | null;
 }): Promise<AiInsightRecord | null> {
   return generateAiInsightByType('analytics', options);
 }
@@ -275,6 +304,7 @@ export async function generateRuntimeAnalyticsInsight(options?: {
   source?: AiInsightSource;
   range?: AiPathRuntimeAnalyticsRange;
   force?: boolean;
+  contextRegistry?: ContextRegistryConsumerEnvelope | null;
 }): Promise<AiInsightRecord | null> {
   return generateAiInsightByType('runtime_analytics', options);
 }
@@ -282,6 +312,7 @@ export async function generateRuntimeAnalyticsInsight(options?: {
 export async function generateLogsInsight(options?: {
   source?: AiInsightSource;
   force?: boolean;
+  contextRegistry?: ContextRegistryConsumerEnvelope | null;
 }): Promise<AiInsightRecord | null> {
   return generateAiInsightByType('logs', options);
 }
@@ -289,6 +320,7 @@ export async function generateLogsInsight(options?: {
 export async function generateLogInterpretation(options: {
   source?: AiInsightSource;
   log: Record<string, unknown>;
+  contextRegistry?: ContextRegistryConsumerEnvelope | null;
 }): Promise<AiInsightRecord | null> {
   const capability: AiBrainCapabilityKey = 'insights.system_logs';
   const assignment = await getBrainAssignmentForCapability(capability);
@@ -298,9 +330,13 @@ export async function generateLogInterpretation(options: {
 
   const { modelId } = assignment;
   const source: AiInsightSource = options.source ?? 'manual';
-  const systemPrompt =
+  const systemPrompt = [
     (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsPromptSystem)) ||
-    DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT;
+      DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT,
+    buildSystemLogsContextRegistrySystemPrompt(options.contextRegistry?.resolved),
+  ]
+    .filter(Boolean)
+    .join('\n\n');
   const userPrompt = `Interpret this specific system log entry and provide:
 1) likely root cause,
 2) impact/risk,

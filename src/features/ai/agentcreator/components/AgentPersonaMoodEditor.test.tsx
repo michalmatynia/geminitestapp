@@ -17,6 +17,22 @@ const { uploadPersonaAvatarMock, deletePersonaAvatarMock } = vi.hoisted(() => ({
   deletePersonaAvatarMock: vi.fn(),
 }));
 
+vi.mock('next/image', () => ({
+  default: ({
+    alt,
+    src,
+    fill: _fill,
+    unoptimized: _unoptimized,
+    sizes: _sizes,
+    ...rest
+  }: React.ImgHTMLAttributes<HTMLImageElement> & {
+    fill?: boolean;
+    src: string;
+    unoptimized?: boolean;
+    sizes?: string;
+  }) => <img alt={alt} src={src} {...rest} />,
+}));
+
 vi.mock('@/features/ai/agentcreator/utils/avatar-input', async () => {
   const actual =
     await vi.importActual<typeof import('@/features/ai/agentcreator/utils/avatar-input')>(

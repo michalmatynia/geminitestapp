@@ -15,10 +15,8 @@ canonical: true
 2. `docs/ai-paths/overview.md`
 3. `docs/ai-paths/reference.md`
 4. `docs/platform/architecture-guardrails.md`
-5. `docs/ai-paths/ai-paths-development-plan-2026-02-20.md`
-6. `docs/ai-paths/ai-paths-development-plan-2026-02-20-phase-3.md`
-7. `docs/ai-paths/kernel-engine-transition-plan-2026-03-05.md`
-8. `docs/ai-paths/ai-paths-improvements-roadmap.json`
+5. `docs/ai-paths/kernel-engine-transition-plan-2026-03-05.md`
+6. `docs/ai-paths/ai-paths-improvements-roadmap.json`
 
 ## Companion Artifact
 

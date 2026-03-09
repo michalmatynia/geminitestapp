@@ -27,10 +27,11 @@ Use this directory for cross-feature or repo-wide:
 - [`fastcomet-storage-plan.md`](./fastcomet-storage-plan.md)
 - [`image-studio-object-layout-improvement-plan.md`](./image-studio-object-layout-improvement-plan.md)
 - [`canonical-closeout-2026-04-17.md`](./canonical-closeout-2026-04-17.md)
-- [`canonical-migration-inventory-2026-03-04.md`](./canonical-migration-inventory-2026-03-04.md)
-- [`master-folder-tree-migration-plan-2026-03-04.md`](./master-folder-tree-migration-plan-2026-03-04.md)
-- [`master-folder-tree-shell-phase1-parity-2026-03-05.md`](./master-folder-tree-shell-phase1-parity-2026-03-05.md)
-- [`master-folder-tree-shell-phase2-runtime-lifecycle-2026-03-05.md`](./master-folder-tree-shell-phase2-runtime-lifecycle-2026-03-05.md)
-- [`master-folder-tree-shell-phase3-browser-lifecycle-2026-03-05.md`](./master-folder-tree-shell-phase3-browser-lifecycle-2026-03-05.md)
-- [`site-wide-canonical-migration-plan-2026-03-04.md`](./site-wide-canonical-migration-plan-2026-03-04.md)
 - [`site-wide-canonical-migration-plan-2026-03-05.md`](./site-wide-canonical-migration-plan-2026-03-05.md)
+
+## Structure Notes
+
+- Keep only the current cross-feature plan baseline here.
+- Delete superseded dated plan iterations once a later re-baseline or closeout
+  document replaces them and no active repo consumers still depend on them.
+- Feature-specific implementation waves should not linger here after completion.

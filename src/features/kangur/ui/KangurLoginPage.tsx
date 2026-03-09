@@ -292,7 +292,16 @@ function KangurLoginPageContent({
   const processedVerificationTokenRef = useRef<string | null>(null);
   const loginKind = resolveKangurLoginKind(identifier);
   const isParentFlowVisible = loginKind !== 'student';
-  const formDescribedBy = [helperTextId, notice ? noticeId : null, error ? errorId : null]
+  const visibleNotice = createdParentEmail ? null : notice;
+  const createAccountConfirmationDetail =
+    notice?.trim() || 'Kliknij link potwierdzajacy w emailu. Potem zalogujesz sie tym samym emailem i haslem.';
+  const helperText =
+    isParentFlowVisible && parentAuthMode === 'create-account'
+      ? createdParentEmail
+        ? null
+        : 'Po potwierdzeniu emaila zalogujesz sie tym samym emailem i haslem.'
+      : 'Tryb rodzica wybierasz przyciskami na gorze. Kazdy identyfikator bez symbolu @ traktujemy jako nick ucznia i sprawdzamy, czy sklada sie tylko z liter i cyfr.';
+  const formDescribedBy = [helperText ? helperTextId : null, visibleNotice ? noticeId : null, error ? errorId : null]
     .filter(Boolean)
     .join(' ');
 
@@ -442,10 +451,9 @@ function KangurLoginPageContent({
         debugVerificationUrl && debugVerificationUrl.length > 0 ? debugVerificationUrl : null
       );
       setNotice(
-        payload?.message?.trim() ||
-          (payload?.created === true
-            ? 'Konto rodzica zostalo utworzone. Zalogujesz sie po potwierdzeniu emaila.'
-            : 'To konto czeka na potwierdzenie emaila. Wyslalismy nowy link potwierdzajacy.')
+        payload?.created === true
+          ? null
+          : payload?.message?.trim() || 'To konto czeka na potwierdzenie emaila. Wyslalismy nowy link.'
       );
     } catch {
       trackKangurClientEvent('kangur_parent_account_create_failed', {
@@ -453,6 +461,62 @@ function KangurLoginPageContent({
         reason: 'network_error',
       });
       setError('Nie udalo sie utworzyc konta rodzica. Sprobuj ponownie.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleParentVerificationResend = async (): Promise<void> => {
+    if (!createdParentEmail) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/kangur/auth/parent-account/resend', {
+        method: 'POST',
+        headers: withCsrfHeaders({
+          'Content-Type': 'application/json',
+        }),
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          email: createdParentEmail,
+          callbackUrl,
+        }),
+      });
+
+      if (!response.ok) {
+        const message = await readApiErrorMessage(response);
+        trackKangurClientEvent('kangur_parent_account_resend_failed', {
+          callbackUrl,
+          statusCode: response.status,
+        });
+        setError(message ?? 'Nie udalo sie wyslac nowego emaila potwierdzajacego. Sprobuj ponownie.');
+        return;
+      }
+
+      const payload =
+        (await response.json().catch(() => null)) as KangurParentAccountCreatePayload | null;
+      const debugVerificationUrl = payload?.debug?.verificationUrl?.trim();
+      trackKangurClientEvent('kangur_parent_account_resend_sent', {
+        callbackUrl,
+        hasPassword: payload?.hasPassword === true,
+      });
+      setVerificationDebugUrl(
+        debugVerificationUrl && debugVerificationUrl.length > 0 ? debugVerificationUrl : null
+      );
+      setNotice(
+        payload?.message?.trim() ||
+          'Wyslalismy nowy email potwierdzajacy. Konto rodzica uaktywni sie po weryfikacji adresu.'
+      );
+    } catch {
+      trackKangurClientEvent('kangur_parent_account_resend_failed', {
+        callbackUrl,
+        reason: 'network_error',
+      });
+      setError('Nie udalo sie wyslac nowego emaila potwierdzajacego. Sprobuj ponownie.');
     } finally {
       setIsSubmitting(false);
     }
@@ -659,7 +723,7 @@ function KangurLoginPageContent({
               </h1>
               <p className='mt-2 text-sm leading-6 text-slate-600'>
                 {isParentFlowVisible && parentAuthMode === 'create-account'
-                  ? 'Tworzysz konto rodzica jednym emailem i haslem. Po potwierdzeniu adresu wracasz tutaj i logujesz sie bez dodatkowych krokow.'
+                  ? 'Podaj email rodzica i haslo. Wyslemy link potwierdzajacy.'
                   : 'Rodzic loguje sie emailem i haslem. Uczen loguje sie alfanumerycznym nickiem i haslem do gry.'}
               </p>
             </div>
@@ -695,13 +759,16 @@ function KangurLoginPageContent({
                 aria-pressed={parentAuthMode === 'sign-in'}
                 className={
                   parentAuthMode === 'sign-in'
-                    ? 'inline-flex items-center justify-center rounded-2xl border border-indigo-500 bg-indigo-50 px-4 py-3 text-sm font-bold text-indigo-700 shadow-sm transition hover:border-indigo-600 hover:text-indigo-800 disabled:cursor-not-allowed disabled:opacity-60'
-                    : 'inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:border-slate-400 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60'
+                    ? 'inline-flex cursor-pointer items-center justify-center rounded-2xl border border-indigo-500 bg-indigo-50 px-4 py-3 text-sm font-bold text-indigo-700 shadow-sm transition hover:border-indigo-600 hover:text-indigo-800 disabled:cursor-not-allowed disabled:opacity-60'
+                    : 'inline-flex cursor-pointer items-center justify-center rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:border-slate-400 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60'
                 }
                 disabled={!isHydrated || isSubmitting}
                 onClick={() => {
                   setParentAuthMode('sign-in');
                   setError(null);
+                  setNotice(null);
+                  setCreatedParentEmail(null);
+                  setVerificationDebugUrl(null);
                 }}
                 type='button'
               >
@@ -711,13 +778,16 @@ function KangurLoginPageContent({
                 aria-pressed={parentAuthMode === 'create-account'}
                 className={
                   parentAuthMode === 'create-account'
-                    ? 'inline-flex items-center justify-center rounded-2xl border border-emerald-500 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700 shadow-sm transition hover:border-emerald-600 hover:text-emerald-800 disabled:cursor-not-allowed disabled:opacity-60'
-                    : 'inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:border-slate-400 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60'
+                    ? 'inline-flex cursor-pointer items-center justify-center rounded-2xl border border-emerald-500 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700 shadow-sm transition hover:border-emerald-600 hover:text-emerald-800 disabled:cursor-not-allowed disabled:opacity-60'
+                    : 'inline-flex cursor-pointer items-center justify-center rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:border-slate-400 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60'
                 }
                 disabled={!isHydrated || isSubmitting}
                 onClick={() => {
                   setParentAuthMode('create-account');
                   setError(null);
+                  setNotice(null);
+                  setCreatedParentEmail(null);
+                  setVerificationDebugUrl(null);
                 }}
                 type='button'
               >
@@ -726,19 +796,10 @@ function KangurLoginPageContent({
             </div>
           ) : null}
 
-          {isParentFlowVisible && parentAuthMode === 'create-account' ? (
-            <div className='rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4 text-sm text-emerald-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]'>
-              <p className='font-bold'>Jak zalozyc konto rodzica</p>
-              <p className='mt-1 leading-6 text-emerald-800'>
-                Podaj email rodzica i ustaw haslo. Po kliknieciu wyslemy link potwierdzajacy.
-                Dopiero po weryfikacji emaila rodzic zaloguje sie do Kangura, a AI Tutor
-                odblokuje sie automatycznie.
-              </p>
-            </div>
-          ) : null}
-
           <label className='flex flex-col gap-2 text-sm font-semibold text-slate-700'>
-            Email rodzica lub nick ucznia
+            {isParentFlowVisible && parentAuthMode === 'create-account'
+              ? 'Email rodzica'
+              : 'Email rodzica lub nick ucznia'}
             <input
               autoComplete='username'
               aria-describedby={formDescribedBy || undefined}
@@ -747,7 +808,11 @@ function KangurLoginPageContent({
               id={identifierInputId}
               name='identifier'
               onChange={(event) => setIdentifier(event.target.value)}
-              placeholder='rodzic@example.com lub janek123'
+              placeholder={
+                isParentFlowVisible && parentAuthMode === 'create-account'
+                  ? 'rodzic@example.com'
+                  : 'rodzic@example.com lub janek123'
+              }
               required
               type='text'
               value={identifier}
@@ -782,14 +847,7 @@ function KangurLoginPageContent({
               value={password}
             />
           </label>
-          {isParentFlowVisible && parentAuthMode === 'create-account' ? (
-            <p className='text-xs leading-5 text-slate-500'>
-              Uzyj mocnego hasla. Backend sprawdzi wymagania bezpieczenstwa podczas tworzenia
-              konta.
-            </p>
-          ) : null}
-
-          {notice ? (
+          {visibleNotice ? (
             <div
               aria-atomic='true'
               aria-live='polite'
@@ -797,7 +855,7 @@ function KangurLoginPageContent({
               id={noticeId}
               role='status'
             >
-              {notice}
+              {visibleNotice}
             </div>
           ) : null}
           {error ? (
@@ -812,17 +870,29 @@ function KangurLoginPageContent({
             </div>
           ) : null}
           {createdParentEmail ? (
-            <div className='rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]'>
+            <div
+              aria-atomic='true'
+              aria-live='polite'
+              className='rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]'
+              role='status'
+            >
               <p className='font-bold text-slate-900'>Sprawdz skrzynke: {createdParentEmail}</p>
-              <p className='mt-1 leading-6'>
-                Otworz wiadomosc potwierdzajaca i kliknij link. Gdy wrocisz po weryfikacji,
-                zalogujesz sie tym samym emailem i haslem.
-              </p>
+              <p className='mt-1 leading-6'>{createAccountConfirmationDetail}</p>
+              <button
+                className='mt-3 inline-flex cursor-pointer items-center justify-center rounded-2xl border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-slate-400 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60'
+                disabled={isSubmitting}
+                onClick={() => {
+                  void handleParentVerificationResend();
+                }}
+                type='button'
+              >
+                Wyslij email ponownie
+              </button>
             </div>
           ) : null}
           {verificationDebugUrl ? (
             <a
-              className='inline-flex w-fit items-center justify-center rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700 transition hover:border-emerald-400 hover:text-emerald-800'
+              className='inline-flex w-fit cursor-pointer items-center justify-center rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700 transition hover:border-emerald-400 hover:text-emerald-800'
               href={verificationDebugUrl}
             >
               Potwierdz email teraz
@@ -833,8 +903,8 @@ function KangurLoginPageContent({
             <button
               className={
                 parentAuthMode === 'create-account'
-                  ? 'inline-flex items-center justify-center rounded-2xl bg-emerald-500 px-4 py-3 text-sm font-bold text-white shadow transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-60'
-                  : 'inline-flex items-center justify-center rounded-2xl bg-indigo-500 px-4 py-3 text-sm font-bold text-white shadow transition hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-60'
+                  ? 'inline-flex cursor-pointer items-center justify-center rounded-2xl bg-emerald-500 px-4 py-3 text-sm font-bold text-white shadow transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-60'
+                  : 'inline-flex cursor-pointer items-center justify-center rounded-2xl bg-indigo-500 px-4 py-3 text-sm font-bold text-white shadow transition hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-60'
               }
               disabled={!isHydrated || isSubmitting}
               type='submit'
@@ -849,7 +919,7 @@ function KangurLoginPageContent({
             </button>
           ) : (
             <button
-              className='inline-flex items-center justify-center rounded-2xl bg-indigo-500 px-4 py-3 text-sm font-bold text-white shadow transition hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-60'
+              className='inline-flex cursor-pointer items-center justify-center rounded-2xl bg-indigo-500 px-4 py-3 text-sm font-bold text-white shadow transition hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-60'
               disabled={!isHydrated || isSubmitting}
               type='submit'
             >
@@ -857,11 +927,11 @@ function KangurLoginPageContent({
             </button>
           )}
 
-          <p className='text-xs leading-5 text-slate-500' id={helperTextId}>
-            Tryb rodzica wybierasz przyciskami na gorze. Link weryfikacyjny odblokowuje pierwsze
-            logowanie rodzica i dostep do AI Tutora. Kazdy identyfikator bez symbolu @ traktujemy
-            jako nick ucznia i sprawdzamy, czy sklada sie tylko z liter i cyfr.
-          </p>
+          {helperText ? (
+            <p className='text-xs leading-5 text-slate-500' id={helperTextId}>
+              {helperText}
+            </p>
+          ) : null}
         </form>
       </div>
     </div>

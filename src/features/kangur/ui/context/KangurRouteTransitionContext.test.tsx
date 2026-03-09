@@ -94,6 +94,10 @@ describe('KangurRouteTransitionProvider', () => {
       </KangurRoutingProvider>
     );
 
+    act(() => {
+      vi.advanceTimersByTime(560);
+    });
+
     expect(scrollToMock).toHaveBeenNthCalledWith(1, { left: 0, top: 0, behavior: 'auto' });
     expect(scrollToMock).toHaveBeenNthCalledWith(2, { left: 0, top: 0, behavior: 'auto' });
     expect(screen.getByTestId('route-transition-pending')).toHaveTextContent('false');

@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { KangurScoreRecord, KangurUser } from '@/features/kangur/services/ports';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
+import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import { expectNoAxeViolations } from '@/testing/accessibility/axe';
 
 const {
@@ -94,6 +95,20 @@ vi.mock('@/features/kangur/ui/components/KangurLearnerAssignmentsPanel', () => (
 
 import Game from '@/features/kangur/ui/pages/Game';
 import LearnerProfile from '@/features/kangur/ui/pages/LearnerProfile';
+
+const renderLearnerProfilePage = () =>
+  render(
+    <KangurGuestPlayerProvider>
+      <LearnerProfile />
+    </KangurGuestPlayerProvider>
+  );
+
+const renderGamePage = () =>
+  render(
+    <KangurGuestPlayerProvider>
+      <Game />
+    </KangurGuestPlayerProvider>
+  );
 
 const baseProgress: KangurProgressState = {
   totalXp: 620,
@@ -203,7 +218,7 @@ describe('Kangur accessibility smoke', () => {
       }
     );
 
-    render(<LearnerProfile />);
+    renderLearnerProfilePage();
 
     await waitFor(() => expect(scoreFilterMock).toHaveBeenCalledTimes(3));
     expect(scoreFilterMock).toHaveBeenCalledWith({ learner_id: 'learner-jan' }, '-created_date', 120);
@@ -240,7 +255,7 @@ describe('Kangur accessibility smoke', () => {
       }
     );
 
-    const { container } = render(<LearnerProfile />);
+    const { container } = renderLearnerProfilePage();
 
     await waitFor(() => expect(scoreFilterMock).toHaveBeenCalledTimes(3));
     await expectNoAxeViolations(container);
@@ -253,7 +268,7 @@ describe('Kangur accessibility smoke', () => {
       logout: logoutMock,
     });
 
-    render(<LearnerProfile />);
+    renderLearnerProfilePage();
 
     const loginButton = screen.getByRole('button', {
       name: 'Zaloguj sie, aby synchronizowac postep',
@@ -273,7 +288,7 @@ describe('Kangur accessibility smoke', () => {
       logout: logoutMock,
     });
 
-    render(<Game />);
+    renderGamePage();
 
     expect(screen.getByRole('link', { name: 'Przejdz do glownej tresci' })).toHaveAttribute(
       'href',
@@ -299,7 +314,7 @@ describe('Kangur accessibility smoke', () => {
 
     const user = userEvent.setup();
 
-    render(<Game />);
+    renderGamePage();
 
     await user.click(getFeaturedHomeAction('Grajmy!'));
     expect(await screen.findByRole('heading', { name: 'Grajmy!' })).toBeInTheDocument();

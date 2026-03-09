@@ -290,6 +290,9 @@ const syncGuestScoresToApiIfAuthenticated = async (): Promise<void> => {
     persistScore: (payload) => createScoreViaApi(payload),
   });
   if (result.syncedCount > 0) {
+    if (result.remainingCount === 0) {
+      resetGuestKangurScoreSession();
+    }
     clearScoreQueryCache();
   }
 };

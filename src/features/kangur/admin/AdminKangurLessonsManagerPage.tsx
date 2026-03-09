@@ -34,17 +34,7 @@ import {
   buildKangurLessonMasterNodes,
   resolveKangurLessonOrderFromNodes,
 } from './kangur-lessons-master-tree';
-import {
-  KANGUR_LESSON_DOCUMENTS_SETTING_KEY,
-  appendMissingGeometryKangurLessons,
-  appendMissingLogicalThinkingKangurLessons,
-  KANGUR_LESSONS_SETTING_KEY,
-  KANGUR_LESSON_LIBRARY,
-  KANGUR_LESSON_SORT_ORDER_GAP,
-  canonicalizeKangurLessons,
-  createKangurLessonId,
-  parseKangurLessons,
-} from '../settings';
+import { importLegacyKangurLessonDocument } from '../legacy-lesson-imports';
 import {
   createDefaultKangurLessonDocument,
   createKangurLessonSvgBlock,
@@ -56,8 +46,18 @@ import {
   updateKangurLessonDocumentPages,
   updateKangurLessonDocumentTimestamp,
 } from '../lesson-documents';
-import { importLegacyKangurLessonDocument } from '../legacy-lesson-imports';
-
+import {
+  KANGUR_LESSON_DOCUMENTS_SETTING_KEY,
+  appendMissingGeometryKangurLessons,
+  appendMissingLogicalThinkingKangurLessons,
+  KANGUR_LESSONS_SETTING_KEY,
+  KANGUR_LESSON_LIBRARY,
+  KANGUR_LESSON_SORT_ORDER_GAP,
+  canonicalizeKangurLessons,
+  createKangurLessonId,
+  parseKangurLessons,
+} from '../settings';
+import { KangurAdminContentShell } from './components/KangurAdminContentShell';
 import { LessonContentEditorDialog } from './components/LessonContentEditorDialog';
 import { LessonMetadataForm } from './components/LessonMetadataForm';
 import { LessonSvgQuickAddModal } from './components/LessonSvgQuickAddModal';
@@ -68,7 +68,6 @@ import {
   buildKangurAdminLessonsManagerContextBundle,
   KANGUR_ADMIN_LESSONS_MANAGER_CONTEXT_ROOT_IDS,
 } from './context-registry/lessons-manager';
-import type { LessonFormData, LessonTreeMode } from './types';
 import {
   countLessonsRequiringLegacyImport,
   createInitialLessonFormData,
@@ -77,7 +76,9 @@ import {
   toLessonFormData,
   upsertLesson,
 } from './utils';
-import { KangurAdminContentShell } from './components/KangurAdminContentShell';
+
+import type { LessonFormData, LessonTreeMode } from './types';
+
 
 function AdminKangurLessonsManagerRegistrySource({
   registrySource,

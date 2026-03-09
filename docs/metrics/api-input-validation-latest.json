@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-09T07:50:51.076Z",
+  "generatedAt": "2026-03-09T09:07:29.693Z",
   "status": "warn",
   "summary": {
     "total": 11,
@@ -21,7 +21,7 @@
       "ruleId": "query-param-unvalidated",
       "message": "searchParams.get() used without Zod schema validation.",
       "file": "src/app/api/agent/approval-gates/route.ts",
-      "line": 11,
+      "line": 12,
       "column": null,
       "snippet": null,
       "context": null
@@ -31,17 +31,7 @@
       "ruleId": "query-param-unvalidated",
       "message": "searchParams.get() used without Zod schema validation.",
       "file": "src/app/api/agent/approval-gates/route.ts",
-      "line": 31,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "query-param-unvalidated",
-      "message": "searchParams.get() used without Zod schema validation.",
-      "file": "src/app/api/agent/leases/route.ts",
-      "line": 31,
+      "line": 32,
       "column": null,
       "snippet": null,
       "context": null
@@ -61,7 +51,7 @@
       "ruleId": "query-param-unvalidated",
       "message": "searchParams.get() used without Zod schema validation.",
       "file": "src/app/api/agent/leases/route.ts",
-      "line": 57,
+      "line": 33,
       "column": null,
       "snippet": null,
       "context": null
@@ -71,7 +61,7 @@
       "ruleId": "query-param-unvalidated",
       "message": "searchParams.get() used without Zod schema validation.",
       "file": "src/app/api/agent/leases/route.ts",
-      "line": 65,
+      "line": 58,
       "column": null,
       "snippet": null,
       "context": null
@@ -90,8 +80,8 @@
       "severity": "warn",
       "ruleId": "query-param-unvalidated",
       "message": "searchParams.get() used without Zod schema validation.",
-      "file": "src/app/api/agent/resources/route.ts",
-      "line": 24,
+      "file": "src/app/api/agent/leases/route.ts",
+      "line": 67,
       "column": null,
       "snippet": null,
       "context": null
@@ -101,7 +91,7 @@
       "ruleId": "query-param-unvalidated",
       "message": "searchParams.get() used without Zod schema validation.",
       "file": "src/app/api/agent/resources/route.ts",
-      "line": 45,
+      "line": 25,
       "column": null,
       "snippet": null,
       "context": null
@@ -125,6 +115,16 @@
       "column": null,
       "snippet": null,
       "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "query-param-unvalidated",
+      "message": "searchParams.get() used without Zod schema validation.",
+      "file": "src/app/api/agent/resources/route.ts",
+      "line": 48,
+      "column": null,
+      "snippet": null,
+      "context": null
     }
   ],
   "rules": [
@@ -135,5 +135,5 @@
       "infoCount": 0
     }
   ],
-  "durationMs": 86
+  "durationMs": 58
 }

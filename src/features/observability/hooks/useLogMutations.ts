@@ -1,5 +1,6 @@
 'use client';
 
+import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
 import type { AiInsightRecord } from '@/shared/contracts';
 import { ClearLogsResponseDto as ClearLogsResponse } from '@/shared/contracts/observability';
 import type { UpdateMutation } from '@/shared/contracts/ui';
@@ -41,8 +42,13 @@ export function useRebuildIndexesMutation(): UpdateMutation<unknown, void> {
 }
 
 export function useRunLogInsight(): UpdateMutation<{ insight: AiInsightRecord }, void> {
+  const contextRegistry = useOptionalContextRegistryPageEnvelope();
+
   return createCreateMutationV2({
-    mutationFn: () => api.post<{ insight: AiInsightRecord }>('/api/system/logs/insights'),
+    mutationFn: () =>
+      api.post<{ insight: AiInsightRecord }>('/api/system/logs/insights', {
+        ...(contextRegistry ? { contextRegistry } : {}),
+      }),
     mutationKey: logsKeys.all,
     meta: {
       source: 'observability.hooks.useRunLogInsight',
@@ -57,9 +63,14 @@ export function useRunLogInsight(): UpdateMutation<{ insight: AiInsightRecord },
 }
 
 export function useInterpretLog(): UpdateMutation<{ insight: AiInsightRecord }, string> {
+  const contextRegistry = useOptionalContextRegistryPageEnvelope();
+
   return createCreateMutationV2({
     mutationFn: (logId: string) =>
-      api.post<{ insight: AiInsightRecord }>('/api/system/logs/interpret', { logId }),
+      api.post<{ insight: AiInsightRecord }>('/api/system/logs/interpret', {
+        logId,
+        ...(contextRegistry ? { contextRegistry } : {}),
+      }),
     mutationKey: logsKeys.all,
     meta: {
       source: 'observability.hooks.useInterpretLog',

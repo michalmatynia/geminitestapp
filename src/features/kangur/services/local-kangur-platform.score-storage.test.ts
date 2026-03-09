@@ -4,11 +4,6 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  createGuestKangurScore,
-  loadGuestKangurScores,
-} from '@/features/kangur/services/guest-kangur-scores';
-
 const {
   signOutMock,
   withCsrfHeadersMock,
@@ -42,6 +37,7 @@ const AUTHENTICATED_USER = {
   actorType: 'parent' as const,
   canManageLearners: true,
   ownerUserId: 'parent-1',
+  ownerEmailVerified: true,
   activeLearner: {
     id: 'learner-1',
     ownerUserId: 'parent-1',
@@ -88,6 +84,9 @@ describe('createLocalKangurPlatform score storage', () => {
 
     const { createLocalKangurPlatform } =
       await import('@/features/kangur/services/local-kangur-platform');
+    const { loadGuestKangurScores } = await import(
+      '@/features/kangur/services/guest-kangur-scores'
+    );
     const platform = createLocalKangurPlatform();
 
     const created = await platform.score.create({
@@ -107,6 +106,12 @@ describe('createLocalKangurPlatform score storage', () => {
   });
 
   it('syncs guest scores into the API before returning authenticated score reads', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { createGuestKangurScore, loadGuestKangurScores } = await import(
+      '@/features/kangur/services/guest-kangur-scores'
+    );
     const localScore = createGuestKangurScore({
       player_name: 'Gracz',
       score: 9,
@@ -122,50 +127,47 @@ describe('createLocalKangurPlatform score storage', () => {
       learner_id: 'learner-1',
       owner_user_id: 'parent-1',
     };
-
-    const fetchMock = vi.fn(
-      async (input: RequestInfo | URL, init?: RequestInit) => {
-        const url =
-          typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
-        const method = init?.method ?? 'GET';
-
-        if (url.endsWith('/api/kangur/auth/me')) {
-          return {
-            ok: true,
-            status: 200,
-            json: async () => AUTHENTICATED_USER,
-          };
-        }
-
-        if (url.endsWith('/api/kangur/scores') && method === 'POST') {
-          return {
-            ok: true,
-            status: 201,
-            json: async () => persistedScore,
-          };
-        }
-
-        if (url.includes('/api/kangur/scores') && method === 'GET') {
-          return {
-            ok: true,
-            status: 200,
-            json: async () => [persistedScore],
-          };
-        }
-
-        throw new Error(`Unexpected fetch request: ${method} ${url}`);
-      }
-    );
-    vi.stubGlobal('fetch', fetchMock);
+    expect(loadGuestKangurScores()).toEqual([localScore]);
 
     const { createLocalKangurPlatform } =
       await import('@/features/kangur/services/local-kangur-platform');
     const platform = createLocalKangurPlatform();
 
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url =
+        typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+      const method = init?.method ?? 'GET';
+
+      if (url.endsWith('/api/kangur/auth/me')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => AUTHENTICATED_USER,
+        };
+      }
+
+      if (url.endsWith('/api/kangur/scores') && method === 'POST') {
+        return {
+          ok: true,
+          status: 201,
+          json: async () => persistedScore,
+        };
+      }
+
+      if (url.includes('/api/kangur/scores') && method === 'GET') {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => [persistedScore],
+        };
+      }
+
+      throw new Error(`Unexpected fetch request: ${method} ${url}`);
+    });
+
     const rows = await platform.score.list('-created_date', 10);
 
     expect(rows).toEqual([persistedScore]);
-    expect(loadGuestKangurScores()).toEqual([]);
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/kangur/scores',
       expect.objectContaining({
@@ -211,6 +213,9 @@ describe('createLocalKangurPlatform score storage', () => {
 
     const { createLocalKangurPlatform } =
       await import('@/features/kangur/services/local-kangur-platform');
+    const { loadGuestKangurScores } = await import(
+      '@/features/kangur/services/guest-kangur-scores'
+    );
     const platform = createLocalKangurPlatform();
 
     const previousGuestScore = await platform.score.create({

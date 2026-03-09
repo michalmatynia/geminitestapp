@@ -119,13 +119,18 @@ When a task changes docs:
     generated snapshots one by one.
 17. Stable generated metrics entry points are the `README.md` hubs,
     `route-hotspots.md`, and `*-latest.md` aliases; timestamped metrics history
-    files should remain generated, non-canonical artifacts.
+    files are optional generated artifacts and should be written only when a
+    task explicitly needs history via `--write-history`.
 18. If a docs generator writes markdown into a managed canonical surface, keep
     frontmatter in the generator itself through the shared helpers under
     `scripts/docs/` instead of relying on a later cleanup pass.
 19. Do not hand-tune metadata on managed generated-doc outputs after generation;
     if the metadata contract needs to change, update the shared helper and let
     `npm run docs:structure:check` enforce it.
+20. If a historical docs surface has no live repo consumers left, prune it
+    instead of preserving it as passive archive clutter.
+21. If a later dated plan or decision supersedes an older one, remove the older
+    version once active references and tooling have moved to the newer record.
 
 ## Scanner JSON Contract
 

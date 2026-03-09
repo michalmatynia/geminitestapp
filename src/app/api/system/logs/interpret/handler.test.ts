@@ -5,11 +5,13 @@ const {
   startAiInsightsQueueMock,
   getSystemLogByIdMock,
   hydrateSystemLogRecordRuntimeContextMock,
+  resolveObservabilityContextRegistryEnvelopeMock,
   generateLogInterpretationMock,
 } = vi.hoisted(() => ({
   startAiInsightsQueueMock: vi.fn(),
   getSystemLogByIdMock: vi.fn(),
   hydrateSystemLogRecordRuntimeContextMock: vi.fn(),
+  resolveObservabilityContextRegistryEnvelopeMock: vi.fn(),
   generateLogInterpretationMock: vi.fn(),
 }));
 
@@ -25,6 +27,10 @@ vi.mock('@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-c
   hydrateSystemLogRecordRuntimeContext: hydrateSystemLogRecordRuntimeContextMock,
 }));
 
+vi.mock('@/features/observability/context-registry/server', () => ({
+  resolveObservabilityContextRegistryEnvelope: resolveObservabilityContextRegistryEnvelopeMock,
+}));
+
 vi.mock('@/features/ai/insights/server', () => ({
   generateLogInterpretation: generateLogInterpretationMock,
 }));
@@ -36,6 +42,34 @@ describe('system logs interpret handler', () => {
 
   it('hydrates registry runtime context before generating the log interpretation', async () => {
     const { POST_handler } = await import('./handler');
+
+    resolveObservabilityContextRegistryEnvelopeMock.mockResolvedValue({
+      refs: [{ id: 'page:system-logs', kind: 'static_node' }],
+      resolved: {
+        refs: [{ id: 'page:system-logs', kind: 'static_node' }],
+        nodes: [
+          {
+            id: 'page:system-logs',
+            kind: 'page',
+            name: 'Observation Post',
+            description: 'System logs workspace',
+            tags: ['observability'],
+            permissions: {
+              readScopes: ['ctx:read'],
+              riskTier: 'none',
+              classification: 'internal',
+            },
+            version: '1.0.0',
+            updatedAtISO: '2026-03-09T00:00:00.000Z',
+            source: { type: 'code', ref: 'test' },
+          },
+        ],
+        documents: [],
+        truncated: false,
+        engineVersion: 'registry:test',
+      },
+      engineVersion: 'registry:test',
+    });
 
     getSystemLogByIdMock.mockResolvedValue({
       id: 'log-1',
@@ -106,7 +140,13 @@ describe('system logs interpret handler', () => {
 
     const req = new NextRequest('http://localhost/api/system/logs/interpret', {
       method: 'POST',
-      body: JSON.stringify({ logId: 'log-1' }),
+      body: JSON.stringify({
+        logId: 'log-1',
+        contextRegistry: {
+          refs: [{ id: 'page:system-logs', kind: 'static_node' }],
+          engineVersion: 'page-context:v1',
+        },
+      }),
     });
 
     const response = await POST_handler(req, {} as never);
@@ -119,8 +159,21 @@ describe('system logs interpret handler', () => {
         id: 'log-1',
       })
     );
+    expect(resolveObservabilityContextRegistryEnvelopeMock).toHaveBeenCalledWith({
+      refs: [{ id: 'page:system-logs', kind: 'static_node' }],
+      engineVersion: 'page-context:v1',
+    });
     expect(generateLogInterpretationMock).toHaveBeenCalledWith({
       source: 'manual',
+      contextRegistry: expect.objectContaining({
+        refs: expect.arrayContaining([
+          expect.objectContaining({ id: 'page:system-logs' }),
+          expect.objectContaining({ id: 'runtime:ai-path-run:run-1' }),
+        ]),
+        resolved: expect.objectContaining({
+          documents: [expect.objectContaining({ id: 'runtime:ai-path-run:run-1' })],
+        }),
+      }),
       log: expect.objectContaining({
         id: 'log-1',
         context: expect.objectContaining({

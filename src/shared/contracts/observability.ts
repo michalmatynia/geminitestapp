@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
+import { contextRegistryConsumerEnvelopeSchema } from './ai-context-registry';
 import { dtoBaseSchema, namedDtoSchema } from './base';
-
 import { activityLogSchema } from './system';
 
 export const ERROR_CATEGORY = {
@@ -250,6 +250,21 @@ export const clearLogsResponseSchema = z.object({
 
 export type ClearLogsResponse = z.infer<typeof clearLogsResponseSchema>;
 export type ClearLogsResponseDto = ClearLogsResponse;
+
+export const systemLogsInsightRequestSchema = z.object({
+  contextRegistry: contextRegistryConsumerEnvelopeSchema.optional(),
+});
+
+export type SystemLogsInsightRequest = z.infer<typeof systemLogsInsightRequestSchema>;
+export type SystemLogsInsightRequestDto = SystemLogsInsightRequest;
+
+export const systemLogsInterpretRequestSchema = z.object({
+  logId: z.string().trim().min(1),
+  contextRegistry: contextRegistryConsumerEnvelopeSchema.optional(),
+});
+
+export type SystemLogsInterpretRequest = z.infer<typeof systemLogsInterpretRequestSchema>;
+export type SystemLogsInterpretRequestDto = SystemLogsInterpretRequest;
 
 /**
  * Trace & Span DTOs

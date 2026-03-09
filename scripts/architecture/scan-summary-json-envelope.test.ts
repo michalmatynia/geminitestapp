@@ -17,11 +17,24 @@ const uiConsolidationScriptPath = path.join(
   'architecture',
   'scan-ui-consolidation.mjs'
 );
+const collectMetricsScriptPath = path.join(repoRoot, 'scripts', 'architecture', 'collect-metrics.mjs');
 const observabilityScriptPath = path.join(
   repoRoot,
   'scripts',
   'observability',
   'check-observability.mjs'
+);
+const canonicalSitewideScriptPath = path.join(
+  repoRoot,
+  'scripts',
+  'canonical',
+  'check-sitewide.mjs'
+);
+const canonicalStabilizationScriptPath = path.join(
+  repoRoot,
+  'scripts',
+  'canonical',
+  'check-stabilization.mjs'
 );
 const aiPathsCanonicalScriptPath = path.join(repoRoot, 'scripts', 'ai-paths', 'check-canonical.mjs');
 const docsTooltipCoverageScriptPath = path.join(
@@ -92,16 +105,16 @@ const seedQualitySources = (root: string): void => {
   writeFile(
     root,
     'src/features/products/products.test.ts',
-    "describe('products', () => { it('works', () => { expect(true).toBe(true); }); });\n"
+    'describe(\'products\', () => { it(\'works\', () => { expect(true).toBe(true); }); });\n'
   );
   writeFile(
     root,
     'src/app/api/products/route.ts',
     [
-      "import { apiHandler } from '@/shared/lib/api/api-handler';",
-      "import { GET_handler } from './handler';",
+      'import { apiHandler } from \'@/shared/lib/api/api-handler\';',
+      'import { GET_handler } from \'./handler\';',
       '',
-      "export const GET = apiHandler(GET_handler, { source: 'products.GET' });",
+      'export const GET = apiHandler(GET_handler, { source: \'products.GET\' });',
       '',
     ].join('\n')
   );
@@ -110,7 +123,7 @@ const seedQualitySources = (root: string): void => {
     'src/app/api/products/handler.ts',
     [
       'export async function GET_handler(): Promise<Response> {',
-      "  return Response.json({ ok: true });",
+      '  return Response.json({ ok: true });',
       '}',
       '',
     ].join('\n')
@@ -264,6 +277,50 @@ describe('scanner summary-json envelope', () => {
     expect(uiConsolidation.notes).toContain('ui consolidation scan result');
   });
 
+  it('wraps architecture metrics collection in the shared scan envelope', () => {
+    const root = createTempRoot();
+    seedArchitectureSources(root);
+    seedQualitySources(root);
+
+    const metricsCollection = runSummaryJson(root, collectMetricsScriptPath, [
+      '--summary-json',
+      '--no-write',
+      '--no-history',
+    ]);
+
+    expect(metricsCollection.scanner).toMatchObject({
+      name: 'architecture-metrics-collect',
+      version: '1.0.0',
+    });
+    expect(metricsCollection.status).toBe('ok');
+    expect(metricsCollection.summary).toMatchObject({
+      sourceFileCount: expect.any(Number),
+      apiRouteCount: expect.any(Number),
+      crossFeatureEdgePairCount: expect.any(Number),
+      propDrillingCandidateChainCount: expect.any(Number),
+      propDrillingDepthGte4ChainCount: expect.any(Number),
+    });
+    expect(metricsCollection.details).toMatchObject({
+      source: expect.any(Object),
+      api: expect.any(Object),
+      imports: expect.any(Object),
+      architecture: expect.any(Object),
+      runtime: expect.any(Object),
+      codeHealth: expect.any(Object),
+      hotspots: expect.any(Object),
+      propDrilling: expect.any(Object),
+    });
+    expect(metricsCollection.paths).toBeNull();
+    expect(metricsCollection.filters).toMatchObject({
+      historyDisabled: true,
+      noWrite: true,
+      rawJson: false,
+      ci: false,
+    });
+    expect(metricsCollection.notes).toContain('architecture baseline metrics collection result');
+    expect(fs.existsSync(path.join(root, 'docs', 'metrics', 'baseline-latest.json'))).toBe(false);
+  });
+
   it('wraps observability summary-json output in the shared scan envelope', () => {
     const root = createTempRoot();
     seedObservabilitySources(root);
@@ -405,6 +462,86 @@ describe('scanner summary-json envelope', () => {
     });
     expect(aiPathsCanonical.notes).toContain('ai-paths canonical check result');
   });
+
+  it('wraps canonical sitewide checks in the shared scan envelope', () => {
+    const canonicalSitewide = runSummaryJson(repoRoot, canonicalSitewideScriptPath, ['--summary-json']);
+
+    expect(canonicalSitewide.scanner).toMatchObject({
+      name: 'canonical-check-sitewide',
+      version: '1.0.0',
+    });
+    expect(canonicalSitewide.status).toBe('ok');
+    expect(canonicalSitewide.summary).toMatchObject({
+      runtimeFileCount: expect.any(Number),
+      docsArtifactCount: expect.any(Number),
+      violationCount: 0,
+    });
+    expect(canonicalSitewide.details).toMatchObject({
+      violations: [],
+      scope: {
+        srcDir: 'src',
+        rootTestsDir: '__tests__',
+        requiredDocs: expect.any(Array),
+        exceptionRegisterPath: expect.any(String),
+        canonicalArtifactsManifest: 'docs/canonical-artifacts-latest.json',
+      },
+    });
+    expect(canonicalSitewide.paths).toBeNull();
+    expect(canonicalSitewide.filters).toMatchObject({
+      historyDisabled: true,
+      noWrite: true,
+      strictMode: false,
+    });
+    expect(canonicalSitewide.notes).toContain('canonical sitewide check result');
+  });
+
+  it('wraps canonical stabilization aggregate checks in the shared scan envelope', () => {
+    const canonicalStabilization = runSummaryJson(repoRoot, canonicalStabilizationScriptPath, [
+      '--summary-json',
+    ]);
+
+    expect(canonicalStabilization.scanner).toMatchObject({
+      name: 'canonical-stabilization-check',
+      version: '1.0.0',
+    });
+    expect(canonicalStabilization.status).toBe('ok');
+    expect(canonicalStabilization.summary).toMatchObject({
+      canonicalStatus: 'pass',
+      canonicalRuntimeFileCount: expect.any(Number),
+      canonicalDocsArtifactCount: expect.any(Number),
+      aiStatus: 'pass',
+      aiSourceFileCount: expect.any(Number),
+      observabilityStatus: 'pass',
+      observabilityLegacyCompatibilityViolations: 0,
+      observabilityRuntimeErrors: 0,
+    });
+    expect(canonicalStabilization.details).toMatchObject({
+      canonical: {
+        status: 'pass',
+        runtimeFileCount: expect.any(Number),
+        docsArtifactCount: expect.any(Number),
+        ok: true,
+      },
+      ai: {
+        status: 'pass',
+        sourceFileCount: expect.any(Number),
+        ok: true,
+      },
+      observability: {
+        status: 'pass',
+        legacyCompatibilityViolations: 0,
+        runtimeErrors: 0,
+        ok: true,
+      },
+    });
+    expect(canonicalStabilization.paths).toBeNull();
+    expect(canonicalStabilization.filters).toMatchObject({
+      structured: true,
+    });
+    expect(canonicalStabilization.notes).toContain(
+      'canonical stabilization aggregate check result'
+    );
+  }, 20_000);
 
   it('wraps docs checks in the shared scan envelope', () => {
     const tooltipCoverage = runSummaryJson(

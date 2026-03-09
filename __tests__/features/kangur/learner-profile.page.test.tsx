@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { KangurScoreRecord, KangurUser } from '@/features/kangur/services/ports';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
+import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 
 const {
   useKangurRoutingMock,
@@ -84,6 +85,13 @@ vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
 });
 
 import LearnerProfile from '@/features/kangur/ui/pages/LearnerProfile';
+
+const renderLearnerProfilePage = () =>
+  render(
+    <KangurGuestPlayerProvider>
+      <LearnerProfile />
+    </KangurGuestPlayerProvider>
+  );
 
 const baseProgress: KangurProgressState = {
   totalXp: 620,
@@ -171,7 +179,7 @@ describe('LearnerProfile page', () => {
       }
     );
 
-    render(<LearnerProfile />);
+    renderLearnerProfilePage();
 
     await waitFor(() => expect(scoreFilterMock).toHaveBeenCalledTimes(2));
     expect(scoreFilterMock).toHaveBeenCalledWith({ created_by: 'jan@example.com' }, '-created_date', 120);
@@ -280,7 +288,7 @@ describe('LearnerProfile page', () => {
       logout: logoutMock,
     });
 
-    render(<LearnerProfile />);
+    renderLearnerProfilePage();
 
     expect(scoreFilterMock).not.toHaveBeenCalled();
     expect(
@@ -308,7 +316,7 @@ describe('LearnerProfile page', () => {
   it('shows scores loading error when score provider fails', async () => {
     scoreFilterMock.mockRejectedValue(new Error('Network unavailable'));
 
-    render(<LearnerProfile />);
+    renderLearnerProfilePage();
 
     expect(await screen.findByText('Nie udalo sie pobrac historii wynikow.')).toBeInTheDocument();
     expect(logKangurClientErrorMock).toHaveBeenCalledTimes(1);
@@ -317,7 +325,7 @@ describe('LearnerProfile page', () => {
   it('treats score authorization errors as expected local-mode fallback', async () => {
     scoreFilterMock.mockRejectedValue({ status: 403 });
 
-    render(<LearnerProfile />);
+    renderLearnerProfilePage();
 
     expect(await screen.findByText('Brak rozegranych sesji.')).toBeInTheDocument();
     expect(screen.queryByText('Nie udalo sie pobrac historii wynikow.')).not.toBeInTheDocument();

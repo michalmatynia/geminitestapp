@@ -26,7 +26,7 @@ const writeRoute = ({
   method = 'GET',
   handlerName = `${method}_handler`,
   handlerSource = `export async function ${handlerName}() { return Response.json({ ok: true }); }`,
-  options = "{ source: 'test.route' }",
+  options = '{ source: \'test.route\' }',
 }) => {
   writeFile(
     root,
@@ -79,7 +79,7 @@ describe('analyzeSecurityAuthzMatrix', () => {
       routePath: 'ai-paths/portable-engine/remediation-webhook',
       method: 'POST',
       handlerSource:
-        "export async function POST_handler() { await verifyPortablePathWebhookSignature({}); return Response.json({ ok: true }); }",
+        'export async function POST_handler() { await verifyPortablePathWebhookSignature({}); return Response.json({ ok: true }); }',
     });
 
     const report = analyzeSecurityAuthzMatrix({ root });
@@ -95,7 +95,7 @@ describe('analyzeSecurityAuthzMatrix', () => {
       method: 'GET',
       handlerName: 'getKangurProgressHandler',
       handlerSource:
-        "export async function getKangurProgressHandler(req) { await resolveKangurActor(req); return Response.json({ ok: true }); }",
+        'export async function getKangurProgressHandler(req) { await resolveKangurActor(req); return Response.json({ ok: true }); }',
     });
 
     const report = analyzeSecurityAuthzMatrix({ root });
@@ -110,7 +110,7 @@ describe('analyzeSecurityAuthzMatrix', () => {
       routePath: 'auth/users',
       method: 'GET',
       handlerSource:
-        "export async function GET_handler() { const session = await auth(); if (!session?.user) throw new Error('Unauthorized.'); return Response.json({ ok: true }); }",
+        'export async function GET_handler() { const session = await auth(); if (!session?.user) throw new Error(\'Unauthorized.\'); return Response.json({ ok: true }); }',
     });
 
     const report = analyzeSecurityAuthzMatrix({ root });
@@ -131,7 +131,7 @@ describe('analyzeSecurityAuthzMatrix', () => {
       root,
       path.join('src', 'app', 'api', 'agentcreator', 'agent', 'route.ts'),
       [
-        "import { GET as getAgentRuns } from '@/features/ai/agentcreator/api/agent/route';",
+        'import { GET as getAgentRuns } from \'@/features/ai/agentcreator/api/agent/route\';',
         'export const GET = getAgentRuns;',
       ].join('\n')
     );
@@ -139,14 +139,14 @@ describe('analyzeSecurityAuthzMatrix', () => {
       root,
       path.join('src', 'features', 'ai', 'agentcreator', 'api', 'agent', 'route.ts'),
       [
-        "import { apiHandler } from '@/shared/lib/api/api-handler';",
+        'import { apiHandler } from \'@/shared/lib/api/api-handler\';',
         '',
         'async function GET_handler() {',
         '  await requireAgentCreatorAccess();',
         '  return Response.json({ ok: true });',
         '}',
         '',
-        "export const GET = apiHandler(GET_handler, { source: 'agentcreator.agent.GET' });",
+        'export const GET = apiHandler(GET_handler, { source: \'agentcreator.agent.GET\' });',
       ].join('\n')
     );
 
@@ -161,12 +161,12 @@ describe('analyzeSecurityAuthzMatrix', () => {
     writeFile(
       root,
       path.join('src', 'app', 'api', 'chatbot', 'agent', '[runId]', 'assets', '[file]', 'route.ts'),
-      "export { AgentCreatorAgentRunAssetsGET as GET } from '@/features/ai/agentcreator/server';\n"
+      'export { AgentCreatorAgentRunAssetsGET as GET } from \'@/features/ai/agentcreator/server\';\n'
     );
     writeFile(
       root,
       path.join('src', 'features', 'ai', 'agentcreator', 'server.ts'),
-      "export { GET as AgentCreatorAgentRunAssetsGET } from './api/agent/[runId]/assets/[file]/route';\n"
+      'export { GET as AgentCreatorAgentRunAssetsGET } from \'./api/agent/[runId]/assets/[file]/route\';\n'
     );
     writeFile(
       root,
@@ -183,15 +183,15 @@ describe('analyzeSecurityAuthzMatrix', () => {
         'route.ts'
       ),
       [
-        "import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';",
+        'import { apiHandlerWithParams } from \'@/shared/lib/api/api-handler\';',
         '',
         'async function GET_handler() {',
         '  const session = await auth();',
-        "  if (!session?.user) throw new Error('Unauthorized');",
+        '  if (!session?.user) throw new Error(\'Unauthorized\');',
         '  return Response.json({ ok: true });',
         '}',
         '',
-        "export const GET = apiHandlerWithParams(GET_handler, { source: 'agentcreator.assets.GET' });",
+        'export const GET = apiHandlerWithParams(GET_handler, { source: \'agentcreator.assets.GET\' });',
       ].join('\n')
     );
 

@@ -1,84 +1,70 @@
-import fs from 'node:fs/promises';
-import path from 'node:path';
-import { execFile as execFileCallback } from 'node:child_process';
-import { promisify } from 'node:util';
+import {
+  UI_CONSOLIDATION_GUARDRAIL_RULES,
+  buildUiConsolidationGuardrailSnapshot,
+  collectGuardrailThresholdFailures,
+  readGuardrailBaseline,
+  resolveGuardrailBaselinePath,
+} from './lib/guardrails-baseline.mjs';
+import { collectNumericSummaryMetrics } from './lib/scan-summary-metrics.mjs';
 
-import { parseScanSummary } from './lib/scan-output.mjs';
-
-const execFile = promisify(execFileCallback);
 const root = process.cwd();
-const baselinePath = path.join(root, 'scripts', 'architecture', 'guardrails-baseline.json');
-
-const readBaseline = async () => {
-  const raw = await fs.readFile(baselinePath, 'utf8');
-  return JSON.parse(raw);
-};
+const baselinePath = resolveGuardrailBaselinePath(root);
 
 const run = async () => {
-  const [propResult, uiResult] = await Promise.all([
-    execFile(
-      'node',
-      [
+  const [propDrilling, uiConsolidation] = await Promise.all([
+    collectNumericSummaryMetrics({
+      cwd: root,
+      commandArgs: [
         'scripts/architecture/scan-prop-drilling.mjs',
         '--ci',
         '--no-history',
         '--no-write',
         '--summary-json',
       ],
-      { cwd: root }
-    ),
-    execFile(
-      'node',
-      [
+      sourceName: 'scan-prop-drilling',
+      fields: {
+        componentsWithForwarding: 'componentsWithForwarding',
+        highPriorityChainCount: 'highPriorityChainCount',
+      },
+    }),
+    collectNumericSummaryMetrics({
+      cwd: root,
+      commandArgs: [
         'scripts/architecture/scan-ui-consolidation.mjs',
         '--ci',
         '--no-history',
         '--no-write',
         '--summary-json',
       ],
-      { cwd: root }
-    ),
+      sourceName: 'scan-ui-consolidation',
+      fields: {
+        totalOpportunities: 'totalOpportunities',
+        highPriorityCount: 'highPriorityCount',
+        duplicateNameClusterCount: 'duplicateNameClusterCount',
+        propSignatureClusterCount: 'propSignatureClusterCount',
+        tokenSimilarityClusterCount: 'tokenSimilarityClusterCount',
+      },
+    }),
   ]);
 
-  const propSummary = parseScanSummary(propResult.stdout, 'scan-prop-drilling');
-  const uiSummary = parseScanSummary(uiResult.stdout, 'scan-ui-consolidation');
-
-  const componentsWithForwarding = Number(propSummary.componentsWithForwarding);
-  const highPriorityChainCount = Number(propSummary.highPriorityChainCount);
-  const totalOpportunities = Number(uiSummary.totalOpportunities);
-  const highPriorityCount = Number(uiSummary.highPriorityCount);
-  const duplicateNameClusterCount = Number(uiSummary.duplicateNameClusterCount);
-  const propSignatureClusterCount = Number(uiSummary.propSignatureClusterCount);
-  const tokenSimilarityClusterCount = Number(uiSummary.tokenSimilarityClusterCount);
-
-  if (
-    !Number.isFinite(componentsWithForwarding) ||
-    !Number.isFinite(highPriorityChainCount) ||
-    !Number.isFinite(totalOpportunities) ||
-    !Number.isFinite(highPriorityCount) ||
-    !Number.isFinite(duplicateNameClusterCount) ||
-    !Number.isFinite(propSignatureClusterCount) ||
-    !Number.isFinite(tokenSimilarityClusterCount)
-  ) {
-    throw new Error('One or more consolidation summary metrics are invalid.');
-  }
+  const snapshot = buildUiConsolidationGuardrailSnapshot(propDrilling, uiConsolidation);
 
   console.log('UI consolidation guardrail snapshot');
   console.log(
     [
-      `propForwarding=${componentsWithForwarding}`,
-      `propDepthGte4Chains=${highPriorityChainCount}`,
-      `uiOpportunities=${totalOpportunities}`,
-      `uiHighPriority=${highPriorityCount}`,
-      `duplicateNameClusters=${duplicateNameClusterCount}`,
-      `propSignatureClusters=${propSignatureClusterCount}`,
-      `tokenSimilarityClusters=${tokenSimilarityClusterCount}`,
+      `propForwarding=${snapshot['propDrilling.componentsWithForwarding']}`,
+      `propDepthGte4Chains=${snapshot['propDrilling.depthGte4Chains']}`,
+      `uiOpportunities=${snapshot['uiConsolidation.totalOpportunities']}`,
+      `uiHighPriority=${snapshot['uiConsolidation.highPriorityOpportunities']}`,
+      `duplicateNameClusters=${snapshot['uiConsolidation.duplicateNameClusters']}`,
+      `propSignatureClusters=${snapshot['uiConsolidation.propSignatureClusters']}`,
+      `tokenSimilarityClusters=${snapshot['uiConsolidation.tokenSimilarityClusters']}`,
     ].join(' | ')
   );
 
   let baseline;
   try {
-    baseline = await readBaseline();
+    baseline = await readGuardrailBaseline({ baselinePath });
   } catch {
     console.error(
       'Guardrail baseline is missing. Run: node scripts/architecture/check-guardrails.mjs --update-baseline'
@@ -87,55 +73,12 @@ const run = async () => {
     return;
   }
 
-  const maxByKey = baseline.max ?? {};
-  const maxComponentsWithForwarding = Number(maxByKey['propDrilling.componentsWithForwarding'] ?? 0);
-  const maxHighPriorityChainCount = Number(maxByKey['propDrilling.depthGte4Chains'] ?? 0);
-  const maxTotalOpportunities = Number(maxByKey['uiConsolidation.totalOpportunities'] ?? 0);
-  const maxHighPriorityCount = Number(maxByKey['uiConsolidation.highPriorityOpportunities'] ?? 0);
-  const maxDuplicateNameClusterCount = Number(maxByKey['uiConsolidation.duplicateNameClusters'] ?? 0);
-  const maxPropSignatureClusterCount = Number(maxByKey['uiConsolidation.propSignatureClusters'] ?? 0);
-  const maxTokenSimilarityClusterCount = Number(
-    maxByKey['uiConsolidation.tokenSimilarityClusters'] ?? 0
-  );
-
   console.log(`Baseline generated at: ${baseline.generatedAt ?? 'unknown'}`);
-
-  const failures = [];
-  if (componentsWithForwarding > maxComponentsWithForwarding) {
-    failures.push(
-      `Expected prop forwarding components <= ${maxComponentsWithForwarding}, got ${componentsWithForwarding}.`
-    );
-  }
-  if (highPriorityChainCount > maxHighPriorityChainCount) {
-    failures.push(
-      `Expected prop depth>=4 chains <= ${maxHighPriorityChainCount}, got ${highPriorityChainCount}.`
-    );
-  }
-  if (totalOpportunities > maxTotalOpportunities) {
-    failures.push(
-      `Expected UI consolidation opportunities <= ${maxTotalOpportunities}, got ${totalOpportunities}.`
-    );
-  }
-  if (highPriorityCount > maxHighPriorityCount) {
-    failures.push(
-      `Expected high-priority UI opportunities <= ${maxHighPriorityCount}, got ${highPriorityCount}.`
-    );
-  }
-  if (duplicateNameClusterCount > maxDuplicateNameClusterCount) {
-    failures.push(
-      `Expected duplicate-name clusters <= ${maxDuplicateNameClusterCount}, got ${duplicateNameClusterCount}.`
-    );
-  }
-  if (propSignatureClusterCount > maxPropSignatureClusterCount) {
-    failures.push(
-      `Expected prop-signature clusters <= ${maxPropSignatureClusterCount}, got ${propSignatureClusterCount}.`
-    );
-  }
-  if (tokenSimilarityClusterCount > maxTokenSimilarityClusterCount) {
-    failures.push(
-      `Expected token-similarity clusters <= ${maxTokenSimilarityClusterCount}, got ${tokenSimilarityClusterCount}.`
-    );
-  }
+  const failures = collectGuardrailThresholdFailures(
+    snapshot,
+    baseline,
+    UI_CONSOLIDATION_GUARDRAIL_RULES
+  );
 
   if (failures.length > 0) {
     console.error('UI consolidation guardrail check failed:');

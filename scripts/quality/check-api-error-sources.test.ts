@@ -36,11 +36,11 @@ describe('analyzeApiErrorSources', () => {
       root,
       'src/app/api/products/[id]/route.ts',
       [
-        "import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';",
-        "import { GET_handler } from './handler';",
+        'import { apiHandlerWithParams } from \'@/shared/lib/api/api-handler\';',
+        'import { GET_handler } from \'./handler\';',
         '',
-        "export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, {",
-        "  source: 'products.[id].GET',",
+        'export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, {',
+        '  source: \'products.[id].GET\',',
         '});',
         '',
       ].join('\n')
@@ -58,7 +58,7 @@ describe('analyzeApiErrorSources', () => {
       root,
       'src/app/api/agentcreator/agent/route.ts',
       [
-        "import { GET as getAgentRuns } from '@/features/ai/agentcreator/api/agent/route';",
+        'import { GET as getAgentRuns } from \'@/features/ai/agentcreator/api/agent/route\';',
         '',
         'export const GET = getAgentRuns;',
         '',
@@ -105,7 +105,7 @@ describe('analyzeApiErrorSources', () => {
         '  const stream = new ReadableStream();',
         '  return new Response(stream, {',
         '    headers: {',
-        "      'Content-Type': 'text/event-stream',",
+        '      \'Content-Type\': \'text/event-stream\',',
         '    },',
         '  });',
         '}',

@@ -3,8 +3,9 @@ import path from 'node:path';
 import { spawn, execFile as execFileCallback } from 'node:child_process';
 import { promisify } from 'node:util';
 
+import { runStabilizationGates } from '../canonical/lib/stabilization-gate-runner.mjs';
 import { collectMetrics } from '../architecture/lib-metrics.mjs';
-import { parseScanOutput } from '../architecture/lib/scan-output.mjs';
+import { execScanOutput } from '../architecture/lib/exec-scan-output.mjs';
 import { writeMetricsMarkdownFile } from '../docs/metrics-frontmatter.mjs';
 
 const execFile = promisify(execFileCallback);
@@ -17,7 +18,7 @@ const includeE2E = args.has('--include-e2e');
 const includeFullLint = args.has('--include-full-lint');
 const includeFullUnit = args.has('--include-full-unit');
 const strictMode = args.has('--strict');
-const shouldWriteHistory = !args.has('--ci') && !args.has('--no-history');
+const shouldWriteHistory = args.has('--write-history') && !args.has('--ci') && !args.has('--no-history');
 
 const MAX_OUTPUT_BYTES = 160_000;
 const BUILD_LOCK_PATH = path.join(root, '.next', 'lock');
@@ -396,35 +397,25 @@ const runCommandCheck = async ({
 };
 
 const parseScannerSummary = async (scriptName) => {
-  try {
-    const { stdout } = await execFile(
-      'node',
-      [
-        scriptName,
-        '--ci',
-        '--no-history',
-        '--no-write',
-        '--summary-json',
-      ],
-      {
-        cwd: root,
-        maxBuffer: 8 * 1024 * 1024,
-      }
-    );
+  const result = await execScanOutput({
+    command: 'node',
+    commandArgs: [
+      scriptName,
+      '--ci',
+      '--no-history',
+      '--no-write',
+      '--summary-json',
+    ],
+    cwd: root,
+    sourceName: scriptName,
+    maxBuffer: 8 * 1024 * 1024,
+  });
 
-    const { summary } = parseScanOutput(stdout, scriptName);
-    return {
-      ok: true,
-      summary,
-      error: null,
-    };
-  } catch (error) {
-    return {
-      ok: false,
-      summary: null,
-      error: error instanceof Error ? error.message : String(error),
-    };
-  }
+  return {
+    ok: result.ok,
+    summary: result.output?.summary ?? null,
+    error: result.error,
+  };
 };
 
 const getPassRate = (check) => {
@@ -500,6 +491,25 @@ const toMarkdown = (report) => {
 
   lines.push('## Guardrail Snapshot');
   lines.push('');
+  if (report.stabilization) {
+    lines.push(
+      `- Stabilization aggregate: ${report.stabilization.ok ? 'PASS' : 'FAIL'} (refreshed ${report.stabilization.generatedAt})`
+    );
+    lines.push(
+      `- Canonical stabilization: ${report.stabilization.canonical.status} | runtime files=${report.stabilization.canonical.runtimeFileCount ?? 'n/a'} | docs=${report.stabilization.canonical.docsArtifactCount ?? 'n/a'}`
+    );
+    lines.push(
+      `- AI stabilization: ${report.stabilization.ai.status} | source files=${report.stabilization.ai.sourceFileCount ?? 'n/a'}`
+    );
+    lines.push(
+      `- Observability stabilization: ${report.stabilization.observability.status} | legacyCompatViolations=${report.stabilization.observability.legacyCompatibilityViolations ?? 'n/a'} | runtimeErrors=${report.stabilization.observability.runtimeErrors ?? 'n/a'}`
+    );
+  } else {
+    lines.push(
+      `- Stabilization aggregate: unavailable${report.stabilizationError ? ` (${report.stabilizationError})` : ''}`
+    );
+  }
+  lines.push('');
 
   lines.push('## Trend Snapshot');
   lines.push('');
@@ -544,7 +554,7 @@ const toMarkdown = (report) => {
     }
   }
   lines.push('');
-  if (report.propDrilling.ok && report.uiConsolidation.ok) {
+  if (report.propDrilling.summary && report.uiConsolidation.summary) {
     lines.push(
       `- Prop forwarding components: ${Number(report.propDrilling.summary.componentsWithForwarding ?? 0)}`
     );
@@ -560,6 +570,11 @@ const toMarkdown = (report) => {
     lines.push(
       `- Raw UI clusters: duplicate=${Number(report.uiConsolidation.summary.duplicateNameClusterCount ?? 0)} | signature=${Number(report.uiConsolidation.summary.propSignatureClusterCount ?? 0)} | token=${Number(report.uiConsolidation.summary.tokenSimilarityClusterCount ?? 0)}`
     );
+    if (!report.propDrilling.ok || !report.uiConsolidation.ok) {
+      lines.push(
+        `- Scanner summary recovered from failing command output.${report.propDrilling.error || report.uiConsolidation.error ? ' Inspect JSON payload for failure details.' : ''}`
+      );
+    }
   } else {
     lines.push('- Scanner summary unavailable; inspect JSON payload for errors.');
   }
@@ -807,6 +822,18 @@ const run = async () => {
     parseScannerSummary('scripts/architecture/scan-prop-drilling.mjs'),
     parseScannerSummary('scripts/architecture/scan-ui-consolidation.mjs'),
   ]);
+  let stabilization = null;
+  let stabilizationError = null;
+  try {
+    stabilization = await runStabilizationGates({
+      cwd: root,
+      env: process.env,
+      logger: null,
+      prefix: 'weekly-quality:stabilization',
+    });
+  } catch (error) {
+    stabilizationError = error instanceof Error ? error.message : String(error);
+  }
   const [weeklyLaneTrendRaw, unitDomainTrendRaw, lintDomainTrendRaw] = await Promise.all([
     readJsonIfExists('docs/metrics/weekly-quality-trend-latest.json'),
     readJsonIfExists('docs/metrics/unit-domain-timings-trend-latest.json'),
@@ -863,6 +890,8 @@ const run = async () => {
     metricsError,
     propDrilling,
     uiConsolidation,
+    stabilization,
+    stabilizationError,
     trends: {
       weeklyLane: summarizeTrend(weeklyLaneTrendRaw),
       unitDomains: summarizeTrend(unitDomainTrendRaw),

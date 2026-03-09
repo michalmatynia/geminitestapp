@@ -11,7 +11,6 @@ import {
 
 const SOURCE_ROOT = 'src';
 const SOURCE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs']);
-const FEATURES_DIR = 'src/features';
 
 // Directories where direct Prisma client usage is acceptable
 const PRISMA_ALLOWED_PATTERNS = [
@@ -50,18 +49,6 @@ const listSourceFiles = (absoluteDir, acc = []) => {
 const getFeatureName = (relativePath) => {
   const match = relativePath.match(/^src\/features\/([^/]+)/);
   return match ? match[1] : null;
-};
-
-const isBarrelImport = (importPath) => {
-  // @/features/foo or @/features/foo/index or @/features/foo/server etc.
-  const featureMatch = importPath.match(/^@\/features\/([^/]+)(\/(.*))?$/);
-  if (!featureMatch) return true; // Not a feature import
-  const subPath = featureMatch[3];
-  if (!subPath) return true; // Direct feature import (barrel)
-  return BARREL_SUFFIXES.some((suffix) => {
-    const clean = suffix.startsWith('/') ? suffix.slice(1) : suffix;
-    return subPath === clean || subPath.startsWith(`${clean}/`) === false && subPath === clean;
-  });
 };
 
 const extractImports = (text) => {

@@ -7,16 +7,18 @@ import {
   useOptionalContextRegistryPageEnvelope,
   useRegisterContextRegistryPageSource,
 } from '@/features/ai/ai-context-registry/context/page-context';
+import { buildContextRegistryConsumerEnvelope } from '@/features/ai/ai-context-registry/context/page-context-shared';
 import {
   KANGUR_NARRATOR_SETTINGS_KEY,
   parseKangurNarratorSettings,
 } from '@/features/kangur/settings';
+import { buildInlineVttTrackSrc } from '@/features/kangur/tts/captions';
+import { buildKangurLessonTtsEnvelopeSignature } from '@/features/kangur/tts/context-registry/instructions';
 import {
   KANGUR_TTS_DEFAULT_VOICE,
   type KangurLessonTtsAudioResponse,
   type KangurLessonTtsResponse,
 } from '@/features/kangur/tts/contracts';
-import { buildInlineVttTrackSrc } from '@/features/kangur/tts/captions';
 import {
   buildKangurLessonDocumentNarrationScript,
   buildKangurLessonNarrationScriptFromText,
@@ -31,6 +33,11 @@ import { cn } from '@/shared/utils';
 
 type PlaybackStatus = 'idle' | 'loading' | 'playing' | 'paused' | 'error';
 type PlaybackTransport = 'server' | 'client' | 'client-fallback' | null;
+
+const KANGUR_LESSON_NARRATOR_CONTEXT_ROOT_IDS = [
+  'component:kangur-lesson-narrator',
+  'action:kangur-lesson-tts',
+] as const;
 
 type KangurLessonNarratorProps = {
   lesson: Pick<KangurLesson, 'id' | 'title' | 'description' | 'contentMode'>;
@@ -82,6 +89,21 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
       ? (lessonDocument?.narration?.voice ?? defaultVoice)
       : defaultVoice;
   const pageContextRegistry = useOptionalContextRegistryPageEnvelope();
+  const requestContextRegistry = useMemo(
+    () =>
+      pageContextRegistry
+        ? buildContextRegistryConsumerEnvelope({
+          refs: pageContextRegistry.refs,
+          resolved: pageContextRegistry.resolved ?? null,
+          rootNodeIds: [...KANGUR_LESSON_NARRATOR_CONTEXT_ROOT_IDS],
+        })
+        : null,
+    [pageContextRegistry]
+  );
+  const contextRegistrySignature = useMemo(
+    () => buildKangurLessonTtsEnvelopeSignature(requestContextRegistry),
+    [requestContextRegistry]
+  );
   const [observedText, setObservedText] = useState('');
   const [status, setStatus] = useState<PlaybackStatus>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -101,7 +123,7 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
     useMemo(
       () => ({
         label: 'Kangur lesson narrator',
-        rootNodeIds: ['component:kangur-lesson-narrator', 'action:kangur-lesson-tts'],
+        rootNodeIds: [...KANGUR_LESSON_NARRATOR_CONTEXT_ROOT_IDS],
       }),
       []
     )
@@ -183,9 +205,10 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
         engine: narratorSettings.engine,
         voice,
         locale: script.locale,
+        contextRegistrySignature,
         segments: script.segments.map((segment) => segment.text),
       }),
-    [narratorSettings.engine, script, voice]
+    [contextRegistrySignature, narratorSettings.engine, script, voice]
   );
 
   const stopPlayback = useCallback(() => {
@@ -369,7 +392,7 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
         script,
         voice,
         forceRegenerate: false,
-        ...(pageContextRegistry ? { contextRegistry: pageContextRegistry } : {}),
+        ...(requestContextRegistry ? { contextRegistry: requestContextRegistry } : {}),
       });
 
       if (response.mode !== 'audio') {
@@ -402,7 +425,7 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
       );
       return null;
     }
-  }, [pageContextRegistry, script, scriptCacheKey, speakClientSegments, voice]);
+  }, [requestContextRegistry, script, scriptCacheKey, speakClientSegments, voice]);
 
   const handlePlay = useCallback(async () => {
     if (status === 'paused') {

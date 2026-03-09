@@ -7,7 +7,7 @@ import { writeManagedGeneratedDoc } from '../docs/generated-doc-frontmatter.mjs'
 const args = new Set(process.argv.slice(2));
 const root = process.cwd();
 const outDir = path.join(root, 'docs', 'ui-consolidation');
-const HISTORY_DISABLED = args.has('--ci') || args.has('--no-history');
+const HISTORY_DISABLED = !args.has('--write-history') || args.has('--ci') || args.has('--no-history');
 const NO_WRITE = args.has('--no-write');
 const SUMMARY_JSON_ONLY = args.has('--summary-json');
 

@@ -1,5 +1,6 @@
 'use client';
 
+import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
 import type { AiInsightRecord } from '@/shared/contracts';
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
@@ -66,10 +67,13 @@ export function useRuntimeAnalyticsInsightsQuery(): ListQuery<AiInsightRecord, I
 }
 
 export function useRunAnalyticsInsightMutation(): MutationResult<AiInsightRecord | null, void> {
+  const contextRegistry = useOptionalContextRegistryPageEnvelope();
   const mutationKey = QUERY_KEYS.ai.insights.analytics();
   return createCreateMutationV2<AiInsightRecord | null, void>({
     mutationFn: async () => {
-      const data = await api.post<{ insight?: AiInsightRecord }>('/api/analytics/insights', {});
+      const data = await api.post<{ insight?: AiInsightRecord }>('/api/analytics/insights', {
+        ...(contextRegistry ? { contextRegistry } : {}),
+      });
       return data?.insight ?? null;
     },
     mutationKey,
@@ -86,10 +90,13 @@ export function useRunAnalyticsInsightMutation(): MutationResult<AiInsightRecord
 }
 
 export function useRunLogInsightMutation(): MutationResult<AiInsightRecord | null, void> {
+  const contextRegistry = useOptionalContextRegistryPageEnvelope();
   const mutationKey = QUERY_KEYS.ai.insights.logs();
   return createCreateMutationV2<AiInsightRecord | null, void>({
     mutationFn: async () => {
-      const data = await api.post<{ insight?: AiInsightRecord }>('/api/system/logs/insights', {});
+      const data = await api.post<{ insight?: AiInsightRecord }>('/api/system/logs/insights', {
+        ...(contextRegistry ? { contextRegistry } : {}),
+      });
       return data?.insight ?? null;
     },
     mutationKey,
@@ -109,12 +116,15 @@ export function useRunRuntimeAnalyticsInsightMutation(): MutationResult<
   AiInsightRecord | null,
   void
   > {
+  const contextRegistry = useOptionalContextRegistryPageEnvelope();
   const mutationKey = QUERY_KEYS.ai.insights.runtimeAnalytics();
   return createCreateMutationV2<AiInsightRecord | null, void>({
     mutationFn: async () => {
       const data = await api.post<{ insight?: AiInsightRecord }>(
         '/api/ai-paths/runtime-analytics/insights',
-        {}
+        {
+          ...(contextRegistry ? { contextRegistry } : {}),
+        }
       );
       return data?.insight ?? null;
     },

@@ -12,7 +12,7 @@ const outDir = path.join(root, 'docs', 'metrics');
 
 const SOURCE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs']);
 const JSX_EXTENSIONS = new Set(['.tsx', '.jsx']);
-const HISTORY_DISABLED = args.has('--ci') || args.has('--no-history');
+const HISTORY_DISABLED = !args.has('--write-history') || args.has('--ci') || args.has('--no-history');
 const NO_WRITE = args.has('--no-write');
 const SUMMARY_JSON_ONLY = args.has('--summary-json');
 const MAX_CHAIN_DEPTH = 7;

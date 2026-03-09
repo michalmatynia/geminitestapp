@@ -52,6 +52,7 @@ import {
   KangurGameRuntimeProvider,
   useKangurGameRuntime,
 } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
+import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 
 const RuntimeProbe = (): React.JSX.Element => {
   const { canStartFromHome, handleStartGame, playerName, screen } = useKangurGameRuntime();
@@ -104,9 +105,11 @@ describe('KangurGameRuntimeContext', () => {
 
   it('keeps home game actions available in anonymous mode', () => {
     render(
-      <KangurGameRuntimeProvider>
-        <RuntimeProbe />
-      </KangurGameRuntimeProvider>
+      <KangurGuestPlayerProvider>
+        <KangurGameRuntimeProvider>
+          <RuntimeProbe />
+        </KangurGameRuntimeProvider>
+      </KangurGuestPlayerProvider>
     );
 
     expect(screen.getByTestId('kangur-game-can-start')).toHaveTextContent('true');
@@ -117,9 +120,11 @@ describe('KangurGameRuntimeContext', () => {
     const user = userEvent.setup();
 
     render(
-      <KangurGameRuntimeProvider>
-        <RuntimeProbe />
-      </KangurGameRuntimeProvider>
+      <KangurGuestPlayerProvider>
+        <KangurGameRuntimeProvider>
+          <RuntimeProbe />
+        </KangurGameRuntimeProvider>
+      </KangurGuestPlayerProvider>
     );
 
     await user.click(screen.getByRole('button', { name: 'Start game' }));

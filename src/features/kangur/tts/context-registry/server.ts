@@ -15,10 +15,10 @@ export const resolveKangurTtsContextRegistryEnvelope = async (
   const resolvedRegistryBundle =
     contextRegistry.refs.length > 0
       ? await contextRegistryEngine.resolveRefs({
-          refs: contextRegistry.refs,
-          maxNodes: 24,
-          depth: 1,
-        })
+        refs: contextRegistry.refs,
+        maxNodes: 24,
+        depth: 1,
+      })
       : null;
 
   return buildContextRegistryConsumerEnvelope({

@@ -2,8 +2,6 @@
 
 import { z } from 'zod';
 
-import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/features/playwright';
-import { normalizePlaywrightPersonas } from '@/features/playwright';
 export { useIntegrationsWithConnections } from '@/shared/hooks/useIntegrationQueries';
 export {
   useBaseInventories,
@@ -23,8 +21,10 @@ import type {
   BaseInventory,
 } from '@/shared/contracts/integrations';
 import type { PlaywrightPersona } from '@/shared/contracts/playwright';
+import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/shared/contracts/playwright';
 import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
 import { api, ApiError } from '@/shared/lib/api-client';
+import { normalizePlaywrightPersonas } from '@/shared/lib/playwright/personas';
 import {
   createListQueryV2,
   createSingleQueryV2,

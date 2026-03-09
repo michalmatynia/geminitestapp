@@ -13,7 +13,7 @@ import {
   readPromptExploderApplyPayloadSnapshot,
   savePromptExploderApplyPromptForCaseResolver,
   type PromptExploderBridgePayload,
-} from '@/features/prompt-exploder';
+} from '@/shared/lib/prompt-exploder/bridge';
 import type {
   CaseResolverFile,
   CaseResolverFileEditDraft,

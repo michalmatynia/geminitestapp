@@ -163,7 +163,7 @@ vi.mock('@/shared/utils/observability/client-error-logger', () => ({
   logClientError: vi.fn(),
 }));
 
-vi.mock('@/features/prompt-exploder', () => ({
+vi.mock('@/shared/lib/prompt-exploder/bridge', () => ({
   savePromptExploderDraftPrompt: mocks.savePromptExploderDraftPrompt,
 }));
 

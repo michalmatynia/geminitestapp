@@ -19,7 +19,7 @@ import { FormModal, Skeleton } from '@/shared/ui';
 
 import ProductForm from './ProductForm';
 
-const FileManager = dynamic(() => import('@/features/files'), {
+const FileManager = dynamic(() => import('@/shared/ui/files'), {
   ssr: false,
 });
 

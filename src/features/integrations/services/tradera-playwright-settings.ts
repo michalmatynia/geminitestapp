@@ -1,12 +1,10 @@
 import 'server-only';
 
 import { decryptSecret } from '@/features/integrations/server';
-import {
-  defaultPlaywrightSettings,
-  PLAYWRIGHT_PERSONA_SETTINGS_KEY,
-} from '@/features/playwright';
-import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations';
+import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/shared/contracts/playwright';
+import { getSettingValue } from '@/shared/lib/ai/server-settings';
+import { defaultPlaywrightSettings } from '@/shared/lib/playwright/settings';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import type { BrowserContextOptions } from 'playwright';

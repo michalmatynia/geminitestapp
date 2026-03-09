@@ -1,12 +1,12 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-09T04:05:08.925Z
+Generated at: 2026-03-09T04:34:32.495Z
 
 ## Snapshot
 
-- Source files: 5167
-- Source lines: 839569
-- use client files: 1494
+- Source files: 5170
+- Source lines: 839582
+- use client files: 1493
 - Files >= 1000 LOC: 10
 - Files >= 1500 LOC: 3
 - Largest file: `src/features/kangur/ui/components/KangurAiTutorWidget.tsx` (3073 LOC)
@@ -14,8 +14,8 @@ Generated at: 2026-03-09T04:05:08.925Z
 - API delegated server routes: 0
 - API routes without apiHandler/delegation: 15
 - API explicit cache policy coverage: 336/336 (100.0%)
-- Cross-feature dependency pairs: 30
-- Shared -> features imports: 75
+- Cross-feature dependency pairs: 23
+- Shared -> features imports: 76
 - setInterval occurrences: 22
 - Prop-drilling chains (depth >= 3): 24
 - Prop-drilling chains (depth >= 4): 0
@@ -56,9 +56,9 @@ Generated at: 2026-03-09T04:05:08.925Z
 | `cms -> viewer3d` | 8 |
 | `kangur -> cms` | 8 |
 | `products -> internationalization` | 8 |
-| `integrations -> playwright` | 7 |
 | `products -> foldertree` | 7 |
 | `prompt-exploder -> foldertree` | 7 |
+| `admin -> foldertree` | 5 |
 
 ## Top File Hotspots (by LOC)
 

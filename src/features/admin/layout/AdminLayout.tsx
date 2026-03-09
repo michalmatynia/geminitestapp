@@ -13,11 +13,7 @@ import {
   useAdminLayoutActions,
   useAdminLayoutState,
 } from '@/features/admin/context/AdminLayoutContext';
-import { AuthProvider } from '@/features/auth';
-import {
-  useUserPreferences,
-  useUpdateUserPreferencesMutation,
-} from '@/features/auth';
+import { useUpdateUserPreferences, useUserPreferences } from '@/shared/hooks/useUserPreferences';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { NoteSettingsProvider } from '@/shared/providers/NoteSettingsProvider';
 import { QueryProvider } from '@/shared/providers/QueryProvider';
@@ -40,7 +36,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
   const hydratedUserRef = useRef<string | null>(null);
 
   const { data: preferences } = useUserPreferences();
-  const updatePreferencesMutation = useUpdateUserPreferencesMutation();
+  const updatePreferencesMutation = useUpdateUserPreferences();
 
   const persistMenuCollapsedFallbacks = useCallback((collapsed: boolean): void => {
     if (typeof window === 'undefined') return;
@@ -208,15 +204,13 @@ export function AdminLayout({
   return (
     <SessionProvider session={session}>
       <QueryProvider>
-        <AuthProvider>
-          <ToastProvider>
-            <AdminLayoutProvider initialMenuCollapsed={menuCollapsedDefault}>
-              <NoteSettingsProvider>
-                <AdminLayoutContent>{children}</AdminLayoutContent>
-              </NoteSettingsProvider>
-            </AdminLayoutProvider>
-          </ToastProvider>
-        </AuthProvider>
+        <ToastProvider>
+          <AdminLayoutProvider initialMenuCollapsed={menuCollapsedDefault}>
+            <NoteSettingsProvider>
+              <AdminLayoutContent>{children}</AdminLayoutContent>
+            </NoteSettingsProvider>
+          </AdminLayoutProvider>
+        </ToastProvider>
       </QueryProvider>
     </SessionProvider>
   );

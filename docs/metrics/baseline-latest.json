@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-03-09T04:05:08.925Z",
+  "generatedAt": "2026-03-09T04:34:32.495Z",
   "source": {
-    "totalFiles": 5167,
-    "totalLines": 839569,
-    "useClientFiles": 1494,
+    "totalFiles": 5170,
+    "totalLines": 839582,
+    "useClientFiles": 1493,
     "filesOver800": 70,
     "filesOver1000": 10,
     "filesOver1500": 3,
@@ -109,12 +109,12 @@
   "imports": {
     "appFeatureBarrelImports": 3,
     "appFeatureDeepImports": 146,
-    "sharedToFeaturesStaticImports": 68,
+    "sharedToFeaturesStaticImports": 69,
     "sharedToFeaturesDynamicImports": 7,
-    "sharedToFeaturesTotalImports": 75
+    "sharedToFeaturesTotalImports": 76
   },
   "architecture": {
-    "crossFeatureEdgePairs": 30,
+    "crossFeatureEdgePairs": 23,
     "topCrossFeatureEdges": [
       {
         "edge": "cms -> gsap",
@@ -165,20 +165,12 @@
         "references": 8
       },
       {
-        "edge": "integrations -> playwright",
-        "references": 7
-      },
-      {
         "edge": "products -> foldertree",
         "references": 7
       },
       {
         "edge": "prompt-exploder -> foldertree",
         "references": 7
-      },
-      {
-        "edge": "case-resolver -> prompt-exploder",
-        "references": 6
       },
       {
         "edge": "admin -> foldertree",
@@ -201,20 +193,20 @@
         "references": 4
       },
       {
-        "edge": "ai -> files",
-        "references": 3
-      },
-      {
         "edge": "cms -> admin",
         "references": 3
       },
       {
-        "edge": "products -> files",
-        "references": 3
+        "edge": "ai -> foldertree",
+        "references": 2
       },
       {
-        "edge": "admin -> auth",
-        "references": 2
+        "edge": "ai -> viewer3d",
+        "references": 1
+      },
+      {
+        "edge": "cms -> products",
+        "references": 1
       }
     ],
     "featureSizeByLines": [
@@ -226,7 +218,7 @@
       {
         "feature": "kangur",
         "files": 433,
-        "lines": 91349
+        "lines": 91344
       },
       {
         "feature": "case-resolver",
@@ -246,12 +238,12 @@
       {
         "feature": "integrations",
         "files": 198,
-        "lines": 29705
+        "lines": 29703
       },
       {
         "feature": "prompt-exploder",
         "files": 152,
-        "lines": 26789
+        "lines": 26110
       },
       {
         "feature": "notesapp",
@@ -271,7 +263,7 @@
       {
         "feature": "admin",
         "files": 34,
-        "lines": 6719
+        "lines": 6713
       },
       {
         "feature": "auth",
@@ -334,11 +326,6 @@
         "lines": 2006
       },
       {
-        "feature": "playwright",
-        "files": 8,
-        "lines": 612
-      },
-      {
         "feature": "jobs",
         "files": 4,
         "lines": 480
@@ -347,6 +334,11 @@
         "feature": "gsap",
         "files": 4,
         "lines": 370
+      },
+      {
+        "feature": "playwright",
+        "files": 8,
+        "lines": 206
       },
       {
         "feature": "tooltip-engine",

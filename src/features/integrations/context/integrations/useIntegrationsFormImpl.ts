@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { IntegrationConnection } from '@/shared/contracts/integrations';
-import { defaultPlaywrightSettings } from '@/features/playwright';
+import { defaultPlaywrightSettings } from '@/shared/lib/playwright/settings';
 
 export function useIntegrationsFormImpl(connections: IntegrationConnection[]) {
   const [isModalOpen, setIsModalOpen] = useState(false);

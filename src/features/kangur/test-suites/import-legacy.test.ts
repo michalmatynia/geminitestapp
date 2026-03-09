@@ -13,6 +13,7 @@ describe('importLegacyKangurQuestions', () => {
     expect(importedQuestion?.presentation.choiceStyle).toBe('grid');
     expect(importedQuestion?.choices[0]?.description).toContain('schodkowym');
     expect(importedQuestion?.editorial.auditFlags).toContain('legacy_choice_descriptions');
+    expect(importedQuestion?.editorial.workflowStatus).toBe('draft');
   });
 
   it('flags known inconsistent legacy questions for editorial repair', () => {
@@ -23,6 +24,7 @@ describe('importLegacyKangurQuestions', () => {
 
     expect(importedQuestion).toBeDefined();
     expect(importedQuestion?.editorial.reviewStatus).toBe('needs-fix');
+    expect(importedQuestion?.editorial.workflowStatus).toBe('draft');
     expect(importedQuestion?.editorial.auditFlags).toContain('explanation_answer_mismatch');
   });
 

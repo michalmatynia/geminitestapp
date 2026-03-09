@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { settingsStoreMock, mutateAsyncMock, toastMock } = vi.hoisted(() => ({
@@ -34,6 +34,7 @@ vi.mock('@/shared/ui', async (importOriginal) => {
 });
 
 import { KANGUR_TEST_QUESTIONS_SETTING_KEY } from '../test-questions';
+import { KANGUR_TEST_SUITES_SETTING_KEY } from '../test-suites';
 import { KangurQuestionsManagerPanel } from './KangurQuestionsManagerPanel';
 import { KangurQuestionsManagerRuntimeProvider } from './context/KangurQuestionsManagerRuntimeContext';
 import {
@@ -49,6 +50,7 @@ const suite = {
   gradeLevel: 'III-IV',
   category: 'matematyczny',
   enabled: true,
+  publicationStatus: 'draft',
   sortOrder: 1000,
 } as const;
 
@@ -72,6 +74,12 @@ describe('KangurQuestionsManagerPanel', () => {
             pointValue: 3,
             explanation: 'Bo 2+2=4',
             illustration: { type: 'none' },
+            editorial: {
+              source: 'manual',
+              reviewStatus: 'ready',
+              workflowStatus: 'published',
+              auditFlags: [],
+            },
           },
           'question-review': {
             id: 'question-review',
@@ -89,6 +97,7 @@ describe('KangurQuestionsManagerPanel', () => {
             editorial: {
               source: 'legacy-import',
               reviewStatus: 'needs-review',
+              workflowStatus: 'draft',
               auditFlags: ['legacy_choice_descriptions'],
             },
           },
@@ -116,10 +125,14 @@ describe('KangurQuestionsManagerPanel', () => {
             editorial: {
               source: 'legacy-import',
               reviewStatus: 'needs-fix',
+              workflowStatus: 'draft',
               auditFlags: ['explanation_answer_mismatch'],
             },
           },
         });
+      }
+      if (key === KANGUR_TEST_SUITES_SETTING_KEY) {
+        return JSON.stringify([suite]);
       }
       return null;
     });
@@ -137,6 +150,8 @@ describe('KangurQuestionsManagerPanel', () => {
     expect(screen.getByText('Needs review 1')).toBeInTheDocument();
     expect(screen.getByText('Needs fix 1')).toBeInTheDocument();
     expect(screen.getByText('SVG 1')).toBeInTheDocument();
+    expect(screen.getByText('Draft 2')).toBeInTheDocument();
+    expect(screen.getByText('Published 1')).toBeInTheDocument();
     expect(screen.getByText('Gotowe pytanie')).toBeInTheDocument();
     expect(screen.getByText('Pytanie do review')).toBeInTheDocument();
     expect(screen.getByText('Pytanie do naprawy')).toBeInTheDocument();
@@ -166,6 +181,20 @@ describe('KangurQuestionsManagerPanel', () => {
     expect(screen.queryByText('Gotowe pytanie')).not.toBeInTheDocument();
     expect(screen.queryByText('Pytanie do review')).not.toBeInTheDocument();
     expect(screen.getByText('Pytanie do naprawy')).toBeInTheDocument();
+  });
+
+  it('filters questions by workflow state', () => {
+    render(
+      <KangurQuestionsManagerRuntimeProvider suite={suite} onClose={vi.fn()}>
+        <KangurQuestionsManagerPanel />
+      </KangurQuestionsManagerRuntimeProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Published' }));
+
+    expect(screen.getByText('Gotowe pytanie')).toBeInTheDocument();
+    expect(screen.queryByText('Pytanie do review')).not.toBeInTheDocument();
+    expect(screen.queryByText('Pytanie do naprawy')).not.toBeInTheDocument();
   });
 
   it('orders the review queue by authoring priority', () => {
@@ -225,6 +254,249 @@ describe('KangurQuestionsManagerPanel', () => {
     expect(screen.getByRole('button', { name: 'Save Question' })).toBeDisabled();
   });
 
+  it('publishes ready questions for the current suite directly from the question manager', async () => {
+    settingsStoreMock.get.mockImplementation((key: string) => {
+      if (key === KANGUR_TEST_QUESTIONS_SETTING_KEY) {
+        return JSON.stringify({
+          'question-ready': {
+            id: 'question-ready',
+            suiteId: 'suite-1',
+            sortOrder: 1000,
+            prompt: 'Gotowe pytanie do publikacji',
+            choices: [
+              { label: 'A', text: '3' },
+              { label: 'B', text: '4' },
+            ],
+            correctChoiceLabel: 'B',
+            pointValue: 3,
+            explanation: 'Bo 2+2=4',
+            illustration: { type: 'none' },
+            editorial: {
+              source: 'manual',
+              reviewStatus: 'ready',
+              workflowStatus: 'ready',
+              auditFlags: [],
+            },
+          },
+        });
+      }
+      if (key === KANGUR_TEST_SUITES_SETTING_KEY) {
+        return JSON.stringify([suite]);
+      }
+      return null;
+    });
+
+    render(
+      <KangurQuestionsManagerRuntimeProvider suite={suite} onClose={vi.fn()}>
+        <KangurQuestionsManagerPanel />
+      </KangurQuestionsManagerRuntimeProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Publish ready questions' }));
+
+    await waitFor(() => {
+      expect(
+        mutateAsyncMock.mock.calls.some(([input]) => input?.key === KANGUR_TEST_QUESTIONS_SETTING_KEY)
+      ).toBe(true);
+    });
+    const questionCall = mutateAsyncMock.mock.calls.find(
+      ([input]) => input?.key === KANGUR_TEST_QUESTIONS_SETTING_KEY
+    );
+    expect(JSON.parse(String(questionCall?.[0]?.value))['question-ready'].editorial.workflowStatus).toBe(
+      'published'
+    );
+    expect(toastMock).toHaveBeenCalledWith(
+      'Published 1 ready question in Kangur 2024.',
+      { variant: 'success' }
+    );
+  });
+
+  it('can publish and go live in one step when the current suite is fully clean after publish', async () => {
+    settingsStoreMock.get.mockImplementation((key: string) => {
+      if (key === KANGUR_TEST_QUESTIONS_SETTING_KEY) {
+        return JSON.stringify({
+          'question-ready': {
+            id: 'question-ready',
+            suiteId: 'suite-1',
+            sortOrder: 1000,
+            prompt: 'Gotowe pytanie do publikacji',
+            choices: [
+              { label: 'A', text: '3' },
+              { label: 'B', text: '4' },
+            ],
+            correctChoiceLabel: 'B',
+            pointValue: 3,
+            explanation: 'Bo 2+2=4',
+            illustration: { type: 'none' },
+            editorial: {
+              source: 'manual',
+              reviewStatus: 'ready',
+              workflowStatus: 'ready',
+              auditFlags: [],
+            },
+          },
+        });
+      }
+      if (key === KANGUR_TEST_SUITES_SETTING_KEY) {
+        return JSON.stringify([{ ...suite, publicationStatus: 'draft' }]);
+      }
+      return null;
+    });
+
+    render(
+      <KangurQuestionsManagerRuntimeProvider suite={suite} onClose={vi.fn()}>
+        <KangurQuestionsManagerPanel />
+      </KangurQuestionsManagerRuntimeProvider>
+    );
+
+    expect(screen.getByText('Go live after publish')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Go live for learners' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Publish and go live' }));
+
+    await waitFor(() => {
+      expect(
+        mutateAsyncMock.mock.calls.some(([input]) => input?.key === KANGUR_TEST_SUITES_SETTING_KEY)
+      ).toBe(true);
+    });
+
+    const questionCall = mutateAsyncMock.mock.calls.find(
+      ([input]) => input?.key === KANGUR_TEST_QUESTIONS_SETTING_KEY
+    );
+    const suiteCall = mutateAsyncMock.mock.calls.find(
+      ([input]) => input?.key === KANGUR_TEST_SUITES_SETTING_KEY
+    );
+
+    expect(JSON.parse(String(questionCall?.[0]?.value))['question-ready'].editorial.workflowStatus).toBe(
+      'published'
+    );
+    expect(JSON.parse(String(suiteCall?.[0]?.value))[0].publicationStatus).toBe('live');
+    expect(toastMock).toHaveBeenCalledWith(
+      'Published 1 ready question and marked Kangur 2024 live for learners (1 suite updated).',
+      { variant: 'success' }
+    );
+  });
+
+  it('can mark the current suite live directly from the question manager', async () => {
+    settingsStoreMock.get.mockImplementation((key: string) => {
+      if (key === KANGUR_TEST_QUESTIONS_SETTING_KEY) {
+        return JSON.stringify({
+          'question-ready': {
+            id: 'question-ready',
+            suiteId: 'suite-1',
+            sortOrder: 1000,
+            prompt: 'Gotowe pytanie',
+            choices: [
+              { label: 'A', text: '3' },
+              { label: 'B', text: '4' },
+            ],
+            correctChoiceLabel: 'B',
+            pointValue: 3,
+            explanation: 'Bo 2+2=4',
+            illustration: { type: 'none' },
+            editorial: {
+              source: 'manual',
+              reviewStatus: 'ready',
+              workflowStatus: 'published',
+              auditFlags: [],
+            },
+          },
+        });
+      }
+      if (key === KANGUR_TEST_SUITES_SETTING_KEY) {
+        return JSON.stringify([{ ...suite, publicationStatus: 'draft' }]);
+      }
+      return null;
+    });
+
+    render(
+      <KangurQuestionsManagerRuntimeProvider suite={suite} onClose={vi.fn()}>
+        <KangurQuestionsManagerPanel />
+      </KangurQuestionsManagerRuntimeProvider>
+    );
+
+    expect(screen.getByText('This suite is fully published and ready to go live for learners.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Go live for learners' }));
+
+    await waitFor(() => {
+      expect(
+        mutateAsyncMock.mock.calls.some(([input]) => input?.key === KANGUR_TEST_SUITES_SETTING_KEY)
+      ).toBe(true);
+    });
+    const suiteCall = mutateAsyncMock.mock.calls.find(
+      ([input]) => input?.key === KANGUR_TEST_SUITES_SETTING_KEY
+    );
+    expect(JSON.parse(String(suiteCall?.[0]?.value))[0].publicationStatus).toBe('live');
+    expect(toastMock).toHaveBeenCalledWith(
+      'Suite Kangur 2024 is now live for learners (1 suite updated).',
+      { variant: 'success' }
+    );
+  });
+
+  it('can take the current live suite offline directly from the question manager', async () => {
+    const liveSuite = {
+      ...suite,
+      publicationStatus: 'live' as const,
+      publishedAt: '2026-03-09T12:00:00.000Z',
+    };
+    settingsStoreMock.get.mockImplementation((key: string) => {
+      if (key === KANGUR_TEST_QUESTIONS_SETTING_KEY) {
+        return JSON.stringify({
+          'question-ready': {
+            id: 'question-ready',
+            suiteId: 'suite-1',
+            sortOrder: 1000,
+            prompt: 'Gotowe pytanie',
+            choices: [
+              { label: 'A', text: '3' },
+              { label: 'B', text: '4' },
+            ],
+            correctChoiceLabel: 'B',
+            pointValue: 3,
+            explanation: 'Bo 2+2=4',
+            illustration: { type: 'none' },
+            editorial: {
+              source: 'manual',
+              reviewStatus: 'ready',
+              workflowStatus: 'published',
+              auditFlags: [],
+            },
+          },
+        });
+      }
+      if (key === KANGUR_TEST_SUITES_SETTING_KEY) {
+        return JSON.stringify([liveSuite]);
+      }
+      return null;
+    });
+
+    render(
+      <KangurQuestionsManagerRuntimeProvider suite={liveSuite} onClose={vi.fn()}>
+        <KangurQuestionsManagerPanel />
+      </KangurQuestionsManagerRuntimeProvider>
+    );
+
+    expect(
+      screen.getByText(
+        'This suite is live for learners. Draft edits, deletions, or unpublished duplicates will take it offline until the published set is complete again.'
+      )
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Take suite offline' }));
+
+    await waitFor(() => {
+      expect(
+        mutateAsyncMock.mock.calls.some(([input]) => input?.key === KANGUR_TEST_SUITES_SETTING_KEY)
+      ).toBe(true);
+    });
+    const suiteCall = mutateAsyncMock.mock.calls.find(
+      ([input]) => input?.key === KANGUR_TEST_SUITES_SETTING_KEY
+    );
+    expect(JSON.parse(String(suiteCall?.[0]?.value))[0].publicationStatus).toBe('draft');
+    expect(toastMock).toHaveBeenCalledWith(
+      'Suite Kangur 2024 is now offline for learners (1 suite updated).',
+      { variant: 'success' }
+    );
+  });
+
   it('offers local draft recovery for an edited question', () => {
     const recoveredQuestion = {
       id: 'question-ready',
@@ -243,6 +515,7 @@ describe('KangurQuestionsManagerPanel', () => {
       editorial: {
         source: 'manual' as const,
         reviewStatus: 'ready' as const,
+        workflowStatus: 'draft' as const,
         auditFlags: [],
       },
     };
@@ -316,5 +589,279 @@ describe('KangurQuestionsManagerPanel', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('takes a live suite offline when a new draft question is added', async () => {
+    const liveSuite = {
+      ...suite,
+      publicationStatus: 'live' as const,
+      publishedAt: '2026-03-09T12:00:00.000Z',
+    };
+    settingsStoreMock.get.mockImplementation((key: string) => {
+      if (key === KANGUR_TEST_QUESTIONS_SETTING_KEY) {
+        return JSON.stringify({
+          'question-ready': {
+            id: 'question-ready',
+            suiteId: 'suite-1',
+            sortOrder: 1000,
+            prompt: 'Gotowe pytanie',
+            choices: [
+              { label: 'A', text: '3' },
+              { label: 'B', text: '4' },
+            ],
+            correctChoiceLabel: 'B',
+            pointValue: 3,
+            explanation: 'Bo 2+2=4',
+            illustration: { type: 'none' },
+            editorial: {
+              source: 'manual',
+              reviewStatus: 'ready',
+              workflowStatus: 'published',
+              auditFlags: [],
+            },
+          },
+        });
+      }
+      if (key === KANGUR_TEST_SUITES_SETTING_KEY) {
+        return JSON.stringify([liveSuite]);
+      }
+      return null;
+    });
+
+    render(
+      <KangurQuestionsManagerRuntimeProvider suite={liveSuite} onClose={vi.fn()}>
+        <KangurQuestionsManagerPanel />
+      </KangurQuestionsManagerRuntimeProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add question' }));
+    fireEvent.change(screen.getByPlaceholderText(/Enter the question text/i), {
+      target: { value: 'Nowe pytanie robocze' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Choice A text'), {
+      target: { value: '3' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Choice B text'), {
+      target: { value: '4' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Choice C text'), {
+      target: { value: '5' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Choice D text'), {
+      target: { value: '6' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Choice E text'), {
+      target: { value: '7' },
+    });
+    fireEvent.change(
+      screen.getByPlaceholderText(/Step-by-step explanation of why the correct answer is correct/i),
+      {
+        target: { value: 'To jest wersja robocza.' },
+      }
+    );
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByRole('button', { name: 'Add Question' })).toBeEnabled();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Add Question' }));
+
+    await waitFor(() => {
+      expect(
+        mutateAsyncMock.mock.calls.some(([input]) => input?.key === KANGUR_TEST_SUITES_SETTING_KEY)
+      ).toBe(true);
+    });
+    const suiteCall = mutateAsyncMock.mock.calls.find(
+      ([input]) => input?.key === KANGUR_TEST_SUITES_SETTING_KEY
+    );
+    expect(JSON.parse(String(suiteCall?.[0]?.value))[0].publicationStatus).toBe('draft');
+    expect(toastMock).toHaveBeenCalledWith(
+      'Question saved. The live suite was taken offline because its published question set changed.',
+      { variant: 'warning' }
+    );
+  });
+
+  it('takes a live suite offline when duplicating a published question', async () => {
+    const liveSuite = {
+      ...suite,
+      publicationStatus: 'live' as const,
+      publishedAt: '2026-03-09T12:00:00.000Z',
+    };
+    settingsStoreMock.get.mockImplementation((key: string) => {
+      if (key === KANGUR_TEST_QUESTIONS_SETTING_KEY) {
+        return JSON.stringify({
+          'question-ready': {
+            id: 'question-ready',
+            suiteId: 'suite-1',
+            sortOrder: 1000,
+            prompt: 'Gotowe pytanie',
+            choices: [
+              { label: 'A', text: '3' },
+              { label: 'B', text: '4' },
+            ],
+            correctChoiceLabel: 'B',
+            pointValue: 3,
+            explanation: 'Bo 2+2=4',
+            illustration: { type: 'none' },
+            editorial: {
+              source: 'manual',
+              reviewStatus: 'ready',
+              workflowStatus: 'published',
+              auditFlags: [],
+            },
+          },
+        });
+      }
+      if (key === KANGUR_TEST_SUITES_SETTING_KEY) {
+        return JSON.stringify([liveSuite]);
+      }
+      return null;
+    });
+
+    render(
+      <KangurQuestionsManagerRuntimeProvider suite={liveSuite} onClose={vi.fn()}>
+        <KangurQuestionsManagerPanel />
+      </KangurQuestionsManagerRuntimeProvider>
+    );
+
+    fireEvent.click(screen.getByTitle('Duplicate question'));
+
+    await waitFor(() => {
+      expect(
+        mutateAsyncMock.mock.calls.some(([input]) => input?.key === KANGUR_TEST_SUITES_SETTING_KEY)
+      ).toBe(true);
+    });
+    const suiteCall = mutateAsyncMock.mock.calls.find(
+      ([input]) => input?.key === KANGUR_TEST_SUITES_SETTING_KEY
+    );
+    expect(JSON.parse(String(suiteCall?.[0]?.value))[0].publicationStatus).toBe('draft');
+    expect(toastMock).toHaveBeenCalledWith(
+      'Question duplicated. The live suite was taken offline because its published question set changed.',
+      { variant: 'warning' }
+    );
+  });
+
+  it('takes a live suite offline when a published question is downgraded to draft', async () => {
+    const liveSuite = {
+      ...suite,
+      publicationStatus: 'live' as const,
+      publishedAt: '2026-03-09T12:00:00.000Z',
+    };
+    settingsStoreMock.get.mockImplementation((key: string) => {
+      if (key === KANGUR_TEST_QUESTIONS_SETTING_KEY) {
+        return JSON.stringify({
+          'question-ready': {
+            id: 'question-ready',
+            suiteId: 'suite-1',
+            sortOrder: 1000,
+            prompt: 'Gotowe pytanie',
+            choices: [
+              { label: 'A', text: '3' },
+              { label: 'B', text: '4' },
+            ],
+            correctChoiceLabel: 'B',
+            pointValue: 3,
+            explanation: 'Bo 2+2=4',
+            illustration: { type: 'none' },
+            editorial: {
+              source: 'manual',
+              reviewStatus: 'ready',
+              workflowStatus: 'published',
+              publishedAt: '2026-03-09T12:00:00.000Z',
+              auditFlags: [],
+            },
+          },
+        });
+      }
+      if (key === KANGUR_TEST_SUITES_SETTING_KEY) {
+        return JSON.stringify([liveSuite]);
+      }
+      return null;
+    });
+
+    render(
+      <KangurQuestionsManagerRuntimeProvider suite={liveSuite} onClose={vi.fn()}>
+        <KangurQuestionsManagerPanel />
+      </KangurQuestionsManagerRuntimeProvider>
+    );
+
+    fireEvent.click(screen.getByTitle('Edit question'));
+    fireEvent.click(screen.getByRole('button', { name: 'Draft' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save Question' }));
+
+    await waitFor(() => {
+      expect(
+        mutateAsyncMock.mock.calls.some(([input]) => input?.key === KANGUR_TEST_SUITES_SETTING_KEY)
+      ).toBe(true);
+    });
+    const suiteCall = mutateAsyncMock.mock.calls.find(
+      ([input]) => input?.key === KANGUR_TEST_SUITES_SETTING_KEY
+    );
+    expect(JSON.parse(String(suiteCall?.[0]?.value))[0].publicationStatus).toBe('draft');
+    expect(toastMock).toHaveBeenCalledWith(
+      'Question saved. The live suite was taken offline because its published question set changed.',
+      { variant: 'warning' }
+    );
+  });
+
+  it('moves a published question back to draft when learner-facing content changes', async () => {
+    settingsStoreMock.get.mockImplementation((key: string) => {
+      if (key === KANGUR_TEST_QUESTIONS_SETTING_KEY) {
+        return JSON.stringify({
+          'question-ready': {
+            id: 'question-ready',
+            suiteId: 'suite-1',
+            sortOrder: 1000,
+            prompt: 'Gotowe pytanie',
+            choices: [
+              { label: 'A', text: '3' },
+              { label: 'B', text: '4' },
+            ],
+            correctChoiceLabel: 'B',
+            pointValue: 3,
+            explanation: 'Bo 2+2=4',
+            illustration: { type: 'none' },
+            editorial: {
+              source: 'manual',
+              reviewStatus: 'ready',
+              workflowStatus: 'published',
+              publishedAt: '2026-03-09T12:00:00.000Z',
+              auditFlags: [],
+            },
+          },
+        });
+      }
+      if (key === KANGUR_TEST_SUITES_SETTING_KEY) {
+        return JSON.stringify([suite]);
+      }
+      return null;
+    });
+
+    render(
+      <KangurQuestionsManagerRuntimeProvider suite={suite} onClose={vi.fn()}>
+        <KangurQuestionsManagerPanel />
+      </KangurQuestionsManagerRuntimeProvider>
+    );
+
+    fireEvent.click(screen.getByTitle('Edit question'));
+    fireEvent.change(screen.getByPlaceholderText(/Enter the question text/i), {
+      target: { value: 'Gotowe pytanie po zmianie' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save Question' }));
+
+    await waitFor(() => {
+      expect(
+        mutateAsyncMock.mock.calls.some(([input]) => input?.key === KANGUR_TEST_QUESTIONS_SETTING_KEY)
+      ).toBe(true);
+    });
+
+    const questionCall = mutateAsyncMock.mock.calls.find(
+      ([input]) => input?.key === KANGUR_TEST_QUESTIONS_SETTING_KEY
+    );
+    expect(JSON.parse(String(questionCall?.[0]?.value))['question-ready'].editorial.workflowStatus).toBe(
+      'draft'
+    );
+    expect(JSON.parse(String(questionCall?.[0]?.value))['question-ready'].editorial.publishedAt).toBeUndefined();
+    expect(toastMock).toHaveBeenCalledWith(
+      'Question updated. Learner-facing changes moved this published question back to draft.',
+      { variant: 'warning' }
+    );
   });
 });

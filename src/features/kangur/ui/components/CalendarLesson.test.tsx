@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { KangurLessonNavigationWidget } from '@/features/kangur/ui/components/KangurLessonNavigationWidget';
@@ -40,9 +40,11 @@ vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
     ...actual,
     addXp: (...args: unknown[]): unknown => addXpMock(...args),
     loadProgress: (): unknown => loadProgressMock(),
-    XP_REWARDS: {
-      lesson_completed: 40,
-    },
+    createLessonCompletionReward: vi.fn(() => ({
+      xp: 28,
+      scorePercent: 60,
+      progressUpdates: {},
+    })),
   };
 });
 
@@ -68,7 +70,10 @@ describe('CalendarLesson section hub layout', () => {
     expect(screen.getByTestId('lesson-hub-progress-dni')).toBeInTheDocument();
     expect(screen.getByTestId('lesson-hub-progress-miesiace')).toBeInTheDocument();
     expect(screen.getByTestId('lesson-hub-progress-data')).toBeInTheDocument();
-    expect(screen.queryByTestId('lesson-hub-progress-game_days')).toBeNull();
+    expect(screen.getByTestId('lesson-hub-progress-game_days')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-hub-progress-dot-game_days-0')).toHaveClass(
+      'kangur-step-pill-pending'
+    );
   });
 
   it('opens a lesson section and returns to topics', async () => {
@@ -135,6 +140,9 @@ describe('CalendarLesson section hub layout', () => {
       screen
         .getByRole('button', { name: 'Wróć do tematów' })
         .closest('[data-testid="calendar-lesson-game-shell"]')
+    ).toBeNull();
+    expect(
+      within(screen.getByTestId('calendar-lesson-game-shell')).queryByText('Ćwiczenie: Daty')
     ).toBeNull();
     expect(screen.getByTestId('mock-calendar-interactive-game')).toBeInTheDocument();
     expect(screen.getByTestId('mock-calendar-interactive-section')).toHaveTextContent('data');

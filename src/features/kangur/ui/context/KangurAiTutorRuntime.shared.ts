@@ -13,38 +13,6 @@ import {
 } from 'react';
 
 import {
-  DEFAULT_AGENT_PERSONA_MOOD_ID,
-  agentPersonaMoodIdSchema,
-  type AgentPersona,
-  type AgentPersonaMoodId,
-} from '@/shared/contracts/agents';
-import type { AgentTeachingChatSource } from '@/shared/contracts/agent-teaching';
-import {
-  kangurAiTutorCoachingFrameSchema,
-  kangurAiTutorLearnerMemorySchema,
-  kangurAiTutorUsageSummarySchema,
-  type KangurAiTutorChatResponse,
-  type KangurAiTutorCoachingFrame,
-  type KangurAiTutorConversationContext,
-  type KangurAiTutorFocusKind,
-  type KangurAiTutorFollowUpAction,
-  type KangurAiTutorInteractionIntent,
-  type KangurAiTutorLearnerMemory,
-  type KangurAiTutorPromptMode,
-  type KangurAiTutorUsageSummary,
-  type KangurAiTutorUsageResponse,
-} from '@/shared/contracts/kangur-ai-tutor';
-import {
-  createDefaultKangurAiTutorLearnerMood,
-  getKangurTutorMoodPreset,
-  type KangurAiTutorLearnerMood,
-  type KangurTutorMoodId,
-} from '@/shared/contracts/kangur-ai-tutor-mood';
-import { useAgentPersonaVisuals } from '@/shared/hooks/useAgentPersonaVisuals';
-import { ApiError, api } from '@/shared/lib/api-client';
-import { resolveAgentPersonaMood } from '@/shared/lib/agent-personas';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import {
   useOptionalContextRegistryPageEnvelope,
   useRegisterContextRegistryPageSource,
 } from '@/features/ai/ai-context-registry/context/page-context';
@@ -64,6 +32,39 @@ import {
   type KangurAiTutorLearnerSettings,
 } from '@/features/kangur/settings-ai-tutor';
 import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import type { AgentTeachingChatSource } from '@/shared/contracts/agent-teaching';
+import {
+  DEFAULT_AGENT_PERSONA_MOOD_ID,
+  agentPersonaMoodIdSchema,
+  type AgentPersona,
+  type AgentPersonaMoodId,
+} from '@/shared/contracts/agents';
+import {
+  kangurAiTutorCoachingFrameSchema,
+  kangurAiTutorLearnerMemorySchema,
+  kangurAiTutorUsageSummarySchema,
+  type KangurAiTutorChatResponse,
+  type KangurAiTutorCoachingFrame,
+  type KangurAiTutorConversationContext,
+  type KangurAiTutorFocusKind,
+  type KangurAiTutorFollowUpAction,
+  type KangurAiTutorInteractionIntent,
+  type KangurAiTutorLearnerMemory,
+  type KangurAiTutorPromptMode,
+  type KangurAiTutorRecoverySignal,
+  type KangurAiTutorUsageSummary,
+  type KangurAiTutorUsageResponse,
+} from '@/shared/contracts/kangur-ai-tutor';
+import {
+  createDefaultKangurAiTutorLearnerMood,
+  getKangurTutorMoodPreset,
+  type KangurAiTutorLearnerMood,
+  type KangurTutorMoodId,
+} from '@/shared/contracts/kangur-ai-tutor-mood';
+import { useAgentPersonaVisuals } from '@/shared/hooks/useAgentPersonaVisuals';
+import { resolveAgentPersonaMood } from '@/shared/lib/agent-personas';
+import { ApiError, api } from '@/shared/lib/api-client';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
 export type ChatMessage = {
   role: 'user' | 'assistant';
@@ -129,6 +130,14 @@ export type KangurAiTutorContextValue = {
       interactionIntent?: KangurAiTutorInteractionIntent;
     }
   ) => Promise<void>;
+  recordFollowUpCompletion?: (input: {
+    actionId: string;
+    actionLabel: string;
+    actionReason?: string | null;
+    actionPage: string;
+    targetPath: string;
+    targetSearch?: string | null;
+  }) => void;
   setHighlightedText: (text: string | null) => void;
 };
 
@@ -142,8 +151,6 @@ type PersistedKangurAiTutorRuntimeState = {
   sessionStates: Record<string, KangurAiTutorSessionState>;
   learnerMemories: Record<string, KangurAiTutorLearnerMemory>;
 };
-
-type KangurAiTutorRecoverySignal = 'answer_revealed' | 'focus_advanced';
 
 type KangurAiTutorHintRecoveryCandidate = {
   surface: KangurAiTutorConversationContext['surface'];
@@ -169,6 +176,7 @@ export const KangurAiTutorSessionRegistryContext =
   createContext<KangurAiTutorSessionRegistryContextValue | null>(null);
 
 const KANGUR_AI_TUTOR_RUNTIME_STORAGE_KEY = 'kangur-ai-tutor-runtime-v1';
+const KANGUR_AI_TUTOR_MEMORY_SCOPE_SEPARATOR = '::';
 
 const createEmptySessionState = (): KangurAiTutorSessionState => ({
   messages: [],
@@ -187,6 +195,66 @@ const createEmptyPersistedRuntimeState = (): PersistedKangurAiTutorRuntimeState 
 
 const normalizeTutorMessageForComparison = (value: string): string =>
   value.trim().toLocaleLowerCase().replace(/\s+/g, ' ');
+
+const normalizeTutorScopePart = (
+  value: string | null | undefined,
+  maxLength: number
+): string | null => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const normalized = value
+    .trim()
+    .toLocaleLowerCase()
+    .replace(/\s+/g, ' ')
+    .replace(/[^a-z0-9:_-]+/gi, '-')
+    .replace(/-{2,}/g, '-')
+    .replace(/^[-:]+|[-:]+$/g, '');
+
+  if (!normalized) {
+    return null;
+  }
+
+  return normalized.length > maxLength
+    ? normalized.slice(0, maxLength).replace(/[-:]+$/g, '')
+    : normalized;
+};
+
+const buildTutorSessionScope = (
+  sessionContext: KangurAiTutorConversationContext | null | undefined
+): string | null => {
+  if (!sessionContext) {
+    return null;
+  }
+
+  const bucket =
+    normalizeTutorScopePart(sessionContext.contentId, 120) ??
+    normalizeTutorScopePart(sessionContext.assignmentId, 120)?.replace(/^/, 'assignment:') ??
+    normalizeTutorScopePart(sessionContext.focusId, 120)?.replace(
+      /^/,
+      `focus:${sessionContext.focusKind ?? 'unknown'}:`
+    ) ??
+    normalizeTutorScopePart(sessionContext.title, 120)?.replace(/^/, 'title:') ??
+    'none';
+
+  return `${sessionContext.surface}:${bucket}`;
+};
+
+const buildLearnerMemoryKey = (
+  learnerId: string | null | undefined,
+  sessionContext: KangurAiTutorConversationContext | null | undefined
+): string | null => {
+  if (!learnerId) {
+    return null;
+  }
+
+  const scope = buildTutorSessionScope(sessionContext);
+  return scope ? `${learnerId}${KANGUR_AI_TUTOR_MEMORY_SCOPE_SEPARATOR}${scope}` : null;
+};
+
+const isLearnerMemoryKeyForLearner = (key: string, learnerId: string): boolean =>
+  key === learnerId || key.startsWith(`${learnerId}${KANGUR_AI_TUTOR_MEMORY_SCOPE_SEPARATOR}`);
 
 const normalizeTutorContextIdentifier = (
   value: string | null | undefined,
@@ -222,6 +290,17 @@ const countRepeatedUserMessages = (
       ? count + 1
       : count;
   }, 0);
+};
+
+const getLastAssistantCoachingMode = (
+  messages: ChatMessage[],
+  fallback: KangurAiTutorLearnerMemory | null
+): KangurAiTutorCoachingFrame['mode'] | null => {
+  const latestAssistantMessage = [...messages]
+    .reverse()
+    .find((message) => message.role === 'assistant');
+
+  return latestAssistantMessage?.coachingFrame?.mode ?? fallback?.lastCoachingMode ?? null;
 };
 
 const buildTutorRecoveryFocusKey = (
@@ -382,13 +461,13 @@ const loadPersistedRuntimeState = (): PersistedKangurAiTutorRuntimeState => {
       learnerMemories:
         parsed.learnerMemories && typeof parsed.learnerMemories === 'object'
           ? Object.entries(parsed.learnerMemories).reduce<Record<string, KangurAiTutorLearnerMemory>>(
-            (acc, [learnerId, learnerMemory]) => {
+            (acc, [memoryKey, learnerMemory]) => {
               const normalized = normalizePersistedLearnerMemory(learnerMemory);
-              if (!normalized) {
+              if (!normalized || !memoryKey.trim()) {
                 return acc;
               }
 
-              acc[learnerId] = normalized;
+              acc[memoryKey] = normalized;
               return acc;
             },
             {}
@@ -522,15 +601,44 @@ const buildNextLearnerMemory = (input: {
     lastCoachingMode: input.coachingFrame?.mode ?? input.current?.lastCoachingMode,
   });
 
+const buildLearnerMemoryFromCompletedFollowUp = (input: {
+  current: KangurAiTutorLearnerMemory | null;
+  context: KangurAiTutorConversationContext;
+  actionLabel: string;
+  actionReason?: string | null;
+  actionPage: string;
+}): KangurAiTutorLearnerMemory =>
+  omitUndefinedFields({
+    lastSurface: input.context.surface,
+    lastFocusLabel: buildTutorMemoryFocusLabel(input.context) ?? input.current?.lastFocusLabel,
+    lastUnresolvedBlocker: input.current?.lastUnresolvedBlocker,
+    lastRecommendedAction:
+      normalizeTutorMemoryText(
+        input.actionReason
+          ? `Completed follow-up: ${input.actionLabel}: ${input.actionReason}`
+          : `Completed follow-up: ${input.actionLabel}`,
+        160
+      ) ?? input.current?.lastRecommendedAction,
+    lastSuccessfulIntervention:
+      normalizeTutorMemoryText(
+        input.actionReason
+          ? `The learner completed the tutor follow-up ${input.actionLabel} for ${input.actionReason} on ${input.actionPage}.`
+          : `The learner completed the tutor follow-up ${input.actionLabel} on ${input.actionPage}.`,
+        200
+      ) ?? input.current?.lastSuccessfulIntervention,
+    lastCoachingMode: 'next_best_action',
+  });
+
 const buildSessionKey = (
   learnerId: string | null,
   sessionContext: KangurAiTutorConversationContext | null | undefined
 ): string | null => {
-  if (!sessionContext) {
+  const scope = buildTutorSessionScope(sessionContext);
+  if (!scope) {
     return null;
   }
 
-  return `${learnerId ?? 'guest'}:${sessionContext.surface}:${sessionContext.contentId ?? 'none'}`;
+  return `${learnerId ?? 'guest'}:${scope}`;
 };
 
 const areConversationContextsEqual = (
@@ -755,8 +863,14 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
     allowCrossPagePersistence && (tutorSettings?.rememberTutorContext ?? true);
   const allowSelectedTextSupport = tutorSettings?.allowSelectedTextSupport ?? true;
   const showSources = tutorSettings?.showSources ?? true;
+  const activeLearnerMemoryKey = useMemo(
+    () => buildLearnerMemoryKey(activeLearnerId, activeSessionContext),
+    [activeLearnerId, activeSessionContext]
+  );
   const activeLearnerMemory =
-    activeLearnerId && allowLearnerMemory ? learnerMemories[activeLearnerId] ?? null : null;
+    activeLearnerMemoryKey && allowLearnerMemory
+      ? learnerMemories[activeLearnerMemoryKey] ?? null
+      : null;
 
   const activeSessionState = activeSessionKey
     ? (sessionStates[activeSessionKey] ?? createEmptySessionState())
@@ -808,33 +922,33 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
 
   const updateLearnerMemory = useCallback(
     (
-      learnerId: string | null,
+      memoryKey: string | null,
       updater: (memory: KangurAiTutorLearnerMemory | null) => KangurAiTutorLearnerMemory | null
     ) => {
-      if (!learnerId) {
+      if (!memoryKey) {
         return;
       }
 
       setLearnerMemories((prev) => {
-        const currentMemory = prev[learnerId] ?? null;
+        const currentMemory = prev[memoryKey] ?? null;
         const nextMemory = updater(currentMemory);
         if (nextMemory === currentMemory) {
           return prev;
         }
 
         if (!nextMemory) {
-          if (!(learnerId in prev)) {
+          if (!(memoryKey in prev)) {
             return prev;
           }
 
           const nextState = { ...prev };
-          delete nextState[learnerId];
+          delete nextState[memoryKey];
           return nextState;
         }
 
         return {
           ...prev,
-          [learnerId]: nextMemory,
+          [memoryKey]: nextMemory,
         };
       });
     },
@@ -941,6 +1055,9 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
   const pendingHintRecoveryBySessionKeyRef = useRef<
     Record<string, KangurAiTutorHintRecoveryCandidate>
   >({});
+  const recentHintRecoverySignalBySessionKeyRef = useRef<
+    Record<string, KangurAiTutorRecoverySignal>
+  >({});
 
   useEffect(() => {
     if (!allowCrossPagePersistence) {
@@ -975,8 +1092,22 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
       return;
     }
 
-    updateLearnerMemory(activeLearnerId, () => null);
-  }, [activeLearnerId, allowLearnerMemory, updateLearnerMemory]);
+    setLearnerMemories((prev) => {
+      let changed = false;
+      const nextState = { ...prev };
+
+      Object.keys(prev).forEach((memoryKey) => {
+        if (!isLearnerMemoryKeyForLearner(memoryKey, activeLearnerId)) {
+          return;
+        }
+
+        delete nextState[memoryKey];
+        changed = true;
+      });
+
+      return changed ? nextState : prev;
+    });
+  }, [activeLearnerId, allowLearnerMemory]);
 
   useEffect(() => {
     const previousSessionKey = previousSessionKeyRef.current;
@@ -1023,6 +1154,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
       nextQuestionId: activeSessionContext.questionId ?? null,
       nextFocusKind: activeSessionContext.focusKind ?? null,
     });
+    recentHintRecoverySignalBySessionKeyRef.current[activeSessionKey] = recoverySignal;
     delete pendingHintRecoveryBySessionKeyRef.current[activeSessionKey];
   }, [
     activeSessionContext,
@@ -1134,6 +1266,46 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
     [activeSessionKey, updateSessionState]
   );
 
+  const recordFollowUpCompletion = useCallback(
+    (input: {
+      actionId: string;
+      actionLabel: string;
+      actionReason?: string | null;
+      actionPage: string;
+      targetPath: string;
+      targetSearch?: string | null;
+    }) => {
+      if (!allowLearnerMemory || !activeLearnerMemoryKey || !activeSessionContext) {
+        return;
+      }
+
+      updateLearnerMemory(activeLearnerMemoryKey, (currentMemory) =>
+        buildLearnerMemoryFromCompletedFollowUp({
+          current: currentMemory,
+          context: activeSessionContext,
+          actionLabel: input.actionLabel,
+          actionReason: input.actionReason ?? null,
+          actionPage: input.actionPage,
+        })
+      );
+
+      trackKangurClientEvent('kangur_ai_tutor_follow_up_memory_recorded', {
+        surface: activeSessionContext.surface,
+        contentId: activeSessionContext.contentId ?? null,
+        actionId: input.actionId,
+        actionPage: input.actionPage,
+        targetPath: input.targetPath,
+        targetSearch: input.targetSearch ?? null,
+      });
+    },
+    [
+      activeLearnerMemoryKey,
+      activeSessionContext,
+      allowLearnerMemory,
+      updateLearnerMemory,
+    ]
+  );
+
   const sendMessage = useCallback(
     async (
       text: string,
@@ -1162,6 +1334,9 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
         ? (options?.selectedText ?? highlightedText)?.trim() || null
         : null;
       const repeatCount = countRepeatedUserMessages(messages, userMessage.content);
+      const previousCoachingMode = getLastAssistantCoachingMode(messages, activeLearnerMemory);
+      const recentHintRecoverySignal =
+        recentHintRecoverySignalBySessionKeyRef.current[activeSessionKey] ?? null;
       const telemetryContext = {
         surface: activeSessionContext?.surface ?? null,
         contentId: activeSessionContext?.contentId ?? null,
@@ -1174,6 +1349,8 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
         messageCount: outgoingMessages.length,
         isRepeatedQuestion: repeatCount > 0,
         repeatCount,
+        previousCoachingMode,
+        recentHintRecoverySignal,
       };
       updateSessionState(activeSessionKey, (currentState) => ({
         ...currentState,
@@ -1195,6 +1372,13 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
           ...(options?.focusLabel ? { focusLabel: options.focusLabel } : {}),
           ...(options?.assignmentId ? { assignmentId: options.assignmentId } : {}),
           ...(options?.interactionIntent ? { interactionIntent: options.interactionIntent } : {}),
+          ...(repeatCount > 0 ? { repeatedQuestionCount: repeatCount } : {}),
+          ...(recentHintRecoverySignal
+            ? { recentHintRecoverySignal }
+            : {}),
+          ...(previousCoachingMode
+            ? { previousCoachingMode }
+            : {}),
         });
         const result = await api.post<KangurAiTutorChatResponse>('/api/kangur/ai-tutor/chat', {
           messages: outgoingMessages.map((message) => ({
@@ -1226,14 +1410,15 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
         } else {
           delete pendingHintRecoveryBySessionKeyRef.current[activeSessionKey];
         }
+        delete recentHintRecoverySignalBySessionKeyRef.current[activeSessionKey];
         if (result.tutorMood && activeLearnerId) {
           setLearnerMoodById((current) => ({
             ...current,
             [activeLearnerId]: mergeLearnerTutorMood(current[activeLearnerId], result.tutorMood),
           }));
         }
-        if (allowLearnerMemory && activeLearnerId) {
-          updateLearnerMemory(activeLearnerId, (currentMemory) =>
+        if (allowLearnerMemory && activeLearnerMemoryKey) {
+          updateLearnerMemory(activeLearnerMemoryKey, (currentMemory) =>
             buildNextLearnerMemory({
               current: currentMemory,
               context: nextContext,
@@ -1296,6 +1481,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
     },
     [
       activeLearnerId,
+      activeLearnerMemoryKey,
       activeLearnerMemory,
       activeSessionContext,
       activeSessionKey,
@@ -1342,6 +1528,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
       openChat,
       closeChat,
       sendMessage,
+      recordFollowUpCompletion,
       setHighlightedText,
     }),
     [
@@ -1355,6 +1542,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
       isUsageLoading,
       messages,
       openChat,
+      recordFollowUpCompletion,
       sendMessage,
       setHighlightedText,
       tutorAvatarImageUrl,

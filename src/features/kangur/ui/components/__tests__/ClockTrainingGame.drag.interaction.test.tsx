@@ -223,7 +223,7 @@ describe('ClockTrainingGame drag interactions', () => {
     const hourHand = getHourHand(container);
     const minuteHand = getMinuteHand(container);
 
-    expect(screen.getByTestId('clock-training-section-badge')).toHaveTextContent('Sekcja: Godziny');
+    expect(screen.queryByTestId('clock-training-section-badge')).toBeNull();
     expect(screen.getByTestId('clock-training-guidance-title')).toHaveTextContent(
       'Trening godzin'
     );
@@ -249,7 +249,7 @@ describe('ClockTrainingGame drag interactions', () => {
     const hourHand = getHourHand(container);
     const minuteHand = getMinuteHand(container);
 
-    expect(screen.getByTestId('clock-training-section-badge')).toHaveTextContent('Sekcja: Minuty');
+    expect(screen.queryByTestId('clock-training-section-badge')).toBeNull();
     expect(screen.getByTestId('clock-training-guidance-title')).toHaveTextContent(
       'Trening minut'
     );
@@ -286,7 +286,7 @@ describe('ClockTrainingGame drag interactions', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('clock-feedback')).toHaveTextContent(
-        'Prawie! Minuty są blisko.'
+        'Długa wskazówka jest prawie dobrze.'
       );
     });
     expect(screen.getByTestId('clock-feedback')).toHaveTextContent(
@@ -385,5 +385,65 @@ describe('ClockTrainingGame drag interactions', () => {
     expect(screen.getByTestId('clock-feedback')).not.toHaveTextContent(
       'Dodaliśmy krótką powtórkę tego zadania.'
     );
+  });
+
+  it('calls onPracticeSuccess after a correct solve in practice mode', async () => {
+    const onPracticeSuccess = vi.fn();
+    const { container } = render(
+      <ClockTrainingGame onFinish={vi.fn()} onPracticeSuccess={onPracticeSuccess} section='hours' />
+    );
+    const hourHand = getHourHand(container);
+    const taskLabel = screen.getByText('Ustaw pełną godzinę');
+    const taskValueText = taskLabel.nextElementSibling?.textContent ?? '12:00';
+    const target = parseDisplayedTime(taskValueText);
+
+    dragHandToAngle(hourHand, hourToAngle(target.hours));
+    fireEvent.click(screen.getByRole('button', { name: 'Sprawdź! ✅' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('clock-feedback')).toHaveTextContent('Brawo');
+    });
+
+    expect(onPracticeSuccess).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses provided practiceTasks for deterministic staged rounds', () => {
+    render(
+      <ClockTrainingGame
+        onFinish={vi.fn()}
+        practiceTasks={[{ hours: 11, minutes: 0 }]}
+        section='hours'
+      />
+    );
+
+    const taskLabel = screen.getByText('Ustaw pełną godzinę');
+    expect(taskLabel.nextElementSibling).toHaveTextContent('11:00');
+  });
+
+  it('does not call onPracticeSuccess in challenge mode', async () => {
+    const onPracticeSuccess = vi.fn();
+    const { container } = render(
+      <ClockTrainingGame onFinish={vi.fn()} onPracticeSuccess={onPracticeSuccess} section='hours' />
+    );
+    const hourHand = getHourHand(container);
+
+    fireEvent.click(screen.getByTestId('clock-mode-challenge'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('clock-challenge-timer')).toBeInTheDocument();
+    });
+
+    const taskLabel = screen.getByText('Ustaw pełną godzinę');
+    const taskValueText = taskLabel.nextElementSibling?.textContent ?? '12:00';
+    const target = parseDisplayedTime(taskValueText);
+
+    dragHandToAngle(hourHand, hourToAngle(target.hours));
+    fireEvent.click(screen.getByRole('button', { name: 'Sprawdź! ✅' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('clock-feedback')).toHaveTextContent('Brawo');
+    });
+
+    expect(onPracticeSuccess).not.toHaveBeenCalled();
   });
 });

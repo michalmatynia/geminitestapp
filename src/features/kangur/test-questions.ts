@@ -208,6 +208,14 @@ export const getQuestionReviewStatus = (
   q: Pick<KangurTestQuestion, 'editorial'>
 ): KangurTestQuestionReviewStatus => q.editorial.reviewStatus;
 
+export const getQuestionWorkflowStatus = (
+  q: Pick<KangurTestQuestion, 'editorial'>
+): KangurTestQuestion['editorial']['workflowStatus'] => q.editorial.workflowStatus;
+
+export const isPublishedKangurTestQuestion = (
+  question: Pick<KangurTestQuestion, 'editorial'>
+): boolean => question.editorial.workflowStatus === 'published';
+
 export const questionDocumentNeedsRichRenderer = (
   document: KangurLessonDocument | undefined,
   fallbackText: string
@@ -258,7 +266,7 @@ export const createKangurTestQuestion = (suiteId: string, sortOrder = 0): Kangur
       explanation: '',
       illustration: createDefaultIllustration(),
       presentation: { layout: 'classic', choiceStyle: 'list' },
-      editorial: { source: 'manual', reviewStatus: 'ready', auditFlags: [] },
+      editorial: { source: 'manual', reviewStatus: 'ready', workflowStatus: 'draft', auditFlags: [] },
     })
   );
 
@@ -291,6 +299,120 @@ export const getQuestionsForSuite = (
       if (delta !== 0) return delta;
       return a.id.localeCompare(b.id);
     });
+
+export const getPublishedQuestionsForSuite = (
+  store: KangurTestQuestionStore,
+  suiteId: string
+): KangurTestQuestion[] =>
+  getQuestionsForSuite(store, suiteId).filter((question) => isPublishedKangurTestQuestion(question));
+
+export const hasFullyPublishedQuestionSetForSuite = (
+  store: KangurTestQuestionStore,
+  suiteId: string
+): boolean => {
+  const suiteQuestions = getQuestionsForSuite(store, suiteId);
+  return suiteQuestions.length > 0 && suiteQuestions.every((question) => isPublishedKangurTestQuestion(question));
+};
+
+export const publishReadyQuestions = (
+  store: KangurTestQuestionStore,
+  options?: {
+    suiteId?: string;
+    questionIds?: string[];
+    publishedAt?: string;
+  }
+): {
+  store: KangurTestQuestionStore;
+  publishedQuestionIds: string[];
+} => {
+  const questionIds = options?.questionIds ? new Set(options.questionIds) : null;
+  const publishedAt = options?.publishedAt ?? new Date().toISOString();
+  const nextStore: KangurTestQuestionStore = { ...store };
+  const publishedQuestionIds: string[] = [];
+
+  for (const [questionId, question] of Object.entries(store)) {
+    if (options?.suiteId && question.suiteId !== options.suiteId) {
+      continue;
+    }
+
+    if (questionIds && !questionIds.has(questionId)) {
+      continue;
+    }
+
+    if (question.editorial.workflowStatus !== 'ready') {
+      continue;
+    }
+
+    nextStore[questionId] = sanitizeQuestion({
+      ...question,
+      editorial: {
+        ...question.editorial,
+        workflowStatus: 'published',
+        publishedAt,
+      },
+    });
+    publishedQuestionIds.push(questionId);
+  }
+
+  return {
+    store: publishedQuestionIds.length > 0 ? nextStore : store,
+    publishedQuestionIds,
+  };
+};
+
+const getQuestionLearnerPayload = (
+  question: Pick<
+    KangurTestQuestion,
+    | 'prompt'
+    | 'choices'
+    | 'correctChoiceLabel'
+    | 'pointValue'
+    | 'explanation'
+    | 'illustration'
+    | 'stemDocument'
+    | 'explanationDocument'
+    | 'hintDocument'
+    | 'presentation'
+  >
+): string =>
+  JSON.stringify({
+    prompt: question.prompt,
+    choices: question.choices,
+    correctChoiceLabel: question.correctChoiceLabel,
+    pointValue: question.pointValue,
+    explanation: question.explanation ?? null,
+    illustration: question.illustration,
+    stemDocument: question.stemDocument ?? null,
+    explanationDocument: question.explanationDocument ?? null,
+    hintDocument: question.hintDocument ?? null,
+    presentation: question.presentation,
+  });
+
+export const shouldDemotePublishedQuestionAfterEdit = (
+  previousQuestion: KangurTestQuestion,
+  nextQuestion: KangurTestQuestion
+): boolean =>
+  previousQuestion.editorial.workflowStatus === 'published' &&
+  nextQuestion.editorial.workflowStatus === 'published' &&
+  getQuestionLearnerPayload(previousQuestion) !== getQuestionLearnerPayload(nextQuestion);
+
+export const applyPublishedQuestionEditPolicy = (
+  previousQuestion: KangurTestQuestion | null,
+  nextQuestion: KangurTestQuestion
+): KangurTestQuestion => {
+  if (!previousQuestion || !shouldDemotePublishedQuestionAfterEdit(previousQuestion, nextQuestion)) {
+    return nextQuestion;
+  }
+
+  return sanitizeQuestion({
+    ...nextQuestion,
+    editorial: {
+      ...nextQuestion.editorial,
+      workflowStatus: 'draft',
+      publishedAt: undefined,
+    },
+  });
+};
 
 export const reorderQuestions = (questions: KangurTestQuestion[]): KangurTestQuestion[] =>
   questions.map((q, i) => ({ ...q, sortOrder: (i + 1) * KANGUR_QUESTION_SORT_ORDER_GAP }));
@@ -385,15 +507,21 @@ export const formDataToQuestion = (
       sortOrder,
       prompt: formData.prompt.trim(),
       choices: formData.choices,
-    correctChoiceLabel: formData.correctChoiceLabel,
-    pointValue: formData.pointValue,
-    explanation: formData.explanation.trim() || undefined,
-    illustration: formData.illustration,
-    stemDocument: formData.stemDocument ?? buildQuestionTextDocument(formData.prompt),
-    explanationDocument:
-      formData.explanationDocument ?? buildQuestionTextDocument(formData.explanation),
-    hintDocument: formData.hintDocument ?? undefined,
-    presentation: formData.presentation,
-    editorial: formData.editorial,
-  })
+      correctChoiceLabel: formData.correctChoiceLabel,
+      pointValue: formData.pointValue,
+      explanation: formData.explanation.trim() || undefined,
+      illustration: formData.illustration,
+      stemDocument: formData.stemDocument ?? buildQuestionTextDocument(formData.prompt),
+      explanationDocument:
+        formData.explanationDocument ?? buildQuestionTextDocument(formData.explanation),
+      hintDocument: formData.hintDocument ?? undefined,
+      presentation: formData.presentation,
+      editorial: {
+        ...formData.editorial,
+        publishedAt:
+          formData.editorial.workflowStatus === 'published'
+            ? formData.editorial.publishedAt ?? new Date().toISOString()
+            : undefined,
+      },
+    })
   );

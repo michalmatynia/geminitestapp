@@ -21,6 +21,7 @@ const {
   sendMessageMock,
   openChatMock,
   closeChatMock,
+  recordFollowUpCompletionMock,
   navigateToLoginMock,
   setHighlightedTextMock,
   clearSelectionMock,
@@ -34,6 +35,7 @@ const {
   sendMessageMock: vi.fn(),
   openChatMock: vi.fn(),
   closeChatMock: vi.fn(),
+  recordFollowUpCompletionMock: vi.fn(),
   navigateToLoginMock: vi.fn(),
   setHighlightedTextMock: vi.fn(),
   clearSelectionMock: vi.fn(),
@@ -207,6 +209,7 @@ describe('KangurAiTutorWidget', () => {
       openChat: openChatMock,
       closeChat: closeChatMock,
       sendMessage: sendMessageMock,
+      recordFollowUpCompletion: recordFollowUpCompletionMock,
       setHighlightedText: setHighlightedTextMock,
     });
 
@@ -248,6 +251,7 @@ describe('KangurAiTutorWidget', () => {
       openChat: openChatMock,
       closeChat: closeChatMock,
       sendMessage: sendMessageMock,
+      recordFollowUpCompletion: recordFollowUpCompletionMock,
       setHighlightedText: setHighlightedTextMock,
       tutorBehaviorMoodId: 'neutral',
       tutorBehaviorMoodLabel: 'Neutralny',
@@ -322,6 +326,7 @@ describe('KangurAiTutorWidget', () => {
       openChat: openChatMock,
       closeChat: closeChatMock,
       sendMessage: sendMessageMock,
+      recordFollowUpCompletion: recordFollowUpCompletionMock,
       setHighlightedText: setHighlightedTextMock,
       tutorBehaviorMoodId: 'neutral',
       tutorBehaviorMoodLabel: 'Neutralny',
@@ -612,6 +617,7 @@ describe('KangurAiTutorWidget', () => {
       openChat: openChatMock,
       closeChat: closeChatMock,
       sendMessage: sendMessageMock,
+      recordFollowUpCompletion: recordFollowUpCompletionMock,
       setHighlightedText: setHighlightedTextMock,
     });
 
@@ -906,6 +912,8 @@ describe('KangurAiTutorWidget', () => {
     ).toMatchObject({
       pendingFollowUp: {
         actionId: 'recommendation:strengthen_lesson_mastery',
+        actionLabel: 'Otworz lekcje',
+        actionReason: 'Powtorz lekcje: Dodawanie',
         actionPage: 'Lessons',
         pathname: '/kangur/lessons',
         search: '?focus=adding',
@@ -924,6 +932,8 @@ describe('KangurAiTutorWidget', () => {
           pathname: '/kangur/lessons',
           search: '?focus=adding',
           actionId: 'recommendation:strengthen_lesson_mastery',
+          actionLabel: 'Otworz lekcje',
+          actionReason: 'Powtorz lekcje: Dodawanie',
           actionPage: 'Lessons',
           messageIndex: 0,
           hasQuery: true,
@@ -963,6 +973,14 @@ describe('KangurAiTutorWidget', () => {
         })
       )
     );
+    expect(recordFollowUpCompletionMock).toHaveBeenCalledWith({
+      actionId: 'recommendation:strengthen_lesson_mastery',
+      actionLabel: 'Otworz lekcje',
+      actionReason: 'Powtorz lekcje: Dodawanie',
+      actionPage: 'Lessons',
+      targetPath: '/kangur/lessons',
+      targetSearch: '?focus=adding',
+    });
     expect(
       JSON.parse(window.sessionStorage.getItem('kangur-ai-tutor-widget-v1') ?? '{}')
     ).not.toHaveProperty('pendingFollowUp');
@@ -2085,6 +2103,84 @@ describe('KangurAiTutorWidget', () => {
         title: 'Pytanie do rozwiazania',
         action: 'hint',
         promptMode: 'hint',
+      })
+    );
+  });
+
+  it('adapts question quick actions after a previous hint ladder response', async () => {
+    useKangurAiTutorMock.mockReturnValue({
+      enabled: true,
+      tutorSettings: {
+        enabled: true,
+        agentPersonaId: null,
+        motionPresetId: null,
+        uiMode: 'anchored',
+        allowCrossPagePersistence: true,
+        allowLessons: true,
+        testAccessMode: 'guided',
+        showSources: true,
+        allowSelectedTextSupport: true,
+        dailyMessageLimit: null,
+      },
+      tutorName: 'Pomocnik',
+      sessionContext: {
+        surface: 'game',
+        contentId: 'game',
+        title: 'Pytanie do rozwiazania',
+        currentQuestion: 'Ile to 8 + 5?',
+        questionProgressLabel: 'Pytanie 2/10',
+      },
+      isOpen: true,
+      messages: [
+        {
+          role: 'assistant',
+          content: 'Najpierw rozbij liczbe 5 na mniejsze kroki.',
+          coachingFrame: {
+            mode: 'hint_ladder',
+            label: 'Jeden trop',
+            description: 'Daj tylko jeden maly krok.',
+          },
+        },
+      ],
+      isLoading: false,
+      isUsageLoading: false,
+      highlightedText: null,
+      usageSummary: null,
+      openChat: openChatMock,
+      closeChat: closeChatMock,
+      sendMessage: sendMessageMock,
+      setHighlightedText: setHighlightedTextMock,
+    });
+
+    useKangurTextHighlightMock.mockReturnValue({
+      selectedText: null,
+      selectionRect: null,
+      clearSelection: clearSelectionMock,
+    });
+
+    render(<KangurAiTutorWidget />);
+
+    expect(screen.getByRole('button', { name: 'Jak myslec dalej?' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Inny trop' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Jak myslec dalej?' }));
+
+    await waitFor(() =>
+      expect(sendMessageMock).toHaveBeenCalledWith(
+        'Pomóż mi sprawdzić tok myślenia krok po kroku, bez podawania odpowiedzi.',
+        expect.objectContaining({
+          promptMode: 'explain',
+          interactionIntent: 'explain',
+        })
+      )
+    );
+    expect(trackKangurClientEventMock).toHaveBeenCalledWith(
+      'kangur_ai_tutor_quick_action_clicked',
+      expect.objectContaining({
+        surface: 'game',
+        title: 'Pytanie do rozwiazania',
+        action: 'how-think',
+        promptMode: 'explain',
       })
     );
   });

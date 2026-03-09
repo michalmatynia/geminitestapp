@@ -78,6 +78,7 @@ function Harness(): React.JSX.Element {
     isLoading,
     isUsageLoading,
     openChat,
+    recordFollowUpCompletion,
   } = useKangurAiTutor();
   const followUpSummary = messages
     .flatMap((message) =>
@@ -111,6 +112,21 @@ function Harness(): React.JSX.Element {
       </div>
       <button type='button' onClick={openChat}>
         Open tutor
+      </button>
+      <button
+        type='button'
+        onClick={() =>
+          recordFollowUpCompletion?.({
+            actionId: 'recommendation:strengthen_lesson_mastery',
+            actionLabel: 'Otworz lekcje',
+            actionReason: 'Powtorz lekcje: Dodawanie',
+            actionPage: 'Lessons',
+            targetPath: '/kangur/lessons',
+            targetSearch: '?focus=adding',
+          })
+        }
+      >
+        Record follow-up completion
       </button>
       <button
         type='button'
@@ -415,6 +431,18 @@ describe('KangurAiTutorContext', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
 
     await waitFor(() => expect(apiPostMock).toHaveBeenCalledTimes(2));
+    expect(apiPostMock).toHaveBeenLastCalledWith(
+      '/api/kangur/ai-tutor/chat',
+      expect.objectContaining({
+        context: expect.objectContaining({
+          surface: 'lesson',
+          contentId: 'lesson-1',
+          promptMode: 'hint',
+          selectedText: '2 + 2',
+          repeatedQuestionCount: 1,
+        }),
+      })
+    );
     expect(trackKangurClientEventMock).toHaveBeenNthCalledWith(
       1,
       'kangur_ai_tutor_repeat_question_detected',
@@ -520,6 +548,25 @@ describe('KangurAiTutorContext', () => {
     );
     expect(trackKangurClientEventMock).toHaveBeenCalledTimes(1);
 
+    apiPostMock.mockClear();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+
+    await waitFor(() => expect(apiPostMock).toHaveBeenCalledTimes(1));
+    expect(apiPostMock).toHaveBeenLastCalledWith(
+      '/api/kangur/ai-tutor/chat',
+      expect.objectContaining({
+        context: expect.objectContaining({
+          surface: 'test',
+          contentId: 'suite-1',
+          promptMode: 'hint',
+          selectedText: '2 + 2',
+          recentHintRecoverySignal: 'answer_revealed',
+          previousCoachingMode: 'hint_ladder',
+        }),
+      })
+    );
+
     rerender(
       <KangurAiTutorProvider
         learnerId='learner-1'
@@ -540,7 +587,13 @@ describe('KangurAiTutorContext', () => {
       </KangurAiTutorProvider>
     );
 
-    await waitFor(() => expect(trackKangurClientEventMock).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(
+        trackKangurClientEventMock.mock.calls.filter(
+          ([eventName]) => eventName === 'kangur_ai_tutor_recovery_after_hint'
+        )
+      ).toHaveLength(1)
+    );
   });
 
   it('hydrates the learner-scoped tutor mood from the active learner profile', async () => {
@@ -996,7 +1049,7 @@ describe('KangurAiTutorContext', () => {
         learnerMemories?: Record<string, Record<string, unknown>>;
       };
 
-      expect(persisted.learnerMemories?.['learner-1']).toMatchObject({
+      expect(persisted.learnerMemories?.['learner-1::lesson:lesson-1']).toMatchObject({
         lastSurface: 'lesson',
         lastFocusLabel: 'Dodawanie',
         lastUnresolvedBlocker: 'Pomóż mi z tym zadaniem.',
@@ -1018,6 +1071,179 @@ describe('KangurAiTutorContext', () => {
         lastCoachingMode: 'hint_ladder',
       },
     });
+  });
+
+  it('scopes compact learner memory to the active tutor context so it does not bleed into another lesson', async () => {
+    apiPostMock
+      .mockResolvedValueOnce({
+        message: 'Najpierw rozbij dodawanie na dwa kroki.',
+        sources: [],
+        followUpActions: [
+          {
+            id: 'recommendation:strengthen_lesson_mastery',
+            label: 'Otworz lekcje',
+            page: 'Lessons',
+            query: {
+              focus: 'adding',
+            },
+            reason: 'Powtorz lekcje: Dodawanie',
+          },
+        ],
+        coachingFrame: {
+          mode: 'hint_ladder',
+          label: 'Jeden trop',
+          description:
+            'Daj tylko jeden maly krok albo pytanie kontrolne, bez pelnego rozwiazania.',
+        },
+      })
+      .mockResolvedValueOnce({
+        message: 'W nowej lekcji zacznij od pierwszej odejmowanej liczby.',
+        sources: [],
+      })
+      .mockResolvedValueOnce({
+        message: 'Wroc do rozbicia dodawania na dwa kroki.',
+        sources: [],
+      });
+
+    function SessionSwitcherHarness(): React.JSX.Element {
+      const [lessonId, setLessonId] = React.useState<'lesson-1' | 'lesson-2'>('lesson-1');
+
+      return (
+        <div>
+          <KangurAiTutorSessionSync
+            learnerId='learner-1'
+            sessionContext={{
+              surface: 'lesson',
+              contentId: lessonId,
+              title: lessonId === 'lesson-1' ? 'Dodawanie' : 'Odejmowanie',
+            }}
+          />
+          <button type='button' onClick={() => setLessonId('lesson-1')}>
+            Go to lesson 1
+          </button>
+          <button type='button' onClick={() => setLessonId('lesson-2')}>
+            Go to lesson 2
+          </button>
+          <Harness />
+        </div>
+      );
+    }
+
+    render(
+      <KangurAiTutorProvider>
+        <SessionSwitcherHarness />
+      </KangurAiTutorProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+    await waitFor(() => expect(apiPostMock).toHaveBeenCalledTimes(1));
+    expect((apiPostMock.mock.calls[0] ?? [])[1]).not.toHaveProperty('memory');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Go to lesson 2' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+
+    await waitFor(() => expect(apiPostMock).toHaveBeenCalledTimes(2));
+    expect((apiPostMock.mock.calls[1] ?? [])[1]).not.toHaveProperty('memory');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Go to lesson 1' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+
+    await waitFor(() => expect(apiPostMock).toHaveBeenCalledTimes(3));
+    expect((apiPostMock.mock.calls[2] ?? [])[1]).toMatchObject({
+      memory: {
+        lastSurface: 'lesson',
+        lastFocusLabel: 'Dodawanie',
+        lastUnresolvedBlocker: 'Pomóż mi z tym zadaniem.',
+        lastRecommendedAction: 'Otworz lekcje: Powtorz lekcje: Dodawanie',
+        lastSuccessfulIntervention: 'Najpierw rozbij dodawanie na dwa kroki.',
+        lastCoachingMode: 'hint_ladder',
+      },
+    });
+  });
+
+  it('records completed tutor follow-ups into compact learner memory for the next request', async () => {
+    apiPostMock
+      .mockResolvedValueOnce({
+        message: 'Wroc do lekcji z dodawania i zrob jedna krotka powtorke.',
+        sources: [],
+        followUpActions: [
+          {
+            id: 'recommendation:strengthen_lesson_mastery',
+            label: 'Otworz lekcje',
+            page: 'Lessons',
+            query: {
+              focus: 'adding',
+            },
+            reason: 'Powtorz lekcje: Dodawanie',
+          },
+        ],
+        coachingFrame: {
+          mode: 'next_best_action',
+          label: 'Nastepny krok',
+          description: 'Wskaz jedna konkretna aktywnosc Kangur jako najlepszy dalszy ruch.',
+        },
+      })
+      .mockResolvedValueOnce({
+        message: 'Dobrze, po tej powtorce sprawdz jeszcze jedna probe.',
+        sources: [],
+      });
+
+    render(
+      <KangurAiTutorProvider
+        learnerId='learner-1'
+        sessionContext={{
+          surface: 'lesson',
+          contentId: 'lesson-1',
+          title: 'Dodawanie',
+        }}
+      >
+        <Harness />
+      </KangurAiTutorProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+    await waitFor(() => expect(apiPostMock).toHaveBeenCalledTimes(1));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Record follow-up completion' }));
+
+    await waitFor(() => {
+      const persisted = JSON.parse(
+        window.sessionStorage.getItem('kangur-ai-tutor-runtime-v1') ?? '{}'
+      ) as {
+        learnerMemories?: Record<string, Record<string, unknown>>;
+      };
+
+      expect(persisted.learnerMemories?.['learner-1::lesson:lesson-1']).toMatchObject({
+        lastSurface: 'lesson',
+        lastFocusLabel: 'Dodawanie',
+        lastRecommendedAction: 'Completed follow-up: Otworz lekcje: Powtorz lekcje: Dodawanie',
+        lastSuccessfulIntervention:
+          'The learner completed the tutor follow-up Otworz lekcje for Powtorz lekcje: Dodawanie on Lessons.',
+        lastCoachingMode: 'next_best_action',
+      });
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+    await waitFor(() => expect(apiPostMock).toHaveBeenCalledTimes(2));
+    expect((apiPostMock.mock.calls[1] ?? [])[1]).toMatchObject({
+      memory: {
+        lastRecommendedAction: 'Completed follow-up: Otworz lekcje: Powtorz lekcje: Dodawanie',
+        lastSuccessfulIntervention:
+          'The learner completed the tutor follow-up Otworz lekcje for Powtorz lekcje: Dodawanie on Lessons.',
+        lastCoachingMode: 'next_best_action',
+      },
+    });
+    expect(trackKangurClientEventMock).toHaveBeenCalledWith(
+      'kangur_ai_tutor_follow_up_memory_recorded',
+      expect.objectContaining({
+        surface: 'lesson',
+        contentId: 'lesson-1',
+        actionId: 'recommendation:strengthen_lesson_mastery',
+        actionPage: 'Lessons',
+        targetPath: '/kangur/lessons',
+        targetSearch: '?focus=adding',
+      })
+    );
   });
 
   it('does not persist compact learner memory when tutor memory is disabled', async () => {

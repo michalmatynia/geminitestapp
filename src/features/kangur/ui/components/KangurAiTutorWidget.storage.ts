@@ -1,11 +1,11 @@
-import type { CSSProperties } from 'react';
-
 import {
   AVATAR_SIZE,
   EDGE_GAP,
   KANGUR_AI_TUTOR_GUEST_INTRO_STORAGE_KEY,
   KANGUR_AI_TUTOR_WIDGET_STORAGE_KEY,
 } from './KangurAiTutorWidget.shared';
+
+import type { CSSProperties } from 'react';
 
 export type KangurAiTutorGuestIntroRecord = {
   status: 'shown' | 'accepted' | 'dismissed';
@@ -25,6 +25,8 @@ export type KangurAiTutorPendingFollowUpRecord = {
   pathname: string;
   search: string;
   actionId: string;
+  actionLabel: string;
+  actionReason: string | null;
   actionPage: string;
   messageIndex: number;
   hasQuery: boolean;
@@ -100,6 +102,8 @@ const isValidPendingFollowUpRecord = (
     typeof input.pathname === 'string' &&
     typeof input.search === 'string' &&
     typeof input.actionId === 'string' &&
+    typeof input.actionLabel === 'string' &&
+    (typeof input.actionReason === 'string' || input.actionReason === null) &&
     typeof input.actionPage === 'string' &&
     typeof input.messageIndex === 'number' &&
     typeof input.hasQuery === 'boolean' &&

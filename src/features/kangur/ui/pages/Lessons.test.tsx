@@ -463,6 +463,46 @@ describe('Lessons', () => {
     expect(screen.queryByTestId('lesson-document-renderer')).not.toBeInTheDocument();
   });
 
+  it('scrolls the active lesson header into view when opening a lesson from the library', async () => {
+    const originalScrollIntoView = Element.prototype.scrollIntoView;
+    const originalHtmlScrollIntoView = HTMLElement.prototype.scrollIntoView;
+    const scrollIntoViewMock = vi.fn();
+
+    Element.prototype.scrollIntoView = scrollIntoViewMock;
+    HTMLElement.prototype.scrollIntoView = scrollIntoViewMock;
+
+    try {
+      setSettingsStore({
+        lessons: [
+          createLesson(),
+          createLesson({
+            id: 'adding-lesson',
+            componentId: 'adding',
+            title: 'Dodawanie',
+            description: 'Jednocyfrowe, dwucyfrowe i gra z pilkami!',
+            emoji: '➕',
+            sortOrder: 1010,
+          }),
+        ],
+      });
+
+      renderLessonsPage();
+
+      fireEvent.click(screen.getByRole('button', { name: /dodawanie/i }));
+
+      await waitFor(() =>
+        expect(scrollIntoViewMock).toHaveBeenCalledWith({
+          behavior: 'auto',
+          block: 'start',
+        })
+      );
+      expect(screen.getByTestId('active-lesson-header')).toBeInTheDocument();
+    } finally {
+      Element.prototype.scrollIntoView = originalScrollIntoView;
+      HTMLElement.prototype.scrollIntoView = originalHtmlScrollIntoView;
+    }
+  });
+
   it('returns from an active lesson to the lessons library via the shared header back button', () => {
     setSettingsStore({
       lessons: [createLesson()],

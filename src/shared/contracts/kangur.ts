@@ -307,6 +307,58 @@ export const normalizeKangurLessonMastery = (value: unknown): KangurLessonMaster
   return normalized;
 };
 
+export const kangurActivityStatsEntrySchema = z.object({
+  sessionsPlayed: kangurProgressCounterSchema,
+  perfectSessions: kangurProgressCounterSchema,
+  totalCorrectAnswers: kangurProgressCounterSchema,
+  totalQuestionsAnswered: kangurProgressCounterSchema,
+  bestScorePercent: kangurLessonMasteryPercentSchema,
+  lastScorePercent: kangurLessonMasteryPercentSchema,
+  currentStreak: kangurProgressCounterSchema,
+  bestStreak: kangurProgressCounterSchema,
+  lastPlayedAt: z.string().datetime({ offset: true }).nullable(),
+});
+export type KangurActivityStatsEntry = z.infer<typeof kangurActivityStatsEntrySchema>;
+
+export const kangurActivityStatsSchema = z.record(
+  z.string().trim().min(1).max(80),
+  kangurActivityStatsEntrySchema
+);
+export type KangurActivityStats = z.infer<typeof kangurActivityStatsSchema>;
+
+const normalizeKangurActivityStatsEntry = (value: unknown): KangurActivityStatsEntry | null => {
+  const parsed = kangurActivityStatsEntrySchema.safeParse(value);
+  if (!parsed.success) {
+    return null;
+  }
+
+  return {
+    ...parsed.data,
+    lastPlayedAt: parsed.data.lastPlayedAt ?? null,
+  };
+};
+
+export const normalizeKangurActivityStats = (value: unknown): KangurActivityStats => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return {};
+  }
+
+  const normalized: KangurActivityStats = {};
+  for (const [rawKey, rawEntry] of Object.entries(value as Record<string, unknown>)) {
+    const key = rawKey.trim();
+    if (!key || key.length > 80) {
+      continue;
+    }
+
+    const entry = normalizeKangurActivityStatsEntry(rawEntry);
+    if (entry) {
+      normalized[key] = entry;
+    }
+  }
+
+  return normalized;
+};
+
 export const kangurProgressStateSchema = z.object({
   totalXp: kangurProgressCounterSchema,
   gamesPlayed: kangurProgressCounterSchema,
@@ -318,6 +370,11 @@ export const kangurProgressStateSchema = z.object({
   badges: kangurProgressListSchema,
   operationsPlayed: kangurProgressListSchema,
   lessonMastery: kangurLessonMasterySchema,
+  totalCorrectAnswers: kangurProgressCounterSchema.optional(),
+  totalQuestionsAnswered: kangurProgressCounterSchema.optional(),
+  currentWinStreak: kangurProgressCounterSchema.optional(),
+  bestWinStreak: kangurProgressCounterSchema.optional(),
+  activityStats: kangurActivityStatsSchema.optional(),
 });
 export type KangurProgressState = z.infer<typeof kangurProgressStateSchema>;
 
@@ -428,16 +485,30 @@ export const createDefaultKangurProgressState = (): KangurProgressState => ({
   badges: [],
   operationsPlayed: [],
   lessonMastery: {},
+  totalCorrectAnswers: 0,
+  totalQuestionsAnswered: 0,
+  currentWinStreak: 0,
+  bestWinStreak: 0,
+  activityStats: {},
 });
 
 export const normalizeKangurProgressState = (value: unknown): KangurProgressState => {
+  const defaults = createDefaultKangurProgressState();
+
   const parsed = kangurProgressStateSchema.safeParse(value);
   if (parsed.success) {
     return {
+      ...defaults,
       ...parsed.data,
       badges: mergeUniqueProgressValues(parsed.data.badges),
       operationsPlayed: mergeUniqueProgressValues(parsed.data.operationsPlayed),
       lessonMastery: normalizeKangurLessonMastery(parsed.data.lessonMastery),
+      totalCorrectAnswers: parsed.data.totalCorrectAnswers ?? defaults.totalCorrectAnswers,
+      totalQuestionsAnswered:
+        parsed.data.totalQuestionsAnswered ?? defaults.totalQuestionsAnswered,
+      currentWinStreak: parsed.data.currentWinStreak ?? defaults.currentWinStreak,
+      bestWinStreak: parsed.data.bestWinStreak ?? defaults.bestWinStreak,
+      activityStats: normalizeKangurActivityStats(parsed.data.activityStats),
     };
   }
 
@@ -446,7 +517,6 @@ export const normalizeKangurProgressState = (value: unknown): KangurProgressStat
     return createDefaultKangurProgressState();
   }
 
-  const defaults = createDefaultKangurProgressState();
   return {
     ...defaults,
     ...partial.data,
@@ -455,6 +525,12 @@ export const normalizeKangurProgressState = (value: unknown): KangurProgressStat
       partial.data.operationsPlayed ?? defaults.operationsPlayed
     ),
     lessonMastery: normalizeKangurLessonMastery(partial.data.lessonMastery),
+    totalCorrectAnswers: partial.data.totalCorrectAnswers ?? defaults.totalCorrectAnswers,
+    totalQuestionsAnswered:
+      partial.data.totalQuestionsAnswered ?? defaults.totalQuestionsAnswered,
+    currentWinStreak: partial.data.currentWinStreak ?? defaults.currentWinStreak,
+    bestWinStreak: partial.data.bestWinStreak ?? defaults.bestWinStreak,
+    activityStats: normalizeKangurActivityStats(partial.data.activityStats),
   };
 };
 

@@ -1,8 +1,5 @@
 'use client';
 
-import { cn } from '@/shared/utils';
-
-import { BADGES } from '@/features/kangur/ui/services/progress';
 import {
   KangurEmptyState,
   KangurGlassPanel,
@@ -11,11 +8,13 @@ import {
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
+import { getProgressBadges } from '@/features/kangur/ui/services/progress';
 import {
   formatKangurProfileDateTime,
   formatKangurProfileDuration,
   useKangurLearnerProfileRuntime,
 } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
+import { cn } from '@/shared/utils';
 
 const SESSION_ACCENTS: Record<string, KangurAccent> = {
   addition: 'amber',
@@ -42,7 +41,8 @@ const resolveSessionScoreAccent = (accuracyPercent: number): KangurAccent => {
 };
 
 export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
-  const { isLoadingScores, scoresError, snapshot } = useKangurLearnerProfileRuntime();
+  const { isLoadingScores, progress, scoresError, snapshot } = useKangurLearnerProfileRuntime();
+  const badgeStatuses = getProgressBadges(progress);
 
   return (
     <section className='grid grid-cols-1 gap-4 xl:grid-cols-5'>
@@ -129,8 +129,8 @@ export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
           Odznaki
         </div>
         <div className='flex flex-wrap gap-2'>
-          {BADGES.map((badge) => {
-            const unlocked = snapshot.unlockedBadgeIds.includes(badge.id);
+          {badgeStatuses.map((badge) => {
+            const unlocked = badge.isUnlocked;
             return (
               <KangurStatusChip
                 accent={unlocked ? 'indigo' : 'slate'}
@@ -138,10 +138,13 @@ export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
                 data-testid={`learner-profile-badge-${badge.id}`}
                 key={badge.id}
                 size='sm'
-                title={`${badge.name}: ${badge.desc}`}
+                title={`${badge.name}: ${badge.desc}${unlocked ? '' : ` (${badge.summary})`}`}
               >
                 <span className={unlocked ? '' : 'grayscale'}>{badge.emoji}</span>
                 <span>{badge.name}</span>
+                {!unlocked ? (
+                  <span className='text-[11px] font-semibold text-slate-500'>{badge.summary}</span>
+                ) : null}
               </KangurStatusChip>
             );
           })}

@@ -25,6 +25,7 @@ const AGENT_ID_ENV_KEYS = [
 ];
 const NPM_EXECUTABLE = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const NPX_EXECUTABLE = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+const PLAYWRIGHT_BROKER_DEV_SCRIPT = 'dev:playwright-broker';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -398,6 +399,8 @@ const signalProcess = async (pid, signal) => {
     throw error;
   }
 };
+
+const isSignalPermissionError = (error) => error?.code === 'EPERM';
 
 const readBrokerLockRecord = async (lockFilePath) => {
   try {
@@ -906,6 +909,21 @@ export const acquireRuntimeLease = async ({
   try {
     const existingLease = await readLeaseRecord(leaseFilePath);
     if (existingLease) {
+      const reuseExistingLease = async () => {
+        const refreshedLease = withAgentLeaseMetadata({
+          ...existingLease,
+          managed: true,
+          source: 'broker',
+          reused: true,
+          leaseFilePath,
+          logFilePath,
+          preferredBrowserNodeBinDir:
+            existingLease.preferredBrowserNodeBinDir ?? preferredBrowserNodeBinDir,
+        });
+        await writeLeaseRecord(leaseFilePath, refreshedLease);
+        return refreshedLease;
+      };
+
       const running = await isProcessAlive(existingLease.pid);
       if (running) {
         const healthy = await waitForHealthyServer({
@@ -916,21 +934,28 @@ export const acquireRuntimeLease = async ({
         });
 
         if (healthy) {
-          const refreshedLease = withAgentLeaseMetadata({
-            ...existingLease,
-            managed: true,
-            source: 'broker',
-            reused: true,
-            leaseFilePath,
-            logFilePath,
-            preferredBrowserNodeBinDir:
-              existingLease.preferredBrowserNodeBinDir ?? preferredBrowserNodeBinDir,
-          });
-          await writeLeaseRecord(leaseFilePath, refreshedLease);
-          return refreshedLease;
+          return await reuseExistingLease();
         }
 
-        await stopBrokerRuntimeLease({ lease: existingLease, leaseFilePath });
+        try {
+          await stopBrokerRuntimeLease({ lease: existingLease, leaseFilePath });
+        } catch (error) {
+          if (!isSignalPermissionError(error)) {
+            throw error;
+          }
+
+          const recoveredHealthy = await waitForHealthyServer({
+            baseUrl: existingLease.baseUrl,
+            pid: existingLease.pid,
+            fetchImpl,
+            timeoutMs: startupTimeoutMs,
+          });
+          if (recoveredHealthy) {
+            return await reuseExistingLease();
+          }
+
+          throw error;
+        }
       } else {
         await removeFileIfPresent(leaseFilePath);
       }
@@ -954,9 +979,10 @@ export const acquireRuntimeLease = async ({
     await fsPromises.mkdir(path.dirname(logFilePath), { recursive: true });
     await fsPromises.mkdir(resolvedRuntimeTmpDir, { recursive: true });
     const logFd = fs.openSync(logFilePath, 'a');
+    const devScript = resolvedMode === 'dev' ? PLAYWRIGHT_BROKER_DEV_SCRIPT : 'dev';
     const child = spawnImpl(
       resolveNpmExecutable({ preferredBrowserNodeBinDir }),
-      ['run', 'dev'],
+      ['run', devScript],
       {
         cwd: resolvedRootDir,
         env: buildBrokerServerEnv({

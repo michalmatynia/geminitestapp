@@ -18,9 +18,8 @@ import {
   type GeometryShapeId,
 } from '@/features/kangur/ui/services/geometry-drawing';
 import {
-  XP_REWARDS,
   addXp,
-  buildLessonMasteryUpdate,
+  createTrainingReward,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { cn } from '@/shared/utils';
@@ -305,27 +304,21 @@ export default function GeometryDrawingGame({
 
   const finishGame = useCallback(
     (finalScore: number): void => {
-      const isPerfect = finalScore === totalRounds;
-      const isGood = finalScore >= Math.ceil(totalRounds * 0.65);
-      const xp = isPerfect
-        ? XP_REWARDS.geometry_training_perfect
-        : isGood
-          ? XP_REWARDS.geometry_training_good
-          : 15;
       const progress = loadProgress();
-      addXp(xp, {
-        lessonsCompleted: progress.lessonsCompleted + 1,
-        geometryPerfect: isPerfect ? progress.geometryPerfect + 1 : progress.geometryPerfect,
-        lessonMastery: buildLessonMasteryUpdate(
-          progress,
-          'geometry_shapes',
-          (finalScore / totalRounds) * 100
-        ),
+      const reward = createTrainingReward(progress, {
+        activityKey: `training:geometry:${difficulty}`,
+        lessonKey: 'geometry_shapes',
+        correctAnswers: finalScore,
+        totalQuestions: totalRounds,
+        difficulty,
+        strongThresholdPercent: 65,
+        perfectCounterKey: 'geometryPerfect',
       });
-      setXpEarned(xp);
+      addXp(reward.xp, reward.progressUpdates);
+      setXpEarned(reward.xp);
       setDone(true);
     },
-    [totalRounds]
+    [difficulty, totalRounds]
   );
 
   const resetRun = useCallback((): void => {

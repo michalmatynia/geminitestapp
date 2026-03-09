@@ -151,7 +151,11 @@ const extractTriggerButtonPathUsageMap = (
     }
     const parsedConfig = resolvedConfig.value.pathConfig;
     if (!parsedConfig || typeof parsedConfig !== 'object') return;
-    if (resolvedConfig.value.migrationWarnings.some((warning) => warning.code === 'legacy_trigger_context_mode_upgraded')) {
+    if (
+      resolvedConfig.value.migrationWarnings.some(
+        (warning) => warning.code === 'removed_trigger_context_modes_normalized'
+      )
+    ) {
       repairedPaths.push({
         pathId,
         rawPayload: value,

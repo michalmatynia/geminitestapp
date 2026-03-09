@@ -88,6 +88,43 @@ function GameContent(): React.JSX.Element {
   const currentScreenLabel = GAME_SCREEN_LABELS[screen];
   const learnerId = user?.activeLearner?.id ?? null;
   const activeGameAssignment = runtime.activePracticeAssignment ?? runtime.resultPracticeAssignment;
+  const tutorActivityContentId = useMemo(() => {
+    if (activeGameAssignment?.id) {
+      return `game:assignment:${activeGameAssignment.id}`;
+    }
+
+    if ((screen === 'playing' || screen === 'result') && runtime.operation) {
+      return `game:practice:${runtime.operation}:${runtime.difficulty}`;
+    }
+
+    if (screen === 'calendar_quiz' || screen === 'geometry_quiz') {
+      return `game:${screen}`;
+    }
+
+    if (screen === 'kangur' || screen === 'kangur_setup') {
+      return `game:kangur:${runtime.kangurMode ?? 'setup'}`;
+    }
+
+    if (screen === 'training') {
+      return 'game:training-setup';
+    }
+
+    if (screen === 'operation') {
+      return 'game:operation-selector';
+    }
+
+    if (screen === 'home') {
+      return 'game:home';
+    }
+
+    return `game:${screen}`;
+  }, [
+    activeGameAssignment?.id,
+    runtime.difficulty,
+    runtime.kangurMode,
+    runtime.operation,
+    screen,
+  ]);
   const tutorSessionContext = useMemo<KangurAiTutorConversationContext | null>(() => {
     const questionText = runtime.currentQuestion?.question?.trim() || null;
     const assignmentSummary = activeGameAssignment
@@ -114,7 +151,7 @@ function GameContent(): React.JSX.Element {
 
     return {
       surface: 'game',
-      contentId: 'game',
+      contentId: tutorActivityContentId,
       title: currentScreenLabel,
       description: GAME_SCREEN_DESCRIPTIONS[screen],
       ...(assignmentSummary ? { assignmentSummary } : {}),
@@ -133,9 +170,13 @@ function GameContent(): React.JSX.Element {
     currentScreenLabel,
     runtime.currentQuestion,
     runtime.currentQuestionIndex,
+    runtime.difficulty,
+    runtime.kangurMode,
+    runtime.operation,
     runtime.score,
     runtime.totalQuestions,
     screen,
+    tutorActivityContentId,
   ]);
   const screenMotionProps = useMemo(
     () => createKangurPageTransitionMotionProps(prefersReducedMotion),

@@ -97,7 +97,7 @@ export const readKangurAiTutorDailyUsage = async ({
   };
 };
 
-export const consumeKangurAiTutorDailyUsage = async ({
+export const ensureKangurAiTutorDailyUsageAvailable = async ({
   learnerId,
   dailyMessageLimit,
   now = new Date(),
@@ -111,20 +111,41 @@ export const consumeKangurAiTutorDailyUsage = async ({
     dailyMessageLimit,
     now,
   });
+
+  if (dailyMessageLimit !== null && currentUsage.messageCount >= dailyMessageLimit) {
+    throw quotaExceededError(
+      'Daily AI tutor message limit reached for this learner. Try again tomorrow.',
+      {
+        learnerId,
+        dateKey: currentUsage.dateKey,
+        dailyMessageLimit,
+        messageCount: currentUsage.messageCount,
+        remainingMessages: 0,
+      }
+    );
+  }
+
+  return currentUsage;
+};
+
+export const consumeKangurAiTutorDailyUsage = async ({
+  learnerId,
+  dailyMessageLimit,
+  now = new Date(),
+}: {
+  learnerId: string;
+  dailyMessageLimit: number | null;
+  now?: Date;
+}): Promise<KangurAiTutorUsageSummary> => {
+  const currentUsage = await ensureKangurAiTutorDailyUsageAvailable({
+    learnerId,
+    dailyMessageLimit,
+    now,
+  });
   const { dateKey, messageCount: currentCount } = currentUsage;
 
   if (dailyMessageLimit === null) {
     return currentUsage;
-  }
-
-  if (currentCount >= dailyMessageLimit) {
-    throw quotaExceededError('Daily AI tutor message limit reached for this learner. Try again tomorrow.', {
-      learnerId,
-      dateKey,
-      dailyMessageLimit,
-      messageCount: currentCount,
-      remainingMessages: 0,
-    });
   }
 
   const nextCount = currentCount + 1;

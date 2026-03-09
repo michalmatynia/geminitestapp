@@ -20,7 +20,7 @@ import {
 import { findPathConfigCollectionAliasIssues } from '../utils/collection-names';
 import { sanitizeEdges } from '../utils/graph.edges';
 import {
-  remediateRemovedLegacyTriggerContextModesInPathConfig,
+  normalizeRemovedTriggerContextModesInPathConfig,
 } from '../utils/legacy-trigger-context-mode';
 import { validateCanonicalPathNodeIdentities } from '../utils/node-identity';
 import { stableStringify } from '../utils/runtime';
@@ -197,7 +197,7 @@ const assertNoUnsupportedTriggerDataGraph = (nodes: AiNode[], edges: Edge[]): vo
 };
 
 export const sanitizeTriggerPathConfig = (config: PathConfig): PathConfig => {
-  const remediatedConfig = remediateRemovedLegacyTriggerContextModesInPathConfig(config).value;
+  const remediatedConfig = normalizeRemovedTriggerContextModesInPathConfig(config).value;
   const collectionAliasIssues = findPathConfigCollectionAliasIssues(remediatedConfig);
   if (collectionAliasIssues.length > 0) {
     throw validationError('AI Path config contains unsupported collection aliases.', {

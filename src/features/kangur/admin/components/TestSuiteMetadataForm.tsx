@@ -69,6 +69,15 @@ export function TestSuiteMetadataForm(props: {
           onCheckedChange={(checked): void => setFormData((f) => ({ ...f, enabled: checked }))}
         />
       </div>
+
+      <div className='rounded-md border border-border/50 bg-card/30 p-3'>
+        <div className='text-sm font-medium text-white'>Learner live status</div>
+        <div className='mt-1 text-xs text-gray-400'>
+          {formData.publicationStatus === 'live'
+            ? 'This suite is currently marked live for learner-facing runtime.'
+            : 'This suite is still in draft mode for learners. Use the suite library go-live action once the published question set is complete.'}
+        </div>
+      </div>
     </div>
   );
 }

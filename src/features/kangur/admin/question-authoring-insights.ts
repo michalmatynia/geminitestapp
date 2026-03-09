@@ -3,6 +3,7 @@ import type {
   KangurTestChoice,
   KangurTestQuestion,
   KangurTestQuestionEditorial,
+  KangurTestQuestionWorkflowStatus,
 } from '@/shared/contracts/kangur-tests';
 import type { QuestionFormData } from '../test-questions';
 
@@ -28,7 +29,9 @@ export type QuestionAuthoringIssueCode =
   | 'missing_explanation'
   | 'visual_prompt_without_visuals'
   | 'choice_svg_without_note'
-  | 'legacy_review_required';
+  | 'legacy_review_required'
+  | 'ready_workflow_requires_clean_review'
+  | 'published_workflow_requires_clean_review';
 
 export type QuestionAuthoringIssue = {
   code: QuestionAuthoringIssueCode;
@@ -43,6 +46,20 @@ export type QuestionAuthoringSummary = {
   blockers: QuestionAuthoringIssue[];
   warnings: QuestionAuthoringIssue[];
   nextAction: string;
+  workflowStatus: KangurTestQuestionWorkflowStatus;
+};
+
+export const getQuestionWorkflowLabel = (
+  workflowStatus: KangurTestQuestionWorkflowStatus
+): string => {
+  switch (workflowStatus) {
+    case 'ready':
+      return 'Ready to publish';
+    case 'published':
+      return 'Published';
+    default:
+      return 'Draft';
+  }
 };
 
 const VISUAL_PROMPT_PATTERN =
@@ -220,6 +237,23 @@ const buildIssues = (draft: QuestionAuthoringDraftLike): QuestionAuthoringIssue[
     });
   }
 
+  const hasWarnings = issues.some((issue) => issue.severity === 'warning');
+  if (draft.editorial.workflowStatus === 'ready' && hasWarnings) {
+    issues.push({
+      code: 'ready_workflow_requires_clean_review',
+      severity: 'blocker',
+      message: 'Resolve review warnings before marking this question ready to publish.',
+    });
+  }
+
+  if (draft.editorial.workflowStatus === 'published' && hasWarnings) {
+    issues.push({
+      code: 'published_workflow_requires_clean_review',
+      severity: 'blocker',
+      message: 'Resolve review warnings before publishing this question.',
+    });
+  }
+
   return issues;
 };
 
@@ -235,12 +269,17 @@ export const getQuestionAuthoringSummary = (
   const nextAction =
     blockers[0]?.message ||
     warnings[0]?.message ||
-    'Question is structurally ready for review and publishing.';
+    (draft.editorial.workflowStatus === 'published'
+      ? 'Question is published and structurally clean.'
+      : draft.editorial.workflowStatus === 'ready'
+        ? 'Question is ready to publish.'
+        : 'Question is saved as a draft. Mark it ready when review is complete.');
 
   return {
     status,
     blockers,
     warnings,
     nextAction,
+    workflowStatus: draft.editorial.workflowStatus,
   };
 };

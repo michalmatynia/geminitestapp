@@ -1,12 +1,9 @@
 import 'server-only';
 
-import type {
-  ContextRegistryResolutionBundle,
-  ContextRuntimeDocument,
-} from '@/shared/contracts/ai-context-registry';
+import { KANGUR_LESSON_LIBRARY } from '@/features/kangur/settings';
 import { getKangurAssignmentRepository, getKangurProgressRepository, getKangurScoreRepository } from '@/features/kangur/server';
-import { evaluateKangurAssignment } from '@/features/kangur/services/kangur-assignments';
 import { resolveKangurAiTutorRuntimeDocuments } from '@/features/kangur/server/context-registry';
+import { evaluateKangurAssignment } from '@/features/kangur/services/kangur-assignments';
 import {
   buildKangurLearnerProfileSnapshot,
   buildLessonMasteryInsights,
@@ -14,8 +11,13 @@ import {
   type KangurLessonMasteryInsight,
 } from '@/features/kangur/ui/services/profile';
 import type {
+  ContextRegistryResolutionBundle,
+  ContextRuntimeDocument,
+} from '@/shared/contracts/ai-context-registry';
+import type {
   KangurAssignmentSnapshot,
   KangurAssignmentProgressStatus,
+  KangurLessonComponentId,
   KangurPracticeAssignmentOperation,
   KangurRoutePage,
 } from '@/shared/contracts/kangur';
@@ -24,6 +26,7 @@ import type {
   KangurAiTutorCoachingFrame,
   KangurAiTutorCoachingMode,
   KangurAiTutorFollowUpAction,
+  KangurAiTutorLearnerMemory,
 } from '@/shared/contracts/kangur-ai-tutor';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -40,6 +43,27 @@ const QUICK_START_OPERATIONS = new Set<KangurPracticeAssignmentOperation>([
   'clock',
   'mixed',
 ]);
+const LESSON_COMPONENT_IDS = new Set<KangurLessonComponentId>(
+  Object.keys(KANGUR_LESSON_LIBRARY) as KangurLessonComponentId[]
+);
+const PRACTICE_OPERATION_TO_LESSON_COMPONENT: Partial<
+  Record<KangurPracticeAssignmentOperation, KangurLessonComponentId>
+> = {
+  addition: 'adding',
+  subtraction: 'subtracting',
+  multiplication: 'multiplication',
+  division: 'division',
+  clock: 'clock',
+};
+const LESSON_COMPONENT_TO_PRACTICE_OPERATION: Partial<
+  Record<KangurLessonComponentId, KangurPracticeAssignmentOperation>
+> = {
+  adding: 'addition',
+  subtracting: 'subtraction',
+  multiplication: 'multiplication',
+  division: 'division',
+  clock: 'clock',
+};
 const ASSIGNMENT_PRIORITY_ORDER = {
   high: 0,
   medium: 1,
@@ -72,12 +96,26 @@ const buildKangurAiTutorCoachingFrame = (input: {
   context: KangurAiTutorConversationContext | undefined;
   averageAccuracy: number;
   weakMasteryPercent: number;
+  previousCoachingMode: KangurAiTutorCoachingMode | null;
 }): KangurAiTutorCoachingFrame => {
-  const { context, averageAccuracy, weakMasteryPercent } = input;
+  const { context, averageAccuracy, previousCoachingMode, weakMasteryPercent } = input;
   const hasSelectedExcerpt =
     Boolean(context?.selectedText) ||
     context?.focusKind === 'selection' ||
     context?.promptMode === 'selected_text';
+  const repeatedQuestionCount = context?.repeatedQuestionCount ?? 0;
+  const recentHintRecoverySignal = context?.recentHintRecoverySignal ?? null;
+
+  if (recentHintRecoverySignal === 'answer_revealed') {
+    return {
+      mode: 'review_reflection',
+      label: 'Omow po wskazowce',
+      description:
+        'Podsumuj to, co zadzialalo po wskazowce, nazwij jedna poprawke i zakoncz jednym kolejnym krokiem.',
+      rationale:
+        'Uczen przeszedl od wskazowki do omowienia po zobaczeniu odpowiedzi, wiec najlepsze bedzie spokojne podsumowanie i jedna poprawka.',
+    };
+  }
 
   if (context?.interactionIntent === 'review' || context?.answerRevealed) {
     return {
@@ -97,6 +135,41 @@ const buildKangurAiTutorCoachingFrame = (input: {
       label: 'Nastepny krok',
       description: 'Wskaz jedna konkretna aktywnosc Kangur jako najlepszy dalszy ruch.',
       rationale: 'Najwiecej wartosci da teraz jedna jasna aktywnosc, a nie kilka opcji naraz.',
+    };
+  }
+
+  if (
+    recentHintRecoverySignal === 'focus_advanced' &&
+    !hasSelectedExcerpt &&
+    context?.interactionIntent !== 'review'
+  ) {
+    return {
+      mode: 'next_best_action',
+      label: 'Utrwal postep',
+      description:
+        'Potwierdz postep po poprzedniej wskazowce i daj jeden konkretny dalszy krok.',
+      rationale:
+        'Uczen ruszyl dalej po poprzedniej wskazowce, wiec zamiast kolejnej podobnej podpowiedzi lepiej utrwalic postep jednym ruchem.',
+    };
+  }
+
+  if (
+    repeatedQuestionCount > 0 &&
+    (context?.promptMode === 'hint' ||
+      context?.interactionIntent === 'hint' ||
+      context?.surface === 'test' ||
+      context?.surface === 'game' ||
+      context?.focusKind === 'question')
+  ) {
+    return {
+      mode: 'misconception_check',
+      label: 'Zmien podejscie',
+      description:
+        'Sprawdz, gdzie uczen blokuje sie w rozumowaniu, zamiast dawac kolejny taki sam trop.',
+      rationale:
+        previousCoachingMode === 'hint_ladder'
+          ? 'Uczen powtorzyl to samo pytanie po wskazowce, wiec trzeba przejsc z kolejnego tropu do diagnozy rozumienia.'
+          : 'Powtorzone pytanie sugeruje, ze trzeba zmienic strategie i uchwycic zrodlo blokady.',
     };
   }
 
@@ -156,6 +229,17 @@ const appendCoachingFrameInstructions = (
   }
 };
 
+type KangurCompletedFollowUp = {
+  label: string;
+  reason: string | null;
+  page: KangurRoutePage | null;
+};
+
+type KangurLessonFocusCandidate = {
+  componentId: KangurLessonComponentId;
+  title: string | null;
+};
+
 const normalizeComparableValue = (value: string | null | undefined): string | null => {
   if (typeof value !== 'string') {
     return null;
@@ -163,6 +247,123 @@ const normalizeComparableValue = (value: string | null | undefined): string | nu
 
   const normalized = value.trim().toLowerCase();
   return normalized.length > 0 ? normalized : null;
+};
+
+const normalizeLessonComponentCandidate = (
+  value: string | null | undefined
+): KangurLessonComponentId | null => {
+  const normalizedValue = normalizeComparableValue(value);
+  if (!normalizedValue) {
+    return null;
+  }
+
+  const withoutLessonPrefix = normalizedValue.startsWith('lesson-')
+    ? normalizedValue.slice('lesson-'.length)
+    : normalizedValue;
+  if (LESSON_COMPONENT_IDS.has(withoutLessonPrefix as KangurLessonComponentId)) {
+    return withoutLessonPrefix as KangurLessonComponentId;
+  }
+
+  return (
+    PRACTICE_OPERATION_TO_LESSON_COMPONENT[
+      withoutLessonPrefix as KangurPracticeAssignmentOperation
+    ] ?? null
+  );
+};
+
+const resolveLessonFocusTitle = (
+  componentId: KangurLessonComponentId,
+  preferredTitle?: string | null
+): string => preferredTitle?.trim() || KANGUR_LESSON_LIBRARY[componentId].title;
+
+const buildTrainingQueryFromLessonComponent = (
+  componentId: KangurLessonComponentId,
+  averageAccuracy: number
+): Record<string, string> => {
+  const operation = LESSON_COMPONENT_TO_PRACTICE_OPERATION[componentId];
+  if (!operation) {
+    return {
+      quickStart: 'training',
+    };
+  }
+
+  return {
+    quickStart: 'operation',
+    operation,
+    difficulty: resolvePracticeDifficulty(averageAccuracy),
+  };
+};
+
+const parseCompletedFollowUp = (
+  memory: KangurAiTutorLearnerMemory | null | undefined
+): KangurCompletedFollowUp | null => {
+  const rawAction = memory?.lastRecommendedAction?.trim();
+  if (rawAction?.startsWith('Completed follow-up:') !== true) {
+    return null;
+  }
+
+  const payload = rawAction.slice('Completed follow-up:'.length).trim();
+  if (!payload) {
+    return null;
+  }
+
+  const separatorIndex = payload.indexOf(':');
+  const label =
+    separatorIndex === -1 ? payload.trim() : payload.slice(0, separatorIndex).trim();
+  const reason =
+    separatorIndex === -1 ? null : payload.slice(separatorIndex + 1).trim() || null;
+  const normalizedLabel = normalizeComparableValue(label);
+  if (!normalizedLabel) {
+    return null;
+  }
+
+  const intervention = memory?.lastSuccessfulIntervention?.trim();
+  const pageMatch = intervention?.match(
+    /\bon (Game|Lessons|ParentDashboard|LearnerProfile)\.?$/u
+  );
+  const pageFromIntervention =
+    pageMatch?.[1] === 'Game' ||
+    pageMatch?.[1] === 'Lessons' ||
+    pageMatch?.[1] === 'ParentDashboard' ||
+    pageMatch?.[1] === 'LearnerProfile'
+      ? pageMatch[1]
+      : null;
+  const inferredPage =
+    pageFromIntervention ??
+    (normalizedLabel === 'otworz lekcje'
+      ? 'Lessons'
+      : normalizedLabel === 'uruchom trening' ||
+          normalizedLabel === 'zagraj teraz' ||
+          normalizedLabel === 'zagraj dzis' ||
+          normalizedLabel === 'kontynuuj gre'
+        ? 'Game'
+        : null);
+
+  return {
+    label: normalizedLabel,
+    reason: normalizeComparableValue(reason),
+    page: inferredPage,
+  };
+};
+
+const isCompletedFollowUpMatch = (
+  completedFollowUp: KangurCompletedFollowUp | null,
+  action: KangurAiTutorFollowUpAction | null | undefined
+): boolean => {
+  if (!completedFollowUp || !action) {
+    return false;
+  }
+
+  const actionLabel = normalizeComparableValue(action.label);
+  if (!actionLabel || actionLabel !== completedFollowUp.label) {
+    return false;
+  }
+
+  if (!completedFollowUp.reason) {
+    return true;
+  }
+
+  return normalizeComparableValue(action.reason) === completedFollowUp.reason;
 };
 
 const matchesLessonComponent = (
@@ -247,6 +448,21 @@ const pickRelevantAssignment = (
   }
 
   return assignments[0] ?? null;
+};
+
+const buildOrderedAssignmentCandidates = (
+  assignments: KangurAssignmentSnapshot[],
+  context: KangurAiTutorConversationContext | undefined
+): KangurAssignmentSnapshot[] => {
+  const relevantAssignment = pickRelevantAssignment(assignments, context);
+  if (!relevantAssignment) {
+    return assignments;
+  }
+
+  return [
+    relevantAssignment,
+    ...assignments.filter((assignment) => assignment.id !== relevantAssignment.id),
+  ];
 };
 
 const pickRelevantWeakLesson = (
@@ -362,13 +578,90 @@ const toRecommendationFollowUpAction = (
   reason: recommendation.title,
 });
 
+const resolveLessonFocusFromAction = (
+  action: KangurAiTutorFollowUpAction | null | undefined
+): KangurLessonFocusCandidate | null => {
+  const componentId = normalizeLessonComponentCandidate(action?.query?.['focus']);
+  if (!componentId) {
+    return null;
+  }
+
+  return {
+    componentId,
+    title: action?.reason?.trim() || null,
+  };
+};
+
+const buildCompletedFollowUpBridgeAction = (input: {
+  completedFollowUp: KangurCompletedFollowUp | null;
+  lessonFocus: KangurLessonFocusCandidate | null;
+  averageAccuracy: number;
+}): KangurAiTutorFollowUpAction | null => {
+  if (!input.completedFollowUp || !input.lessonFocus) {
+    return null;
+  }
+
+  const lessonTitle = resolveLessonFocusTitle(
+    input.lessonFocus.componentId,
+    input.lessonFocus.title
+  );
+
+  if (input.completedFollowUp.page === 'Lessons') {
+    return {
+      id: `bridge:lesson-to-game:${input.lessonFocus.componentId}`,
+      label: 'Uruchom trening',
+      page: 'Game',
+      query: buildTrainingQueryFromLessonComponent(
+        input.lessonFocus.componentId,
+        input.averageAccuracy
+      ),
+      reason: `Po lekcji: ${lessonTitle}`,
+    };
+  }
+
+  if (input.completedFollowUp.page === 'Game') {
+    return {
+      id: `bridge:game-to-lesson:${input.lessonFocus.componentId}`,
+      label: 'Otworz lekcje',
+      page: 'Lessons',
+      query: {
+        focus: input.lessonFocus.componentId,
+      },
+      reason: `Po treningu: ${lessonTitle}`,
+    };
+  }
+
+  return null;
+};
+
+const pickFreshCandidate = <T,>(
+  candidates: T[],
+  toAction: (candidate: T) => KangurAiTutorFollowUpAction | null,
+  completedFollowUp: KangurCompletedFollowUp | null
+): T | null => {
+  for (const candidate of candidates) {
+    const action = toAction(candidate);
+    if (!action || isCompletedFollowUpMatch(completedFollowUp, action)) {
+      continue;
+    }
+
+    return candidate;
+  }
+
+  return null;
+};
+
 const buildFollowUpActions = (input: {
   context: KangurAiTutorConversationContext | undefined;
+  bridgeAction: KangurAiTutorFollowUpAction | null;
   relevantAssignment: KangurAssignmentSnapshot | null;
   topRecommendation: KangurLearnerRecommendation | null;
   averageAccuracy: number;
+  coachingMode: KangurAiTutorCoachingMode | null;
+  completedFollowUp: KangurCompletedFollowUp | null;
 }): KangurAiTutorFollowUpAction[] => {
   if (
+    input.coachingMode !== 'next_best_action' &&
     input.context?.interactionIntent !== 'next_step' &&
     input.context?.interactionIntent !== 'review'
   ) {
@@ -376,11 +669,14 @@ const buildFollowUpActions = (input: {
   }
 
   const candidates = [
+    input.bridgeAction,
     input.relevantAssignment
       ? toAssignmentFollowUpAction(input.relevantAssignment, input.averageAccuracy)
       : null,
     input.topRecommendation ? toRecommendationFollowUpAction(input.topRecommendation) : null,
-  ].filter((action): action is KangurAiTutorFollowUpAction => Boolean(action));
+  ]
+    .filter((action): action is KangurAiTutorFollowUpAction => Boolean(action))
+    .filter((action) => !isCompletedFollowUpMatch(input.completedFollowUp, action));
 
   const seen = new Set<string>();
   const deduped: KangurAiTutorFollowUpAction[] = [];
@@ -392,7 +688,7 @@ const buildFollowUpActions = (input: {
     }
     seen.add(key);
     deduped.push(action);
-    if (deduped.length >= 2) {
+    if (input.coachingMode === 'next_best_action' || deduped.length >= 2) {
       break;
     }
   }
@@ -521,9 +817,95 @@ const formatRecommendationItem = (item: Record<string, unknown>): string => {
     .join(' ');
 };
 
+const resolveLessonFocusFromRegistry = (input: {
+  context?: KangurAiTutorConversationContext;
+  relevantWeakLesson: Record<string, unknown> | null;
+  relevantAssignment: Record<string, unknown> | null;
+  topRecommendation: Record<string, unknown> | null;
+}): KangurLessonFocusCandidate | null => {
+  const contextComponentId =
+    normalizeLessonComponentCandidate(input.context?.focusId) ??
+    normalizeLessonComponentCandidate(input.context?.contentId);
+  if (contextComponentId) {
+    return {
+      componentId: contextComponentId,
+      title: input.context?.title?.trim() || null,
+    };
+  }
+
+  const weakLessonComponentId = normalizeLessonComponentCandidate(
+    typeof input.relevantWeakLesson?.['componentId'] === 'string'
+      ? String(input.relevantWeakLesson['componentId'])
+      : null
+  );
+  if (weakLessonComponentId) {
+    return {
+      componentId: weakLessonComponentId,
+      title:
+        typeof input.relevantWeakLesson?.['title'] === 'string'
+          ? String(input.relevantWeakLesson['title']).trim()
+          : null,
+    };
+  }
+
+  const assignmentFocus = resolveLessonFocusFromAction(
+    toFollowUpActionFromItem(input.relevantAssignment, {
+      idPrefix: 'assignment',
+    })
+  );
+  if (assignmentFocus) {
+    return assignmentFocus;
+  }
+
+  return resolveLessonFocusFromAction(
+    toFollowUpActionFromItem(input.topRecommendation, {
+      idPrefix: 'recommendation',
+    })
+  );
+};
+
+const resolveLessonFocusFromAdaptiveSnapshot = (input: {
+  context?: KangurAiTutorConversationContext;
+  relevantWeakLesson: KangurLessonMasteryInsight | null;
+  relevantAssignment: KangurAssignmentSnapshot | null;
+  topRecommendation: KangurLearnerRecommendation | null;
+  averageAccuracy: number;
+}): KangurLessonFocusCandidate | null => {
+  const contextComponentId =
+    normalizeLessonComponentCandidate(input.context?.focusId) ??
+    normalizeLessonComponentCandidate(input.context?.contentId);
+  if (contextComponentId) {
+    return {
+      componentId: contextComponentId,
+      title: input.context?.title?.trim() || null,
+    };
+  }
+
+  if (input.relevantWeakLesson) {
+    return {
+      componentId: input.relevantWeakLesson.componentId,
+      title: input.relevantWeakLesson.title,
+    };
+  }
+
+  const assignmentFocus = resolveLessonFocusFromAction(
+    input.relevantAssignment
+      ? toAssignmentFollowUpAction(input.relevantAssignment, input.averageAccuracy)
+      : null
+  );
+  if (assignmentFocus) {
+    return assignmentFocus;
+  }
+
+  return resolveLessonFocusFromAction(
+    input.topRecommendation ? toRecommendationFollowUpAction(input.topRecommendation) : null
+  );
+};
+
 const buildAdaptiveGuidanceFromRegistry = (input: {
   context?: KangurAiTutorConversationContext;
   registryBundle: ContextRegistryResolutionBundle;
+  memory?: KangurAiTutorLearnerMemory | null;
 }): KangurAiTutorAdaptiveGuidance => {
   const { learnerSnapshot, loginActivity, surfaceContext, assignmentContext } =
     resolveKangurAiTutorRuntimeDocuments(input.registryBundle, input.context);
@@ -531,6 +913,7 @@ const buildAdaptiveGuidanceFromRegistry = (input: {
   const recentSessions = readSectionItems(learnerSnapshot, 'recent_sessions');
   const recommendations = readSectionItems(learnerSnapshot, 'recommendations');
   const activeAssignments = readSectionItems(learnerSnapshot, 'active_assignments');
+  const completedFollowUp = parseCompletedFollowUp(input.memory);
   const relevantWeakLesson =
     weakLessons.find((lesson) =>
       matchesLessonComponent(String(lesson['componentId'] ?? ''), [
@@ -541,11 +924,25 @@ const buildAdaptiveGuidanceFromRegistry = (input: {
     weakLessons[0] ??
     null;
   const latestSession = recentSessions[0] ?? null;
-  const topRecommendation = recommendations[0] ?? null;
-  const relevantAssignment =
-    (assignmentContext ? asRecord(assignmentContext.facts) : null) ??
-    activeAssignments[0] ??
-    null;
+  const topRecommendation = pickFreshCandidate(
+    recommendations,
+    (item) =>
+      toFollowUpActionFromItem(item, {
+        idPrefix: 'recommendation',
+      }),
+    completedFollowUp
+  );
+  const relevantAssignment = pickFreshCandidate(
+    [
+      ...(assignmentContext ? [asRecord(assignmentContext.facts)] : []),
+      ...activeAssignments,
+    ].filter((item): item is Record<string, unknown> => Boolean(item)),
+    (item) =>
+      toFollowUpActionFromItem(item, {
+        idPrefix: 'assignment',
+      }),
+    completedFollowUp
+  );
   const averageAccuracy = readNumberFact(learnerSnapshot, 'averageAccuracy') ?? 0;
   const todayGames = readNumberFact(learnerSnapshot, 'todayGames') ?? 0;
   const dailyGoalGames = readNumberFact(learnerSnapshot, 'dailyGoalGames') ?? 0;
@@ -557,17 +954,6 @@ const buildAdaptiveGuidanceFromRegistry = (input: {
     (typeof relevantAssignment?.['assignmentSummary'] === 'string'
       ? String(relevantAssignment['assignmentSummary']).trim()
       : null) ?? readStringFact(surfaceContext, 'assignmentSummary');
-  const followUpActions =
-    input.context?.interactionIntent === 'next_step' || input.context?.interactionIntent === 'review'
-      ? [
-        toFollowUpActionFromItem(relevantAssignment, {
-          idPrefix: 'assignment',
-        }),
-        toFollowUpActionFromItem(topRecommendation, {
-          idPrefix: 'recommendation',
-        }),
-      ].filter((action): action is KangurAiTutorFollowUpAction => Boolean(action))
-      : [];
   const lines: string[] = [];
 
   if (learnerSummary) {
@@ -632,11 +1018,74 @@ const buildAdaptiveGuidanceFromRegistry = (input: {
     typeof relevantWeakLesson?.['masteryPercent'] === 'number'
       ? relevantWeakLesson['masteryPercent']
       : 100;
+  const previousCoachingMode =
+    input.context?.previousCoachingMode ?? input.memory?.lastCoachingMode ?? null;
   const coachingFrame = buildKangurAiTutorCoachingFrame({
     context: input.context,
     averageAccuracy,
     weakMasteryPercent,
+    previousCoachingMode,
   });
+  const bridgeAction = buildCompletedFollowUpBridgeAction({
+    completedFollowUp,
+    lessonFocus: resolveLessonFocusFromRegistry({
+      context: input.context,
+      relevantWeakLesson,
+      relevantAssignment,
+      topRecommendation,
+    }),
+    averageAccuracy,
+  });
+  const followUpActions =
+    coachingFrame.mode === 'next_best_action' ||
+    input.context?.interactionIntent === 'next_step' ||
+    input.context?.interactionIntent === 'review'
+      ? [
+        bridgeAction,
+        toFollowUpActionFromItem(relevantAssignment, {
+          idPrefix: 'assignment',
+        }),
+        toFollowUpActionFromItem(topRecommendation, {
+          idPrefix: 'recommendation',
+        }),
+      ]
+        .filter((action): action is KangurAiTutorFollowUpAction => Boolean(action))
+        .filter((action) => !isCompletedFollowUpMatch(completedFollowUp, action))
+        .slice(0, coachingFrame.mode === 'next_best_action' ? 1 : 2)
+      : [];
+  const repeatedQuestionCount = input.context?.repeatedQuestionCount ?? 0;
+  const recentHintRecoverySignal = input.context?.recentHintRecoverySignal ?? null;
+
+  if (repeatedQuestionCount > 0) {
+    lines.push(
+      `Repeat signal: the learner has repeated essentially the same question ${repeatedQuestionCount + 1} times in this tutor thread, so change strategy instead of repeating the same hint.`
+    );
+  }
+  if (recentHintRecoverySignal === 'answer_revealed') {
+    lines.push(
+      'Hint recovery signal: the learner reached review after the last hint. Consolidate the learning with reflection, one improvement, and one retry idea.'
+    );
+  } else if (recentHintRecoverySignal === 'focus_advanced') {
+    lines.push(
+      'Hint recovery signal: the learner advanced after the last hint. Acknowledge the progress and give one clear next step instead of restarting the same explanation.'
+    );
+  }
+  if (previousCoachingMode && repeatedQuestionCount > 0) {
+    lines.push(
+      `Previous coaching mode was ${previousCoachingMode}, so do not reuse it unchanged while the learner is still stuck.`
+    );
+  }
+  if (completedFollowUp) {
+    lines.push(
+      'Completed tutor follow-up in this thread: the learner already carried out the previous recommended action, so avoid repeating the same next step unless there is a clear new reason.'
+    );
+    if (bridgeAction) {
+      lines.push(
+        `Successful follow-up signal: build on that completion with one adjacent next move: ${bridgeAction.label}${bridgeAction.reason ? ` (${bridgeAction.reason})` : ''}.`
+      );
+    }
+  }
+
   if (averageAccuracy < 70 || weakMasteryPercent < 60) {
     lines.push(
       'Adaptive tutoring stance: use smaller reasoning steps, ask one checkpoint question at a time, and confirm understanding before moving on.'
@@ -650,7 +1099,9 @@ const buildAdaptiveGuidanceFromRegistry = (input: {
 
   if (input.context?.interactionIntent === 'next_step') {
     lines.push(
-      relevantAssignment
+      bridgeAction
+        ? 'When suggesting the next step, build on the completed tutor follow-up and give exactly one adjacent Kangur action.'
+        : relevantAssignment
         ? `When suggesting the next step, anchor it to this assignment and give exactly one concrete Kangur action: ${String(relevantAssignment['title'] ?? 'current assignment')}.`
         : topRecommendation
           ? 'When suggesting the next step, anchor it to the top recommendation and give exactly one concrete Kangur action.'
@@ -678,16 +1129,19 @@ export async function buildKangurAiTutorAdaptiveGuidance({
   learnerId,
   context,
   registryBundle,
+  memory,
 }: {
   learnerId: string;
   context?: KangurAiTutorConversationContext;
   registryBundle?: ContextRegistryResolutionBundle | null;
+  memory?: KangurAiTutorLearnerMemory | null;
 }): Promise<KangurAiTutorAdaptiveGuidance> {
   try {
     if (registryBundle?.documents.length) {
       return buildAdaptiveGuidanceFromRegistry({
         context,
         registryBundle,
+        memory,
       });
     }
 
@@ -728,24 +1182,53 @@ export async function buildKangurAiTutorAdaptiveGuidance({
       )
       .filter((assignment) => !assignment.archived && assignment.progress.status !== 'completed')
       .sort(sortAssignments);
+    const completedFollowUp = parseCompletedFollowUp(memory);
+    const orderedAssignments = buildOrderedAssignmentCandidates(activeAssignments, context);
 
     const relevantWeakLesson = pickRelevantWeakLesson(masteryInsights.weakest, context);
-    const topRecommendation = snapshot.recommendations[0] ?? null;
-    const relevantAssignment = pickRelevantAssignment(activeAssignments, context);
+    const topRecommendation = pickFreshCandidate(
+      snapshot.recommendations,
+      toRecommendationFollowUpAction,
+      completedFollowUp
+    );
+    const relevantAssignment = pickFreshCandidate(
+      orderedAssignments,
+      (assignment) =>
+        toAssignmentFollowUpAction(assignment, snapshot.averageAccuracy),
+      completedFollowUp
+    );
     const latestSession = snapshot.recentSessions[0] ?? null;
     const lines: string[] = [];
-    const followUpActions = buildFollowUpActions({
-      context,
-      relevantAssignment,
-      topRecommendation,
-      averageAccuracy: snapshot.averageAccuracy,
-    });
     const weakMasteryPercent = relevantWeakLesson?.masteryPercent ?? 100;
+    const previousCoachingMode = context?.previousCoachingMode ?? memory?.lastCoachingMode ?? null;
     const coachingFrame = buildKangurAiTutorCoachingFrame({
       context,
       averageAccuracy: snapshot.averageAccuracy,
       weakMasteryPercent,
+      previousCoachingMode,
     });
+    const bridgeAction = buildCompletedFollowUpBridgeAction({
+      completedFollowUp,
+      lessonFocus: resolveLessonFocusFromAdaptiveSnapshot({
+        context,
+        relevantWeakLesson,
+        relevantAssignment,
+        topRecommendation,
+        averageAccuracy: snapshot.averageAccuracy,
+      }),
+      averageAccuracy: snapshot.averageAccuracy,
+    });
+    const followUpActions = buildFollowUpActions({
+      context,
+      bridgeAction,
+      relevantAssignment,
+      topRecommendation,
+      averageAccuracy: snapshot.averageAccuracy,
+      coachingMode: coachingFrame.mode,
+      completedFollowUp,
+    });
+    const repeatedQuestionCount = context?.repeatedQuestionCount ?? 0;
+    const recentHintRecoverySignal = context?.recentHintRecoverySignal ?? null;
 
     lines.push(
       `Adaptive learner snapshot: average accuracy ${snapshot.averageAccuracy}%, daily goal ${snapshot.todayGames}/${snapshot.dailyGoalGames}, streak ${snapshot.currentStreakDays} days.`
@@ -773,6 +1256,36 @@ export async function buildKangurAiTutorAdaptiveGuidance({
       lines.push(`Relevant active assignment: ${formatAssignmentSummary(relevantAssignment)}`);
     }
 
+    if (repeatedQuestionCount > 0) {
+      lines.push(
+        `Repeat signal: the learner has repeated essentially the same question ${repeatedQuestionCount + 1} times in this tutor thread, so switch strategy instead of repeating the same hint.`
+      );
+    }
+    if (recentHintRecoverySignal === 'answer_revealed') {
+      lines.push(
+        'Hint recovery signal: the learner reached review after the previous hint. Reflect on what happened, then name one specific adjustment.'
+      );
+    } else if (recentHintRecoverySignal === 'focus_advanced') {
+      lines.push(
+        'Hint recovery signal: the learner moved forward after the previous hint. Confirm the progress and point to one concrete next step.'
+      );
+    }
+    if (previousCoachingMode && repeatedQuestionCount > 0) {
+      lines.push(
+        `Previous coaching mode was ${previousCoachingMode}, so avoid repeating it unchanged while the learner is still blocked.`
+      );
+    }
+    if (completedFollowUp) {
+      lines.push(
+        'Completed tutor follow-up in this thread: the learner already carried out the previous recommended action, so avoid repeating the same next step unless there is a clear new reason.'
+      );
+      if (bridgeAction) {
+        lines.push(
+          `Successful follow-up signal: build on that completion with one adjacent next move: ${bridgeAction.label}${bridgeAction.reason ? ` (${bridgeAction.reason})` : ''}.`
+        );
+      }
+    }
+
     if (
       snapshot.averageAccuracy < 70 ||
       weakMasteryPercent < 60
@@ -789,7 +1302,9 @@ export async function buildKangurAiTutorAdaptiveGuidance({
 
     if (context?.interactionIntent === 'next_step') {
       lines.push(
-        relevantAssignment
+        bridgeAction
+          ? 'When suggesting the next step, build on the completed tutor follow-up and give exactly one adjacent Kangur action.'
+          : relevantAssignment
           ? `When suggesting the next step, anchor it to this assignment and give exactly one concrete Kangur action: ${relevantAssignment.title}.`
           : topRecommendation
             ? 'When suggesting the next step, anchor it to the top recommendation and give exactly one concrete Kangur action.'

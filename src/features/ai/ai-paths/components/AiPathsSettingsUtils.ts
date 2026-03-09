@@ -39,7 +39,7 @@ import {
   formatRemovedLegacyAiPathNodesMessage,
 } from '@/shared/lib/ai-paths/core/utils/legacy-node-removal';
 import {
-  remediateRemovedLegacyTriggerContextModesInPathConfig,
+  normalizeRemovedTriggerContextModesInPathConfig,
 } from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
 
 type DatabaseOperation = 'query' | 'update' | 'insert' | 'delete';
@@ -358,7 +358,7 @@ const assertNoUnsupportedTriggerDataGraph = (nodes: AiNode[], edges: unknown[]):
 };
 
 export const sanitizePathConfig = (config: PathConfig): PathConfig => {
-  const remediatedConfig = remediateRemovedLegacyTriggerContextModesInPathConfig(config).value;
+  const remediatedConfig = normalizeRemovedTriggerContextModesInPathConfig(config).value;
   const collectionAliasIssues = findPathConfigCollectionAliasIssues(remediatedConfig);
   if (collectionAliasIssues.length > 0) {
     throw validationError('AI Path config contains unsupported collection aliases.', {

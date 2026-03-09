@@ -74,9 +74,7 @@ describe('CalendarInteractiveGame', () => {
 
     render(<CalendarInteractiveGame onFinish={() => undefined} section='dni' />);
 
-    expect(screen.getByTestId('calendar-interactive-section-badge')).toHaveTextContent(
-      'Sekcja: Dni tygodnia'
-    );
+    expect(screen.queryByTestId('calendar-interactive-section-badge')).toBeNull();
     expect(screen.getByTestId('calendar-interactive-guidance-title')).toHaveTextContent(
       'Trening dni tygodnia'
     );
@@ -90,9 +88,7 @@ describe('CalendarInteractiveGame', () => {
 
     render(<CalendarInteractiveGame onFinish={() => undefined} section='data' />);
 
-    expect(screen.getByTestId('calendar-interactive-section-badge')).toHaveTextContent(
-      'Sekcja: Odczytywanie dat'
-    );
+    expect(screen.queryByTestId('calendar-interactive-section-badge')).toBeNull();
     expect(screen.getByTestId('calendar-interactive-guidance-title')).toHaveTextContent(
       'Trening dat'
     );

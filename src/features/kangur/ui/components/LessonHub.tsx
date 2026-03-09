@@ -42,6 +42,8 @@ export default function LessonHub({
       >
         {sections.map((section, i) => {
           const accent = section.isGame ? 'indigo' : 'slate';
+          const resolvedProgress =
+            section.progress ?? (section.isGame ? { totalCount: 1, viewedCount: 0 } : undefined);
 
           return (
             <motion.div
@@ -84,15 +86,15 @@ export default function LessonHub({
                   <KangurStatusChip accent={accent} className='uppercase tracking-[0.14em]' size='sm'>
                     {section.locked ? (section.lockedLabel ?? 'Zablokowane') : section.isGame ? 'Gra' : 'Lekcja'}
                   </KangurStatusChip>
-                  {!section.isGame && section.progress && section.progress.totalCount > 0 ? (
+                  {resolvedProgress && resolvedProgress.totalCount > 0 ? (
                     <KangurLessonProgressDots
                       activeDotClassName={progressDotClassName}
                       className='self-end'
                       dotTestIdPrefix={`lesson-hub-progress-dot-${section.id}`}
-                      srLabel={`Obejrzano ${section.progress.viewedCount} z ${section.progress.totalCount} ekranow sekcji.`}
+                      srLabel={`Obejrzano ${resolvedProgress.viewedCount} z ${resolvedProgress.totalCount} ekranow sekcji.`}
                       testId={`lesson-hub-progress-${section.id}`}
-                      totalCount={section.progress.totalCount}
-                      viewedCount={section.progress.viewedCount}
+                      totalCount={resolvedProgress.totalCount}
+                      viewedCount={resolvedProgress.viewedCount}
                     />
                   ) : null}
                 </div>

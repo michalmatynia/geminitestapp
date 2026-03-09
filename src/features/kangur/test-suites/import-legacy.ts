@@ -65,9 +65,11 @@ const convertQuestion = (
     editorial: {
       source: 'legacy-import',
       reviewStatus: audit.reviewStatus,
+      workflowStatus: audit.reviewStatus === 'ready' ? 'published' : 'draft',
       auditFlags: audit.flags,
       legacyId: lq.id,
       note: audit.note,
+      publishedAt: audit.reviewStatus === 'ready' ? new Date().toISOString() : undefined,
     },
   };
 };

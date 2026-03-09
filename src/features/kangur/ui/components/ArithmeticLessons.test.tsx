@@ -3,7 +3,7 @@
  */
 
 import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('framer-motion', () => ({
@@ -110,11 +110,10 @@ describe('Arithmetic lessons shared surfaces', () => {
       'kangur-cta-pill',
       'surface-cta'
     );
-    expect(screen.getByRole('heading', { name: /gra z piłkami!/i })).toHaveClass(
-      'text-xl',
-      'text-amber-700'
-    );
-    expect(screen.getByText('🎮')).toHaveClass('h-12', 'w-12', 'bg-amber-100', 'text-amber-700');
+    expect(screen.getByText('Mock Adding Ball Game')).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId('adding-lesson-game-shell')).queryByText('Gra z piłkami!')
+    ).toBeNull();
   });
 
   it('uses shared equation and game header surfaces in the subtracting lesson', () => {
@@ -143,11 +142,12 @@ describe('Arithmetic lessons shared surfaces', () => {
       'kangur-cta-pill',
       'surface-cta'
     );
-    expect(screen.getByRole('heading', { name: /gra z odejmowaniem!/i })).toHaveClass(
-      'text-xl',
-      'text-rose-700'
-    );
-    expect(screen.getByText('🎮')).toHaveClass('h-12', 'w-12', 'bg-rose-100', 'text-rose-700');
+    expect(screen.getByText('Mock Subtracting Game')).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId('subtracting-lesson-game-shell')).queryByText(
+        'Gra z odejmowaniem!'
+      )
+    ).toBeNull();
   });
 
   it('uses shared equation and game header surfaces in the division lesson', () => {
@@ -175,11 +175,10 @@ describe('Arithmetic lessons shared surfaces', () => {
       'kangur-cta-pill',
       'surface-cta'
     );
-    expect(screen.getByRole('heading', { name: /gra z dzieleniem!/i })).toHaveClass(
-      'text-xl',
-      'text-sky-700'
-    );
-    expect(screen.getByText('🎮')).toHaveClass('h-12', 'w-12', 'bg-sky-100', 'text-sky-700');
+    expect(screen.getByText('Mock Division Game')).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId('division-lesson-game-shell')).queryByText('Gra z dzieleniem!')
+    ).toBeNull();
   });
 
   it('uses shared equation, chip, and game header surfaces in the multiplication lesson', () => {
@@ -212,15 +211,28 @@ describe('Arithmetic lessons shared surfaces', () => {
       'kangur-cta-pill',
       'surface-cta'
     );
-    expect(screen.getByRole('heading', { name: /gra z grupami!/i })).toHaveClass(
-      'text-xl',
-      'text-violet-700'
+    expect(screen.getByText('Mock Multiplication Array Game')).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId('multiplication-lesson-game-array-shell')).queryByText(
+        'Gra z grupami!'
+      )
+    ).toBeNull();
+
+    unmount();
+
+    renderLesson(<MultiplicationLesson />);
+    fireEvent.click(screen.getByTestId('lesson-hub-section-game_quiz'));
+
+    expect(screen.getByTestId('multiplication-lesson-game-quiz-shell')).toHaveClass(
+      'glass-panel',
+      'border-white/88',
+      'bg-white/94'
     );
-    expect(screen.getByText('✨')).toHaveClass(
-      'h-12',
-      'w-12',
-      'bg-violet-100',
-      'text-violet-700'
-    );
+    expect(screen.getByText('Mock Multiplication Game')).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId('multiplication-lesson-game-quiz-shell')).queryByText(
+        'Quiz mnozenia!'
+      )
+    ).toBeNull();
   });
 });

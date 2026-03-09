@@ -1,4 +1,12 @@
-export type QuestionListFilter = 'all' | 'needs-review' | 'needs-fix' | 'rich-ui' | 'illustrated';
+export type QuestionListFilter =
+  | 'all'
+  | 'needs-review'
+  | 'needs-fix'
+  | 'rich-ui'
+  | 'illustrated'
+  | 'draft'
+  | 'ready'
+  | 'published';
 
 export type QuestionListSort = 'manual' | 'review-queue';
 

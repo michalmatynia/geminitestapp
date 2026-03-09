@@ -1,3 +1,4 @@
+import LessonMasteryInsights from '@/features/kangur/ui/components/LessonMasteryInsights';
 import {
   KangurDisplayEmoji,
   KangurGlassPanel,
@@ -6,8 +7,13 @@ import {
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
-import LessonMasteryInsights from '@/features/kangur/ui/components/LessonMasteryInsights';
-import { BADGES, getCurrentLevel, getNextLevel } from '@/features/kangur/ui/services/progress';
+import {
+  getCurrentLevel,
+  getNextLevel,
+  getProgressBadges,
+  getProgressAverageAccuracy,
+  getProgressTopActivities,
+} from '@/features/kangur/ui/services/progress';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 
 type ProgressOverviewProps = {
@@ -17,39 +23,31 @@ type ProgressOverviewProps = {
 type ProgressStat = {
   accent: KangurAccent;
   label: string;
-  value: number;
+  value: number | string;
 };
 
 export default function ProgressOverview({ progress }: ProgressOverviewProps): React.JSX.Element {
-  const {
-    totalXp,
-    badges = [],
-    gamesPlayed,
-    lessonsCompleted,
-    perfectGames,
-    operationsPlayed = [],
-  } = progress;
+  const { totalXp, gamesPlayed, lessonsCompleted, operationsPlayed = [] } = progress;
   const currentLevel = getCurrentLevel(totalXp);
   const nextLevel = getNextLevel(totalXp);
   const xpIntoLevel = totalXp - currentLevel.minXp;
   const xpNeeded = nextLevel ? nextLevel.minXp - currentLevel.minXp : 1;
   const percent = nextLevel ? Math.min(100, Math.round((xpIntoLevel / xpNeeded) * 100)) : 100;
+  const averageAccuracy = getProgressAverageAccuracy(progress);
+  const topActivities = getProgressTopActivities(progress);
+  const badgeStatuses = getProgressBadges(progress);
 
   const stats: ProgressStat[] = [
     { accent: 'indigo', label: 'Laczne XP', value: totalXp },
     { accent: 'violet', label: 'Poziom', value: currentLevel.level },
     { accent: 'sky', label: 'Rozegrane gry', value: gamesPlayed },
     {
-      accent: 'amber',
-      label: 'Idealne wyniki',
-      value: perfectGames || 0,
-    },
-    {
       accent: 'emerald',
       label: 'Ukonczone lekcje',
       value: lessonsCompleted,
     },
-    { accent: 'rose', label: 'Zdobyte odznaki', value: badges.length },
+    { accent: 'amber', label: 'Srednia skutecznosc', value: `${averageAccuracy}%` },
+    { accent: 'rose', label: 'Najlepsza seria', value: progress.bestWinStreak ?? 0 },
   ];
 
   return (
@@ -118,23 +116,52 @@ export default function ProgressOverview({ progress }: ProgressOverviewProps): R
         </KangurGlassPanel>
       )}
 
+      {topActivities.length > 0 && (
+        <KangurGlassPanel padding='md' surface='solid' variant='subtle'>
+          <p className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
+            Najczesciej cwiczone aktywnosci
+          </p>
+          <div className='flex flex-col gap-3'>
+            {topActivities.map((activity) => (
+              <div
+                key={activity.key}
+                className='flex items-center justify-between gap-3 rounded-3xl border border-slate-200/80 bg-white/80 px-4 py-3'
+                data-testid={`progress-overview-activity-${activity.key}`}
+              >
+                <div className='min-w-0'>
+                  <p className='truncate text-sm font-semibold text-slate-800'>{activity.label}</p>
+                  <p className='text-xs text-slate-500'>
+                    {activity.sessionsPlayed} sesji · srednio {activity.averageAccuracy}% · najlepszy
+                    wynik {activity.bestScorePercent}%
+                  </p>
+                </div>
+                <KangurStatusChip accent='indigo'>seria {activity.bestStreak}</KangurStatusChip>
+              </div>
+            ))}
+          </div>
+        </KangurGlassPanel>
+      )}
+
       <KangurGlassPanel padding='md' surface='solid' variant='subtle'>
         <p className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
           Odznaki
         </p>
         <div className='flex flex-wrap gap-2'>
-          {BADGES.map((badge) => {
-            const unlocked = badges.includes(badge.id);
+          {badgeStatuses.map((badge) => {
+            const unlocked = badge.isUnlocked;
             return (
               <KangurStatusChip
                 accent={unlocked ? 'amber' : 'slate'}
                 key={badge.id}
                 className={unlocked ? 'gap-1.5' : 'gap-1.5 opacity-70'}
-                title={badge.desc}
+                title={`${badge.desc}${unlocked ? '' : ` (${badge.summary})`}`}
                 data-testid={`progress-overview-badge-${badge.id}`}
               >
                 <span className={unlocked ? '' : 'grayscale'}>{badge.emoji}</span>
                 <span>{badge.name}</span>
+                {!unlocked ? (
+                  <span className='text-[11px] font-semibold text-slate-500'>{badge.summary}</span>
+                ) : null}
               </KangurStatusChip>
             );
           })}

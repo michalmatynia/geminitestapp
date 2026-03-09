@@ -519,15 +519,21 @@ export default function Lessons() {
     }
   }, [isSecretLessonUnlocked]);
   useEffect(() => {
-    if (!isSecretLessonHostActive) {
+    if (!activeLesson) {
       return;
     }
 
-    activeLessonHeaderRef.current?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start',
+    const frameId = window.requestAnimationFrame(() => {
+      activeLessonHeaderRef.current?.scrollIntoView({
+        behavior: 'auto',
+        block: 'start',
+      });
     });
-  }, [isSecretLessonHostActive]);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
+  }, [activeLesson?.id]);
   useKangurTutorAnchor({
     id: activeLesson ? `kangur-lesson-header:${activeLesson.id}` : 'kangur-lesson-header',
     kind: 'lesson_header',

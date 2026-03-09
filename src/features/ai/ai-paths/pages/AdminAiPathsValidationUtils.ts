@@ -12,7 +12,7 @@ import { pathConfigSchema } from '@/shared/contracts/ai-paths';
 import { validationError } from '@/shared/errors/app-error';
 import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY } from '@/shared/lib/ai-paths/core/constants';
 import {
-  remediateRemovedLegacyTriggerContextModesInDocument,
+  normalizeRemovedTriggerContextModesInDocument,
 } from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
 import { normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths/core/validation-engine';
 
@@ -143,7 +143,7 @@ export const parsePathConfig = (
       pathId,
     });
   }
-  const remediated = remediateRemovedLegacyTriggerContextModesInDocument(raw);
+  const remediated = normalizeRemovedTriggerContextModesInDocument(raw);
   const result = pathConfigSchema.safeParse(remediated.value);
   if (!result.success) {
     throw validationError('Invalid AI Paths validation path config payload.', {

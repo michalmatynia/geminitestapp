@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 
 const DOCUMENT_LOAD_COUNT_KEY = '__kangurE2eDocumentLoadCount';
 const ROUTE_SHELL_MONITOR_KEY = '__kangurRouteShellMonitor';
@@ -69,22 +69,49 @@ const expectGameRouteReady = async (page: Page, navTestId: string): Promise<void
   });
 };
 
+const expectLocatorToHaveClassToken = async (
+  locator: Locator,
+  classToken: string
+): Promise<void> => {
+  await expect
+    .poll(
+      () =>
+        locator.evaluate(
+          (element, expectedClassToken) => element.classList.contains(expectedClassToken),
+          classToken
+        ),
+      {
+        message: `expected element to include class token "${classToken}"`,
+      }
+    )
+    .toBe(true);
+};
+
 const expectLearnerProfileRouteReady = async (page: Page): Promise<void> => {
+  const hero = page.getByTestId('kangur-learner-profile-hero');
+
   await expect(page.getByTestId('kangur-route-shell')).toBeVisible({
     timeout: ROUTE_BOOT_TIMEOUT_MS,
   });
-  await expect(page.getByTestId('kangur-learner-profile-hero')).toBeVisible({
+  await expect(hero).toBeVisible({
     timeout: ROUTE_BOOT_TIMEOUT_MS,
   });
+  await expect(hero.getByRole('heading', { name: 'Profil ucznia' })).toBeVisible({
+    timeout: ROUTE_BOOT_TIMEOUT_MS,
+  });
+  await expectLocatorToHaveClassToken(hero, 'text-center');
 };
 
 const expectParentDashboardRouteReady = async (page: Page): Promise<void> => {
-  await expect(page.getByTestId('kangur-parent-dashboard-hero')).toBeVisible({
+  const hero = page.getByTestId('kangur-parent-dashboard-hero');
+
+  await expect(hero).toBeVisible({
     timeout: ROUTE_BOOT_TIMEOUT_MS,
   });
   await expect(page.getByRole('heading', { name: /^Panel Rodzica$/ })).toBeVisible({
     timeout: ROUTE_BOOT_TIMEOUT_MS,
   });
+  await expectLocatorToHaveClassToken(hero, 'text-center');
 };
 
 const expectKangurLoginReady = async (page: Page): Promise<void> => {
@@ -960,6 +987,7 @@ test.describe('Kangur navigation continuity', () => {
     await expect(page.getByTestId('lessons-list-transition')).toBeVisible();
     await expect(page.getByTestId('lessons-list-intro-card')).toBeVisible();
     await expect(page.getByTestId('kangur-lessons-heading-art')).toBeVisible();
+    await expectLocatorToHaveClassToken(page.getByTestId('lessons-list-intro-card'), 'text-center');
     await expect(
       page.getByTestId('lessons-list-intro-card').getByRole('heading', { name: 'Lekcje' })
     ).toBeVisible();
@@ -999,6 +1027,77 @@ test.describe('Kangur navigation continuity', () => {
       await activeLessonSnapshotPromise,
       'lessons library -> active lesson'
     );
+  });
+
+  test('jumps back to the active lesson header when opening a lesson from the library', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 560 });
+    await gotoKangurPath(page, '/kangur/game');
+    await expectGameRouteReady(page, 'kangur-primary-nav-lessons');
+
+    await page.getByTestId('kangur-primary-nav-lessons').click();
+    await expect(page).toHaveURL(/\/kangur\/lessons$/);
+    await expect(page.getByTestId('lessons-list-transition')).toBeVisible();
+
+    await page.evaluate(() => {
+      window.scrollTo({ top: 420, left: 0, behavior: 'auto' });
+    });
+
+    await expect
+      .poll(
+        () => page.evaluate(() => window.scrollY > 140),
+        {
+          message: 'expected the Lessons library to be scrolled before opening a lesson',
+        }
+      )
+      .toBe(true);
+    const beforeOpenScrollY = await page.evaluate(() => window.scrollY);
+
+    const clickedLessonLabel = await page.evaluate(() => {
+      const target = Array.from(document.querySelectorAll('[data-doc-id="lessons_library_entry"]'))
+        .filter((element): element is HTMLButtonElement => element instanceof HTMLButtonElement)
+        .find((element) => {
+          const rect = element.getBoundingClientRect();
+          return rect.top >= 0 && rect.bottom <= window.innerHeight;
+        });
+
+      if (!target) {
+        return null;
+      }
+
+      const lessonLabel =
+        target.querySelector<HTMLElement>('.text-xl')?.textContent?.trim() ??
+        target.textContent?.trim() ??
+        null;
+
+      target.click();
+      return lessonLabel;
+    });
+
+    expect(clickedLessonLabel).not.toBeNull();
+
+    await expect(page.getByTestId('lessons-active-transition')).toBeVisible();
+    await expect(page.getByTestId('active-lesson-header')).toBeVisible();
+    await expect
+      .poll(
+        () => page.evaluate((initialScrollY) => window.scrollY < initialScrollY - 120, beforeOpenScrollY),
+        {
+          message: 'expected opening a lesson to jump upward toward the header anchor',
+        }
+      )
+      .toBe(true);
+    await expect
+      .poll(
+        () =>
+          page
+            .getByTestId('active-lesson-header')
+            .evaluate((element) => element.getBoundingClientRect().top < 180),
+        {
+          message: 'expected the active lesson header to land near the top of the viewport',
+        }
+      )
+      .toBe(true);
   });
 
   test('keeps route navigation smooth when opening Lekcje and returning home through the StudiQ logo', async ({
@@ -1056,6 +1155,10 @@ test.describe('Kangur navigation continuity', () => {
     await expect(page).toHaveURL(/\/kangur\/game$/);
     await expect(page.getByTestId('kangur-game-operation-top-section')).toBeVisible();
     await expect(page.getByTestId('kangur-grajmy-heading-art')).toBeVisible();
+    await expectLocatorToHaveClassToken(
+      page.getByTestId('kangur-game-operation-top-section'),
+      'text-center'
+    );
     await expect(
       page.getByTestId('kangur-game-operation-top-section').getByRole('heading', { name: 'Grajmy!' })
     ).toBeVisible();
@@ -1073,6 +1176,10 @@ test.describe('Kangur navigation continuity', () => {
     await expect(page).toHaveURL(/\/kangur\/game$/);
     await expect(page.getByTestId('kangur-game-training-top-section')).toBeVisible();
     await expect(page.getByTestId('kangur-training-heading-art')).toBeVisible();
+    await expectLocatorToHaveClassToken(
+      page.getByTestId('kangur-game-training-top-section'),
+      'text-center'
+    );
     await expect(
       page
         .getByTestId('kangur-game-training-top-section')
@@ -1092,6 +1199,10 @@ test.describe('Kangur navigation continuity', () => {
     await expect(page).toHaveURL(/\/kangur\/game$/);
     await expect(page.getByTestId('kangur-game-kangur-setup-top-section')).toBeVisible();
     await expect(page.getByTestId('kangur-kangur-heading-art')).toBeVisible();
+    await expectLocatorToHaveClassToken(
+      page.getByTestId('kangur-game-kangur-setup-top-section'),
+      'text-center'
+    );
     await expect(
       page
         .getByTestId('kangur-game-kangur-setup-top-section')

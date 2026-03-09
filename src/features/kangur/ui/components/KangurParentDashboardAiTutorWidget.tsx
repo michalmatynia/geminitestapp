@@ -1,8 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { BrainCircuit } from 'lucide-react';
+import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 
 import {
   KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
@@ -21,12 +21,6 @@ import {
   shouldRenderKangurParentDashboardPanel,
   useKangurParentDashboardRuntime,
 } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
-import type { KangurAiTutorUsageResponse } from '@/shared/contracts/kangur-ai-tutor';
-import {
-  createDefaultKangurAiTutorLearnerMood,
-  getKangurTutorMoodPreset,
-  type KangurTutorMoodId,
-} from '@/shared/contracts/kangur-ai-tutor-mood';
 import {
   KangurButton,
   KangurGlassPanel,
@@ -35,9 +29,15 @@ import {
   KangurSurfacePanel,
 } from '@/features/kangur/ui/design/primitives';
 import { invalidateSettingsCache } from '@/shared/api/settings-client';
-import { kangurKeys } from '@/shared/lib/query-key-exports';
-import { invalidateAllSettings } from '@/shared/lib/query-invalidation';
+import type { KangurAiTutorUsageResponse } from '@/shared/contracts/kangur-ai-tutor';
+import {
+  createDefaultKangurAiTutorLearnerMood,
+  getKangurTutorMoodPreset,
+  type KangurTutorMoodId,
+} from '@/shared/contracts/kangur-ai-tutor-mood';
 import { api } from '@/shared/lib/api-client';
+import { invalidateAllSettings } from '@/shared/lib/query-invalidation';
+import { kangurKeys } from '@/shared/lib/query-key-exports';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
@@ -171,6 +171,7 @@ function AiTutorConfigPanel(): React.JSX.Element {
     currentSettings?.rememberTutorContext ?? true
   );
   const [allowLessons, setAllowLessons] = useState(currentSettings?.allowLessons ?? true);
+  const [allowGames, setAllowGames] = useState(currentSettings?.allowGames ?? true);
   const [testAccessMode, setTestAccessMode] = useState<KangurAiTutorTestAccessMode>(
     currentSettings?.testAccessMode ?? 'guided'
   );
@@ -191,6 +192,7 @@ function AiTutorConfigPanel(): React.JSX.Element {
     setAllowCrossPagePersistence(currentSettings?.allowCrossPagePersistence ?? true);
     setRememberTutorContext(currentSettings?.rememberTutorContext ?? true);
     setAllowLessons(currentSettings?.allowLessons ?? true);
+    setAllowGames(currentSettings?.allowGames ?? true);
     setTestAccessMode(currentSettings?.testAccessMode ?? 'guided');
     setShowSources(currentSettings?.showSources ?? true);
     setAllowSelectedTextSupport(currentSettings?.allowSelectedTextSupport ?? true);
@@ -245,6 +247,7 @@ function AiTutorConfigPanel(): React.JSX.Element {
       allowCrossPagePersistence,
       rememberTutorContext,
       allowLessons,
+      allowGames,
       testAccessMode,
       showSources,
       allowSelectedTextSupport,
@@ -283,6 +286,7 @@ function AiTutorConfigPanel(): React.JSX.Element {
     allowCrossPagePersistence,
     rememberTutorContext,
     allowLessons,
+    allowGames,
     testAccessMode,
     showSources,
     allowSelectedTextSupport,
@@ -446,6 +450,13 @@ function AiTutorConfigPanel(): React.JSX.Element {
           label='Pokazuj tutora w lekcjach'
           description='Tutor może pomagać podczas otwartych lekcji i samodzielnych powtórek.'
           onChange={setAllowLessons}
+        />
+        <TutorToggleField
+          checked={allowGames}
+          disabled={!enabled}
+          label='Pokazuj tutora w grach'
+          description='Tutor może pomagać w Grajmy podczas treningów i quizów bez mieszania tego z ustawieniami lekcji.'
+          onChange={setAllowGames}
         />
         <div className='flex flex-col gap-1'>
           <label

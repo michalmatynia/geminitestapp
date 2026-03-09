@@ -88,9 +88,29 @@ vi.mock('@/features/kangur/server/ai-tutor-adaptive', () => ({
 vi.unmock('@/features/kangur/settings-ai-tutor');
 import { postKangurAiTutorChatHandler } from './handler';
 const KANGUR_AI_TUTOR_BRAIN_CAPABILITY = 'kangur_ai_tutor.chat';
+const expectTutorSource = (input: {
+  documentId: string;
+  title: string;
+  description: string;
+  tags: string[];
+}) =>
+  expect.objectContaining({
+    documentId: input.documentId,
+    collectionId: 'kangur-runtime-context',
+    score: expect.any(Number),
+    text: expect.any(String),
+    metadata: expect.objectContaining({
+      source: 'manual-text',
+      sourceId: input.documentId,
+      title: input.title,
+      description: input.description,
+      tags: input.tags,
+    }),
+  });
+
 describe('kangur ai tutor chat handler', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-03-07T10:00:00.000Z'));
     resolveKangurActorMock.mockResolvedValue({
@@ -371,8 +391,8 @@ describe('kangur ai tutor chat handler', () => {
           contentId: 'suite-2026',
           promptMode: 'hint',
           brainCapability: KANGUR_AI_TUTOR_BRAIN_CAPABILITY,
-          retrievedSourceCount: 0,
-          returnedSourceCount: 0,
+          retrievedSourceCount: 1,
+          returnedSourceCount: 1,
           showSources: true,
           adaptiveGuidanceApplied: true,
           hintDepth: 'step_by_step',
@@ -466,9 +486,9 @@ describe('kangur ai tutor chat handler', () => {
     });
     expect(upsertStoredSettingValueMock).not.toHaveBeenCalled();
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({
+    const body = await response.json();
+    expect(body).toMatchObject({
       message: 'Spójrz najpierw na to, co oznacza znak plus.',
-      sources: [],
       followUpActions: [],
       coachingFrame: {
         mode: 'hint_ladder',
@@ -492,6 +512,17 @@ describe('kangur ai tutor chat handler', () => {
         remainingMessages: null,
       },
     });
+    expect(body.sources).toHaveLength(1);
+    expect(body.sources[0]).toEqual(
+      expectTutorSource({
+        documentId: 'runtime:kangur:test:learner-1:suite-1:q-1:active',
+        title: 'Kangur Mini',
+        description: 'Krótki zestaw próbny.',
+        tags: ['kangur', 'test'],
+      })
+    );
+    expect(body.sources[0].text).toContain('Krótki zestaw próbny.');
+    expect(body.sources[0].text).toContain('Ile to 2 + 2?');
   });
   it('builds structured game tutor context from the live request when the registry has no game surface document', async () => {
     contextRegistryResolveRefsMock.mockResolvedValue(
@@ -552,9 +583,9 @@ describe('kangur ai tutor chat handler', () => {
     );
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({
+    const body = await response.json();
+    expect(body).toMatchObject({
       message: 'Najpierw dolicz 3 do 7, a potem jeszcze 2.',
-      sources: [],
       followUpActions: [],
       suggestedMoodId: 'encouraging',
       tutorMood: {
@@ -571,6 +602,17 @@ describe('kangur ai tutor chat handler', () => {
         remainingMessages: null,
       },
     });
+    expect(body.sources).toHaveLength(1);
+    expect(body.sources[0]).toEqual(
+      expectTutorSource({
+        documentId: 'runtime:kangur:game:game:game-q-2:active',
+        title: 'Trening dodawania',
+        description: 'Active game question Pytanie 2/10.',
+        tags: ['kangur', 'game', 'ai-tutor'],
+      })
+    );
+    expect(body.sources[0].text).toContain('Trening dodawania');
+    expect(body.sources[0].text).toContain('Ile to 7 + 5?');
   });
   it('returns adaptive follow-up actions with the tutor response', async () => {
     buildKangurAiTutorAdaptiveGuidanceMock.mockResolvedValue({
@@ -632,9 +674,9 @@ describe('kangur ai tutor chat handler', () => {
         }),
       })
     );
-    await expect(response.json()).resolves.toEqual({
+    const body = await response.json();
+    expect(body).toMatchObject({
       message: 'Wroc teraz do lekcji z dodawania i zrob jedna krotka powtorke.',
-      sources: [],
       followUpActions: [
         {
           id: 'recommendation:strengthen_lesson_mastery',
@@ -667,6 +709,17 @@ describe('kangur ai tutor chat handler', () => {
         remainingMessages: null,
       },
     });
+    expect(body.sources).toHaveLength(1);
+    expect(body.sources[0]).toEqual(
+      expectTutorSource({
+        documentId: 'runtime:kangur:lesson:learner-1:lesson-1',
+        title: 'Dodawanie',
+        description: 'Ćwiczenia z podstaw dodawania.',
+        tags: ['kangur', 'test'],
+      })
+    );
+    expect(body.sources[0].text).toContain('Ćwiczenia z podstaw dodawania.');
+    expect(body.sources[0].text).toContain('Powtorz lekcje: Dodawanie.');
   });
   it('ignores legacy teaching-agent ids and still uses the direct Brain runtime', async () => {
     buildKangurAiTutorAdaptiveGuidanceMock.mockResolvedValue({
@@ -706,9 +759,9 @@ describe('kangur ai tutor chat handler', () => {
     );
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({
+    const body = await response.json();
+    expect(body).toMatchObject({
       message: 'Skup sie na zaznaczonym fragmencie i policz krok po kroku.',
-      sources: [],
       followUpActions: [],
       suggestedMoodId: 'encouraging',
       tutorMood: {
@@ -725,8 +778,64 @@ describe('kangur ai tutor chat handler', () => {
         remainingMessages: null,
       },
     });
+    expect(body.sources).toHaveLength(1);
+    expect(body.sources[0]).toEqual(
+      expectTutorSource({
+        documentId: 'runtime:kangur:lesson:learner-1:lesson-1',
+        title: 'Dodawanie',
+        description: 'Ćwiczenia z podstaw dodawania.',
+        tags: ['kangur', 'test'],
+      })
+    );
+    expect(body.sources[0].text).toContain('Ćwiczenia z podstaw dodawania.');
   });
   it('logs failed tutor runs for observability', async () => {
+    readStoredSettingValueMock.mockImplementation(async (key: string) => {
+      if (key === KANGUR_AI_TUTOR_SETTINGS_KEY) {
+        return JSON.stringify({
+          'learner-1': {
+            enabled: true,
+            agentPersonaId: 'persona-1',
+            playwrightPersonaId: null,
+            rememberTutorContext: true,
+            allowLessons: true,
+            testAccessMode: 'guided',
+            showSources: true,
+            allowSelectedTextSupport: true,
+            hintDepth: 'step_by_step',
+            proactiveNudges: 'coach',
+            dailyMessageLimit: 2,
+          },
+        });
+      }
+      if (key === KANGUR_AI_TUTOR_APP_SETTINGS_KEY) {
+        return JSON.stringify({
+          agentPersonaId: 'persona-1',
+          motionPresetId: null,
+          dailyMessageLimit: 2,
+        });
+      }
+      if (key === KANGUR_AI_TUTOR_USAGE_SETTINGS_KEY) {
+        return JSON.stringify({
+          'learner-1': {
+            dateKey: '2026-03-07',
+            messageCount: 1,
+            updatedAt: '2026-03-07T09:30:00.000Z',
+          },
+        });
+      }
+      if (key === AGENT_PERSONA_SETTINGS_KEY) {
+        return JSON.stringify([
+          {
+            id: 'persona-1',
+            name: 'Mila',
+            role: 'Math coach',
+            instructions: 'Use a calm, playful tone.',
+          },
+        ]);
+      }
+      return null;
+    });
     runBrainChatCompletionMock.mockRejectedValue(new Error('Tutor provider failed.'));
     await expect(
       postKangurAiTutorChatHandler(
@@ -757,6 +866,7 @@ describe('kangur ai tutor chat handler', () => {
         }),
       })
     );
+    expect(upsertStoredSettingValueMock).not.toHaveBeenCalled();
   });
   it('rejects active test tutoring when the parent only allows review after the answer', async () => {
     readStoredSettingValueMock.mockImplementation(async (key: string) => {
@@ -819,6 +929,72 @@ describe('kangur ai tutor chat handler', () => {
           contentId: 'suite-2026',
           promptMode: 'hint',
           testAccessMode: 'review_after_answer',
+        }),
+      })
+    );
+  });
+  it('rejects game tutoring when the parent disables the tutor for Grajmy separately from lessons', async () => {
+    readStoredSettingValueMock.mockImplementation(async (key: string) => {
+      if (key === KANGUR_AI_TUTOR_SETTINGS_KEY) {
+        return JSON.stringify({
+          'learner-1': {
+            enabled: true,
+            agentPersonaId: 'persona-1',
+            playwrightPersonaId: null,
+            allowLessons: true,
+            allowGames: false,
+            testAccessMode: 'guided',
+            showSources: true,
+            allowSelectedTextSupport: true,
+            dailyMessageLimit: null,
+          },
+        });
+      }
+      if (key === KANGUR_AI_TUTOR_USAGE_SETTINGS_KEY) {
+        return JSON.stringify({});
+      }
+      if (key === AGENT_PERSONA_SETTINGS_KEY) {
+        return JSON.stringify([
+          {
+            id: 'persona-1',
+            name: 'Mila',
+            role: 'Math coach',
+            instructions: 'Use a calm, playful tone.',
+          },
+        ]);
+      }
+      return null;
+    });
+
+    await expect(
+      postKangurAiTutorChatHandler(
+        createPostRequest(
+          JSON.stringify({
+            messages: [{ role: 'user', content: 'Podpowiedz mi kolejny ruch.' }],
+            context: {
+              surface: 'game',
+              contentId: 'calendar-quiz',
+              questionId: 'calendar-1',
+              currentQuestion: 'Który dzień jest po wtorku?',
+              promptMode: 'hint',
+            },
+          })
+        ),
+        createRequestContext()
+      )
+    ).rejects.toMatchObject({
+      message: 'AI tutor is disabled for games for this learner.',
+      httpStatus: 400,
+    });
+    expect(runBrainChatCompletionMock).not.toHaveBeenCalled();
+    expect(logKangurServerEventMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'kangur.ai-tutor.chat.failed',
+        statusCode: 400,
+        context: expect.objectContaining({
+          surface: 'game',
+          contentId: 'calendar-quiz',
+          allowGames: false,
         }),
       })
     );

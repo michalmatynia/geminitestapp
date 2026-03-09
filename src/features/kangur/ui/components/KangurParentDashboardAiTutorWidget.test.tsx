@@ -120,6 +120,7 @@ describe('KangurParentDashboardAiTutorWidget', () => {
             uiMode: 'anchored',
             allowCrossPagePersistence: true,
             allowLessons: true,
+            allowGames: true,
             testAccessMode: 'guided',
             showSources: true,
             allowSelectedTextSupport: true,
@@ -157,6 +158,7 @@ describe('KangurParentDashboardAiTutorWidget', () => {
     render(<KangurParentDashboardAiTutorWidget />);
 
     const lessonsToggle = screen.getByRole('checkbox', { name: /pokazuj tutora w lekcjach/i });
+    const gamesToggle = screen.getByRole('checkbox', { name: /pokazuj tutora w grach/i });
     expect(lessonsToggle.nextElementSibling).toHaveClass(
       'bg-gradient-to-r',
       'from-amber-400',
@@ -189,6 +191,7 @@ describe('KangurParentDashboardAiTutorWidget', () => {
     );
 
     fireEvent.click(lessonsToggle);
+    fireEvent.click(gamesToggle);
     fireEvent.change(screen.getByLabelText(/tryb interfejsu tutora/i), {
       target: { value: 'static' },
     });
@@ -226,6 +229,7 @@ describe('KangurParentDashboardAiTutorWidget', () => {
             allowCrossPagePersistence: false,
             rememberTutorContext: false,
             allowLessons: false,
+            allowGames: false,
             testAccessMode: 'review_after_answer',
             showSources: false,
             allowSelectedTextSupport: false,
@@ -253,6 +257,7 @@ describe('KangurParentDashboardAiTutorWidget', () => {
             uiMode: 'anchored',
             allowCrossPagePersistence: true,
             allowLessons: true,
+            allowGames: true,
             testAccessMode: 'guided',
             showSources: true,
             allowSelectedTextSupport: true,

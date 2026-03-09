@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/features/kangur/ui/components/AddingBallGame', () => ({
@@ -68,5 +68,21 @@ describe('AddingLesson', () => {
     expect(screen.getByTestId('lesson-hub-progress-dot-podstawy-1')).toHaveClass(
       'bg-orange-200'
     );
+  });
+
+  it('does not repeat the subsection title inside the adding game shell', () => {
+    render(
+      <KangurLessonNavigationProvider onBack={vi.fn()}>
+        <AddingLesson />
+      </KangurLessonNavigationProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /gra z piłkami/i }));
+
+    expect(screen.getByTestId('adding-lesson-game-shell')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Mock Adding Ball Game' })).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId('adding-lesson-game-shell')).queryByText('Gra z piłkami!')
+    ).toBeNull();
   });
 });

@@ -31,7 +31,11 @@ import {
 import { KANGUR_ACCENT_STYLES, type KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import { getKangurQuestions, isExamMode } from '@/features/kangur/ui/services/kangur-questions';
-import { XP_REWARDS, addXp, loadProgress } from '@/features/kangur/ui/services/progress';
+import {
+  addXp,
+  createGameSessionReward,
+  loadProgress,
+} from '@/features/kangur/ui/services/progress';
 import type { KangurExamQuestion, KangurQuestionChoice } from '@/features/kangur/ui/types';
 import { cn } from '@/shared/utils';
 
@@ -309,17 +313,14 @@ function PracticeModeGame(): React.JSX.Element {
 
     if (current + 1 >= questions.length) {
       const progress = loadProgress();
-      const isPerfect = newScore === questions.length;
-      const xp = isPerfect
-        ? XP_REWARDS.perfect_game
-        : newScore >= Math.ceil(questions.length * 0.7)
-          ? XP_REWARDS.great_game
-          : XP_REWARDS.good_game;
-
-      addXp(xp, {
-        gamesPlayed: progress.gamesPlayed + 1,
-        perfectGames: isPerfect ? progress.perfectGames + 1 : progress.perfectGames,
+      const reward = createGameSessionReward(progress, {
+        operation: mode ?? 'mixed',
+        difficulty: null,
+        correctAnswers: newScore,
+        totalQuestions: questions.length,
       });
+
+      addXp(reward.xp, reward.progressUpdates);
       setScore(newScore);
       setFinished(true);
     } else {

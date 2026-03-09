@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Badge, SelectSimple, Textarea } from '@/shared/ui';
+import { Badge, Button, SelectSimple, Textarea } from '@/shared/ui';
 import type { KangurTestQuestion } from '@/shared/contracts/kangur-tests';
 import type { QuestionFormData } from '../test-questions';
 import { hasIllustration } from '../test-questions';
@@ -15,6 +15,11 @@ import {
 } from './context/KangurTestQuestionEditorContext';
 import { useOptionalKangurQuestionsManagerRuntimeContext } from './context/KangurQuestionsManagerRuntimeContext';
 import { getQuestionAuthoringSummary } from './question-authoring-insights';
+import { getQuestionWorkflowLabel } from './question-authoring-insights';
+import {
+  applyQuestionAuthoringRepair,
+  getQuestionAuthoringRepairActions,
+} from './question-authoring-repairs';
 
 const POINT_VALUE_OPTIONS = [
   { value: '1', label: '1 pt' },
@@ -34,6 +39,12 @@ const CHOICE_STYLE_OPTIONS = [
   { value: 'list', label: 'Choice list' },
   { value: 'grid', label: 'Choice grid' },
 ];
+
+const QUESTION_WORKFLOW_OPTIONS = [
+  { value: 'draft', label: 'Draft' },
+  { value: 'ready', label: 'Ready to publish' },
+  { value: 'published', label: 'Published' },
+] as const;
 
 type Props = {
   formData: QuestionFormData;
@@ -65,6 +76,10 @@ function KangurTestQuestionEditorContent({
   localDraftSavedAtLabel?: string | null;
 }): React.JSX.Element {
   const { formData, suiteTitle, updateFormData } = useKangurTestQuestionEditorContext();
+  const [previewMode, setPreviewMode] = React.useState<'learner' | 'correct' | 'incorrect'>(
+    'learner'
+  );
+  const [previewFrame, setPreviewFrame] = React.useState<'desktop' | 'compact'>('desktop');
 
   const previewQuestion: KangurTestQuestion = {
     id: 'preview',
@@ -95,6 +110,29 @@ function KangurTestQuestionEditorContent({
       : authoringSummary.status === 'needs-review'
         ? 'Needs review'
         : 'Ready';
+  const workflowLabel = getQuestionWorkflowLabel(formData.editorial.workflowStatus);
+  const repairActions = React.useMemo(
+    () =>
+      getQuestionAuthoringRepairActions([
+        ...authoringSummary.blockers,
+        ...authoringSummary.warnings,
+      ]),
+    [authoringSummary.blockers, authoringSummary.warnings]
+  );
+  const previewSelectedLabel =
+    previewMode === 'learner'
+      ? null
+      : previewMode === 'correct'
+        ? formData.correctChoiceLabel
+        : formData.choices.find((choice) => choice.label !== formData.correctChoiceLabel)?.label ??
+          formData.correctChoiceLabel;
+  const previewShowAnswer = previewMode !== 'learner';
+  const previewModeLabel =
+    previewMode === 'learner'
+      ? 'Learner view'
+      : previewMode === 'correct'
+        ? 'Correct answer review'
+        : 'Wrong answer review';
 
   return (
     <div className='grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(300px,0.9fr)]'>
@@ -146,6 +184,18 @@ function KangurTestQuestionEditorContent({
           ) : null}
           <Badge variant='outline' className='text-[10px]'>
             {isDirty ? 'Unsaved changes' : 'Saved'}
+          </Badge>
+          <Badge
+            variant='outline'
+            className={
+              formData.editorial.workflowStatus === 'published'
+                ? 'border-emerald-400/40 text-[10px] text-emerald-300'
+                : formData.editorial.workflowStatus === 'ready'
+                  ? 'border-cyan-400/40 text-[10px] text-cyan-300'
+                  : 'border-slate-400/40 text-[10px] text-slate-300'
+            }
+          >
+            {workflowLabel}
           </Badge>
           <Badge variant='outline' className={statusBadgeClassName}>
             {statusLabel}
@@ -209,6 +259,76 @@ function KangurTestQuestionEditorContent({
               {formData.editorial.note.trim()}
             </div>
           ) : null}
+          {repairActions.length > 0 ? (
+            <div className='rounded-xl border border-border/40 bg-background/30 p-3'>
+              <div className='mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+                Quick repairs
+              </div>
+              <div className='flex flex-wrap gap-2'>
+                {repairActions.map((repair) => (
+                  <Button
+                    key={repair.id}
+                    type='button'
+                    size='sm'
+                    variant='outline'
+                    className='h-8 px-3 text-[11px]'
+                    onClick={(): void =>
+                      updateFormData(applyQuestionAuthoringRepair(formData, repair.id))
+                    }
+                  >
+                    {repair.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
+
+        <div className='grid gap-3 rounded-2xl border border-border/50 bg-card/20 p-4'>
+          <div className='space-y-1'>
+            <div className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+              Publishing state
+            </div>
+            <div className='text-sm text-muted-foreground'>
+              Draft questions stay in authoring. Ready questions are cleared for publish. Published
+              marks the question as live-approved in the bank.
+            </div>
+          </div>
+          <div className='flex flex-wrap gap-2'>
+            {QUESTION_WORKFLOW_OPTIONS.map((option) => {
+              const isActive = formData.editorial.workflowStatus === option.value;
+              return (
+                <button
+                  key={option.value}
+                  type='button'
+                  className={
+                    isActive
+                      ? 'inline-flex items-center rounded-full border border-cyan-400/50 bg-cyan-500/15 px-3 py-1.5 text-xs font-semibold text-cyan-100'
+                      : 'inline-flex items-center rounded-full border border-border/60 bg-background/40 px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:border-primary/40 hover:text-foreground'
+                  }
+                  onClick={(): void =>
+                    updateFormData({
+                      editorial: {
+                        ...formData.editorial,
+                        workflowStatus: option.value,
+                      },
+                    })
+                  }
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+          {formData.editorial.publishedAt ? (
+            <div className='text-xs text-muted-foreground'>
+              Last published: {new Date(formData.editorial.publishedAt).toLocaleString('pl-PL')}
+            </div>
+          ) : (
+            <div className='text-xs text-muted-foreground'>
+              This question has not been published yet.
+            </div>
+          )}
         </div>
 
         <div className='grid gap-3 rounded-2xl border border-border/50 bg-card/20 p-4 md:grid-cols-2'>
@@ -329,16 +449,67 @@ function KangurTestQuestionEditorContent({
       {/* ── Preview column ──────────────────────────────────────────────── */}
       <div className='sticky top-4 hidden h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-2xl border border-border/60 bg-card/20 xl:flex'>
         <div className='flex items-center justify-between border-b border-border/60 bg-card/40 px-4 py-3 backdrop-blur-md'>
-          <div className='text-sm font-semibold text-white'>Preview</div>
-          <div className='text-xs text-muted-foreground'>Live learner view</div>
+          <div>
+            <div className='text-sm font-semibold text-white'>Preview</div>
+            <div className='text-xs text-muted-foreground'>{previewModeLabel}</div>
+          </div>
+          <div className='flex flex-wrap items-center justify-end gap-2'>
+            <div className='flex items-center gap-1 rounded-full border border-border/50 bg-background/30 p-1'>
+              {(['learner', 'correct', 'incorrect'] as const).map((mode) => {
+                const label =
+                  mode === 'learner'
+                    ? 'Learner view'
+                    : mode === 'correct'
+                      ? 'Correct answer'
+                      : 'Wrong answer';
+                return (
+                  <button
+                    key={mode}
+                    type='button'
+                    className={
+                      previewMode === mode
+                        ? 'rounded-full bg-cyan-500/15 px-2.5 py-1 text-[11px] font-semibold text-cyan-100'
+                        : 'rounded-full px-2.5 py-1 text-[11px] font-semibold text-muted-foreground hover:text-foreground'
+                    }
+                    onClick={(): void => setPreviewMode(mode)}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+            <div className='flex items-center gap-1 rounded-full border border-border/50 bg-background/30 p-1'>
+              {(['desktop', 'compact'] as const).map((frame) => (
+                <button
+                  key={frame}
+                  type='button'
+                  className={
+                    previewFrame === frame
+                      ? 'rounded-full bg-cyan-500/15 px-2.5 py-1 text-[11px] font-semibold text-cyan-100'
+                      : 'rounded-full px-2.5 py-1 text-[11px] font-semibold text-muted-foreground hover:text-foreground'
+                  }
+                  onClick={(): void => setPreviewFrame(frame)}
+                >
+                  {frame === 'desktop' ? 'Desktop' : 'Compact'}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
         <div className='flex-1 overflow-y-auto p-4 scrollbar-thin'>
-          <div className='mx-auto max-w-xl rounded-xl border border-border/40 bg-white p-4 shadow-sm'>
+          <div
+            data-testid='question-preview-frame'
+            className={
+              previewFrame === 'compact'
+                ? 'mx-auto max-w-[360px] rounded-xl border border-border/40 bg-white p-4 shadow-sm'
+                : 'mx-auto max-w-xl rounded-xl border border-border/40 bg-white p-4 shadow-sm'
+            }
+          >
             <KangurTestQuestionRenderer
               question={previewQuestion}
-              selectedLabel={null}
+              selectedLabel={previewSelectedLabel}
               onSelect={(): void => {}}
-              showAnswer={false}
+              showAnswer={previewShowAnswer}
             />
           </div>
         </div>

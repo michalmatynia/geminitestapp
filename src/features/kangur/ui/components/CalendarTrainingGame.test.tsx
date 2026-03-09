@@ -32,7 +32,11 @@ const MONTHS_DAYS = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31] as const;
 
 vi.mock('@/features/kangur/ui/services/progress', () => ({
   addXp: vi.fn(),
-  buildLessonMasteryUpdate: vi.fn(() => ({})),
+  createTrainingReward: vi.fn(() => ({
+    xp: 32,
+    scorePercent: 100,
+    progressUpdates: {},
+  })),
   loadProgress: () => ({
     totalXp: 0,
     gamesPlayed: 0,

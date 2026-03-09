@@ -71,12 +71,23 @@ export const kangurTestQuestionReviewStatusSchema = z.enum([
 ]);
 export type KangurTestQuestionReviewStatus = z.infer<typeof kangurTestQuestionReviewStatusSchema>;
 
+export const kangurTestQuestionWorkflowStatusSchema = z.enum([
+  'draft',
+  'ready',
+  'published',
+]);
+export type KangurTestQuestionWorkflowStatus = z.infer<
+  typeof kangurTestQuestionWorkflowStatusSchema
+>;
+
 export const kangurTestQuestionEditorialSchema = z.object({
   source: z.enum(['manual', 'legacy-import']).default('manual'),
   reviewStatus: kangurTestQuestionReviewStatusSchema.default('ready'),
+  workflowStatus: kangurTestQuestionWorkflowStatusSchema.default('draft'),
   auditFlags: z.array(kangurTestQuestionAuditFlagSchema).max(12).default([]),
   legacyId: z.string().trim().max(120).optional(),
   note: z.string().trim().max(500).optional(),
+  publishedAt: z.string().datetime().optional(),
 });
 export type KangurTestQuestionEditorial = z.infer<typeof kangurTestQuestionEditorialSchema>;
 
@@ -112,6 +123,7 @@ export const kangurTestQuestionSchema = z.object({
   editorial: kangurTestQuestionEditorialSchema.default({
     source: 'manual',
     reviewStatus: 'ready',
+    workflowStatus: 'draft',
     auditFlags: [],
   }),
 });
@@ -130,6 +142,8 @@ export const kangurTestSuiteSchema = z.object({
   gradeLevel: z.string().max(40).default(''),
   category: z.string().max(80).default('custom'),
   enabled: z.boolean().default(true),
+  publicationStatus: z.enum(['draft', 'live']).default('draft'),
+  publishedAt: z.string().datetime().optional(),
   sortOrder: z.number().int(),
 });
 export type KangurTestSuite = z.infer<typeof kangurTestSuiteSchema>;

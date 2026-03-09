@@ -6,6 +6,8 @@
   "scripts": {
     "predev": "node scripts/runtime/check-node-version.cjs",
     "dev": "node --max-old-space-size=8192 server.cjs",
+    "predev:playwright-broker": "node scripts/runtime/check-node-version.cjs",
+    "dev:playwright-broker": "node --max-old-space-size=12288 server.cjs",
     "dev:heap": "node --max-old-space-size=8192 --heapsnapshot-near-heap-limit=2 --trace-gc server.cjs",
     "postinstall": "prisma generate",
     "build": "prisma generate && NODE_OPTIONS=--max-old-space-size=8192 next build --webpack",
@@ -162,6 +164,7 @@
     "test:scanner-envelopes": "vitest run scripts/architecture/scan-summary-json-envelope.test.ts",
     "test:ai-paths:trigger-queue:unit": "vitest run src/features/ai/ai-paths/components/__tests__/job-queue-context.enqueue-events.test.tsx src/shared/contracts/__tests__/ai-paths-run-enqueued-event.contract-runtime.test.ts src/shared/lib/__tests__/query-invalidation.notify-ai-path-run-enqueued.test.ts src/shared/lib/__tests__/query-invalidation.optimistically-insert-run.test.ts src/shared/lib/ai-paths/__tests__/optimistic-run-queue.test.ts src/shared/lib/ai-paths/api/__tests__/enqueue-client-contract.test.ts src/features/products/hooks/useProductAiPathsRunSync.test.tsx src/features/products/state/queued-product-ops.test.ts src/shared/lib/ai-paths/hooks/trigger-event-selection.test.ts src/shared/lib/ai-paths/hooks/trigger-event-sanitization.test.ts src/shared/lib/ai-paths/hooks/trigger-event-utils.test.ts src/shared/lib/ai-paths/hooks/trigger-event-recovery.test.ts src/shared/lib/ai-paths/hooks/trigger-event-context.test.ts src/shared/lib/ai-paths/hooks/trigger-event-invalidation.test.ts src/shared/lib/ai-paths/hooks/trigger-event-settings.test.ts",
     "test:ai-paths:trigger-queue:e2e": "node scripts/testing/run-playwright-suite.mjs e2e/features/products/products-trigger-queue-integration.spec.ts",
+    "test:ai-paths:products-workflows:e2e": "node scripts/testing/run-playwright-suite.mjs e2e/features/products/products-trigger-workflow-success.spec.ts",
     "test:ai-paths:trigger-queue:integration": "npm run test:ai-paths:trigger-queue:unit && npm run test:ai-paths:trigger-queue:e2e",
     "test:ai-paths:node-migration-parity-evidence": "vitest run __tests__/scripts/docs/node-migration-parity-evidence.test.ts __tests__/scripts/docs/node-migration-rollout-approvals.test.ts __tests__/scripts/docs/node-migration-rollout-eligibility.test.ts",
     "test:ai-paths:runtime-kernel-parity": "vitest run src/shared/lib/ai-paths/core/runtime/__tests__/engine-core.runtime-kernel-parity.test.ts",

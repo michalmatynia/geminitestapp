@@ -48,7 +48,7 @@ describe('KangurLearnerProfileHeroWidget', () => {
     expect(screen.getByRole('heading', { name: 'Profil ucznia' })).toHaveClass('text-3xl');
     expect(
       screen.getByText(
-        'Zaloguj sie, aby synchronizowac postep ucznia miedzy urzadzeniami. Jesli nie masz jeszcze konta rodzica, zaloz je bez opuszczania Kangura.'
+        'Zaloguj sie, aby synchronizowac postep ucznia miedzy urzadzeniami. Jesli nie masz jeszcze konta rodzica, zaloz je tutaj.'
       )
     ).toBeInTheDocument();
     expect(

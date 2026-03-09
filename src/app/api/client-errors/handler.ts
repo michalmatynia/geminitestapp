@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+
+import { clientErrorPayloadSchema, type ErrorContext } from '@/shared/contracts/observability';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import {
   isSensitiveKey,
   REDACTED_VALUE,
   truncateString,
 } from '@/shared/lib/observability/log-redaction';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { isAbortLikeError } from '@/shared/utils/observability/is-abort-like-error';
-import { clientErrorPayloadSchema, type ErrorContext } from '@/shared/contracts/observability';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { isObjectRecord } from '@/shared/utils/object-utils';
 
 const MAX_CLIENT_ERROR_BODY_BYTES = 64_000;
 const MAX_CLIENT_CONTEXT_BYTES = 16_000;

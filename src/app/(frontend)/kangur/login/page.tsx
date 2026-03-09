@@ -1,5 +1,5 @@
-import { Suspense, type JSX } from 'react';
 import { redirect } from 'next/navigation';
+import { Suspense, type JSX } from 'react';
 
 import { getKangurCanonicalPublicHref } from '@/features/kangur/config/routing';
 import { KangurFeatureRouteShell } from '@/features/kangur/ui/KangurFeatureRouteShell';

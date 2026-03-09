@@ -4,7 +4,6 @@ import { z } from 'zod';
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
-import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import { AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION } from '@/shared/lib/ai-paths/portable-engine';
 import { getPortablePathRunExecutionSnapshot } from '@/shared/lib/ai-paths/portable-engine/portable-engine-observability';
 import {
@@ -28,6 +27,7 @@ import {
   resolvePortablePathAuditSinkAutoRemediationWebhookSignatureKeyIdFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironment,
 } from '@/shared/lib/ai-paths/portable-engine/server';
+import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 
 const DEFAULT_TREND_SNAPSHOT_LIMIT = 50;
 const MAX_TREND_SNAPSHOT_LIMIT = 500;

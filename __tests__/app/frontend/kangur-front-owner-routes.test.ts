@@ -3,9 +3,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   buildSlugMetadataMock,
+  kangurFeatureRouteShellMock,
   getFrontPagePublicOwnerMock,
   getFrontPageSettingMock,
-  kangurLoginPageMock,
   kangurPublicAppMock,
   loadSlugRenderDataMock,
   notFoundMock,
@@ -14,9 +14,9 @@ const {
   shouldApplyFrontPageAppSelectionMock,
 } = vi.hoisted(() => ({
   buildSlugMetadataMock: vi.fn(),
+  kangurFeatureRouteShellMock: vi.fn(),
   getFrontPagePublicOwnerMock: vi.fn(),
   getFrontPageSettingMock: vi.fn(),
-  kangurLoginPageMock: vi.fn(),
   kangurPublicAppMock: vi.fn(),
   loadSlugRenderDataMock: vi.fn(),
   notFoundMock: vi.fn(),
@@ -43,8 +43,8 @@ vi.mock('@/features/kangur/ui/KangurPublicApp', () => ({
   KangurPublicApp: kangurPublicAppMock,
 }));
 
-vi.mock('@/features/kangur/ui/KangurLoginPage', () => ({
-  KangurLoginPage: kangurLoginPageMock,
+vi.mock('@/features/kangur/ui/KangurFeatureRouteShell', () => ({
+  KangurFeatureRouteShell: kangurFeatureRouteShellMock,
 }));
 
 vi.mock('@/features/cms/components/frontend/CmsPageRenderer', () => ({
@@ -79,7 +79,7 @@ describe('kangur public-owner frontend routes', () => {
       throw new Error(`redirect:${target}`);
     });
     kangurPublicAppMock.mockReturnValue(null);
-    kangurLoginPageMock.mockReturnValue(null);
+    kangurFeatureRouteShellMock.mockReturnValue(null);
   });
 
   it('routes public frontend slugs through Kangur when Kangur owns the frontend', async () => {
@@ -162,9 +162,15 @@ describe('kangur public-owner frontend routes', () => {
 
     const result = await KangurAliasLoginPage({});
 
-    expect(result).toMatchObject({
-      type: kangurLoginPageMock,
-      props: { defaultCallbackUrl: '/kangur', backHref: '/kangur' },
+    expect(result.type).toBe(Symbol.for('react.suspense'));
+    expect(result.props.children).toMatchObject({
+      type: kangurFeatureRouteShellMock,
+    });
+    expect(result.props.fallback).toMatchObject({
+      props: {
+        className: 'sr-only',
+        children: 'Ladowanie Kangura...',
+      },
     });
     expect(redirectMock).not.toHaveBeenCalled();
   });

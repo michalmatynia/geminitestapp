@@ -1,5 +1,12 @@
 import { createHash } from 'crypto';
+
 import { NextRequest } from 'next/server';
+
+import {
+  coerceBoolean,
+  coerceFiniteNumber,
+  isFileLike,
+} from '@/features/ai/image-studio/server/image-handler-utils';
 import {
   type ImageStudioCenterRequest,
   type ImageStudioCenterResponse,
@@ -10,11 +17,6 @@ import {
   type UploadedClientCenterImage,
   type ImageStudioCenterMetadata,
 } from '@/shared/contracts/image-studio';
-import {
-  coerceBoolean,
-  coerceFiniteNumber,
-  isFileLike,
-} from '@/features/ai/image-studio/server/image-handler-utils';
 
 export async function parseCenterRequestPayload(
   req: NextRequest

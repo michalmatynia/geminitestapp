@@ -17,17 +17,13 @@ agents.
 
 The docs tree has grown large and mixed:
 
-- `36` markdown files directly under `docs/`
-- `1522` total files under `docs/`
-- `1055` files under `docs/metrics/` alone
+- `5` markdown files directly under `docs/`
+- `1564` total files under `docs/`
+- `1078` files under `docs/metrics/` alone
 
 The main problem is not volume by itself. The problem is mixed document classes
 at the same level: entrypoints, policies, feature docs, dated plans, runbooks,
 decision records, and generated artifacts all compete for the same surface.
-
-Migration backlog:
-
-- [`docs/documentation/root-doc-migration-backlog.md`](./root-doc-migration-backlog.md)
 
 ## Validation
 
@@ -65,9 +61,8 @@ This check currently enforces:
 - every `canonical: true` docs file is registered in `requiredCanonicalDocs`
 - required frontmatter on canonical docs
 - existence of the main governance and hub docs
-- superseded root docs stay short and explicitly marked `canonical: false`
-- canonical docs and configured reference guides do not point at root
-  compatibility stubs, except for explicit migration inventory exemptions
+- canonical docs and configured reference guides do not point at obsolete root
+  aliases
 - artifact-only docs directories are explicitly declared and linked from an
   owning markdown doc
 - docs hubs follow their declared index policies
@@ -106,7 +101,6 @@ The root `docs/` directory is for:
 - repo entrypoints
 - governance docs
 - agent overlays
-- a small number of legacy docs pending migration
 
 Do not add new dated or feature-specific files directly under `docs/`.
 
@@ -155,6 +149,9 @@ canonical metrics manifest entries aligned in one pass.
 If a script owns a canonical generated markdown surface, update the generator to
 preserve frontmatter at write time through the shared helpers in `scripts/docs/`
 instead of depending on a later cleanup pass.
+Managed generated-doc surfaces should also stay aligned with those helper rules
+under `npm run docs:structure:check`; do not fork their metadata ad hoc in the
+generated file body.
 
 ### 5c. Artifact-only directories need ownership
 
@@ -166,17 +163,17 @@ CSV, or screenshots, it may remain hubless only when:
 
 Silent artifact buckets are documentation debt.
 
-### 6. Migrate with compatibility stubs when needed
+### 6. Remove root aliases after migration
 
 When moving a legacy root doc to its canonical folder:
 
 - move the full content to the new canonical path
 - update the nearest hub page
-- leave a short root stub at the old path when existing links, scripts, or human
-  habits would otherwise break abruptly
-- mark the root stub as `superseded` and point to the new canonical location
-- do not update canonical docs to point back at the root stub; link to the
-  canonical destination instead
+- update repo-internal links, registries, and scripts to the canonical path in
+  the same patch when practical
+- delete the old root alias once repo-internal consumers are updated
+- if an exceptional temporary alias is unavoidable, keep it short, mark it
+  `superseded`, and remove it quickly
 
 For non-markdown artifacts such as JSON manifests or exception registers:
 
@@ -193,7 +190,7 @@ For non-markdown artifacts such as JSON manifests or exception registers:
 
 | Class | Canonical Location | Use For | Notes |
 | --- | --- | --- | --- |
-| Repo entrypoints / governance | `docs/` | root index, owners, agent overlays, documentation system, legacy entrypoints pending migration | root is allowlisted, not general-purpose |
+| Repo entrypoints / governance | `docs/` | root index, owners, agent overlays, documentation system | root is allowlisted, not general-purpose |
 | Documentation system | `docs/documentation/` | docs IA, standards, migration plan | governs doc structure itself |
 | Cross-cutting platform docs | `docs/platform/` | architecture, shared patterns, handbook, shared API policy | new platform docs go here |
 | Feature docs | `docs/<feature>/` | feature overview, architecture, APIs, examples, local runbooks | prefer nearest owner |
@@ -294,8 +291,7 @@ When making the change:
 10. If a machine-readable compatibility copy exists, update it in the same change.
 11. Prefer `npm run docs:structure:sync-mirrors` over manual copy/paste when the
    manifest already defines the compatibility mirror pair.
-12. Link to canonical destinations, not root compatibility stubs, unless a
-    migration inventory doc explicitly needs to record the legacy path.
+12. Link to canonical destinations, not obsolete root aliases.
 13. Keep the folder hub aligned with its declared index policy: complete hubs
     enumerate direct docs; curated hubs expose the stable entry points.
 14. If the change creates an artifact-only docs directory, either add a local
@@ -310,53 +306,39 @@ After the change:
 1. Check for broken links or duplicate canonical docs.
 2. Ensure the new doc is discoverable from at least one index page.
 3. Run `npm run docs:structure:check`.
-4. Leave a clear breadcrumb in the final summary if legacy docs still need
-   migration.
+4. Note any remaining invalid, finished, or duplicate docs that still need
+   pruning.
 
-## Structuralization Plan
+## Steady-State Maintenance
 
-### Phase 0: Governance and scaffolding
+The structural migration is complete. The ongoing model is:
 
-- create canonical folders for platform docs, plans, decisions, runbooks, and
-  documentation governance
-- update `docs/README.md`, `docs/AGENTS.md`, and `docs/OWNERS.md`
-- stop adding new unclassified docs to the root
+- new cross-cutting plans go to `docs/plans/`
+- new cross-cutting decisions go to `docs/decisions/`
+- new cross-cutting runbooks go to `docs/runbooks/`
+- new stable shared guides go to `docs/platform/`
+- root `docs/` stays limited to repo entrypoints, governance, and agent overlays
+- obsolete root aliases should be removed in the same patch that updates their
+  remaining repo-internal consumers
+- finished or incompatible docs should be pruned instead of left as dormant
+  clutter
 
-### Phase 1: Stop root growth
+Validation already enforces:
 
-- all new cross-cutting plans move to `docs/plans/`
-- all new cross-cutting decisions move to `docs/decisions/`
-- all new cross-cutting runbooks move to `docs/runbooks/`
-- all new stable shared guides move to `docs/platform/`
-
-### Phase 2: Opportunistic migration
-
-Migrate legacy root docs when they are touched for real work:
-
-- platform guides such as `DEVELOPER_HANDBOOK.md` and `API_CACHING.md`
-- root-level plans and migration plans
-- root-level runbooks
-- duplicated date-stamped root docs
-
-Do not bulk-move everything in one refactor unless link impact is understood.
-Use compatibility stubs when gradual migration is safer than a hard cut.
-
-### Phase 3: Stronger validation
-
-- implemented: `npm run docs:structure:check` for root allowlist compliance,
+- `npm run docs:structure:check` for root allowlist compliance,
   canonical frontmatter, required hub-doc presence, and recursive hub coverage
-- implemented: manifest-driven docs-hub index policies for complete versus
+- manifest-driven docs-hub index policies for complete versus
   curated folder indexes
-- implemented: manifest-driven artifact-bucket policies for non-markdown docs
+- manifest-driven artifact-bucket policies for non-markdown docs
   directories
-- implemented: parent-hub discoverability checks so child docs hubs cannot stay
+- parent-hub discoverability checks so child docs hubs cannot stay
   structurally hidden from their immediate parent index
-- implemented: canonical-doc registration checks so `requiredCanonicalDocs`
+- canonical-doc registration checks so `requiredCanonicalDocs`
   stays exhaustive for active canonical docs
-- implemented: `.github/workflows/docs-structure.yml` to run the structure gate
+- `.github/workflows/docs-structure.yml` to run the structure gate
   on docs-related changes
-- implemented: root compatibility stub reference detection for canonical docs and
-  configured repo reference guides
+- obsolete-root-alias reference detection for canonical docs and configured repo
+  reference guides
 - next: expand validation to detect more unindexed docs and deeper feature-level
   metadata gaps where practical
 
@@ -370,7 +352,7 @@ A docs change is structurally complete when:
 4. any markdown-bearing docs folder has a hub page
 5. generated docs were changed via the correct path
 6. superseded docs are called out instead of silently drifting
-7. canonical docs point at canonical destinations, not root compatibility stubs
+7. canonical docs point at canonical destinations, not obsolete root aliases
 8. the nearest docs hub still satisfies its declared indexing policy
 9. any artifact-only docs directory introduced by the change is explicitly owned
 10. any new child docs hub is discoverable from its immediate parent hub

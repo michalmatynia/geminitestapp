@@ -2,10 +2,10 @@ import { NextRequest } from 'next/server';
 import { z } from 'zod';
 
 import { assertAiPathRunAccess, requireAiPathsRunAccess } from '@/features/ai/ai-paths/server';
-import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import { getRedisSubscriber, isSubscriberConnected } from '@/shared/lib/redis-pubsub';
 

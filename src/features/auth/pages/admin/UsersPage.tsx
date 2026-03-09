@@ -3,6 +3,7 @@
 import { UserPlusIcon, ShieldAlertIcon, ShieldCheck, Key, Users } from 'lucide-react';
 import React, { useMemo } from 'react';
 
+import type { AuthRole } from '@/features/auth/utils/auth-management';
 import type { AuthUser as AuthUserSummary } from '@/shared/contracts/auth';
 import {
   StandardDataTablePanel,
@@ -28,7 +29,6 @@ import {
   useUsersSearch,
 } from '../../context/UsersContext';
 
-import type { AuthRole } from '@/features/auth/utils/auth-management';
 import type { ColumnDef } from '@tanstack/react-table';
 
 export default function AuthUsersPage(): React.JSX.Element {

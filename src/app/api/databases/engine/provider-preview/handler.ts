@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { getDatabaseEngineProviderPreview } from '@/shared/lib/db/services/database-engine-provider-preview';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { optionalCsvQueryStringArray } from '@/shared/lib/api/query-schema';
+import { getDatabaseEngineProviderPreview } from '@/shared/lib/db/services/database-engine-provider-preview';
 
 export const querySchema = z.object({
   collections: optionalCsvQueryStringArray(),

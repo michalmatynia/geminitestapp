@@ -189,11 +189,7 @@ function ParentDashboardContent(): React.JSX.Element {
           enabled={docsTooltipsEnabled}
           rootId='kangur-parent-dashboard-page'
         />
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          className='w-full max-w-lg'
-        >
+        <motion.div initial={false} animate={{ opacity: 1, y: 0 }} className='w-full max-w-lg'>
           <KangurParentDashboardHeroWidget />
         </motion.div>
       </KangurPageShell>
@@ -216,7 +212,7 @@ function ParentDashboardContent(): React.JSX.Element {
         id='kangur-parent-dashboard-main'
         className='max-w-2xl flex flex-col gap-6'
       >
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
+        <motion.div initial={false} animate={{ opacity: 1, y: 0 }}>
           <KangurParentDashboardHeroWidget showActions={false} />
         </motion.div>
 

@@ -85,7 +85,7 @@ describe('KangurLearnerAssignmentsPanel', () => {
       refresh: vi.fn(),
     });
 
-    render(<KangurLearnerAssignmentsPanel basePath='/kangur' />);
+    render(<KangurLearnerAssignmentsPanel basePath='/kangur' enabled />);
 
     expect(screen.getByText('Przebieg przydzielonych zadan')).toBeInTheDocument();
     expect(screen.getByText('Skutecznosc')).toBeInTheDocument();
@@ -139,7 +139,7 @@ describe('KangurLearnerAssignmentsPanel', () => {
       refresh: vi.fn(),
     });
 
-    render(<KangurLearnerAssignmentsPanel basePath='/kangur' />);
+    render(<KangurLearnerAssignmentsPanel basePath='/kangur' enabled />);
 
     expect(screen.getByTestId('learner-assignments-loading')).toHaveClass(
       'soft-card',
@@ -159,7 +159,7 @@ describe('KangurLearnerAssignmentsPanel', () => {
       refresh: vi.fn(),
     });
 
-    render(<KangurLearnerAssignmentsPanel basePath='/kangur' />);
+    render(<KangurLearnerAssignmentsPanel basePath='/kangur' enabled />);
 
     expect(screen.getByTestId('learner-assignments-error')).toHaveClass(
       'soft-card',

@@ -4,6 +4,10 @@ import { Folders, ListOrdered, Plus, Sparkles } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
+  ContextRegistryPageProvider,
+  useRegisterContextRegistryPageSource,
+} from '@/features/ai/ai-context-registry/context/page-context';
+import {
   createMasterFolderTreeTransactionAdapter,
   FolderTreeViewportV2,
   useMasterFolderTreeShell,
@@ -60,6 +64,10 @@ import { LessonSvgQuickAddModal } from './components/LessonSvgQuickAddModal';
 import { LessonTreeRow } from './components/LessonTreeRow';
 import { TREE_MODE_STORAGE_KEY, CATALOG_TREE_INSTANCE, ORDERED_TREE_INSTANCE } from './constants';
 import { LessonSvgQuickAddRuntimeProvider } from './context/LessonSvgQuickAddRuntimeContext';
+import {
+  buildKangurAdminLessonsManagerContextBundle,
+  KANGUR_ADMIN_LESSONS_MANAGER_CONTEXT_ROOT_IDS,
+} from './context-registry/lessons-manager';
 import type { LessonFormData, LessonTreeMode } from './types';
 import {
   countLessonsRequiringLegacyImport,
@@ -70,6 +78,20 @@ import {
   upsertLesson,
 } from './utils';
 import { KangurAdminContentShell } from './components/KangurAdminContentShell';
+
+function AdminKangurLessonsManagerRegistrySource({
+  registrySource,
+}: {
+  registrySource:
+    | {
+        label: string;
+        resolved: ReturnType<typeof buildKangurAdminLessonsManagerContextBundle>;
+      }
+    | null;
+}): null {
+  useRegisterContextRegistryPageSource('kangur-admin-lessons-manager-workspace', registrySource);
+  return null;
+}
 
 export function AdminKangurLessonsManagerPage({
   standalone = true,
@@ -107,6 +129,19 @@ export function AdminKangurLessonsManagerPage({
   const isCatalogMode = treeMode === 'catalog';
   const activeTreeInstance = isCatalogMode ? CATALOG_TREE_INSTANCE : ORDERED_TREE_INSTANCE;
   const treeSearchQuery = isCatalogMode ? catalogTreeSearchQuery : orderedTreeSearchQuery;
+  const registrySource = useMemo(
+    () => ({
+      label: 'Kangur admin lessons manager workspace',
+      resolved: buildKangurAdminLessonsManagerContextBundle({
+        lessonCount: lessons.length,
+        lesson: editingContentLesson,
+        document: showContentModal ? contentDraft : null,
+        isEditorOpen: showContentModal,
+        isSaving: updateSetting.isPending,
+      }),
+    }),
+    [contentDraft, editingContentLesson, lessons.length, showContentModal, updateSetting.isPending]
+  );
   const handleTreeSearchChange = useCallback(
     (nextQuery: string): void => {
       if (isCatalogMode) {
@@ -716,24 +751,31 @@ export function AdminKangurLessonsManagerPage({
     </div>
   );
 
-  if (!standalone) {
-    return content;
-  }
-
   return (
-    <KangurAdminContentShell
-      title='Kangur Lessons'
-      description='Manage lesson library, order, and interactive content.'
-      breadcrumbs={[
-        { label: 'Admin', href: '/admin' },
-        { label: 'Kangur', href: '/admin/kangur' },
-        { label: 'Lessons' },
-      ]}
-      className='h-full'
-      panelClassName='flex h-full min-h-0 flex-col'
-      contentClassName='flex min-h-0 flex-1 flex-col'
+    <ContextRegistryPageProvider
+      pageId='admin:kangur-lessons-manager'
+      title='Kangur Lessons Manager'
+      rootNodeIds={[...KANGUR_ADMIN_LESSONS_MANAGER_CONTEXT_ROOT_IDS]}
     >
-      {content}
-    </KangurAdminContentShell>
+      <AdminKangurLessonsManagerRegistrySource registrySource={registrySource} />
+      {standalone ? (
+        <KangurAdminContentShell
+          title='Kangur Lessons'
+          description='Manage lesson library, order, and interactive content.'
+          breadcrumbs={[
+            { label: 'Admin', href: '/admin' },
+            { label: 'Kangur', href: '/admin/kangur' },
+            { label: 'Lessons' },
+          ]}
+          className='h-full'
+          panelClassName='flex h-full min-h-0 flex-col'
+          contentClassName='flex min-h-0 flex-1 flex-col'
+        >
+          {content}
+        </KangurAdminContentShell>
+      ) : (
+        content
+      )}
+    </ContextRegistryPageProvider>
   );
 }

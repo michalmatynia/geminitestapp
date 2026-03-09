@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { getProposal, updateProposal } from '@/features/ai/ai-context-registry/server';
 import { executeActionRequestSchema } from '@/shared/contracts/ai-context-registry';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-import { getProposal, updateProposal } from '@/features/ai/ai-context-registry/server';
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const rawBody = await req.text();

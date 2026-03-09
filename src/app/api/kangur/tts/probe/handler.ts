@@ -4,9 +4,9 @@ import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import { resolveKangurActor } from '@/features/kangur/server';
 import { kangurLessonTtsProbeRequestSchema } from '@/features/kangur/tts/contracts';
 import { probeKangurLessonNarrationBackend } from '@/features/kangur/tts/server';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, forbiddenError } from '@/shared/errors/app-error';
 
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const readBodyJson = async (request: NextRequest): Promise<unknown> => {
   const rawBody = await request.text();

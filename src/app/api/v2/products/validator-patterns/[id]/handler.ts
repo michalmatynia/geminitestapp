@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/shared/lib/products/constants';
 import { getValidationPatternRepository } from '@/features/products/server';
+import { validateAndNormalizeRuntimeConfig } from '@/features/products/server';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/shared/lib/products/constants';
 import { invalidateValidationPatternRuntimeCache } from '@/shared/lib/products/services/validation-pattern-runtime-cache';
 import {
   normalizeProductValidationPatternDenyBehaviorOverride,
@@ -12,11 +15,8 @@ import {
   normalizeProductValidationPatternReplacementScopes,
   normalizeProductValidationPatternScopes,
 } from '@/shared/lib/products/utils/validator-instance-behavior';
-import { validateRegexSafety } from '@/shared/utils/regex-safety';
 import { parseDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
-import { validateAndNormalizeRuntimeConfig } from '@/features/products/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { validateRegexSafety } from '@/shared/utils/regex-safety';
 
 const replacementFieldSchema = z.enum(PRODUCT_VALIDATION_REPLACEMENT_FIELDS);
 

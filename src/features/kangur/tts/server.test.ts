@@ -274,6 +274,106 @@ describe('kangur tts server', () => {
     );
   });
 
+  it('adds registry surface context to synthesis instructions when provided', async () => {
+    readStoredSettingValueMock.mockImplementation(async (key: string): Promise<string | null> => {
+      if (key === 'openai_api_key') return 'test-openai-key';
+      if (key === KANGUR_LESSON_AUDIO_CACHE_SETTING_KEY) return null;
+      return null;
+    });
+
+    await ensureKangurLessonNarrationAudio({
+      script: createLessonScript(),
+      voice: 'coral',
+      contextRegistry: {
+        refs: [
+          { id: 'page:kangur-lessons', kind: 'static_node' },
+          { id: 'component:kangur-lesson-narrator', kind: 'static_node' },
+          { id: 'action:kangur-lesson-tts', kind: 'static_node' },
+        ],
+        engineVersion: 'page-context:v1',
+        resolved: {
+          refs: [
+            { id: 'page:kangur-lessons', kind: 'static_node' },
+            { id: 'component:kangur-lesson-narrator', kind: 'static_node' },
+            { id: 'action:kangur-lesson-tts', kind: 'static_node' },
+          ],
+          nodes: [
+            {
+              id: 'page:kangur-lessons',
+              kind: 'page',
+              name: 'Kangur Lessons',
+              description: 'Lessons page',
+              tags: ['kangur'],
+              permissions: {
+                readScopes: ['ctx:read'],
+                riskTier: 'none',
+                classification: 'internal',
+              },
+              version: '1.0.0',
+              updatedAtISO: '2026-03-09T00:00:00.000Z',
+              source: { type: 'code', ref: 'test' },
+            },
+            {
+              id: 'component:kangur-lesson-narrator',
+              kind: 'component',
+              name: 'KangurLessonNarrator',
+              description: 'Narrator',
+              tags: ['kangur'],
+              permissions: {
+                readScopes: ['ctx:read'],
+                riskTier: 'none',
+                classification: 'internal',
+              },
+              version: '1.0.0',
+              updatedAtISO: '2026-03-09T00:00:00.000Z',
+              source: { type: 'code', ref: 'test' },
+            },
+            {
+              id: 'action:kangur-lesson-tts',
+              kind: 'action',
+              name: 'Kangur Lesson TTS',
+              description: 'Narration action',
+              tags: ['kangur'],
+              permissions: {
+                readScopes: ['ctx:read'],
+                riskTier: 'low',
+                classification: 'internal',
+              },
+              version: '1.0.0',
+              updatedAtISO: '2026-03-09T00:00:00.000Z',
+              source: { type: 'code', ref: 'test' },
+            },
+          ],
+          documents: [
+            {
+              id: 'runtime:kangur-admin:lesson-editor:clock',
+              kind: 'runtime_document',
+              entityType: 'kangur_admin_lessons_manager_workspace',
+              title: 'Lesson editor',
+              summary: 'Admin lesson editor state',
+              status: 'editing',
+              tags: ['kangur'],
+              relatedNodeIds: ['page:kangur-admin-lessons-manager'],
+            },
+          ],
+          truncated: false,
+          engineVersion: 'page-context:v1',
+        },
+      },
+    });
+
+    expect(audioSpeechCreateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        instructions: expect.stringContaining('Kangur Lessons'),
+      })
+    );
+    expect(audioSpeechCreateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        instructions: expect.stringContaining('KangurLessonNarrator'),
+      })
+    );
+  });
+
   it('logs the failure stage when neural narration generation fails', async () => {
     readStoredSettingValueMock.mockImplementation(async (key: string): Promise<string | null> => {
       if (key === 'openai_api_key') return 'test-openai-key';

@@ -375,7 +375,11 @@ export const collectionNodes: ContextNode[] = [
     description:
       'Kangur lesson catalog and lesson document content authored in settings-backed storage.',
     tags: ['kangur', 'lessons', 'content', 'education'],
-    relationships: [{ type: 'related_to', targetId: 'collection:kangur-assignments' }],
+    relationships: [
+      { type: 'related_to', targetId: 'collection:kangur-assignments' },
+      { type: 'related_to', targetId: 'action:kangur-lesson-tts' },
+      { type: 'related_to', targetId: 'page:kangur-admin-lessons-manager' },
+    ],
     permissions: {
       readScopes: ['ctx:read'],
       riskTier: 'low',

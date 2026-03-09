@@ -8,7 +8,6 @@ import { useAuth } from '@/features/auth/context/AuthContext';
 import { useAuthUserSecurity } from '@/features/auth/hooks/useAuthQueries';
 import { AUTH_SETTINGS_KEYS, type AuthRole } from '@/features/auth/utils/auth-management';
 import { type AuthSecurityPolicy } from '@/features/auth/utils/auth-security';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { ApiError } from '@/shared/lib/api-client';
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
@@ -24,6 +23,7 @@ import {
   Alert,
   SelectSimple,
 } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export default function AuthSettingsPage(): React.JSX.Element {
   const { toast } = useToast();

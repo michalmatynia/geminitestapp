@@ -4,10 +4,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { uploadFile } from '@/features/files/server';
-import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import { getProductRepository } from '@/shared/lib/products/services/product-repository';
+import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 
 const linkToFileSchema = z.object({
   url: z.string().trim().url(),

@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import { resolveKangurActor } from '@/features/kangur/server';
-import { ensureKangurLessonNarrationAudio } from '@/features/kangur/tts/server';
 import { kangurLessonTtsRequestSchema } from '@/features/kangur/tts/contracts';
-import { badRequestError } from '@/shared/errors/app-error';
-
+import { resolveKangurTtsContextRegistryEnvelope } from '@/features/kangur/tts/context-registry/server';
+import { ensureKangurLessonNarrationAudio } from '@/features/kangur/tts/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { badRequestError } from '@/shared/errors/app-error';
 
 const readBodyJson = async (request: NextRequest): Promise<unknown> => {
   const rawBody = await request.text();
@@ -27,10 +27,12 @@ export async function postKangurTtsHandler(
 ): Promise<Response> {
   const actor = await resolveKangurActor(req);
   const payload = kangurLessonTtsRequestSchema.parse(await readBodyJson(req));
+  const contextRegistry = await resolveKangurTtsContextRegistryEnvelope(payload.contextRegistry);
   const response = await ensureKangurLessonNarrationAudio({
     script: payload.script,
     voice: payload.voice,
     forceRegenerate: payload.forceRegenerate,
+    contextRegistry,
   });
 
   if (response.mode === 'fallback') {
@@ -50,6 +52,8 @@ export async function postKangurTtsHandler(
         forceRegenerate: payload.forceRegenerate ?? false,
         reason: response.reason,
         segmentCount: response.segments.length,
+        contextRegistryRefCount: contextRegistry?.refs.length ?? 0,
+        contextRegistryDocumentCount: contextRegistry?.resolved?.documents.length ?? 0,
       },
     });
   }
@@ -70,6 +74,8 @@ export async function postKangurTtsHandler(
       mode: response.mode,
       reason: 'reason' in response ? response.reason : null,
       segmentCount: response.segments.length,
+      contextRegistryRefCount: contextRegistry?.refs.length ?? 0,
+      contextRegistryDocumentCount: contextRegistry?.resolved?.documents.length ?? 0,
     },
   });
   return NextResponse.json(response);

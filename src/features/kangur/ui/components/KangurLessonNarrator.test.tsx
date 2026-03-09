@@ -6,6 +6,8 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ContextRegistryPageProvider } from '@/features/ai/ai-context-registry/context/page-context';
+
 const { settingsStoreMock, apiPostMock, speechSynthesisMock, audioPlayMock, audioPauseMock } =
   vi.hoisted(() => ({
     settingsStoreMock: {
@@ -41,7 +43,11 @@ function NarratorHarness(): React.JSX.Element {
   const lessonContentRef = React.useRef<HTMLDivElement | null>(null);
 
   return (
-    <>
+    <ContextRegistryPageProvider
+      pageId='kangur:Lessons'
+      title='Kangur Lessons'
+      rootNodeIds={['page:kangur-lessons']}
+    >
       <div ref={lessonContentRef}>
         <h2>Widoczna lekcja</h2>
         <p>To jest tekst lekcji do czytania przez narratora.</p>
@@ -57,7 +63,7 @@ function NarratorHarness(): React.JSX.Element {
         lessonContentRef={lessonContentRef}
         readLabel='Read lesson'
       />
-    </>
+    </ContextRegistryPageProvider>
   );
 }
 
@@ -164,19 +170,29 @@ describe('KangurLessonNarrator', () => {
 
     await waitFor(() => expect(apiPostMock).toHaveBeenCalledTimes(1));
 
-    expect(apiPostMock).toHaveBeenCalledWith('/api/kangur/tts', {
-      forceRegenerate: false,
-      script: expect.objectContaining({
-        lessonId: 'clock',
-        locale: 'pl-PL',
-        segments: expect.arrayContaining([
-          expect.objectContaining({
-            text: expect.stringContaining('To jest tekst lekcji do czytania przez narratora.'),
-          }),
-        ]),
-      }),
-      voice: 'coral',
-    });
+    expect(apiPostMock).toHaveBeenCalledWith(
+      '/api/kangur/tts',
+      expect.objectContaining({
+        forceRegenerate: false,
+        script: expect.objectContaining({
+          lessonId: 'clock',
+          locale: 'pl-PL',
+          segments: expect.arrayContaining([
+            expect.objectContaining({
+              text: expect.stringContaining('To jest tekst lekcji do czytania przez narratora.'),
+            }),
+          ]),
+        }),
+        voice: 'coral',
+        contextRegistry: expect.objectContaining({
+          refs: expect.arrayContaining([
+            expect.objectContaining({ id: 'page:kangur-lessons', kind: 'static_node' }),
+            expect.objectContaining({ id: 'component:kangur-lesson-narrator', kind: 'static_node' }),
+            expect.objectContaining({ id: 'action:kangur-lesson-tts', kind: 'static_node' }),
+          ]),
+        }),
+      })
+    );
     expect(audioPlayMock).toHaveBeenCalled();
     expect(speechSynthesisMock.speak).not.toHaveBeenCalled();
     expect(screen.queryByText('Voice')).toBeNull();

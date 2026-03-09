@@ -40,6 +40,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: useKangurAuthMock,
+  useOptionalKangurAuth: useKangurAuthMock,
 }));
 
 vi.mock('@/features/kangur/docs/tooltips', () => ({

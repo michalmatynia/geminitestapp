@@ -6,7 +6,17 @@ import {
   evaluateLegacyPruneManifest,
   loadLegacyPruneManifest,
 } from './legacy-prune-manifest-utils.mjs';
-import { evaluateCanonicalManifestPathRules } from './canonical-manifest-paths-utils.mjs';
+import {
+  DOCS_REGISTRY_CONSTANTS_PATH,
+  NODE_VALIDATOR_MANIFEST_PATH,
+  TOOLTIP_MANIFEST_PATH,
+  evaluateCanonicalManifestPathRules,
+} from './canonical-manifest-paths-utils.mjs';
+import {
+  buildStaticCheckFilters,
+  parseCommonCheckArgs,
+  writeSummaryJson,
+} from '../lib/check-cli.mjs';
 
 const ROOT = process.cwd();
 const SRC_DIR = path.join(ROOT, 'src');
@@ -37,26 +47,20 @@ const collectSourceFiles = (dir) => {
   return files;
 };
 
-const violations = [];
-
-const reportViolation = (file, message) => {
-  violations.push({ file, message });
-};
-
-const checkValidationManifestSourcePaths = () => {
+const checkValidationManifestSourcePaths = (violations) => {
   const findings = evaluateCanonicalManifestPathRules({ root: ROOT });
   for (const finding of findings) {
-    reportViolation(finding.file, finding.message);
+    violations.push({ file: finding.file, message: finding.message });
   }
 };
 
-const checkManifestLegacyPruneRules = () => {
+const checkManifestLegacyPruneRules = (violations) => {
   let manifest;
   try {
     manifest = loadLegacyPruneManifest(ROOT, DEFAULT_LEGACY_PRUNE_MANIFEST_RELATIVE_PATH);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'failed to load legacy prune manifest';
-    reportViolation(DEFAULT_LEGACY_PRUNE_MANIFEST_RELATIVE_PATH, message);
+    violations.push({ file: DEFAULT_LEGACY_PRUNE_MANIFEST_RELATIVE_PATH, message });
     return;
   }
 
@@ -66,15 +70,55 @@ const checkManifestLegacyPruneRules = () => {
   });
 
   for (const finding of findings) {
-    reportViolation(finding.file, `manifest rule "${finding.ruleId}" ${finding.message}`);
+    violations.push({ file: finding.file, message: `manifest rule "${finding.ruleId}" ${finding.message}` });
   }
 };
 
-const main = () => {
+const evaluateCanonicalCheck = () => {
   const sourceFiles = collectSourceFiles(SRC_DIR);
+  const violations = [];
 
-  checkManifestLegacyPruneRules();
-  checkValidationManifestSourcePaths();
+  checkManifestLegacyPruneRules(violations);
+  checkValidationManifestSourcePaths(violations);
+
+  return {
+    sourceFiles,
+    violations,
+  };
+};
+
+const main = () => {
+  const { summaryJson, strictMode, failOnWarnings } = parseCommonCheckArgs();
+  const generatedAt = new Date().toISOString();
+  const { sourceFiles, violations } = evaluateCanonicalCheck();
+
+  if (summaryJson) {
+    writeSummaryJson({
+      scannerName: 'ai-paths-check-canonical',
+      generatedAt,
+      status: violations.length === 0 ? 'ok' : 'failed',
+      summary: {
+        sourceFileCount: sourceFiles.length,
+        violationCount: violations.length,
+      },
+      details: {
+        violations,
+        scope: {
+          srcDir: 'src',
+          constantsFile: DOCS_REGISTRY_CONSTANTS_PATH,
+          nodeValidatorManifest: NODE_VALIDATOR_MANIFEST_PATH,
+          tooltipManifest: TOOLTIP_MANIFEST_PATH,
+          legacyPruneManifest: DEFAULT_LEGACY_PRUNE_MANIFEST_RELATIVE_PATH,
+        },
+      },
+      filters: buildStaticCheckFilters({ strictMode, failOnWarnings }),
+      notes: ['ai-paths canonical check result'],
+    });
+    if (violations.length > 0) {
+      process.exitCode = 1;
+    }
+    return;
+  }
 
   if (violations.length > 0) {
     console.error('[ai-paths:check:canonical] failed with violations:');

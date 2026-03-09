@@ -1,6 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getValidationPatternRepository } from '@/features/products/server';
+import { validateAndNormalizeRuntimeConfig } from '@/features/products/server';
+import type {
+  CreateProductValidationPatternInput,
+  ProductValidationPattern,
+  ProductValidationRuntimeType,
+  UpdateProductValidationPatternInput,
+} from '@/shared/contracts/products';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import {
+  productValidatorImportRequestSchema,
+  type ProductValidatorImportError,
+  type ProductValidatorImportPattern,
+  type ProductValidatorImportRequest,
+  type ProductValidatorImportResult,
+  type ProductValidatorImportOperation,
+} from '@/shared/contracts/validator-import';
+import { badRequestError } from '@/shared/errors/app-error';
 import { invalidateValidationPatternRuntimeCache } from '@/shared/lib/products/services/validation-pattern-runtime-cache';
 import {
   normalizeProductValidationPatternDenyBehaviorOverride,
@@ -10,25 +27,8 @@ import {
   normalizeProductValidationPatternScopes,
   normalizeProductValidationSkipNoopReplacementProposal,
 } from '@/shared/lib/products/utils/validator-instance-behavior';
-import { validateRegexSafety } from '@/shared/utils/regex-safety';
 import { parseDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
-import { validateAndNormalizeRuntimeConfig } from '@/features/products/server';
-import type {
-  CreateProductValidationPatternInput,
-  ProductValidationPattern,
-  ProductValidationRuntimeType,
-  UpdateProductValidationPatternInput,
-} from '@/shared/contracts/products';
-import {
-  productValidatorImportRequestSchema,
-  type ProductValidatorImportError,
-  type ProductValidatorImportPattern,
-  type ProductValidatorImportRequest,
-  type ProductValidatorImportResult,
-  type ProductValidatorImportOperation,
-} from '@/shared/contracts/validator-import';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { badRequestError } from '@/shared/errors/app-error';
+import { validateRegexSafety } from '@/shared/utils/regex-safety';
 
 type PlannedAction = 'create' | 'update' | 'delete' | 'skip';
 

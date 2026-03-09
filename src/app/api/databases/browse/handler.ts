@@ -2,7 +2,6 @@ import { ObjectId } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
   DatabaseBrowseParams as BrowseParams,
   DatabaseBrowse as BrowseResponse,
@@ -16,6 +15,7 @@ import {
 import { resolveCollectionProviderForRequest } from '@/shared/lib/db/collection-provider-map';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 type PrismaBrowseModel = {
   findMany: (args: unknown) => Promise<unknown[]>;

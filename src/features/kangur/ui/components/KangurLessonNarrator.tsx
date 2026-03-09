@@ -4,6 +4,10 @@ import { Pause, Play, Volume2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
+  useOptionalContextRegistryPageEnvelope,
+  useRegisterContextRegistryPageSource,
+} from '@/features/ai/ai-context-registry/context/page-context';
+import {
   KANGUR_NARRATOR_SETTINGS_KEY,
   parseKangurNarratorSettings,
 } from '@/features/kangur/settings';
@@ -77,6 +81,7 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
     lesson.contentMode === 'document'
       ? (lessonDocument?.narration?.voice ?? defaultVoice)
       : defaultVoice;
+  const pageContextRegistry = useOptionalContextRegistryPageEnvelope();
   const [observedText, setObservedText] = useState('');
   const [status, setStatus] = useState<PlaybackStatus>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -90,6 +95,17 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
   const currentIndexRef = useRef(0);
   const responseCacheRef = useRef<Map<string, KangurLessonTtsAudioResponse>>(new Map());
   const stopRequestedRef = useRef(false);
+
+  useRegisterContextRegistryPageSource(
+    'kangur-lesson-narrator',
+    useMemo(
+      () => ({
+        label: 'Kangur lesson narrator',
+        rootNodeIds: ['component:kangur-lesson-narrator', 'action:kangur-lesson-tts'],
+      }),
+      []
+    )
+  );
 
   useEffect(() => {
     if (lesson.contentMode === 'document') {
@@ -353,6 +369,7 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
         script,
         voice,
         forceRegenerate: false,
+        ...(pageContextRegistry ? { contextRegistry: pageContextRegistry } : {}),
       });
 
       if (response.mode !== 'audio') {
@@ -385,7 +402,7 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
       );
       return null;
     }
-  }, [script, scriptCacheKey, speakClientSegments, voice]);
+  }, [pageContextRegistry, script, scriptCacheKey, speakClientSegments, voice]);
 
   const handlePlay = useCallback(async () => {
     if (status === 'paused') {

@@ -47,6 +47,8 @@ const stripStringsAndComments = (text) => {
   result = result.replace(/(["'])(?:(?!\1|\\).|\\.)*\1/g, (match) => ' '.repeat(match.length));
   // Template literals (basic — doesn't handle nested)
   result = result.replace(/`(?:[^`\\]|\\.)*`/g, (match) => ' '.repeat(match.length));
+  // Single-line comments
+  result = result.replace(/\/\/.*$/gm, (match) => ' '.repeat(match.length));
   return result;
 };
 

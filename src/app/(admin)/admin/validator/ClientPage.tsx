@@ -4,6 +4,12 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useMemo } from 'react';
 
+import {
+  parseValidatorPatternLists,
+  VALIDATOR_PATTERN_LISTS_KEY,
+  VALIDATOR_SCOPE_DESCRIPTIONS,
+  type ValidatorScope,
+} from '@/features/admin/pages/validator-scope';
 import { AdminPromptEngineValidationPatternsPage } from '@/features/prompt-engine/pages/AdminPromptEngineValidationPatternsPage';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import {
@@ -12,12 +18,6 @@ import {
 } from '@/shared/lib/product-validator-admin';
 import { Button, ClientOnly, FormSection, SectionHeader } from '@/shared/ui';
 
-import {
-  parseValidatorPatternLists,
-  VALIDATOR_PATTERN_LISTS_KEY,
-  VALIDATOR_SCOPE_DESCRIPTIONS,
-  type ValidatorScope,
-} from '@/features/admin/pages/validator-scope';
 
 export function AdminGlobalValidatorPage(): React.JSX.Element {
   const searchParams = useSearchParams();

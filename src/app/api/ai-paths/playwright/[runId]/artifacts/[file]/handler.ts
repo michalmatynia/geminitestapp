@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { assertPlaywrightRunAccess } from '@/app/api/ai-paths/playwright/access';
 import {
   enforceAiPathsActionRateLimit,
   requireAiPathsAccessOrInternal,
@@ -11,7 +12,6 @@ import {
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
-import { assertPlaywrightRunAccess } from '@/app/api/ai-paths/playwright/access';
 
 const guessContentType = (fileName: string): string => {
   const normalized = fileName.toLowerCase();

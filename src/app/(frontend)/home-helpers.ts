@@ -2,8 +2,8 @@ import { getUserPreferences } from '@/features/auth/server';
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import { FRONT_PAGE_ALLOWED } from '@/shared/lib/front-page-app';
 import prisma from '@/shared/lib/db/prisma';
+import { FRONT_PAGE_ALLOWED } from '@/shared/lib/front-page-app';
 
 import type { Session } from 'next-auth';
 

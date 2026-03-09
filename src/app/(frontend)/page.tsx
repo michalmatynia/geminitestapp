@@ -7,9 +7,9 @@ import { getSlugsForDomain, resolveCmsDomainFromHeaders } from '@/features/cms/s
 import { KangurPublicApp } from '@/features/kangur/ui/KangurPublicApp';
 import { getFrontPagePublicOwner, getFrontPageRedirectPath } from '@/shared/lib/front-page-app';
 
-import { HomeContent } from './HomeContent';
 import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from './home-helpers';
 import { createHomeTimingRecorder } from './home-timing';
+import { HomeContent } from './HomeContent';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;

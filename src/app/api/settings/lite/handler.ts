@@ -8,6 +8,7 @@ import { internalError } from '@/shared/errors/app-error';
 import { optionalBooleanQuerySchema } from '@/shared/lib/api/query-schema';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
 import { LITE_SETTINGS_KEYS } from '@/shared/lib/settings-lite-keys';
 import {
   cloneLiteSettings,
@@ -17,7 +18,6 @@ import {
   setLiteSettingsInflight,
   type LiteSettingRecord,
 } from '@/shared/lib/settings-lite-server-cache';
-import prisma from '@/shared/lib/db/prisma';
 
 type SettingRecord = LiteSettingRecord;
 

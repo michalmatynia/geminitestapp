@@ -1,11 +1,12 @@
-import { apiHandler } from '@/shared/lib/api/api-handler';
+import { NextResponse } from 'next/server';
+
 import {
   getAgentDiscoverySummary,
   getAgentResource,
   listAgentCapabilities,
   listAgentResources,
 } from '@/shared/lib/agent-discovery';
-import { NextResponse } from 'next/server';
+import { apiHandler } from '@/shared/lib/api/api-handler';
 
 function parseBooleanFlag(value: string | null) {
   if (value === 'true') {

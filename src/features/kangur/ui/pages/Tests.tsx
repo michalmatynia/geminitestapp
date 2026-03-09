@@ -80,7 +80,7 @@ export default function Tests(): React.JSX.Element {
       <KangurTopNavigationController navigation={navigation} />
 
       <KangurPageContainer id='kangur-tests-main'>
-        <AnimatePresence mode='wait'>
+        <AnimatePresence initial={false} mode='wait'>
           {activeSuite ? (
             <motion.div
               key={`suite-${activeSuite.id}`}

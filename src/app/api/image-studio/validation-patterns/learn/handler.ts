@@ -1,28 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { resolveImageStudioContextRegistryEnvelope } from '@/features/ai/image-studio/context-registry/server';
+import { buildImageStudioWorkspaceSystemPrompt } from '@/features/ai/image-studio/context-registry/workspace-prompt';
+import {
+  IMAGE_STUDIO_SETTINGS_KEY,
+  parsePersistedImageStudioSettings,
+} from '@/features/ai/server';
+import { auth } from '@/features/auth/server';
+import { imageStudioValidationPatternsLearnRequestSchema } from '@/shared/contracts/image-studio';
+import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { authError, internalError } from '@/shared/errors/app-error';
+import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 import {
   runBrainChatCompletion,
   supportsBrainJsonMode,
 } from '@/shared/lib/ai-brain/server-runtime-client';
-import {
-  IMAGE_STUDIO_SETTINGS_KEY,
-  parsePersistedImageStudioSettings,
-} from '@/features/ai/server';
-import { resolveImageStudioContextRegistryEnvelope } from '@/features/ai/image-studio/context-registry/server';
-import { buildImageStudioWorkspaceSystemPrompt } from '@/features/ai/image-studio/context-registry/workspace-prompt';
-import { auth } from '@/features/auth/server';
-import { getSettingValue } from '@/shared/lib/ai/server-settings';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import {
   PROMPT_ENGINE_SETTINGS_KEY,
   parsePromptEngineSettings,
   parsePromptValidationRules,
 } from '@/shared/lib/prompt-engine/settings';
-import { imageStudioValidationPatternsLearnRequestSchema } from '@/shared/contracts/image-studio';
-import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { authError, internalError } from '@/shared/errors/app-error';
-import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 const ruleSignature = (rule: PromptValidationRule): string => {
   if (rule.kind === 'regex') {

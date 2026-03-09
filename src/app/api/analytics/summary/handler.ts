@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { getAnalyticsSummary } from '@/shared/lib/analytics/server';
 import { auth } from '@/features/auth/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError } from '@/shared/errors/app-error';
+import { getAnalyticsSummary } from '@/shared/lib/analytics/server';
 import { normalizeOptionalQueryString } from '@/shared/lib/api/query-schema';
 
 const RANGE_VALUES = ['24h', '7d', '30d'] as const;

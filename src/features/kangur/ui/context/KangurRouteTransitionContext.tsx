@@ -17,6 +17,7 @@ import { useKangurRouting } from './KangurRoutingContext';
 type KangurRouteTransitionState = {
   href: string | null;
   pageKey: string | null;
+  startedAt: number;
 };
 
 type KangurRouteTransitionContextValue = {
@@ -36,6 +37,7 @@ type KangurRouteTransitionActionsContextValue = Pick<
 >;
 
 const ROUTE_TRANSITION_TIMEOUT_MS = 4_000;
+const ROUTE_TRANSITION_MIN_VISIBLE_MS = 260;
 const ROUTE_TRANSITION_SCROLL_RESET_FRAME_COUNT = 2;
 
 const KangurRouteTransitionStateContext =
@@ -56,13 +58,10 @@ export function KangurRouteTransitionProvider({
   useEffect(() => {
     const previousRequestedPath = previousRequestedPathRef.current;
     let animationFrameId: number | null = null;
+    let clearTransitionTimeoutId: number | null = null;
     let remainingFrameCount = ROUTE_TRANSITION_SCROLL_RESET_FRAME_COUNT;
 
-    if (
-      transitionState &&
-      previousRequestedPath !== undefined &&
-      requestedPath !== previousRequestedPath
-    ) {
+    const commitTransition = (): void => {
       if (shouldResetScrollOnCommitRef.current && typeof window !== 'undefined') {
         const resetScrollPosition = (): void => {
           window.scrollTo({ left: 0, top: 0, behavior: 'auto' });
@@ -80,6 +79,24 @@ export function KangurRouteTransitionProvider({
 
       shouldResetScrollOnCommitRef.current = false;
       setTransitionState(null);
+    };
+
+    if (
+      transitionState &&
+      previousRequestedPath !== undefined &&
+      requestedPath !== previousRequestedPath
+    ) {
+      const elapsedMs = Date.now() - transitionState.startedAt;
+      const remainingVisibleMs = Math.max(0, ROUTE_TRANSITION_MIN_VISIBLE_MS - elapsedMs);
+
+      if (remainingVisibleMs > 0 && typeof window !== 'undefined') {
+        clearTransitionTimeoutId = window.setTimeout(() => {
+          clearTransitionTimeoutId = null;
+          commitTransition();
+        }, remainingVisibleMs);
+      } else {
+        commitTransition();
+      }
     }
 
     previousRequestedPathRef.current = requestedPath;
@@ -87,6 +104,9 @@ export function KangurRouteTransitionProvider({
     return () => {
       if (animationFrameId !== null && typeof window !== 'undefined') {
         window.cancelAnimationFrame(animationFrameId);
+      }
+      if (clearTransitionTimeoutId !== null && typeof window !== 'undefined') {
+        window.clearTimeout(clearTransitionTimeoutId);
       }
     };
   }, [requestedPath, transitionState]);
@@ -125,6 +145,7 @@ export function KangurRouteTransitionProvider({
         setTransitionState({
           href: normalizedHref,
           pageKey: nextPageKey,
+          startedAt: Date.now(),
         });
       });
     },

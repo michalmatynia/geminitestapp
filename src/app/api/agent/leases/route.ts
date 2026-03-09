@@ -1,6 +1,6 @@
-import { apiHandler } from '@/shared/lib/api/api-handler';
 import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
+
 import {
   SHARED_LEASE_LIMITATION,
   getAgentLeaseDiscoveryPayload,
@@ -8,6 +8,7 @@ import {
   listAgentLeaseStates,
   mutateAgentLease,
 } from '@/shared/lib/agent-lease-service';
+import { apiHandler } from '@/shared/lib/api/api-handler';
 
 function statusForLeaseMutation(code: string) {
   switch (code) {

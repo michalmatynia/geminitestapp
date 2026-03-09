@@ -1,5 +1,5 @@
-import { AUTH_SETTINGS_KEYS } from '@/shared/lib/auth/constants';
 import type { AuthPermission, AuthRole, AuthUserRoleMap } from '@/shared/contracts/auth';
+import { AUTH_SETTINGS_KEYS } from '@/shared/lib/auth/constants';
 
 export { AUTH_SETTINGS_KEYS };
 export type { AuthPermission, AuthRole, AuthUserRoleMap };

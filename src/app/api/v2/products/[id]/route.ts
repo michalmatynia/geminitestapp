@@ -1,9 +1,6 @@
 export const runtime = 'nodejs';
 export const revalidate = 60;
 
-import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import { idParamSchema } from '@/shared/validations/api-schemas';
-
 import {
   DELETE_handler,
   GET_handler,
@@ -11,6 +8,9 @@ import {
   PUT_handler,
   getQuerySchema,
 } from '@/app/api/v2/products/[id]/handler';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import { idParamSchema } from '@/shared/validations/api-schemas';
+
 
 export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, {
   source: 'v2.products.[id].GET',

@@ -192,6 +192,49 @@ export const componentNodes: ContextNode[] = [
     source: { type: 'code', ref: SOURCE_REF },
   },
   {
+    id: 'component:kangur-lesson-narrator',
+    kind: 'component',
+    name: 'KangurLessonNarrator',
+    description:
+      'Learner-facing narration control used in Kangur lessons and tests to request server-side lesson audio or browser fallback playback.',
+    tags: ['kangur', 'tts', 'narration', 'learner', 'audio'],
+    relationships: [
+      { type: 'uses', targetId: 'page:kangur-lessons' },
+      { type: 'uses', targetId: 'page:kangur-tests' },
+      { type: 'uses', targetId: 'action:kangur-lesson-tts' },
+      { type: 'reads', targetId: 'collection:kangur-lessons' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'component:kangur-lesson-narration-panel',
+    kind: 'component',
+    name: 'KangurLessonNarrationPanel',
+    description:
+      'Admin lesson-editor narration preview panel for choosing voice, previewing generated audio, and checking cached Kangur lesson narration.',
+    tags: ['kangur', 'tts', 'narration', 'admin', 'editor'],
+    relationships: [
+      { type: 'uses', targetId: 'page:kangur-admin-lessons-manager' },
+      { type: 'uses', targetId: 'action:kangur-lesson-tts' },
+      { type: 'reads', targetId: 'collection:kangur-lessons' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
     id: 'component:image-studio-slot-tree',
     kind: 'component',
     name: 'ImageStudioSlotTree',

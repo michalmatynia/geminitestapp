@@ -54,7 +54,7 @@ canonical: true
 | `src/features/products/components/settings/validator-settings/helpers.ts:428` | `buildSequenceGroups` | helpers.buildSequenceGroups | yes | yes |
 | `src/features/products/components/settings/validator-settings/controller-form-utils.ts:20` | `buildFormDataFromPattern` | controller.buildFormDataFromPattern | yes | yes |
 | `src/features/products/components/settings/validator-settings/controller-sequence-actions.ts:25` | `createSequenceActions` | controller.createSequenceActions | yes | yes |
-| `src/features/products/components/settings/validator-settings/useValidatorSettingsController.ts:53` | `useValidatorSettingsController` | controller.useValidatorSettingsController | no | yes |
+| `src/features/products/components/settings/validator-settings/useValidatorSettingsController.ts:56` | `useValidatorSettingsController` | controller.useValidatorSettingsController | yes | yes |
 | `src/features/products/components/settings/ValidatorSettings.tsx:21` | `ValidatorSettings` | ui.ValidatorSettings | yes | yes |
 | `src/features/products/components/settings/validator-settings/ValidatorSettingsContext.tsx:13` | `ValidatorSettingsProvider` | ui.ValidatorSettingsProvider | yes | yes |
 | `src/features/products/components/settings/validator-settings/ValidatorSettingsContext.tsx:28` | `useValidatorSettingsContext` | ui.useValidatorSettingsContext | yes | yes |

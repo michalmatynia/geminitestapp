@@ -206,24 +206,64 @@ describe('KangurPrimaryNavigation', () => {
   it('shows login and create-account actions when the user is not authenticated', () => {
     const onLogin = vi.fn();
     const onCreateAccount = vi.fn();
+    const onGuestPlayerNameChange = vi.fn();
 
     render(
       <KangurPrimaryNavigation
         basePath='/kangur'
         currentPage='Game'
+        guestPlayerName='Ala'
         isAuthenticated={false}
         onCreateAccount={onCreateAccount}
+        onGuestPlayerNameChange={onGuestPlayerNameChange}
         onLogin={onLogin}
         onLogout={vi.fn()}
       />
     );
 
+    expect(screen.getByRole('button', { name: 'Ala' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ala' }));
+    fireEvent.change(screen.getByPlaceholderText('Wpisz imie gracza...'), {
+      target: { value: 'Ola' },
+    });
+    fireEvent.keyDown(screen.getByPlaceholderText('Wpisz imie gracza...'), {
+      key: 'Enter',
+    });
     fireEvent.click(screen.getByRole('button', { name: /utworz konto/i }));
     fireEvent.click(screen.getByRole('button', { name: /zaloguj się/i }));
 
+    expect(onGuestPlayerNameChange).toHaveBeenCalledWith('Ola');
     expect(onCreateAccount).toHaveBeenCalledTimes(1);
     expect(onLogin).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: 'Ala' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /profil/i })).toBeNull();
+  });
+
+  it('collapses the guest name input on blur and reopens it on click', () => {
+    const onGuestPlayerNameChange = vi.fn();
+
+    render(
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        currentPage='Game'
+        guestPlayerName='Ola'
+        isAuthenticated={false}
+        onCreateAccount={vi.fn()}
+        onGuestPlayerNameChange={onGuestPlayerNameChange}
+        onLogin={vi.fn()}
+        onLogout={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ola' }));
+    fireEvent.blur(screen.getByPlaceholderText('Wpisz imie gracza...'));
+
+    expect(screen.getByRole('button', { name: 'Ola' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ola' }));
+
+    expect(screen.getByPlaceholderText('Wpisz imie gracza...')).toBeInTheDocument();
   });
 
   it('hides the parent dashboard link when auth resolves a student session', () => {

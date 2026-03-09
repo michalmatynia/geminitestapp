@@ -5,7 +5,6 @@ import React, { useEffect, useMemo } from 'react';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useAuthUsers } from '@/features/auth/hooks/useAuthQueries';
 import type { AuthRole } from '@/features/auth/utils/auth-management';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { AuthUser as AuthUserSummary } from '@/shared/contracts/auth';
 import {
   Card,
@@ -19,6 +18,7 @@ import {
   MetadataItem,
   LoadingState,
 } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export default function AuthDashboardPage(): React.JSX.Element {
   const { toast } = useToast();

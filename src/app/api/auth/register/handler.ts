@@ -7,7 +7,6 @@ import { getAuthSecurityPolicy, validatePasswordStrength } from '@/features/auth
 import { getAuthUserPageSettings } from '@/features/auth/server';
 import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/server';
 import { logAuthEvent } from '@/features/auth/server';
-import { logActivity } from '@/shared/utils/observability/activity-service';
 import { ActivityTypes } from '@/shared/constants/observability';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import {
@@ -20,6 +19,7 @@ import { badRequestError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import { logger } from '@/shared/utils/logger';
+import { logActivity } from '@/shared/utils/observability/activity-service';
 
 export const registerSchema = z.object({
   email: z.string().trim().email(),

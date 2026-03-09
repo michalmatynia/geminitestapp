@@ -159,6 +159,32 @@ export const actionNodes: ContextNode[] = [
     source: { type: 'code', ref: SOURCE_REF },
   },
   {
+    id: 'action:kangur-lesson-tts',
+    kind: 'action',
+    name: 'Kangur Lesson TTS',
+    description:
+      'Generates or reuses Kangur lesson narration audio for learner playback and admin lesson-preview flows using the shared page context registry envelope.',
+    tags: ['kangur', 'tts', 'narration', 'audio', 'ai'],
+    relationships: [
+      { type: 'uses', targetId: 'page:kangur-lessons' },
+      { type: 'uses', targetId: 'page:kangur-tests' },
+      { type: 'uses', targetId: 'page:kangur-admin-lessons-manager' },
+      { type: 'uses', targetId: 'component:kangur-lesson-narrator' },
+      { type: 'uses', targetId: 'component:kangur-lesson-narration-panel' },
+      { type: 'reads', targetId: 'collection:kangur-lessons' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      proposeScopes: ['ctx:propose'],
+      executeScopes: ['ctx:execute'],
+      riskTier: 'low',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
     id: 'action:cms-css-ai-stream',
     kind: 'action',
     name: 'CMS CSS AI Stream',

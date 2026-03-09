@@ -2,10 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import {
-  getPromptValidationObservabilitySnapshot,
-  resetPromptValidationObservability,
-} from '@/shared/lib/prompt-core/runtime-observability';
-import {
   getPromptExploderRuntimePatternCacheSnapshot,
   resetPromptExploderRuntimePatternCache,
 } from '@/features/prompt-exploder/parser';
@@ -19,6 +15,10 @@ import {
 } from '@/features/prompt-exploder/runtime-load-shedder';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { optionalBooleanQuerySchema } from '@/shared/lib/api/query-schema';
+import {
+  getPromptValidationObservabilitySnapshot,
+  resetPromptValidationObservability,
+} from '@/shared/lib/prompt-core/runtime-observability';
 
 export const querySchema = z.object({
   reset: optionalBooleanQuerySchema(),

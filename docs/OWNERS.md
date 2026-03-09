@@ -75,8 +75,8 @@ when the doc is touched meaningfully.
    by hand-editing outputs.
 12. Machine-readable companions should live beside their canonical doc, and any
    retained compatibility copy must be updated in the same change.
-13. Superseded root docs should remain short compatibility stubs, not partial
-   shadow copies of the old canonical content.
+13. Obsolete root aliases should be removed once repo-internal consumers are
+   updated; do not keep partial shadow copies of canonical docs.
 14. Manifest-defined compatibility mirrors should be synced by script when
    possible, not maintained by ad hoc manual copying.
 15. Compatibility mirrors should be deleted once repo-internal consumers are
@@ -98,12 +98,12 @@ When an AI adds or rewrites docs, it should:
 8. Mark superseded docs explicitly instead of leaving ambiguous duplicates.
 9. If a JSON or other machine-readable companion exists, update the canonical
    file first and keep any compatibility copy in sync.
-10. If a root compatibility stub exists, keep it short and make sure it still
-   points cleanly at the canonical replacement.
+10. Remove obsolete root aliases once repo-internal consumers are updated; do
+    not keep them as a permanent parallel docs surface.
 11. If the mirror pair is declared in the docs structure manifest, run
    `npm run docs:structure:sync-mirrors`.
-12. Canonical docs should link to canonical destinations, not back to root
-    compatibility stubs, unless a migration inventory explicitly needs the old path.
+12. Canonical docs should link to canonical destinations, not obsolete root
+    aliases.
 13. Keep the owning docs hub aligned with its indexing policy when the
     directory’s active docs surface changes.
 14. If a docs directory contains only non-markdown artifacts, declare it in the
@@ -120,3 +120,6 @@ When an AI adds or rewrites docs, it should:
 18. If a repo script owns markdown generation for a canonical docs surface,
     keep frontmatter in the generator itself through the shared helpers in
     `scripts/docs/` so regeneration does not strip metadata.
+19. Managed generated-doc surfaces should match their shared-helper metadata
+    contract under `npm run docs:structure:check`; change the helper first, not
+    the generated file by hand.

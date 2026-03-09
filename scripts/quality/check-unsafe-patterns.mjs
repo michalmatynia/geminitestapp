@@ -1,13 +1,5 @@
-import path from 'node:path';
-
 import { analyzeUnsafePatterns } from './lib/check-unsafe-patterns.mjs';
-import {
-  formatDuration,
-  parseCommonCheckArgs,
-  renderIssueTable,
-  renderRuleTable,
-  writeCheckArtifacts,
-} from './lib/check-runner.mjs';
+import { renderIssueTable, renderRuleTable, runQualityCheckCli } from './lib/check-runner.mjs';
 
 const toMarkdown = (payload) => {
   const lines = [];
@@ -71,42 +63,12 @@ const toMarkdown = (payload) => {
   return `${lines.join('\n')}\n`;
 };
 
-const run = async () => {
-  const root = process.cwd();
-  const startedAt = Date.now();
-  const { strictMode, failOnWarnings, shouldWriteHistory } = parseCommonCheckArgs();
-  const payload = analyzeUnsafePatterns({ root });
-  payload.durationMs = Date.now() - startedAt;
-  const markdown = toMarkdown(payload);
-  const outputs = await writeCheckArtifacts({
-    root,
-    slug: 'unsafe-patterns',
-    payload,
-    markdown,
-    shouldWriteHistory,
-  });
-
-  console.log(
-    `[unsafe-patterns] status=${payload.status} files=${payload.summary.fileCount} errors=${payload.summary.errorCount} warnings=${payload.summary.warningCount} info=${payload.summary.infoCount} duration=${formatDuration(payload.durationMs)}`
-  );
-  console.log(`  double-assertions=${payload.trendCounters.doubleAssertionCount} any=${payload.trendCounters.anyCount} eslint-disable=${payload.trendCounters.eslintDisableCount} non-null=${payload.trendCounters.nonNullAssertionCount}`);
-  console.log(`Wrote ${path.relative(root, outputs.latestJsonPath)}`);
-  console.log(`Wrote ${path.relative(root, outputs.latestMdPath)}`);
-  if (shouldWriteHistory) {
-    console.log(`Wrote ${path.relative(root, outputs.historicalJsonPath)}`);
-    console.log(`Wrote ${path.relative(root, outputs.historicalMdPath)}`);
-  }
-
-  if (strictMode && payload.summary.errorCount > 0) {
-    process.exit(1);
-  }
-  if (strictMode && failOnWarnings && payload.summary.warningCount > 0) {
-    process.exit(1);
-  }
-};
-
-run().catch((error) => {
-  console.error('[unsafe-patterns] failed');
-  console.error(error instanceof Error ? error.stack : error);
-  process.exit(1);
+await runQualityCheckCli({
+  id: 'unsafe-patterns',
+  analyze: analyzeUnsafePatterns,
+  toMarkdown,
+  buildLogLines: ({ payload, formatDuration }) => [
+    `[unsafe-patterns] status=${payload.status} files=${payload.summary.fileCount} errors=${payload.summary.errorCount} warnings=${payload.summary.warningCount} info=${payload.summary.infoCount} duration=${formatDuration(payload.durationMs)}`,
+    `  double-assertions=${payload.trendCounters.doubleAssertionCount} any=${payload.trendCounters.anyCount} eslint-disable=${payload.trendCounters.eslintDisableCount} non-null=${payload.trendCounters.nonNullAssertionCount}`,
+  ],
 });

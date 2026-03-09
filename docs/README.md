@@ -52,8 +52,7 @@ avoid becoming another dumping ground.
 
 ## Cross-Cutting Engineering Docs
 
-These are canonical platform guides. Root-level legacy entrypoints may remain as
-compatibility stubs during migration.
+These are canonical platform guides.
 
 - [`docs/platform/developer-handbook.md`](./platform/developer-handbook.md)
 - [`docs/platform/best-practices.md`](./platform/best-practices.md)
@@ -90,6 +89,7 @@ home for new cross-feature docs:
 - Do not add new dated files directly under `docs/`.
 - Do not add new root docs unless they are repo entrypoints, governance, or
   agent-overlay files.
+- Remove obsolete root aliases once repo-internal consumers are updated.
 - Every new doc should update its nearest hub page and, when cross-cutting, this
   index.
 - If a doc supersedes an older doc, mark the relationship explicitly instead of
@@ -99,8 +99,6 @@ home for new cross-feature docs:
 
 - Ownership matrix: [`docs/OWNERS.md`](./OWNERS.md)
 - Documentation structure rules: [`docs/documentation/README.md`](./documentation/README.md)
-- Root migration backlog:
-  [`docs/documentation/root-doc-migration-backlog.md`](./documentation/root-doc-migration-backlog.md)
 - All feature/API changes must update relevant docs before merge.
 - Runbooks must be reviewed after incidents and on their stated cadence.
 

@@ -50,6 +50,9 @@ import {
   getReplacementFieldsForTarget,
 } from './helpers';
 
+/**
+ * Coordinates validator settings queries, pattern-editing state, and modal actions for the validator settings UI.
+ */
 export function useValidatorSettingsController() {
   const queryClient = useQueryClient();
   const patternsQuery = useValidationPatterns();

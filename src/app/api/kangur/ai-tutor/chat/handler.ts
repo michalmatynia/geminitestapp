@@ -11,7 +11,13 @@ import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server'
 import { chatbotSessionRepository } from '@/features/ai/chatbot/server';
 import { buildKangurAiTutorContextRegistryRefs } from '@/features/kangur/context-registry/refs';
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
+import {
+  buildKangurAiTutorLearnerMood,
+  resolveKangurActor,
+  setKangurLearnerAiTutorState,
+} from '@/features/kangur/server';
 import { buildKangurAiTutorAdaptiveGuidance } from '@/features/kangur/server/ai-tutor-adaptive';
+import { consumeKangurAiTutorDailyUsage } from '@/features/kangur/server/ai-tutor-usage';
 import { resolveKangurAiTutorRuntimeDocuments } from '@/features/kangur/server/context-registry';
 import {
   KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
@@ -24,18 +30,13 @@ import {
   type KangurAiTutorHintDepth,
   type KangurAiTutorProactiveNudges,
 } from '@/features/kangur/settings-ai-tutor';
-import { consumeKangurAiTutorDailyUsage } from '@/features/kangur/server/ai-tutor-usage';
-import {
-  buildKangurAiTutorLearnerMood,
-  resolveKangurActor,
-  setKangurLearnerAiTutorState,
-} from '@/features/kangur/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import {
   AGENT_PERSONA_SETTINGS_KEY,
   type AgentPersona,
   type AgentPersonaMoodId,
 } from '@/shared/contracts/agents';
+import type { ContextRegistryResolutionBundle, ContextRuntimeDocument } from '@/shared/contracts/ai-context-registry';
+import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
 import {
   kangurAiTutorChatRequestSchema,
   type KangurAiTutorChatResponse,
@@ -46,21 +47,20 @@ import {
   type KangurAiTutorPromptMode,
 } from '@/shared/contracts/kangur-ai-tutor';
 import { createDefaultKangurAiTutorLearnerMood } from '@/shared/contracts/kangur-ai-tutor-mood';
-import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
-import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { isAppError } from '@/shared/errors/app-error';
 import {
   resolveBrainExecutionConfigForCapability,
 } from '@/shared/lib/ai-brain/server';
+import { readStoredSettingValue } from '@/shared/lib/ai-brain/server';
 import {
   runBrainChatCompletion,
   type BrainChatMessage,
 } from '@/shared/lib/ai-brain/server-runtime-client';
-import { readStoredSettingValue } from '@/shared/lib/ai-brain/server';
-import { isAppError } from '@/shared/errors/app-error';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import prisma from '@/shared/lib/db/prisma';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
-import type { ContextRegistryResolutionBundle, ContextRuntimeDocument } from '@/shared/contracts/ai-context-registry';
 
 const SOCRATIC_CONSTRAINT = [
   'You are a friendly AI tutor helping a child (age 6–12) learn.',

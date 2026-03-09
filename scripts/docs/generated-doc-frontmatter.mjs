@@ -1,16 +1,11 @@
-import fs from 'node:fs';
-import fsPromises from 'node:fs/promises';
 import path from 'node:path';
 
-const frontmatterPattern = /^---\r?\n[\s\S]*?\r?\n---\r?\n*/;
-
-function normalizeDocPath(value) {
-  return value.replace(/\\/g, '/');
-}
-
-function stripFrontmatter(content) {
-  return content.replace(frontmatterPattern, '').replace(/^\r?\n+/, '');
-}
+import {
+  normalizeDocPath,
+  withStructuredMarkdownFrontmatter,
+  writeStructuredMarkdownDoc,
+  writeStructuredMarkdownDocSync,
+} from './markdown-frontmatter-utils.mjs';
 
 function resolveManagedGeneratedDocRule(relativePath) {
   const normalizedPath = normalizeDocPath(relativePath);
@@ -126,6 +121,10 @@ function resolveManagedGeneratedDocRule(relativePath) {
   return null;
 }
 
+export function isManagedGeneratedDoc(relativePath) {
+  return resolveManagedGeneratedDocRule(relativePath) !== null;
+}
+
 export function getManagedGeneratedDocMeta(relativePath, reviewDate) {
   const rule = resolveManagedGeneratedDocRule(relativePath);
   if (!rule) {
@@ -143,22 +142,10 @@ export function getManagedGeneratedDocMeta(relativePath, reviewDate) {
 }
 
 export function withManagedGeneratedDocFrontmatter(relativePath, content, reviewDate) {
-  const metadata = getManagedGeneratedDocMeta(relativePath, reviewDate);
-  const body = stripFrontmatter(content);
-  const normalizedBody = body.endsWith('\n') ? body : `${body}\n`;
-  const frontmatter = [
-    '---',
-    `owner: '${metadata.owner}'`,
-    `last_reviewed: '${metadata.last_reviewed}'`,
-    `status: '${metadata.status}'`,
-    `doc_type: '${metadata.doc_type}'`,
-    `scope: '${metadata.scope}'`,
-    `canonical: ${metadata.canonical ? 'true' : 'false'}`,
-    '---',
-    '',
-  ].join('\n');
-
-  return `${frontmatter}${normalizedBody}`;
+  return withStructuredMarkdownFrontmatter(
+    content,
+    getManagedGeneratedDocMeta(relativePath, reviewDate)
+  );
 }
 
 export async function writeManagedGeneratedDoc({
@@ -167,11 +154,13 @@ export async function writeManagedGeneratedDoc({
   content,
   reviewDate = new Date().toISOString().slice(0, 10),
 }) {
-  const relativePath = normalizeDocPath(path.relative(root, targetPath));
-  const normalizedContent = withManagedGeneratedDocFrontmatter(relativePath, content, reviewDate);
-
-  await fsPromises.mkdir(path.dirname(targetPath), { recursive: true });
-  await fsPromises.writeFile(targetPath, normalizedContent, 'utf8');
+  await writeStructuredMarkdownDoc({
+    root,
+    targetPath,
+    content,
+    reviewDate,
+    getMeta: getManagedGeneratedDocMeta,
+  });
 }
 
 export function writeManagedGeneratedDocSync({
@@ -180,9 +169,11 @@ export function writeManagedGeneratedDocSync({
   content,
   reviewDate = new Date().toISOString().slice(0, 10),
 }) {
-  const relativePath = normalizeDocPath(path.relative(root, targetPath));
-  const normalizedContent = withManagedGeneratedDocFrontmatter(relativePath, content, reviewDate);
-
-  fs.mkdirSync(path.dirname(targetPath), { recursive: true });
-  fs.writeFileSync(targetPath, normalizedContent, 'utf8');
+  writeStructuredMarkdownDocSync({
+    root,
+    targetPath,
+    content,
+    reviewDate,
+    getMeta: getManagedGeneratedDocMeta,
+  });
 }

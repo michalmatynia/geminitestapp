@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { clearKangurLearnerSession } from '@/features/kangur/services/kangur-learner-session';
-
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 export async function postKangurLearnerSignOutHandler(

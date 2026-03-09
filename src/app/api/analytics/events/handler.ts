@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { insertAnalyticsEvent, listAnalyticsEvents } from '@/shared/lib/analytics/server';
 import { auth, extractClientIp } from '@/features/auth/server';
 import type { AnalyticsEventCreateInput } from '@/shared/contracts';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError } from '@/shared/errors/app-error';
+import { insertAnalyticsEvent, listAnalyticsEvents } from '@/shared/lib/analytics/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import {
   normalizeOptionalQueryString,

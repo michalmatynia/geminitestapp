@@ -12,8 +12,6 @@ import {
   type AuthUserSecurityProfile,
 } from '@/features/auth/api/users';
 
-export type { AuthUsersResponse, AuthUserSecurityProfile };
-
 import type { AuthUser as AuthUserSummary } from '@/shared/contracts/auth';
 import type {
   SingleQuery,
@@ -30,6 +28,8 @@ import {
 } from '@/shared/lib/query-factories-v2';
 import { invalidateAuthSecurity, invalidateUsers } from '@/shared/lib/query-invalidation';
 import { authKeys } from '@/shared/lib/query-key-exports';
+
+export type { AuthUsersResponse, AuthUserSecurityProfile };
 
 const AUTH_USERS_STALE_MS = 10_000;
 const AUTH_SECURITY_STALE_MS = 10_000;

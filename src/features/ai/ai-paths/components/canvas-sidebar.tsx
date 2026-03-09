@@ -20,6 +20,7 @@ import {
   usePersistenceActions,
   usePresetsState,
   usePresetsActions,
+  useRunHistoryActions,
   useSelectionState,
   useSelectionActions,
   useRuntimeState,
@@ -113,6 +114,7 @@ export function CanvasSidebar(): React.JSX.Element {
   const { nodes, edges, executionMode } = useGraphState();
   const { savePathConfig } = usePersistenceActions();
   const { runtimeRunStatus, runtimeState } = useRuntimeState();
+  const { handoffRun } = useRunHistoryActions();
   const {
     fireTrigger,
     fireTriggerPersistent,
@@ -135,6 +137,10 @@ export function CanvasSidebar(): React.JSX.Element {
     ConfirmationModal,
   } = useCanvasSidebarActions();
   const runStatus = runtimeRunStatus;
+  const activeRunId =
+    runtimeState.currentRun && typeof runtimeState.currentRun === 'object'
+      ? (runtimeState.currentRun.id ?? null)
+      : null;
 
   // --- Derived ---
   const selectedNode = useMemo(
@@ -169,6 +175,8 @@ export function CanvasSidebar(): React.JSX.Element {
       : runStatus === 'blocked_on_lease' || runStatus === 'handoff_ready' || runStatus === 'paused'
         ? 'warning'
         : 'neutral';
+  const [isMarkingHandoff, setIsMarkingHandoff] = useState(false);
+  const [handoffRequested, setHandoffRequested] = useState(false);
   const [paletteMode, setPaletteMode] = useState<PaletteMode>('data');
   const [paletteSearch, setPaletteSearch] = useState('');
   const normalizedPaletteSearch = paletteSearch.trim().toLowerCase();
@@ -604,6 +612,34 @@ export function CanvasSidebar(): React.JSX.Element {
                   panel to inspect ownership and mark the run handoff-ready if work should change
                   hands.
                 </div>
+                {activeRunId ? (
+                  <div className='flex flex-wrap items-center gap-2 pt-1'>
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      type='button'
+                      onClick={() => {
+                        setIsMarkingHandoff(true);
+                        setHandoffRequested(false);
+                        void handoffRun(activeRunId)
+                          .then((ok: boolean) => {
+                            setHandoffRequested(ok);
+                          })
+                          .finally(() => {
+                            setIsMarkingHandoff(false);
+                          });
+                      }}
+                      disabled={isMarkingHandoff}
+                    >
+                      {isMarkingHandoff ? 'Marking...' : 'Mark handoff-ready'}
+                    </Button>
+                    {handoffRequested ? (
+                      <span className='text-[10px] text-current/80'>
+                        Handoff requested. Refreshing run status...
+                      </span>
+                    ) : null}
+                  </div>
+                ) : null}
               </Card>
             ) : null}
             {runStatus === 'handoff_ready' ? (

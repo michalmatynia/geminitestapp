@@ -78,6 +78,11 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
     },
+    server: {
+      deps: {
+        inline: ['next-auth'],
+      },
+    },
     projects: [
       {
         extends: true,

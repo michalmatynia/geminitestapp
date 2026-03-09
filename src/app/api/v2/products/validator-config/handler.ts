@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getValidationPatternRepository } from '@/features/products/server';
-import { listValidationPatternsCached } from '@/shared/lib/products/services/validation-pattern-runtime-cache';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { optionalBooleanQuerySchema } from '@/shared/lib/api/query-schema';
+import { listValidationPatternsCached } from '@/shared/lib/products/services/validation-pattern-runtime-cache';
 
 export const querySchema = z.object({
   includeDisabled: optionalBooleanQuerySchema().default(false),

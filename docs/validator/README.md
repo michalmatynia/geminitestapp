@@ -15,6 +15,8 @@ Generated and maintained docs for the Product Validator tool.
 - Function inventory: `docs/validator/function-inventory.md`
 - Architecture: `docs/validator/architecture.md`
 - Examples: `docs/validator/examples.md`
+- Case Resolver plain-text patterns: `docs/validator/case-resolver-plain-text-patterns.md`
+- Semantic grammar: `docs/validator/semantic-grammar/README.md`
 
 Regenerate with:
 

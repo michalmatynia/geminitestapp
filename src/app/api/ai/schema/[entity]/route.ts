@@ -2,9 +2,9 @@ export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
 
+import { registryBackend } from '@/features/ai/ai-context-registry/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import { registryBackend } from '@/features/ai/ai-context-registry/server';
 
 export const GET = apiHandlerWithParams<{ entity: string }>(
   async (_req: NextRequest, _ctx: ApiHandlerContext, params: { entity: string }) => {

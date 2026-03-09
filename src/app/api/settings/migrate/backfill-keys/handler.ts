@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@/features/auth/server';
-import { assertDatabaseEngineOperationEnabled } from '@/shared/lib/db/services/database-engine-operation-guards';
 import {
   settingsBackfillRequestSchema as backfillSchema,
   type SettingsBackfillResult as BackfillResult,
@@ -11,6 +10,7 @@ import { authError, forbiddenError, internalError } from '@/shared/errors/app-er
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { getDatabaseEnginePolicy } from '@/shared/lib/db/database-engine-policy';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { assertDatabaseEngineOperationEnabled } from '@/shared/lib/db/services/database-engine-operation-guards';
 
 import type { Filter } from 'mongodb';
 

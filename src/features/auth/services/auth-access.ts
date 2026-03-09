@@ -1,6 +1,5 @@
 import 'server-only';
 
-import { getAuthDataProvider, requireAuthProvider } from '@/shared/lib/auth/services/auth-provider';
 import {
   AUTH_SETTINGS_KEYS,
   DEFAULT_AUTH_PERMISSIONS,
@@ -13,6 +12,7 @@ import {
 } from '@/features/auth/utils/auth-management';
 import type { AuthUserAccessDetail as AuthUserAccess } from '@/shared/contracts/auth';
 import { MongoSettingRecord } from '@/shared/contracts/base';
+import { getAuthDataProvider, requireAuthProvider } from '@/shared/lib/auth/services/auth-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import { parseJsonSetting } from '@/shared/utils/settings-json';

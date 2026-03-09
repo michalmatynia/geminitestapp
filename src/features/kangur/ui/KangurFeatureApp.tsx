@@ -35,7 +35,7 @@ import { cn } from '@/shared/utils';
 const AuthenticatedApp = (): JSX.Element | null => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useKangurAuth();
   const { pageKey, embedded, requestedPath } = useKangurRouting();
-  const { isRoutePending } = useKangurRouteTransition();
+  const { isRoutePending, pendingPageKey } = useKangurRouteTransition();
   const authErrorType = authError?.type;
   const prefersReducedMotion = useReducedMotion();
   const routeContentMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
@@ -74,6 +74,12 @@ const AuthenticatedApp = (): JSX.Element | null => {
     <>
       <KangurRouteAccessibilityAnnouncer />
       <KangurTopNavigationHost />
+      {isRoutePending ? (
+        <KangurPageTransitionSkeleton
+          pageKey={pendingPageKey ?? pageKey ?? KANGUR_MAIN_PAGE}
+          reason='navigation'
+        />
+      ) : null}
       <AnimatePresence mode='wait'>
         {routeContent ? (
           <motion.div

@@ -3,17 +3,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import {
-  normalizeAiPathsCollectionMap,
-  resolveAiPathsCollectionName,
-} from '@/shared/lib/ai-paths/core/utils/collection-mapping';
-import { getUnsupportedProviderActionMessage } from '@/shared/lib/ai-paths/core/utils/provider-actions';
-import {
   enforceAiPathsActionRateLimit,
   isCollectionAllowed,
   requireAiPathsAccessOrInternal,
 } from '@/features/ai/ai-paths/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
+import {
+  normalizeAiPathsCollectionMap,
+  resolveAiPathsCollectionName,
+} from '@/shared/lib/ai-paths/core/utils/collection-mapping';
+import { getUnsupportedProviderActionMessage } from '@/shared/lib/ai-paths/core/utils/provider-actions';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { resolveCollectionProviderForRequest } from '@/shared/lib/db/collection-provider-map';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';

@@ -1,10 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
-import { resolveImageStudioContextRegistryEnvelope } from '@/features/ai/image-studio/context-registry/server';
-import { sendProductImageToStudio } from '@/features/ai/server';
 import { productStudioSendRequestSchema as sendSchema } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
+
+import type { NextRequest } from 'next/server';
 
 export async function POST_handler(
   req: NextRequest,
@@ -19,7 +20,7 @@ export async function POST_handler(
   const body = (await req.json().catch(() => null)) as unknown;
   const parsed = sendSchema.safeParse(body);
   if (!parsed.success) {
-    throw badRequestError('Invalid payload.', { errors: parsed.error.format() });
+    throw badRequestError('Invalid payload.', { errors: z.treeifyError(parsed.error) });
   }
 
   const basePayload = {
@@ -28,8 +29,14 @@ export async function POST_handler(
     projectId: parsed.data.projectId ?? null,
     rotateBeforeSendDeg: parsed.data.rotateBeforeSendDeg ?? null,
   } as const;
+  const { resolveImageStudioContextRegistryEnvelope } = await import(
+    '@/features/ai/image-studio/context-registry/server'
+  );
   const contextRegistry = await resolveImageStudioContextRegistryEnvelope(
     parsed.data.contextRegistry ?? null
+  );
+  const { sendProductImageToStudio } = await import(
+    '@/features/ai/image-studio/product-studio/product-studio-service'
   );
 
   const result = await sendProductImageToStudio({

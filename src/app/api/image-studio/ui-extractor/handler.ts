@@ -1,25 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
-import {
-  runBrainChatCompletion,
-  supportsBrainJsonMode,
-} from '@/shared/lib/ai-brain/server-runtime-client';
-import {
-  imageStudioUiExtractorRequestSchema,
-  imageStudioUiExtractorResponseSchema,
-} from '@/shared/contracts/image-studio';
+import { resolveImageStudioContextRegistryEnvelope } from '@/features/ai/image-studio/context-registry/server';
+import { buildImageStudioWorkspaceSystemPrompt } from '@/features/ai/image-studio/context-registry/workspace-prompt';
 import {
   IMAGE_STUDIO_SETTINGS_KEY,
   parsePersistedImageStudioSettings,
 } from '@/features/ai/server';
 import { auth } from '@/features/auth/server';
-import { getSettingValue } from '@/shared/lib/ai/server-settings';
+import {
+  imageStudioUiExtractorRequestSchema,
+  imageStudioUiExtractorResponseSchema,
+} from '@/shared/contracts/image-studio';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, internalError } from '@/shared/errors/app-error';
+import { getSettingValue } from '@/shared/lib/ai/server-settings';
+import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
+import {
+  runBrainChatCompletion,
+  supportsBrainJsonMode,
+} from '@/shared/lib/ai-brain/server-runtime-client';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import { resolveImageStudioContextRegistryEnvelope } from '@/features/ai/image-studio/context-registry/server';
-import { buildImageStudioWorkspaceSystemPrompt } from '@/features/ai/image-studio/context-registry/workspace-prompt';
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();

@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { CachedProductService } from '@/features/products/performance';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { env } from '@/shared/lib/env';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { productService } from '@/shared/lib/products/services/productService';
 import { productFilterSchema, type ProductFiltersParsed } from '@/shared/lib/products/validations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { env } from '@/shared/lib/env';
 
 const shouldLogTiming = () => env.DEBUG_API_TIMING;
 

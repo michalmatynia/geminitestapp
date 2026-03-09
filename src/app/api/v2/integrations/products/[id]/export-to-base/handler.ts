@@ -6,12 +6,12 @@ import {
   LogCapture,
 } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/server';
-import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
-import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import { parseJsonBody } from '@/features/products/server';
 import type { ProductListingExportEvent } from '@/shared/contracts/integrations/listings';
+import type { ProductWithImages } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, externalServiceError } from '@/shared/errors/app-error';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 
 import {
   BASE_EXPORT_SOURCE,

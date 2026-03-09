@@ -12,11 +12,11 @@ import {
   resolveAiPathsStaleRunningCleanupIntervalMs,
   resolveAiPathsStaleRunningMaxAgeMs,
 } from '@/features/ai/ai-paths/server';
-import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { deletePathRunsWithRepository } from '@/features/ai/ai-paths/server';
 import type { AiPathRunListOptions, AiPathRunStatus } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError } from '@/shared/errors/app-error';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import {
   normalizeOptionalQueryString,
   optionalIntegerQuerySchema,

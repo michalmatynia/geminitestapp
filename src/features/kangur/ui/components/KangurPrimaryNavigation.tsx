@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+
 import { BookOpen, LayoutGrid, LogIn, LogOut, Trophy, UserPlus } from 'lucide-react';
 
 import {
@@ -12,6 +14,7 @@ import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/Ka
 import {
   KangurButton,
   KangurPageTopBar,
+  KangurTextField,
   KangurTopNavGroup,
 } from '@/features/kangur/ui/design/primitives';
 import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
@@ -40,10 +43,13 @@ type KangurPrimaryNavigationProps = {
   className?: string;
   contentClassName?: string;
   currentPage: KangurPrimaryNavigationPage;
+  guestPlayerName?: string;
+  guestPlayerNamePlaceholder?: string;
   homeActive?: boolean;
   isAuthenticated: boolean;
   navLabel?: string;
   onCreateAccount?: () => void;
+  onGuestPlayerNameChange?: (value: string) => void;
   onHomeClick?: () => void;
   onLogin?: () => void;
   onLogout: () => void;
@@ -108,10 +114,13 @@ export function KangurPrimaryNavigation({
   className,
   contentClassName,
   currentPage,
+  guestPlayerName,
+  guestPlayerNamePlaceholder = 'Wpisz imie gracza...',
   homeActive = currentPage === 'Game',
   isAuthenticated,
   navLabel = 'Glowna nawigacja Kangur',
   onCreateAccount,
+  onGuestPlayerNameChange,
   onHomeClick,
   onLogin,
   onLogout,
@@ -126,6 +135,38 @@ export function KangurPrimaryNavigation({
     : canManageLearners;
   const effectiveShowParentDashboard = effectiveCanManageLearners && showParentDashboard;
   const mobileAuthActionClassName = 'max-sm:min-w-0 max-sm:flex-1 max-sm:justify-center';
+  const [isEditingGuestPlayerName, setIsEditingGuestPlayerName] = useState(
+    !(guestPlayerName?.trim() ?? '')
+  );
+  const showGuestPlayerNameInput =
+    !effectiveIsAuthenticated &&
+    typeof guestPlayerName === 'string' &&
+    typeof onGuestPlayerNameChange === 'function';
+  const hasGuestPlayerName = (guestPlayerName?.trim() ?? '').length > 0;
+
+  useEffect(() => {
+    if (!showGuestPlayerNameInput) {
+      setIsEditingGuestPlayerName(false);
+      return;
+    }
+
+    if (!hasGuestPlayerName) {
+      setIsEditingGuestPlayerName(true);
+    }
+  }, [hasGuestPlayerName, showGuestPlayerNameInput]);
+
+  const commitGuestPlayerName = (): void => {
+    if (!showGuestPlayerNameInput || !hasGuestPlayerName) {
+      setIsEditingGuestPlayerName(true);
+      return;
+    }
+
+    const trimmedValue = guestPlayerName.trim();
+    if (trimmedValue !== guestPlayerName) {
+      onGuestPlayerNameChange(trimmedValue);
+    }
+    setIsEditingGuestPlayerName(false);
+  };
 
   const authAction = effectiveIsAuthenticated ? (
     <NavAction docId='profile_logout' onClick={onLogout}>
@@ -134,6 +175,45 @@ export function KangurPrimaryNavigation({
     </NavAction>
   ) : onLogin || onCreateAccount ? (
     <>
+      {showGuestPlayerNameInput ? (
+        isEditingGuestPlayerName || !hasGuestPlayerName ? (
+          <div className='w-full sm:w-[220px]'>
+            <label className='sr-only' htmlFor='kangur-primary-nav-guest-player-name'>
+              Imie gracza
+            </label>
+            <KangurTextField
+              accent='indigo'
+              className='h-11 min-w-0 text-sm'
+              data-doc-id='profile_guest_player_name'
+              id='kangur-primary-nav-guest-player-name'
+              maxLength={20}
+              onBlur={commitGuestPlayerName}
+              onChange={(event) => onGuestPlayerNameChange(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault();
+                  commitGuestPlayerName();
+                }
+              }}
+              placeholder={guestPlayerNamePlaceholder}
+              size='md'
+              type='text'
+              value={guestPlayerName}
+            />
+          </div>
+        ) : (
+          <KangurButton
+            className='w-full justify-start px-3 text-left sm:w-auto sm:min-w-[180px]'
+            data-doc-id='profile_guest_player_name_display'
+            onClick={() => setIsEditingGuestPlayerName(true)}
+            size='md'
+            type='button'
+            variant='navigation'
+          >
+            <span className='truncate'>{guestPlayerName.trim()}</span>
+          </KangurButton>
+        )
+      ) : null}
       {onCreateAccount ? (
         <NavAction
           className={mobileAuthActionClassName}
@@ -228,11 +308,11 @@ export function KangurPrimaryNavigation({
 
           {rightAccessory || authAction ? (
             <div className='ml-auto flex w-full flex-wrap items-center justify-stretch gap-2 sm:w-auto sm:justify-end'>
-              {rightAccessory}
-              {authAction}
-            </div>
-          ) : null}
-        </KangurTopNavGroup>
+          {rightAccessory}
+          {authAction}
+        </div>
+      ) : null}
+    </KangurTopNavGroup>
       }
     />
   );

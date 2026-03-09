@@ -1,6 +1,7 @@
+import { KangurSurfaceClassSync } from '@/features/kangur/ui/KangurSurfaceClassSync';
+
 import type { ReactNode } from 'react';
 
-import { KangurSurfaceClassSync } from '@/features/kangur/ui/KangurSurfaceClassSync';
 
 export default function Layout({
   children,

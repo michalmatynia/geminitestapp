@@ -1,15 +1,15 @@
 export const runtime = 'nodejs';
 
-import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import { badRequestError } from '@/shared/errors/app-error';
 
-import { POST_handler as postRotate } from '@/app/api/v2/products/[id]/studio/handlers/rotate';
 import { POST_handler as postAccept } from '@/app/api/v2/products/[id]/studio/handlers/accept';
-import { POST_handler as postSend } from '@/app/api/v2/products/[id]/studio/handlers/send';
-import { POST_handler as postLink } from '@/app/api/v2/products/[id]/studio/handlers/link';
 import { GET_handler as getAudit } from '@/app/api/v2/products/[id]/studio/handlers/audit';
-import { GET_handler as getVariants } from '@/app/api/v2/products/[id]/studio/handlers/variants';
+import { POST_handler as postLink } from '@/app/api/v2/products/[id]/studio/handlers/link';
 import { GET_handler as getPreflight } from '@/app/api/v2/products/[id]/studio/handlers/preflight';
+import { POST_handler as postRotate } from '@/app/api/v2/products/[id]/studio/handlers/rotate';
+import { POST_handler as postSend } from '@/app/api/v2/products/[id]/studio/handlers/send';
+import { GET_handler as getVariants } from '@/app/api/v2/products/[id]/studio/handlers/variants';
+import { badRequestError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 
 type StudioActionParams = { id: string; action: string };
 

@@ -1,10 +1,11 @@
-import { apiHandler } from '@/shared/lib/api/api-handler';
 import { NextResponse } from 'next/server';
+
 import {
   getAgentApprovalGate,
   getAgentDiscoverySummary,
   listAgentApprovalGates,
 } from '@/shared/lib/agent-discovery';
+import { apiHandler } from '@/shared/lib/api/api-handler';
 
 const GET_handler = async (request: Request) => {
   const { searchParams } = new URL(request.url);

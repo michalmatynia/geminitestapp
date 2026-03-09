@@ -52,6 +52,8 @@ import {
   KangurStatusChip,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
+import { type KangurAccent } from '@/features/kangur/ui/design/tokens';
+import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import type { KangurLesson, KangurLessonComponentId } from '@/shared/contracts/kangur';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
@@ -59,14 +61,10 @@ type LessonProps = {
   onBack?: () => void;
 };
 
-const LESSONS_PAGE_EASE = [0.22, 1, 0.36, 1] as const;
-const LESSONS_PAGE_TRANSITION = {
-  duration: 0.32,
-  ease: LESSONS_PAGE_EASE,
-} as const;
+const LESSONS_CARD_EASE = [0.22, 1, 0.36, 1] as const;
 const LESSONS_CARD_TRANSITION = {
   duration: 0.26,
-  ease: LESSONS_PAGE_EASE,
+  ease: LESSONS_CARD_EASE,
 } as const;
 const LESSONS_CARD_STAGGER_DELAY = 0.06;
 
@@ -76,16 +74,11 @@ const LessonLoadingFallback = (): React.JSX.Element => (
 
 const LessonLoadingFallbackCard = (): React.JSX.Element => {
   const prefersReducedMotion = useReducedMotion();
-  const loadingTransition = prefersReducedMotion
-    ? { duration: 0 }
-    : LESSONS_PAGE_TRANSITION;
+  const loadingMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
 
   return (
     <motion.div
-      initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: -10 }}
-      transition={loadingTransition}
+      {...loadingMotionProps}
       className='w-full max-w-5xl'
       data-testid='lessons-loading-fallback'
     >
@@ -354,14 +347,7 @@ export default function Lessons() {
     [basePath, logout, navigateToLogin, user]
   );
   const lessonPageMotionProps = useMemo(
-    () => ({
-      initial: prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 18 },
-      animate: { opacity: 1, y: 0 },
-      exit: prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: -14 },
-      transition: prefersReducedMotion
-        ? { duration: 0 }
-        : LESSONS_PAGE_TRANSITION,
-    }),
+    () => createKangurPageTransitionMotionProps(prefersReducedMotion),
     [prefersReducedMotion]
   );
   const lessonCardMotionProps = useMemo(

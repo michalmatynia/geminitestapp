@@ -1,18 +1,18 @@
 import { NextRequest } from 'next/server';
 
+import { runTeachingChat } from '@/features/ai/agentcreator/teaching/server/chat';
 import { mergeContextRegistryResolutionBundles } from '@/features/ai/ai-context-registry/context/page-context-shared';
 import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
-import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
-import { streamBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
-import { runTeachingChat } from '@/features/ai/agentcreator/teaching/server/chat';
+import { buildCmsContextRegistrySystemPrompt } from '@/features/cms/context-registry/system-prompt';
 import type { AgentTeachingChatMessage } from '@/shared/contracts/agent-teaching';
 import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
 import {
   cmsCssAiRequestSchema,
 } from '@/shared/contracts/cms';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { buildCmsContextRegistrySystemPrompt } from '@/features/cms/context-registry/system-prompt';
 import { badRequestError } from '@/shared/errors/app-error';
+import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
+import { streamBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 
 const isValidMessages = (messages: ChatMessage[]): boolean =>

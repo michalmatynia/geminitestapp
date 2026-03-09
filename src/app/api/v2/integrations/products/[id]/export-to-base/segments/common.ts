@@ -1,10 +1,10 @@
-import { badRequestError } from '@/shared/errors/app-error';
 import {
   type BaseFieldMapping,
   type BaseExportProductLike,
   type BaseExportRequestData,
   baseExportRequestSchema as exportSchema,
 } from '@/shared/contracts/integrations/base-com';
+import { badRequestError } from '@/shared/errors/app-error';
 
 export type { BaseFieldMapping, BaseExportProductLike, BaseExportRequestData };
 export { exportSchema };

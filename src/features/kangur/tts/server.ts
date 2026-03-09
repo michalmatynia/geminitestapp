@@ -12,6 +12,7 @@ import { uploadsRoot } from '@/shared/lib/files/server-constants';
 import { getDiskPathFromPublicPath } from '@/shared/lib/files/services/image-file-service';
 import { uploadToConfiguredStorage } from '@/shared/lib/files/services/storage/file-storage-service';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils';
 
 import type {
@@ -29,6 +30,10 @@ import {
   KANGUR_LESSON_AUDIO_CACHE_SETTING_KEY,
   KANGUR_TTS_DEFAULT_MODEL,
 } from './contracts';
+import {
+  buildKangurLessonTtsContextInstructions,
+  buildKangurLessonTtsContextSignature,
+} from './context-registry/instructions';
 
 const resolveLocaleInstruction = (locale: string): string => {
   const normalizedLocale = locale.trim().toLowerCase();
@@ -42,14 +47,20 @@ const resolveLocaleInstruction = (locale: string): string => {
   return `Speak naturally in the requested locale ${locale.trim()}.`;
 };
 
-const buildTtsInstructions = (locale: string): string =>
+const buildTtsInstructions = (input: {
+  locale: string;
+  contextRegistry?: ContextRegistryConsumerEnvelope | null;
+}): string =>
   [
-    resolveLocaleInstruction(locale),
+    resolveLocaleInstruction(input.locale),
     'Use a warm, realistic, calm teaching voice.',
     'Keep the pacing patient and clear.',
     'Read numbers, dates, and short lists carefully.',
     'Avoid sounding robotic or overly dramatic.',
-  ].join(' ');
+    buildKangurLessonTtsContextInstructions(input.contextRegistry?.resolved),
+  ]
+    .filter(Boolean)
+    .join(' ');
 
 const createSha256 = (value: string): string => createHash('sha256').update(value).digest('hex');
 
@@ -57,6 +68,7 @@ const buildSegmentCacheKey = (input: {
   locale: string;
   voice: KangurLessonTtsVoice;
   text: string;
+  contextSignature?: string | null;
 }): string =>
   createSha256(
     JSON.stringify({
@@ -65,6 +77,7 @@ const buildSegmentCacheKey = (input: {
       locale: input.locale,
       voice: input.voice,
       text: input.text,
+      ...(input.contextSignature ? { contextSignature: input.contextSignature } : {}),
     })
   ).slice(0, 40);
 
@@ -179,6 +192,7 @@ const synthesizeSegmentAudio = async (input: {
   voice: KangurLessonTtsVoice;
   text: string;
   cacheKey: string;
+  contextRegistry?: ContextRegistryConsumerEnvelope | null;
 }): Promise<string> => {
   let response: Awaited<ReturnType<typeof input.client.audio.speech.create>>;
 
@@ -187,7 +201,10 @@ const synthesizeSegmentAudio = async (input: {
       model: KANGUR_TTS_DEFAULT_MODEL,
       voice: input.voice,
       input: input.text,
-      instructions: buildTtsInstructions(input.locale),
+      instructions: buildTtsInstructions({
+        locale: input.locale,
+        contextRegistry: input.contextRegistry,
+      }),
       response_format: 'mp3',
     });
   } catch (error) {
@@ -215,10 +232,12 @@ const synthesizeSegmentAudio = async (input: {
 const resolveCachedAudioSegments = async (input: {
   script: KangurLessonNarrationScript;
   voice: KangurLessonTtsVoice;
+  contextRegistry?: ContextRegistryConsumerEnvelope | null;
 }): Promise<KangurLessonAudioSegment[] | null> => {
   const cache = parseAudioCache(
     await readStoredSettingValue(KANGUR_LESSON_AUDIO_CACHE_SETTING_KEY)
   );
+  const contextSignature = buildKangurLessonTtsContextSignature(input.contextRegistry?.resolved);
   const segments: KangurLessonAudioSegment[] = [];
 
   for (const segment of input.script.segments) {
@@ -226,6 +245,7 @@ const resolveCachedAudioSegments = async (input: {
       locale: input.script.locale,
       voice: input.voice,
       text: segment.text,
+      contextSignature,
     });
     const existingEntry = cache[cacheKey] ?? null;
     const canReuseEntry =
@@ -252,6 +272,7 @@ const resolveCachedAudioSegments = async (input: {
 export const inspectKangurLessonNarrationAudio = async (input: {
   script: KangurLessonNarrationScript;
   voice: KangurLessonTtsVoice;
+  contextRegistry?: ContextRegistryConsumerEnvelope | null;
 }): Promise<KangurLessonTtsStatusResponse> => {
   if (input.script.segments.length === 0) {
     return {
@@ -330,7 +351,7 @@ export const probeKangurLessonNarrationBackend = async (input: {
         model: KANGUR_TTS_DEFAULT_MODEL,
         voice: input.voice,
         input: input.text,
-        instructions: buildTtsInstructions(input.locale),
+        instructions: buildTtsInstructions({ locale: input.locale }),
         response_format: 'mp3',
       });
     } catch (error) {
@@ -373,6 +394,7 @@ export const ensureKangurLessonNarrationAudio = async (input: {
   script: KangurLessonNarrationScript;
   voice: KangurLessonTtsVoice;
   forceRegenerate?: boolean;
+  contextRegistry?: ContextRegistryConsumerEnvelope | null;
 }): Promise<KangurLessonTtsResponse> => {
   if (input.script.segments.length === 0) {
     return {
@@ -397,6 +419,7 @@ export const ensureKangurLessonNarrationAudio = async (input: {
   const cache = parseAudioCache(
     await readStoredSettingValue(KANGUR_LESSON_AUDIO_CACHE_SETTING_KEY)
   );
+  const contextSignature = buildKangurLessonTtsContextSignature(input.contextRegistry?.resolved);
   let cacheChanged = false;
 
   try {
@@ -407,6 +430,7 @@ export const ensureKangurLessonNarrationAudio = async (input: {
         locale: input.script.locale,
         voice: input.voice,
         text: segment.text,
+        contextSignature,
       });
       const existingEntry = input.forceRegenerate ? null : (cache[cacheKey] ?? null);
       const canReuseEntry =
@@ -418,13 +442,14 @@ export const ensureKangurLessonNarrationAudio = async (input: {
       const audioUrl = canReuseEntry
         ? existingEntry.audioUrl
         : await synthesizeSegmentAudio({
-          client,
-          lessonId: input.script.lessonId,
-          locale: input.script.locale,
-          voice: input.voice,
-          text: segment.text,
-          cacheKey,
-        });
+            client,
+            lessonId: input.script.lessonId,
+            locale: input.script.locale,
+            voice: input.voice,
+            text: segment.text,
+            cacheKey,
+            contextRegistry: input.contextRegistry,
+          });
 
       if (!canReuseEntry) {
         const createdAt = new Date().toISOString();
@@ -473,6 +498,8 @@ export const ensureKangurLessonNarrationAudio = async (input: {
         voice: input.voice,
         forceRegenerate: input.forceRegenerate ?? false,
         segmentCount: input.script.segments.length,
+        contextRegistryRefCount: input.contextRegistry?.refs.length ?? 0,
+        contextRegistryDocumentCount: input.contextRegistry?.resolved?.documents.length ?? 0,
         failureStage: getKangurLessonTtsFailureStage(error),
         errorName: getErrorName(error),
         errorMessage: getErrorMessage(error),

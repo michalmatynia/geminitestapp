@@ -65,7 +65,7 @@ const KANGUR_VISUAL_CONTRACTS = [
     ],
   },
   {
-    file: 'src/app/(frontend)/kangur/error.tsx',
+    file: 'src/features/kangur/ui/KangurErrorFallback.tsx',
     requiredTokens: [
       'data-testid=\'kangur-error-shell\'',
       'kangur-premium-bg',
@@ -73,8 +73,16 @@ const KANGUR_VISUAL_CONTRACTS = [
     ],
   },
   {
+    file: 'src/app/(frontend)/kangur/error.tsx',
+    requiredTokens: ['KangurErrorFallback', "homeHref='/kangur'"],
+  },
+  {
+    file: 'src/features/kangur/ui/KangurLoginPage.tsx',
+    requiredTokens: ['data-testid=\'kangur-login-shell\'', 'Logowanie Kangur', 'Mam konto rodzica'],
+  },
+  {
     file: 'src/app/(frontend)/kangur/login/page.tsx',
-    requiredTokens: ['data-testid=\'kangur-login-shell\'', 'kangur-premium-bg', 'Wroc do Kangura'],
+    requiredTokens: ['KangurFeatureRouteShell', 'Ladowanie Kangura...'],
   },
 ] as const;
 
@@ -136,7 +144,7 @@ const isForbiddenKangurUiImport = (importPath: string): boolean => {
   }
 
   if (importPath.startsWith('@/features/') && !importPath.startsWith('@/features/kangur/')) {
-    return /\/(components?|ui|pages?)\b/.test(importPath);
+    return /\/(?:components?|ui|pages?)(?:\/|$)/.test(importPath);
   }
 
   return false;

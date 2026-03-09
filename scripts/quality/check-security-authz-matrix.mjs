@@ -1,13 +1,5 @@
-import path from 'node:path';
-
 import { analyzeSecurityAuthzMatrix } from './lib/check-security-authz-matrix.mjs';
-import {
-  formatDuration,
-  parseCommonCheckArgs,
-  renderIssueTable,
-  renderRuleTable,
-  writeCheckArtifacts,
-} from './lib/check-runner.mjs';
+import { renderIssueTable, renderRuleTable, runQualityCheckCli } from './lib/check-runner.mjs';
 
 const toMarkdown = (payload) => {
   const lines = [];
@@ -57,42 +49,11 @@ const toMarkdown = (payload) => {
   return `${lines.join('\n')}\n`;
 };
 
-const run = async () => {
-  const root = process.cwd();
-  const startedAt = Date.now();
-  const { strictMode, failOnWarnings, shouldWriteHistory } = parseCommonCheckArgs();
-  const payload = analyzeSecurityAuthzMatrix({ root });
-  payload.durationMs = Date.now() - startedAt;
-
-  const markdown = toMarkdown(payload);
-  const outputs = await writeCheckArtifacts({
-    root,
-    slug: 'security-authz-matrix',
-    payload,
-    markdown,
-    shouldWriteHistory,
-  });
-
-  console.log(
-    `[security-authz-matrix] status=${payload.status} routes=${payload.summary.routeFileCount} methods=${payload.summary.methodCount} errors=${payload.summary.errorCount} warnings=${payload.summary.warningCount} duration=${formatDuration(payload.durationMs)}`
-  );
-  console.log(`Wrote ${path.relative(root, outputs.latestJsonPath)}`);
-  console.log(`Wrote ${path.relative(root, outputs.latestMdPath)}`);
-  if (shouldWriteHistory) {
-    console.log(`Wrote ${path.relative(root, outputs.historicalJsonPath)}`);
-    console.log(`Wrote ${path.relative(root, outputs.historicalMdPath)}`);
-  }
-
-  if (strictMode && payload.summary.errorCount > 0) {
-    process.exit(1);
-  }
-  if (strictMode && failOnWarnings && payload.summary.warningCount > 0) {
-    process.exit(1);
-  }
-};
-
-run().catch((error) => {
-  console.error('[security-authz-matrix] failed');
-  console.error(error instanceof Error ? error.stack : error);
-  process.exit(1);
+await runQualityCheckCli({
+  id: 'security-authz-matrix',
+  analyze: analyzeSecurityAuthzMatrix,
+  toMarkdown,
+  buildLogLines: ({ payload, formatDuration }) => [
+    `[security-authz-matrix] status=${payload.status} routes=${payload.summary.routeFileCount} methods=${payload.summary.methodCount} errors=${payload.summary.errorCount} warnings=${payload.summary.warningCount} duration=${formatDuration(payload.durationMs)}`,
+  ],
 });

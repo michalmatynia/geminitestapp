@@ -1,12 +1,12 @@
 export const runtime = 'nodejs';
 
-import { apiHandler } from '@/shared/lib/api/api-handler';
-
 import {
   createPatternSchema,
   getValidatorPatternsHandler,
   postValidatorPatternsHandler,
 } from '@/app/api/v2/products/validator-patterns/handler';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+
 
 export const GET = apiHandler(getValidatorPatternsHandler, {
   source: 'v2.products.validator-patterns.GET',

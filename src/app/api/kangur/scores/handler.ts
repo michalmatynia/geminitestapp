@@ -3,22 +3,21 @@ import { z } from 'zod';
 
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import { getKangurScoreRepository, resolveKangurActor } from '@/features/kangur/server';
-import { badRequestError } from '@/shared/errors/app-error';
-import {
-  normalizeKangurSort,
-  parseKangurScoreCreatePayload,
-} from '@/shared/validations/kangur';
 import {
   kangurScoreLimitSchema,
   kangurScoreSortSchema,
 } from '@/shared/contracts/kangur';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { badRequestError } from '@/shared/errors/app-error';
 import {
   normalizeOptionalQueryString,
   parseOptionalIntegerQueryValue,
   optionalTrimmedQueryString,
 } from '@/shared/lib/api/query-schema';
-
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import {
+  normalizeKangurSort,
+  parseKangurScoreCreatePayload,
+} from '@/shared/validations/kangur';
 
 export const querySchema = z.object({
   sort: z.preprocess(normalizeOptionalQueryString, kangurScoreSortSchema.optional()),

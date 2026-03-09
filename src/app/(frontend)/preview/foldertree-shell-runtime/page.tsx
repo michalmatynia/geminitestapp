@@ -8,8 +8,8 @@ import {
   useFolderTreeShellRuntime,
 } from '@/features/foldertree/v2';
 import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/v2';
-import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import { useInterval } from '@/shared/hooks/use-interval';
+import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 type RuntimeRouteId = 'alpha' | 'beta';
 

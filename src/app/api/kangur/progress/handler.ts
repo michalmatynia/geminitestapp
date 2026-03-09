@@ -3,10 +3,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import { getKangurProgressRepository, resolveKangurActor } from '@/features/kangur/server';
 import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { parseKangurProgressUpdatePayload } from '@/shared/validations/kangur';
 
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const readBodyJson = async (request: NextRequest): Promise<unknown> => {
   const rawBody = await request.text();

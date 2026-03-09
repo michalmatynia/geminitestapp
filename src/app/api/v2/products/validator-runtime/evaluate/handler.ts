@@ -1,22 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
-import {
-  runBrainChatCompletion,
-  supportsBrainJsonMode,
-} from '@/shared/lib/ai-brain/server-runtime-client';
-import { dbApi, type DbActionPayload, type DbQueryPayload } from '@/shared/lib/ai-paths/api/client';
-import { getValueAtMappingPath } from '@/shared/lib/ai-paths/core/utils/json';
-import { renderTemplate } from '@/shared/lib/ai-paths/core/utils/template';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { listValidationPatternsCached } from '@/shared/lib/products/services/validation-pattern-runtime-cache';
-import {
-  isPatternEnabledForValidationScope,
-  isPatternReplacementEnabledForValidationScope,
-  normalizeProductValidationInstanceScope,
-  normalizeProductValidationSkipNoopReplacementProposal,
-} from '@/shared/lib/products/utils/validator-instance-behavior';
+import { parseRuntimeConfigForEvaluation } from '@/features/products/server';
 import {
   deriveDiffSegment,
   isPatternLocaleMatch,
@@ -26,7 +11,6 @@ import {
   resolveFieldTargetAndLocale,
   shouldLaunchPattern,
 } from '@/features/products/validation-engine/core';
-import { parseRuntimeConfigForEvaluation } from '@/features/products/server';
 import type {
   ProductValidationPattern,
   ProductValidationPostAcceptBehavior,
@@ -34,6 +18,22 @@ import type {
 } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
+import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
+import {
+  runBrainChatCompletion,
+  supportsBrainJsonMode,
+} from '@/shared/lib/ai-brain/server-runtime-client';
+import { dbApi, type DbActionPayload, type DbQueryPayload } from '@/shared/lib/ai-paths/api/client';
+import { getValueAtMappingPath } from '@/shared/lib/ai-paths/core/utils/json';
+import { renderTemplate } from '@/shared/lib/ai-paths/core/utils/template';
+import { listValidationPatternsCached } from '@/shared/lib/products/services/validation-pattern-runtime-cache';
+import {
+  isPatternEnabledForValidationScope,
+  isPatternReplacementEnabledForValidationScope,
+  normalizeProductValidationInstanceScope,
+  normalizeProductValidationSkipNoopReplacementProposal,
+} from '@/shared/lib/products/utils/validator-instance-behavior';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export const evaluateRuntimeSchema = z.object({
   values: z.record(z.string(), z.unknown()),

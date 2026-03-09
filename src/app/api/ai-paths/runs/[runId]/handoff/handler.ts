@@ -7,10 +7,10 @@ import {
   markPathRunHandoffReady,
   requireAiPathsAccess,
 } from '@/features/ai/ai-paths/server';
-import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 
 const handoffSchema = z.object({
   reason: z.string().trim().min(1).max(500).optional(),

@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { chatbotSessionRepository } from '@/features/ai/chatbot/server';
-import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { parseJsonBody } from '@/features/products/server';
 import type {
   ChatbotSessionDto as ChatSession,
   UpdateChatSessionDto as UpdateSessionInput,
@@ -11,6 +10,7 @@ import type {
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError, validationError } from '@/shared/errors/app-error';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 

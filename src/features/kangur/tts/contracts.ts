@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { contextRegistryConsumerEnvelopeSchema } from '@/shared/contracts/ai-context-registry';
 import {
   KANGUR_TTS_DEFAULT_LOCALE,
   KANGUR_TTS_DEFAULT_VOICE,
@@ -50,12 +51,14 @@ export const kangurLessonTtsRequestSchema = z.object({
   script: kangurLessonNarrationScriptSchema,
   voice: kangurLessonTtsVoiceSchema.default(KANGUR_TTS_DEFAULT_VOICE),
   forceRegenerate: z.boolean().optional().default(false),
+  contextRegistry: contextRegistryConsumerEnvelopeSchema.optional(),
 });
 export type KangurLessonTtsRequest = z.infer<typeof kangurLessonTtsRequestSchema>;
 
 export const kangurLessonTtsStatusRequestSchema = z.object({
   script: kangurLessonNarrationScriptSchema,
   voice: kangurLessonTtsVoiceSchema.default(KANGUR_TTS_DEFAULT_VOICE),
+  contextRegistry: contextRegistryConsumerEnvelopeSchema.optional(),
 });
 export type KangurLessonTtsStatusRequest = z.infer<typeof kangurLessonTtsStatusRequestSchema>;
 

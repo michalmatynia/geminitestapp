@@ -12,7 +12,7 @@ vi.mock('@/features/ai/image-studio/context-registry/server', () => ({
   resolveImageStudioContextRegistryEnvelope: resolveImageStudioContextRegistryEnvelopeMock,
 }));
 
-vi.mock('@/features/ai/server', () => ({
+vi.mock('@/features/ai/image-studio/product-studio/product-studio-service', () => ({
   sendProductImageToStudio: sendProductImageToStudioMock,
 }));
 

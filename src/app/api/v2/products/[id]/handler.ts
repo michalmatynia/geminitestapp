@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { parseJsonBody } from '@/features/products/server';
 import { CachedProductService } from '@/features/products/server';
-import { productService } from '@/shared/lib/products/services/productService'; // Direct import
 import { validateProductUpdateMiddleware } from '@/features/products/validations/middleware';
 import type { ProductRecord, ProductWithImages } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError, payloadTooLargeError } from '@/shared/errors/app-error';
 import { optionalBooleanQuerySchema } from '@/shared/lib/api/query-schema';
 import { env } from '@/shared/lib/env';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { productService } from '@/shared/lib/products/services/productService'; // Direct import
 
 export const getQuerySchema = z.object({
   fresh: optionalBooleanQuerySchema().default(false),

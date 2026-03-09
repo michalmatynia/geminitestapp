@@ -28,6 +28,7 @@ vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: useKangurAuthMock,
+  useOptionalKangurAuth: useKangurAuthMock,
 }));
 
 vi.mock('@/shared/providers/SettingsStoreProvider', () => ({

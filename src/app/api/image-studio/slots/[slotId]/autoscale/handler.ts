@@ -15,16 +15,7 @@ import {
   buildAutoScalerLayoutSignature,
   buildAutoScalerRequestRelationType,
 } from '@/features/ai/image-studio/server/auto-scaler-utils';
-import {
-  getImageStudioSlotLinkBySourceAndRelation,
-  upsertImageStudioSlotLink,
-} from '@/features/ai/server';
-import { createImageStudioSlots, getImageStudioSlotById } from '@/features/ai/server';
-import { getImageFileRepository } from '@/features/files/server';
-import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { notFoundError } from '@/shared/errors/app-error';
-
+import { processAutoScalerPayload } from '@/features/ai/image-studio/server/autoscale-service';
 import {
   autoScaleBadRequest,
   guessExtension,
@@ -33,7 +24,17 @@ import {
   sanitizeFilename,
   sanitizeSegment,
 } from '@/features/ai/image-studio/server/image-handler-utils';
-import { processAutoScalerPayload } from '@/features/ai/image-studio/server/autoscale-service';
+import {
+  getImageStudioSlotLinkBySourceAndRelation,
+  upsertImageStudioSlotLink,
+} from '@/features/ai/server';
+import { createImageStudioSlots, getImageStudioSlotById } from '@/features/ai/server';
+import { getImageFileRepository } from '@/features/files/server';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { notFoundError } from '@/shared/errors/app-error';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+
+
 import {
   parseAutoScalerRequestPayload,
   normalizeAutoScaleRequestBody,

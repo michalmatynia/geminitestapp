@@ -1,8 +1,68 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildProductStudioWorkspaceContextBundle } from '../workspace';
+import {
+  buildProductEditorWorkspaceContextBundle,
+  buildProductStudioWorkspaceContextBundle,
+} from '../workspace';
 
 describe('buildProductStudioWorkspaceContextBundle', () => {
+  it('builds a product editor runtime document with validation workspace state', () => {
+    const bundle = buildProductEditorWorkspaceContextBundle({
+      productId: 'product-1',
+      draftId: 'draft-1',
+      productTitle: 'Vintage Lamp',
+      activeTab: 'validation',
+      mountedTabs: ['general', 'validation', 'studio'],
+      validationInstanceScope: 'product_edit',
+      validatorEnabled: true,
+      formatterEnabled: false,
+      validationDenyBehavior: 'ask_again',
+      visibleIssueCount: 3,
+      visibleIssueFieldCount: 2,
+      validatorPatternCount: 9,
+      selectedCategoryId: 'category-1',
+      selectedCatalogIds: ['catalog-1', 'catalog-2'],
+      selectedTagIds: ['tag-1'],
+      selectedProducerIds: ['producer-1'],
+      hasUnsavedChanges: true,
+      uploading: false,
+      uploadError: null,
+      uploadSuccess: false,
+    });
+
+    expect(bundle.refs).toEqual([
+      expect.objectContaining({
+        id: 'runtime:product-editor:workspace:product-1',
+        kind: 'runtime_document',
+        providerId: 'product-editor-local',
+        entityType: 'product_editor_workspace_state',
+      }),
+    ]);
+    expect(bundle.documents).toHaveLength(1);
+    expect(bundle.documents[0]).toMatchObject({
+      entityType: 'product_editor_workspace_state',
+      title: 'Product Editor workspace for Vintage Lamp',
+      facts: expect.objectContaining({
+        productId: 'product-1',
+        activeTab: 'validation',
+        validationInstanceScope: 'product_edit',
+        validatorEnabled: true,
+        formatterEnabled: false,
+        visibleIssueCount: 3,
+        selectedCatalogCount: 2,
+        hasUnsavedChanges: true,
+      }),
+    });
+    expect(bundle.documents[0].sections.map((section) => section.title)).toEqual(
+      expect.arrayContaining([
+        'Workspace snapshot',
+        'Validation state',
+        'Taxonomy selection',
+        'Mounted tabs',
+      ])
+    );
+  });
+
   it('builds a product studio runtime document with product and studio state', () => {
     const bundle = buildProductStudioWorkspaceContextBundle({
       product: {

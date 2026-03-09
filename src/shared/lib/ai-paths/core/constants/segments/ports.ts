@@ -29,7 +29,6 @@ export const AUDIO_SPEAKER_INPUT_PORTS = [
   'trigger',
 ];
 export const AUDIO_SPEAKER_OUTPUT_PORTS = ['status', 'audioSignal'];
-export const DESCRIPTION_OUTPUT_PORTS = ['description_en'];
 export const PARSER_INPUT_PORTS = ['entityJson'];
 export const PARSER_OUTPUT_PORTS = ['productId', 'content_en', 'images', 'title', 'bundle'];
 export const MUTATOR_INPUT_PORTS = ['value', 'productId', 'content_en', 'bundle'];
@@ -58,8 +57,6 @@ export const DELAY_INPUT_PORTS = ['value', 'bundle'];
 export const DELAY_OUTPUT_PORTS = ['value', 'bundle'];
 export const NOTIFICATION_INPUT_PORTS = ['value', 'bundle', 'title'];
 export const NOTIFICATION_OUTPUT_PORTS = ['value', 'bundle'];
-export const AI_DESCRIPTION_INPUT_PORTS = ['productId', 'bundle'];
-export const AI_DESCRIPTION_OUTPUT_PORTS = ['description', 'description_en', 'bundle'];
 export const DESCRIPTION_UPDATER_INPUT_PORTS = ['productId', 'description', 'bundle'];
 export const DESCRIPTION_UPDATER_OUTPUT_PORTS = ['result', 'bundle'];
 export const BOUNDS_NORMALIZER_INPUT_PORTS = ['value', 'bundle'];

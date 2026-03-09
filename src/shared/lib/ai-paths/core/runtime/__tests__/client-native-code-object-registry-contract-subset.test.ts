@@ -11,8 +11,6 @@ const {
   mockDbApiSchema,
   mockAiJobsEnqueue,
   mockAiJobsPoll,
-  mockAiGenerationGenerate,
-  mockAiGenerationUpdateProductDescription,
   mockAgentEnqueue,
   mockAgentPoll,
   mockSettingsList,
@@ -642,50 +640,6 @@ describe('client native code-object registry contract subset', () => {
         ] ?? ''
       )
     ).toContain('Collection: products');
-  });
-
-  it('executes ai description nodes through client native contract resolver mapping', async () => {
-    mockAiGenerationGenerate.mockClear();
-    const entityJsonNode = builders.buildConstantNode({
-      id: 'node-entity-json',
-      title: 'Entity JSON',
-      value: { id: 'product-42', imageLinks: [] },
-    });
-
-    const result = await evaluateGraphClient({
-      nodes: [entityJsonNode, builders.buildAiDescriptionNode()],
-      edges: [
-        {
-          id: 'edge-entity-json-ai-description',
-          from: 'node-entity-json',
-          to: 'node-ai-description',
-          fromPort: 'value',
-          toPort: 'entityJson',
-          kind: 'value',
-        },
-      ],
-      runtimeKernelNodeTypes: ['constant', 'ai_description'],
-      reportAiPathsError: (): void => {},
-    });
-
-    expect(mockAiGenerationGenerate).toHaveBeenCalledTimes(1);
-    expect(result.outputs?.['node-ai-description']?.['description_en']).toBe(
-      'generated-description'
-    );
-  });
-
-  it('executes description updater nodes through client native contract resolver mapping', async () => {
-    mockAiGenerationUpdateProductDescription.mockClear();
-
-    const result = await evaluateGraphClient({
-      nodes: [builders.buildDescriptionUpdaterNode()],
-      edges: [],
-      runtimeKernelNodeTypes: ['description_updater'],
-      reportAiPathsError: (): void => {},
-    });
-
-    expect(mockAiGenerationUpdateProductDescription).not.toHaveBeenCalled();
-    expect(result.outputs?.['node-description-updater']).toEqual({});
   });
 
   it('executes playwright nodes through client native contract resolver mapping', async () => {

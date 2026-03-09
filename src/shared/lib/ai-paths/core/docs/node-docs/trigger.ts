@@ -11,7 +11,7 @@ export const triggerDocs: NodeConfigDocField[] = [
   {
     path: 'trigger.contextMode',
     description:
-      'Deprecated Trigger context policy: simulation_required, simulation_preferred, or trigger_only. For forward flow, prefer Trigger only + Fetcher node.',
+      'Trigger context policy. Canonical value is trigger_only; resolve entity context downstream with Fetcher or Simulation nodes.',
     defaultValue: 'trigger_only',
   },
   ...COMMON_RUNTIME_FIELDS,

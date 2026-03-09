@@ -83,8 +83,6 @@ This document is the detailed operator/developer reference for AI Paths:
 
 - `database`
 - `db_schema`
-- `description_updater`
-- `ai_description`
 
 ### Diagnostics and UX
 

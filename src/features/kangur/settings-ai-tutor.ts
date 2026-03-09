@@ -63,14 +63,15 @@ export type KangurAiTutorLearnerStoredSettings = KangurAiTutorLearnerGuardrails 
 
 export type KangurAiTutorSettingsStore = Record<string, KangurAiTutorLearnerStoredSettings>;
 
-export const DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS: KangurAiTutorAppSettings = {
+export const DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS: Readonly<KangurAiTutorAppSettings> = Object.freeze({
   agentPersonaId: null,
   motionPresetId: null,
   dailyMessageLimit: null,
   guestIntroMode: 'first_visit',
-};
+});
 
-export const DEFAULT_KANGUR_AI_TUTOR_LEARNER_GUARDRAILS: KangurAiTutorLearnerGuardrails = {
+export const DEFAULT_KANGUR_AI_TUTOR_LEARNER_GUARDRAILS: Readonly<KangurAiTutorLearnerGuardrails> =
+  Object.freeze({
   enabled: false,
   uiMode: 'anchored',
   allowCrossPagePersistence: true,
@@ -81,12 +82,13 @@ export const DEFAULT_KANGUR_AI_TUTOR_LEARNER_GUARDRAILS: KangurAiTutorLearnerGua
   allowSelectedTextSupport: true,
   hintDepth: 'guided',
   proactiveNudges: 'gentle',
-};
+  });
 
-export const DEFAULT_KANGUR_AI_TUTOR_LEARNER_SETTINGS: KangurAiTutorLearnerSettings = {
-  ...DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS,
-  ...DEFAULT_KANGUR_AI_TUTOR_LEARNER_GUARDRAILS,
-};
+export const DEFAULT_KANGUR_AI_TUTOR_LEARNER_SETTINGS: Readonly<KangurAiTutorLearnerSettings> =
+  Object.freeze({
+    ...DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS,
+    ...DEFAULT_KANGUR_AI_TUTOR_LEARNER_GUARDRAILS,
+  });
 
 export type KangurAiTutorAvailabilityReason =
   | 'disabled'

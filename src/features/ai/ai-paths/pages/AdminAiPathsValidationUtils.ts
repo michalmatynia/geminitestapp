@@ -11,6 +11,10 @@ import type {
 import { pathConfigSchema } from '@/shared/contracts/ai-paths';
 import { validationError } from '@/shared/errors/app-error';
 import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY } from '@/shared/lib/ai-paths/core/constants';
+import {
+  findRemovedLegacyTriggerContextModesInDocument,
+  formatRemovedLegacyTriggerContextModesMessage,
+} from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
 import { normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths/core/validation-engine';
 
 export type ParsedAiPathsSettings = {
@@ -132,6 +136,20 @@ export const parsePathConfig = (pathId: string, raw: unknown): PathConfig => {
       reason: 'payload_not_object',
       pathId,
     });
+  }
+  const removedLegacyTriggerContextModes = findRemovedLegacyTriggerContextModesInDocument(raw);
+  if (removedLegacyTriggerContextModes.length > 0) {
+    throw validationError(
+      formatRemovedLegacyTriggerContextModesMessage(removedLegacyTriggerContextModes, {
+        surface: 'validation payload',
+      }),
+      {
+        source: 'ai_paths.validation',
+        reason: 'removed_legacy_trigger_context_mode',
+        pathId,
+        removedTriggerContextModes: removedLegacyTriggerContextModes,
+      }
+    );
   }
   const result = pathConfigSchema.safeParse(raw);
   if (!result.success) {

@@ -29,6 +29,7 @@ interface JobQueueRealtimeParams {
   isWindowFocused: boolean;
   queueStatus: QueueStatus | undefined;
   refetchQueueData: JobQueueRefetchData;
+  rememberVisibleOptimisticRun: (run: AiPathRunRecord) => void;
   runDetails: Record<string, RunDetail | null>;
   setRunDetails: Dispatch<SetStateAction<Record<string, RunDetail | null>>>;
 }
@@ -50,6 +51,7 @@ export function useJobQueueRealtime({
   isWindowFocused,
   queueStatus,
   refetchQueueData,
+  rememberVisibleOptimisticRun,
   runDetails,
   setRunDetails,
 }: JobQueueRealtimeParams): JobQueueRealtimeResult {
@@ -183,6 +185,9 @@ export function useJobQueueRealtime({
       const payload = parseAiPathRunEnqueuedEventPayload((event as CustomEvent<unknown>).detail);
       if (!payload) return;
       rememberEnqueue(payload);
+      if (payload.run) {
+        rememberVisibleOptimisticRun(payload.run);
+      }
       refreshQueueViews();
     };
 
@@ -197,6 +202,9 @@ export function useJobQueueRealtime({
           const payload = parseAiPathRunEnqueuedEventPayload(event.data);
           if (!payload) return;
           rememberEnqueue(payload);
+          if (payload.run) {
+            rememberVisibleOptimisticRun(payload.run);
+          }
           refreshQueueViews();
         };
       } catch {
@@ -213,7 +221,13 @@ export function useJobQueueRealtime({
         channel.close();
       }
     };
-  }, [isDocumentVisible, isPanelActive, isWindowFocused, refetchQueueData]);
+  }, [
+    isDocumentVisible,
+    isPanelActive,
+    isWindowFocused,
+    refetchQueueData,
+    rememberVisibleOptimisticRun,
+  ]);
 
   useEffect(() => {
     streamSourcesRef.current.forEach((source, runId) => {

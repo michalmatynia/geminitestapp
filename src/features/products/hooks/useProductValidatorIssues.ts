@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
 import {
   areIssueMapsEquivalent,
   buildFieldIssues,
@@ -14,6 +14,7 @@ import type {
   ProductValidationPattern,
 } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 type UseProductValidatorIssuesOptions = {
   values: Record<string, unknown>;
@@ -53,6 +54,7 @@ export const useProductValidatorIssues = ({
   fieldIssues: Record<string, FieldValidatorIssue[]>;
   visibleFieldIssues: Record<string, FieldValidatorIssue[]>;
 } => {
+  const contextRegistry = useOptionalContextRegistryPageEnvelope();
   const previousFieldValuesRef = useRef<Record<string, string>>({});
   const fieldEditTimestampsRef = useRef<Record<string, number>>({});
   const debounceRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -73,6 +75,14 @@ export const useProductValidatorIssues = ({
     [patterns]
   );
 
+  const contextRegistryKey = useMemo((): string => {
+    try {
+      return JSON.stringify(contextRegistry ?? null);
+    } catch {
+      return '';
+    }
+  }, [contextRegistry]);
+
   const trackedFieldList = useMemo(
     () =>
       Array.isArray(trackedFields) && trackedFields.length > 0
@@ -92,11 +102,13 @@ export const useProductValidatorIssues = ({
         lp: latestProductValues,
         p: runtimePatternIds,
         s: validationScope,
+        c: contextRegistryKey,
       });
     } catch {
       return '';
     }
   }, [
+    contextRegistryKey,
     latestProductValues,
     runtimePatternIds,
     runtimeValues,
@@ -127,6 +139,7 @@ export const useProductValidatorIssues = ({
               latestProductValues,
               patternIds: runtimePatternIds,
               validationScope,
+              contextRegistry,
             },
             { logError: false }
           )
@@ -154,6 +167,7 @@ export const useProductValidatorIssues = ({
       clearTimeout(timer);
     };
   }, [
+    contextRegistry,
     latestProductValues,
     runtimeDebounceMs,
     runtimePatternIds,

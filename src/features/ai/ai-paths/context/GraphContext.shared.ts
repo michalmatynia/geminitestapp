@@ -131,9 +131,8 @@ export interface GraphProviderProps {
   initialActivePathId?: string | null | undefined;
 }
 
-export const DEFAULT_PATH_NAME = 'AI Description Path';
-export const DEFAULT_PATH_DESCRIPTION =
-  'Visual analysis + description generation with structured updates.';
+export const DEFAULT_PATH_NAME = 'Description Inference Path';
+export const DEFAULT_PATH_DESCRIPTION = 'Vision + text model workflow with structured updates.';
 export const DEFAULT_TRIGGER = 'Product Modal - Context Filter';
 export const DEFAULT_EXECUTION_MODE: PathExecutionMode = 'server';
 export const DEFAULT_FLOW_INTENSITY: PathFlowIntensity = 'medium';

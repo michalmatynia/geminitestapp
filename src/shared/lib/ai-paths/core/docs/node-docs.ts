@@ -1,8 +1,10 @@
 import type { NodeType } from '@/shared/contracts/ai-paths';
 import { isObjectRecord } from '@/shared/utils/object-utils';
+
 import { palette as NODE_DEFINITIONS } from '../definitions';
 import { COMMON_RUNTIME_FIELDS } from './node-docs.constants';
 import { CONFIG_DOCS_BY_TYPE } from './node-docs.registry';
+
 import type { AiPathsNodeDoc } from './node-docs.types';
 
 export type { NodeConfigDocField, AiPathsNodeDoc } from './node-docs.types';
@@ -42,8 +44,6 @@ const ALL_NODE_TYPES: NodeType[] = [
   'db_schema',
   'viewer',
   'notification',
-  'ai_description',
-  'description_updater',
 ];
 
 const definitionByType = new Map(
@@ -59,25 +59,13 @@ const resolveDefaultConfigFromDefinition = (
 };
 
 export const AI_PATHS_NODE_DOCS: AiPathsNodeDoc[] = ALL_NODE_TYPES.map((type: NodeType) => {
-  const fallbackDefinition =
-    type === 'description_updater'
-      ? {
-        type: 'description_updater' as const,
-        title: 'Description Updater (Deprecated)',
-        description: 'Writes description_en back to the product.',
-        inputs: ['productId', 'description_en'],
-        outputs: ['description_en'],
-      }
-      : null;
-  const def = definitionByType.get(type) ?? fallbackDefinition;
+  const def = definitionByType.get(type);
   const notes =
-    type === 'description_updater'
-      ? ['Deprecated node. Prefer Database node write operations for updates.']
-      : type === 'notification'
-        ? ['Configuration UI is not available yet; it runs with defaults.']
-        : type === 'playwright'
-          ? ['Built-in script templates are available in the Playwright node config dialog.']
-          : undefined;
+    type === 'notification'
+      ? ['Configuration UI is not available yet; it runs with defaults.']
+      : type === 'playwright'
+        ? ['Built-in script templates are available in the Playwright node config dialog.']
+        : undefined;
   const defaultConfig = resolveDefaultConfigFromDefinition(def);
   return {
     type,

@@ -8,11 +8,11 @@ canonical: true
 ---
 # UI Consolidation Scan
 
-Generated at: 2026-03-09T08:45:26.624Z
+Generated at: 2026-03-09T12:19:13.253Z
 
 ## Snapshot
 
-- Scanned UI files: 1335
+- Scanned UI files: 1343
 - Duplicate-name clusters: 0
 - Prop-signature clusters: 0
 - Token-similarity clusters: 0
@@ -24,7 +24,7 @@ Generated at: 2026-03-09T08:45:26.624Z
 
 | Domain | Files |
 | --- | ---: |
-| `feature` | 999 |
+| `feature` | 1007 |
 | `app` | 176 |
 | `shared-ui` | 121 |
 | `shared` | 39 |
@@ -33,10 +33,10 @@ Generated at: 2026-03-09T08:45:26.624Z
 
 | Family | Files |
 | --- | ---: |
-| `Unknown` | 757 |
+| `Unknown` | 765 |
 | `Page` | 150 |
-| `Section` | 134 |
-| `Panel` | 84 |
+| `Section` | 133 |
+| `Panel` | 85 |
 | `Modal` | 57 |
 | `Tab` | 38 |
 | `Card` | 20 |

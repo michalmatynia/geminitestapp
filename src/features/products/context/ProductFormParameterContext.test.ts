@@ -1,6 +1,22 @@
-import { describe, expect, it } from 'vitest';
+import { act, renderHook } from '@testing-library/react';
+import { createElement, type ReactNode } from 'react';
+import { describe, expect, it, vi } from 'vitest';
 
-import { resolvePrimaryParameterValue } from './ProductFormParameterContext';
+import type { ProductParameter, ProductWithImages } from '@/shared/contracts/products';
+
+const { useParametersMock } = vi.hoisted(() => ({
+  useParametersMock: vi.fn(),
+}));
+
+vi.mock('../hooks/useProductMetadataQueries', () => ({
+  useParameters: useParametersMock,
+}));
+
+import {
+  ProductFormParameterProvider,
+  resolvePrimaryParameterValue,
+  useProductFormParameters,
+} from './ProductFormParameterContext';
 
 describe('resolvePrimaryParameterValue', () => {
   it('prefers default and then en/pl/de fallbacks', () => {
@@ -28,5 +44,120 @@ describe('resolvePrimaryParameterValue', () => {
     ).toBe('Francais');
 
     expect(resolvePrimaryParameterValue({}, 'Fallback')).toBe('Fallback');
+  });
+});
+
+describe('ProductFormParameterProvider', () => {
+  it('removes a parameter row from local state and tracks interaction', () => {
+    useParametersMock.mockReturnValue({
+      data: [
+        { id: 'param-1', name_en: 'Condition' },
+        { id: 'param-2', name_en: 'Material' },
+      ] satisfies Partial<ProductParameter>[],
+      isLoading: false,
+    });
+
+    const onInteraction = vi.fn();
+    const product = {
+      parameters: [
+        { parameterId: 'param-1', value: 'Used' },
+        { parameterId: 'param-2', value: 'Steel' },
+      ],
+    } as Partial<ProductWithImages> as ProductWithImages;
+
+    const wrapper = ({ children }: { children: ReactNode }) =>
+      createElement(
+        ProductFormParameterProvider,
+        {
+          product,
+          selectedCatalogIds: ['catalog-1'],
+          onInteraction,
+        },
+        children
+      );
+
+    const { result } = renderHook(() => useProductFormParameters(), { wrapper });
+
+    act(() => {
+      result.current.removeParameterValue(0);
+    });
+
+    expect(result.current.parameterValues).toEqual([{ parameterId: 'param-2', value: 'Steel' }]);
+    expect(onInteraction).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the parameter row when its localized value is cleared', () => {
+    useParametersMock.mockReturnValue({
+      data: [{ id: 'param-1', name_en: 'Condition' }] satisfies Partial<ProductParameter>[],
+      isLoading: false,
+    });
+
+    const product = {
+      parameters: [
+        {
+          parameterId: 'param-1',
+          value: 'Used',
+          valuesByLanguage: { en: 'Used' },
+        },
+      ],
+    } as Partial<ProductWithImages> as ProductWithImages;
+
+    const wrapper = ({ children }: { children: ReactNode }) =>
+      createElement(
+        ProductFormParameterProvider,
+        {
+          product,
+          selectedCatalogIds: ['catalog-1'],
+        },
+        children
+      );
+
+    const { result } = renderHook(() => useProductFormParameters(), { wrapper });
+
+    act(() => {
+      result.current.updateParameterValueByLanguage(0, 'en', '');
+    });
+
+    expect(result.current.parameterValues).toEqual([
+      {
+        parameterId: 'param-1',
+        value: '',
+      },
+    ]);
+  });
+
+  it('hydrates an explicitly blank saved parameter as a preserved row', () => {
+    useParametersMock.mockReturnValue({
+      data: [{ id: 'param-1', name_en: 'Condition' }] satisfies Partial<ProductParameter>[],
+      isLoading: false,
+    });
+
+    const product = {
+      parameters: [
+        {
+          parameterId: 'param-1',
+          value: '',
+        },
+      ],
+    } as Partial<ProductWithImages> as ProductWithImages;
+
+    const wrapper = ({ children }: { children: ReactNode }) =>
+      createElement(
+        ProductFormParameterProvider,
+        {
+          product,
+          selectedCatalogIds: ['catalog-1'],
+        },
+        children
+      );
+
+    const { result } = renderHook(() => useProductFormParameters(), { wrapper });
+
+    expect(result.current.parameterValues).toEqual([
+      {
+        parameterId: 'param-1',
+        value: '',
+      },
+    ]);
   });
 });

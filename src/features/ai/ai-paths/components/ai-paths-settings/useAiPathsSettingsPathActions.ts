@@ -1,5 +1,9 @@
 import React, { useCallback } from 'react';
 
+import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
+import { usePersistenceActions } from '@/features/ai/ai-paths/context/PersistenceContext';
+import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
+import { useSelectionActions } from '@/features/ai/ai-paths/context/SelectionContext';
 import type { AiNode, PathConfig, PathMeta } from '@/shared/lib/ai-paths';
 import {
   PATH_CONFIG_PREFIX,
@@ -9,7 +13,6 @@ import {
   DEFAULT_AI_PATHS_VALIDATION_CONFIG,
   PATH_TEMPLATES,
   buildPathConfigFromTemplate,
-  createAiDescriptionPath,
   createDefaultPathConfig,
   createPathId,
   createPathMeta,
@@ -25,10 +28,6 @@ import {
   fetchAiPathsSettingsCached,
   fetchAiPathsSettingsByKeysCached,
 } from '@/shared/lib/ai-paths/settings-store-client';
-import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
-import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
-import { useSelectionActions } from '@/features/ai/ai-paths/context/SelectionContext';
-import { usePersistenceActions } from '@/features/ai/ai-paths/context/PersistenceContext';
 
 import {
   normalizeParserSamples,
@@ -79,7 +78,6 @@ const SWITCH_PATH_FETCH_TIMEOUT_MS = 25_000;
 export type UseAiPathsSettingsPathActionsReturn = {
   handleReset: () => void;
   handleCreatePath: () => void;
-  handleCreateAiDescriptionPath: () => void;
   handleCreateFromTemplate: (templateId: string) => void;
   handleDuplicatePath: (pathId?: string) => void;
   handleDeletePath: (pathId?: string) => Promise<void>;
@@ -350,28 +348,6 @@ export function useAiPathsSettingsPathActions({
     setActivePathId(id);
     applyPathConfigState(config);
   }, [applyPathConfigState, paths.length, setActivePathId, setPathConfigs, setPaths]);
-
-  const handleCreateAiDescriptionPath = useCallback((): void => {
-    const id = createPathId();
-    const config = createAiDescriptionPath(id);
-    const now = new Date().toISOString();
-    const meta: PathMeta = {
-      id,
-      name: config.name,
-      createdAt: now,
-      updatedAt: now,
-    };
-    setPaths((prev: PathMeta[]): PathMeta[] => [...prev, meta]);
-    setPathConfigs(
-      (prev: Record<string, PathConfig>): Record<string, PathConfig> => ({
-        ...prev,
-        [id]: config,
-      })
-    );
-    setActivePathId(id);
-    applyPathConfigState(config);
-    toast('AI Description Path created.', { variant: 'success' });
-  }, [applyPathConfigState, setActivePathId, setPathConfigs, setPaths, toast]);
 
   const handleCreateFromTemplate = useCallback(
     (templateId: string): void => {
@@ -688,7 +664,6 @@ export function useAiPathsSettingsPathActions({
   return {
     handleReset,
     handleCreatePath,
-    handleCreateAiDescriptionPath,
     handleCreateFromTemplate,
     handleDuplicatePath,
     handleDeletePath,

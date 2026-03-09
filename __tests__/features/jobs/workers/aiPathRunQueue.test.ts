@@ -60,6 +60,7 @@ describe('AI Path Run Queue Worker', () => {
     updateRunIfStatus: vi.fn(),
     claimRunForProcessing: vi.fn(),
     getQueueStats: vi.fn(),
+    listRuns: vi.fn(),
     createRunEvent: vi.fn(),
     finalizeRun: vi.fn(),
   };
@@ -109,6 +110,7 @@ describe('AI Path Run Queue Worker', () => {
     mockRepo.updateRunIfStatus.mockResolvedValue(null);
     mockRepo.claimRunForProcessing.mockResolvedValue(null);
     mockRepo.getQueueStats.mockResolvedValue({ queuedCount: 0, oldestQueuedAt: null });
+    mockRepo.listRuns.mockResolvedValue({ items: [], total: 0 });
     vi.mocked(getPathRunRepository).mockReturnValue(mockRepo as any);
   });
 

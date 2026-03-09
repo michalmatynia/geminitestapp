@@ -44,8 +44,6 @@ export const aiNodeTypeSchema = z.enum([
   'scanfile',
   'viewer',
   'notification',
-  'ai_description',
-  'description_updater',
   'bounds_normalizer',
   'canvas_output',
   'subgraph',

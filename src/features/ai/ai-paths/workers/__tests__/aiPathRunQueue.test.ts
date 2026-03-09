@@ -78,6 +78,10 @@ describe('aiPathRunQueue status', () => {
         queuedCount: 4,
         oldestQueuedAt: new Date('2026-03-02T00:00:00.000Z'),
       }),
+      listRuns: vi.fn().mockResolvedValue({
+        items: [],
+        total: 2,
+      }),
     });
     getAiInsightsQueueStatusMock.mockResolvedValue({
       running: true,

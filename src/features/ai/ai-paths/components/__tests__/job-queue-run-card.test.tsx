@@ -175,6 +175,12 @@ describe('JobQueueRunCard status pills', () => {
     expect(screen.queryByText('Running')).toBeNull();
   });
 
+  it('renders created timestamps in a deterministic UTC format', () => {
+    render(<JobQueueRunCard runId='run-1' run={createRun('queued')} />);
+
+    expect(screen.getByText('Created 2026-03-05 00:00:00 UTC')).toBeTruthy();
+  });
+
   it('renders a lease-blocked operator notice when execution ownership is unavailable', () => {
     render(
       <JobQueueRunCard

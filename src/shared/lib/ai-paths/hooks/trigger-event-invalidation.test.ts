@@ -71,6 +71,7 @@ describe('handleAiPathTriggerInvalidation', () => {
     expect(notifyAiPathRunEnqueuedMock).toHaveBeenCalledWith('run-1', {
       entityId: 'product-1',
       entityType: 'product',
+      run: null,
     });
   });
 
@@ -84,6 +85,7 @@ describe('handleAiPathTriggerInvalidation', () => {
     expect(notifyAiPathRunEnqueuedMock).toHaveBeenCalledWith('run-2', {
       entityId: null,
       entityType: 'product',
+      run: null,
     });
   });
 

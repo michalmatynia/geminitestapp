@@ -2,9 +2,11 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { writeMetricsMarkdownFile } from '../docs/metrics-frontmatter.mjs';
+import { parseCommonCheckArgs, writeSummaryJson } from '../lib/check-cli.mjs';
 
-const args = new Set(process.argv.slice(2));
-const shouldWriteHistory = args.has('--write-history') && !args.has('--ci') && !args.has('--no-history');
+const argv = process.argv.slice(2);
+const args = new Set(argv);
+const { noWrite, shouldWriteHistory, summaryJson } = parseCommonCheckArgs(argv);
 const includeLatest = !args.has('--exclude-latest');
 const applyBudgets = args.has('--apply-budgets');
 const includeSupplementalSamples = !args.has('--no-supplemental-samples');
@@ -365,6 +367,12 @@ const applyRecommendedBudgets = async (analysis) => {
     return result;
   }
 
+  if (noWrite) {
+    result.status = 'skipped';
+    result.reason = 'Budget application is disabled when --no-write is set.';
+    return result;
+  }
+
   if (analysis.status !== 'ready') {
     result.status = 'skipped';
     result.reason = `Calibration status is ${analysis.status}; all checks must be ready before apply.`;
@@ -542,21 +550,73 @@ const run = async () => {
   const latestMdPath = path.join(metricsDir, 'weekly-duration-budget-recommendations-latest.md');
   const historicalJsonPath = path.join(metricsDir, `weekly-duration-budget-recommendations-${stamp}.json`);
   const historicalMdPath = path.join(metricsDir, `weekly-duration-budget-recommendations-${stamp}.md`);
+  const paths = noWrite
+    ? null
+    : {
+        latestJson: path.relative(root, latestJsonPath),
+        latestMarkdown: path.relative(root, latestMdPath),
+        historicalJson: shouldWriteHistory ? path.relative(root, historicalJsonPath) : null,
+        historicalMarkdown: shouldWriteHistory ? path.relative(root, historicalMdPath) : null,
+      };
 
-  await fs.writeFile(latestJsonPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
-  await writeMetricsMarkdownFile({
-    root,
-    targetPath: latestMdPath,
-    content: toMarkdown(payload),
-  });
-
-  if (shouldWriteHistory) {
-    await fs.writeFile(historicalJsonPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+  if (!noWrite) {
+    await fs.writeFile(latestJsonPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
     await writeMetricsMarkdownFile({
       root,
-      targetPath: historicalMdPath,
+      targetPath: latestMdPath,
       content: toMarkdown(payload),
     });
+
+    if (shouldWriteHistory) {
+      await fs.writeFile(historicalJsonPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+      await writeMetricsMarkdownFile({
+        root,
+        targetPath: historicalMdPath,
+        content: toMarkdown(payload),
+      });
+    }
+  }
+
+  if (summaryJson) {
+    writeSummaryJson({
+      scannerName: 'weekly-duration-recalibration',
+      generatedAt: payload.generatedAt,
+      status: analysis.status === 'ready' ? 'ok' : 'failed',
+      summary: {
+        status: payload.summary.status,
+        runsAnalyzed: payload.summary.runsAnalyzed,
+        checksRequired: payload.summary.checksRequired,
+        checksReadyRequired: payload.summary.checksReadyRequired,
+        checksPendingRequired: payload.summary.checksPendingRequired,
+        requiredRunsNeeded: payload.summary.requiredRunsNeeded,
+        checksChanged: payload.summary.checksChanged,
+        applicationStatus: payload.summary.applicationStatus,
+        supplementalSamplesTotal: payload.summary.samplesSupplemental,
+      },
+      details: {
+        summary: payload.summary,
+        application: payload.application,
+        supplemental: payload.supplemental,
+        recommendations: payload.recommendations,
+        runs: payload.runs,
+      },
+      paths,
+      filters: {
+        includeLatest,
+        applyBudgets,
+        includeSupplementalSamples,
+        minSamples,
+        maxRuns,
+        percentile,
+        headroom,
+        cadenceDays,
+        historyDisabled: !shouldWriteHistory,
+        noWrite,
+        ci: args.has('--ci'),
+      },
+      notes: ['weekly duration budget recalibration snapshot'],
+    });
+    return;
   }
 
   console.log(
@@ -571,11 +631,15 @@ const run = async () => {
   console.log(
     `[weekly-duration-recalibration] apply=${application.status} changedChecks=${application.changedChecks.length}`
   );
-  console.log(`Wrote ${path.relative(root, latestJsonPath)}`);
-  console.log(`Wrote ${path.relative(root, latestMdPath)}`);
-  if (shouldWriteHistory) {
-    console.log(`Wrote ${path.relative(root, historicalJsonPath)}`);
-    console.log(`Wrote ${path.relative(root, historicalMdPath)}`);
+  if (paths) {
+    console.log(`Wrote ${paths.latestJson}`);
+    console.log(`Wrote ${paths.latestMarkdown}`);
+    if (paths.historicalJson) {
+      console.log(`Wrote ${paths.historicalJson}`);
+      console.log(`Wrote ${paths.historicalMarkdown}`);
+    }
+  } else {
+    console.log('Skipped writing weekly duration recalibration artifacts (--no-write).');
   }
 };
 

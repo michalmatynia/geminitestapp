@@ -39,8 +39,6 @@ Current runtime-kernel set:
 - `database`
 - `delay`
 - `db_schema`
-- `description_updater`
-- `ai_description`
 - `fetcher`
 - `gate`
 - `http`
@@ -69,9 +67,9 @@ Approved runtime-kernel nodes now resolve via contract-backed native handler reg
 Server runtime resolves `code_object_v3` handlers through `docs/ai-paths/node-code-objects-v3/contracts.json`.
 Supported adapters:
 - `legacy_handler_bridge`
-- `native_handler_registry` (current approved set: `agent`, `ai_description`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `bundle`, `compare`, `constant`, `context`, `database`, `db_schema`, `delay`, `description_updater`, `fetcher`, `gate`, `http`, `iterator`, `learner_agent`, `mapper`, `math`, `model`, `mutator`, `notification`, `parser`, `playwright`, `poll`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`)
+- `native_handler_registry` (current approved set: `agent`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `bundle`, `compare`, `constant`, `context`, `database`, `db_schema`, `delay`, `fetcher`, `gate`, `http`, `iterator`, `learner_agent`, `mapper`, `math`, `model`, `mutator`, `notification`, `parser`, `playwright`, `poll`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`)
 For `native_handler_registry`, contract-backed `code_object_v3` resolution now fails closed when native mappings are missing.
-Client runtime now supports native execution for a broader local subset (`agent`, `ai_description`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `bundle`, `compare`, `constant`, `context`, `database`, `db_schema`, `delay`, `description_updater`, `fetcher`, `gate`, `http`, `iterator`, `learner_agent`, `mapper`, `math`, `model`, `mutator`, `notification`, `parser`, `playwright`, `poll`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`).
+Client runtime now supports native execution for a broader local subset (`agent`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `bundle`, `compare`, `constant`, `context`, `database`, `db_schema`, `delay`, `fetcher`, `gate`, `http`, `iterator`, `learner_agent`, `mapper`, `math`, `model`, `mutator`, `notification`, `parser`, `playwright`, `poll`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`).
 Remaining server-only native node families are tracked explicitly in runtime guardrails (`none`).
 
 Rollout control:
@@ -85,7 +83,7 @@ Rollout control:
 - deprecated persisted key `ai_paths_runtime_kernel_pilot_node_types` is cleanup-only compatibility data and is no longer read by the live executor or Canvas settings UI.
 - Admin UI control is available in AI-Paths Canvas action bar under `Runtime Kernel`.
 - Canvas runtime controls now expose only node-type and resolver-id overrides; strict native behavior is fixed on for live execution.
-- `AI_PATHS_RUNTIME_KERNEL_NODE_TYPES=agent,api_advanced,audio_oscillator,audio_speaker,constant,context,bundle,compare,database,delay,db_schema,description_updater,ai_description,fetcher,gate,http,iterator,learner_agent,mapper,math,model,mutator,notification,parser,playwright,poll,prompt,regex,router,simulation,string_mutator,template,trigger,validation_pattern,validator,viewer`
+- `AI_PATHS_RUNTIME_KERNEL_NODE_TYPES=agent,api_advanced,audio_oscillator,audio_speaker,constant,context,bundle,compare,database,delay,db_schema,fetcher,gate,http,iterator,learner_agent,mapper,math,model,mutator,notification,parser,playwright,poll,prompt,regex,router,simulation,string_mutator,template,trigger,validation_pattern,validator,viewer`
 - deprecated env alias `AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY=true|false` is cleanup-only compatibility data and is no longer read by the live executor, Canvas local execution loop, or server runtime entrypoint.
 - deprecated env alias `AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES=...` is cleanup-only compatibility data and is no longer read by the live executor.
 - deprecated path-config aliases under `extensions.runtimeKernel` (`pilotNodeTypes`, `resolverIds`, `mode`, `strictNativeRegistry`, `strictCodeObjectRegistry`) are cleanup-only compatibility data and are no longer read by Canvas runtime settings, Canvas local execution, or server enqueue/runtime reads.
@@ -108,7 +106,7 @@ Rollout control:
 - `docs/ai-paths/node-code-objects-v3/parity-evidence.json` (test-backed runtime parity evidence, including product-trigger E2E coverage)
 - `docs/ai-paths/node-code-objects-v3/rollout-approvals.json` (manual rollout approval source)
 - `docs/ai-paths/node-code-objects-v3/rollout-eligibility.json` (generated technical rollout-candidate source)
-- `docs/ai-paths/node-code-objects-v3/{agent,api_advanced,audio_oscillator,audio_speaker,constant,context,bundle,compare,database,delay,db_schema,description_updater,ai_description,fetcher,gate,http,iterator,learner_agent,mapper,math,model,mutator,notification,parser,playwright,poll,prompt,regex,router,simulation,string_mutator,template,trigger,validation_pattern,validator,viewer}.scaffold.json`
+- `docs/ai-paths/node-code-objects-v3/{agent,api_advanced,audio_oscillator,audio_speaker,constant,context,bundle,compare,database,delay,db_schema,fetcher,gate,http,iterator,learner_agent,mapper,math,model,mutator,notification,parser,playwright,poll,prompt,regex,router,simulation,string_mutator,template,trigger,validation_pattern,validator,viewer}.scaffold.json`
 - `docs/ai-paths/node-code-objects-v3/migration-index.json` (generated full-node migration matrix)
 - `docs/ai-paths/node-code-objects-v3/MIGRATION_GUIDE.md` (generated workflow and coverage guide)
 - `docs/ai-paths/node-code-objects-v3/nodes/<nodeType>.md` (generated per-node migration sheets)

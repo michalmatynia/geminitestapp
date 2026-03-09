@@ -81,6 +81,7 @@ export function useJobQueueRuntime({
   const [clearScope, setClearScope] = useState<'terminal' | 'all' | null>(null);
   const [runToDelete, setRunToDelete] = useState<AiPathRunRecord | null>(null);
   const [showMetricsPanel, setShowMetricsPanel] = useState(false);
+  const [optimisticRunsHydrated, setOptimisticRunsHydrated] = useState(false);
 
   const normalizedPathFilter = pathFilter.trim();
   const normalizedQuery = debouncedQuery.trim();
@@ -127,6 +128,10 @@ export function useJobQueueRuntime({
     };
   }, []);
 
+  useEffect(() => {
+    setOptimisticRunsHydrated(true);
+  }, []);
+
   const isQueueRoute = pathname?.startsWith('/admin/ai-paths/queue') ?? false;
   const isPanelActive = isQueueRoute && isActive;
   const effectiveAutoRefreshEnabled =
@@ -147,6 +152,7 @@ export function useJobQueueRuntime({
     deleteRunMutation,
     heavyMap,
     queueStatusQuery,
+    rememberVisibleOptimisticRun,
     refetchQueueData,
     runsQuery,
     visibleRunsPayload,
@@ -156,6 +162,7 @@ export function useJobQueueRuntime({
     isBurstRefreshActive,
     isPanelActive,
     markBurstRefresh,
+    optimisticRunsHydrated,
     normalizedPathFilter,
     normalizedQuery,
     normalizedSourceFilter,
@@ -185,6 +192,7 @@ export function useJobQueueRuntime({
     isWindowFocused,
     queueStatus: queueStatusQuery.data?.status,
     refetchQueueData,
+    rememberVisibleOptimisticRun,
     runDetails,
     setRunDetails,
   });

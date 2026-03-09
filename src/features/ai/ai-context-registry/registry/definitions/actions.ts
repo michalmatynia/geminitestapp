@@ -57,6 +57,30 @@ export const actionNodes: ContextNode[] = [
     source: { type: 'code', ref: SOURCE_REF },
   },
   {
+    id: 'action:product-validator-runtime-evaluate',
+    kind: 'action',
+    name: 'Product Validator Runtime Evaluate',
+    description:
+      'Runs AI-backed product validator runtime checks from the Product Editor using the current page context registry envelope and live validation workspace state.',
+    tags: ['products', 'validation', 'runtime', 'editor', 'ai'],
+    relationships: [
+      { type: 'uses', targetId: 'page:product-editor' },
+      { type: 'uses', targetId: 'component:product-form' },
+      { type: 'uses', targetId: 'component:product-form-validation-tab' },
+      { type: 'reads', targetId: 'collection:products' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      proposeScopes: ['ctx:propose'],
+      executeScopes: ['ctx:execute'],
+      riskTier: 'low',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
     id: 'action:run-ai-path',
     kind: 'action',
     name: 'Run AI Path',

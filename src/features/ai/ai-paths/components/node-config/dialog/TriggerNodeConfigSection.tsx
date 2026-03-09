@@ -93,37 +93,10 @@ export function TriggerNodeConfigSection(): React.JSX.Element | null {
       </FormField>
 
       <FormField label='Context Source'>
-        <SelectSimple
-          size='sm'
-          variant='subtle'
-          value={triggerConfig.contextMode ?? 'trigger_only'}
-          onValueChange={(value: string): void =>
-            updateSelectedNodeConfig({
-              trigger: {
-                ...triggerConfig,
-                contextMode: value as
-                  | 'simulation_required'
-                  | 'simulation_preferred'
-                  | 'trigger_only',
-              },
-            })
-          }
-          options={[
-            {
-              value: 'simulation_required',
-              label: 'Simulation required',
-            },
-            {
-              value: 'simulation_preferred',
-              label: 'Simulation preferred',
-            },
-            {
-              value: 'trigger_only',
-              label: 'Trigger only',
-            },
-          ]}
-          placeholder='Select context source'
-        />
+        <Card variant='outline' padding='sm' className='text-[11px] text-muted-foreground'>
+          Trigger context mode is fixed to <span className='font-medium'>Trigger only</span>.
+          Resolve entity context downstream with a Fetcher or Simulation node.
+        </Card>
       </FormField>
 
       {isScheduled ? (

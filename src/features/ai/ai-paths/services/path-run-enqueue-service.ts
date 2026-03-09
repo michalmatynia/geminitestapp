@@ -1,34 +1,22 @@
 import 'server-only';
 
-import {
-  evaluateRunPreflight,
-  normalizeNodes,
-  normalizeAiPathsValidationConfig,
-  palette,
-  sanitizeEdges,
-  stableStringify,
-  validateCanonicalPathNodeIdentities,
-} from '@/shared/lib/ai-paths';
 import { parseRuntimeState } from '@/features/ai/ai-paths/services/path-run-executor.runtime-state';
-import { buildAiPathErrorReport } from '@/shared/lib/ai-paths/error-reporting';
 import {
   evaluateDisabledNodeTypesPolicy,
   formatDisabledNodeTypesPolicyMessage,
 } from '@/features/ai/ai-paths/services/path-run-policy';
-import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
-import {
-  getAiPathsRuntimeFingerprint,
-  withRuntimeFingerprintMeta,
-} from '@/features/ai/ai-paths/services/runtime-fingerprint';
 import {
   recordRuntimeRunFinished,
   recordRuntimeRunQueued,
 } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import {
+  getAiPathsRuntimeFingerprint,
+  withRuntimeFingerprintMeta,
+} from '@/features/ai/ai-paths/services/runtime-fingerprint';
+import {
   enqueuePathRunJob,
   scheduleLocalFallbackRun,
 } from '@/features/ai/ai-paths/workers/aiPathRunQueue';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
   AiNode,
   Edge,
@@ -38,6 +26,24 @@ import type {
   UpdaterSampleState,
 } from '@/shared/contracts/ai-paths';
 import { validationError } from '@/shared/errors/app-error';
+import {
+  evaluateRunPreflight,
+  findRemovedLegacyAiPathNodes,
+  formatRemovedLegacyAiPathNodesMessage,
+  normalizeNodes,
+  normalizeAiPathsValidationConfig,
+  palette,
+  sanitizeEdges,
+  stableStringify,
+  validateCanonicalPathNodeIdentities,
+} from '@/shared/lib/ai-paths';
+import { buildAiPathErrorReport } from '@/shared/lib/ai-paths/error-reporting';
+import {
+  findRemovedLegacyTriggerContextModes,
+  formatRemovedLegacyTriggerContextModesMessage,
+} from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export type EnqueueRunInput = {
   userId?: string | null;
@@ -192,6 +198,31 @@ const assertCanonicalRunGraph = ({
   nodes: AiNode[];
   edges: Edge[];
 }): Edge[] => {
+  const removedLegacyNodes = findRemovedLegacyAiPathNodes(nodes);
+  if (removedLegacyNodes.length > 0) {
+    throw validationError(formatRemovedLegacyAiPathNodesMessage(removedLegacyNodes, {
+      surface: 'run graph',
+    }), {
+      source: 'ai_paths.run',
+      reason: 'removed_legacy_node_type',
+      pathId: input.pathId,
+      removedNodes: removedLegacyNodes,
+    });
+  }
+  const removedLegacyTriggerContextModes = findRemovedLegacyTriggerContextModes(nodes);
+  if (removedLegacyTriggerContextModes.length > 0) {
+    throw validationError(
+      formatRemovedLegacyTriggerContextModesMessage(removedLegacyTriggerContextModes, {
+        surface: 'run graph',
+      }),
+      {
+        source: 'ai_paths.run',
+        reason: 'removed_legacy_trigger_context_mode',
+        pathId: input.pathId,
+        removedTriggerContextModes: removedLegacyTriggerContextModes,
+      }
+    );
+  }
   const identityIssues = validateCanonicalPathNodeIdentities(
     buildRunGraphValidationConfig(input, nodes, edges),
     {

@@ -3,7 +3,6 @@
   "generatedAt": "2026-03-06T00:00:00.000Z",
   "approvedNodeTypes": [
     "agent",
-    "ai_description",
     "api_advanced",
     "audio_oscillator",
     "audio_speaker",
@@ -14,7 +13,6 @@
     "database",
     "db_schema",
     "delay",
-    "description_updater",
     "fetcher",
     "gate",
     "http",

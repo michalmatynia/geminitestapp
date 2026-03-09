@@ -1,8 +1,22 @@
 import type { NodeType } from '@/shared/contracts/ai-paths';
-import type { NodeConfigDocField } from './node-docs.types';
 
-import { triggerDocs, fetcherDocs, simulationDocs } from './node-docs/trigger';
+
 import { audioOscillatorDocs, audioSpeakerDocs } from './node-docs/audio';
+import {
+  databaseDocs,
+  dbSchemaDocs,
+  viewerDocs,
+  notificationDocs,
+} from './node-docs/data';
+import {
+  httpDocs,
+  apiAdvancedDocs,
+  playwrightDocs,
+  promptDocs,
+  modelDocs,
+  agentDocs,
+  learnerAgentDocs,
+} from './node-docs/integration';
 import {
   boundsNormalizerDocs,
   canvasOutputDocs,
@@ -16,6 +30,7 @@ import {
   validatorDocs,
   validationPatternDocs,
 } from './node-docs/transform';
+import { triggerDocs, fetcherDocs, simulationDocs } from './node-docs/trigger';
 import {
   constantDocs,
   mathDocs,
@@ -27,23 +42,8 @@ import {
   delayDocs,
   pollDocs,
 } from './node-docs/utils';
-import {
-  httpDocs,
-  apiAdvancedDocs,
-  playwrightDocs,
-  promptDocs,
-  modelDocs,
-  agentDocs,
-  learnerAgentDocs,
-} from './node-docs/integration';
-import {
-  databaseDocs,
-  dbSchemaDocs,
-  viewerDocs,
-  notificationDocs,
-  aiDescriptionDocs,
-  descriptionUpdaterDocs,
-} from './node-docs/data';
+
+import type { NodeConfigDocField } from './node-docs.types';
 
 export const CONFIG_DOCS_BY_TYPE: Partial<Record<NodeType, NodeConfigDocField[]>> = {
   trigger: triggerDocs,
@@ -82,6 +82,4 @@ export const CONFIG_DOCS_BY_TYPE: Partial<Record<NodeType, NodeConfigDocField[]>
   db_schema: dbSchemaDocs,
   viewer: viewerDocs,
   notification: notificationDocs,
-  ai_description: aiDescriptionDocs,
-  description_updater: descriptionUpdaterDocs,
 };

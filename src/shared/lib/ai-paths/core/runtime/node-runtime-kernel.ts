@@ -4,6 +4,7 @@ import type {
   NodeRuntimeResolutionStrategy,
   NodeRuntimeResolutionTelemetry,
 } from '@/shared/contracts/ai-paths-runtime';
+
 import { resolveNodeCodeObjectV3ContractByCodeObjectId } from './node-code-object-v3-legacy-bridge';
 
 export const NODE_RUNTIME_KERNEL_STRATEGIES = ['compatibility', 'code_object_v3'] as const;
@@ -21,8 +22,6 @@ export const NODE_RUNTIME_KERNEL_CANONICAL_NODE_TYPES = [
   'database',
   'delay',
   'db_schema',
-  'description_updater',
-  'ai_description',
   'fetcher',
   'gate',
   'http',

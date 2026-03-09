@@ -45,7 +45,7 @@ export const normalizeProductParameterValues = (input: unknown): ProductParamete
       typeof record['parameterId'] === 'string' ? record['parameterId'] : ''
     );
     if (!parameterId) return;
-    const value = typeof record['value'] === 'string' ? record['value'] : '';
+    const value = typeof record['value'] === 'string' ? record['value'].trim() : '';
     const valuesByLanguageRaw = record['valuesByLanguage'];
     const valuesByLanguage =
       valuesByLanguageRaw &&
@@ -54,8 +54,9 @@ export const normalizeProductParameterValues = (input: unknown): ProductParamete
         ? Object.entries(valuesByLanguageRaw as Record<string, unknown>).reduce(
           (acc: Record<string, string>, [languageCode, languageValue]) => {
             const normalizedCode = languageCode.trim().toLowerCase();
-            if (!normalizedCode || typeof languageValue !== 'string') return acc;
-            acc[normalizedCode] = languageValue;
+            const normalizedValue = typeof languageValue === 'string' ? languageValue.trim() : '';
+            if (!normalizedCode || !normalizedValue) return acc;
+            acc[normalizedCode] = normalizedValue;
             return acc;
           },
           {}

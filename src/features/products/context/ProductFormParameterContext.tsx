@@ -158,11 +158,16 @@ export function ProductFormParameterProvider({
           delete currentValues[normalizedLang];
         }
         const nextPrimaryValue = resolvePrimaryParameterValue(currentValues, '');
-        next[index] = {
+        const nextEntry: ProductParameterValue = {
           ...current,
           value: nextPrimaryValue,
-          ...(Object.keys(currentValues).length > 0 ? { valuesByLanguage: currentValues } : {}),
         };
+        if (Object.keys(currentValues).length > 0) {
+          nextEntry.valuesByLanguage = currentValues;
+        } else {
+          delete nextEntry.valuesByLanguage;
+        }
+        next[index] = nextEntry;
         return next;
       });
     };

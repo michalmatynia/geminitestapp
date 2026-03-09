@@ -11,7 +11,6 @@
       ],
       "nodeTypes": [
         "agent",
-        "ai_description",
         "api_advanced",
         "audio_oscillator",
         "audio_speaker",
@@ -22,7 +21,6 @@
         "database",
         "delay",
         "db_schema",
-        "description_updater",
         "fetcher",
         "gate",
         "http",

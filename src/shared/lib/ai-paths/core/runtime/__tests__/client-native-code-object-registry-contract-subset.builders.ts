@@ -37,14 +37,6 @@ const hoistedMocks = vi.hoisted(() => ({
       result: 'model-result',
     },
   })),
-  mockAiGenerationGenerate: vi.fn(async () => ({
-    ok: true as const,
-    data: { result: 'generated-description' },
-  })),
-  mockAiGenerationUpdateProductDescription: vi.fn(async () => ({
-    ok: true as const,
-    data: {},
-  })),
   mockAgentEnqueue: vi.fn(async () => ({
     ok: true as const,
     data: { runId: 'agent-run-1' },
@@ -103,9 +95,6 @@ const hoistedMocks = vi.hoisted(() => ({
 export const mockDbApiSchema = hoistedMocks.mockDbApiSchema;
 export const mockAiJobsEnqueue = hoistedMocks.mockAiJobsEnqueue;
 export const mockAiJobsPoll = hoistedMocks.mockAiJobsPoll;
-export const mockAiGenerationGenerate = hoistedMocks.mockAiGenerationGenerate;
-export const mockAiGenerationUpdateProductDescription =
-  hoistedMocks.mockAiGenerationUpdateProductDescription;
 export const mockAgentEnqueue = hoistedMocks.mockAgentEnqueue;
 export const mockAgentPoll = hoistedMocks.mockAgentPoll;
 export const mockSettingsList = hoistedMocks.mockSettingsList;
@@ -127,11 +116,6 @@ vi.mock('@/shared/lib/ai-paths/api', async () => {
       ...actual.aiJobsApi,
       enqueue: hoistedMocks.mockAiJobsEnqueue,
       poll: hoistedMocks.mockAiJobsPoll,
-    },
-    aiGenerationApi: {
-      ...actual.aiGenerationApi,
-      generate: hoistedMocks.mockAiGenerationGenerate,
-      updateProductDescription: hoistedMocks.mockAiGenerationUpdateProductDescription,
     },
     agentApi: {
       ...actual.agentApi,
@@ -406,33 +390,6 @@ export const buildDbSchemaNode = (): AiNode => ({
     },
   },
   position: { x: 160, y: 0 },
-});
-
-export const buildAiDescriptionNode = (): AiNode => ({
-  id: 'node-ai-description',
-  type: 'ai_description',
-  title: 'AI Description',
-  description: '',
-  inputs: ['entityJson', 'images'],
-  outputs: ['description_en'],
-  config: {
-    description: {
-      visionOutputEnabled: true,
-      generationOutputEnabled: true,
-    },
-  },
-  position: { x: 175, y: 0 },
-});
-
-export const buildDescriptionUpdaterNode = (): AiNode => ({
-  id: 'node-description-updater',
-  type: 'description_updater',
-  title: 'Description Updater',
-  description: '',
-  inputs: ['productId', 'description_en'],
-  outputs: ['description_en'],
-  config: {},
-  position: { x: 182, y: 0 },
 });
 
 export const buildPlaywrightNode = (): AiNode => ({

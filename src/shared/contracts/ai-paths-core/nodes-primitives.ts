@@ -58,7 +58,7 @@ export type Edge = z.infer<typeof aiEdgeSchema>;
 
 export const triggerConfigSchema = z.object({
   event: z.string(),
-  contextMode: z.enum(['simulation_required', 'simulation_preferred', 'trigger_only']).optional(),
+  contextMode: z.literal('trigger_only').optional(),
 });
 
 export type TriggerConfigDto = z.infer<typeof triggerConfigSchema>;

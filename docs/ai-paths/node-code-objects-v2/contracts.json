@@ -2,19 +2,13 @@
   "schemaVersion": "ai-paths.node-code-object-contracts.v2",
   "generatedAt": "2026-03-05T00:00:00.000Z",
   "specVersion": "ai-paths.portable-engine.v1",
-  "totalContracts": 36,
+  "totalContracts": 34,
   "contracts": {
     "agent": {
       "objectId": "node_obj_agent_portable_v2",
       "title": "Reasoning Agent",
       "objectHashAlgorithm": "sha256",
       "objectHash": "faa0bfe78128b816e54ddc786c0a817b930325f193fa80cd5cc1c0c3e6591238"
-    },
-    "ai_description": {
-      "objectId": "node_obj_ai_description_portable_v2",
-      "title": "AI Description Generator",
-      "objectHashAlgorithm": "sha256",
-      "objectHash": "394ad579d2446645315cb39bd09ada121a1bb586bd967ad40558d2d627d63280"
     },
     "api_advanced": {
       "objectId": "node_obj_api_advanced_portable_v2",
@@ -75,12 +69,6 @@
       "title": "Delay",
       "objectHashAlgorithm": "sha256",
       "objectHash": "f20e3d01f2917b54f5b394e2e8567df33d15362329f86ec2c422d7337dc1422f"
-    },
-    "description_updater": {
-      "objectId": "node_obj_description_updater_portable_v2",
-      "title": "Description Updater (Deprecated)",
-      "objectHashAlgorithm": "sha256",
-      "objectHash": "fb563a17c51dedc8243f2ff5a5686e9947ee6871b329681b37f0f70f4cd57d62"
     },
     "fetcher": {
       "objectId": "node_obj_fetcher_portable_v2",
@@ -222,5 +210,5 @@
     }
   },
   "contractsHashAlgorithm": "sha256",
-  "contractsHash": "74399a95a3914abea9f90d08bd5be5d5581b6c8e81eb7c2178900875208d0c83"
+  "contractsHash": "83b9b9d0580394f5979b05248b74cef07f07748b69c47d2e72e1d3a90d13a1ee"
 }

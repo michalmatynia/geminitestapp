@@ -1,7 +1,7 @@
 {
   "summary": {
-    "generatedAt": "2026-03-09T08:45:26.624Z",
-    "scannedFileCount": 1335,
+    "generatedAt": "2026-03-09T12:19:13.253Z",
+    "scannedFileCount": 1343,
     "duplicateNameClusterCount": 0,
     "propSignatureClusterCount": 0,
     "tokenSimilarityClusterCount": 0,
@@ -11,7 +11,7 @@
     "familyCounts": [
       {
         "family": "Unknown",
-        "count": 757
+        "count": 765
       },
       {
         "family": "Page",
@@ -19,11 +19,11 @@
       },
       {
         "family": "Section",
-        "count": 134
+        "count": 133
       },
       {
         "family": "Panel",
-        "count": 84
+        "count": 85
       },
       {
         "family": "Modal",
@@ -81,7 +81,7 @@
     "domainCounts": [
       {
         "domain": "feature",
-        "count": 999
+        "count": 1007
       },
       {
         "domain": "app",
@@ -3989,7 +3989,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 102,
+      "lines": 100,
       "useClient": true,
       "imports": [
         "react",
@@ -3998,7 +3998,6 @@
         "./node-config/DatabaseNodeConfigSection",
         "./node-config/DbSchemaNodeConfigSection",
         "./node-config/dialog/AgentNodeConfigSection",
-        "./node-config/dialog/AiDescriptionNodeConfigSection",
         "./node-config/dialog/ApiAdvancedNodeConfigSection",
         "./node-config/dialog/AudioOscillatorNodeConfigSection",
         "./node-config/dialog/AudioSpeakerNodeConfigSection",
@@ -5177,24 +5176,6 @@
       "thinReExportWrapper": false
     },
     {
-      "path": "src/features/ai/ai-paths/components/node-config/dialog/AiDescriptionNodeConfigSection.tsx",
-      "basename": "AiDescriptionNodeConfigSection.tsx",
-      "domain": "feature",
-      "scope": "feature:ai",
-      "family": "Section",
-      "lines": 58,
-      "useClient": true,
-      "imports": [
-        "@/shared/ui",
-        "../../AiPathConfigContext"
-      ],
-      "templateImports": 0,
-      "uiPrimitiveImports": 0,
-      "tokenSet": {},
-      "propsSignature": null,
-      "thinReExportWrapper": false
-    },
-    {
       "path": "src/features/ai/ai-paths/components/node-config/dialog/ApiAdvancedNodeConfigSection.tsx",
       "basename": "ApiAdvancedNodeConfigSection.tsx",
       "domain": "feature",
@@ -5789,7 +5770,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Section",
-      "lines": 351,
+      "lines": 350,
       "useClient": true,
       "imports": [
         "@/shared/lib/ai-paths",
@@ -5953,7 +5934,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 60,
+      "lines": 58,
       "useClient": true,
       "imports": [
         "@/shared/lib/ai-paths"
@@ -6331,7 +6312,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Panel",
-      "lines": 710,
+      "lines": 711,
       "useClient": true,
       "imports": [
         "react",
@@ -17779,6 +17760,51 @@
       "thinReExportWrapper": false
     },
     {
+      "path": "src/features/kangur/admin/components/KangurDocumentationTooltipSettingsPanel.test.tsx",
+      "basename": "KangurDocumentationTooltipSettingsPanel.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 149,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@testing-library/react",
+        "vitest",
+        "@/features/kangur/help-settings",
+        "./KangurDocumentationTooltipSettingsPanel",
+        "@/shared/ui"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/admin/components/KangurDocumentationTooltipSettingsPanel.tsx",
+      "basename": "KangurDocumentationTooltipSettingsPanel.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Panel",
+      "lines": 220,
+      "useClient": true,
+      "imports": [
+        "react",
+        "@/features/kangur/docs/tooltips",
+        "@/features/kangur/help-settings",
+        "@/shared/hooks/use-settings",
+        "@/shared/providers/SettingsStoreProvider",
+        "@/shared/ui",
+        "@/shared/utils/settings-json"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
       "path": "src/features/kangur/admin/components/LessonContentEditorDialog.tsx",
       "basename": "LessonContentEditorDialog.tsx",
       "domain": "feature",
@@ -18790,7 +18816,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 2191,
+      "lines": 2283,
       "useClient": false,
       "imports": [
         "react",
@@ -18810,7 +18836,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 3075,
+      "lines": 3103,
       "useClient": true,
       "imports": [
         "next/image",
@@ -19049,7 +19075,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 123,
+      "lines": 126,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -19187,9 +19213,10 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 29,
+      "lines": 32,
       "useClient": true,
       "imports": [
+        "@/features/kangur/ui/components/KangurKangurWordmark",
         "@/features/kangur/ui/components/KangurPageIntroCard",
         "@/features/kangur/ui/components/KangurSetup",
         "@/features/kangur/ui/context/KangurGameRuntimeContext"
@@ -19211,6 +19238,7 @@
       "imports": [
         "react",
         "@/features/kangur/ui/components/KangurTopNavigationController",
+        "@/features/kangur/ui/context/KangurGuestPlayerContext",
         "@/features/kangur/ui/context/KangurGameRuntimeContext"
       ],
       "templateImports": 0,
@@ -19225,10 +19253,11 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 69,
+      "lines": 70,
       "useClient": true,
       "imports": [
         "@/features/kangur/ui/components/OperationSelector",
+        "@/features/kangur/ui/components/KangurGrajmyWordmark",
         "@/features/kangur/ui/components/KangurPageIntroCard",
         "@/features/kangur/ui/components/KangurPracticeAssignmentBanner",
         "@/features/kangur/ui/design/primitives",
@@ -19306,11 +19335,12 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 40,
+      "lines": 43,
       "useClient": true,
       "imports": [
         "@/features/kangur/ui/components/KangurPageIntroCard",
         "@/features/kangur/ui/components/KangurPracticeAssignmentBanner",
+        "@/features/kangur/ui/components/KangurTreningWordmark",
         "@/features/kangur/ui/components/TrainingSetup",
         "@/features/kangur/ui/context/KangurGameRuntimeContext"
       ],
@@ -19359,6 +19389,43 @@
       "thinReExportWrapper": false
     },
     {
+      "path": "src/features/kangur/ui/components/KangurGrajmyWordmark.test.tsx",
+      "basename": "KangurGrajmyWordmark.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 28,
+      "useClient": false,
+      "imports": [
+        "@testing-library/react",
+        "vitest",
+        "@/features/kangur/ui/components/KangurGrajmyWordmark"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/KangurGrajmyWordmark.tsx",
+      "basename": "KangurGrajmyWordmark.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 92,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@/shared/utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "className|props",
+      "thinReExportWrapper": false
+    },
+    {
       "path": "src/features/kangur/ui/components/KangurHomeLogo.test.tsx",
       "basename": "KangurHomeLogo.test.tsx",
       "domain": "feature",
@@ -19393,6 +19460,43 @@
       "uiPrimitiveImports": 0,
       "tokenSet": {},
       "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/KangurKangurWordmark.test.tsx",
+      "basename": "KangurKangurWordmark.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 28,
+      "useClient": false,
+      "imports": [
+        "@testing-library/react",
+        "vitest",
+        "@/features/kangur/ui/components/KangurKangurWordmark"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/KangurKangurWordmark.tsx",
+      "basename": "KangurKangurWordmark.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 88,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@/shared/utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "className|props",
       "thinReExportWrapper": false
     },
     {
@@ -19873,7 +19977,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 79,
+      "lines": 157,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -19954,7 +20058,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 279,
+      "lines": 275,
       "useClient": true,
       "imports": [
         "@/features/kangur/ui/context/KangurRoutingContext",
@@ -20518,7 +20622,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 100,
+      "lines": 133,
       "useClient": false,
       "imports": [
         "react",
@@ -20538,7 +20642,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 73,
+      "lines": 85,
       "useClient": true,
       "imports": [
         "next/link",
@@ -20550,6 +20654,43 @@
       "uiPrimitiveImports": 0,
       "tokenSet": {},
       "propsSignature": "href|onClick|props|scroll|target|targetPageKey",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/KangurTreningWordmark.test.tsx",
+      "basename": "KangurTreningWordmark.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 28,
+      "useClient": false,
+      "imports": [
+        "@testing-library/react",
+        "vitest",
+        "@/features/kangur/ui/components/KangurTreningWordmark"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/KangurTreningWordmark.tsx",
+      "basename": "KangurTreningWordmark.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 92,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@/shared/utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "className|props",
       "thinReExportWrapper": false
     },
     {
@@ -22234,7 +22375,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Form",
-      "lines": 185,
+      "lines": 286,
       "useClient": true,
       "imports": [
         "next/navigation",
@@ -22242,25 +22383,26 @@
         "@/features/ai/ai-context-registry/context/page-context",
         "@/features/products/components/ProductFormDebugPanel",
         "@/features/products/context/ProductFormCoreContext",
-        "@/features/products/context-registry/workspace",
+        "@/features/products/context/ProductFormMetadataContext",
         "@/features/products/context/ProductValidationSettingsContext",
+        "@/features/products/context-registry/workspace",
         "@/shared/contracts/products",
         "@/shared/ui",
+        "./form/ProductFormFooter",
         "./form/ProductFormGeneral",
-        "./form/ProductFormOther",
-        "./form/ProductFormParameters",
         "./form/ProductFormImages",
-        "./form/ProductFormStudio",
         "./form/ProductFormImportInfo",
         "./form/ProductFormNoteLink",
+        "./form/ProductFormOther",
+        "./form/ProductFormParameters",
+        "./form/ProductFormStudio",
         "./form/ProductFormValidationTab",
-        "./form/ProductFormFooter",
         "../hooks/useProductFormValidator"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "skuRequired|submitButtonText|validationInstanceScopeOverride",
+      "propsSignature": "activeTab|mountedTabs",
       "thinReExportWrapper": false
     },
     {
@@ -22424,7 +22566,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 321,
+      "lines": 388,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -23078,6 +23220,26 @@
         "@/features/products/context/ProductStudioContext",
         "@/shared/lib/image-studio-adapter",
         "@/features/products/hooks/useProductSettings"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/products/components/list/ProductColumns.test.tsx",
+      "basename": "ProductColumns.test.tsx",
+      "domain": "feature",
+      "scope": "feature:products",
+      "family": "Unknown",
+      "lines": 99,
+      "useClient": false,
+      "imports": [
+        "@testing-library/react",
+        "vitest",
+        "@/shared/contracts/products",
+        "./ProductColumns"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,

@@ -1,10 +1,21 @@
 import React from 'react';
 import { act, render } from '@testing-library/react';
+import { hydrateRoot } from 'react-dom/client';
+import { renderToString } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AI_PATH_RUN_ENQUEUED_EVENT_NAME } from '@/shared/contracts/ai-paths';
-import { rememberRecentAiPathRunEnqueue } from '@/shared/lib/query-invalidation';
-import { JobQueueProvider } from '../JobQueueContext';
+import type { AiPathRunRecord } from '@/shared/lib/ai-paths';
+import {
+  listOptimisticAiPathRuns,
+  rememberOptimisticAiPathRun,
+  removeOptimisticAiPathRuns,
+} from '@/shared/lib/ai-paths/optimistic-run-queue';
+import {
+  clearRecentAiPathRunEnqueue,
+  rememberRecentAiPathRunEnqueue,
+} from '@/shared/lib/query-invalidation';
+import { JobQueueProvider, useJobQueueState } from '../JobQueueContext';
 
 const mocks = vi.hoisted(() => ({
   usePathnameMock: vi.fn(),
@@ -41,8 +52,38 @@ const renderProvider = () =>
     </JobQueueProvider>
   );
 
+const buildOptimisticRun = (): AiPathRunRecord =>
+  ({
+    id: 'optimistic-run-1',
+    status: 'queued',
+    pathId: 'path-1',
+    pathName: 'Path 1',
+    createdAt: '2026-03-09T07:25:00.000Z',
+    updatedAt: '2026-03-09T07:25:00.000Z',
+    entityId: 'product-1',
+    entityType: 'product',
+    meta: {
+      source: 'trigger_button',
+    },
+  }) as AiPathRunRecord;
+
+const resetOptimisticQueue = (): void => {
+  const runIds = listOptimisticAiPathRuns().map((run) => run.id);
+  if (runIds.length > 0) {
+    removeOptimisticAiPathRuns(runIds);
+  }
+  window.localStorage.clear();
+};
+
+function QueueCountProbe(): React.JSX.Element {
+  const { runs, total } = useJobQueueState();
+
+  return <div data-testid='queue-counts'>{`${runs.length}:${total}`}</div>;
+}
+
 describe('JobQueueProvider enqueue event listeners', () => {
   beforeEach(() => {
+    resetOptimisticQueue();
     mocks.usePathnameMock.mockReset();
     mocks.toastMock.mockReset();
     mocks.createListQueryV2Mock.mockReset();
@@ -103,8 +144,50 @@ describe('JobQueueProvider enqueue event listeners', () => {
   });
 
   afterEach(() => {
+    clearRecentAiPathRunEnqueue();
     vi.unstubAllGlobals();
-    window.localStorage.clear();
+    resetOptimisticQueue();
+  });
+
+  it('hydrates without a text mismatch when optimistic runs are already in client storage', async () => {
+    const serverMarkup = renderToString(
+      <JobQueueProvider>
+        <QueueCountProbe />
+      </JobQueueProvider>
+    );
+    expect(serverMarkup).toContain('0:0');
+
+    rememberOptimisticAiPathRun(buildOptimisticRun());
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    container.innerHTML = serverMarkup;
+
+    const recoverableErrors: string[] = [];
+    let root: ReturnType<typeof hydrateRoot> | null = null;
+
+    await act(async () => {
+      root = hydrateRoot(
+        container,
+        <JobQueueProvider>
+          <QueueCountProbe />
+        </JobQueueProvider>,
+        {
+          onRecoverableError: (error) => {
+            recoverableErrors.push(error.message);
+          },
+        }
+      );
+      await Promise.resolve();
+    });
+
+    expect(recoverableErrors).toEqual([]);
+    expect(container.textContent).toContain('1:1');
+
+    await act(async () => {
+      root?.unmount();
+    });
+    container.remove();
   });
 
   it('refreshes queue only for valid window enqueue events', () => {
@@ -123,6 +206,36 @@ describe('JobQueueProvider enqueue event listeners', () => {
       window.dispatchEvent(
         new CustomEvent(AI_PATH_RUN_ENQUEUED_EVENT_NAME, {
           detail: { runId: 'run-valid' },
+        })
+      );
+    });
+
+    expect(mocks.refetchRunsMock).toHaveBeenCalledTimes(1);
+    expect(mocks.refetchQueueStatusMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('still refreshes queue when recent enqueue persistence fails', () => {
+    renderProvider();
+
+    mocks.refetchRunsMock.mockClear();
+    mocks.refetchQueueStatusMock.mockClear();
+
+    const originalSetItem = window.localStorage.setItem.bind(window.localStorage);
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string
+    ): void {
+      if (key === 'ai-path-run-recent-enqueue') {
+        throw new Error('Quota exceeded');
+      }
+      return originalSetItem(key, value);
+    });
+
+    act(() => {
+      window.dispatchEvent(
+        new CustomEvent(AI_PATH_RUN_ENQUEUED_EVENT_NAME, {
+          detail: { runId: 'run-quota' },
         })
       );
     });

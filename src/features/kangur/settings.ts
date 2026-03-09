@@ -21,6 +21,8 @@ export const KANGUR_LESSON_SORT_ORDER_GAP = 1000;
 export const KANGUR_NARRATOR_SETTINGS_KEY = 'kangur_narrator_settings_v1';
 export const KANGUR_PARENT_VERIFICATION_SETTINGS_KEY = 'kangur_parent_verification_email_settings_v1';
 export const KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_SECONDS = 60;
+export const KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS =
+  KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_SECONDS * 1000;
 
 export type KangurNarratorEngine = 'server' | 'client';
 export type KangurParentVerificationEmailSettings = {

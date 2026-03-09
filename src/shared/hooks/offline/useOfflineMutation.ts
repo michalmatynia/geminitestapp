@@ -20,6 +20,7 @@ interface QueuedMutation {
   optimisticUpdate?: ((oldData: unknown) => unknown) | undefined;
   invalidateKeys?: readonly (readonly unknown[])[] | undefined;
   onProcessed?: ((context: { queryClient: QueryClient }) => void) | undefined;
+  onFailed?: ((context: { queryClient: QueryClient; error: unknown }) => void) | undefined;
   timestamp: number;
 }
 
@@ -63,6 +64,7 @@ class OfflineMutationQueue {
           this.queue.unshift(mutation);
           break;
         }
+        mutation.onFailed?.({ queryClient, error });
       }
     }
 
@@ -73,7 +75,7 @@ class OfflineMutationQueue {
   private saveToStorage(): void {
     if (typeof window !== 'undefined') {
       const payload = this.queue.map(
-        ({ mutationFn: _, onProcessed: __, ...rest }: QueuedMutation) => rest
+        ({ mutationFn: _, onProcessed: __, onFailed: ___, ...rest }: QueuedMutation) => rest
       );
       if (payload.length === 0) {
         localStorage.removeItem('offline-mutation-queue');
@@ -89,11 +91,16 @@ class OfflineMutationQueue {
       if (stored) {
         try {
           const parsed = JSON.parse(stored) as QueuedMutation[];
-          this.queue = parsed.filter(
+          const restoredQueue = parsed.filter(
             (item: QueuedMutation): boolean => typeof item?.mutationFn === 'function'
           );
+          if (restoredQueue.length > 0 || this.queue.length === 0) {
+            this.queue = restoredQueue;
+          }
         } catch {
-          this.queue = [];
+          if (this.queue.length === 0) {
+            this.queue = [];
+          }
         }
       }
     }
@@ -148,6 +155,11 @@ export function useOfflineMutation<
     processedMessage?: string;
     onQueued?: (variables: TVariables, context: { queryClient: QueryClient }) => void;
     onProcessed?: (variables: TVariables, context: { queryClient: QueryClient }) => void;
+    onFailed?: (
+      variables: TVariables,
+      context: { queryClient: QueryClient },
+      error: Error
+    ) => void;
   }
 ): UseMutationResult<TData, TError, TVariables, TContext> {
   const queryClient = useQueryClient();
@@ -193,6 +205,12 @@ export function useOfflineMutation<
           queryKey: options.queryKey,
           invalidateKeys: extraKeys,
           onProcessed: () => options.onProcessed?.(variables, { queryClient }),
+          onFailed: ({ error }: { error: unknown }) =>
+            options.onFailed?.(
+              variables,
+              { queryClient },
+              error instanceof Error ? error : new Error('Queued mutation failed')
+            ),
           timestamp: Date.now(),
         });
 

@@ -1,3 +1,4 @@
+import { writeSync } from 'node:fs';
 import process from 'node:process';
 
 import { buildScanOutput } from '../architecture/lib/scan-output.mjs';
@@ -36,6 +37,30 @@ export const buildStaticCheckFilters = ({
   noWrite: true,
 });
 
+const writeStdoutSync = (text) => {
+  if (!Number.isInteger(process.stdout.fd)) {
+    process.stdout.write(text);
+    return;
+  }
+
+  const buffer = Buffer.from(text, 'utf8');
+  let offset = 0;
+  while (offset < buffer.length) {
+    try {
+      const written = writeSync(process.stdout.fd, buffer, offset, buffer.length - offset);
+      offset += written;
+    } catch (error) {
+      if (error && typeof error === 'object' && 'code' in error) {
+        const code = error.code;
+        if (code === 'EAGAIN' || code === 'EINTR') {
+          continue;
+        }
+      }
+      throw error;
+    }
+  }
+};
+
 /**
  * @param {SummaryJsonOptions} options
  */
@@ -62,6 +87,7 @@ export const writeSummaryJson = ({
     notes,
   });
 
-  console.log(JSON.stringify(payload, null, 2));
+  const text = `${JSON.stringify(payload, null, 2)}\n`;
+  writeStdoutSync(text);
   return payload;
 };

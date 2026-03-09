@@ -401,11 +401,12 @@ export function DocsTabPanel(): React.JSX.Element {
 
       {showDescriptionFlow ? (
         <DocumentationList
-          title='AI Description Flow'
+          title='Description Inference Flow'
           items={[
             'Context Filter.entityJson → Parser.entityJson',
-            'Parser.title/images → AI Description Generator',
-            'AI Description Generator.description_en → Database.content_en',
+            'Parser.title/images → Prompt',
+            'Prompt.prompt/images → Model',
+            'Model.result → Database.content_en',
             'Parser.productId → Database.entityId',
             '(Optional) Database.result → Result Viewer.result',
           ]}

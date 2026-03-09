@@ -15,7 +15,7 @@ export type TriggerProvenanceContext = {
 };
 
 export const checkTriggerProvenance = (ctx: TriggerProvenanceContext): boolean => {
-  const { scopedNodeIds, nodeById, state, triggerContext, triggerSource } = ctx;
+  const { scopedNodeIds, nodeById, state, triggerContext } = ctx;
   const simulationNodesInScope = Array.from(scopedNodeIds)
     .map((id) => nodeById.get(id))
     .filter((n): n is AiNode => !!n && (n.type === 'simulation' || isSimulationCapableFetcher(n)));
@@ -29,7 +29,7 @@ export const checkTriggerProvenance = (ctx: TriggerProvenanceContext): boolean =
     (out) => out && hasValuableSimulationContext((out['context'] as Record<string, unknown>) ?? {})
   );
 
-  if (triggerSource?.type === 'simulation' || hasLiveProvenance || hasSimNodeProvenance) {
+  if (hasLiveProvenance || hasSimNodeProvenance) {
     return true;
   }
 
@@ -38,21 +38,5 @@ export const checkTriggerProvenance = (ctx: TriggerProvenanceContext): boolean =
 };
 
 export const validateTriggerProvenanceFeasibility = (ctx: TriggerProvenanceContext): void => {
-  const { triggerSource, triggerContext, scopedNodeIds, nodeById } = ctx;
-  if (
-    triggerSource?.config?.trigger?.contextMode === 'simulation_required' &&
-    !(
-      triggerSource?.type === 'simulation' ||
-      (triggerContext && checkContextMatchesSimulation(triggerContext)) ||
-      Array.from(scopedNodeIds).some((id) => {
-        const n = nodeById.get(id);
-        return n && (n.type === 'simulation' || isSimulationCapableFetcher(n));
-      })
-    )
-  ) {
-    // Note: Caller should handle GraphExecutionError as it needs RuntimeState snapshot
-    throw new Error(
-      `Trigger "${triggerSource.title || triggerSource.id}" requires simulation context but none was provided or resolved.`
-    );
-  }
+  void ctx;
 };

@@ -2,15 +2,11 @@
   "schemaVersion": "ai-paths.node-code-object-index.v3-scaffold",
   "generatedAt": "2026-03-05T00:00:00.000Z",
   "strategy": "code_object_v3",
-  "totalObjects": 36,
+  "totalObjects": 34,
   "objects": [
     {
       "nodeType": "agent",
       "objectFile": "docs/ai-paths/node-code-objects-v3/agent.scaffold.json"
-    },
-    {
-      "nodeType": "ai_description",
-      "objectFile": "docs/ai-paths/node-code-objects-v3/ai_description.scaffold.json"
     },
     {
       "nodeType": "api_advanced",
@@ -51,10 +47,6 @@
     {
       "nodeType": "delay",
       "objectFile": "docs/ai-paths/node-code-objects-v3/delay.scaffold.json"
-    },
-    {
-      "nodeType": "description_updater",
-      "objectFile": "docs/ai-paths/node-code-objects-v3/description_updater.scaffold.json"
     },
     {
       "nodeType": "fetcher",

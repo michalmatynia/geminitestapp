@@ -12,8 +12,9 @@ import {
   useProductsWithCount,
 } from '@/features/products/hooks/useProductsQuery';
 import {
-  addQueuedProductId,
-  removeQueuedProductId,
+  addQueuedProductSource,
+  buildQueuedProductOfflineMutationSource,
+  removeQueuedProductSource,
 } from '@/features/products/state/queued-product-ops';
 import {
   productAdvancedFilterGroupSchema,
@@ -37,6 +38,8 @@ import {
 } from './productCache';
 
 const PRODUCT_UPDATE_FORM_TIMEOUT_MS = 60_000;
+const PRODUCT_UPDATE_QUEUE_SOURCE = buildQueuedProductOfflineMutationSource('update');
+const PRODUCT_DELETE_QUEUE_SOURCE = buildQueuedProductOfflineMutationSource('delete');
 
 type ProductListCacheValue =
   | ProductWithImages[]
@@ -253,12 +256,17 @@ export function useUpdateProductMutation(): UseMutationResult<
         id: string;
         data: Partial<ProductWithImages> | FormData;
         originalSku?: string | null;
-      }) => addQueuedProductId(variables.id),
+      }) => addQueuedProductSource(variables.id, PRODUCT_UPDATE_QUEUE_SOURCE),
       onProcessed: (variables: {
         id: string;
         data: Partial<ProductWithImages> | FormData;
         originalSku?: string | null;
-      }) => removeQueuedProductId(variables.id),
+      }) => removeQueuedProductSource(variables.id, PRODUCT_UPDATE_QUEUE_SOURCE),
+      onFailed: (variables: {
+        id: string;
+        data: Partial<ProductWithImages> | FormData;
+        originalSku?: string | null;
+      }) => removeQueuedProductSource(variables.id, PRODUCT_UPDATE_QUEUE_SOURCE),
     }
   );
 }
@@ -290,8 +298,12 @@ export function useBulkDeleteProductsMutation(): UseMutationResult<
       queuedMessage: 'Product deletion queued in runtime queue.',
       processedMessage: 'Queued product deletion completed.',
       errorMessage: 'Failed to delete some products',
-      onQueued: (ids: string[]) => ids.forEach((id: string) => addQueuedProductId(id)),
-      onProcessed: (ids: string[]) => ids.forEach((id: string) => removeQueuedProductId(id)),
+      onQueued: (ids: string[]) =>
+        ids.forEach((id: string) => addQueuedProductSource(id, PRODUCT_DELETE_QUEUE_SOURCE)),
+      onProcessed: (ids: string[]) =>
+        ids.forEach((id: string) => removeQueuedProductSource(id, PRODUCT_DELETE_QUEUE_SOURCE)),
+      onFailed: (ids: string[]) =>
+        ids.forEach((id: string) => removeQueuedProductSource(id, PRODUCT_DELETE_QUEUE_SOURCE)),
     }
   );
 }

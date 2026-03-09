@@ -121,6 +121,24 @@ export const formatDate = (value?: Date | string | null): string => {
   return date.toLocaleString();
 };
 
+export const formatUtcClockTime = (
+  value?: Date | string | number | null
+): string => {
+  if (value === null || value === undefined || value === '') return '-';
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+  return `${date.toISOString().slice(11, 19)} UTC`;
+};
+
+export const formatUtcDateTime = (
+  value?: Date | string | number | null
+): string => {
+  if (value === null || value === undefined || value === '') return '-';
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+  return `${date.toISOString().slice(0, 19).replace('T', ' ')} UTC`;
+};
+
 export const formatDurationMs = (value?: number | null): string => {
   if (value === null || value === undefined || Number.isNaN(value)) return '-';
   if (value < 1000) return `${Math.max(0, value)}ms`;

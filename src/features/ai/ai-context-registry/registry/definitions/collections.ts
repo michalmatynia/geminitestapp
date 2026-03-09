@@ -13,6 +13,7 @@ export const collectionNodes: ContextNode[] = [
     tags: ['products', 'mongo', 'database', 'catalog'],
     relationships: [
       { type: 'related_to', targetId: 'collection:orders' },
+      { type: 'related_to', targetId: 'action:product-validator-runtime-evaluate' },
       { type: 'related_to', targetId: 'action:product-studio-send' },
     ],
     jsonSchema2020: {

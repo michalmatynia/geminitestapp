@@ -172,6 +172,7 @@ export const aiPathRunEnqueuedEventSchema = z.object({
   entityType: nonEmptyTrimmedStringSchema
     .nullish()
     .transform((value) => (value ? value.toLowerCase() : null)),
+  run: aiPathRunRecordSchema.optional(),
   at: z.number().int().nonnegative().optional(),
 });
 

@@ -3,18 +3,43 @@ import {
   canvasSemanticDocumentSchema,
   semanticDocumentSchema,
 } from '@/shared/contracts/ai-paths-semantic-grammar';
-
 import type {
   CanvasSemanticDocument,
   SemanticEdge,
   SemanticNode,
   ParseSemanticDocumentResult,
 } from '@/shared/contracts/ai-paths-semantic-grammar';
-
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
+import {
+  findRemovedLegacyAiPathNodesInDocument,
+  formatRemovedLegacyAiPathNodesMessage,
+} from '@/shared/lib/ai-paths/core/utils/legacy-node-removal';
+import {
+  findRemovedLegacyTriggerContextModesInDocument,
+  formatRemovedLegacyTriggerContextModesMessage,
+} from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
+
 import { normalizeAiPathsValidationConfig } from '../validation-engine';
 
 export const parseSemanticDocument = (input: unknown): ParseSemanticDocumentResult => {
+  const removedLegacyNodes = findRemovedLegacyAiPathNodesInDocument(input);
+  if (removedLegacyNodes.length > 0) {
+    return {
+      ok: false,
+      error: formatRemovedLegacyAiPathNodesMessage(removedLegacyNodes, {
+        surface: 'semantic document',
+      }),
+    };
+  }
+  const removedLegacyTriggerContextModes = findRemovedLegacyTriggerContextModesInDocument(input);
+  if (removedLegacyTriggerContextModes.length > 0) {
+    return {
+      ok: false,
+      error: formatRemovedLegacyTriggerContextModesMessage(removedLegacyTriggerContextModes, {
+        surface: 'semantic document',
+      }),
+    };
+  }
   const parsed = semanticDocumentSchema.safeParse(input);
   if (parsed.success) {
     return { ok: true, value: parsed.data };
@@ -28,6 +53,24 @@ export const parseSemanticDocument = (input: unknown): ParseSemanticDocumentResu
 };
 
 export const parseSemanticCanvasDocument = (input: unknown): ParseSemanticDocumentResult => {
+  const removedLegacyNodes = findRemovedLegacyAiPathNodesInDocument(input);
+  if (removedLegacyNodes.length > 0) {
+    return {
+      ok: false,
+      error: formatRemovedLegacyAiPathNodesMessage(removedLegacyNodes, {
+        surface: 'semantic document',
+      }),
+    };
+  }
+  const removedLegacyTriggerContextModes = findRemovedLegacyTriggerContextModesInDocument(input);
+  if (removedLegacyTriggerContextModes.length > 0) {
+    return {
+      ok: false,
+      error: formatRemovedLegacyTriggerContextModesMessage(removedLegacyTriggerContextModes, {
+        surface: 'semantic document',
+      }),
+    };
+  }
   const parsed = canvasSemanticDocumentSchema.safeParse(input);
   if (parsed.success) {
     return { ok: true, value: parsed.data };

@@ -38,6 +38,10 @@ import {
   validateCanonicalPathNodeIdentities,
 } from '@/shared/lib/ai-paths';
 import { sanitizeTriggerPathConfig } from '@/shared/lib/ai-paths/core/normalization/trigger-normalization';
+import {
+  findRemovedLegacyTriggerContextModesInDocument,
+  formatRemovedLegacyTriggerContextModesMessage,
+} from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 const enqueueSchema = z.object({
@@ -120,6 +124,14 @@ const loadStoredPathConfig = async (pathId: string): Promise<PathConfig> => {
     parsed = JSON.parse(raw) as unknown;
   } catch {
     throw badRequestError(`Stored AI Path config for "${pathId}" is invalid JSON.`);
+  }
+  const removedLegacyTriggerContextModes = findRemovedLegacyTriggerContextModesInDocument(parsed);
+  if (removedLegacyTriggerContextModes.length > 0) {
+    throw badRequestError(
+      formatRemovedLegacyTriggerContextModesMessage(removedLegacyTriggerContextModes, {
+        surface: 'path config',
+      })
+    );
   }
 
   const validation = pathConfigSchema.safeParse(parsed);

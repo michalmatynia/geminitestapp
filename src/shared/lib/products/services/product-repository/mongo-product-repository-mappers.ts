@@ -121,7 +121,7 @@ const normalizeParameterValues = (input: unknown): ProductParameterValue[] => {
       toTrimmedString(record['parameterId']) ?? ''
     );
     if (!parameterId) return;
-    const value = typeof record['value'] === 'string' ? record['value'] : '';
+    const value = typeof record['value'] === 'string' ? record['value'].trim() : '';
     const valuesByLanguageRaw = record['valuesByLanguage'];
     const valuesByLanguage =
       valuesByLanguageRaw &&

@@ -4,6 +4,7 @@ import { Alert, Button, StatusBadge } from '@/shared/ui';
 
 import {
   formatDurationMs,
+  formatUtcClockTime,
   getSloVariant,
   type QueueHistoryEntry,
   type QueueStatus,
@@ -63,9 +64,7 @@ export function JobQueueOverview(props: JobQueueOverviewProps): React.JSX.Elemen
         <div className='rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300'>
           <div className='text-[10px] uppercase text-gray-500'>Last poll</div>
           <div className='mt-1 text-sm text-white'>
-            {queueStatus?.lastPollTime
-              ? new Date(queueStatus.lastPollTime).toLocaleTimeString()
-              : '-'}
+            {formatUtcClockTime(queueStatus?.lastPollTime)}
           </div>
           <div className='mt-1 text-[11px] text-gray-400'>
             Age: {formatDurationMs(queueStatus?.timeSinceLastPoll ?? null)}
@@ -202,7 +201,7 @@ export function JobQueueOverview(props: JobQueueOverviewProps): React.JSX.Elemen
               Last {queueHistory.length} samples · refresh{' '}
               {autoRefreshEnabled ? `${Math.round(autoRefreshInterval / 1000)}s` : 'off'}
               {queueHistory.length > 0
-                ? ` · last sample ${new Date(queueHistory[queueHistory.length - 1]!.ts).toLocaleTimeString()}`
+                ? ` · last sample ${formatUtcClockTime(queueHistory[queueHistory.length - 1]!.ts)}`
                 : ''}
             </div>
           </div>
@@ -241,7 +240,7 @@ export function JobQueueOverview(props: JobQueueOverviewProps): React.JSX.Elemen
                         key={`${entry.ts}-${index}`}
                         className='w-[5px] rounded bg-emerald-400/60'
                         style={{ height: `${height}%` }}
-                        title={`${entry.queued} queued @ ${new Date(entry.ts).toLocaleTimeString()}`}
+                        title={`${entry.queued} queued @ ${formatUtcClockTime(entry.ts)}`}
                       />
                     );
                   })

@@ -36,6 +36,7 @@ const workspaceRoot = process.cwd();
 const manifestPath = path.join(workspaceRoot, 'docs/ai-paths/tooltip-central-manifest.json');
 const outputTsPath = path.join(workspaceRoot, 'docs/ai-paths/tooltip-catalog.ts');
 const outputJsonPath = path.join(workspaceRoot, 'docs/ai-paths/tooltip-catalog.json');
+const liveNodeTypeSet = new Set<string>(AI_PATHS_NODE_DOCS.map((doc) => doc.type));
 
 const tooltipEntrySchema = z.object({
   id: z.string().trim().min(1),
@@ -204,7 +205,9 @@ const buildSemanticIndexEntries = (source: TooltipManifestSource): TooltipCatalo
     throw new Error(`Invalid semantic node index: ${source.path}`);
   }
 
-  return result.data.map((row) =>
+  return result.data
+    .filter((row) => liveNodeTypeSet.has(row.nodeType))
+    .map((row) =>
     formatEntry({
       id: `semantic_node_${row.nodeType}`,
       title: `Semantic Node JSON: ${row.title}`,
@@ -215,7 +218,7 @@ const buildSemanticIndexEntries = (source: TooltipManifestSource): TooltipCatalo
       tags: [...source.tags, 'semantic-node'],
       uiTargets: [`docs.semantic.${row.nodeType}`],
     })
-  );
+    );
 };
 
 const buildSnippetEntries = (source: TooltipManifestSource): TooltipCatalogEntry[] => {

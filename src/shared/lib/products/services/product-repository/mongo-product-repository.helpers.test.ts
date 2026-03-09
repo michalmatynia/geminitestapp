@@ -26,7 +26,7 @@ describe('mongo normalizeProductParameterValues', () => {
     ]);
   });
 
-  it('allows clearing stale localized values when latest duplicate entry omits language map', () => {
+  it('keeps the parameter with an empty value when latest duplicate entry clears every value', () => {
     const normalized = normalizeProductParameterValues([
       {
         parameterId: 'name',

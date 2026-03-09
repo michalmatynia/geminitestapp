@@ -4,7 +4,9 @@ import {
   appendMissingGeometryKangurLessons,
   appendMissingLogicalThinkingKangurLessons,
   createDefaultKangurLessons,
+  KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_SECONDS,
   parseKangurNarratorSettings,
+  parseKangurParentVerificationEmailSettings,
   normalizeKangurLessons,
 } from '@/features/kangur/settings';
 import { KANGUR_TTS_DEFAULT_VOICE } from '@/features/kangur/tts/contracts';
@@ -97,6 +99,30 @@ describe('kangur lesson settings', () => {
       engine: 'server',
       voice: 'sage',
     });
+  });
+
+  it('parses parent verification settings with defaults', () => {
+    expect(parseKangurParentVerificationEmailSettings(undefined)).toEqual({
+      resendCooldownSeconds: KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_SECONDS,
+    });
+    expect(parseKangurParentVerificationEmailSettings('null')).toEqual({
+      resendCooldownSeconds: KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_SECONDS,
+    });
+    expect(parseKangurParentVerificationEmailSettings(JSON.stringify({}))).toEqual({
+      resendCooldownSeconds: KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_SECONDS,
+    });
+  });
+
+  it('parses and clamps parent verification cooldown values', () => {
+    expect(
+      parseKangurParentVerificationEmailSettings(JSON.stringify({ resendCooldownSeconds: 15 }))
+    ).toEqual({ resendCooldownSeconds: 15 });
+    expect(
+      parseKangurParentVerificationEmailSettings(JSON.stringify({ resendCooldownSeconds: -5 }))
+    ).toEqual({ resendCooldownSeconds: 1 });
+    expect(
+      parseKangurParentVerificationEmailSettings(JSON.stringify({ resendCooldownSeconds: 5000 }))
+    ).toEqual({ resendCooldownSeconds: 3600 });
   });
 
   it('appends missing geometry lessons to an existing legacy-like list', () => {

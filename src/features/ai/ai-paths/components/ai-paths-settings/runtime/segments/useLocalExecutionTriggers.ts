@@ -7,15 +7,9 @@ import { buildTriggerContext, createRunId, mergeRuntimeNodeOutputsForStatus } fr
 import { evaluateLocalExecutionSecurity } from '../local-execution-security';
 import type { LocalExecutionArgs } from '../types';
 import {
-  buildSimulationOutputsFromContext,
-  isSimulationCapableFetcher,
   normalizeEntityType,
   readEntityIdFromContext,
   readEntityTypeFromContext,
-  resolveSimulationRunBehavior,
-  resolveTriggerContextMode,
-  hasEntityReference,
-  hasSimulationContextProvenance,
 } from '../useAiPathsLocalExecution.helpers';
 
 export function useLocalExecutionTriggers(
@@ -170,16 +164,8 @@ export function useLocalExecutionTriggers(
         activeTab: args.activeTab,
         activeTrigger: args.activeTrigger,
       };
-      const triggerContextMode = resolveTriggerContextMode(triggerNode);
-      const connectedSimulationNodes = getConnectedSimulationNodesForTrigger(triggerNode.id);
-      const connectedFetcherNodes = getConnectedFetcherNodesForTrigger(triggerNode.id);
-      const hasSimulationFetcherSource = connectedFetcherNodes.some((node: AiNode): boolean =>
-        isSimulationCapableFetcher(node)
-      );
       const baseTriggerContext = buildTriggerContext(triggerContextArgs);
       const simulationSeedOutputs: Record<string, RuntimePortValues> = {};
-      let resolvedSimulationContext: Record<string, unknown> | null = null;
-      const allowSimulationContext = triggerContextMode !== 'trigger_only';
       const localSecurityIssues = evaluateLocalExecutionSecurity(args.normalizedNodes);
       if (args.executionMode === 'local' && localSecurityIssues.length > 0) {
         const timestamp = new Date().toISOString();
@@ -511,81 +497,10 @@ export function useLocalExecutionTriggers(
         args.toast(warningMessage, { variant: 'warning' });
       }
 
-      if (allowSimulationContext && connectedSimulationNodes.length > 0) {
-        for (const simulationNode of connectedSimulationNodes) {
-          const runBehavior = resolveSimulationRunBehavior(simulationNode);
-          const hasExplicitContext = hasEntityReference(contextOverride ?? null);
-          const shouldResolve =
-            runBehavior === 'before_connected_trigger' ||
-            (runBehavior === 'manual_only' && hasExplicitContext);
-          if (!shouldResolve) continue;
-          const simulationContext = await resolveSimulationContextForNode(
-            simulationNode,
-            runBehavior === 'manual_only' ? (contextOverride ?? null) : null
-          );
-          if (!simulationContext) continue;
-          simulationSeedOutputs[simulationNode.id] =
-            buildSimulationOutputsFromContext(simulationContext);
-          resolvedSimulationContext = {
-            ...(resolvedSimulationContext || {}),
-            ...(simulationContext || {}),
-          };
-        }
-      }
-
       const triggerContext = {
         ...baseTriggerContext,
-        ...(allowSimulationContext ? (resolvedSimulationContext ?? {}) : {}),
         ...(contextOverride ?? {}),
       };
-
-      const simulationSatisfiedFromOverride = hasSimulationContextProvenance(
-        contextOverride ?? null
-      );
-      const simulationContextSatisfied =
-        Boolean(resolvedSimulationContext) ||
-        simulationSatisfiedFromOverride ||
-        hasSimulationFetcherSource;
-      if (triggerContextMode === 'simulation_required' && !simulationContextSatisfied) {
-        const timestamp = new Date().toISOString();
-        const blockedMessage =
-          'Trigger requires Simulation context. Connect Trigger -> Fetcher with simulated source mode, or set connected Simulation nodes to "Auto-run before connected Trigger".';
-        args.appendRuntimeEvent({
-          source: 'local',
-          kind: 'run_blocked',
-          level: 'warn',
-          timestamp,
-          message: blockedMessage,
-          nodeId: triggerNode.id,
-          nodeType: triggerNode.type,
-          nodeTitle: triggerNode.title ?? null,
-          metadata: {
-            triggerContextMode,
-            connectedSimulationNodeIds: connectedSimulationNodes.map((node) => node.id),
-            connectedFetcherNodeIds: connectedFetcherNodes.map((node) => node.id),
-            hasSimulationFetcherSource,
-            hasSimulationContextOverride: simulationSatisfiedFromOverride,
-          },
-        });
-        args.setNodeStatus({
-          nodeId: triggerNode.id,
-          status: 'blocked',
-          source: 'local',
-          nodeType: triggerNode.type,
-          nodeTitle: triggerNode.title ?? null,
-          kind: 'node_status',
-          level: 'warn',
-          message: blockedMessage,
-          metadata: {
-            triggerContextMode,
-            connectedFetcherNodeIds: connectedFetcherNodes.map((node) => node.id),
-            hasSimulationFetcherSource,
-            hasSimulationContextOverride: simulationSatisfiedFromOverride,
-          },
-        });
-        args.toast(blockedMessage, { variant: 'warning' });
-        return;
-      }
 
       if (args.serverRunActiveRef.current) {
         args.stopServerRunStream();

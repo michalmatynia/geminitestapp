@@ -22,6 +22,7 @@ import type { AiNode, AiPathRunRecord, PathConfig } from '@/shared/contracts/ai-
 import type { ParserSampleState, UpdaterSampleState } from '@/shared/contracts/ai-paths-core/nodes';
 import {
   invalidateAiPathSettings,
+  notifyAiPathRunEnqueued,
   optimisticallyInsertAiPathRunInQueueCache,
 } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
@@ -488,6 +489,7 @@ export function useAiPathTriggerEvent(): {
         await handleAiPathTriggerInvalidation({
           queryClient,
           runId,
+          run: queuedRunForCache,
           entityType: args.entityType,
           entityId: args.entityId,
         });
@@ -513,14 +515,41 @@ export function useAiPathTriggerEvent(): {
 
         void listAiPathRuns({
           pathId: selectedConfig.id,
+          requestId,
           status: 'running',
           limit: 1,
+          fresh: true,
         }).then((waitResult) => {
           if (!waitResult.ok) {
             logClientError(new Error('Wait for run status failed'), {
               context: { source: 'useAiPathTriggerEvent', action: 'waitForStatusError', runId },
             });
+            return;
           }
+          const runningRunCandidate = Array.isArray(waitResult.data?.runs)
+            ? (waitResult.data.runs.find(
+              (candidate: unknown): boolean =>
+                Boolean(candidate) &&
+                typeof candidate === 'object' &&
+                (candidate as { id?: unknown }).id === runId
+            ) ??
+              waitResult.data.runs[0] ??
+              null)
+            : null;
+          if (!runningRunCandidate || typeof runningRunCandidate !== 'object') {
+            return;
+          }
+          const runningRunForCache = mergeEnqueuedAiPathRunForCache({
+            fallbackRun: queuedRunForCache,
+            runId,
+            runRecord: runningRunCandidate as AiPathRunRecord,
+          });
+          optimisticallyInsertAiPathRunInQueueCache(queryClient, runningRunForCache);
+          notifyAiPathRunEnqueued(runId, {
+            entityId: args.entityId ?? null,
+            entityType: args.entityType,
+            run: runningRunForCache,
+          });
         });
       } catch (error) {
         const message =

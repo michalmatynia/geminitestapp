@@ -17,7 +17,6 @@ This folder contains the per-node migration sheets for `code_object_v3` node mig
 ## Node Sheets
 
 - [`agent.md`](./agent.md)
-- [`ai_description.md`](./ai_description.md)
 - [`api_advanced.md`](./api_advanced.md)
 - [`audio_oscillator.md`](./audio_oscillator.md)
 - [`audio_speaker.md`](./audio_speaker.md)
@@ -28,7 +27,6 @@ This folder contains the per-node migration sheets for `code_object_v3` node mig
 - [`database.md`](./database.md)
 - [`db_schema.md`](./db_schema.md)
 - [`delay.md`](./delay.md)
-- [`description_updater.md`](./description_updater.md)
 - [`fetcher.md`](./fetcher.md)
 - [`gate.md`](./gate.md)
 - [`http.md`](./http.md)

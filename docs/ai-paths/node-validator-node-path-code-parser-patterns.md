@@ -101,7 +101,6 @@ Primary docs bindings:
       "operator": "node_types_known",
       "list": [
         "agent",
-        "ai_description",
         "api_advanced",
         "audio_oscillator",
         "audio_speaker",
@@ -112,7 +111,6 @@ Primary docs bindings:
         "database",
         "db_schema",
         "delay",
-        "description_updater",
         "fetcher",
         "gate",
         "http",

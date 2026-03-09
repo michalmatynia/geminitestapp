@@ -285,64 +285,7 @@ export const compileGraph = (
     }
   });
 
-  // 6. Trigger context resolution risk
-  nodes.forEach((node) => {
-    if (node.type === 'trigger' && node.config?.trigger?.contextMode === 'simulation_required') {
-      const incomingEdges = edgeMap.get(node.id) ?? [];
-      const outgoingEdges = outgoingEdgeMap.get(node.id) ?? [];
-
-      let hasSimulationSource = false;
-      let hasManualOnlySimulation = false;
-      let hasTriggerFetcherPath = false;
-      let hasTriggerFetcherSimulationMode = false;
-
-      incomingEdges.forEach((e) => {
-        const source = nodeMap.get(e.from || '');
-        if (source?.type === 'simulation') {
-          if (source.config?.simulation?.runBehavior !== 'manual_only') {
-            hasSimulationSource = true;
-            return;
-          }
-          hasManualOnlySimulation = true;
-        }
-        if (source?.type === 'fetcher') {
-          hasTriggerFetcherPath = true;
-          if (source.config?.fetcher?.sourceMode === 'simulation_id') {
-            hasSimulationSource = true;
-            hasTriggerFetcherSimulationMode = true;
-          }
-        }
-      });
-
-      outgoingEdges.forEach((e) => {
-        if (e.fromPort !== 'trigger' || e.toPort !== 'trigger') return;
-        const target = nodeMap.get(e.to || '');
-        if (target?.type !== 'fetcher') return;
-        hasTriggerFetcherPath = true;
-        if (target.config?.fetcher?.sourceMode === 'simulation_id') {
-          hasSimulationSource = true;
-          hasTriggerFetcherSimulationMode = true;
-        }
-      });
-
-      if (!hasSimulationSource) {
-        let message = `Trigger "${node.title || node.id}" requires simulation context but no simulation-capable source is connected, or source is manual-only.`;
-        if (hasManualOnlySimulation) {
-          message = `Trigger "${node.title || node.id}" requires simulation context, but connected Simulation is manual-only. Set Simulation run behavior to Auto-run before connected Trigger.`;
-        } else if (hasTriggerFetcherPath && !hasTriggerFetcherSimulationMode) {
-          message = `Trigger "${node.title || node.id}" requires simulation context but no simulation-capable source is connected via Trigger -> Fetcher.`;
-        }
-        findings.push({
-          code: 'trigger_context_resolution_risk',
-          severity: 'warning',
-          message,
-          nodeId: node.id,
-        });
-      }
-    }
-  });
-
-  // 7. Model prompt deadlock risk
+  // 6. Model prompt deadlock risk
   nodes.forEach((node) => {
     if (node.type === 'model') {
       const isPromptRequired = getNodeInputPortContract(node, 'prompt').required;

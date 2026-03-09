@@ -16,7 +16,6 @@ import {
   DATABASE_INPUT_PORTS,
   DELAY_INPUT_PORTS,
   DELAY_OUTPUT_PORTS,
-  DESCRIPTION_OUTPUT_PORTS,
   HTTP_INPUT_PORTS,
   API_ADVANCED_INPUT_PORTS,
   MODEL_OUTPUT_PORTS,
@@ -184,14 +183,6 @@ const basePalette: NodeDefinition[] = [
     inputs: NOTIFICATION_INPUT_PORTS,
     outputs: [],
     inputContracts: buildOptionalInputContracts(NOTIFICATION_INPUT_PORTS),
-  },
-  {
-    type: 'ai_description',
-    title: 'AI Description Generator',
-    description: 'Runs the AI Description pipeline to produce description_en.',
-    inputs: ['entityJson', 'images', 'title'],
-    outputs: DESCRIPTION_OUTPUT_PORTS,
-    inputContracts: buildRequiredInputContracts(['entityJson', 'images', 'title'], ['entityJson']),
   },
   {
     type: 'context',

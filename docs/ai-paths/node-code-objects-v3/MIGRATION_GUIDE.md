@@ -35,10 +35,10 @@ Generated at: 2026-03-05T00:00:00.000Z
 
 ## Strategy Totals
 
-- Total node types: 36
+- Total node types: 34
 - `compatibility`: 0
-- `code_object_v3`: 36
-- v3 contracts hash: `3c1f9408662c3f08c65268df19d15ca4aa22f3886e7ab3157ee0af290605d40e`
+- `code_object_v3`: 34
+- v3 contracts hash: `ccaeb5d779cae157bfdf1a4b5cdfad63637bff6256f0a67021e147f0c50db76f`
 
 ## Readiness Scorecard
 
@@ -51,7 +51,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 | `scaffolded` | 0 |
 | `runtime_kernel_indexed` | 0 |
 | `rollout_candidate` | 0 |
-| `rollout_approved` | 36 |
+| `rollout_approved` | 34 |
 
 ## Parity Evidence
 
@@ -59,14 +59,14 @@ Generated at: 2026-03-05T00:00:00.000Z
 - Schema version: `ai-paths.node-migration-parity-evidence.v2`
 - Generated at: `2026-03-05T00:00:00.000Z`
 - Evidence suites: 2
-- Validated node types: `agent`, `ai_description`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `bundle`, `compare`, `constant`, `context`, `database`, `db_schema`, `delay`, `description_updater`, `fetcher`, `gate`, `http`, `iterator`, `learner_agent`, `mapper`, `math`, `model`, `mutator`, `notification`, `parser`, `playwright`, `poll`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`
+- Validated node types: `agent`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `bundle`, `compare`, `constant`, `context`, `database`, `db_schema`, `delay`, `fetcher`, `gate`, `http`, `iterator`, `learner_agent`, `mapper`, `math`, `model`, `mutator`, `notification`, `parser`, `playwright`, `poll`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`
 
 ## Rollout Approvals
 
 - Source file: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`
 - Schema version: `ai-paths.node-migration-rollout-approvals.v1`
 - Generated at: `2026-03-06T00:00:00.000Z`
-- Approved node types: `agent`, `ai_description`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `bundle`, `compare`, `constant`, `context`, `database`, `db_schema`, `delay`, `description_updater`, `fetcher`, `gate`, `http`, `iterator`, `learner_agent`, `mapper`, `math`, `model`, `mutator`, `notification`, `parser`, `playwright`, `poll`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`
+- Approved node types: `agent`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `bundle`, `compare`, `constant`, `context`, `database`, `db_schema`, `delay`, `fetcher`, `gate`, `http`, `iterator`, `learner_agent`, `mapper`, `math`, `model`, `mutator`, `notification`, `parser`, `playwright`, `poll`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`
 
 ## Rollout Eligibility
 
@@ -74,7 +74,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 - Schema version: `ai-paths.node-migration-rollout-eligibility.v2`
 - Generated at: `2026-03-05T00:00:00.000Z`
 - Eligibility criteria: `runtime_strategy=code_object_v3`, `has_semantic_contract_hash`, `has_v2_object_contract`, `has_v3_scaffold`, `has_v3_object_artifacts`, `dual_run_parity_validated`
-- Eligible node types: `agent`, `ai_description`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `bundle`, `compare`, `constant`, `context`, `database`, `db_schema`, `delay`, `description_updater`, `fetcher`, `gate`, `http`, `iterator`, `learner_agent`, `mapper`, `math`, `model`, `mutator`, `notification`, `parser`, `playwright`, `poll`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`
+- Eligible node types: `agent`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `bundle`, `compare`, `constant`, `context`, `database`, `db_schema`, `delay`, `fetcher`, `gate`, `http`, `iterator`, `learner_agent`, `mapper`, `math`, `model`, `mutator`, `notification`, `parser`, `playwright`, `poll`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`
 
 Top blockers:
 
@@ -84,9 +84,8 @@ No migration blockers detected.
 
 | Node Family | Total | `compatibility` | `code_object_v3` |
 | --- | ---: | ---: | ---: |
-| ai-generation | 5 | 0 | 5 |
+| ai-generation | 4 | 0 | 4 |
 | audio | 2 | 0 | 2 |
-| general | 1 | 0 | 1 |
 | integration | 7 | 0 | 7 |
 | orchestration | 9 | 0 | 9 |
 | transform | 12 | 0 | 12 |
@@ -96,7 +95,6 @@ No migration blockers detected.
 | Node Type | Family | Runtime Strategy | Ports (in/out) | Scaffold | Sheet | Semantic Hash | v3 Object Hash |
 | --- | --- | --- | ---: | --- | --- | --- | --- |
 | `agent` | ai-generation | `code_object_v3` | 4/2 | `yes` | [sheet](./nodes/agent.md) | `ed2953a2fed7...` | `391ea94d0576...` |
-| `ai_description` | ai-generation | `code_object_v3` | 3/1 | `yes` | [sheet](./nodes/ai_description.md) | `93b3b2422e40...` | `061517ae24c8...` |
 | `api_advanced` | integration | `code_object_v3` | 5/8 | `yes` | [sheet](./nodes/api_advanced.md) | `37b85ffa5772...` | `77838bc67f86...` |
 | `audio_oscillator` | audio | `code_object_v3` | 5/5 | `yes` | [sheet](./nodes/audio_oscillator.md) | `7baab1b01ab3...` | `9580ebad3164...` |
 | `audio_speaker` | audio | `code_object_v3` | 6/2 | `yes` | [sheet](./nodes/audio_speaker.md) | `37a4b7541ec6...` | `bd68ece9ae08...` |
@@ -107,7 +105,6 @@ No migration blockers detected.
 | `database` | integration | `code_object_v3` | 12/4 | `yes` | [sheet](./nodes/database.md) | `eadd4fae4b6f...` | `d269b7737ba0...` |
 | `db_schema` | integration | `code_object_v3` | 0/2 | `yes` | [sheet](./nodes/db_schema.md) | `dc56e39b3002...` | `86528cde5227...` |
 | `delay` | orchestration | `code_object_v3` | 2/2 | `yes` | [sheet](./nodes/delay.md) | `fa631c84b720...` | `b0e3ddc14299...` |
-| `description_updater` | general | `code_object_v3` | 2/1 | `yes` | [sheet](./nodes/description_updater.md) | `0140c1929e74...` | `4706503301a9...` |
 | `fetcher` | orchestration | `code_object_v3` | 5/4 | `yes` | [sheet](./nodes/fetcher.md) | `b75a94276b7a...` | `6e0e7cb5f8f7...` |
 | `gate` | orchestration | `code_object_v3` | 3/3 | `yes` | [sheet](./nodes/gate.md) | `c49aeec3b3e8...` | `b97f1b9584a7...` |
 | `http` | integration | `code_object_v3` | 4/2 | `yes` | [sheet](./nodes/http.md) | `19960ba99dd5...` | `d04742150b2c...` |

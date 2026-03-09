@@ -2,9 +2,11 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { writeMetricsMarkdownFile } from '../docs/metrics-frontmatter.mjs';
+import { parseCommonCheckArgs, writeSummaryJson } from '../lib/check-cli.mjs';
 
-const args = new Set(process.argv.slice(2));
-const shouldWriteHistory = args.has('--write-history') && !args.has('--ci') && !args.has('--no-history');
+const argv = process.argv.slice(2);
+const args = new Set(argv);
+const { noWrite, shouldWriteHistory, summaryJson } = parseCommonCheckArgs(argv);
 
 const getArgValue = (name, fallback) => {
   const hit = [...args].find((arg) => arg.startsWith(`--${name}=`));
@@ -264,30 +266,82 @@ const run = async () => {
   const historicalJsonPath = path.join(metricsDir, `${cfg.trendPrefix}${stamp}.json`);
   const historicalMdPath = path.join(metricsDir, `${cfg.trendPrefix}${stamp}.md`);
 
-  await fs.writeFile(latestJsonPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
-  await writeMetricsMarkdownFile({
-    root,
-    targetPath: latestMdPath,
-    content: toMarkdown(payload),
-  });
+  const latestTotalDurationMs = runs[runs.length - 1]?.totalDurationMs ?? null;
+  const latestFailedDomains =
+    runs[runs.length - 1]?.domains.filter((domain) => domain.status === 'fail').length ?? 0;
+  const paths = noWrite
+    ? null
+    : {
+        latestJson: path.relative(root, latestJsonPath),
+        latestMarkdown: path.relative(root, latestMdPath),
+        historicalJson: shouldWriteHistory ? path.relative(root, historicalJsonPath) : null,
+        historicalMarkdown: shouldWriteHistory ? path.relative(root, historicalMdPath) : null,
+      };
 
-  if (shouldWriteHistory) {
-    await fs.writeFile(historicalJsonPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+  if (!noWrite) {
+    await fs.writeFile(latestJsonPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
     await writeMetricsMarkdownFile({
       root,
-      targetPath: historicalMdPath,
+      targetPath: latestMdPath,
       content: toMarkdown(payload),
     });
+
+    if (shouldWriteHistory) {
+      await fs.writeFile(historicalJsonPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+      await writeMetricsMarkdownFile({
+        root,
+        targetPath: historicalMdPath,
+        content: toMarkdown(payload),
+      });
+    }
+  }
+
+  if (summaryJson) {
+    writeSummaryJson({
+      scannerName: 'domain-suite-trend',
+      generatedAt: payload.generatedAt,
+      summary: {
+        suite,
+        runCount: summary.runCount,
+        domainCount: domainIds.length,
+        oldestRun: summary.oldestRun,
+        newestRun: summary.newestRun,
+        latestTotalDurationMs,
+        latestFailedDomains,
+      },
+      details: {
+        label: payload.label,
+        windowDays: payload.windowDays,
+        domainIds: payload.domainIds,
+        domainOwners: payload.domainOwners,
+        runs: payload.runs,
+      },
+      paths,
+      filters: {
+        suite,
+        windowDays: payload.windowDays,
+        maxRuns,
+        historyDisabled: !shouldWriteHistory,
+        noWrite,
+        ci: args.has('--ci'),
+      },
+      notes: [`${cfg.label} trend snapshot`],
+    });
+    return;
   }
 
   console.log(
     `[domain-suite-trend] suite=${suite} runs=${summary.runCount} oldest=${summary.oldestRun ?? '-'} newest=${summary.newestRun ?? '-'}`
   );
-  console.log(`Wrote ${path.relative(root, latestJsonPath)}`);
-  console.log(`Wrote ${path.relative(root, latestMdPath)}`);
-  if (shouldWriteHistory) {
-    console.log(`Wrote ${path.relative(root, historicalJsonPath)}`);
-    console.log(`Wrote ${path.relative(root, historicalMdPath)}`);
+  if (paths) {
+    console.log(`Wrote ${paths.latestJson}`);
+    console.log(`Wrote ${paths.latestMarkdown}`);
+    if (paths.historicalJson) {
+      console.log(`Wrote ${paths.historicalJson}`);
+      console.log(`Wrote ${paths.historicalMarkdown}`);
+    }
+  } else {
+    console.log('Skipped writing domain suite trend artifacts (--no-write).');
   }
 };
 

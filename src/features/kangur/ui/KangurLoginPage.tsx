@@ -13,8 +13,8 @@ import {
 } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-import { KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_MS } from '@/features/kangur/config/auth';
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
+import { KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS } from '@/features/kangur/settings';
 import {
   clearStoredActiveLearnerId,
   setStoredActiveLearnerId,
@@ -26,6 +26,11 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import { KangurHomeLogo } from '@/features/kangur/ui/components/KangurHomeLogo';
 import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import type { VerifyCredentialsResponse } from '@/shared/contracts/auth';
+import {
+  parseKangurParentAccountActionResponse,
+  parseKangurParentEmailVerifyResponse,
+} from '@/shared/contracts/kangur-auth';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 
 type KangurLoginPageProps = {
@@ -40,39 +45,10 @@ type KangurCredentialsCallbackPayload = {
   url?: string;
 };
 
-type KangurVerifyCredentialsPayload = {
-  challengeId?: string;
-  code?: string;
-  message?: string;
-  mfaRequired?: boolean;
-  ok?: boolean;
-};
-
 type KangurApiErrorPayload = {
   error?: string | { message?: string };
   message?: string;
   retryAfterMs?: number;
-};
-
-type KangurParentAccountCreatePayload = {
-  created?: boolean;
-  debug?: {
-    verificationUrl?: string;
-  } | null;
-  email?: string;
-  emailVerified?: boolean;
-  hasPassword?: boolean;
-  retryAfterMs?: number;
-  message?: string;
-  ok?: boolean;
-};
-
-type KangurParentEmailVerifyPayload = {
-  callbackUrl?: string | null;
-  email?: string;
-  emailVerified?: boolean;
-  message?: string;
-  ok?: boolean;
 };
 
 type KangurLoginKind = 'parent' | 'student' | 'unknown';
@@ -141,7 +117,7 @@ const signInParentWithCredentials = async ({
     }),
   });
   const verifyPayload =
-    (await verifyResponse.json().catch(() => null)) as KangurVerifyCredentialsPayload | null;
+    (await verifyResponse.json().catch(() => null)) as VerifyCredentialsResponse | null;
 
   if (!verifyResponse.ok || verifyPayload?.ok !== true || !verifyPayload?.challengeId) {
     return {
@@ -211,6 +187,8 @@ const getParentSignInErrorMessage = (errorCode?: string, fallbackMessage?: strin
   switch (errorCode) {
     case 'EMAIL_UNVERIFIED':
       return 'Potwierdz email rodzica, zanim sie zalogujesz. Sprawdz skrzynke i kliknij link potwierdzajacy.';
+    case 'PASSWORD_SETUP_REQUIRED':
+      return 'To konto rodzica trzeba najpierw zabezpieczyc haslem. Ustaw haslo i wyslij email potwierdzajacy.';
     case 'MFA_REQUIRED':
       return 'To konto wymaga dodatkowej weryfikacji. Zaloguj sie przez glowny ekran konta.';
     case 'EMAIL_LOCKED':
@@ -266,7 +244,7 @@ const readApiErrorDetails = async (
 const resolveParentVerificationRetryAfterMs = (value: unknown): number =>
   typeof value === 'number' && Number.isFinite(value) && value > 0
     ? value
-    : KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_MS;
+    : KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS;
 
 const clearOneTimeAuthParams = (): void => {
   const url = new URL(window.location.href);
@@ -489,6 +467,14 @@ function KangurLoginPageContent({
           statusCode: 401,
           reason: result.error,
         });
+        if (result.error === 'PASSWORD_SETUP_REQUIRED') {
+          setParentAuthMode('create-account');
+          setPassword('');
+          setNotice(
+            'To starsze konto rodzica nie ma jeszcze hasla. Ustaw haslo ponizej, a wyslemy email potwierdzajacy.'
+          );
+          return;
+        }
         if (result.error === 'EMAIL_UNVERIFIED') {
           setCreatedParentEmail(email);
           setNotice('Potwierdz email rodzica, zanim sie zalogujesz. Mozesz tez wyslac nowy email potwierdzajacy.');
@@ -557,8 +543,9 @@ function KangurLoginPageContent({
         return;
       }
 
-      const payload =
-        (await response.json().catch(() => null)) as KangurParentAccountCreatePayload | null;
+      const payload = parseKangurParentAccountActionResponse(
+        await response.json().catch(() => null)
+      );
       const debugVerificationUrl = payload?.debug?.verificationUrl?.trim();
       const retryAfterMs = resolveParentVerificationRetryAfterMs(payload?.retryAfterMs);
       trackKangurClientEvent('kangur_parent_account_created', {
@@ -630,8 +617,9 @@ function KangurLoginPageContent({
         return;
       }
 
-      const payload =
-        (await response.json().catch(() => null)) as KangurParentAccountCreatePayload | null;
+      const payload = parseKangurParentAccountActionResponse(
+        await response.json().catch(() => null)
+      );
       const debugVerificationUrl = payload?.debug?.verificationUrl?.trim();
       const retryAfterMs = resolveParentVerificationRetryAfterMs(payload?.retryAfterMs);
       trackKangurClientEvent('kangur_parent_account_resend_sent', {
@@ -688,8 +676,7 @@ function KangurLoginPageContent({
         return;
       }
 
-      const payload =
-        (await response.json().catch(() => null)) as KangurParentEmailVerifyPayload | null;
+      const payload = parseKangurParentEmailVerifyResponse(await response.json().catch(() => null));
       trackKangurClientEvent('kangur_parent_email_verified', {
         callbackUrl,
       });

@@ -1,33 +1,11 @@
 import { type AiNode } from '@/shared/contracts/ai-paths';
+
 import {
   AGENT_INPUT_PORTS,
   AGENT_OUTPUT_PORTS,
-  DESCRIPTION_OUTPUT_PORTS,
   MODEL_OUTPUT_PORTS,
 } from '../../constants';
 import { ensureUniquePorts } from '../../utils/graph.ports';
-
-export const normalizeAiDescriptionNode = (node: AiNode): AiNode => {
-  return {
-    ...node,
-    inputs: ensureUniquePorts(node.inputs ?? [], ['entityJson', 'images', 'title']),
-    outputs: ensureUniquePorts(node.outputs ?? [], DESCRIPTION_OUTPUT_PORTS),
-    config: {
-      ...node.config,
-      description: {
-        visionOutputEnabled: node.config?.description?.visionOutputEnabled ?? true,
-        generationOutputEnabled: node.config?.description?.generationOutputEnabled ?? true,
-      },
-    },
-  };
-};
-
-export const normalizeDescriptionUpdaterNode = (node: AiNode): AiNode => {
-  return {
-    ...node,
-    outputs: ensureUniquePorts(node.outputs ?? [], ['description_en']),
-  };
-};
 
 export const normalizeModelNode = (node: AiNode): AiNode => {
   return {

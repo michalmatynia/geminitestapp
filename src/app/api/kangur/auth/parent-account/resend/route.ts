@@ -1,12 +1,10 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+import { kangurParentAccountResendSchema } from '@/shared/contracts/kangur-auth';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
-import {
-  kangurParentAccountResendSchema,
-  postKangurParentAccountResendHandler,
-} from './handler';
+import { postKangurParentAccountResendHandler } from './handler';
 
 export const POST = apiHandler(postKangurParentAccountResendHandler, {
   source: 'kangur.auth.parent-account.resend.POST',

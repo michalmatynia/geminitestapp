@@ -30,6 +30,4 @@ compare,yes,partial,partial,n/a,n/a,n/a,partial,Advanced pack validates compare 
 delay,yes,partial,partial,n/a,n/a,n/a,partial,Advanced pack validates delay duration
 viewer,n/a,yes,partial,n/a,n/a,n/a,covered,Incoming data checks included
 notification,partial,partial,partial,n/a,n/a,n/a,partial,Advanced pack adds incoming data wiring validation
-ai_description,partial,yes,partial,n/a,n/a,partial,partial,Description flow wiring covered via snippets
-description_updater,partial,yes,partial,n/a,n/a,yes,partial,Legacy/deprecated path checks pending
 cross_graph_invariants,yes,yes,yes,yes,yes,yes,covered,Semantic grammar pack enforces edge endpoint and declared-port integrity

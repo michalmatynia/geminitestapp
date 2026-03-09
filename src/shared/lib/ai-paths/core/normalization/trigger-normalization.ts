@@ -20,6 +20,10 @@ import { findPathConfigCollectionAliasIssues } from '../utils/collection-names';
 import { sanitizeEdges } from '../utils/graph.edges';
 import { validateCanonicalPathNodeIdentities } from '../utils/node-identity';
 import { stableStringify } from '../utils/runtime';
+import {
+  findRemovedLegacyTriggerContextModesInPathConfig,
+  formatRemovedLegacyTriggerContextModesMessage,
+} from '../utils/legacy-trigger-context-mode';
 
 export const normalizeLoadedPathName = (_pathId: string, name: unknown): string => {
   return typeof name === 'string' ? name.trim() : '';
@@ -204,6 +208,21 @@ export const sanitizeTriggerPathConfig = (config: PathConfig): PathConfig => {
   }
 
   const contractBackfilledConfig = backfillPathConfigNodeContracts(config).config;
+  const removedLegacyTriggerContextModes =
+    findRemovedLegacyTriggerContextModesInPathConfig(contractBackfilledConfig);
+  if (removedLegacyTriggerContextModes.length > 0) {
+    throw validationError(
+      formatRemovedLegacyTriggerContextModesMessage(removedLegacyTriggerContextModes, {
+        surface: 'trigger payload',
+      }),
+      {
+        source: 'ai_paths.trigger_payload',
+        reason: 'removed_legacy_trigger_context_mode',
+        pathId: config.id,
+        removedTriggerContextModes: removedLegacyTriggerContextModes,
+      }
+    );
+  }
   const graphNodes = (
     Array.isArray(contractBackfilledConfig.nodes) ? contractBackfilledConfig.nodes : []
   ).map((node: AiNode, index: number): AiNode => {

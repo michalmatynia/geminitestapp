@@ -9,6 +9,7 @@ const {
   deleteManyMock,
   enqueueChatbotJobMock,
   startChatbotJobQueueMock,
+  contextRegistryResolveRefsMock,
 } = vi.hoisted(() => ({
   resolveBrainModelExecutionConfigMock: vi.fn(),
   findByIdMock: vi.fn(),
@@ -18,10 +19,17 @@ const {
   deleteManyMock: vi.fn(),
   enqueueChatbotJobMock: vi.fn(),
   startChatbotJobQueueMock: vi.fn(),
+  contextRegistryResolveRefsMock: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/ai-brain/server', () => ({
   resolveBrainModelExecutionConfig: resolveBrainModelExecutionConfigMock,
+}));
+
+vi.mock('@/features/ai/ai-context-registry/server', () => ({
+  contextRegistryEngine: {
+    resolveRefs: contextRegistryResolveRefsMock,
+  },
 }));
 
 vi.mock('@/features/ai/chatbot/services/chatbot-session-repository', () => ({
@@ -56,6 +64,7 @@ describe('chatbot jobs handler', () => {
     deleteManyMock.mockReset();
     enqueueChatbotJobMock.mockReset();
     startChatbotJobQueueMock.mockReset();
+    contextRegistryResolveRefsMock.mockReset();
 
     resolveBrainModelExecutionConfigMock.mockResolvedValue({
       modelId: 'brain-model',
@@ -83,6 +92,35 @@ describe('chatbot jobs handler', () => {
       status: 'pending',
     });
     enqueueChatbotJobMock.mockResolvedValue(undefined);
+    contextRegistryResolveRefsMock.mockResolvedValue({
+      refs: [
+        {
+          id: 'page:admin-chatbot',
+          kind: 'static_node',
+        },
+      ],
+      nodes: [
+        {
+          id: 'page:admin-chatbot',
+          kind: 'page',
+          name: 'Admin Chatbot',
+          description: 'Admin chatbot workspace.',
+          tags: ['chatbot'],
+          relationships: [],
+          permissions: {
+            readScopes: ['ctx:read'],
+            riskTier: 'none',
+            classification: 'internal',
+          },
+          version: '1.0.0',
+          updatedAtISO: '2026-03-09T00:00:00.000Z',
+          source: { type: 'code', ref: 'test' },
+        },
+      ],
+      documents: [],
+      truncated: false,
+      engineVersion: 'page-context-engine/1',
+    });
   });
 
   it('creates a job with Brain-applied config and queues it', async () => {
@@ -173,5 +211,115 @@ describe('chatbot jobs handler', () => {
     expect(createMock).not.toHaveBeenCalled();
     expect(startChatbotJobQueueMock).not.toHaveBeenCalled();
     expect(enqueueChatbotJobMock).not.toHaveBeenCalled();
+  });
+
+  it('normalizes and stores context registry payloads on queued jobs', async () => {
+    await POST_handler(
+      new Request('http://localhost/api/chatbot/jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: 'session-1',
+          messages: [
+            {
+              role: 'user',
+              content: 'Use the page context.',
+            },
+          ],
+          contextRegistry: {
+            refs: [
+              {
+                id: 'page:admin-chatbot',
+                kind: 'static_node',
+              },
+              {
+                id: 'runtime:chatbot:workspace',
+                kind: 'runtime_document',
+                providerId: 'chatbot-page-local',
+                entityType: 'chatbot_workspace_state',
+              },
+            ],
+            engineVersion: 'page-context-engine/1',
+            resolved: {
+              refs: [
+                {
+                  id: 'runtime:chatbot:workspace',
+                  kind: 'runtime_document',
+                  providerId: 'chatbot-page-local',
+                  entityType: 'chatbot_workspace_state',
+                },
+              ],
+              nodes: [],
+              documents: [
+                {
+                  id: 'runtime:chatbot:workspace',
+                  kind: 'runtime_document',
+                  entityType: 'chatbot_workspace_state',
+                  title: 'Chatbot workspace state',
+                  summary: 'Current page state',
+                  tags: ['chatbot'],
+                  relatedNodeIds: ['page:admin-chatbot'],
+                  timestamps: {
+                    observedAtISO: '2026-03-09T08:30:00.000Z',
+                  },
+                },
+              ],
+              truncated: false,
+              engineVersion: 'page-context-engine/1',
+            },
+          },
+        }),
+      }) as Parameters<typeof POST_handler>[0],
+      { requestId: 'req-5' } as Parameters<typeof POST_handler>[1]
+    );
+
+    expect(contextRegistryResolveRefsMock).toHaveBeenCalledWith({
+      refs: [
+        {
+          id: 'page:admin-chatbot',
+          kind: 'static_node',
+        },
+        {
+          id: 'runtime:chatbot:workspace',
+          kind: 'runtime_document',
+          providerId: 'chatbot-page-local',
+          entityType: 'chatbot_workspace_state',
+        },
+      ],
+      maxNodes: 24,
+      depth: 1,
+    });
+    expect(createMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({
+          contextRegistry: expect.objectContaining({
+            refs: [
+              {
+                id: 'page:admin-chatbot',
+                kind: 'static_node',
+              },
+              {
+                id: 'runtime:chatbot:workspace',
+                kind: 'runtime_document',
+                providerId: 'chatbot-page-local',
+                entityType: 'chatbot_workspace_state',
+              },
+            ],
+            resolved: expect.objectContaining({
+              documents: expect.arrayContaining([
+                expect.objectContaining({
+                  id: 'runtime:chatbot:workspace',
+                }),
+              ]),
+              nodes: expect.arrayContaining([
+                expect.objectContaining({
+                  id: 'page:admin-chatbot',
+                }),
+              ]),
+            }),
+          }),
+        }),
+      })
+    );
   });
 });

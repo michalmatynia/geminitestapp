@@ -1,3 +1,12 @@
+---
+owner: 'AI Paths Team'
+last_reviewed: '2026-03-09'
+status: 'active'
+doc_type: 'reference'
+scope: 'feature:ai-paths'
+canonical: true
+---
+
 # Node Validator Node-Code Parser Patterns
 
 Pattern list id: `kernel-node-code-parser-v1`

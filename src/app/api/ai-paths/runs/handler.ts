@@ -97,6 +97,8 @@ const scheduleStaleRunningCleanup = (
 const RUN_STATUSES: AiPathRunStatus[] = [
   'queued',
   'running',
+  'blocked_on_lease',
+  'handoff_ready',
   'paused',
   'completed',
   'failed',
@@ -109,7 +111,7 @@ const TERMINAL_STATUSES: AiPathRunStatus[] = ['completed', 'failed', 'canceled',
 const listStatusSchema = z.preprocess((value) => {
   const normalized = normalizeOptionalQueryString(value)?.toLowerCase();
   return normalized && RUN_STATUSES.includes(normalized as AiPathRunStatus) ? normalized : undefined;
-}, z.enum(['queued', 'running', 'paused', 'completed', 'failed', 'canceled', 'dead_lettered']).optional());
+}, z.enum(['queued', 'running', 'blocked_on_lease', 'handoff_ready', 'paused', 'completed', 'failed', 'canceled', 'dead_lettered']).optional());
 
 export const listQuerySchema = z.object({
   visibility: z.preprocess((value) => {

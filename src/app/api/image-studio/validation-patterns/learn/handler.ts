@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 import {
@@ -10,6 +9,8 @@ import {
   IMAGE_STUDIO_SETTINGS_KEY,
   parsePersistedImageStudioSettings,
 } from '@/features/ai/server';
+import { resolveImageStudioContextRegistryEnvelope } from '@/features/ai/image-studio/context-registry/server';
+import { buildImageStudioWorkspaceSystemPrompt } from '@/features/ai/image-studio/context-registry/workspace-prompt';
 import { auth } from '@/features/auth/server';
 import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import {
@@ -17,15 +18,11 @@ import {
   parsePromptEngineSettings,
   parsePromptValidationRules,
 } from '@/shared/lib/prompt-engine/settings';
+import { imageStudioValidationPatternsLearnRequestSchema } from '@/shared/contracts/image-studio';
 import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, internalError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-
-const payloadSchema = z.object({
-  prompt: z.string().trim().min(1),
-  limit: z.number().int().min(1).max(20).optional().default(8),
-});
 
 const ruleSignature = (rule: PromptValidationRule): string => {
   if (rule.kind === 'regex') {
@@ -40,7 +37,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     session?.user?.isElevated || session?.user?.permissions?.includes('ai_paths.manage');
   if (!hasAccess) throw authError('Unauthorized.');
 
-  const parsed = await parseJsonBody(req, payloadSchema, {
+  const parsed = await parseJsonBody(req, imageStudioValidationPatternsLearnRequestSchema, {
     logPrefix: 'image-studio.validation-patterns.learn.POST',
   });
   if (!parsed.ok) return parsed.response;
@@ -71,6 +68,15 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     })
     .join('\n');
 
+  const contextRegistry = await resolveImageStudioContextRegistryEnvelope(
+    parsed.data.contextRegistry ?? null
+  );
+  const contextRegistryPrompt = buildImageStudioWorkspaceSystemPrompt({
+    registryBundle: contextRegistry?.resolved,
+    taskLabel: 'Image Studio prompt validation rule authoring',
+    extraInstructions:
+      'Use the current workspace prompt draft, active params, and slot state when identifying recurring prompt structure or invalid patterns.',
+  });
   const systemPrompt = [
     'You generate validation rules for Image Studio prompts.',
     'Return ONLY valid JSON with shape: { "rules": PromptValidationRule[] }.',
@@ -91,7 +97,10 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     '- For invalid patterns, include similar patterns + autofix replacements.',
     '- Avoid duplicates or overlaps with existing rules.',
     `- Maximum ${parsed.data.limit} rules.`,
-  ].join('\n');
+    contextRegistryPrompt,
+  ]
+    .filter(Boolean)
+    .join('\n');
 
   const userPrompt = [
     'Prompt to analyze:',

@@ -1,3 +1,12 @@
+---
+owner: 'AI Paths Team'
+last_reviewed: '2026-03-09'
+status: 'archived'
+doc_type: 'plan'
+scope: 'feature:ai-paths'
+canonical: true
+---
+
 # AI Paths Improvement Plan: Phase 3 (2026-03-23 to 2026-04-03)
 
 > Historical plan note:

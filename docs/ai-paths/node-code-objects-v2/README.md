@@ -1,3 +1,11 @@
+---
+owner: 'AI Paths Team'
+last_reviewed: '2026-03-05'
+status: 'active'
+doc_type: 'index'
+scope: 'feature:ai-paths'
+canonical: true
+---
 # AI-Paths Node Code Objects (v2)
 
 Generated portable semantic node objects for copy/paste-safe AI-Paths authoring.

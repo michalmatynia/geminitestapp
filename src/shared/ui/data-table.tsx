@@ -84,9 +84,10 @@ export function DataTableSortableHeader<TData, TValue>({
   );
 }
 
-declare module '@tanstack/table-core' {
+declare module '@tanstack/react-table' {
   interface TableMeta<TData extends RowData> {
     queryClient?: QueryClient;
+    _rowModel?: TData;
   }
 }
 

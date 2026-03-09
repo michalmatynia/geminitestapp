@@ -1,3 +1,12 @@
+---
+owner: 'AI Paths Team'
+last_reviewed: '2026-03-09'
+status: 'active'
+doc_type: 'plan'
+scope: 'feature:ai-paths'
+canonical: true
+---
+
 # Port Contract Validation Ownership (2026-03-06)
 
 ## References

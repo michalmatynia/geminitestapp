@@ -243,6 +243,11 @@ Examples verified in the tree:
 
 Prefer those entrypoints over deep cross-feature imports.
 
+When consuming scanner or guardrail `--summary-json` output, preserve the shared
+envelope shape: keep headline metrics in `summary`, rich findings in `details`,
+artifact locations in `paths`, run flags in `filters`, and annotations in
+`notes`.
+
 ## Data Layer
 
 ### Primary persistence options

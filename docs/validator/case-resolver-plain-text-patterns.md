@@ -1,3 +1,12 @@
+---
+owner: 'Products / Platform Team'
+last_reviewed: '2026-03-09'
+status: 'active'
+doc_type: 'reference'
+scope: 'feature:validator'
+canonical: true
+---
+
 # Case Resolver Plain Text Patterns
 
 - Scope (validator list): `case-resolver-plain-text`

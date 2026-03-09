@@ -1,3 +1,4 @@
+import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import type { Toast } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 
@@ -53,6 +54,7 @@ type PromptExtractionHandlersDeps = {
   setSelectedExtractHistoryId: (value: string | null) => void;
   studioSettings: StudioPromptExtractionSettings;
   toast: Toast;
+  contextRegistry?: ContextRegistryConsumerEnvelope | null;
 };
 
 export type PromptExtractionHandlers = {
@@ -93,6 +95,7 @@ export const createPromptExtractionHandlers = (
         prompt: promptBefore,
         mode: 'programmatic',
         applyAutofix: deps.studioSettings.promptExtraction.applyAutofix,
+        ...(deps.contextRegistry ? { contextRegistry: deps.contextRegistry } : {}),
       });
       if (!result.params || typeof result.params !== 'object') {
         throw new Error('Invalid extraction response.');
@@ -148,6 +151,7 @@ export const createPromptExtractionHandlers = (
         prompt: promptBefore,
         mode: deps.studioSettings.promptExtraction.mode,
         applyAutofix: deps.studioSettings.promptExtraction.applyAutofix,
+        ...(deps.contextRegistry ? { contextRegistry: deps.contextRegistry } : {}),
       });
       if (!result.params || typeof result.params !== 'object') {
         throw new Error('Invalid extraction response.');
@@ -217,6 +221,7 @@ export const createPromptExtractionHandlers = (
         prompt: promptBefore,
         mode: 'gpt',
         applyAutofix: deps.studioSettings.promptExtraction.applyAutofix,
+        ...(deps.contextRegistry ? { contextRegistry: deps.contextRegistry } : {}),
       });
       if (!result.params || typeof result.params !== 'object') {
         throw new Error('Invalid extraction response.');
@@ -292,6 +297,7 @@ export const createPromptExtractionHandlers = (
           })),
 
           mode,
+          ...(deps.contextRegistry ? { contextRegistry: deps.contextRegistry } : {}),
         });
         aiSuggestions = (response.suggestions ?? [])
           .filter((item): item is { path: string; control: string } =>

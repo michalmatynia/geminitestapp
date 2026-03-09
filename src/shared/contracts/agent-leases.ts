@@ -19,6 +19,7 @@ export type AgentLeaseRecordStatus = z.infer<
 export const AgentLeaseRecordSchema = z.object({
   leaseId: z.string().min(1),
   resourceId: z.string().min(1),
+  scopeId: z.string().min(1).nullable().default(null),
   resourceType: z.string().min(1),
   ownerAgentId: z.string().min(1),
   ownerRunId: z.string().min(1).nullable().default(null),
@@ -49,6 +50,7 @@ export const AgentLeaseEventSchema = z.object({
   eventId: z.string().min(1),
   kind: AgentLeaseEventKindSchema,
   resourceId: z.string().min(1),
+  scopeId: z.string().min(1).nullable().default(null),
   leaseId: z.string().min(1).nullable().default(null),
   timestamp: z.string().datetime(),
   ownerAgentId: z.string().min(1).nullable().default(null),
@@ -60,7 +62,9 @@ export type AgentLeaseEvent = z.infer<typeof AgentLeaseEventSchema>;
 
 export const AgentLeaseStateSchema = z.object({
   resource: AgentRuntimeLeaseDescriptorSchema,
+  scopeId: z.string().min(1).nullable().default(null),
   supported: z.boolean(),
+  managedBy: z.enum(['shared_service', 'external_adapter']).default('shared_service'),
   activeLease: AgentLeaseRecordSchema.nullable(),
   recentEvents: z.array(AgentLeaseEventSchema).default([]),
 });
@@ -80,6 +84,7 @@ export type AgentLeaseMutationAction = z.infer<
 export const AgentLeaseMutationRequestSchema = z.object({
   action: AgentLeaseMutationActionSchema,
   resourceId: z.string().min(1),
+  scopeId: z.string().min(1).nullable().optional(),
   ownerAgentId: z.string().min(1),
   ownerRunId: z.string().min(1).nullable().optional(),
   leaseId: z.string().min(1).optional(),

@@ -16,6 +16,8 @@ const resumePathRunMock = vi.hoisted(() => vi.fn());
 const retryPathRunNodeMock = vi.hoisted(() => vi.fn());
 const getPathRunRepositoryMock = vi.hoisted(() => vi.fn());
 const getAiPathsSettingMock = vi.hoisted(() => vi.fn());
+const logSystemEventMock = vi.hoisted(() => vi.fn());
+const contextRegistryResolveRefsMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/features/ai/ai-paths/server', () => ({
   requireAiPathsRunAccess: requireAiPathsRunAccessMock,
@@ -40,6 +42,16 @@ vi.mock('@/shared/lib/api/parse-json', () => ({
 
 vi.mock('@/shared/lib/ai-paths/services/path-run-repository', () => ({
   getPathRunRepository: getPathRunRepositoryMock,
+}));
+
+vi.mock('@/shared/lib/observability/system-logger', () => ({
+  logSystemEvent: logSystemEventMock,
+}));
+
+vi.mock('@/features/ai/ai-context-registry/server', () => ({
+  contextRegistryEngine: {
+    resolveRefs: contextRegistryResolveRefsMock,
+  },
 }));
 
 import { POST_handler as enqueueHandler } from '@/app/api/ai-paths/runs/enqueue/handler';
@@ -70,6 +82,14 @@ describe('AI Paths fail-fast queue guards', () => {
     getPathRunRepositoryMock.mockResolvedValue({
       findRunById: vi.fn().mockResolvedValue({ id: 'run-1', status: 'failed' }),
       listRuns: vi.fn().mockResolvedValue({ runs: [] }),
+    });
+    logSystemEventMock.mockResolvedValue(undefined);
+    contextRegistryResolveRefsMock.mockResolvedValue({
+      refs: [],
+      nodes: [],
+      documents: [],
+      truncated: false,
+      engineVersion: 'registry:test',
     });
   });
 

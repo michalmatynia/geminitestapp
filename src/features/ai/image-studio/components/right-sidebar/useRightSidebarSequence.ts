@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 
+import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
 import type { VectorShape } from '@/shared/lib/vector-drawing';
 import type {
   ImageStudioSlotRecord,
@@ -77,6 +78,7 @@ export function useRightSidebarSequence({
   workingSlotImageHeight,
   imageContentFrame,
 }: UseRightSidebarSequenceArgs): UseRightSidebarSequenceResult {
+  const contextRegistry = useOptionalContextRegistryPageEnvelope();
   const sequenceRequestPreview = useMemo((): SequenceRequestPreview => {
     const errors: string[] = [];
     const normalizedProjectId = projectId.trim();
@@ -289,6 +291,7 @@ export function useRightSidebarSequence({
         metadata: {
           source: 'right-sidebar-sequence-generate',
         },
+        ...(contextRegistry ? { contextRegistry } : {}),
       })
       .then((result) => {
         const stepCount =
@@ -327,6 +330,7 @@ export function useRightSidebarSequence({
     sequenceRequiresPrompt,
     maskShapes,
     compositeAssetIds,
+    contextRegistry,
     maskInvert,
     maskFeather,
     setPromptControlOpen,

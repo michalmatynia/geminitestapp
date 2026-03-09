@@ -1,3 +1,12 @@
+---
+owner: 'AI Paths Team'
+last_reviewed: '2026-03-09'
+status: 'active'
+doc_type: 'index'
+scope: 'feature:ai-paths'
+canonical: true
+---
+
 # AI-Paths Semantic Grammar
 
 Semantic Grammar is the portable JSON contract for AI-Paths canvases and subgraphs.
@@ -13,6 +22,7 @@ Main references:
 
 - Spec: `docs/ai-paths/semantic-grammar/spec-v1.md`
 - JSON Schema: `docs/ai-paths/semantic-grammar/schema/canvas-grammar.v1.json`
+- Node JSON hub: `docs/ai-paths/semantic-grammar/nodes/README.md`
 - Per-node JSON scaffolds: `docs/ai-paths/semantic-grammar/nodes/`
 - Node hash index: `docs/ai-paths/semantic-grammar/nodes/index.json` (`nodeHash`, `nodeHashAlgorithm`)
 

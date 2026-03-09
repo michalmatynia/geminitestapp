@@ -5,6 +5,7 @@ import { promisify } from 'node:util';
 
 import { collectMetrics, formatCompactSummary } from './lib-metrics.mjs';
 import { parseScanSummary } from './lib/scan-output.mjs';
+import { writeMetricsMarkdownFile } from '../docs/metrics-frontmatter.mjs';
 
 const args = new Set(process.argv.slice(2));
 const root = process.cwd();
@@ -113,7 +114,11 @@ const run = async () => {
   const shouldWriteHistory = !args.has('--ci') && !args.has('--no-history');
 
   await writeJson(latestJsonPath, metrics);
-  await fs.writeFile(latestMdPath, generateMarkdown(metrics), 'utf8');
+  await writeMetricsMarkdownFile({
+    root,
+    targetPath: latestMdPath,
+    content: generateMarkdown(metrics),
+  });
 
   if (shouldWriteHistory) {
     await writeJson(historicalJsonPath, metrics);

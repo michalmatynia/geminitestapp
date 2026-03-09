@@ -3,12 +3,23 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 vi.unmock('@/shared/lib/db/prisma');
 vi.unmock('@/shared/lib/ai-paths/services/path-run-repository');
 
-const { enqueuePathRunJobMock, removePathRunQueueEntriesMock, scheduleLocalFallbackRunMock } =
-  vi.hoisted(() => ({
+const {
+  enqueuePathRunJobMock,
+  removePathRunQueueEntriesMock,
+  scheduleLocalFallbackRunMock,
+  captureExceptionMock,
+  logWarningMock,
+  logInfoMock,
+  logValidationErrorMock,
+} = vi.hoisted(() => ({
   enqueuePathRunJobMock: vi.fn().mockResolvedValue(undefined),
   removePathRunQueueEntriesMock: vi.fn().mockResolvedValue({ removed: 0, requested: 0 }),
-   scheduleLocalFallbackRunMock: vi.fn(),
- }));
+  scheduleLocalFallbackRunMock: vi.fn(),
+  captureExceptionMock: vi.fn().mockResolvedValue(undefined),
+  logWarningMock: vi.fn().mockResolvedValue(undefined),
+  logInfoMock: vi.fn().mockResolvedValue(undefined),
+  logValidationErrorMock: vi.fn().mockResolvedValue(undefined),
+}));
 
 import {
   enqueuePathRun,
@@ -34,20 +45,71 @@ vi.mock('@/features/ai/ai-paths/workers/aiPathRunQueue', () => ({
   scheduleLocalFallbackRun: scheduleLocalFallbackRunMock,
 }));
 
+vi.mock('@/shared/utils/observability/error-system', () => ({
+  ErrorSystem: {
+    captureException: captureExceptionMock,
+    logWarning: logWarningMock,
+    logInfo: logInfoMock,
+    logValidationError: logValidationErrorMock,
+    generateErrorReport: vi.fn(),
+  },
+}));
+
 let canMutatePathRunTables = true;
+let supportsExtendedAiPathRunStatuses: boolean | null = null;
+const REQUIRED_AI_PATH_RUN_STATUSES = ['blocked_on_lease', 'handoff_ready'] as const;
 
 describe('PathRunService', () => {
   const shouldSkipPathRunPrismaTests = (): boolean =>
-    !process.env['DATABASE_URL'] || !canMutatePathRunTables;
+    !process.env['DATABASE_URL'] ||
+    !canMutatePathRunTables ||
+    supportsExtendedAiPathRunStatuses === false;
+
+  const refreshAiPathRunStatusEnumSupport = async (): Promise<void> => {
+    if (!process.env['DATABASE_URL']) {
+      supportsExtendedAiPathRunStatuses = false;
+      return;
+    }
+
+    try {
+      const rows = await prisma.$queryRaw<Array<{ enumlabel: string }>>`
+        SELECT e.enumlabel
+        FROM pg_enum e
+        JOIN pg_type t ON t.oid = e.enumtypid
+        WHERE t.typname = 'AiPathRunStatus'
+          AND e.enumlabel IN ('blocked_on_lease', 'handoff_ready')
+      `;
+      const labels = new Set(rows.map((row) => row.enumlabel));
+      supportsExtendedAiPathRunStatuses = REQUIRED_AI_PATH_RUN_STATUSES.every((status) =>
+        labels.has(status)
+      );
+    } catch (error) {
+      const code = (error as { code?: string }).code;
+      if (code === 'EPERM') {
+        canMutatePathRunTables = false;
+        supportsExtendedAiPathRunStatuses = false;
+        return;
+      }
+      throw error;
+    }
+  };
 
   let repo: AiPathRunRepository;
 
   beforeEach(async () => {
+    enqueuePathRunJobMock.mockReset().mockResolvedValue(undefined);
+    removePathRunQueueEntriesMock.mockReset().mockResolvedValue({ removed: 0, requested: 0 });
+    scheduleLocalFallbackRunMock.mockReset();
+    captureExceptionMock.mockReset().mockResolvedValue(undefined);
+    logWarningMock.mockReset().mockResolvedValue(undefined);
+    logInfoMock.mockReset().mockResolvedValue(undefined);
+    logValidationErrorMock.mockReset().mockResolvedValue(undefined);
+
+    if (supportsExtendedAiPathRunStatuses === null) {
+      await refreshAiPathRunStatusEnumSupport();
+    }
     if (shouldSkipPathRunPrismaTests()) return;
 
-    enqueuePathRunJobMock.mockClear();
-    removePathRunQueueEntriesMock.mockClear();
-    scheduleLocalFallbackRunMock.mockClear();
     repo = await getPathRunRepository();
     // Direct prisma cleanup since repo doesn't have deleteMany
     try {

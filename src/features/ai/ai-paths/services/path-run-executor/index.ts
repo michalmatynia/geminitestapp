@@ -7,7 +7,11 @@ import { GraphExecutionCancelled } from '@/shared/lib/ai-paths/core/runtime/engi
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { getAiPathsRuntimeFingerprint } from '@/features/ai/ai-paths/services/runtime-fingerprint';
 import { publishRunUpdate } from '@/features/ai/ai-paths/services/run-stream-publisher';
-import { recordRuntimeRunFinished } from '@/features/ai/ai-paths/services/runtime-analytics-service';
+import {
+  recordRuntimeRunBlockedOnLease,
+  recordRuntimeRunFinished,
+  recordRuntimeRunHandoffReady,
+} from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
   AiPathRunNodeRecord,
@@ -99,6 +103,11 @@ export const executePathRun = async (
       const updated = await repo.updateRunIfStatus(run.id, UPDATE_ELIGIBLE_RUN_STATUSES, data);
       if (updated) {
         publishRunUpdate(run.id, 'run', data);
+        if (data.status === 'blocked_on_lease') {
+          void recordRuntimeRunBlockedOnLease({ runId: run.id });
+        } else if (data.status === 'handoff_ready') {
+          void recordRuntimeRunHandoffReady({ runId: run.id });
+        }
       }
       return !!updated;
     } catch (error) {

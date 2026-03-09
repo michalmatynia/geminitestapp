@@ -1,3 +1,11 @@
+---
+owner: 'Platform Team'
+last_reviewed: '2026-03-09'
+status: 'generated'
+doc_type: 'generated'
+scope: 'generated'
+canonical: true
+---
 # Type Cluster Domain Scan Summary
 
 Generated at: 2026-03-05T04:21:27.732Z

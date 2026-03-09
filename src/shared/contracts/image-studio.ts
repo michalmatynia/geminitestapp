@@ -284,6 +284,7 @@ export const imageStudioAssetDtoSchema = z.object({
 export type ImageStudioAssetDto = z.infer<typeof imageStudioAssetDtoSchema>;
 
 export const imageStudioProjectSchema = dtoBaseSchema.extend({
+  name: z.string().nullable().optional(),
   canvasWidthPx: z.number().nullable(),
   canvasHeightPx: z.number().nullable(),
 });
@@ -356,6 +357,94 @@ export const imageStudioPromptExtractResponseSchema = z.object({
 
 export type ImageStudioPromptExtractResponse = z.infer<
   typeof imageStudioPromptExtractResponseSchema
+>;
+
+export const imageStudioPromptExtractRequestSchema = z.object({
+  prompt: z.string().trim().min(1),
+  mode: imageStudioPromptExtractModeSchema.optional(),
+  applyAutofix: z.boolean().optional(),
+  contextRegistry: contextRegistryConsumerEnvelopeSchema.optional(),
+});
+
+export type ImageStudioPromptExtractRequest = z.infer<
+  typeof imageStudioPromptExtractRequestSchema
+>;
+
+export const imageStudioUiExtractorControlSchema = z.enum([
+  'auto',
+  'checkbox',
+  'buttons',
+  'select',
+  'slider',
+  'number',
+  'text',
+  'textarea',
+  'json',
+  'rgb',
+  'tuple2',
+]);
+
+export type ImageStudioUiExtractorControl = z.infer<typeof imageStudioUiExtractorControlSchema>;
+
+export const imageStudioUiExtractorParamSpecSchema = z
+  .object({
+    kind: z.string().optional(),
+    min: z.number().optional(),
+    max: z.number().optional(),
+    enumOptions: z.array(z.string()).optional(),
+  })
+  .partial();
+
+export const imageStudioUiExtractorRequestSchema = z.object({
+  prompt: z.string().trim().min(1),
+  params: z.array(
+    z.object({
+      path: z.string().trim().min(1),
+      value: z.unknown(),
+      spec: imageStudioUiExtractorParamSpecSchema.nullable().optional(),
+    })
+  ),
+  mode: z.enum(['heuristic', 'ai', 'both']).optional().default('ai'),
+  contextRegistry: contextRegistryConsumerEnvelopeSchema.optional(),
+});
+
+export type ImageStudioUiExtractorRequest = z.infer<typeof imageStudioUiExtractorRequestSchema>;
+
+export const imageStudioUiExtractorResponseSchema = z.object({
+  suggestions: z.array(
+    z.object({
+      path: z.string().trim().min(1),
+      control: imageStudioUiExtractorControlSchema,
+      reason: z.string().trim().min(1).nullable().optional(),
+      confidence: z.number().min(0).max(1).optional(),
+    })
+  ),
+});
+
+export type ImageStudioUiExtractorResponse = z.infer<
+  typeof imageStudioUiExtractorResponseSchema
+>;
+
+export const imageStudioMaskAiModeSchema = z.enum(['bbox', 'polygon']);
+
+export type ImageStudioMaskAiMode = z.infer<typeof imageStudioMaskAiModeSchema>;
+
+export const imageStudioMaskAiRequestSchema = z.object({
+  imagePath: z.string().trim().min(1),
+  mode: imageStudioMaskAiModeSchema.optional().default('bbox'),
+  contextRegistry: contextRegistryConsumerEnvelopeSchema.optional(),
+});
+
+export type ImageStudioMaskAiRequest = z.infer<typeof imageStudioMaskAiRequestSchema>;
+
+export const imageStudioValidationPatternsLearnRequestSchema = z.object({
+  prompt: z.string().trim().min(1),
+  limit: z.number().int().min(1).max(20).optional().default(8),
+  contextRegistry: contextRegistryConsumerEnvelopeSchema.optional(),
+});
+
+export type ImageStudioValidationPatternsLearnRequest = z.infer<
+  typeof imageStudioValidationPatternsLearnRequestSchema
 >;
 
 export const imageStudioObjectDetectionUsedSchema = z.enum([
@@ -828,7 +917,38 @@ export type ImageStudioSequenceRunRequest = {
   mask: ImageStudioSequenceMaskContext;
   studioSettings: Record<string, unknown> | null;
   metadata: Record<string, unknown> | null;
+  contextRegistry?: z.infer<typeof contextRegistryConsumerEnvelopeSchema> | null;
 };
+
+const imageStudioSequencePointSchema = z.object({
+  x: z.number().min(0).max(1),
+  y: z.number().min(0).max(1),
+});
+
+export const imageStudioSequenceRunStartRequestSchema = z.object({
+  projectId: z.string().trim().min(1),
+  sourceSlotId: z.string().trim().min(1),
+  prompt: z.string().trim().min(1),
+  paramsState: z.record(z.string(), z.unknown()).nullable().optional(),
+  referenceSlotIds: z.array(z.string().trim().min(1)).optional(),
+  mask: z
+    .object({
+      polygons: z.array(z.array(imageStudioSequencePointSchema).min(3)).min(1),
+      invert: z.boolean().optional(),
+      feather: z.number().min(0).max(50).optional(),
+    })
+    .nullable()
+    .optional(),
+  studioSettings: z.record(z.string(), z.unknown()).nullable().optional(),
+  steps: z.array(z.unknown()).optional(),
+  presetId: z.string().trim().nullable().optional(),
+  metadata: z.record(z.string(), z.unknown()).nullable().optional(),
+  contextRegistry: contextRegistryConsumerEnvelopeSchema.optional(),
+});
+
+export type ImageStudioSequenceRunStartRequest = z.infer<
+  typeof imageStudioSequenceRunStartRequestSchema
+>;
 
 export type ImageStudioSequenceRunHistoryEvent = ImageStudioRunHistoryEvent;
 

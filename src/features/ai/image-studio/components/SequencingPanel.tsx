@@ -3,6 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
 import type { ImageStudioSlotRecord, StudioSlotsResponse } from '@/shared/contracts/image-studio';
 import { api } from '@/shared/lib/api-client';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
@@ -83,6 +84,7 @@ export function SequencingPanel(): React.JSX.Element {
     capability: 'image_studio.general',
   });
   const queryClient = useQueryClient();
+  const contextRegistry = useOptionalContextRegistryPageEnvelope();
   const { toast } = useToast();
 
   const sourceSlotIdRef = useRef<string | null>(null);
@@ -625,6 +627,7 @@ export function SequencingPanel(): React.JSX.Element {
         metadata: {
           source: 'sequencing-panel',
         },
+        ...(contextRegistry ? { contextRegistry } : {}),
       });
 
       setActiveSequenceRunId(result.runId);
@@ -656,6 +659,7 @@ export function SequencingPanel(): React.JSX.Element {
     studioSettings,
     toast,
     workingSlot,
+    contextRegistry,
     setPendingSequenceThumbnail,
   ]);
 

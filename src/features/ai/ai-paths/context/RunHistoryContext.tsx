@@ -36,6 +36,7 @@ export type { RunDetailData, RunStreamStatus };
 export interface RunHistoryOperationHandlers {
   refreshRuns?: (() => Promise<void> | void) | undefined;
   resumeRun?: ((runId: string, mode: 'resume' | 'replay') => Promise<void> | void) | undefined;
+  handoffRun?: ((runId: string, reason?: string) => Promise<boolean> | boolean) | undefined;
   retryRunNode?: ((runId: string, nodeId: string) => Promise<void> | void) | undefined;
   cancelRun?: ((runId: string) => Promise<void> | void) | undefined;
   requeueDeadLetter?: ((runId: string) => Promise<void> | void) | undefined;
@@ -74,6 +75,7 @@ export interface RunHistoryActions {
   setRunsRefreshing: (refreshing: boolean) => void;
   refreshRuns: () => Promise<void>;
   resumeRun: (runId: string, mode: 'resume' | 'replay') => Promise<void>;
+  handoffRun: (runId: string, reason?: string) => Promise<boolean>;
   retryRunNode: (runId: string, nodeId: string) => Promise<void>;
   cancelRun: (runId: string) => Promise<void>;
   requeueDeadLetter: (runId: string) => Promise<void>;
@@ -190,6 +192,10 @@ export function RunHistoryProvider({ children }: RunHistoryProviderProps): React
     await runOperationHandlersRef.current.resumeRun?.(runId, mode);
   }, []);
 
+  const handoffRun = useCallback(async (runId: string, reason?: string): Promise<boolean> => {
+    return (await runOperationHandlersRef.current.handoffRun?.(runId, reason)) === true;
+  }, []);
+
   const retryRunNode = useCallback(async (runId: string, nodeId: string): Promise<void> => {
     await runOperationHandlersRef.current.retryRunNode?.(runId, nodeId);
   }, []);
@@ -218,6 +224,7 @@ export function RunHistoryProvider({ children }: RunHistoryProviderProps): React
       setRunsRefreshing: setRunsRefreshingInternal,
       refreshRuns,
       resumeRun,
+      handoffRun,
       retryRunNode,
       cancelRun,
       requeueDeadLetter,

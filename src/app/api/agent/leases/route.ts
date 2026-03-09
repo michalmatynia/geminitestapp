@@ -1,11 +1,13 @@
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import {
-  getAgentLeaseDiscoveryPayload,
-  getAgentLeaseState,
-  mutateAgentLease,
-} from '@/shared/lib/agent-lease-service';
 import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
+import {
+  SHARED_LEASE_LIMITATION,
+  getAgentLeaseDiscoveryPayload,
+  getAgentLeaseState,
+  listAgentLeaseStates,
+  mutateAgentLease,
+} from '@/shared/lib/agent-lease-service';
 
 function statusForLeaseMutation(code: string) {
   switch (code) {
@@ -27,26 +29,39 @@ function statusForLeaseMutation(code: string) {
 const GET_handler = async (request: Request) => {
   const { searchParams } = new URL(request.url);
   const resourceId = searchParams.get('resourceId');
+  const scopeId = searchParams.get('scopeId');
 
-  if (resourceId) {
-    const state = getAgentLeaseState(resourceId);
+  if (resourceId && scopeId) {
+    const state = await getAgentLeaseState(resourceId, scopeId);
 
     if (!state) {
       return NextResponse.json(
-        { error: `Unknown agent resource: ${resourceId}` },
+        {
+          error: `Unknown agent lease scope: ${resourceId} (${scopeId})`,
+        },
         { status: 404 },
       );
     }
 
     return NextResponse.json({
       lease: state,
-      limitation:
-        'Lease state is currently process-local until the existing runtime broker and import lease implementations are migrated onto this shared service.',
+      limitation: SHARED_LEASE_LIMITATION,
+    });
+  }
+
+  if (resourceId) {
+    return NextResponse.json({
+      resourceId,
+      leases: await listAgentLeaseStates({
+        resourceId,
+        activeOnly: searchParams.get('activeOnly') === 'true',
+      }),
+      limitation: SHARED_LEASE_LIMITATION,
     });
   }
 
   return NextResponse.json(
-    getAgentLeaseDiscoveryPayload({
+    await getAgentLeaseDiscoveryPayload({
       activeOnly: searchParams.get('activeOnly') === 'true',
       resourceType: searchParams.get('resourceType'),
     })

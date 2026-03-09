@@ -7,7 +7,7 @@ import {
   supportsBrainJsonMode,
 } from '@/shared/lib/ai-brain/server-runtime-client';
 import {
-  imageStudioPromptExtractModeSchema,
+  imageStudioPromptExtractRequestSchema,
   type ImageStudioPromptExtractResponse,
   type ImageStudioPromptExtractSource,
 } from '@/shared/contracts/image-studio';
@@ -31,12 +31,8 @@ import type {
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, badRequestError, internalError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-
-const payloadSchema = z.object({
-  prompt: z.string().trim().min(1),
-  mode: imageStudioPromptExtractModeSchema.optional(),
-  applyAutofix: z.boolean().optional(),
-});
+import { resolveImageStudioContextRegistryEnvelope } from '@/features/ai/image-studio/context-registry/server';
+import { buildImageStudioWorkspaceSystemPrompt } from '@/features/ai/image-studio/context-registry/workspace-prompt';
 
 const responseSchema = z.object({
   params: z.record(z.string(), z.unknown()),
@@ -207,7 +203,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     session?.user?.isElevated || session?.user?.permissions?.includes('ai_paths.manage');
   if (!hasAccess) throw authError('Unauthorized.');
 
-  const parsed = await parseJsonBody(req, payloadSchema, {
+  const parsed = await parseJsonBody(req, imageStudioPromptExtractRequestSchema, {
     logPrefix: 'image-studio.prompt-extract.POST',
   });
   if (!parsed.ok) return parsed.response;
@@ -274,13 +270,25 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     });
   }
 
+  const contextRegistry = await resolveImageStudioContextRegistryEnvelope(
+    parsed.data.contextRegistry ?? null
+  );
+  const contextRegistryPrompt = buildImageStudioWorkspaceSystemPrompt({
+    registryBundle: contextRegistry?.resolved,
+    taskLabel: 'prompt parameter extraction and normalization',
+    extraInstructions:
+      'Use the selected slot, active prompt draft, params, and mask state when they clarify ambiguous field names.',
+  });
   const systemPrompt = [
     'You extract a JSON params object from a prompt.',
     'If the prompt includes a params object (JS-like or JSON), extract it and normalize to strict JSON.',
     'If the prompt does not include a params object, infer a best-effort params object from explicit key/value settings only; otherwise return an empty object.',
     'Return ONLY JSON matching: { "params": { ... } } with no extra text.',
     'Preserve booleans, numbers, arrays, and nested objects when present.',
-  ].join('\n');
+    contextRegistryPrompt,
+  ]
+    .filter(Boolean)
+    .join('\n');
   let model = '';
   let aiError: string | null;
   try {

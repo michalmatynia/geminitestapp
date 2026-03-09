@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { collectMetrics } from '../architecture/lib-metrics.mjs';
+import { writeMetricsMarkdownFile } from '../docs/metrics-frontmatter.mjs';
 
 const root = process.cwd();
 const outPath = path.join(root, 'docs', 'metrics', 'route-hotspots.md');
@@ -41,8 +42,11 @@ const run = async () => {
     lines.push(`- \`${route.path}\``);
   }
 
-  await fs.mkdir(path.dirname(outPath), { recursive: true });
-  await fs.writeFile(outPath, `${lines.join('\n')}\n`, 'utf8');
+  await writeMetricsMarkdownFile({
+    root,
+    targetPath: outPath,
+    content: `${lines.join('\n')}\n`,
+  });
 
   console.log(`Wrote ${path.relative(root, outPath)}`);
 };

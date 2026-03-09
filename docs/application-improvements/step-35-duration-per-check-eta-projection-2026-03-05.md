@@ -1,3 +1,12 @@
+---
+owner: 'Platform Team'
+last_reviewed: '2026-03-09'
+status: 'active'
+doc_type: 'plan'
+scope: 'cross-feature'
+canonical: true
+---
+
 # Step 35 Execution: Duration Per-Check ETA Projection
 
 Date: 2026-03-05

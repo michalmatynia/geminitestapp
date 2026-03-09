@@ -6,7 +6,7 @@ import {
   KANGUR_DOC_CATALOG,
   KANGUR_DOCUMENTATION_LIBRARY,
 } from '@/shared/lib/documentation/catalogs/kangur';
-import { SearchInput } from '@/shared/ui';
+import { Badge, Card, EmptyState, ListPanel, PanelStats, SearchInput } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 type GroupedTooltipDocs = {
@@ -42,10 +42,6 @@ export function KangurDocumentationCenter(): React.JSX.Element {
   const searchInputId = useId();
   const indexHeadingId = useId();
   const indexDescriptionId = useId();
-  const guideLibraryHeadingId = useId();
-  const guideLibraryDescriptionId = useId();
-  const tooltipCatalogHeadingId = useId();
-  const tooltipCatalogDescriptionId = useId();
   const resultsStatusId = useId();
 
   const visibleGuides = useMemo(
@@ -101,6 +97,16 @@ export function KangurDocumentationCenter(): React.JSX.Element {
     () => groupedTooltipDocs.reduce((count, group) => count + group.entries.length, 0),
     [groupedTooltipDocs]
   );
+
+  const stats = useMemo(
+    () => [
+      { key: 'guides', label: 'Guides', value: String(visibleGuides.length) },
+      { key: 'docs', label: 'Tooltip Docs', value: String(visibleTooltipDocCount) },
+      { key: 'sections', label: 'Sections', value: String(groupedTooltipDocs.length) },
+    ],
+    [groupedTooltipDocs.length, visibleGuides.length, visibleTooltipDocCount]
+  );
+
   const resultSummary = normalizedQuery
     ? `Showing ${visibleGuides.length} guides and ${visibleTooltipDocCount} tooltip documents across ${groupedTooltipDocs.length} sections for "${query.trim()}".`
     : `Showing ${visibleGuides.length} guides and ${visibleTooltipDocCount} tooltip documents across ${groupedTooltipDocs.length} sections in the Kangur documentation center.`;
@@ -110,20 +116,25 @@ export function KangurDocumentationCenter(): React.JSX.Element {
       <div id={resultsStatusId} role='status' aria-live='polite' aria-atomic='true' className='sr-only'>
         {resultSummary}
       </div>
-      <div className='grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]'>
-        <section
-          className='rounded-2xl border border-border/60 bg-card/55 p-5 shadow-sm'
-          aria-labelledby={indexHeadingId}
-          aria-describedby={indexDescriptionId}
-        >
-          <h2 id={indexHeadingId} className='text-sm font-semibold text-foreground'>
-            Kangur Documentation Index
-          </h2>
-          <p id={indexDescriptionId} className='mt-1 text-sm text-muted-foreground'>
-            Search the central Kangur guides and the tooltip catalog that feeds the learner and
-            admin UI.
-          </p>
-          <div className='mt-4' role='search' aria-label='Search Kangur documentation'>
+
+      <Card
+        variant='subtle'
+        padding='lg'
+        className='rounded-2xl border-border/60 bg-card/40 shadow-sm'
+        aria-labelledby={indexHeadingId}
+        aria-describedby={indexDescriptionId}
+      >
+        <div className='space-y-4'>
+          <div>
+            <h2 id={indexHeadingId} className='text-sm font-semibold text-foreground'>
+              Kangur Documentation Index
+            </h2>
+            <p id={indexDescriptionId} className='mt-1 text-sm text-muted-foreground'>
+              Search the central Kangur guides and the tooltip catalog that feeds the learner and
+              admin UI.
+            </p>
+          </div>
+          <div role='search' aria-label='Search Kangur documentation'>
             <label htmlFor={searchInputId} className='sr-only'>
               Search Kangur documentation
             </label>
@@ -135,165 +146,138 @@ export function KangurDocumentationCenter(): React.JSX.Element {
               onClear={() => setQuery('')}
               placeholder='Search Kangur docs, sections, or tooltip ids'
               size='sm'
-              variant='default'
+              variant='subtle'
               aria-describedby={resultsStatusId}
               data-doc-id='settings_documentation_library'
             />
           </div>
-          <div className='mt-4 grid gap-3 sm:grid-cols-3'>
-            <div className='rounded-xl border border-border/60 bg-background/70 px-3 py-3'>
-              <div className='text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground'>
-                Guides
-              </div>
-              <div className='mt-1 text-2xl font-bold text-foreground'>{visibleGuides.length}</div>
-            </div>
-            <div className='rounded-xl border border-border/60 bg-background/70 px-3 py-3'>
-              <div className='text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground'>
-                Tooltip Docs
-              </div>
-              <div className='mt-1 text-2xl font-bold text-foreground'>{visibleTooltipDocCount}</div>
-            </div>
-            <div className='rounded-xl border border-border/60 bg-background/70 px-3 py-3'>
-              <div className='text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground'>
-                Sections
-              </div>
-              <div className='mt-1 text-2xl font-bold text-foreground'>
-                {groupedTooltipDocs.length}
-              </div>
-            </div>
-          </div>
-        </section>
+          <PanelStats stats={stats} className='grid-cols-1 sm:grid-cols-3 lg:grid-cols-3' />
+        </div>
+      </Card>
 
-        <section aria-labelledby={guideLibraryHeadingId} aria-describedby={guideLibraryDescriptionId}>
-          <h2 id={guideLibraryHeadingId} className='sr-only'>
-            Guide library results
-          </h2>
-          <p id={guideLibraryDescriptionId} className='sr-only'>
-            Guide cards from the Kangur documentation library that match the current search.
-          </p>
-          <ul className='grid gap-3 md:grid-cols-2'>
-            {visibleGuides.map((guide) => (
-              <li key={guide.id}>
-                <article
-                  aria-labelledby={`kangur-doc-guide-${guide.id}-title`}
-                  className='rounded-2xl border border-border/60 bg-card/50 p-4 shadow-sm'
+      <div className='grid gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]'>
+        <ListPanel
+          header={
+            <div>
+              <h2 className='text-xl font-semibold text-foreground'>Guide Library</h2>
+              <p className='mt-1 text-sm text-muted-foreground'>
+                Canonical Kangur guides that back the tooltip catalog and admin reference copy.
+              </p>
+            </div>
+          }
+          className='rounded-2xl border-border/60 bg-card/40 shadow-sm'
+          contentClassName='space-y-4'
+        >
+          {visibleGuides.length > 0 ? (
+            <div className='grid gap-3 md:grid-cols-2'>
+              {visibleGuides.map((guide) => (
+                <Card
+                  key={guide.id}
+                  variant='subtle'
+                  padding='md'
+                  className='rounded-2xl border-border/60 bg-card/55 shadow-sm'
                 >
                   <div className='flex items-start justify-between gap-3'>
                     <div>
-                      <h3
-                        id={`kangur-doc-guide-${guide.id}-title`}
-                        className='text-sm font-semibold text-foreground'
-                      >
-                        {guide.title}
-                      </h3>
+                      <h3 className='text-sm font-semibold text-foreground'>{guide.title}</h3>
                       <p className='mt-1 text-sm text-muted-foreground'>{guide.summary}</p>
                     </div>
-                    <span className='rounded-full bg-indigo-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo-700'>
-                      {formatAudience(guide.audience)}
-                    </span>
-                  </div>
-                  <div className='mt-3 rounded-xl border border-border/60 bg-background/60 px-3 py-2 text-xs text-muted-foreground'>
-                    Source: <span className='font-mono text-foreground'>{guide.docPath}</span>
+                    <Badge variant='secondary'>{formatAudience(guide.audience)}</Badge>
                   </div>
                   <div className='mt-3 flex flex-wrap gap-2'>
+                    <Badge variant='outline'>{guide.docPath}</Badge>
                     {guide.sectionsCovered.map((section) => (
-                      <span
-                        key={section}
-                        className='rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-700'
-                      >
+                      <Badge key={section} variant='outline'>
                         {section}
-                      </span>
+                      </Badge>
                     ))}
                   </div>
-                </article>
-              </li>
-            ))}
-          </ul>
-          {visibleGuides.length === 0 ? (
-            <div className='rounded-2xl border border-dashed border-border/60 bg-background/50 p-4 text-sm text-muted-foreground md:col-span-2'>
-              No Kangur guide matched the current search.
+                </Card>
+              ))}
             </div>
-          ) : null}
-        </section>
-      </div>
+          ) : (
+            <EmptyState
+              title='No Kangur guide matched the current search.'
+              description='Try a broader phrase, a guide title, or a documentation path.'
+              className='rounded-2xl border-border/60 bg-background/30'
+              variant='compact'
+            />
+          )}
+        </ListPanel>
 
-      <section aria-labelledby={tooltipCatalogHeadingId} aria-describedby={tooltipCatalogDescriptionId}>
-        <h2 id={tooltipCatalogHeadingId} className='sr-only'>
-          Tooltip catalog results
-        </h2>
-        <p id={tooltipCatalogDescriptionId} className='sr-only'>
-          Grouped tooltip documentation entries that match the current search.
-        </p>
-        <div className='grid gap-4 xl:grid-cols-2'>
-          {groupedTooltipDocs.map((group, groupIndex) => (
-            <section
-              key={group.section}
-              aria-labelledby={`kangur-doc-tooltip-section-${groupIndex}-title`}
-              className='rounded-2xl border border-border/60 bg-card/50 p-4 shadow-sm'
-            >
-              <div className='flex items-center justify-between gap-3'>
-                <h3
-                  id={`kangur-doc-tooltip-section-${groupIndex}-title`}
-                  className='text-sm font-semibold text-foreground'
+        <ListPanel
+          header={
+            <div>
+              <h2 className='text-xl font-semibold text-foreground'>Tooltip Catalog</h2>
+              <p className='mt-1 text-sm text-muted-foreground'>
+                Grouped documentation entries that map directly to Kangur UI surfaces.
+              </p>
+            </div>
+          }
+          className='rounded-2xl border-border/60 bg-card/40 shadow-sm'
+          contentClassName='space-y-4'
+        >
+          {groupedTooltipDocs.length > 0 ? (
+            <div className='space-y-4'>
+              {groupedTooltipDocs.map((group, groupIndex) => (
+                <Card
+                  key={group.section}
+                  variant='subtle'
+                  padding='md'
+                  className='rounded-2xl border-border/60 bg-card/55 shadow-sm'
+                  aria-labelledby={`kangur-doc-tooltip-section-${groupIndex}-title`}
                 >
-                  {group.section}
-                </h3>
-                <span className='rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700'>
-                  {group.entries.length} docs
-                </span>
-              </div>
-              <ul className='mt-3 space-y-3'>
-                {group.entries.map((entry) => (
-                  <li key={entry.id}>
-                    <article
-                      aria-labelledby={`kangur-doc-tooltip-${entry.id}-title`}
-                      className={cn(
-                        'rounded-xl border border-border/60 bg-background/55 px-3 py-3',
-                        'transition-colors hover:bg-background/70'
-                      )}
+                  <div className='flex items-center justify-between gap-3'>
+                    <h3
+                      id={`kangur-doc-tooltip-section-${groupIndex}-title`}
+                      className='text-sm font-semibold text-foreground'
                     >
-                      <div className='flex flex-wrap items-start justify-between gap-3'>
-                        <div>
-                          <h4
-                            id={`kangur-doc-tooltip-${entry.id}-title`}
-                            className='text-sm font-semibold text-foreground'
-                          >
-                            {entry.title}
-                          </h4>
-                          <p className='mt-1 text-sm text-muted-foreground'>{entry.summary}</p>
+                      {group.section}
+                    </h3>
+                    <Badge variant='outline'>{group.entries.length} docs</Badge>
+                  </div>
+                  <div className='mt-3 space-y-3'>
+                    {group.entries.map((entry) => (
+                      <Card
+                        key={entry.id}
+                        variant='subtle'
+                        padding='sm'
+                        className={cn(
+                          'rounded-xl border-border/60 bg-background/55 shadow-none',
+                          'transition-colors hover:bg-background/70'
+                        )}
+                      >
+                        <div className='flex flex-wrap items-start justify-between gap-3'>
+                          <div>
+                            <h4 className='text-sm font-semibold text-foreground'>{entry.title}</h4>
+                            <p className='mt-1 text-sm text-muted-foreground'>{entry.summary}</p>
+                          </div>
+                          <Badge variant='outline'>{entry.id}</Badge>
                         </div>
-                        <span className='rounded-full bg-white/90 px-2.5 py-1 font-mono text-[11px] text-slate-700 shadow-sm'>
-                          {entry.id}
-                        </span>
-                      </div>
-                      <div className='mt-3 text-xs text-muted-foreground'>
-                        Source: <span className='font-mono text-foreground'>{entry.docPath}</span>
-                      </div>
-                      {entry.uiTargets?.length ? (
                         <div className='mt-3 flex flex-wrap gap-2'>
-                          {entry.uiTargets.slice(0, 3).map((target) => (
-                            <span
-                              key={target}
-                              className='rounded-full bg-sky-50 px-2.5 py-1 text-[11px] font-medium text-sky-700'
-                            >
+                          <Badge variant='outline'>{entry.docPath}</Badge>
+                          {entry.uiTargets?.slice(0, 3).map((target) => (
+                            <Badge key={target} variant='outline'>
                               {target}
-                            </span>
+                            </Badge>
                           ))}
                         </div>
-                      ) : null}
-                    </article>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ))}
-        </div>
-        {groupedTooltipDocs.length === 0 ? (
-          <div className='rounded-2xl border border-dashed border-border/60 bg-background/50 p-4 text-sm text-muted-foreground xl:col-span-2'>
-            No Kangur tooltip documentation matched the current search.
-          </div>
-        ) : null}
-      </section>
+                      </Card>
+                    ))}
+                  </div>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              title='No Kangur tooltip documentation matched the current search.'
+              description='Try a guide name, tooltip id, or UI target to widen the result set.'
+              className='rounded-2xl border-border/60 bg-background/30'
+              variant='compact'
+            />
+          )}
+        </ListPanel>
+      </div>
     </div>
   );
 }

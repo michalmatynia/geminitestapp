@@ -3,6 +3,8 @@ import type { AiPathRunStatus } from '@/shared/contracts/ai-paths';
 export const UPDATE_ELIGIBLE_RUN_STATUSES: AiPathRunStatus[] = [
   'queued',
   'running',
+  'blocked_on_lease',
+  'handoff_ready',
   'paused',
   'completed',
   'failed',

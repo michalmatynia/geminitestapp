@@ -1,5 +1,5 @@
-run npx tsc and address the issues one by one
-run npx eslint and address the issues one by one
+run npx tsc 
+npm run lint:fix
 run npm build and address the issues one by one
 run vitest and address the issues ony by one
 npm audit fix

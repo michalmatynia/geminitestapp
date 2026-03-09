@@ -1,3 +1,12 @@
+---
+owner: 'Platform Team'
+last_reviewed: '2026-03-09'
+status: 'active'
+doc_type: 'policy'
+scope: 'platform'
+canonical: true
+---
+
 # Forward-Only Execution
 
 Forward-only execution means agent work is coordinated through durable events, checkpoints, and ownership changes rather than destructive rewrites of shared state.

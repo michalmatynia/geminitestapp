@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
+import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
 import type { AiNode, Edge, RuntimeState } from '@/shared/lib/ai-paths';
 import { normalizeNodes, sanitizeEdges, stableStringify, aiJobsApi } from '@/shared/lib/ai-paths';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
@@ -32,6 +33,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
   const parserSamples = runtimeContextState.parserSamples;
   const updaterSamples = runtimeContextState.updaterSamples;
   const sendingToAi = runtimeContextState.sendingToAi;
+  const contextRegistry = useOptionalContextRegistryPageEnvelope();
   const brainAssignment = useBrainAssignment({
     capability: 'ai_paths.model',
   });
@@ -290,6 +292,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
           runId: `preview-${createRunId()}`,
         },
         context: sourceOutputs,
+        ...(contextRegistry ? { contextRegistry } : {}),
       };
 
       const res = await aiJobsApi.enqueue({
@@ -362,7 +365,15 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
     } finally {
       runtimeContextActions.setSendingToAi(false);
     }
-  }, [args, brainAssignment, resolvePreviewModelNode, runtimeContextActions, runtimeContextState, setRuntimeState]);
+  }, [
+    args,
+    brainAssignment,
+    contextRegistry,
+    resolvePreviewModelNode,
+    runtimeContextActions,
+    runtimeContextState,
+    setRuntimeState,
+  ]);
 
   const { runtimeNodeStatusesRef, setRuntimeNodeStatuses, appendRuntimeEvent } = state;
   const clearNodeCache = useCallback(

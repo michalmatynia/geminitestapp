@@ -55,19 +55,31 @@ when the doc is touched meaningfully.
 
 1. Every doc change must follow [`docs/documentation/README.md`](./documentation/README.md).
 2. Every new doc must update its nearest index or hub page.
-3. New dated docs belong in `docs/plans/`, `docs/decisions/`, feature-specific
+3. Every `docs/**/` directory with markdown content must have a `README.md` or
+   `index.md` hub page.
+4. Every child docs hub must be linked from its immediate parent hub unless the
+   structure manifest explicitly exempts it.
+5. Every `canonical: true` docs file must be listed in `requiredCanonicalDocs`
+   in the structure manifest.
+6. Every docs hub must follow its declared indexing policy: complete
+   or curated.
+7. Hand-written stable entry points surfaced by curated hubs should be canonical
+   docs with metadata, not untyped markdown files.
+8. Every artifact-only docs directory must either have a local hub or be
+   declared in the structure manifest and linked from an owning markdown doc.
+9. New dated docs belong in `docs/plans/`, `docs/decisions/`, feature-specific
    subfolders, or `docs/migrations/` when they are migration execution records.
-4. New docs should not be added directly under `docs/` unless they are root
+10. New docs should not be added directly under `docs/` unless they are root
    entrypoints, governance docs, or agent overlays.
-5. Generated docs should be updated through their scripts whenever possible, not
+11. Generated docs should be updated through their scripts whenever possible, not
    by hand-editing outputs.
-6. Machine-readable companions should live beside their canonical doc, and any
+12. Machine-readable companions should live beside their canonical doc, and any
    retained compatibility copy must be updated in the same change.
-7. Superseded root docs should remain short compatibility stubs, not partial
+13. Superseded root docs should remain short compatibility stubs, not partial
    shadow copies of the old canonical content.
-8. Manifest-defined compatibility mirrors should be synced by script when
+14. Manifest-defined compatibility mirrors should be synced by script when
    possible, not maintained by ad hoc manual copying.
-9. Compatibility mirrors should be deleted once repo-internal consumers are
+15. Compatibility mirrors should be deleted once repo-internal consumers are
    removed.
 
 ## AI Update Protocol
@@ -77,13 +89,34 @@ When an AI adds or rewrites docs, it should:
 1. Classify the scope and doc type before creating the file.
 2. Place the file in the canonical folder for that class of document.
 3. Update metadata and ownership fields.
-4. Update the relevant hub page and cross-links.
-5. Mark superseded docs explicitly instead of leaving ambiguous duplicates.
-6. If a JSON or other machine-readable companion exists, update the canonical
+4. If the doc is canonical, register it in `requiredCanonicalDocs`.
+5. Update the relevant hub page and cross-links.
+6. Add a hub page in the same patch if the change creates or expands a
+   markdown-bearing docs directory.
+7. If the change adds a child docs hub, link it from the immediate parent hub in
+   the same patch unless the structure manifest documents an exemption.
+8. Mark superseded docs explicitly instead of leaving ambiguous duplicates.
+9. If a JSON or other machine-readable companion exists, update the canonical
    file first and keep any compatibility copy in sync.
-7. If a root compatibility stub exists, keep it short and make sure it still
+10. If a root compatibility stub exists, keep it short and make sure it still
    points cleanly at the canonical replacement.
-8. If the mirror pair is declared in the docs structure manifest, run
+11. If the mirror pair is declared in the docs structure manifest, run
    `npm run docs:structure:sync-mirrors`.
-9. Canonical docs should link to canonical destinations, not back to root
-   compatibility stubs, unless a migration inventory explicitly needs the old path.
+12. Canonical docs should link to canonical destinations, not back to root
+    compatibility stubs, unless a migration inventory explicitly needs the old path.
+13. Keep the owning docs hub aligned with its indexing policy when the
+    directory’s active docs surface changes.
+14. If a docs directory contains only non-markdown artifacts, declare it in the
+    manifest and link it from an owning markdown doc unless you are adding a
+    local hub.
+15. If the task is metadata cleanup, run `npm run docs:structure:audit:frontmatter`
+    first and normalize one structural slice at a time.
+16. For generated markdown under `docs/metrics/`, prefer
+    `npm run docs:metrics:normalize-frontmatter` so frontmatter and canonical
+    registration stay aligned with the generated metrics policy.
+17. Treat `docs/metrics/**/README.md`, `docs/metrics/**/-latest.md`, and
+    `docs/metrics/route-hotspots.md` as the canonical generated metrics surface;
+    timestamped history snapshots are generated records, not canonical docs.
+18. If a repo script owns markdown generation for a canonical docs surface,
+    keep frontmatter in the generator itself through the shared helpers in
+    `scripts/docs/` so regeneration does not strip metadata.

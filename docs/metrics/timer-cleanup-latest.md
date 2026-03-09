@@ -1,6 +1,14 @@
+---
+owner: 'Platform Team'
+last_reviewed: '2026-03-09'
+status: 'generated'
+doc_type: 'generated'
+scope: 'generated'
+canonical: true
+---
 # Timer Cleanup Check
 
-Generated at: 2026-03-09T06:12:24.204Z
+Generated at: 2026-03-09T07:50:51.909Z
 
 ## Summary
 

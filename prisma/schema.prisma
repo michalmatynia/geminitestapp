@@ -1319,6 +1319,8 @@ enum ProductAiJobStatus {
 enum AiPathRunStatus {
   queued
   running
+  blocked_on_lease
+  handoff_ready
   paused
   completed
   failed

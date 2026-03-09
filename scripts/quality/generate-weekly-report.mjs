@@ -5,6 +5,7 @@ import { promisify } from 'node:util';
 
 import { collectMetrics } from '../architecture/lib-metrics.mjs';
 import { parseScanOutput } from '../architecture/lib/scan-output.mjs';
+import { writeMetricsMarkdownFile } from '../docs/metrics-frontmatter.mjs';
 
 const execFile = promisify(execFileCallback);
 
@@ -879,11 +880,19 @@ const run = async () => {
   const historicalMdPath = path.join(outDir, `weekly-quality-${stamp}.md`);
 
   await fs.writeFile(latestJsonPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
-  await fs.writeFile(latestMdPath, toMarkdown(report), 'utf8');
+  await writeMetricsMarkdownFile({
+    root,
+    targetPath: latestMdPath,
+    content: toMarkdown(report),
+  });
 
   if (shouldWriteHistory) {
     await fs.writeFile(historicalJsonPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
-    await fs.writeFile(historicalMdPath, toMarkdown(report), 'utf8');
+    await writeMetricsMarkdownFile({
+      root,
+      targetPath: historicalMdPath,
+      content: toMarkdown(report),
+    });
   }
 
   console.log(

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { resolveImageStudioContextRegistryEnvelope } from '@/features/ai/image-studio/context-registry/server';
 import { sendProductImageToStudio } from '@/features/ai/server';
 import { productStudioSendRequestSchema as sendSchema } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -27,10 +28,14 @@ export async function POST_handler(
     projectId: parsed.data.projectId ?? null,
     rotateBeforeSendDeg: parsed.data.rotateBeforeSendDeg ?? null,
   } as const;
+  const contextRegistry = await resolveImageStudioContextRegistryEnvelope(
+    parsed.data.contextRegistry ?? null
+  );
 
   const result = await sendProductImageToStudio({
     ...basePayload,
     sequenceGenerationMode: parsed.data.sequenceGenerationMode,
+    ...(contextRegistry ? { contextRegistry } : {}),
   });
 
   return NextResponse.json(result);

@@ -17,6 +17,7 @@ import {
   computeNodeMigrationReadiness,
   summarizeNodeMigrationReadiness,
 } from './node-migration-readiness';
+import { writeManagedGeneratedDocSync } from './generated-doc-frontmatter.mjs';
 
 type SemanticNodeIndexRow = {
   nodeType: string;
@@ -529,7 +530,12 @@ for (const row of rows) {
 
   const rowSheetPath = path.join(workspaceRoot, row.docs.migrationDocFile);
   fs.mkdirSync(path.dirname(rowSheetPath), { recursive: true });
-  fs.writeFileSync(rowSheetPath, `${rowSheetLines.join('\n')}\n`, 'utf8');
+  writeManagedGeneratedDocSync({
+    root: workspaceRoot,
+    targetPath: rowSheetPath,
+    content: `${rowSheetLines.join('\n')}\n`,
+    reviewDate: generatedAt.slice(0, 10),
+  });
 }
 
 fs.writeFileSync(outputIndexPath, stableJson(payload), 'utf8');
@@ -695,6 +701,11 @@ const guideLines = [
   '',
 ];
 
-fs.writeFileSync(outputGuidePath, `${guideLines.join('\n')}\n`, 'utf8');
+writeManagedGeneratedDocSync({
+  root: workspaceRoot,
+  targetPath: outputGuidePath,
+  content: `${guideLines.join('\n')}\n`,
+  reviewDate: generatedAt.slice(0, 10),
+});
 
 console.log(`Generated AI-Paths node migration docs for ${rows.length} node types.`);

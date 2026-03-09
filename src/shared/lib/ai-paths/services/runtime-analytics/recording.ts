@@ -72,6 +72,54 @@ export const recordRuntimeRunStarted = async (input: {
   }
 };
 
+const recordRuntimeRunStatusMetric = async (input: {
+  runId: string;
+  status: 'blocked_on_lease' | 'handoff_ready';
+  timestamp?: Date | string | number | null;
+}): Promise<void> => {
+  try {
+    const redis = getRedisConnection();
+    if (!redis || !input.runId) return;
+    const timestampMs = toTimestampMs(input.timestamp);
+    const pruneTo = pruneBefore(timestampMs);
+    const runStatusKey = keyRuns(input.status);
+    const multi = redis.multi();
+    multi.zadd(
+      runStatusKey,
+      String(timestampMs),
+      buildEventMember(input.status, input.runId, timestampMs)
+    );
+    multi.zremrangebyscore(runStatusKey, 0, pruneTo);
+    multi.hincrby(keyTotals(), `runs_${input.status}`, 1);
+    await multi.exec();
+  } catch (error) {
+    void ErrorSystem.logWarning('Failed to record run status analytics', {
+      service: 'ai-paths-analytics',
+      error,
+      runId: input.runId,
+      status: input.status,
+    });
+  }
+};
+
+export const recordRuntimeRunBlockedOnLease = async (input: {
+  runId: string;
+  timestamp?: Date | string | number | null;
+}): Promise<void> =>
+  recordRuntimeRunStatusMetric({
+    ...input,
+    status: 'blocked_on_lease',
+  });
+
+export const recordRuntimeRunHandoffReady = async (input: {
+  runId: string;
+  timestamp?: Date | string | number | null;
+}): Promise<void> =>
+  recordRuntimeRunStatusMetric({
+    ...input,
+    status: 'handoff_ready',
+  });
+
 export const recordRuntimeRunFinished = async (input: {
   runId: string;
   status: 'completed' | 'failed' | 'canceled' | 'dead_lettered';

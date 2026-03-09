@@ -1,3 +1,11 @@
+---
+owner: 'AI Paths Team'
+last_reviewed: '2026-03-05'
+status: 'active'
+doc_type: 'reference'
+scope: 'feature:ai-paths'
+canonical: true
+---
 # Node Migration Guide (Semantic Portable Engine)
 
 This guide tracks node-by-node migration from compatibility runtime handlers to semantic portable code objects (`v3`).

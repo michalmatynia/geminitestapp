@@ -1,7 +1,10 @@
 ---
 owner: 'Kangur Team'
-last_reviewed: '2026-03-07'
+last_reviewed: '2026-03-09'
 status: 'active'
+doc_type: 'runbook'
+scope: 'feature:kangur'
+canonical: true
 related_components:
   - 'src/features/kangur/observability/client.ts'
   - 'src/features/kangur/observability/server.ts'

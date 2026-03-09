@@ -5,6 +5,7 @@ import path from 'node:path';
 import { palette } from '@/shared/lib/ai-paths/core/definitions';
 import { AI_PATHS_NODE_DOCS } from '@/shared/lib/ai-paths/core/docs/node-docs';
 import { pruneUnexpectedFilesBySuffix } from './artifact-hygiene';
+import { writeManagedGeneratedDocSync } from './generated-doc-frontmatter.mjs';
 
 const workspaceRoot = process.cwd();
 const semanticDocsDir = path.join(workspaceRoot, 'docs/ai-paths/semantic-grammar');
@@ -167,6 +168,10 @@ const readmeLines = [
   '```',
   '',
 ];
-fs.writeFileSync(path.join(nodesDir, 'README.md'), readmeLines.join('\n'), 'utf8');
+writeManagedGeneratedDocSync({
+  root: workspaceRoot,
+  targetPath: path.join(nodesDir, 'README.md'),
+  content: readmeLines.join('\n'),
+});
 
 console.log(`Semantic grammar node docs generated for ${sortedRows.length} node types.`);

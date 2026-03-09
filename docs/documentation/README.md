@@ -37,6 +37,19 @@ Use the structure gate before or after docs changes:
 npm run docs:structure:check
 ```
 
+Use the frontmatter audit when you want a non-gating view of metadata debt:
+
+```bash
+npm run docs:structure:audit:frontmatter
+```
+
+If you touch generated markdown under `docs/metrics/`, normalize it structurally
+through the metrics normalizer instead of hand-editing hundreds of snapshots:
+
+```bash
+npm run docs:metrics:normalize-frontmatter
+```
+
 If a docs change affects machine-readable compatibility mirrors, sync them from
 the canonical sources first when mirror pairs are still declared:
 
@@ -47,11 +60,17 @@ npm run docs:structure:sync-mirrors
 This check currently enforces:
 
 - root-level docs allowlist compliance
+- docs directories with markdown content expose a README/index hub
+- parent hubs reference their child docs directories
+- every `canonical: true` docs file is registered in `requiredCanonicalDocs`
 - required frontmatter on canonical docs
 - existence of the main governance and hub docs
 - superseded root docs stay short and explicitly marked `canonical: false`
 - canonical docs and configured reference guides do not point at root
   compatibility stubs, except for explicit migration inventory exemptions
+- artifact-only docs directories are explicitly declared and linked from an
+  owning markdown doc
+- docs hubs follow their declared index policies
 - declared compatibility mirrors, when present, stay byte-identical to their canonical source
 
 The GitHub Actions workflow `.github/workflows/docs-structure.yml` runs the same
@@ -106,6 +125,47 @@ removed once internal consumers are gone.
 Any new doc must update its nearest hub page. A doc that is not discoverable
 from an index is effectively documentation debt.
 
+### 5a. No orphan directories
+
+Any `docs/**/` directory that contains markdown should expose a `README.md` or
+`index.md` hub page, even when the folder is generated or mostly historical.
+
+### 5aa. Child hubs must be discoverable
+
+If a docs folder has its own hub, the immediate parent hub should link to that
+child directory unless the structure manifest explicitly exempts it.
+
+### 5b. Docs hubs need an index policy
+
+Each docs hub should follow one of two models:
+
+- complete: enumerate every direct markdown file in that folder
+- curated: link the stable entry points and state clearly that the hub is
+  curated rather than exhaustive
+
+The docs structure manifest defines which model applies per docs folder, and the
+checker validates those expectations.
+
+Hand-written stable entry points exposed by curated hubs should carry
+frontmatter and be registered as canonical docs. Generated latest reports can be
+tracked through the frontmatter audit until their generators are upgraded.
+Generated metrics markdown under `docs/metrics/` should be normalized with
+`npm run docs:metrics:normalize-frontmatter`, which keeps frontmatter and the
+canonical metrics manifest entries aligned in one pass.
+If a script owns a canonical generated markdown surface, update the generator to
+preserve frontmatter at write time through the shared helpers in `scripts/docs/`
+instead of depending on a later cleanup pass.
+
+### 5c. Artifact-only directories need ownership
+
+If a `docs/**/` directory contains only non-markdown artifacts such as JSON,
+CSV, or screenshots, it may remain hubless only when:
+
+- it is declared in the docs structure manifest as an artifact bucket
+- an owning markdown doc links to it or to its canonical artifacts
+
+Silent artifact buckets are documentation debt.
+
 ### 6. Migrate with compatibility stubs when needed
 
 When moving a legacy root doc to its canonical folder:
@@ -126,6 +186,8 @@ For non-markdown artifacts such as JSON manifests or exception registers:
 - keep compatibility copies byte-identical to the canonical file until they are
   removed
 - update any manifest or script that should learn the canonical path
+- if an artifact-only directory has no local README, declare it in the manifest
+  and link it from an owning markdown doc
 
 ## Canonical Taxonomy
 
@@ -141,6 +203,9 @@ For non-markdown artifacts such as JSON manifests or exception registers:
 | Machine-readable decision companions | `docs/decisions/` | exception register JSON, decision manifests tied to one owning record | keep root copies only as temporary compatibility mirrors |
 | Migration execution | `docs/migrations/` | wave execution, verification, reports | keep execution artifacts together |
 | Generated metrics | `docs/metrics/` | scans, baselines, trend outputs | generated only |
+| Artifact-only generated buckets | nested under the owning docs area | JSON schemas, reports, CSV exports, screenshots, and other non-markdown outputs | either add a local hub or declare the bucket in the manifest with an owning markdown reference |
+| Historical program folders | `docs/<program>/` | legacy or ongoing cross-feature program histories such as application-improvements or ui-consolidation | still require a hub page; not the default location for new shared docs |
+| Temporary TODO backlogs | `docs/todo/` | short-lived debt queues and work-in-progress checklists | promote durable work into canonical folders |
 | Feature-generated references | feature-specific generated folders | semantic grammars, manifests, catalogs | keep near the feature that owns them |
 
 ## Placement Decision Tree
@@ -218,14 +283,27 @@ When making the change:
 1. Update existing canonical docs before creating new ones.
 2. If a new doc is needed, place it using the taxonomy above.
 3. Add metadata.
-4. Update the nearest index or hub page.
-5. If the new doc supersedes an older one, mark that explicitly.
-6. If the doc is generated, update the generator or source contract when needed.
-7. If a machine-readable compatibility copy exists, update it in the same change.
-8. Prefer `npm run docs:structure:sync-mirrors` over manual copy/paste when the
+4. If the doc is canonical, add it to `requiredCanonicalDocs` in the structure manifest.
+5. Update the nearest index or hub page.
+6. If the change creates or expands a markdown-bearing `docs/**/` directory,
+   make sure that folder has a `README.md` or `index.md`.
+7. If the change creates a child docs hub, link it from the immediate parent
+   hub in the same patch unless the manifest documents an exemption.
+8. If the new doc supersedes an older one, mark that explicitly.
+9. If the doc is generated, update the generator or source contract when needed.
+10. If a machine-readable compatibility copy exists, update it in the same change.
+11. Prefer `npm run docs:structure:sync-mirrors` over manual copy/paste when the
    manifest already defines the compatibility mirror pair.
-9. Link to canonical destinations, not root compatibility stubs, unless a
-   migration inventory doc explicitly needs to record the legacy path.
+12. Link to canonical destinations, not root compatibility stubs, unless a
+    migration inventory doc explicitly needs to record the legacy path.
+13. Keep the folder hub aligned with its declared index policy: complete hubs
+    enumerate direct docs; curated hubs expose the stable entry points.
+14. If the change creates an artifact-only docs directory, either add a local
+    hub or declare an artifact directory policy plus owning markdown reference in
+    the same patch.
+15. If the task is metadata normalization rather than a targeted docs edit, run
+    `npm run docs:structure:audit:frontmatter` first and normalize one
+    structural slice at a time.
 
 After the change:
 
@@ -266,7 +344,15 @@ Use compatibility stubs when gradual migration is safer than a hard cut.
 ### Phase 3: Stronger validation
 
 - implemented: `npm run docs:structure:check` for root allowlist compliance,
-  canonical frontmatter, and required hub-doc presence
+  canonical frontmatter, required hub-doc presence, and recursive hub coverage
+- implemented: manifest-driven docs-hub index policies for complete versus
+  curated folder indexes
+- implemented: manifest-driven artifact-bucket policies for non-markdown docs
+  directories
+- implemented: parent-hub discoverability checks so child docs hubs cannot stay
+  structurally hidden from their immediate parent index
+- implemented: canonical-doc registration checks so `requiredCanonicalDocs`
+  stays exhaustive for active canonical docs
 - implemented: `.github/workflows/docs-structure.yml` to run the structure gate
   on docs-related changes
 - implemented: root compatibility stub reference detection for canonical docs and
@@ -281,6 +367,11 @@ A docs change is structurally complete when:
 1. the doc is in the right folder
 2. metadata is present
 3. the nearest index is updated
-4. generated docs were changed via the correct path
-5. superseded docs are called out instead of silently drifting
-6. canonical docs point at canonical destinations, not root compatibility stubs
+4. any markdown-bearing docs folder has a hub page
+5. generated docs were changed via the correct path
+6. superseded docs are called out instead of silently drifting
+7. canonical docs point at canonical destinations, not root compatibility stubs
+8. the nearest docs hub still satisfies its declared indexing policy
+9. any artifact-only docs directory introduced by the change is explicitly owned
+10. any new child docs hub is discoverable from its immediate parent hub
+11. any canonical doc touched by the change remains registered in `requiredCanonicalDocs`

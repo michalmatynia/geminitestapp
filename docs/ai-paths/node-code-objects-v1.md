@@ -1,3 +1,12 @@
+---
+owner: 'AI Paths Team'
+last_reviewed: '2026-03-09'
+status: 'active'
+doc_type: 'reference'
+scope: 'feature:ai-paths'
+canonical: true
+---
+
 # AI-Paths Node Code Objects (v1)
 
 > `v2` portable semantic node objects are available at [`docs/ai-paths/node-code-objects-v2.md`](./node-code-objects-v2.md).

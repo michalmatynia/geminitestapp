@@ -1,3 +1,12 @@
+---
+owner: 'Platform Team'
+last_reviewed: '2026-03-09'
+status: 'active'
+doc_type: 'overview'
+scope: 'platform'
+canonical: true
+---
+
 # Agentic Coding Overview
 
 This application now exposes a first-class baseline for AI-first concurrent agentic coding:

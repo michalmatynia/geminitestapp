@@ -1,3 +1,12 @@
+---
+owner: 'Platform Team'
+last_reviewed: '2026-03-09'
+status: 'archived'
+doc_type: 'plan'
+scope: 'cross-feature'
+canonical: true
+---
+
 # ESLint Fixes - Phase 6 ✅ COMPLETED
 
 > Historical note:

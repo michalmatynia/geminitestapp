@@ -1,3 +1,12 @@
+---
+owner: 'Platform Team'
+last_reviewed: '2026-03-09'
+status: 'active'
+doc_type: 'decision'
+scope: 'cross-feature'
+canonical: true
+---
+
 # Decision Record: `products-ai-worker-model-fallback` (2026-03-05)
 
 Date: 2026-03-05  

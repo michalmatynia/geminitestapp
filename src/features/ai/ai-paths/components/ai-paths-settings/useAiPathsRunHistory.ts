@@ -8,6 +8,7 @@ import {
   getAiPathRun,
   listAiPathRuns,
   aiPathRunRecordSchema,
+  handoffAiPathRun,
   resumeAiPathRun,
   retryAiPathRunNode,
   type AiPathRunEventRecord,
@@ -42,7 +43,11 @@ const RUN_STATUS_ALIASES: Record<string, AiPathRunRecord['status']> = {
   queued: 'queued',
   queue: 'queued',
   running: 'running',
+  blocked_on_lease: 'blocked_on_lease',
+  blocked: 'blocked_on_lease',
   paused: 'paused',
+  handoff_ready: 'handoff_ready',
+  handoff: 'handoff_ready',
   completed: 'completed',
   complete: 'completed',
   success: 'completed',
@@ -356,7 +361,10 @@ export function useAiPathsRunHistory({ activePathId, toast }: UseAiPathsRunHisto
       if (!d?.ok) return false;
       const runs: AiPathRunRecord[] = d.data?.runs ?? [];
       const hasActive: boolean = runs.some(
-        (run: AiPathRunRecord): boolean => run.status === 'queued' || run.status === 'running'
+        (run: AiPathRunRecord): boolean =>
+          run.status === 'queued' ||
+          run.status === 'running' ||
+          run.status === 'blocked_on_lease'
       );
       return hasActive ? 5000 : false;
     },
@@ -426,6 +434,20 @@ export function useAiPathsRunHistory({ activePathId, toast }: UseAiPathsRunHisto
     [refetchRuns, toast]
   );
 
+  const handleHandoffRun = useCallback(
+    async (runId: string, reason?: string): Promise<boolean> => {
+      const response = await handoffAiPathRun(runId, reason ? { reason } : undefined);
+      if (!response.ok) {
+        toast(response.error || 'Failed to mark run handoff-ready.', { variant: 'error' });
+        return false;
+      }
+      toast('Run marked handoff-ready.', { variant: 'success' });
+      void refetchRuns();
+      return true;
+    },
+    [refetchRuns, toast]
+  );
+
   const handleCancelRun = useCallback(
     async (runId: string): Promise<void> => {
       const response = await cancelAiPathRun(runId);
@@ -487,6 +509,7 @@ export function useAiPathsRunHistory({ activePathId, toast }: UseAiPathsRunHisto
         await refetchRuns();
       },
       resumeRun: handleResumeRun,
+      handoffRun: handleHandoffRun,
       retryRunNode: handleRetryRunNode,
       cancelRun: handleCancelRun,
       requeueDeadLetter: handleRequeueDeadLetter,
@@ -496,6 +519,7 @@ export function useAiPathsRunHistory({ activePathId, toast }: UseAiPathsRunHisto
     };
   }, [
     handleCancelRun,
+    handleHandoffRun,
     handleRequeueDeadLetter,
     handleResumeRun,
     handleRetryRunNode,

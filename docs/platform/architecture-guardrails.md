@@ -67,11 +67,23 @@ Every scan/check now emits the same envelope:
 - `paths` contains written artifact paths when the scanner produced files.
 - `filters` contains run filters/flags.
 - `notes` contains optional run annotations.
+- AI and automation should preserve that partitioning when reshaping a scan:
+  keep headline metrics in `summary`, rich findings in `details`, artifact
+  locations in `paths`, and run flags in `filters`.
 
 Use [`scripts/architecture/lib/scan-output.mjs`](/Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/scripts/architecture/lib/scan-output.mjs) for both producers and consumers:
 
 - `buildScanOutput` when writing `--summary-json`
 - `parseScanOutput` / `parseScanSummary` when reading `stdout`
+- If a consumer needs the full payload, use `parseScanOutput` and keep each
+  section in its matching field instead of flattening everything into one blob.
+
+Validation commands for the shared envelope:
+
+```bash
+npm run lint:scanner-scripts
+npm run test:scanner-envelopes
+```
 
 ### Guardrail enforcement
 

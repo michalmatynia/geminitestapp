@@ -6,6 +6,8 @@ import {
   resolveAiPathsNodeExecutionConfig,
   resolveBrainExecutionConfigForCapability,
 } from '@/shared/lib/ai-brain/server';
+import { buildAiPathsContextRegistrySystemPrompt } from '@/features/ai/ai-paths/context-registry/system-prompt';
+import { contextRegistryConsumerEnvelopeSchema } from '@/shared/contracts/ai-context-registry';
 import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 import { inferBrainModelVendor } from '@/shared/lib/ai-brain/model-vendor';
 import { createMongoBackup, createPostgresBackup } from '@/shared/lib/db/services/database-backup';
@@ -192,6 +194,12 @@ export async function processGraphModel(job: Job): Promise<Record<string, unknow
     typeof payload['systemPrompt'] === 'string' && payload['systemPrompt'].trim()
       ? payload['systemPrompt'].trim()
       : '';
+  const contextRegistryParsed = contextRegistryConsumerEnvelopeSchema.safeParse(
+    payload['contextRegistry']
+  );
+  const contextRegistryPrompt = contextRegistryParsed.success
+    ? buildAiPathsContextRegistrySystemPrompt(contextRegistryParsed.data.resolved ?? null)
+    : '';
   let modelId: string;
   let temperature: number;
   let maxTokens: number;
@@ -217,7 +225,7 @@ export async function processGraphModel(job: Job): Promise<Record<string, unknow
     modelId = brainConfig.modelId;
     temperature = brainConfig.temperature;
     maxTokens = brainConfig.maxTokens;
-    systemMessage = brainConfig.systemPrompt;
+    systemMessage = [brainConfig.systemPrompt, contextRegistryPrompt].filter(Boolean).join('\n\n');
     brainApplied = brainConfig.brainApplied;
   } else {
     const capability = payload.vision
@@ -232,7 +240,7 @@ export async function processGraphModel(job: Job): Promise<Record<string, unknow
     modelId = brainConfig.modelId;
     temperature = brainConfig.temperature;
     maxTokens = brainConfig.maxTokens;
-    systemMessage = brainConfig.systemPrompt;
+    systemMessage = [brainConfig.systemPrompt, contextRegistryPrompt].filter(Boolean).join('\n\n');
     brainApplied = brainConfig.brainApplied;
   }
 

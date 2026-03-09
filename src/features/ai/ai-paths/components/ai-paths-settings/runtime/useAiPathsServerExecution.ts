@@ -3,6 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useRef } from 'react';
 
+import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
 import type { AiNode, AiPathRunRecord } from '@/shared/lib/ai-paths';
 import { mergeEnqueuedAiPathRunForCache } from '@/shared/lib/ai-paths';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -26,6 +27,7 @@ import type { ServerExecutionArgs, ServerRunFinalizeOptions } from './server-exe
 export function useAiPathsServerExecution(args: ServerExecutionArgs) {
   const queryClient = useQueryClient();
   const { setPathConfigs } = useGraphActions();
+  const contextRegistry = useOptionalContextRegistryPageEnvelope();
   const serverRunActiveRef = useRef(false);
 
   const finalizeRun = useCallback(
@@ -181,7 +183,14 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
       }
 
       try {
-        const result = await performEnqueue(args, enqueueInfo.payload, enqueueInfo.requestId);
+        const result = await performEnqueue(
+          args,
+          {
+            ...enqueueInfo.payload,
+            ...(contextRegistry ? { contextRegistry } : {}),
+          },
+          enqueueInfo.requestId
+        );
         if ('error' in result && result.error === 'enqueue_failed') {
           const { metadata, result: enqueueResult } = result;
           const enqueueError =
@@ -276,7 +285,15 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
         finalizeRun('failed', { message: 'Failed to initiate server run.' });
       }
     },
-    [args, queryClient, setPathConfigs, stopServerRunStream, startStream, finalizeRun]
+    [
+      args,
+      contextRegistry,
+      queryClient,
+      setPathConfigs,
+      stopServerRunStream,
+      startStream,
+      finalizeRun,
+    ]
   );
 
   return {

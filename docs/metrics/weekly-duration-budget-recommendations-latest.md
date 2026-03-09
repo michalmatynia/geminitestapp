@@ -1,3 +1,11 @@
+---
+owner: 'Platform Team'
+last_reviewed: '2026-03-09'
+status: 'generated'
+doc_type: 'generated'
+scope: 'generated'
+canonical: true
+---
 # Weekly Duration Budget Recommendations
 
 Generated at: 2026-03-08T19:34:26.735Z

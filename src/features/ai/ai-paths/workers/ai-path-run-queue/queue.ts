@@ -11,14 +11,27 @@ import {
   processRun,
   processStaleRunRecovery,
 } from '@/features/ai/ai-paths/workers/ai-path-run-processor';
-import { recordRuntimeRunStarted } from '@/features/ai/ai-paths/services/runtime-analytics-service';
+import {
+  recordRuntimeRunBlockedOnLease,
+  recordRuntimeRunStarted,
+} from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import { createDebugQueueLogger } from '../ai-path-run-queue-utils';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { mutateAgentLease } from '@/shared/lib/agent-lease-service';
 
 const { log: debugQueueLog, warn: debugQueueWarn } = createDebugQueueLogger(
   LOG_SOURCE,
   process.env['AI_PATHS_QUEUE_DEBUG'] === 'true'
 );
+
+const AI_PATH_EXECUTION_LEASE_RESOURCE_ID = 'ai-paths.run.execution';
+const AI_PATH_EXECUTION_LEASE_MS = Math.max(60_000, JOB_EXECUTION_TIMEOUT_MS || 0, 5 * 60 * 1000);
+
+const resolveQueueWorkerAgentId = (): string =>
+  process.env['AI_AGENT_ID']?.trim() ||
+  process.env['CODEX_AGENT_ID']?.trim() ||
+  process.env['AGENT_ID']?.trim() ||
+  `ai-path-run-queue-${process.pid}`;
 
 export const enqueuePathRunJob = async (
   runId: string,
@@ -63,10 +76,76 @@ export const queue = createManagedQueue<AiPathRunJobData>({
       debugQueueLog(`[aiPathRunQueue] Run ${data.runId} has status "${latest.status}", skipping`);
       return;
     }
-    await recordRuntimeRunStarted({ runId: run.id });
-    const outcome = await processRun(run, signal);
-    if (outcome?.requeueDelayMs !== undefined) {
-      await enqueuePathRunJob(run.id, { delayMs: outcome.requeueDelayMs });
+    const ownerAgentId = resolveQueueWorkerAgentId();
+    const leaseResult = mutateAgentLease({
+      action: 'claim',
+      resourceId: AI_PATH_EXECUTION_LEASE_RESOURCE_ID,
+      scopeId: run.id,
+      ownerAgentId,
+      ownerRunId: run.id,
+      leaseMs: AI_PATH_EXECUTION_LEASE_MS,
+    });
+
+    if (!leaseResult.ok) {
+      const blockedAt = new Date().toISOString();
+      const blockingOwnerAgentId = leaseResult.conflictingLease?.ownerAgentId ?? null;
+      const blocked = await repo.updateRunIfStatus(run.id, ['running'], {
+        status: 'blocked_on_lease',
+        errorMessage: 'Run blocked on execution lease.',
+        meta: {
+          ...(run.meta ?? {}),
+          executionLease: {
+            resourceId: AI_PATH_EXECUTION_LEASE_RESOURCE_ID,
+            scopeId: run.id,
+            requestedBy: ownerAgentId,
+            blockedAt,
+            blockingOwnerAgentId,
+            resultCode: leaseResult.code,
+          },
+        },
+      });
+
+      if (blocked) {
+        await repo.createRunEvent({
+          runId: run.id,
+          level: 'warn',
+          message: 'Run blocked on execution lease.',
+          metadata: {
+            leaseResourceId: AI_PATH_EXECUTION_LEASE_RESOURCE_ID,
+            leaseScopeId: run.id,
+            requestedBy: ownerAgentId,
+            blockingOwnerAgentId,
+            blockedAt,
+          },
+        });
+        await recordRuntimeRunBlockedOnLease({
+          runId: run.id,
+          timestamp: blockedAt,
+        });
+      }
+
+      debugQueueLog(
+        `[aiPathRunQueue] Run ${data.runId} blocked on execution lease owned by ${blockingOwnerAgentId ?? 'unknown-owner'}`
+      );
+      return;
+    }
+
+    try {
+      await recordRuntimeRunStarted({ runId: run.id });
+      const outcome = await processRun(run, signal);
+      if (outcome?.requeueDelayMs !== undefined) {
+        await enqueuePathRunJob(run.id, { delayMs: outcome.requeueDelayMs });
+      }
+    } finally {
+      mutateAgentLease({
+        action: 'release',
+        resourceId: AI_PATH_EXECUTION_LEASE_RESOURCE_ID,
+        scopeId: run.id,
+        ownerAgentId,
+        ownerRunId: run.id,
+        leaseId: leaseResult.lease?.leaseId ?? undefined,
+        reason: 'ai-path queue worker finished processing',
+      });
     }
   },
   onFailed: async (_jobId, error, data) => {

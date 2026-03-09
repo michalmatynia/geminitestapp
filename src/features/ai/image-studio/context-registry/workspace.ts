@@ -17,9 +17,15 @@ export const IMAGE_STUDIO_CONTEXT_ROOT_IDS = [
   'component:image-studio-right-sidebar',
   'component:image-studio-generation-toolbar',
   'action:image-studio-run',
+  'action:image-studio-sequence-run',
+  'action:image-studio-ai-path-object-analysis',
+  'action:image-studio-prompt-extract',
+  'action:image-studio-ui-extractor',
+  'action:image-studio-mask-ai',
   'collection:image-studio-projects',
   'collection:image-studio-slots',
   'collection:image-studio-runs',
+  'collection:image-studio-sequence-runs',
 ] as const;
 
 export const IMAGE_STUDIO_CONTEXT_RUNTIME_REF = {
@@ -76,6 +82,13 @@ const trimText = (value: string, maxLength: number): string => {
   return `${normalized.slice(0, maxLength - 1)}...`;
 };
 
+type ProjectLike = {
+  id: string;
+  name?: string | null;
+  canvasWidthPx?: number | null;
+  canvasHeightPx?: number | null;
+};
+
 const countEligibleMaskShapes = (shapes: readonly MaskShapeLike[]): number =>
   shapes.filter(
     (shape) =>
@@ -85,9 +98,9 @@ const countEligibleMaskShapes = (shapes: readonly MaskShapeLike[]): number =>
       shape.points.length >= 3
   ).length;
 
-const summarizeProject = (project: ImageStudioProjectRecord, activeProjectId: string) => ({
+const summarizeProject = (project: ProjectLike, activeProjectId: string) => ({
   id: project.id,
-  name: project.name,
+  name: project.name ?? '',
   canvasWidthPx: project.canvasWidthPx ?? null,
   canvasHeightPx: project.canvasHeightPx ?? null,
   isActive: project.id === activeProjectId,
@@ -134,7 +147,7 @@ export const buildImageStudioWorkspaceRuntimeDocument = (
         {
           activeTab: input.activeTab,
           projectId: input.projectId || null,
-          projectName: activeProject?.name ?? null,
+          projectName: activeProject?.id ?? null,
           projectCount: input.projects.length,
           slotCount: input.slots.length,
           selectedFolder: input.selectedFolder || null,
@@ -221,8 +234,8 @@ export const buildImageStudioWorkspaceRuntimeDocument = (
     id: IMAGE_STUDIO_CONTEXT_RUNTIME_REF.id,
     kind: 'runtime_document',
     entityType: IMAGE_STUDIO_CONTEXT_RUNTIME_REF.entityType,
-    title: activeProject?.name
-      ? `Image Studio workspace for ${activeProject.name}`
+    title: activeProject?.id
+      ? `Image Studio workspace for ${activeProject.id}`
       : 'Image Studio workspace state',
     summary:
       'Live Image Studio workspace state including the active project, slot selection, prompt, ' +
@@ -233,7 +246,7 @@ export const buildImageStudioWorkspaceRuntimeDocument = (
     facts: {
       activeTab: input.activeTab,
       projectId: input.projectId || null,
-      projectName: activeProject?.name ?? null,
+      projectName: activeProject?.id ?? null,
       slotCount: input.slots.length,
       selectedFolder: input.selectedFolder || null,
       selectedSlotId: input.selectedSlot?.id ?? null,

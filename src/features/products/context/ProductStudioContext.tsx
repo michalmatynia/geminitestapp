@@ -2,11 +2,16 @@
 
 import React, { createContext, useContext, useState, useMemo, useCallback, useEffect } from 'react';
 
+import {
+  useOptionalContextRegistryPageEnvelope,
+  useRegisterContextRegistryPageSource,
+} from '@/features/ai/ai-context-registry/context/page-context';
 import { useToast } from '@/shared/ui';
 import { api } from '@/shared/lib/api-client';
 import { useStudioProjects } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/utils/image-src';
 import { useProductSettings } from '@/features/products/hooks/useProductSettings';
+import { buildProductStudioWorkspaceContextBundle } from '@/features/products/context-registry/workspace';
 import { useProductFormCore } from './ProductFormCoreContext';
 import { useProductFormImages } from './ProductFormImageContext';
 import { useProductFormStudio } from './ProductFormStudioContext';
@@ -86,6 +91,7 @@ export function ProductStudioProvider({
 
   const { toast } = useToast();
   const { defaultProjectId, getImageExternalBaseUrl } = useProductSettings();
+  const contextRegistry = useOptionalContextRegistryPageEnvelope();
 
   const sendToStudioMutation = useSendToStudioMutation();
   const acceptVariantMutation = useAcceptVariantMutation();
@@ -237,6 +243,7 @@ export function ProductStudioProvider({
         productId: product.id,
         imageSlotIndex: selectedImageIndex,
         projectId: studioProjectId,
+        ...(contextRegistry ? { contextRegistry } : {}),
       });
       setActiveRunId(result.runId);
       setActiveRunBaselineVariantIds(baselineIds);
@@ -355,6 +362,46 @@ export function ProductStudioProvider({
     () => variants.filter((s) => s.id && !activeRunBaselineVariantIdSet.has(s.id)).length,
     [activeRunBaselineVariantIdSet, variants]
   );
+  const pendingVariantPlaceholderCount =
+    activeRunId && (runStatus === 'queued' || runStatus === 'running')
+      ? Math.max(0, pendingExpectedOutputs - variantsProducedForActiveRun)
+      : 0;
+  const registrySource = useMemo(
+    () =>
+      product?.id
+        ? {
+          label: 'Product Studio workspace state',
+          resolved: buildProductStudioWorkspaceContextBundle({
+            product,
+            studioProjectId,
+            selectedImageIndex,
+            imageSlotPreviews,
+            selectedVariantSlotId,
+            variantsData,
+            activeRunId,
+            runStatus,
+            pendingVariantPlaceholderCount,
+            sequenceReadinessMessage,
+            auditEntries,
+          }),
+        }
+        : null,
+    [
+      activeRunId,
+      auditEntries,
+      imageSlotPreviews,
+      pendingVariantPlaceholderCount,
+      product,
+      runStatus,
+      selectedImageIndex,
+      selectedVariantSlotId,
+      sequenceReadinessMessage,
+      studioProjectId,
+      variantsData,
+    ]
+  );
+
+  useRegisterContextRegistryPageSource('product-studio-workspace-state', registrySource);
 
   const stateValue = useMemo(
     (): ProductStudioStateContextValue => ({
@@ -368,10 +415,7 @@ export function ProductStudioProvider({
       variantsLoading,
       selectedVariantSlotId,
       selectedVariant,
-      pendingVariantPlaceholderCount:
-        activeRunId && (runStatus === 'queued' || runStatus === 'running')
-          ? Math.max(0, pendingExpectedOutputs - variantsProducedForActiveRun)
-          : 0,
+      pendingVariantPlaceholderCount,
       sourceImageSrc,
       variantImageSrc,
       canCompareWithSource,
@@ -403,7 +447,7 @@ export function ProductStudioProvider({
       deletingVariantId,
       imageSlotPreviews,
       openingInImageStudio,
-      pendingExpectedOutputs,
+      pendingVariantPlaceholderCount,
       rotateImageSlotMutation.isPending,
       rotateImageSlotMutation.variables?.direction,
       runStatus,
@@ -423,7 +467,6 @@ export function ProductStudioProvider({
       variants,
       variantsData,
       variantsLoading,
-      variantsProducedForActiveRun,
     ]
   );
   const actionsValue = useMemo(

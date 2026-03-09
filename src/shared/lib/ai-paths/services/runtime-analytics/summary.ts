@@ -93,6 +93,8 @@ export const getRuntimeAnalyticsSummaryBase = async (
       pipeline.zcount(keyRuns('failed'), fromMs, toMs);
       pipeline.zcount(keyRuns('canceled'), fromMs, toMs);
       pipeline.zcount(keyRuns('dead_lettered'), fromMs, toMs);
+      pipeline.zcount(keyRuns('blocked_on_lease'), fromMs, toMs);
+      pipeline.zcount(keyRuns('handoff_ready'), fromMs, toMs);
       pipeline.zcount(keyNodes('started'), fromMs, toMs);
       pipeline.zcount(keyNodes('completed'), fromMs, toMs);
       pipeline.zcount(keyNodes('failed'), fromMs, toMs);
@@ -122,7 +124,7 @@ export const getRuntimeAnalyticsSummaryBase = async (
 
       const readCountAt = (index: number): number =>
         toPipelineCount(Array.isArray(results[index]) ? results[index]?.[1] : 0);
-      const durationMembers = toPipelineStrings(Array.isArray(results[20]) ? results[20]?.[1] : []);
+      const durationMembers = toPipelineStrings(Array.isArray(results[22]) ? results[22]?.[1] : []);
       const durations = durationMembers
         .map(parseDurationMember)
         .filter((value: number | null): value is number => value !== null)
@@ -144,6 +146,8 @@ export const getRuntimeAnalyticsSummaryBase = async (
       const runsFailed = readCountAt(4);
       const runsCanceled = readCountAt(5);
       const runsDeadLettered = readCountAt(6);
+      const runsBlockedOnLease = readCountAt(7);
+      const runsHandoffReady = readCountAt(8);
       const terminalRuns = runsCompleted + runsFailed + runsCanceled + runsDeadLettered;
       const successRate = terminalRuns > 0 ? clampRate((runsCompleted / terminalRuns) * 100) : 0;
       const failureRate =
@@ -167,6 +171,8 @@ export const getRuntimeAnalyticsSummaryBase = async (
           failed: runsFailed,
           canceled: runsCanceled,
           deadLettered: runsDeadLettered,
+          blockedOnLease: runsBlockedOnLease,
+          handoffReady: runsHandoffReady,
           successRate,
           failureRate,
           deadLetterRate,
@@ -174,21 +180,21 @@ export const getRuntimeAnalyticsSummaryBase = async (
           p95DurationMs,
         },
         nodes: {
-          started: readCountAt(7),
-          completed: readCountAt(8),
-          failed: readCountAt(9),
-          queued: readCountAt(10),
-          running: readCountAt(11),
-          polling: readCountAt(12),
-          cached: readCountAt(13),
-          waitingCallback: readCountAt(14),
+          started: readCountAt(9),
+          completed: readCountAt(10),
+          failed: readCountAt(11),
+          queued: readCountAt(12),
+          running: readCountAt(13),
+          polling: readCountAt(14),
+          cached: readCountAt(15),
+          waitingCallback: readCountAt(16),
         },
         brain: {
-          analyticsReports: readCountAt(15),
-          logReports: readCountAt(16),
-          totalReports: readCountAt(17),
-          warningReports: readCountAt(18),
-          errorReports: readCountAt(19),
+          analyticsReports: readCountAt(17),
+          logReports: readCountAt(18),
+          totalReports: readCountAt(19),
+          warningReports: readCountAt(20),
+          errorReports: readCountAt(21),
         },
         traces,
         generatedAt: new Date().toISOString(),

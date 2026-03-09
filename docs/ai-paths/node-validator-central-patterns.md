@@ -1,3 +1,12 @@
+---
+owner: 'AI Paths Team'
+last_reviewed: '2026-03-09'
+status: 'active'
+doc_type: 'reference'
+scope: 'feature:ai-paths'
+canonical: true
+---
+
 # AI-Paths Node Validator Central Patterns
 
 This file is the centralized index for AI-Paths validation pattern packs.

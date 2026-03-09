@@ -37,8 +37,8 @@ avoid becoming another dumping ground.
 - Cross-feature plans and closeouts belong in [`docs/plans/`](./plans/README.md)
 - Cross-feature decisions and exception registers belong in
   [`docs/decisions/`](./decisions/README.md)
-- Migration execution docs stay in [`docs/migrations/`](./migrations/)
-- Generated metrics stay in [`docs/metrics/`](./metrics/)
+- Migration execution docs stay in [`docs/migrations/`](./migrations/README.md)
+- Generated metrics stay in [`docs/metrics/`](./metrics/README.md)
 
 ## Major Feature Entry Points
 
@@ -66,13 +66,24 @@ Future platform-wide docs should land under [`docs/platform/`](./platform/README
 
 ## Generated and Managed Artifact Areas
 
-- Route and architecture metrics: [`docs/metrics/`](./metrics/)
+- Route and architecture metrics: [`docs/metrics/README.md`](./metrics/README.md)
 - AI Paths semantic grammar: [`docs/ai-paths/semantic-grammar/`](./ai-paths/semantic-grammar/)
 - Validator semantic grammar: [`docs/validator/semantic-grammar/`](./validator/semantic-grammar/)
+- Migration execution docs: [`docs/migrations/README.md`](./migrations/README.md)
 - Migration reports: [`docs/migrations/reports/`](./migrations/reports/)
+- Supporting screenshots/assets: [`docs/images/`](./images/)
 
 Generated docs should be refreshed by scripts when possible instead of edited
 manually.
+
+## Historical Program Hubs
+
+These folders are discoverable and maintained, but they are not the default
+home for new cross-feature docs:
+
+- Application improvements: [`docs/application-improvements/README.md`](./application-improvements/README.md)
+- UI consolidation: [`docs/ui-consolidation/README.md`](./ui-consolidation/README.md)
+- Temporary TODO backlogs: [`docs/todo/README.md`](./todo/README.md)
 
 ## Structural Rules
 
@@ -102,3 +113,5 @@ Platform-level guidance for AI-first concurrent coding now lives under `docs/pla
 - `docs/platform/forward-only-execution.md`
 - `docs/platform/agent-discovery.md`
 - `docs/platform/shared-lease-service.md`
+
+- [Platform: AI Paths resume vs handoff](./platform/ai-paths-resume-vs-handoff.md)

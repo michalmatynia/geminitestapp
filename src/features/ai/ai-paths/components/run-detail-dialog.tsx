@@ -1,10 +1,11 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import type { AiPathRunNodeRecord, RuntimeHistoryEntry } from '@/shared/contracts/ai-paths';
 import type { AiPathRunErrorSummary } from '@/shared/lib/ai-paths/error-reporting';
 import {
+  Alert,
   Button,
   Label,
   SelectSimple,
@@ -24,6 +25,8 @@ import { RunHistoryEntries } from './RunHistoryEntries';
 import { useRunHistoryActions, useRunHistoryState } from '../context';
 
 export function RunDetailDialog(): React.JSX.Element {
+  const [isMarkingHandoff, setIsMarkingHandoff] = useState(false);
+  const [handoffRequested, setHandoffRequested] = useState(false);
   const {
     runDetailOpen: isOpen,
     runDetailLoading,
@@ -39,6 +42,7 @@ export function RunDetailDialog(): React.JSX.Element {
     setRunStreamPaused: onStreamPauseToggle,
     setRunHistoryNodeId: onHistoryNodeSelect,
     resumeRun,
+    handoffRun,
     retryRunNode,
   } = useRunHistoryActions();
 
@@ -100,6 +104,31 @@ export function RunDetailDialog(): React.JSX.Element {
   const playwrightArtifacts = useMemo(() => collectPlaywrightArtifacts(runNodes), [runNodes]);
 
   const isScheduledRun = Boolean(runDetail?.run?.triggerEvent === 'scheduled_run');
+  const runMeta =
+    runDetail?.run?.meta && typeof runDetail.run.meta === 'object' ? runDetail.run.meta : null;
+  const executionLease =
+    runMeta &&
+    typeof runMeta['executionLease'] === 'object' &&
+    runMeta['executionLease'] !== null
+      ? (runMeta['executionLease'] as Record<string, unknown>)
+      : null;
+  const handoffMeta =
+    runMeta &&
+    typeof runMeta['handoff'] === 'object' &&
+    runMeta['handoff'] !== null
+      ? (runMeta['handoff'] as Record<string, unknown>)
+      : null;
+  const leaseOwnerAgentId =
+    typeof executionLease?.['ownerAgentId'] === 'string' ? executionLease['ownerAgentId'] : null;
+  const leaseOwnerRunId =
+    typeof executionLease?.['ownerRunId'] === 'string' ? executionLease['ownerRunId'] : null;
+  const handoffReason =
+    typeof handoffMeta?.['reason'] === 'string' ? handoffMeta['reason'] : null;
+  const handoffCheckpointLineageId =
+    typeof handoffMeta?.['checkpointLineageId'] === 'string'
+      ? handoffMeta['checkpointLineageId']
+      : null;
+  const canMarkHandoffReady = runDetail?.run?.status === 'blocked_on_lease';
 
   const switchRoutingSummary = useMemo(() => {
     if (!runDetailHistory || !runDetail?.run?.graph?.nodes) return [];
@@ -203,6 +232,67 @@ export function RunDetailDialog(): React.JSX.Element {
               </div>
             </div>
           </div>
+          {runDetail.run.status === 'blocked_on_lease' ? (
+            <Alert variant='warning' className='px-3 py-2 text-[11px]'>
+              <div className='flex flex-wrap items-center justify-between gap-2'>
+                <div className='space-y-1'>
+                  <div className='font-semibold'>Execution lease blocked</div>
+                  <div>
+                    This run cannot continue until the active execution owner releases the lease or
+                    the run is handed off.
+                  </div>
+                  {leaseOwnerAgentId ? (
+                    <div className='text-[10px] text-current/80'>
+                      Current owner: {leaseOwnerAgentId}
+                      {leaseOwnerRunId ? ` (${leaseOwnerRunId})` : ''}
+                    </div>
+                  ) : null}
+                </div>
+                {canMarkHandoffReady ? (
+                  <Button
+                    type='button'
+                    size='sm'
+                    variant='outline'
+                    onClick={() => {
+                      setIsMarkingHandoff(true);
+                      setHandoffRequested(false);
+                      void handoffRun(runDetail.run.id)
+                        .then((ok: boolean) => {
+                          setHandoffRequested(ok);
+                        })
+                        .finally(() => {
+                          setIsMarkingHandoff(false);
+                        });
+                    }}
+                    disabled={isMarkingHandoff}
+                  >
+                    {isMarkingHandoff ? 'Marking...' : 'Mark handoff-ready'}
+                  </Button>
+                ) : null}
+              </div>
+              {handoffRequested ? (
+                <div className='text-[10px] text-current/80'>
+                  Handoff requested. Refreshing run status...
+                </div>
+              ) : null}
+            </Alert>
+          ) : null}
+          {runDetail.run.status === 'handoff_ready' ? (
+            <Alert variant='info' className='px-3 py-2 text-[11px]'>
+              <div className='space-y-1'>
+                <div className='font-semibold'>Ready for delegated continuation</div>
+                <div>
+                  {handoffReason ??
+                    'This run was prepared for another operator or agent to continue.'}
+                </div>
+                {handoffCheckpointLineageId ? (
+                  <div className='text-[10px] text-current/80'>
+                    Checkpoint lineage: {handoffCheckpointLineageId}
+                  </div>
+                ) : null}
+              </div>
+            </Alert>
+          ) : null}
           {runNodeSummary ? (
             <div className='rounded-md border border-border/70 bg-black/20 p-3'>
               <div className='flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-500'>

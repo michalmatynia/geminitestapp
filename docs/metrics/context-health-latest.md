@@ -1,6 +1,14 @@
+---
+owner: 'Platform Team'
+last_reviewed: '2026-03-09'
+status: 'generated'
+doc_type: 'generated'
+scope: 'generated'
+canonical: true
+---
 # Context Health Check
 
-Generated at: 2026-03-09T06:12:23.890Z
+Generated at: 2026-03-09T07:50:51.621Z
 
 ## Summary
 

@@ -5,6 +5,7 @@ import {
   type ImageStudioSequenceRunRecord,
   type ImageStudioSequenceRunStartResponse,
 } from '@/shared/contracts/image-studio';
+import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import {
   createImageStudioSequenceRun,
   getImageStudioSequenceRunById,
@@ -44,6 +45,7 @@ export type StartImageStudioSequenceInput = {
   steps?: unknown;
   presetId?: string | null;
   metadata?: Record<string, unknown> | null;
+  contextRegistry?: ContextRegistryConsumerEnvelope | null;
 };
 
 const asTrimmedString = (value: unknown): string | null => {
@@ -214,6 +216,7 @@ export async function startImageStudioSequenceRun(
       mask: toMaskContext(input.mask),
       studioSettings: settingsSnapshot,
       metadata: input.metadata ?? null,
+      contextRegistry: input.contextRegistry ?? null,
     },
   });
 

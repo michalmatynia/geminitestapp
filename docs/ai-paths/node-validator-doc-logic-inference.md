@@ -1,3 +1,12 @@
+---
+owner: 'AI Paths Team'
+last_reviewed: '2026-03-09'
+status: 'active'
+doc_type: 'reference'
+scope: 'feature:ai-paths'
+canonical: true
+---
+
 # AI-Paths Node Validator Docs Logic Inference
 
 This document defines how the Node Validator infers additional candidate rules directly from centralized AI-Paths documentation sources.

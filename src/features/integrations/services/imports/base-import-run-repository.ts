@@ -21,6 +21,7 @@ import type {
 } from '@/shared/contracts/integrations';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
+import { mutateAgentLease } from '@/shared/lib/agent-lease-service';
 
 import type { Filter } from 'mongodb';
 
@@ -28,6 +29,7 @@ const RUN_KEY_PREFIX = 'base_import_run:';
 const ITEM_KEY_PREFIX = 'base_import_run_item:';
 const LIST_LIMIT_DEFAULT = 50;
 const RUN_ITEM_HARD_LIMIT = 100_000;
+const BASE_IMPORT_AGENT_RESOURCE_ID = 'integrations.base-import.run';
 
 type StorageProvider = 'mongodb' | 'prisma';
 type SettingDoc = MongoTimestampedStringSettingRecord<string | ObjectId, Date>;
@@ -36,6 +38,22 @@ const resolveProvider = async (): Promise<StorageProvider> => {
   const provider = await getProductDataProvider();
   return provider as StorageProvider;
 };
+
+const toRunLeasePatch = (
+  lease:
+    | {
+      ownerAgentId: string;
+      leaseId: string;
+      heartbeatAt?: string | null;
+      expiresAt?: string | null;
+    }
+    | null
+): Partial<BaseImportRunRecord> => ({
+  lockOwnerId: lease?.ownerAgentId ?? null,
+  lockToken: lease?.leaseId ?? null,
+  lockHeartbeatAt: lease?.heartbeatAt ?? null,
+  lockExpiresAt: lease?.expiresAt ?? null,
+});
 
 const toMongoId = (id: string): string | ObjectId => {
   if (ObjectId.isValid(id) && id.length === 24) return new ObjectId(id);
@@ -696,30 +714,25 @@ export const acquireBaseImportRunLease = async (input: {
   if (isRunTerminal(run.status)) {
     return { acquired: false, run, reason: 'RUN_TERMINAL' };
   }
-  const now = Date.now();
-  const lockExpiresAtMs = toTimestamp(run.lockExpiresAt ?? null);
-  const lockActive =
-    Boolean(run.lockOwnerId) &&
-    lockExpiresAtMs !== null &&
-    lockExpiresAtMs > now &&
-    run.lockOwnerId !== input.ownerId;
-  if (lockActive) {
-    return { acquired: false, run, reason: 'LOCKED_BY_OTHER' };
-  }
-  const leaseMs =
-    Number.isFinite(input.leaseMs) && input.leaseMs > 0 ? Math.floor(input.leaseMs) : 60_000;
-  const lockToken = randomUUID();
-  const nowIsoValue = new Date(now).toISOString();
-  const leased = await updateBaseImportRun(input.runId, {
-    lockOwnerId: input.ownerId,
-    lockToken,
-    lockHeartbeatAt: nowIsoValue,
-    lockExpiresAt: new Date(now + leaseMs).toISOString(),
+  const result = mutateAgentLease({
+    action: 'claim',
+    resourceId: BASE_IMPORT_AGENT_RESOURCE_ID,
+    scopeId: input.runId,
+    ownerAgentId: input.ownerId,
+    ownerRunId: input.runId,
+    leaseMs: input.leaseMs,
   });
-  if (leased.lockOwnerId === input.ownerId && leased.lockToken === lockToken) {
+  if (result.ok && result.lease) {
+    const leased = await updateBaseImportRun(input.runId, toRunLeasePatch(result.lease));
     return { acquired: true, run: leased };
   }
-  return { acquired: false, run: leased, reason: 'LEASE_RACE' };
+
+  if (result.conflictingLease) {
+    const synced = await updateBaseImportRun(input.runId, toRunLeasePatch(result.conflictingLease));
+    return { acquired: false, run: synced, reason: 'LOCKED_BY_OTHER' };
+  }
+
+  return { acquired: false, run, reason: result.code.toUpperCase() };
 };
 
 export const heartbeatBaseImportRunLease = async (input: {
@@ -729,14 +742,17 @@ export const heartbeatBaseImportRunLease = async (input: {
 }): Promise<BaseImportRunRecord | null> => {
   const run = await getBaseImportRun(input.runId);
   if (!run) return null;
-  if (run.lockOwnerId !== input.ownerId) return null;
-  const now = Date.now();
-  const leaseMs =
-    Number.isFinite(input.leaseMs) && input.leaseMs > 0 ? Math.floor(input.leaseMs) : 60_000;
-  return updateBaseImportRun(input.runId, {
-    lockHeartbeatAt: new Date(now).toISOString(),
-    lockExpiresAt: new Date(now + leaseMs).toISOString(),
+  const result = mutateAgentLease({
+    action: 'renew',
+    resourceId: BASE_IMPORT_AGENT_RESOURCE_ID,
+    scopeId: input.runId,
+    ownerAgentId: input.ownerId,
+    ownerRunId: input.runId,
+    leaseId: run.lockToken ?? undefined,
+    leaseMs: input.leaseMs,
   });
+  if (!result.ok || !result.lease) return null;
+  return updateBaseImportRun(input.runId, toRunLeasePatch(result.lease));
 };
 
 export const releaseBaseImportRunLease = async (input: {
@@ -746,10 +762,16 @@ export const releaseBaseImportRunLease = async (input: {
   const run = await getBaseImportRun(input.runId);
   if (!run) return null;
   if (run.lockOwnerId !== input.ownerId) return run;
-  return updateBaseImportRun(input.runId, {
-    lockOwnerId: null,
-    lockToken: null,
-    lockExpiresAt: null,
-    lockHeartbeatAt: null,
+  const result = mutateAgentLease({
+    action: 'release',
+    resourceId: BASE_IMPORT_AGENT_RESOURCE_ID,
+    scopeId: input.runId,
+    ownerAgentId: input.ownerId,
+    ownerRunId: input.runId,
+    leaseId: run.lockToken ?? undefined,
   });
+  if (!result.ok && result.code !== 'not_found') {
+    return run;
+  }
+  return updateBaseImportRun(input.runId, toRunLeasePatch(null));
 };

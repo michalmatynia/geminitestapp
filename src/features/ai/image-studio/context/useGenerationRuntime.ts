@@ -680,38 +680,40 @@ export function useGenerationRuntime(): {
         ...(contextRegistry ? { contextRegistry } : {}),
       },
       {
-      onSuccess: (data) => {
-        const queuedExpected = normalizeExpectedOutputs(data.expectedOutputs, expectedOutputs);
-        setActiveRunId(data.runId);
-        setActiveRunSourceSlotId(submittedSlotId || null);
-        setActiveRunStatus(data.status);
-        setActiveRunError(null);
-        setLandingSlots(buildPendingLandingSlots(data.runId, queuedExpected));
-        if (data.dispatchMode === 'inline') {
-          toast('Redis queue unavailable, generation is running inline.', { variant: 'info' });
-        }
+        onSuccess: (data) => {
+          const queuedExpected = normalizeExpectedOutputs(data.expectedOutputs, expectedOutputs);
+          setActiveRunId(data.runId);
+          setActiveRunSourceSlotId(submittedSlotId || null);
+          setActiveRunStatus(data.status);
+          setActiveRunError(null);
+          setLandingSlots(buildPendingLandingSlots(data.runId, queuedExpected));
+          if (data.dispatchMode === 'inline') {
+            toast('Redis queue unavailable, generation is running inline.', {
+              variant: 'info',
+            });
+          }
 
-        void pollRunUntilFinished({
-          runId: data.runId,
-          resolvedPrompt,
-          maskShapeCount: requestPreview.maskShapeCount,
-          submittedMaskInvert,
-          submittedMaskFeather,
-          submittedSlotId,
-          submittedSlotName,
-          submittedSlotFolderPath: workingSlot?.folderPath ?? '',
-          expectedOutputs: queuedExpected,
-        });
-      },
-      onError: (error) => {
-        setActiveRunStatus('failed');
-        setActiveRunError(error.message || 'Generation failed.');
-        setRunOutputs([]);
-        setLandingSlots((previous) =>
-          markLandingSlotsAsFailed(previous, 'pending', expectedOutputs)
-        );
-        toast(error.message || 'Generation failed.', { variant: 'error' });
-      },
+          void pollRunUntilFinished({
+            runId: data.runId,
+            resolvedPrompt,
+            maskShapeCount: requestPreview.maskShapeCount,
+            submittedMaskInvert,
+            submittedMaskFeather,
+            submittedSlotId,
+            submittedSlotName,
+            submittedSlotFolderPath: workingSlot?.folderPath ?? '',
+            expectedOutputs: queuedExpected,
+          });
+        },
+        onError: (error) => {
+          setActiveRunStatus('failed');
+          setActiveRunError(error.message || 'Generation failed.');
+          setRunOutputs([]);
+          setLandingSlots((previous) =>
+            markLandingSlotsAsFailed(previous, 'pending', expectedOutputs)
+          );
+          toast(error.message || 'Generation failed.', { variant: 'error' });
+        },
       }
     );
   }, [

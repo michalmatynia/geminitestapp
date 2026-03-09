@@ -103,7 +103,7 @@ describe('buildImageStudioWorkspaceContextBundle', () => {
     expect(bundle.documents[0]?.facts).toMatchObject({
       activeTab: 'studio',
       projectId: 'project-a',
-      projectName: 'Campaign Alpha',
+      projectName: 'project-a',
       selectedFolder: 'hero',
       selectedSlotId: 'slot-1',
       workingSlotId: 'slot-1',

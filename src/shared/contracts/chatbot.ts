@@ -256,6 +256,7 @@ export const chatbotJobPayloadSchema = z.object({
     )
     .optional(),
   options: z.record(z.string(), z.unknown()).optional(),
+  contextRegistry: contextRegistryConsumerEnvelopeSchema.optional(),
 });
 
 export type ChatbotJobPayloadDto = z.infer<typeof chatbotJobPayloadSchema>;
@@ -284,6 +285,7 @@ export const enqueueChatbotJobRequestSchema = z.object({
     })
   ),
   userMessage: z.string().optional(),
+  contextRegistry: contextRegistryConsumerEnvelopeSchema.optional(),
 });
 
 export type EnqueueChatbotJobRequestDto = z.infer<typeof enqueueChatbotJobRequestSchema>;

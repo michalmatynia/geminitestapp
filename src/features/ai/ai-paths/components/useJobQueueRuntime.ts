@@ -3,7 +3,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { usePathname } from 'next/navigation';
 
-import { getAiPathRun, resumeAiPathRun, retryAiPathRunNode } from '@/shared/lib/ai-paths';
+import {
+  getAiPathRun,
+  handoffAiPathRun,
+  resumeAiPathRun,
+  retryAiPathRunNode,
+} from '@/shared/lib/ai-paths';
 import type { AiPathRunRecord, AiPathRunVisibility } from '@/shared/lib/ai-paths';
 import { internalError } from '@/shared/errors/app-error';
 import { useToast } from '@/shared/ui';
@@ -273,6 +278,20 @@ export function useJobQueueRuntime({
     [refetchQueueData, toast]
   );
 
+  const handleHandoffRun = useCallback(
+    async (id: string, reason?: string): Promise<boolean> => {
+      const response = await handoffAiPathRun(id, reason ? { reason } : undefined);
+      if (!response.ok) {
+        toast(response.error || 'Failed to mark run handoff-ready.', { variant: 'error' });
+        return false;
+      }
+      toast('Run marked handoff-ready.', { variant: 'success' });
+      refetchQueueData({ fresh: true, markBurst: true });
+      return true;
+    },
+    [refetchQueueData, toast]
+  );
+
   const handleRetryRunNode = useCallback(
     async (id: string, nodeId: string): Promise<void> => {
       const response = await retryAiPathRunNode(id, nodeId);
@@ -388,6 +407,7 @@ export function useJobQueueRuntime({
       refetchQueueData: refetchQueueDataAction,
       handleClearRuns,
       handleResumeRun,
+      handleHandoffRun,
       handleRetryRunNode,
       handleCancelRun,
       handleDeleteRun,
@@ -405,6 +425,7 @@ export function useJobQueueRuntime({
       refetchQueueDataAction,
       handleClearRuns,
       handleResumeRun,
+      handleHandoffRun,
       handleRetryRunNode,
       handleCancelRun,
       handleDeleteRun,

@@ -36,6 +36,8 @@ const buildPipelineResults = (): Array<[null, number | string[]]> => [
   [null, 1],
   [null, 0],
   [null, 0],
+  [null, 0],
+  [null, 0],
   [null, 6],
   [null, 5],
   [null, 1],

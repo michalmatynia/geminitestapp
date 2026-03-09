@@ -970,7 +970,7 @@ if (!guideRaw.includes('## Per-Node Sheets')) {
 
 const actualMigrationDocFiles = new Set<string>(
   fs.readdirSync(perNodeDocsDir, { withFileTypes: true })
-    .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
+    .filter((entry) => entry.isFile() && entry.name.endsWith('.md') && entry.name !== 'README.md')
     .map((entry) => `docs/ai-paths/node-code-objects-v3/nodes/${entry.name}`)
 );
 

@@ -1,3 +1,12 @@
+---
+owner: 'Platform Team'
+last_reviewed: '2026-03-09'
+status: 'active'
+doc_type: 'agent-guide'
+scope: 'repo'
+canonical: true
+---
+
 # COPILOT.md - Copilot Overlay
 
 This is a lightweight GitHub Copilot overlay. It should stay short and defer to
@@ -53,6 +62,9 @@ the canonical repo references.
   fallback behavior.
 - Treat `docs/platform/architecture-guardrails.md` and query-factory metadata checks as
   active engineering constraints.
+- When consuming scanner/check `--summary-json` output, keep the envelope fields
+  separate: `summary` for headline metrics, `details` for findings, `paths` for
+  artifacts, `filters` for run flags, and `notes` for annotations.
 
 ## Sensitive / Avoid-By-Default Areas
 

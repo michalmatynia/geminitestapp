@@ -62,6 +62,7 @@ export type JobQueueContextValue = {
   refetchQueueData: () => void;
   handleClearRuns: (scope: 'terminal' | 'all') => Promise<void>;
   handleResumeRun: (runId: string, mode: 'resume' | 'replay') => Promise<void>;
+  handleHandoffRun: (runId: string, reason?: string) => Promise<boolean>;
   handleRetryRunNode: (runId: string, nodeId: string) => Promise<void>;
   handleCancelRun: (runId: string) => Promise<void>;
   handleDeleteRun: (runId: string) => Promise<void>;
@@ -88,6 +89,7 @@ export type JobQueueActionKey =
   | 'refetchQueueData'
   | 'handleClearRuns'
   | 'handleResumeRun'
+  | 'handleHandoffRun'
   | 'handleRetryRunNode'
   | 'handleCancelRun'
   | 'handleDeleteRun'

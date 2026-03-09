@@ -1,4 +1,6 @@
 import { z } from 'zod';
+
+import { contextRegistryConsumerEnvelopeSchema } from '@/shared/contracts/ai-context-registry';
 export const productStudioSequenceGenerationModeSchema = z.enum([
   'studio_prompt_then_sequence',
   'model_full_sequence',
@@ -148,6 +150,7 @@ export const productStudioSendRequestSchema = z.object({
   projectId: z.string().trim().nullable().optional(),
   rotateBeforeSendDeg: z.literal(90).nullable().optional(),
   sequenceGenerationMode: productStudioSequenceGenerationModeSchema.optional(),
+  contextRegistry: contextRegistryConsumerEnvelopeSchema.optional(),
 });
 
 export type ProductStudioSendRequest = z.infer<typeof productStudioSendRequestSchema>;

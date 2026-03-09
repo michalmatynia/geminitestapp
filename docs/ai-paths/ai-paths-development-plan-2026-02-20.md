@@ -1,3 +1,12 @@
+---
+owner: 'AI Paths Team'
+last_reviewed: '2026-03-09'
+status: 'archived'
+doc_type: 'plan'
+scope: 'feature:ai-paths'
+canonical: true
+---
+
 # AI Paths Development Plan (2026-02-20)
 
 > Historical plan note:

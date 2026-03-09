@@ -1,14 +1,22 @@
+---
+owner: 'Platform Team'
+last_reviewed: '2026-03-09'
+status: 'generated'
+doc_type: 'generated'
+scope: 'generated'
+canonical: true
+---
 # Unsafe Patterns Check
 
-Generated at: 2026-03-09T06:12:22.550Z
+Generated at: 2026-03-09T07:50:50.415Z
 
 ## Summary
 
 - Status: PASSED
-- Files scanned: 4473
+- Files scanned: 4483
 - Errors: 0
 - Warnings: 0
-- Info: 1
+- Info: 2
 
 ## Trend Counters
 
@@ -17,7 +25,7 @@ Generated at: 2026-03-09T06:12:22.550Z
 | doubleAssertionCount | 0 |
 | anyCount | 0 |
 | eslintDisableCount | 0 |
-| nonNullAssertionCount | 1 |
+| nonNullAssertionCount | 2 |
 | tsIgnoreCount | 0 |
 | tsExpectErrorCount | 0 |
 
@@ -25,12 +33,13 @@ Generated at: 2026-03-09T06:12:22.550Z
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| non-null-assertion | 0 | 0 | 1 |
+| non-null-assertion | 0 | 0 | 2 |
 
 ## Issues
 
 | Severity | Rule | Location | Message |
 | --- | --- | --- | --- |
+| INFO | non-null-assertion | src/app/api/ai-paths/runs/enqueue/handler.ts:166 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
 | INFO | non-null-assertion | src/features/cms/context-registry/page-builder.ts:231 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
 
 ## Notes

@@ -1,3 +1,11 @@
+---
+owner: "Platform Team"
+last_reviewed: "2026-03-09"
+status: "active"
+doc_type: "plan"
+scope: "cross-feature"
+canonical: true
+---
 # Step 39 Execution: AI-Paths Pilot Parity-Evidence Required Gate
 
 Date: 2026-03-05

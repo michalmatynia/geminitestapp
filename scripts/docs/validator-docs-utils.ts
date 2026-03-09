@@ -22,7 +22,6 @@ export const TARGET_FILES = [
   'src/features/products/components/settings/validator-settings/ValidatorInstanceBehaviorPanel.tsx',
   'src/features/products/components/settings/validator-settings/ValidatorPatternTablePanel.tsx',
   'src/features/products/components/settings/validator-settings/ValidatorPatternModal.tsx',
-  'src/features/admin/pages/AdminGlobalValidatorPage.tsx',
   'src/features/admin/pages/AdminValidatorPatternListsPage.tsx',
 ] as const;
 

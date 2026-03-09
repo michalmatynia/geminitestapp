@@ -146,14 +146,29 @@ export function CanvasSidebar(): React.JSX.Element {
     selectedNode?.type === 'trigger' && selectedNode.config?.trigger?.event === 'scheduled_run';
 
   const showRunControls = executionMode === 'local';
-  const runStatusLabel =
-    runStatus === 'running'
-      ? 'Running'
-      : runStatus === 'paused'
-        ? 'Paused'
-        : runStatus === 'stepping'
-          ? 'Stepping'
-          : 'Idle';
+  const isRunControlActive = runStatus === 'running' || runStatus === 'stepping';
+  const runStatusLabel = (() => {
+    switch (runStatus) {
+      case 'running':
+        return 'Running';
+      case 'blocked_on_lease':
+        return 'Blocked On Lease';
+      case 'handoff_ready':
+        return 'Handoff Ready';
+      case 'paused':
+        return 'Paused';
+      case 'stepping':
+        return 'Stepping';
+      default:
+        return 'Idle';
+    }
+  })();
+  const runStatusVariant =
+    runStatus === 'running' || runStatus === 'stepping'
+      ? 'processing'
+      : runStatus === 'blocked_on_lease' || runStatus === 'handoff_ready' || runStatus === 'paused'
+        ? 'warning'
+        : 'neutral';
   const [paletteMode, setPaletteMode] = useState<PaletteMode>('data');
   const [paletteSearch, setPaletteSearch] = useState('');
   const normalizedPaletteSearch = paletteSearch.trim().toLowerCase();
@@ -572,19 +587,40 @@ export function CanvasSidebar(): React.JSX.Element {
               <span className='text-sm font-semibold text-white'>Run Controls</span>
               <StatusBadge
                 status={runStatusLabel}
-                variant={
-                  runStatus === 'running' || runStatus === 'stepping'
-                    ? 'processing'
-                    : runStatus === 'paused'
-                      ? 'warning'
-                      : 'neutral'
-                }
+                variant={runStatusVariant}
                 size='sm'
                 className='font-bold'
               />
             </div>
+            {runStatus === 'blocked_on_lease' ? (
+              <Card
+                variant='warning'
+                padding='sm'
+                className='mb-3 space-y-1 border-amber-500/30 bg-amber-500/10 text-[11px] text-amber-100'
+              >
+                <div className='font-semibold text-white'>Execution lease blocked</div>
+                <div>
+                  This run is waiting on another execution owner. Use the run history or run detail
+                  panel to inspect ownership and mark the run handoff-ready if work should change
+                  hands.
+                </div>
+              </Card>
+            ) : null}
+            {runStatus === 'handoff_ready' ? (
+              <Card
+                variant='info'
+                padding='sm'
+                className='mb-3 space-y-1 border-blue-500/30 bg-blue-500/10 text-[11px] text-blue-100'
+              >
+                <div className='font-semibold text-white'>Ready for delegated continuation</div>
+                <div>
+                  This run has been prepared for another operator or agent to continue. Resume it
+                  from the run history once the next owner is ready.
+                </div>
+              </Card>
+            ) : null}
             <div className='grid grid-cols-2 gap-2'>
-              {runStatus === 'running' || runStatus === 'stepping' ? (
+              {isRunControlActive ? (
                 <>
                   <Button
                     variant='warning'
@@ -605,6 +641,17 @@ export function CanvasSidebar(): React.JSX.Element {
                   Cancel
                   </Button>
                 </>
+              ) : runStatus === 'blocked_on_lease' || runStatus === 'handoff_ready' ? (
+                <Button
+                  className='col-span-2'
+                  variant='destructive'
+                  size='sm'
+                  type='button'
+                  onClick={cancelRun}
+                  disabled={!cancelRun}
+                >
+                Cancel
+                </Button>
               ) : runStatus === 'paused' ? (
                 <>
                   <Button

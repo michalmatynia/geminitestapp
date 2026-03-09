@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
 import { api } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
 
@@ -114,6 +115,7 @@ export function useAiPathsObjectAnalysis(
   } = options;
 
   const { toast } = useToast();
+  const contextRegistry = useOptionalContextRegistryPageEnvelope();
   const { canvasImageOffset } = useUiCanvasState();
   const { setCanvasImageOffset, setCenterGuidesEnabled, getPreviewCanvasImageFrame } =
     useUiActions();
@@ -350,6 +352,7 @@ export function useAiPathsObjectAnalysis(
           meta: {
             source: 'image_studio_object_analysis',
           },
+          ...(contextRegistry ? { contextRegistry } : {}),
         };
         if (config.triggerNodeId) {
           enqueuePayload['triggerNodeId'] = config.triggerNodeId;
@@ -458,6 +461,7 @@ export function useAiPathsObjectAnalysis(
       config,
       status,
       toast,
+      contextRegistry,
       workingSlotId,
       workingSlotImageHeight,
       workingSlotImageSrc,

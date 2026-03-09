@@ -1,67 +1,75 @@
+---
+owner: 'Products / Platform Team'
+last_reviewed: '2026-03-09'
+status: 'generated'
+doc_type: 'generated'
+scope: 'feature:validator'
+canonical: true
+---
 # Validator Function Reference
 
 Generated from `src/features/products/components/settings/validator-settings/validator-docs-catalog.ts`.
 
-| ID                                          | Symbol                                | File                                                                                              | Purpose                                                                                   |
-| ------------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| core.normalizeValidationDebounceMs          | `normalizeValidationDebounceMs`       | `src/features/products/validation-engine/core.ts`                                                 | Clamps and normalizes debounce value to an integer between 0 and 30000 ms.                |
-| core.normalizePostAcceptBehavior            | `normalizePostAcceptBehavior`         | `src/features/products/validation-engine/core.ts`                                                 | Normalizes post-accept behavior to supported enum values.                                 |
-| core.normalizePatternSequence               | `normalizePatternSequence`            | `src/features/products/validation-engine/core.ts`                                                 | Produces a deterministic sequence index for ordering patterns.                            |
-| core.normalizePatternChainMode              | `normalizePatternChainMode`           | `src/features/products/validation-engine/core.ts`                                                 | Normalizes chain execution mode for grouped patterns.                                     |
-| core.normalizePatternMaxExecutions          | `normalizePatternMaxExecutions`       | `src/features/products/validation-engine/core.ts`                                                 | Bounds max execution count for iterative regex processing.                                |
-| core.buildSequenceGroupCounts               | `buildSequenceGroupCounts`            | `src/features/products/validation-engine/core.ts`                                                 | Counts enabled sequence-grouped patterns by scope key.                                    |
-| core.isPatternInSequenceGroup               | `isPatternInSequenceGroup`            | `src/features/products/validation-engine/core.ts`                                                 | Determines if a pattern belongs to a multi-step sequence.                                 |
-| core.sortValidatorPatterns                  | `sortValidatorPatterns`               | `src/features/products/validation-engine/core.ts`                                                 | Sorts patterns by sequence, target, and label for deterministic runtime order.            |
-| core.resolveFieldTargetAndLocale            | `resolveFieldTargetAndLocale`         | `src/features/products/validation-engine/core.ts`                                                 | Maps form field names to validator target and locale context.                             |
-| core.isPatternLocaleMatch                   | `isPatternLocaleMatch`                | `src/features/products/validation-engine/core.ts`                                                 | Checks locale compatibility between pattern and field.                                    |
-| core.normalizeReplacementFields             | `normalizeReplacementFields`          | `src/features/products/validation-engine/core.ts`                                                 | Validates, deduplicates, and normalizes replacement field allowlist.                      |
-| core.isReplacementAllowedForField           | `isReplacementAllowedForField`        | `src/features/products/validation-engine/core.ts`                                                 | Checks whether replacement is permitted for a specific form field.                        |
-| core.isLatestPriceStockMirrorPattern        | `isLatestPriceStockMirrorPattern`     | `src/features/products/validation-engine/core.ts`                                                 | Detects dynamic mirror patterns pulling latest price or stock values.                     |
-| core.isRuntimePatternEnabled                | `isRuntimePatternEnabled`             | `src/features/products/validation-engine/core.ts`                                                 | Identifies patterns delegated to runtime evaluator.                                       |
-| core.resolvePatternLaunchSourceValue        | `resolvePatternLaunchSourceValue`     | `src/features/products/validation-engine/core.ts`                                                 | Resolves the value used to evaluate launch condition.                                     |
-| core.shouldLaunchPattern                    | `shouldLaunchPattern`                 | `src/features/products/validation-engine/core.ts`                                                 | Evaluates launch gates for static and sequence patterns.                                  |
-| core.resolvePatternReplacementValue         | `resolvePatternReplacementValue`      | `src/features/products/validation-engine/core.ts`                                                 | Resolves static or dynamic replacement payload for matched pattern.                       |
-| core.applyResolvedReplacement               | `applyResolvedReplacement`            | `src/features/products/validation-engine/core.ts`                                                 | Applies replacement to value using recipe apply mode.                                     |
-| core.deriveDiffSegment                      | `deriveDiffSegment`                   | `src/features/products/validation-engine/core.ts`                                                 | Computes minimal changed segment between original and replaced values.                    |
-| core.buildFieldIssues                       | `buildFieldIssues`                    | `src/features/products/validation-engine/core.ts`                                                 | Builds static validator issues by applying eligible patterns to each field.               |
-| core.mergeFieldIssueMaps                    | `mergeFieldIssueMaps`                 | `src/features/products/validation-engine/core.ts`                                                 | Merges static and runtime issue maps by field.                                            |
-| core.areIssueMapsEquivalent                 | `areIssueMapsEquivalent`              | `src/features/products/validation-engine/core.ts`                                                 | Performs deep structural equality check for issue maps.                                   |
-| core.getIssueReplacementPreview             | `getIssueReplacementPreview`          | `src/features/products/validation-engine/core.ts`                                                 | Generates preview value for a single issue replacement.                                   |
-| helpers.normalizeReplacementFields          | `normalizeReplacementFields`          | `src/features/products/components/settings/validator-settings/helpers.ts`                         | Normalizes replacement fields selected in modal/controller state.                         |
-| helpers.formatReplacementFields             | `formatReplacementFields`             | `src/features/products/components/settings/validator-settings/helpers.ts`                         | Formats replacement field list into user-facing label string.                             |
-| helpers.getReplacementFieldsForTarget       | `getReplacementFieldsForTarget`       | `src/features/products/components/settings/validator-settings/helpers.ts`                         | Returns replacement fields allowed for target.                                            |
-| helpers.isLocaleTarget                      | `isLocaleTarget`                      | `src/features/products/components/settings/validator-settings/helpers.ts`                         | Indicates if target supports locale selector.                                             |
-| helpers.isLatestFieldMirrorPattern          | `isLatestFieldMirrorPattern`          | `src/features/products/components/settings/validator-settings/helpers.ts`                         | Detects auto-template latest value mirror patterns for price/stock.                       |
-| helpers.isNameSecondSegmentDimensionPattern | `isNameSecondSegmentDimensionPattern` | `src/features/products/components/settings/validator-settings/helpers.ts`                         | Detects name segment templates used for length/height mapping.                            |
-| helpers.getSourceFieldOptionsForTarget      | `getSourceFieldOptionsForTarget`      | `src/features/products/components/settings/validator-settings/helpers.ts`                         | Returns source-field options for dynamic replacement and launch settings.                 |
-| helpers.buildDynamicRecipeFromForm          | `buildDynamicRecipeFromForm`          | `src/features/products/components/settings/validator-settings/helpers.ts`                         | Builds dynamic replacement recipe object from modal form state.                           |
-| helpers.buildLatestFieldRecipe              | `buildLatestFieldRecipe`              | `src/features/products/components/settings/validator-settings/helpers.ts`                         | Builds encoded dynamic recipe for latest product field mirror templates.                  |
-| helpers.buildDuplicateLabel                 | `buildDuplicateLabel`                 | `src/features/products/components/settings/validator-settings/helpers.ts`                         | Generates unique duplicate label with copy suffix.                                        |
-| helpers.buildUniqueLabel                    | `buildUniqueLabel`                    | `src/features/products/components/settings/validator-settings/helpers.ts`                         | Builds unique label by incrementing numeric suffix.                                       |
-| helpers.getPatternSequence                  | `getPatternSequence`                  | `src/features/products/components/settings/validator-settings/helpers.ts`                         | Normalizes sequence value used in settings sorting.                                       |
-| helpers.getSequenceGroupId                  | `getSequenceGroupId`                  | `src/features/products/components/settings/validator-settings/helpers.ts`                         | Returns normalized sequence group identifier or null.                                     |
-| helpers.sortPatternsBySequence              | `sortPatternsBySequence`              | `src/features/products/components/settings/validator-settings/helpers.ts`                         | Sorts pattern table records by sequence then target then label.                           |
-| helpers.reorderPatterns                     | `reorderPatterns`                     | `src/features/products/components/settings/validator-settings/helpers.ts`                         | Reorders pattern list for drag-and-drop sequencing operations.                            |
-| helpers.createSequenceGroupId               | `createSequenceGroupId`               | `src/features/products/components/settings/validator-settings/helpers.ts`                         | Creates unique sequence group id for ad-hoc grouping.                                     |
-| helpers.normalizeSequenceGroupDebounceMs    | `normalizeSequenceGroupDebounceMs`    | `src/features/products/components/settings/validator-settings/helpers.ts`                         | Clamps sequence group debounce to 0..30000 integer range.                                 |
-| helpers.canCompileRegex                     | `canCompileRegex`                     | `src/features/products/components/settings/validator-settings/helpers.ts`                         | Validates regex source/flags in UI before save.                                           |
-| helpers.buildSequenceGroups                 | `buildSequenceGroups`                 | `src/features/products/components/settings/validator-settings/helpers.ts`                         | Builds grouped sequence metadata for table rendering and editing.                         |
-| controller.buildFormDataFromPattern         | `buildFormDataFromPattern`            | `src/features/products/components/settings/validator-settings/controller-form-utils.ts`           | Converts persisted pattern entity into editable modal form state.                         |
-| controller.createSequenceActions            | `createSequenceActions`               | `src/features/products/components/settings/validator-settings/controller-sequence-actions.ts`     | Builds all advanced template/group action handlers used by validator settings controller. |
-| controller.useValidatorSettingsController   | `useValidatorSettingsController`      | `src/features/products/components/settings/validator-settings/useValidatorSettingsController.ts`  | Main orchestration hook for validator settings data, modal state, and mutations.          |
-| scope.defaultValidatorPatternLists          | `defaultValidatorPatternLists`        | `src/features/admin/pages/validator-scope.ts`                                                     | Builds default pattern list configuration for each validator scope.                       |
-| scope.parseValidatorScope                   | `parseValidatorScope`                 | `src/features/admin/pages/validator-scope.ts`                                                     | Normalizes URL/query scope values to known validator scope enum.                          |
-| scope.normalizeValidatorPatternLists        | `normalizeValidatorPatternLists`      | `src/features/admin/pages/validator-scope.ts`                                                     | Normalizes and sanitizes persisted list manager payload.                                  |
-| scope.parseValidatorPatternLists            | `parseValidatorPatternLists`          | `src/features/admin/pages/validator-scope.ts`                                                     | Parses settings JSON payload into normalized validator pattern lists.                     |
-| ui.ValidatorSettings                        | `ValidatorSettings`                   | `src/features/products/components/settings/ValidatorSettings.tsx`                                 | Top-level validator settings composition root.                                            |
-| ui.ValidatorSettingsProvider                | `ValidatorSettingsProvider`           | `src/features/products/components/settings/validator-settings/ValidatorSettingsContext.tsx`       | Provides controller instance via React context.                                           |
-| ui.useValidatorSettingsContext              | `useValidatorSettingsContext`         | `src/features/products/components/settings/validator-settings/ValidatorSettingsContext.tsx`       | Reads validator settings controller from context.                                         |
-| ui.ValidatorDefaultPanel                    | `ValidatorDefaultPanel`               | `src/features/products/components/settings/validator-settings/ValidatorDefaultPanel.tsx`          | Renders default-on/off validator behavior toggle for product forms.                       |
-| ui.ValidatorInstanceBehaviorPanel           | `ValidatorInstanceBehaviorPanel`      | `src/features/products/components/settings/validator-settings/ValidatorInstanceBehaviorPanel.tsx` | Renders deny behavior selectors for each validation scope.                                |
-| ui.ValidatorPatternTablePanel               | `ValidatorPatternTablePanel`          | `src/features/products/components/settings/validator-settings/ValidatorPatternTablePanel.tsx`     | Renders pattern table, sequence controls, and row-level actions.                          |
-| ui.ValidatorPatternModal                    | `ValidatorPatternModal`               | `src/features/products/components/settings/validator-settings/ValidatorPatternModal.tsx`          | Renders modal for creating/editing validation patterns and runtime configuration.         |
-| ui.AdminGlobalValidatorPage                 | `AdminGlobalValidatorPage`            | `src/features/admin/pages/AdminGlobalValidatorPage.tsx`                                           | Switches active validator panel based on selected pattern list/scope.                     |
-| ui.AdminValidatorPatternListsPage           | `AdminValidatorPatternListsPage`      | `src/features/admin/pages/AdminValidatorPatternListsPage.tsx`                                     | Manages creation, editing, locking, and persistence of validator pattern lists.           |
+| ID | Symbol | File | Purpose |
+| --- | --- | --- | --- |
+| core.normalizeValidationDebounceMs | `normalizeValidationDebounceMs` | `src/features/products/validation-engine/core.ts` | Clamps and normalizes debounce value to an integer between 0 and 30000 ms. |
+| core.normalizePostAcceptBehavior | `normalizePostAcceptBehavior` | `src/features/products/validation-engine/core.ts` | Normalizes post-accept behavior to supported enum values. |
+| core.normalizePatternSequence | `normalizePatternSequence` | `src/features/products/validation-engine/core.ts` | Produces a deterministic sequence index for ordering patterns. |
+| core.normalizePatternChainMode | `normalizePatternChainMode` | `src/features/products/validation-engine/core.ts` | Normalizes chain execution mode for grouped patterns. |
+| core.normalizePatternMaxExecutions | `normalizePatternMaxExecutions` | `src/features/products/validation-engine/core.ts` | Bounds max execution count for iterative regex processing. |
+| core.buildSequenceGroupCounts | `buildSequenceGroupCounts` | `src/features/products/validation-engine/core.ts` | Counts enabled sequence-grouped patterns by scope key. |
+| core.isPatternInSequenceGroup | `isPatternInSequenceGroup` | `src/features/products/validation-engine/core.ts` | Determines if a pattern belongs to a multi-step sequence. |
+| core.sortValidatorPatterns | `sortValidatorPatterns` | `src/features/products/validation-engine/core.ts` | Sorts patterns by sequence, target, and label for deterministic runtime order. |
+| core.resolveFieldTargetAndLocale | `resolveFieldTargetAndLocale` | `src/features/products/validation-engine/core.ts` | Maps form field names to validator target and locale context. |
+| core.isPatternLocaleMatch | `isPatternLocaleMatch` | `src/features/products/validation-engine/core.ts` | Checks locale compatibility between pattern and field. |
+| core.normalizeReplacementFields | `normalizeReplacementFields` | `src/features/products/validation-engine/core.ts` | Validates, deduplicates, and normalizes replacement field allowlist. |
+| core.isReplacementAllowedForField | `isReplacementAllowedForField` | `src/features/products/validation-engine/core.ts` | Checks whether replacement is permitted for a specific form field. |
+| core.isLatestPriceStockMirrorPattern | `isLatestPriceStockMirrorPattern` | `src/features/products/validation-engine/core.ts` | Detects dynamic mirror patterns pulling latest price or stock values. |
+| core.isRuntimePatternEnabled | `isRuntimePatternEnabled` | `src/features/products/validation-engine/core.ts` | Identifies patterns delegated to runtime evaluator. |
+| core.resolvePatternLaunchSourceValue | `resolvePatternLaunchSourceValue` | `src/features/products/validation-engine/core.ts` | Resolves the value used to evaluate launch condition. |
+| core.shouldLaunchPattern | `shouldLaunchPattern` | `src/features/products/validation-engine/core.ts` | Evaluates launch gates for static and sequence patterns. |
+| core.resolvePatternReplacementValue | `resolvePatternReplacementValue` | `src/features/products/validation-engine/core.ts` | Resolves static or dynamic replacement payload for matched pattern. |
+| core.applyResolvedReplacement | `applyResolvedReplacement` | `src/features/products/validation-engine/core.ts` | Applies replacement to value using recipe apply mode. |
+| core.deriveDiffSegment | `deriveDiffSegment` | `src/features/products/validation-engine/core.ts` | Computes minimal changed segment between original and replaced values. |
+| core.buildFieldIssues | `buildFieldIssues` | `src/features/products/validation-engine/core.ts` | Builds static validator issues by applying eligible patterns to each field. |
+| core.mergeFieldIssueMaps | `mergeFieldIssueMaps` | `src/features/products/validation-engine/core.ts` | Merges static and runtime issue maps by field. |
+| core.areIssueMapsEquivalent | `areIssueMapsEquivalent` | `src/features/products/validation-engine/core.ts` | Performs deep structural equality check for issue maps. |
+| core.getIssueReplacementPreview | `getIssueReplacementPreview` | `src/features/products/validation-engine/core.ts` | Generates preview value for a single issue replacement. |
+| helpers.normalizeReplacementFields | `normalizeReplacementFields` | `src/features/products/components/settings/validator-settings/helpers.ts` | Normalizes replacement fields selected in modal/controller state. |
+| helpers.formatReplacementFields | `formatReplacementFields` | `src/features/products/components/settings/validator-settings/helpers.ts` | Formats replacement field list into user-facing label string. |
+| helpers.getReplacementFieldsForTarget | `getReplacementFieldsForTarget` | `src/features/products/components/settings/validator-settings/helpers.ts` | Returns replacement fields allowed for target. |
+| helpers.isLocaleTarget | `isLocaleTarget` | `src/features/products/components/settings/validator-settings/helpers.ts` | Indicates if target supports locale selector. |
+| helpers.isLatestFieldMirrorPattern | `isLatestFieldMirrorPattern` | `src/features/products/components/settings/validator-settings/helpers.ts` | Detects auto-template latest value mirror patterns for price/stock. |
+| helpers.isNameSecondSegmentDimensionPattern | `isNameSecondSegmentDimensionPattern` | `src/features/products/components/settings/validator-settings/helpers.ts` | Detects name segment templates used for length/height mapping. |
+| helpers.getSourceFieldOptionsForTarget | `getSourceFieldOptionsForTarget` | `src/features/products/components/settings/validator-settings/helpers.ts` | Returns source-field options for dynamic replacement and launch settings. |
+| helpers.buildDynamicRecipeFromForm | `buildDynamicRecipeFromForm` | `src/features/products/components/settings/validator-settings/helpers.ts` | Builds dynamic replacement recipe object from modal form state. |
+| helpers.buildLatestFieldRecipe | `buildLatestFieldRecipe` | `src/features/products/components/settings/validator-settings/helpers.ts` | Builds encoded dynamic recipe for latest product field mirror templates. |
+| helpers.buildDuplicateLabel | `buildDuplicateLabel` | `src/features/products/components/settings/validator-settings/helpers.ts` | Generates unique duplicate label with copy suffix. |
+| helpers.buildUniqueLabel | `buildUniqueLabel` | `src/features/products/components/settings/validator-settings/helpers.ts` | Builds unique label by incrementing numeric suffix. |
+| helpers.getPatternSequence | `getPatternSequence` | `src/features/products/components/settings/validator-settings/helpers.ts` | Normalizes sequence value used in settings sorting. |
+| helpers.getSequenceGroupId | `getSequenceGroupId` | `src/features/products/components/settings/validator-settings/helpers.ts` | Returns normalized sequence group identifier or null. |
+| helpers.sortPatternsBySequence | `sortPatternsBySequence` | `src/features/products/components/settings/validator-settings/helpers.ts` | Sorts pattern table records by sequence then target then label. |
+| helpers.reorderPatterns | `reorderPatterns` | `src/features/products/components/settings/validator-settings/helpers.ts` | Reorders pattern list for drag-and-drop sequencing operations. |
+| helpers.createSequenceGroupId | `createSequenceGroupId` | `src/features/products/components/settings/validator-settings/helpers.ts` | Creates unique sequence group id for ad-hoc grouping. |
+| helpers.normalizeSequenceGroupDebounceMs | `normalizeSequenceGroupDebounceMs` | `src/features/products/components/settings/validator-settings/helpers.ts` | Clamps sequence group debounce to 0..30000 integer range. |
+| helpers.canCompileRegex | `canCompileRegex` | `src/features/products/components/settings/validator-settings/helpers.ts` | Validates regex source/flags in UI before save. |
+| helpers.buildSequenceGroups | `buildSequenceGroups` | `src/features/products/components/settings/validator-settings/helpers.ts` | Builds grouped sequence metadata for table rendering and editing. |
+| controller.buildFormDataFromPattern | `buildFormDataFromPattern` | `src/features/products/components/settings/validator-settings/controller-form-utils.ts` | Converts persisted pattern entity into editable modal form state. |
+| controller.createSequenceActions | `createSequenceActions` | `src/features/products/components/settings/validator-settings/controller-sequence-actions.ts` | Builds all advanced template/group action handlers used by validator settings controller. |
+| controller.useValidatorSettingsController | `useValidatorSettingsController` | `src/features/products/components/settings/validator-settings/useValidatorSettingsController.ts` | Main orchestration hook for validator settings data, modal state, and mutations. |
+| scope.defaultValidatorPatternLists | `defaultValidatorPatternLists` | `src/features/admin/pages/validator-scope.ts` | Builds default pattern list configuration for each validator scope. |
+| scope.parseValidatorScope | `parseValidatorScope` | `src/features/admin/pages/validator-scope.ts` | Normalizes URL/query scope values to known validator scope enum. |
+| scope.normalizeValidatorPatternLists | `normalizeValidatorPatternLists` | `src/features/admin/pages/validator-scope.ts` | Normalizes and sanitizes persisted list manager payload. |
+| scope.parseValidatorPatternLists | `parseValidatorPatternLists` | `src/features/admin/pages/validator-scope.ts` | Parses settings JSON payload into normalized validator pattern lists. |
+| ui.ValidatorSettings | `ValidatorSettings` | `src/features/products/components/settings/ValidatorSettings.tsx` | Top-level validator settings composition root. |
+| ui.ValidatorSettingsProvider | `ValidatorSettingsProvider` | `src/features/products/components/settings/validator-settings/ValidatorSettingsContext.tsx` | Provides controller instance via React context. |
+| ui.useValidatorSettingsContext | `useValidatorSettingsContext` | `src/features/products/components/settings/validator-settings/ValidatorSettingsContext.tsx` | Reads validator settings controller from context. |
+| ui.ValidatorDefaultPanel | `ValidatorDefaultPanel` | `src/features/products/components/settings/validator-settings/ValidatorDefaultPanel.tsx` | Renders default-on/off validator behavior toggle for product forms. |
+| ui.ValidatorInstanceBehaviorPanel | `ValidatorInstanceBehaviorPanel` | `src/features/products/components/settings/validator-settings/ValidatorInstanceBehaviorPanel.tsx` | Renders deny behavior selectors for each validation scope. |
+| ui.ValidatorPatternTablePanel | `ValidatorPatternTablePanel` | `src/features/products/components/settings/validator-settings/ValidatorPatternTablePanel.tsx` | Renders pattern table, sequence controls, and row-level actions. |
+| ui.ValidatorPatternModal | `ValidatorPatternModal` | `src/features/products/components/settings/validator-settings/ValidatorPatternModal.tsx` | Renders modal for creating/editing validation patterns and runtime configuration. |
+| ui.AdminGlobalValidatorPage | `AdminGlobalValidatorPage` | `src/app/(admin)/admin/validator/ClientPage.tsx` | Switches active validator panel based on selected pattern list/scope. |
+| ui.AdminValidatorPatternListsPage | `AdminValidatorPatternListsPage` | `src/features/admin/pages/AdminValidatorPatternListsPage.tsx` | Manages creation, editing, locking, and persistence of validator pattern lists. |
 
 ### core.normalizeValidationDebounceMs
 
@@ -93,7 +101,7 @@ Generated from `src/features/products/components/settings/validator-settings/val
 - Parameters: pattern: pattern record. fallbackIndex: array index when sequence is unset.
 - Returns: Non-negative integer sequence number.
 - Errors: No throws.
-- Edge Cases: Missing sequence uses (fallbackIndex + 1) \* 10.
+- Edge Cases: Missing sequence uses (fallbackIndex + 1) * 10.
 - Example: `normalizePatternSequence(pattern, 3)`
 
 ### core.normalizePatternChainMode
@@ -486,8 +494,8 @@ Generated from `src/features/products/components/settings/validator-settings/val
 - File: `src/features/products/components/settings/validator-settings/helpers.ts`
 - Symbol: `createSequenceGroupId`
 - Purpose: Creates unique sequence group id for ad-hoc grouping.
-- Parameters:
-- Returns: String id with seq\_ prefix.
+- Parameters: 
+- Returns: String id with seq_ prefix.
 - Errors: No throws.
 - Edge Cases: Uses Date.now plus random suffix for collision resistance.
 - Example: `createSequenceGroupId()`
@@ -552,7 +560,7 @@ Generated from `src/features/products/components/settings/validator-settings/val
 - File: `src/features/products/components/settings/validator-settings/useValidatorSettingsController.ts`
 - Symbol: `useValidatorSettingsController`
 - Purpose: Main orchestration hook for validator settings data, modal state, and mutations.
-- Parameters:
+- Parameters: 
 - Returns: ValidatorSettingsController interface consumed by UI panels.
 - Errors: Mutation errors are surfaced via toasts and observability logs.
 - Edge Cases: Reorder flow includes optimistic grouping draft updates and stale timestamp checks.
@@ -563,7 +571,7 @@ Generated from `src/features/products/components/settings/validator-settings/val
 - File: `src/features/admin/pages/validator-scope.ts`
 - Symbol: `defaultValidatorPatternLists`
 - Purpose: Builds default pattern list configuration for each validator scope.
-- Parameters:
+- Parameters: 
 - Returns: Default list array with current timestamps.
 - Errors: No throws.
 - Edge Cases: All default lists are deletion locked.
@@ -599,7 +607,7 @@ Generated from `src/features/products/components/settings/validator-settings/val
 - Parameters: value: persisted setting payload.
 - Returns: Normalized list array.
 - Errors: JSON parse errors fallback to defaults.
-- Edge Cases: Requires canonical payload `{ version: 2, lists: [...] }`; invalid or legacy payload variants fallback to defaults.
+- Edge Cases: Requires canonical envelope shape `{ version: 2, lists: [...] }`; unsupported payload variants fallback to defaults.
 - Example: `parseValidatorPatternLists(rawSetting)`
 
 ### ui.ValidatorSettings
@@ -607,7 +615,7 @@ Generated from `src/features/products/components/settings/validator-settings/val
 - File: `src/features/products/components/settings/ValidatorSettings.tsx`
 - Symbol: `ValidatorSettings`
 - Purpose: Top-level validator settings composition root.
-- Parameters:
+- Parameters: 
 - Returns: Composed validator settings UI with modal and deletion confirmation.
 - Errors: No throws.
 - Edge Cases: Provider boundary is required for child panels.
@@ -629,7 +637,7 @@ Generated from `src/features/products/components/settings/validator-settings/val
 - File: `src/features/products/components/settings/validator-settings/ValidatorSettingsContext.tsx`
 - Symbol: `useValidatorSettingsContext`
 - Purpose: Reads validator settings controller from context.
-- Parameters:
+- Parameters: 
 - Returns: ValidatorSettingsController object.
 - Errors: Throws internalError when used outside provider.
 - Edge Cases: No fallback controller is provided intentionally.
@@ -640,7 +648,7 @@ Generated from `src/features/products/components/settings/validator-settings/val
 - File: `src/features/products/components/settings/validator-settings/ValidatorDefaultPanel.tsx`
 - Symbol: `ValidatorDefaultPanel`
 - Purpose: Renders default-on/off validator behavior toggle for product forms.
-- Parameters:
+- Parameters: 
 - Returns: Panel section component.
 - Errors: No throws.
 - Edge Cases: Toggle disabled while settings mutation is pending.
@@ -651,7 +659,7 @@ Generated from `src/features/products/components/settings/validator-settings/val
 - File: `src/features/products/components/settings/validator-settings/ValidatorInstanceBehaviorPanel.tsx`
 - Symbol: `ValidatorInstanceBehaviorPanel`
 - Purpose: Renders deny behavior selectors for each validation scope.
-- Parameters:
+- Parameters: 
 - Returns: Panel section component.
 - Errors: No throws.
 - Edge Cases: Options lock while settings mutation is pending.
@@ -662,7 +670,7 @@ Generated from `src/features/products/components/settings/validator-settings/val
 - File: `src/features/products/components/settings/validator-settings/ValidatorPatternTablePanel.tsx`
 - Symbol: `ValidatorPatternTablePanel`
 - Purpose: Renders pattern table, sequence controls, and row-level actions.
-- Parameters:
+- Parameters: 
 - Returns: Pattern management panel component.
 - Errors: No throws.
 - Edge Cases: Drag-drop is disabled while reorder mutations are active.
@@ -673,7 +681,7 @@ Generated from `src/features/products/components/settings/validator-settings/val
 - File: `src/features/products/components/settings/validator-settings/ValidatorPatternModal.tsx`
 - Symbol: `ValidatorPatternModal`
 - Purpose: Renders modal for creating/editing validation patterns and runtime configuration.
-- Parameters:
+- Parameters: 
 - Returns: Modal component or null when closed.
 - Errors: No throws.
 - Edge Cases: Returns null when showModal is false.
@@ -681,10 +689,10 @@ Generated from `src/features/products/components/settings/validator-settings/val
 
 ### ui.AdminGlobalValidatorPage
 
-- File: `src/features/admin/pages/AdminGlobalValidatorPage.tsx`
+- File: `src/app/(admin)/admin/validator/ClientPage.tsx`
 - Symbol: `AdminGlobalValidatorPage`
 - Purpose: Switches active validator panel based on selected pattern list/scope.
-- Parameters:
+- Parameters: 
 - Returns: Global validator admin page.
 - Errors: No throws.
 - Edge Cases: Falls back to first available list when query params are missing.
@@ -695,7 +703,7 @@ Generated from `src/features/products/components/settings/validator-settings/val
 - File: `src/features/admin/pages/AdminValidatorPatternListsPage.tsx`
 - Symbol: `AdminValidatorPatternListsPage`
 - Purpose: Manages creation, editing, locking, and persistence of validator pattern lists.
-- Parameters:
+- Parameters: 
 - Returns: List manager page component.
 - Errors: Save errors are surfaced via toast.
 - Edge Cases: At least one list must remain after delete.

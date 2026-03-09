@@ -33,6 +33,7 @@ export async function executeGenerateStep(params: {
     request: {
       projectId: run.projectId,
       prompt,
+      ...(run.request.contextRegistry ? { contextRegistry: run.request.contextRegistry } : {}),
     },
     expectedOutputs: config.outputCount ?? 1,
   });

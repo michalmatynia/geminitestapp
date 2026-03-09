@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-03-09T06:12:23.045Z",
+  "generatedAt": "2026-03-09T07:50:50.862Z",
   "status": "failed",
   "summary": {
-    "total": 10,
-    "errorCount": 7,
-    "warningCount": 3,
+    "total": 9,
+    "errorCount": 9,
+    "warningCount": 0,
     "infoCount": 0,
     "status": "failed",
-    "fileCount": 4473,
+    "fileCount": 4483,
     "featureCount": 9,
-    "circularDependencyCount": 0
+    "circularDependencyCount": 1
   },
   "scope": {
     "root": "src",
@@ -60,6 +60,7 @@
       "foldertree"
     ],
     "products": [
+      "ai",
       "foldertree",
       "internationalization"
     ],
@@ -67,8 +68,24 @@
       "foldertree"
     ]
   },
-  "circularDependencies": [],
+  "circularDependencies": [
+    [
+      "ai",
+      "products",
+      "ai"
+    ]
+  ],
   "issues": [
+    {
+      "severity": "error",
+      "ruleId": "circular-feature-dep",
+      "message": "Circular dependency between features: ai -> products -> ai",
+      "file": null,
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
     {
       "severity": "error",
       "ruleId": "cross-feature-internal-import",
@@ -140,31 +157,11 @@
       "context": null
     },
     {
-      "severity": "warn",
-      "ruleId": "deep-relative-import",
-      "message": "Deep relative import (4 levels up). Consider using path aliases.",
-      "file": "src/app/api/agent/approval-gates/route.ts",
-      "line": 3,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "deep-relative-import",
-      "message": "Deep relative import (4 levels up). Consider using path aliases.",
-      "file": "src/app/api/agent/capabilities/route.ts",
-      "line": 3,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "deep-relative-import",
-      "message": "Deep relative import (4 levels up). Consider using path aliases.",
-      "file": "src/app/api/agent/resources/route.ts",
-      "line": 3,
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"ai\": @/features/ai/ai-paths/context-registry/system-prompt. Use the barrel export instead.",
+      "file": "src/features/products/workers/product-ai-processors.ts",
+      "line": 9,
       "column": null,
       "snippet": null,
       "context": null
@@ -173,16 +170,16 @@
   "rules": [
     {
       "ruleId": "cross-feature-internal-import",
-      "errorCount": 7,
+      "errorCount": 8,
       "warningCount": 0,
       "infoCount": 0
     },
     {
-      "ruleId": "deep-relative-import",
-      "errorCount": 0,
-      "warningCount": 3,
+      "ruleId": "circular-feature-dep",
+      "errorCount": 1,
+      "warningCount": 0,
       "infoCount": 0
     }
   ],
-  "durationMs": 298
+  "durationMs": 270
 }

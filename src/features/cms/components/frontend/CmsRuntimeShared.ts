@@ -1,7 +1,8 @@
+import type { UnknownRecord } from '@/shared/contracts/base';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
-export type CmsRuntimeSources = Record<string, unknown>;
 export type CmsRuntimeAction = (...args: unknown[]) => void;
+export type CmsRuntimeSources = UnknownRecord;
 
 export type CmsRuntimeContextValue = {
   sources: CmsRuntimeSources;

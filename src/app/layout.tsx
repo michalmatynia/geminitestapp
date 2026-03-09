@@ -11,6 +11,7 @@ import { SettingsStoreProvider } from '@/shared/providers/SettingsStoreProvider'
 import { ThemeProvider } from '@/shared/providers/theme-provider';
 import { UrlGuardProvider } from '@/shared/providers/UrlGuardProvider';
 import { AppErrorBoundary } from '@/shared/ui/AppErrorBoundary';
+import { RouteAccessibilityAnnouncer } from '@/shared/ui/RouteAccessibilityAnnouncer';
 import { SkipToContentLink } from '@/shared/ui/SkipToContentLink';
 import { ToastProvider } from '@/shared/ui/toast';
 import { cn } from '@/shared/utils';
@@ -34,6 +35,7 @@ export default function RootLayout({
     <html lang='en' suppressHydrationWarning>
       <body suppressHydrationWarning className={cn('max-w-full overflow-x-hidden font-sans')}>
         <SkipToContentLink />
+        <RouteAccessibilityAnnouncer />
         <ToastProvider>
           <QueryProvider>
             <SettingsStoreProvider mode='lite'>

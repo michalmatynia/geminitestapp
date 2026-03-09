@@ -1,6 +1,9 @@
 import { z } from 'zod';
-import { dtoBaseSchema } from './base';
+
 import { nodePortValueKindSchema, type AiNode, type Edge } from './ai-paths-core';
+import { dtoBaseSchema } from './base';
+
+import type { ContextRegistryConsumerEnvelope } from './ai-context-registry';
 import type { Toast as ToastFn } from './ui';
 
 /**
@@ -724,6 +727,7 @@ export interface NodeHandlerContext {
   timeoutMs: number;
   runMeta?: Record<string, unknown> | null | undefined;
   activePathId: string | null;
+  contextRegistry?: ContextRegistryConsumerEnvelope | null | undefined;
   iteration: number;
   triggerNodeId?: string | undefined;
   triggerEvent?: string | undefined;

@@ -134,7 +134,7 @@ describe('KangurFeatureApp', () => {
     });
   });
 
-  it('shows the navigation skeleton while a Kangur route transition is pending', () => {
+  it('renders the resolved Kangur page content once auth is ready', () => {
     routeTransitionStateMock.mockReturnValue({
       isRoutePending: true,
       pendingPageKey: 'Game',
@@ -143,21 +143,9 @@ describe('KangurFeatureApp', () => {
 
     render(<KangurFeatureApp />);
 
-    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent('Lessons');
-    expect(screen.queryByTestId('kangur-page-lessons')).toBeNull();
-    expect(screen.queryByTestId('kangur-route-content')).toBeNull();
+    expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-page-lessons')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
   });
 
-  it('still renders the boot skeleton while the Kangur app is loading', () => {
-    authStateMock.mockReturnValue({
-      isLoadingAuth: true,
-      isLoadingPublicSettings: false,
-      authError: null,
-      navigateToLogin: vi.fn(),
-    });
-
-    render(<KangurFeatureApp />);
-
-    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent('Lessons');
-  });
 });

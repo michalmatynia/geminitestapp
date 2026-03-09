@@ -4,14 +4,17 @@ import path from 'node:path';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
+import { resolveAgentRuntimeContextRegistryEnvelope } from '@/features/ai/agent-runtime/context-registry/server';
 import { startAgentQueue } from '@/features/ai/server';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type { AgentRunStatusType } from '@/shared/contracts/agent-runtime';
+import { contextRegistryConsumerEnvelopeSchema } from '@/shared/contracts/ai-context-registry';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { getBrainAssignmentForFeature } from '@/shared/lib/ai-brain/server';
 import { badRequestError, configurationError, internalError } from '@/shared/errors/app-error';
+import { getBrainAssignmentForFeature } from '@/shared/lib/ai-brain/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import prisma from '@/shared/lib/db/prisma';
+import { Prisma } from '@/shared/lib/db/prisma-client';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export const dynamic = 'force-dynamic';
 
@@ -86,6 +89,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     runHeadless?: boolean;
     ignoreRobotsTxt?: boolean;
     requireHumanApproval?: boolean;
+    contextRegistry?: unknown;
     planSettings?: {
       maxSteps?: number;
       maxStepAttempts?: number;
@@ -106,6 +110,16 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
   if (!body.prompt?.trim()) {
     throw badRequestError('Prompt is required.');
+  }
+  let contextRegistry = null;
+  if (body.contextRegistry !== undefined) {
+    const parsedContextRegistry = contextRegistryConsumerEnvelopeSchema.safeParse(
+      body.contextRegistry
+    );
+    if (!parsedContextRegistry.success) {
+      throw badRequestError('Invalid context registry payload.');
+    }
+    contextRegistry = await resolveAgentRuntimeContextRegistryEnvelope(parsedContextRegistry.data);
   }
   const normalizePlanSettings = (input?: {
     maxSteps?: number;
@@ -150,13 +164,15 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       runHeadless: body.runHeadless ?? true,
       ignoreRobotsTxt: body.ignoreRobotsTxt ?? false,
       requireHumanApproval: body.requireHumanApproval ?? false,
+      contextRegistryRefCount: contextRegistry?.refs.length ?? 0,
+      contextRegistryDocumentCount: contextRegistry?.resolved?.documents.length ?? 0,
       planSettings,
     });
   }
 
   const hasPreferenceOverrides =
     body.ignoreRobotsTxt !== undefined || body.requireHumanApproval !== undefined;
-  const shouldAttachPlanState = Boolean(planSettings || hasPreferenceOverrides);
+  const shouldAttachPlanState = Boolean(planSettings || hasPreferenceOverrides || contextRegistry);
 
   const run = await prisma.chatbotAgentRun.create({
     data: {
@@ -176,7 +192,8 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
               ignoreRobotsTxt: Boolean(body.ignoreRobotsTxt),
               requireHumanApproval: Boolean(body.requireHumanApproval),
             },
-          },
+            ...(contextRegistry ? { contextRegistry } : {}),
+          } as Prisma.InputJsonValue,
         }
         : {}),
     },

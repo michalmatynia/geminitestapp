@@ -214,6 +214,11 @@ const setSettingsStore = ({
 describe('Lessons', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback: FrameRequestCallback) => {
+      callback(0);
+      return 1;
+    });
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => undefined);
     assignmentsState.value = [];
     progressState.value = {
       lessonMastery: {},

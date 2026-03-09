@@ -12,11 +12,15 @@ module.exports = tseslint.config(
     files: [
       'scripts/ai-paths/**/*.mjs',
       'scripts/architecture/**/*.mjs',
+      'scripts/cleanup/**/*.mjs',
       'scripts/canonical/**/*.mjs',
+      'scripts/db/**/*.mjs',
       'scripts/docs/**/*.mjs',
       'scripts/lib/**/*.mjs',
       'scripts/observability/**/*.mjs',
+      'scripts/perf/**/*.mjs',
       'scripts/quality/**/*.mjs',
+      'scripts/testing/**/*.mjs',
     ],
     ignores: [
       'scripts/architecture/debug-edges.mjs',
@@ -40,10 +44,15 @@ module.exports = tseslint.config(
     files: [
       'scripts/ai-paths/**/*.ts',
       'scripts/architecture/**/*.test.ts',
+      'scripts/auth/**/*.ts',
       'scripts/canonical/**/*.test.ts',
+      'scripts/cleanup/**/*.ts',
+      'scripts/db/**/*.ts',
       'scripts/docs/**/*.ts',
       'scripts/observability/**/*.test.ts',
+      'scripts/perf/**/*.ts',
       'scripts/quality/**/*.test.ts',
+      'scripts/testing/**/*.ts',
     ],
     languageOptions: {
       ecmaVersion: 'latest',

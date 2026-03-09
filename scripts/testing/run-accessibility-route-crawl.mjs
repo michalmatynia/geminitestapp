@@ -1,7 +1,8 @@
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 
-import { parseCommonCheckArgs, formatDuration, writeCheckArtifacts } from '../quality/lib/check-runner.mjs';
+import { formatDuration, parseCommonCheckArgs, writeCheckArtifacts } from '../quality/lib/check-runner.mjs';
+import { writeSummaryJson } from '../lib/check-cli.mjs';
 import { accessibilityRouteCrawlRoutes } from './config/accessibility-route-crawl.config.mjs';
 import {
   acquireRuntimeLease,
@@ -96,7 +97,29 @@ const toMarkdown = (payload) => {
   return `${lines.join('\n')}\n`;
 };
 
-const runPlaywrightRouteCrawl = async (playwrightRuntime) => {
+const buildSummaryJsonSummary = (payload) => ({
+  totalRoutes: payload.summary.total,
+  passedRoutes: payload.summary.passed,
+  failedRoutes: payload.summary.failed,
+  playwrightDurationMs: payload.summary.durationMs,
+  totalDurationMs: payload.durationMs,
+  unexpectedResults: payload.summary.unexpected,
+  flakyResults: payload.summary.flaky,
+  skippedResults: payload.summary.skipped,
+  errorCount: payload.summary.errorCount,
+});
+
+const buildSummaryJsonPaths = (outputs, shouldWriteHistory) =>
+  outputs
+    ? {
+        latestJson: path.relative(root, outputs.latestJsonPath),
+        latestMarkdown: path.relative(root, outputs.latestMdPath),
+        historicalJson: shouldWriteHistory ? path.relative(root, outputs.historicalJsonPath) : null,
+        historicalMarkdown: shouldWriteHistory ? path.relative(root, outputs.historicalMdPath) : null,
+      }
+    : null;
+
+const runPlaywrightRouteCrawl = async (playwrightRuntime, { emitHeartbeat = true } = {}) => {
   const artifacts = resolvePlaywrightRunArtifacts({
     rootDir: root,
     appId: 'web',
@@ -116,18 +139,20 @@ const runPlaywrightRouteCrawl = async (playwrightRuntime) => {
       'e2e/features/accessibility/accessibility-route-crawl.spec.ts',
       '--reporter=json',
     ];
-    const heartbeatTimer = setInterval(() => {
-      console.log(
-        buildAccessibilityRouteCrawlHeartbeatLine({
-          elapsedMs: Date.now() - startedAt,
-          baseUrl: playwrightRuntime.baseUrl ?? null,
-          agentId: playwrightRuntime.agentId ?? null,
-          leaseKey: playwrightRuntime.leaseKey ?? null,
-          formatDuration,
-        })
-      );
-    }, 30_000);
-    heartbeatTimer.unref?.();
+    const heartbeatTimer = emitHeartbeat
+      ? setInterval(() => {
+          console.log(
+            buildAccessibilityRouteCrawlHeartbeatLine({
+              elapsedMs: Date.now() - startedAt,
+              baseUrl: playwrightRuntime.baseUrl ?? null,
+              agentId: playwrightRuntime.agentId ?? null,
+              leaseKey: playwrightRuntime.leaseKey ?? null,
+              formatDuration,
+            })
+          );
+        }, 30_000)
+      : null;
+    heartbeatTimer?.unref?.();
 
     const child = spawn(command, args, {
       cwd: root,
@@ -188,7 +213,8 @@ const runPlaywrightRouteCrawl = async (playwrightRuntime) => {
 
 const run = async () => {
   const startedAt = Date.now();
-  const { strictMode, failOnWarnings, shouldWriteHistory } = parseCommonCheckArgs();
+  const { strictMode, failOnWarnings, shouldWriteHistory, noWrite, summaryJson } =
+    parseCommonCheckArgs();
   void failOnWarnings;
 
   let playwrightRuntime = null;
@@ -200,11 +226,15 @@ const run = async () => {
         context: accessibilityRuntime,
       })
     );
-    console.log(
-      `[accessibility-route-crawl] runtime=${playwrightRuntime.source}${playwrightRuntime.reused ? ':reused' : ':started'} baseUrl=${playwrightRuntime.baseUrl} agent=${playwrightRuntime.agentId}`
-    );
+    if (!summaryJson) {
+      console.log(
+        `[accessibility-route-crawl] runtime=${playwrightRuntime.source}${playwrightRuntime.reused ? ':reused' : ':started'} baseUrl=${playwrightRuntime.baseUrl} agent=${playwrightRuntime.agentId}`
+      );
+    }
 
-    const execution = await runPlaywrightRouteCrawl(playwrightRuntime);
+    const execution = await runPlaywrightRouteCrawl(playwrightRuntime, {
+      emitHeartbeat: !summaryJson,
+    });
 
     let playwrightReport = null;
     try {
@@ -240,22 +270,58 @@ const run = async () => {
       };
 
       const markdown = toMarkdown(payload);
-      const outputs = await writeCheckArtifacts({
-        root,
-        slug: 'accessibility-route-crawl',
-        payload,
-        markdown,
-        shouldWriteHistory,
-      });
+      const outputs = noWrite
+        ? null
+        : await writeCheckArtifacts({
+            root,
+            slug: 'accessibility-route-crawl',
+            payload,
+            markdown,
+            shouldWriteHistory,
+          });
+
+      if (summaryJson) {
+        writeSummaryJson({
+          scannerName: 'accessibility-route-crawl',
+          generatedAt: payload.generatedAt,
+          status: 'failed',
+          summary: buildSummaryJsonSummary(payload),
+          details: {
+            runtime: payload.runtime,
+            command: payload.command,
+            externalErrors: payload.externalErrors,
+            results: payload.results,
+            stderr: payload.stderr,
+            exitCode: payload.exitCode ?? execution.exitCode ?? null,
+          },
+          paths: buildSummaryJsonPaths(outputs, shouldWriteHistory),
+          filters: {
+            strictMode,
+            historyDisabled: !shouldWriteHistory,
+            noWrite,
+            ci: process.argv.includes('--ci'),
+          },
+          notes: ['accessibility route crawl result'],
+        });
+
+        if (strictMode) {
+          process.exit(1);
+        }
+        return;
+      }
 
       console.log(
         `[accessibility-route-crawl] status=${payload.status} routes=${payload.summary.total} pass=${payload.summary.passed} fail=${payload.summary.failed} duration=${formatDuration(payload.durationMs)}`
       );
-      console.log(`Wrote ${path.relative(root, outputs.latestJsonPath)}`);
-      console.log(`Wrote ${path.relative(root, outputs.latestMdPath)}`);
-      if (shouldWriteHistory) {
-        console.log(`Wrote ${path.relative(root, outputs.historicalJsonPath)}`);
-        console.log(`Wrote ${path.relative(root, outputs.historicalMdPath)}`);
+      if (outputs) {
+        console.log(`Wrote ${path.relative(root, outputs.latestJsonPath)}`);
+        console.log(`Wrote ${path.relative(root, outputs.latestMdPath)}`);
+        if (shouldWriteHistory) {
+          console.log(`Wrote ${path.relative(root, outputs.historicalJsonPath)}`);
+          console.log(`Wrote ${path.relative(root, outputs.historicalMdPath)}`);
+        }
+      } else {
+        console.log('Skipped writing accessibility route crawl artifacts (--no-write).');
       }
 
       if (strictMode) {
@@ -285,22 +351,58 @@ const run = async () => {
     };
 
     const markdown = toMarkdown(payload);
-    const outputs = await writeCheckArtifacts({
-      root,
-      slug: 'accessibility-route-crawl',
-      payload,
-      markdown,
-      shouldWriteHistory,
-    });
+    const outputs = noWrite
+      ? null
+      : await writeCheckArtifacts({
+          root,
+          slug: 'accessibility-route-crawl',
+          payload,
+          markdown,
+          shouldWriteHistory,
+        });
+
+    if (summaryJson) {
+      writeSummaryJson({
+        scannerName: 'accessibility-route-crawl',
+        generatedAt: payload.generatedAt,
+        status: payload.status === 'passed' ? 'ok' : 'failed',
+        summary: buildSummaryJsonSummary(payload),
+        details: {
+          runtime: payload.runtime,
+          command: payload.command,
+          externalErrors: payload.externalErrors,
+          results: payload.results,
+          stderr: payload.stderr,
+          exitCode: payload.exitCode,
+        },
+        paths: buildSummaryJsonPaths(outputs, shouldWriteHistory),
+        filters: {
+          strictMode,
+          historyDisabled: !shouldWriteHistory,
+          noWrite,
+          ci: process.argv.includes('--ci'),
+        },
+        notes: ['accessibility route crawl result'],
+      });
+
+      if (strictMode && payload.status !== 'passed') {
+        process.exit(1);
+      }
+      return;
+    }
 
     console.log(
       `[accessibility-route-crawl] status=${payload.status} routes=${payload.summary.total} pass=${payload.summary.passed} fail=${payload.summary.failed} duration=${formatDuration(payload.durationMs)}`
     );
-    console.log(`Wrote ${path.relative(root, outputs.latestJsonPath)}`);
-    console.log(`Wrote ${path.relative(root, outputs.latestMdPath)}`);
-    if (shouldWriteHistory) {
-      console.log(`Wrote ${path.relative(root, outputs.historicalJsonPath)}`);
-      console.log(`Wrote ${path.relative(root, outputs.historicalMdPath)}`);
+    if (outputs) {
+      console.log(`Wrote ${path.relative(root, outputs.latestJsonPath)}`);
+      console.log(`Wrote ${path.relative(root, outputs.latestMdPath)}`);
+      if (shouldWriteHistory) {
+        console.log(`Wrote ${path.relative(root, outputs.historicalJsonPath)}`);
+        console.log(`Wrote ${path.relative(root, outputs.historicalMdPath)}`);
+      }
+    } else {
+      console.log('Skipped writing accessibility route crawl artifacts (--no-write).');
     }
 
     if (strictMode && payload.status !== 'passed') {

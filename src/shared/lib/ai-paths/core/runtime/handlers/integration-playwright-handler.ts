@@ -4,11 +4,11 @@ import type {
   NodeHandlerContext,
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths-runtime';
-
 import { playwrightNodeApi, type PlaywrightNodeRunSnapshot } from '@/shared/lib/ai-paths/api';
+import { isObjectRecord } from '@/shared/utils/object-utils';
+
 import { normalizePlaywrightConfig } from '../../playwright/default-config';
 import { coerceInput, parseJsonSafe, renderTemplate } from '../../utils';
-import { isObjectRecord } from '@/shared/utils/object-utils';
 
 const parseObjectJson = (value: string | undefined, fieldName: string): Record<string, unknown> => {
   if (!value?.trim()) return {};
@@ -107,6 +107,7 @@ export const handlePlaywright: NodeHandler = async ({
   node,
   nodeInputs,
   prevOutputs,
+  contextRegistry,
   skipAiJobs,
   executed,
   toast,
@@ -151,6 +152,7 @@ export const handlePlaywright: NodeHandler = async ({
       settingsOverrides,
       launchOptions,
       contextOptions,
+      ...(contextRegistry ? { contextRegistry } : {}),
       ...(normalizedCapture ? { capture: normalizedCapture } : {}),
     });
 

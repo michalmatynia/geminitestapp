@@ -34,6 +34,7 @@ export async function postKangurParentAccountResendHandler(
     created: result.created,
     emailVerified: result.emailVerified,
     hasPassword: result.hasPassword,
+    retryAfterMs: result.retryAfterMs,
     message:
       'Wyslalismy nowy email potwierdzajacy. Konto rodzica uaktywni sie po weryfikacji adresu.',
     debug: buildKangurParentAccountCreateDebugPayload(result),

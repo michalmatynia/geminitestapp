@@ -8,13 +8,13 @@ canonical: true
 ---
 # Route Policy Report
 
-Generated at: 2026-03-09T06:20:00.569Z
+Generated at: 2026-03-09T09:53:44.658Z
 
 ## Summary
 
 - Status: WARN
-- Routes scanned: 350
-- Method exports scanned: 499
+- Routes scanned: 351
+- Method exports scanned: 500
 - Errors: 0
 - Warnings: 1
 - CSRF exemptions: 47
@@ -29,7 +29,7 @@ Generated at: 2026-03-09T06:20:00.569Z
 
 | Severity | Rule | Location | Message |
 | --- | --- | --- | --- |
-| WARN | route-parsejson-without-bodyschema | src/app/api/agent/leases/route.ts:83:14 | POST parses JSON without a bodySchema guard. |
+| WARN | route-parsejson-without-bodyschema | src/app/api/agent/leases/route.ts:99:14 | POST parses JSON without a bodySchema guard. |
 
 ## CSRF Exemption Inventory
 

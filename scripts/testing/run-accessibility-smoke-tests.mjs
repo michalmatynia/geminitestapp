@@ -15,11 +15,11 @@ import {
   buildAccessibilityPlaywrightRuntimeContext,
 } from './lib/accessibility-playwright-runtime-env.mjs';
 import { writeMetricsMarkdownFile } from '../docs/metrics-frontmatter.mjs';
+import { parseCommonCheckArgs, writeSummaryJson } from '../lib/check-cli.mjs';
 
 const args = new Set(process.argv.slice(2));
-const strictMode = args.has('--strict');
+const { strictMode, shouldWriteHistory, noWrite, summaryJson } = parseCommonCheckArgs();
 const failOnWarningBudgetExceed = args.has('--fail-on-warning-budget-exceed');
-const shouldWriteHistory = args.has('--write-history') && !args.has('--ci') && !args.has('--no-history');
 const warningBudgetArg = [...args].find((arg) => arg.startsWith('--warning-budget='));
 const warningBudget = Number.parseInt(warningBudgetArg?.split('=')[1] ?? '10', 10);
 
@@ -272,6 +272,50 @@ const toMarkdown = (payload) => {
   return `${lines.join('\n')}\n`;
 };
 
+const writeArtifacts = async (payload) => {
+  await fs.mkdir(outDir, { recursive: true });
+  const stamp = payload.generatedAt.replace(/[:.]/g, '-');
+
+  const latestJsonPath = path.join(outDir, 'accessibility-smoke-latest.json');
+  const latestMdPath = path.join(outDir, 'accessibility-smoke-latest.md');
+  const historicalJsonPath = path.join(outDir, `accessibility-smoke-${stamp}.json`);
+  const historicalMdPath = path.join(outDir, `accessibility-smoke-${stamp}.md`);
+
+  await fs.writeFile(latestJsonPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+  await writeMetricsMarkdownFile({
+    root,
+    targetPath: latestMdPath,
+    content: toMarkdown(payload),
+  });
+
+  if (shouldWriteHistory) {
+    await fs.writeFile(historicalJsonPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+    await writeMetricsMarkdownFile({
+      root,
+      targetPath: historicalMdPath,
+      content: toMarkdown(payload),
+    });
+  }
+
+  return {
+    latestJson: path.relative(root, latestJsonPath),
+    latestMarkdown: path.relative(root, latestMdPath),
+    historicalJson: shouldWriteHistory ? path.relative(root, historicalJsonPath) : null,
+    historicalMarkdown: shouldWriteHistory ? path.relative(root, historicalMdPath) : null,
+  };
+};
+
+const buildSummaryJsonSummary = (payload) => ({
+  totalSuites: payload.summary.total,
+  passedSuites: payload.summary.passed,
+  failedSuites: payload.summary.failed,
+  actWarnings: payload.summary.actWarnings,
+  warningBudget: payload.summary.warningBudget,
+  warningBudgetStatus: payload.summary.warningBudgetStatus,
+  warningBudgetEnforcement: payload.summary.warningBudgetEnforcement,
+  totalDurationMs: payload.summary.totalDurationMs,
+});
+
 const run = async () => {
   let playwrightRuntime = null;
 
@@ -282,17 +326,21 @@ const run = async () => {
         context: accessibilityRuntime,
       })
     );
-    console.log(
-      `[a11y-smoke] runtime=${playwrightRuntime.source}${playwrightRuntime.reused ? ':reused' : ':started'} baseUrl=${playwrightRuntime.baseUrl} agent=${playwrightRuntime.agentId}`
-    );
+    if (!summaryJson) {
+      console.log(
+        `[a11y-smoke] runtime=${playwrightRuntime.source}${playwrightRuntime.reused ? ':reused' : ':started'} baseUrl=${playwrightRuntime.baseUrl} agent=${playwrightRuntime.agentId}`
+      );
+    }
 
     const results = [];
     for (const suite of suites) {
       const result = await runSuite(suite, playwrightRuntime);
       results.push(result);
-      console.log(
-        `[a11y-smoke] ${suite.name.padEnd(38, ' ')} ${result.status.toUpperCase().padEnd(4, ' ')} ${formatDuration(result.durationMs)}`
-      );
+      if (!summaryJson) {
+        console.log(
+          `[a11y-smoke] ${suite.name.padEnd(38, ' ')} ${result.status.toUpperCase().padEnd(4, ' ')} ${formatDuration(result.durationMs)}`
+        );
+      }
     }
 
     const summary = {
@@ -303,6 +351,7 @@ const run = async () => {
       warningBudget: Number.isFinite(warningBudget) ? warningBudget : 10,
       warningBudgetStatus: 'ok',
       warningBudgetEnforcement: failOnWarningBudgetExceed ? 'fail-on-exceed' : 'telemetry-only',
+      totalDurationMs: results.reduce((acc, result) => acc + result.durationMs, 0),
     };
     summary.warningBudgetStatus =
       summary.actWarnings <= summary.warningBudget ? 'ok' : 'exceeded';
@@ -321,39 +370,55 @@ const run = async () => {
       summary,
       results,
     };
+    const paths = noWrite ? null : await writeArtifacts(payload);
+    const exceededWarningBudget = summary.warningBudgetStatus === 'exceeded';
+    const status =
+      summary.failed > 0 || (failOnWarningBudgetExceed && exceededWarningBudget) ? 'failed' : 'ok';
 
-    await fs.mkdir(outDir, { recursive: true });
-    const stamp = payload.generatedAt.replace(/[:.]/g, '-');
-
-    const latestJsonPath = path.join(outDir, 'accessibility-smoke-latest.json');
-    const latestMdPath = path.join(outDir, 'accessibility-smoke-latest.md');
-    const historicalJsonPath = path.join(outDir, `accessibility-smoke-${stamp}.json`);
-    const historicalMdPath = path.join(outDir, `accessibility-smoke-${stamp}.md`);
-
-    await fs.writeFile(latestJsonPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
-    await writeMetricsMarkdownFile({
-      root,
-      targetPath: latestMdPath,
-      content: toMarkdown(payload),
-    });
-
-    if (shouldWriteHistory) {
-      await fs.writeFile(historicalJsonPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
-      await writeMetricsMarkdownFile({
-        root,
-        targetPath: historicalMdPath,
-        content: toMarkdown(payload),
+    if (summaryJson) {
+      writeSummaryJson({
+        scannerName: 'accessibility-smoke',
+        generatedAt: payload.generatedAt,
+        status,
+        summary: buildSummaryJsonSummary(payload),
+        details: {
+          runtime: payload.runtime,
+          results: payload.results,
+        },
+        paths,
+        filters: {
+          strictMode,
+          failOnWarningBudgetExceed,
+          historyDisabled: !shouldWriteHistory,
+          noWrite,
+          ci: args.has('--ci'),
+          warningBudget: Number.isFinite(warningBudget) ? warningBudget : 10,
+        },
+        notes: ['accessibility smoke report result'],
       });
+
+      if (strictMode && summary.failed > 0) {
+        process.exit(1);
+      }
+
+      if (strictMode && failOnWarningBudgetExceed && exceededWarningBudget) {
+        process.exit(1);
+      }
+      return;
     }
 
     console.log(
-      `[a11y-smoke] summary pass=${summary.passed} fail=${summary.failed} total=${summary.total} actWarnings=${summary.actWarnings} budget=${summary.warningBudget} status=${summary.warningBudgetStatus}`
+      `[a11y-smoke] summary pass=${summary.passed} fail=${summary.failed} total=${summary.total} duration=${formatDuration(summary.totalDurationMs)} actWarnings=${summary.actWarnings} budget=${summary.warningBudget} status=${summary.warningBudgetStatus}`
     );
-    console.log(`Wrote ${path.relative(root, latestJsonPath)}`);
-    console.log(`Wrote ${path.relative(root, latestMdPath)}`);
-    if (shouldWriteHistory) {
-      console.log(`Wrote ${path.relative(root, historicalJsonPath)}`);
-      console.log(`Wrote ${path.relative(root, historicalMdPath)}`);
+    if (paths) {
+      console.log(`Wrote ${paths.latestJson}`);
+      console.log(`Wrote ${paths.latestMarkdown}`);
+      if (paths.historicalJson) {
+        console.log(`Wrote ${paths.historicalJson}`);
+        console.log(`Wrote ${paths.historicalMarkdown}`);
+      }
+    } else {
+      console.log('Skipped writing accessibility smoke artifacts (--no-write).');
     }
 
     if (strictMode && summary.failed > 0) {

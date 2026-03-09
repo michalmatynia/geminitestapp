@@ -317,21 +317,23 @@ describe('Kangur accessibility smoke', () => {
     renderGamePage();
 
     await user.click(getFeaturedHomeAction('Grajmy!'));
-    expect(await screen.findByRole('heading', { name: 'Grajmy!' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Wybor rodzaju gry' })).toBeInTheDocument();
     expect(getEntryScreenBackButton('kangur-game-operation-top-section')).toBeInTheDocument();
 
     await user.click(getEntryScreenBackButton('kangur-game-operation-top-section'));
     expect(await screen.findByRole('heading', { name: 'Wybierz aktywnosc' })).toBeInTheDocument();
 
     await user.click(getFeaturedHomeAction('Trening mieszany'));
-    expect(await screen.findByRole('heading', { name: 'Trening mieszany' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Konfiguracja treningu' })).toBeInTheDocument();
     expect(getEntryScreenBackButton('kangur-game-training-top-section')).toBeInTheDocument();
 
     await user.click(getEntryScreenBackButton('kangur-game-training-top-section'));
     expect(await screen.findByRole('heading', { name: 'Wybierz aktywnosc' })).toBeInTheDocument();
 
     await user.click(getFeaturedHomeAction('Kangur Matematyczny'));
-    expect(await screen.findByRole('heading', { name: 'Kangur Matematyczny' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Konfiguracja sesji Kangura Matematycznego' })
+    ).toBeInTheDocument();
     expect(getEntryScreenBackButton('kangur-game-kangur-setup-top-section')).toBeInTheDocument();
   });
 });

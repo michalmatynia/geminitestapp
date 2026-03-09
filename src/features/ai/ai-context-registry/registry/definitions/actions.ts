@@ -105,6 +105,30 @@ export const actionNodes: ContextNode[] = [
     source: { type: 'code', ref: SOURCE_REF },
   },
   {
+    id: 'action:ai-paths-playwright-run',
+    kind: 'action',
+    name: 'AI Paths Playwright Run',
+    description:
+      'Queues an AI Paths Playwright browser-automation node using the current page context registry envelope and exposes the resolved workspace bundle to the Playwright runtime.',
+    tags: ['ai-paths', 'playwright', 'automation', 'browser', 'ai'],
+    relationships: [
+      { type: 'uses', targetId: 'page:ai-paths' },
+      { type: 'uses', targetId: 'component:ai-paths-canvas-board' },
+      { type: 'uses', targetId: 'component:ai-paths-node-config-dialog' },
+      { type: 'writes', targetId: 'collection:ai-path-playwright-runs' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      proposeScopes: ['ctx:propose'],
+      executeScopes: ['ctx:execute'],
+      riskTier: 'medium',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
     id: 'action:run-db-query',
     kind: 'action',
     name: 'Run Database Query',

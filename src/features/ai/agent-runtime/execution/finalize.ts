@@ -12,6 +12,7 @@ import type {
   PlannerMeta,
 } from '@/shared/contracts/agent-runtime';
 import prisma from '@/shared/lib/db/prisma';
+import { Prisma } from '@/shared/lib/db/prisma-client';
 
 type FinalizeRunInput = {
   context: AgentExecutionContext;
@@ -30,8 +31,15 @@ export async function finalizeAgentRun(input: FinalizeRunInput): Promise<{
 }> {
   const { context, planSteps, taskType, overallOk, requiresHuman, lastError, summaryCheckpoint } =
     input;
-  const { run, settings, preferences, memoryContext, plannerModel, memorySummarizationModel } =
-    context;
+  const {
+    run,
+    settings,
+    preferences,
+    contextRegistry,
+    memoryContext,
+    plannerModel,
+    memorySummarizationModel,
+  } = context;
   const status = requiresHuman ? 'waiting_human' : overallOk ? 'completed' : 'failed';
 
   await prisma.chatbotAgentRun.update({
@@ -51,7 +59,8 @@ export async function finalizeAgentRun(input: FinalizeRunInput): Promise<{
         summaryCheckpoint,
         settings,
         preferences,
-      }),
+        contextRegistry,
+      }) as Prisma.InputJsonValue,
       checkpointedAt: new Date(),
       logLines: {
         push: `[${new Date().toISOString()}] Playwright tool ${

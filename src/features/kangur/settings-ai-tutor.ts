@@ -11,6 +11,7 @@ export type KangurAiTutorTestAccessMode = 'disabled' | 'guided' | 'review_after_
 export type KangurAiTutorUiMode = 'anchored' | 'static';
 export type KangurAiTutorHintDepth = 'brief' | 'guided' | 'step_by_step';
 export type KangurAiTutorProactiveNudges = 'off' | 'gentle' | 'coach';
+export type KangurAiTutorGuestIntroMode = 'first_visit' | 'every_visit';
 
 export const KANGUR_AI_TUTOR_MOTION_PRESET_OPTIONS: Array<{
   id: Exclude<KangurAiTutorMotionPresetKind, 'default'>;
@@ -38,6 +39,7 @@ export type KangurAiTutorAppSettings = {
   agentPersonaId: string | null;
   motionPresetId: string | null;
   dailyMessageLimit: number | null;
+  guestIntroMode: KangurAiTutorGuestIntroMode;
 };
 
 export type KangurAiTutorLearnerGuardrails = {
@@ -65,6 +67,7 @@ export const DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS: KangurAiTutorAppSettings = {
   agentPersonaId: null,
   motionPresetId: null,
   dailyMessageLimit: null,
+  guestIntroMode: 'first_visit',
 };
 
 export const DEFAULT_KANGUR_AI_TUTOR_LEARNER_GUARDRAILS: KangurAiTutorLearnerGuardrails = {
@@ -200,6 +203,16 @@ const normalizeDailyMessageLimit = (value: unknown): number | null => {
   return Math.min(normalized, 200);
 };
 
+const normalizeGuestIntroMode = (value: unknown): KangurAiTutorGuestIntroMode => {
+  switch (value) {
+    case 'every_visit':
+    case 'first_visit':
+      return value;
+    default:
+      return DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS.guestIntroMode;
+  }
+};
+
 const normalizeKangurAiTutorAppSettingsFields = (
   input: Record<string, unknown>
 ): KangurAiTutorAppSettings => ({
@@ -209,6 +222,7 @@ const normalizeKangurAiTutorAppSettingsFields = (
   motionPresetId:
     normalizeOptionalId(input['motionPresetId']) ?? normalizeOptionalId(input['playwrightPersonaId']),
   dailyMessageLimit: normalizeDailyMessageLimit(input['dailyMessageLimit']),
+  guestIntroMode: normalizeGuestIntroMode(input['guestIntroMode']),
 });
 
 export function normalizeKangurAiTutorAppSettings(raw: unknown): KangurAiTutorAppSettings {
@@ -240,6 +254,10 @@ function deriveLegacyKangurAiTutorAppSettings(
         agentPersonaId: resolved.agentPersonaId ?? legacy.agentPersonaId,
         motionPresetId: resolved.motionPresetId ?? legacy.motionPresetId,
         dailyMessageLimit: resolved.dailyMessageLimit ?? legacy.dailyMessageLimit,
+        guestIntroMode:
+          resolved.guestIntroMode !== DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS.guestIntroMode
+            ? resolved.guestIntroMode
+            : legacy.guestIntroMode,
       };
     },
     { ...DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS }

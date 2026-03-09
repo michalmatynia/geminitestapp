@@ -337,6 +337,78 @@ describe('KangurAiTutorWidget', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it('shows the guest intro on every anonymous page entry when admin repeat mode is enabled', async () => {
+    useOptionalKangurAuthMock.mockReturnValue({
+      isAuthenticated: false,
+      isLoadingAuth: false,
+      navigateToLogin: navigateToLoginMock,
+    });
+    window.localStorage.setItem(
+      'kangur-ai-tutor-guest-intro-v1',
+      JSON.stringify({
+        status: 'dismissed',
+        version: 1,
+        updatedAt: '2026-03-08T10:00:00.000Z',
+      })
+    );
+    useKangurTextHighlightMock.mockReturnValue({
+      selectedText: null,
+      selectionRect: null,
+      selectionContainerRect: null,
+      clearSelection: clearSelectionMock,
+    });
+    useKangurAiTutorMock.mockReturnValue({
+      enabled: false,
+      appSettings: {
+        agentPersonaId: null,
+        motionPresetId: null,
+        dailyMessageLimit: null,
+        guestIntroMode: 'every_visit',
+      },
+      tutorSettings: null,
+      tutorName: 'Pomocnik',
+      tutorMoodId: 'neutral',
+      tutorAvatarSvg:
+        '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="34" fill="#ffffff" /></svg>',
+      tutorAvatarImageUrl: null,
+      sessionContext: null,
+      isOpen: false,
+      messages: [],
+      isLoading: false,
+      isUsageLoading: false,
+      highlightedText: null,
+      usageSummary: null,
+      openChat: openChatMock,
+      closeChat: closeChatMock,
+      sendMessage: sendMessageMock,
+      setHighlightedText: setHighlightedTextMock,
+      tutorBehaviorMoodId: 'neutral',
+      tutorBehaviorMoodLabel: 'Neutralny',
+      tutorBehaviorMoodDescription: 'Neutralny nastroj.',
+    });
+
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<KangurAiTutorWidget />);
+
+    expect(await screen.findByTestId('kangur-ai-tutor-guest-intro')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'This helper appears on every anonymous page entry while AI Tutor onboarding is enabled.'
+      )
+    ).toBeVisible();
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(
+      JSON.parse(window.localStorage.getItem('kangur-ai-tutor-guest-intro-v1') ?? '{}')
+    ).toEqual(
+      expect.objectContaining({
+        status: 'shown',
+        version: 1,
+      })
+    );
+  });
+
   it('opens the guest assistance card after accepting the intro and exposes login actions', async () => {
     useOptionalKangurAuthMock.mockReturnValue({
       isAuthenticated: false,

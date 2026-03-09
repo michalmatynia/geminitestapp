@@ -44,6 +44,7 @@ describe('kangur parent account resend handler', () => {
       created: false,
       emailVerified: false,
       hasPassword: true,
+      retryAfterMs: 60000,
       verificationUrl: 'https://example.com/kangur/login?verifyEmailToken=verify-2',
     });
     buildKangurParentAccountCreateDebugPayloadMock.mockReturnValue({
@@ -70,6 +71,7 @@ describe('kangur parent account resend handler', () => {
       created: false,
       emailVerified: false,
       hasPassword: true,
+      retryAfterMs: 60000,
       message:
         'Wyslalismy nowy email potwierdzajacy. Konto rodzica uaktywni sie po weryfikacji adresu.',
       debug: {

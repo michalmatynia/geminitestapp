@@ -1,5 +1,6 @@
 import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
 import { getBrowserContextSummary } from '@/features/ai/agent-runtime/browsing/context';
+import { applyAgentRuntimeContextMemory } from '@/features/ai/agent-runtime/context-registry/shared';
 import { addAgentMemory } from '@/features/ai/agent-runtime/memory';
 import { addProblemSolutionMemory } from '@/features/ai/agent-runtime/memory/context';
 import {
@@ -84,6 +85,8 @@ export async function runPostStepAdaptiveReviews(
     run,
     settings,
     preferences,
+    contextRegistry,
+    contextRegistryPrompt,
     memoryKey,
     memoryValidationModel,
     memorySummarizationModel,
@@ -143,6 +146,7 @@ export async function runPostStepAdaptiveReviews(
         summaryCheckpoint,
         settings,
         preferences,
+        contextRegistry,
       });
     }
   }
@@ -209,6 +213,7 @@ export async function runPostStepAdaptiveReviews(
           summaryCheckpoint,
           settings,
           preferences,
+          contextRegistry,
         });
       }
     }
@@ -234,7 +239,10 @@ export async function runPostStepAdaptiveReviews(
         content: summary,
         metadata: { type: 'planner-summary', completedCount },
       });
-      memoryContext = [...memoryContext, summary].slice(-10);
+      memoryContext = applyAgentRuntimeContextMemory(
+        [...memoryContext, summary],
+        contextRegistryPrompt
+      );
       summaryCheckpoint = completedCount;
       await logAgentAudit(run.id, 'info', 'Planner summary saved.', {
         type: 'planner-summary',
@@ -252,6 +260,7 @@ export async function runPostStepAdaptiveReviews(
         summaryCheckpoint,
         settings,
         preferences,
+        contextRegistry,
       });
     }
   }
@@ -301,6 +310,7 @@ export async function runPostStepAdaptiveReviews(
         summaryCheckpoint,
         settings,
         preferences,
+        contextRegistry,
       });
     }
   }
@@ -357,6 +367,7 @@ export async function runPostStepAdaptiveReviews(
         summaryCheckpoint,
         settings,
         preferences,
+        contextRegistry,
       });
     }
   }
@@ -453,6 +464,7 @@ export async function runPostStepAdaptiveReviews(
         summaryCheckpoint,
         settings,
         preferences,
+        contextRegistry,
       });
     }
   }
@@ -524,6 +536,7 @@ export async function runPostStepAdaptiveReviews(
         summaryCheckpoint,
         settings,
         preferences,
+        contextRegistry,
       });
     }
   }
@@ -585,6 +598,7 @@ export async function runPostStepAdaptiveReviews(
         summaryCheckpoint,
         settings,
         preferences,
+        contextRegistry,
       });
     }
   }

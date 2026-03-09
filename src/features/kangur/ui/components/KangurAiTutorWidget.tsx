@@ -1298,6 +1298,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
   const guestIntroCheckStartedRef = useRef(false);
   const guestIntroLocalSuppressionTrackedRef = useRef(false);
   const motionTimeoutRef = useRef<number | null>(null);
+  const guestIntroShownForCurrentEntryRef = useRef(false);
   const uiMode = tutorSettings?.uiMode ?? 'anchored';
   const isAnchoredUiMode = uiMode !== 'static';
   const allowCrossPagePersistence = tutorSettings?.allowCrossPagePersistence ?? true;
@@ -1305,6 +1306,8 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
   const showSources = tutorSettings?.showSources ?? true;
   const proactiveNudges = tutorSettings?.proactiveNudges ?? 'gentle';
   const hintDepth = tutorSettings?.hintDepth ?? 'guided';
+  const guestIntroMode = tutorRuntime.appSettings?.guestIntroMode ?? 'first_visit';
+  const shouldRepeatGuestIntroOnEntry = guestIntroMode === 'every_visit';
   const activeSelectedText = allowSelectedTextSupport
     ? (selectedText ?? highlightedText)?.trim() || null
     : null;
@@ -1362,6 +1365,22 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     if (authState.isAuthenticated) {
       setGuestIntroVisible(false);
       setGuestIntroHelpVisible(false);
+      return;
+    }
+
+    if (shouldRepeatGuestIntroOnEntry) {
+      if (guestIntroShownForCurrentEntryRef.current) {
+        return;
+      }
+
+      guestIntroShownForCurrentEntryRef.current = true;
+      guestIntroLocalSuppressionTrackedRef.current = false;
+      const nextRecord = persistGuestIntroRecord('shown');
+      setGuestIntroRecord(nextRecord);
+      setGuestIntroVisible(true);
+      trackKangurClientEvent('kangur_ai_tutor_guest_intro_shown', {
+        reason: 'admin_every_visit',
+      });
       return;
     }
 
@@ -1430,7 +1449,14 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     return () => {
       cancelled = true;
     };
-  }, [authState, guestIntroHelpVisible, guestIntroRecord, guestIntroVisible, mounted]);
+  }, [
+    authState,
+    guestIntroHelpVisible,
+    guestIntroRecord,
+    guestIntroVisible,
+    mounted,
+    shouldRepeatGuestIntroOnEntry,
+  ]);
 
   useEffect(() => {
     if (!mounted) return;
@@ -2424,7 +2450,9 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
                   <div className='mt-2 text-xs leading-relaxed text-slate-600'>
                     {guestIntroHelpVisible
                       ? 'If you already have an account, open the login flow. If not, create a parent account and verify the email when you are ready.'
-                      : 'This appears only once for a first-time anonymous visit on this device and network.'}
+                      : shouldRepeatGuestIntroOnEntry
+                        ? 'This helper appears on every anonymous page entry while AI Tutor onboarding is enabled.'
+                        : 'This appears only once for a first-time anonymous visit on this device and network.'}
                   </div>
                 </div>
               </div>

@@ -1,3 +1,5 @@
+import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
+
 import { apiPost, apiFetch, ApiResponse } from './base';
 
 export type AgentEnqueuePayload = {
@@ -29,6 +31,7 @@ export type AgentEnqueuePayload = {
     loopBackoffBaseMs?: number;
     loopBackoffMaxMs?: number;
   };
+  contextRegistry?: ContextRegistryConsumerEnvelope | null;
 };
 
 export type PlaywrightNodeEnqueuePayload = {
@@ -42,6 +45,7 @@ export type PlaywrightNodeEnqueuePayload = {
   settingsOverrides?: Record<string, unknown> | undefined;
   launchOptions?: Record<string, unknown> | undefined;
   contextOptions?: Record<string, unknown> | undefined;
+  contextRegistry?: ContextRegistryConsumerEnvelope | null | undefined;
   capture?:
     | {
         screenshot?: boolean | undefined;

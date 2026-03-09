@@ -153,7 +153,7 @@ const extractTrailingJsonObject = (rawText) => {
       continue;
     }
 
-    if (char === '"' || char === "'") {
+    if (char === '"' || char === '\'') {
       inString = true;
       stringQuote = char;
       continue;

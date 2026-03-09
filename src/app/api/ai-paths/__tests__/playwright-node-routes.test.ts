@@ -6,6 +6,7 @@ const {
   requireAiPathsAccessOrInternalMock,
   enforceAiPathsActionRateLimitMock,
   parseJsonBodyMock,
+  resolveAiPathsContextRegistryEnvelopeMock,
   enqueuePlaywrightNodeRunMock,
   readPlaywrightNodeRunMock,
   readPlaywrightNodeArtifactMock,
@@ -13,6 +14,7 @@ const {
   requireAiPathsAccessOrInternalMock: vi.fn(),
   enforceAiPathsActionRateLimitMock: vi.fn(),
   parseJsonBodyMock: vi.fn(),
+  resolveAiPathsContextRegistryEnvelopeMock: vi.fn(),
   enqueuePlaywrightNodeRunMock: vi.fn(),
   readPlaywrightNodeRunMock: vi.fn(),
   readPlaywrightNodeArtifactMock: vi.fn(),
@@ -25,6 +27,10 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
 
 vi.mock('@/features/products/server', () => ({
   parseJsonBody: parseJsonBodyMock,
+}));
+
+vi.mock('@/features/ai/ai-paths/context-registry/server', () => ({
+  resolveAiPathsContextRegistryEnvelope: resolveAiPathsContextRegistryEnvelopeMock,
 }));
 
 vi.mock('@/features/ai/ai-paths/services/playwright-node-runner', () => ({
@@ -82,6 +88,7 @@ describe('AI Paths Playwright routes', () => {
     requireAiPathsAccessOrInternalMock.mockReset();
     enforceAiPathsActionRateLimitMock.mockReset();
     parseJsonBodyMock.mockReset();
+    resolveAiPathsContextRegistryEnvelopeMock.mockReset().mockResolvedValue(null);
     enqueuePlaywrightNodeRunMock.mockReset();
     readPlaywrightNodeRunMock.mockReset();
     readPlaywrightNodeArtifactMock.mockReset();
@@ -110,7 +117,18 @@ describe('AI Paths Playwright routes', () => {
         settingsOverrides: { headless: true },
         launchOptions: { args: ['--disable-gpu'] },
         contextOptions: { locale: 'en-US' },
+        contextRegistry: {
+          refs: [{ kind: 'static_node', id: 'page:ai-paths' }],
+        },
         capture: { screenshot: true, html: false, video: false, trace: false },
+      },
+    });
+    resolveAiPathsContextRegistryEnvelopeMock.mockResolvedValueOnce({
+      refs: [{ kind: 'static_node', id: 'page:ai-paths' }],
+      resolved: {
+        refs: [{ kind: 'static_node', id: 'page:ai-paths' }],
+        nodes: [],
+        documents: [],
       },
     });
     enqueuePlaywrightNodeRunMock.mockResolvedValueOnce(buildRun({ runId: 'run-123' }));
@@ -130,9 +148,20 @@ describe('AI Paths Playwright routes', () => {
         timeoutMs: 45000,
         browserEngine: 'firefox',
         personaId: 'persona-1',
+        contextRegistry: {
+          refs: [{ kind: 'static_node', id: 'page:ai-paths' }],
+          resolved: {
+            refs: [{ kind: 'static_node', id: 'page:ai-paths' }],
+            nodes: [],
+            documents: [],
+          },
+        },
       }) as unknown,
       waitForResult: false,
       ownerUserId: 'user-1',
+    });
+    expect(resolveAiPathsContextRegistryEnvelopeMock).toHaveBeenCalledWith({
+      refs: [{ kind: 'static_node', id: 'page:ai-paths' }],
     });
     expect(body['run']).toEqual(expect.objectContaining({ runId: 'run-123' }));
   });

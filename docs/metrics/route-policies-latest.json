@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-09T06:20:00.569Z",
+  "generatedAt": "2026-03-09T09:53:44.658Z",
   "status": "warn",
   "summary": {
     "total": 1,
@@ -7,8 +7,8 @@
     "warningCount": 1,
     "infoCount": 0,
     "status": "warn",
-    "routeCount": 350,
-    "methodCount": 499,
+    "routeCount": 351,
+    "methodCount": 500,
     "csrfExemptionCount": 47,
     "csrfExemptionsByPolicy": {
       "webhook-ingest": 1,
@@ -28,7 +28,7 @@
       "ruleId": "route-parsejson-without-bodyschema",
       "message": "POST parses JSON without a bodySchema guard.",
       "file": "src/app/api/agent/leases/route.ts",
-      "line": 83,
+      "line": 99,
       "column": 14,
       "snippet": null,
       "context": null
@@ -326,5 +326,5 @@
       "reason": "Integration routes accept external callbacks, requests, and connection flows."
     }
   ],
-  "durationMs": 93
+  "durationMs": 131
 }

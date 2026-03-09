@@ -82,6 +82,7 @@ export const collectionNodes: ContextNode[] = [
     relationships: [
       { type: 'related_to', targetId: 'action:run-ai-path' },
       { type: 'related_to', targetId: 'action:image-studio-ai-path-object-analysis' },
+      { type: 'related_to', targetId: 'page:brain' },
     ],
     permissions: {
       readScopes: ['ctx:read'],
@@ -90,6 +91,27 @@ export const collectionNodes: ContextNode[] = [
     },
     version: '1.0.0',
     updatedAtISO: '2026-01-01T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'collection:ai-path-playwright-runs',
+    kind: 'collection',
+    name: 'ai_path_playwright_runs',
+    description:
+      'File-backed run records for AI Paths Playwright node executions, including browser artifacts, logs, result payloads, and resolved Context Registry workspace bundles available to the runtime.',
+    tags: ['ai-paths', 'playwright', 'automation', 'artifacts', 'runtime'],
+    relationships: [
+      { type: 'related_to', targetId: 'page:ai-paths' },
+      { type: 'related_to', targetId: 'action:ai-paths-playwright-run' },
+      { type: 'related_to', targetId: 'collection:ai-path-runs' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'low',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
     source: { type: 'code', ref: SOURCE_REF },
   },
   {
@@ -182,6 +204,7 @@ export const collectionNodes: ContextNode[] = [
     relationships: [
       { type: 'related_to', targetId: 'action:chatbot-chat' },
       { type: 'related_to', targetId: 'page:admin-chatbot' },
+      { type: 'related_to', targetId: 'page:brain' },
     ],
     permissions: {
       readScopes: ['ctx:read'],
@@ -201,6 +224,7 @@ export const collectionNodes: ContextNode[] = [
     tags: ['observability', 'logs', 'telemetry', 'database'],
     relationships: [
       { type: 'related_to', targetId: 'page:system-logs' },
+      { type: 'related_to', targetId: 'page:brain' },
       { type: 'related_to', targetId: 'action:system-logs-generate-insight' },
       { type: 'related_to', targetId: 'action:system-logs-interpret' },
     ],
@@ -245,6 +269,7 @@ export const collectionNodes: ContextNode[] = [
     relationships: [
       { type: 'related_to', targetId: 'page:analytics' },
       { type: 'related_to', targetId: 'page:ai-insights' },
+      { type: 'related_to', targetId: 'page:brain' },
       { type: 'related_to', targetId: 'action:analytics-generate-insight' },
     ],
     jsonSchema2020: {
@@ -280,6 +305,7 @@ export const collectionNodes: ContextNode[] = [
     relationships: [
       { type: 'related_to', targetId: 'page:analytics' },
       { type: 'related_to', targetId: 'page:ai-insights' },
+      { type: 'related_to', targetId: 'page:brain' },
       { type: 'related_to', targetId: 'action:analytics-generate-insight' },
       { type: 'related_to', targetId: 'action:runtime-analytics-generate-insight' },
       { type: 'related_to', targetId: 'action:system-logs-generate-insight' },
@@ -355,6 +381,7 @@ export const collectionNodes: ContextNode[] = [
       { type: 'related_to', targetId: 'action:image-studio-run' },
       { type: 'related_to', targetId: 'action:image-studio-sequence-run' },
       { type: 'related_to', targetId: 'action:product-studio-send' },
+      { type: 'related_to', targetId: 'page:brain' },
     ],
     permissions: {
       readScopes: ['ctx:read'],

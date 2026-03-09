@@ -9,12 +9,12 @@ import type {
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths-runtime';
 import type { ChatMessage } from '@/shared/contracts/chatbot';
-
 import { agentApi, learnerAgentsApi, settingsApi } from '@/shared/lib/ai-paths/api';
+import type { AgentEnqueuePayload } from '@/shared/lib/ai-paths/api';
+
 import { coerceInput, formatRuntimeValue, hashRuntimeValue, parseJsonSafe } from '../../utils';
 import { buildPromptOutput, coercePayloadObject } from '../utils';
 
-import type { AgentEnqueuePayload } from '@/shared/lib/ai-paths/api';
 
 type AgentRunRecord = {
   id?: string;
@@ -148,6 +148,7 @@ export const handleAgent: NodeHandler = async ({
   node,
   nodeInputs,
   prevOutputs,
+  contextRegistry,
   skipAiJobs,
   executed,
   toast,
@@ -235,6 +236,7 @@ export const handleAgent: NodeHandler = async ({
     ...(settings.outputNormalizationModel
       ? { outputNormalizationModel: settings.outputNormalizationModel }
       : {}),
+    ...(contextRegistry ? { contextRegistry } : {}),
   };
 
   let runId: string | undefined;

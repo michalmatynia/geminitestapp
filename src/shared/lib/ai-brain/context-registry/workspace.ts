@@ -1,17 +1,17 @@
 import type {
-  ContextRegistryResolutionBundle,
-  ContextRuntimeDocument,
-  ContextRuntimeDocumentSection,
-} from '@/shared/contracts/ai-context-registry';
-import type { AnalyticsSummary } from '@/shared/contracts/analytics';
-import type {
   BrainOperationsDomainOverview,
   BrainOperationsOverviewResponse,
   BrainOperationsRange,
   InsightsSnapshot,
 } from '@/shared/contracts/ai-brain';
+import type {
+  ContextRegistryResolutionBundle,
+  ContextRuntimeDocument,
+  ContextRuntimeDocumentSection,
+} from '@/shared/contracts/ai-context-registry';
 import type { AiInsightRecord } from '@/shared/contracts/ai-insights';
 import type { AiPathRuntimeAnalyticsSummary } from '@/shared/contracts/ai-paths';
+import type { AnalyticsSummary } from '@/shared/contracts/analytics';
 import type { SystemLogMetrics } from '@/shared/contracts/observability';
 import { PAGE_CONTEXT_ENGINE_VERSION } from '@/shared/lib/ai-context-registry/page-context-shared';
 
@@ -179,15 +179,17 @@ export const buildAiBrainWorkspaceRuntimeDocument = (
       [AiBrainCapabilityKey, AiBrainAssignment | undefined]
     >
   )
-    .filter(([, assignment]): assignment is AiBrainAssignment => Boolean(assignment))
+    .filter(
+      (entry): entry is [AiBrainCapabilityKey, AiBrainAssignment] => Boolean(entry[1])
+    )
     .slice(0, 14)
     .map(([capability, assignment]) => summarizeAssignment(capability, assignment));
 
   const latestInsights = getLatestInsights(input.insights);
   const operationsDomains = input.operationsOverview
-    ? (Object.values(input.operationsOverview.domains) as BrainOperationsDomainOverview[]).map(
-        summarizeOperationsDomain
-      )
+    ? (Object.values(input.operationsOverview.domains)).map(
+      summarizeOperationsDomain
+    )
     : [];
 
   const telemetryItems: Record<string, unknown>[] = [];

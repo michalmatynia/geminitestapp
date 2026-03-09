@@ -13,11 +13,18 @@ import {
 } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
+import { KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_MS } from '@/features/kangur/config/auth';
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
 import {
   clearStoredActiveLearnerId,
   setStoredActiveLearnerId,
 } from '@/features/kangur/services/kangur-active-learner';
+import {
+  KangurButton,
+  KangurGlassPanel,
+  KangurGradientHeading,
+} from '@/features/kangur/ui/design/primitives';
+import { KangurHomeLogo } from '@/features/kangur/ui/components/KangurHomeLogo';
 import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 
@@ -42,9 +49,9 @@ type KangurVerifyCredentialsPayload = {
 };
 
 type KangurApiErrorPayload = {
-  error?: {
-    message?: string;
-  };
+  error?: string | { message?: string };
+  message?: string;
+  retryAfterMs?: number;
 };
 
 type KangurParentAccountCreatePayload = {
@@ -55,6 +62,7 @@ type KangurParentAccountCreatePayload = {
   email?: string;
   emailVerified?: boolean;
   hasPassword?: boolean;
+  retryAfterMs?: number;
   message?: string;
   ok?: boolean;
 };
@@ -212,15 +220,53 @@ const getParentSignInErrorMessage = (errorCode?: string, fallbackMessage?: strin
     case 'ACCOUNT_DISABLED':
       return 'To konto rodzica jest niedostepne.';
     default:
-      return fallbackMessage?.trim() || 'Nie udalo sie zalogowac rodzica. Sprawdz email i haslo.';
+      return fallbackMessage?.trim() || 'Nie udalo sie zalogowac rodzica. Sprawdz email i hasło.';
   }
 };
 
-const readApiErrorMessage = async (response: Response): Promise<string | null> => {
-  const payload = (await response.json().catch(() => null)) as KangurApiErrorPayload | null;
-  const message = payload?.error?.message?.trim();
-  return message && message.length > 0 ? message : null;
+const formatRetryAfterLabel = (retryAfterMs: number): string => {
+  const seconds = Math.max(1, Math.ceil(retryAfterMs / 1000));
+  if (seconds < 60) {
+    return `${seconds} s`;
+  }
+
+  const minutes = Math.ceil(seconds / 60);
+  return `${minutes} min`;
 };
+
+const readApiErrorDetails = async (
+  response: Response
+): Promise<{ message: string | null; retryAfterMs: number | null }> => {
+  const payload = (await response.json().catch(() => null)) as KangurApiErrorPayload | null;
+  const errorMessage =
+    typeof payload?.error === 'string' ? payload.error.trim() : payload?.error?.message?.trim();
+  const fallbackMessage = payload?.message?.trim();
+  const retryAfterMs =
+    typeof payload?.retryAfterMs === 'number' &&
+    Number.isFinite(payload.retryAfterMs) &&
+    payload.retryAfterMs > 0
+      ? payload.retryAfterMs
+      : null;
+  const message = errorMessage || fallbackMessage || null;
+
+  if (message) {
+    return { message, retryAfterMs };
+  }
+
+  if (retryAfterMs) {
+    return {
+      message: `Sprobuj ponownie za ${formatRetryAfterLabel(retryAfterMs)}.`,
+      retryAfterMs,
+    };
+  }
+
+  return { message: null, retryAfterMs: null };
+};
+
+const resolveParentVerificationRetryAfterMs = (value: unknown): number =>
+  typeof value === 'number' && Number.isFinite(value) && value > 0
+    ? value
+    : KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_MS;
 
 const clearOneTimeAuthParams = (): void => {
   const url = new URL(window.location.href);
@@ -257,7 +303,6 @@ function KangurLoginPageContent({
   const titleId = useId();
   const identifierInputId = useId();
   const passwordInputId = useId();
-  const helperTextId = useId();
   const noticeId = useId();
   const errorId = useId();
   const callbackUrl = useMemo(() => {
@@ -285,25 +330,61 @@ function KangurLoginPageContent({
   const [isHydrated, setIsHydrated] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdParentEmail, setCreatedParentEmail] = useState<string | null>(null);
+  const [resendAvailableAtMs, setResendAvailableAtMs] = useState<number | null>(null);
   const [parentAuthMode, setParentAuthMode] = useState<KangurParentAuthMode>(
     requestedParentAuthMode
   );
   const [verificationDebugUrl, setVerificationDebugUrl] = useState<string | null>(null);
+  const [resendCountdownNowMs, setResendCountdownNowMs] = useState(() => Date.now());
   const processedVerificationTokenRef = useRef<string | null>(null);
   const loginKind = resolveKangurLoginKind(identifier);
   const isParentFlowVisible = loginKind !== 'student';
+  const audienceLabel =
+    parentAuthMode === 'create-account'
+      ? 'Nowe konto rodzica'
+      : loginKind === 'student'
+        ? 'Uczen'
+        : loginKind === 'parent'
+          ? 'Rodzic'
+          : 'Rodzic lub uczen';
+  const audienceBadgeClassName =
+    parentAuthMode === 'create-account'
+      ? 'inline-flex items-center justify-center rounded-full border border-amber-200/80 bg-white/82 px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-[#9a5418] shadow-[0_14px_30px_-26px_rgba(249,115,22,0.52)]'
+      : loginKind === 'student'
+        ? 'inline-flex items-center justify-center rounded-full border border-sky-200/80 bg-white/82 px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-sky-700 shadow-[0_14px_30px_-26px_rgba(59,130,246,0.4)]'
+        : loginKind === 'parent'
+          ? 'inline-flex items-center justify-center rounded-full border border-indigo-200/80 bg-white/82 px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-indigo-700 shadow-[0_14px_30px_-26px_rgba(99,102,241,0.42)]'
+          : 'inline-flex items-center justify-center rounded-full border border-amber-200/80 bg-white/82 px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-[#9a5418] shadow-[0_14px_30px_-26px_rgba(249,115,22,0.42)]';
+  const introDescription =
+    parentAuthMode === 'create-account'
+      ? 'Zakładasz konto rodzica emailem i hasłem. Po potwierdzeniu adresu zalogujesz się tak samo za każdym razem.'
+      : loginKind === 'student'
+        ? 'Uczeń loguje się nickiem i hasłem. Rodzic może wejść emailem i hasłem.'
+        : 'Rodzic loguje się emailem i hasłem. Uczeń loguje się nickiem i hasłem.';
   const visibleNotice = createdParentEmail ? null : notice;
   const createAccountConfirmationDetail =
     notice?.trim() || 'Kliknij link potwierdzajacy w emailu. Potem zalogujesz sie tym samym emailem i haslem.';
-  const helperText =
-    isParentFlowVisible && parentAuthMode === 'create-account'
-      ? createdParentEmail
-        ? null
-        : 'Po potwierdzeniu emaila zalogujesz sie tym samym emailem i haslem.'
-      : 'Tryb rodzica wybierasz przyciskami na gorze. Kazdy identyfikator bez symbolu @ traktujemy jako nick ucznia i sprawdzamy, czy sklada sie tylko z liter i cyfr.';
-  const formDescribedBy = [helperText ? helperTextId : null, visibleNotice ? noticeId : null, error ? errorId : null]
+  const resendRetryAfterMs =
+    typeof resendAvailableAtMs === 'number'
+      ? Math.max(0, resendAvailableAtMs - resendCountdownNowMs)
+      : 0;
+  const isResendCoolingDown = resendRetryAfterMs > 0;
+  const resendAvailabilityMessage = isResendCoolingDown
+    ? `Nowy email bedzie mozna wyslac za ${formatRetryAfterLabel(resendRetryAfterMs)}.`
+    : null;
+  const resendButtonLabel = isResendCoolingDown
+    ? `Wyslij email ponownie za ${formatRetryAfterLabel(resendRetryAfterMs)}`
+    : 'Wyslij email ponownie';
+  const inputClassName =
+    'rounded-[24px] border border-white/85 bg-white/88 px-4 py-3 text-sm text-slate-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.76)] outline-none transition placeholder:text-slate-400 focus:border-amber-200 focus:bg-white focus:ring-2 focus:ring-amber-200/70 disabled:cursor-not-allowed disabled:opacity-60';
+  const formDescribedBy = [visibleNotice ? noticeId : null, error ? errorId : null]
     .filter(Boolean)
     .join(' ');
+  const startResendCooldown = (retryAfterMs: number): void => {
+    const now = Date.now();
+    setResendCountdownNowMs(now);
+    setResendAvailableAtMs(now + retryAfterMs);
+  };
 
   useEffect(() => {
     setIsHydrated(true);
@@ -314,6 +395,27 @@ function KangurLoginPageContent({
   }, [requestedParentAuthMode]);
 
   useEffect(() => {
+    if (!(typeof resendAvailableAtMs === 'number' && resendAvailableAtMs > Date.now())) {
+      return;
+    }
+
+    setResendCountdownNowMs(Date.now());
+    const intervalId = window.setInterval(() => {
+      setResendCountdownNowMs(Date.now());
+    }, 1_000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [resendAvailableAtMs]);
+
+  useEffect(() => {
+    if (typeof resendAvailableAtMs === 'number' && resendAvailableAtMs <= resendCountdownNowMs) {
+      setResendAvailableAtMs(null);
+    }
+  }, [resendAvailableAtMs, resendCountdownNowMs]);
+
+  useEffect(() => {
     if (loginKind !== 'student') {
       return;
     }
@@ -322,6 +424,7 @@ function KangurLoginPageContent({
     setCreatedParentEmail(null);
     setNotice(null);
     setVerificationDebugUrl(null);
+    setResendAvailableAtMs(null);
   }, [loginKind]);
 
   const clearLearnerSession = async (): Promise<void> => {
@@ -386,6 +489,11 @@ function KangurLoginPageContent({
           statusCode: 401,
           reason: result.error,
         });
+        if (result.error === 'EMAIL_UNVERIFIED') {
+          setCreatedParentEmail(email);
+          setNotice('Potwierdz email rodzica, zanim sie zalogujesz. Mozesz tez wyslac nowy email potwierdzajacy.');
+          return;
+        }
         setError(getParentSignInErrorMessage(result.error, result.message));
         return;
       }
@@ -410,6 +518,7 @@ function KangurLoginPageContent({
     setError(null);
     setNotice(null);
     setCreatedParentEmail(null);
+    setResendAvailableAtMs(null);
     setVerificationDebugUrl(null);
 
     try {
@@ -427,11 +536,23 @@ function KangurLoginPageContent({
       });
 
       if (!response.ok) {
-        const message = await readApiErrorMessage(response);
+        const { message, retryAfterMs } = await readApiErrorDetails(response);
         trackKangurClientEvent('kangur_parent_account_create_failed', {
           callbackUrl,
           statusCode: response.status,
         });
+        if (response.status === 429) {
+          setCreatedParentEmail(email);
+          setPassword('');
+          if (retryAfterMs) {
+            startResendCooldown(retryAfterMs);
+          }
+          setNotice(
+            message ??
+              'Email potwierdzajacy zostal juz wyslany. Sprawdz skrzynke i sprobuj ponownie za chwile.'
+          );
+          return;
+        }
         setError(message ?? 'Nie udalo sie utworzyc konta rodzica. Sprobuj ponownie.');
         return;
       }
@@ -439,6 +560,7 @@ function KangurLoginPageContent({
       const payload =
         (await response.json().catch(() => null)) as KangurParentAccountCreatePayload | null;
       const debugVerificationUrl = payload?.debug?.verificationUrl?.trim();
+      const retryAfterMs = resolveParentVerificationRetryAfterMs(payload?.retryAfterMs);
       trackKangurClientEvent('kangur_parent_account_created', {
         callbackUrl,
         created: payload?.created === true,
@@ -447,6 +569,7 @@ function KangurLoginPageContent({
       });
       setPassword('');
       setCreatedParentEmail(email);
+      startResendCooldown(retryAfterMs);
       setVerificationDebugUrl(
         debugVerificationUrl && debugVerificationUrl.length > 0 ? debugVerificationUrl : null
       );
@@ -467,7 +590,7 @@ function KangurLoginPageContent({
   };
 
   const handleParentVerificationResend = async (): Promise<void> => {
-    if (!createdParentEmail) {
+    if (!createdParentEmail || isResendCoolingDown) {
       return;
     }
 
@@ -488,11 +611,21 @@ function KangurLoginPageContent({
       });
 
       if (!response.ok) {
-        const message = await readApiErrorMessage(response);
+        const { message, retryAfterMs } = await readApiErrorDetails(response);
         trackKangurClientEvent('kangur_parent_account_resend_failed', {
           callbackUrl,
           statusCode: response.status,
         });
+        if (response.status === 429) {
+          if (retryAfterMs) {
+            startResendCooldown(retryAfterMs);
+          }
+          setNotice(
+            message ??
+              'Email potwierdzajacy zostal juz wyslany. Sprawdz skrzynke i sprobuj ponownie za chwile.'
+          );
+          return;
+        }
         setError(message ?? 'Nie udalo sie wyslac nowego emaila potwierdzajacego. Sprobuj ponownie.');
         return;
       }
@@ -500,6 +633,7 @@ function KangurLoginPageContent({
       const payload =
         (await response.json().catch(() => null)) as KangurParentAccountCreatePayload | null;
       const debugVerificationUrl = payload?.debug?.verificationUrl?.trim();
+      const retryAfterMs = resolveParentVerificationRetryAfterMs(payload?.retryAfterMs);
       trackKangurClientEvent('kangur_parent_account_resend_sent', {
         callbackUrl,
         hasPassword: payload?.hasPassword === true,
@@ -507,10 +641,8 @@ function KangurLoginPageContent({
       setVerificationDebugUrl(
         debugVerificationUrl && debugVerificationUrl.length > 0 ? debugVerificationUrl : null
       );
-      setNotice(
-        payload?.message?.trim() ||
-          'Wyslalismy nowy email potwierdzajacy. Konto rodzica uaktywni sie po weryfikacji adresu.'
-      );
+      startResendCooldown(retryAfterMs);
+      setNotice(payload?.message?.trim() || 'Wyslalismy nowy link potwierdzajacy.');
     } catch {
       trackKangurClientEvent('kangur_parent_account_resend_failed', {
         callbackUrl,
@@ -529,7 +661,7 @@ function KangurLoginPageContent({
 
     setIsSubmitting(true);
     setError(null);
-    setNotice('Trwa weryfikacja emaila...');
+    setNotice('Sprawdzamy email...');
     setCreatedParentEmail(null);
     setVerificationDebugUrl(null);
 
@@ -546,7 +678,7 @@ function KangurLoginPageContent({
       });
 
       if (!response.ok) {
-        const message = await readApiErrorMessage(response);
+        const { message } = await readApiErrorDetails(response);
         trackKangurClientEvent('kangur_parent_email_verify_failed', {
           callbackUrl,
           statusCode: response.status,
@@ -567,7 +699,9 @@ function KangurLoginPageContent({
       }
       setParentAuthMode('sign-in');
       setPassword('');
-      setNotice(payload?.message?.trim() || 'Email zostal zweryfikowany.');
+      setNotice(
+        payload?.message?.trim() || 'Email zostal zweryfikowany. Mozesz zalogowac sie emailem i haslem.'
+      );
       await auth?.checkAppState?.();
 
       if (auth?.isAuthenticated) {
@@ -620,7 +754,7 @@ function KangurLoginPageContent({
           callbackUrl,
           statusCode: response.status,
         });
-        setError(payload?.error?.message || 'Nie udalo sie zalogowac ucznia. Sprawdz login i haslo.');
+        setError(payload?.error?.message || 'Nie udalo sie zalogowac ucznia. Sprawdz login i hasło.');
         return;
       }
 
@@ -655,8 +789,8 @@ function KangurLoginPageContent({
       if (!password.trim()) {
         setError(
           parentAuthMode === 'create-account'
-            ? 'Wpisz haslo rodzica, aby utworzyc konto.'
-            : 'Wpisz haslo rodzica.'
+            ? 'Wpisz hasło rodzica, aby utworzyc konto.'
+            : 'Wpisz hasło rodzica.'
         );
         setNotice(null);
         return;
@@ -672,7 +806,7 @@ function KangurLoginPageContent({
     }
 
     if (!password.trim()) {
-      setError('Wpisz haslo ucznia.');
+      setError('Wpisz hasło ucznia.');
       setNotice(null);
       return;
     }
@@ -706,63 +840,65 @@ function KangurLoginPageContent({
   }, [auth?.isAuthenticated, callbackUrl, isHydrated, verifyEmailToken]);
 
   return (
-    <div
+    <KangurGlassPanel
       aria-labelledby={titleId}
-      className='overflow-hidden rounded-[2rem] border border-white/80 bg-white/97 shadow-[0_30px_120px_rgba(15,23,42,0.22)] backdrop-blur'
+      className='overflow-hidden shadow-[0_30px_90px_-44px_rgba(99,102,241,0.28)]'
       data-testid='kangur-login-shell'
+      padding='xl'
+      surface='playField'
+      variant='soft'
     >
-      <div className='p-6 sm:p-8'>
-        <div className='mb-6 rounded-[1.75rem] border border-slate-200/70 bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.16),_transparent_42%),linear-gradient(135deg,rgba(248,250,252,0.98),rgba(241,245,249,0.92))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] sm:p-6'>
-          <div className='text-[10px] font-black uppercase tracking-[0.28em] text-slate-500'>
-            Kangur access
-          </div>
-          <div className='mt-3 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between'>
-            <div className='max-w-2xl'>
-              <h1 className='text-2xl font-black tracking-[-0.03em] text-slate-950 sm:text-[2rem]' id={titleId}>
-                Logowanie Kangur
-              </h1>
-              <p className='mt-2 text-sm leading-6 text-slate-600'>
-                {isParentFlowVisible && parentAuthMode === 'create-account'
-                  ? 'Podaj email rodzica i haslo. Wyslemy link potwierdzajacy.'
-                  : 'Rodzic loguje sie emailem i haslem. Uczen loguje sie alfanumerycznym nickiem i haslem do gry.'}
-              </p>
-            </div>
-            {isParentFlowVisible ? (
+      <KangurGlassPanel
+        className='relative mb-6 overflow-hidden'
+        data-testid='kangur-login-hero'
+        padding='lg'
+        surface='warmGlow'
+        variant='soft'
+      >
+        <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_16%,rgba(251,191,36,0.22),transparent_28%),radial-gradient(circle_at_88%_0%,rgba(99,102,241,0.16),transparent_34%),radial-gradient(circle_at_50%_100%,rgba(45,212,191,0.12),transparent_32%)]' />
+        <div className='relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between'>
+          <div className='max-w-2xl'>
+            <div className='flex items-center gap-3'>
               <div
-                className={
-                  parentAuthMode === 'create-account'
-                    ? 'inline-flex items-center justify-center rounded-full border border-emerald-300 bg-emerald-50 px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-emerald-700'
-                    : 'inline-flex items-center justify-center rounded-full border border-indigo-300 bg-indigo-50 px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-indigo-700'
-                }
+                className='inline-flex items-center rounded-full border border-white/80 bg-white/78 px-4 py-2 text-sm font-black tracking-[-0.03em] text-indigo-700 shadow-[0_18px_38px_-30px_rgba(99,102,241,0.28)]'
+                data-testid='kangur-login-hero-logo'
               >
-                {parentAuthMode === 'create-account' ? 'Nowe konto rodzica' : 'Logowanie rodzica'}
+                <KangurHomeLogo className='h-[22px] sm:h-[24px]' />
               </div>
-            ) : (
-              <div className='inline-flex items-center justify-center rounded-full border border-amber-300 bg-amber-50 px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-amber-700'>
-                Logowanie ucznia
+              <div className='text-[10px] font-black uppercase tracking-[0.28em] text-[#9a5418]'>
+                Konto StudiQ
               </div>
-            )}
+            </div>
+            <KangurGradientHeading
+              className='mt-3 text-[2rem] tracking-[-0.05em] sm:text-[2.65rem]'
+              gradientClass='from-amber-500 via-orange-500 to-indigo-500'
+              id={titleId}
+              size='lg'
+            >
+              Zaloguj się
+            </KangurGradientHeading>
+            <p className='mt-3 max-w-xl text-sm leading-6 text-slate-600'>{introDescription}</p>
           </div>
+          <div className={audienceBadgeClassName}>{audienceLabel}</div>
         </div>
-        <form
-          aria-busy={isSubmitting ? 'true' : 'false'}
-          aria-describedby={formDescribedBy || undefined}
-          className='flex flex-col gap-4'
-          data-hydrated={isHydrated ? 'true' : 'false'}
-          data-login-kind={loginKind}
-          data-testid='kangur-login-form'
-          onSubmit={handleSubmit}
-        >
-          {isParentFlowVisible ? (
+      </KangurGlassPanel>
+
+      <form
+        aria-busy={isSubmitting ? 'true' : 'false'}
+        aria-describedby={formDescribedBy || undefined}
+        className='flex flex-col gap-4'
+        data-hydrated={isHydrated ? 'true' : 'false'}
+        data-login-kind={loginKind}
+        data-testid='kangur-login-form'
+        onSubmit={handleSubmit}
+      >
+        {isParentFlowVisible ? (
+          <div className='rounded-[28px] border border-white/80 bg-white/62 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.78)]'>
             <div className='grid gap-2 sm:grid-cols-2'>
-              <button
+              <KangurButton
                 aria-pressed={parentAuthMode === 'sign-in'}
-                className={
-                  parentAuthMode === 'sign-in'
-                    ? 'inline-flex cursor-pointer items-center justify-center rounded-2xl border border-indigo-500 bg-indigo-50 px-4 py-3 text-sm font-bold text-indigo-700 shadow-sm transition hover:border-indigo-600 hover:text-indigo-800 disabled:cursor-not-allowed disabled:opacity-60'
-                    : 'inline-flex cursor-pointer items-center justify-center rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:border-slate-400 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60'
-                }
                 disabled={!isHydrated || isSubmitting}
+                fullWidth
                 onClick={() => {
                   setParentAuthMode('sign-in');
                   setError(null);
@@ -770,18 +906,16 @@ function KangurLoginPageContent({
                   setCreatedParentEmail(null);
                   setVerificationDebugUrl(null);
                 }}
+                size='md'
                 type='button'
+                variant={parentAuthMode === 'sign-in' ? 'segmentActive' : 'segment'}
               >
-                Mam konto rodzica
-              </button>
-              <button
+                Mam konto
+              </KangurButton>
+              <KangurButton
                 aria-pressed={parentAuthMode === 'create-account'}
-                className={
-                  parentAuthMode === 'create-account'
-                    ? 'inline-flex cursor-pointer items-center justify-center rounded-2xl border border-emerald-500 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700 shadow-sm transition hover:border-emerald-600 hover:text-emerald-800 disabled:cursor-not-allowed disabled:opacity-60'
-                    : 'inline-flex cursor-pointer items-center justify-center rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:border-slate-400 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60'
-                }
                 disabled={!isHydrated || isSubmitting}
+                fullWidth
                 onClick={() => {
                   setParentAuthMode('create-account');
                   setError(null);
@@ -789,152 +923,166 @@ function KangurLoginPageContent({
                   setCreatedParentEmail(null);
                   setVerificationDebugUrl(null);
                 }}
+                size='md'
                 type='button'
+                variant={parentAuthMode === 'create-account' ? 'segmentActive' : 'segment'}
               >
-                Tworze konto rodzica
-              </button>
+                Tworzę konto rodzica
+              </KangurButton>
             </div>
-          ) : null}
+          </div>
+        ) : null}
 
-          <label className='flex flex-col gap-2 text-sm font-semibold text-slate-700'>
-            {isParentFlowVisible && parentAuthMode === 'create-account'
-              ? 'Email rodzica'
-              : 'Email rodzica lub nick ucznia'}
-            <input
-              autoComplete='username'
-              aria-describedby={formDescribedBy || undefined}
-              className='rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:opacity-60'
-              disabled={!isHydrated || isSubmitting}
-              id={identifierInputId}
-              name='identifier'
-              onChange={(event) => setIdentifier(event.target.value)}
-              placeholder={
-                isParentFlowVisible && parentAuthMode === 'create-account'
-                  ? 'rodzic@example.com'
-                  : 'rodzic@example.com lub janek123'
-              }
-              required
-              type='text'
-              value={identifier}
-            />
-          </label>
+        <label className='flex flex-col gap-2 text-sm font-semibold text-slate-700'>
+          {isParentFlowVisible && parentAuthMode === 'create-account'
+            ? 'Email rodzica'
+            : 'Email rodzica albo nick ucznia'}
+          <input
+            autoComplete='username'
+            aria-describedby={formDescribedBy || undefined}
+            className={inputClassName}
+            disabled={!isHydrated || isSubmitting}
+            id={identifierInputId}
+            name='identifier'
+            onChange={(event) => setIdentifier(event.target.value)}
+            placeholder={
+              isParentFlowVisible && parentAuthMode === 'create-account'
+                ? 'rodzic@example.com'
+                : 'rodzic@example.com albo janek123'
+            }
+            required
+            type='text'
+            value={identifier}
+          />
+        </label>
 
-          <label className='flex flex-col gap-2 text-sm font-semibold text-slate-700'>
-            {isParentFlowVisible && parentAuthMode === 'create-account'
-              ? 'Ustaw haslo rodzica'
-              : 'Haslo'}
-            <input
-              autoComplete={
-                isParentFlowVisible && parentAuthMode === 'create-account'
-                  ? 'new-password'
-                  : 'current-password'
-              }
-              aria-describedby={formDescribedBy || undefined}
-              className='rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:opacity-60'
-              disabled={!isHydrated || isSubmitting}
-              id={passwordInputId}
-              name='password'
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder={
-                isParentFlowVisible && parentAuthMode === 'create-account'
-                  ? 'Ustaw haslo rodzica'
-                  : loginKind === 'parent'
-                    ? 'Haslo rodzica'
-                    : 'Haslo'
-              }
-              required={loginKind === 'student'}
-              type='password'
-              value={password}
-            />
-          </label>
-          {visibleNotice ? (
-            <div
-              aria-atomic='true'
-              aria-live='polite'
-              className='text-sm text-emerald-600'
-              id={noticeId}
-              role='status'
+        <label className='flex flex-col gap-2 text-sm font-semibold text-slate-700'>
+          {isParentFlowVisible && parentAuthMode === 'create-account'
+            ? 'Ustaw hasło rodzica'
+            : 'Hasło'}
+          <input
+            autoComplete={
+              isParentFlowVisible && parentAuthMode === 'create-account'
+                ? 'new-password'
+                : 'current-password'
+            }
+            aria-describedby={formDescribedBy || undefined}
+            className={inputClassName}
+            disabled={!isHydrated || isSubmitting}
+            id={passwordInputId}
+            name='password'
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder={
+              isParentFlowVisible && parentAuthMode === 'create-account'
+                ? 'Ustaw hasło rodzica'
+                : loginKind === 'parent'
+                  ? 'Hasło rodzica'
+                  : loginKind === 'student'
+                    ? 'Hasło ucznia'
+                    : 'Hasło'
+            }
+            required={loginKind === 'student'}
+            type='password'
+            value={password}
+          />
+        </label>
+        {visibleNotice ? (
+          <KangurGlassPanel
+            aria-atomic='true'
+            aria-live='polite'
+            className='text-sm text-emerald-800'
+            id={noticeId}
+            padding='md'
+            role='status'
+            surface='successGlow'
+            variant='soft'
+          >
+            {visibleNotice}
+          </KangurGlassPanel>
+        ) : null}
+        {error ? (
+          <KangurGlassPanel
+            aria-atomic='true'
+            aria-live='assertive'
+            className='text-sm text-rose-700'
+            id={errorId}
+            padding='md'
+            role='alert'
+            surface='rose'
+            variant='soft'
+          >
+            {error}
+          </KangurGlassPanel>
+        ) : null}
+        {createdParentEmail ? (
+          <KangurGlassPanel
+            aria-atomic='true'
+            aria-live='polite'
+            className='text-sm text-slate-700'
+            padding='md'
+            role='status'
+            surface='warmGlow'
+            variant='soft'
+          >
+            <p className='font-bold text-slate-900'>Sprawdz skrzynke: {createdParentEmail}</p>
+            <p className='mt-1 leading-6'>{createAccountConfirmationDetail}</p>
+            {resendAvailabilityMessage ? (
+              <p className='mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500'>
+                {resendAvailabilityMessage}
+              </p>
+            ) : null}
+            <KangurButton
+              className='mt-3'
+              disabled={isSubmitting || isResendCoolingDown}
+              onClick={() => {
+                void handleParentVerificationResend();
+              }}
+              size='sm'
+              type='button'
+              variant='surface'
             >
-              {visibleNotice}
-            </div>
-          ) : null}
-          {error ? (
-            <div
-              aria-atomic='true'
-              aria-live='assertive'
-              className='text-sm text-rose-500'
-              id={errorId}
-              role='alert'
-            >
-              {error}
-            </div>
-          ) : null}
-          {createdParentEmail ? (
-            <div
-              aria-atomic='true'
-              aria-live='polite'
-              className='rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]'
-              role='status'
-            >
-              <p className='font-bold text-slate-900'>Sprawdz skrzynke: {createdParentEmail}</p>
-              <p className='mt-1 leading-6'>{createAccountConfirmationDetail}</p>
-              <button
-                className='mt-3 inline-flex cursor-pointer items-center justify-center rounded-2xl border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-slate-400 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60'
-                disabled={isSubmitting}
-                onClick={() => {
-                  void handleParentVerificationResend();
-                }}
-                type='button'
-              >
-                Wyslij email ponownie
-              </button>
-            </div>
-          ) : null}
-          {verificationDebugUrl ? (
-            <a
-              className='inline-flex w-fit cursor-pointer items-center justify-center rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700 transition hover:border-emerald-400 hover:text-emerald-800'
-              href={verificationDebugUrl}
-            >
-              Potwierdz email teraz
-            </a>
-          ) : null}
+              {resendButtonLabel}
+            </KangurButton>
+          </KangurGlassPanel>
+        ) : null}
+        {verificationDebugUrl ? (
+          <KangurButton asChild className='w-fit' size='sm' variant='surface'>
+            <a href={verificationDebugUrl}>Potwierdz email teraz</a>
+          </KangurButton>
+        ) : null}
 
-          {isParentFlowVisible ? (
-            <button
-              className={
-                parentAuthMode === 'create-account'
-                  ? 'inline-flex cursor-pointer items-center justify-center rounded-2xl bg-emerald-500 px-4 py-3 text-sm font-bold text-white shadow transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-60'
-                  : 'inline-flex cursor-pointer items-center justify-center rounded-2xl bg-indigo-500 px-4 py-3 text-sm font-bold text-white shadow transition hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-60'
-              }
-              disabled={!isHydrated || isSubmitting}
-              type='submit'
-            >
-              {isSubmitting
-                ? parentAuthMode === 'create-account'
-                  ? 'Tworzenie...'
-                  : 'Logowanie...'
-                : parentAuthMode === 'create-account'
-                  ? 'Utworz konto rodzica'
-                  : 'Zaloguj haslem'}
-            </button>
-          ) : (
-            <button
-              className='inline-flex cursor-pointer items-center justify-center rounded-2xl bg-indigo-500 px-4 py-3 text-sm font-bold text-white shadow transition hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-60'
-              disabled={!isHydrated || isSubmitting}
-              type='submit'
-            >
-              {isSubmitting ? 'Logowanie...' : 'Zaloguj sie'}
-            </button>
-          )}
+        {isParentFlowVisible ? (
+          <KangurButton
+            disabled={!isHydrated || isSubmitting}
+            fullWidth
+            size='lg'
+            type='submit'
+            variant='primary'
+          >
+            {isSubmitting
+              ? parentAuthMode === 'create-account'
+                ? 'Tworzenie...'
+                : 'Logowanie...'
+              : parentAuthMode === 'create-account'
+                ? 'Utworz konto rodzica'
+                : loginKind === 'parent'
+                  ? 'Zaloguj rodzica'
+                  : 'Zaloguj sie'}
+          </KangurButton>
+        ) : (
+          <KangurButton
+            disabled={!isHydrated || isSubmitting}
+            fullWidth
+            size='lg'
+            type='submit'
+            variant='primary'
+          >
+            {isSubmitting ? 'Logowanie...' : 'Zaloguj ucznia'}
+          </KangurButton>
+        )}
 
-          {helperText ? (
-            <p className='text-xs leading-5 text-slate-500' id={helperTextId}>
-              {helperText}
-            </p>
-          ) : null}
-        </form>
-      </div>
-    </div>
+      </form>
+    </KangurGlassPanel>
   );
 }
 

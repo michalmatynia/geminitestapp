@@ -18,6 +18,7 @@ const extractExecErrorDetails = (error) => {
   const stderr = toText(error?.stderr);
   const exitCode = typeof error?.code === 'number' ? error.code : null;
   const signal = typeof error?.signal === 'string' ? error.signal : null;
+  const killed = Boolean(error?.killed);
   const message = error instanceof Error ? error.message : String(error);
 
   return {
@@ -25,6 +26,7 @@ const extractExecErrorDetails = (error) => {
     stderr,
     exitCode,
     signal,
+    killed,
     message,
   };
 };
@@ -36,6 +38,7 @@ export const execScanOutput = async ({
   env,
   sourceName,
   maxBuffer = 8 * 1024 * 1024,
+  timeoutMs = 0,
 }) => {
   try {
     const { stdout, stderr } = await execFile(command, commandArgs, {
@@ -43,6 +46,7 @@ export const execScanOutput = async ({
       encoding: 'utf8',
       env,
       maxBuffer,
+      timeout: timeoutMs > 0 ? timeoutMs : undefined,
     });
 
     return {
@@ -52,10 +56,13 @@ export const execScanOutput = async ({
       stderr,
       exitCode: 0,
       signal: null,
+      killed: false,
+      timedOut: false,
       error: null,
     };
   } catch (error) {
     const details = extractExecErrorDetails(error);
+    const timedOut = timeoutMs > 0 && details.killed && details.signal === 'SIGTERM' && details.exitCode === null;
 
     try {
       const output = parseScanOutput(details.stdout, sourceName);
@@ -66,6 +73,8 @@ export const execScanOutput = async ({
         stderr: details.stderr,
         exitCode: details.exitCode,
         signal: details.signal,
+        killed: details.killed,
+        timedOut,
         error: details.message,
       };
     } catch (parseError) {
@@ -77,6 +86,8 @@ export const execScanOutput = async ({
         stderr: details.stderr,
         exitCode: details.exitCode,
         signal: details.signal,
+        killed: details.killed,
+        timedOut,
         error: `${details.message} | ${parseMessage}`,
       };
     }

@@ -5,6 +5,7 @@ import {
   handleModel,
 } from '@/shared/lib/ai-paths/core/runtime/handlers/generation';
 import { aiJobsApi } from '@/shared/lib/ai-paths/api';
+import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import type { AiNode, Edge, ModelConfig } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
 
@@ -112,6 +113,7 @@ const buildContext = (input: {
   allOutputs?: Record<string, RuntimePortValues>;
   allInputs?: Record<string, RuntimePortValues>;
   executedAiIds?: string[];
+  contextRegistry?: ContextRegistryConsumerEnvelope | null;
 }): NodeHandlerContext =>
   ({
     node: input.node,
@@ -123,6 +125,7 @@ const buildContext = (input: {
     runId: 'run-model-1',
     runStartedAt: '2026-02-23T00:00:00.000Z',
     activePathId: 'path-model',
+    contextRegistry: input.contextRegistry ?? null,
     now: '2026-02-23T00:00:00.000Z',
     skipAiJobs: false,
     allOutputs: input.allOutputs ?? {},
@@ -281,6 +284,55 @@ describe('handleModel prompt routing', () => {
     expect(result['debugPayload']).toEqual(
       expect.objectContaining({
         modelId: 'gpt-4o-mini',
+      })
+    );
+  });
+
+  it('includes contextRegistry in the queued graph_model payload when available', async () => {
+    vi.mocked(aiJobsApi.enqueue).mockResolvedValueOnce({
+      ok: true,
+      data: { jobId: 'job-queued-context' },
+    } as Awaited<ReturnType<typeof aiJobsApi.enqueue>>);
+
+    const contextRegistry: ContextRegistryConsumerEnvelope = {
+      refs: [{ id: 'page:ai-paths', kind: 'static_node' }],
+      engineVersion: 'test-engine',
+    };
+    const modelNode = buildModelNode();
+    const promptNode = buildPromptNode('prompt-context');
+    const edges: Edge[] = [
+      {
+        id: 'edge-context',
+        from: 'prompt-context',
+        fromPort: 'prompt',
+        to: 'model-1',
+        toPort: 'prompt',
+      } as Edge,
+    ];
+    const context = buildContext({
+      node: modelNode,
+      nodes: [promptNode, modelNode],
+      edges,
+      contextRegistry,
+      allOutputs: {
+        'prompt-context': {
+          prompt: 'Generate with page context.',
+        },
+      },
+    });
+
+    const result = await handleModel(context);
+    const enqueueArgs = vi.mocked(aiJobsApi.enqueue).mock.calls.at(-1)?.[0] as
+      | { type: string; payload: Record<string, unknown> }
+      | undefined;
+
+    expect(result['status']).toBe('queued');
+    expect(enqueueArgs?.payload).toMatchObject({
+      contextRegistry,
+    });
+    expect(result['debugPayload']).toEqual(
+      expect.objectContaining({
+        contextRegistry,
       })
     );
   });

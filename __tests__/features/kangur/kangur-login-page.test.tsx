@@ -98,14 +98,11 @@ describe('KangurLoginPage', () => {
 
     expect(screen.getByTestId('kangur-login-shell')).toHaveClass(
       'overflow-hidden',
-      'rounded-[2rem]'
+      'rounded-[34px]'
     );
     expect(screen.getByTestId('kangur-login-form')).toHaveAttribute('data-login-kind', 'unknown');
-    expect(screen.getByRole('button', { name: 'Mam konto rodzica' })).toHaveAttribute(
-      'aria-pressed',
-      'true'
-    );
-    expect(screen.getByRole('button', { name: 'Tworze konto rodzica' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'Mam konto' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Tworzę konto rodzica' })).toHaveAttribute(
       'aria-pressed',
       'false'
     );
@@ -122,9 +119,13 @@ describe('KangurLoginPage', () => {
 
     render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
-    await user.type(screen.getByLabelText('Email rodzica lub nick ucznia'), 'adachild');
-    await user.type(screen.getByPlaceholderText('Haslo'), 'secret');
-    await user.click(screen.getByRole('button', { name: 'Zaloguj sie' }));
+    await user.type(screen.getByLabelText('Email rodzica albo nick ucznia'), 'adachild');
+    const passwordInput = screen
+      .getByTestId('kangur-login-form')
+      .querySelector<HTMLInputElement>('input[name="password"]');
+    expect(passwordInput).not.toBeNull();
+    await user.type(passwordInput!, 'secret');
+    await user.click(screen.getByRole('button', { name: 'Zaloguj ucznia' }));
 
     await waitFor(() => {
       expect(setStoredActiveLearnerIdMock).toHaveBeenCalledWith('learner-1');
@@ -144,9 +145,13 @@ describe('KangurLoginPage', () => {
 
     render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
-    await user.type(screen.getByLabelText('Email rodzica lub nick ucznia'), 'adachild');
-    await user.type(screen.getByPlaceholderText('Haslo'), 'secret');
-    await user.click(screen.getByRole('button', { name: 'Zaloguj sie' }));
+    await user.type(screen.getByLabelText('Email rodzica albo nick ucznia'), 'adachild');
+    const passwordInput = screen
+      .getByTestId('kangur-login-form')
+      .querySelector<HTMLInputElement>('input[name="password"]');
+    expect(passwordInput).not.toBeNull();
+    await user.type(passwordInput!, 'secret');
+    await user.click(screen.getByRole('button', { name: 'Zaloguj ucznia' }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(

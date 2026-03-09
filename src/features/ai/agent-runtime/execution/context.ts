@@ -1,6 +1,10 @@
 import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
 import { getBrowserContextSummary } from '@/features/ai/agent-runtime/browsing/context';
-import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
+import {
+  applyAgentRuntimeContextMemory,
+  buildAgentRuntimeContextRegistryPrompt,
+  readAgentRuntimeContextRegistry,
+} from '@/features/ai/agent-runtime/context-registry/shared';
 import {
   resolveAgentPlanSettings,
   resolveAgentPreferences,
@@ -15,6 +19,7 @@ import {
   listAgentMemory,
 } from '@/features/ai/agent-runtime/memory';
 import type { AgentExecutionContext } from '@/shared/contracts/agent-runtime';
+import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 import prisma from '@/shared/lib/db/prisma';
 
 type AgentRunContextInput = {
@@ -29,6 +34,8 @@ type AgentRunContextInput = {
 };
 
 export async function prepareRunContext(run: AgentRunContextInput): Promise<AgentExecutionContext> {
+  const contextRegistry = readAgentRuntimeContextRegistry(run.planState);
+  const contextRegistryPrompt = buildAgentRuntimeContextRegistryPrompt(contextRegistry?.resolved);
   let memoryKey = run.memoryKey;
   if (!memoryKey) {
     memoryKey = run.id;
@@ -86,11 +93,11 @@ export async function prepareRunContext(run: AgentRunContextInput): Promise<Agen
     .map((item: { summary: string | null; content: string }) => item.summary || item.content)
     .filter(Boolean)
     .map((item: string) => `Long-term memory: ${item}`);
-  const memoryContext = [
+  const memoryContext = applyAgentRuntimeContextMemory([
     ...sessionContext,
     ...longTermContext,
     ...(selfImprovementPlaybook ? [selfImprovementPlaybook] : []),
-  ].slice(-10);
+  ], contextRegistryPrompt);
 
   const settings = resolveAgentPlanSettings(run.planState);
   const preferences = resolveAgentPreferences(run.planState);
@@ -152,6 +159,8 @@ export async function prepareRunContext(run: AgentRunContextInput): Promise<Agen
     model: plannerModel,
     memory: memoryContext,
     browserContext,
+    contextRegistryRefCount: contextRegistry?.refs.length ?? 0,
+    contextRegistryDocumentCount: contextRegistry?.resolved?.documents.length ?? 0,
   });
 
   return {
@@ -163,6 +172,8 @@ export async function prepareRunContext(run: AgentRunContextInput): Promise<Agen
     },
     memoryKey,
     memoryContext,
+    contextRegistry: contextRegistry ?? null,
+    contextRegistryPrompt: contextRegistryPrompt || null,
     settings,
     preferences,
     resolvedModel,

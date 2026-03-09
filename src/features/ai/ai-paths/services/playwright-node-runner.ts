@@ -6,18 +6,20 @@ import { createRequire } from 'module';
 import path from 'path';
 import vm from 'vm';
 
-import { getSettingValue } from '@/shared/lib/ai/server-settings';
+import { buildAiPathsContextRegistrySystemPrompt } from '@/features/ai/ai-paths/context-registry/system-prompt';
+import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
+import type { ImageStudioRunStatus } from '@/shared/contracts/image-studio';
 import {
   PLAYWRIGHT_PERSONA_SETTINGS_KEY,
   playwrightSettingsSchema,
   type PlaywrightPersona,
   type PlaywrightSettings,
 } from '@/shared/contracts/playwright';
+import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import { defaultPlaywrightSettings } from '@/shared/lib/playwright/settings';
-import type { ImageStudioRunStatus } from '@/shared/contracts/image-studio';
 import { evaluateOutboundUrlPolicy } from '@/shared/lib/security/outbound-url-policy';
-import { parseJsonSetting } from '@/shared/utils/settings-json';
 import { isObjectRecord } from '@/shared/utils/object-utils';
+import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import type {
   Browser,
@@ -124,6 +126,7 @@ export type PlaywrightNodeRunRequest = {
   settingsOverrides?: Record<string, unknown> | undefined;
   launchOptions?: Record<string, unknown> | undefined;
   contextOptions?: Record<string, unknown> | undefined;
+  contextRegistry?: ContextRegistryConsumerEnvelope | null | undefined;
   capture?:
     | {
         screenshot?: boolean | undefined;
@@ -421,6 +424,10 @@ const executePlaywrightNodeRun = async (
   );
   const timeoutMs = Math.max(1_000, request.timeoutMs ?? 120_000);
   const browserEngine = request.browserEngine ?? 'chromium';
+  const contextRegistry = request.contextRegistry ?? null;
+  const contextRegistryPrompt = buildAiPathsContextRegistrySystemPrompt(
+    contextRegistry?.resolved ?? null
+  );
 
   let browser: Browser | null = null;
   let context: BrowserContext | null = null;
@@ -458,6 +465,14 @@ const executePlaywrightNodeRun = async (
       });
     }
 
+    if (contextRegistry) {
+      logs.push(
+        `[context] Loaded Context Registry bundle with ${contextRegistry.refs.length} refs and ${
+          contextRegistry.resolved?.documents.length ?? 0
+        } runtime documents.`
+      );
+    }
+
     const emittedOutputs: Record<string, unknown> = {};
     const inlineArtifacts: Array<{ name: string; value: unknown }> = [];
     const userScript = parseUserScript(request.script, logs);
@@ -466,6 +481,8 @@ const executePlaywrightNodeRun = async (
       context,
       page,
       input: request.input ?? {},
+      contextRegistry,
+      contextRegistryPrompt: contextRegistryPrompt || null,
       emit: (port: string, value: unknown): void => {
         const normalizedPort = port.trim();
         if (!normalizedPort) return;

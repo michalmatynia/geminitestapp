@@ -226,7 +226,6 @@ const reconcilePrismaMappings = async (dryRun: boolean): Promise<ReconcileSummar
     };
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let prisma: any = null;
   try {
     const prismaModule = await import('@/shared/lib/db/prisma');

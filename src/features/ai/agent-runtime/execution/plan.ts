@@ -40,6 +40,7 @@ export async function initializePlanState(
     browserContext,
     settings,
     preferences,
+    contextRegistry,
     plannerModel,
     loopGuardModel,
     memorySummarizationModel,
@@ -138,6 +139,7 @@ export async function initializePlanState(
         summaryCheckpoint,
         settings,
         preferences: nextPreferences,
+        contextRegistry,
       });
     }
     if (!resumedWithNewPlan && checkpoint.activeStepId) {
@@ -215,6 +217,7 @@ export async function initializePlanState(
       approvalGrantedStepId: null,
       settings,
       preferences: nextPreferences,
+      contextRegistry,
     });
   }
 

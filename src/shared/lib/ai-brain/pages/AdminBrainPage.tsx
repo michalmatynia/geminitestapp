@@ -4,15 +4,6 @@ import { Activity, Brain, KeyRound, Radar, Sparkles } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo } from 'react';
 
-import {
-  ContextRegistryPageProvider,
-  useRegisterContextRegistryPageSource,
-} from '@/shared/lib/ai-context-registry/page-context';
-import {
-  AI_BRAIN_CONTEXT_ROOT_IDS,
-  buildAiBrainWorkspaceContextBundle,
-} from '@/shared/lib/ai-brain/context-registry/workspace';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
 
 import { BrainSettingsHeader } from '@/shared/lib/ai-brain/components/BrainSettingsHeader';
 import { BrainStateOverview } from '@/shared/lib/ai-brain/components/BrainStateOverview';
@@ -22,6 +13,15 @@ import { ProvidersTab } from '@/shared/lib/ai-brain/components/ProvidersTab';
 import { ReportsTab } from '@/shared/lib/ai-brain/components/ReportsTab';
 import { RoutingTab } from '@/shared/lib/ai-brain/components/RoutingTab';
 import { BrainProvider, useBrain } from '@/shared/lib/ai-brain/context/BrainContext';
+import {
+  AI_BRAIN_CONTEXT_ROOT_IDS,
+  buildAiBrainWorkspaceContextBundle,
+} from '@/shared/lib/ai-brain/context-registry/workspace';
+import {
+  ContextRegistryPageProvider,
+  useRegisterContextRegistryPageSource,
+} from '@/shared/lib/ai-context-registry/page-context';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
 
 type BrainTab = 'operations' | 'routing' | 'providers' | 'reports' | 'metrics';
 

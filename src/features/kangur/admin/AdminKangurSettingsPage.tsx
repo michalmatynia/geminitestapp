@@ -12,17 +12,22 @@ import {
 } from '@/features/kangur/help-settings';
 import {
   KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
+  DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS,
   KANGUR_AI_TUTOR_MOTION_PRESET_OPTIONS,
   KANGUR_AI_TUTOR_SETTINGS_KEY,
   parseKangurAiTutorSettings,
   resolveKangurAiTutorAppSettings,
   resolveKangurAiTutorMotionPresetKind,
   type KangurAiTutorAppSettings,
+  type KangurAiTutorGuestIntroMode,
 } from '@/features/kangur/settings-ai-tutor';
 import {
   KANGUR_NARRATOR_ENGINE_OPTIONS,
   KANGUR_NARRATOR_SETTINGS_KEY,
+  KANGUR_PARENT_VERIFICATION_SETTINGS_KEY,
+  parseKangurParentVerificationEmailSettings,
   parseKangurNarratorSettings,
+  type KangurParentVerificationEmailSettings,
   type KangurNarratorEngine,
 } from '@/features/kangur/settings';
 import {
@@ -103,9 +108,27 @@ const DOCS_TOOLTIP_SURFACES: Array<{
 
 const DEFAULT_AGENT_PERSONA_OPTION = '__default_agent_persona__';
 const DEFAULT_MOTION_PRESET_OPTION = '__default_motion_preset__';
+const AI_TUTOR_GUEST_INTRO_MODE_OPTIONS: Array<{
+  value: KangurAiTutorGuestIntroMode;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: 'first_visit',
+    label: 'Pierwsza wizyta',
+    description: 'Show the anonymous AI Tutor intro only once on the first visit.',
+  },
+  {
+    value: 'every_visit',
+    label: 'Każde wejście',
+    description: 'Show the anonymous AI Tutor intro on every page entry.',
+  },
+];
 const SETTINGS_SECTION_CLASS_NAME = 'border-border/60 bg-card/35 shadow-sm';
 const SETTINGS_CARD_CLASS_NAME = 'rounded-2xl border-border/60 bg-card/40 shadow-sm';
 const SETTINGS_INSET_CARD_CLASS_NAME = 'rounded-2xl border-border/60 bg-background/60 shadow-sm';
+const KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_SECONDS_MIN = 1;
+const KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_SECONDS_MAX = 3600;
 
 const areHelpSettingsEqual = (left: KangurHelpSettings, right: KangurHelpSettings): boolean =>
   left.docsTooltips.enabled === right.docsTooltips.enabled &&
@@ -122,7 +145,8 @@ const areAiTutorAppSettingsEqual = (
 ): boolean =>
   left.agentPersonaId === right.agentPersonaId &&
   left.motionPresetId === right.motionPresetId &&
-  left.dailyMessageLimit === right.dailyMessageLimit;
+  left.dailyMessageLimit === right.dailyMessageLimit &&
+  left.guestIntroMode === right.guestIntroMode;
 
 const parseAiTutorDailyMessageLimit = (value: string): number | null => {
   const parsed = Number.parseInt(value, 10);
@@ -131,6 +155,18 @@ const parseAiTutorDailyMessageLimit = (value: string): number | null => {
   }
 
   return Math.min(parsed, 200);
+};
+
+const parseParentVerificationCooldownInput = (value: string): number | null => {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return null;
+  }
+
+  return Math.min(
+    Math.max(parsed, KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_SECONDS_MIN),
+    KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_SECONDS_MAX
+  );
 };
 
 const formatProbeTimestamp = (value: string): string => {
@@ -202,6 +238,8 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
   const rawHelpSettings = settingsStore.get(KANGUR_HELP_SETTINGS_KEY);
   const rawAiTutorSettings = settingsStore.get(KANGUR_AI_TUTOR_SETTINGS_KEY);
   const rawAiTutorAppSettings = settingsStore.get(KANGUR_AI_TUTOR_APP_SETTINGS_KEY);
+  const rawParentVerificationEmailSettings =
+    settingsStore.get(KANGUR_PARENT_VERIFICATION_SETTINGS_KEY);
 
   const persistedNarratorSettings = useMemo(
     () => parseKangurNarratorSettings(rawNarratorSettings),
@@ -219,6 +257,10 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
     () => resolveKangurAiTutorAppSettings(rawAiTutorAppSettings, aiTutorSettingsStore),
     [rawAiTutorAppSettings, aiTutorSettingsStore]
   );
+  const persistedParentVerificationEmailSettings = useMemo(
+    () => parseKangurParentVerificationEmailSettings(rawParentVerificationEmailSettings),
+    [rawParentVerificationEmailSettings]
+  );
 
   const [engine, setEngine] = useState<KangurNarratorEngine>(persistedNarratorSettings.engine);
   const [voice, setVoice] = useState<KangurLessonTtsVoice>(persistedNarratorSettings.voice);
@@ -232,6 +274,13 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
     persistedAiTutorSettings.dailyMessageLimit
       ? String(persistedAiTutorSettings.dailyMessageLimit)
       : ''
+  );
+  const [parentVerificationResendCooldownInput, setParentVerificationResendCooldownInput] =
+    useState(
+      String(persistedParentVerificationEmailSettings.resendCooldownSeconds)
+    );
+  const [guestIntroMode, setGuestIntroMode] = useState<KangurAiTutorGuestIntroMode>(
+    persistedAiTutorSettings.guestIntroMode
   );
   const [copyStatus, setCopyStatus] = useState('Copy text');
   const [narratorProbe, setNarratorProbe] = useState<KangurLessonTtsProbeResponse | null>(null);
@@ -261,7 +310,14 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
         ? String(persistedAiTutorSettings.dailyMessageLimit)
         : ''
     );
+    setGuestIntroMode(persistedAiTutorSettings.guestIntroMode);
   }, [persistedAiTutorSettings]);
+
+  useEffect(() => {
+    setParentVerificationResendCooldownInput(
+      String(persistedParentVerificationEmailSettings.resendCooldownSeconds)
+    );
+  }, [persistedParentVerificationEmailSettings]);
 
   useEffect(
     () => () => {
@@ -350,8 +406,9 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
       agentPersonaId: agentPersonaId || null,
       motionPresetId: motionPresetId || null,
       dailyMessageLimit: parseAiTutorDailyMessageLimit(dailyMessageLimitInput),
+      guestIntroMode,
     }),
-    [agentPersonaId, dailyMessageLimitInput, motionPresetId]
+    [agentPersonaId, dailyMessageLimitInput, guestIntroMode, motionPresetId]
   );
   const selectedAgentPersona = useMemo(
     () => agentPersonas.find((persona) => persona.id === agentPersonaId) ?? null,
@@ -397,13 +454,25 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
     draftAiTutorSettings,
     persistedAiTutorSettings
   );
-  const isDirty = narratorDirty || helpSettingsDirty || aiTutorSettingsDirty;
+  const parentVerificationEmailDraft = useMemo<KangurParentVerificationEmailSettings>(
+    () => ({
+      resendCooldownSeconds:
+        parseParentVerificationCooldownInput(parentVerificationResendCooldownInput) ??
+        persistedParentVerificationEmailSettings.resendCooldownSeconds,
+    }),
+    [parentVerificationResendCooldownInput, persistedParentVerificationEmailSettings]
+  );
+  const parentVerificationEmailSettingsDirty =
+    parentVerificationEmailDraft.resendCooldownSeconds !==
+    persistedParentVerificationEmailSettings.resendCooldownSeconds;
+  const isDirty =
+    narratorDirty || helpSettingsDirty || aiTutorSettingsDirty || parentVerificationEmailSettingsDirty;
   const adminDocsEnabled = areKangurDocsTooltipsEnabled(helpSettings, 'admin');
 
   const handleSave = async (): Promise<void> => {
     setIsSaving(true);
     try {
-      const savedSections: Array<'narrator' | 'docs' | 'ai-tutor'> = [];
+      const savedSections: Array<'narrator' | 'docs' | 'ai-tutor' | 'parent-verification'> = [];
 
       if (narratorDirty) {
         await updateSetting.mutateAsync({
@@ -429,6 +498,14 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
         savedSections.push('ai-tutor');
       }
 
+      if (parentVerificationEmailSettingsDirty) {
+        await updateSetting.mutateAsync({
+          key: KANGUR_PARENT_VERIFICATION_SETTINGS_KEY,
+          value: serializeSetting(parentVerificationEmailDraft),
+        });
+        savedSections.push('parent-verification');
+      }
+
       if (savedSections.length === 0) {
         return;
       }
@@ -439,6 +516,10 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
         toast('Kangur narrator settings saved.', { variant: 'success' });
       } else if (savedSections[0] === 'ai-tutor') {
         toast('Kangur AI tutor settings saved.', { variant: 'success' });
+      } else if (savedSections[0] === 'parent-verification') {
+        toast('Kangur parent verification email settings saved.', {
+          variant: 'success',
+        });
       } else {
         toast('Kangur documentation tooltip settings saved.', { variant: 'success' });
       }
@@ -677,6 +758,20 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
                   aria-label='Dzienny limit wiadomości'
                 />
               </FormField>
+
+              <FormField
+                label='Anonimowy onboarding AI Tutora'
+                description='Control how the first AI Tutor helper appears before the user logs in.'
+                className='mt-4'
+              >
+                <SelectSimple
+                  value={guestIntroMode || DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS.guestIntroMode}
+                  onValueChange={(value) => setGuestIntroMode(value as KangurAiTutorGuestIntroMode)}
+                  options={AI_TUTOR_GUEST_INTRO_MODE_OPTIONS}
+                  ariaLabel='Anonimowy onboarding AI Tutora'
+                  variant='subtle'
+                />
+              </FormField>
             </Card>
 
             <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
@@ -746,6 +841,42 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
           <Alert variant='default' title='Scope' className='mt-4'>
             Parents no longer change these fields per learner. Configure them here once, then use
             the parent dashboard only for access and guardrails.
+          </Alert>
+        </FormSection>
+
+        <FormSection
+          title='Parent verification email'
+          description='Configure resend throttling for parent account verification emails.'
+          className={SETTINGS_SECTION_CLASS_NAME}
+        >
+          <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
+            <FormField
+              label='Czas oczekiwania na ponowne wysłanie e-maila (sekundy)'
+              description='Controls how long to wait before another verification email can be sent to the same address.'
+            >
+              <Input
+                type='number'
+                min={KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_SECONDS_MIN}
+                max={KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_SECONDS_MAX}
+                step={1}
+                value={parentVerificationResendCooldownInput}
+                onChange={(event) => setParentVerificationResendCooldownInput(event.target.value)}
+                aria-label='Czas oczekiwania na ponowne wysłanie e-maila (sekundy)'
+                inputMode='numeric'
+              />
+            </FormField>
+            <p className='mt-3 text-xs text-muted-foreground'>
+              Akceptowany zakres: {KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_SECONDS_MIN}–
+              {KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_SECONDS_MAX} s.
+            </p>
+          </Card>
+          <Alert variant='default' title='Scope' className='mt-4'>
+            Applies to parent create-account and resend-verification actions across login pages and public
+            enrollment flow.
+          </Alert>
+          <Alert variant='default' className='mt-2' title='Security'>
+            Shorter values increase retry attempts and email traffic. Longer values reduce request spam but
+            also slow account confirmation.
           </Alert>
         </FormSection>
 
@@ -921,6 +1052,9 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
               <Badge variant='outline'>{persistedNarratorSettings.engine}</Badge>
               <Badge variant='outline'>
                 Docs tooltips {persistedHelpSettings.docsTooltips.enabled ? 'On' : 'Off'}
+              </Badge>
+              <Badge variant='outline'>
+                Parent email cooldown {persistedParentVerificationEmailSettings.resendCooldownSeconds}s
               </Badge>
             </div>
             <Badge variant={isDirty ? 'warning' : 'secondary'}>

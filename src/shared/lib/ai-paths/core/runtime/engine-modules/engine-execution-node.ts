@@ -4,31 +4,32 @@ import {
   RuntimeHistoryEntry,
   RuntimeTraceResume,
 } from '@/shared/contracts/ai-paths-runtime';
-import { cloneValue } from '../utils';
+
 import { nowMs, resolveNodeTimeoutMs, withTimeout, withRetries } from '../execution-helpers';
-import {
-  GraphExecutionError,
-  type EvaluateGraphOptions,
-  type RuntimeNodeResolutionTelemetry,
-} from './engine-types';
+import { cloneValue } from '../utils';
+import { buildSpanId } from './engine-execution-context';
+import { resolveNodeHandlerOrThrow } from './engine-execution-handlers';
+import { buildRuntimeTelemetryFields } from './engine-execution-telemetry';
 import { buildNodeInputHash, buildNodeHash, resolveCacheScopeFingerprint } from './engine-hashing';
-import {
-  buildInputLinks,
-  buildOutputLinks,
-  collectNodeInputs,
-  resolveEdgeToNodeId,
-} from './engine-utils';
-import { EngineStateManager } from './engine-state-manager';
 import { deriveNodeInputs } from './engine-node-input-deriver';
 import {
   applyCachedNodeRuntimeStatus,
   readRuntimeRetryPolicy,
   resolveRecoverableNodeWaitState,
 } from './engine-runtime-status';
+import { EngineStateManager } from './engine-state-manager';
+import {
+  GraphExecutionError,
+  type EvaluateGraphOptions,
+  type RuntimeNodeResolutionTelemetry,
+} from './engine-types';
+import {
+  buildInputLinks,
+  buildOutputLinks,
+  collectNodeInputs,
+  resolveEdgeToNodeId,
+} from './engine-utils';
 import { applyValidationBlockedNodeState, runRuntimeValidation } from './engine-validation-helpers';
-import { resolveNodeHandlerOrThrow } from './engine-execution-handlers';
-import { buildRuntimeTelemetryFields } from './engine-execution-telemetry';
-import { buildSpanId } from './engine-execution-context';
 
 const EXECUTED_STATE_KEY = '__executed_state__';
 const createExecutedState = (): NodeHandlerContext['executed'] => ({
@@ -515,6 +516,7 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
         (options['meta'] as Record<string, unknown> | undefined) ??
         {},
       activePathId: options.pathId ?? null,
+      contextRegistry: options.contextRegistry ?? null,
       iteration,
       attempt,
       spanId,

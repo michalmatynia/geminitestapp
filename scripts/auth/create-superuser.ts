@@ -80,7 +80,7 @@ async function main() {
   console.log(`User ensured with ID: ${userId} (${providerUsed})`);
 
   // Assign Role
-  console.log("Assigning 'super_admin' role...");
+  console.log('Assigning \'super_admin\' role...');
 
   if (providerUsed === 'mongodb') {
     const db = await getMongoDb();

@@ -34,17 +34,17 @@ export function KangurLoginModal(): JSX.Element {
           )}
           data-testid='kangur-login-modal'
         >
-          <DialogPrimitive.Title className='sr-only'>Logowanie Kangur</DialogPrimitive.Title>
+          <DialogPrimitive.Title className='sr-only'>Zaloguj się</DialogPrimitive.Title>
           <DialogPrimitive.Description className='sr-only'>
-            Zaloguj rodzica emailem albo ucznia alfanumerycznym nickiem bez opuszczania strony.
+            Zaloguj rodzica emailem albo ucznia nickiem bez opuszczania strony.
           </DialogPrimitive.Description>
 
           <button
             aria-label='Zamknij logowanie'
             className={cn(
-              'absolute right-4 top-4 z-10 cursor-pointer rounded-full border border-slate-200/80',
-              'bg-white/95 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.18em]',
-              'text-slate-500 shadow-sm transition hover:text-slate-900'
+              'absolute right-4 top-4 z-10 cursor-pointer rounded-full border border-amber-200/80',
+              'bg-[linear-gradient(180deg,rgba(255,255,255,0.95)_0%,rgba(255,247,237,0.88)_100%)] px-3 py-1.5 text-xs font-bold uppercase tracking-[0.18em]',
+              'text-[#9a5418] shadow-[0_16px_34px_-26px_rgba(249,115,22,0.5)] transition hover:text-[#7f4310]'
             )}
             data-testid='kangur-login-modal-close'
             onClick={closeLoginModal}

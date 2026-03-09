@@ -128,6 +128,81 @@ describe('KangurFeatureApp shell behavior', () => {
     expect(screen.queryByTestId('kangur-game-page')).not.toBeInTheDocument();
   });
 
+  it('renders lessons route content while auth/public settings are loading', () => {
+    useKangurRoutingMock.mockReturnValue({
+      pageKey: 'Lessons',
+      requestedPath: '/kangur/lessons',
+    });
+    resolveKangurPageKeyMock.mockReturnValue('Lessons');
+
+    useKangurAuthMock.mockReturnValue(
+      buildAuthState({
+        isLoadingAuth: true,
+        isLoadingPublicSettings: true,
+      })
+    );
+
+    render(<KangurFeatureApp />);
+
+    expect(screen.getByTestId('kangur-lessons-page')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-page-transition-skeleton')).not.toBeInTheDocument();
+  });
+
+  it('renders lessons route content while loading when pageKey is lowercased as lessons', () => {
+    useKangurRoutingMock.mockReturnValue({
+      pageKey: 'lessons',
+      requestedPath: '/kangur/lessons',
+    });
+    resolveKangurPageKeyMock.mockReturnValue('Lessons');
+
+    useKangurAuthMock.mockReturnValue(
+      buildAuthState({
+        isLoadingAuth: true,
+        isLoadingPublicSettings: true,
+      })
+    );
+
+    render(<KangurFeatureApp />);
+
+    expect(screen.getByTestId('kangur-lessons-page')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-page-transition-skeleton')).not.toBeInTheDocument();
+  });
+
+  it('updates route transition key when navigating into lessons while loading', () => {
+    useKangurRoutingMock.mockReturnValue({
+      pageKey: 'game',
+      requestedPath: '/kangur/game',
+    });
+    resolveKangurPageKeyMock.mockReturnValue('Game');
+
+    const { rerender } = render(<KangurFeatureApp />);
+
+    expect(screen.getByTestId('kangur-route-content')).toHaveAttribute(
+      'data-route-transition-key',
+      '/kangur/game'
+    );
+
+    useKangurRoutingMock.mockReturnValue({
+      pageKey: 'lessons',
+      requestedPath: '/kangur/lessons',
+    });
+    resolveKangurPageKeyMock.mockReturnValue('Lessons');
+    useKangurAuthMock.mockReturnValue(
+      buildAuthState({
+        isLoadingAuth: true,
+        isLoadingPublicSettings: true,
+      })
+    );
+
+    rerender(<KangurFeatureApp />);
+
+    expect(screen.getByTestId('kangur-lessons-page')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-route-content')).toHaveAttribute(
+      'data-route-transition-key',
+      '/kangur/lessons'
+    );
+  });
+
   it('renders the user-not-registered state for missing Kangur enrollment', () => {
     useKangurAuthMock.mockReturnValue(
       buildAuthState({

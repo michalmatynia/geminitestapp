@@ -372,6 +372,20 @@ export default function Lessons() {
     () => createKangurPageTransitionMotionProps(prefersReducedMotion),
     [prefersReducedMotion]
   );
+  const lessonContentReadyMotionProps = useMemo(
+    () => ({
+      initial: prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0.92, y: 12 },
+      animate: { opacity: 1, y: 0 },
+      exit: prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0.98, y: -4 },
+      transition: prefersReducedMotion
+        ? { duration: 0 }
+        : {
+            duration: 0.32,
+            ease: LESSONS_CARD_EASE,
+          },
+    }),
+    [prefersReducedMotion]
+  );
   const lessonCardMotionProps = useMemo(
     () => ({
       initial: prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 },
@@ -391,15 +405,18 @@ export default function Lessons() {
 
         <KangurPageContainer id='kangur-lessons-main' className='flex flex-col items-center'>
           <AnimatePresence initial={false} mode='wait'>
-            {!isDeferredContentReady ? (
-              <motion.div
-                key='loading'
-                {...lessonPageMotionProps}
+            {!activeLesson ? (
+              <div
+                key='list-shell'
                 className='flex w-full max-w-md flex-col items-center gap-4'
-                data-testid='lessons-shell-transition'
+                data-testid={isDeferredContentReady ? 'lessons-list-transition' : 'lessons-shell-transition'}
               >
                 <KangurPageIntroCard
-                  description='Wczytujemy lekcje i przygotowujemy liste tematow.'
+                  description={
+                    isDeferredContentReady
+                      ? 'Wybierz temat i przejdz od razu do praktyki lub powtorki.'
+                      : 'Lekcje zaraz beda gotowe.'
+                  }
                   headingAs='h1'
                   headingTestId='kangur-lessons-list-heading'
                   onBack={handleGoBack}
@@ -411,166 +428,144 @@ export default function Lessons() {
                     />
                   }
                 />
-                <div className='flex w-full flex-col gap-3'>
-                  <div className='h-28 w-full animate-pulse rounded-[30px] bg-white/75' />
-                  <div className='h-28 w-full animate-pulse rounded-[30px] bg-white/70' />
-                  <div className='h-28 w-full animate-pulse rounded-[30px] bg-white/65' />
-                </div>
-              </motion.div>
-            ) : !activeLesson ? (
-              <motion.div
-                key='list'
-                {...lessonPageMotionProps}
-                className='flex flex-col items-center gap-4 w-full max-w-md'
-                data-testid='lessons-list-transition'
-              >
-                <KangurPageIntroCard
-                  description='Wybierz temat i przejdz od razu do praktyki lub powtorki.'
-                  headingAs='h1'
-                  headingTestId='kangur-lessons-list-heading'
-                  onBack={handleGoBack}
-                  title='Lekcje'
-                  visualTitle={
-                    <KangurLessonsWordmark
-                      className='mx-auto'
-                      data-testid='kangur-lessons-heading-art'
-                    />
-                  }
-                />
+                {isDeferredContentReady ? (
+                  <motion.div
+                    key='list-content'
+                    {...lessonContentReadyMotionProps}
+                    className='flex w-full flex-col gap-4'
+                  >
+                    {orderedLessons.length === 0 ? (
+                      <KangurEmptyState
+                        accent='indigo'
+                        className='w-full'
+                        description='Włącz lekcje w panelu admina, aby pojawiły się tutaj.'
+                        padding='xl'
+                        title='Brak aktywnych lekcji'
+                      />
+                    ) : (
+                      orderedLessons.map((lesson, index) => {
+                        const masteryPresentation = getLessonMasteryPresentation(lesson, progress);
+                        const lessonAssignment =
+                          lessonAssignmentsByComponent.get(lesson.componentId) ?? null;
+                        const completedLessonAssignment = !lessonAssignment
+                          ? (completedLessonAssignmentsByComponent.get(lesson.componentId) ?? null)
+                          : null;
 
-                {orderedLessons.length === 0 ? (
-                  <KangurEmptyState
-                    accent='indigo'
-                    className='w-full'
-                    description='Włącz lekcje w panelu admina, aby pojawiły się tutaj.'
-                    padding='xl'
-                    title='Brak aktywnych lekcji'
-                  />
-                ) : (
-                  orderedLessons.map((lesson, index) => {
-                    const masteryPresentation = getKangurLessonMasteryPresentation(
-                      lesson,
-                      progress
-                    );
-                    const lessonAssignment =
-                      lessonAssignmentsByComponent.get(lesson.componentId) ?? null;
-                    const completedLessonAssignment = !lessonAssignment
-                      ? (completedLessonAssignmentsByComponent.get(lesson.componentId) ?? null)
-                      : null;
-
-                    return (
-                      <motion.div
-                        key={lesson.id}
-                        {...lessonCardMotionProps}
-                        transition={{
-                          ...(prefersReducedMotion ? { duration: 0 } : LESSONS_CARD_TRANSITION),
-                          delay: prefersReducedMotion ? 0 : index * LESSONS_CARD_STAGGER_DELAY,
-                        }}
-                        data-testid={`lesson-library-motion-${lesson.id}`}
-                      >
-                        <KangurOptionCardButton
-                          accent='indigo'
-                          className='flex w-full items-start gap-4 rounded-[30px] p-5 text-left'
-                          data-doc-id='lessons_library_entry'
-                          emphasis='neutral'
-                          onClick={() => setActiveLessonId(lesson.id)}
-                          type='button'
-                        >
-                          <KangurGradientIconTile
-                            data-testid={`lesson-library-icon-${lesson.id}`}
-                            gradientClass={lesson.color}
-                            size='lg'
+                        return (
+                          <motion.div
+                            key={lesson.id}
+                            {...lessonCardMotionProps}
+                            transition={{
+                              ...(prefersReducedMotion ? { duration: 0 } : LESSONS_CARD_TRANSITION),
+                              delay: prefersReducedMotion ? 0 : index * LESSONS_CARD_STAGGER_DELAY,
+                            }}
+                            data-testid={`lesson-library-motion-${lesson.id}`}
                           >
-                            {lesson.emoji}
-                          </KangurGradientIconTile>
-                          <div className='flex-1'>
-                            <div className='flex items-start justify-between gap-3'>
-                              <div>
-                                <div className='text-xl font-extrabold text-slate-800'>
-                                  {lesson.title}
-                                </div>
-                                <div className='mt-0.5 text-sm text-slate-500'>
-                                  {lesson.description}
-                                </div>
-                                {lesson.contentMode === 'document' &&
-                                hasKangurLessonDocumentContent(lessonDocuments[lesson.id]) ? (
+                            <KangurOptionCardButton
+                              accent='indigo'
+                              className='flex w-full items-start gap-4 rounded-[30px] p-5 text-left'
+                              data-doc-id='lessons_library_entry'
+                              emphasis='neutral'
+                              onClick={() => setActiveLessonId(lesson.id)}
+                              type='button'
+                            >
+                              <KangurGradientIconTile
+                                data-testid={`lesson-library-icon-${lesson.id}`}
+                                gradientClass={lesson.color}
+                                size='lg'
+                              >
+                                {lesson.emoji}
+                              </KangurGradientIconTile>
+                              <div className='flex-1'>
+                                <div className='flex items-start justify-between gap-3'>
+                                  <div>
+                                    <div className='text-xl font-extrabold text-slate-800'>
+                                      {lesson.title}
+                                    </div>
+                                    <div className='mt-0.5 text-sm text-slate-500'>
+                                      {lesson.description}
+                                    </div>
+                                    {lesson.contentMode === 'document' &&
+                                    hasKangurLessonDocumentContent(lessonDocuments[lesson.id]) ? (
+                                        <KangurStatusChip
+                                          accent='sky'
+                                          className='mt-2 uppercase tracking-[0.14em]'
+                                          size='sm'
+                                        >
+                                        Wlasna zawartosc
+                                        </KangurStatusChip>
+                                      ) : null}
+                                    {lessonAssignment ? (
+                                      <KangurStatusChip
+                                        accent='rose'
+                                        className='mt-2 uppercase tracking-[0.14em]'
+                                        size='sm'
+                                      >
+                                        Priorytet rodzica
+                                      </KangurStatusChip>
+                                    ) : completedLessonAssignment ? (
+                                      <KangurStatusChip
+                                        accent='emerald'
+                                        className='mt-2 uppercase tracking-[0.14em]'
+                                        size='sm'
+                                      >
+                                        Ukonczone dla rodzica
+                                      </KangurStatusChip>
+                                    ) : null}
+                                  </div>
+                                  <div className='flex flex-col items-end gap-2'>
                                     <KangurStatusChip
-                                      accent='sky'
-                                      className='mt-2 uppercase tracking-[0.14em]'
+                                      accent={masteryPresentation.badgeAccent}
+                                      className='whitespace-nowrap uppercase tracking-[0.14em]'
                                       size='sm'
                                     >
-                                    Wlasna zawartosc
+                                      {masteryPresentation.statusLabel}
                                     </KangurStatusChip>
-                                  ) : null}
+                                    {lessonAssignment ? (
+                                      <KangurStatusChip
+                                        accent='rose'
+                                        className='whitespace-nowrap uppercase tracking-[0.14em]'
+                                        size='sm'
+                                      >
+                                        {lessonAssignment.priority === 'high'
+                                          ? 'Priorytet wysoki'
+                                          : lessonAssignment.priority === 'medium'
+                                            ? 'Priorytet sredni'
+                                            : 'Priorytet niski'}
+                                      </KangurStatusChip>
+                                    ) : completedLessonAssignment ? (
+                                      <KangurStatusChip
+                                        accent='emerald'
+                                        className='whitespace-nowrap uppercase tracking-[0.14em]'
+                                        size='sm'
+                                      >
+                                        Zadanie zamkniete
+                                      </KangurStatusChip>
+                                    ) : null}
+                                  </div>
+                                </div>
+                                <div className='mt-3 text-xs font-medium text-slate-500'>
+                                  {masteryPresentation.summaryLabel}
+                                </div>
                                 {lessonAssignment ? (
-                                  <KangurStatusChip
-                                    accent='rose'
-                                    className='mt-2 uppercase tracking-[0.14em]'
-                                    size='sm'
-                                  >
-                                    Priorytet rodzica
-                                  </KangurStatusChip>
+                                  <div className='mt-2 text-xs font-semibold text-rose-600'>
+                                    {lessonAssignment.description}
+                                  </div>
                                 ) : completedLessonAssignment ? (
-                                  <KangurStatusChip
-                                    accent='emerald'
-                                    className='mt-2 uppercase tracking-[0.14em]'
-                                    size='sm'
-                                  >
-                                    Ukonczone dla rodzica
-                                  </KangurStatusChip>
+                                  <div className='mt-2 text-xs font-semibold text-emerald-600'>
+                                    Zadanie od rodzica zostalo juz wykonane.{' '}
+                                    {completedLessonAssignment.progress.summary}
+                                  </div>
                                 ) : null}
                               </div>
-                              <div className='flex flex-col items-end gap-2'>
-                                <KangurStatusChip
-                                  accent={masteryPresentation.badgeAccent}
-                                  className='whitespace-nowrap uppercase tracking-[0.14em]'
-                                  size='sm'
-                                >
-                                  {masteryPresentation.statusLabel}
-                                </KangurStatusChip>
-                                {lessonAssignment ? (
-                                  <KangurStatusChip
-                                    accent='rose'
-                                    className='whitespace-nowrap uppercase tracking-[0.14em]'
-                                    size='sm'
-                                  >
-                                    {lessonAssignment.priority === 'high'
-                                      ? 'Priorytet wysoki'
-                                      : lessonAssignment.priority === 'medium'
-                                        ? 'Priorytet sredni'
-                                        : 'Priorytet niski'}
-                                  </KangurStatusChip>
-                                ) : completedLessonAssignment ? (
-                                  <KangurStatusChip
-                                    accent='emerald'
-                                    className='whitespace-nowrap uppercase tracking-[0.14em]'
-                                    size='sm'
-                                  >
-                                    Zadanie zamkniete
-                                  </KangurStatusChip>
-                                ) : null}
-                              </div>
-                            </div>
-                            <div className='mt-3 text-xs font-medium text-slate-500'>
-                              {masteryPresentation.summaryLabel}
-                            </div>
-                            {lessonAssignment ? (
-                              <div className='mt-2 text-xs font-semibold text-rose-600'>
-                                {lessonAssignment.description}
-                              </div>
-                            ) : completedLessonAssignment ? (
-                              <div className='mt-2 text-xs font-semibold text-emerald-600'>
-                                Zadanie od rodzica zostalo juz wykonane.{' '}
-                                {completedLessonAssignment.progress.summary}
-                              </div>
-                            ) : null}
-                          </div>
-                        </KangurOptionCardButton>
-                      </motion.div>
-                    );
-                  })
-                )}
-              </motion.div>
+                            </KangurOptionCardButton>
+                          </motion.div>
+                        );
+                      })
+                    )}
+                  </motion.div>
+                ) : null}
+              </div>
             ) : (
               <motion.div
                 key={activeLesson.id}

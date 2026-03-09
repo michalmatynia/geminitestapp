@@ -78,7 +78,7 @@ const KANGUR_VISUAL_CONTRACTS = [
   },
   {
     file: 'src/features/kangur/ui/KangurLoginPage.tsx',
-    requiredTokens: ['data-testid=\'kangur-login-shell\'', 'Logowanie Kangur', 'Mam konto rodzica'],
+    requiredTokens: ['data-testid=\'kangur-login-shell\'', 'Zaloguj sie', 'Mam konto'],
   },
   {
     file: 'src/app/(frontend)/kangur/login/page.tsx',

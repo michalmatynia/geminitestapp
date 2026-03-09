@@ -163,4 +163,38 @@ describe('execScanOutput', () => {
     expect(result.output).toBeNull();
     expect(result.error).toContain('did not return valid JSON output');
   });
+
+  it('propagates timeout state for long-running commands', async () => {
+    const root = createTempRoot();
+    const scriptPath = writeFile(
+      root,
+      'timeout.mjs',
+      [
+        'await new Promise((resolve) => setTimeout(resolve, 500));',
+        'console.log(JSON.stringify({',
+        '  schemaVersion: 1,',
+        '  generatedAt: \'2026-03-09T08:00:02.000Z\',',
+        '  scanner: { name: \'fixture-scan\', version: \'1.0.0\' },',
+        '  status: \'ok\',',
+        '  summary: { issueCount: 0 },',
+        '  details: { issues: [] },',
+        '  paths: null,',
+        '  filters: { ci: true },',
+        '  notes: [\'fixture timeout\'],',
+        '}));',
+      ].join('\n')
+    );
+
+    const result = await execScanOutput({
+      commandArgs: [scriptPath],
+      cwd: root,
+      sourceName: 'fixture-scan',
+      timeoutMs: 50,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.output).toBeNull();
+    expect(result.killed).toBe(true);
+    expect(result.timedOut).toBe(true);
+  });
 });

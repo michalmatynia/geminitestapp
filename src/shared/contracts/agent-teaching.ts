@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { contextRegistryConsumerEnvelopeSchema } from './ai-context-registry';
 import { dtoBaseSchema } from './base';
 
 /**
@@ -117,3 +118,20 @@ export const agentTeachingSearchOptionsSchema = z.object({
 });
 
 export type AgentTeachingSearchOptionsDto = z.infer<typeof agentTeachingSearchOptionsSchema>;
+
+export const agentTeachingChatMessageSchema = z.object({
+  role: z.enum(['user', 'assistant', 'system']),
+  content: z.string(),
+});
+
+export type AgentTeachingChatMessageDto = z.infer<typeof agentTeachingChatMessageSchema>;
+export type AgentTeachingChatMessage = AgentTeachingChatMessageDto;
+
+export const agentTeachingChatRequestSchema = z.object({
+  agentId: z.string().trim().min(1),
+  messages: z.array(agentTeachingChatMessageSchema).min(1),
+  contextRegistry: contextRegistryConsumerEnvelopeSchema.optional(),
+});
+
+export type AgentTeachingChatRequestDto = z.infer<typeof agentTeachingChatRequestSchema>;
+export type AgentTeachingChatRequest = AgentTeachingChatRequestDto;

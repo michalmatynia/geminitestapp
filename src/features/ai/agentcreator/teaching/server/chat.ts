@@ -5,8 +5,10 @@ import {
   runBrainChatCompletion,
   type BrainChatMessage,
 } from '@/shared/lib/ai-brain/server-runtime-client';
-import type { AgentTeachingChatSource } from '@/shared/contracts/agent-teaching';
-import type { ChatMessage } from '@/shared/contracts/chatbot';
+import type {
+  AgentTeachingChatMessage,
+  AgentTeachingChatSource,
+} from '@/shared/contracts/agent-teaching';
 
 import { generateOllamaEmbedding } from './embeddings';
 import { getTeachingAgentById } from './repository';
@@ -41,7 +43,8 @@ const buildRagSystemPrompt = (params: {
 
 export async function runTeachingChat(params: {
   agentId: string;
-  messages: ChatMessage[];
+  messages: AgentTeachingChatMessage[];
+  additionalSystemPrompt?: string | null;
 }): Promise<{ message: string; sources: AgentTeachingChatSource[] }> {
   const agent = await getTeachingAgentById(params.agentId);
   if (!agent) {
@@ -50,7 +53,7 @@ export async function runTeachingChat(params: {
 
   const lastUserMessage = [...params.messages]
     .reverse()
-    .find((m: ChatMessage): boolean => m.role === 'user');
+    .find((m: AgentTeachingChatMessage): boolean => m.role === 'user');
   const queryText = lastUserMessage?.content?.trim() ?? '';
   if (!queryText) {
     throw new Error('Missing user message.');
@@ -82,6 +85,7 @@ export async function runTeachingChat(params: {
     runtimeKind: 'chat',
   });
   const systemPrompt = [brainConfig.systemPrompt.trim(), ragSystemPrompt]
+    .concat(params.additionalSystemPrompt?.trim() ? [params.additionalSystemPrompt.trim()] : [])
     .filter(Boolean)
     .join('\n\n');
 
@@ -92,8 +96,8 @@ export async function runTeachingChat(params: {
     messages: [
       { role: 'system', content: systemPrompt },
       ...(params.messages
-        .filter((m: ChatMessage) => m.role !== 'system')
-        .map((m: ChatMessage) => ({
+        .filter((m: AgentTeachingChatMessage) => m.role !== 'system')
+        .map((m: AgentTeachingChatMessage) => ({
           role: m.role === 'assistant' || m.role === 'system' ? m.role : 'user',
           content: m.content,
         })) as BrainChatMessage[]),

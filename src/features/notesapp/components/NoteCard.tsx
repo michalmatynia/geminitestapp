@@ -121,6 +121,26 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
     ? getReadableTextColor(backgroundColor)
     : effectiveTheme.textColor;
 
+  const selectNote = (): void => {
+    onSelectNote(note);
+  };
+
+  const handleCardClick = (event: React.MouseEvent<HTMLElement>): void => {
+    if (shouldIgnoreSelectionTarget(event.target, event.currentTarget)) {
+      return;
+    }
+    if (event.defaultPrevented) return;
+    selectNote();
+  };
+
+  const handleCardKeyDown = (event: React.KeyboardEvent<HTMLElement>): void => {
+    if (event.key !== 'Enter' && event.key !== ' ') {
+      return;
+    }
+    event.preventDefault();
+    selectNote();
+  };
+
   const relatedNoteStyle = {
     borderWidth: `${effectiveTheme.relatedNoteBorderWidth ?? 1}px`,
     borderColor: effectiveTheme.relatedNoteBorderColor,
@@ -152,13 +172,10 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
     <div
       ref={cardRef}
       key={note.id}
-      onClick={(event: React.MouseEvent<HTMLElement>): void => {
-        if (shouldIgnoreSelectionTarget(event.target, event.currentTarget)) {
-          return;
-        }
-        if (event.defaultPrevented) return;
-        onSelectNote(note);
-      }}
+      role='button'
+      tabIndex={0}
+      onClick={handleCardClick}
+      onKeyDown={handleCardKeyDown}
       style={{
         backgroundColor,
         color: textColor,

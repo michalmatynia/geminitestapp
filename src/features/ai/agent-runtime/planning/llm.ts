@@ -29,7 +29,10 @@ import {
   guardRepetitionWithLLM,
   optimizePlanWithLLM,
 } from './llm-postprocessing';
-import { normalizePlanStepSpecs } from './llm-step-specs';
+import {
+  normalizePlanStepSpecs,
+  type PlanStepSpecInput,
+} from './llm-step-specs';
 import { buildAdaptivePlanReview } from './llm/review';
 
 import { runPlannerTask } from './llm/core';
@@ -44,6 +47,65 @@ export {
   buildSelfImprovementReviewWithLLM,
   verifyPlanWithLLM,
 } from './llm-evaluation';
+
+const asString = (value: unknown): string | undefined =>
+  typeof value === 'string' ? value : undefined;
+
+const asNumber = (value: unknown): number | undefined =>
+  typeof value === 'number' ? value : undefined;
+
+const asDependencies = (value: unknown): number[] | string[] | undefined => {
+  if (!Array.isArray(value) || value.length === 0) {
+    return undefined;
+  }
+  if (value.every((item: unknown): item is number => typeof item === 'number')) {
+    return value;
+  }
+  if (value.every((item: unknown): item is string => typeof item === 'string')) {
+    return value;
+  }
+  return undefined;
+};
+
+const asPlanStepSpec = (value: unknown): PlanStepSpecInput | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+  const record = value as Record<string, unknown>;
+  return {
+    title: asString(record['title']),
+    tool: asString(record['tool']),
+    expectedObservation: asString(record['expectedObservation']),
+    successCriteria: asString(record['successCriteria']),
+    phase: asString(record['phase']),
+    priority: asNumber(record['priority']),
+    dependsOn: asDependencies(record['dependsOn']),
+    goalId: asString(record['goalId']),
+    subgoalId: asString(record['subgoalId']),
+  };
+};
+
+const normalizePlanStepSpecsFromUnknown = (value: unknown): PlanStepSpecInput[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value.map(asPlanStepSpec).filter((item): item is PlanStepSpecInput => item !== null);
+};
+
+type HierarchyExpansionStepInput = Parameters<typeof expandHierarchyFromStepsWithLLM>[0]['steps'][number];
+
+const toHierarchyExpansionSteps = (steps: PlanStepSpecInput[]): HierarchyExpansionStepInput[] =>
+  steps.map((step: PlanStepSpecInput): HierarchyExpansionStepInput => ({
+    ...(typeof step.title === 'string' ? { title: step.title } : {}),
+    ...(typeof step.tool === 'string' ? { tool: step.tool } : {}),
+    ...(typeof step.expectedObservation === 'string'
+      ? { expectedObservation: step.expectedObservation }
+      : {}),
+    ...(typeof step.successCriteria === 'string' ? { successCriteria: step.successCriteria } : {}),
+    ...(typeof step.phase === 'string' ? { phase: step.phase } : {}),
+    ...(typeof step.priority === 'number' ? { priority: step.priority } : {}),
+    ...(Array.isArray(step.dependsOn) ? { dependsOn: step.dependsOn } : {}),
+  }));
 
 type BuildPlanWithLLMResult = {
   steps: PlanStep[];
@@ -231,10 +293,9 @@ export async function buildPlanWithLLM({
       throw new Error('Planner LLM returned invalid JSON.');
     }
     const plannerResponse = parsed as Record<string, unknown>;
-    const rawSteps = Array.isArray(plannerResponse['steps']) ? plannerResponse['steps'] : [];
-    const rawBranchSteps = Array.isArray(plannerResponse['branchSteps'])
-      ? plannerResponse['branchSteps']
-      : rawSteps;
+    const rawSteps = normalizePlanStepSpecsFromUnknown(plannerResponse['steps']);
+    const parsedBranchSteps = normalizePlanStepSpecsFromUnknown(plannerResponse['branchSteps']);
+    const rawBranchSteps = parsedBranchSteps.length > 0 ? parsedBranchSteps : rawSteps;
     const rawDecision =
       plannerResponse['decision'] && typeof plannerResponse['decision'] === 'object'
         ? (plannerResponse['decision'] as Partial<AgentDecision>)
@@ -246,7 +307,7 @@ export async function buildPlanWithLLM({
         prompt,
         model,
         memory,
-        steps: rawSteps,
+        steps: toHierarchyExpansionSteps(rawSteps),
         meta,
         ...(runId && { runId }),
       });
@@ -332,13 +393,7 @@ export async function buildPlanWithLLM({
       }
     }
     const branchSpecs = rawBranchSteps.slice(0, 4);
-    const branchSteps: PlanStep[] = branchSpecs.map(
-      (step: {
-        title?: string;
-        tool?: string;
-        expectedObservation?: string;
-        successCriteria?: string;
-      }) => ({
+    const branchSteps: PlanStep[] = branchSpecs.map((step: PlanStepSpecInput) => ({
         id: randomUUID(),
         title: step.title?.trim() || 'Review the page state.',
         status: 'pending' as const,
@@ -347,8 +402,7 @@ export async function buildPlanWithLLM({
         successCriteria: step.successCriteria?.trim() || null,
         attempts: 0,
         maxAttempts: maxStepAttempts,
-      })
-    );
+    }));
     const fallbackBranchSteps = buildBranchStepsFromAlternatives(
       meta?.alternatives ?? undefined,
       maxStepAttempts,

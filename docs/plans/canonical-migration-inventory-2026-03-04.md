@@ -728,7 +728,7 @@ Goal: migrate feature surfaces to their canonical latest contracts and remove ru
     - `src/app/api/catalogs/assign`
     - `src/app/api/ai-paths/legacy-compat/counters`
 - Reconciled stale temporary exceptions that were already retired by prior hard-cuts:
-  - `docs/legacy-compatibility-exception-register-2026-03-04.json`
+  - `docs/decisions/legacy-compatibility-exception-register-2026-03-04.json`
   - removed:
     - `products-api-legacy-gateway`
     - `integrations-base-import-action-import-rejection`
@@ -782,7 +782,7 @@ Goal: migrate feature surfaces to their canonical latest contracts and remove ru
   - `src/features/integrations/services/export-warehouse-preference-migration.ts`
   - `src/features/case-resolver/workspace-detached-contract-migration.ts`
 - Reconciled exception register to reflect completion:
-  - `docs/legacy-compatibility-exception-register-2026-03-04.json` now has no active temporary exceptions (`"exceptions": []`).
+  - `docs/decisions/legacy-compatibility-exception-register-2026-03-04.json` now has no active temporary exceptions (`"exceptions": []`).
 - Regression coverage updates:
   - `src/features/case-resolver/__tests__/workspace-detached-contract-migration.test.ts` now targets the relocated script helper.
   - `src/features/case-resolver/__tests__/workspace-persistence.test.ts` now inlines legacy schema constants for runtime-side legacy payload rejection checks.
@@ -1063,7 +1063,7 @@ Goal: migrate feature surfaces to their canonical latest contracts and remove ru
     - deprecated callback case wording updated after filename migration.
 - Updated migration docs references to canonical test filenames:
   - `docs/ai-paths/ai-paths-modernization-playbook-2026-03-04.md`
-  - `docs/canonical-migration-inventory-2026-03-04.md`
+  - `docs/plans/canonical-migration-inventory-2026-03-04.md`
 - Extended site-wide canonical guardrail:
   - `scripts/canonical/check-sitewide.mjs`
   - new check blocks reintroduction of `*.compat.test.ts(x)` files under `src/**`.

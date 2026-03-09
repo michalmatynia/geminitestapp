@@ -3,7 +3,7 @@
 Draft generated on: 2026-03-05  
 Target publication date: 2026-04-17  
 Status: Draft (Wave F stabilization pending)  
-Scope: final publication update for `docs/site-wide-canonical-migration-plan-2026-03-05.md`
+Scope: final publication update for `docs/plans/site-wide-canonical-migration-plan-2026-03-05.md`
 
 ## Final Summary (Target State)
 
@@ -16,9 +16,9 @@ Scope: final publication update for `docs/site-wide-canonical-migration-plan-202
 
 Completed artifacts:
 
-1. `docs/canonical-contract-matrix-2026-03-05.md`
-2. `docs/legacy-compatibility-exception-register-2026-03-05.md`
-3. `docs/legacy-compatibility-exception-register-2026-03-05.json`
+1. `docs/decisions/canonical-contract-matrix-2026-03-05.md`
+2. `docs/decisions/legacy-compatibility-exception-register-2026-03-05.md`
+3. `docs/decisions/legacy-compatibility-exception-register-2026-03-05.json`
 
 Final check target:
 
@@ -97,7 +97,7 @@ Required completion criteria by 2026-04-17:
 2. Final script lifecycle publication:
    - `docs/migrations/script-lifecycle-register-2026-04-17.md`
 3. Final closeout publication:
-   - `docs/canonical-closeout-2026-04-17.md`
+   - `docs/plans/canonical-closeout-2026-04-17.md`
 
 ## Verification Snapshot (Captured 2026-03-05)
 

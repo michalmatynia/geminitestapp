@@ -5,7 +5,7 @@
 1. `docs/AGENTS.md`
 2. `docs/AI_PATHS.md`
 3. `docs/AI_PATHS_EXTENDED_REFERENCE.md`
-4. `docs/ARCHITECTURE_GUARDRAILS.md`
+4. `docs/platform/architecture-guardrails.md`
 5. `docs/ai-paths/ai-paths-development-plan-2026-02-20.md`
 6. `docs/ai-paths/ai-paths-development-plan-2026-02-20-phase-3.md`
 7. `docs/ai-paths/kernel-engine-transition-plan-2026-03-05.md`

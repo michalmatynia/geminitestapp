@@ -402,14 +402,16 @@ export const handleAdvancedApi: NodeHandler = async ({
     const responseData = result.responseData;
 
     if (paginationMode !== 'none') {
-      const items = Array.isArray(responseData)
-        ? responseData
-        : itemsPath
-          ? (getValueAtMappingPath(responseData, itemsPath) as unknown[])
-          : [];
+      const rawItems: unknown =
+        Array.isArray(responseData)
+          ? responseData
+          : itemsPath
+            ? getValueAtMappingPath(responseData, itemsPath)
+            : [];
+      const items: unknown[] = Array.isArray(rawItems) ? rawItems : [];
 
-      if (Array.isArray(items)) {
-        aggregateItems.push(...items);
+      for (const item of items) {
+        aggregateItems.push(item);
       }
 
       if (paginationMode === 'page') {

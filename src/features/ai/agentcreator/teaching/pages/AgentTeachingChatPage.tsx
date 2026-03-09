@@ -3,6 +3,11 @@
 import Link from 'next/link';
 import React from 'react';
 
+import {
+  ContextRegistryPageProvider,
+  useOptionalContextRegistryPageEnvelope,
+  useRegisterContextRegistryPageSource,
+} from '@/features/ai/ai-context-registry/context/page-context';
 import type {
   AgentTeachingAgentRecord,
   AgentTeachingChatSource,
@@ -22,13 +27,24 @@ import {
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
+import {
+  AGENT_TEACHING_CHAT_CONTEXT_ROOT_IDS,
+  buildAgentTeachingChatContextBundle,
+} from '../context-registry/chat-page';
 import { useAgentTeachingQueriesContext } from '../context/AgentTeachingContext';
 import { useTeachingChatMutation } from '../hooks/useAgentTeachingQueries';
 
-export function AgentTeachingChatPage(): React.JSX.Element {
+function AgentTeachingChatPageContent(): React.JSX.Element {
   const { toast } = useToast();
-  const { agents, collections, isLoading: loadingAgents } = useAgentTeachingQueriesContext();
+  const {
+    agents,
+    collections,
+    chatModelId,
+    embeddingModelId,
+    isLoading: loadingAgents,
+  } = useAgentTeachingQueriesContext();
   const chatMutation = useTeachingChatMutation();
+  const contextRegistry = useOptionalContextRegistryPageEnvelope();
 
   const [selectedAgentId, setSelectedAgentId] = React.useState<string>('');
   const [input, setInput] = React.useState('');
@@ -40,6 +56,32 @@ export function AgentTeachingChatPage(): React.JSX.Element {
   const selectedAgent: AgentTeachingAgentRecord | null = selectedAgentId
     ? (agents.find((a: AgentTeachingAgentRecord) => a.id === selectedAgentId) ?? null)
     : null;
+
+  const registrySource = React.useMemo(
+    () => ({
+      label: 'Agent Teaching Chat',
+      resolved: buildAgentTeachingChatContextBundle({
+        agents,
+        collections,
+        chatModelId,
+        embeddingModelId,
+        selectedAgent,
+        messages,
+        lastSources,
+      }),
+    }),
+    [
+      agents,
+      chatModelId,
+      collections,
+      embeddingModelId,
+      lastSources,
+      messages,
+      selectedAgent,
+    ]
+  );
+
+  useRegisterContextRegistryPageSource('agent-teaching-chat-state', registrySource);
 
   const resolveCollectionName = (id: string): string => {
     const found = collections.find((c: AgentTeachingEmbeddingCollectionRecord) => c.id === id);
@@ -63,6 +105,7 @@ export function AgentTeachingChatPage(): React.JSX.Element {
       const data = await chatMutation.mutateAsync({
         agentId: selectedAgentId,
         messages: nextMessages,
+        contextRegistry,
       });
       setMessages((prev: SimpleChatMessage[]) => [
         ...prev,
@@ -228,5 +271,17 @@ export function AgentTeachingChatPage(): React.JSX.Element {
         </FormSection>
       </div>
     </div>
+  );
+}
+
+export function AgentTeachingChatPage(): React.JSX.Element {
+  return (
+    <ContextRegistryPageProvider
+      pageId='agentcreator:teaching-chat'
+      title='Agent Creator Teaching Chat'
+      rootNodeIds={[...AGENT_TEACHING_CHAT_CONTEXT_ROOT_IDS]}
+    >
+      <AgentTeachingChatPageContent />
+    </ContextRegistryPageProvider>
   );
 }

@@ -16,6 +16,9 @@ Use this directory for durable records such as:
 - compatibility decisions
 - cross-feature matrices
 
+Machine-readable companion artifacts for those records can also live here when a
+decision is backed by JSON or another tooling-facing format.
+
 ## Placement Rule
 
 - Feature-local decisions can live under feature folders when ownership is clear.
@@ -26,3 +29,5 @@ Use this directory for durable records such as:
 
 - [`canonical-contract-matrix-2026-03-04.md`](./canonical-contract-matrix-2026-03-04.md)
 - [`canonical-contract-matrix-2026-03-05.md`](./canonical-contract-matrix-2026-03-05.md)
+- [`legacy-compatibility-exception-register-2026-03-04.md`](./legacy-compatibility-exception-register-2026-03-04.md)
+- [`legacy-compatibility-exception-register-2026-03-05.md`](./legacy-compatibility-exception-register-2026-03-05.md)

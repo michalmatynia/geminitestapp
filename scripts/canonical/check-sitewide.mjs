@@ -8,13 +8,13 @@ const ROOT_TESTS_DIR = path.join(ROOT, '__tests__');
 
 const CANONICAL_ARTIFACTS_MANIFEST_PATH = 'docs/canonical-artifacts-latest.json';
 const DEFAULT_REQUIRED_DOCS = [
-  'docs/site-wide-canonical-migration-plan-2026-03-05.md',
-  'docs/canonical-contract-matrix-2026-03-05.md',
-  'docs/legacy-compatibility-exception-register-2026-03-05.md',
-  'docs/legacy-compatibility-exception-register-2026-03-05.json',
+  'docs/plans/site-wide-canonical-migration-plan-2026-03-05.md',
+  'docs/decisions/canonical-contract-matrix-2026-03-05.md',
+  'docs/decisions/legacy-compatibility-exception-register-2026-03-05.md',
+  'docs/decisions/legacy-compatibility-exception-register-2026-03-05.json',
 ];
 
-const DEFAULT_EXCEPTION_REGISTER_PATH = 'docs/legacy-compatibility-exception-register-2026-03-05.json';
+const DEFAULT_EXCEPTION_REGISTER_PATH = 'docs/decisions/legacy-compatibility-exception-register-2026-03-05.json';
 let requiredDocs = [...DEFAULT_REQUIRED_DOCS];
 let exceptionRegisterPath = DEFAULT_EXCEPTION_REGISTER_PATH;
 const FORBIDDEN_LEGACY_ROUTE_DIRS = [

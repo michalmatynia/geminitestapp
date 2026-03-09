@@ -14,14 +14,17 @@ export const collectUiInventory = async (
 ): Promise<UiInventory | null> => {
   if (!page) return null;
   try {
-    const uiInventory = await page.evaluate(() => {
+    /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
+    const uiInventory = await page.evaluate<UiInventory>(() => {
+      const documentRef = document;
+
       const cssPath = (el: Element): string | null => {
         if (!(el instanceof Element)) return null;
         if (el.id) return `#${CSS.escape(el.id)}`;
         const parts: string[] = [];
         let node: Element | null = el;
-        while (node?.nodeType === 1 && node !== document.documentElement) {
-          const currentNode = node;
+        while (node && node.nodeType === 1 && node !== documentRef.documentElement) {
+          const currentNode: Element = node;
           let part = currentNode.tagName.toLowerCase();
           const name = currentNode.getAttribute('name');
           const dataTest =
@@ -35,7 +38,7 @@ export const collectUiInventory = async (
           }
           const parent = currentNode.parentElement;
           if (parent) {
-            const siblings = Array.from(parent.children, (child) => child);
+            const siblings = Array.from(parent.children as HTMLCollectionOf<Element>, (child) => child);
             const matchingSiblings = siblings.filter((child) => child.tagName === currentNode.tagName);
             if (matchingSiblings.length > 1) {
               part += `:nth-of-type(${matchingSiblings.indexOf(currentNode) + 1})`;
@@ -61,24 +64,28 @@ export const collectUiInventory = async (
       });
 
       const cap = 200;
-      const inputs = Array.from(document.querySelectorAll('input, textarea, select'))
-        .filter(visible)
-        .map(describe);
-      const buttons = Array.from(
-        document.querySelectorAll('button, input[type=\'submit\'], input[type=\'button\']')
+      const inputs = Array.from(
+        documentRef.querySelectorAll('input, textarea, select')
       )
         .filter(visible)
         .map(describe);
-      const links = Array.from(document.querySelectorAll('a[href]'))
+      const buttons = Array.from(
+        documentRef.querySelectorAll('button, input[type=\'submit\'], input[type=\'button\']')
+      )
+        .filter(visible)
+        .map(describe);
+      const links = Array.from(documentRef.querySelectorAll('a[href]'))
         .filter(visible)
         .map((el: Element) => ({
           ...describe(el),
           href: (el as HTMLAnchorElement).href,
         }));
-      const headings = Array.from(document.querySelectorAll('h1, h2, h3, h4, h5, h6'))
+      const headings = Array.from(
+        documentRef.querySelectorAll('h1, h2, h3, h4, h5, h6')
+      )
         .filter(visible)
         .map(describe);
-      const forms = Array.from(document.querySelectorAll('form'))
+      const forms = Array.from(documentRef.querySelectorAll('form') as NodeListOf<Element>)
         .filter(visible)
         .map((el: Element) => ({
           ...describe(el),
@@ -95,8 +102,8 @@ export const collectUiInventory = async (
       };
 
       return {
-        url: location.href,
-        title: document.title,
+        url: documentRef.location.href,
+        title: documentRef.title,
         counts: {
           inputs: inputs.length,
           buttons: buttons.length,
@@ -112,6 +119,7 @@ export const collectUiInventory = async (
         truncated,
       };
     });
+    /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
 
     if (log) {
       await log('info', 'Captured UI inventory.', {

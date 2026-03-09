@@ -1,5 +1,6 @@
 'use client';
 
+import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import type {
   AgentTeachingAgentDto as AgentTeachingAgentRecord,
   AgentTeachingCollectionDto as AgentTeachingEmbeddingCollectionRecord,
@@ -73,15 +74,22 @@ export function useSearchEmbeddingCollectionMutation(): MutationResult<
 
 export function useTeachingChatMutation(): MutationResult<
   { message: string; sources: AgentTeachingChatSource[] },
-  { agentId: string; messages: SimpleChatMessage[] }
+  { agentId: string; messages: SimpleChatMessage[]; contextRegistry?: ContextRegistryConsumerEnvelope | null }
   > {
   const mutationKey = agentTeachingKeys.agents();
   return createMutationV2<
     { message: string; sources: AgentTeachingChatSource[] },
-    { agentId: string; messages: SimpleChatMessage[] }
+    { agentId: string; messages: SimpleChatMessage[]; contextRegistry?: ContextRegistryConsumerEnvelope | null }
   >({
-    mutationFn: ({ agentId, messages }: { agentId: string; messages: SimpleChatMessage[] }) =>
-      teachingChat(agentId, messages as ChatMessage[]),
+    mutationFn: ({
+      agentId,
+      messages,
+      contextRegistry,
+    }: {
+      agentId: string;
+      messages: SimpleChatMessage[];
+      contextRegistry?: ContextRegistryConsumerEnvelope | null;
+    }) => teachingChat(agentId, messages as ChatMessage[], contextRegistry),
     mutationKey,
     meta: {
       source: 'agentTeaching.hooks.useTeachingChatMutation',

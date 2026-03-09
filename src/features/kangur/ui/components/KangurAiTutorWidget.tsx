@@ -1,5 +1,6 @@
 'use client';
 
+import NextImage from 'next/image';
 import { createPortal } from 'react-dom';
 import {
   useCallback,
@@ -132,14 +133,17 @@ const TutorMoodAvatar = ({
   return (
     <div
       aria-label={label}
-      className={cn('flex items-center justify-center overflow-hidden rounded-full', className)}
+      className={cn('relative flex items-center justify-center overflow-hidden rounded-full', className)}
       data-testid={dataTestId}
       role='img'
     >
       {hasImage ? (
-        <img
-          src={avatarImageUrl ?? undefined}
+        <NextImage
+          src={avatarImageUrl}
           alt={label}
+          fill
+          sizes='100%'
+          unoptimized
           className={cn('h-full w-full object-cover', imgClassName)}
           loading='lazy'
         />

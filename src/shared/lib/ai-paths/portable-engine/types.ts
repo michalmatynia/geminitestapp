@@ -70,7 +70,8 @@ export const getPrismaSettingDelegate = (
   if (!process.env['DATABASE_URL'] || !prismaClient || typeof prismaClient !== 'object') {
     return null;
   }
-  const setting = Reflect.get(prismaClient, 'setting');
+  const prismaClientRecord = prismaClient as Record<string, unknown>;
+  const setting = prismaClientRecord['setting'];
   return isPrismaSettingDelegate(setting) ? setting : null;
 };
 

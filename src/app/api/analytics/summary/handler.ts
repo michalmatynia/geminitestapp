@@ -3,7 +3,6 @@ import { z } from 'zod';
 
 import { getAnalyticsSummary } from '@/shared/lib/analytics/server';
 import { auth } from '@/features/auth/server';
-import type { AnalyticsScope } from '@/shared/contracts';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError } from '@/shared/errors/app-error';
 import { normalizeOptionalQueryString } from '@/shared/lib/api/query-schema';

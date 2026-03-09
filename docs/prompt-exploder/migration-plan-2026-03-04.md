@@ -167,7 +167,7 @@ Test targets:
 
 Cleanup targets:
 
-- `docs/PROMPT_EXPLODER_MASTER_PLAN.md` (add migration completion note)
+- `docs/prompt-exploder/master-plan.md` (add migration completion note)
 - `docs/PROMPT_EXPLODER_OPERATIONS_RUNBOOK.md`
 - `docs/case-resolver/runbooks/prompt-exploder-capture-handoff.md`
 

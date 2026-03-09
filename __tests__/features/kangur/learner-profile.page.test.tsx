@@ -280,7 +280,11 @@ describe('LearnerProfile page', () => {
     render(<LearnerProfile />);
 
     expect(scoreFilterMock).not.toHaveBeenCalled();
-    expect(screen.getByText('Statystyki ucznia: Tryb lokalny.')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Zaloguj sie, aby synchronizowac postep ucznia miedzy urzadzeniami. Jesli nie masz jeszcze konta rodzica, zaloz je tutaj.'
+      )
+    ).toBeInTheDocument();
     expect(screen.getByTestId('learner-profile-operation-empty')).toHaveClass(
       'soft-card',
       'border-dashed',
@@ -289,8 +293,13 @@ describe('LearnerProfile page', () => {
     expect(screen.getByText('Brak danych o operacjach.')).toBeInTheDocument();
 
     const loginButton = screen.getByRole('button', { name: 'Zaloguj sie, aby synchronizowac postep' });
+    const createAccountButton = screen.getByRole('button', { name: 'Utworz konto rodzica' });
     await userEvent.click(loginButton);
-    expect(navigateToLoginMock).toHaveBeenCalledTimes(1);
+    await userEvent.click(createAccountButton);
+    expect(navigateToLoginMock).toHaveBeenCalledTimes(2);
+    expect(navigateToLoginMock).toHaveBeenLastCalledWith({
+      authMode: 'create-account',
+    });
   });
 
   it('shows scores loading error when score provider fails', async () => {

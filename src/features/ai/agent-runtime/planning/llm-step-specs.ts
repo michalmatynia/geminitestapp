@@ -1,24 +1,27 @@
-type PlanStepSpecInput = {
+export type PlanStepSpecInput = {
   title?: string;
   tool?: string;
-  expectedObservation?: string | null;
-  successCriteria?: string | null;
-  phase?: string | null;
-  priority?: number | null;
-  dependsOn?: number[] | string[] | null;
-  goalId?: string | null;
-  subgoalId?: string | null;
+  expectedObservation?: string | null | undefined;
+  successCriteria?: string | null | undefined;
+  phase?: string | null | undefined;
+  priority?: number | null | undefined;
+  dependsOn?: number[] | string[] | null | undefined;
+  goalId?: string | null | undefined;
+  subgoalId?: string | null | undefined;
 };
 
-export const normalizePlanStepSpecs = (steps: PlanStepSpecInput[]): PlanStepSpecInput[] =>
-  steps.map((step: PlanStepSpecInput) => {
+export const normalizePlanStepSpecs = (
+  steps: PlanStepSpecInput[]
+): PlanStepSpecInput[] =>
+  steps.map((step: PlanStepSpecInput): PlanStepSpecInput => {
     const { expectedObservation, successCriteria, phase, priority, dependsOn, ...rest } = step;
+    const nextDependsOn = Array.isArray(dependsOn) ? dependsOn : undefined;
     return {
       ...rest,
-      ...(expectedObservation != null && { expectedObservation }),
-      ...(successCriteria != null && { successCriteria }),
-      ...(phase != null && { phase }),
-      ...(priority != null && { priority }),
-      ...(dependsOn != null && { dependsOn }),
+      ...(typeof expectedObservation === 'string' ? { expectedObservation } : {}),
+      ...(typeof successCriteria === 'string' ? { successCriteria } : {}),
+      ...(typeof phase === 'string' ? { phase } : {}),
+      ...(typeof priority === 'number' ? { priority } : {}),
+      ...(nextDependsOn ? { dependsOn: nextDependsOn } : {}),
     };
   });

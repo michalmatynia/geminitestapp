@@ -33,9 +33,8 @@ New cross-cutting platform docs should land here instead of directly under
 - [`tooltip-documentation-platform.md`](./tooltip-documentation-platform.md)
 - [`migration-checklist.md`](./migration-checklist.md)
 
-## Legacy Root Docs Pending Migration
+## Root Compatibility Stubs
 
-These still live at the root today and should migrate here opportunistically:
-
-- none at the current top-tier platform-guide level
-- `docs/ARCHITECTURE_GUARDRAILS.md`
+Some historical root entrypoints may still exist as compatibility stubs, but the
+canonical platform docs now live in this directory. New references should point
+to the files above rather than the root-level stub paths.

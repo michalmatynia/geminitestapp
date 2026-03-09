@@ -1,7 +1,7 @@
 # Wave Execution Status (2026-03-05)
 
 Date: 2026-03-05  
-Scope: execution update for `docs/site-wide-canonical-migration-plan-2026-03-05.md`
+Scope: execution update for `docs/plans/site-wide-canonical-migration-plan-2026-03-05.md`
 
 ## Executed Today
 
@@ -9,9 +9,9 @@ Scope: execution update for `docs/site-wide-canonical-migration-plan-2026-03-05.
 
 Completed artifacts:
 
-1. `docs/canonical-contract-matrix-2026-03-05.md`
-2. `docs/legacy-compatibility-exception-register-2026-03-05.md`
-3. `docs/legacy-compatibility-exception-register-2026-03-05.json`
+1. `docs/decisions/canonical-contract-matrix-2026-03-05.md`
+2. `docs/decisions/legacy-compatibility-exception-register-2026-03-05.md`
+3. `docs/decisions/legacy-compatibility-exception-register-2026-03-05.json`
 
 Current exceptions:
 
@@ -133,5 +133,5 @@ In progress:
 
 1. Stabilization observation window is required before final closeout.
 2. Closeout draft artifact created:
-   - `docs/canonical-closeout-2026-04-17.md`
+   - `docs/plans/canonical-closeout-2026-04-17.md`
 3. Final publication remains targeted for 2026-04-17.

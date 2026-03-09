@@ -86,6 +86,10 @@ Metrics, inventories, semantic grammars, manifests, catalogs, and reports
 produced by scripts belong in generated areas and should be updated through the
 relevant scripts when possible.
 
+Machine-readable companions that are part of a decision or policy surface should
+live beside that canonical doc unless a temporary compatibility copy is still
+required elsewhere.
+
 ### 5. No orphan docs
 
 Any new doc must update its nearest hub page. A doc that is not discoverable
@@ -101,6 +105,15 @@ When moving a legacy root doc to its canonical folder:
   habits would otherwise break abruptly
 - mark the root stub as `superseded` and point to the new canonical location
 
+For non-markdown artifacts such as JSON manifests or exception registers:
+
+- create or keep the canonical file in the structured folder
+- if an old root path must remain temporarily, treat it as a compatibility copy
+  rather than the source of truth
+- keep compatibility copies byte-identical to the canonical file until they are
+  removed
+- update any manifest or script that should learn the canonical path
+
 ## Canonical Taxonomy
 
 | Class | Canonical Location | Use For | Notes |
@@ -112,6 +125,7 @@ When moving a legacy root doc to its canonical folder:
 | Cross-feature runbooks | `docs/runbooks/` | repo-wide or multi-feature operational procedures | feature-local runbooks stay inside feature dirs |
 | Cross-feature plans | `docs/plans/` | implementation plans, closeouts, refactor waves | feature-local plans can live in feature subfolders |
 | Cross-feature decisions | `docs/decisions/` | ADR-style records, exception registers, matrices | date-stamped records belong here |
+| Machine-readable decision companions | `docs/decisions/` | exception register JSON, decision manifests tied to one owning record | keep root copies only as temporary compatibility mirrors |
 | Migration execution | `docs/migrations/` | wave execution, verification, reports | keep execution artifacts together |
 | Generated metrics | `docs/metrics/` | scans, baselines, trend outputs | generated only |
 | Feature-generated references | feature-specific generated folders | semantic grammars, manifests, catalogs | keep near the feature that owns them |
@@ -130,9 +144,11 @@ When adding or rewriting docs:
    - Use `docs/plans/`.
 5. Is it a decision, exception register, or matrix?
    - Use `docs/decisions/`.
-6. Is it a stable shared platform guide?
+6. Is it a machine-readable companion to a decision or policy doc?
+   - Put it beside that canonical doc unless compatibility requires a mirror.
+7. Is it a stable shared platform guide?
    - Use `docs/platform/`.
-7. Is it a repo entrypoint or governance doc?
+8. Is it a repo entrypoint or governance doc?
    - Use the root `docs/` allowlist.
 
 If two locations seem possible, prefer the one with the clearest owner and the
@@ -192,6 +208,7 @@ When making the change:
 4. Update the nearest index or hub page.
 5. If the new doc supersedes an older one, mark that explicitly.
 6. If the doc is generated, update the generator or source contract when needed.
+7. If a machine-readable compatibility copy exists, update it in the same change.
 
 After the change:
 

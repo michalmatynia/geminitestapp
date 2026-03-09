@@ -103,11 +103,18 @@ describe('ParentDashboard page', () => {
     );
     expect(screen.getByRole('heading', { name: 'Panel Rodzica / Nauczyciela' })).toBeInTheDocument();
     expect(
-      screen.getByText('Ten widok pokazuje prywatne postepy ucznia, wiec dostep wymaga zalogowanego konta.')
+      screen.getByText(
+        'Ten widok pokazuje prywatne postepy ucznia, wiec wymaga konta rodzica. Jesli go jeszcze nie masz, zaloz je bez opuszczania Kangura.'
+      )
     ).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Zaloguj sie' }));
-    expect(navigateToLoginMock).toHaveBeenCalledTimes(1);
+    await userEvent.click(screen.getByRole('button', { name: 'Utworz konto rodzica' }));
+
+    expect(navigateToLoginMock).toHaveBeenCalledTimes(2);
+    expect(navigateToLoginMock).toHaveBeenLastCalledWith({
+      authMode: 'create-account',
+    });
     expect(screen.getByRole('link', { name: /Wroc do gry/i })).toHaveAttribute('href', '/kangur');
   });
 

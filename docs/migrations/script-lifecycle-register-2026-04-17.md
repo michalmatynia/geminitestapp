@@ -60,7 +60,7 @@ Owner: Platform Architecture + Domain Maintainers
 ## Preconditions For Finalizing This Register
 
 1. Stabilization window on main completes without canonical regressions.
-2. No active entries in `docs/legacy-compatibility-exception-register-2026-03-05.json`.
+2. No active entries in `docs/decisions/legacy-compatibility-exception-register-2026-03-05.json`.
 3. Final owner confirmation for each proposed status change.
 
 ## Owner Approval Matrix (Pending)

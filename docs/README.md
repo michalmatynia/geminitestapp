@@ -42,14 +42,13 @@ avoid becoming another dumping ground.
 
 ## Major Feature Entry Points
 
-- AI Paths: legacy root entrypoint [`docs/AI_PATHS.md`](./AI_PATHS.md) plus
-  feature docs under [`docs/ai-paths/README.md`](./ai-paths/README.md)
+- AI Paths: canonical feature docs under
+  [`docs/ai-paths/README.md`](./ai-paths/README.md)
 - Case Resolver: [`docs/case-resolver/index.md`](./case-resolver/index.md)
 - Validator: [`docs/validator/README.md`](./validator/README.md)
 - Kangur: [`docs/kangur/README.md`](./kangur/README.md)
-- Prompt Exploder: legacy root entrypoint
-  [`docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md`](./PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md)
-  plus feature docs under [`docs/prompt-exploder/README.md`](./prompt-exploder/README.md)
+- Prompt Exploder: canonical feature docs under
+  [`docs/prompt-exploder/README.md`](./prompt-exploder/README.md)
 
 ## Cross-Cutting Engineering Docs
 
@@ -93,3 +92,13 @@ manually.
   [`docs/documentation/root-doc-migration-backlog.md`](./documentation/root-doc-migration-backlog.md)
 - All feature/API changes must update relevant docs before merge.
 - Runbooks must be reviewed after incidents and on their stated cadence.
+
+## Agentic coding
+
+Platform-level guidance for AI-first concurrent coding now lives under `docs/platform/`:
+
+- `docs/platform/agentic-coding-overview.md`
+- `docs/platform/resource-leasing.md`
+- `docs/platform/forward-only-execution.md`
+- `docs/platform/agent-discovery.md`
+- `docs/platform/shared-lease-service.md`

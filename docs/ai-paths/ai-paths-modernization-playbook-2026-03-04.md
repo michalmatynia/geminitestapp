@@ -210,7 +210,7 @@ Scope:
 Files (expected):
 
 1. Legacy-only hooks/files identified in sessions 2-5.
-2. `docs/AI_PATHS.md` and linked architecture docs.
+2. `docs/ai-paths/overview.md` and linked architecture docs.
 
 Acceptance:
 

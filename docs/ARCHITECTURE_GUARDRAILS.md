@@ -4,6 +4,7 @@ last_reviewed: '2026-03-09'
 status: 'superseded'
 doc_type: 'policy'
 scope: 'platform'
+canonical: false
 superseded_by: 'docs/platform/architecture-guardrails.md'
 ---
 

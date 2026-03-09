@@ -4,6 +4,10 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import React, { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 
 import {
+  ContextRegistryPageProvider,
+  useRegisterContextRegistryPageSource,
+} from '@/features/ai/ai-context-registry/context/page-context';
+import {
   ClientOnly,
   Tabs,
   TabsContent,
@@ -14,6 +18,7 @@ import {
   Button,
 } from '@/shared/ui';
 import { useAdminLayoutActions } from '@/shared/providers/AdminLayoutProvider';
+import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 
 import { AdminImageStudioPromptsPage } from './AdminImageStudioPromptsPage';
 import { AdminImageStudioSettingsPage } from './AdminImageStudioSettingsPage';
@@ -23,11 +28,18 @@ import { StudioMainContent } from '../components/StudioMainContent';
 import { StudioModals } from '../components/StudioModals';
 import { StudioProjectsList } from '../components/StudioProjectsList';
 import { ToggleButtonGroup } from '../components/ToggleButtonGroup';
+import { useGenerationState } from '../context/GenerationContext';
 import { ImageStudioProvider } from '../context/ImageStudioProvider';
+import { useMaskingState } from '../context/MaskingContext';
+import { usePromptState } from '../context/PromptContext';
 import { useProjectsActions, useProjectsState } from '../context/ProjectsContext';
-import { useSettingsActions } from '../context/SettingsContext';
+import { useSettingsActions, useSettingsState } from '../context/SettingsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import { useUiActions, useUiState, type PreviewCanvasSize } from '../context/UiContext';
+import {
+  buildImageStudioWorkspaceContextBundle,
+  IMAGE_STUDIO_CONTEXT_ROOT_IDS,
+} from '../context-registry/workspace';
 import { getImageStudioDocTooltip } from '@/features/ai/image-studio/utils/studio-docs';
 
 type StudioTab = 'studio' | 'projects' | 'settings' | 'prompts' | 'docs';
@@ -56,8 +68,14 @@ function AdminImageStudioPageContent(): React.JSX.Element {
   const { handleRefreshSettings } = useSettingsActions();
   const { projectId, projectsQuery } = useProjectsState();
   const { setProjectId } = useProjectsActions();
-  const { selectedSlot, slots, slotsQuery } = useSlotsState();
+  const { selectedSlot, workingSlot, slots, slotsQuery, previewMode, selectedFolder } =
+    useSlotsState();
   const { setSelectedSlotId, setWorkingSlotId } = useSlotsActions();
+  const { promptText, paramsState } = usePromptState();
+  const { studioSettings } = useSettingsState();
+  const { maskShapes, maskInvert, maskFeather } = useMaskingState();
+  const { activeRunId, activeRunStatus, activeRunError, generationHistory, landingSlots } =
+    useGenerationState();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -65,12 +83,70 @@ function AdminImageStudioPageContent(): React.JSX.Element {
   const { isFocusMode, previewCanvasSize } = useUiState();
   const { setPreviewCanvasSize } = useUiActions();
   const { setIsMenuHidden } = useAdminLayoutActions();
+  const generationModel = useBrainAssignment({
+    capability: 'image_studio.general',
+  });
   const hideTopBar = activeTab === 'studio' && isFocusMode;
   const requestedSlotId = searchParams?.get('slotId')?.trim() ?? '';
   const returnToPath = normalizeReturnToPath(searchParams?.get('returnTo'));
   const slotHydrationKeyRef = useRef<string | null>(null);
   const copyCardNameTooltip = getImageStudioDocTooltip('sidebar_copy_card_name');
   const selectCardFirstTooltip = getImageStudioDocTooltip('sidebar_select_card_first');
+  const registrySource = React.useMemo(
+    () => ({
+      label: 'Image Studio workspace state',
+      resolved: buildImageStudioWorkspaceContextBundle({
+        activeTab,
+        projectId,
+        projects: projectsQuery.data ?? [],
+        slots,
+        selectedSlot,
+        workingSlot,
+        selectedFolder,
+        previewMode,
+        promptText,
+        paramsState,
+        studioSettings,
+        isFocusMode,
+        previewCanvasSize,
+        maskShapes,
+        maskInvert,
+        maskFeather,
+        activeRunId,
+        activeRunStatus,
+        activeRunError,
+        landingSlots,
+        generationHistoryCount: generationHistory.length,
+        assignedModelId: generationModel.effectiveModelId ?? null,
+      }),
+    }),
+    [
+      activeRunError,
+      activeRunId,
+      activeRunStatus,
+      activeTab,
+      generationHistory.length,
+      generationModel.effectiveModelId,
+      isFocusMode,
+      landingSlots,
+      maskFeather,
+      maskInvert,
+      maskShapes,
+      paramsState,
+      previewCanvasSize,
+      previewMode,
+      projectId,
+      projectsQuery.data,
+      promptText,
+      selectedFolder,
+      selectedSlot,
+      slots,
+      studioSettings,
+      workingSlot,
+    ]
+  );
+
+  useRegisterContextRegistryPageSource('image-studio-workspace-state', registrySource);
 
   useEffect(() => {
     const rawTab = searchParams?.get('tab');
@@ -317,9 +393,15 @@ function AdminImageStudioPageContent(): React.JSX.Element {
 export function AdminImageStudioPage(): React.JSX.Element {
   return (
     <Suspense fallback={<ImageStudioPageLoadingFallback />}>
-      <ImageStudioProvider>
-        <AdminImageStudioPageContent />
-      </ImageStudioProvider>
+      <ContextRegistryPageProvider
+        pageId='admin:image-studio'
+        title='Image Studio'
+        rootNodeIds={[...IMAGE_STUDIO_CONTEXT_ROOT_IDS]}
+      >
+        <ImageStudioProvider>
+          <AdminImageStudioPageContent />
+        </ImageStudioProvider>
+      </ContextRegistryPageProvider>
     </Suspense>
   );
 }

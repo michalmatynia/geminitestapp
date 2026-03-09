@@ -1,25 +1,26 @@
 # Weekly Quality Report
 
-Generated at: 2026-03-09T05:26:11.912Z
+Generated at: 2026-03-09T06:12:30.508Z
 Node: v24.3.0
 
 ## Quality Check Summary
 
 - Total checks: 18
-- Passed: 11
-- Failed: 4
+- Passed: 12
+- Failed: 3
 - Timed out: 0
 - Skipped: 3
 
 ## Baseline Status
 
 - Build pass rate: 100%
+- Build preflight: removed (Removed .next/standalone before build to reclaim disk space. Removed stale .next/trace-build before running build check.)
 - Lint pass rate: n/a%
 - Lint-domain pass rate: 0%
 - Typecheck pass rate: 0%
 - Critical-flow gate pass rate: 100%
 - Security smoke gate pass rate: 100%
-- Unit-domain gate pass rate: 0%
+- Unit-domain gate pass rate: 100%
 - Full unit pass rate: n/a%
 - E2E test pass rate: n/a%
 - Duration budget alerts: 0
@@ -34,24 +35,24 @@ E2E tests were skipped in this run. Use `--include-e2e` for full end-to-end base
 
 | Check | Status | Duration | Exit | Command |
 | --- | --- | ---: | ---: | --- |
-| Build | PASS | 2.5m | 0 | `npm run build` |
+| Build | PASS | 2.7m | 0 | `npm run build` |
 | Lint | SKIPPED | 0ms | - | `npm run lint` |
-| Lint Domain Gate | FAIL | 2.3m | 1 | `node scripts/quality/run-lint-domain-checks.mjs --include-test-tree --strict --ci --no-history` |
-| Typecheck | FAIL | 1.2m | 2 | `npm run typecheck` |
-| Critical Flow Gate | PASS | 25.1s | 0 | `npm run test:critical-flows:strict -- --ci --no-history` |
-| Security Smoke Gate | PASS | 8.8s | 0 | `npm run test:security-smoke:strict -- --ci --no-history` |
-| Unit Domain Gate | FAIL | 4.8m | 1 | `npm run test:unit:domains:strict -- --ci --no-history` |
+| Lint Domain Gate | FAIL | 1.5m | 1 | `node scripts/quality/run-lint-domain-checks.mjs --include-test-tree --strict --ci --no-history` |
+| Typecheck | FAIL | 1.3m | 2 | `npm run typecheck` |
+| Critical Flow Gate | PASS | 27.5s | 0 | `npm run test:critical-flows:strict -- --ci --no-history` |
+| Security Smoke Gate | PASS | 9.6s | 0 | `npm run test:security-smoke:strict -- --ci --no-history` |
+| Unit Domain Gate | PASS | 5.2m | 0 | `npm run test:unit:domains:strict -- --ci --no-history` |
 | Full Unit Tests | SKIPPED | 0ms | - | `npm run test:unit` |
 | E2E Tests | SKIPPED | 0ms | - | `npm run test:e2e` |
-| Architecture Guardrails | FAIL | 3.6s | 1 | `node scripts/architecture/check-guardrails.mjs` |
-| UI Consolidation Guardrail | PASS | 3.2s | 0 | `node scripts/architecture/check-ui-consolidation.mjs` |
-| Observability Check | PASS | 1.4s | 0 | `npm run observability:check` |
-| Unsafe Patterns | PASS | 960ms | 0 | `node scripts/quality/check-unsafe-patterns.mjs --ci --no-history` |
-| Import Boundaries | PASS | 422ms | 0 | `node scripts/quality/check-import-boundaries.mjs --ci --no-history` |
-| API Input Validation | PASS | 194ms | 0 | `node scripts/quality/check-api-input-validation.mjs --ci --no-history` |
-| Context Health | PASS | 574ms | 0 | `node scripts/quality/check-context-health.mjs --ci --no-history` |
-| Timer Cleanup | PASS | 287ms | 0 | `node scripts/quality/check-timer-cleanup.mjs --ci --no-history` |
-| Test Distribution | PASS | 268ms | 0 | `node scripts/quality/check-test-distribution.mjs --ci --no-history` |
+| Architecture Guardrails | FAIL | 6.0s | 1 | `node scripts/architecture/check-guardrails.mjs` |
+| UI Consolidation Guardrail | PASS | 3.9s | 0 | `node scripts/architecture/check-ui-consolidation.mjs` |
+| Observability Check | PASS | 1.6s | 0 | `npm run observability:check` |
+| Unsafe Patterns | PASS | 1.3s | 0 | `node scripts/quality/check-unsafe-patterns.mjs --ci --no-history` |
+| Import Boundaries | PASS | 484ms | 0 | `node scripts/quality/check-import-boundaries.mjs --ci --no-history` |
+| API Input Validation | PASS | 233ms | 0 | `node scripts/quality/check-api-input-validation.mjs --ci --no-history` |
+| Context Health | PASS | 609ms | 0 | `node scripts/quality/check-context-health.mjs --ci --no-history` |
+| Timer Cleanup | PASS | 309ms | 0 | `node scripts/quality/check-timer-cleanup.mjs --ci --no-history` |
+| Test Distribution | PASS | 333ms | 0 | `node scripts/quality/check-test-distribution.mjs --ci --no-history` |
 
 ## Guardrail Snapshot
 
@@ -73,12 +74,12 @@ E2E tests were skipped in this run. Use `--include-e2e` for full end-to-end base
 
 ## Architecture and Performance Snapshot
 
-- Source files: 5179
-- Source lines: 840959
-- API routes: 337
-- Cross-feature edge pairs: 24
+- Source files: 5197
+- Source lines: 844215
+- API routes: 340
+- Cross-feature edge pairs: 25
 - Shared->features imports: 76
-- Largest file: `src/features/kangur/ui/components/KangurAiTutorWidget.tsx` (3073 LOC)
+- Largest file: `src/features/kangur/ui/components/KangurAiTutorWidget.tsx` (3075 LOC)
 - use client files: 1496
 - setInterval occurrences: 22
 

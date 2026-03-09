@@ -14,13 +14,13 @@ artifacts, semantic grammar docs, manifests, catalogs, and dated plans.
 
 ## Canonical Entry Points
 
-- High-level overview: [`docs/AI_PATHS.md`](../AI_PATHS.md)
-- Extended reference: [`docs/AI_PATHS_EXTENDED_REFERENCE.md`](../AI_PATHS_EXTENDED_REFERENCE.md)
+- High-level overview: [`./overview.md`](./overview.md)
+- Extended reference: [`./reference.md`](./reference.md)
 - Semantic grammar hub: [`./semantic-grammar/README.md`](./semantic-grammar/README.md)
 
 ## Structural Rule
 
-- Keep stable high-level AI Paths overviews discoverable from the root index
-  until migration is complete.
+- Root-level AI Paths docs now act only as compatibility stubs and should not
+  be treated as canonical entrypoints.
 - Put feature-specific deep docs, plans, generated artifacts, and references in
   this folder rather than creating new root-level AI Paths docs.

@@ -63,6 +63,12 @@ when the doc is touched meaningfully.
    by hand-editing outputs.
 6. Machine-readable companions should live beside their canonical doc, and any
    retained compatibility copy must be updated in the same change.
+7. Superseded root docs should remain short compatibility stubs, not partial
+   shadow copies of the old canonical content.
+8. Manifest-defined compatibility mirrors should be synced by script when
+   possible, not maintained by ad hoc manual copying.
+9. Compatibility mirrors should be deleted once repo-internal consumers are
+   removed.
 
 ## AI Update Protocol
 
@@ -75,3 +81,9 @@ When an AI adds or rewrites docs, it should:
 5. Mark superseded docs explicitly instead of leaving ambiguous duplicates.
 6. If a JSON or other machine-readable companion exists, update the canonical
    file first and keep any compatibility copy in sync.
+7. If a root compatibility stub exists, keep it short and make sure it still
+   points cleanly at the canonical replacement.
+8. If the mirror pair is declared in the docs structure manifest, run
+   `npm run docs:structure:sync-mirrors`.
+9. Canonical docs should link to canonical destinations, not back to root
+   compatibility stubs, unless a migration inventory explicitly needs the old path.

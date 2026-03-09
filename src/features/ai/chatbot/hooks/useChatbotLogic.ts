@@ -3,6 +3,7 @@
 import { useSearchParams } from 'next/navigation';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 
+import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
 import { useAgentCreatorSettings } from '@/features/ai/agentcreator';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import {
@@ -96,6 +97,7 @@ export interface UseChatbotLogicReturn {
 export const useChatbotLogic = (): UseChatbotLogicReturn => {
   const { toast } = useToast();
   const searchParams = useSearchParams();
+  const contextRegistry = useOptionalContextRegistryPageEnvelope();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState<string>('');
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -429,6 +431,7 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
       const data = await chatbotApi.sendChatbotMessage({
         messages: [...messages, userMessage],
         sessionId,
+        ...(contextRegistry ? { contextRegistry } : {}),
       });
 
       if (data.message) {
@@ -454,7 +457,7 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
     } finally {
       setIsSending(false);
     }
-  }, [input, isSending, messages, sessionId, toast]);
+  }, [contextRegistry, input, isSending, messages, sessionId, toast]);
 
   return {
     messages: messages,

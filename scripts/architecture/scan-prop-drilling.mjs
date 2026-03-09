@@ -3,6 +3,8 @@ import path from 'node:path';
 
 import ts from 'typescript';
 
+import { buildScanOutput } from './lib/scan-output.mjs';
+
 const root = process.cwd();
 const args = new Set(process.argv.slice(2));
 const outDir = path.join(root, 'docs', 'metrics');
@@ -1359,14 +1361,14 @@ const run = async () => {
 
   const backlog = chains.slice(0, TOP_BACKLOG_LIMIT);
 
-  const result = {
-    summary,
-    backlog,
-    transitionBacklog,
-    componentBacklog,
-    forwardingComponentBacklog,
-    chains,
-  };
+const result = {
+  summary,
+  backlog,
+  transitionBacklog,
+  componentBacklog,
+  forwardingComponentBacklog,
+  chains,
+};
 
   if (!NO_WRITE) {
     await fs.mkdir(outDir, { recursive: true });
@@ -1417,7 +1419,25 @@ const run = async () => {
   }
 
   if (SUMMARY_JSON_ONLY) {
-    console.log(JSON.stringify({ summary }));
+    process.stdout.write(
+      `${JSON.stringify(
+        buildScanOutput({
+          scannerName: 'scan-prop-drilling',
+          scannerVersion: '1.0.0',
+          summary,
+          details: {
+            backlog,
+            transitionBacklog,
+            componentBacklog,
+            forwardingComponentBacklog,
+            chains,
+          },
+          notes: ['prop-drilling scan result'],
+        }),
+        null,
+        2
+      )}\n`
+    );
     return;
   }
 

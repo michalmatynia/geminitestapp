@@ -8,7 +8,7 @@ the canonical repo references.
 1. `docs/COPILOT.md` for Copilot-specific working style
 2. `docs/AGENTS.md` for authoritative repo guidance
 3. `GEMINI.md` for the deeper scanned architecture reference
-4. feature docs such as `docs/AI_PATHS.md` or `docs/case-resolver/index.md`
+4. feature docs such as `docs/ai-paths/overview.md` or `docs/case-resolver/index.md`
    when working in those areas
 
 ## Copilot-Specific Guidance

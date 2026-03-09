@@ -8,7 +8,7 @@ to the canonical repo references.
 1. `docs/CLAUDE.md` for Claude-specific working style
 2. `docs/AGENTS.md` for authoritative repo guidance
 3. `GEMINI.md` for the deeper code-backed architecture reference
-4. feature docs such as `docs/AI_PATHS.md` or `docs/case-resolver/index.md`
+4. feature docs such as `docs/ai-paths/overview.md` or `docs/case-resolver/index.md`
    when working in those areas
 
 ## Claude-Specific Guidance
@@ -40,7 +40,7 @@ to the canonical repo references.
 - Admin shell and dashboards: `src/features/admin/`
 - Auth and session flow: `src/features/auth/`, `src/app/auth/`, `src/proxy.ts`
 - AI Paths: `src/features/ai/ai-paths/`, `src/shared/lib/ai-paths/`,
-  `docs/AI_PATHS.md`
+  `docs/ai-paths/overview.md`
 - AI Brain/model routing: `src/shared/lib/ai-brain/`
 - CMS/frontend rendering: `src/features/cms/`, `src/app/(frontend)/`
 - Database engine routing: `src/features/database/`, `src/shared/lib/db/`

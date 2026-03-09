@@ -110,6 +110,171 @@ export const componentNodes: ContextNode[] = [
     source: { type: 'code', ref: SOURCE_REF },
   },
   {
+    id: 'component:chatbot-chat-interface',
+    kind: 'component',
+    name: 'ChatbotChatInterface',
+    description:
+      'Primary chat panel in the admin Chatbot workspace for viewing the active conversation and sending messages.',
+    tags: ['chatbot', 'admin', 'chat', 'conversation'],
+    relationships: [
+      { type: 'uses', targetId: 'page:admin-chatbot' },
+      { type: 'uses', targetId: 'action:chatbot-chat' },
+      { type: 'reads', targetId: 'collection:chatbot-sessions' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'component:chatbot-session-sidebar',
+    kind: 'component',
+    name: 'ChatbotSessionSidebar',
+    description:
+      'Session navigation column for browsing, creating, selecting, and deleting chatbot conversations.',
+    tags: ['chatbot', 'admin', 'sessions', 'sidebar'],
+    relationships: [
+      { type: 'uses', targetId: 'page:admin-chatbot' },
+      { type: 'reads', targetId: 'collection:chatbot-sessions' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'component:chatbot-settings-panel',
+    kind: 'component',
+    name: 'ChatbotSettingsPanel',
+    description:
+      'Settings tab in the admin Chatbot workspace for persona selection, web search, and operator-authored context.',
+    tags: ['chatbot', 'admin', 'settings', 'context'],
+    relationships: [
+      { type: 'uses', targetId: 'page:admin-chatbot' },
+      { type: 'uses', targetId: 'action:chatbot-chat' },
+      { type: 'reads', targetId: 'collection:chatbot-sessions' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'component:chatbot-debug-panel',
+    kind: 'component',
+    name: 'ChatbotDebugPanel',
+    description:
+      'Debug panel in the admin Chatbot workspace for recent run state, diagnostics, and agent execution visibility.',
+    tags: ['chatbot', 'admin', 'debug', 'agent'],
+    relationships: [
+      { type: 'uses', targetId: 'page:admin-chatbot' },
+      { type: 'uses', targetId: 'action:chatbot-chat' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'component:image-studio-slot-tree',
+    kind: 'component',
+    name: 'ImageStudioSlotTree',
+    description:
+      'Left-hand slot tree in Image Studio for browsing folders, selecting slots, and organizing project assets.',
+    tags: ['image-studio', 'slots', 'tree', 'sidebar'],
+    relationships: [
+      { type: 'uses', targetId: 'page:admin-image-studio' },
+      { type: 'reads', targetId: 'collection:image-studio-projects' },
+      { type: 'reads', targetId: 'collection:image-studio-slots' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'component:image-studio-center-preview',
+    kind: 'component',
+    name: 'ImageStudioCenterPreview',
+    description:
+      'Central preview canvas in Image Studio for the active slot, masks, focus mode, and generation results.',
+    tags: ['image-studio', 'preview', 'canvas', 'mask'],
+    relationships: [
+      { type: 'uses', targetId: 'page:admin-image-studio' },
+      { type: 'reads', targetId: 'collection:image-studio-slots' },
+      { type: 'uses', targetId: 'action:image-studio-run' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'component:image-studio-right-sidebar',
+    kind: 'component',
+    name: 'ImageStudioRightSidebar',
+    description:
+      'Right-side controls in Image Studio for prompt editing, prompt params, masks, settings, and run history.',
+    tags: ['image-studio', 'sidebar', 'prompt', 'settings'],
+    relationships: [
+      { type: 'uses', targetId: 'page:admin-image-studio' },
+      { type: 'reads', targetId: 'collection:image-studio-runs' },
+      { type: 'uses', targetId: 'action:image-studio-run' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'component:image-studio-generation-toolbar',
+    kind: 'component',
+    name: 'ImageStudioGenerationToolbar',
+    description:
+      'Top-level generation controls in Image Studio for launching runs, switching tabs, and reviewing in-flight state.',
+    tags: ['image-studio', 'toolbar', 'generation', 'controls'],
+    relationships: [
+      { type: 'uses', targetId: 'page:admin-image-studio' },
+      { type: 'uses', targetId: 'action:image-studio-run' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
     id: 'component:product-filters',
     kind: 'component',
     name: 'ProductFilters',

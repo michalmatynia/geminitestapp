@@ -3,8 +3,8 @@
 ## Reference Basis
 
 1. `docs/AGENTS.md`
-2. `docs/AI_PATHS.md`
-3. `docs/AI_PATHS_EXTENDED_REFERENCE.md`
+2. `docs/ai-paths/overview.md`
+3. `docs/ai-paths/reference.md`
 4. `docs/platform/architecture-guardrails.md`
 5. `docs/ai-paths/ai-paths-development-plan-2026-02-20.md`
 6. `docs/ai-paths/ai-paths-development-plan-2026-02-20-phase-3.md`

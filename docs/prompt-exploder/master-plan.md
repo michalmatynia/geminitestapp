@@ -11,8 +11,8 @@ canonical: true
 
 Related docs:
 
-- `docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md`
-- `docs/PROMPT_EXPLODER_TOOLTIP_GUIDE.md`
+- `docs/prompt-exploder/overview.md`
+- `docs/prompt-exploder/tooltip-guide.md`
 
 ## Scope
 

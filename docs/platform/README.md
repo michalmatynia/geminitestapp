@@ -38,3 +38,13 @@ New cross-cutting platform docs should land here instead of directly under
 Some historical root entrypoints may still exist as compatibility stubs, but the
 canonical platform docs now live in this directory. New references should point
 to the files above rather than the root-level stub paths.
+
+## Agentic coding
+
+The platform now exposes an AI-first concurrent agentic coding baseline:
+
+- [Agentic Coding Overview](./agentic-coding-overview.md)
+- [Resource Leasing](./resource-leasing.md)
+- [Forward-Only Execution](./forward-only-execution.md)
+- [Agent Discovery](./agent-discovery.md)
+- [Shared Lease Service](./shared-lease-service.md)

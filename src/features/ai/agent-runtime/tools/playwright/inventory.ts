@@ -14,7 +14,6 @@ export const collectUiInventory = async (
 ): Promise<UiInventory | null> => {
   if (!page) return null;
   try {
-    /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
     const uiInventory = await page.evaluate<UiInventory>(() => {
       const documentRef = document;
 
@@ -23,7 +22,8 @@ export const collectUiInventory = async (
         if (el.id) return `#${CSS.escape(el.id)}`;
         const parts: string[] = [];
         let node: Element | null = el;
-        while (node && node.nodeType === 1 && node !== documentRef.documentElement) {
+        while (node !== null) {
+          if (node.nodeType !== 1 || node === documentRef.documentElement) break;
           const currentNode: Element = node;
           let part = currentNode.tagName.toLowerCase();
           const name = currentNode.getAttribute('name');
@@ -119,8 +119,6 @@ export const collectUiInventory = async (
         truncated,
       };
     });
-    /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
-
     if (log) {
       await log('info', 'Captured UI inventory.', {
         label,

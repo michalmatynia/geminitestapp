@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import {
+  buildContextRegistryConsumerEnvelope,
+  mergeContextRegistryResolutionBundles,
+} from '@/features/ai/ai-context-registry/context/page-context-shared';
+import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
+import {
   imageStudioRunRequestSchema,
   resolveExpectedOutputCount,
   sanitizeImageStudioProjectId,
@@ -29,9 +34,25 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     throw badRequestError('Project id is required.');
   }
 
+  const resolvedRegistryBundle =
+    parsed.data.contextRegistry?.refs.length
+      ? await contextRegistryEngine.resolveRefs({
+        refs: parsed.data.contextRegistry.refs,
+        maxNodes: 24,
+        depth: 1,
+      })
+      : null;
+  const contextRegistry = buildContextRegistryConsumerEnvelope({
+    refs: parsed.data.contextRegistry?.refs,
+    resolved: mergeContextRegistryResolutionBundles(
+      resolvedRegistryBundle,
+      parsed.data.contextRegistry?.resolved ?? null
+    ),
+  });
   const request = {
     ...parsed.data,
     projectId,
+    ...(contextRegistry ? { contextRegistry } : {}),
   };
   const operation = request.operation === 'center_object' ? 'center_object' : 'generate';
   const operationLabel = operation === 'center_object' ? 'Center object' : 'Generation';

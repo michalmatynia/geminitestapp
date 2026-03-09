@@ -37,11 +37,22 @@ Use the structure gate before or after docs changes:
 npm run docs:structure:check
 ```
 
+If a docs change affects machine-readable compatibility mirrors, sync them from
+the canonical sources first when mirror pairs are still declared:
+
+```bash
+npm run docs:structure:sync-mirrors
+```
+
 This check currently enforces:
 
 - root-level docs allowlist compliance
 - required frontmatter on canonical docs
 - existence of the main governance and hub docs
+- superseded root docs stay short and explicitly marked `canonical: false`
+- canonical docs and configured reference guides do not point at root
+  compatibility stubs, except for explicit migration inventory exemptions
+- declared compatibility mirrors, when present, stay byte-identical to their canonical source
 
 The GitHub Actions workflow `.github/workflows/docs-structure.yml` runs the same
 check on docs-related changes.
@@ -87,8 +98,8 @@ produced by scripts belong in generated areas and should be updated through the
 relevant scripts when possible.
 
 Machine-readable companions that are part of a decision or policy surface should
-live beside that canonical doc unless a temporary compatibility copy is still
-required elsewhere.
+live beside that canonical doc. Compatibility copies should be temporary and
+removed once internal consumers are gone.
 
 ### 5. No orphan docs
 
@@ -104,6 +115,8 @@ When moving a legacy root doc to its canonical folder:
 - leave a short root stub at the old path when existing links, scripts, or human
   habits would otherwise break abruptly
 - mark the root stub as `superseded` and point to the new canonical location
+- do not update canonical docs to point back at the root stub; link to the
+  canonical destination instead
 
 For non-markdown artifacts such as JSON manifests or exception registers:
 
@@ -209,6 +222,10 @@ When making the change:
 5. If the new doc supersedes an older one, mark that explicitly.
 6. If the doc is generated, update the generator or source contract when needed.
 7. If a machine-readable compatibility copy exists, update it in the same change.
+8. Prefer `npm run docs:structure:sync-mirrors` over manual copy/paste when the
+   manifest already defines the compatibility mirror pair.
+9. Link to canonical destinations, not root compatibility stubs, unless a
+   migration inventory doc explicitly needs to record the legacy path.
 
 After the change:
 
@@ -252,6 +269,8 @@ Use compatibility stubs when gradual migration is safer than a hard cut.
   canonical frontmatter, and required hub-doc presence
 - implemented: `.github/workflows/docs-structure.yml` to run the structure gate
   on docs-related changes
+- implemented: root compatibility stub reference detection for canonical docs and
+  configured repo reference guides
 - next: expand validation to detect more unindexed docs and deeper feature-level
   metadata gaps where practical
 
@@ -264,3 +283,4 @@ A docs change is structurally complete when:
 3. the nearest index is updated
 4. generated docs were changed via the correct path
 5. superseded docs are called out instead of silently drifting
+6. canonical docs point at canonical destinations, not root compatibility stubs

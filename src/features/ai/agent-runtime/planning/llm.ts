@@ -394,14 +394,14 @@ export async function buildPlanWithLLM({
     }
     const branchSpecs = rawBranchSteps.slice(0, 4);
     const branchSteps: PlanStep[] = branchSpecs.map((step: PlanStepSpecInput) => ({
-        id: randomUUID(),
-        title: step.title?.trim() || 'Review the page state.',
-        status: 'pending' as const,
-        tool: step.tool === 'none' ? 'none' : 'playwright',
-        expectedObservation: step.expectedObservation?.trim() || null,
-        successCriteria: step.successCriteria?.trim() || null,
-        attempts: 0,
-        maxAttempts: maxStepAttempts,
+      id: randomUUID(),
+      title: step.title?.trim() || 'Review the page state.',
+      status: 'pending' as const,
+      tool: step.tool === 'none' ? 'none' : 'playwright',
+      expectedObservation: step.expectedObservation?.trim() || null,
+      successCriteria: step.successCriteria?.trim() || null,
+      attempts: 0,
+      maxAttempts: maxStepAttempts,
     }));
     const fallbackBranchSteps = buildBranchStepsFromAlternatives(
       meta?.alternatives ?? undefined,

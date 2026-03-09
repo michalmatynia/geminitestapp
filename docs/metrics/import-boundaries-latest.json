@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-03-09T05:26:06.707Z",
+  "generatedAt": "2026-03-09T06:12:23.045Z",
   "status": "failed",
   "summary": {
-    "total": 2,
-    "errorCount": 2,
-    "warningCount": 0,
+    "total": 10,
+    "errorCount": 7,
+    "warningCount": 3,
     "infoCount": 0,
     "status": "failed",
-    "fileCount": 4461,
+    "fileCount": 4473,
     "featureCount": 9,
     "circularDependencyCount": 0
   },
@@ -40,6 +40,7 @@
     ],
     "cms": [
       "admin",
+      "ai",
       "foldertree",
       "gsap",
       "products",
@@ -72,6 +73,56 @@
       "severity": "error",
       "ruleId": "cross-feature-internal-import",
       "message": "Imports internal path from feature \"ai\": @/features/ai/ai-context-registry/context/page-context. Use the barrel export instead.",
+      "file": "src/features/cms/components/page-builder/context/useInspectorAiGeneration.ts",
+      "line": 3,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"ai\": @/features/ai/ai-context-registry/context/page-context. Use the barrel export instead.",
+      "file": "src/features/cms/components/page-builder/PageBuilderLayout.tsx",
+      "line": 7,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"ai\": @/features/ai/ai-context-registry/context/page-context. Use the barrel export instead.",
+      "file": "src/features/cms/components/page-builder/settings/page-settings/usePageAiAssistant.ts",
+      "line": 4,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"ai\": @/features/ai/ai-context-registry/context/page-context. Use the barrel export instead.",
+      "file": "src/features/cms/components/page-builder/theme/ThemeColorsContext.tsx",
+      "line": 5,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"ai\": @/features/ai/ai-context-registry/context/page-context-shared. Use the barrel export instead.",
+      "file": "src/features/cms/context-registry/page-builder.ts",
+      "line": 8,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"ai\": @/features/ai/ai-context-registry/context/page-context. Use the barrel export instead.",
       "file": "src/features/kangur/ui/context/KangurAiTutorRuntime.shared.ts",
       "line": 47,
       "column": null,
@@ -87,15 +138,51 @@
       "column": null,
       "snippet": null,
       "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (4 levels up). Consider using path aliases.",
+      "file": "src/app/api/agent/approval-gates/route.ts",
+      "line": 3,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (4 levels up). Consider using path aliases.",
+      "file": "src/app/api/agent/capabilities/route.ts",
+      "line": 3,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (4 levels up). Consider using path aliases.",
+      "file": "src/app/api/agent/resources/route.ts",
+      "line": 3,
+      "column": null,
+      "snippet": null,
+      "context": null
     }
   ],
   "rules": [
     {
       "ruleId": "cross-feature-internal-import",
-      "errorCount": 2,
+      "errorCount": 7,
       "warningCount": 0,
+      "infoCount": 0
+    },
+    {
+      "ruleId": "deep-relative-import",
+      "errorCount": 0,
+      "warningCount": 3,
       "infoCount": 0
     }
   ],
-  "durationMs": 287
+  "durationMs": 298
 }

@@ -4,6 +4,7 @@ import { execFile as execFileCallback } from 'node:child_process';
 import { promisify } from 'node:util';
 
 import { collectMetrics, formatCompactSummary } from './lib-metrics.mjs';
+import { parseScanSummary } from './lib/scan-output.mjs';
 
 const args = new Set(process.argv.slice(2));
 const root = process.cwd();
@@ -19,11 +20,7 @@ const collectPropDrillingSummary = async () => {
     }
   );
 
-  const parsed = JSON.parse(stdout);
-  const summary = parsed?.summary;
-  if (!summary || typeof summary !== 'object') {
-    throw new Error('Prop drilling summary is missing from scanner output.');
-  }
+  const summary = parseScanSummary(stdout, 'scan-prop-drilling');
 
   return {
     candidateChains: Number(summary.candidateChainCount ?? 0),

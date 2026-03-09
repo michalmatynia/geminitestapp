@@ -15,6 +15,14 @@ function readFrontmatter(content) {
   return match ? match[1] : null;
 }
 
+function countLines(content) {
+  return content.split(/\r?\n/).length;
+}
+
+function lineNumberAt(content, index) {
+  return content.slice(0, index).split(/\r?\n/).length;
+}
+
 async function loadManifest() {
   const raw = await fs.readFile(manifestPath, 'utf8');
   return JSON.parse(raw);
@@ -36,6 +44,51 @@ async function fileExists(relativePath) {
   } catch {
     return false;
   }
+}
+
+async function listSupersededRootDocs(rootDocs) {
+  const supersededDocs = [];
+
+  for (const fileName of rootDocs) {
+    const relativePath = path.join('docs', fileName);
+    const content = await fs.readFile(path.join(root, relativePath), 'utf8');
+    const frontmatter = readFrontmatter(content);
+
+    if (frontmatter && /^status:\s*'?(superseded)'?$/m.test(frontmatter)) {
+      supersededDocs.push(relativePath);
+    }
+  }
+
+  return supersededDocs;
+}
+
+function findDocReferenceTokens(content) {
+  const pattern =
+    /docs\/[A-Za-z0-9._/-]+\.(?:md|mdx)|(?:\.\.?\/)+[A-Za-z0-9._/-]+\.(?:md|mdx)/g;
+  const matches = [];
+
+  for (const match of content.matchAll(pattern)) {
+    matches.push({
+      token: match[0],
+      index: match.index ?? 0,
+    });
+  }
+
+  return matches;
+}
+
+function resolveDocReference(fromPath, referenceToken) {
+  if (referenceToken.startsWith('docs/')) {
+    return path.posix.normalize(referenceToken);
+  }
+
+  if (referenceToken.startsWith('./') || referenceToken.startsWith('../')) {
+    return path.posix.normalize(
+      path.posix.join(path.posix.dirname(fromPath), referenceToken)
+    );
+  }
+
+  return null;
 }
 
 async function checkCanonicalFrontmatter(relativePath, requiredFields) {
@@ -62,12 +115,88 @@ async function checkCanonicalFrontmatter(relativePath, requiredFields) {
   return issues;
 }
 
+async function checkSupersededRootDoc(relativePath, maxLines) {
+  const fullPath = path.join(root, relativePath);
+  const content = await fs.readFile(fullPath, 'utf8');
+  const frontmatter = readFrontmatter(content);
+
+  if (!frontmatter || !/^status:\s*'?(superseded)'?$/m.test(frontmatter)) {
+    return [];
+  }
+
+  const issues = [];
+
+  if (!/^canonical:\s*false$/m.test(frontmatter)) {
+    issues.push(`${relativePath}: superseded root docs must declare canonical: false`);
+  }
+
+  if (!/^superseded_by:\s*.+$/m.test(frontmatter)) {
+    issues.push(`${relativePath}: superseded root docs must declare superseded_by`);
+  }
+
+  if (countLines(content) > maxLines) {
+    issues.push(
+      `${relativePath}: superseded root docs must stay at or under ${maxLines} lines`
+    );
+  }
+
+  return issues;
+}
+
+async function checkCompatibilityMirrorPair(pair) {
+  const issues = [];
+  const canonicalExists = await fileExists(pair.canonical);
+  const mirrorExists = await fileExists(pair.mirror);
+
+  if (!canonicalExists) {
+    issues.push(`${pair.canonical}: compatibility mirror source is missing`);
+    return issues;
+  }
+
+  if (!mirrorExists) {
+    issues.push(`${pair.mirror}: compatibility mirror file is missing`);
+    return issues;
+  }
+
+  const [canonicalContent, mirrorContent] = await Promise.all([
+    fs.readFile(path.join(root, pair.canonical), 'utf8'),
+    fs.readFile(path.join(root, pair.mirror), 'utf8'),
+  ]);
+
+  if (canonicalContent !== mirrorContent) {
+    issues.push(
+      `${pair.mirror}: compatibility mirror content diverges from canonical source ${pair.canonical}`
+    );
+  }
+
+  return issues;
+}
+
+async function checkReferenceTargetForRootStubReferences(relativePath, rootStubPaths) {
+  const content = await fs.readFile(path.join(root, relativePath), 'utf8');
+  const issues = [];
+  const rootStubSet = new Set(rootStubPaths.map((value) => value.replace(/\\/g, '/')));
+
+  for (const reference of findDocReferenceTokens(content)) {
+    const resolvedReference = resolveDocReference(relativePath, reference.token);
+
+    if (resolvedReference && rootStubSet.has(resolvedReference)) {
+      issues.push(
+        `${relativePath}:${lineNumberAt(content, reference.index)}: references root compatibility stub ${resolvedReference}; use the canonical destination instead`
+      );
+    }
+  }
+
+  return issues;
+}
+
 async function run() {
   const manifest = await loadManifest();
   const issues = [];
 
   const rootDocs = await listRootDocs();
   const allowlist = new Set(manifest.rootAllowlist);
+  const supersededRootDocs = await listSupersededRootDocs(rootDocs);
 
   for (const fileName of rootDocs) {
     if (!allowlist.has(fileName)) {
@@ -79,6 +208,15 @@ async function run() {
     if (!rootDocs.includes(fileName)) {
       issues.push(`structure manifest references missing root doc docs/${fileName}`);
     }
+  }
+
+  const maxSupersededRootDocLines = manifest.maxSupersededRootDocLines ?? 25;
+  for (const fileName of rootDocs) {
+    const docIssues = await checkSupersededRootDoc(
+      path.join('docs', fileName),
+      maxSupersededRootDocLines
+    );
+    issues.push(...docIssues);
   }
 
   for (const relativePath of manifest.requiredCanonicalDocs) {
@@ -93,6 +231,37 @@ async function run() {
       manifest.requiredFrontmatterFields
     );
     issues.push(...docIssues);
+  }
+
+  for (const pair of manifest.compatibilityMirrorPairs ?? []) {
+    const mirrorIssues = await checkCompatibilityMirrorPair(pair);
+    issues.push(...mirrorIssues);
+  }
+
+  const referenceTargets = [
+    ...new Set([
+      ...manifest.requiredCanonicalDocs,
+      ...(manifest.additionalReferenceCheckTargets ?? []),
+    ]),
+  ];
+  const referenceTargetExemptions = new Set(manifest.rootStubReferenceExemptions ?? []);
+
+  for (const relativePath of referenceTargets) {
+    if (referenceTargetExemptions.has(relativePath)) {
+      continue;
+    }
+
+    const exists = await fileExists(relativePath);
+    if (!exists) {
+      issues.push(`${relativePath}: root stub reference check target is missing`);
+      continue;
+    }
+
+    const referenceIssues = await checkReferenceTargetForRootStubReferences(
+      relativePath,
+      supersededRootDocs
+    );
+    issues.push(...referenceIssues);
   }
 
   if (issues.length > 0) {

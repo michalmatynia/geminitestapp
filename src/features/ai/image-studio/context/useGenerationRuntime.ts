@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useRunStudio } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
+import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
 import { buildRunRequestPreview } from '@/features/ai/image-studio/utils/run-request-preview';
 import type { ImageFileRecord } from '@/shared/contracts/files';
 import type {
@@ -235,6 +236,7 @@ export function useGenerationRuntime(): {
   const generationModel = useBrainAssignment({
     capability: 'image_studio.general',
   });
+  const contextRegistry = useOptionalContextRegistryPageEnvelope();
 
   const runMutation = useRunStudio();
   const [runOutputs, setRunOutputs] = useState<ImageFileRecord[]>([]);
@@ -672,7 +674,12 @@ export function useGenerationRuntime(): {
     setPendingSourceSlotId(null);
     setLandingSlots(buildPendingLandingSlots('pending', expectedOutputs));
 
-    runMutation.mutate(requestPreview.payload, {
+    runMutation.mutate(
+      {
+        ...requestPreview.payload,
+        ...(contextRegistry ? { contextRegistry } : {}),
+      },
+      {
       onSuccess: (data) => {
         const queuedExpected = normalizeExpectedOutputs(data.expectedOutputs, expectedOutputs);
         setActiveRunId(data.runId);
@@ -705,10 +712,12 @@ export function useGenerationRuntime(): {
         );
         toast(error.message || 'Generation failed.', { variant: 'error' });
       },
-    });
+      }
+    );
   }, [
     cancelCurrentPoll,
     compositeAssetIds,
+    contextRegistry,
     generationModel.effectiveModelId,
     maskFeather,
     maskInvert,

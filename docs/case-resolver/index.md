@@ -41,7 +41,7 @@ This section is the centralized source of truth for the Case Resolver feature.
 - [Developer Handbook](../platform/developer-handbook.md)
 - [API Caching](../platform/api-caching.md)
 - [Architecture Guardrails](../platform/architecture-guardrails.md)
-- [AI Paths Docs](../AI_PATHS.md)
+- [AI Paths Docs](../ai-paths/overview.md)
 
 ## Ownership and Review
 

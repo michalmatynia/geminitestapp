@@ -3,6 +3,10 @@
 import { useSearchParams } from 'next/navigation';
 import React, { Suspense } from 'react';
 
+import {
+  ContextRegistryPageProvider,
+  useRegisterContextRegistryPageSource,
+} from '@/features/ai/ai-context-registry/context/page-context';
 import { AgentCreatorSettingsProvider } from '@/features/ai/agentcreator';
 import { Tabs, TabsContent, TabsList, TabsTrigger, LoadingState, Card } from '@/shared/ui';
 
@@ -10,12 +14,70 @@ import { ChatbotDebugPanel } from '../components/ChatbotDebugPanel';
 import { ChatInterface } from '../components/ChatInterface';
 import { SessionSidebar } from '../components/SessionSidebar';
 import { SettingsTab } from '../components/SettingsTab';
-import { ChatbotProvider } from '../context/ChatbotContext';
+import {
+  useChatbotMessages,
+  useChatbotSessions,
+  useChatbotSettings,
+  useChatbotUI,
+  ChatbotProvider,
+} from '../context/ChatbotContext';
+import {
+  buildChatbotWorkspaceContextBundle,
+  CHATBOT_CONTEXT_ROOT_IDS,
+} from '../context-registry/workspace';
 
 function ChatbotPageInner(): React.JSX.Element | null {
   const searchParams = useSearchParams();
   const [mounted, setMounted] = React.useState<boolean>(false);
   const [activeTab, setActiveTab] = React.useState<string>('chat');
+  const { messages } = useChatbotMessages();
+  const { sessions, currentSessionId } = useChatbotSessions();
+  const {
+    personaId,
+    webSearchEnabled,
+    useGlobalContext,
+    useLocalContext,
+    globalContext,
+    localContext,
+    localContextMode,
+  } = useChatbotSettings();
+  const { latestAgentRunId } = useChatbotUI();
+
+  const registrySource = React.useMemo(
+    () => ({
+      label: 'Chatbot workspace state',
+      resolved: buildChatbotWorkspaceContextBundle({
+        activeTab,
+        messages,
+        sessions,
+        currentSessionId,
+        personaId,
+        webSearchEnabled,
+        useGlobalContext,
+        useLocalContext,
+        globalContext,
+        localContext,
+        localContextMode,
+        latestAgentRunId,
+      }),
+    }),
+    [
+      activeTab,
+      currentSessionId,
+      globalContext,
+      latestAgentRunId,
+      localContext,
+      localContextMode,
+      messages,
+      personaId,
+      sessions,
+      useGlobalContext,
+      useLocalContext,
+      webSearchEnabled,
+    ]
+  );
+
+  useRegisterContextRegistryPageSource('chatbot-workspace-state', registrySource);
 
   React.useEffect((): void => {
     setMounted(true);
@@ -69,9 +131,15 @@ export default function ChatbotPage(): React.JSX.Element {
   return (
     <Suspense fallback={<LoadingState message='Loading chatbot...' />}>
       <AgentCreatorSettingsProvider>
-        <ChatbotProvider>
-          <ChatbotPageInner />
-        </ChatbotProvider>
+        <ContextRegistryPageProvider
+          pageId='admin:chatbot'
+          title='Admin Chatbot'
+          rootNodeIds={[...CHATBOT_CONTEXT_ROOT_IDS]}
+        >
+          <ChatbotProvider>
+            <ChatbotPageInner />
+          </ChatbotProvider>
+        </ContextRegistryPageProvider>
       </AgentCreatorSettingsProvider>
     </Suspense>
   );

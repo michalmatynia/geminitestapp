@@ -4,26 +4,12 @@ import { execFile as execFileCallback } from 'node:child_process';
 import { promisify } from 'node:util';
 
 import { collectMetrics } from './lib-metrics.mjs';
+import { parseScanSummary } from './lib/scan-output.mjs';
 
 const args = new Set(process.argv.slice(2));
 const root = process.cwd();
 const baselinePath = path.join(root, 'scripts', 'architecture', 'guardrails-baseline.json');
 const execFile = promisify(execFileCallback);
-
-const parseSummary = (stdout, source) => {
-  let parsed;
-  try {
-    parsed = JSON.parse(stdout);
-  } catch {
-    throw new Error(`${source} did not return JSON summary output.`);
-  }
-
-  const summary = parsed?.summary;
-  if (!summary || typeof summary !== 'object') {
-    throw new Error(`${source} did not produce a valid summary object.`);
-  }
-  return summary;
-};
 
 const collectPropDrillingGuardrail = async () => {
   const { stdout } = await execFile(
@@ -34,7 +20,7 @@ const collectPropDrillingGuardrail = async () => {
     }
   );
 
-  const summary = parseSummary(stdout, 'scan-prop-drilling');
+  const summary = parseScanSummary(stdout, 'scan-prop-drilling');
   const depthGte4Chains = Number(summary?.highPriorityChainCount);
   const componentsWithForwarding = Number(summary?.componentsWithForwarding);
   if (!Number.isFinite(depthGte4Chains)) {
@@ -65,7 +51,7 @@ const collectUiConsolidationGuardrail = async () => {
     }
   );
 
-  const summary = parseSummary(stdout, 'scan-ui-consolidation');
+  const summary = parseScanSummary(stdout, 'scan-ui-consolidation');
   const totalOpportunities = Number(summary?.totalOpportunities);
   const highPriorityOpportunities = Number(summary?.highPriorityCount);
   const duplicateNameClusters = Number(summary?.duplicateNameClusterCount);

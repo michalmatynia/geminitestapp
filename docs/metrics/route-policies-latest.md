@@ -1,24 +1,27 @@
 # Route Policy Report
 
-Generated at: 2026-03-09T05:09:00.793Z
+Generated at: 2026-03-09T06:20:00.569Z
 
 ## Summary
 
-- Status: PASSED
-- Routes scanned: 345
-- Method exports scanned: 493
+- Status: WARN
+- Routes scanned: 350
+- Method exports scanned: 499
 - Errors: 0
-- Warnings: 0
+- Warnings: 1
 - CSRF exemptions: 47
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
+| route-parsejson-without-bodyschema | 0 | 1 | 0 |
 
 ## Issues
 
-No route policy issues detected.
+| Severity | Rule | Location | Message |
+| --- | --- | --- | --- |
+| WARN | route-parsejson-without-bodyschema | src/app/api/agent/leases/route.ts:83:14 | POST parses JSON without a bodySchema guard. |
 
 ## CSRF Exemption Inventory
 

@@ -70,6 +70,58 @@ export const pageNodes: ContextNode[] = [
     source: { type: 'code', ref: SOURCE_REF },
   },
   {
+    id: 'page:admin-chatbot',
+    kind: 'page',
+    name: 'Admin Chatbot',
+    description:
+      'Admin chatbot workspace with session navigation, persona-aware chat, debug visibility, ' +
+      'settings, and page-scoped context for AI turns.',
+    tags: ['chatbot', 'admin', 'chat', 'ai'],
+    relationships: [
+      { type: 'reads', targetId: 'collection:chatbot-sessions' },
+      { type: 'uses', targetId: 'component:chatbot-chat-interface' },
+      { type: 'uses', targetId: 'component:chatbot-session-sidebar' },
+      { type: 'uses', targetId: 'component:chatbot-settings-panel' },
+      { type: 'uses', targetId: 'component:chatbot-debug-panel' },
+      { type: 'uses', targetId: 'action:chatbot-chat' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'page:admin-image-studio',
+    kind: 'page',
+    name: 'Admin Image Studio',
+    description:
+      'Admin image generation workspace for managing projects, slot trees, masks, prompt parameters, ' +
+      'generation settings, and output review.',
+    tags: ['image-studio', 'admin', 'generation', 'editor', 'ai'],
+    relationships: [
+      { type: 'reads', targetId: 'collection:image-studio-projects' },
+      { type: 'reads', targetId: 'collection:image-studio-slots' },
+      { type: 'reads', targetId: 'collection:image-studio-runs' },
+      { type: 'uses', targetId: 'component:image-studio-slot-tree' },
+      { type: 'uses', targetId: 'component:image-studio-center-preview' },
+      { type: 'uses', targetId: 'component:image-studio-right-sidebar' },
+      { type: 'uses', targetId: 'component:image-studio-generation-toolbar' },
+      { type: 'uses', targetId: 'action:image-studio-run' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
     id: 'page:products',
     kind: 'page',
     name: 'Products Listing Page',

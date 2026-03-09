@@ -35,6 +35,44 @@ Outputs:
 - `docs/metrics/baseline-<timestamp>.json`
 - `docs/metrics/route-hotspots.md`
 
+### Machine-readable scan output contract
+
+For AI and automation, use JSON mode:
+
+```bash
+node scripts/architecture/scan-prop-drilling.mjs --summary-json --no-write --no-history
+node scripts/architecture/scan-ui-consolidation.mjs --summary-json --no-write --no-history
+node scripts/architecture/scan-type-clusters.mjs --summary-json --no-write --no-history
+node scripts/observability/check-observability.mjs --mode=check --summary-json
+```
+
+Every scan/check now emits the same envelope:
+
+```json
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-03-09T00:00:00.000Z",
+  "scanner": { "name": "scan-prop-drilling", "version": "1.0.0" },
+  "status": "ok",
+  "summary": { "metricName": 0 },
+  "details": {},
+  "paths": {},
+  "filters": {},
+  "notes": []
+}
+```
+
+- `summary` contains scalar metrics used by guardrail checks.
+- `details` contains arrays/maps such as `chains`, `opportunities`, or `clusters` for downstream AI usage.
+- `paths` contains written artifact paths when the scanner produced files.
+- `filters` contains run filters/flags.
+- `notes` contains optional run annotations.
+
+Use [`scripts/architecture/lib/scan-output.mjs`](/Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/scripts/architecture/lib/scan-output.mjs) for both producers and consumers:
+
+- `buildScanOutput` when writing `--summary-json`
+- `parseScanOutput` / `parseScanSummary` when reading `stdout`
+
 ### Guardrail enforcement
 
 Run:

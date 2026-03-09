@@ -1,7 +1,7 @@
 'use client';
 
 import type {
-  ChatMessageDto as ChatMessage,
+  ChatbotChatResponseDto,
   ChatbotSettingsDto as ChatbotSettingsPayload,
   ChatbotSessionDto as ChatSession,
   ChatbotSessionListItem,
@@ -139,8 +139,8 @@ type SaveChatbotSettingsVariables = {
  * Mutation hook for sending a chat message
  */
 export function useSendChatMessage(): UpdateMutation<
-  { message?: string },
-  { messages: ChatMessage[]; sessionId?: string | null }
+  ChatbotChatResponseDto,
+  Parameters<typeof sendChatbotMessage>[0]
   > {
   const mutationKey = chatbotQueryKeys.mutation('send-message');
   return createUpdateMutationV2({

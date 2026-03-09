@@ -18,7 +18,7 @@ code-backed, and shorter than `GEMINI.md`. Other overlay docs should defer to it
 2. `GEMINI.md` for the deeper scanned architecture reference
 3. `docs/README.md` for the docs map
 4. `docs/documentation/README.md` when the task touches docs
-5. feature docs such as `docs/AI_PATHS.md`, `docs/case-resolver/index.md`,
+5. feature docs such as `docs/ai-paths/overview.md`, `docs/case-resolver/index.md`,
    or `docs/validator/README.md` when working in those areas
 
 ## Repo Snapshot
@@ -59,6 +59,16 @@ Hard rules:
 - never silently replace a canonical doc with a second doc covering the same role
 - when migrating legacy root docs, prefer canonical relocation plus a short
   compatibility stub over silent hard cuts
+- compatibility stubs must stay short, declare `status: superseded`,
+  `canonical: false`, and point at `superseded_by`
+- canonical docs and repo reference guides must not use root compatibility stubs
+  as ongoing reference targets
+- compatibility mirrors for machine-readable artifacts must stay byte-identical
+  to their canonical source until they are removed
+- when a manifest-defined mirror changes, prefer `npm run docs:structure:sync-mirrors`
+  over hand-copying the mirror file
+- remove compatibility mirrors once internal consumers are gone; do not keep
+  them indefinitely out of habit
 
 ## AI Documentation Workflow
 
@@ -77,6 +87,12 @@ When a task changes docs:
    old doc for follow-up migration or archival.
 7. Run `npm run docs:structure:check` when the change affects documentation
    placement, metadata, or hub pages.
+8. If the change keeps a root compatibility stub or mirror, keep it minimal and
+   structurally aligned with the canonical source in the same patch.
+9. If the docs structure manifest declares a compatibility mirror pair, sync it
+   with `npm run docs:structure:sync-mirrors`.
+10. When linking to documentation, use the canonical destination rather than a
+    root compatibility stub unless the doc is explicitly tracking migration.
 
 ## Current Source Layout
 

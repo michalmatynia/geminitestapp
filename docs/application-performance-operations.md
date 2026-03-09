@@ -4,6 +4,7 @@ last_reviewed: '2026-03-09'
 status: 'superseded'
 doc_type: 'runbook'
 scope: 'cross-feature'
+canonical: false
 superseded_by: 'docs/runbooks/application-performance-operations.md'
 ---
 

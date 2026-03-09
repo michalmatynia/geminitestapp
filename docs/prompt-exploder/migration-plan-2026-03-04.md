@@ -59,8 +59,8 @@ Code/doc targets:
 - `src/shared/contracts/prompt-exploder/base.ts`
 - `src/shared/contracts/prompt-exploder/bridge.ts`
 - `src/shared/contracts/prompt-exploder/settings.ts`
-- `docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md`
-- `docs/PROMPT_EXPLODER_OPERATIONS_RUNBOOK.md`
+- `docs/prompt-exploder/overview.md`
+- `docs/prompt-exploder/operations-runbook.md`
 
 Deliverables:
 
@@ -168,7 +168,7 @@ Test targets:
 Cleanup targets:
 
 - `docs/prompt-exploder/master-plan.md` (add migration completion note)
-- `docs/PROMPT_EXPLODER_OPERATIONS_RUNBOOK.md`
+- `docs/prompt-exploder/operations-runbook.md`
 - `docs/case-resolver/runbooks/prompt-exploder-capture-handoff.md`
 
 Exit criteria:

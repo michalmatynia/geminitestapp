@@ -48205,3 +48205,1882 @@ Ready on http://localhost:57831 { port: 57831, host: '127.0.0.1' }
 Received SIGTERM, shutting down gracefully... { signal: 'SIGTERM' }
  GET /api/settings?scope=heavy 200 in 3.9s (compile: 2.2s, proxy.ts: 11ms, render: 1728ms)
 Server closed undefined
+
+> libapp2@0.1.0 predev
+> node scripts/runtime/check-node-version.cjs
+
+
+> libapp2@0.1.0 dev
+> node --max-old-space-size=8192 server.cjs
+
+○ Compiling instrumentation Node.js ...
+[ai-paths.portable-engine.envelope-verification] Portable envelope verification audit sink health probe sinkId=portable-envelope-verification-log-forwarding {
+  category: 'ai_path_portable_envelope_verification_audit_sink_health',
+  kind: 'ai-paths.portable-envelope-verification-audit-sink-health.v1',
+  sinkId: 'portable-envelope-verification-log-forwarding',
+  stage: 'probe',
+  service: 'ai-paths.portable-engine'
+}
+[ai-paths.portable-engine.envelope-verification.sink-bootstrap] Portable envelope verification audit sink startup health summary sinkId=all {
+  category: 'ai_path_portable_envelope_verification_audit_sink_health',
+  kind: 'ai-paths.portable-envelope-verification-audit-sink-health.v1',
+  profile: 'dev',
+  policy: 'warn',
+  timeoutMs: 3000,
+  status: 'healthy',
+  failedSinkIds: [],
+  diagnostics: [
+    {
+      sinkId: 'portable-envelope-verification-log-forwarding',
+      status: 'healthy',
+      checkedAt: '2026-03-08T22:47:05.287Z',
+      durationMs: 102,
+      message: 'Health check passed.',
+      error: null
+    }
+  ],
+  service: 'ai-paths.portable-engine'
+}
+[queue-factory] [queue-factory:database-backup-scheduler] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:product-sync-scheduler] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:system-log-alerts] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-init] Starting BullMQ workers... { service: 'queue-init' }
+[queue-registry] [queue-registry] Starting queue worker: base-import { queueName: 'base-import', service: 'queue-registry' }
+[queue-factory] [queue-factory:base-import] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: database-backup-scheduler { queueName: 'database-backup-scheduler', service: 'queue-registry' }
+[queue-registry] [queue-registry] Starting queue worker: system-log-alerts { queueName: 'system-log-alerts', service: 'queue-registry' }
+[queue-registry] [queue-registry] Starting queue worker: tradera-listings { queueName: 'tradera-listings', service: 'queue-registry' }
+[queue-factory] [queue-factory:tradera-listings] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-ai { queueName: 'product-ai', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-ai] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync { queueName: 'product-sync', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-sync] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync-backfill { queueName: 'product-sync-backfill', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-sync-backfill] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync-scheduler { queueName: 'product-sync-scheduler', service: 'queue-registry' }
+[queue-factory] [queue-factory:case-resolver-ocr] BullMQ worker started (concurrency: 2) { concurrency: 2, service: 'queue-factory' }
+[queue-factory] [queue-factory:ai-path-run] BullMQ worker started (concurrency: 3) { concurrency: 3, service: 'queue-factory' }
+[queue-factory] [queue-factory:chatbot] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:agent] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:image-studio-run] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:tradera-relist-scheduler] Worker stopped { service: 'queue-factory' }
+Ready on http://localhost:55959 { port: 55959, host: '127.0.0.1' }
+[queue-factory] [queue-factory:image-studio-sequence] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+ GET /api/health 200 in 1494ms (compile: 860ms, proxy.ts: 75ms, render: 558ms)
+○ Compiling /auth/signin ...
+ GET /api/health 200 in 760ms (compile: 11ms, proxy.ts: 6ms, render: 742ms)
+ GET /auth/signin 200 in 1044ms (compile: 722ms, render: 322ms)
+○ Compiling /kangur/[[...slug]] ...
+ GET /kangur 200 in 10.8s (compile: 9.6s, render: 1248ms)
+ GET /kangur 200 in 142ms (compile: 9ms, render: 133ms)
+[kangur.scores.GET] kangur.scores.GET completed successfully {
+  durationMs: 148,
+  successPolicy: 'all',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: 'eaa478a0056d5ef2671a2d11437a8442',
+  otelSpanId: 'eb9087ec8daea994',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  traceId: 'e0cc9532-6123-4ff6-8d13-c56cd53ea0f8',
+  correlationId: '84fa9f8a-03c7-4521-b516-c324c27ea042'
+}
+[kangur.scores.GET] kangur.scores.GET completed successfully {
+  durationMs: 54,
+  successPolicy: 'all',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '07f7d7ad063396bef34be7e5d73f1644',
+  otelSpanId: '29d571608fe68c9a',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  traceId: '1eb7179d-6f38-49f9-bb70-f40c3118491a',
+  correlationId: 'be10fed4-57e4-4a4b-a087-100d670d623a'
+}
+ GET /api/kangur/scores?sort=-score&limit=100 200 in 63ms (compile: 2ms, proxy.ts: 3ms, render: 57ms)
+ GET /api/auth/session 200 in 218ms (compile: 203ms, proxy.ts: 5ms, render: 10ms)
+ GET /api/auth/session 200 in 12ms (compile: 5ms, proxy.ts: 2ms, render: 5ms)
+ GET /kangur 200 in 125ms (compile: 6ms, render: 119ms)
+ GET /api/auth/session 200 in 14ms (compile: 5ms, proxy.ts: 3ms, render: 5ms)
+ GET /api/auth/session 200 in 19ms (compile: 6ms, proxy.ts: 4ms, render: 8ms)
+[kangur.scores.GET] kangur.scores.GET completed successfully {
+  durationMs: 56,
+  successPolicy: 'all',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '6d95664ce31849ed7e37b5e150841f9b',
+  otelSpanId: '74f39231fa9264d8',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  traceId: '7af9152b-5cde-4a17-a460-8676120d27c5',
+  correlationId: '96586fd9-a587-4e5c-8d0c-1d65596e693d'
+}
+ GET /api/kangur/scores?sort=-score&limit=100 200 in 67ms (compile: 1822µs, proxy.ts: 3ms, render: 62ms)
+ GET /kangur 200 in 72ms (compile: 4ms, render: 68ms)
+ GET /api/auth/session 200 in 79ms (compile: 42ms, proxy.ts: 8ms, render: 30ms)
+ GET /api/auth/session 200 in 21ms (compile: 10ms, proxy.ts: 6ms, render: 6ms)
+[kangur.scores.GET] kangur.scores.GET completed successfully {
+  durationMs: 62,
+  successPolicy: 'all',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '9b80da13daf6b82147599e0c3b308b4d',
+  otelSpanId: 'e7f3caddf76d20b6',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  traceId: '75fbca0b-c99c-4e4a-bf66-77095691385f',
+  correlationId: '06abb2da-88cd-4fe7-ab3c-40d053b1f37a'
+}
+ GET /api/kangur/scores?sort=-score&limit=100 200 in 74ms (compile: 5ms, proxy.ts: 3ms, render: 66ms)
+ GET /kangur/lessons 200 in 74ms (compile: 6ms, render: 69ms)
+ GET /api/auth/session 200 in 14ms (compile: 5ms, proxy.ts: 3ms, render: 6ms)
+ GET /api/auth/session 200 in 13ms (compile: 5ms, proxy.ts: 4ms, render: 4ms)
+ GET /kangur/lessons 200 in 83ms (compile: 5ms, render: 78ms)
+ GET /api/auth/session 200 in 24ms (compile: 11ms, proxy.ts: 5ms, render: 8ms)
+ GET /api/auth/session 200 in 26ms (compile: 7ms, proxy.ts: 5ms, render: 14ms)
+ GET /kangur/lessons 200 in 125ms (compile: 5ms, render: 120ms)
+ GET /api/auth/session 200 in 14ms (compile: 4ms, proxy.ts: 7ms, render: 3ms)
+ GET /api/auth/session 200 in 12ms (compile: 4ms, proxy.ts: 3ms, render: 5ms)
+ GET /uploads/agentcreator/personas/persona-mila/neutral/avatar.png 200 in 3.6s (compile: 3.4s, render: 180ms)
+ GET /uploads/agentcreator/personas/persona-mila/neutral/avatar.png 200 in 177ms (compile: 5ms, render: 172ms)
+ GET /kangur/lessons 200 in 74ms (compile: 4ms, render: 69ms)
+ GET /api/auth/session 200 in 17ms (compile: 5ms, proxy.ts: 3ms, render: 9ms)
+ GET /api/auth/session 200 in 23ms (compile: 12ms, proxy.ts: 3ms, render: 8ms)
+ GET /kangur/lessons 200 in 80ms (compile: 4ms, render: 76ms)
+ GET /api/auth/session 200 in 11ms (compile: 4ms, proxy.ts: 4ms, render: 3ms)
+ GET /api/auth/session 200 in 12ms (compile: 4ms, proxy.ts: 4ms, render: 4ms)
+ GET /kangur/lessons 200 in 128ms (compile: 7ms, render: 122ms)
+ GET /api/auth/session 200 in 65ms (compile: 17ms, proxy.ts: 40ms, render: 7ms)
+ GET /api/auth/session 200 in 23ms (compile: 11ms, proxy.ts: 8ms, render: 5ms)
+ GET /kangur/lessons 200 in 162ms (compile: 9ms, render: 153ms)
+ GET /api/auth/session 200 in 21ms (compile: 6ms, proxy.ts: 4ms, render: 10ms)
+ GET /api/auth/session 200 in 21ms (compile: 4ms, proxy.ts: 13ms, render: 4ms)
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 1,
+  reason: 'idle',
+  address: 'cluster0-shard-00-02.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 1,
+  reason: 'idle',
+  address: 'cluster0-shard-00-00.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 4,
+  reason: 'idle',
+  address: 'cluster0-shard-00-01.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+ GET /kangur/tests 200 in 89ms (compile: 4ms, render: 84ms)
+ GET /api/auth/session 200 in 13ms (compile: 4ms, proxy.ts: 4ms, render: 5ms)
+ GET /api/auth/session 200 in 20ms (compile: 3ms, proxy.ts: 13ms, render: 4ms)
+ GET /kangur/game?quickStart=operation&operation=division&difficulty=easy 200 in 80ms (compile: 4ms, render: 76ms)
+ GET /api/auth/session 200 in 10ms (compile: 4ms, proxy.ts: 1907µs, render: 4ms)
+[kangur.scores.GET] kangur.scores.GET completed successfully {
+  durationMs: 59,
+  successPolicy: 'all',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '2f3f7c609169c07c77521792eecb8e11',
+  otelSpanId: '6f70a180489dafdf',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  traceId: 'ee6912cb-b046-4649-8a9e-1e8590262beb',
+  correlationId: 'f72953f2-61fd-4839-9d17-4ebae13f2e8d'
+}
+ GET /api/kangur/scores?sort=-score&limit=100 200 in 71ms (compile: 2ms, proxy.ts: 7ms, render: 63ms)
+ GET /api/auth/session 200 in 13ms (compile: 6ms, proxy.ts: 2ms, render: 5ms)
+ GET /kangur/tests 200 in 83ms (compile: 4ms, render: 79ms)
+ GET /api/auth/session 200 in 22ms (compile: 12ms, proxy.ts: 2ms, render: 8ms)
+ GET /api/auth/session 200 in 15ms (compile: 3ms, proxy.ts: 8ms, render: 4ms)
+ GET /kangur/lessons 200 in 74ms (compile: 5ms, render: 70ms)
+ GET /api/auth/session 200 in 11ms (compile: 4ms, proxy.ts: 3ms, render: 4ms)
+ GET /api/auth/session 200 in 36ms (compile: 12ms, proxy.ts: 17ms, render: 7ms)
+ GET /kangur/tests 200 in 65ms (compile: 5ms, render: 60ms)
+ GET /kangur/lessons 200 in 68ms (compile: 4ms, render: 64ms)
+ GET /kangur/lessons 200 in 82ms (compile: 4ms, render: 78ms)
+ GET /api/auth/session 200 in 16ms (compile: 4ms, proxy.ts: 7ms, render: 5ms)
+ GET /api/auth/session 200 in 14ms (compile: 6ms, proxy.ts: 3ms, render: 5ms)
+ GET /kangur/tests 200 in 133ms (compile: 8ms, render: 125ms)
+ GET /kangur/lessons 200 in 134ms (compile: 5ms, render: 129ms)
+Received SIGTERM, shutting down gracefully... { signal: 'SIGTERM' }
+Server closed undefined
+
+> libapp2@0.1.0 predev
+> node scripts/runtime/check-node-version.cjs
+
+
+> libapp2@0.1.0 dev
+> node --max-old-space-size=8192 server.cjs
+
+○ Compiling instrumentation Node.js ...
+[ai-paths.portable-engine.envelope-verification] Portable envelope verification audit sink health probe sinkId=portable-envelope-verification-log-forwarding {
+  category: 'ai_path_portable_envelope_verification_audit_sink_health',
+  kind: 'ai-paths.portable-envelope-verification-audit-sink-health.v1',
+  sinkId: 'portable-envelope-verification-log-forwarding',
+  stage: 'probe',
+  service: 'ai-paths.portable-engine'
+}
+[ai-paths.portable-engine.envelope-verification.sink-bootstrap] Portable envelope verification audit sink startup health summary sinkId=all {
+  category: 'ai_path_portable_envelope_verification_audit_sink_health',
+  kind: 'ai-paths.portable-envelope-verification-audit-sink-health.v1',
+  profile: 'dev',
+  policy: 'warn',
+  timeoutMs: 3000,
+  status: 'healthy',
+  failedSinkIds: [],
+  diagnostics: [
+    {
+      sinkId: 'portable-envelope-verification-log-forwarding',
+      status: 'healthy',
+      checkedAt: '2026-03-09T03:28:36.054Z',
+      durationMs: 104,
+      message: 'Health check passed.',
+      error: null
+    }
+  ],
+  service: 'ai-paths.portable-engine'
+}
+[queue-factory] [queue-factory:database-backup-scheduler] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:product-sync-scheduler] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:system-log-alerts] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-init] Starting BullMQ workers... { service: 'queue-init' }
+[queue-registry] [queue-registry] Starting queue worker: base-import { queueName: 'base-import', service: 'queue-registry' }
+[queue-factory] [queue-factory:base-import] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: database-backup-scheduler { queueName: 'database-backup-scheduler', service: 'queue-registry' }
+[queue-registry] [queue-registry] Starting queue worker: system-log-alerts { queueName: 'system-log-alerts', service: 'queue-registry' }
+[queue-registry] [queue-registry] Starting queue worker: tradera-listings { queueName: 'tradera-listings', service: 'queue-registry' }
+[queue-factory] [queue-factory:tradera-listings] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-ai { queueName: 'product-ai', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-ai] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync { queueName: 'product-sync', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-sync] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync-backfill { queueName: 'product-sync-backfill', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-sync-backfill] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync-scheduler { queueName: 'product-sync-scheduler', service: 'queue-registry' }
+[queue-factory] [queue-factory:case-resolver-ocr] BullMQ worker started (concurrency: 2) { concurrency: 2, service: 'queue-factory' }
+[queue-factory] [queue-factory:ai-path-run] BullMQ worker started (concurrency: 3) { concurrency: 3, service: 'queue-factory' }
+[queue-factory] [queue-factory:chatbot] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:image-studio-run] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:agent] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:tradera-relist-scheduler] Worker stopped { service: 'queue-factory' }
+Ready on http://localhost:55119 { port: 55119, host: '127.0.0.1' }
+[queue-factory] [queue-factory:image-studio-sequence] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+ GET /api/health 200 in 1495ms (compile: 744ms, proxy.ts: 41ms, render: 709ms)
+[health.GET] health.GET completed successfully {
+  durationMs: 880,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '5553f29d3ebf015e45fbb65c59eb9c45',
+  otelSpanId: 'fbae7c88fbd1b0c6',
+  otelTraceFlags: '01',
+  service: 'health',
+  traceId: 'aded208f-5020-49c9-be9e-e8dc38efef30',
+  correlationId: '37c2fecc-dde6-4f02-9ef8-0984bc0d28f5'
+}
+○ Compiling /auth/signin ...
+[health.GET] health.GET completed successfully {
+  durationMs: 750,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '68c36a44d9d49ca759d737d15394cfa7',
+  otelSpanId: '2ca0a8e389a258c9',
+  otelTraceFlags: '01',
+  service: 'health',
+  traceId: 'ccf071d3-5596-4cac-aef3-3754d73c07d1',
+  correlationId: '9a59ec5e-68a8-4d79-bd0c-f8f9a0eac01e'
+}
+ GET /api/health 200 in 766ms (compile: 4ms, proxy.ts: 5ms, render: 757ms)
+ GET /auth/signin 200 in 1491ms (compile: 1075ms, render: 416ms)
+○ Compiling /kangur/[[...slug]] ...
+ GET /kangur/lessons 200 in 8.1s (compile: 7.1s, render: 1035ms)
+Received SIGTERM, shutting down gracefully... { signal: 'SIGTERM' }
+Server closed undefined
+
+> libapp2@0.1.0 predev
+> node scripts/runtime/check-node-version.cjs
+
+
+> libapp2@0.1.0 dev
+> node --max-old-space-size=8192 server.cjs
+
+○ Compiling instrumentation Node.js ...
+[ai-paths.portable-engine.envelope-verification] Portable envelope verification audit sink health probe sinkId=portable-envelope-verification-log-forwarding {
+  category: 'ai_path_portable_envelope_verification_audit_sink_health',
+  kind: 'ai-paths.portable-envelope-verification-audit-sink-health.v1',
+  sinkId: 'portable-envelope-verification-log-forwarding',
+  stage: 'probe',
+  service: 'ai-paths.portable-engine'
+}
+[ai-paths.portable-engine.envelope-verification.sink-bootstrap] Portable envelope verification audit sink startup health summary sinkId=all {
+  category: 'ai_path_portable_envelope_verification_audit_sink_health',
+  kind: 'ai-paths.portable-envelope-verification-audit-sink-health.v1',
+  profile: 'dev',
+  policy: 'warn',
+  timeoutMs: 3000,
+  status: 'healthy',
+  failedSinkIds: [],
+  diagnostics: [
+    {
+      sinkId: 'portable-envelope-verification-log-forwarding',
+      status: 'healthy',
+      checkedAt: '2026-03-09T03:29:39.063Z',
+      durationMs: 99,
+      message: 'Health check passed.',
+      error: null
+    }
+  ],
+  service: 'ai-paths.portable-engine'
+}
+[queue-factory] [queue-factory:database-backup-scheduler] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:product-sync-scheduler] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:system-log-alerts] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-init] Starting BullMQ workers... { service: 'queue-init' }
+[queue-registry] [queue-registry] Starting queue worker: base-import { queueName: 'base-import', service: 'queue-registry' }
+[queue-factory] [queue-factory:base-import] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: database-backup-scheduler { queueName: 'database-backup-scheduler', service: 'queue-registry' }
+[queue-registry] [queue-registry] Starting queue worker: system-log-alerts { queueName: 'system-log-alerts', service: 'queue-registry' }
+[queue-registry] [queue-registry] Starting queue worker: tradera-listings { queueName: 'tradera-listings', service: 'queue-registry' }
+[queue-factory] [queue-factory:tradera-listings] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-ai { queueName: 'product-ai', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-ai] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync { queueName: 'product-sync', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-sync] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync-backfill { queueName: 'product-sync-backfill', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-sync-backfill] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync-scheduler { queueName: 'product-sync-scheduler', service: 'queue-registry' }
+[queue-factory] [queue-factory:case-resolver-ocr] BullMQ worker started (concurrency: 2) { concurrency: 2, service: 'queue-factory' }
+[queue-factory] [queue-factory:ai-path-run] BullMQ worker started (concurrency: 3) { concurrency: 3, service: 'queue-factory' }
+[queue-factory] [queue-factory:chatbot] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:agent] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:image-studio-run] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:image-studio-sequence] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:tradera-relist-scheduler] Worker stopped { service: 'queue-factory' }
+Ready on http://localhost:55524 { port: 55524, host: '127.0.0.1' }
+ GET /api/health 200 in 1491ms (compile: 881ms, proxy.ts: 63ms, render: 548ms)
+○ Compiling /auth/signin ...
+ GET /api/health 200 in 675ms (compile: 3ms, proxy.ts: 3ms, render: 669ms)
+ GET /auth/signin 200 in 925ms (compile: 556ms, render: 369ms)
+[health.GET] health.GET completed successfully {
+  durationMs: 5094,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: 'caa7441c97982ebb0c47d8a258c1d986',
+  otelSpanId: '260c05feea18ef67',
+  otelTraceFlags: '01',
+  service: 'health',
+  traceId: '8036fb48-fbdf-4eef-bdc5-5c1ab44dc640',
+  correlationId: 'b36a2e9f-fe26-4e75-9ba7-9bb76f6aa356'
+}
+○ Compiling /kangur/[[...slug]] ...
+ GET /kangur/lessons 200 in 7.4s (compile: 6.5s, render: 840ms)
+Received SIGTERM, shutting down gracefully... { signal: 'SIGTERM' }
+Server closed undefined
+
+> libapp2@0.1.0 predev
+> node scripts/runtime/check-node-version.cjs
+
+
+> libapp2@0.1.0 dev
+> node --max-old-space-size=8192 server.cjs
+
+○ Compiling instrumentation Node.js ...
+[ai-paths.portable-engine.envelope-verification] Portable envelope verification audit sink health probe sinkId=portable-envelope-verification-log-forwarding {
+  category: 'ai_path_portable_envelope_verification_audit_sink_health',
+  kind: 'ai-paths.portable-envelope-verification-audit-sink-health.v1',
+  sinkId: 'portable-envelope-verification-log-forwarding',
+  stage: 'probe',
+  service: 'ai-paths.portable-engine'
+}
+[ai-paths.portable-engine.envelope-verification.sink-bootstrap] Portable envelope verification audit sink startup health summary sinkId=all {
+  category: 'ai_path_portable_envelope_verification_audit_sink_health',
+  kind: 'ai-paths.portable-envelope-verification-audit-sink-health.v1',
+  profile: 'dev',
+  policy: 'warn',
+  timeoutMs: 3000,
+  status: 'healthy',
+  failedSinkIds: [],
+  diagnostics: [
+    {
+      sinkId: 'portable-envelope-verification-log-forwarding',
+      status: 'healthy',
+      checkedAt: '2026-03-09T03:32:21.750Z',
+      durationMs: 113,
+      message: 'Health check passed.',
+      error: null
+    }
+  ],
+  service: 'ai-paths.portable-engine'
+}
+[queue-factory] [queue-factory:database-backup-scheduler] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:product-sync-scheduler] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:system-log-alerts] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-init] Starting BullMQ workers... { service: 'queue-init' }
+[queue-registry] [queue-registry] Starting queue worker: base-import { queueName: 'base-import', service: 'queue-registry' }
+[queue-factory] [queue-factory:base-import] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: database-backup-scheduler { queueName: 'database-backup-scheduler', service: 'queue-registry' }
+[queue-registry] [queue-registry] Starting queue worker: system-log-alerts { queueName: 'system-log-alerts', service: 'queue-registry' }
+[queue-registry] [queue-registry] Starting queue worker: tradera-listings { queueName: 'tradera-listings', service: 'queue-registry' }
+[queue-factory] [queue-factory:tradera-listings] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-ai { queueName: 'product-ai', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-ai] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync { queueName: 'product-sync', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-sync] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync-backfill { queueName: 'product-sync-backfill', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-sync-backfill] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync-scheduler { queueName: 'product-sync-scheduler', service: 'queue-registry' }
+[queue-factory] [queue-factory:case-resolver-ocr] BullMQ worker started (concurrency: 2) { concurrency: 2, service: 'queue-factory' }
+[queue-factory] [queue-factory:ai-path-run] BullMQ worker started (concurrency: 3) { concurrency: 3, service: 'queue-factory' }
+[queue-factory] [queue-factory:chatbot] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:agent] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:image-studio-run] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:tradera-relist-scheduler] Worker stopped { service: 'queue-factory' }
+Ready on http://localhost:56414 { port: 56414, host: '127.0.0.1' }
+[queue-factory] [queue-factory:image-studio-sequence] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+ GET /api/health 200 in 1497ms (compile: 1077ms, proxy.ts: 57ms, render: 363ms)
+[health.GET] health.GET completed successfully {
+  durationMs: 835,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: 'd86409403acf2804051b75cfba9f230a',
+  otelSpanId: '54d721fb36186174',
+  otelTraceFlags: '01',
+  service: 'health',
+  traceId: '1b19598b-70e4-49fb-894a-b2c6b24c75b7',
+  correlationId: '0d2dda15-5893-4cc5-95dc-4b7845c1e32f'
+}
+○ Compiling /auth/signin ...
+ GET /api/health 200 in 652ms (compile: 5ms, proxy.ts: 4ms, render: 643ms)
+ GET /auth/signin 200 in 1082ms (compile: 754ms, render: 329ms)
+○ Compiling /kangur/[[...slug]] ...
+ GET /kangur/lessons 200 in 8.2s (compile: 7.3s, render: 846ms)
+ GET /kangur/game?quickStart=training 200 in 86ms (compile: 8ms, render: 78ms)
+[kangur.scores.GET] kangur.scores.GET completed successfully {
+  durationMs: 126,
+  successPolicy: 'all',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '3f93887739a05d31d40b77a4119489f8',
+  otelSpanId: '13a875d2ba7e0865',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  traceId: '7cc6ff0b-a3b9-4648-8b59-bc622ed41f6e',
+  correlationId: '56375ed0-d954-4612-99b9-cd101074efee'
+}
+ GET /api/kangur/scores?sort=-score&limit=100 200 in 1396ms (compile: 1249ms, proxy.ts: 9ms, render: 137ms)
+ GET /api/settings/lite 200 in 1461ms (compile: 1343ms, proxy.ts: 12ms, render: 106ms)
+ GET /api/kangur/ai-tutor/guest-intro 200 in 1373ms (compile: 1167ms, proxy.ts: 9ms, render: 197ms)
+ GET /kangur/game?quickStart=operation&operation=division&difficulty=easy 200 in 244ms (compile: 11ms, render: 233ms)
+○ Compiling /api/settings/lite ...
+ GET /api/settings/lite 200 in 30ms (compile: 10ms, proxy.ts: 11ms, render: 9ms)
+[kangur.scores.GET] kangur.scores.GET completed successfully {
+  durationMs: 74,
+  successPolicy: 'all',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: 'a6263fbd7e954f5c4e74b92dfd80e79a',
+  otelSpanId: '92d9914fbe5bb711',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  traceId: '424cfdbb-27fb-4b12-bf00-cf8df4a532c0',
+  correlationId: '4767d19a-b446-4ecd-bc13-5f51be506942'
+}
+ GET /api/kangur/scores?sort=-score&limit=100 200 in 96ms (compile: 9ms, proxy.ts: 9ms, render: 78ms)
+ GET /api/kangur/ai-tutor/guest-intro 200 in 100ms (compile: 12ms, proxy.ts: 11ms, render: 77ms)
+ POST /api/analytics/events 202 in 310ms (compile: 285ms, proxy.ts: 10ms, render: 15ms)
+ POST /api/analytics/events 202 in 314ms (compile: 288ms, proxy.ts: 11ms, render: 15ms)
+ GET /api/settings?scope=heavy 200 in 1189ms (compile: 8ms, proxy.ts: 9ms, render: 1172ms)
+ GET /kangur/game?quickStart=operation 200 in 74ms (compile: 6ms, render: 69ms)
+ GET /api/settings/lite 200 in 26ms (compile: 7ms, proxy.ts: 7ms, render: 12ms)
+[kangur.scores.GET] kangur.scores.GET completed successfully {
+  durationMs: 60,
+  successPolicy: 'all',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '929926bc3bb802e04ee249cfdcb64d53',
+  otelSpanId: '125b9a8bec23a9e6',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  traceId: 'e592fb55-79af-42ff-b5d1-cd276e6a34ba',
+  correlationId: 'e0c5eb5d-25f6-442f-8b0d-82cbcd08bb39'
+}
+ GET /api/kangur/scores?sort=-score&limit=100 200 in 75ms (compile: 3ms, proxy.ts: 8ms, render: 65ms)
+ GET /api/kangur/ai-tutor/guest-intro 200 in 76ms (compile: 6ms, proxy.ts: 3ms, render: 67ms)
+ POST /api/analytics/events 202 in 12ms (compile: 3ms, proxy.ts: 2ms, render: 7ms)
+ POST /api/analytics/events 202 in 14ms (compile: 5ms, proxy.ts: 3ms, render: 7ms)
+[api/settings] [api/settings] [settings] cache fallback {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'timeout-prisma-fallback',
+  reason: '[settings] cache miss fetch timed out after 3000ms',
+  category: 'SYSTEM',
+  otelTraceId: 'cc06a3574ad9cd80e7ee58c2b7629234',
+  otelSpanId: '14c143619ee3feab',
+  otelTraceFlags: '01',
+  fingerprint: '772884b32ff22fd8'
+}
+[settings.GET] settings.GET completed successfully {
+  durationMs: 3078,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: 'cc06a3574ad9cd80e7ee58c2b7629234',
+  otelSpanId: '14c143619ee3feab',
+  otelTraceFlags: '01',
+  service: 'settings',
+  traceId: '1c7a8f7c-7c44-4e86-8533-4836637fef6f',
+  correlationId: 'c459ed31-8ff1-4368-ae79-2a5469eba875'
+}
+[api/settings] [api/settings] [settings] cache fallback {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'timeout-prisma-fallback',
+  reason: '[settings] inflight fetch timed out after 3000ms',
+  category: 'SYSTEM',
+  otelTraceId: 'e8bdc5ff9cbe52f4e795d1270fa88ae9',
+  otelSpanId: 'cc1971ee58737023',
+  otelTraceFlags: '01',
+  fingerprint: '772884b32ff22fd8'
+}
+[settings.GET] settings.GET completed successfully {
+  durationMs: 3060,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: 'e8bdc5ff9cbe52f4e795d1270fa88ae9',
+  otelSpanId: 'cc1971ee58737023',
+  otelTraceFlags: '01',
+  service: 'settings',
+  traceId: 'a0286f6d-becb-4d10-afbf-b6ae539023e3',
+  correlationId: 'e7a1d63c-3a23-409a-a6b4-38263ef732b7'
+}
+ GET /api/settings?scope=heavy 200 in 1384ms (compile: 5ms, proxy.ts: 7ms, render: 1372ms)
+Received SIGTERM, shutting down gracefully... { signal: 'SIGTERM' }
+Server closed undefined
+
+> libapp2@0.1.0 predev
+> node scripts/runtime/check-node-version.cjs
+
+
+> libapp2@0.1.0 dev
+> node --max-old-space-size=8192 server.cjs
+
+○ Compiling instrumentation Node.js ...
+[ai-paths.portable-engine.envelope-verification] Portable envelope verification audit sink health probe sinkId=portable-envelope-verification-log-forwarding {
+  category: 'ai_path_portable_envelope_verification_audit_sink_health',
+  kind: 'ai-paths.portable-envelope-verification-audit-sink-health.v1',
+  sinkId: 'portable-envelope-verification-log-forwarding',
+  stage: 'probe',
+  service: 'ai-paths.portable-engine'
+}
+[ai-paths.portable-engine.envelope-verification.sink-bootstrap] Portable envelope verification audit sink startup health summary sinkId=all {
+  category: 'ai_path_portable_envelope_verification_audit_sink_health',
+  kind: 'ai-paths.portable-envelope-verification-audit-sink-health.v1',
+  profile: 'dev',
+  policy: 'warn',
+  timeoutMs: 3000,
+  status: 'healthy',
+  failedSinkIds: [],
+  diagnostics: [
+    {
+      sinkId: 'portable-envelope-verification-log-forwarding',
+      status: 'healthy',
+      checkedAt: '2026-03-09T03:33:49.845Z',
+      durationMs: 117,
+      message: 'Health check passed.',
+      error: null
+    }
+  ],
+  service: 'ai-paths.portable-engine'
+}
+[queue-factory] [queue-factory:database-backup-scheduler] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:product-sync-scheduler] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:system-log-alerts] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-init] Starting BullMQ workers... { service: 'queue-init' }
+[queue-registry] [queue-registry] Starting queue worker: base-import { queueName: 'base-import', service: 'queue-registry' }
+[queue-factory] [queue-factory:base-import] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: database-backup-scheduler { queueName: 'database-backup-scheduler', service: 'queue-registry' }
+[queue-registry] [queue-registry] Starting queue worker: system-log-alerts { queueName: 'system-log-alerts', service: 'queue-registry' }
+[queue-registry] [queue-registry] Starting queue worker: tradera-listings { queueName: 'tradera-listings', service: 'queue-registry' }
+[queue-factory] [queue-factory:tradera-listings] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-ai { queueName: 'product-ai', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-ai] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync { queueName: 'product-sync', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-sync] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync-backfill { queueName: 'product-sync-backfill', service: 'queue-registry' }
+[queue-factory] [queue-factory:product-sync-backfill] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-registry] [queue-registry] Starting queue worker: product-sync-scheduler { queueName: 'product-sync-scheduler', service: 'queue-registry' }
+[queue-factory] [queue-factory:case-resolver-ocr] BullMQ worker started (concurrency: 2) { concurrency: 2, service: 'queue-factory' }
+[queue-factory] [queue-factory:ai-path-run] BullMQ worker started (concurrency: 3) { concurrency: 3, service: 'queue-factory' }
+[queue-factory] [queue-factory:chatbot] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:image-studio-run] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:agent] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+[queue-factory] [queue-factory:tradera-relist-scheduler] Worker stopped { service: 'queue-factory' }
+Ready on http://localhost:56924 { port: 56924, host: '127.0.0.1' }
+[queue-factory] [queue-factory:image-studio-sequence] BullMQ worker started (concurrency: 1) { concurrency: 1, service: 'queue-factory' }
+ GET /api/health 200 in 1528ms (compile: 1459ms, proxy.ts: 49ms, render: 21ms)
+[health.GET] health.GET completed successfully {
+  durationMs: 865,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: 'fa580c9e96bd0639f2e04f3c0bf3fadf',
+  otelSpanId: '0f1d4892989e5c49',
+  otelTraceFlags: '01',
+  service: 'health',
+  traceId: '5a899a19-3ac1-4177-b41a-cef8048f9a3c',
+  correlationId: '9f6ea063-e91b-444c-abfe-3047fe4cb20a'
+}
+○ Compiling /auth/signin ...
+ GET /api/health 200 in 694ms (compile: 4ms, proxy.ts: 4ms, render: 686ms)
+ GET /auth/signin 200 in 1375ms (compile: 1023ms, render: 352ms)
+ GET /auth/signin?callbackUrl=%2Fadmin%2Fkangur%2Fsettings 200 in 40ms (compile: 3ms, render: 37ms)
+ GET /api/settings/lite 200 in 768ms (compile: 412ms, proxy.ts: 5ms, render: 351ms)
+ GET /api/auth/session 200 in 1044ms (compile: 1031ms, proxy.ts: 5ms, render: 9ms)
+ GET /api/auth/providers 200 in 922ms (compile: 907ms, proxy.ts: 5ms, render: 9ms)
+ GET /api/auth/session 200 in 18ms (compile: 10ms, proxy.ts: 2ms, render: 6ms)
+ GET /api/auth/csrf 200 in 19ms (compile: 12ms, proxy.ts: 2ms, render: 5ms)
+[system] [AUTH-REPO] Finding user e2e.admin@example.com using mongodb {
+  email: 'e2e.admin@example.com',
+  provider: 'mongodb',
+  otelTraceId: '3982e7718727940607d24d720eb7311c',
+  otelSpanId: '0c5a411457f89209',
+  otelTraceFlags: '01'
+}
+[auth.[...nextauth].POST] auth.[...nextauth].POST completed successfully {
+  durationMs: 803,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  params: { nextauth: [ 'callback', 'credentials' ] },
+  otelTraceId: '3982e7718727940607d24d720eb7311c',
+  otelSpanId: '0c5a411457f89209',
+  otelTraceFlags: '01',
+  service: 'auth.[',
+  traceId: '77bd0513-2bc0-477c-8c29-12a9b49877f5',
+  correlationId: 'ad78377d-479f-45d7-b738-115f4e941382'
+}
+ POST /api/auth/callback/credentials 200 in 811ms (compile: 3ms, proxy.ts: 3ms, render: 806ms)
+ GET /api/auth/session 200 in 17ms (compile: 4ms, proxy.ts: 2ms, render: 10ms)
+[auth.security] User signed in successfully {
+  email: 'e2e.admin@example.com',
+  ip: '127.0.0.1',
+  service: 'auth.security',
+  otelTraceId: '3982e7718727940607d24d720eb7311c',
+  otelSpanId: '0c5a411457f89209',
+  otelTraceFlags: '01'
+}
+[user] Activity: auth.login - User logged in: e2e.admin@example.com {
+  activityId: '69ae3fade6f5fa710b94fe70',
+  activityType: 'auth.login',
+  userId: '69a9bc1e2d43c3d631e76018',
+  entityId: '69a9bc1e2d43c3d631e76018',
+  entityType: 'user',
+  metadata: null,
+  service: 'user',
+  otelTraceId: '3982e7718727940607d24d720eb7311c',
+  otelSpanId: '0c5a411457f89209',
+  otelTraceFlags: '01'
+}
+ GET /admin/kangur/settings 200 in 2.4s (compile: 2.1s, proxy.ts: 14ms, render: 301ms)
+ GET /api/auth/session 200 in 40ms (compile: 5ms, proxy.ts: 5ms, render: 31ms)
+ GET /api/auth/session 200 in 317ms (compile: 5ms, proxy.ts: 5ms, render: 307ms)
+ GET /admin/kangur/settings 200 in 535ms (compile: 9ms, proxy.ts: 24ms, render: 501ms)
+[system] [timing] user.preferences.GET {
+  auth: 19.628499999998894,
+  cache: 0.10279099999752361,
+  repository: 61.825292000001355,
+  total: 81.95229200000176,
+  databaseConfigured: true,
+  otelTraceId: '3f30287688d98b60bb31a0192e06083b',
+  otelSpanId: '91068a4783b23411',
+  otelTraceFlags: '01'
+}
+[system] [timing] user.preferences.GET {
+  auth: 20.183834000003117,
+  cache: 0.015375000002677552,
+  repository: 60.58691700000054,
+  total: 81.60091599999942,
+  databaseConfigured: true,
+  otelTraceId: '903b61a0252b105a2dbcc931ad9de94a',
+  otelSpanId: '3209b25f6e895c7d',
+  otelTraceFlags: '01'
+}
+ POST /api/client-errors 200 in 522ms (compile: 502ms, proxy.ts: 10ms, render: 10ms)
+[system] [timing] user.preferences.GET {
+  auth: 47.57054199999766,
+  cache: 0.029667000002518762,
+  total: 47.68975000000137,
+  databaseConfigured: true,
+  source: 'cache',
+  otelTraceId: '94e5664ebe11a3b9f9c697a683dba188',
+  otelSpanId: '56c2940fa22a29eb',
+  otelTraceFlags: '01'
+}
+ GET /api/user/preferences 200 in 73ms (compile: 3ms, proxy.ts: 5ms, render: 65ms)
+[kangur.tts.probe.POST] Kangur TTS probe payload is required. {
+  errorId: 'dcdc0d0e-9e6d-45b4-b680-0ee4652af1ef',
+  code: 'BAD_REQUEST',
+  category: 'VALIDATION',
+  durationMs: 160,
+  source: 'kangur.tts.probe.POST',
+  route: '/api/kangur/tts/probe',
+  method: 'POST',
+  traceId: '14eab476-2b2d-45c0-8023-dadcff1ccd3d',
+  correlationId: 'ae855eec-034d-46dc-8024-c2110ca5a406',
+  otelTraceId: '50bc24a02b034536100e3cd7c6f7cbfb',
+  otelSpanId: 'b8112d71134dfd43',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  expected: true,
+  critical: false,
+  retryable: false,
+  error: {
+    message: 'Kangur TTS probe payload is required.',
+    stack: 'AppError: Kangur TTS probe payload is required.\n' +
+      '    at badRequestError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:191:58)\n' +
+      '    at readBodyJson (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_app_api_kangur_tts_probe_9ae007e0._.js:34:176)\n' +
+      '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+      '    at async postKangurTtsProbeHandler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_app_api_kangur_tts_probe_9ae007e0._.js:47:224)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:2352:34\n' +
+      '    at async AppRouteRouteModule.do (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:37866)\n' +
+      '    at async AppRouteRouteModule.handle (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:45156)\n' +
+      '    at async responseGenerator (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_a57655d6._.js:17162:38)\n' +
+      '    at async AppRouteRouteModule.handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:1:191938)\n' +
+      '    at async handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_a57655d6._.js:17225:32)\n' +
+      '    at async Module.handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_a57655d6._.js:17276:13)\n' +
+      '    at async DevServer.renderToResponseWithComponentsImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1442:9)\n' +
+      '    at async DevServer.renderPageComponent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1494:24)\n' +
+      '    at async DevServer.renderToResponseImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1544:32)\n' +
+      '    at async DevServer.pipeImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1038:25)\n' +
+      '    at async NextNodeServer.handleCatchallRenderRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/next-server.js:395:17)\n' +
+      '    at async DevServer.handleRequestImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:929:17)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:387:20\n' +
+      '    at async Span.traceAsyncFn (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/trace/trace.js:157:20)\n' +
+      '    at async DevServer.handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:383:24)\n' +
+      '    at async invokeRender (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:248:21)\n' +
+      '    at async handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:447:24)\n' +
+      '    at async NextCustomServer.requestHandlerImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:496:13)',
+    name: 'AppError',
+    code: 'BAD_REQUEST',
+    httpStatus: 400,
+    expected: true,
+    critical: false,
+    retryable: false
+  },
+  errorCode: 'BAD_REQUEST',
+  errorName: 'AppError',
+  fingerprint: '84a645008a5feb3b'
+}
+[kangur.tts.probe.failed] Kangur server narrator probe failed {
+  feature: 'kangur',
+  actorType: 'parent',
+  ownerUserId: '69a9bc1e2d43c3d631e76018',
+  learnerId: 'ef236581-60dc-4998-8479-dfbf2329b2bf',
+  learnerStatus: 'active',
+  canManageLearners: true,
+  voice: 'coral',
+  model: 'gpt-4o-mini-tts',
+  stage: 'config',
+  errorName: null,
+  errorStatus: null,
+  errorCode: null,
+  service: 'kangur.tts',
+  traceId: 'b716dff3-60c2-42fa-888f-5e571a56212f',
+  correlationId: '8fedc83e-890b-40a6-8c56-b2531645aa87',
+  otelTraceId: '8d5118354a18b081898a5c9d0dadf99c',
+  otelSpanId: 'e13489e6b0337db5',
+  otelTraceFlags: '01',
+  fingerprint: 'f6c5541ffdcaeb32'
+}
+[kangur.tts.probe.POST] kangur.tts.probe.POST completed successfully {
+  durationMs: 229,
+  successPolicy: 'all',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '8d5118354a18b081898a5c9d0dadf99c',
+  otelSpanId: 'e13489e6b0337db5',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  traceId: 'b716dff3-60c2-42fa-888f-5e571a56212f',
+  correlationId: '8fedc83e-890b-40a6-8c56-b2531645aa87'
+}
+ POST /api/kangur/tts/probe 200 in 297ms (compile: 59ms, proxy.ts: 5ms, render: 232ms)
+ GET /api/settings?scope=light 200 in 1095ms (compile: 861ms, proxy.ts: 5ms, render: 229ms)
+ GET /api/settings?scope=heavy 200 in 1099ms (compile: 856ms, proxy.ts: 5ms, render: 238ms)
+ GET /admin/kangur/documentation 200 in 1387ms (compile: 1230ms, proxy.ts: 32ms, render: 125ms)
+ GET /api/settings?scope=light 200 in 1274ms (compile: 1625µs, proxy.ts: 2ms, render: 1270ms)
+ GET /admin/kangur/observability 200 in 1285ms (compile: 1014ms, proxy.ts: 4ms, render: 266ms)
+[api/settings] [api/settings] [settings] cache fallback {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'timeout-prisma-fallback',
+  reason: '[settings] cache miss fetch timed out after 3000ms',
+  category: 'SYSTEM',
+  otelTraceId: 'bc8c5bbfba256e91358c1a66bdd9fc64',
+  otelSpanId: '909d53904315ae97',
+  otelTraceFlags: '01',
+  fingerprint: '772884b32ff22fd8'
+}
+[settings.GET] settings.GET completed successfully {
+  durationMs: 3061,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: 'bc8c5bbfba256e91358c1a66bdd9fc64',
+  otelSpanId: '909d53904315ae97',
+  otelTraceFlags: '01',
+  service: 'settings',
+  traceId: 'e10ca321-6fed-4d60-a6d8-b11759a5eb2d',
+  correlationId: '4e48620d-ef4a-46a4-adc9-835bc5f13199'
+}
+[api/settings] [api/settings] [settings] cache fallback {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'timeout-prisma-fallback',
+  reason: '[settings] inflight fetch timed out after 3000ms',
+  category: 'SYSTEM',
+  otelTraceId: '5ef5f74632f3606de4d967111952b79e',
+  otelSpanId: '09429acd9a3f0e86',
+  otelTraceFlags: '01',
+  fingerprint: '772884b32ff22fd8'
+}
+[settings.GET] settings.GET completed successfully {
+  durationMs: 3082,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '5ef5f74632f3606de4d967111952b79e',
+  otelSpanId: '09429acd9a3f0e86',
+  otelTraceFlags: '01',
+  service: 'settings',
+  traceId: '49402fb0-aca1-4632-a1e4-04b446ceb0bd',
+  correlationId: '25d36465-c924-4e36-9f92-83508a00cdb0'
+}
+[api/settings] [api/settings] [timing] settings.fetch {
+  service: 'api/settings',
+  scope: 'light',
+  provider: 0.011957999999140156,
+  mongo: 3651.6714159999974,
+  total: 3651.7158329999984,
+  category: 'NETWORK',
+  otelTraceId: '2f25ad6aa6e4d8f855539bb9db14aa51',
+  otelSpanId: '6879ef747c158685',
+  otelTraceFlags: '01'
+}
+[system] [settings] cache {
+  scope: 'light',
+  status: 'miss',
+  otelTraceId: '2f25ad6aa6e4d8f855539bb9db14aa51',
+  otelSpanId: '6879ef747c158685',
+  otelTraceFlags: '01'
+}
+[system] [settings] cache {
+  scope: 'light',
+  status: 'wait',
+  otelTraceId: '00d653788f1960e68617c0139f87b12d',
+  otelSpanId: 'd5e30a161d8b9f49',
+  otelTraceFlags: '01'
+}
+[system] [settings] cache {
+  scope: 'light',
+  status: 'wait',
+  otelTraceId: '6529614ef2d4f735b807045f0e893488',
+  otelSpanId: '607db387167bfc9a',
+  otelTraceFlags: '01'
+}
+[system] [settings] cache {
+  scope: 'light',
+  status: 'wait',
+  otelTraceId: '5eb294dfb6a5402a9ef0eeed9208c574',
+  otelSpanId: '1de35f84936b8869',
+  otelTraceFlags: '01'
+}
+[settings.GET] settings.GET completed successfully {
+  durationMs: 3671,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '2f25ad6aa6e4d8f855539bb9db14aa51',
+  otelSpanId: '6879ef747c158685',
+  otelTraceFlags: '01',
+  service: 'settings',
+  traceId: '1bfd0800-46ff-4dac-ab61-ecc331678f25',
+  correlationId: '476df2d7-0d02-44dc-8ef5-c80c1004f40c'
+}
+[settings.GET] settings.GET completed successfully {
+  durationMs: 3667,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '00d653788f1960e68617c0139f87b12d',
+  otelSpanId: 'd5e30a161d8b9f49',
+  otelTraceFlags: '01',
+  service: 'settings',
+  traceId: '7d7fd0a0-46b0-49a3-9fa8-cb15859f0a45',
+  correlationId: '4c4aef63-b6a7-4ece-8210-4e58647aafa2'
+}
+[settings.GET] settings.GET completed successfully {
+  durationMs: 3041,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '6529614ef2d4f735b807045f0e893488',
+  otelSpanId: '607db387167bfc9a',
+  otelTraceFlags: '01',
+  service: 'settings',
+  traceId: 'ce40f212-ca80-4b74-af88-a59c3784704c',
+  correlationId: '43455331-28c4-4c3b-831b-dd0f67ce7445'
+}
+[settings.GET] settings.GET completed successfully {
+  durationMs: 1242,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '5eb294dfb6a5402a9ef0eeed9208c574',
+  otelSpanId: '1de35f84936b8869',
+  otelTraceFlags: '01',
+  service: 'settings',
+  traceId: 'e363154d-1483-466b-b8ab-bac06316dfd0',
+  correlationId: 'c8c66867-de70-4409-90c9-5a66b9004961'
+}
+ GET /api/settings?scope=light 200 in 1262ms (compile: 4ms, proxy.ts: 10ms, render: 1249ms)
+○ Compiling /api/kangur/observability/summary ...
+ GET /api/kangur/observability/summary?range=24h 200 in 6.7s (compile: 446ms, proxy.ts: 11ms, render: 6.3s)
+ POST /api/client-errors 200 in 17ms (compile: 1895µs, proxy.ts: 3ms, render: 12ms)
+ GET /admin/kangur/content-manager 200 in 6.7s (compile: 6.1s, proxy.ts: 9ms, render: 578ms)
+[api/settings] [api/settings] [settings] cache hit {
+  service: 'api/settings',
+  scope: 'light',
+  status: 'hit',
+  category: 'SYSTEM',
+  otelTraceId: '6e9f5c659fbc3a08364f0b8e89f7be40',
+  otelSpanId: 'af2dcc68bd8687f3',
+  otelTraceFlags: '01'
+}
+ GET /api/settings?scope=light 200 in 13ms (compile: 1562µs, proxy.ts: 2ms, render: 9ms)
+ POST /api/settings 200 in 72ms (compile: 1719µs, proxy.ts: 2ms, render: 68ms)
+[api/settings] [api/settings] [timing] settings.fetch {
+  service: 'api/settings',
+  scope: 'heavy',
+  provider: 0.7559579999979178,
+  mongo: 12211.838417000003,
+  total: 12212.622707999999,
+  category: 'NETWORK',
+  otelTraceId: 'bc8c5bbfba256e91358c1a66bdd9fc64',
+  otelSpanId: '909d53904315ae97',
+  otelTraceFlags: '01'
+}
+ GET /api/settings?scope=light 200 in 1929ms (compile: 1424µs, proxy.ts: 1929µs, render: 1926ms)
+ GET /admin/kangur/lessons-manager 200 in 2.3s (compile: 2.2s, proxy.ts: 4ms, render: 151ms)
+ POST /api/settings 200 in 146ms (compile: 2ms, proxy.ts: 6ms, render: 138ms)
+[api/settings] [api/settings] [timing] settings.fetch {
+  service: 'api/settings',
+  scope: 'light',
+  provider: 0.014000000002852175,
+  mongo: 3540.7453339999993,
+  total: 3540.792417000004,
+  category: 'NETWORK',
+  otelTraceId: 'c73ff4ae4d78ee81469ad199c8fd7186',
+  otelSpanId: 'b159bdcd3e807b95',
+  otelTraceFlags: '01'
+}
+[system] [settings] cache {
+  scope: 'light',
+  status: 'miss',
+  otelTraceId: 'c73ff4ae4d78ee81469ad199c8fd7186',
+  otelSpanId: 'b159bdcd3e807b95',
+  otelTraceFlags: '01'
+}
+[system] [settings] cache {
+  scope: 'light',
+  status: 'wait',
+  otelTraceId: 'e33ecf4d677527b7d891bab9df4eb6c1',
+  otelSpanId: 'c864b1cd35496152',
+  otelTraceFlags: '01'
+}
+[settings.GET] settings.GET completed successfully {
+  durationMs: 3548,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: 'c73ff4ae4d78ee81469ad199c8fd7186',
+  otelSpanId: 'b159bdcd3e807b95',
+  otelTraceFlags: '01',
+  service: 'settings',
+  traceId: 'c8f5ef89-5390-4e73-9519-cb73475a1504',
+  correlationId: 'a6f2f5cf-5654-454c-bdb8-1e646f19c257'
+}
+ GET /api/settings?scope=light 200 in 753ms (compile: 1867µs, proxy.ts: 2ms, render: 749ms)
+[api/settings] [api/settings] [settings] cache hit {
+  service: 'api/settings',
+  scope: 'light',
+  status: 'hit',
+  category: 'SYSTEM',
+  otelTraceId: '8028590b6b95879a56398f7bc6c1b9f6',
+  otelSpanId: 'cc586bb1bb394226',
+  otelTraceFlags: '01'
+}
+ GET /api/settings?scope=light 200 in 14ms (compile: 2ms, proxy.ts: 3ms, render: 9ms)
+ GET /admin/kangur/tests-manager 200 in 1186ms (compile: 1038ms, proxy.ts: 4ms, render: 144ms)
+[api/settings] [api/settings] [settings] cache hit {
+  service: 'api/settings',
+  scope: 'light',
+  status: 'hit',
+  category: 'SYSTEM',
+  otelTraceId: 'cca8e027d0d618e13ca0c841c3f0465f',
+  otelSpanId: '2b0d9fd2968db655',
+  otelTraceFlags: '01'
+}
+ GET /api/settings?scope=light 200 in 17ms (compile: 2ms, proxy.ts: 1920µs, render: 13ms)
+ GET /kangur 200 in 2.3s (compile: 2.2s, render: 128ms)
+ GET /api/auth/session 200 in 31ms (compile: 12ms, proxy.ts: 10ms, render: 8ms)
+ GET /api/auth/session 200 in 53ms (compile: 17ms, proxy.ts: 23ms, render: 13ms)
+ GET /api/kangur/scores?sort=-score&limit=100 200 in 477ms (compile: 370ms, proxy.ts: 3ms, render: 104ms)
+[kangur.scores.GET] kangur.scores.GET completed successfully {
+  durationMs: 142,
+  successPolicy: 'all',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: 'cbd2e4b5a52a7939700efe3d11957989',
+  otelSpanId: '8f74acc48440e185',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  traceId: '2bec0b59-cf06-48da-a9e1-ee3d7f6d013e',
+  correlationId: '48a46639-973e-4b31-975a-872056c1d9a2'
+}
+ GET /kangur 200 in 74ms (compile: 4ms, render: 70ms)
+ GET /api/auth/session 200 in 11ms (compile: 4ms, proxy.ts: 3ms, render: 4ms)
+ GET /api/auth/session 200 in 10ms (compile: 3ms, proxy.ts: 3ms, render: 4ms)
+[kangur.scores.GET] kangur.scores.GET completed successfully {
+  durationMs: 60,
+  successPolicy: 'all',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '82c3eb7766115574cb6c085fecdc9283',
+  otelSpanId: '8db9be2b5be70023',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  traceId: '303ce87e-e97a-428f-95ca-168ed58eebd5',
+  correlationId: '22fd8264-a925-41ce-a60b-58f7cd0bd519'
+}
+ GET /api/kangur/scores?sort=-score&limit=100 200 in 70ms (compile: 2ms, proxy.ts: 2ms, render: 66ms)
+ GET /kangur 200 in 115ms (compile: 4ms, render: 111ms)
+ GET /api/auth/session 200 in 15ms (compile: 8ms, proxy.ts: 3ms, render: 4ms)
+ GET /api/auth/session 200 in 10ms (compile: 3ms, proxy.ts: 2ms, render: 4ms)
+[kangur.scores.GET] kangur.scores.GET completed successfully {
+  durationMs: 52,
+  successPolicy: 'all',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '6811edf787e454c5d435d47749b87234',
+  otelSpanId: '4787c15e723a6ccc',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  traceId: 'c7cca781-d600-4923-ac93-525d34562e2b',
+  correlationId: 'c2adcf37-5f70-423e-9de3-16506e26adc7'
+}
+ GET /api/kangur/scores?sort=-score&limit=100 200 in 58ms (compile: 1739µs, proxy.ts: 2ms, render: 55ms)
+ GET /kangur 200 in 81ms (compile: 4ms, render: 77ms)
+ GET /api/auth/session 200 in 11ms (compile: 4ms, proxy.ts: 2ms, render: 4ms)
+ GET /api/auth/session 200 in 10ms (compile: 3ms, proxy.ts: 3ms, render: 4ms)
+[kangur.scores.GET] kangur.scores.GET completed successfully {
+  durationMs: 76,
+  successPolicy: 'all',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '84eb1bb9bc8579d3aa10c72477c6dcc2',
+  otelSpanId: '3a032f3042d39be3',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  traceId: '4ff8016c-25e8-4b96-a446-6c955dcb04e6',
+  correlationId: '7f423b04-3433-4bc3-ac82-f89b72f26aa9'
+}
+ GET /api/kangur/scores?sort=-score&limit=100 200 in 82ms (compile: 1468µs, proxy.ts: 2ms, render: 78ms)
+ GET /kangur/lessons 200 in 125ms (compile: 4ms, render: 120ms)
+ GET /api/auth/session 200 in 14ms (compile: 4ms, proxy.ts: 3ms, render: 7ms)
+ GET /api/auth/session 200 in 9ms (compile: 3ms, proxy.ts: 2ms, render: 4ms)
+[kangur.observability.summary.GET] kangur.observability.summary.GET completed successfully {
+  durationMs: 26500,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '680a659f987f6bc2c8577070d2367b04',
+  otelSpanId: '077cefd46921a3a7',
+  otelTraceFlags: '01',
+  service: 'kangur.observability',
+  traceId: '4483f04d-65ab-4213-8d66-e490482f7875',
+  correlationId: '78f3b1ca-b28e-4a6b-8fa8-32ce957350b8'
+}
+ GET /kangur/lessons 200 in 94ms (compile: 12ms, render: 81ms)
+ GET /api/auth/session 200 in 27ms (compile: 13ms, proxy.ts: 6ms, render: 8ms)
+ GET /api/auth/session 200 in 19ms (compile: 7ms, proxy.ts: 3ms, render: 8ms)
+ GET /kangur/lessons 200 in 81ms (compile: 7ms, render: 74ms)
+ GET /api/auth/session 200 in 16ms (compile: 7ms, proxy.ts: 4ms, render: 4ms)
+ GET /api/auth/session 200 in 11ms (compile: 3ms, proxy.ts: 2ms, render: 5ms)
+○ Compiling /[...slug] ...
+ GET /uploads/agentcreator/personas/persona-mila/neutral/avatar.png 200 in 3.9s (compile: 3.7s, render: 181ms)
+ GET /uploads/agentcreator/personas/persona-mila/neutral/avatar.png 200 in 92ms (compile: 5ms, render: 87ms)
+ GET /kangur/lessons 200 in 73ms (compile: 5ms, render: 68ms)
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 1,
+  reason: 'idle',
+  address: 'cluster0-shard-00-00.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 1,
+  reason: 'idle',
+  address: 'cluster0-shard-00-02.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+ GET /api/auth/session 200 in 18ms (compile: 8ms, proxy.ts: 3ms, render: 8ms)
+ GET /api/auth/session 200 in 12ms (compile: 3ms, proxy.ts: 5ms, render: 4ms)
+ GET /kangur/lessons 200 in 195ms (compile: 9ms, render: 186ms)
+ GET /api/auth/session 200 in 30ms (compile: 16ms, proxy.ts: 6ms, render: 8ms)
+ GET /api/auth/session 200 in 17ms (compile: 4ms, proxy.ts: 5ms, render: 8ms)
+ GET /kangur/lessons 200 in 167ms (compile: 8ms, render: 159ms)
+ GET /api/auth/session 200 in 93ms (compile: 46ms, proxy.ts: 23ms, render: 23ms)
+ GET /api/auth/session 200 in 20ms (compile: 4ms, proxy.ts: 4ms, render: 12ms)
+ GET /kangur/lessons 200 in 88ms (compile: 6ms, render: 82ms)
+ GET /api/auth/session 200 in 18ms (compile: 10ms, proxy.ts: 3ms, render: 5ms)
+ GET /api/auth/session 200 in 12ms (compile: 4ms, proxy.ts: 3ms, render: 5ms)
+ GET /kangur/tests 200 in 350ms (compile: 279ms, render: 72ms)
+ GET /api/auth/session 200 in 23ms (compile: 9ms, proxy.ts: 3ms, render: 11ms)
+ GET /api/auth/session 200 in 24ms (compile: 6ms, proxy.ts: 15ms, render: 4ms)
+ GET /kangur/game?quickStart=operation&operation=division&difficulty=easy 200 in 83ms (compile: 4ms, render: 79ms)
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 6,
+  reason: 'idle',
+  address: 'cluster0-shard-00-01.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+ GET /api/auth/session 200 in 16ms (compile: 4ms, proxy.ts: 4ms, render: 8ms)
+[kangur.scores.GET] kangur.scores.GET completed successfully {
+  durationMs: 58,
+  successPolicy: 'all',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '357d2d9ea2d554d45a0b4f9b54469759',
+  otelSpanId: '840baa80cb7d8856',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  traceId: '9fc47829-2d9f-4a45-81b5-d5b13fa485b3',
+  correlationId: '5e8372db-d5d4-45de-8ffe-8a4818b05b12'
+}
+ GET /api/kangur/scores?sort=-score&limit=100 200 in 68ms (compile: 2ms, proxy.ts: 3ms, render: 62ms)
+ GET /api/auth/session 200 in 8ms (compile: 3ms, proxy.ts: 2ms, render: 3ms)
+ GET /kangur/tests 200 in 157ms (compile: 4ms, render: 153ms)
+ GET /api/auth/session 200 in 13ms (compile: 4ms, proxy.ts: 4ms, render: 5ms)
+ GET /api/auth/session 200 in 11ms (compile: 3ms, proxy.ts: 3ms, render: 5ms)
+ GET /kangur/lessons 200 in 88ms (compile: 5ms, render: 83ms)
+ GET /api/auth/session 200 in 14ms (compile: 9ms, proxy.ts: 2ms, render: 3ms)
+ GET /api/auth/session 200 in 9ms (compile: 3ms, proxy.ts: 2ms, render: 4ms)
+ GET /kangur/tests 200 in 77ms (compile: 5ms, render: 72ms)
+ GET /kangur/lessons 200 in 74ms (compile: 7ms, render: 67ms)
+ GET /kangur/lessons 200 in 75ms (compile: 4ms, render: 71ms)
+ GET /api/auth/session 200 in 12ms (compile: 4ms, proxy.ts: 4ms, render: 4ms)
+ GET /api/auth/session 200 in 9ms (compile: 3ms, proxy.ts: 1842µs, render: 5ms)
+ GET /kangur/tests 200 in 73ms (compile: 6ms, render: 68ms)
+ GET /kangur/lessons 200 in 72ms (compile: 5ms, render: 67ms)
+ GET /kangur/lessons 200 in 79ms (compile: 4ms, render: 74ms)
+ GET /kangur/game?quickStart=training 200 in 77ms (compile: 4ms, render: 73ms)
+[kangur.scores.GET] kangur.scores.GET completed successfully {
+  durationMs: 57,
+  successPolicy: 'all',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '1a14414e71b68e5a29fdd884d47c7318',
+  otelSpanId: 'bca12063c6fc4f2f',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  traceId: '9fb50771-a8dc-4d7e-8e88-aca871a9e904',
+  correlationId: 'dc69ddd3-d251-497d-a29d-5e3e9e248ea4'
+}
+ GET /api/kangur/scores?sort=-score&limit=100 200 in 64ms (compile: 1569µs, proxy.ts: 3ms, render: 59ms)
+ GET /api/settings/lite 200 in 290ms (compile: 16ms, proxy.ts: 15ms, render: 259ms)
+ GET /api/kangur/ai-tutor/guest-intro 200 in 345ms (compile: 200ms, proxy.ts: 1521µs, render: 143ms)
+ POST /api/analytics/events 202 in 178ms (compile: 166ms, proxy.ts: 4ms, render: 9ms)
+ POST /api/analytics/events 202 in 181ms (compile: 170ms, proxy.ts: 3ms, render: 7ms)
+ GET /api/settings?scope=heavy 200 in 1327ms (compile: 5ms, proxy.ts: 20ms, render: 1302ms)
+ GET /kangur/game?quickStart=operation&operation=division&difficulty=easy 200 in 70ms (compile: 4ms, render: 66ms)
+ GET /api/settings/lite 200 in 9ms (compile: 4ms, proxy.ts: 2ms, render: 3ms)
+[kangur.scores.GET] kangur.scores.GET completed successfully {
+  durationMs: 55,
+  successPolicy: 'all',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: 'bb6c24f0a883d489af113d79eef69fd2',
+  otelSpanId: 'dc0c4717c700a724',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  traceId: '9f176a63-2edc-4b89-abac-019c08c18671',
+  correlationId: 'e448c134-8344-45a4-9391-a4bb18845c8d'
+}
+ GET /api/kangur/scores?sort=-score&limit=100 200 in 61ms (compile: 1699µs, proxy.ts: 2ms, render: 57ms)
+ GET /api/kangur/ai-tutor/guest-intro 200 in 66ms (compile: 1471µs, proxy.ts: 2ms, render: 62ms)
+ POST /api/analytics/events 202 in 14ms (compile: 2ms, proxy.ts: 6ms, render: 6ms)
+ POST /api/analytics/events 202 in 17ms (compile: 4ms, proxy.ts: 6ms, render: 7ms)
+[api/settings] [api/settings] [settings] cache fallback {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'timeout-prisma-fallback',
+  reason: '[settings] cache miss fetch timed out after 3000ms',
+  category: 'SYSTEM',
+  otelTraceId: 'bb26829d73ce0c66a8ef67b8c8139226',
+  otelSpanId: '252a23920fea03c7',
+  otelTraceFlags: '01',
+  fingerprint: '772884b32ff22fd8'
+}
+[settings.GET] settings.GET completed successfully {
+  durationMs: 3045,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: 'bb26829d73ce0c66a8ef67b8c8139226',
+  otelSpanId: '252a23920fea03c7',
+  otelTraceFlags: '01',
+  service: 'settings',
+  traceId: '0a7d8dac-c2e1-47d6-ad51-7967525e45ae',
+  correlationId: '48389c2c-9d29-4d22-b69f-ba2053510bf2'
+}
+ GET /api/settings?scope=heavy 200 in 821ms (compile: 2ms, proxy.ts: 3ms, render: 815ms)
+ GET /kangur/game?quickStart=operation 200 in 172ms (compile: 6ms, render: 166ms)
+[api/settings] [api/settings] [settings] cache hit {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'hit',
+  category: 'SYSTEM',
+  otelTraceId: '0c5d36b65643db44c9bac727632169f9',
+  otelSpanId: 'e48de27a73935c0b',
+  otelTraceFlags: '01'
+}
+ GET /api/settings?scope=heavy 200 in 23ms (compile: 3ms, proxy.ts: 4ms, render: 17ms)
+ GET /api/settings/lite 200 in 26ms (compile: 4ms, proxy.ts: 4ms, render: 18ms)
+[kangur.scores.GET] kangur.scores.GET completed successfully {
+  durationMs: 65,
+  successPolicy: 'all',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '395791c945c7e38a7016f21926ef1a26',
+  otelSpanId: 'c428d7a4e08f16fb',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  traceId: '7de3e466-d306-4408-8ded-60cf159dcd8e',
+  correlationId: 'e4aed98c-efe7-4171-bb15-8b10d754a00f'
+}
+ GET /api/kangur/scores?sort=-score&limit=100 200 in 85ms (compile: 3ms, proxy.ts: 7ms, render: 74ms)
+ GET /api/kangur/ai-tutor/guest-intro 200 in 129ms (compile: 14ms, proxy.ts: 7ms, render: 107ms)
+ POST /api/analytics/events 202 in 36ms (compile: 9ms, proxy.ts: 15ms, render: 11ms)
+ POST /api/analytics/events 202 in 49ms (compile: 17ms, proxy.ts: 22ms, render: 9ms)
+[api/settings] [api/settings] [settings] cache fallback {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'timeout-prisma-fallback',
+  reason: '[settings] inflight fetch timed out after 3000ms',
+  category: 'SYSTEM',
+  otelTraceId: 'd370651af5385ace25657606a0b5e2e1',
+  otelSpanId: '1ad5cfef7705d167',
+  otelTraceFlags: '01',
+  fingerprint: '772884b32ff22fd8'
+}
+[settings.GET] settings.GET completed successfully {
+  durationMs: 3016,
+  successPolicy: 'slow',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: 'd370651af5385ace25657606a0b5e2e1',
+  otelSpanId: '1ad5cfef7705d167',
+  otelTraceFlags: '01',
+  service: 'settings',
+  traceId: 'a582a1cd-8182-4caf-ad16-5c86d488da16',
+  correlationId: 'fc7201c9-9ddd-45df-9abc-f3970bf836c8'
+}
+ GET /kangur/game 200 in 258ms (compile: 19ms, render: 240ms)
+[api/settings] [api/settings] [settings] cache hit {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'hit',
+  category: 'SYSTEM',
+  otelTraceId: 'cdfabde47788a45fdcf828cdf410a0be',
+  otelSpanId: 'ec5456d7e0f6c5ef',
+  otelTraceFlags: '01'
+}
+ GET /api/settings?scope=heavy 200 in 16ms (compile: 3ms, proxy.ts: 5ms, render: 8ms)
+ GET /api/settings/lite 200 in 15ms (compile: 4ms, proxy.ts: 3ms, render: 7ms)
+[kangur.auth.me.GET] Authentication required. {
+  errorId: 'cd9cb5b2-0be5-4e2a-bad6-81da96a7182f',
+  code: 'UNAUTHORIZED',
+  category: 'AUTH',
+  durationMs: 4,
+  source: 'kangur.auth.me.GET',
+  route: '/api/kangur/auth/me',
+  method: 'GET',
+  traceId: 'abd8c920-d5e2-419d-8989-477fcb158500',
+  correlationId: 'f53a9f6e-7d2e-40e7-a7a7-64756bea4309',
+  otelTraceId: '3259a56a1fe3ba7fdaaa77eea62032c6',
+  otelSpanId: 'e99cd34c2ee0cc68',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  expected: true,
+  critical: false,
+  retryable: false,
+  error: {
+    message: 'Authentication required.',
+    stack: 'AppError: Authentication required.\n' +
+      '    at authError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:167:53)\n' +
+      '    at resolveKangurActor (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_features_61e92bf6._.js:6522:170)\n' +
+      '    at async getKangurAuthMeHandler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_app_api_kangur_auth_me_629d727f._.js:25:19)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:2352:34\n' +
+      '    at async AppRouteRouteModule.do (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:37866)\n' +
+      '    at async AppRouteRouteModule.handle (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:45156)\n' +
+      '    at async responseGenerator (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17162:38)\n' +
+      '    at async AppRouteRouteModule.handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:1:191938)\n' +
+      '    at async handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17225:32)\n' +
+      '    at async Module.handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17276:13)\n' +
+      '    at async DevServer.renderToResponseWithComponentsImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1442:9)\n' +
+      '    at async DevServer.renderPageComponent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1494:24)\n' +
+      '    at async DevServer.renderToResponseImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1544:32)\n' +
+      '    at async DevServer.pipeImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1038:25)\n' +
+      '    at async NextNodeServer.handleCatchallRenderRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/next-server.js:395:17)\n' +
+      '    at async DevServer.handleRequestImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:929:17)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:387:20\n' +
+      '    at async Span.traceAsyncFn (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/trace/trace.js:157:20)\n' +
+      '    at async DevServer.handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:383:24)\n' +
+      '    at async invokeRender (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:248:21)\n' +
+      '    at async handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:447:24)\n' +
+      '    at async NextCustomServer.requestHandlerImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:496:13)',
+    name: 'AppError',
+    code: 'UNAUTHORIZED',
+    httpStatus: 401,
+    expected: true,
+    critical: false,
+    retryable: false
+  },
+  errorCode: 'UNAUTHORIZED',
+  errorName: 'AppError',
+  fingerprint: '5c061657c3e53d28'
+}
+ GET /api/kangur/auth/me 401 in 259ms (compile: 249ms, proxy.ts: 4ms, render: 7ms)
+[kangur.scores.GET] kangur.scores.GET completed successfully {
+  durationMs: 58,
+  successPolicy: 'all',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '379c9715f86303b6584bd32fe0bc7081',
+  otelSpanId: 'b295e36e54a6db28',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  traceId: 'eaabd8f9-bd8f-440b-94f6-f2c3c296eb3d',
+  correlationId: '44bb76f4-4063-41d2-a002-2b0d07505eef'
+}
+ GET /api/kangur/scores?sort=-score&limit=100 200 in 64ms (compile: 1944µs, proxy.ts: 2ms, render: 60ms)
+ GET /api/kangur/ai-tutor/guest-intro 200 in 75ms (compile: 4ms, proxy.ts: 2ms, render: 69ms)
+ POST /api/analytics/events 202 in 14ms (compile: 2ms, proxy.ts: 7ms, render: 5ms)
+ POST /api/analytics/events 202 in 12ms (compile: 3ms, proxy.ts: 3ms, render: 5ms)
+[api/settings] [api/settings] [timing] settings.fetch {
+  service: 'api/settings',
+  scope: 'heavy',
+  provider: 0.32387500000186265,
+  mongo: 12232.591249999998,
+  total: 12232.966708000007,
+  category: 'NETWORK',
+  otelTraceId: 'bb26829d73ce0c66a8ef67b8c8139226',
+  otelSpanId: '252a23920fea03c7',
+  otelTraceFlags: '01'
+}
+ GET /kangur/game 200 in 91ms (compile: 11ms, render: 80ms)
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 2,
+  reason: 'idle',
+  address: 'cluster0-shard-00-00.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 2,
+  reason: 'idle',
+  address: 'cluster0-shard-00-02.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+ GET /api/settings/lite 200 in 42ms (compile: 18ms, proxy.ts: 9ms, render: 15ms)
+[api/settings] [api/settings] [settings] cache hit {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'hit',
+  category: 'SYSTEM',
+  otelTraceId: '14f32a5d13bca08a53a8d0a9ed84f75b',
+  otelSpanId: 'e08283047ea5a52a',
+  otelTraceFlags: '01'
+}
+ GET /api/settings?scope=heavy 200 in 66ms (compile: 35ms, proxy.ts: 10ms, render: 21ms)
+[kangur.auth.me.GET] Authentication required. {
+  errorId: 'e3eab11f-b7b7-4b38-8404-382204d5f46f',
+  code: 'UNAUTHORIZED',
+  category: 'AUTH',
+  durationMs: 24,
+  source: 'kangur.auth.me.GET',
+  route: '/api/kangur/auth/me',
+  method: 'GET',
+  traceId: '2741a6d3-07d2-448c-a998-9615eae57400',
+  correlationId: 'b700d781-d79f-479c-b2e7-cf79a5ed123e',
+  otelTraceId: '70b93a5404342a43bc7a41912e57a72c',
+  otelSpanId: '7f004305569e3243',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  expected: true,
+  critical: false,
+  retryable: false,
+  error: {
+    message: 'Authentication required.',
+    stack: 'AppError: Authentication required.\n' +
+      '    at authError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:167:53)\n' +
+      '    at resolveKangurActor (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_features_61e92bf6._.js:6522:170)\n' +
+      '    at async getKangurAuthMeHandler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_app_api_kangur_auth_me_629d727f._.js:25:19)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:2352:34\n' +
+      '    at async AppRouteRouteModule.do (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:37866)\n' +
+      '    at async AppRouteRouteModule.handle (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:45156)\n' +
+      '    at async responseGenerator (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17162:38)\n' +
+      '    at async AppRouteRouteModule.handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:1:191938)\n' +
+      '    at async handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17225:32)\n' +
+      '    at async Module.handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17276:13)\n' +
+      '    at async DevServer.renderToResponseWithComponentsImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1442:9)\n' +
+      '    at async DevServer.renderPageComponent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1494:24)\n' +
+      '    at async DevServer.renderToResponseImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1544:32)\n' +
+      '    at async DevServer.pipeImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1038:25)\n' +
+      '    at async NextNodeServer.handleCatchallRenderRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/next-server.js:395:17)\n' +
+      '    at async DevServer.handleRequestImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:929:17)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:387:20\n' +
+      '    at async Span.traceAsyncFn (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/trace/trace.js:157:20)\n' +
+      '    at async DevServer.handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:383:24)\n' +
+      '    at async invokeRender (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:248:21)\n' +
+      '    at async handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:447:24)\n' +
+      '    at async NextCustomServer.requestHandlerImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:496:13)',
+    name: 'AppError',
+    code: 'UNAUTHORIZED',
+    httpStatus: 401,
+    expected: true,
+    critical: false,
+    retryable: false
+  },
+  errorCode: 'UNAUTHORIZED',
+  errorName: 'AppError',
+  fingerprint: '5c061657c3e53d28'
+}
+ GET /api/kangur/auth/me 401 in 63ms (compile: 24ms, proxy.ts: 10ms, render: 29ms)
+ GET /api/kangur/ai-tutor/guest-intro 200 in 71ms (compile: 2ms, proxy.ts: 2ms, render: 66ms)
+ POST /api/analytics/events 202 in 11ms (compile: 2ms, proxy.ts: 3ms, render: 6ms)
+ POST /api/analytics/events 202 in 16ms (compile: 5ms, proxy.ts: 2ms, render: 8ms)
+ GET /kangur/lessons 200 in 75ms (compile: 6ms, render: 69ms)
+ POST /api/analytics/events 202 in 11ms (compile: 1726µs, proxy.ts: 1921µs, render: 7ms)
+ GET /kangur 200 in 65ms (compile: 6ms, render: 59ms)
+ POST /api/analytics/events 202 in 18ms (compile: 8ms, proxy.ts: 3ms, render: 7ms)
+ GET /kangur/tests 200 in 62ms (compile: 4ms, render: 58ms)
+ GET /kangur 200 in 67ms (compile: 5ms, render: 63ms)
+ GET /kangur/game 200 in 409ms (compile: 7ms, render: 402ms)
+[api/settings] [api/settings] [settings] cache hit {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'hit',
+  category: 'SYSTEM',
+  otelTraceId: '1130d0910a806e3b86ff0a1a9ff39538',
+  otelSpanId: 'ca879b889b2fd5c5',
+  otelTraceFlags: '01'
+}
+[kangur.auth.me.GET] Authentication required. {
+  errorId: 'f8a2c2f4-e1bb-4f85-ad13-c225ae190746',
+  code: 'UNAUTHORIZED',
+  category: 'AUTH',
+  durationMs: 16,
+  source: 'kangur.auth.me.GET',
+  route: '/api/kangur/auth/me',
+  method: 'GET',
+  traceId: '0828a6e2-968a-4bfa-8c8f-1a95464a7ab5',
+  correlationId: '9678b2f0-94a6-4894-9e62-3265ac02ad3a',
+  otelTraceId: '3a1bc328d5d04897f98f6e2c8967454a',
+  otelSpanId: '477fb4ff308ba2d3',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  expected: true,
+  critical: false,
+  retryable: false,
+  error: {
+    message: 'Authentication required.',
+    stack: 'AppError: Authentication required.\n' +
+      '    at authError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:167:53)\n' +
+      '    at resolveKangurActor (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_features_61e92bf6._.js:6522:170)\n' +
+      '    at async getKangurAuthMeHandler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_app_api_kangur_auth_me_629d727f._.js:25:19)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:2352:34\n' +
+      '    at async AppRouteRouteModule.do (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:37866)\n' +
+      '    at async AppRouteRouteModule.handle (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:45156)\n' +
+      '    at async responseGenerator (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17162:38)\n' +
+      '    at async AppRouteRouteModule.handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:1:191938)\n' +
+      '    at async handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17225:32)\n' +
+      '    at async Module.handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17276:13)\n' +
+      '    at async DevServer.renderToResponseWithComponentsImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1442:9)\n' +
+      '    at async DevServer.renderPageComponent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1494:24)\n' +
+      '    at async DevServer.renderToResponseImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1544:32)\n' +
+      '    at async DevServer.pipeImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1038:25)\n' +
+      '    at async NextNodeServer.handleCatchallRenderRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/next-server.js:395:17)\n' +
+      '    at async DevServer.handleRequestImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:929:17)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:387:20\n' +
+      '    at async Span.traceAsyncFn (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/trace/trace.js:157:20)\n' +
+      '    at async DevServer.handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:383:24)\n' +
+      '    at async invokeRender (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:248:21)\n' +
+      '    at async handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:447:24)\n' +
+      '    at async NextCustomServer.requestHandlerImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:496:13)',
+    name: 'AppError',
+    code: 'UNAUTHORIZED',
+    httpStatus: 401,
+    expected: true,
+    critical: false,
+    retryable: false
+  },
+  errorCode: 'UNAUTHORIZED',
+  errorName: 'AppError',
+  fingerprint: '5c061657c3e53d28'
+}
+ GET /api/kangur/auth/me 401 in 32ms (compile: 5ms, proxy.ts: 5ms, render: 22ms)
+ GET /api/settings?scope=heavy 200 in 35ms (compile: 3ms, proxy.ts: 6ms, render: 26ms)
+ GET /api/settings/lite 200 in 37ms (compile: 7ms, proxy.ts: 5ms, render: 24ms)
+ GET /api/kangur/ai-tutor/guest-intro 200 in 81ms (compile: 1836µs, proxy.ts: 13ms, render: 66ms)
+ POST /api/analytics/events 202 in 15ms (compile: 2ms, proxy.ts: 5ms, render: 8ms)
+ POST /api/analytics/events 202 in 19ms (compile: 6ms, proxy.ts: 3ms, render: 10ms)
+ GET /kangur/tests 200 in 175ms (compile: 8ms, render: 168ms)
+ GET /kangur 200 in 100ms (compile: 8ms, render: 92ms)
+ GET /kangur/game 200 in 95ms (compile: 5ms, render: 90ms)
+[api/settings] [api/settings] [settings] cache hit {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'hit',
+  category: 'SYSTEM',
+  otelTraceId: '5a1cac4c109f58a67112bc77426ba047',
+  otelSpanId: '6e12feb233f12ea3',
+  otelTraceFlags: '01'
+}
+[kangur.auth.me.GET] Authentication required. {
+  errorId: 'f2604c17-e11f-4883-abfd-7b9b7ef4a47e',
+  code: 'UNAUTHORIZED',
+  category: 'AUTH',
+  durationMs: 16,
+  source: 'kangur.auth.me.GET',
+  route: '/api/kangur/auth/me',
+  method: 'GET',
+  traceId: 'f47fa6d4-1544-4354-bcff-0e3661e2ea46',
+  correlationId: '8b82e369-1159-4cd1-b90b-4cc0f60d0347',
+  otelTraceId: 'ffc5c0413ee4cb673e82b1ffbd1ee57a',
+  otelSpanId: 'b073992a6760a344',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  expected: true,
+  critical: false,
+  retryable: false,
+  error: {
+    message: 'Authentication required.',
+    stack: 'AppError: Authentication required.\n' +
+      '    at authError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:167:53)\n' +
+      '    at resolveKangurActor (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_features_61e92bf6._.js:6522:170)\n' +
+      '    at async getKangurAuthMeHandler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_app_api_kangur_auth_me_629d727f._.js:25:19)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:2352:34\n' +
+      '    at async AppRouteRouteModule.do (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:37866)\n' +
+      '    at async AppRouteRouteModule.handle (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:45156)\n' +
+      '    at async responseGenerator (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17162:38)\n' +
+      '    at async AppRouteRouteModule.handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:1:191938)\n' +
+      '    at async handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17225:32)\n' +
+      '    at async Module.handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17276:13)\n' +
+      '    at async DevServer.renderToResponseWithComponentsImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1442:9)\n' +
+      '    at async DevServer.renderPageComponent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1494:24)\n' +
+      '    at async DevServer.renderToResponseImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1544:32)\n' +
+      '    at async DevServer.pipeImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1038:25)\n' +
+      '    at async NextNodeServer.handleCatchallRenderRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/next-server.js:395:17)\n' +
+      '    at async DevServer.handleRequestImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:929:17)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:387:20\n' +
+      '    at async Span.traceAsyncFn (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/trace/trace.js:157:20)\n' +
+      '    at async DevServer.handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:383:24)\n' +
+      '    at async invokeRender (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:248:21)\n' +
+      '    at async handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:447:24)\n' +
+      '    at async NextCustomServer.requestHandlerImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:496:13)',
+    name: 'AppError',
+    code: 'UNAUTHORIZED',
+    httpStatus: 401,
+    expected: true,
+    critical: false,
+    retryable: false
+  },
+  errorCode: 'UNAUTHORIZED',
+  errorName: 'AppError',
+  fingerprint: '5c061657c3e53d28'
+}
+ GET /api/kangur/auth/me 401 in 33ms (compile: 9ms, proxy.ts: 5ms, render: 19ms)
+ GET /api/settings/lite 200 in 34ms (compile: 11ms, proxy.ts: 5ms, render: 19ms)
+ GET /api/settings?scope=heavy 200 in 38ms (compile: 7ms, proxy.ts: 5ms, render: 26ms)
+ GET /api/kangur/ai-tutor/guest-intro 200 in 93ms (compile: 4ms, proxy.ts: 3ms, render: 87ms)
+ POST /api/analytics/events 202 in 20ms (compile: 3ms, proxy.ts: 6ms, render: 11ms)
+ POST /api/analytics/events 202 in 24ms (compile: 5ms, proxy.ts: 6ms, render: 13ms)
+ GET /kangur/lessons 200 in 128ms (compile: 7ms, render: 121ms)
+ POST /api/analytics/events 202 in 45ms (compile: 17ms, proxy.ts: 17ms, render: 11ms)
+ GET /kangur/tests 200 in 148ms (compile: 7ms, render: 142ms)
+ GET /kangur 200 in 81ms (compile: 7ms, render: 74ms)
+ POST /api/analytics/events 202 in 43ms (compile: 13ms, proxy.ts: 22ms, render: 8ms)
+ GET /kangur/game 200 in 610ms (compile: 8ms, render: 602ms)
+[api/settings] [api/settings] [settings] cache hit {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'hit',
+  category: 'SYSTEM',
+  otelTraceId: 'ca6eed91d0f462ae0e203829e8e05e6c',
+  otelSpanId: '8c1768cb09e64e70',
+  otelTraceFlags: '01'
+}
+[kangur.auth.me.GET] Authentication required. {
+  errorId: '2841fa50-6e86-4d84-9038-b714d7e74ba0',
+  code: 'UNAUTHORIZED',
+  category: 'AUTH',
+  durationMs: 24,
+  source: 'kangur.auth.me.GET',
+  route: '/api/kangur/auth/me',
+  method: 'GET',
+  traceId: 'aef389ee-f245-4998-a646-0d074e0f81a3',
+  correlationId: 'c7107ea2-1722-493b-bba9-5408270aab26',
+  otelTraceId: 'd3606343e926bfa824d77a3d1f7aa3a5',
+  otelSpanId: 'e697ca8966920690',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  expected: true,
+  critical: false,
+  retryable: false,
+  error: {
+    message: 'Authentication required.',
+    stack: 'AppError: Authentication required.\n' +
+      '    at authError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:167:53)\n' +
+      '    at resolveKangurActor (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_features_61e92bf6._.js:6522:170)\n' +
+      '    at async getKangurAuthMeHandler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_app_api_kangur_auth_me_629d727f._.js:25:19)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:2352:34\n' +
+      '    at async AppRouteRouteModule.do (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:37866)\n' +
+      '    at async AppRouteRouteModule.handle (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:45156)\n' +
+      '    at async responseGenerator (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17162:38)\n' +
+      '    at async AppRouteRouteModule.handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:1:191938)\n' +
+      '    at async handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17225:32)\n' +
+      '    at async Module.handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17276:13)\n' +
+      '    at async DevServer.renderToResponseWithComponentsImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1442:9)\n' +
+      '    at async DevServer.renderPageComponent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1494:24)\n' +
+      '    at async DevServer.renderToResponseImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1544:32)\n' +
+      '    at async DevServer.pipeImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1038:25)\n' +
+      '    at async NextNodeServer.handleCatchallRenderRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/next-server.js:395:17)\n' +
+      '    at async DevServer.handleRequestImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:929:17)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:387:20\n' +
+      '    at async Span.traceAsyncFn (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/trace/trace.js:157:20)\n' +
+      '    at async DevServer.handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:383:24)\n' +
+      '    at async invokeRender (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:248:21)\n' +
+      '    at async handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:447:24)\n' +
+      '    at async NextCustomServer.requestHandlerImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:496:13)',
+    name: 'AppError',
+    code: 'UNAUTHORIZED',
+    httpStatus: 401,
+    expected: true,
+    critical: false,
+    retryable: false
+  },
+  errorCode: 'UNAUTHORIZED',
+  errorName: 'AppError',
+  fingerprint: '5c061657c3e53d28'
+}
+ GET /api/kangur/auth/me 401 in 39ms (compile: 7ms, proxy.ts: 5ms, render: 27ms)
+ GET /api/settings/lite 200 in 40ms (compile: 29ms, proxy.ts: 4ms, render: 7ms)
+ GET /api/settings?scope=heavy 200 in 43ms (compile: 4ms, proxy.ts: 5ms, render: 35ms)
+ GET /api/kangur/ai-tutor/guest-intro 200 in 94ms (compile: 9ms, proxy.ts: 10ms, render: 75ms)
+ POST /api/analytics/events 202 in 23ms (compile: 4ms, proxy.ts: 6ms, render: 13ms)
+ POST /api/analytics/events 202 in 28ms (compile: 6ms, proxy.ts: 6ms, render: 15ms)
+ GET /kangur/lessons 200 in 73ms (compile: 6ms, render: 66ms)
+ POST /api/analytics/events 202 in 33ms (compile: 6ms, proxy.ts: 18ms, render: 10ms)
+ GET /kangur/game 200 in 91ms (compile: 4ms, render: 87ms)
+[api/settings] [api/settings] [settings] cache hit {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'hit',
+  category: 'SYSTEM',
+  otelTraceId: '242179d31d1362144c3e9cea834cd1a4',
+  otelSpanId: '8c9f94a7671468e2',
+  otelTraceFlags: '01'
+}
+ GET /api/settings?scope=heavy 200 in 32ms (compile: 11ms, proxy.ts: 4ms, render: 17ms)
+[kangur.auth.me.GET] Authentication required. {
+  errorId: 'b28fa669-4700-4abb-b364-a90091821889',
+  code: 'UNAUTHORIZED',
+  category: 'AUTH',
+  durationMs: 14,
+  source: 'kangur.auth.me.GET',
+  route: '/api/kangur/auth/me',
+  method: 'GET',
+  traceId: '666c080a-96b4-4481-a7ad-671d903458c5',
+  correlationId: 'a0d641d5-0322-4ff7-921e-6835e9174071',
+  otelTraceId: '70d12471af6f73f9fbc9ae48327e20cd',
+  otelSpanId: '715c1821becd7f77',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  expected: true,
+  critical: false,
+  retryable: false,
+  error: {
+    message: 'Authentication required.',
+    stack: 'AppError: Authentication required.\n' +
+      '    at authError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:167:53)\n' +
+      '    at resolveKangurActor (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_features_61e92bf6._.js:6522:170)\n' +
+      '    at async getKangurAuthMeHandler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_app_api_kangur_auth_me_629d727f._.js:25:19)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:2352:34\n' +
+      '    at async AppRouteRouteModule.do (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:37866)\n' +
+      '    at async AppRouteRouteModule.handle (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:45156)\n' +
+      '    at async responseGenerator (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17162:38)\n' +
+      '    at async AppRouteRouteModule.handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:1:191938)\n' +
+      '    at async handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17225:32)\n' +
+      '    at async Module.handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17276:13)\n' +
+      '    at async DevServer.renderToResponseWithComponentsImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1442:9)\n' +
+      '    at async DevServer.renderPageComponent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1494:24)\n' +
+      '    at async DevServer.renderToResponseImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1544:32)\n' +
+      '    at async DevServer.pipeImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1038:25)\n' +
+      '    at async NextNodeServer.handleCatchallRenderRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/next-server.js:395:17)\n' +
+      '    at async DevServer.handleRequestImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:929:17)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:387:20\n' +
+      '    at async Span.traceAsyncFn (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/trace/trace.js:157:20)\n' +
+      '    at async DevServer.handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:383:24)\n' +
+      '    at async invokeRender (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:248:21)\n' +
+      '    at async handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:447:24)\n' +
+      '    at async NextCustomServer.requestHandlerImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:496:13)',
+    name: 'AppError',
+    code: 'UNAUTHORIZED',
+    httpStatus: 401,
+    expected: true,
+    critical: false,
+    retryable: false
+  },
+  errorCode: 'UNAUTHORIZED',
+  errorName: 'AppError',
+  fingerprint: '5c061657c3e53d28'
+}
+ GET /api/kangur/auth/me 401 in 33ms (compile: 13ms, proxy.ts: 4ms, render: 17ms)
+ GET /api/settings/lite 200 in 34ms (compile: 16ms, proxy.ts: 12ms, render: 7ms)
+ GET /api/kangur/ai-tutor/guest-intro 200 in 78ms (compile: 1481µs, proxy.ts: 3ms, render: 74ms)
+ POST /api/analytics/events 202 in 11ms (compile: 3ms, proxy.ts: 3ms, render: 6ms)
+ POST /api/analytics/events 202 in 13ms (compile: 5ms, proxy.ts: 3ms, render: 5ms)
+ GET /kangur/lessons 200 in 71ms (compile: 6ms, render: 64ms)
+ POST /api/analytics/events 202 in 41ms (compile: 2ms, proxy.ts: 3ms, render: 36ms)
+ POST /api/analytics/events 202 in 11ms (compile: 2ms, proxy.ts: 4ms, render: 5ms)
+ GET /kangur/game 200 in 105ms (compile: 5ms, render: 100ms)
+[api/settings] [api/settings] [settings] cache hit {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'hit',
+  category: 'SYSTEM',
+  otelTraceId: '0042d1f89fb373faaf1fac6141f72ce2',
+  otelSpanId: '37a368b6db76332b',
+  otelTraceFlags: '01'
+}
+ GET /api/settings/lite 200 in 31ms (compile: 10ms, proxy.ts: 8ms, render: 13ms)
+[kangur.auth.me.GET] Authentication required. {
+  errorId: '6ffa994f-cd52-4115-aea2-d1366b4a31ec',
+  code: 'UNAUTHORIZED',
+  category: 'AUTH',
+  durationMs: 18,
+  source: 'kangur.auth.me.GET',
+  route: '/api/kangur/auth/me',
+  method: 'GET',
+  traceId: '0eed3240-739b-4e5f-9685-9c6d7889e0de',
+  correlationId: '737d0cee-de0d-4a45-89c8-483847e115c4',
+  otelTraceId: 'c5af9469e9d1117f336b363e8a35a8a1',
+  otelSpanId: '5b6983f4c2728dc4',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  expected: true,
+  critical: false,
+  retryable: false,
+  error: {
+    message: 'Authentication required.',
+    stack: 'AppError: Authentication required.\n' +
+      '    at authError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:167:53)\n' +
+      '    at resolveKangurActor (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_features_61e92bf6._.js:6522:170)\n' +
+      '    at async getKangurAuthMeHandler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_app_api_kangur_auth_me_629d727f._.js:25:19)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:2352:34\n' +
+      '    at async AppRouteRouteModule.do (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:37866)\n' +
+      '    at async AppRouteRouteModule.handle (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:45156)\n' +
+      '    at async responseGenerator (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17162:38)\n' +
+      '    at async AppRouteRouteModule.handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:1:191938)\n' +
+      '    at async handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17225:32)\n' +
+      '    at async Module.handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17276:13)\n' +
+      '    at async DevServer.renderToResponseWithComponentsImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1442:9)\n' +
+      '    at async DevServer.renderPageComponent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1494:24)\n' +
+      '    at async DevServer.renderToResponseImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1544:32)\n' +
+      '    at async DevServer.pipeImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1038:25)\n' +
+      '    at async NextNodeServer.handleCatchallRenderRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/next-server.js:395:17)\n' +
+      '    at async DevServer.handleRequestImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:929:17)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:387:20\n' +
+      '    at async Span.traceAsyncFn (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/trace/trace.js:157:20)\n' +
+      '    at async DevServer.handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:383:24)\n' +
+      '    at async invokeRender (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:248:21)\n' +
+      '    at async handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:447:24)\n' +
+      '    at async NextCustomServer.requestHandlerImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:496:13)',
+    name: 'AppError',
+    code: 'UNAUTHORIZED',
+    httpStatus: 401,
+    expected: true,
+    critical: false,
+    retryable: false
+  },
+  errorCode: 'UNAUTHORIZED',
+  errorName: 'AppError',
+  fingerprint: '5c061657c3e53d28'
+}
+ GET /api/kangur/auth/me 401 in 35ms (compile: 9ms, proxy.ts: 4ms, render: 22ms)
+ GET /api/settings?scope=heavy 200 in 40ms (compile: 9ms, proxy.ts: 13ms, render: 19ms)
+ GET /api/kangur/ai-tutor/guest-intro 200 in 81ms (compile: 8ms, proxy.ts: 5ms, render: 67ms)
+ POST /api/analytics/events 202 in 33ms (compile: 3ms, proxy.ts: 13ms, render: 17ms)
+ POST /api/analytics/events 202 in 36ms (compile: 5ms, proxy.ts: 14ms, render: 17ms)
+ GET /kangur/lessons 200 in 80ms (compile: 5ms, render: 75ms)
+ POST /api/analytics/events 202 in 9ms (compile: 2ms, proxy.ts: 2ms, render: 4ms)
+ GET /kangur 200 in 74ms (compile: 6ms, render: 68ms)
+ POST /api/analytics/events 202 in 29ms (compile: 12ms, proxy.ts: 11ms, render: 7ms)
+ GET /kangur/game 200 in 77ms (compile: 4ms, render: 73ms)
+[api/settings] [api/settings] [settings] cache hit {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'hit',
+  category: 'SYSTEM',
+  otelTraceId: '54bb7992676baf740653346b77a1f02d',
+  otelSpanId: 'da7b5460474bb8b2',
+  otelTraceFlags: '01'
+}
+[kangur.auth.me.GET] Authentication required. {
+  errorId: '05edcb13-9ba5-4726-98ce-89944d3b2ac6',
+  code: 'UNAUTHORIZED',
+  category: 'AUTH',
+  durationMs: 20,
+  source: 'kangur.auth.me.GET',
+  route: '/api/kangur/auth/me',
+  method: 'GET',
+  traceId: 'a7ad38f6-987f-437b-9b9f-fe9b58ca7949',
+  correlationId: 'a897ffbb-af6b-4bc9-adce-154172ce486e',
+  otelTraceId: '31b4175127394f20dcfca7945b953f40',
+  otelSpanId: '2bf56ebe2e45b392',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  expected: true,
+  critical: false,
+  retryable: false,
+  error: {
+    message: 'Authentication required.',
+    stack: 'AppError: Authentication required.\n' +
+      '    at authError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:167:53)\n' +
+      '    at resolveKangurActor (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_features_61e92bf6._.js:6522:170)\n' +
+      '    at async getKangurAuthMeHandler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_app_api_kangur_auth_me_629d727f._.js:25:19)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:2352:34\n' +
+      '    at async AppRouteRouteModule.do (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:37866)\n' +
+      '    at async AppRouteRouteModule.handle (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:45156)\n' +
+      '    at async responseGenerator (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17162:38)\n' +
+      '    at async AppRouteRouteModule.handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:1:191938)\n' +
+      '    at async handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17225:32)\n' +
+      '    at async Module.handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17276:13)\n' +
+      '    at async DevServer.renderToResponseWithComponentsImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1442:9)\n' +
+      '    at async DevServer.renderPageComponent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1494:24)\n' +
+      '    at async DevServer.renderToResponseImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1544:32)\n' +
+      '    at async DevServer.pipeImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1038:25)\n' +
+      '    at async NextNodeServer.handleCatchallRenderRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/next-server.js:395:17)\n' +
+      '    at async DevServer.handleRequestImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:929:17)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:387:20\n' +
+      '    at async Span.traceAsyncFn (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/trace/trace.js:157:20)\n' +
+      '    at async DevServer.handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:383:24)\n' +
+      '    at async invokeRender (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:248:21)\n' +
+      '    at async handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:447:24)\n' +
+      '    at async NextCustomServer.requestHandlerImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:496:13)',
+    name: 'AppError',
+    code: 'UNAUTHORIZED',
+    httpStatus: 401,
+    expected: true,
+    critical: false,
+    retryable: false
+  },
+  errorCode: 'UNAUTHORIZED',
+  errorName: 'AppError',
+  fingerprint: '5c061657c3e53d28'
+}
+ GET /api/kangur/auth/me 401 in 37ms (compile: 6ms, proxy.ts: 8ms, render: 23ms)
+ GET /api/settings/lite 200 in 38ms (compile: 13ms, proxy.ts: 7ms, render: 17ms)
+ GET /api/settings?scope=heavy 200 in 40ms (compile: 10ms, proxy.ts: 7ms, render: 23ms)
+ GET /api/kangur/ai-tutor/guest-intro 200 in 80ms (compile: 5ms, proxy.ts: 5ms, render: 70ms)
+ POST /api/analytics/events 202 in 35ms (compile: 4ms, proxy.ts: 23ms, render: 8ms)
+ POST /api/analytics/events 202 in 35ms (compile: 6ms, proxy.ts: 22ms, render: 6ms)

@@ -393,6 +393,14 @@ function DraggableClock({
   const challengeRingOffset = challengeRingCircumference * (1 - challengeProgress);
   const challengeRingColor =
     challengeProgress <= 0.2 ? '#dc2626' : challengeProgress <= 0.5 ? '#f97316' : '#f59e0b';
+  const hourHandInteractionStyle = {
+    cursor: activeHand === 'hour' ? 'grabbing' : 'grab',
+    touchAction: 'none',
+  };
+  const minuteHandInteractionStyle = {
+    cursor: activeHand === 'minute' ? 'grabbing' : 'grab',
+    touchAction: 'none',
+  };
 
   return (
     <div className='flex flex-col items-center gap-4'>
@@ -445,7 +453,7 @@ function DraggableClock({
         viewBox='0 0 200 200'
         width='220'
         height='220'
-        className='drop-shadow-lg touch-none select-none'
+        className='drop-shadow-lg select-none'
         style={{ cursor: 'crosshair' }}
       >
         {showChallengeRing && (
@@ -513,6 +521,21 @@ function DraggableClock({
         })}
 
         <line
+          aria-hidden='true'
+          data-testid='clock-hour-hand-hit-area'
+          x1='100'
+          y1='100'
+          x2={hourHandX}
+          y2={hourHandY}
+          stroke='transparent'
+          strokeWidth='24'
+          strokeLinecap='round'
+          pointerEvents='stroke'
+          style={hourHandInteractionStyle}
+          onMouseDown={onMouseDown('hour')}
+          onTouchStart={onMouseDown('hour')}
+        />
+        <line
           data-testid='clock-hour-hand'
           x1='100'
           y1='100'
@@ -521,11 +544,26 @@ function DraggableClock({
           stroke='#dc2626'
           strokeWidth={activeHand === 'hour' ? '9' : '7'}
           strokeLinecap='round'
-          style={{ cursor: activeHand === 'hour' ? 'grabbing' : 'grab' }}
+          style={hourHandInteractionStyle}
           onMouseDown={onMouseDown('hour')}
           onTouchStart={onMouseDown('hour')}
         />
 
+        <line
+          aria-hidden='true'
+          data-testid='clock-minute-hand-hit-area'
+          x1='100'
+          y1='100'
+          x2={minuteHandX}
+          y2={minuteHandY}
+          stroke='transparent'
+          strokeWidth='20'
+          strokeLinecap='round'
+          pointerEvents='stroke'
+          style={minuteHandInteractionStyle}
+          onMouseDown={onMouseDown('minute')}
+          onTouchStart={onMouseDown('minute')}
+        />
         <line
           data-testid='clock-minute-hand'
           x1='100'
@@ -535,7 +573,7 @@ function DraggableClock({
           stroke='#16a34a'
           strokeWidth={activeHand === 'minute' ? '7' : '5'}
           strokeLinecap='round'
-          style={{ cursor: activeHand === 'minute' ? 'grabbing' : 'grab' }}
+          style={minuteHandInteractionStyle}
           onMouseDown={onMouseDown('minute')}
           onTouchStart={onMouseDown('minute')}
         />
@@ -546,7 +584,7 @@ function DraggableClock({
           r={activeHand === 'hour' ? '12' : '10'}
           fill='#dc2626'
           fillOpacity='0.25'
-          style={{ cursor: activeHand === 'hour' ? 'grabbing' : 'grab' }}
+          style={hourHandInteractionStyle}
           onMouseDown={onMouseDown('hour')}
           onTouchStart={onMouseDown('hour')}
         />
@@ -556,7 +594,7 @@ function DraggableClock({
           r={activeHand === 'minute' ? '12' : '10'}
           fill='#16a34a'
           fillOpacity='0.25'
-          style={{ cursor: activeHand === 'minute' ? 'grabbing' : 'grab' }}
+          style={minuteHandInteractionStyle}
           onMouseDown={onMouseDown('minute')}
           onTouchStart={onMouseDown('minute')}
         />

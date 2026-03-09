@@ -68,11 +68,14 @@ import {
   type TutorQuickAction,
 } from './KangurAiTutorWidget.shared';
 import {
+  clearPersistedPendingTutorFollowUp,
   clearPersistedTutorSessionKey,
   getGuestIntroPanelStyle,
   loadPersistedGuestIntroRecord,
+  loadPersistedPendingTutorFollowUp,
   loadPersistedTutorSessionKey,
   persistGuestIntroRecord,
+  persistPendingTutorFollowUp,
   persistTutorSessionKey,
   type KangurAiTutorGuestIntroCheckResponse,
   type KangurAiTutorGuestIntroRecord,
@@ -91,6 +94,8 @@ type TutorProactiveNudge = {
   action: TutorQuickAction;
 };
 
+type TutorMessageFeedback = 'helpful' | 'not_helpful';
+
 type TutorPointerGeometry = {
   left: number;
   top: number;
@@ -101,7 +106,15 @@ type TutorPointerGeometry = {
   end: TutorPoint;
 };
 
+const FOLLOW_UP_COMPLETION_MAX_AGE_MS = 30 * 60 * 1000;
+
 const clamp = (value: number, min: number, max: number): number => Math.min(Math.max(value, min), max);
+
+const getAssistantMessageFeedbackKey = (
+  sessionKey: string | null,
+  index: number,
+  message: { content: string }
+): string => `${sessionKey ?? 'session'}:${index}:${message.content.trim()}`;
 
 const TutorMoodAvatar = ({
   svgContent,
@@ -1032,6 +1045,35 @@ const toFollowUpHref = (
     query: action.query,
   });
 
+const resolveTutorFollowUpLocation = (
+  href: string
+): { pathname: string; search: string } | null => {
+  try {
+    const resolved = new URL(
+      href,
+      typeof window === 'undefined' ? 'https://kangur.local' : window.location.origin
+    );
+
+    return {
+      pathname: resolved.pathname,
+      search: resolved.search,
+    };
+  } catch {
+    return null;
+  }
+};
+
+const getCurrentTutorLocation = (): { pathname: string; search: string } | null => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  return {
+    pathname: window.location.pathname,
+    search: window.location.search,
+  };
+};
+
 const getTutorSessionKey = (
   sessionContext: KangurAiTutorConversationContext | null | undefined
 ): string | null => {
@@ -1224,6 +1266,9 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
   const [hasNewMessage, setHasNewMessage] = useState(false);
   const [guestIntroVisible, setGuestIntroVisible] = useState(false);
   const [guestIntroHelpVisible, setGuestIntroHelpVisible] = useState(false);
+  const [messageFeedbackByKey, setMessageFeedbackByKey] = useState<
+    Record<string, TutorMessageFeedback>
+  >({});
   const [panelMotionState, setPanelMotionState] = useState<'animating' | 'settled'>('settled');
   const [panelMeasuredHeight, setPanelMeasuredHeight] = useState<number | null>(null);
   const [persistedSelectionRect, setPersistedSelectionRect] = useState<DOMRect | null>(null);
@@ -1245,6 +1290,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
   const lastShownSelectionKeyRef = useRef<string | null>(null);
   const lastTrackedFocusKeyRef = useRef<string | null>(null);
   const lastTrackedProactiveNudgeKeyRef = useRef<string | null>(null);
+  const lastTrackedQuotaKeyRef = useRef<string | null>(null);
   const guestIntroCheckStartedRef = useRef(false);
   const guestIntroLocalSuppressionTrackedRef = useRef(false);
   const motionTimeoutRef = useRef<number | null>(null);
@@ -1540,6 +1586,65 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
   }, [allowCrossPagePersistence, tutorSessionKey]);
 
   useEffect(() => {
+    if (!mounted) {
+      return;
+    }
+
+    const pendingFollowUp = loadPersistedPendingTutorFollowUp();
+    if (!pendingFollowUp) {
+      return;
+    }
+
+    const createdAtMs = Date.parse(pendingFollowUp.createdAt);
+    if (
+      Number.isNaN(createdAtMs) ||
+      Date.now() - createdAtMs > FOLLOW_UP_COMPLETION_MAX_AGE_MS
+    ) {
+      clearPersistedPendingTutorFollowUp();
+      return;
+    }
+
+    const currentLocation = getCurrentTutorLocation();
+    if (
+      currentLocation?.pathname !== pendingFollowUp.pathname ||
+      currentLocation?.search !== pendingFollowUp.search
+    ) {
+      return;
+    }
+
+    if (
+      pendingFollowUp.sourcePathname === pendingFollowUp.pathname &&
+      pendingFollowUp.sourceSearch === pendingFollowUp.search
+    ) {
+      clearPersistedPendingTutorFollowUp();
+      return;
+    }
+
+    trackKangurClientEvent('kangur_ai_tutor_follow_up_completed', {
+      surface: pendingFollowUp.sourceSurface,
+      contentId: pendingFollowUp.sourceContentId,
+      title: pendingFollowUp.sourceTitle,
+      actionId: pendingFollowUp.actionId,
+      actionPage: pendingFollowUp.actionPage,
+      messageIndex: pendingFollowUp.messageIndex,
+      hasQuery: pendingFollowUp.hasQuery,
+      targetPath: pendingFollowUp.pathname,
+      targetSearch: pendingFollowUp.search || null,
+      pageKey: routing?.pageKey ?? null,
+      currentSurface: sessionContext?.surface ?? null,
+      currentContentId: sessionContext?.contentId ?? null,
+    });
+    clearPersistedPendingTutorFollowUp();
+  }, [
+    mounted,
+    routing?.pageKey,
+    routing?.requestedPath,
+    sessionContext?.contentId,
+    sessionContext?.surface,
+    sessionContext?.title,
+  ]);
+
+  useEffect(() => {
     if (!contextSwitchNotice || !isOpen) {
       return;
     }
@@ -1779,6 +1884,15 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
       tutorSessionKey,
     ]
   );
+  const quotaExhaustedTelemetryKey = useMemo(
+    () =>
+      usageSummary &&
+      usageSummary.dailyMessageLimit !== null &&
+      usageSummary.remainingMessages === 0
+        ? `${usageSummary.dateKey}:${usageSummary.messageCount}:${usageSummary.dailyMessageLimit}`
+        : null,
+    [usageSummary]
+  );
   useLayoutEffect(() => {
     if (!proactiveNudgeTelemetryKey || !proactiveNudge) {
       lastTrackedProactiveNudgeKeyRef.current = proactiveNudgeTelemetryKey;
@@ -1809,6 +1923,25 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     sessionContext?.surface,
     sessionContext?.title,
   ]);
+  useEffect(() => {
+    if (!quotaExhaustedTelemetryKey || !usageSummary) {
+      lastTrackedQuotaKeyRef.current = quotaExhaustedTelemetryKey;
+      return;
+    }
+
+    if (lastTrackedQuotaKeyRef.current === quotaExhaustedTelemetryKey) {
+      return;
+    }
+
+    lastTrackedQuotaKeyRef.current = quotaExhaustedTelemetryKey;
+    trackKangurClientEvent('kangur_ai_tutor_quota_exhausted', {
+      ...telemetryContext,
+      dateKey: usageSummary.dateKey,
+      messageCount: usageSummary.messageCount,
+      dailyMessageLimit: usageSummary.dailyMessageLimit,
+      remainingMessages: usageSummary.remainingMessages,
+    });
+  }, [quotaExhaustedTelemetryKey, telemetryContext, usageSummary]);
   const emptyStateMessage = getEmptyStateMessage({
     surface: sessionContext?.surface,
     answerRevealed: sessionContext?.answerRevealed,
@@ -2025,8 +2158,6 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     authState?.navigateToLogin?.();
   }, [authState]);
 
-  if ((!enabled && !shouldRenderGuestIntroUi) || !mounted) return null;
-
   const handleAskAbout = (): void => {
     const persistedSelectedText = persistSelectionContext({ prefillInput: true });
     if (!persistedSelectedText) return;
@@ -2131,8 +2262,31 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
 
   const handleFollowUpClick = (
     action: KangurAiTutorFollowUpAction,
-    messageIndex: number
+    messageIndex: number,
+    href: string
   ): void => {
+    const targetLocation = resolveTutorFollowUpLocation(href);
+    const currentLocation = getCurrentTutorLocation();
+
+    if (targetLocation && currentLocation) {
+      persistPendingTutorFollowUp({
+        version: 1,
+        href,
+        pathname: targetLocation.pathname,
+        search: targetLocation.search,
+        actionId: action.id,
+        actionPage: action.page,
+        messageIndex,
+        hasQuery: Boolean(action.query && Object.keys(action.query).length > 0),
+        sourceSurface: telemetryContext.surface,
+        sourceContentId: telemetryContext.contentId,
+        sourceTitle: telemetryContext.title,
+        sourcePathname: currentLocation.pathname,
+        sourceSearch: currentLocation.search,
+        createdAt: new Date().toISOString(),
+      });
+    }
+
     trackKangurClientEvent('kangur_ai_tutor_follow_up_clicked', {
       ...telemetryContext,
       actionId: action.id,
@@ -2141,6 +2295,50 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
       hasQuery: Boolean(action.query && Object.keys(action.query).length > 0),
     });
   };
+
+  const handleMessageFeedback = useCallback(
+    (
+      messageIndex: number,
+      message: {
+        content: string;
+        coachingFrame?: { mode: string } | null;
+        followUpActions?: unknown[];
+        sources?: unknown[];
+      },
+      feedback: TutorMessageFeedback
+    ): void => {
+      const feedbackKey = getAssistantMessageFeedbackKey(tutorSessionKey, messageIndex, message);
+      let shouldTrack = false;
+
+      setMessageFeedbackByKey((current) => {
+        if (current[feedbackKey]) {
+          return current;
+        }
+
+        shouldTrack = true;
+        return {
+          ...current,
+          [feedbackKey]: feedback,
+        };
+      });
+
+      if (!shouldTrack) {
+        return;
+      }
+
+      trackKangurClientEvent('kangur_ai_tutor_feedback_submitted', {
+        ...telemetryContext,
+        feedback,
+        messageIndex,
+        coachingMode: message.coachingFrame?.mode ?? null,
+        hasFollowUpActions: Boolean(message.followUpActions?.length),
+        hasSources: Boolean(message.sources?.length),
+      });
+    },
+    [telemetryContext, tutorSessionKey]
+  );
+
+  if ((!enabled && !shouldRenderGuestIntroUi) || !mounted) return null;
 
   return createPortal(
     <>
@@ -2665,14 +2863,21 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
                       {emptyStateMessage}
                     </p>
                   ) : (
-                    messages.map((msg, index) =>
-                      msg.role === 'user' ? (
-                        <div key={index} className='flex justify-end'>
-                          <div className='max-w-[80%] rounded-[22px] border border-orange-400 bg-gradient-to-br from-orange-400 to-amber-500 px-3 py-2 text-sm leading-relaxed text-white shadow-[0_16px_28px_-20px_rgba(249,115,22,0.58)]'>
-                            {msg.content}
+                    messages.map((msg, index) => {
+                      if (msg.role === 'user') {
+                        return (
+                          <div key={index} className='flex justify-end'>
+                            <div className='max-w-[80%] rounded-[22px] border border-orange-400 bg-gradient-to-br from-orange-400 to-amber-500 px-3 py-2 text-sm leading-relaxed text-white shadow-[0_16px_28px_-20px_rgba(249,115,22,0.58)]'>
+                              {msg.content}
+                            </div>
                           </div>
-                        </div>
-                      ) : (
+                        );
+                      }
+
+                      const feedbackKey = getAssistantMessageFeedbackKey(tutorSessionKey, index, msg);
+                      const submittedFeedback = messageFeedbackByKey[feedbackKey] ?? null;
+
+                      return (
                         <div key={index} className='flex justify-start'>
                           <div className='w-full max-w-[90%] space-y-2'>
                             {msg.coachingFrame ? (
@@ -2703,32 +2908,37 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
                                 Kolejny krok
                                 </div>
                                 <div className='grid gap-2 sm:grid-cols-2'>
-                                  {msg.followUpActions.map((action) => (
-                                    <div
-                                      key={action.id}
-                                      className='rounded-2xl border border-amber-100 bg-amber-50/70 px-3 py-3'
-                                    >
-                                      {action.reason ? (
-                                        <div className='text-xs font-medium leading-relaxed text-slate-700'>
-                                          {action.reason}
-                                        </div>
-                                      ) : null}
-                                      <KangurButton
-                                        asChild
-                                        size='sm'
-                                        variant='primary'
-                                        className={cn('mt-2 w-full', action.reason ? '' : 'mt-0')}
+                                  {msg.followUpActions.map((action) => {
+                                    const followUpHref = toFollowUpHref(basePath, action);
+
+                                    return (
+                                      <div
+                                        key={action.id}
+                                        className='rounded-2xl border border-amber-100 bg-amber-50/70 px-3 py-3'
                                       >
-                                        <Link
-                                          href={toFollowUpHref(basePath, action)}
-                                          onClick={() => handleFollowUpClick(action, index)}
-                                          targetPageKey={action.page}
+                                        {action.reason ? (
+                                          <div className='text-xs font-medium leading-relaxed text-slate-700'>
+                                            {action.reason}
+                                          </div>
+                                        ) : null}
+                                        <KangurButton
+                                          asChild
+                                          size='sm'
+                                          variant='primary'
+                                          className={cn('mt-2 w-full', action.reason ? '' : 'mt-0')}
                                         >
-                                          {action.label}
-                                        </Link>
-                                      </KangurButton>
-                                    </div>
-                                  ))}
+                                          <Link
+                                            href={followUpHref}
+                                            onClick={() =>
+                                              handleFollowUpClick(action, index, followUpHref)}
+                                            targetPageKey={action.page}
+                                          >
+                                            {action.label}
+                                          </Link>
+                                        </KangurButton>
+                                      </div>
+                                    );
+                                  })}
                                 </div>
                               </div>
                             ) : null}
@@ -2758,10 +2968,64 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
                                 ))}
                               </div>
                             ) : null}
+                            <div
+                              data-testid={`kangur-ai-tutor-feedback-${index}`}
+                              className='rounded-2xl border border-slate-200 bg-slate-50/80 px-3 py-2'
+                            >
+                              <div className='flex flex-wrap items-center gap-2'>
+                                <span className='text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500'>
+                                  Pomoglo?
+                                </span>
+                                <KangurButton
+                                  data-testid={`kangur-ai-tutor-feedback-helpful-${index}`}
+                                  type='button'
+                                  size='sm'
+                                  variant='surface'
+                                  aria-pressed={submittedFeedback === 'helpful'}
+                                  disabled={submittedFeedback !== null}
+                                  className={cn(
+                                    'h-8 px-3 text-[11px]',
+                                    submittedFeedback === 'helpful'
+                                      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                                      : ''
+                                  )}
+                                  onClick={() => handleMessageFeedback(index, msg, 'helpful')}
+                                >
+                                  Tak
+                                </KangurButton>
+                                <KangurButton
+                                  data-testid={`kangur-ai-tutor-feedback-not-helpful-${index}`}
+                                  type='button'
+                                  size='sm'
+                                  variant='surface'
+                                  aria-pressed={submittedFeedback === 'not_helpful'}
+                                  disabled={submittedFeedback !== null}
+                                  className={cn(
+                                    'h-8 px-3 text-[11px]',
+                                    submittedFeedback === 'not_helpful'
+                                      ? 'border-rose-200 bg-rose-50 text-rose-700'
+                                      : ''
+                                  )}
+                                  onClick={() => handleMessageFeedback(index, msg, 'not_helpful')}
+                                >
+                                  Jeszcze nie
+                                </KangurButton>
+                              </div>
+                              {submittedFeedback ? (
+                                <div
+                                  data-testid={`kangur-ai-tutor-feedback-status-${index}`}
+                                  className='mt-2 text-[11px] leading-relaxed text-slate-500'
+                                >
+                                  {submittedFeedback === 'helpful'
+                                    ? 'Dzieki. To pomaga dopasowac kolejne odpowiedzi tutora.'
+                                    : 'Dzieki. Tutor sprobuje inaczej w kolejnej odpowiedzi.'}
+                                </div>
+                              ) : null}
+                            </div>
                           </div>
                         </div>
-                      )
-                    )
+                      );
+                    })
                   )}
                   {isLoading && (
                     <div className='flex justify-start'>

@@ -376,6 +376,173 @@ describe('KangurAiTutorContext', () => {
     expect(screen.getByTestId('usage-summary')).toHaveTextContent('2/3/1');
   });
 
+  it('tracks repeated tutor questions within the same session before sending again', async () => {
+    apiPostMock.mockResolvedValue({
+      message: 'Sprobuj jeszcze raz od pierwszego kroku.',
+      sources: [],
+      followUpActions: [],
+      usage: {
+        dateKey: '2026-03-07',
+        messageCount: 1,
+        dailyMessageLimit: null,
+        remainingMessages: null,
+      },
+    });
+
+    render(
+      <KangurAiTutorProvider
+        learnerId='learner-1'
+        sessionContext={{
+          surface: 'lesson',
+          contentId: 'lesson-1',
+          title: 'Dodawanie',
+        }}
+      >
+        <Harness />
+      </KangurAiTutorProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+    await waitFor(() => expect(apiPostMock).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(screen.getByTestId('messages')).toHaveTextContent(
+        'Pomóż mi z tym zadaniem. | Sprobuj jeszcze raz od pierwszego kroku.'
+      )
+    );
+
+    trackKangurClientEventMock.mockClear();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+
+    await waitFor(() => expect(apiPostMock).toHaveBeenCalledTimes(2));
+    expect(trackKangurClientEventMock).toHaveBeenNthCalledWith(
+      1,
+      'kangur_ai_tutor_repeat_question_detected',
+      expect.objectContaining({
+        surface: 'lesson',
+        contentId: 'lesson-1',
+        promptMode: 'hint',
+        isRepeatedQuestion: true,
+        repeatCount: 1,
+      })
+    );
+    expect(trackKangurClientEventMock).toHaveBeenNthCalledWith(
+      2,
+      'kangur_ai_tutor_message_sent',
+      expect.objectContaining({
+        surface: 'lesson',
+        contentId: 'lesson-1',
+        promptMode: 'hint',
+        isRepeatedQuestion: true,
+        repeatCount: 1,
+      })
+    );
+  });
+
+  it('tracks same-session recovery after a hint when the learner reaches review mode', async () => {
+    apiPostMock.mockResolvedValue({
+      message: 'Zacznij od dodania pierwszych dwoch liczb.',
+      sources: [],
+      followUpActions: [],
+      coachingFrame: {
+        mode: 'hint_ladder',
+        label: 'Jeden trop',
+        description:
+          'Daj tylko jeden maly krok albo pytanie kontrolne, bez pelnego rozwiazania.',
+      },
+    });
+
+    const { rerender } = render(
+      <KangurAiTutorProvider
+        learnerId='learner-1'
+        sessionContext={{
+          surface: 'test',
+          contentId: 'suite-1',
+          title: 'Kangur Mini',
+          questionId: 'question-1',
+          currentQuestion: 'Ile to 2 + 2?',
+          questionProgressLabel: 'Pytanie 1/10',
+          answerRevealed: false,
+          focusKind: 'question',
+          focusId: 'question-1',
+          focusLabel: 'Pytanie 1',
+        }}
+      >
+        <Harness />
+      </KangurAiTutorProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+
+    await waitFor(() => expect(apiPostMock).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(screen.getByTestId('messages')).toHaveTextContent(
+        'Pomóż mi z tym zadaniem. | Zacznij od dodania pierwszych dwoch liczb.'
+      )
+    );
+
+    trackKangurClientEventMock.mockClear();
+
+    rerender(
+      <KangurAiTutorProvider
+        learnerId='learner-1'
+        sessionContext={{
+          surface: 'test',
+          contentId: 'suite-1',
+          title: 'Kangur Mini',
+          questionId: 'question-1',
+          currentQuestion: 'Ile to 2 + 2?',
+          questionProgressLabel: 'Pytanie 1/10',
+          answerRevealed: true,
+          focusKind: 'review',
+          focusId: 'review-1',
+          focusLabel: 'Omowienie pytania 1',
+        }}
+      >
+        <Harness />
+      </KangurAiTutorProvider>
+    );
+
+    await waitFor(() =>
+      expect(trackKangurClientEventMock).toHaveBeenCalledWith(
+        'kangur_ai_tutor_recovery_after_hint',
+        expect.objectContaining({
+          surface: 'test',
+          contentId: 'suite-1',
+          questionId: 'question-1',
+          focusKind: 'question',
+          coachingMode: 'hint_ladder',
+          recoverySignal: 'answer_revealed',
+          nextQuestionId: 'question-1',
+          nextFocusKind: 'review',
+        })
+      )
+    );
+    expect(trackKangurClientEventMock).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <KangurAiTutorProvider
+        learnerId='learner-1'
+        sessionContext={{
+          surface: 'test',
+          contentId: 'suite-1',
+          title: 'Kangur Mini',
+          questionId: 'question-1',
+          currentQuestion: 'Ile to 2 + 2?',
+          questionProgressLabel: 'Pytanie 1/10',
+          answerRevealed: true,
+          focusKind: 'review',
+          focusId: 'review-1',
+          focusLabel: 'Omowienie pytania 1',
+        }}
+      >
+        <Harness />
+      </KangurAiTutorProvider>
+    );
+
+    await waitFor(() => expect(trackKangurClientEventMock).toHaveBeenCalledTimes(1));
+  });
+
   it('hydrates the learner-scoped tutor mood from the active learner profile', async () => {
     useOptionalKangurAuthMock.mockReturnValue({
       user: {

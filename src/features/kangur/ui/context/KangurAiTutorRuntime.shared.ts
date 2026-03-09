@@ -136,6 +136,19 @@ type PersistedKangurAiTutorRuntimeState = {
   learnerMemories: Record<string, KangurAiTutorLearnerMemory>;
 };
 
+type KangurAiTutorRecoverySignal = 'answer_revealed' | 'focus_advanced';
+
+type KangurAiTutorHintRecoveryCandidate = {
+  surface: KangurAiTutorConversationContext['surface'];
+  contentId: string | null;
+  questionId: string | null;
+  focusKind: KangurAiTutorFocusKind | null;
+  focusKey: string | null;
+  coachingMode: KangurAiTutorCoachingFrame['mode'] | null;
+  interactionIntent: KangurAiTutorInteractionIntent | null;
+  answerRevealedAtHint: boolean;
+};
+
 export type KangurAiTutorSessionRegistryContextValue = {
   setRegistration: (registration: KangurAiTutorSessionRegistrationSetter) => void;
 };
@@ -164,6 +177,115 @@ const createEmptyPersistedRuntimeState = (): PersistedKangurAiTutorRuntimeState 
   sessionStates: {},
   learnerMemories: {},
 });
+
+const normalizeTutorMessageForComparison = (value: string): string =>
+  value.trim().toLocaleLowerCase().replace(/\s+/g, ' ');
+
+const normalizeTutorContextIdentifier = (
+  value: string | null | undefined,
+  maxLength: number
+): string | null => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const normalized = value.replace(/\s+/g, ' ').trim();
+  if (!normalized) {
+    return null;
+  }
+
+  return normalized.length > maxLength ? normalized.slice(0, maxLength).trimEnd() : normalized;
+};
+
+const countRepeatedUserMessages = (
+  messages: ChatMessage[],
+  nextText: string
+): number => {
+  const normalizedNextText = normalizeTutorMessageForComparison(nextText);
+  if (!normalizedNextText) {
+    return 0;
+  }
+
+  return messages.reduce((count, message) => {
+    if (message.role !== 'user') {
+      return count;
+    }
+
+    return normalizeTutorMessageForComparison(message.content) === normalizedNextText
+      ? count + 1
+      : count;
+  }, 0);
+};
+
+const buildTutorRecoveryFocusKey = (
+  context: KangurAiTutorConversationContext | null | undefined
+): string | null => {
+  if (!context) {
+    return null;
+  }
+
+  const questionId = normalizeTutorContextIdentifier(context.questionId, 120);
+  if (questionId) {
+    return `question:${questionId}`;
+  }
+
+  const assignmentId = normalizeTutorContextIdentifier(context.assignmentId, 120);
+  if (assignmentId) {
+    return `assignment:${assignmentId}`;
+  }
+
+  const focusId = normalizeTutorContextIdentifier(context.focusId, 120);
+  if (focusId) {
+    return `focus:${context.focusKind ?? 'unknown'}:${focusId}`;
+  }
+
+  const currentQuestion = normalizeTutorContextIdentifier(context.currentQuestion, 160);
+  if (currentQuestion) {
+    return `question_text:${normalizeTutorMessageForComparison(currentQuestion)}`;
+  }
+
+  const focusLabel = normalizeTutorContextIdentifier(context.focusLabel, 160);
+  if (focusLabel) {
+    return `focus_label:${normalizeTutorMessageForComparison(focusLabel)}`;
+  }
+
+  return null;
+};
+
+const buildHintRecoveryCandidate = (input: {
+  context: KangurAiTutorConversationContext;
+  coachingFrame: KangurAiTutorCoachingFrame | null;
+}): KangurAiTutorHintRecoveryCandidate => ({
+  surface: input.context.surface,
+  contentId: input.context.contentId ?? null,
+  questionId: input.context.questionId ?? null,
+  focusKind: input.context.focusKind ?? null,
+  focusKey: buildTutorRecoveryFocusKey(input.context),
+  coachingMode: input.coachingFrame?.mode ?? null,
+  interactionIntent: input.context.interactionIntent ?? null,
+  answerRevealedAtHint: input.context.answerRevealed === true,
+});
+
+const resolveHintRecoverySignal = (input: {
+  candidate: KangurAiTutorHintRecoveryCandidate;
+  nextContext: KangurAiTutorConversationContext | null;
+}): KangurAiTutorRecoverySignal | null => {
+  const { candidate, nextContext } = input;
+  if (!nextContext) {
+    return null;
+  }
+
+  if (!candidate.answerRevealedAtHint && nextContext.answerRevealed === true) {
+    return 'answer_revealed';
+  }
+
+  const nextFocusKey = buildTutorRecoveryFocusKey(nextContext);
+  if (candidate.focusKey && nextFocusKey && candidate.focusKey !== nextFocusKey) {
+    return 'focus_advanced';
+  }
+
+  return null;
+};
 
 const normalizePersistedMessage = (value: unknown): ChatMessage | null => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -767,6 +889,9 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
   const tutorAvatarImageUrl = resolvedTutorMoodVisuals.tutorAvatarImageUrl;
 
   const previousSessionKeyRef = useRef<string | null>(null);
+  const pendingHintRecoveryBySessionKeyRef = useRef<
+    Record<string, KangurAiTutorHintRecoveryCandidate>
+  >({});
 
   useEffect(() => {
     if (!allowCrossPagePersistence) {
@@ -819,6 +944,48 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
       previousSessionKeyRef.current = activeSessionKey;
     }
   }, [activeSessionContext?.contentId, activeSessionContext?.surface, activeSessionKey]);
+
+  useEffect(() => {
+    if (!activeSessionKey || !activeSessionContext) {
+      return;
+    }
+
+    const pendingCandidate = pendingHintRecoveryBySessionKeyRef.current[activeSessionKey];
+    if (!pendingCandidate) {
+      return;
+    }
+
+    const recoverySignal = resolveHintRecoverySignal({
+      candidate: pendingCandidate,
+      nextContext: activeSessionContext,
+    });
+    if (!recoverySignal) {
+      return;
+    }
+
+    trackKangurClientEvent('kangur_ai_tutor_recovery_after_hint', {
+      surface: pendingCandidate.surface,
+      contentId: pendingCandidate.contentId,
+      questionId: pendingCandidate.questionId,
+      focusKind: pendingCandidate.focusKind,
+      coachingMode: pendingCandidate.coachingMode,
+      interactionIntent: pendingCandidate.interactionIntent,
+      recoverySignal,
+      nextQuestionId: activeSessionContext.questionId ?? null,
+      nextFocusKind: activeSessionContext.focusKind ?? null,
+    });
+    delete pendingHintRecoveryBySessionKeyRef.current[activeSessionKey];
+  }, [
+    activeSessionContext,
+    activeSessionContext?.answerRevealed,
+    activeSessionContext?.assignmentId,
+    activeSessionContext?.currentQuestion,
+    activeSessionContext?.focusId,
+    activeSessionContext?.focusKind,
+    activeSessionContext?.focusLabel,
+    activeSessionContext?.questionId,
+    activeSessionKey,
+  ]);
 
   useLayoutEffect(() => {
     if (!activeSessionKey) {
@@ -945,6 +1112,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
       const resolvedSelectedText = allowSelectedTextSupport
         ? (options?.selectedText ?? highlightedText)?.trim() || null
         : null;
+      const repeatCount = countRepeatedUserMessages(messages, userMessage.content);
       const telemetryContext = {
         surface: activeSessionContext?.surface ?? null,
         contentId: activeSessionContext?.contentId ?? null,
@@ -954,12 +1122,17 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
         focusKind: options?.focusKind ?? null,
         interactionIntent: options?.interactionIntent ?? null,
         messageCount: outgoingMessages.length,
+        isRepeatedQuestion: repeatCount > 0,
+        repeatCount,
       };
       updateSessionState(activeSessionKey, (currentState) => ({
         ...currentState,
         messages: outgoingMessages,
         isLoading: true,
       }));
+      if (repeatCount > 0) {
+        trackKangurClientEvent('kangur_ai_tutor_repeat_question_detected', telemetryContext);
+      }
       trackKangurClientEvent('kangur_ai_tutor_message_sent', telemetryContext);
 
       try {
@@ -994,6 +1167,14 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
           followUpActionCount: followUpActions.length,
           coachingMode: coachingFrame?.mode ?? null,
         });
+        if (resolvedPromptMode === 'hint') {
+          pendingHintRecoveryBySessionKeyRef.current[activeSessionKey] = buildHintRecoveryCandidate({
+            context: nextContext,
+            coachingFrame,
+          });
+        } else {
+          delete pendingHintRecoveryBySessionKeyRef.current[activeSessionKey];
+        }
         if (result.tutorMood && activeLearnerId) {
           setLearnerMoodById((current) => ({
             ...current,

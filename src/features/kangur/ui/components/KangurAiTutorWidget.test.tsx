@@ -735,6 +735,8 @@ describe('KangurAiTutorWidget', () => {
   });
 
   it('tracks clicks on assistant follow-up actions', () => {
+    window.history.pushState({}, '', '/kangur/lesson-1');
+
     useKangurAiTutorMock.mockReturnValue({
       enabled: true,
       tutorSettings: {
@@ -803,6 +805,157 @@ describe('KangurAiTutorWidget', () => {
         messageIndex: 0,
         hasQuery: true,
       })
+    );
+    expect(
+      JSON.parse(window.sessionStorage.getItem('kangur-ai-tutor-widget-v1') ?? '{}')
+    ).toMatchObject({
+      pendingFollowUp: {
+        actionId: 'recommendation:strengthen_lesson_mastery',
+        actionPage: 'Lessons',
+        pathname: '/kangur/lessons',
+        search: '?focus=adding',
+        sourcePathname: '/kangur/lesson-1',
+      },
+    });
+  });
+
+  it('tracks tutor follow-up completion after landing on the suggested route', async () => {
+    window.sessionStorage.setItem(
+      'kangur-ai-tutor-widget-v1',
+      JSON.stringify({
+        pendingFollowUp: {
+          version: 1,
+          href: '/kangur/lessons?focus=adding',
+          pathname: '/kangur/lessons',
+          search: '?focus=adding',
+          actionId: 'recommendation:strengthen_lesson_mastery',
+          actionPage: 'Lessons',
+          messageIndex: 0,
+          hasQuery: true,
+          sourceSurface: 'lesson',
+          sourceContentId: 'lesson-1',
+          sourceTitle: 'Dodawanie',
+          sourcePathname: '/kangur/lesson-1',
+          sourceSearch: '',
+          createdAt: new Date().toISOString(),
+        },
+      })
+    );
+    window.history.pushState({}, '', '/kangur/lessons?focus=adding');
+    useOptionalKangurRoutingMock.mockReturnValue({
+      basePath: '/kangur',
+      embedded: false,
+      pageKey: 'Lessons',
+      requestedPath: '/kangur/lessons?focus=adding',
+    });
+
+    const { rerender } = render(<KangurAiTutorWidget />);
+
+    await waitFor(() =>
+      expect(trackKangurClientEventMock).toHaveBeenCalledWith(
+        'kangur_ai_tutor_follow_up_completed',
+        expect.objectContaining({
+          surface: 'lesson',
+          contentId: 'lesson-1',
+          title: 'Dodawanie',
+          actionId: 'recommendation:strengthen_lesson_mastery',
+          actionPage: 'Lessons',
+          messageIndex: 0,
+          hasQuery: true,
+          targetPath: '/kangur/lessons',
+          targetSearch: '?focus=adding',
+          pageKey: 'Lessons',
+        })
+      )
+    );
+    expect(
+      JSON.parse(window.sessionStorage.getItem('kangur-ai-tutor-widget-v1') ?? '{}')
+    ).not.toHaveProperty('pendingFollowUp');
+
+    rerender(<KangurAiTutorWidget />);
+
+    await waitFor(() =>
+      expect(
+        trackKangurClientEventMock.mock.calls.filter(
+          ([eventName]) => eventName === 'kangur_ai_tutor_follow_up_completed'
+        )
+      ).toHaveLength(1)
+    );
+  });
+
+  it('tracks learner feedback on assistant replies and locks the controls after submission', () => {
+    useKangurAiTutorMock.mockReturnValue({
+      enabled: true,
+      tutorSettings: {
+        enabled: true,
+        agentPersonaId: null,
+        motionPresetId: null,
+        uiMode: 'anchored',
+        allowCrossPagePersistence: true,
+        allowLessons: true,
+        testAccessMode: 'guided',
+        showSources: true,
+        allowSelectedTextSupport: true,
+        dailyMessageLimit: null,
+      },
+      tutorName: 'Pomocnik',
+      sessionContext: {
+        surface: 'lesson',
+        contentId: 'lesson-1',
+        title: 'Dodawanie',
+      },
+      isOpen: true,
+      messages: [
+        {
+          role: 'assistant',
+          content: 'Sprobuj najpierw policzyc dziesiatke.',
+          coachingFrame: {
+            mode: 'hint_ladder',
+            label: 'Jeden trop',
+            description: 'Daj tylko jeden maly krok.',
+          },
+        },
+      ],
+      isLoading: false,
+      isUsageLoading: false,
+      highlightedText: null,
+      usageSummary: null,
+      openChat: openChatMock,
+      closeChat: closeChatMock,
+      sendMessage: sendMessageMock,
+      setHighlightedText: setHighlightedTextMock,
+    });
+
+    useKangurTextHighlightMock.mockReturnValue({
+      selectedText: null,
+      selectionRect: null,
+      clearSelection: clearSelectionMock,
+    });
+
+    render(<KangurAiTutorWidget />);
+
+    fireEvent.click(screen.getByTestId('kangur-ai-tutor-feedback-helpful-0'));
+
+    expect(trackKangurClientEventMock).toHaveBeenCalledWith(
+      'kangur_ai_tutor_feedback_submitted',
+      expect.objectContaining({
+        surface: 'lesson',
+        contentId: 'lesson-1',
+        feedback: 'helpful',
+        messageIndex: 0,
+        coachingMode: 'hint_ladder',
+        hasFollowUpActions: false,
+        hasSources: false,
+      })
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-feedback-helpful-0')).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-feedback-helpful-0')).toBeDisabled();
+    expect(screen.getByTestId('kangur-ai-tutor-feedback-not-helpful-0')).toBeDisabled();
+    expect(screen.getByTestId('kangur-ai-tutor-feedback-status-0')).toHaveTextContent(
+      'Dzieki. To pomaga dopasowac kolejne odpowiedzi tutora.'
     );
   });
 
@@ -1964,5 +2117,69 @@ describe('KangurAiTutorWidget', () => {
       'focus:ring-amber-200/70'
     );
     expect(screen.getByRole('textbox', { name: 'Wpisz pytanie' })).toBeDisabled();
+  });
+
+  it('tracks quota exhaustion once when the daily tutor limit is fully consumed', () => {
+    useKangurAiTutorMock.mockReturnValue({
+      enabled: true,
+      tutorSettings: {
+        enabled: true,
+        agentPersonaId: null,
+        motionPresetId: null,
+        uiMode: 'anchored',
+        allowCrossPagePersistence: true,
+        allowLessons: true,
+        testAccessMode: 'guided',
+        showSources: true,
+        allowSelectedTextSupport: true,
+        dailyMessageLimit: 5,
+      },
+      tutorName: 'Pomocnik',
+      sessionContext: {
+        surface: 'lesson',
+        contentId: 'lesson-1',
+        title: 'Dodawanie',
+      },
+      isOpen: true,
+      messages: [],
+      isLoading: false,
+      isUsageLoading: false,
+      highlightedText: null,
+      usageSummary: {
+        dateKey: '2026-03-07',
+        messageCount: 5,
+        dailyMessageLimit: 5,
+        remainingMessages: 0,
+      },
+      openChat: openChatMock,
+      closeChat: closeChatMock,
+      sendMessage: sendMessageMock,
+      setHighlightedText: setHighlightedTextMock,
+    });
+
+    useKangurTextHighlightMock.mockReturnValue({
+      selectedText: null,
+      selectionRect: null,
+      clearSelection: clearSelectionMock,
+    });
+
+    const { rerender } = render(<KangurAiTutorWidget />);
+
+    rerender(<KangurAiTutorWidget />);
+
+    const quotaEvents = trackKangurClientEventMock.mock.calls.filter(
+      ([name]) => name === 'kangur_ai_tutor_quota_exhausted'
+    );
+    expect(quotaEvents).toHaveLength(1);
+    expect(quotaEvents[0]?.[1]).toEqual(
+      expect.objectContaining({
+        surface: 'lesson',
+        contentId: 'lesson-1',
+        dateKey: '2026-03-07',
+        messageCount: 5,
+        dailyMessageLimit: 5,
+        remainingMessages: 0,
+      })
+    );
   });
 });

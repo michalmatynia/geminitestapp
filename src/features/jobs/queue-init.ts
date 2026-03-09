@@ -113,7 +113,7 @@ export const initializeQueues = (): void => {
       import('@/features/product-sync/server'),
       import('@/features/product-sync/server'),
       import('@/features/product-sync/server'),
-      import('@/features/case-resolver/server'),
+      import('@/server/queues/case-resolver-ocr'),
       import('@/shared/lib/observability/workers/systemLogAlertsQueue'),
     ]);
 

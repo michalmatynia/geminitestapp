@@ -54,6 +54,20 @@ const dragHandToAngle = (hand: Element, angleDeg: number): void => {
   });
 };
 
+const dragHandToAngleWithTouch = (hand: Element, angleDeg: number): void => {
+  const point = getClockPoint(angleDeg);
+  act(() => {
+    fireEvent.touchStart(hand, {
+      touches: [{ clientX: CLOCK_CENTER, clientY: CLOCK_CENTER }],
+    });
+    fireEvent.touchMove(window, {
+      cancelable: true,
+      touches: [{ clientX: point.x, clientY: point.y }],
+    });
+    fireEvent.touchEnd(window);
+  });
+};
+
 const parseDisplayedTime = (value: string): { hours: number; minutes: number } => {
   const [rawHours, rawMinutes] = value.trim().split(':');
   const hours = Number.parseInt(rawHours ?? '0', 10);
@@ -146,6 +160,25 @@ describe('ClockTrainingGame drag interactions', () => {
 
     await waitFor(() => {
       expect(getClockDisplay()).toHaveTextContent('5:30');
+    });
+  });
+
+  it('supports touch dragging on the clock hands without relying on page pan gestures', async () => {
+    const { container } = render(<ClockTrainingGame onFinish={vi.fn()} />);
+    const clockSvg = container.querySelector('svg');
+    const hourHand = getHourHand(container);
+    const minuteHand = getMinuteHand(container);
+
+    expect(clockSvg).not.toBeNull();
+    expect(clockSvg).not.toHaveClass('touch-none');
+    expect((hourHand as SVGElement).style.touchAction).toBe('none');
+    expect((minuteHand as SVGElement).style.touchAction).toBe('none');
+
+    dragHandToAngle(hourHand, 90);
+    dragHandToAngleWithTouch(minuteHand, 180);
+
+    await waitFor(() => {
+      expect(getClockDisplay()).toHaveTextContent('3:30');
     });
   });
 

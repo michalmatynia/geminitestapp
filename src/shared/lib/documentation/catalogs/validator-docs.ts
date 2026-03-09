@@ -688,7 +688,7 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
   {
     id: 'ui.AdminGlobalValidatorPage',
     symbol: 'AdminGlobalValidatorPage',
-    file: 'src/features/admin/pages/AdminGlobalValidatorPage.tsx',
+    file: 'src/app/(admin)/admin/validator/ClientPage.tsx',
     purpose: 'Switches active validator panel based on selected pattern list/scope.',
     params: [],
     returns: 'Global validator admin page.',

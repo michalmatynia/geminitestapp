@@ -19,7 +19,29 @@ export type KangurAiTutorGuestIntroCheckResponse = {
   reason?: string;
 };
 
-export const loadPersistedTutorSessionKey = (): string | null => {
+export type KangurAiTutorPendingFollowUpRecord = {
+  version: 1;
+  href: string;
+  pathname: string;
+  search: string;
+  actionId: string;
+  actionPage: string;
+  messageIndex: number;
+  hasQuery: boolean;
+  sourceSurface: string | null;
+  sourceContentId: string | null;
+  sourceTitle: string | null;
+  sourcePathname: string;
+  sourceSearch: string;
+  createdAt: string;
+};
+
+type KangurAiTutorWidgetStorageState = {
+  lastSessionKey?: string | null;
+  pendingFollowUp?: KangurAiTutorPendingFollowUpRecord | null;
+};
+
+const loadPersistedTutorWidgetState = (): KangurAiTutorWidgetStorageState | null => {
   if (typeof window === 'undefined') {
     return null;
   }
@@ -30,38 +52,109 @@ export const loadPersistedTutorSessionKey = (): string | null => {
       return null;
     }
 
-    const parsed = JSON.parse(raw) as { lastSessionKey?: unknown } | null;
-    return typeof parsed?.lastSessionKey === 'string' ? parsed.lastSessionKey : null;
+    const parsed = JSON.parse(raw) as KangurAiTutorWidgetStorageState | null;
+    return parsed && typeof parsed === 'object' ? parsed : null;
   } catch {
     return null;
   }
 };
 
-export const persistTutorSessionKey = (sessionKey: string | null): void => {
+const persistTutorWidgetState = (state: KangurAiTutorWidgetStorageState): void => {
   if (typeof window === 'undefined') {
     return;
   }
 
+  const nextState = {
+    ...(typeof state.lastSessionKey === 'string'
+      ? { lastSessionKey: state.lastSessionKey }
+      : {}),
+    ...(state.pendingFollowUp ? { pendingFollowUp: state.pendingFollowUp } : {}),
+  };
+
   try {
+    if (!('lastSessionKey' in nextState) && !('pendingFollowUp' in nextState)) {
+      window.sessionStorage.removeItem(KANGUR_AI_TUTOR_WIDGET_STORAGE_KEY);
+      return;
+    }
+
     window.sessionStorage.setItem(
       KANGUR_AI_TUTOR_WIDGET_STORAGE_KEY,
-      JSON.stringify({ lastSessionKey: sessionKey })
+      JSON.stringify(nextState)
     );
   } catch {
     // Ignore storage write failures so the widget remains functional without storage.
   }
 };
 
-export const clearPersistedTutorSessionKey = (): void => {
-  if (typeof window === 'undefined') {
-    return;
+const isValidPendingFollowUpRecord = (
+  value: unknown
+): value is KangurAiTutorPendingFollowUpRecord => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
   }
 
-  try {
-    window.sessionStorage.removeItem(KANGUR_AI_TUTOR_WIDGET_STORAGE_KEY);
-  } catch {
-    // Ignore storage cleanup failures so the widget remains functional without storage.
-  }
+  const input = value as Partial<KangurAiTutorPendingFollowUpRecord>;
+  return (
+    input.version === 1 &&
+    typeof input.href === 'string' &&
+    typeof input.pathname === 'string' &&
+    typeof input.search === 'string' &&
+    typeof input.actionId === 'string' &&
+    typeof input.actionPage === 'string' &&
+    typeof input.messageIndex === 'number' &&
+    typeof input.hasQuery === 'boolean' &&
+    (typeof input.sourceSurface === 'string' || input.sourceSurface === null) &&
+    (typeof input.sourceContentId === 'string' || input.sourceContentId === null) &&
+    (typeof input.sourceTitle === 'string' || input.sourceTitle === null) &&
+    typeof input.sourcePathname === 'string' &&
+    typeof input.sourceSearch === 'string' &&
+    typeof input.createdAt === 'string'
+  );
+};
+
+export const loadPersistedTutorSessionKey = (): string | null => {
+  const parsed = loadPersistedTutorWidgetState();
+  return typeof parsed?.lastSessionKey === 'string' ? parsed.lastSessionKey : null;
+};
+
+export const persistTutorSessionKey = (sessionKey: string | null): void => {
+  const currentState = loadPersistedTutorWidgetState();
+  persistTutorWidgetState({
+    ...currentState,
+    lastSessionKey: sessionKey,
+  });
+};
+
+export const clearPersistedTutorSessionKey = (): void => {
+  const currentState = loadPersistedTutorWidgetState();
+  persistTutorWidgetState({
+    ...currentState,
+    lastSessionKey: null,
+  });
+};
+
+export const loadPersistedPendingTutorFollowUp =
+  (): KangurAiTutorPendingFollowUpRecord | null => {
+    const parsed = loadPersistedTutorWidgetState();
+    return isValidPendingFollowUpRecord(parsed?.pendingFollowUp) ? parsed.pendingFollowUp : null;
+  };
+
+export const persistPendingTutorFollowUp = (
+  followUp: KangurAiTutorPendingFollowUpRecord
+): void => {
+  const currentState = loadPersistedTutorWidgetState();
+  persistTutorWidgetState({
+    ...currentState,
+    pendingFollowUp: followUp,
+  });
+};
+
+export const clearPersistedPendingTutorFollowUp = (): void => {
+  const currentState = loadPersistedTutorWidgetState();
+  persistTutorWidgetState({
+    ...currentState,
+    pendingFollowUp: null,
+  });
 };
 
 export const loadPersistedGuestIntroRecord = (): KangurAiTutorGuestIntroRecord | null => {

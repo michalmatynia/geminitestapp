@@ -1,7 +1,8 @@
 'use client';
 
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { X, Send, BrainCircuit } from 'lucide-react';
 import NextImage from 'next/image';
-import { createPortal } from 'react-dom';
 import {
   useCallback,
   useEffect,
@@ -12,29 +13,28 @@ import {
   useState,
   type CSSProperties,
 } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { X, Send, BrainCircuit } from 'lucide-react';
+import { createPortal } from 'react-dom';
 
 import { KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
 import { resolveKangurAiTutorMotionPresetKind } from '@/features/kangur/settings-ai-tutor';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
+import type { KangurTutorAnchorKind } from '@/features/kangur/ui/context/kangur-tutor-types';
+import { useKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';
+import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import {
   buildKangurRecommendationHref,
 } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
-import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import {
   selectBestTutorAnchor,
   useOptionalKangurTutorAnchors,
 } from '@/features/kangur/ui/context/KangurTutorAnchorContext';
-import type { KangurTutorAnchorKind } from '@/features/kangur/ui/context/kangur-tutor-types';
 import {
   KangurButton,
   KangurGlassPanel,
   KangurTextField,
 } from '@/features/kangur/ui/design/primitives';
-import { useKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { useKangurTextHighlight } from '@/features/kangur/ui/hooks/useKangurTextHighlight';
 import type {
   KangurAiTutorConversationContext,
@@ -739,6 +739,15 @@ const getInteractionIntent = (
   return 'next_step';
 };
 
+const getLastAssistantCoachingMode = (
+  messages: Array<{
+    role: 'user' | 'assistant';
+    coachingFrame?: { mode: string } | null;
+  }>
+): string | null =>
+  [...messages].reverse().find((message) => message.role === 'assistant')?.coachingFrame?.mode ??
+  null;
+
 const buildQuickActions = (input: {
   surface: TutorSurface | null | undefined;
   answerRevealed: boolean | undefined;
@@ -746,6 +755,7 @@ const buildQuickActions = (input: {
   hasCurrentQuestion: boolean;
   hasAssignmentSummary: boolean;
   focusKind: ActiveTutorFocus['kind'];
+  lastAssistantCoachingMode: string | null;
 }): TutorQuickAction[] => {
   const actions: TutorQuickAction[] = [];
   const isQuestionSurface =
@@ -777,29 +787,55 @@ const buildQuickActions = (input: {
       interactionIntent: 'next_step',
     });
   } else if (isQuestionSurface) {
-    actions.push({
-      id: 'hint',
-      label: 'Podpowiedz',
-      prompt: 'Daj mi małą podpowiedź, ale bez gotowej odpowiedzi.',
-      promptMode: 'hint',
-      interactionIntent: 'hint',
-    });
-    actions.push({
-      id: 'how-think',
-      label: 'Jak myslec?',
-      prompt: 'Wyjaśnij, jak podejść do tego pytania krok po kroku, bez podawania odpowiedzi.',
-      promptMode: 'explain',
-      interactionIntent: 'explain',
-    });
+    if (input.lastAssistantCoachingMode === 'misconception_check') {
+      actions.push({
+        id: 'how-think',
+        label: 'Co myle?',
+        prompt:
+          'Pomóż mi znaleźć, gdzie mogę mylić sposób myślenia, bez podawania odpowiedzi.',
+        promptMode: 'explain',
+        interactionIntent: 'explain',
+      });
+      actions.push({
+        id: 'hint',
+        label: 'Inny trop',
+        prompt: 'Daj mi inny mały trop, ale bez gotowej odpowiedzi.',
+        promptMode: 'hint',
+        interactionIntent: 'hint',
+      });
+    } else if (input.lastAssistantCoachingMode === 'hint_ladder') {
+      actions.push({
+        id: 'how-think',
+        label: 'Jak myslec dalej?',
+        prompt: 'Pomóż mi sprawdzić tok myślenia krok po kroku, bez podawania odpowiedzi.',
+        promptMode: 'explain',
+        interactionIntent: 'explain',
+      });
+      actions.push({
+        id: 'hint',
+        label: 'Inny trop',
+        prompt: 'Daj mi inny mały trop, ale bez gotowej odpowiedzi.',
+        promptMode: 'hint',
+        interactionIntent: 'hint',
+      });
+    } else {
+      actions.push({
+        id: 'hint',
+        label: 'Podpowiedz',
+        prompt: 'Daj mi małą podpowiedź, ale bez gotowej odpowiedzi.',
+        promptMode: 'hint',
+        interactionIntent: 'hint',
+      });
+      actions.push({
+        id: 'how-think',
+        label: 'Jak myslec?',
+        prompt: 'Wyjaśnij, jak podejść do tego pytania krok po kroku, bez podawania odpowiedzi.',
+        promptMode: 'explain',
+        interactionIntent: 'explain',
+      });
+    }
   } else {
-    actions.push({
-      id: 'hint',
-      label: 'Podpowiedz',
-      prompt: 'Daj mi małą podpowiedź, ale bez gotowej odpowiedzi.',
-      promptMode: 'hint',
-      interactionIntent: 'hint',
-    });
-    actions.push({
+    const explainAction: TutorQuickAction = {
       id: 'explain',
       label:
         input.focusKind === 'assignment' || input.hasAssignmentSummary ? 'Wyjasnij temat' : 'Wyjasnij',
@@ -808,8 +844,8 @@ const buildQuickActions = (input: {
         : 'Wyjaśnij mi to prostymi słowami.',
       promptMode: 'explain',
       interactionIntent: 'explain',
-    });
-    actions.push({
+    };
+    const nextStepAction: TutorQuickAction = {
       id: 'next-step',
       label: input.focusKind === 'assignment' || input.hasAssignmentSummary ? 'Plan zadania' : 'Co dalej?',
       prompt:
@@ -822,7 +858,20 @@ const buildQuickActions = (input: {
             : 'Powiedz, co warto ćwiczyć dalej na podstawie mojego postępu.',
       promptMode: 'chat',
       interactionIntent: 'next_step',
-    });
+    };
+    const hintAction: TutorQuickAction = {
+      id: 'hint',
+      label: 'Podpowiedz',
+      prompt: 'Daj mi małą podpowiedź, ale bez gotowej odpowiedzi.',
+      promptMode: 'hint',
+      interactionIntent: 'hint',
+    };
+
+    if (input.lastAssistantCoachingMode === 'next_best_action') {
+      actions.push(nextStepAction, explainAction, hintAction);
+    } else {
+      actions.push(hintAction, explainAction, nextStepAction);
+    }
   }
 
   if (input.hasSelectedText) {
@@ -1254,6 +1303,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     openChat,
     closeChat,
     sendMessage,
+    recordFollowUpCompletion,
     setHighlightedText,
   } = tutorRuntime;
   const tutorBehaviorMoodId = tutorRuntime.tutorBehaviorMoodId ?? 'neutral';
@@ -1657,9 +1707,18 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
       currentSurface: sessionContext?.surface ?? null,
       currentContentId: sessionContext?.contentId ?? null,
     });
+    recordFollowUpCompletion?.({
+      actionId: pendingFollowUp.actionId,
+      actionLabel: pendingFollowUp.actionLabel,
+      actionReason: pendingFollowUp.actionReason,
+      actionPage: pendingFollowUp.actionPage,
+      targetPath: pendingFollowUp.pathname,
+      targetSearch: pendingFollowUp.search,
+    });
     clearPersistedPendingTutorFollowUp();
   }, [
     mounted,
+    recordFollowUpCompletion,
     routing?.pageKey,
     routing?.requestedPath,
     sessionContext?.contentId,
@@ -1774,6 +1833,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
   const hasAssignmentSummary = Boolean(
     sessionContext?.assignmentId?.trim() || sessionContext?.assignmentSummary?.trim()
   );
+  const lastAssistantCoachingMode = getLastAssistantCoachingMode(messages);
   const quickActions = buildQuickActions({
     surface: sessionContext?.surface,
     answerRevealed: sessionContext?.answerRevealed,
@@ -1781,6 +1841,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     hasCurrentQuestion,
     hasAssignmentSummary,
     focusKind: activeFocus.kind,
+    lastAssistantCoachingMode,
   });
   const proactiveNudge = buildProactiveNudge({
     proactiveNudges,
@@ -2298,6 +2359,8 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
         pathname: targetLocation.pathname,
         search: targetLocation.search,
         actionId: action.id,
+        actionLabel: action.label,
+        actionReason: action.reason ?? null,
         actionPage: action.page,
         messageIndex,
         hasQuery: Boolean(action.query && Object.keys(action.query).length > 0),

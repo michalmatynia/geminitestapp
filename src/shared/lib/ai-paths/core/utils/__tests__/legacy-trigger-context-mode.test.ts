@@ -9,8 +9,8 @@ import {
 import {
   findRemovedLegacyTriggerContextModesInDocument,
   formatRemovedLegacyTriggerContextModesMessage,
-  remediateRemovedLegacyTriggerContextModesInDocument,
-  remediateRemovedLegacyTriggerContextModesInPathConfig,
+  normalizeRemovedTriggerContextModesInDocument,
+  normalizeRemovedTriggerContextModesInPathConfig,
 } from '../legacy-trigger-context-mode';
 
 const buildLegacyTriggerConfig = (pathId: string): PathConfig => {
@@ -73,7 +73,7 @@ describe('legacy-trigger-context-mode', () => {
 
   it('remediates removed legacy trigger context modes in plain path config payloads', () => {
     const legacyConfig = buildLegacyTriggerConfig('path_remains_legacy');
-    const remediated = remediateRemovedLegacyTriggerContextModesInPathConfig(legacyConfig);
+    const remediated = normalizeRemovedTriggerContextModesInPathConfig(legacyConfig);
 
     expect(remediated.changed).toBe(true);
     expect(remediated.value?.nodes?.[0]?.config?.trigger?.contextMode).toBe('trigger_only');
@@ -88,7 +88,7 @@ describe('legacy-trigger-context-mode', () => {
         exporterVersion: 'test.legacy-trigger',
       }
     );
-    const remediated = remediateRemovedLegacyTriggerContextModesInDocument(portablePayload);
+    const remediated = normalizeRemovedTriggerContextModesInDocument(portablePayload);
 
     expect(remediated.changed).toBe(true);
     expect(findRemovedLegacyTriggerContextModesInDocument(remediated.value)).toHaveLength(0);

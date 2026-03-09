@@ -21,6 +21,7 @@ const suite: KangurTestSuite = {
   gradeLevel: 'III-IV',
   category: 'matematyczny',
   enabled: true,
+  publicationStatus: 'draft',
   sortOrder: 1000,
 };
 
@@ -39,7 +40,12 @@ const questions: KangurTestQuestion[] = [
     explanation: '2 + 2 = 4.',
     illustration: { type: 'none' },
     presentation: { layout: 'classic', choiceStyle: 'list' },
-    editorial: { source: 'manual', reviewStatus: 'ready', auditFlags: [] },
+    editorial: {
+      source: 'manual',
+      reviewStatus: 'ready',
+      workflowStatus: 'published',
+      auditFlags: [],
+    },
   },
 ];
 
@@ -84,5 +90,38 @@ describe('KangurTestSuitePlayer', () => {
       'border-dashed',
       'border-slate-200/80'
     );
+    expect(screen.getByText('This test suite has no published questions yet.')).toBeInTheDocument();
+  });
+
+  it('filters out draft questions and plays only published ones', async () => {
+    const onFinish = vi.fn();
+    render(
+      <KangurTestSuitePlayer
+        suite={suite}
+        questions={[
+          {
+            ...questions[0]!,
+            id: 'draft-question',
+            prompt: 'Draft question should stay hidden',
+            editorial: {
+              source: 'manual',
+              reviewStatus: 'ready',
+              workflowStatus: 'draft',
+              auditFlags: [],
+            },
+          },
+          questions[0]!,
+        ]}
+        onFinish={onFinish}
+      />
+    );
+
+    expect(screen.queryByText('Draft question should stay hidden')).not.toBeInTheDocument();
+    expect(screen.getByText('Question 1 / 1')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /A.*4/i }));
+    await userEvent.click(screen.getByRole('button', { name: /finish/i }));
+
+    expect(onFinish).toHaveBeenCalledWith(3, 3, { 'question-1': 'A' });
   });
 });

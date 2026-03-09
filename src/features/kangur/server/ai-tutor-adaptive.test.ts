@@ -225,6 +225,108 @@ describe('buildKangurAiTutorAdaptiveGuidance', () => {
         },
         reason: 'Powtórka dodawania',
       },
+    ]);
+  });
+
+  it('avoids repeating a completed tutor follow-up and falls back to a fresh recommendation', async () => {
+    const progress = {
+      ...createDefaultKangurProgressState(),
+      totalXp: 180,
+      gamesPlayed: 5,
+      lessonMastery: {
+        adding: {
+          attempts: 3,
+          completions: 1,
+          masteryPercent: 45,
+          bestScorePercent: 55,
+          lastScorePercent: 45,
+          lastCompletedAt: '2026-03-07T08:00:00.000Z',
+        },
+      },
+    };
+    const scores: KangurScore[] = [
+      {
+        id: 'score-1',
+        player_name: 'Ada',
+        score: 4,
+        operation: 'addition',
+        total_questions: 8,
+        correct_answers: 4,
+        time_taken: 80,
+        created_date: '2026-03-07T09:00:00.000Z',
+        learner_id: 'learner-1',
+        created_by: 'owner-1',
+        owner_user_id: 'owner-1',
+      },
+      {
+        id: 'score-2',
+        player_name: 'Ada',
+        score: 8,
+        operation: 'division',
+        total_questions: 8,
+        correct_answers: 8,
+        time_taken: 95,
+        created_date: '2026-03-06T09:00:00.000Z',
+        learner_id: 'learner-1',
+        created_by: 'owner-1',
+        owner_user_id: 'owner-1',
+      },
+    ];
+    const assignments: KangurAssignment[] = [
+      {
+        id: 'assignment-1',
+        learnerKey: 'learner-1',
+        title: 'Powtórka dodawania',
+        description: 'Wróć do dodawania i zrób jeszcze jedną próbę.',
+        priority: 'high',
+        archived: false,
+        target: {
+          type: 'lesson',
+          lessonComponentId: 'adding',
+          requiredCompletions: 2,
+          baselineCompletions: 0,
+        },
+        assignedByName: 'Rodzic',
+        assignedByEmail: 'rodzic@example.com',
+        createdAt: '2026-03-07T07:00:00.000Z',
+        updatedAt: '2026-03-07T07:00:00.000Z',
+      },
+    ];
+
+    getKangurProgressRepositoryMock.mockResolvedValue({
+      getProgress: vi.fn().mockResolvedValue(progress),
+    });
+    getKangurScoreRepositoryMock.mockResolvedValue({
+      listScores: vi.fn().mockResolvedValue(scores),
+    });
+    getKangurAssignmentRepositoryMock.mockResolvedValue({
+      listAssignments: vi.fn().mockResolvedValue(assignments),
+    });
+
+    const guidance = await buildKangurAiTutorAdaptiveGuidance({
+      learnerId: 'learner-1',
+      context: {
+        surface: 'lesson',
+        contentId: 'lesson-adding',
+        title: 'Dodawanie',
+        interactionIntent: 'next_step',
+      },
+      memory: {
+        lastRecommendedAction: 'Completed follow-up: Otworz lekcje: Powtórka dodawania',
+        lastSuccessfulIntervention:
+          'The learner completed the tutor follow-up Otworz lekcje for Powtórka dodawania on Lessons.',
+        lastCoachingMode: 'next_best_action',
+      },
+    });
+
+    expect(guidance.instructions).toContain(
+      'Completed tutor follow-up in this thread: the learner already carried out the previous recommended action, so avoid repeating the same next step unless there is a clear new reason.'
+    );
+    expect(guidance.instructions).not.toContain('Relevant active assignment: Powtórka dodawania');
+    expect(guidance.instructions).toContain(
+      'When suggesting the next step, anchor it to the top recommendation and give exactly one concrete Kangur action.'
+    );
+    expect(guidance.followUpActions).toEqual([
       {
         id: 'recommendation:focus_weakest_operation',
         label: 'Otworz lekcje',
@@ -235,6 +337,39 @@ describe('buildKangurAiTutorAdaptiveGuidance', () => {
         reason: 'Skup sie na: Dodawanie',
       },
     ]);
+  });
+
+  it('escalates repeated hint requests into misconception checks instead of repeating the same ladder', async () => {
+    const guidance = await buildKangurAiTutorAdaptiveGuidance({
+      learnerId: 'learner-1',
+      context: {
+        surface: 'game',
+        contentId: 'calendar-quiz',
+        currentQuestion: 'Która godzina jest pokazana na zegarze?',
+        questionProgressLabel: 'Pytanie 2/10',
+        promptMode: 'hint',
+        interactionIntent: 'hint',
+        repeatedQuestionCount: 1,
+        previousCoachingMode: 'hint_ladder',
+      },
+      registryBundle: createRegistryBundle(),
+    });
+
+    expect(guidance.instructions).toContain(
+      'Repeat signal: the learner has repeated essentially the same question 2 times in this tutor thread, so change strategy instead of repeating the same hint.'
+    );
+    expect(guidance.instructions).toContain(
+      'Previous coaching mode was hint_ladder, so do not reuse it unchanged while the learner is still stuck.'
+    );
+    expect(guidance.coachingFrame).toEqual({
+      mode: 'misconception_check',
+      label: 'Zmien podejscie',
+      description:
+        'Sprawdz, gdzie uczen blokuje sie w rozumowaniu, zamiast dawac kolejny taki sam trop.',
+      rationale:
+        'Uczen powtorzyl to samo pytanie po wskazowce, wiec trzeba przejsc z kolejnego tropu do diagnozy rozumienia.',
+    });
+    expect(guidance.followUpActions).toEqual([]);
   });
 
   it('uses synthesized game surface context when registry docs omit a game runtime document', async () => {

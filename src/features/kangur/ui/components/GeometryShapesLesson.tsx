@@ -6,17 +6,16 @@ import LessonHub from '@/features/kangur/ui/components/LessonHub';
 import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
+import { KangurLessonSubsectionSummarySync } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
 import {
   KangurButton,
   KangurGlassPanel,
 } from '@/features/kangur/ui/design/primitives';
-import { KangurLessonSubsectionSummarySync } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 import {
-  XP_REWARDS,
   addXp,
-  buildLessonMasteryUpdate,
+  createLessonCompletionReward,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 
@@ -106,10 +105,8 @@ export default function GeometryShapesLesson(): React.JSX.Element {
   const handleGameStart = (): void => {
     if (!rewarded) {
       const progress = loadProgress();
-      addXp(XP_REWARDS.lesson_completed, {
-        lessonsCompleted: progress.lessonsCompleted + 1,
-        lessonMastery: buildLessonMasteryUpdate(progress, 'geometry_shapes', 60),
-      });
+      const reward = createLessonCompletionReward(progress, 'geometry_shapes', 60);
+      addXp(reward.xp, reward.progressUpdates);
       setRewarded(true);
     }
     setActiveSection('game');

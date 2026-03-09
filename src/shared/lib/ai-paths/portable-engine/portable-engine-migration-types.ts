@@ -1,7 +1,7 @@
 import type { AiPathPortablePackage, PortablePathInputSource } from './portable-engine-contract';
 
 export type PortablePathMigrationWarningCode =
-  | 'legacy_trigger_context_mode_upgraded'
+  | 'removed_trigger_context_modes_normalized'
   | 'path_config_upgraded'
   | 'semantic_canvas_upgraded'
   | 'portable_package_version_upgraded'

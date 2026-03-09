@@ -7,7 +7,7 @@ import {
   formatRemovedLegacyAiPathNodesMessage,
 } from '@/shared/lib/ai-paths/core/utils/legacy-node-removal';
 import {
-  remediateRemovedLegacyTriggerContextModesInDocument,
+  normalizeRemovedTriggerContextModesInDocument,
 } from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
 
 import { aiPathPortablePackageVersionedSchema } from './portable-engine-contract';
@@ -45,14 +45,14 @@ export const migratePortablePathInput = (
       }),
     };
   }
-  const triggerContextModeRemediation = remediateRemovedLegacyTriggerContextModesInDocument(input);
+  const triggerContextModeRemediation = normalizeRemovedTriggerContextModesInDocument(input);
   const migrationWarnings: PortablePathMigrationWarning[] =
     triggerContextModeRemediation.changed
       ? [
           {
-            code: 'legacy_trigger_context_mode_upgraded',
+            code: 'removed_trigger_context_modes_normalized',
             message:
-              'Portable payload upgraded deprecated Trigger.contextMode values to trigger_only.',
+              'Portable payload normalized removed Trigger.contextMode values to trigger_only.',
           },
         ]
       : [];

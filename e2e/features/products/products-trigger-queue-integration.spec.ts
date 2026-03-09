@@ -195,6 +195,48 @@ const createProductFixture = (
   noteIds: [],
 });
 
+const createProductTriggerPathConfig = (args: {
+  pathId: string;
+  pathName: string;
+  timestamp: string;
+  triggerTitle?: string;
+  triggerEventId?: string;
+  triggerConfig?: Record<string, unknown>;
+}): Record<string, unknown> => ({
+  id: args.pathId,
+  name: args.pathName,
+  isActive: true,
+  strictFlowMode: true,
+  aiPathsValidation: { enabled: false },
+  nodes: [
+    {
+      id: 'node-111111111111111111111111',
+      instanceId: 'node-111111111111111111111111',
+      nodeTypeId: 'nt-111111111111111111111111',
+      type: 'trigger',
+      title: args.triggerTitle ?? 'Trigger',
+      description: 'E2E trigger node',
+      position: { x: 120, y: 120 },
+      inputs: [],
+      outputs: ['trigger'],
+      ...(args.triggerConfig
+        ? {
+            config: {
+              trigger: {
+                ...(args.triggerEventId ? { event: args.triggerEventId } : {}),
+                ...args.triggerConfig,
+              },
+            },
+          }
+        : {}),
+      createdAt: args.timestamp,
+      updatedAt: args.timestamp,
+    },
+  ],
+  edges: [],
+  updatedAt: args.timestamp,
+});
+
 test.describe('Products trigger button queue integration', () => {
   const routeSharedProductHarnessApis = async (page: Page, product: ProductFixture): Promise<void> => {
     await page.route('**/api/user/preferences**', async (route) => {
@@ -334,7 +376,11 @@ test.describe('Products trigger button queue integration', () => {
 
   const setupProductTriggerHarness = async (
     page: Page,
-    options: { enqueueBody: Record<string, unknown> }
+    options: {
+      enqueueBody: Record<string, unknown>;
+      pathConfigOverride?: Record<string, unknown>;
+      pathName?: string;
+    }
   ): Promise<{
     triggerButtonName: string;
     productSku: string;
@@ -343,6 +389,7 @@ test.describe('Products trigger button queue integration', () => {
     triggerEventId: string;
     getProductsPagedRequestCount: () => number;
     getEnqueueRequestBody: () => Record<string, unknown> | null;
+    getSettingsWriteBodies: () => Array<Record<string, unknown>>;
   }> => {
     const now = new Date().toISOString();
     const triggerEventId = 'manual';
@@ -367,6 +414,15 @@ test.describe('Products trigger button queue integration', () => {
 
     let productsPagedRequestCount = 0;
     let enqueueRequestBody: Record<string, unknown> | null = null;
+    const settingsWriteBodies: Array<Record<string, unknown>> = [];
+    const pathName = options.pathName ?? 'E2E Trigger Path';
+    const pathConfig =
+      options.pathConfigOverride ??
+      createProductTriggerPathConfig({
+        pathId,
+        pathName,
+        timestamp: now,
+      });
 
     await routeSharedProductHarnessApis(page, product);
 
@@ -390,6 +446,18 @@ test.describe('Products trigger button queue integration', () => {
     });
 
     await page.route('**/api/ai-paths/settings**', async (route) => {
+      if (route.request().method() === 'POST') {
+        const body = route.request().postDataJSON() as Record<string, unknown>;
+        settingsWriteBodies.push(body);
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          headers: { 'Cache-Control': 'no-store' },
+          body: JSON.stringify(body),
+        });
+        return;
+      }
+
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -398,35 +466,12 @@ test.describe('Products trigger button queue integration', () => {
           {
             key: 'ai_paths_index',
             value: JSON.stringify([
-              { id: pathId, name: 'E2E Trigger Path', createdAt: now, updatedAt: now },
+              { id: pathId, name: pathName, createdAt: now, updatedAt: now },
             ]),
           },
           {
             key: `ai_paths_config_${pathId}`,
-            value: JSON.stringify({
-              id: pathId,
-              name: 'E2E Trigger Path',
-              isActive: true,
-              strictFlowMode: true,
-              aiPathsValidation: { enabled: false },
-              nodes: [
-                {
-                  id: 'node-111111111111111111111111',
-                  instanceId: 'node-111111111111111111111111',
-                  nodeTypeId: 'nt-111111111111111111111111',
-                  type: 'trigger',
-                  title: 'Trigger',
-                  description: 'E2E trigger node',
-                  position: { x: 120, y: 120 },
-                  inputs: [],
-                  outputs: ['trigger'],
-                  createdAt: now,
-                  updatedAt: now,
-                },
-              ],
-              edges: [],
-              updatedAt: now,
-            }),
+            value: JSON.stringify(pathConfig),
           },
         ]),
       });
@@ -461,6 +506,7 @@ test.describe('Products trigger button queue integration', () => {
       triggerEventId,
       getProductsPagedRequestCount: () => productsPagedRequestCount,
       getEnqueueRequestBody: () => enqueueRequestBody,
+      getSettingsWriteBodies: () => settingsWriteBodies,
     };
   };
 
@@ -805,6 +851,58 @@ test.describe('Products trigger button queue integration', () => {
       },
     });
     await assertTriggerRunQueued(page, setup);
+  });
+
+  test('repairs legacy Trigger contextMode in stored product path config and still enqueues', async ({
+    page,
+  }) => {
+    const authenticated = await ensureAdminSession(page);
+    test.skip(!authenticated, 'Admin authentication is required for this e2e test.');
+
+    const setup = await setupProductTriggerHarness(page, {
+      pathName: 'E2E Legacy Trigger Path',
+      pathConfigOverride: createProductTriggerPathConfig({
+        pathId: 'path-e2e-product-trigger',
+        pathName: 'E2E Legacy Trigger Path',
+        timestamp: new Date().toISOString(),
+        triggerTitle: 'Trigger: Opis i Tytul',
+        triggerEventId: 'manual',
+        triggerConfig: {
+          contextMode: 'simulation_preferred',
+        },
+      }),
+      enqueueBody: {
+        run: {
+          id: 'run-e2e-product-trigger-legacy-context-mode',
+          status: 'queued',
+        },
+      },
+    });
+
+    await assertTriggerRunQueued(page, setup);
+
+    await expect
+      .poll(
+        () =>
+          setup
+            .getSettingsWriteBodies()
+            .filter((body) => body?.['key'] === `ai_paths_config_${setup.pathId}`).length
+      )
+      .toBe(1);
+    const repairWrites = setup
+      .getSettingsWriteBodies()
+      .filter((body) => body?.['key'] === `ai_paths_config_${setup.pathId}`);
+    const repairWrite = repairWrites.at(-1);
+    expect(repairWrite?.['key']).toBe(`ai_paths_config_${setup.pathId}`);
+    expect(typeof repairWrite?.['value']).toBe('string');
+
+    const repairedConfig = JSON.parse(repairWrite['value'] as string) as {
+      nodes?: Array<{ config?: { trigger?: { contextMode?: string } } }>;
+    };
+    expect(repairedConfig.nodes?.[0]?.config?.trigger?.contextMode).toBe('trigger_only');
+
+    await expect(page.getByText(/removed legacy Trigger context modes/i)).toHaveCount(0);
+    await expect(page.getByText(/temporarily unavailable/i)).toHaveCount(0);
   });
 
   test('enqueues AI Path run from Product modal trigger with entityJson form context', async ({

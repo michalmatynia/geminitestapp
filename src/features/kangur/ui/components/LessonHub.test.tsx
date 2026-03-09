@@ -75,6 +75,10 @@ describe('LessonHub', () => {
     expect(screen.queryByText('Wybierz temat')).not.toBeInTheDocument();
     expect(within(lessonCard).getByText('Lekcja')).toHaveClass('border-slate-200', 'bg-slate-100');
     expect(within(gameCard).getByText('Gra')).toHaveClass('border-indigo-200', 'bg-indigo-100');
+    expect(within(gameCard).getByTestId('lesson-hub-progress-game')).toBeInTheDocument();
+    expect(within(gameCard).getByTestId('lesson-hub-progress-dot-game-0')).toHaveClass(
+      'kangur-step-pill-pending'
+    );
 
     fireEvent.click(gameCard);
 
@@ -111,6 +115,43 @@ describe('LessonHub', () => {
     expect(screen.getByTestId('lesson-hub-progress-dot-days-0')).toHaveClass('bg-emerald-200');
     expect(screen.getByTestId('lesson-hub-progress-dot-days-1')).toHaveClass('bg-emerald-200');
     expect(screen.getByTestId('lesson-hub-progress-dot-days-2')).toHaveClass(
+      'kangur-step-pill-pending'
+    );
+  });
+
+  it('uses explicit game progress instead of the generic one-pill fallback', () => {
+    render(
+      <LessonHub
+        gradientClass='from-emerald-400 to-teal-500'
+        lessonEmoji='📅'
+        lessonTitle='Nauka kalendarza'
+        onBack={vi.fn()}
+        onSelect={vi.fn()}
+        progressDotClassName='bg-indigo-200'
+        sections={[
+          {
+            id: 'game_clock',
+            emoji: '🕐',
+            title: 'Ćwiczenie: Godziny',
+            description: 'Trzy panele przed wyzwaniem',
+            isGame: true,
+            progress: {
+              viewedCount: 1,
+              totalCount: 3,
+            },
+          },
+        ]}
+      />
+    );
+
+    expect(screen.getByTestId('lesson-hub-progress-game_clock')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-hub-progress-dot-game_clock-0')).toHaveClass(
+      'bg-indigo-200'
+    );
+    expect(screen.getByTestId('lesson-hub-progress-dot-game_clock-1')).toHaveClass(
+      'kangur-step-pill-pending'
+    );
+    expect(screen.getByTestId('lesson-hub-progress-dot-game_clock-2')).toHaveClass(
       'kangur-step-pill-pending'
     );
   });

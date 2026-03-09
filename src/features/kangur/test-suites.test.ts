@@ -3,9 +3,13 @@ import { describe, expect, it } from 'vitest';
 import {
   KANGUR_TEST_SUITE_SORT_ORDER_GAP,
   canonicalizeKangurTestSuites,
+  demoteInvalidLiveKangurTestSuites,
   createInitialTestSuiteFormData,
+  demoteKangurTestSuitesToDraft,
   formDataToTestSuite,
+  isLiveKangurTestSuite,
   parseKangurTestSuites,
+  promoteKangurTestSuitesLive,
   toTestSuiteFormData,
   upsertKangurTestSuite,
 } from '@/features/kangur/test-suites';
@@ -19,6 +23,7 @@ const makeSuite = (overrides: Partial<KangurTestSuite> = {}): KangurTestSuite =>
   gradeLevel: '',
   category: 'custom',
   enabled: true,
+  publicationStatus: 'draft',
   sortOrder: 1000,
   ...overrides,
 });
@@ -59,6 +64,7 @@ describe('parseKangurTestSuites', () => {
     expect(result[0]?.description).toBe('');
     expect(result[0]?.year).toBeNull();
     expect(result[0]?.enabled).toBe(true);
+    expect(result[0]?.publicationStatus).toBe('draft');
     expect(result[0]?.category).toBe('custom');
   });
 
@@ -134,8 +140,113 @@ describe('upsertKangurTestSuite', () => {
   });
 });
 
+describe('suite publication helpers', () => {
+  it('treats only enabled live suites as learner-live', () => {
+    expect(isLiveKangurTestSuite(makeSuite({ publicationStatus: 'live' }))).toBe(true);
+    expect(isLiveKangurTestSuite(makeSuite({ publicationStatus: 'draft' }))).toBe(false);
+    expect(
+      isLiveKangurTestSuite(makeSuite({ publicationStatus: 'live', enabled: false }))
+    ).toBe(false);
+  });
+
+  it('can promote selected suites live and stamp publishedAt', () => {
+    const result = promoteKangurTestSuitesLive(
+      [makeSuite({ id: 's1' }), makeSuite({ id: 's2', publicationStatus: 'live' })],
+      {
+        suiteIds: ['s1'],
+        publishedAt: '2026-03-09T12:00:00.000Z',
+      }
+    );
+
+    expect(result.publishedSuiteIds).toEqual(['s1']);
+    expect(result.suites[0]?.publicationStatus).toBe('live');
+    expect(result.suites[0]?.publishedAt).toBe('2026-03-09T12:00:00.000Z');
+    expect(result.suites[1]?.publishedAt).toBeUndefined();
+  });
+
+  it('can take live suites back to draft mode', () => {
+    const result = demoteKangurTestSuitesToDraft([
+      makeSuite({
+        id: 's1',
+        publicationStatus: 'live',
+        publishedAt: '2026-03-09T12:00:00.000Z',
+      } as Partial<KangurTestSuite>),
+      makeSuite({ id: 's2', publicationStatus: 'draft' }),
+    ], {
+      suiteIds: ['s1'],
+    });
+
+    expect(result.draftSuiteIds).toEqual(['s1']);
+    expect(result.suites[0]?.publicationStatus).toBe('draft');
+    expect(result.suites[0]?.publishedAt).toBeUndefined();
+    expect(result.suites[1]?.publicationStatus).toBe('draft');
+  });
+
+  it('takes live suites offline when the question set is no longer fully published', () => {
+    const result = demoteInvalidLiveKangurTestSuites(
+      [
+        makeSuite({
+          id: 's1',
+          publicationStatus: 'live',
+          publishedAt: '2026-03-09T12:00:00.000Z',
+        }),
+        makeSuite({
+          id: 's2',
+          publicationStatus: 'live',
+          publishedAt: '2026-03-09T12:00:00.000Z',
+        }),
+      ],
+      {
+        q1: {
+          id: 'q1',
+          suiteId: 's1',
+          sortOrder: 1000,
+          prompt: 'Published question',
+          choices: [
+            { label: 'A', text: '1' },
+            { label: 'B', text: '2' },
+          ],
+          correctChoiceLabel: 'A',
+          pointValue: 3,
+          illustration: { type: 'none' },
+          editorial: {
+            source: 'manual',
+            reviewStatus: 'ready',
+            workflowStatus: 'published',
+            auditFlags: [],
+          },
+        },
+        q2: {
+          id: 'q2',
+          suiteId: 's2',
+          sortOrder: 1000,
+          prompt: 'Draft question',
+          choices: [
+            { label: 'A', text: '1' },
+            { label: 'B', text: '2' },
+          ],
+          correctChoiceLabel: 'A',
+          pointValue: 3,
+          illustration: { type: 'none' },
+          editorial: {
+            source: 'manual',
+            reviewStatus: 'ready',
+            workflowStatus: 'draft',
+            auditFlags: [],
+          },
+        },
+      }
+    );
+
+    expect(result.draftSuiteIds).toEqual(['s2']);
+    expect(result.suites[0]?.publicationStatus).toBe('live');
+    expect(result.suites[1]?.publicationStatus).toBe('draft');
+    expect(result.suites[1]?.publishedAt).toBeUndefined();
+  });
+});
+
 describe('formDataToTestSuite / toTestSuiteFormData round-trip', () => {
-  it('preserves title, description, year, gradeLevel, category, enabled', () => {
+  it('preserves title, description, year, gradeLevel, category, enabled, and publication state', () => {
     const suite = makeSuite({
       id: 's-rt',
       title: 'Kangur 2024',
@@ -144,6 +255,8 @@ describe('formDataToTestSuite / toTestSuiteFormData round-trip', () => {
       gradeLevel: 'III–IV',
       category: 'matematyczny',
       enabled: false,
+      publicationStatus: 'live',
+      publishedAt: '2026-03-09T10:00:00.000Z',
       sortOrder: 3000,
     });
     const fd = toTestSuiteFormData(suite);
@@ -154,6 +267,8 @@ describe('formDataToTestSuite / toTestSuiteFormData round-trip', () => {
     expect(restored.gradeLevel).toBe('III–IV');
     expect(restored.category).toBe('matematyczny');
     expect(restored.enabled).toBe(false);
+    expect(restored.publicationStatus).toBe('live');
+    expect(restored.publishedAt).toBe('2026-03-09T10:00:00.000Z');
     expect(restored.sortOrder).toBe(3000);
   });
 
@@ -198,6 +313,7 @@ describe('createInitialTestSuiteFormData', () => {
     const fd = createInitialTestSuiteFormData();
     expect(fd.title).toBe('');
     expect(fd.enabled).toBe(true);
+    expect(fd.publicationStatus).toBe('draft');
     expect(fd.category).toBe('custom');
     expect(fd.year).toBe('');
   });

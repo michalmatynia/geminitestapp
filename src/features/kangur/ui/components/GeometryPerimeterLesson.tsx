@@ -1,17 +1,16 @@
 import { useState } from 'react';
 
-import {
-  XP_REWARDS,
-  addXp,
-  buildLessonMasteryUpdate,
-  loadProgress,
-} from '@/features/kangur/ui/services/progress';
 import LessonHub from '@/features/kangur/ui/components/LessonHub';
 import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
 import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
+import {
+  addXp,
+  createLessonCompletionReward,
+  loadProgress,
+} from '@/features/kangur/ui/services/progress';
 
 type SectionId = 'intro' | 'kwadrat' | 'prostokan' | 'podsumowanie';
 
@@ -130,10 +129,8 @@ export default function GeometryPerimeterLesson(): React.JSX.Element {
 
   const handleComplete = (): void => {
     const progress = loadProgress();
-    addXp(XP_REWARDS.lesson_completed, {
-      lessonsCompleted: progress.lessonsCompleted + 1,
-      lessonMastery: buildLessonMasteryUpdate(progress, 'geometry_perimeter', 100),
-    });
+    const reward = createLessonCompletionReward(progress, 'geometry_perimeter', 100);
+    addXp(reward.xp, reward.progressUpdates);
   };
 
   if (activeSection) {

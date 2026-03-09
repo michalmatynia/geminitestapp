@@ -22,8 +22,12 @@ import {
   KANGUR_TEST_SUITES_SETTING_KEY,
 } from '@/shared/contracts/kangur-tests';
 import { parseKangurLessonDocumentStore, resolveKangurLessonDocumentPages, stripHtmlToText } from '@/features/kangur/lesson-documents';
-import { parseKangurTestSuites } from '@/features/kangur/test-suites';
-import { getQuestionsForSuite, parseKangurTestQuestionStore } from '@/features/kangur/test-questions';
+import { isLiveKangurTestSuite, parseKangurTestSuites } from '@/features/kangur/test-suites';
+import {
+  hasFullyPublishedQuestionSetForSuite,
+  getPublishedQuestionsForSuite,
+  parseKangurTestQuestionStore,
+} from '@/features/kangur/test-questions';
 import { getKangurAssignmentRepository } from '@/features/kangur/services/kangur-assignment-repository';
 import { getKangurProgressRepository } from '@/features/kangur/services/kangur-progress-repository';
 import { getKangurScoreRepository } from '@/features/kangur/services/kangur-score-repository';
@@ -734,11 +738,17 @@ export const buildKangurTestContextRuntimeDocument = async (input: {
 }): Promise<ContextRuntimeDocument | null> => {
   const data = input.data ?? (await loadKangurRegistryBaseData(input.learnerId));
   const suite = data.testSuitesById.get(input.suiteId) ?? null;
-  if (!suite) {
+  if (!suite || !isLiveKangurTestSuite(suite)) {
+    return null;
+  }
+  if (!hasFullyPublishedQuestionSetForSuite(data.questionStore, suite.id)) {
     return null;
   }
 
-  const questions = getQuestionsForSuite(data.questionStore, suite.id);
+  const questions = getPublishedQuestionsForSuite(data.questionStore, suite.id);
+  if (questions.length === 0) {
+    return null;
+  }
   const currentQuestion = input.questionId
     ? questions.find((question) => question.id === input.questionId) ?? null
     : null;

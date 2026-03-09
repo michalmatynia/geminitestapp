@@ -15,6 +15,7 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
+import { isPublishedKangurTestQuestion } from '@/features/kangur/test-questions';
 import type { KangurTestQuestion, KangurTestSuite } from '@/shared/contracts/kangur-tests';
 
 import { KangurTestQuestionRenderer } from './KangurTestQuestionRenderer';
@@ -101,6 +102,10 @@ export function KangurTestSuitePlayer({
 }: Props): React.JSX.Element {
   const prefersReducedMotion = useReducedMotion();
   const questionMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
+  const publishedQuestions = useMemo(
+    () => questions.filter((question) => isPublishedKangurTestQuestion(question)),
+    [questions]
+  );
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [showAnswer, setShowAnswer] = useState(false);
@@ -108,16 +113,16 @@ export function KangurTestSuitePlayer({
   const questionAnchorRef = useRef<HTMLDivElement | null>(null);
   const summaryAnchorRef = useRef<HTMLDivElement | null>(null);
 
-  const currentQuestion = questions[currentIndex] ?? null;
+  const currentQuestion = publishedQuestions[currentIndex] ?? null;
   const selectedLabel = currentQuestion ? (answers[currentQuestion.id] ?? null) : null;
   const isAnswered = selectedLabel !== null;
 
-  const score = questions.reduce((total, q) => {
+  const score = publishedQuestions.reduce((total, q) => {
     if (answers[q.id] === q.correctChoiceLabel) return total + q.pointValue;
     return total;
   }, 0);
-  const maxScore = questions.reduce((total, q) => total + q.pointValue, 0);
-  const totalQuestions = questions.length;
+  const maxScore = publishedQuestions.reduce((total, q) => total + q.pointValue, 0);
+  const totalQuestions = publishedQuestions.length;
   const activeTutorContext = useMemo(
     () => ({
       surface: 'test' as const,
@@ -186,7 +191,7 @@ export function KangurTestSuitePlayer({
 
   const handleNext = (): void => {
     setShowAnswer(false);
-    if (currentIndex < questions.length - 1) {
+    if (currentIndex < publishedQuestions.length - 1) {
       setCurrentIndex((i) => i + 1);
     } else {
       setFinished(true);
@@ -197,7 +202,7 @@ export function KangurTestSuitePlayer({
   const handlePrev = (): void => {
     if (currentIndex > 0) {
       setCurrentIndex((i) => i - 1);
-      setShowAnswer(Boolean(answers[questions[currentIndex - 1]?.id ?? '']));
+      setShowAnswer(Boolean(answers[publishedQuestions[currentIndex - 1]?.id ?? '']));
     }
   };
 
@@ -214,7 +219,7 @@ export function KangurTestSuitePlayer({
         accent='slate'
         data-testid='kangur-test-suite-empty'
         padding='xl'
-        title='This test suite has no questions yet.'
+        title='This test suite has no published questions yet.'
       />
     );
   }
@@ -230,7 +235,7 @@ export function KangurTestSuitePlayer({
           <div ref={summaryAnchorRef}>
             <ExamSummary
               suite={suite}
-              questions={questions}
+              questions={publishedQuestions}
               answers={answers}
               score={score}
               maxScore={maxScore}

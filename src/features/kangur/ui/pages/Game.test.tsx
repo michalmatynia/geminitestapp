@@ -6,10 +6,16 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-const { useKangurGameRuntimeMock, homeHeroPropsMock, homeActionsPropsMock } = vi.hoisted(() => ({
+const {
+  useKangurGameRuntimeMock,
+  homeHeroPropsMock,
+  homeActionsPropsMock,
+  tutorSessionSyncPropsMock,
+} = vi.hoisted(() => ({
   useKangurGameRuntimeMock: vi.fn(),
   homeHeroPropsMock: vi.fn(),
   homeActionsPropsMock: vi.fn(),
+  tutorSessionSyncPropsMock: vi.fn(),
 }));
 
 vi.mock('framer-motion', () => {
@@ -56,6 +62,13 @@ vi.mock('framer-motion', () => {
 vi.mock('@/features/kangur/ui/context/KangurGameRuntimeContext', () => ({
   KangurGameRuntimeBoundary: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   useKangurGameRuntime: useKangurGameRuntimeMock,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
+  KangurAiTutorSessionSync: (props: unknown) => {
+    tutorSessionSyncPropsMock(props);
+    return null;
+  },
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurGameNavigationWidget', () => ({
@@ -130,10 +143,19 @@ import Game from '@/features/kangur/ui/pages/Game';
 
 describe('Game page', () => {
   const buildRuntime = (screenKey: string) => ({
+    activePracticeAssignment: null,
     basePath: '/kangur',
     canAccessParentAssignments: false,
+    currentQuestion: null,
+    currentQuestionIndex: 0,
+    difficulty: 'medium',
+    kangurMode: null,
+    operation: null,
     progress: {},
+    resultPracticeAssignment: null,
+    score: 0,
     screen: screenKey,
+    totalQuestions: 0,
     user: null,
     xpToast: {
       xpGained: 0,
@@ -215,6 +237,66 @@ describe('Game page', () => {
     expect(transitionShell).toHaveAttribute(
       'data-motion-transition',
       JSON.stringify({ duration: 0.32, ease: [0.22, 1, 0.36, 1] })
+    );
+  });
+
+  it('publishes activity-specific tutor context for Grajmy instead of one generic game scope', () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      ...buildRuntime('calendar_quiz'),
+      user: {
+        activeLearner: {
+          id: 'learner-1',
+        },
+      },
+    });
+
+    render(<Game />);
+
+    expect(tutorSessionSyncPropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        learnerId: 'learner-1',
+        sessionContext: expect.objectContaining({
+          surface: 'game',
+          contentId: 'game:calendar_quiz',
+        }),
+      })
+    );
+  });
+
+  it('keeps gameplay tutor context stable per practice activity and assignment', () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      ...buildRuntime('playing'),
+      activePracticeAssignment: {
+        id: 'assignment-division-easy',
+        title: 'Dzielenie latwe',
+        progress: {
+          summary: '2/5',
+        },
+      },
+      currentQuestion: {
+        question: '12 : 3 = ?',
+      },
+      currentQuestionIndex: 0,
+      difficulty: 'easy',
+      operation: 'division',
+      totalQuestions: 5,
+      user: {
+        activeLearner: {
+          id: 'learner-1',
+        },
+      },
+    });
+
+    render(<Game />);
+
+    expect(tutorSessionSyncPropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sessionContext: expect.objectContaining({
+          contentId: 'game:assignment:assignment-division-easy',
+          assignmentId: 'assignment-division-easy',
+          questionId: 'game-question-1',
+        }),
+      })
     );
   });
 });

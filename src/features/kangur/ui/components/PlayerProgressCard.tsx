@@ -7,7 +7,13 @@ import {
   KangurProgressBar,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { BADGES, getCurrentLevel, getNextLevel } from '@/features/kangur/ui/services/progress';
+import {
+  getCurrentLevel,
+  getNextLevel,
+  getProgressAverageAccuracy,
+  getProgressBadges,
+  getProgressTopActivities,
+} from '@/features/kangur/ui/services/progress';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 
 type PlayerProgressCardProps = {
@@ -17,13 +23,17 @@ type PlayerProgressCardProps = {
 export default function PlayerProgressCard({
   progress,
 }: PlayerProgressCardProps): React.JSX.Element {
-  const { totalXp, badges, gamesPlayed, lessonsCompleted } = progress;
+  const { totalXp, gamesPlayed, lessonsCompleted } = progress;
   const currentLevel = getCurrentLevel(totalXp);
   const nextLevel = getNextLevel(totalXp);
   const xpIntoLevel = totalXp - currentLevel.minXp;
   const xpNeeded = nextLevel ? nextLevel.minXp - currentLevel.minXp : 1;
   const percent = nextLevel ? Math.min(100, Math.round((xpIntoLevel / xpNeeded) * 100)) : 100;
-  const unlockedBadges = BADGES.filter((badge) => badges.includes(badge.id));
+  const averageAccuracy = getProgressAverageAccuracy(progress);
+  const bestWinStreak = progress.bestWinStreak ?? 0;
+  const topActivity = getProgressTopActivities(progress, 1)[0] ?? null;
+  const badgeStatuses = getProgressBadges(progress);
+  const unlockedBadgeCount = badgeStatuses.filter((badge) => badge.isUnlocked).length;
 
   return (
     <motion.div
@@ -70,7 +80,7 @@ export default function PlayerProgressCard({
           />
         </div>
 
-        <div className='grid grid-cols-3 gap-3'>
+        <div className='grid grid-cols-2 gap-3'>
           <KangurMetricCard accent='indigo' align='center' label='Gier' value={gamesPlayed} />
           <KangurMetricCard
             accent='violet'
@@ -79,28 +89,60 @@ export default function PlayerProgressCard({
             value={lessonsCompleted}
           />
           <KangurMetricCard
+            accent='emerald'
+            align='center'
+            label='Skutecznosc'
+            value={`${averageAccuracy}%`}
+          />
+          <KangurMetricCard
             accent='amber'
             align='center'
-            label='Odznak'
-            value={unlockedBadges.length}
+            label='Seria'
+            value={bestWinStreak}
+          />
+          <KangurMetricCard
+            accent='sky'
+            align='center'
+            label='Odznaki'
+            value={unlockedBadgeCount}
           />
         </div>
+
+        {topActivity && (
+          <div
+            className='flex items-center justify-between gap-3 rounded-3xl border border-slate-200/80 bg-white/80 px-4 py-3'
+            data-testid='player-progress-top-activity'
+          >
+            <div>
+              <p className='text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500'>
+                Najczesciej cwiczysz
+              </p>
+              <p className='text-sm font-semibold text-slate-800'>{topActivity.label}</p>
+            </div>
+            <KangurStatusChip accent='indigo'>
+              {topActivity.sessionsPlayed} sesji
+            </KangurStatusChip>
+          </div>
+        )}
 
         <div>
           <p className='mb-2 text-xs font-bold uppercase tracking-wide text-slate-500'>Odznaki</p>
           <div className='flex flex-wrap gap-2'>
-            {BADGES.map((badge) => {
-              const unlocked = badges.includes(badge.id);
+            {badgeStatuses.map((badge) => {
+              const unlocked = badge.isUnlocked;
               return (
                 <KangurStatusChip
                   key={badge.id}
                   accent={unlocked ? 'amber' : 'slate'}
                   className={unlocked ? 'gap-1.5' : 'gap-1.5 opacity-70'}
                   data-testid={`player-progress-badge-${badge.id}`}
-                  title={`${badge.name}: ${badge.desc}`}
+                  title={`${badge.name}: ${badge.desc}${unlocked ? '' : ` (${badge.summary})`}`}
                 >
                   <span className={unlocked ? '' : 'grayscale'}>{badge.emoji}</span>
                   <span>{badge.name}</span>
+                  {!unlocked ? (
+                    <span className='text-[11px] font-semibold text-slate-500'>{badge.summary}</span>
+                  ) : null}
                 </KangurStatusChip>
               );
             })}

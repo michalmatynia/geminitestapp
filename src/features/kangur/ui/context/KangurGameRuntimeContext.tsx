@@ -11,7 +11,6 @@ import {
   type ReactNode,
 } from 'react';
 
-import { internalError } from '@/shared/errors/app-error';
 import {
   getKangurInternalQueryParamName,
   readKangurUrlParam,
@@ -25,17 +24,21 @@ import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingCont
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import {
-  DIFFICULTY_CONFIG,
-  generateQuestions,
-  generateTrainingQuestions,
-} from '@/features/kangur/ui/services/math-questions';
-import { XP_REWARDS, addXp, loadProgress } from '@/features/kangur/ui/services/progress';
-import {
   mapKangurPracticeAssignmentsByOperation,
   parseKangurMixedTrainingQuickStartParams,
   selectKangurPracticeAssignmentForScreen,
   selectKangurResultPracticeAssignment,
 } from '@/features/kangur/ui/services/delegated-assignments';
+import {
+  DIFFICULTY_CONFIG,
+  generateQuestions,
+  generateTrainingQuestions,
+} from '@/features/kangur/ui/services/math-questions';
+import {
+  addXp,
+  createGameSessionReward,
+  loadProgress,
+} from '@/features/kangur/ui/services/progress';
 import type {
   KangurDifficulty,
   KangurGameScreen,
@@ -45,16 +48,20 @@ import type {
   KangurTrainingSelection,
   KangurXpToastState,
 } from '@/features/kangur/ui/types';
-import type {
-  KangurGameRuntimeActionsContextValue,
-  KangurGameRuntimeContextValue,
-  KangurGameRuntimeStateContextValue,
-} from './KangurGameRuntimeContext.shared';
+import { internalError } from '@/shared/errors/app-error';
+
 import {
   isKangurDifficulty,
   isKangurOperation,
   TOTAL_QUESTIONS,
 } from './KangurGameRuntimeContext.shared';
+
+import type {
+  KangurGameRuntimeActionsContextValue,
+  KangurGameRuntimeContextValue,
+  KangurGameRuntimeStateContextValue,
+} from './KangurGameRuntimeContext.shared';
+
 
 const kangurPlatform = getKangurPlatform();
 
@@ -274,17 +281,14 @@ export function KangurGameRuntimeProvider({
       const storedProgress = loadProgress();
       const isPerfect = nextScore === totalQuestions;
       const isGreat = nextScore >= greatThreshold;
-      const xp = isPerfect
-        ? XP_REWARDS.perfect_game
-        : isGreat
-          ? XP_REWARDS.great_game
-          : XP_REWARDS.good_game;
-      const operationsPlayed = [...new Set([...(storedProgress.operationsPlayed || []), selectedOperation])];
-      const { newBadges } = addXp(xp, {
-        gamesPlayed: storedProgress.gamesPlayed + 1,
-        perfectGames: isPerfect ? storedProgress.perfectGames + 1 : storedProgress.perfectGames,
-        operationsPlayed,
+      const reward = createGameSessionReward(storedProgress, {
+        operation: selectedOperation,
+        difficulty,
+        correctAnswers: nextScore,
+        totalQuestions,
+        durationSeconds: taken,
       });
+      const { newBadges } = addXp(reward.xp, reward.progressUpdates);
       trackKangurClientEvent('kangur_game_completed', {
         operation: selectedOperation,
         difficulty,
@@ -294,10 +298,11 @@ export function KangurGameRuntimeProvider({
         correctAnswers: nextScore,
         accuracyPercent: Math.round((nextScore / totalQuestions) * 100),
         isPerfect,
-        xpAwarded: xp,
+        isGreat,
+        xpAwarded: reward.xp,
         playerNamePresent: nextPlayerName.length > 0,
       });
-      showXpToast(xp, newBadges);
+      showXpToast(reward.xp, newBadges);
 
       window.setTimeout(() => setScreen('result'), 1000);
       return;

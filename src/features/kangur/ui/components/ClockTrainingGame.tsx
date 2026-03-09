@@ -18,8 +18,7 @@ import {
 } from '@/features/kangur/ui/design/tokens';
 import {
   addXp,
-  buildLessonMasteryUpdate,
-  XP_REWARDS,
+  createTrainingReward,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { cn } from '@/shared/utils';
@@ -27,7 +26,13 @@ import { cn } from '@/shared/utils';
 import type { MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from 'react';
 
 type ClockTrainingGameProps = {
+  hideModeSwitch?: boolean;
+  initialMode?: ClockGameMode;
   onFinish: () => void;
+  onPracticeSuccess?: () => void;
+  onModeChange?: (mode: ClockGameMode) => void;
+  onChallengeSuccess?: () => void;
+  practiceTasks?: ClockTask[];
   section?: ClockTrainingTaskPoolId;
 };
 
@@ -39,7 +44,7 @@ type ClockTask = {
 type Feedback = 'correct' | 'wrong' | null;
 type Hand = 'hour' | 'minute';
 type MinuteSnapMode = '5min' | '1min';
-type ClockGameMode = 'practice' | 'challenge';
+export type ClockGameMode = 'practice' | 'challenge';
 export type ClockTrainingSectionId = 'hours' | 'minutes' | 'combined';
 export type ClockTrainingTaskPoolId = ClockTrainingSectionId | 'mixed';
 
@@ -174,6 +179,17 @@ export function getClockTrainingSectionContent(
 
 function createClockTaskSet(section: ClockTrainingTaskPoolId): ClockTask[] {
   return shuffle(CLOCK_TRAINING_TASKS[section]).slice(0, INITIAL_TASK_COUNT);
+}
+
+function resolveClockPracticeTaskSet(
+  section: ClockTrainingTaskPoolId,
+  practiceTasks?: ClockTask[]
+): ClockTask[] {
+  if (practiceTasks && practiceTasks.length > 0) {
+    return practiceTasks;
+  }
+
+  return createClockTaskSet(section);
 }
 
 function pad(value: number): string {
@@ -668,7 +684,6 @@ function DraggableClock({
 
   return (
     <div className='flex flex-col items-center gap-4'>
-      <p className='text-sm text-slate-400'>Przeciągnij wskazówki, aby ustawić godzinę:</p>
       <KangurStatusChip
         accent='indigo'
         className='px-5 py-2 text-2xl font-extrabold'
@@ -904,11 +919,19 @@ function DraggableClock({
 }
 
 export default function ClockTrainingGame({
+  hideModeSwitch = false,
+  initialMode = 'practice',
   onFinish,
+  onPracticeSuccess,
+  onModeChange,
+  onChallengeSuccess,
+  practiceTasks,
   section = 'mixed',
 }: ClockTrainingGameProps): React.JSX.Element {
-  const [gameMode, setGameMode] = useState<ClockGameMode>('practice');
-  const [tasks, setTasks] = useState<ClockTask[]>(() => createClockTaskSet(section));
+  const [gameMode, setGameMode] = useState<ClockGameMode>(initialMode);
+  const [tasks, setTasks] = useState<ClockTask[]>(() =>
+    resolveClockPracticeTaskSet(section, practiceTasks)
+  );
   const [current, setCurrent] = useState(0);
   const [score, setScore] = useState(0);
   const [feedback, setFeedback] = useState<ClockFeedback | null>(null);
@@ -919,7 +942,6 @@ export default function ClockTrainingGame({
   const [challengeTimeLeft, setChallengeTimeLeft] = useState(CHALLENGE_TIME_LIMIT_SECONDS);
   const [challengeStreak, setChallengeStreak] = useState(0);
   const [challengeBestStreak, setChallengeBestStreak] = useState(0);
-  const trainingSectionLabel = getClockTrainingSectionLabel(section);
   const trainingSectionContent = getClockTrainingSectionContent(section);
 
   const task = tasks[current];
@@ -929,34 +951,38 @@ export default function ClockTrainingGame({
 
   const handleDone = useCallback(
     (finalScore: number): void => {
-      const isPerfect = finalScore === tasks.length;
-      const isGood = finalScore >= 3;
-      const xp = isPerfect
-        ? XP_REWARDS.clock_training_perfect
-        : isGood
-          ? XP_REWARDS.clock_training_good
-          : 10;
+      const isChallengeSuccessful =
+        gameMode === 'challenge' && finalScore >= Math.max(1, Math.ceil(tasks.length * 0.8));
 
       const progress = loadProgress();
-      addXp(xp, {
-        clockPerfect: isPerfect ? progress.clockPerfect + 1 : progress.clockPerfect,
-        lessonMastery: buildLessonMasteryUpdate(
-          progress,
-          'clock',
-          (finalScore / tasks.length) * 100
-        ),
+      const reward = createTrainingReward(progress, {
+        activityKey: `training:clock:${section}`,
+        lessonKey: 'clock',
+        correctAnswers: finalScore,
+        totalQuestions: tasks.length,
+        strongThresholdPercent: gameMode === 'challenge' ? 80 : 60,
+        perfectCounterKey: 'clockPerfect',
       });
+      addXp(reward.xp, reward.progressUpdates);
 
-      setXpEarned(xp);
+      setXpEarned(reward.xp);
       setDone(true);
+      if (isChallengeSuccessful) {
+        onChallengeSuccess?.();
+      }
     },
-    [tasks.length]
+    [gameMode, onChallengeSuccess, section, tasks.length]
   );
 
   const resetSession = useCallback(
     (mode: ClockGameMode = gameMode): void => {
+      onModeChange?.(mode);
       setGameMode(mode);
-      setTasks(createClockTaskSet(section));
+      setTasks(
+        mode === 'challenge'
+          ? createClockTaskSet(section)
+          : resolveClockPracticeTaskSet(section, practiceTasks)
+      );
       setCurrent(0);
       setScore(0);
       setFeedback(null);
@@ -968,7 +994,7 @@ export default function ClockTrainingGame({
       setChallengeStreak(0);
       setChallengeBestStreak(0);
     },
-    [gameMode, section]
+    [gameMode, onModeChange, practiceTasks, section]
   );
 
   const resolveAttempt = useCallback(
@@ -994,6 +1020,8 @@ export default function ClockTrainingGame({
           const nextStreak = challengeStreak + 1;
           setChallengeStreak(nextStreak);
           setChallengeBestStreak((value) => Math.max(value, nextStreak));
+        } else {
+          onPracticeSuccess?.();
         }
         setFeedback(
           feedbackOverride ??
@@ -1047,7 +1075,7 @@ export default function ClockTrainingGame({
         }
       }, feedbackDelay);
     },
-    [challengeStreak, current, gameMode, handleDone, retryCounts, score, tasks]
+    [challengeStreak, current, gameMode, handleDone, onPracticeSuccess, retryCounts, score, tasks]
   );
 
   const handleSubmit = (hours: number, minutes: number): void => {
@@ -1109,14 +1137,6 @@ export default function ClockTrainingGame({
           <p className='text-xs font-semibold text-indigo-600'>
             Tryb: {gameMode === 'challenge' ? 'Wyzwanie' : 'Nauka'}
           </p>
-          {section !== 'mixed' && (
-            <p
-              data-testid='clock-training-summary-section'
-              className='text-xs font-semibold text-slate-500'
-            >
-              Sekcja: {trainingSectionLabel}
-            </p>
-          )}
           {gameMode === 'challenge' && (
             <p
               data-testid='clock-challenge-summary'
@@ -1153,42 +1173,35 @@ export default function ClockTrainingGame({
 
   return (
     <div className='flex flex-col items-center gap-4 w-full'>
-      <div
-        data-testid='clock-mode-switch'
-        className={cn(
-          KANGUR_SEGMENTED_CONTROL_CLASSNAME,
-          'inline-flex w-auto flex-wrap items-center justify-center'
-        )}
-      >
-        <KangurButton
-          data-testid='clock-mode-practice'
-          onClick={() => resetSession('practice')}
-          className='h-10 px-4 text-xs sm:flex-none'
-          size='sm'
-          variant={gameMode === 'practice' ? 'segmentActive' : 'segment'}
+      {!hideModeSwitch ? (
+        <div
+          data-testid='clock-mode-switch'
+          className={cn(
+            KANGUR_SEGMENTED_CONTROL_CLASSNAME,
+            'inline-flex w-auto flex-wrap items-center justify-center'
+          )}
         >
-          Tryb Nauka
-        </KangurButton>
-        <KangurButton
-          data-testid='clock-mode-challenge'
-          onClick={() => resetSession('challenge')}
-          className='h-10 px-4 text-xs sm:flex-none'
-          size='sm'
-          variant={gameMode === 'challenge' ? 'segmentActive' : 'segment'}
-        >
-          Tryb Wyzwanie
-        </KangurButton>
-      </div>
-      {section !== 'mixed' && (
-        <KangurStatusChip
-          accent='indigo'
-          className='text-xs font-semibold'
-          data-testid='clock-training-section-badge'
-        >
-          Sekcja: {trainingSectionLabel}
-        </KangurStatusChip>
-      )}
-      {section !== 'mixed' && (
+          <KangurButton
+            data-testid='clock-mode-practice'
+            onClick={() => resetSession('practice')}
+            className='h-10 px-4 text-xs sm:flex-none'
+            size='sm'
+            variant={gameMode === 'practice' ? 'segmentActive' : 'segment'}
+          >
+            Tryb Nauka
+          </KangurButton>
+          <KangurButton
+            data-testid='clock-mode-challenge'
+            onClick={() => resetSession('challenge')}
+            className='h-10 px-4 text-xs sm:flex-none'
+            size='sm'
+            variant={gameMode === 'challenge' ? 'segmentActive' : 'segment'}
+          >
+            Tryb Wyzwanie
+          </KangurButton>
+        </div>
+      ) : null}
+      {section !== 'mixed' && gameMode !== 'challenge' && (
         <KangurInfoCard
           accent={trainingSectionContent.accent}
           className='w-full max-w-md'
@@ -1197,19 +1210,28 @@ export default function ClockTrainingGame({
           tone='accent'
         >
           <p
-            className='text-sm font-extrabold'
+            className='text-sm font-semibold text-slate-900'
             data-testid='clock-training-guidance-title'
           >
             {trainingSectionContent.guidanceTitle}
           </p>
-          <p className='mt-2 text-sm font-semibold leading-relaxed'>
+          <p className='mt-2 text-sm font-normal leading-relaxed text-slate-900'>
             {trainingSectionContent.guidance}
           </p>
-          <p className='mt-2 text-xs font-semibold opacity-80'>{trainingSectionContent.legend}</p>
+          <p className='mt-2 text-xs font-normal text-slate-700'>
+            {trainingSectionContent.legend}
+          </p>
         </KangurInfoCard>
       )}
       {gameMode === 'challenge' ? (
         <div className='inline-flex flex-wrap items-center gap-2'>
+          <KangurStatusChip
+            accent='amber'
+            className='text-xs font-bold uppercase tracking-[0.16em]'
+            data-testid='clock-challenge-pill'
+          >
+            Wyzwanie
+          </KangurStatusChip>
           <KangurStatusChip
             accent='amber'
             className='gap-2 text-xs font-bold'

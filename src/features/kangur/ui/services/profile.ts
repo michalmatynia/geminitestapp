@@ -1,11 +1,17 @@
+import type { KangurScoreRecord } from '@/features/kangur/services/ports';
+import { KANGUR_LESSON_LIBRARY } from '@/features/kangur/settings';
+import {
+  getCurrentLevel,
+  getNextLevel,
+  getProgressBadges,
+  getProgressAverageAccuracy,
+  getProgressBestAccuracy,
+} from '@/features/kangur/ui/services/progress';
 import type {
   KangurAssignmentPriority,
   KangurProgressState,
   KangurRouteAction,
 } from '@/shared/contracts/kangur';
-import type { KangurScoreRecord } from '@/features/kangur/services/ports';
-import { KANGUR_LESSON_LIBRARY } from '@/features/kangur/settings';
-import { BADGES, getCurrentLevel, getNextLevel } from '@/features/kangur/ui/services/progress';
 
 const OPERATION_LABELS: Record<string, { label: string; emoji: string }> = {
   addition: { label: 'Dodawanie', emoji: '➕' },
@@ -304,6 +310,20 @@ const computeRecentSessions = (scores: KangurScoreRecord[]): KangurRecentSession
     };
   });
 
+const getLatestProgressActivityDate = (progress: KangurProgressState): string | null => {
+  const timestamps = Object.values(progress.activityStats ?? {})
+    .map((entry) => entry.lastPlayedAt)
+    .filter((value): value is string => Boolean(value))
+    .map((value) => Date.parse(value))
+    .filter((value) => Number.isFinite(value));
+
+  if (timestamps.length === 0) {
+    return null;
+  }
+
+  return new Date(Math.max(...timestamps)).toISOString();
+};
+
 const resolveLessonMasteryEntries = (progress: KangurProgressState): KangurLessonMasteryInsight[] =>
   Object.entries(progress.lessonMastery)
     .map(([componentId, mastery]) => {
@@ -499,18 +519,26 @@ export const buildKangurLearnerProfileSnapshot = (
   const accuracyValues = normalizedScores.map(
     (score) => (score.correct_answers / Math.max(1, score.total_questions || 1)) * 100
   );
-  const averageAccuracy =
+  const scoreHistoryAverageAccuracy =
     accuracyValues.length === 0
       ? 0
       : toPercent(accuracyValues.reduce((sum, value) => sum + value, 0) / accuracyValues.length);
-  const bestAccuracy = accuracyValues.length === 0 ? 0 : toPercent(Math.max(...accuracyValues));
+  const scoreHistoryBestAccuracy =
+    accuracyValues.length === 0 ? 0 : toPercent(Math.max(...accuracyValues));
+  const progressAverageAccuracy = getProgressAverageAccuracy(input.progress);
+  const progressBestAccuracy = getProgressBestAccuracy(input.progress);
+  const averageAccuracy =
+    (input.progress.totalQuestionsAnswered ?? 0) > 0
+      ? progressAverageAccuracy
+      : scoreHistoryAverageAccuracy;
+  const bestAccuracy = Math.max(scoreHistoryBestAccuracy, progressBestAccuracy);
+  const latestProgressActivityDate = getLatestProgressActivityDate(input.progress);
   const todayDateKey = toLocalDateKey(now);
   const todayGames = weeklyActivity.find((entry) => entry.dateKey === todayDateKey)?.games ?? 0;
   const dailyGoalGames = Math.max(1, Math.round(input.dailyGoalGames));
   const dailyGoalPercent = toPercent((todayGames / dailyGoalGames) * 100);
-  const unlockedBadgeIds = BADGES.filter((badge) => input.progress.badges.includes(badge.id)).map(
-    (badge) => badge.id
-  );
+  const badgeStatuses = getProgressBadges(input.progress);
+  const unlockedBadgeIds = badgeStatuses.filter((badge) => badge.isUnlocked).map((badge) => badge.id);
   const recommendations = buildRecommendations({
     averageAccuracy,
     currentStreakDays: streaks.currentStreakDays,
@@ -525,7 +553,7 @@ export const buildKangurLearnerProfileSnapshot = (
     gamesPlayed: input.progress.gamesPlayed,
     lessonsCompleted: input.progress.lessonsCompleted,
     perfectGames: input.progress.perfectGames,
-    totalBadges: BADGES.length,
+    totalBadges: badgeStatuses.length,
     unlockedBadges: unlockedBadgeIds.length,
     unlockedBadgeIds,
     level,
@@ -535,7 +563,7 @@ export const buildKangurLearnerProfileSnapshot = (
     bestAccuracy,
     currentStreakDays: streaks.currentStreakDays,
     longestStreakDays: streaks.longestStreakDays,
-    lastPlayedAt: streaks.lastPlayedAt,
+    lastPlayedAt: streaks.lastPlayedAt ?? latestProgressActivityDate,
     dailyGoalGames,
     todayGames,
     dailyGoalPercent,

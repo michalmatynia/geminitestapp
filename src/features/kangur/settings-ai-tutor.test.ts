@@ -29,6 +29,7 @@ describe('kangur ai tutor settings', () => {
       allowCrossPagePersistence: true,
       rememberTutorContext: true,
       allowLessons: true,
+      allowGames: true,
       testAccessMode: 'guided',
       showSources: true,
       allowSelectedTextSupport: true,
@@ -215,6 +216,7 @@ describe('kangur ai tutor settings', () => {
         allowCrossPagePersistence: true,
         rememberTutorContext: true,
         allowLessons: true,
+        allowGames: true,
         testAccessMode: 'review_after_answer',
         showSources: true,
         allowSelectedTextSupport: true,
@@ -247,6 +249,7 @@ describe('kangur ai tutor settings', () => {
         allowCrossPagePersistence: true,
         rememberTutorContext: true,
         allowLessons: true,
+        allowGames: true,
         testAccessMode: 'guided',
         showSources: true,
         allowSelectedTextSupport: true,
@@ -264,5 +267,38 @@ describe('kangur ai tutor settings', () => {
     );
 
     expect(availability).toEqual({ allowed: true });
+  });
+
+  it('blocks the tutor on the game surface when game tutoring is disabled separately from lessons', () => {
+    const availability = resolveKangurAiTutorAvailability(
+      {
+        enabled: true,
+        agentPersonaId: null,
+        motionPresetId: null,
+        guestIntroMode: 'first_visit',
+        uiMode: 'anchored',
+        allowCrossPagePersistence: true,
+        rememberTutorContext: true,
+        allowLessons: true,
+        allowGames: false,
+        testAccessMode: 'guided',
+        showSources: true,
+        allowSelectedTextSupport: true,
+        hintDepth: 'guided',
+        proactiveNudges: 'gentle',
+        dailyMessageLimit: 12,
+      },
+      {
+        surface: 'game',
+        contentId: 'calendar-quiz',
+        title: 'Ćwiczenie kalendarza',
+        currentQuestion: 'Który dzień jest po wtorku?',
+      }
+    );
+
+    expect(availability).toEqual({
+      allowed: false,
+      reason: 'games_disabled',
+    });
   });
 });

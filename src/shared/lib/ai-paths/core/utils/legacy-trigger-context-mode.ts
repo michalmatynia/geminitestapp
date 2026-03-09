@@ -126,7 +126,7 @@ export const findRemovedLegacyTriggerContextModesInDocument = (
   return [];
 };
 
-export const remediateRemovedLegacyTriggerContextModesInDocument = (
+export const normalizeRemovedTriggerContextModesInDocument = (
   document: unknown
 ): LegacyTriggerContextModeRemediationResult<unknown> => {
   if (!isObjectRecord(document)) {
@@ -203,7 +203,7 @@ export const findRemovedLegacyTriggerContextModesInPathConfig = (
   return findRemovedLegacyTriggerContextModes((pathConfig as { nodes?: unknown }).nodes);
 };
 
-export const remediateRemovedLegacyTriggerContextModesInPathConfig = <
+export const normalizeRemovedTriggerContextModesInPathConfig = <
   TPathConfig extends { nodes?: unknown } | null | undefined,
 >(
   pathConfig: TPathConfig

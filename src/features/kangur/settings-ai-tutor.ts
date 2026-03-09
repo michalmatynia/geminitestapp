@@ -1,8 +1,8 @@
-import { parseJsonSetting } from '@/shared/utils/settings-json';
 import type {
   KangurAiTutorConversationContext,
   KangurAiTutorMotionPresetKind,
 } from '@/shared/contracts/kangur-ai-tutor';
+import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 export const KANGUR_AI_TUTOR_SETTINGS_KEY = 'kangur_ai_tutor_settings';
 export const KANGUR_AI_TUTOR_APP_SETTINGS_KEY = 'kangur_ai_tutor_app_settings_v1';
@@ -48,6 +48,7 @@ export type KangurAiTutorLearnerGuardrails = {
   allowCrossPagePersistence: boolean;
   rememberTutorContext: boolean;
   allowLessons: boolean;
+  allowGames: boolean;
   testAccessMode: KangurAiTutorTestAccessMode;
   showSources: boolean;
   allowSelectedTextSupport: boolean;
@@ -72,16 +73,17 @@ export const DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS: Readonly<KangurAiTutorAppSett
 
 export const DEFAULT_KANGUR_AI_TUTOR_LEARNER_GUARDRAILS: Readonly<KangurAiTutorLearnerGuardrails> =
   Object.freeze({
-  enabled: false,
-  uiMode: 'anchored',
-  allowCrossPagePersistence: true,
-  rememberTutorContext: true,
-  allowLessons: true,
-  testAccessMode: 'guided',
-  showSources: true,
-  allowSelectedTextSupport: true,
-  hintDepth: 'guided',
-  proactiveNudges: 'gentle',
+    enabled: false,
+    uiMode: 'anchored',
+    allowCrossPagePersistence: true,
+    rememberTutorContext: true,
+    allowLessons: true,
+    allowGames: true,
+    testAccessMode: 'guided',
+    showSources: true,
+    allowSelectedTextSupport: true,
+    hintDepth: 'guided',
+    proactiveNudges: 'gentle',
   });
 
 export const DEFAULT_KANGUR_AI_TUTOR_LEARNER_SETTINGS: Readonly<KangurAiTutorLearnerSettings> =
@@ -95,6 +97,7 @@ export type KangurAiTutorAvailabilityReason =
   | 'email_unverified'
   | 'missing_context'
   | 'lessons_disabled'
+  | 'games_disabled'
   | 'tests_disabled'
   | 'review_after_answer_only';
 
@@ -309,6 +312,10 @@ export function normalizeKangurAiTutorLearnerSettings(
       typeof input['allowLessons'] === 'boolean'
         ? input['allowLessons']
         : DEFAULT_KANGUR_AI_TUTOR_LEARNER_GUARDRAILS.allowLessons,
+    allowGames:
+      typeof input['allowGames'] === 'boolean'
+        ? input['allowGames']
+        : DEFAULT_KANGUR_AI_TUTOR_LEARNER_GUARDRAILS.allowGames,
     testAccessMode: normalizeTestAccessMode(input['testAccessMode']),
     showSources:
       typeof input['showSources'] === 'boolean'
@@ -383,9 +390,9 @@ export function resolveKangurAiTutorAvailability(
   }
 
   if (context.surface === 'game') {
-    return settings.allowLessons
+    return settings.allowGames
       ? { allowed: true }
-      : { allowed: false, reason: 'lessons_disabled' };
+      : { allowed: false, reason: 'games_disabled' };
   }
 
   if (settings.testAccessMode === 'disabled') {

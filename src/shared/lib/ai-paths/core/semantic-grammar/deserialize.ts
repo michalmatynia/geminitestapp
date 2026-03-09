@@ -15,7 +15,7 @@ import {
   formatRemovedLegacyAiPathNodesMessage,
 } from '@/shared/lib/ai-paths/core/utils/legacy-node-removal';
 import {
-  remediateRemovedLegacyTriggerContextModesInDocument,
+  normalizeRemovedTriggerContextModesInDocument,
 } from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
 
 import { normalizeAiPathsValidationConfig } from '../validation-engine';
@@ -30,7 +30,7 @@ export const parseSemanticDocument = (input: unknown): ParseSemanticDocumentResu
       }),
     };
   }
-  const remediatedInput = remediateRemovedLegacyTriggerContextModesInDocument(input).value;
+  const remediatedInput = normalizeRemovedTriggerContextModesInDocument(input).value;
   const parsed = semanticDocumentSchema.safeParse(remediatedInput);
   if (parsed.success) {
     return { ok: true, value: parsed.data };
@@ -53,7 +53,7 @@ export const parseSemanticCanvasDocument = (input: unknown): ParseSemanticDocume
       }),
     };
   }
-  const remediatedInput = remediateRemovedLegacyTriggerContextModesInDocument(input).value;
+  const remediatedInput = normalizeRemovedTriggerContextModesInDocument(input).value;
   const parsed = canvasSemanticDocumentSchema.safeParse(remediatedInput);
   if (parsed.success) {
     return { ok: true, value: parsed.data };

@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   acquireRuntimeLease,
@@ -204,10 +204,12 @@ describe('acquireRuntimeLease', () => {
     const healthyBaseUrls = new Set<string>();
     let spawnCount = 0;
     const spawnedEnvs: Array<Record<string, string>> = [];
+    const spawnedArgs: Array<string[]> = [];
 
     const spawnImpl = (_command: string, _args: string[], options: { env: Record<string, string> }) => {
       spawnCount += 1;
       spawnedEnvs.push(options.env);
+      spawnedArgs.push(_args);
       const child = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], {
         detached: true,
         stdio: 'ignore',
@@ -265,6 +267,7 @@ describe('acquireRuntimeLease', () => {
     expect(left.runtimeTmpDir).toBe(resolveBrokerManagedRuntimeTmpDir({ leaseKey: left.leaseKey }));
     expect(right.runtimeTmpDir).toBe(resolveBrokerManagedRuntimeTmpDir({ leaseKey: right.leaseKey }));
     expect(spawnedEnvs).toHaveLength(1);
+    expect(spawnedArgs).toEqual([['run', 'dev:playwright-broker']]);
     expect(spawnedEnvs[0]?.NEXT_DEV_BUNDLER).toBeUndefined();
     expect(spawnedEnvs[0]?.TMPDIR).toBe(path.join(rootDir, left.runtimeTmpDir));
     expect(spawnedEnvs[0]?.TMP).toBe(path.join(rootDir, left.runtimeTmpDir));
@@ -282,9 +285,11 @@ describe('acquireRuntimeLease', () => {
 
     const healthyBaseUrls = new Set<string>();
     const spawnedEnvs: Array<Record<string, string>> = [];
+    const spawnedArgs: Array<string[]> = [];
 
     const spawnImpl = (_command: string, _args: string[], options: { env: Record<string, string> }) => {
       spawnedEnvs.push(options.env);
+      spawnedArgs.push(_args);
       const child = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], {
         detached: true,
         stdio: 'ignore',
@@ -325,7 +330,96 @@ describe('acquireRuntimeLease', () => {
     expect(lease.leaseKey).toMatch(/^web-dev-turbopack-agent-bundler-[a-f0-9]{8}$/);
     expect(lease.distDir).toBe('.next-dev-web-dev-turbopack-agent-bundler');
     expect(spawnedEnvs).toHaveLength(1);
+    expect(spawnedArgs).toEqual([['run', 'dev:playwright-broker']]);
     expect(spawnedEnvs[0]?.NEXT_DEV_BUNDLER).toBe('turbopack');
+  });
+
+  it('reuses a recovering runtime when stale-lease termination is denied', async () => {
+    const rootDir = await fs.mkdtemp(path.join(os.tmpdir(), 'runtime-broker-eperm-reuse-'));
+    cleanupTargets.push(rootDir);
+
+    const appId = 'web';
+    const mode = 'dev';
+    const agentId = 'agent-eperm';
+    const leaseKey = buildRuntimeLeaseKey({
+      rootDir,
+      appId,
+      mode,
+      agentId,
+    });
+    const brokerDir = path.join(rootDir, 'tmp', 'playwright-runtime-broker');
+    const leaseFilePath = path.join(brokerDir, 'leases', `${leaseKey}.json`);
+    const logFilePath = path.join(brokerDir, 'logs', `${leaseKey}.log`);
+    const existingLease = {
+      source: 'broker',
+      managed: true,
+      reused: false,
+      rootDir,
+      appId,
+      mode,
+      agentId,
+      host: '127.0.0.1',
+      port: 43175,
+      baseUrl: 'http://127.0.0.1:43175',
+      pid: 43210,
+      distDir: resolveBrokerManagedDistDir({ appId, mode, agentId }),
+      runtimeTmpDir: resolveBrokerManagedRuntimeTmpDir({ leaseKey }),
+      managedRuntimeTmpDir: true,
+      leaseKey,
+      startedAt: new Date().toISOString(),
+    };
+
+    await fs.mkdir(path.dirname(leaseFilePath), { recursive: true });
+    await fs.mkdir(path.dirname(logFilePath), { recursive: true });
+    await fs.writeFile(leaseFilePath, `${JSON.stringify(existingLease, null, 2)}\n`, 'utf8');
+
+    let healthChecks = 0;
+    const fetchImpl = async () => {
+      healthChecks += 1;
+      if (healthChecks >= 2) {
+        return { status: 200 };
+      }
+
+      throw new Error('runtime not ready');
+    };
+
+    const spawnImpl = vi.fn(() => {
+      throw new Error('expected recovering runtime to be reused');
+    });
+
+    const originalKill = process.kill;
+    const killSpy = vi.spyOn(process, 'kill').mockImplementation((pid, signal) => {
+      if (pid === existingLease.pid && signal === 0) {
+        return true;
+      }
+      if (pid === existingLease.pid && signal === 'SIGTERM') {
+        const error = new Error('operation not permitted');
+        error.code = 'EPERM';
+        throw error;
+      }
+      return originalKill(pid, signal);
+    });
+
+    try {
+      const lease = await acquireRuntimeLease({
+        rootDir,
+        appId,
+        mode,
+        agentId,
+        env: {},
+        fetchImpl,
+        spawnImpl,
+        startupTimeoutMs: 25,
+        reuseTimeoutMs: 0,
+      });
+
+      expect(lease.baseUrl).toBe(existingLease.baseUrl);
+      expect(lease.reused).toBe(true);
+      expect(spawnImpl).not.toHaveBeenCalled();
+      expect(healthChecks).toBeGreaterThanOrEqual(2);
+    } finally {
+      killSpy.mockRestore();
+    }
   });
 });
 

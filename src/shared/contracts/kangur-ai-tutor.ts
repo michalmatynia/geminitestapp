@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
+import { agentTeachingChatSourceSchema } from './agent-teaching';
 import { agentPersonaMoodIdSchema } from './agents';
 import { contextRegistryConsumerEnvelopeSchema } from './ai-context-registry';
-import { agentTeachingChatSourceSchema } from './agent-teaching';
 import { kangurRouteActionQuerySchema, kangurRoutePageSchema } from './kangur';
 import { kangurAiTutorLearnerMoodSchema } from './kangur-ai-tutor-mood';
 
@@ -46,6 +46,22 @@ export type KangurAiTutorInteractionIntent = z.infer<
 export const kangurAiTutorSurfaceSchema = z.enum(['lesson', 'test', 'game']);
 export type KangurAiTutorSurface = z.infer<typeof kangurAiTutorSurfaceSchema>;
 
+export const kangurAiTutorCoachingModeSchema = z.enum([
+  'hint_ladder',
+  'misconception_check',
+  'review_reflection',
+  'next_best_action',
+]);
+export type KangurAiTutorCoachingMode = z.infer<typeof kangurAiTutorCoachingModeSchema>;
+
+export const kangurAiTutorRecoverySignalSchema = z.enum([
+  'answer_revealed',
+  'focus_advanced',
+]);
+export type KangurAiTutorRecoverySignal = z.infer<
+  typeof kangurAiTutorRecoverySignalSchema
+>;
+
 export const kangurAiTutorMotionPresetKindSchema = z.enum([
   'default',
   'desktop',
@@ -74,18 +90,13 @@ export const kangurAiTutorConversationContextSchema = z.object({
   focusLabel: z.string().trim().max(240).optional(),
   assignmentId: z.string().trim().max(120).optional(),
   interactionIntent: kangurAiTutorInteractionIntentSchema.optional(),
+  repeatedQuestionCount: z.number().int().nonnegative().max(20).optional(),
+  recentHintRecoverySignal: kangurAiTutorRecoverySignalSchema.optional(),
+  previousCoachingMode: kangurAiTutorCoachingModeSchema.optional(),
 });
 export type KangurAiTutorConversationContext = z.infer<
   typeof kangurAiTutorConversationContextSchema
 >;
-
-export const kangurAiTutorCoachingModeSchema = z.enum([
-  'hint_ladder',
-  'misconception_check',
-  'review_reflection',
-  'next_best_action',
-]);
-export type KangurAiTutorCoachingMode = z.infer<typeof kangurAiTutorCoachingModeSchema>;
 
 export const kangurAiTutorLearnerMemorySchema = z.object({
   lastSurface: kangurAiTutorSurfaceSchema.optional(),

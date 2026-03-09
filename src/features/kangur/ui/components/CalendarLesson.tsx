@@ -10,8 +10,7 @@ import { KangurDisplayEmoji } from '@/features/kangur/ui/design/primitives';
 import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 import {
   addXp,
-  buildLessonMasteryUpdate,
-  XP_REWARDS,
+  createLessonCompletionReward,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 
@@ -339,10 +338,8 @@ export default function CalendarLesson(): React.JSX.Element {
   const handleStartTraining = useCallback((sectionId: CalendarInteractiveSectionId) => {
     if (!lessonCompletionAwardedRef.current) {
       const progress = loadProgress();
-      addXp(XP_REWARDS.lesson_completed, {
-        lessonsCompleted: progress.lessonsCompleted + 1,
-        lessonMastery: buildLessonMasteryUpdate(progress, 'calendar', 60),
-      });
+      const reward = createLessonCompletionReward(progress, 'calendar', 60);
+      addXp(reward.xp, reward.progressUpdates);
       lessonCompletionAwardedRef.current = true;
     }
     setView({ kind: 'training', sectionId });

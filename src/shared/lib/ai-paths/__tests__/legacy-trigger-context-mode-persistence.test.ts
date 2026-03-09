@@ -136,6 +136,14 @@ describe('legacy-trigger-context-mode-persistence', () => {
           value: JSON.stringify(repairedConfig),
         }))
     );
+    const changedLegacyConfig: PathConfig = {
+      ...legacyConfig,
+      updatedAt: '2026-03-09T17:47:00.000Z',
+    };
+    const changedRepairedConfig: PathConfig = {
+      ...repairedConfig,
+      updatedAt: '2026-03-09T17:47:00.000Z',
+    };
 
     persistLegacyTriggerContextModeRepair({
       pathId: legacyConfig.id,
@@ -158,13 +166,54 @@ describe('legacy-trigger-context-mode-persistence', () => {
 
     persistLegacyTriggerContextModeRepair({
       pathId: legacyConfig.id,
-      rawPayload: JSON.stringify(legacyConfig),
-      repairedConfig,
+      rawPayload: JSON.stringify(changedLegacyConfig),
+      repairedConfig: changedRepairedConfig,
       source: 'test',
       action: 'retryAfterInflight',
     });
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(mockedUpdateAiPathsSetting).toHaveBeenCalledTimes(2);
+  });
+
+  it('skips repeat write-through when the same stale payload reappears after a successful repair', async () => {
+    const legacyConfig = buildLegacyTriggerConfig('path_repeat_shadow');
+    const repairedConfig: PathConfig = {
+      ...legacyConfig,
+      nodes: legacyConfig.nodes.map((node, index) =>
+        index === 0
+          ? {
+              ...node,
+              config: {
+                ...node.config,
+                trigger: {
+                  ...node.config?.trigger,
+                  contextMode: 'trigger_only',
+                },
+              },
+            }
+          : node
+      ),
+    };
+
+    persistLegacyTriggerContextModeRepair({
+      pathId: legacyConfig.id,
+      rawPayload: JSON.stringify(legacyConfig),
+      repairedConfig,
+      source: 'test',
+      action: 'initialSuccessfulRepair',
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    persistLegacyTriggerContextModeRepair({
+      pathId: legacyConfig.id,
+      rawPayload: JSON.stringify(legacyConfig),
+      repairedConfig,
+      source: 'test',
+      action: 'stalePayloadReplay',
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(mockedUpdateAiPathsSetting).toHaveBeenCalledTimes(1);
   });
 });

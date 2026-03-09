@@ -21,7 +21,7 @@ import {
 } from '@/features/kangur/ui/design/tokens';
 import {
   addXp,
-  buildLessonMasteryUpdate,
+  createTrainingReward,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { cn } from '@/shared/utils';
@@ -161,15 +161,17 @@ export default function CalendarTrainingGame({
   };
 
   const handleDone = (finalScore: number) => {
-    const isPerfect = finalScore === TOTAL;
-    const isGood = finalScore >= 4;
-    const xp = isPerfect ? 60 : isGood ? 30 : 10;
     const prog = loadProgress();
-    addXp(xp, {
-      calendarPerfect: isPerfect ? prog.calendarPerfect + 1 : prog.calendarPerfect,
-      lessonMastery: buildLessonMasteryUpdate(prog, 'calendar', (finalScore / TOTAL) * 100),
+    const reward = createTrainingReward(prog, {
+      activityKey: 'training:calendar',
+      lessonKey: 'calendar',
+      correctAnswers: finalScore,
+      totalQuestions: TOTAL,
+      strongThresholdPercent: 65,
+      perfectCounterKey: 'calendarPerfect',
     });
-    setXpEarned(xp);
+    addXp(reward.xp, reward.progressUpdates);
+    setXpEarned(reward.xp);
     setDone(true);
   };
 

@@ -26,7 +26,7 @@ const question: KangurTestQuestion = {
   explanation: '2 + 2 = 4.',
   illustration: { type: 'none' },
   presentation: { layout: 'classic', choiceStyle: 'list' },
-  editorial: { source: 'manual', reviewStatus: 'ready', auditFlags: [] },
+  editorial: { source: 'manual', reviewStatus: 'ready', workflowStatus: 'draft', auditFlags: [] },
 };
 
 describe('KangurTestQuestionRenderer', () => {

@@ -8,7 +8,19 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { KangurQuestionsManagerRuntimeProvider } from '@/features/kangur/admin/context/KangurQuestionsManagerRuntimeContext';
 vi.mock('@/features/kangur/ui/components/KangurTestQuestionRenderer', () => ({
-  KangurTestQuestionRenderer: () => <div data-testid='question-preview' />,
+  KangurTestQuestionRenderer: ({
+    selectedLabel,
+    showAnswer,
+  }: {
+    selectedLabel: string | null;
+    showAnswer: boolean;
+  }) => (
+    <div
+      data-testid='question-preview'
+      data-selected-label={selectedLabel ?? ''}
+      data-show-answer={showAnswer ? 'true' : 'false'}
+    />
+  ),
 }));
 
 import { KangurTestQuestionEditor } from '@/features/kangur/admin/KangurTestQuestionEditor';
@@ -37,7 +49,7 @@ function buildFormData(overrides: Partial<QuestionFormData> = {}): QuestionFormD
     explanationDocument: null,
     hintDocument: null,
     presentation: { layout: 'classic', choiceStyle: 'list' },
-    editorial: { source: 'manual', reviewStatus: 'ready', auditFlags: [] },
+    editorial: { source: 'manual', reviewStatus: 'ready', workflowStatus: 'draft', auditFlags: [] },
     ...overrides,
   };
 }
@@ -73,6 +85,7 @@ const runtimeSuite: KangurTestSuite = {
   gradeLevel: 'III-IV',
   category: 'math',
   enabled: true,
+  publicationStatus: 'draft',
   sortOrder: 1000,
 };
 
@@ -121,6 +134,7 @@ describe('KangurTestQuestionEditor', () => {
           editorial: {
             source: 'legacy-import',
             reviewStatus: 'needs-review',
+            workflowStatus: 'draft',
             auditFlags: ['legacy_choice_descriptions'],
           },
         })}
@@ -129,6 +143,9 @@ describe('KangurTestQuestionEditor', () => {
 
     expect(screen.getAllByText('Needs review').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Choice grid').length).toBeGreaterThan(0);
+    expect(screen.getByText('Publishing state')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ready to publish' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Published' })).toBeInTheDocument();
     expect(screen.getByText('legacy choice descriptions')).toBeInTheDocument();
     expect(screen.getByText('Question review')).toBeInTheDocument();
     expect(screen.getByText('Review before publish')).toBeInTheDocument();
@@ -170,5 +187,112 @@ describe('KangurTestQuestionEditor', () => {
     );
 
     expect(screen.getByText('Runtime suite')).toBeInTheDocument();
+  });
+
+  it('shows published workflow state when the question is already published', () => {
+    render(
+      <StatefulQuestionEditorHarness
+        initialValue={buildFormData({
+          editorial: {
+            source: 'manual',
+            reviewStatus: 'ready',
+            workflowStatus: 'published',
+            auditFlags: [],
+            publishedAt: '2026-03-09T10:00:00.000Z',
+          },
+        })}
+      />
+    );
+
+    expect(screen.getAllByText('Published').length).toBeGreaterThan(0);
+    expect(screen.getByText(/Last published:/i)).toBeInTheDocument();
+  });
+
+  it('switches the preview into correct-answer review mode', () => {
+    render(<StatefulQuestionEditorHarness initialValue={buildFormData()} />);
+
+    fireEvent.click(screen.getByText('Correct answer', { selector: 'button' }));
+
+    const preview = screen.getByTestId('question-preview');
+    expect(preview).toHaveAttribute('data-show-answer', 'true');
+    expect(preview).toHaveAttribute('data-selected-label', 'A');
+    expect(screen.getByText('Correct answer review')).toBeInTheDocument();
+  });
+
+  it('switches the preview into wrong-answer review mode', () => {
+    render(<StatefulQuestionEditorHarness initialValue={buildFormData()} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Wrong answer' }));
+
+    const preview = screen.getByTestId('question-preview');
+    expect(preview).toHaveAttribute('data-show-answer', 'true');
+    expect(preview).toHaveAttribute('data-selected-label', 'B');
+    expect(screen.getByText('Wrong answer review')).toBeInTheDocument();
+  });
+
+  it('supports compact preview framing', () => {
+    render(<StatefulQuestionEditorHarness initialValue={buildFormData()} />);
+
+    const frame = screen.getByTestId('question-preview-frame');
+    expect(frame).toHaveClass('max-w-xl');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Compact' }));
+
+    expect(frame).toHaveClass('max-w-[360px]');
+    expect(frame).not.toHaveClass('max-w-xl');
+  });
+
+  it('offers a quick repair to add an explanation starter', () => {
+    render(<StatefulQuestionEditorHarness initialValue={buildFormData({ explanation: '' })} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add explanation starter' }));
+
+    expect(
+      screen.getByDisplayValue('The correct answer is A: First answer. Add the worked reasoning here.')
+    ).toBeInTheDocument();
+  });
+
+  it('offers a quick repair to switch split layouts back to classic without an illustration', () => {
+    render(
+      <StatefulQuestionEditorHarness
+        initialValue={buildFormData({
+          illustration: { type: 'none' },
+          presentation: { layout: 'split-illustration-left', choiceStyle: 'list' },
+        })}
+      />
+    );
+
+    expect(
+      screen.getByText('Split layouts need an illustration before they can be saved.')
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Switch to classic layout' }));
+
+    expect(
+      screen.queryByText('Split layouts need an illustration before they can be saved.')
+    ).not.toBeInTheDocument();
+  });
+
+  it('offers a quick repair to add starter notes for SVG-backed choices', () => {
+    render(
+      <StatefulQuestionEditorHarness
+        initialValue={buildFormData({
+          choices: [
+            {
+              label: 'A',
+              text: 'First answer',
+              description: '',
+              svgContent:
+                '<svg viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg"><circle cx="5" cy="5" r="4" /></svg>',
+            },
+            { label: 'B', text: 'Second answer', svgContent: '' },
+          ],
+        })}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add starter notes for SVG choices' }));
+
+    expect(screen.getByDisplayValue('Describe what is shown in option A.')).toBeInTheDocument();
   });
 });

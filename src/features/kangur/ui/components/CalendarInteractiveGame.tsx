@@ -430,14 +430,6 @@ export default function CalendarInteractiveGame({
           <h2 className='text-2xl font-extrabold text-slate-800'>
             Wynik: {score}/{TOTAL}
           </h2>
-          {section !== 'mixed' ? (
-            <p
-              data-testid='calendar-interactive-summary-section'
-              className='text-xs font-semibold text-slate-500'
-            >
-              Sekcja: {trainingSectionLabel}
-            </p>
-          ) : null}
           <KangurProgressBar
             accent='emerald'
             animated
@@ -476,15 +468,6 @@ export default function CalendarInteractiveGame({
   return (
     <div className='flex flex-col items-center gap-3 w-full max-w-sm'>
       {section !== 'mixed' ? (
-        <KangurStatusChip
-          accent='indigo'
-          className='text-xs font-semibold'
-          data-testid='calendar-interactive-section-badge'
-        >
-          Sekcja: {trainingSectionLabel}
-        </KangurStatusChip>
-      ) : null}
-      {section !== 'mixed' ? (
         <KangurInfoCard
           accent={trainingSectionContent.accent}
           className='w-full rounded-[24px]'
@@ -493,12 +476,12 @@ export default function CalendarInteractiveGame({
           tone='accent'
         >
           <p
-            className='text-sm font-extrabold'
+            className='text-sm font-semibold text-slate-900'
             data-testid='calendar-interactive-guidance-title'
           >
             {trainingSectionContent.guidanceTitle}
           </p>
-          <p className='mt-2 text-sm font-semibold leading-relaxed'>
+          <p className='mt-2 text-sm font-normal leading-relaxed text-slate-900'>
             {trainingSectionContent.guidance}
           </p>
         </KangurInfoCard>

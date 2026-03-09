@@ -124,7 +124,19 @@ describe('buildKangurLearnerProfileSnapshot', () => {
     expect(snapshot.longestStreakDays).toBe(3);
     expect(snapshot.todayGames).toBe(1);
     expect(snapshot.dailyGoalPercent).toBe(50);
-    expect(snapshot.unlockedBadges).toBe(4);
+    expect(snapshot.unlockedBadges).toBe(8);
+    expect(snapshot.unlockedBadgeIds).toEqual(
+      expect.arrayContaining([
+        'first_game',
+        'perfect_10',
+        'lesson_hero',
+        'clock_master',
+        'calendar_keeper',
+        'geometry_artist',
+        'ten_games',
+        'xp_500',
+      ])
+    );
     expect(snapshot.operationPerformance.map((entry) => entry.operation)).toContain('addition');
     expect(
       snapshot.operationPerformance.find((entry) => entry.operation === 'addition')
@@ -172,5 +184,54 @@ describe('buildKangurLearnerProfileSnapshot', () => {
     expect(snapshot.recommendations.every((entry) => typeof entry.action.page === 'string')).toBe(
       true
     );
+  });
+
+  it('falls back to progress activity stats for accuracy when score history is empty', () => {
+    const snapshot = buildKangurLearnerProfileSnapshot({
+      progress: {
+        ...progress,
+        totalCorrectAnswers: 44,
+        totalQuestionsAnswered: 50,
+        activityStats: {
+          'training:clock:hours': {
+            sessionsPlayed: 4,
+            perfectSessions: 1,
+            totalCorrectAnswers: 18,
+            totalQuestionsAnswered: 20,
+            bestScorePercent: 100,
+            lastScorePercent: 80,
+            currentStreak: 2,
+            bestStreak: 2,
+            lastPlayedAt: '2026-03-08T10:00:00.000Z',
+          },
+        },
+      },
+      scores: [],
+      dailyGoalGames: 3,
+      now: new Date('2026-03-09T15:00:00.000Z'),
+    });
+
+    expect(snapshot.averageAccuracy).toBe(88);
+    expect(snapshot.bestAccuracy).toBe(100);
+    expect(snapshot.lastPlayedAt).toBe('2026-03-08T10:00:00.000Z');
+  });
+
+  it('derives unlocked badges from current progress even when badge ids were not persisted yet', () => {
+    const snapshot = buildKangurLearnerProfileSnapshot({
+      progress: {
+        ...progress,
+        badges: ['first_game'],
+        totalXp: 620,
+        gamesPlayed: 10,
+      },
+      scores: [],
+      dailyGoalGames: 3,
+      now: new Date('2026-03-09T15:00:00.000Z'),
+    });
+
+    expect(snapshot.unlockedBadgeIds).toEqual(
+      expect.arrayContaining(['first_game', 'ten_games', 'xp_500'])
+    );
+    expect(snapshot.unlockedBadges).toBeGreaterThanOrEqual(3);
   });
 });

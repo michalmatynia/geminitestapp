@@ -15,11 +15,12 @@ vi.mock('@/features/kangur/ui/components/GeometryDrawingGame', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/services/progress', () => ({
-  XP_REWARDS: {
-    lesson_completed: 40,
-  },
   addXp: vi.fn(),
-  buildLessonMasteryUpdate: vi.fn(() => ({})),
+  createLessonCompletionReward: vi.fn(() => ({
+    xp: 28,
+    scorePercent: 100,
+    progressUpdates: {},
+  })),
   loadProgress: vi.fn(() => ({
     lessonsCompleted: 0,
     lessonMastery: {},

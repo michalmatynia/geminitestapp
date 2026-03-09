@@ -17,7 +17,10 @@ import {
   setKangurLearnerAiTutorState,
 } from '@/features/kangur/server';
 import { buildKangurAiTutorAdaptiveGuidance } from '@/features/kangur/server/ai-tutor-adaptive';
-import { consumeKangurAiTutorDailyUsage } from '@/features/kangur/server/ai-tutor-usage';
+import {
+  consumeKangurAiTutorDailyUsage,
+  ensureKangurAiTutorDailyUsageAvailable,
+} from '@/features/kangur/server/ai-tutor-usage';
 import { resolveKangurAiTutorRuntimeDocuments } from '@/features/kangur/server/context-registry';
 import {
   KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
@@ -30,6 +33,7 @@ import {
   type KangurAiTutorHintDepth,
   type KangurAiTutorProactiveNudges,
 } from '@/features/kangur/settings-ai-tutor';
+import type { AgentTeachingChatSource } from '@/shared/contracts/agent-teaching';
 import {
   AGENT_PERSONA_SETTINGS_KEY,
   type AgentPersona,
@@ -108,6 +112,7 @@ const AVAILABILITY_ERROR_MESSAGES: Record<KangurAiTutorAvailabilityReason, strin
   email_unverified: 'Verify your parent email to unlock AI Tutor.',
   missing_context: 'AI tutor context is required for Kangur tutoring sessions.',
   lessons_disabled: 'AI tutor is disabled for lessons for this learner.',
+  games_disabled: 'AI tutor is disabled for games for this learner.',
   tests_disabled: 'AI tutor is disabled for tests for this learner.',
   review_after_answer_only:
     'AI tutor is available in tests only after the answer has been revealed.',
@@ -327,6 +332,23 @@ const buildContextInstructions = (input: {
   if (context.selectedText) {
     lines.push(`Learner selected this text: """${context.selectedText}"""`);
   }
+  if ((context.repeatedQuestionCount ?? 0) > 0) {
+    lines.push(
+      `Repeat signal: the learner has asked essentially the same question ${context.repeatedQuestionCount + 1} times in this session. Do not repeat the same hint unchanged; change strategy and diagnose the sticking point.`
+    );
+  }
+  if (context.previousCoachingMode) {
+    lines.push(`Previous coaching mode in this tutor thread: ${context.previousCoachingMode}.`);
+  }
+  if (context.recentHintRecoverySignal === 'answer_revealed') {
+    lines.push(
+      'Recent hint recovery: the learner moved from a hint into review after seeing the answer. Focus on reflection, reasoning, and one improvement for the next attempt.'
+    );
+  } else if (context.recentHintRecoverySignal === 'focus_advanced') {
+    lines.push(
+      'Recent hint recovery: the learner progressed after the previous hint. Acknowledge that progress and give one clear next step instead of repeating the same hint.'
+    );
+  }
   if (context.promptMode) {
     lines.push(PROMPT_MODE_INSTRUCTIONS[context.promptMode]);
   }
@@ -358,6 +380,85 @@ const buildContextInstructions = (input: {
   }
 
   return lines.join('\n');
+};
+
+const buildRuntimeDocumentSourceText = (
+  document: ContextRuntimeDocument | null | undefined
+): string | null => {
+  if (!document) {
+    return null;
+  }
+
+  const sectionText =
+    document.sections
+      ?.map((section) => (typeof section.text === 'string' ? section.text.trim() : ''))
+      .find(Boolean) ?? null;
+  const summary = document.summary.trim();
+  const currentQuestion = readStringFact(document, 'currentQuestion');
+  const assignmentSummary = readStringFact(document, 'assignmentSummary');
+  const masterySummary = readStringFact(document, 'masterySummary');
+  const text = [summary, sectionText, currentQuestion, assignmentSummary, masterySummary]
+    .filter((value, index, all): value is string => Boolean(value) && all.indexOf(value) === index)
+    .join('\n')
+    .trim();
+
+  if (!text) {
+    return null;
+  }
+
+  return text.length > 320 ? `${text.slice(0, 317).trimEnd()}...` : text;
+};
+
+const toKangurTutorChatSource = (
+  document: ContextRuntimeDocument,
+  score: number
+): AgentTeachingChatSource | null => {
+  const text = buildRuntimeDocumentSourceText(document);
+  if (!text) {
+    return null;
+  }
+
+  return {
+    documentId: document.id,
+    collectionId: 'kangur-runtime-context',
+    text,
+    score,
+    metadata: {
+      source: 'manual-text',
+      sourceId: document.id,
+      title: document.title,
+      description: document.summary,
+      tags: document.tags,
+    },
+  };
+};
+
+const buildKangurTutorResponseSources = (input: {
+  learnerSnapshot: ContextRuntimeDocument | null;
+  surfaceContext: ContextRuntimeDocument | null;
+  assignmentContext: ContextRuntimeDocument | null;
+}): AgentTeachingChatSource[] => {
+  const candidates = [input.surfaceContext, input.assignmentContext];
+  if (!candidates.some(Boolean) && input.learnerSnapshot) {
+    candidates.push(input.learnerSnapshot);
+  }
+
+  const seen = new Set<string>();
+
+  return candidates.reduce<AgentTeachingChatSource[]>((acc, document, index) => {
+    if (!document || seen.has(document.id)) {
+      return acc;
+    }
+
+    const source = toKangurTutorChatSource(document, Math.max(0.5, 0.98 - index * 0.06));
+    if (!source) {
+      return acc;
+    }
+
+    seen.add(document.id);
+    acc.push(source);
+    return acc;
+  }, []);
 };
 
 export async function postKangurAiTutorChatHandler(
@@ -423,7 +524,7 @@ export async function postKangurAiTutorChatHandler(
       throw badRequestError('Selected-text tutor help is disabled for this learner.');
     }
 
-    const usage = await consumeKangurAiTutorDailyUsage({
+    await ensureKangurAiTutorDailyUsageAvailable({
       learnerId,
       dailyMessageLimit: tutorSettings.dailyMessageLimit,
     });
@@ -434,6 +535,7 @@ export async function postKangurAiTutorChatHandler(
         depth: 1,
       })
       : null;
+    const resolvedRuntimeDocuments = resolveKangurAiTutorRuntimeDocuments(contextRegistryBundle, context);
 
     const personaInstructions = await resolvePersonaInstructions(tutorSettings.agentPersonaId);
     const systemParts: string[] = [SOCRATIC_CONSTRAINT];
@@ -534,6 +636,7 @@ export async function postKangurAiTutorChatHandler(
       learnerId,
       context,
       registryBundle: contextRegistryBundle,
+      memory,
     });
     const adaptiveInstructions = adaptiveGuidance.instructions;
     adaptiveCoachingMode = adaptiveGuidance.coachingFrame?.mode ?? null;
@@ -570,6 +673,12 @@ export async function postKangurAiTutorChatHandler(
           })) as BrainChatMessage[]),
       ],
     });
+    const usage = await consumeKangurAiTutorDailyUsage({
+      learnerId,
+      dailyMessageLimit: tutorSettings.dailyMessageLimit,
+    });
+    const resolvedSources = buildKangurTutorResponseSources(resolvedRuntimeDocuments);
+    const responseSources = tutorSettings.showSources ? resolvedSources : [];
 
     if (personaMemorySessionId && tutorSettings.agentPersonaId) {
       try {
@@ -703,11 +812,12 @@ export async function postKangurAiTutorChatHandler(
         focusKind: context?.focusKind ?? null,
         interactionIntent: context?.interactionIntent ?? null,
         brainCapability: KANGUR_AI_TUTOR_BRAIN_CAPABILITY,
-        retrievedSourceCount: 0,
-        returnedSourceCount: 0,
+        retrievedSourceCount: resolvedSources.length,
+        returnedSourceCount: responseSources.length,
         showSources: tutorSettings.showSources,
         allowSelectedTextSupport: tutorSettings.allowSelectedTextSupport,
         allowLessons: tutorSettings.allowLessons,
+        allowGames: tutorSettings.allowGames,
         testAccessMode: tutorSettings.testAccessMode,
         hintDepth: tutorSettings.hintDepth,
         proactiveNudges: tutorSettings.proactiveNudges,
@@ -735,7 +845,7 @@ export async function postKangurAiTutorChatHandler(
 
     return NextResponse.json({
       message: res.text.trim(),
-      sources: [],
+      sources: responseSources,
       followUpActions: adaptiveGuidance.followUpActions,
       ...(adaptiveGuidance.coachingFrame
         ? { coachingFrame: adaptiveGuidance.coachingFrame }
@@ -765,6 +875,7 @@ export async function postKangurAiTutorChatHandler(
         showSources: tutorSettings.showSources,
         allowSelectedTextSupport: tutorSettings.allowSelectedTextSupport,
         allowLessons: tutorSettings.allowLessons,
+        allowGames: tutorSettings.allowGames,
         testAccessMode: tutorSettings.testAccessMode,
         hintDepth: tutorSettings.hintDepth,
         proactiveNudges: tutorSettings.proactiveNudges,

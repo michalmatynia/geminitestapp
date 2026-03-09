@@ -17,7 +17,7 @@ const makeQuestion = (overrides: Partial<KangurTestQuestion> = {}): KangurTestQu
   explanation: 'Because two plus two equals four.',
   illustration: { type: 'none' },
   presentation: { layout: 'classic', choiceStyle: 'list' },
-  editorial: { source: 'manual', reviewStatus: 'ready', auditFlags: [] },
+  editorial: { source: 'manual', reviewStatus: 'ready', workflowStatus: 'draft', auditFlags: [] },
   ...overrides,
 });
 
@@ -69,6 +69,7 @@ describe('getQuestionAuthoringSummary', () => {
         editorial: {
           source: 'legacy-import',
           reviewStatus: 'needs-review',
+          workflowStatus: 'draft',
           auditFlags: ['legacy_choice_descriptions'],
         },
       })
@@ -78,6 +79,7 @@ describe('getQuestionAuthoringSummary', () => {
         editorial: {
           source: 'legacy-import',
           reviewStatus: 'needs-fix',
+          workflowStatus: 'draft',
           auditFlags: ['explanation_answer_mismatch'],
           note: 'Legacy question needs editorial repair before publishing.',
         },
@@ -105,6 +107,25 @@ describe('getQuestionAuthoringSummary', () => {
     expect(summary.warnings.map((issue) => issue.code)).toContain('choice_svg_without_note');
     expect(summary.warnings.map((issue) => issue.code)).not.toContain(
       'visual_prompt_without_visuals'
+    );
+  });
+
+  it('blocks ready-to-publish workflow until review warnings are resolved', () => {
+    const summary = getQuestionAuthoringSummary(
+      makeQuestion({
+        explanation: '',
+        editorial: {
+          source: 'manual',
+          reviewStatus: 'ready',
+          workflowStatus: 'ready',
+          auditFlags: [],
+        },
+      })
+    );
+
+    expect(summary.status).toBe('needs-fix');
+    expect(summary.blockers.map((issue) => issue.code)).toContain(
+      'ready_workflow_requires_clean_review'
     );
   });
 });

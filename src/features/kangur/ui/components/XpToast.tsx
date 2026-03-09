@@ -1,10 +1,10 @@
 import { AnimatePresence, motion } from 'framer-motion';
 
+import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import {
   KangurStatusChip,
   KangurSurfacePanel,
 } from '@/features/kangur/ui/design/primitives';
-import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { BADGES } from '@/features/kangur/ui/services/progress';
 import type { KangurXpToastState } from '@/features/kangur/ui/types';
 import { cn } from '@/shared/utils';
@@ -56,11 +56,16 @@ export default function XpToast({ xpGained, newBadges, visible }: XpToastProps):
               key={badge.id}
               padding='md'
             >
-              <div className='flex items-center gap-3'>
-                <KangurStatusChip accent='amber' className='text-sm font-bold'>
-                  {badge.emoji} Nowa odznaka
-                </KangurStatusChip>
-                <span className='text-sm font-bold text-slate-900'>{badge.name}</span>
+              <div className='flex flex-col gap-2'>
+                <div className='flex items-center gap-3'>
+                  <KangurStatusChip accent='amber' className='text-sm font-bold'>
+                    {badge.emoji} Nowa odznaka
+                  </KangurStatusChip>
+                  <span className='text-sm font-bold text-slate-900'>{badge.name}</span>
+                </div>
+                <p className='text-xs font-medium text-slate-600' data-testid={`xp-toast-badge-desc-${badge.id}`}>
+                  {badge.desc}
+                </p>
               </div>
             </KangurSurfacePanel>
           ))}

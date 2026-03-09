@@ -7,8 +7,11 @@ import {
   FolderOpen,
   GripVertical,
   ListChecks,
+  EyeOff,
   Pencil,
+  Sparkles,
   Trash2,
+  WandSparkles,
 } from 'lucide-react';
 
 import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree';
@@ -26,6 +29,9 @@ export function TestSuiteTreeRow(props: {
   onEdit: (suite: KangurTestSuite) => void;
   onManageQuestions: (suite: KangurTestSuite) => void;
   onReviewQueue?: (suite: KangurTestSuite) => void;
+  onPublishReady?: (suite: KangurTestSuite) => void;
+  onGoLive?: (suite: KangurTestSuite) => void;
+  onTakeOffline?: (suite: KangurTestSuite) => void;
   onDelete: (suite: KangurTestSuite) => void;
   isUpdating?: boolean;
 }): React.JSX.Element {
@@ -37,6 +43,9 @@ export function TestSuiteTreeRow(props: {
     onEdit,
     onManageQuestions,
     onReviewQueue,
+    onPublishReady,
+    onGoLive,
+    onTakeOffline,
     onDelete,
     isUpdating,
   } = props;
@@ -167,12 +176,80 @@ export function TestSuiteTreeRow(props: {
               Review {suiteHealth.needsReviewQuestionCount}
             </Badge>
           ) : null}
-          {suiteHealth?.status === 'ready' && suiteHealth.questionCount > 0 ? (
+          {suiteHealth?.status === 'ready' &&
+          suiteHealth.questionCount > 0 &&
+          !suiteHealth.draftQuestionCount &&
+          !suiteHealth.readyToPublishQuestionCount &&
+          suiteHealth.publishedQuestionCount !== suiteHealth.questionCount ? (
             <Badge
               variant='outline'
               className='h-5 px-1.5 text-[10px] border-emerald-400/40 text-emerald-300'
             >
-              Ready
+              Clean
+            </Badge>
+          ) : null}
+          {suiteHealth?.draftQuestionCount ? (
+            <Badge
+              variant='outline'
+              className='h-5 px-1.5 text-[10px] border-slate-400/40 text-slate-300'
+            >
+              Draft {suiteHealth.draftQuestionCount}
+            </Badge>
+          ) : null}
+          {!suiteHealth?.draftQuestionCount && suiteHealth?.readyToPublishQuestionCount ? (
+            <Badge
+              variant='outline'
+              className='h-5 px-1.5 text-[10px] border-cyan-400/40 text-cyan-300'
+            >
+              Ready {suiteHealth.readyToPublishQuestionCount}
+            </Badge>
+          ) : null}
+          {suiteHealth?.canGoLive ? (
+            <Badge
+              variant='outline'
+              className='h-5 px-1.5 text-[10px] border-emerald-400/40 text-emerald-300'
+            >
+              Ready for live
+            </Badge>
+          ) : null}
+          {suiteHealth?.publishStatus === 'partial' ? (
+            <Badge
+              variant='outline'
+              className='h-5 px-1.5 text-[10px] border-cyan-400/40 text-cyan-300'
+            >
+              Published {suiteHealth.publishedQuestionCount}/{suiteHealth.questionCount}
+            </Badge>
+          ) : null}
+          {suiteHealth?.publishStatus === 'published' && !suiteHealth.isLive && !suiteHealth.canGoLive ? (
+            <Badge
+              variant='outline'
+              className='h-5 px-1.5 text-[10px] border-emerald-400/40 text-emerald-300'
+            >
+              Published
+            </Badge>
+          ) : null}
+          {suiteHealth?.isLive ? (
+            <Badge
+              variant='outline'
+              className='h-5 px-1.5 text-[10px] border-emerald-400/40 bg-emerald-500/10 text-emerald-200'
+            >
+              Live
+            </Badge>
+          ) : null}
+          {suiteHealth?.liveNeedsAttention ? (
+            <Badge
+              variant='outline'
+              className='h-5 px-1.5 text-[10px] border-rose-400/40 bg-rose-500/10 text-rose-200'
+            >
+              Live needs attention
+            </Badge>
+          ) : null}
+          {suiteHealth?.publishStatus === 'unpublished' && suiteHealth.questionCount > 0 ? (
+            <Badge
+              variant='outline'
+              className='h-5 px-1.5 text-[10px] border-slate-400/40 text-slate-300'
+            >
+              Not published
             </Badge>
           ) : null}
 
@@ -187,6 +264,54 @@ export function TestSuiteTreeRow(props: {
         </button>
 
         <div className='inline-flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100'>
+          {suiteHealth?.isLive ? (
+            <button
+              type='button'
+              className='inline-flex items-center justify-center rounded p-1 text-slate-300 hover:bg-slate-500/20 hover:text-slate-200'
+              onMouseDown={(e): void => e.stopPropagation()}
+              onClick={(e): void => {
+                e.stopPropagation();
+                onTakeOffline?.(suite);
+              }}
+              title='Take suite offline'
+              aria-label='Take suite offline'
+              disabled={isUpdating || !onTakeOffline}
+            >
+              <EyeOff className='size-3.5' />
+            </button>
+          ) : null}
+          {suiteHealth?.canGoLive ? (
+            <button
+              type='button'
+              className='inline-flex items-center justify-center rounded p-1 text-emerald-300 hover:bg-emerald-500/20 hover:text-emerald-200'
+              onMouseDown={(e): void => e.stopPropagation()}
+              onClick={(e): void => {
+                e.stopPropagation();
+                onGoLive?.(suite);
+              }}
+              title='Go live for learners'
+              aria-label='Go live for learners'
+              disabled={isUpdating || !onGoLive}
+            >
+              <WandSparkles className='size-3.5' />
+            </button>
+          ) : null}
+          {suiteHealth?.publishableQuestionCount ? (
+            <button
+              type='button'
+              className='inline-flex items-center justify-center rounded p-1 text-cyan-300 hover:bg-cyan-500/20 hover:text-cyan-200'
+              onMouseDown={(e): void => e.stopPropagation()}
+              onClick={(e): void => {
+                e.stopPropagation();
+                onPublishReady?.(suite);
+              }}
+              title='Publish ready questions'
+              aria-label='Publish ready questions'
+              disabled={isUpdating || !onPublishReady}
+            >
+              <Sparkles className='size-3.5' />
+            </button>
+          ) : null}
           {suiteHealth && suiteHealth.status !== 'ready' && suiteHealth.status !== 'empty' ? (
             <button
               type='button'

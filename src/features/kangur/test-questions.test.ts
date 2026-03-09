@@ -1,20 +1,26 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  applyPublishedQuestionEditPolicy,
   KANGUR_QUESTION_SORT_ORDER_GAP,
   createPanelIllustration,
   deleteKangurTestQuestion,
   deleteKangurTestSuiteQuestions,
   formDataToQuestion,
+  getPublishedQuestionsForSuite,
+  hasFullyPublishedQuestionSetForSuite,
   getQuestionReviewStatus,
   getQuestionsForSuite,
   hasRichChoiceContent,
   hasIllustration,
+  isPublishedKangurTestQuestion,
   nextChoiceLabel,
   parseKangurTestQuestionStore,
+  publishReadyQuestions,
   questionDocumentNeedsRichRenderer,
   reorderQuestions,
   sanitizeQuestionIllustration,
+  shouldDemotePublishedQuestionAfterEdit,
   toQuestionFormData,
   upsertKangurTestQuestion,
   usesRichQuestionPresentation,
@@ -35,7 +41,7 @@ const makeQuestion = (overrides: Partial<KangurTestQuestion> = {}): KangurTestQu
   pointValue: 3,
   illustration: { type: 'none' },
   presentation: { layout: 'classic', choiceStyle: 'list' },
-  editorial: { source: 'manual', reviewStatus: 'ready', auditFlags: [] },
+  editorial: { source: 'manual', reviewStatus: 'ready', workflowStatus: 'draft', auditFlags: [] },
   ...overrides,
 });
 
@@ -148,11 +154,12 @@ describe('rich question metadata helpers', () => {
   it('detects non-classic presentation and exposes editorial status', () => {
     const question = makeQuestion({
       presentation: { layout: 'split-illustration-right', choiceStyle: 'grid' },
-      editorial: {
-        source: 'legacy-import',
-        reviewStatus: 'needs-review',
-        auditFlags: ['legacy_choice_descriptions'],
-      },
+        editorial: {
+          source: 'legacy-import',
+          reviewStatus: 'needs-review',
+          workflowStatus: 'draft',
+          auditFlags: ['legacy_choice_descriptions'],
+        },
     });
 
     expect(usesRichQuestionPresentation(question)).toBe(true);
@@ -367,6 +374,119 @@ describe('getQuestionsForSuite', () => {
   it('returns [] for an empty store', () => {
     expect(getQuestionsForSuite({}, 'suite-A')).toEqual([]);
   });
+
+  it('can return only published questions for learner and runtime use', () => {
+    const store: KangurTestQuestionStore = {
+      draft: makeQuestion({
+        id: 'draft',
+        suiteId: 'suite-A',
+        editorial: {
+          source: 'manual',
+          reviewStatus: 'ready',
+          workflowStatus: 'draft',
+          auditFlags: [],
+        },
+      }),
+      published: makeQuestion({
+        id: 'published',
+        suiteId: 'suite-A',
+        editorial: {
+          source: 'manual',
+          reviewStatus: 'ready',
+          workflowStatus: 'published',
+          auditFlags: [],
+          publishedAt: '2026-03-09T10:00:00.000Z',
+        },
+      }),
+    };
+
+    expect(isPublishedKangurTestQuestion(store.draft!)).toBe(false);
+    expect(isPublishedKangurTestQuestion(store.published!)).toBe(true);
+    expect(getPublishedQuestionsForSuite(store, 'suite-A').map((question) => question.id)).toEqual([
+      'published',
+    ]);
+  });
+
+  it('can publish only selected ready questions while leaving draft and dirty ready items untouched', () => {
+    const store: KangurTestQuestionStore = {
+      readyClean: makeQuestion({
+        id: 'readyClean',
+        suiteId: 'suite-A',
+        editorial: {
+          source: 'manual',
+          reviewStatus: 'ready',
+          workflowStatus: 'ready',
+          auditFlags: [],
+        },
+      }),
+      readyDirty: makeQuestion({
+        id: 'readyDirty',
+        suiteId: 'suite-A',
+        editorial: {
+          source: 'legacy-import',
+          reviewStatus: 'needs-review',
+          workflowStatus: 'ready',
+          auditFlags: ['legacy_choice_descriptions'],
+        },
+      }),
+      draft: makeQuestion({
+        id: 'draft',
+        suiteId: 'suite-A',
+        editorial: {
+          source: 'manual',
+          reviewStatus: 'ready',
+          workflowStatus: 'draft',
+          auditFlags: [],
+        },
+      }),
+    };
+
+    const result = publishReadyQuestions(store, {
+      suiteId: 'suite-A',
+      questionIds: ['readyClean'],
+      publishedAt: '2026-03-09T12:00:00.000Z',
+    });
+
+    expect(result.publishedQuestionIds).toEqual(['readyClean']);
+    expect(result.store.readyClean?.editorial.workflowStatus).toBe('published');
+    expect(result.store.readyClean?.editorial.publishedAt).toBe('2026-03-09T12:00:00.000Z');
+    expect(result.store.readyDirty?.editorial.workflowStatus).toBe('ready');
+    expect(result.store.draft?.editorial.workflowStatus).toBe('draft');
+  });
+
+  it('can tell when a suite question set is only partially published', () => {
+    const store: KangurTestQuestionStore = {
+      published: makeQuestion({
+        id: 'published',
+        suiteId: 'suite-A',
+        editorial: {
+          source: 'manual',
+          reviewStatus: 'ready',
+          workflowStatus: 'published',
+          auditFlags: [],
+          publishedAt: '2026-03-09T10:00:00.000Z',
+        },
+      }),
+      draft: makeQuestion({
+        id: 'draft',
+        suiteId: 'suite-A',
+        editorial: {
+          source: 'manual',
+          reviewStatus: 'ready',
+          workflowStatus: 'draft',
+          auditFlags: [],
+        },
+      }),
+    };
+
+    expect(hasFullyPublishedQuestionSetForSuite(store, 'suite-A')).toBe(false);
+    expect(
+      hasFullyPublishedQuestionSetForSuite(
+        { published: store.published! },
+        'suite-A'
+      )
+    ).toBe(true);
+  });
 });
 
 // ─── reorderQuestions ─────────────────────────────────────────────────────────
@@ -425,7 +545,7 @@ describe('formDataToQuestion', () => {
         explanationDocument: null,
         hintDocument: null,
         presentation: { layout: 'classic', choiceStyle: 'grid' },
-        editorial: { source: 'manual', reviewStatus: 'ready', auditFlags: [] },
+        editorial: { source: 'manual', reviewStatus: 'ready', workflowStatus: 'draft', auditFlags: [] },
       },
       'question-save',
       'suite-1',
@@ -439,6 +559,52 @@ describe('formDataToQuestion', () => {
       question.illustration.type === 'panels' ? question.illustration.panels[0]?.svgContent : ''
     ).not.toContain('image.png');
     expect(question.presentation.choiceStyle).toBe('grid');
+  });
+});
+
+describe('published question edit policy', () => {
+  it('demotes published questions when learner-facing content changes', () => {
+    const previousQuestion = makeQuestion({
+      editorial: {
+        source: 'manual',
+        reviewStatus: 'ready',
+        workflowStatus: 'published',
+        auditFlags: [],
+        publishedAt: '2026-03-09T12:00:00.000Z',
+      },
+    });
+    const nextQuestion = makeQuestion({
+      ...previousQuestion,
+      prompt: 'Updated learner prompt',
+      editorial: {
+        ...previousQuestion.editorial,
+        workflowStatus: 'published',
+      },
+    });
+
+    expect(shouldDemotePublishedQuestionAfterEdit(previousQuestion, nextQuestion)).toBe(true);
+
+    const result = applyPublishedQuestionEditPolicy(previousQuestion, nextQuestion);
+    expect(result.editorial.workflowStatus).toBe('draft');
+    expect(result.editorial.publishedAt).toBeUndefined();
+  });
+
+  it('keeps published status when learner-facing content is unchanged', () => {
+    const previousQuestion = makeQuestion({
+      editorial: {
+        source: 'manual',
+        reviewStatus: 'ready',
+        workflowStatus: 'published',
+        auditFlags: [],
+        publishedAt: '2026-03-09T12:00:00.000Z',
+      },
+    });
+
+    expect(shouldDemotePublishedQuestionAfterEdit(previousQuestion, previousQuestion)).toBe(false);
+
+    const result = applyPublishedQuestionEditPolicy(previousQuestion, previousQuestion);
+    expect(result.editorial.workflowStatus).toBe('published');
+    expect(result.editorial.publishedAt).toBe('2026-03-09T12:00:00.000Z');
   });
 });
 

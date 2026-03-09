@@ -43,6 +43,9 @@ describe('XpToast', () => {
     expect(screen.getByText('+25 XP')).toHaveClass('border-indigo-200', 'bg-indigo-100');
     expect(screen.getByText(/Nowa odznaka/)).toHaveClass('border-amber-200', 'bg-amber-100');
     expect(screen.getByText('Pierwsza gra')).toBeInTheDocument();
+    expect(screen.getByTestId('xp-toast-badge-desc-first_game')).toHaveTextContent(
+      'Ukoncz pierwsza gre'
+    );
   });
 
   it('renders nothing when the toast is hidden', () => {

@@ -212,7 +212,7 @@ describe('portable AI-path engine scaffold', () => {
       expect(parsed.value.pathConfig.nodes[0]?.config?.trigger?.contextMode).toBe('trigger_only');
       expect(
         parsed.value.migrationWarnings.some(
-          (warning) => warning.code === 'legacy_trigger_context_mode_upgraded'
+          (warning) => warning.code === 'removed_trigger_context_modes_normalized'
         )
       ).toBe(true);
     }

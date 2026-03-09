@@ -18,6 +18,7 @@ const makeSuite = (overrides: Partial<KangurTestSuite> = {}): KangurTestSuite =>
   gradeLevel: 'III–IV',
   category: 'matematyczny',
   enabled: true,
+  publicationStatus: 'draft',
   sortOrder: 1000,
   ...overrides,
 });

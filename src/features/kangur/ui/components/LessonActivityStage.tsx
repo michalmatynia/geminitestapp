@@ -15,6 +15,8 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import { cn } from '@/shared/utils';
 
+import { KangurConfirmModal } from './KangurConfirmModal';
+
 type LessonActivityStageProps = {
   accent: 'amber' | 'emerald' | 'indigo' | 'rose' | 'sky' | 'violet';
   backButtonLabel?: string;
@@ -25,6 +27,24 @@ type LessonActivityStageProps = {
   icon: string;
   maxWidthClassName?: string;
   navigationPills?: React.ReactNode;
+  navigationWarningModal?: {
+    cancelText?: string;
+    confirmText?: string;
+    isOpen: boolean;
+    message: React.ReactNode;
+    onClose: () => void;
+    onConfirm: () => void;
+    title: string;
+  } | null;
+  unlockModal?: {
+    cancelText?: string;
+    confirmText?: string;
+    isOpen: boolean;
+    message: React.ReactNode;
+    onClose: () => void;
+    onConfirm: () => void;
+    title: string;
+  } | null;
   onBack: () => void;
   sectionHeader?: KangurLessonSubsectionSummary | null;
   shellClassName?: string;
@@ -42,6 +62,8 @@ export default function LessonActivityStage({
   icon,
   maxWidthClassName = 'max-w-lg',
   navigationPills,
+  navigationWarningModal = null,
+  unlockModal = null,
   onBack,
   sectionHeader = null,
   shellClassName,
@@ -109,6 +131,28 @@ export default function LessonActivityStage({
         {children}
       </KangurGlassPanel>
       {footerNavigation ? <div className='w-full'>{footerNavigation}</div> : null}
+      {navigationWarningModal ? (
+        <KangurConfirmModal
+          cancelText={navigationWarningModal.cancelText}
+          confirmText={navigationWarningModal.confirmText}
+          isOpen={navigationWarningModal.isOpen}
+          message={navigationWarningModal.message}
+          onClose={navigationWarningModal.onClose}
+          onConfirm={navigationWarningModal.onConfirm}
+          title={navigationWarningModal.title}
+        />
+      ) : null}
+      {unlockModal ? (
+        <KangurConfirmModal
+          cancelText={unlockModal.cancelText}
+          confirmText={unlockModal.confirmText}
+          isOpen={unlockModal.isOpen}
+          message={unlockModal.message}
+          onClose={unlockModal.onClose}
+          onConfirm={unlockModal.onConfirm}
+          title={unlockModal.title}
+        />
+      ) : null}
     </div>
   );
 }

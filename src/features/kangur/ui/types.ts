@@ -16,6 +16,15 @@ export type KangurGameScreen =
 
 export type KangurDifficulty = 'easy' | 'medium' | 'hard';
 
+export type KangurDifficultyOption = {
+  displayLabel: string;
+  id: KangurDifficulty;
+  label: string;
+  metaLabel: string;
+  selected: boolean;
+  select: () => void;
+};
+
 export type KangurOperation =
   | 'addition'
   | 'subtraction'

@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { auth, findAuthUserById } from '@/features/auth/server';
+import { auth, findAuthUserById } from '@/server/auth';
 import type { KangurAuthUser, KangurLearnerProfile } from '@/shared/contracts/kangur';
 import { authError, forbiddenError, notFoundError } from '@/shared/errors/app-error';
 

@@ -17,10 +17,10 @@ import type {
   KangurAssignmentSnapshot,
   KangurAssignmentProgressStatus,
   KangurPracticeAssignmentOperation,
+  KangurRoutePage,
 } from '@/shared/contracts/kangur';
 import type {
   KangurAiTutorConversationContext,
-  KangurAiTutorActionPage,
   KangurAiTutorCoachingFrame,
   KangurAiTutorCoachingMode,
   KangurAiTutorFollowUpAction,
@@ -431,7 +431,7 @@ const readSectionItems = (
     : [];
 };
 
-const readActionPage = (value: unknown): KangurAiTutorActionPage | null => {
+const readActionPage = (value: unknown): KangurRoutePage | null => {
   switch (value) {
     case 'Game':
     case 'Lessons':

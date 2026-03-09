@@ -1,5 +1,7 @@
 import type { Dispatch, SetStateAction } from 'react';
 
+import type { LabelValueOptionDto } from '@/shared/contracts/ui';
+
 import type { ApprovalDraft } from '../helpers/segment-helpers';
 import type { PromptExploderLearnedTemplate } from '../types';
 
@@ -23,16 +25,11 @@ export interface SegmentEditorTemplateCandidate {
   mergeEligible: boolean;
 }
 
-export interface SegmentEditorTemplateTargetOption {
-  value: string;
-  label: string;
-}
-
 export interface SegmentEditorPatternsState {
   approvalDraft: ApprovalDraft;
   matchedRuleDetails: SegmentEditorMatchedRuleDetail[];
   similarTemplateCandidates: SegmentEditorTemplateCandidate[];
-  templateTargetOptions: SegmentEditorTemplateTargetOption[];
+  templateTargetOptions: LabelValueOptionDto[];
 }
 
 export interface SegmentEditorState extends SegmentEditorPatternsState {}

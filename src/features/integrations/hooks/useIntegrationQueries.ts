@@ -5,6 +5,11 @@ import { z } from 'zod';
 import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/features/playwright';
 import { normalizePlaywrightPersonas } from '@/features/playwright';
 export { useIntegrationsWithConnections } from '@/shared/hooks/useIntegrationQueries';
+export {
+  useBaseInventories,
+  useDefaultExportConnection,
+  useDefaultExportInventory,
+} from '@/shared/hooks/useIntegrationQueries';
 import { fetchSettingsCached } from '@/shared/api/settings-client';
 import {
   importExportTemplateSchema,
@@ -165,80 +170,6 @@ export function useActiveExportTemplate(): SingleQuery<{ templateId?: string | n
       queryKey,
       tags: ['integrations', 'export-template'],
       description: 'Loads integrations active export template.'},
-  });
-}
-
-export function useDefaultExportInventory(): SingleQuery<{ inventoryId?: string | null }> {
-  const queryKey = integrationKeys.defaultExportInventory();
-  const queryFn = async (): Promise<{ inventoryId?: string | null }> =>
-    api.get<{ inventoryId?: string | null }>('/api/v2/integrations/exports/base/default-inventory');
-
-  return createSingleQueryV2({
-    id: 'default-export-inventory',
-    queryKey,
-    queryFn,
-    meta: {
-      source: 'integrations.hooks.useDefaultExportInventory',
-      operation: 'detail',
-      resource: 'integrations.default-export-inventory',
-      domain: 'integrations',
-      queryKey,
-      tags: ['integrations', 'inventory'],
-      description: 'Loads integrations default export inventory.'},
-  });
-}
-
-export function useDefaultExportConnection(): SingleQuery<{ connectionId?: string | null }> {
-  const queryKey = integrationKeys.selection.defaultConnection();
-  const queryFn = async (): Promise<{ connectionId?: string | null }> =>
-    api.get<{ connectionId?: string | null }>(
-      '/api/v2/integrations/exports/base/default-connection'
-    );
-
-  return createSingleQueryV2({
-    id: 'default-export-connection',
-    queryKey,
-    queryFn,
-    meta: {
-      source: 'integrations.hooks.useDefaultExportConnection',
-      operation: 'detail',
-      resource: 'integrations.default-export-connection',
-      domain: 'integrations',
-      queryKey,
-      tags: ['integrations', 'connection'],
-      description: 'Loads integrations default export connection.'},
-  });
-}
-
-export function useBaseInventories(
-  connectionId: string,
-  enabled: boolean = true
-): ListQuery<BaseInventory> {
-  const queryKey = integrationKeys.baseInventories(connectionId);
-  const queryFn = async (): Promise<BaseInventory[]> => {
-    const data = await api.post<{ inventories?: BaseInventory[]; error?: string }>(
-      '/api/v2/integrations/imports/base',
-      {
-        action: 'inventories',
-        connectionId,
-      }
-    );
-    if (data.error) throw new ApiError(data.error, 400);
-    return Array.isArray(data.inventories) ? data.inventories : [];
-  };
-
-  return createListQueryV2({
-    queryKey,
-    queryFn,
-    enabled: enabled && !!connectionId,
-    meta: {
-      source: 'integrations.hooks.useBaseInventories',
-      operation: 'list',
-      resource: 'integrations.base-inventories',
-      domain: 'integrations',
-      queryKey,
-      tags: ['integrations', 'inventories'],
-      description: 'Loads integrations base inventories.'},
   });
 }
 

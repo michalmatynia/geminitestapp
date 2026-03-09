@@ -1,3 +1,5 @@
+import type { CodeMessageIssueDto } from '@/shared/contracts/base';
+
 import { getPortableNodeCodeObjectContractsCatalog } from './node-code-objects-v2-contracts';
 
 export const PORTABLE_NODE_CODE_OBJECT_MANIFEST_METADATA_KEY = 'aiPathsNodeCodeObjectsV2' as const;
@@ -29,10 +31,8 @@ export type PortableNodeCodeObjectManifestWarningCode =
   | 'node_code_object_hash_mismatch'
   | 'node_code_object_hash_unknown_node_type';
 
-export type PortableNodeCodeObjectManifestWarning = {
-  code: PortableNodeCodeObjectManifestWarningCode;
-  message: string;
-};
+export type PortableNodeCodeObjectManifestWarning =
+  CodeMessageIssueDto<PortableNodeCodeObjectManifestWarningCode>;
 
 const asRecord = (value: unknown): Record<string, unknown> | null => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;

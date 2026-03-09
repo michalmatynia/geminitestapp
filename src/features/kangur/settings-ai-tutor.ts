@@ -1,12 +1,14 @@
 import { parseJsonSetting } from '@/shared/utils/settings-json';
-import type { KangurAiTutorConversationContext } from '@/shared/contracts/kangur-ai-tutor';
+import type {
+  KangurAiTutorConversationContext,
+  KangurAiTutorMotionPresetKind,
+} from '@/shared/contracts/kangur-ai-tutor';
 
 export const KANGUR_AI_TUTOR_SETTINGS_KEY = 'kangur_ai_tutor_settings';
 export const KANGUR_AI_TUTOR_APP_SETTINGS_KEY = 'kangur_ai_tutor_app_settings_v1';
 
 export type KangurAiTutorTestAccessMode = 'disabled' | 'guided' | 'review_after_answer';
 export type KangurAiTutorUiMode = 'anchored' | 'static';
-export type KangurAiTutorMotionPresetKind = 'default' | 'desktop' | 'tablet' | 'mobile';
 export type KangurAiTutorHintDepth = 'brief' | 'guided' | 'step_by_step';
 export type KangurAiTutorProactiveNudges = 'off' | 'gentle' | 'coach';
 

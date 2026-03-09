@@ -5,6 +5,7 @@ import { useMemo } from 'react';
 import { promptExploderClampNumber } from '../../helpers/formatting';
 import { promptExploderBuildSegmentSampleText, type ApprovalDraft } from '../../helpers/segment-helpers';
 import { normalizeLearningText, templateSimilarityScore } from '../../template-learning';
+import type { LabelValueOptionDto } from '@/shared/contracts/ui';
 
 import type { DocumentState } from '../DocumentContext';
 import type { SettingsState } from '../SettingsContext';
@@ -12,7 +13,6 @@ import type {
   SegmentEditorMatchedRuleDetail,
   SegmentEditorPatternsState,
   SegmentEditorTemplateCandidate,
-  SegmentEditorTemplateTargetOption,
 } from '../SegmentEditorContext.types';
 
 type SegmentEditorPatternState = Omit<SegmentEditorPatternsState, 'approvalDraft'>;
@@ -93,7 +93,7 @@ export const useSegmentEditorPatterns = ({
     templateMergeThreshold,
   ]);
 
-  const templateTargetOptions = useMemo<SegmentEditorTemplateTargetOption[]>(() => {
+  const templateTargetOptions = useMemo<LabelValueOptionDto[]>(() => {
     const normalizeApprovals = (value: unknown): number => {
       if (typeof value === 'number') return value;
       return 0;

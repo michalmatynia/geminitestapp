@@ -24,7 +24,7 @@ const {
 
 vi.mock('server-only', () => ({}));
 
-vi.mock('@/features/auth/server', () => ({
+vi.mock('@/server/auth', () => ({
   auth: vi.fn(),
 }));
 

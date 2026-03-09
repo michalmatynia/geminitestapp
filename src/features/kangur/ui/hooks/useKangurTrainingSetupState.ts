@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DIFFICULTY_CONFIG } from '@/features/kangur/ui/services/math-questions';
 import type {
   KangurDifficulty,
+  KangurDifficultyOption,
   KangurOperation,
   KangurTrainingSelection,
 } from '@/features/kangur/ui/types';
@@ -24,15 +25,6 @@ export type KangurTrainingSetupCountOption = {
   selected: boolean;
   select: () => void;
   value: number;
-};
-
-export type KangurTrainingSetupDifficultyOption = {
-  displayLabel: string;
-  id: KangurDifficulty;
-  label: string;
-  metaLabel: string;
-  selected: boolean;
-  select: () => void;
 };
 
 type UseKangurTrainingSetupStateOptions = {
@@ -142,7 +134,7 @@ export const useKangurTrainingSetupState = (
     [questionCount]
   );
 
-  const difficultyOptions = useMemo<KangurTrainingSetupDifficultyOption[]>(
+  const difficultyOptions = useMemo<KangurDifficultyOption[]>(
     () =>
       (Object.keys(DIFFICULTY_CONFIG) as KangurDifficulty[]).map((id) => {
         const config = DIFFICULTY_CONFIG[id];

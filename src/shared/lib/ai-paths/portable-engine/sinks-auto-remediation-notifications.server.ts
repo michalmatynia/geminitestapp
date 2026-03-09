@@ -40,9 +40,7 @@ export type {
 export type { PortablePathAuditSinkAutoRemediationPreparedNotificationRequest } from './sinks-auto-remediation-delivery.server';
 
 export type PortablePathAuditSinkAutoRemediationAction =
-  | 'none'
-  | 'unregister_all'
-  | 'degrade_to_log_only';
+  PortablePathAuditSinkAutoRemediationStrategy;
 
 export type PortablePathAuditSinkAutoRemediationNotificationChannelResult = {
   attempted: boolean;

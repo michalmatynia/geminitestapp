@@ -38,6 +38,7 @@ import { useKangurTextHighlight } from '@/features/kangur/ui/hooks/useKangurText
 import type {
   KangurAiTutorConversationContext,
   KangurAiTutorFollowUpAction,
+  KangurAiTutorMotionPresetKind,
   KangurAiTutorPromptMode,
   KangurAiTutorSurface,
 } from '@/shared/contracts/kangur-ai-tutor';
@@ -63,7 +64,6 @@ import {
   type TutorMoodAvatarProps,
   type TutorMotionPosition,
   type TutorMotionProfile,
-  type TutorMotionPresetKind,
   type TutorPointerSide,
   type TutorQuickAction,
 } from './KangurAiTutorWidget.shared';
@@ -1131,7 +1131,7 @@ const getContextSwitchNotice = (input: {
 
 const getMotionPresetKind = (
   motionPresetId: string | null | undefined
-): TutorMotionPresetKind => {
+): KangurAiTutorMotionPresetKind => {
   return resolveKangurAiTutorMotionPresetKind(motionPresetId);
 };
 

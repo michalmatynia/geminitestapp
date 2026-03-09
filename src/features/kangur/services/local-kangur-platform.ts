@@ -9,6 +9,7 @@ import {
   kangurLearnerProfileSchema,
   kangurProgressStateSchema,
   kangurScoreSchema,
+  type KangurProgressState,
 } from '@/shared/contracts/kangur';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import type {
@@ -20,7 +21,6 @@ import type {
   KangurLearnerProfile,
   KangurLearnerUpdateInput,
   KangurPlatform,
-  KangurProgressRecord,
   KangurScoreCreateInput,
   KangurScoreRecord,
   KangurUser,
@@ -458,7 +458,7 @@ const createScoreViaApi = async (input: KangurScoreCreateInput): Promise<KangurS
   }
 };
 
-const requestProgressFromApi = async (): Promise<KangurProgressRecord> => {
+const requestProgressFromApi = async (): Promise<KangurProgressState> => {
   try {
     const response = await fetch(KANGUR_PROGRESS_ENDPOINT, {
       method: 'GET',
@@ -670,7 +670,9 @@ const updateAssignmentViaApi = async (
   }
 };
 
-const updateProgressViaApi = async (input: KangurProgressRecord): Promise<KangurProgressRecord> => {
+const updateProgressViaApi = async (
+  input: KangurProgressState
+): Promise<KangurProgressState> => {
   try {
     const response = await fetch(KANGUR_PROGRESS_ENDPOINT, {
       method: 'PATCH',
@@ -915,7 +917,7 @@ export const createLocalKangurPlatform = (): KangurPlatform => {
     },
     progress: {
       get: async () => requestProgressFromApi(),
-      update: async (input: KangurProgressRecord) => updateProgressViaApi(input),
+      update: async (input: KangurProgressState) => updateProgressViaApi(input),
     },
     assignments: {
       list: async (query?: KangurAssignmentListQuery) => requestAssignmentsFromApi(query),

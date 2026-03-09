@@ -7,7 +7,7 @@ import type {
   KangurLearnerCreateInput as SharedKangurLearnerCreateInput,
   KangurLearnerProfile as SharedKangurLearnerProfile,
   KangurLearnerUpdateInput as SharedKangurLearnerUpdateInput,
-  KangurProgressState as SharedKangurProgressState,
+  KangurProgressState,
   KangurScore as SharedKangurScore,
   KangurScoreCreateInput as SharedKangurScoreCreateInput,
 } from '@/shared/contracts/kangur';
@@ -19,8 +19,6 @@ export type KangurLearnerCreateInput = SharedKangurLearnerCreateInput;
 export type KangurLearnerUpdateInput = SharedKangurLearnerUpdateInput;
 export type KangurUser = SharedKangurAuthUser;
 
-export type KangurProgressRecord = SharedKangurProgressState;
-export type KangurProgressState = SharedKangurProgressState;
 export type KangurScoreRecord = SharedKangurScore;
 export type KangurScoreCreateInput = SharedKangurScoreCreateInput;
 export type KangurAssignmentSnapshot = SharedKangurAssignmentSnapshot;
@@ -52,8 +50,8 @@ export interface KangurScorePort {
 }
 
 export interface KangurProgressPort {
-  get: () => Promise<KangurProgressRecord>;
-  update: (input: KangurProgressRecord) => Promise<KangurProgressRecord>;
+  get: () => Promise<KangurProgressState>;
+  update: (input: KangurProgressState) => Promise<KangurProgressState>;
 }
 
 export interface KangurAssignmentPort {

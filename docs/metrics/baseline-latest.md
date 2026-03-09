@@ -1,11 +1,11 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-09T03:41:59.339Z
+Generated at: 2026-03-09T04:05:08.925Z
 
 ## Snapshot
 
-- Source files: 5159
-- Source lines: 839324
+- Source files: 5167
+- Source lines: 839569
 - use client files: 1494
 - Files >= 1000 LOC: 10
 - Files >= 1500 LOC: 3
@@ -14,7 +14,7 @@ Generated at: 2026-03-09T03:41:59.339Z
 - API delegated server routes: 0
 - API routes without apiHandler/delegation: 15
 - API explicit cache policy coverage: 336/336 (100.0%)
-- Cross-feature dependency pairs: 35
+- Cross-feature dependency pairs: 30
 - Shared -> features imports: 75
 - setInterval occurrences: 22
 - Prop-drilling chains (depth >= 3): 24
@@ -50,7 +50,6 @@ Generated at: 2026-03-09T03:41:59.339Z
 | `case-resolver -> filemaker` | 13 |
 | `drafter -> products` | 13 |
 | `case-resolver -> document-editor` | 12 |
-| `jobs -> ai` | 12 |
 | `kangur -> foldertree` | 10 |
 | `case-resolver -> ai` | 9 |
 | `ai -> products` | 8 |
@@ -58,7 +57,8 @@ Generated at: 2026-03-09T03:41:59.339Z
 | `kangur -> cms` | 8 |
 | `products -> internationalization` | 8 |
 | `integrations -> playwright` | 7 |
-| `kangur -> auth` | 7 |
+| `products -> foldertree` | 7 |
+| `prompt-exploder -> foldertree` | 7 |
 
 ## Top File Hotspots (by LOC)
 
@@ -83,4 +83,4 @@ Generated at: 2026-03-09T03:41:59.339Z
 | `src/features/cms/components/page-builder/registry/block-definitions-media.ts` | 957 |
 | `src/shared/contracts/ai-paths-core/nodes.ts` | 953 |
 | `src/features/ai/image-studio/components/VersionNodeMapCanvas.tsx` | 945 |
-| `src/shared/lib/ai-paths/core/utils/__tests__/graph-compile.test.ts` | 929 |
+| `src/features/kangur/services/local-kangur-platform.ts` | 930 |

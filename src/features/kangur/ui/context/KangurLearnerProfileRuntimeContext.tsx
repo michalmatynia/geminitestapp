@@ -16,6 +16,11 @@ import {
   getKangurPageHref as createPageUrl,
 } from '@/features/kangur/config/routing';
 import { logKangurClientError } from '@/features/kangur/observability/client';
+import type {
+  KangurAssignmentPriority,
+  KangurProgressState,
+  KangurRouteAction,
+} from '@/shared/contracts/kangur';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurScoreRecord, KangurUser } from '@/features/kangur/services/ports';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
@@ -29,15 +34,9 @@ import {
 import {
   buildKangurLearnerProfileSnapshot,
   type KangurLearnerProfileSnapshot,
-  type KangurLearnerRecommendationAction,
-  type KangurLearnerRecommendationPriority,
 } from '@/features/kangur/ui/services/profile';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
-import type {
-  KangurDifficulty,
-  KangurOperation,
-  KangurProgressState,
-} from '@/features/kangur/ui/types';
+import type { KangurDifficulty, KangurOperation } from '@/features/kangur/ui/types';
 
 export const KANGUR_LEARNER_PROFILE_DAILY_GOAL_GAMES = 3;
 
@@ -56,7 +55,7 @@ const QUICK_START_OPERATIONS = new Set<KangurOperation>([
 ]);
 
 export const KANGUR_PROFILE_RECOMMENDATION_ACCENTS: Record<
-  KangurLearnerRecommendationPriority,
+  KangurAssignmentPriority,
   KangurAccent
 > = {
   high: 'rose',
@@ -120,7 +119,7 @@ export const buildKangurOperationPracticeHref = (
 
 export const buildKangurRecommendationHref = (
   basePath: string,
-  action: KangurLearnerRecommendationAction
+  action: KangurRouteAction
 ): string => {
   const baseHref = createPageUrl(action.page, basePath);
   return action.query ? appendKangurUrlParams(baseHref, action.query, basePath) : baseHref;

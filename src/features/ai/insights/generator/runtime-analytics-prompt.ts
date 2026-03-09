@@ -7,7 +7,7 @@ const safeRate = (part: number, total: number): number => {
   return Math.max(0, Math.min(100, (part / total) * 100));
 };
 
-export type RuntimeKernelParityRiskLevel = 'low' | 'medium' | 'high';
+type RuntimeKernelParityRiskLevel = 'low' | 'medium' | 'high';
 
 export type RuntimeKernelParityAssessment = {
   riskLevel: RuntimeKernelParityRiskLevel;

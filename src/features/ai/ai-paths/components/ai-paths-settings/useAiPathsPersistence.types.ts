@@ -13,10 +13,7 @@ import type {
   RuntimeState,
   UpdaterSampleState,
 } from '@/shared/lib/ai-paths';
-export type ToastFn = (
-  message: string,
-  options?: { variant?: 'success' | 'error' | 'info' | 'warning' }
-) => void;
+import type { Toast as ToastFn } from '@/shared/contracts/ui';
 
 export type PathSaveOptions = {
   silent?: boolean | undefined;

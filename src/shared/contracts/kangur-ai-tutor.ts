@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { agentPersonaMoodIdSchema } from './agents';
 import { agentTeachingChatSourceSchema } from './agent-teaching';
+import { kangurRouteActionQuerySchema, kangurRoutePageSchema } from './kangur';
 import { kangurAiTutorLearnerMoodSchema } from './kangur-ai-tutor-mood';
 
 const nonEmptyTrimmedString = z.string().trim().min(1);
@@ -44,13 +45,15 @@ export type KangurAiTutorInteractionIntent = z.infer<
 export const kangurAiTutorSurfaceSchema = z.enum(['lesson', 'test', 'game']);
 export type KangurAiTutorSurface = z.infer<typeof kangurAiTutorSurfaceSchema>;
 
-export const kangurAiTutorActionPageSchema = z.enum([
-  'Game',
-  'Lessons',
-  'ParentDashboard',
-  'LearnerProfile',
+export const kangurAiTutorMotionPresetKindSchema = z.enum([
+  'default',
+  'desktop',
+  'tablet',
+  'mobile',
 ]);
-export type KangurAiTutorActionPage = z.infer<typeof kangurAiTutorActionPageSchema>;
+export type KangurAiTutorMotionPresetKind = z.infer<
+  typeof kangurAiTutorMotionPresetKindSchema
+>;
 
 export const kangurAiTutorConversationContextSchema = z.object({
   surface: kangurAiTutorSurfaceSchema,
@@ -111,8 +114,8 @@ export type KangurAiTutorUsageSummary = z.infer<typeof kangurAiTutorUsageSummary
 export const kangurAiTutorFollowUpActionSchema = z.object({
   id: nonEmptyTrimmedString.max(120),
   label: nonEmptyTrimmedString.max(80),
-  page: kangurAiTutorActionPageSchema,
-  query: z.record(z.string().trim().min(1).max(80), z.string().trim().max(240)).optional(),
+  page: kangurRoutePageSchema,
+  query: kangurRouteActionQuerySchema.optional(),
   reason: z.string().trim().max(240).optional(),
 });
 export type KangurAiTutorFollowUpAction = z.infer<typeof kangurAiTutorFollowUpActionSchema>;

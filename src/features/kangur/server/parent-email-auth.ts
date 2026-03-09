@@ -2,19 +2,21 @@ import 'server-only';
 
 import { hash } from 'bcryptjs';
 
-import { getAuthSecurityPolicy, validatePasswordStrength } from '@/features/auth/server';
-import { getAuthSecurityProfile } from '@/features/auth/services/auth-security-profile';
-import { sendAuthEmail, shouldExposeAuthEmailDebug } from '@/features/auth/services/auth-email-delivery';
 import {
   consumeEmailVerificationChallenge,
-  createEmailVerificationChallenge,
-} from '@/features/auth/services/auth-login-challenge';
-import {
   createAuthUserWithEmail,
+  createEmailVerificationChallenge,
+  findAuthUserByEmail,
+  findAuthUserById,
+  getAuthSecurityPolicy,
+  getAuthSecurityProfile,
   markAuthUserEmailVerified,
+  normalizeAuthEmail,
+  sendAuthEmail,
   setAuthUserPassword,
-} from '@/features/auth/services/auth-user-write-service';
-import { findAuthUserByEmail, findAuthUserById, normalizeAuthEmail } from '@/features/auth/server';
+  shouldExposeAuthEmailDebug,
+  validatePasswordStrength,
+} from '@/server/auth';
 import {
   getKangurLoginHref,
   KANGUR_BASE_PATH,

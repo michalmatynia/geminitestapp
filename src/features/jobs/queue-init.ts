@@ -101,12 +101,12 @@ export const initializeQueues = (): void => {
     // Import all queue modules to trigger registration via createManagedQueue
     const queueModules = await Promise.all([
       import('@/server/queues/product-ai'),
-      import('@/features/ai/server'),
-      import('@/features/ai/server'),
-      import('@/features/ai/server'),
+      import('@/server/queues/ai'),
+      import('@/server/queues/ai'),
+      import('@/server/queues/ai'),
       import('@/shared/lib/db/workers/databaseBackupSchedulerQueue'),
-      import('@/features/ai/server'),
-      import('@/features/ai/server'),
+      import('@/server/queues/ai'),
+      import('@/server/queues/ai'),
       import('@/server/queues/integrations'),
       import('@/server/queues/integrations'),
       import('@/server/queues/integrations'),
@@ -178,7 +178,7 @@ export const initializeQueues = (): void => {
 
     // AI Insights queue is started separately after the generic startup pass so Brain gating
     // can decide whether the worker should run at all.
-    const startAiInsightsQueue = (await import('@/features/ai/server'))
+    const startAiInsightsQueue = (await import('@/server/queues/ai'))
       .startAiInsightsQueue as (() => void) | undefined;
     startAiInsightsQueue?.();
   })();

@@ -9,7 +9,6 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { useUserPreferences } from '@/features/auth';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
   defaultPromptEngineSettings,
@@ -18,6 +17,7 @@ import {
   parsePromptValidationRules,
 } from '@/shared/lib/prompt-engine/settings';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
+import { useUserPreferences } from '@/shared/hooks/useUserPreferences';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';

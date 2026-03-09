@@ -1,6 +1,5 @@
 import { AdvancedApiConfig } from '@/shared/contracts/ai-paths';
-
-export type JsonRecord = Record<string, unknown>;
+export type { UnknownRecord as JsonRecord } from '@/shared/contracts/base';
 
 export type AdvancedApiErrorRoute = {
   id?: string;

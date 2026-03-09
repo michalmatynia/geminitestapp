@@ -26,6 +26,6 @@ export async function postKangurParentEmailVerifyHandler(
     email: result.email,
     callbackUrl: result.callbackUrl,
     emailVerified: result.emailVerified,
-    message: 'Email zostal zweryfikowany. AI Tutor jest odblokowany.',
+    message: 'Email zostal zweryfikowany. AI Tutor jest odblokowany. Mozesz zalogowac sie emailem i haslem.',
   });
 }

@@ -58,12 +58,17 @@ describe('Kangur game entry top sections', () => {
     expect(screen.getByTestId('kangur-game-operation-top-section')).toHaveClass(
       'glass-panel',
       'border-white/78',
-      'bg-white/68'
+      'bg-white/68',
+      'text-center'
     );
     expect(screen.getByRole('heading', { name: 'Grajmy!' })).toHaveClass('text-3xl');
     expect(screen.getByTestId('kangur-grajmy-heading-art')).toBeInTheDocument();
+    expect(
+      screen.getByText('Wybierz rodzaj gry i przejdz od razu do matematycznej zabawy.')
+    ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' })).toBeInTheDocument();
     expect(screen.getByTestId('mock-operation-selector')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Szybkie ćwiczenia' })).toBeInTheDocument();
     expect(screen.queryByText(/Cześć,/i)).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
@@ -87,10 +92,14 @@ describe('Kangur game entry top sections', () => {
     expect(screen.getByTestId('kangur-game-training-top-section')).toHaveClass(
       'glass-panel',
       'border-white/78',
-      'bg-white/68'
+      'bg-white/68',
+      'text-center'
     );
     expect(screen.getByRole('heading', { name: 'Trening' })).toHaveClass('text-3xl');
     expect(screen.getByTestId('kangur-training-heading-art')).toBeInTheDocument();
+    expect(
+      screen.getByText('Dobierz poziom, kategorie i liczbe pytan do jednej sesji.')
+    ).toBeInTheDocument();
     expect(screen.getByTestId('mock-training-setup')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
@@ -112,10 +121,14 @@ describe('Kangur game entry top sections', () => {
     expect(screen.getByTestId('kangur-game-kangur-setup-top-section')).toHaveClass(
       'glass-panel',
       'border-white/78',
-      'bg-white/68'
+      'bg-white/68',
+      'text-center'
     );
     expect(screen.getByRole('heading', { name: 'Kangur' })).toHaveClass('text-3xl');
     expect(screen.getByTestId('kangur-kangur-heading-art')).toBeInTheDocument();
+    expect(
+      screen.getByText('Wybierz edycje konkursu i zestaw zadan do rozwiazania.')
+    ).toBeInTheDocument();
     expect(screen.getByTestId('mock-kangur-setup')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));

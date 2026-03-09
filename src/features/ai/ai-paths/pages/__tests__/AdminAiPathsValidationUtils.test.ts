@@ -122,7 +122,7 @@ describe('AdminAiPathsValidationUtils', () => {
     ).toThrowError(/path config id does not match its settings key/i);
   });
 
-  it('rejects removed legacy trigger context modes in stored validation payloads', () => {
+  it('remediates removed legacy trigger context modes in stored validation payloads', () => {
     const config = toCanonicalPathConfig('path_legacy_trigger_mode');
     const seedNode = config.nodes[0];
     expect(seedNode).toBeDefined();
@@ -144,14 +144,29 @@ describe('AdminAiPathsValidationUtils', () => {
     ];
     config.edges = [];
 
-    expect(() =>
-      parseAiPathsSettings([
+    const parsed = parseAiPathsSettings([
+      {
+        key: `${PATH_CONFIG_PREFIX}${config.id}`,
+        value: JSON.stringify(config),
+      },
+    ]);
+    expect(parsed.pathConfigs[config.id]?.nodes[0]?.config?.trigger?.contextMode).toBe(
+      'trigger_only'
+    );
+    expect(parsed.repairedPathSettings).toHaveLength(1);
+    expect(parsed.repairedPathSettings[0]?.key).toBe(`${PATH_CONFIG_PREFIX}${config.id}`);
+    expect(JSON.parse(parsed.repairedPathSettings[0]?.value ?? '{}')).toMatchObject({
+      id: config.id,
+      nodes: [
         {
-          key: `${PATH_CONFIG_PREFIX}${config.id}`,
-          value: JSON.stringify(config),
+          config: {
+            trigger: {
+              contextMode: 'trigger_only',
+            },
+          },
         },
-      ])
-    ).toThrowError(/removed legacy trigger context/i);
+      ],
+    });
   });
 
   it('parses canonical entity:collection lines in collection-map draft', () => {

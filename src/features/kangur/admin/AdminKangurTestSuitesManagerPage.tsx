@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useMemo, useState } from 'react';
-import { Folders, ListOrdered, Plus, Sparkles } from 'lucide-react';
+import { AlertTriangle, ClipboardList, Folders, ListOrdered, Plus, Sparkles, WandSparkles } from 'lucide-react';
 
 import {
   createMasterFolderTreeTransactionAdapter,
@@ -58,6 +58,14 @@ import { KangurQuestionsManagerPanel } from './KangurQuestionsManagerPanel';
 import { KangurQuestionsManagerRuntimeProvider } from './context/KangurQuestionsManagerRuntimeContext';
 import type { KangurTestSuite } from '@/shared/contracts/kangur-tests';
 import { KangurAdminContentShell } from './components/KangurAdminContentShell';
+import { KangurAdminMetricCard } from './components/KangurAdminMetricCard';
+import { KangurAdminWorkspaceIntroCard } from './components/KangurAdminWorkspaceIntroCard';
+import { getQuestionAuthoringSummary } from './question-authoring-insights';
+import {
+  buildKangurTestSuiteHealthMap,
+  getKangurTestLibraryHealthSummary,
+} from './test-suite-health';
+import type { KangurQuestionsManagerInitialView } from './question-manager-view';
 
 const ORDERED_TREE_INSTANCE = 'kangur_test_suites_manager';
 const CATALOG_TREE_INSTANCE = 'kangur_test_suites_manager_catalog';
@@ -97,11 +105,22 @@ export function AdminKangurTestSuitesManagerPage({
     }
     return map;
   }, [suites, questionStore]);
+  const allQuestions = useMemo(() => Object.values(questionStore), [questionStore]);
+  const suiteHealthById = useMemo(
+    () => buildKangurTestSuiteHealthMap(suites, allQuestions),
+    [allQuestions, suites]
+  );
+  const libraryHealthSummary = useMemo(
+    () => getKangurTestLibraryHealthSummary(suites, suiteHealthById),
+    [suiteHealthById, suites]
+  );
 
   const [showModal, setShowModal] = useState(false);
   const [editingSuite, setEditingSuite] = useState<KangurTestSuite | null>(null);
   const [suiteToDelete, setSuiteToDelete] = useState<KangurTestSuite | null>(null);
   const [managingSuite, setManagingSuite] = useState<KangurTestSuite | null>(null);
+  const [managerInitialView, setManagerInitialView] =
+    useState<KangurQuestionsManagerInitialView | undefined>(undefined);
   const [formData, setFormData] = useState<TestSuiteFormData>(() =>
     createInitialTestSuiteFormData()
   );
@@ -167,6 +186,41 @@ export function AdminKangurTestSuitesManagerPage({
   const searchState = useMasterFolderTreeSearch(masterNodes, searchQuery, {
     config: capabilities.search,
   });
+  const orderedSuites = useMemo(
+    () =>
+      [...suites].sort((a, b) => {
+        const delta = a.sortOrder - b.sortOrder;
+        return delta !== 0 ? delta : a.id.localeCompare(b.id);
+      }),
+    [suites]
+  );
+  const firstSuiteNeedingAttention = useMemo(
+    () =>
+      orderedSuites.find((suite) => {
+        const health = suiteHealthById.get(suite.id);
+        return health?.status === 'needs-fix' || health?.status === 'needs-review';
+      }) ?? null,
+    [orderedSuites, suiteHealthById]
+  );
+  const firstFixQuestion = useMemo(() => {
+    for (const suite of orderedSuites) {
+      const firstQuestion = getQuestionsForSuite(questionStore, suite.id).find(
+        (question) => getQuestionAuthoringSummary(question).status === 'needs-fix'
+      );
+      if (firstQuestion) {
+        return { suite, questionId: firstQuestion.id };
+      }
+    }
+    return null;
+  }, [orderedSuites, questionStore]);
+
+  const openQuestionsManager = useCallback(
+    (suite: KangurTestSuite, initialView?: KangurQuestionsManagerInitialView): void => {
+      setManagingSuite(suite);
+      setManagerInitialView(initialView);
+    },
+    []
+  );
 
   const openCreateModal = (): void => {
     setEditingSuite(null);
@@ -179,6 +233,22 @@ export function AdminKangurTestSuitesManagerPage({
     setFormData(toTestSuiteFormData(suite));
     setShowModal(true);
   };
+
+  const handleOpenReviewQueue = useCallback((): void => {
+    if (!firstSuiteNeedingAttention) return;
+    openQuestionsManager(firstSuiteNeedingAttention, {
+      sortMode: 'review-queue',
+    });
+  }, [firstSuiteNeedingAttention, openQuestionsManager]);
+
+  const handleOpenFirstFix = useCallback((): void => {
+    if (!firstFixQuestion) return;
+    openQuestionsManager(firstFixQuestion.suite, {
+      listFilter: 'needs-fix',
+      sortMode: 'review-queue',
+      autoOpenQuestionId: firstFixQuestion.questionId,
+    });
+  }, [firstFixQuestion, openQuestionsManager]);
 
   const handleSaveSuite = async (): Promise<void> => {
     try {
@@ -228,7 +298,7 @@ export function AdminKangurTestSuitesManagerPage({
 
   const handleImportLegacy = async (): Promise<void> => {
     try {
-      const { suites: importedSuites, questionStore: importedQuestions } =
+      const { suites: importedSuites, questionStore: importedQuestions, summary } =
         importLegacyKangurQuestions();
       const nextSuites = canonicalizeKangurTestSuites([...suites, ...importedSuites]);
       const nextQuestions = { ...questionStore, ...importedQuestions };
@@ -240,7 +310,10 @@ export function AdminKangurTestSuitesManagerPage({
         key: KANGUR_TEST_QUESTIONS_SETTING_KEY,
         value: serializeSetting(nextQuestions),
       });
-      toast(`Imported ${importedSuites.length} suites from legacy data.`, { variant: 'success' });
+      toast(
+        `Imported ${importedSuites.length} suites and ${summary.questionCount} questions. ${summary.needsReviewCount} need review, ${summary.needsFixCount} need fixes.`,
+        { variant: 'success' }
+      );
     } catch (error) {
       logClientError(error, {
         context: { source: 'AdminKangurTestSuitesManagerPage', action: 'importLegacy' },
@@ -257,13 +330,25 @@ export function AdminKangurTestSuitesManagerPage({
         input={input}
         suiteById={suiteById}
         questionCountBySuiteId={questionCountBySuiteId}
+        suiteHealthById={suiteHealthById}
         onEdit={openEditModal}
-        onManageQuestions={setManagingSuite}
+        onManageQuestions={(suite) => openQuestionsManager(suite)}
+        onReviewQueue={(suite) =>
+          openQuestionsManager(suite, {
+            sortMode: 'review-queue',
+          })
+        }
         onDelete={setSuiteToDelete}
         isUpdating={updateSetting.isPending}
       />
     ),
-    [suiteById, questionCountBySuiteId, updateSetting.isPending]
+    [
+      openQuestionsManager,
+      questionCountBySuiteId,
+      suiteById,
+      suiteHealthById,
+      updateSetting.isPending,
+    ]
   );
 
   // Questions manager slide-in
@@ -273,7 +358,11 @@ export function AdminKangurTestSuitesManagerPage({
         <div className='flex-1 overflow-hidden rounded-2xl border border-border/60 bg-card/20 p-4'>
           <KangurQuestionsManagerRuntimeProvider
             suite={managingSuite}
-            onClose={(): void => setManagingSuite(null)}
+            onClose={(): void => {
+              setManagingSuite(null);
+              setManagerInitialView(undefined);
+            }}
+            initialView={managerInitialView}
           >
             <KangurQuestionsManagerPanel />
           </KangurQuestionsManagerRuntimeProvider>
@@ -306,6 +395,50 @@ export function AdminKangurTestSuitesManagerPage({
 
   const content = (
     <div className='flex h-full flex-col gap-4 overflow-hidden'>
+      <KangurAdminWorkspaceIntroCard
+        title='Question bank'
+        description='Manage Kangur test suites with the same editorial health model used inside the question workspace. Review-fix pressure is visible before you open each suite.'
+        badge='Shared triage'
+      />
+
+      <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-5'>
+        <KangurAdminMetricCard
+          label='Suites'
+          value={libraryHealthSummary.suiteCount}
+          detail='Tracked test suites in the Kangur question bank'
+          Icon={ClipboardList}
+          tone='info'
+        />
+        <KangurAdminMetricCard
+          label='Ready suites'
+          value={libraryHealthSummary.readySuiteCount}
+          detail='Suites whose current questions are structurally ready'
+          Icon={WandSparkles}
+          tone='success'
+        />
+        <KangurAdminMetricCard
+          label='Needs review'
+          value={libraryHealthSummary.suitesNeedingReviewCount}
+          detail='Suites with questions that still need editorial review'
+          Icon={AlertTriangle}
+          tone='warning'
+        />
+        <KangurAdminMetricCard
+          label='Needs fixes'
+          value={libraryHealthSummary.suitesNeedingFixCount}
+          detail='Suites containing blocked or inconsistent questions'
+          Icon={AlertTriangle}
+          tone='warning'
+        />
+        <KangurAdminMetricCard
+          label='Question queue'
+          value={libraryHealthSummary.reviewQueueQuestionCount}
+          detail={`${libraryHealthSummary.totalQuestionCount} total questions, ${libraryHealthSummary.richQuestionCount} with rich UI`}
+          Icon={Sparkles}
+          tone='info'
+        />
+      </div>
+
       <FolderTreePanel
         className='min-h-0 flex-1'
         header={
@@ -318,6 +451,26 @@ export function AdminKangurTestSuitesManagerPage({
                 </div>
               </div>
               <div className='flex items-center gap-1'>
+                <Button
+                  onClick={handleOpenReviewQueue}
+                  size='sm'
+                  variant='outline'
+                  className='h-7 border px-2 text-[11px] font-semibold tracking-wide text-cyan-200 hover:bg-cyan-900/30'
+                  disabled={updateSetting.isPending || !firstSuiteNeedingAttention}
+                >
+                  <ClipboardList className='mr-1 size-3.5' />
+                  Open review queue
+                </Button>
+                <Button
+                  onClick={handleOpenFirstFix}
+                  size='sm'
+                  variant='outline'
+                  className='h-7 border px-2 text-[11px] font-semibold tracking-wide text-rose-200 hover:bg-rose-900/30'
+                  disabled={updateSetting.isPending || !firstFixQuestion}
+                >
+                  <AlertTriangle className='mr-1 size-3.5' />
+                  Open first fix
+                </Button>
                 <Button
                   onClick={(): void => {
                     void handleImportLegacy();

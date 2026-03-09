@@ -114,7 +114,7 @@ describe('parent email auth service', () => {
     const result = await createKangurParentAccount({
       email: 'cooldown-parent@example.com',
       password: 'Strong123!',
-      callbackUrl: '/kangur/tests',
+      callbackUrl: '/tests',
       request: new Request('https://example.com/api/kangur/auth/parent-account/create'),
     });
 
@@ -128,7 +128,7 @@ describe('parent email auth service', () => {
       emailVerified: false,
       hasPassword: true,
       retryAfterMs: 90_000,
-      verificationUrl: `${expectedOrigin}/kangur/login?callbackUrl=%2Fkangur%2Ftests&verifyEmailToken=verify-link-custom`,
+      verificationUrl: `${expectedOrigin}/login?callbackUrl=%2Ftests&verifyEmailToken=verify-link-custom`,
     });
   });
 
@@ -144,7 +144,7 @@ describe('parent email auth service', () => {
     const result = await createKangurParentAccount({
       email: 'invalid-parent@example.com',
       password: 'Strong123!',
-      callbackUrl: '/kangur/tests',
+      callbackUrl: '/tests',
       request: new Request('https://example.com/api/kangur/auth/parent-account/create'),
     });
 
@@ -169,7 +169,7 @@ describe('parent email auth service', () => {
 
     const result = await resendKangurParentVerificationEmail({
       email: 'resend-parent@example.com',
-      callbackUrl: '/kangur/tests',
+      callbackUrl: '/tests',
     });
 
     expect(readStoredSettingValueMock).toHaveBeenCalledWith(
@@ -183,7 +183,7 @@ describe('parent email auth service', () => {
       hasPassword: true,
       retryAfterMs: 75_000,
       verificationUrl:
-        'http://localhost:3000/kangur/login?callbackUrl=%2Fkangur%2Ftests&verifyEmailToken=verify-link-resend-configured',
+        'http://localhost:3000/login?callbackUrl=%2Ftests&verifyEmailToken=verify-link-resend-configured',
     });
   });
 
@@ -196,7 +196,7 @@ describe('parent email auth service', () => {
       findActiveEmailVerificationChallengeByEmailMock.mockResolvedValue({
         userId: 'pending:kangur_parent:parent%40example.com',
         email: 'parent@example.com',
-        callbackUrl: '/kangur/tests',
+        callbackUrl: '/tests',
         pendingRegistration: {
           source: 'kangur_parent',
           name: 'Parent',
@@ -210,7 +210,7 @@ describe('parent email auth service', () => {
         createKangurParentAccount({
           email: 'parent@example.com',
           password: 'Strong123!',
-          callbackUrl: '/kangur/tests',
+          callbackUrl: '/tests',
         })
       ).rejects.toMatchObject({
         httpStatus: 429,
@@ -242,7 +242,7 @@ describe('parent email auth service', () => {
     const result = await createKangurParentAccount({
       email: 'Parent@example.com',
       password: 'Strong123!',
-      callbackUrl: '/kangur/tests?focus=division',
+      callbackUrl: '/tests?focus=division',
       request: new Request('https://example.com/api/kangur/auth/parent-account/create'),
     });
 
@@ -250,7 +250,7 @@ describe('parent email auth service', () => {
     expect(createAuthUserWithEmailMock).not.toHaveBeenCalled();
     expect(createEmailVerificationChallengeMock).toHaveBeenCalledWith({
       email: 'parent@example.com',
-      callbackUrl: '/kangur/tests?focus=division',
+      callbackUrl: '/tests?focus=division',
       pendingRegistration: {
         source: 'kangur_parent',
         name: 'parent',
@@ -273,10 +273,10 @@ describe('parent email auth service', () => {
       emailVerified: false,
       hasPassword: true,
       retryAfterMs: KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS,
-      verificationUrl: `${expectedOrigin}/kangur/login?callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-link-1`,
+      verificationUrl: `${expectedOrigin}/login?callbackUrl=%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-link-1`,
     });
     expect(buildKangurParentAccountCreateDebugPayload(result)).toEqual({
-      verificationUrl: `${expectedOrigin}/kangur/login?callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-link-1`,
+      verificationUrl: `${expectedOrigin}/login?callbackUrl=%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-link-1`,
     });
   });
 
@@ -405,7 +405,7 @@ describe('parent email auth service', () => {
     findActiveEmailVerificationChallengeByEmailMock.mockResolvedValue({
       userId: 'pending:kangur_parent:parent%40example.com',
       email: 'parent@example.com',
-      callbackUrl: '/kangur/tests',
+      callbackUrl: '/tests',
       pendingRegistration: {
         source: 'kangur_parent',
         name: 'Parent',
@@ -422,7 +422,7 @@ describe('parent email auth service', () => {
     await expect(
       resendKangurParentVerificationEmail({
         email: 'parent@example.com',
-        callbackUrl: '/kangur/tests?focus=division',
+        callbackUrl: '/tests?focus=division',
         request: new Request('https://example.com/api/kangur/auth/parent-account/resend'),
       })
     ).resolves.toEqual({
@@ -432,12 +432,12 @@ describe('parent email auth service', () => {
       hasPassword: true,
       retryAfterMs: KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS,
       verificationUrl:
-        'http://localhost:3000/kangur/login?callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-link-resend-1',
+        'http://localhost:3000/login?callbackUrl=%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-link-resend-1',
     });
 
     expect(createEmailVerificationChallengeMock).toHaveBeenCalledWith({
       email: 'parent@example.com',
-      callbackUrl: '/kangur/tests?focus=division',
+      callbackUrl: '/tests?focus=division',
       pendingRegistration: {
         source: 'kangur_parent',
         name: 'Parent',
@@ -462,7 +462,7 @@ describe('parent email auth service', () => {
     await expect(
       resendKangurParentVerificationEmail({
         email: 'parent@example.com',
-        callbackUrl: '/kangur/tests?focus=division',
+        callbackUrl: '/tests?focus=division',
       })
     ).resolves.toEqual({
       email: 'parent@example.com',
@@ -471,13 +471,13 @@ describe('parent email auth service', () => {
       hasPassword: true,
       retryAfterMs: KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS,
       verificationUrl:
-        'http://localhost:3000/kangur/login?callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-link-resend-2',
+        'http://localhost:3000/login?callbackUrl=%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-link-resend-2',
     });
 
     expect(createEmailVerificationChallengeMock).toHaveBeenCalledWith({
       userId: 'parent-1',
       email: 'parent@example.com',
-      callbackUrl: '/kangur/tests?focus=division',
+      callbackUrl: '/tests?focus=division',
     });
   });
 
@@ -489,7 +489,7 @@ describe('parent email auth service', () => {
       findActiveEmailVerificationChallengeByEmailMock.mockResolvedValue({
         userId: 'pending:kangur_parent:parent%40example.com',
         email: 'parent@example.com',
-        callbackUrl: '/kangur/tests',
+        callbackUrl: '/tests',
         pendingRegistration: {
           source: 'kangur_parent',
           name: 'Parent',
@@ -503,7 +503,7 @@ describe('parent email auth service', () => {
         createKangurParentAccount({
           email: 'parent@example.com',
           password: 'Strong123!',
-          callbackUrl: '/kangur/tests',
+          callbackUrl: '/tests',
         })
       ).rejects.toMatchObject({
         httpStatus: 429,
@@ -532,7 +532,7 @@ describe('parent email auth service', () => {
       findActiveEmailVerificationChallengeByEmailMock.mockResolvedValue({
         userId: 'parent-1',
         email: 'parent@example.com',
-        callbackUrl: '/kangur/tests',
+        callbackUrl: '/tests',
         pendingRegistration: null,
         createdAt: new Date('2026-03-09T07:59:45.000Z'),
         expiresAt: new Date('2026-03-15T21:00:00.000Z'),
@@ -541,7 +541,7 @@ describe('parent email auth service', () => {
       await expect(
         resendKangurParentVerificationEmail({
           email: 'parent@example.com',
-          callbackUrl: '/kangur/tests',
+          callbackUrl: '/tests',
         })
       ).rejects.toMatchObject({
         httpStatus: 429,

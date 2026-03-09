@@ -11,11 +11,16 @@ import {
   buildDefaultAgentPersonaMoods,
   buildAgentPersonaSettings,
   collectAgentPersonaAvatarFileIds,
+  collectAgentPersonaAvatarThumbnailRefs,
   createAgentPersonaId,
   diffRemovedAgentPersonaAvatarFileIds,
+  diffRemovedAgentPersonaAvatarThumbnailRefs,
   normalizeAgentPersonas,
 } from '@/features/ai/agentcreator/utils/personas';
-import { deletePersonaAvatar } from '@/features/ai/agentcreator/utils/avatar-input';
+import {
+  deletePersonaAvatar,
+  deletePersonaAvatarThumbnail,
+} from '@/features/ai/agentcreator/utils/avatar-input';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
   DEFAULT_AGENT_PERSONA_MOOD_ID,
@@ -43,6 +48,30 @@ export function AgentPersonasPage(): React.JSX.Element {
             source: 'AgentPersonasPage',
             action: 'deleteAvatarFile',
             fileId: uniqueFileIds[index],
+          },
+        });
+      }
+    });
+  };
+
+  const deleteAvatarThumbnails = async (thumbnailRefs: string[]): Promise<void> => {
+    const uniqueRefs = Array.from(
+      new Set(thumbnailRefs.map((thumbnailRef) => thumbnailRef.trim()).filter(Boolean))
+    );
+    if (uniqueRefs.length === 0) {
+      return;
+    }
+
+    const results = await Promise.allSettled(
+      uniqueRefs.map((thumbnailRef) => deletePersonaAvatarThumbnail(thumbnailRef))
+    );
+    results.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        logClientError(result.reason, {
+          context: {
+            source: 'AgentPersonasPage',
+            action: 'deleteAvatarThumbnail',
+            thumbnailRef: uniqueRefs[index],
           },
         });
       }
@@ -81,7 +110,10 @@ export function AgentPersonasPage(): React.JSX.Element {
 
     try {
       await savePersonas({ personas: next });
-      await deleteAvatarFiles(diffRemovedAgentPersonaAvatarFileIds(existing, nextPersona));
+      await Promise.all([
+        deleteAvatarFiles(diffRemovedAgentPersonaAvatarFileIds(existing, nextPersona)),
+        deleteAvatarThumbnails(diffRemovedAgentPersonaAvatarThumbnailRefs(existing, nextPersona)),
+      ]);
       toast(existing ? 'Persona updated.' : 'Persona created.', { variant: 'success' });
     } catch (error) {
       logClientError(error, {
@@ -98,7 +130,10 @@ export function AgentPersonasPage(): React.JSX.Element {
     const next = personas.filter((p) => p.id !== persona.id);
     try {
       await savePersonas({ personas: next });
-      await deleteAvatarFiles(collectAgentPersonaAvatarFileIds(persona));
+      await Promise.all([
+        deleteAvatarFiles(collectAgentPersonaAvatarFileIds(persona)),
+        deleteAvatarThumbnails(collectAgentPersonaAvatarThumbnailRefs(persona)),
+      ]);
       toast('Persona deleted.', { variant: 'success' });
     } catch (error) {
       logClientError(error, {
@@ -142,7 +177,10 @@ export function AgentPersonasPage(): React.JSX.Element {
         if (saved) {
           return;
         }
-        return deleteAvatarFiles(diffRemovedAgentPersonaAvatarFileIds(draft, originalItem));
+        return Promise.all([
+          deleteAvatarFiles(diffRemovedAgentPersonaAvatarFileIds(draft, originalItem)),
+          deleteAvatarThumbnails(diffRemovedAgentPersonaAvatarThumbnailRefs(draft, originalItem)),
+        ]).then(() => undefined);
       }}
       renderItemTags={() => ['Routing: AI Brain']}
       renderExtraFields={(item, onChange, { originalItem }) => (

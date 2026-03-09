@@ -13,6 +13,8 @@ export type HubSection = {
   title: string;
   description: string;
   isGame?: boolean;
+  locked?: boolean;
+  lockedLabel?: string;
   progress?: LessonHubSectionProgress;
 };
 
@@ -53,10 +55,15 @@ export default function LessonHub({
             >
               <KangurOptionCardButton
                 accent={accent}
-                className='flex w-full items-center gap-4 rounded-[28px] p-4 text-left'
+                className='flex w-full items-center gap-4 rounded-[28px] p-4 text-left disabled:cursor-not-allowed disabled:opacity-70'
                 data-testid={`lesson-hub-section-${section.id}`}
+                disabled={section.locked}
                 emphasis={section.isGame ? 'accent' : 'neutral'}
-                onClick={() => onSelect(section.id)}
+                onClick={() => {
+                  if (!section.locked) {
+                    onSelect(section.id);
+                  }
+                }}
                 type='button'
               >
                 <KangurIconBadge
@@ -75,7 +82,7 @@ export default function LessonHub({
                 </div>
                 <div className='ml-auto flex shrink-0 flex-col items-end gap-2 self-start'>
                   <KangurStatusChip accent={accent} className='uppercase tracking-[0.14em]' size='sm'>
-                    {section.isGame ? 'Gra' : 'Lekcja'}
+                    {section.locked ? (section.lockedLabel ?? 'Zablokowane') : section.isGame ? 'Gra' : 'Lekcja'}
                   </KangurStatusChip>
                   {!section.isGame && section.progress && section.progress.totalCount > 0 ? (
                     <KangurLessonProgressDots

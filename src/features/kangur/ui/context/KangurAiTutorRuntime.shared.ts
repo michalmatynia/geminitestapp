@@ -40,7 +40,7 @@ import {
   type KangurAiTutorLearnerMood,
   type KangurTutorMoodId,
 } from '@/shared/contracts/kangur-ai-tutor-mood';
-import { useAgentPersonas } from '@/shared/hooks/useAgentPersonas';
+import { useAgentPersonaVisuals } from '@/shared/hooks/useAgentPersonaVisuals';
 import { ApiError, api } from '@/shared/lib/api-client';
 import { resolveAgentPersonaMood } from '@/shared/lib/agent-personas';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -841,7 +841,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
     []
   );
 
-  const { data: agentPersonas = [] } = useAgentPersonas();
+  const { data: agentPersonas = [] } = useAgentPersonaVisuals(tutorSettings?.agentPersonaId);
   const tutorPersona = useMemo<AgentPersona | null>(() => {
     const personaId = tutorSettings?.agentPersonaId;
     if (!personaId) {
@@ -872,6 +872,17 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
   );
   const defaultTutorMood = useMemo(() => resolveAgentPersonaMood(tutorPersona), [tutorPersona]);
   const resolvedTutorMoodVisuals = useMemo(() => {
+    const resolvedThumbnail =
+      resolvedTutorMood.useEmbeddedThumbnail === true
+        ? resolvedTutorMood.avatarThumbnailDataUrl?.trim() || null
+        : null;
+    if (resolvedThumbnail) {
+      return {
+        tutorAvatarImageUrl: resolvedThumbnail,
+        tutorAvatarSvg: null,
+      };
+    }
+
     const resolvedImage = resolvedTutorMood.avatarImageUrl?.trim() || null;
     const resolvedSvg = resolvedTutorMood.svgContent.trim() || null;
 
@@ -889,6 +900,17 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
       };
     }
 
+    const fallbackThumbnail =
+      defaultTutorMood.useEmbeddedThumbnail === true
+        ? defaultTutorMood.avatarThumbnailDataUrl?.trim() || null
+        : null;
+    if (fallbackThumbnail) {
+      return {
+        tutorAvatarImageUrl: fallbackThumbnail,
+        tutorAvatarSvg: null,
+      };
+    }
+
     const fallbackImage = defaultTutorMood.avatarImageUrl?.trim() || null;
     if (fallbackImage) {
       return {
@@ -902,10 +924,14 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
       tutorAvatarSvg: defaultTutorMood.svgContent.trim() || null,
     };
   }, [
+    defaultTutorMood.avatarThumbnailDataUrl,
     defaultTutorMood.avatarImageUrl,
     defaultTutorMood.svgContent,
+    defaultTutorMood.useEmbeddedThumbnail,
+    resolvedTutorMood.avatarThumbnailDataUrl,
     resolvedTutorMood.avatarImageUrl,
     resolvedTutorMood.svgContent,
+    resolvedTutorMood.useEmbeddedThumbnail,
   ]);
   const tutorMoodId = resolvedTutorMood.id;
   const tutorAvatarSvg = resolvedTutorMoodVisuals.tutorAvatarSvg;

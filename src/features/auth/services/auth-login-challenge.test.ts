@@ -60,7 +60,7 @@ describe('auth login challenge service', () => {
     });
     const second = await createEmailVerificationChallenge({
       email: 'parent@example.com',
-      callbackUrl: '/kangur/tests?focus=division',
+      callbackUrl: '/tests?focus=division',
       pendingRegistration: {
         source: 'kangur_parent',
         name: 'Parent',
@@ -71,7 +71,7 @@ describe('auth login challenge service', () => {
     await expect(findActiveEmailVerificationChallengeByEmail('parent@example.com')).resolves.toMatchObject({
       userId: 'pending:kangur_parent:parent%40example.com',
       email: 'parent@example.com',
-      callbackUrl: '/kangur/tests?focus=division',
+      callbackUrl: '/tests?focus=division',
       pendingRegistration: {
         source: 'kangur_parent',
         name: 'Parent',
@@ -82,7 +82,7 @@ describe('auth login challenge service', () => {
     await expect(consumeEmailVerificationChallenge(second.id)).resolves.toMatchObject({
       userId: 'pending:kangur_parent:parent%40example.com',
       email: 'parent@example.com',
-      callbackUrl: '/kangur/tests?focus=division',
+      callbackUrl: '/tests?focus=division',
       pendingRegistration: {
         source: 'kangur_parent',
         name: 'Parent',

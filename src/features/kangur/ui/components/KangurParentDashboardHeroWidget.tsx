@@ -16,11 +16,11 @@ import {
 } from '@/features/kangur/config/routing';
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
+import { useKangurParentDashboardRuntime } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 import {
   KangurButton,
   KangurTopNavGroup,
 } from '@/features/kangur/ui/design/primitives';
-import { useKangurParentDashboardRuntime } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 
 export function KangurParentDashboardHeroWidget({
   showActions = true,

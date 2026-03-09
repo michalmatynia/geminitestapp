@@ -17,6 +17,7 @@ import type {
 } from '@/shared/contracts/kangur-tests';
 import { createKangurTestSuiteId } from '../test-suites';
 import { createKangurTestQuestionId, KANGUR_QUESTION_SORT_ORDER_GAP } from '../test-questions';
+import { auditLegacyKangurQuestion } from './question-audit';
 
 type LegacyQuestion = {
   id: string;
@@ -39,11 +40,16 @@ const convertQuestion = (
   const choices = lq.choices.map((text, i) => ({
     label: DEFAULT_LABELS[i] ?? String.fromCharCode(65 + i),
     text: String(text),
+    description: lq.choiceDescriptions?.[i]?.trim() || undefined,
+    svgContent: '',
   }));
 
   const answerText = String(lq.answer);
-  const matchedChoice = choices.find((c) => c.text === answerText);
+  const matchedChoice =
+    choices.find((c) => c.text === answerText) ??
+    choices.find((c) => c.label.toUpperCase() === answerText.toUpperCase());
   const correctChoiceLabel = matchedChoice?.label ?? choices[0]?.label ?? 'A';
+  const audit = auditLegacyKangurQuestion(lq, choices, correctChoiceLabel);
 
   return {
     id: createKangurTestQuestionId(),
@@ -55,17 +61,33 @@ const convertQuestion = (
     pointValue,
     explanation: lq.explanation ?? undefined,
     illustration: { type: 'none' },
+    presentation: audit.presentation,
+    editorial: {
+      source: 'legacy-import',
+      reviewStatus: audit.reviewStatus,
+      auditFlags: audit.flags,
+      legacyId: lq.id,
+      note: audit.note,
+    },
   };
 };
 
 export type LegacyImportResult = {
   suites: KangurTestSuite[];
   questionStore: KangurTestQuestionStore;
+  summary: {
+    questionCount: number;
+    needsReviewCount: number;
+    needsFixCount: number;
+  };
 };
 
 export const importLegacyKangurQuestions = (): LegacyImportResult => {
   const suites: KangurTestSuite[] = [];
   const questionStore: KangurTestQuestionStore = {};
+  let questionCount = 0;
+  let needsReviewCount = 0;
+  let needsFixCount = 0;
 
   const addSuite = (
     title: string,
@@ -91,6 +113,12 @@ export const importLegacyKangurQuestions = (): LegacyImportResult => {
     questions.forEach((lq, i) => {
       const q = convertQuestion(lq, suiteId, pointValue, (i + 1) * KANGUR_QUESTION_SORT_ORDER_GAP);
       questionStore[q.id] = q;
+      questionCount += 1;
+      if (q.editorial.reviewStatus === 'needs-fix') {
+        needsFixCount += 1;
+      } else if (q.editorial.reviewStatus === 'needs-review') {
+        needsReviewCount += 1;
+      }
     });
   };
 
@@ -138,5 +166,13 @@ export const importLegacyKangurQuestions = (): LegacyImportResult => {
     3
   );
 
-  return { suites, questionStore };
+  return {
+    suites,
+    questionStore,
+    summary: {
+      questionCount,
+      needsReviewCount,
+      needsFixCount,
+    },
+  };
 };

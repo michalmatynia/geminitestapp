@@ -30,6 +30,7 @@ export const buildTriggerContext = (args: {
       entityId: args.entityId,
       sourceLocation: args.source?.location,
     });
+  const embeddedEntitySnapshot = shouldEmbedEntitySnapshot ? sanitizedEntitySnapshot : null;
   const nativeEvent = args.event?.nativeEvent;
   const pointer = nativeEvent
     ? {
@@ -115,7 +116,11 @@ export const buildTriggerContext = (args: {
     },
     entityId: args.entityId ?? null,
     entityType: args.entityType,
-    entity: shouldEmbedEntitySnapshot ? sanitizedEntitySnapshot : null,
+    entity: embeddedEntitySnapshot,
+    ...(embeddedEntitySnapshot ? { entityJson: embeddedEntitySnapshot } : {}),
+    ...(embeddedEntitySnapshot && args.entityType === 'product' && args.entityId
+      ? { productId: args.entityId }
+      : {}),
   };
 
   return base;

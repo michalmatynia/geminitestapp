@@ -1083,6 +1083,47 @@ Progress (2026-03-04):
       1. `npx vitest run src/features/ai/ai-paths/components/__tests__/AiPathsSettingsUtils.sanitize-path-config.test.ts` -> passed.
       2. `npm run ai-paths:check:canonical` -> passed (`4232` files scanned).
       3. `npm run typecheck` -> passed.
+48. Hard-cut removed legacy Trigger context-mode remediation and upgrade channels in seam 178:
+   1. Removed silent remediation from shared import/runtime paths:
+      1. `src/shared/lib/ai-paths/core/semantic-grammar/deserialize.ts`
+      2. `src/shared/lib/ai-paths/portable-engine/portable-engine-migration.ts`
+      3. `src/shared/lib/ai-paths/core/normalization/trigger-normalization.ts`
+      4. `src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts`
+      5. `src/features/ai/ai-paths/services/path-run-enqueue-service.ts`
+      6. all five paths now reject removed `simulation_preferred` / `simulation_required` trigger context modes directly from raw input.
+   2. Deleted the retired remediation module:
+      1. `src/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode-remediation.ts`
+   3. Removed portable migration warning compatibility:
+      1. `src/shared/lib/ai-paths/portable-engine/portable-engine-migration-types.ts`
+      2. removed `legacy_trigger_context_mode_upgraded` from the migration warning channel.
+   4. Updated regression coverage:
+      1. `src/shared/lib/ai-paths/core/utils/__tests__/legacy-trigger-context-mode.test.ts`
+      2. `src/shared/lib/ai-paths/core/semantic-grammar/__tests__/semantic-grammar.test.ts`
+      3. targeted trigger/settings/enqueue/portable suites now assert hard rejection instead of upgrade-to-`trigger_only`.
+   5. Extended AI Paths canonical guardrails:
+      1. `scripts/ai-paths/legacy-prune-manifest.json`
+      2. added:
+         1. `legacy_trigger_context_mode_remediation_module_removed`
+         2. `legacy_trigger_context_mode_upgrade_tokens_runtime_source_scan`
+      3. guardrails now block reintroduction of remediation helpers and the removed portable warning channel.
+   6. Validation:
+      1. `npx vitest run src/shared/lib/ai-paths/core/utils/__tests__/legacy-trigger-context-mode.test.ts src/features/ai/ai-paths/components/__tests__/AiPathsSettingsUtils.sanitize-path-config.test.ts src/features/ai/ai-paths/hooks/__tests__/useAiPathTriggerEvent.sanitize.test.ts src/shared/lib/ai-paths/hooks/trigger-event-settings.test.ts src/app/api/ai-paths/runs/enqueue/handler.test.ts src/features/ai/ai-paths/services/__tests__/path-run-service.test.ts src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts src/shared/lib/ai-paths/core/semantic-grammar/__tests__/semantic-grammar.test.ts src/features/ai/ai-paths/pages/__tests__/AdminAiPathsValidationUtils.test.ts src/features/ai/ai-paths/components/ai-paths-settings/__tests__/useAiPathsPersistence.prefetch.test.tsx src/features/ai/ai-paths/components/ai-paths-settings/__tests__/useAiPathsSettingsPathActions.switch-path.test.tsx` -> passed (`133` tests).
+      2. `npm run ai-paths:check:canonical` -> passed (`5296` files scanned).
+49. Hardened prune-manifest protection for removed product trigger-button compatibility seams in seam 179:
+   1. Extended the AI Paths legacy-prune manifest:
+      1. `scripts/ai-paths/legacy-prune-manifest.json`
+      2. added:
+         1. `legacy_products_trigger_hooks_removed`
+         2. `legacy_trigger_button_binding_repair_tokens_runtime_source_scan`
+      3. guardrails now keep the removed product-side hooks deleted:
+         1. `src/features/products/hooks/useAiPathTrigger.ts`
+         2. `src/features/products/hooks/useAiPathSettings.ts`
+      4. guardrails now block reintroduction of trigger-button binding repair and single-active fallback tokens:
+         1. `repair_trigger_button_bindings`
+         2. `usedSingleActiveFallback`
+   2. Validation:
+      1. `npm run ai-paths:check:canonical` -> passed (`5297` files scanned).
+      2. `npx vitest run __tests__/scripts/ai-paths/legacy-prune-manifest-utils.test.ts` -> passed (`3` tests).
 48. Pruned semantic-grammar edge alias compatibility in seam 178 and re-validated canonical guards:
    1. Enforced canonical edge serialization in semantic grammar:
       1. `src/shared/lib/ai-paths/core/semantic-grammar/serialize.ts`

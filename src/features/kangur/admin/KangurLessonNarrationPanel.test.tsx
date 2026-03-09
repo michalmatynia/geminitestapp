@@ -21,6 +21,7 @@ vi.mock('@/shared/lib/api-client', () => ({
 import { KangurLessonNarrationPanel } from '@/features/kangur/admin/KangurLessonNarrationPanel';
 import { LessonContentEditorProvider } from '@/features/kangur/admin/context/LessonContentEditorContext';
 import type { KangurLesson, KangurLessonDocument } from '@/shared/contracts/kangur';
+import { buildKangurLessonDocumentNarrationSignature } from '@/features/kangur/tts/script';
 
 function StatefulNarrationPanelHarness({
   lesson,
@@ -193,6 +194,7 @@ describe('KangurLessonNarrationPanel', () => {
       expect(screen.getByRole('button', { name: /refresh preview/i })).toBeInTheDocument()
     );
 
+    expect(screen.getByText('Preview up to date')).toBeInTheDocument();
     const audio = container.querySelector('audio');
     expect(audio).not.toBeNull();
     expect(audio?.getAttribute('src')).toBe('/uploads/kangur/tts/example.mp3');
@@ -392,12 +394,12 @@ describe('KangurLessonNarrationPanel', () => {
     );
 
     await waitFor(() =>
-      expect(apiPostMock.mock.calls.some((call) => call[0] === '/api/kangur/tts/status')).toBe(true)
+    expect(apiPostMock.mock.calls.some((call) => call[0] === '/api/kangur/tts/status')).toBe(true)
     );
 
     expect(screen.getByText('0 explicit overrides')).toBeInTheDocument();
     expect(screen.getByText('1 visual block')).toBeInTheDocument();
-    expect(screen.getByText('1 activity')).toBeInTheDocument();
+    expect(screen.getAllByText('1 activity').length).toBeGreaterThan(0);
     expect(
       screen.getByText((content) =>
         content.includes('Narration is fully auto-derived from visible lesson content right now.')
@@ -416,6 +418,80 @@ describe('KangurLessonNarrationPanel', () => {
           '1 activity still uses generic default narration. Add a custom description if the task needs more guidance.'
         )
       )
+    ).toBeInTheDocument();
+    expect(screen.getByText('Page-by-page narration review')).toBeInTheDocument();
+    expect(screen.getByText('2 narration issues')).toBeInTheDocument();
+    expect(
+      screen.getByText('Add a spoken description for 1 visual block on this page.')
+    ).toBeInTheDocument();
+  });
+
+  it('marks the narration preview as needing refresh when the draft changed after the last preview', async () => {
+    apiPostMock.mockImplementation(async (endpoint: string) => {
+      if (endpoint === '/api/kangur/tts/status') {
+        return {
+          state: 'missing',
+          voice: 'coral',
+          latestCreatedAt: null,
+          message: 'Audio has not been generated for this lesson draft yet.',
+          segments: [],
+        };
+      }
+
+      throw new Error('Generate endpoint should not be called in this scenario.');
+    });
+
+    const lesson = {
+      id: 'clock',
+      title: 'Nauka zegara',
+      description: 'Czytamy godziny i minuty.',
+    };
+    const currentDocument: KangurLessonDocument = {
+      version: 1,
+      narration: {
+        voice: 'coral',
+        locale: 'pl-PL',
+      },
+      blocks: [
+        {
+          id: 'text-1',
+          type: 'text',
+          html: '<p>Zegar ma wskazowki.</p>',
+          align: 'left',
+        },
+      ],
+    };
+    const signature = buildKangurLessonDocumentNarrationSignature({
+      lessonId: lesson.id,
+      title: lesson.title,
+      description: lesson.description,
+      document: currentDocument,
+      voice: 'coral',
+      locale: 'pl-PL',
+    });
+
+    render(
+      <StatefulNarrationPanelHarness
+        lesson={lesson}
+        document={{
+          ...currentDocument,
+          narration: {
+            voice: 'coral',
+            locale: 'pl-PL',
+            previewSourceSignature: `${signature}-old`,
+            lastPreviewedAt: '2026-03-09T12:00:00.000Z',
+          },
+        }}
+      />
+    );
+
+    await waitFor(() =>
+      expect(apiPostMock.mock.calls.some((call) => call[0] === '/api/kangur/tts/status')).toBe(true)
+    );
+
+    expect(screen.getByText('Refresh needed')).toBeInTheDocument();
+    expect(
+      screen.getByText(/Narration preview needs refresh after recent lesson or voice changes\./i)
     ).toBeInTheDocument();
   });
 });

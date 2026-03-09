@@ -25,9 +25,16 @@ const { settingsStoreMock, apiPostMock, speechSynthesisMock, audioPlayMock, audi
     audioPlayMock: vi.fn().mockResolvedValue(undefined),
     audioPauseMock: vi.fn(),
   }));
+const { useSessionMock } = vi.hoisted(() => ({
+  useSessionMock: vi.fn(),
+}));
 
 vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   useSettingsStore: () => settingsStoreMock,
+}));
+
+vi.mock('next-auth/react', () => ({
+  useSession: useSessionMock,
 }));
 
 vi.mock('@/shared/lib/api-client', () => ({
@@ -39,7 +46,15 @@ vi.mock('@/shared/lib/api-client', () => ({
 import { KANGUR_NARRATOR_SETTINGS_KEY } from '@/features/kangur/settings';
 import { KangurLessonNarrator } from '@/features/kangur/ui/components/KangurLessonNarrator';
 
-function NarratorHarness(): React.JSX.Element {
+function NarratorHarness({
+  readLabel = 'Read lesson',
+  pauseLabel = 'Pause',
+  resumeLabel = 'Resume',
+}: {
+  readLabel?: string;
+  pauseLabel?: string;
+  resumeLabel?: string;
+} = {}): React.JSX.Element {
   const lessonContentRef = React.useRef<HTMLDivElement | null>(null);
 
   return (
@@ -61,7 +76,9 @@ function NarratorHarness(): React.JSX.Element {
         }}
         lessonDocument={null}
         lessonContentRef={lessonContentRef}
-        readLabel='Read lesson'
+        pauseLabel={pauseLabel}
+        readLabel={readLabel}
+        resumeLabel={resumeLabel}
       />
     </ContextRegistryPageProvider>
   );
@@ -83,6 +100,10 @@ class MockSpeechSynthesisUtterance {
 describe('KangurLessonNarrator', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useSessionMock.mockReturnValue({
+      data: null,
+      status: 'unauthenticated',
+    });
 
     Object.defineProperty(window, 'speechSynthesis', {
       configurable: true,
@@ -146,6 +167,36 @@ describe('KangurLessonNarrator', () => {
     expect(screen.queryByText('Playback speed')).toBeNull();
   });
 
+  it('keeps the narrator pill width stable when the label changes from Czytaj to Pauza', async () => {
+    settingsStoreMock.get.mockImplementation((key: string) => {
+      if (key === KANGUR_NARRATOR_SETTINGS_KEY) {
+        return JSON.stringify({ engine: 'client' });
+      }
+      return undefined;
+    });
+
+    render(
+      <NarratorHarness readLabel='Czytaj' pauseLabel='Pauza' resumeLabel='Wznow' />
+    );
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /^czytaj$/i })).toBeInTheDocument()
+    );
+
+    const readButton = screen.getByRole('button', { name: /^czytaj$/i });
+    const initialMinWidth = readButton.style.minWidth;
+
+    expect(initialMinWidth).not.toBe('');
+
+    fireEvent.click(readButton);
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /^pauza$/i })).toBeInTheDocument()
+    );
+
+    expect(screen.getByRole('button', { name: /^pauza$/i }).style.minWidth).toBe(initialMinWidth);
+  });
+
   it('uses the server narrator mode and requests cached audio from the tts api', async () => {
     apiPostMock.mockResolvedValue({
       mode: 'audio',
@@ -199,7 +250,7 @@ describe('KangurLessonNarrator', () => {
     expect(screen.queryByText('Playback speed')).toBeNull();
   });
 
-  it('falls back to browser speech when the server narrator returns fallback segments', async () => {
+  it('falls back to browser speech without surfacing narrator diagnostics to regular users', async () => {
     apiPostMock.mockResolvedValue({
       mode: 'fallback',
       reason: 'generation_failed',
@@ -228,9 +279,54 @@ describe('KangurLessonNarrator', () => {
       (speechSynthesisMock.speak.mock.calls[0]?.[0] as MockSpeechSynthesisUtterance)?.text
     ).toBe('To jest tekst lekcji do czytania przez narratora.');
     expect(
+      screen.queryByText(
+        /Neural narration could not be prepared right now, so browser narration fallback will be used\./i
+      )
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Switch Kangur narrator settings to Client narrator if you want browser speech instead\./i)
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows narrator diagnostics to super admins when server fallback is used', async () => {
+    useSessionMock.mockReturnValue({
+      data: {
+        user: {
+          role: 'super_admin',
+        },
+      },
+      status: 'authenticated',
+    });
+    apiPostMock.mockResolvedValue({
+      mode: 'fallback',
+      reason: 'generation_failed',
+      message:
+        'Neural narration could not be prepared right now, so browser narration fallback will be used.',
+      segments: [
+        {
+          id: 'clock-segment-1',
+          text: 'To jest tekst lekcji do czytania przez narratora.',
+        },
+      ],
+    });
+
+    render(<NarratorHarness />);
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /^read lesson$/i })).toBeInTheDocument()
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /^read lesson$/i }));
+
+    await waitFor(() => expect(speechSynthesisMock.speak).toHaveBeenCalledTimes(1));
+
+    expect(
       screen.getByText(
         /Neural narration could not be prepared right now, so browser narration fallback will be used\./i
       )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Switch Kangur narrator settings to Client narrator if you want browser speech instead\./i)
     ).toBeInTheDocument();
   });
 

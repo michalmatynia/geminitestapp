@@ -1,13 +1,16 @@
-import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, XCircle, RefreshCw } from 'lucide-react';
+import { useState } from 'react';
+
 import {
   KangurButton,
   KangurDisplayEmoji,
   KangurGlassPanel,
   KangurHeadline,
+  KangurInfoCard,
   KangurInlineFallback,
   KangurOptionCardButton,
+  KangurProgressBar,
   KangurResultBadge,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
@@ -183,7 +186,7 @@ export default function CalendarTrainingGame({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className='flex flex-col items-center gap-5 py-4'
+        className='flex w-full flex-col items-center gap-5 py-4'
       >
         <KangurGlassPanel
           className='flex w-full max-w-sm flex-col items-center gap-5 text-center'
@@ -207,16 +210,26 @@ export default function CalendarTrainingGame({
               +{xpEarned} XP ✨
             </KangurStatusChip>
           )}
+          <KangurProgressBar
+            accent='emerald'
+            animated
+            aria-label='Postep w ćwiczeniach z kalendarzem'
+            aria-valuetext={`${Math.round((score / TOTAL) * 100)}% poprawnych odpowiedzi`}
+            className='w-full'
+            data-testid='calendar-training-summary-progress-bar'
+            size='md'
+            value={Math.round((score / TOTAL) * 100)}
+          />
           <p className='max-w-xs text-center text-slate-500'>
             {score === TOTAL
               ? 'Idealnie! Świetnie znasz kalendarz!'
               : 'Ćwicz dalej, a zostaniesz mistrzem kalendarza!'}
           </p>
-          <div className='flex gap-3'>
-            <KangurButton onClick={handleRestart} size='lg' variant='surface'>
+          <div className='flex w-full gap-3'>
+            <KangurButton className='flex-1' onClick={handleRestart} size='lg' variant='surface'>
               <RefreshCw className='w-4 h-4' /> Jeszcze raz
             </KangurButton>
-            <KangurButton onClick={onFinish} size='lg' variant='primary'>
+            <KangurButton className='flex-1' onClick={onFinish} size='lg' variant='primary'>
               Zakończ lekcję ✅
             </KangurButton>
           </div>
@@ -233,35 +246,55 @@ export default function CalendarTrainingGame({
       <div aria-live='polite' aria-atomic='true' className='sr-only'>
         Pytanie {current + 1} z {TOTAL}. {question.question}
       </div>
-      {/* Progress dots */}
-      <div aria-hidden='true' className='flex gap-2'>
-        {questions.map((_, i) => (
-          <div
-            key={i}
-            className={cn(
-              KANGUR_STEP_PILL_CLASSNAME,
-              'h-[14px] min-w-[14px]',
-              i < current
-                ? 'w-6 bg-emerald-200'
-                : i === current
-                  ? 'w-8 scale-[1.04] bg-emerald-500'
-                  : 'w-[14px] soft-cta opacity-80'
-            )}
-            data-testid={`calendar-training-progress-${i}`}
+      <div className='w-full space-y-3'>
+        <div className='flex w-full items-center gap-3'>
+          <KangurProgressBar
+            accent='emerald'
+            aria-label='Postep ćwiczeń z kalendarzem'
+            aria-valuetext={`Pytanie ${current + 1} z ${TOTAL}`}
+            className='flex-1'
+            data-testid='calendar-training-progress-bar'
+            size='sm'
+            value={(current / TOTAL) * 100}
           />
-        ))}
+          <KangurStatusChip accent='emerald' className='shrink-0' data-testid='calendar-training-progress-label' size='sm'>
+            {current + 1}/{TOTAL}
+          </KangurStatusChip>
+        </div>
+        <div aria-hidden='true' className='flex gap-2'>
+          {questions.map((_, i) => (
+            <div
+              key={i}
+              className={cn(
+                KANGUR_STEP_PILL_CLASSNAME,
+                'h-[14px] min-w-[14px]',
+                i < current
+                  ? 'w-6 bg-emerald-200'
+                  : i === current
+                    ? 'w-8 scale-[1.04] bg-emerald-500'
+                    : 'w-[14px] soft-cta opacity-80'
+              )}
+              data-testid={`calendar-training-progress-${i}`}
+            />
+          ))}
+        </div>
       </div>
 
       <KangurGlassPanel
-        className='w-full text-center'
+        className='w-full'
         data-testid='calendar-training-question-shell'
         padding='lg'
         surface='solid'
         variant='soft'
       >
-        <p id='calendar-training-question-title' className='text-lg font-extrabold text-green-800'>
-          {question.question}
-        </p>
+        <KangurInfoCard accent='emerald' className='flex flex-col items-center gap-3 text-center' data-testid='calendar-training-prompt-card' padding='md' tone='accent'>
+          <KangurStatusChip accent='emerald' size='sm'>
+            Kalendarz
+          </KangurStatusChip>
+          <p id='calendar-training-question-title' className='text-lg font-extrabold text-green-800'>
+            {question.question}
+          </p>
+        </KangurInfoCard>
       </KangurGlassPanel>
 
       <div

@@ -58,7 +58,10 @@ vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   useSettingsStore: () => settingsStoreMock,
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/ui')>();
+  return {
+  ...actual,
   Badge: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
   Breadcrumbs: () => <div data-testid='breadcrumbs' />,
   Button: (props: any) => (
@@ -94,7 +97,8 @@ vi.mock('@/shared/ui', () => ({
   Textarea: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => <textarea {...props} />,
   TreeRow: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   useToast: () => ({ toast: toastMock }),
-}));
+  };
+});
 
 vi.mock('@/shared/ui/templates/modals', () => ({
   ConfirmModal: () => null,

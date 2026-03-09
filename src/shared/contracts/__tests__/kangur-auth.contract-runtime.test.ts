@@ -14,12 +14,12 @@ describe('kangur auth contract runtime', () => {
       kangurParentAccountCreateSchema.parse({
         email: 'parent@example.com',
         password: 'Strong123!',
-        callbackUrl: '/kangur/tests?focus=division',
+        callbackUrl: '/tests?focus=division',
       })
     ).toEqual({
       email: 'parent@example.com',
       password: 'Strong123!',
-      callbackUrl: '/kangur/tests?focus=division',
+      callbackUrl: '/tests?focus=division',
     });
 
     const accountPayload = {
@@ -33,7 +33,7 @@ describe('kangur auth contract runtime', () => {
         'Sprawdz email rodzica. Konto zostanie utworzone po potwierdzeniu adresu, a AI Tutor odblokuje sie po weryfikacji.',
       debug: {
         verificationUrl:
-          'https://example.com/kangur/login?callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-1',
+          'https://example.com/kangur/login?callbackUrl=%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-1',
       },
     };
     expect(kangurParentAccountActionResponseSchema.safeParse(accountPayload).success).toBe(true);
@@ -42,7 +42,7 @@ describe('kangur auth contract runtime', () => {
     const verifyPayload = {
       ok: true,
       email: 'parent@example.com',
-      callbackUrl: '/kangur/tests?focus=division',
+      callbackUrl: '/tests?focus=division',
       emailVerified: true,
       message:
         'Email zostal zweryfikowany. Konto rodzica jest gotowe, AI Tutor jest odblokowany i mozesz zalogowac sie emailem oraz haslem.',

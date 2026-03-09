@@ -1,14 +1,20 @@
 import type {
   KangurLesson,
   KangurLessonDocument,
+  KangurLessonInlineBlock,
   KangurLessonDocumentStore,
   KangurLessonPage,
+  KangurLessonRootBlock,
 } from '@/shared/contracts/kangur';
 import type { KangurTestQuestionStore } from '@/shared/contracts/kangur-tests';
 
 import { countLessonsRequiringLegacyImport } from './utils';
 import { hasKangurLessonDocumentContent, resolveKangurLessonDocumentPages } from '../lesson-documents';
-import { buildKangurLessonDocumentNarrationScript, hasKangurLessonNarrationContent } from '../tts/script';
+import {
+  buildKangurLessonDocumentNarrationScript,
+  buildKangurLessonDocumentNarrationSignature,
+  hasKangurLessonNarrationContent,
+} from '../tts/script';
 
 export type KangurLessonAuthoringFilter =
   | 'all'
@@ -47,12 +53,15 @@ export type KangurLessonAuthoringStatus = {
 export type KangurLessonDocumentValidation = {
   warnings: string[];
   blockers: string[];
+  publishBlockers: string[];
   pageCount: number;
   blockCount: number;
   hasMeaningfulContent: boolean;
   hasNarrationContent: boolean;
   hasNarrationWarning: boolean;
+  hasNarrationStale: boolean;
   hasStructuralWarnings: boolean;
+  narrationState: 'waiting' | 'missing' | 'stale' | 'ready';
 };
 
 export type KangurLessonPageValidation = {
@@ -62,6 +71,19 @@ export type KangurLessonPageValidation = {
   hasStructuralWarnings: boolean;
   issueCount: number;
   isEmpty: boolean;
+  narrationCoverage: KangurLessonPageNarrationCoverage;
+};
+
+export type KangurLessonPageNarrationCoverage = {
+  explicitOverrideCount: number;
+  visualBlockCount: number;
+  activityBlockCount: number;
+  visualBlocksNeedingDescriptions: number;
+  activityBlocksUsingDefaultNarration: number;
+  hasNarrationContent: boolean;
+  state: 'waiting' | 'needs-review' | 'ready';
+  summaryLabel: string;
+  detail: string;
 };
 
 const getLessonNarrationPresence = (
@@ -194,6 +216,16 @@ export const matchesKangurLessonAuthoringFilter = (
 
 const stripHtml = (value: string): string => value.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 
+const collectInlineBlocks = (block: KangurLessonRootBlock): KangurLessonInlineBlock[] => {
+  if (block.type === 'grid') {
+    return block.items.map((item) => item.block);
+  }
+  if (block.type === 'text' || block.type === 'svg' || block.type === 'image') {
+    return [block];
+  }
+  return [];
+};
+
 const hasMeaningfulPageBlockContent = (block: KangurLessonPage['blocks'][number]): boolean => {
   if (block.type === 'text') {
     return stripHtml(block.html).length > 0;
@@ -227,6 +259,117 @@ const hasMeaningfulPageBlockContent = (block: KangurLessonPage['blocks'][number]
   return false;
 };
 
+export const summarizeKangurLessonPageNarrationCoverage = (
+  page: KangurLessonPage
+): KangurLessonPageNarrationCoverage => {
+  let explicitOverrideCount = 0;
+  let visualBlockCount = 0;
+  let activityBlockCount = 0;
+  let visualBlocksNeedingDescriptions = 0;
+  let activityBlocksUsingDefaultNarration = 0;
+
+  for (const block of page.blocks) {
+    if (block.type === 'activity') {
+      activityBlockCount += 1;
+      if (block.ttsDescription?.trim()) {
+        explicitOverrideCount += 1;
+      } else {
+        activityBlocksUsingDefaultNarration += 1;
+      }
+    } else if (block.type === 'callout' || block.type === 'quiz') {
+      if (block.ttsText?.trim()) {
+        explicitOverrideCount += 1;
+      }
+    }
+
+    for (const inlineBlock of collectInlineBlocks(block)) {
+      if (inlineBlock.type === 'text') {
+        if (inlineBlock.ttsText?.trim()) {
+          explicitOverrideCount += 1;
+        }
+        continue;
+      }
+
+      if (inlineBlock.type === 'svg') {
+        visualBlockCount += 1;
+        if (inlineBlock.ttsDescription?.trim()) {
+          explicitOverrideCount += 1;
+        } else if (inlineBlock.title.trim().length === 0) {
+          visualBlocksNeedingDescriptions += 1;
+        }
+        continue;
+      }
+
+      visualBlockCount += 1;
+      if (inlineBlock.ttsDescription?.trim()) {
+        explicitOverrideCount += 1;
+      } else if (
+        (inlineBlock.caption?.trim().length ?? 0) === 0 &&
+        (inlineBlock.altText?.trim().length ?? 0) === 0 &&
+        inlineBlock.title.trim().length === 0
+      ) {
+        visualBlocksNeedingDescriptions += 1;
+      }
+    }
+  }
+
+  const hasMeaningfulContent = page.blocks.some((block) => hasMeaningfulPageBlockContent(block));
+  const hasNarrationContent = hasMeaningfulContent;
+  const issueCount = visualBlocksNeedingDescriptions + activityBlocksUsingDefaultNarration;
+
+  if (!hasNarrationContent) {
+    return {
+      explicitOverrideCount,
+      visualBlockCount,
+      activityBlockCount,
+      visualBlocksNeedingDescriptions,
+      activityBlocksUsingDefaultNarration,
+      hasNarrationContent,
+      state: 'waiting',
+      summaryLabel: 'Waiting for content',
+      detail: 'Add visible learner content before reviewing narration for this page.',
+    };
+  }
+
+  if (issueCount > 0) {
+    return {
+      explicitOverrideCount,
+      visualBlockCount,
+      activityBlockCount,
+      visualBlocksNeedingDescriptions,
+      activityBlocksUsingDefaultNarration,
+      hasNarrationContent,
+      state: 'needs-review',
+      summaryLabel:
+        issueCount === 1 ? '1 narration issue' : `${issueCount} narration issues`,
+      detail:
+        visualBlocksNeedingDescriptions > 0
+          ? visualBlocksNeedingDescriptions === 1
+            ? 'Add a spoken description for 1 visual block on this page.'
+            : `Add spoken descriptions for ${visualBlocksNeedingDescriptions} visual blocks on this page.`
+          : activityBlocksUsingDefaultNarration === 1
+            ? '1 activity still uses generic default narration on this page.'
+            : `${activityBlocksUsingDefaultNarration} activities still use generic default narration on this page.`,
+    };
+  }
+
+  return {
+    explicitOverrideCount,
+    visualBlockCount,
+    activityBlockCount,
+    visualBlocksNeedingDescriptions,
+    activityBlocksUsingDefaultNarration,
+    hasNarrationContent,
+    state: 'ready',
+    summaryLabel:
+      explicitOverrideCount > 0 ? 'Narration ready' : 'Auto narration ready',
+    detail:
+      explicitOverrideCount > 0
+        ? 'Narration overrides and visual descriptions are in good shape for this page.'
+        : 'This page can narrate directly from its visible learner content.',
+  };
+};
+
 export const validateKangurLessonPageDraft = (
   page: KangurLessonPage
 ): KangurLessonPageValidation => {
@@ -240,6 +383,7 @@ export const validateKangurLessonPageDraft = (
   const blockCount = page.blocks.length;
   const hasMeaningfulContent = page.blocks.some((block) => hasMeaningfulPageBlockContent(block));
   const isEmpty = blockCount === 0;
+  const narrationCoverage = summarizeKangurLessonPageNarrationCoverage(page);
 
   if (isEmpty) {
     pushIssue('This page has no blocks yet.');
@@ -302,6 +446,7 @@ export const validateKangurLessonPageDraft = (
     hasStructuralWarnings: issueCount > 0,
     issueCount,
     isEmpty,
+    narrationCoverage,
   };
 };
 
@@ -315,11 +460,14 @@ export const validateKangurLessonDocumentDraft = ({
   const pages = resolveKangurLessonDocumentPages(document);
   const warnings: string[] = [];
   const blockers: string[] = [];
+  const publishBlockers: string[] = [];
   const pageValidations = pages.map((page) => validateKangurLessonPageDraft(page));
   let structuralWarningCount = 0;
   const blockCount = pages.reduce((total, page) => total + page.blocks.length, 0);
   const hasMeaningfulContent = hasKangurLessonDocumentContent(document);
   let hasNarrationWarning = false;
+  let hasNarrationStale = false;
+  let narrationState: KangurLessonDocumentValidation['narrationState'] = 'waiting';
 
   const pushStructuralWarning = (message: string): void => {
     warnings.push(message);
@@ -328,6 +476,7 @@ export const validateKangurLessonDocumentDraft = ({
 
   if (lesson !== null && lesson.title.trim().length === 0) {
     blockers.push('Lesson title is required before saving.');
+    publishBlockers.push('Lesson title is required before publishing.');
   }
 
   for (const pageValidation of pageValidations) {
@@ -340,19 +489,47 @@ export const validateKangurLessonDocumentDraft = ({
     lesson !== null &&
     hasMeaningfulContent &&
     getLessonNarrationPresence(lesson, document);
-  if (lesson !== null && hasMeaningfulContent && !hasNarrationContent) {
+  if (!hasMeaningfulContent) {
+    narrationState = 'waiting';
+    publishBlockers.push('Add visible learner content before publishing this lesson.');
+  } else if (lesson !== null && !hasNarrationContent) {
+    narrationState = 'missing';
     warnings.push('Narration is still empty for this lesson draft.');
+    publishBlockers.push('Generate or review narration before publishing this lesson.');
     hasNarrationWarning = true;
+  } else if (lesson !== null && hasNarrationContent) {
+    const previewSourceSignature = document.narration?.previewSourceSignature?.trim();
+    const currentNarrationSignature = buildKangurLessonDocumentNarrationSignature({
+      lessonId: lesson.id,
+      title: lesson.title,
+      description: lesson.description,
+      document,
+      voice: document.narration?.voice,
+      locale: document.narration?.locale,
+    });
+
+    if (previewSourceSignature && previewSourceSignature !== currentNarrationSignature) {
+      narrationState = 'stale';
+      hasNarrationWarning = true;
+      hasNarrationStale = true;
+      warnings.push('Narration preview needs refresh after content or voice changes.');
+      publishBlockers.push('Refresh narration preview before publishing this lesson.');
+    } else {
+      narrationState = 'ready';
+    }
   }
 
   return {
     warnings,
     blockers,
+    publishBlockers,
     pageCount: pages.length,
     blockCount,
     hasMeaningfulContent,
     hasNarrationContent,
     hasNarrationWarning,
+    hasNarrationStale,
     hasStructuralWarnings: structuralWarningCount > 0,
+    narrationState,
   };
 };

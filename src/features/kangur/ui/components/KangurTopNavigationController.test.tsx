@@ -22,9 +22,9 @@ const LESSONS_NAVIGATION = {
   onLogout: (): void => {},
 };
 
-const TESTS_NAVIGATION = {
+const GAME_NAVIGATION = {
   ...LESSONS_NAVIGATION,
-  currentPage: 'Tests' as const,
+  currentPage: 'Game' as const,
   showParentDashboard: false,
 };
 
@@ -54,14 +54,14 @@ describe('KangurTopNavigationController', () => {
     expect(screen.getByTestId('kangur-primary-nav-parent-dashboard')).toBeInTheDocument();
 
     rerender(
-      <KangurTopNavigationProvider>
-        <KangurTopNavigationHost />
-        <KangurTopNavigationController navigation={TESTS_NAVIGATION} />
-      </KangurTopNavigationProvider>
-    );
+        <KangurTopNavigationProvider>
+          <KangurTopNavigationHost />
+          <KangurTopNavigationController navigation={GAME_NAVIGATION} />
+        </KangurTopNavigationProvider>
+      );
 
     expect(screen.getAllByRole('navigation', { name: /glowna nawigacja kangur/i })).toHaveLength(1);
-    expect(screen.getByTestId('kangur-primary-nav-tests')).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByTestId('kangur-primary-nav-home')).toHaveAttribute('aria-current', 'page');
     expect(screen.queryByTestId('kangur-primary-nav-parent-dashboard')).toBeNull();
   });
 });

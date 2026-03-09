@@ -19,8 +19,8 @@ function buildFormData(overrides: Partial<QuestionFormData> = {}): QuestionFormD
   return {
     prompt: 'Which option is correct?',
     choices: [
-      { label: 'A', text: 'First answer' },
-      { label: 'B', text: 'Second answer' },
+      { label: 'A', text: 'First answer', svgContent: '' },
+      { label: 'B', text: 'Second answer', svgContent: '' },
     ],
     correctChoiceLabel: 'A',
     pointValue: 3,
@@ -33,6 +33,11 @@ function buildFormData(overrides: Partial<QuestionFormData> = {}): QuestionFormD
         { id: 'panel-b', label: 'B', svgContent: '', description: '' },
       ],
     },
+    stemDocument: null,
+    explanationDocument: null,
+    hintDocument: null,
+    presentation: { layout: 'classic', choiceStyle: 'list' },
+    editorial: { source: 'manual', reviewStatus: 'ready', auditFlags: [] },
     ...overrides,
   };
 }
@@ -79,8 +84,8 @@ describe('KangurTestQuestionEditor', () => {
       <StatefulQuestionEditorHarness
         initialValue={buildFormData({
           choices: [
-            { label: 'Z', text: 'First answer' },
-            { label: 'Y', text: 'Second answer' },
+            { label: 'Z', text: 'First answer', svgContent: '' },
+            { label: 'Y', text: 'Second answer', svgContent: '' },
           ],
           correctChoiceLabel: 'Y',
         })}
@@ -106,6 +111,55 @@ describe('KangurTestQuestionEditor', () => {
 
     const panelLabelInputs = screen.getAllByLabelText('Panel label') as HTMLInputElement[];
     expect(panelLabelInputs[0]?.value).toBe('Z');
+  });
+
+  it('shows legacy review metadata when present', () => {
+    render(
+      <StatefulQuestionEditorHarness
+        initialValue={buildFormData({
+          presentation: { layout: 'classic', choiceStyle: 'grid' },
+          editorial: {
+            source: 'legacy-import',
+            reviewStatus: 'needs-review',
+            auditFlags: ['legacy_choice_descriptions'],
+          },
+        })}
+      />
+    );
+
+    expect(screen.getAllByText('Needs review').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Choice grid').length).toBeGreaterThan(0);
+    expect(screen.getByText('legacy choice descriptions')).toBeInTheDocument();
+    expect(screen.getByText('Question review')).toBeInTheDocument();
+    expect(screen.getByText('Review before publish')).toBeInTheDocument();
+    expect(
+      screen.getByText('Add an explanation so learners can review the reasoning after answering.')
+    ).toBeInTheDocument();
+  });
+
+  it('shows structural blockers when the draft is not save-ready', () => {
+    render(
+      <StatefulQuestionEditorHarness
+        initialValue={buildFormData({
+          prompt: '',
+          explanation: '',
+          choices: [{ label: 'A', text: '', svgContent: '' }],
+          correctChoiceLabel: 'B',
+        })}
+      />
+    );
+
+    expect(screen.getAllByText('Needs fixes').length).toBeGreaterThan(0);
+    const requiredSection = screen.getByText('Required before save').parentElement;
+    const reviewSection = screen.getByText('Review before publish').parentElement;
+
+    expect(requiredSection).not.toBeNull();
+    expect(reviewSection).not.toBeNull();
+    expect(requiredSection?.textContent).toContain('Add the learner-facing question prompt.');
+    expect(requiredSection?.textContent).toContain('Every answer choice needs visible text.');
+    expect(reviewSection?.textContent).toContain(
+      'Add an explanation so learners can review the reasoning after answering.'
+    );
   });
 
   it('falls back to the questions manager runtime suite title when no override is provided', () => {

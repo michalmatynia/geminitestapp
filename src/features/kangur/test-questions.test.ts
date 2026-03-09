@@ -6,14 +6,18 @@ import {
   deleteKangurTestQuestion,
   deleteKangurTestSuiteQuestions,
   formDataToQuestion,
+  getQuestionReviewStatus,
   getQuestionsForSuite,
+  hasRichChoiceContent,
   hasIllustration,
   nextChoiceLabel,
   parseKangurTestQuestionStore,
+  questionDocumentNeedsRichRenderer,
   reorderQuestions,
   sanitizeQuestionIllustration,
   toQuestionFormData,
   upsertKangurTestQuestion,
+  usesRichQuestionPresentation,
 } from '@/features/kangur/test-questions';
 import type { KangurTestQuestion, KangurTestQuestionStore } from '@/shared/contracts/kangur-tests';
 
@@ -23,13 +27,15 @@ const makeQuestion = (overrides: Partial<KangurTestQuestion> = {}): KangurTestQu
   sortOrder: 1000,
   prompt: 'What is 2+2?',
   choices: [
-    { label: 'A', text: '3' },
-    { label: 'B', text: '4' },
-    { label: 'C', text: '5' },
+    { label: 'A', text: '3', svgContent: '' },
+    { label: 'B', text: '4', svgContent: '' },
+    { label: 'C', text: '5', svgContent: '' },
   ],
   correctChoiceLabel: 'B',
   pointValue: 3,
   illustration: { type: 'none' },
+  presentation: { layout: 'classic', choiceStyle: 'list' },
+  editorial: { source: 'manual', reviewStatus: 'ready', auditFlags: [] },
   ...overrides,
 });
 
@@ -120,6 +126,64 @@ describe('hasIllustration', () => {
         })
       )
     ).toBe(true);
+  });
+});
+
+describe('rich question metadata helpers', () => {
+  it('detects rich choice content from descriptions or choice SVG', () => {
+    expect(
+      hasRichChoiceContent(
+        makeQuestion({
+          choices: [
+            { label: 'A', text: '3', description: 'Small hint', svgContent: '' },
+            { label: 'B', text: '4', svgContent: '' },
+          ],
+        })
+      )
+    ).toBe(true);
+
+    expect(hasRichChoiceContent(makeQuestion())).toBe(false);
+  });
+
+  it('detects non-classic presentation and exposes editorial status', () => {
+    const question = makeQuestion({
+      presentation: { layout: 'split-illustration-right', choiceStyle: 'grid' },
+      editorial: {
+        source: 'legacy-import',
+        reviewStatus: 'needs-review',
+        auditFlags: ['legacy_choice_descriptions'],
+      },
+    });
+
+    expect(usesRichQuestionPresentation(question)).toBe(true);
+    expect(getQuestionReviewStatus(question)).toBe('needs-review');
+  });
+
+  it('treats plain mirrored prompt documents as non-rich, but richer block sets as rich', () => {
+    const plainQuestion = makeQuestion();
+    expect(questionDocumentNeedsRichRenderer(plainQuestion.stemDocument, plainQuestion.prompt)).toBe(
+      false
+    );
+
+    const richQuestion = makeQuestion({
+      stemDocument: {
+        version: 1,
+        blocks: [
+          {
+            id: 'stem-callout',
+            type: 'callout',
+            variant: 'info',
+            title: 'Hint',
+            html: '<p>Rich content</p>',
+            ttsText: '',
+          },
+        ],
+      },
+    });
+
+    expect(questionDocumentNeedsRichRenderer(richQuestion.stemDocument, richQuestion.prompt)).toBe(
+      true
+    );
   });
 });
 
@@ -338,8 +402,8 @@ describe('formDataToQuestion', () => {
       {
         prompt: '  Co widzisz?  ',
         choices: [
-          { label: 'A', text: 'Kwadrat' },
-          { label: 'B', text: 'Trojkat' },
+          { label: 'A', text: 'Kwadrat', description: 'Panel A', svgContent: '' },
+          { label: 'B', text: 'Trojkat', svgContent: '' },
         ],
         correctChoiceLabel: 'A',
         pointValue: 3,
@@ -357,6 +421,11 @@ describe('formDataToQuestion', () => {
             },
           ],
         },
+        stemDocument: null,
+        explanationDocument: null,
+        hintDocument: null,
+        presentation: { layout: 'classic', choiceStyle: 'grid' },
+        editorial: { source: 'manual', reviewStatus: 'ready', auditFlags: [] },
       },
       'question-save',
       'suite-1',
@@ -369,6 +438,7 @@ describe('formDataToQuestion', () => {
     expect(
       question.illustration.type === 'panels' ? question.illustration.panels[0]?.svgContent : ''
     ).not.toContain('image.png');
+    expect(question.presentation.choiceStyle).toBe('grid');
   });
 });
 

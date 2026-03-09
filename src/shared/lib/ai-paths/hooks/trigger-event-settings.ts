@@ -10,6 +10,7 @@ import {
   sanitizeTriggerPathConfig,
 } from '@/shared/lib/ai-paths/core/normalization/trigger-normalization';
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
+import { persistLegacyTriggerContextModeRepair } from '@/shared/lib/ai-paths/legacy-trigger-context-mode-persistence';
 import { resolvePortablePathInput } from '@/shared/lib/ai-paths/portable-engine';
 import {
   fetchAiPathsSettingsCached,
@@ -122,6 +123,24 @@ export const loadTriggerSettingsData = async (args: {
 export const sanitizeLoadedPathConfig = (config: PathConfig): PathConfig =>
   sanitizeTriggerPathConfig(config);
 
+const createStoredPathConfigFallback = (pathId: string): PathConfig => {
+  const baseConfig = createDefaultPathConfig(pathId);
+  return {
+    ...baseConfig,
+    nodes: [],
+    edges: [],
+    parserSamples: {},
+    updaterSamples: {},
+    runtimeState: { inputs: {}, outputs: {} },
+    uiState: {
+      selectedNodeId: null,
+      configOpen: false,
+    },
+    lastRunAt: null,
+    runCount: 0,
+  };
+};
+
 export const loadPathConfigsFromSettings = async (
   settingsData?: Array<{ key: string; value: string }>
 ): Promise<{
@@ -207,7 +226,7 @@ export const loadPathConfigsFromSettings = async (
       nodeCodeObjectHashVerificationMode: 'warn',
     });
     const resolvedConfigError = resolvedConfig.ok ? null : resolvedConfig.error;
-    const baseConfig = createDefaultPathConfig(meta.id);
+    const baseConfig = createStoredPathConfigFallback(meta.id);
     const mergedConfig =
       resolvedConfig.ok
         ? resolvedConfig.value.pathConfig
@@ -236,6 +255,13 @@ export const loadPathConfigsFromSettings = async (
     }
 
     const normalizedConfig = sanitizeLoadedPathConfig(mergedConfig);
+    void persistLegacyTriggerContextModeRepair({
+      pathId: meta.id,
+      rawPayload: configRaw,
+      repairedConfig: normalizedConfig,
+      source: 'useAiPathTriggerEvent',
+      action: 'persistLegacyTriggerContextModeRepair',
+    });
     const normalizedId = typeof normalizedConfig.id === 'string' ? normalizedConfig.id.trim() : '';
     if (!normalizedId || normalizedId !== meta.id) {
       throw validationError('AI Path config id does not match index entry.', {

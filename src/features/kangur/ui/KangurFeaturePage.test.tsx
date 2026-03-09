@@ -80,7 +80,7 @@ describe('KangurFeaturePage', () => {
       'min-h-screen'
     );
     expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
-      pageKey: 'Tests',
+      pageKey: null,
       requestedPath: '/kangur/tests',
       basePath: '/kangur',
       embedded: false,
@@ -91,7 +91,7 @@ describe('KangurFeaturePage', () => {
     render(<KangurFeaturePage slug={['tests']} basePath='/' />);
 
     expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
-      pageKey: 'Tests',
+      pageKey: null,
       requestedPath: '/tests',
       basePath: '/',
       embedded: false,
@@ -114,13 +114,13 @@ describe('KangurFeaturePage', () => {
       'persist'
     );
     expect(kangurRoutingProviderMock).toHaveBeenLastCalledWith({
-      pageKey: 'Tests',
+      pageKey: null,
       requestedPath: '/home?preview=1&kangur-app-embed-a=tests',
       basePath: '__kangur_embed__:app-embed-a::/home?preview=1',
       embedded: true,
     });
     expect(setKangurClientObservabilityContextMock).toHaveBeenLastCalledWith({
-      pageKey: 'Tests',
+      pageKey: null,
       requestedPath: '/home?preview=1&kangur-app-embed-a=tests',
     });
   });

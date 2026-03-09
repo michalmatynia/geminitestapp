@@ -4,16 +4,28 @@ import type { JSX } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
-import {
-  useKangurLessonsRuntimeActions,
-  useKangurLessonsRuntimeState,
-} from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
+import { useKangurLessonSubsectionNavigationActive } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
+import { useOptionalKangurLessonsRuntime } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
+import type { KangurLesson } from '@/shared/contracts/kangur';
 
-export function KangurLessonNavigationWidget(): JSX.Element | null {
-  const { prevLesson, nextLesson } = useKangurLessonsRuntimeState();
-  const { selectLesson } = useKangurLessonsRuntimeActions();
+type KangurLessonNavigationWidgetProps = {
+  prevLesson?: KangurLesson | null;
+  nextLesson?: KangurLesson | null;
+  onSelectLesson?: (lessonId: string) => void;
+};
 
-  if (!prevLesson && !nextLesson) {
+export function KangurLessonNavigationWidget({
+  prevLesson: overridePrevLesson,
+  nextLesson: overrideNextLesson,
+  onSelectLesson,
+}: KangurLessonNavigationWidgetProps = {}): JSX.Element | null {
+  const runtime = useOptionalKangurLessonsRuntime();
+  const isSubsectionNavigationActive = useKangurLessonSubsectionNavigationActive();
+  const prevLesson = overridePrevLesson ?? runtime?.prevLesson ?? null;
+  const nextLesson = overrideNextLesson ?? runtime?.nextLesson ?? null;
+  const handleSelectLesson = onSelectLesson ?? runtime?.selectLesson;
+
+  if (isSubsectionNavigationActive || !handleSelectLesson || (!prevLesson && !nextLesson)) {
     return null;
   }
 
@@ -21,16 +33,14 @@ export function KangurLessonNavigationWidget(): JSX.Element | null {
     <div className='mt-2 flex w-full gap-3'>
       {prevLesson ? (
         <KangurButton
-          onClick={() => selectLesson(prevLesson.id)}
+          onClick={() => handleSelectLesson(prevLesson.id)}
           className='flex-1 justify-start'
           size='lg'
           variant='surface'
           data-doc-id='lessons_prev_next'
         >
           <ChevronLeft className='h-4 w-4 flex-shrink-0' />
-          <span>
-            {prevLesson.emoji} {prevLesson.title}
-          </span>
+          <span>{prevLesson.title}</span>
         </KangurButton>
       ) : (
         <div className='flex-1' />
@@ -38,15 +48,13 @@ export function KangurLessonNavigationWidget(): JSX.Element | null {
 
       {nextLesson ? (
         <KangurButton
-          onClick={() => selectLesson(nextLesson.id)}
+          onClick={() => handleSelectLesson(nextLesson.id)}
           className='flex-1 justify-end'
           size='lg'
           variant='surface'
           data-doc-id='lessons_prev_next'
         >
-          <span>
-            {nextLesson.emoji} {nextLesson.title}
-          </span>
+          <span>{nextLesson.title}</span>
           <ChevronRight className='h-4 w-4 flex-shrink-0' />
         </KangurButton>
       ) : (

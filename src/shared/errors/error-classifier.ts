@@ -13,7 +13,10 @@ type ApiErrorLike = {
 };
 
 const ERROR_PATTERNS = [
-  [/connection|network|timeout|refused|reset|fetch/i, ERROR_CATEGORY.NETWORK],
+  [
+    /\b(connection|network|timeout|refused|reset)\b|failed to fetch|\bfetch\b|network request failed/i,
+    ERROR_CATEGORY.NETWORK,
+  ],
   [/auth|login|permission|access|unauthorized|forbidden|jwt|session/i, ERROR_CATEGORY.AUTH],
   [/not found/i, ERROR_CATEGORY.VALIDATION],
   [/validation|invalid|missing|required|wrong format|bad request/i, ERROR_CATEGORY.VALIDATION],
@@ -58,6 +61,9 @@ export function classifyError(error: unknown): ErrorCategory {
   const message = error instanceof Error ? error.message : String(error);
 
   if (/includes unsupported keys/i.test(message)) {
+    return ERROR_CATEGORY.VALIDATION;
+  }
+  if (/removed legacy trigger context modes/i.test(message)) {
     return ERROR_CATEGORY.VALIDATION;
   }
 
@@ -131,6 +137,15 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
       break;
 
     case ERROR_CATEGORY.VALIDATION:
+      if (/removed legacy trigger context modes/i.test(message)) {
+        actions.push({
+          label: 'Repair AI Path',
+          description:
+            'Update Trigger nodes to `trigger_only` and resolve entity context through downstream Fetcher or Simulation nodes.',
+          actionType: 'CHECK_CONFIG',
+        });
+        break;
+      }
       if (
         /agent persona settings payload includes unsupported keys/i.test(message) ||
         /agent persona payload includes unsupported keys/i.test(message)

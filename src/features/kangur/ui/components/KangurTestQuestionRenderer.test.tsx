@@ -5,6 +5,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+vi.mock('@/features/kangur/ui/components/KangurLessonNarrator', () => ({
+  KangurLessonNarrator: ({ readLabel }: { readLabel: string }) => <button>{readLabel}</button>,
+}));
+
 import { KangurTestQuestionRenderer } from '@/features/kangur/ui/components/KangurTestQuestionRenderer';
 import type { KangurTestQuestion } from '@/shared/contracts/kangur-tests';
 
@@ -14,13 +18,15 @@ const question: KangurTestQuestion = {
   sortOrder: 1000,
   prompt: 'Ile to jest 2 + 2?',
   choices: [
-    { label: 'A', text: '4' },
-    { label: 'B', text: '5' },
+    { label: 'A', text: '4', svgContent: '' },
+    { label: 'B', text: '5', svgContent: '' },
   ],
   correctChoiceLabel: 'A',
   pointValue: 3,
   explanation: '2 + 2 = 4.',
   illustration: { type: 'none' },
+  presentation: { layout: 'classic', choiceStyle: 'list' },
+  editorial: { source: 'manual', reviewStatus: 'ready', auditFlags: [] },
 };
 
 describe('KangurTestQuestionRenderer', () => {
@@ -83,5 +89,37 @@ describe('KangurTestQuestionRenderer', () => {
       'border-emerald-300'
     );
     expect(screen.getByRole('button', { name: /A.*4/i })).toHaveClass('border-emerald-300');
+  });
+
+  it('renders rich choice notes and SVG content when configured', () => {
+    render(
+      <KangurTestQuestionRenderer
+        question={{
+          ...question,
+          presentation: { layout: 'split-illustration-right', choiceStyle: 'grid' },
+          choices: [
+            {
+              label: 'A',
+              text: '4',
+              description: 'Kwadrat z czterema kropkami',
+              svgContent:
+                '<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><circle cx="15" cy="15" r="5"/><circle cx="45" cy="15" r="5"/><circle cx="15" cy="45" r="5"/><circle cx="45" cy="45" r="5"/></svg>',
+            },
+            { label: 'B', text: '5', svgContent: '' },
+          ],
+          illustration: {
+            type: 'single',
+            svgContent:
+              '<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="8" width="44" height="44" fill="none" stroke="black"/></svg>',
+          },
+        }}
+        selectedLabel={null}
+        onSelect={vi.fn()}
+        showAnswer={false}
+      />
+    );
+
+    expect(screen.getByText('Kwadrat z czterema kropkami')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-illustration-single-frame')).toBeInTheDocument();
   });
 });

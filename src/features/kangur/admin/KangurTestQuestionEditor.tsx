@@ -14,6 +14,7 @@ import {
   useKangurTestQuestionEditorContext,
 } from './context/KangurTestQuestionEditorContext';
 import { useOptionalKangurQuestionsManagerRuntimeContext } from './context/KangurQuestionsManagerRuntimeContext';
+import { getQuestionAuthoringSummary } from './question-authoring-insights';
 
 const POINT_VALUE_OPTIONS = [
   { value: '1', label: '1 pt' },
@@ -23,10 +24,23 @@ const POINT_VALUE_OPTIONS = [
   { value: '5', label: '5 pts' },
 ];
 
+const PRESENTATION_LAYOUT_OPTIONS = [
+  { value: 'classic', label: 'Classic stack' },
+  { value: 'split-illustration-left', label: 'Illustration left' },
+  { value: 'split-illustration-right', label: 'Illustration right' },
+];
+
+const CHOICE_STYLE_OPTIONS = [
+  { value: 'list', label: 'Choice list' },
+  { value: 'grid', label: 'Choice grid' },
+];
+
 type Props = {
   formData: QuestionFormData;
   onChange: (next: QuestionFormData) => void;
   suiteTitle?: string;
+  isDirty?: boolean;
+  localDraftSavedAtLabel?: string | null;
 };
 
 export function KangurTestQuestionEditor(props: Props): React.JSX.Element {
@@ -35,12 +49,21 @@ export function KangurTestQuestionEditor(props: Props): React.JSX.Element {
 
   return (
     <KangurTestQuestionEditorProvider {...props} suiteTitle={resolvedSuiteTitle}>
-      <KangurTestQuestionEditorContent />
+      <KangurTestQuestionEditorContent
+        isDirty={props.isDirty}
+        localDraftSavedAtLabel={props.localDraftSavedAtLabel}
+      />
     </KangurTestQuestionEditorProvider>
   );
 }
 
-function KangurTestQuestionEditorContent(): React.JSX.Element {
+function KangurTestQuestionEditorContent({
+  isDirty = false,
+  localDraftSavedAtLabel = null,
+}: {
+  isDirty?: boolean;
+  localDraftSavedAtLabel?: string | null;
+}): React.JSX.Element {
   const { formData, suiteTitle, updateFormData } = useKangurTestQuestionEditorContext();
 
   const previewQuestion: KangurTestQuestion = {
@@ -53,7 +76,25 @@ function KangurTestQuestionEditorContent(): React.JSX.Element {
     pointValue: formData.pointValue,
     explanation: formData.explanation || undefined,
     illustration: formData.illustration,
+    stemDocument: formData.stemDocument ?? undefined,
+    explanationDocument: formData.explanationDocument ?? undefined,
+    hintDocument: formData.hintDocument ?? undefined,
+    presentation: formData.presentation,
+    editorial: formData.editorial,
   };
+  const authoringSummary = getQuestionAuthoringSummary(previewQuestion);
+  const statusBadgeClassName =
+    authoringSummary.status === 'needs-fix'
+      ? 'border-rose-400/40 text-[10px] text-rose-300'
+      : authoringSummary.status === 'needs-review'
+        ? 'border-amber-400/40 text-[10px] text-amber-300'
+        : 'border-emerald-400/40 text-[10px] text-emerald-300';
+  const statusLabel =
+    authoringSummary.status === 'needs-fix'
+      ? 'Needs fixes'
+      : authoringSummary.status === 'needs-review'
+        ? 'Needs review'
+        : 'Ready';
 
   return (
     <div className='grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(300px,0.9fr)]'>
@@ -86,6 +127,157 @@ function KangurTestQuestionEditorContent(): React.JSX.Element {
               Has illustration
             </Badge>
           ) : null}
+          {formData.editorial.reviewStatus !== 'ready' ? (
+            <Badge
+              variant='outline'
+              className={
+                formData.editorial.reviewStatus === 'needs-fix'
+                  ? 'border-rose-400/40 text-[10px] text-rose-300'
+                  : 'border-amber-400/40 text-[10px] text-amber-300'
+              }
+            >
+              {formData.editorial.reviewStatus === 'needs-fix' ? 'Needs fix' : 'Needs review'}
+            </Badge>
+          ) : null}
+          {formData.presentation.choiceStyle === 'grid' ? (
+            <Badge variant='outline' className='border-sky-400/40 text-[10px] text-sky-300'>
+              Choice grid
+            </Badge>
+          ) : null}
+          <Badge variant='outline' className='text-[10px]'>
+            {isDirty ? 'Unsaved changes' : 'Saved'}
+          </Badge>
+          <Badge variant='outline' className={statusBadgeClassName}>
+            {statusLabel}
+          </Badge>
+          {localDraftSavedAtLabel ? (
+            <span className='text-[10px] text-muted-foreground'>
+              Local draft autosaved: {localDraftSavedAtLabel}
+            </span>
+          ) : null}
+        </div>
+
+        <div className='grid gap-4 rounded-2xl border border-border/50 bg-card/20 p-4'>
+          <div className='flex flex-wrap items-start justify-between gap-3'>
+            <div className='space-y-1'>
+              <div className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+                Question review
+              </div>
+              <div className='text-sm font-semibold text-white'>Next action</div>
+              <div className='text-sm text-muted-foreground'>{authoringSummary.nextAction}</div>
+            </div>
+            <Badge variant='outline' className={statusBadgeClassName}>
+              {statusLabel}
+            </Badge>
+          </div>
+          <div className='grid gap-3 md:grid-cols-2'>
+            <div className='rounded-xl border border-border/40 bg-background/30 p-3'>
+              <div className='mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+                Required before save
+              </div>
+              {authoringSummary.blockers.length > 0 ? (
+                <ul className='space-y-1 text-sm text-rose-200'>
+                  {authoringSummary.blockers.map((issue) => (
+                    <li key={issue.code}>• {issue.message}</li>
+                  ))}
+                </ul>
+              ) : (
+                <div className='text-sm text-emerald-200'>
+                  No structural blockers. This draft can be saved.
+                </div>
+              )}
+            </div>
+            <div className='rounded-xl border border-border/40 bg-background/30 p-3'>
+              <div className='mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+                Review before publish
+              </div>
+              {authoringSummary.warnings.length > 0 ? (
+                <ul className='space-y-1 text-sm text-amber-100'>
+                  {authoringSummary.warnings.map((issue) => (
+                    <li key={issue.code}>• {issue.message}</li>
+                  ))}
+                </ul>
+              ) : (
+                <div className='text-sm text-emerald-200'>
+                  No review warnings. The question is editorially clean.
+                </div>
+              )}
+            </div>
+          </div>
+          {formData.editorial.note?.trim() ? (
+            <div className='rounded-xl border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100'>
+              {formData.editorial.note.trim()}
+            </div>
+          ) : null}
+        </div>
+
+        <div className='grid gap-3 rounded-2xl border border-border/50 bg-card/20 p-4 md:grid-cols-2'>
+          <div className='space-y-1'>
+            <div className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+              Question layout
+            </div>
+            <SelectSimple
+              size='sm'
+              value={formData.presentation.layout}
+              onValueChange={(value): void => {
+                if (
+                  value !== 'classic' &&
+                  value !== 'split-illustration-left' &&
+                  value !== 'split-illustration-right'
+                ) {
+                  return;
+                }
+                updateFormData({
+                  presentation: {
+                    ...formData.presentation,
+                    layout: value,
+                  },
+                });
+              }}
+              options={PRESENTATION_LAYOUT_OPTIONS}
+              triggerClassName='h-9'
+            />
+          </div>
+          <div className='space-y-1'>
+            <div className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+              Choice style
+            </div>
+            <SelectSimple
+              size='sm'
+              value={formData.presentation.choiceStyle}
+              onValueChange={(value): void => {
+                if (value !== 'list' && value !== 'grid') {
+                  return;
+                }
+                updateFormData({
+                  presentation: {
+                    ...formData.presentation,
+                    choiceStyle: value,
+                  },
+                });
+              }}
+              options={CHOICE_STYLE_OPTIONS}
+              triggerClassName='h-9'
+            />
+          </div>
+          {formData.editorial.auditFlags.length > 0 ? (
+            <div className='space-y-2 md:col-span-2'>
+              <div className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+                Legacy review notes
+              </div>
+              <div className='flex flex-wrap gap-1.5'>
+                {formData.editorial.auditFlags.map((flag) => (
+                  <Badge
+                    key={flag}
+                    variant='outline'
+                    className='border-amber-400/40 text-[10px] text-amber-300'
+                  >
+                    {flag.replaceAll('_', ' ')}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </div>
 
         {/* Prompt */}
@@ -99,6 +291,10 @@ function KangurTestQuestionEditorContent(): React.JSX.Element {
             placeholder='Enter the question text. You can use $$formula$$ markers for math expressions.'
             className='min-h-[100px]'
           />
+          <div className='text-xs text-muted-foreground'>
+            This prompt is also mirrored into the structured question-content engine so richer
+            layouts can evolve without migrating the data again.
+          </div>
         </div>
 
         {/* Choices */}
@@ -123,6 +319,10 @@ function KangurTestQuestionEditorContent(): React.JSX.Element {
             placeholder='Step-by-step explanation of why the correct answer is correct.'
             className='min-h-[80px]'
           />
+          <div className='text-xs text-muted-foreground'>
+            Add the learner-facing explanation here. Imported legacy questions keep any review
+            flags above until they are repaired.
+          </div>
         </div>
       </div>
 

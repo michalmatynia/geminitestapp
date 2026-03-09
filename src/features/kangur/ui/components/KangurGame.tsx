@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { CheckCircle, XCircle } from 'lucide-react';
+import { useState } from 'react';
 
 import KangurExam from '@/features/kangur/ui/components/KangurExam';
 import {
@@ -29,6 +29,7 @@ import {
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_ACCENT_STYLES, type KangurAccent } from '@/features/kangur/ui/design/tokens';
+import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import { getKangurQuestions, isExamMode } from '@/features/kangur/ui/services/kangur-questions';
 import { XP_REWARDS, addXp, loadProgress } from '@/features/kangur/ui/services/progress';
 import type { KangurExamQuestion, KangurQuestionChoice } from '@/features/kangur/ui/types';
@@ -292,6 +293,8 @@ function ResultView({ score, total, onRestart }: ResultViewProps): React.JSX.Ele
 }
 
 function PracticeModeGame(): React.JSX.Element {
+  const prefersReducedMotion = useReducedMotion();
+  const questionMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const { mode } = useKangurGameContext();
   const questions = getKangurQuestions(mode);
   const [current, setCurrent] = useState(0);
@@ -343,9 +346,7 @@ function PracticeModeGame(): React.JSX.Element {
     <AnimatePresence mode='wait'>
       <motion.div
         key={current}
-        initial={{ opacity: 0, x: 30 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -30 }}
+        {...questionMotionProps}
         className='w-full'
       >
         <QuestionView

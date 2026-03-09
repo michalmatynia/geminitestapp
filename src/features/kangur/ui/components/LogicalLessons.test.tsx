@@ -22,11 +22,19 @@ const getParagraphByTextContent = (snippet: string): HTMLElement =>
   );
 
 describe('Logical lessons shared surfaces', () => {
-  it('uses the lighter copy palette in the logical thinking lesson', () => {
+  it('uses the shared lesson hub and lighter copy palette in the logical thinking lesson', () => {
     renderLesson(<LogicalThinkingLesson />);
 
+    expect(screen.getByTestId('lesson-hub-section-wprowadzenie')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-hub-section-wzorce')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-hub-progress-wprowadzenie')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /wprowadzenie/i }));
+
     expect(screen.getByText(/Myślenie logiczne to umiejętność/i)).toHaveClass('text-slate-700');
-    expect(screen.getByText(/Logiczne myślenie pomaga:/i).parentElement).toHaveClass('text-slate-600');
+    expect(screen.getByText(/Logiczne myślenie pomaga:/i).parentElement).toHaveClass(
+      'text-slate-600'
+    );
   });
 
   it('uses the lighter copy palette in the logical patterns lesson', async () => {

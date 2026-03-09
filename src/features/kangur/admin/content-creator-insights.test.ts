@@ -8,10 +8,13 @@ import {
   getKangurLessonAuthoringFilterCounts,
   getKangurLessonAuthoringStatus,
   matchesKangurLessonAuthoringFilter,
+  summarizeKangurLessonPageNarrationCoverage,
   summarizeKangurContentCreator,
+  validateKangurLessonDocumentDraft,
   validateKangurLessonPageDraft,
 } from './content-creator-insights';
 import type { KangurLesson, KangurLessonDocumentStore } from '@/shared/contracts/kangur';
+import { buildKangurLessonDocumentNarrationSignature } from '../tts/script';
 
 const buildLesson = (overrides: Partial<KangurLesson> = {}): KangurLesson => ({
   id: 'lesson-1',
@@ -153,6 +156,94 @@ describe('content creator insights', () => {
         'This page has no visible learner content yet.',
         'One quiz block still needs a question, answer choices, or a correct answer.',
       ])
+    );
+    expect(pageValidation.narrationCoverage.state).toBe('waiting');
+    expect(pageValidation.narrationCoverage.summaryLabel).toBe('Waiting for content');
+  });
+
+  it('summarizes page-level narration coverage for visuals and activities that need review', () => {
+    const coverage = summarizeKangurLessonPageNarrationCoverage({
+      id: 'page-2',
+      sectionKey: '',
+      sectionTitle: '',
+      sectionDescription: '',
+      title: 'Visual practice',
+      description: '',
+      blocks: [
+        {
+          id: 'svg-1',
+          type: 'svg',
+          title: '',
+          markup: '<svg viewBox="0 0 100 100"></svg>',
+          viewBox: '0 0 100 100',
+          align: 'center',
+          fit: 'contain',
+          maxWidth: 420,
+        },
+        {
+          id: 'activity-1',
+          type: 'activity',
+          activityId: 'clock-training',
+          title: '',
+          description: '',
+        },
+      ],
+    });
+
+    expect(coverage.state).toBe('needs-review');
+    expect(coverage.summaryLabel).toBe('2 narration issues');
+    expect(coverage.visualBlockCount).toBe(1);
+    expect(coverage.activityBlockCount).toBe(1);
+    expect(coverage.visualBlocksNeedingDescriptions).toBe(1);
+    expect(coverage.activityBlocksUsingDefaultNarration).toBe(1);
+  });
+
+  it('marks narration as stale when the saved preview signature no longer matches the lesson draft', () => {
+    const lesson = buildLesson({ id: 'lesson-stale', contentMode: 'document' });
+    const baseDocument = {
+      version: 1 as const,
+      narration: {
+        voice: 'coral' as const,
+        locale: 'pl-PL',
+      },
+      blocks: [
+        {
+          id: 'text-1',
+          type: 'text' as const,
+          html: '<p>Visible explanation</p>',
+          align: 'left' as const,
+        },
+      ],
+    };
+    const currentSignature = buildKangurLessonDocumentNarrationSignature({
+      lessonId: lesson.id,
+      title: lesson.title,
+      description: lesson.description,
+      document: baseDocument,
+      voice: baseDocument.narration.voice,
+      locale: baseDocument.narration.locale,
+    });
+
+    const validation = validateKangurLessonDocumentDraft({
+      lesson,
+      document: {
+        ...baseDocument,
+        narration: {
+          ...baseDocument.narration,
+          previewSourceSignature: `${currentSignature}-old`,
+          lastPreviewedAt: '2026-03-09T12:00:00.000Z',
+        },
+      },
+    });
+
+    expect(validation.hasNarrationStale).toBe(true);
+    expect(validation.narrationState).toBe('stale');
+    expect(validation.hasNarrationWarning).toBe(true);
+    expect(validation.warnings).toContain(
+      'Narration preview needs refresh after content or voice changes.'
+    );
+    expect(validation.publishBlockers).toContain(
+      'Refresh narration preview before publishing this lesson.'
     );
   });
 });

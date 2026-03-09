@@ -1,14 +1,13 @@
-import {
-  createDefaultKangurProgressState,
-  normalizeKangurProgressState,
-  type KangurLessonMasteryEntry,
-} from '@/shared/contracts/kangur';
-
 import type {
   KangurAddXpResult,
   KangurProgressState,
   KangurXpRewards,
 } from '@/features/kangur/ui/types';
+import {
+  createDefaultKangurProgressState,
+  normalizeKangurProgressState,
+  type KangurLessonMasteryEntry,
+} from '@/shared/contracts/kangur';
 
 type KangurProgressLevel = {
   level: number;
@@ -38,6 +37,7 @@ export const KANGUR_PROGRESS_EVENT_NAME = 'kangur-progress-changed';
 const DEFAULT_PROGRESS: KangurProgressState = createDefaultKangurProgressState();
 const progressListeners = new Set<(progress: KangurProgressState) => void>();
 let cachedProgressSnapshot: KangurProgressState = cloneProgress(DEFAULT_PROGRESS);
+const SERVER_PROGRESS_SNAPSHOT: KangurProgressState = cachedProgressSnapshot;
 const DEFAULT_PROGRESS_RAW = JSON.stringify(cachedProgressSnapshot);
 let cachedProgressRaw: string | null = DEFAULT_PROGRESS_RAW;
 
@@ -193,6 +193,10 @@ export function loadProgress(): KangurProgressState {
   } catch {
     return updateCachedProgressSnapshot(DEFAULT_PROGRESS);
   }
+}
+
+export function getKangurProgressServerSnapshot(): KangurProgressState {
+  return SERVER_PROGRESS_SNAPSHOT;
 }
 
 export function saveProgress(progress: KangurProgressState): void {

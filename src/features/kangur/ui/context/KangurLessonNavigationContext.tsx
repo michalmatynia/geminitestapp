@@ -1,27 +1,47 @@
 'use client';
 
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
 
 type KangurLessonBackAction = () => void;
 
+export type KangurLessonSubsectionSummary = {
+  emoji: string;
+  title: string;
+  description: string;
+  isGame?: boolean;
+};
+
+export type KangurLessonSecretPill = {
+  isUnlocked: boolean;
+  onOpen: () => void;
+};
+
 type KangurLessonNavigationContextValue = {
   onBack: KangurLessonBackAction;
   isSubsectionNavigationActive: boolean;
   registerSubsectionNavigation: () => () => void;
+  subsectionSummary: KangurLessonSubsectionSummary | null;
+  setSubsectionSummary: (summary: KangurLessonSubsectionSummary | null) => void;
+  secretLessonPill: KangurLessonSecretPill | null;
 };
 
 const KangurLessonNavigationContext = createContext<KangurLessonNavigationContextValue | null>(null);
 
 export function KangurLessonNavigationProvider({
   onBack,
+  secretLessonPill = null,
   children,
 }: {
   onBack: KangurLessonBackAction;
+  secretLessonPill?: KangurLessonSecretPill | null;
   children: ReactNode;
 }): React.JSX.Element {
   const [subsectionNavigationDepth, setSubsectionNavigationDepth] = useState(0);
+  const [subsectionSummary, setSubsectionSummary] = useState<KangurLessonSubsectionSummary | null>(
+    null
+  );
   const registerSubsectionNavigation = useCallback(() => {
     setSubsectionNavigationDepth((currentDepth) => currentDepth + 1);
 
@@ -34,8 +54,11 @@ export function KangurLessonNavigationProvider({
       onBack,
       isSubsectionNavigationActive: subsectionNavigationDepth > 0,
       registerSubsectionNavigation,
+      subsectionSummary,
+      setSubsectionSummary,
+      secretLessonPill: secretLessonPill?.isUnlocked ? secretLessonPill : null,
     }),
-    [onBack, registerSubsectionNavigation, subsectionNavigationDepth]
+    [onBack, registerSubsectionNavigation, secretLessonPill, subsectionNavigationDepth, subsectionSummary]
   );
 
   return (
@@ -80,6 +103,12 @@ export const useKangurLessonBackAction = (
 export const useKangurLessonSubsectionNavigationActive = (): boolean =>
   useContext(KangurLessonNavigationContext)?.isSubsectionNavigationActive ?? false;
 
+export const useKangurLessonSubsectionSummary = (): KangurLessonSubsectionSummary | null =>
+  useContext(KangurLessonNavigationContext)?.subsectionSummary ?? null;
+
+export const useKangurLessonSecretPill = (): KangurLessonSecretPill | null =>
+  useContext(KangurLessonNavigationContext)?.secretLessonPill ?? null;
+
 export const useKangurRegisterLessonSubsectionNavigation = (): (() => () => void) => {
   const context = useContext(KangurLessonNavigationContext);
 
@@ -91,3 +120,30 @@ export const useKangurRegisterLessonSubsectionNavigation = (): (() => () => void
     return context.registerSubsectionNavigation();
   }, [context]);
 };
+
+export const useKangurSyncLessonSubsectionSummary = (
+  summary: KangurLessonSubsectionSummary | null
+): void => {
+  const context = useContext(KangurLessonNavigationContext);
+
+  useEffect(() => {
+    if (!context) {
+      return;
+    }
+
+    context.setSubsectionSummary(summary);
+
+    return () => {
+      context.setSubsectionSummary(null);
+    };
+  }, [context, summary]);
+};
+
+export function KangurLessonSubsectionSummarySync({
+  summary,
+}: {
+  summary: KangurLessonSubsectionSummary | null;
+}): null {
+  useKangurSyncLessonSubsectionSummary(summary);
+  return null;
+}

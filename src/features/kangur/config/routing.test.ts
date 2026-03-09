@@ -22,10 +22,9 @@ describe('kangur routing config', () => {
     expect(resolveKangurPageKeyFromSlug('PROFILE')).toBe('LearnerProfile');
   });
 
-  it('maps tests to the public tests slug', () => {
-    expect(getKangurPageHref('Tests')).toBe('/kangur/tests');
-    expect(resolveKangurPageKeyFromSlug('tests')).toBe('Tests');
-    expect(resolveKangurPageKeyFromSlug('TESTS')).toBe('Tests');
+  it('does not resolve the removed tests slug as a Kangur shell page', () => {
+    expect(resolveKangurPageKeyFromSlug('tests')).toBeNull();
+    expect(resolveKangurPageKeyFromSlug('TESTS')).toBeNull();
   });
 
   it('uses the main Kangur page behind the compatibility login slug', () => {
@@ -45,9 +44,11 @@ describe('kangur routing config', () => {
     expect(getKangurLoginHref('/', 'https://example.com/tests?focus=division')).toBe(
       `/login?callbackUrl=${encodeURIComponent('https://example.com/tests?focus=division')}`
     );
-    expect(getKangurLoginHref('/kangur', 'https://example.com/kangur/tests?focus=division')).toBe(
+    expect(
+      getKangurLoginHref('/kangur', 'https://example.com/kangur/lessons?focus=division')
+    ).toBe(
       `/kangur/login?callbackUrl=${encodeURIComponent(
-        'https://example.com/kangur/tests?focus=division'
+        'https://example.com/kangur/lessons?focus=division'
       )}`
     );
   });
@@ -70,7 +71,7 @@ describe('kangur routing config', () => {
     );
     expect(
       resolveKangurPublicBasePathFromHref(
-        'https://example.com/kangur/tests?focus=division',
+        'https://example.com/kangur/lessons?focus=division',
         'https://example.com'
       )
     ).toBe('/kangur');

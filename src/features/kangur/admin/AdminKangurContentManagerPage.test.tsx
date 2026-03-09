@@ -127,6 +127,11 @@ describe('AdminKangurContentManagerPage', () => {
     render(<AdminKangurContentManagerPage />);
 
     expect(screen.getByText('Kangur Content Manager')).toBeInTheDocument();
+    expect(screen.getByText('Content workspace')).toBeInTheDocument();
+    expect(screen.getByText('Choose workspace')).toBeInTheDocument();
+    expect(screen.getByText('Lessons workspace')).toBeInTheDocument();
+    expect(screen.getByText('Shared surface')).toBeInTheDocument();
+    expect(screen.getByText('Authoring surface')).toBeInTheDocument();
     expect(screen.getByText('Custom content')).toBeInTheDocument();
     expect(screen.getByText('Needs import')).toBeInTheDocument();
     expect(screen.getByText('Needs fixes')).toBeInTheDocument();
@@ -148,6 +153,8 @@ describe('AdminKangurContentManagerPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /tests/i }));
 
     expect(screen.getByText('Tests manager body')).toBeInTheDocument();
+    expect(screen.getByText('Tests workspace')).toBeInTheDocument();
+    expect(screen.getByText('Assessment surface')).toBeInTheDocument();
     expect(testsPageMock).toHaveBeenCalledWith({ standalone: false });
     expect(window.localStorage.getItem('kangur_content_manager_tab_v1')).toBe('tests');
   });

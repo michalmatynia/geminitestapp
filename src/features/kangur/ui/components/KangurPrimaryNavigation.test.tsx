@@ -119,22 +119,6 @@ describe('KangurPrimaryNavigation', () => {
     );
   });
 
-  it('shows the tests link as a first-class navigation destination', () => {
-    render(
-      <KangurPrimaryNavigation
-        basePath='/kangur'
-        currentPage='Lessons'
-        isAuthenticated
-        onLogout={vi.fn()}
-      />
-    );
-
-    expect(screen.getByRole('link', { name: /testy/i })).toHaveAttribute(
-      'href',
-      '/kangur/tests'
-    );
-  });
-
   it('starts the Kangur route transition before navigating to another page', () => {
     render(
       <KangurPrimaryNavigation

@@ -1,19 +1,24 @@
+import { ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 
 import GeometryDrawingGame from '@/features/kangur/ui/components/GeometryDrawingGame';
+import LessonHub from '@/features/kangur/ui/components/LessonHub';
+import LessonSlideSection, {
+  type LessonSlide,
+} from '@/features/kangur/ui/components/LessonSlideSection';
+import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
+import {
+  KangurButton,
+  KangurGlassPanel,
+} from '@/features/kangur/ui/design/primitives';
+import { KangurLessonSubsectionSummarySync } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
+import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 import {
   XP_REWARDS,
   addXp,
   buildLessonMasteryUpdate,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
-import LessonHub from '@/features/kangur/ui/components/LessonHub';
-import LessonSlideSection, {
-  type LessonSlide,
-} from '@/features/kangur/ui/components/LessonSlideSection';
-import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
-import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
-import { KangurButton, KangurGlassPanel } from '@/features/kangur/ui/design/primitives';
 
 type SectionId = 'podstawowe' | 'ile_bokow' | 'game';
 
@@ -112,7 +117,7 @@ export default function GeometryShapesLesson(): React.JSX.Element {
 
   if (activeSection === 'game') {
     return (
-      <div className='flex w-full max-w-md flex-col items-center gap-4'>
+      <div className='flex w-full max-w-lg flex-col items-center gap-4'>
         <KangurButton
           onClick={() => setActiveSection(null)}
           className='self-start'
@@ -120,12 +125,17 @@ export default function GeometryShapesLesson(): React.JSX.Element {
           type='button'
           variant='surface'
         >
-          Wróć do tematów
+          <ArrowLeft className='w-4 h-4' /> Wróć do tematów
         </KangurButton>
-        <KangurGlassPanel data-testid='geometry-shapes-game-shell' className='w-full' padding='xl' surface='solid'>
-          <h2 className='mb-4 text-center text-xl font-extrabold text-slate-800'>
-            🔷 Ćwiczenia z Figurami
-          </h2>
+        <KangurLessonSubsectionSummarySync
+          summary={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
+        />
+        <KangurGlassPanel
+          data-testid='geometry-shapes-game-shell'
+          className='flex w-full flex-col items-center gap-5'
+          padding='xl'
+          surface='solid'
+        >
           <GeometryDrawingGame onFinish={() => setActiveSection(null)} />
         </KangurGlassPanel>
       </div>
@@ -136,6 +146,7 @@ export default function GeometryShapesLesson(): React.JSX.Element {
     return (
       <LessonSlideSection
         slides={SLIDES[activeSection]}
+        sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
         onBack={() => setActiveSection(null)}
         onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
         dotActiveClass='bg-fuchsia-500'

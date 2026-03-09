@@ -727,8 +727,8 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
                     </div>
                     <div className='mt-0.5 text-xs leading-relaxed text-muted-foreground'>
                       {selectedAgentPersona
-                        ? `${selectedAgentPersona.role ? `${selectedAgentPersona.role} - ` : ''}This persona defines the tutor voice and avatar while Brain handles the model route.`
-                        : 'Tutor uses the default helper persona when no custom persona is selected.'}
+                        ? `${selectedAgentPersona.role ? `${selectedAgentPersona.role} - ` : ''}This persona defines the tutor voice and avatar while Brain handles the model route. Avatar uploads and embedded Kangur thumbnails are managed in Agent Personas.`
+                        : 'Tutor uses the default helper persona when no custom persona is selected. Avatar uploads are managed in Agent Personas.'}
                     </div>
                   </div>
                 </div>

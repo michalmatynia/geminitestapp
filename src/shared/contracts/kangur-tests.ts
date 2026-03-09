@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { kangurLessonDocumentSchema } from './kangur';
+
 // ─── Setting keys ─────────────────────────────────────────────────────────────
 
 export const KANGUR_TEST_SUITES_SETTING_KEY = 'kangur_test_suites_v1';
@@ -34,11 +36,57 @@ export const kangurQuestionIllustrationSchema = z.discriminatedUnion('type', [
 ]);
 export type KangurQuestionIllustration = z.infer<typeof kangurQuestionIllustrationSchema>;
 
+// ─── Presentation / editorial ────────────────────────────────────────────────
+
+export const kangurTestQuestionLayoutSchema = z.enum([
+  'classic',
+  'split-illustration-left',
+  'split-illustration-right',
+]);
+export type KangurTestQuestionLayout = z.infer<typeof kangurTestQuestionLayoutSchema>;
+
+export const kangurTestQuestionChoiceStyleSchema = z.enum(['list', 'grid']);
+export type KangurTestQuestionChoiceStyle = z.infer<typeof kangurTestQuestionChoiceStyleSchema>;
+
+export const kangurTestQuestionPresentationSchema = z.object({
+  layout: kangurTestQuestionLayoutSchema.default('classic'),
+  choiceStyle: kangurTestQuestionChoiceStyleSchema.default('list'),
+});
+export type KangurTestQuestionPresentation = z.infer<typeof kangurTestQuestionPresentationSchema>;
+
+export const kangurTestQuestionAuditFlagSchema = z.enum([
+  'legacy_visual_prompt',
+  'legacy_choice_descriptions',
+  'legacy_image_reference',
+  'answer_not_in_choices',
+  'explanation_answer_mismatch',
+  'explanation_inconsistent_reasoning',
+]);
+export type KangurTestQuestionAuditFlag = z.infer<typeof kangurTestQuestionAuditFlagSchema>;
+
+export const kangurTestQuestionReviewStatusSchema = z.enum([
+  'ready',
+  'needs-review',
+  'needs-fix',
+]);
+export type KangurTestQuestionReviewStatus = z.infer<typeof kangurTestQuestionReviewStatusSchema>;
+
+export const kangurTestQuestionEditorialSchema = z.object({
+  source: z.enum(['manual', 'legacy-import']).default('manual'),
+  reviewStatus: kangurTestQuestionReviewStatusSchema.default('ready'),
+  auditFlags: z.array(kangurTestQuestionAuditFlagSchema).max(12).default([]),
+  legacyId: z.string().trim().max(120).optional(),
+  note: z.string().trim().max(500).optional(),
+});
+export type KangurTestQuestionEditorial = z.infer<typeof kangurTestQuestionEditorialSchema>;
+
 // ─── Choice ───────────────────────────────────────────────────────────────────
 
 export const kangurTestChoiceSchema = z.object({
   label: z.string().max(16),
   text: z.string().max(2_000),
+  description: z.string().trim().max(1_000).optional(),
+  svgContent: z.string().max(500_000).default(''),
 });
 export type KangurTestChoice = z.infer<typeof kangurTestChoiceSchema>;
 
@@ -54,6 +102,18 @@ export const kangurTestQuestionSchema = z.object({
   pointValue: z.number().int().min(1).max(10).default(3),
   explanation: z.string().max(5_000).optional(),
   illustration: kangurQuestionIllustrationSchema,
+  stemDocument: kangurLessonDocumentSchema.optional(),
+  explanationDocument: kangurLessonDocumentSchema.optional(),
+  hintDocument: kangurLessonDocumentSchema.optional(),
+  presentation: kangurTestQuestionPresentationSchema.default({
+    layout: 'classic',
+    choiceStyle: 'list',
+  }),
+  editorial: kangurTestQuestionEditorialSchema.default({
+    source: 'manual',
+    reviewStatus: 'ready',
+    auditFlags: [],
+  }),
 });
 export type KangurTestQuestion = z.infer<typeof kangurTestQuestionSchema>;
 

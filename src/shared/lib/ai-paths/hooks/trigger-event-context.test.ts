@@ -126,9 +126,12 @@ describe('buildTriggerContext', () => {
       source: { location: 'product_modal' },
     });
     const entity = ctx['entity'] as Record<string, unknown> | null;
+    const entityJson = ctx['entityJson'] as Record<string, unknown> | null;
     expect(entity).not.toBeNull();
     expect(entity?.['id']).toBe('product-1');
     expect(entity?.['imageBase64s']).toBeUndefined();
+    expect(entityJson).toEqual(entity);
+    expect(ctx['productId']).toBe('product-1');
   });
 
   it('sets entity to null when entityJson is not provided', () => {

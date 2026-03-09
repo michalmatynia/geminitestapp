@@ -41,8 +41,8 @@ vi.mock('@/shared/lib/api-client', async (importOriginal) => {
   };
 });
 
-vi.mock('@/shared/hooks/useAgentPersonas', () => ({
-  useAgentPersonas: useAgentPersonasMock,
+vi.mock('@/shared/hooks/useAgentPersonaVisuals', () => ({
+  useAgentPersonaVisuals: useAgentPersonasMock,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({

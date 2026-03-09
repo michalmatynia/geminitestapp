@@ -34,7 +34,7 @@ describe('kangur parent email verify handler', () => {
 
     verifyKangurParentEmailMock.mockResolvedValue({
       email: 'parent@example.com',
-      callbackUrl: '/kangur/tests?focus=division',
+      callbackUrl: '/tests?focus=division',
       emailVerified: true,
     });
 
@@ -51,7 +51,7 @@ describe('kangur parent email verify handler', () => {
     await expect(response.json()).resolves.toEqual({
       ok: true,
       email: 'parent@example.com',
-      callbackUrl: '/kangur/tests?focus=division',
+      callbackUrl: '/tests?focus=division',
       emailVerified: true,
       message:
         'Email zostal zweryfikowany. Konto rodzica jest gotowe, AI Tutor jest odblokowany i mozesz zalogowac sie emailem oraz haslem.',

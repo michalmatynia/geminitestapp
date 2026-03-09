@@ -54,7 +54,7 @@ describe('KangurLoginModal', () => {
     vi.clearAllMocks();
     modalStateMock.mockReturnValue({
       authMode: 'sign-in',
-      callbackUrl: '/kangur/tests?focus=division',
+      callbackUrl: '/tests?focus=division',
       closeLoginModal: closeLoginModalMock,
       dismissLoginModal: dismissLoginModalMock,
       isOpen: true,
@@ -73,7 +73,7 @@ describe('KangurLoginModal', () => {
     expect(screen.getByTestId('kangur-login-modal')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-login-page')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-login-page-callback')).toHaveTextContent(
-      '/kangur/tests?focus=division'
+      '/tests?focus=division'
     );
     expect(screen.getByTestId('kangur-login-page-auth-mode')).toHaveTextContent('sign-in');
 
@@ -83,7 +83,7 @@ describe('KangurLoginModal', () => {
       parentAuthMode?: 'sign-in' | 'create-account';
     };
 
-    expect(loginPageProps.defaultCallbackUrl).toBe('/kangur/tests?focus=division');
+    expect(loginPageProps.defaultCallbackUrl).toBe('/tests?focus=division');
     expect(loginPageProps.onClose).toBe(dismissLoginModalMock);
     expect(loginPageProps.parentAuthMode).toBe('sign-in');
     expect(screen.getByRole('button', { name: 'Zamknij logowanie' })).toHaveClass('cursor-pointer');
@@ -92,7 +92,7 @@ describe('KangurLoginModal', () => {
   it('passes create-account mode through to the shared login page', () => {
     modalStateMock.mockReturnValue({
       authMode: 'create-account',
-      callbackUrl: '/kangur/tests?focus=training',
+      callbackUrl: '/tests?focus=training',
       closeLoginModal: closeLoginModalMock,
       dismissLoginModal: dismissLoginModalMock,
       isOpen: true,
@@ -101,7 +101,7 @@ describe('KangurLoginModal', () => {
     render(<KangurLoginModal />);
 
     expect(screen.getByTestId('kangur-login-page-callback')).toHaveTextContent(
-      '/kangur/tests?focus=training'
+      '/tests?focus=training'
     );
     expect(screen.getByTestId('kangur-login-page-auth-mode')).toHaveTextContent('create-account');
   });
@@ -109,7 +109,7 @@ describe('KangurLoginModal', () => {
   it('does not render the dialog shell when the modal is closed', () => {
     modalStateMock.mockReturnValue({
       authMode: 'sign-in',
-      callbackUrl: '/kangur/tests?focus=division',
+      callbackUrl: '/tests?focus=division',
       closeLoginModal: closeLoginModalMock,
       dismissLoginModal: dismissLoginModalMock,
       isOpen: false,

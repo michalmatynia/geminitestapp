@@ -41,7 +41,7 @@ describe('createLocalKangurPlatform auth navigation', () => {
       value: {
         ...originalLocation,
         assign: vi.fn(),
-        href: `${originalLocation.origin}/kangur/tests?focus=division`,
+        href: `${originalLocation.origin}/kangur/lessons?focus=division`,
         origin: originalLocation.origin,
       },
       configurable: true,

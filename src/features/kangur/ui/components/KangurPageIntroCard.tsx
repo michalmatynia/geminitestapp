@@ -1,6 +1,5 @@
 'use client';
 
-import type { ReactNode } from 'react';
 
 import {
   KangurButton,
@@ -9,6 +8,8 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/shared/utils';
+
+import type { ReactNode } from 'react';
 
 type KangurPageIntroCardProps = {
   accent?: KangurAccent;

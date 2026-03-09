@@ -1,20 +1,18 @@
 import { useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
 
-import SubtractingGame from '@/features/kangur/ui/components/SubtractingGame';
+import LessonActivityStage from '@/features/kangur/ui/components/LessonActivityStage';
 import LessonHub from '@/features/kangur/ui/components/LessonHub';
 import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
+import SubtractingGame from '@/features/kangur/ui/components/SubtractingGame';
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
-import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 import {
-  KangurButton,
   KangurDisplayEmoji,
   KangurEquationDisplay,
-  KangurFeatureHeader,
   KangurIconBadge,
 } from '@/features/kangur/ui/design/primitives';
+import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 
 type SectionId = 'podstawy' | 'przekroczenie' | 'dwucyfrowe' | 'zapamietaj' | 'game';
 
@@ -187,16 +185,21 @@ export default function SubtractingLesson(): React.JSX.Element {
 
   if (activeSection === 'game') {
     return (
-      <div className='flex flex-col items-center gap-4 w-full max-w-sm'>
-        <KangurButton onClick={() => setActiveSection(null)} size='sm' variant='surface'>
-          <ArrowLeft className='w-4 h-4' /> Wróć do tematów
-        </KangurButton>
-        <KangurFeatureHeader accent='rose' icon='🎮' title='Gra z odejmowaniem!' />
+      <LessonActivityStage
+        accent='rose'
+        headerTestId='subtracting-lesson-game-header'
+        icon='🎮'
+        maxWidthClassName='max-w-sm'
+        onBack={() => setActiveSection(null)}
+        sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
+        shellTestId='subtracting-lesson-game-shell'
+        title='Gra z odejmowaniem!'
+      >
         <SubtractingGame
           finishLabel='Wróć do tematów'
           onFinish={() => setActiveSection(null)}
         />
-      </div>
+      </LessonActivityStage>
     );
   }
 
@@ -204,6 +207,7 @@ export default function SubtractingLesson(): React.JSX.Element {
     return (
       <LessonSlideSection
         slides={SLIDES[activeSection]}
+        sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
         onBack={() => setActiveSection(null)}
         onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
         dotActiveClass='bg-red-400'

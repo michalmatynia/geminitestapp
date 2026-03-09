@@ -2,97 +2,204 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, render, screen, within } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import CalendarLesson from '@/features/kangur/ui/components/CalendarLesson';
+import { KangurLessonNavigationWidget } from '@/features/kangur/ui/components/KangurLessonNavigationWidget';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 
-describe('CalendarLesson', () => {
-  it('renders section slide indicators as Kangur micro pills', () => {
-    render(
-      <KangurLessonNavigationProvider onBack={vi.fn()}>
-        <CalendarLesson />
-      </KangurLessonNavigationProvider>
-    );
+import CalendarLesson from '@/features/kangur/ui/components/CalendarLesson';
 
-    fireEvent.click(screen.getByRole('button', { name: /miesiace i pory roku/i }));
+const addXpMock = vi.fn();
+const loadProgressMock = vi.fn(() => ({
+  lessonsCompleted: 0,
+  lessonMastery: {},
+}));
 
-    expect(screen.getByTestId('calendar-lesson-section-shell-miesiace')).toHaveClass(
-      'glass-panel',
-      'border-white/88',
-      'bg-white/94'
-    );
-    const firstIndicator = screen.getByTestId('calendar-lesson-slide-miesiace-0');
-    const secondIndicator = screen.getByTestId('calendar-lesson-slide-miesiace-1');
+vi.mock('@/features/kangur/ui/components/CalendarInteractiveGame', () => ({
+  __esModule: true,
+  default: ({
+    onFinish,
+    section,
+  }: {
+    onFinish: () => void;
+    section?: string;
+  }): React.JSX.Element => (
+    <div data-testid='mock-calendar-interactive-game'>
+      <span data-testid='mock-calendar-interactive-section'>{section ?? 'mixed'}</span>
+      <button type='button' onClick={onFinish}>
+        Finish calendar training
+      </button>
+    </div>
+  ),
+}));
 
-    expect(firstIndicator).toHaveClass('kangur-cta-pill', 'bg-emerald-500');
-    expect(firstIndicator).toHaveClass('cursor-pointer');
-    expect(firstIndicator).toHaveAttribute('aria-current', 'step');
-    expect(screen.getByRole('button', { name: 'Wróć do tematów' })).toHaveClass(
-      'kangur-cta-pill',
-      'surface-cta'
-    );
-    expect(screen.queryByRole('button', { name: /dalej/i })).not.toBeInTheDocument();
-    expect(secondIndicator).toHaveClass(
-      'kangur-cta-pill',
-      'kangur-step-pill-pending',
-      'cursor-pointer'
-    );
+vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/kangur/ui/services/progress')>();
+  return {
+    ...actual,
+    addXp: (...args: unknown[]): unknown => addXpMock(...args),
+    loadProgress: (): unknown => loadProgressMock(),
+    XP_REWARDS: {
+      lesson_completed: 40,
+    },
+  };
+});
 
-    fireEvent.click(secondIndicator);
-
-    expect(firstIndicator).toHaveClass('bg-emerald-200');
-    expect(secondIndicator).toHaveClass('bg-emerald-500');
-    expect(secondIndicator).toHaveAttribute('aria-current', 'step');
-    expect(screen.getByText('Ile dni ma miesiac?')).toBeInTheDocument();
+describe('CalendarLesson section hub layout', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  it('uses shared Kangur headers for the intro slide and game stage', () => {
+  it('renders calendar sections as a lesson hub with dedicated training cards', () => {
+    render(<CalendarLesson />);
+
+    expect(screen.getByTestId('lesson-hub-section-intro')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-hub-section-dni')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-hub-section-miesiace')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-hub-section-data')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-hub-section-game_days')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-hub-section-game_months')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-hub-section-game_dates')).toBeInTheDocument();
+    expect(screen.getByText('Ćwiczenie: Dni tygodnia')).toBeInTheDocument();
+    expect(screen.getByText('Ćwiczenie: Miesiące')).toBeInTheDocument();
+    expect(screen.getByText('Ćwiczenie: Daty')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-hub-progress-intro')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-hub-progress-dni')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-hub-progress-miesiace')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-hub-progress-data')).toBeInTheDocument();
+    expect(screen.queryByTestId('lesson-hub-progress-game_days')).toBeNull();
+  });
+
+  it('opens a lesson section and returns to topics', async () => {
+    render(<CalendarLesson />);
+
+    fireEvent.click(screen.getByTestId('lesson-hub-section-miesiace'));
+
+    await waitFor(() => {
+      expect(screen.getByText('12 miesiecy roku')).toBeInTheDocument();
+    });
+    expect(screen.getByTestId('lesson-slide-shell')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('lesson-slide-indicator-1'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Ile dni ma miesiac?')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Wróć do tematów' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('lesson-hub-section-miesiace')).toBeInTheDocument();
+    });
+  });
+
+  it('updates hub progress after viewing more slides in a section', async () => {
+    render(<CalendarLesson />);
+
+    fireEvent.click(screen.getByTestId('lesson-hub-section-miesiace'));
+
+    await waitFor(() => {
+      expect(screen.getByText('12 miesiecy roku')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('lesson-slide-indicator-1'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Ile dni ma miesiac?')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Wróć do tematów' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('lesson-hub-section-miesiace')).toBeInTheDocument();
+    });
+
+    expect(screen.getByTestId('lesson-hub-progress-dot-miesiace-0')).toHaveClass('bg-emerald-200');
+    expect(screen.getByTestId('lesson-hub-progress-dot-miesiace-1')).toHaveClass('bg-emerald-200');
+    expect(screen.getByTestId('lesson-hub-progress-dot-dni-0')).toHaveClass(
+      'kangur-step-pill-pending'
+    );
+  });
+
+  it('opens dedicated training cards and passes the selected section into the game', async () => {
+    render(<CalendarLesson />);
+
+    fireEvent.click(screen.getByTestId('lesson-hub-section-game_dates'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('calendar-lesson-game-shell')).toBeInTheDocument();
+    });
+
+    expect(
+      screen
+        .getByRole('button', { name: 'Wróć do tematów' })
+        .closest('[data-testid="calendar-lesson-game-shell"]')
+    ).toBeNull();
+    expect(screen.getByTestId('mock-calendar-interactive-game')).toBeInTheDocument();
+    expect(screen.getByTestId('mock-calendar-interactive-section')).toHaveTextContent('data');
+    expect(loadProgressMock).toHaveBeenCalledTimes(1);
+    expect(addXpMock).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId('calendar-lesson-training-prev-button')).toBeNull();
+    expect(screen.queryByTestId('calendar-lesson-training-next-button')).toBeNull();
+    expect(screen.queryByTestId('calendar-lesson-training-indicator-2')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Finish calendar training' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('lesson-hub-section-game_dates')).toBeInTheDocument();
+    });
+  });
+
+  it('hides lesson-to-lesson navigation while a calendar training game is active', async () => {
     render(
       <KangurLessonNavigationProvider onBack={vi.fn()}>
         <CalendarLesson />
+        <KangurLessonNavigationWidget
+          nextLesson={{
+            id: 'lesson-clock',
+            emoji: '🕐',
+            title: 'Nauka zegara',
+          }}
+          onSelectLesson={vi.fn()}
+        />
       </KangurLessonNavigationProvider>
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /czym jest kalendarz/i }));
+    expect(screen.getByRole('button', { name: /Nauka zegara/i })).toBeInTheDocument();
 
-    expect(screen.getByTestId('calendar-lesson-section-shell-intro')).toHaveClass(
-      'glass-panel',
-      'border-white/88',
-      'bg-white/94'
-    );
-    expect(screen.getByTestId('calendar-lesson-intro-emoji')).toHaveClass('inline-flex', 'text-6xl');
-    expect(screen.getByTestId('calendar-lesson-slide-title-intro')).toHaveClass(
-      'text-xl',
-      'text-slate-800'
-    );
+    fireEvent.click(screen.getByTestId('lesson-hub-section-game_days'));
 
-    fireEvent.click(screen.getByRole('button', { name: 'Wróć do tematów' }));
-    fireEvent.click(screen.getByRole('button', { name: /ćwiczenia z kalendarzem/i }));
+    await waitFor(() => {
+      expect(screen.getByTestId('calendar-lesson-game-shell')).toBeInTheDocument();
+    });
 
-    const header = screen.getByTestId('calendar-lesson-game-header');
-    expect(screen.getByTestId('calendar-lesson-game-shell')).toHaveClass(
-      'glass-panel',
-      'border-white/88',
-      'bg-white/94'
-    );
+    expect(screen.queryByRole('button', { name: /Nauka zegara/i })).not.toBeInTheDocument();
+  });
 
-    expect(
-      within(header).getByRole('heading', { name: /ćwiczenia z kalendarzem/i })
-    ).toHaveClass(
-      'text-xl',
-      'text-green-700'
-    );
-    expect(screen.getByRole('button', { name: /wróć do tematów/i })).toHaveClass(
-      'kangur-cta-pill',
-      'surface-cta'
-    );
-    expect(within(header).getByText('📅')).toHaveClass(
-      'h-12',
-      'w-12',
-      'bg-emerald-100',
-      'text-emerald-700'
-    );
+  it('does not award lesson completion xp twice when switching calendar training sections', async () => {
+    render(<CalendarLesson />);
+
+    fireEvent.click(screen.getByTestId('lesson-hub-section-game_days'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mock-calendar-interactive-section')).toHaveTextContent('dni');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Finish calendar training' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('lesson-hub-section-game_months')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('lesson-hub-section-game_months'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mock-calendar-interactive-section')).toHaveTextContent(
+        'miesiace'
+      );
+    });
+
+    expect(addXpMock).toHaveBeenCalledTimes(1);
   });
 });

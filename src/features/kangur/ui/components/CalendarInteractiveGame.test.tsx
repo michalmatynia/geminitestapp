@@ -69,6 +69,39 @@ describe('CalendarInteractiveGame', () => {
     expect(winterTarget).toHaveClass('border-sky-300');
   });
 
+  it('shows day-section guidance and only day-oriented task UI', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+
+    render(<CalendarInteractiveGame onFinish={() => undefined} section='dni' />);
+
+    expect(screen.getByTestId('calendar-interactive-section-badge')).toHaveTextContent(
+      'Sekcja: Dni tygodnia'
+    );
+    expect(screen.getByTestId('calendar-interactive-guidance-title')).toHaveTextContent(
+      'Trening dni tygodnia'
+    );
+    expect(screen.getByText('Znajdź właściwy dzień tygodnia')).toBeInTheDocument();
+    expect(screen.getByTestId('calendar-weekday-0')).toBeInTheDocument();
+    expect(screen.queryByTestId('calendar-season-0')).toBeNull();
+  });
+
+  it('shows date-section guidance and date-focused calendar lookup', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+
+    render(<CalendarInteractiveGame onFinish={() => undefined} section='data' />);
+
+    expect(screen.getByTestId('calendar-interactive-section-badge')).toHaveTextContent(
+      'Sekcja: Odczytywanie dat'
+    );
+    expect(screen.getByTestId('calendar-interactive-guidance-title')).toHaveTextContent(
+      'Trening dat'
+    );
+    expect(screen.getByText('Odszukaj właściwą datę w kalendarzu')).toBeInTheDocument();
+    expect(screen.getByTestId('calendar-interactive-calendar-shell')).toBeInTheDocument();
+    expect(screen.queryByTestId('calendar-weekday-0')).toBeNull();
+    expect(screen.queryByTestId('calendar-season-0')).toBeNull();
+  });
+
   it('uses the shared display emoji on the summary screen', () => {
     vi.useFakeTimers();
     vi.spyOn(Math, 'random').mockReturnValue(0);

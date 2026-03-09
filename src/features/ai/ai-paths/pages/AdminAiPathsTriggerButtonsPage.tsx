@@ -13,9 +13,11 @@ import {
   PATH_CONFIG_PREFIX,
   PATH_INDEX_KEY,
   resolvePortablePathInput,
+  type PathConfig,
   triggerButtonsApi,
 } from '@/shared/lib/ai-paths';
 import { useAiPathsSettingsQuery } from '@/shared/lib/ai-paths/hooks/useAiPathQueries';
+import { persistLegacyTriggerContextModeRepair } from '@/shared/lib/ai-paths/legacy-trigger-context-mode-persistence';
 import { api } from '@/shared/lib/api-client';
 import { ICON_LIBRARY, IconSelector } from '@/shared/lib/icons';
 import {
@@ -51,6 +53,11 @@ import {
 
 type TriggerButtonDraft = AiTriggerButtonCreatePayload & { id?: string };
 type TriggerButtonPathUsage = { id: string; name: string };
+type TriggerButtonPathRepair = {
+  pathId: string;
+  rawPayload: string;
+  repairedConfig: PathConfig;
+};
 
 const LOCATION_OPTIONS: Array<{ value: AiTriggerButtonLocation; label: string }> = [
   { value: 'product_modal', label: 'Products: Product Modal' },
@@ -100,9 +107,13 @@ const BUILT_IN_TRIGGER_EVENTS = new Set<string>(['manual', 'scheduled_run']);
 
 const extractTriggerButtonPathUsageMap = (
   settings: Array<{ key: string; value: string }>
-): Map<string, TriggerButtonPathUsage[]> => {
+): {
+  usageByButtonId: Map<string, TriggerButtonPathUsage[]>;
+  repairedPaths: TriggerButtonPathRepair[];
+} => {
   const map = new Map<string, string>(settings.map((item) => [item.key, item.value]));
   const usageByButtonId = new Map<string, TriggerButtonPathUsage[]>();
+  const repairedPaths: TriggerButtonPathRepair[] = [];
   const indexNameById = new Map<string, string>();
   const indexRaw = map.get(PATH_INDEX_KEY);
   if (indexRaw) {
@@ -140,6 +151,13 @@ const extractTriggerButtonPathUsageMap = (
     }
     const parsedConfig = resolvedConfig.value.pathConfig;
     if (!parsedConfig || typeof parsedConfig !== 'object') return;
+    if (resolvedConfig.value.migrationWarnings.some((warning) => warning.code === 'legacy_trigger_context_mode_upgraded')) {
+      repairedPaths.push({
+        pathId,
+        rawPayload: value,
+        repairedConfig: parsedConfig,
+      });
+    }
 
     const configNameRaw = (parsedConfig as { name?: unknown }).name;
     const configName =
@@ -185,7 +203,7 @@ const extractTriggerButtonPathUsageMap = (
     );
   });
 
-  return usageByButtonId;
+  return { usageByButtonId, repairedPaths };
 };
 
 export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
@@ -447,10 +465,21 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     [router]
   );
 
-  const triggerButtonPathUsageMap = useMemo(
+  const { usageByButtonId: triggerButtonPathUsageMap, repairedPaths } = useMemo(
     () => extractTriggerButtonPathUsageMap(aiPathsSettingsQuery.data ?? []),
     [aiPathsSettingsQuery.data]
   );
+  useEffect(() => {
+    repairedPaths.forEach((entry) => {
+      void persistLegacyTriggerContextModeRepair({
+        pathId: entry.pathId,
+        rawPayload: entry.rawPayload,
+        repairedConfig: entry.repairedConfig,
+        source: 'AdminAiPathsTriggerButtonsPage',
+        action: 'persistLegacyTriggerContextModeRepair',
+      });
+    });
+  }, [repairedPaths]);
   const draftPathUsage = useMemo<TriggerButtonPathUsage[]>(
     () => (draft.id ? (triggerButtonPathUsageMap.get(draft.id) ?? []) : []),
     [draft.id, triggerButtonPathUsageMap]

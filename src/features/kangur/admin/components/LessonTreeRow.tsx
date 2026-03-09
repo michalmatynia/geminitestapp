@@ -40,6 +40,9 @@ export function LessonTreeRow(props: {
   } = props;
   const lessonId = fromKangurLessonNodeId(input.node.id);
   const lesson = lessonId ? (lessonById.get(lessonId) ?? null) : null;
+  const rowStatusBadgeClassName = 'h-5 rounded-full border px-2 text-[10px] uppercase tracking-wide';
+  const actionButtonClassName =
+    'inline-flex cursor-pointer items-center justify-center rounded-lg border border-transparent p-1.5 text-muted-foreground transition hover:border-border/60 hover:bg-background/70 hover:text-foreground';
 
   if (!lesson) {
     const lessonCount = readLessonGroupCount(input.node.metadata);
@@ -50,20 +53,18 @@ export function LessonTreeRow(props: {
         indent={12}
         tone='subtle'
         selected={input.isSelected}
-        selectedClassName='bg-muted text-white hover:bg-muted'
+        selectedClassName='bg-primary/12 text-foreground ring-1 ring-primary/15 hover:bg-primary/12'
         className={cn(
-          'h-9 text-xs',
+          'h-10 text-xs',
           input.isDragging && 'opacity-50',
-          input.isSearchMatch && !input.isSelected && 'ring-1 ring-cyan-400/40'
+          input.isSearchMatch && !input.isSelected && 'ring-1 ring-primary/20'
         )}
       >
-        <div
-          className='flex h-full w-full min-w-0 items-center gap-2 text-left'
-        >
+        <div className='flex h-full w-full min-w-0 items-center gap-2 text-left'>
           {input.hasChildren ? (
             <button
               type='button'
-              className='inline-flex size-5 shrink-0 items-center justify-center rounded text-gray-400 hover:bg-muted/40 hover:text-gray-200'
+              className='inline-flex size-5 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-background/70 hover:text-foreground'
               onClick={(event): void => {
                 event.preventDefault();
                 event.stopPropagation();
@@ -90,18 +91,21 @@ export function LessonTreeRow(props: {
             onClick={input.select}
             aria-pressed={input.isSelected}
             aria-label={`Select lesson group ${input.node.name}`}
-            className='flex min-w-0 flex-1 items-center gap-2 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
+            className='flex min-w-0 flex-1 items-center gap-2 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background'
           >
             {input.isExpanded ? (
-              <FolderOpen className='size-4 shrink-0 text-sky-300/90' />
+              <FolderOpen className='size-4 shrink-0 text-primary/80' />
             ) : (
-              <Folder className='size-4 shrink-0 text-sky-300/70' />
+              <Folder className='size-4 shrink-0 text-primary/70' />
             )}
-            <div className='min-w-0 flex-1 truncate text-[12px] font-medium text-gray-200'>
+            <div className='min-w-0 flex-1 truncate text-[12px] font-medium text-foreground'>
               {input.node.name}
             </div>
             {lessonCount !== null ? (
-              <Badge variant='outline' className='h-5 px-1.5 text-[10px]'>
+              <Badge
+                variant='outline'
+                className='h-5 rounded-full border-border/60 bg-background/70 px-2 text-[10px] text-muted-foreground'
+              >
                 {lessonCount}
               </Badge>
             ) : null}
@@ -120,14 +124,12 @@ export function LessonTreeRow(props: {
       indent={12}
       tone='subtle'
       selected={input.isSelected}
-      selectedClassName='bg-muted text-white hover:bg-muted'
+      selectedClassName='bg-primary/12 text-foreground ring-1 ring-primary/15 hover:bg-primary/12'
       className={cn('h-11 text-xs', input.isDragging && 'opacity-50')}
     >
-      <div
-        className='flex h-full w-full min-w-0 items-center gap-2 text-left'
-      >
+      <div className='flex h-full w-full min-w-0 items-center gap-2 text-left'>
         <span className='inline-flex h-4 w-4 shrink-0 items-center justify-center opacity-0 transition-opacity group-hover:opacity-100'>
-          <GripVertical className='size-3.5 cursor-grab text-gray-500' />
+          <GripVertical className='size-3.5 cursor-grab text-muted-foreground/80' />
         </span>
 
         <button
@@ -135,28 +137,25 @@ export function LessonTreeRow(props: {
           onClick={input.select}
           aria-pressed={input.isSelected}
           aria-label={`Select lesson ${lesson.title}`}
-          className='flex min-w-0 flex-1 items-center gap-2 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
+          className='flex min-w-0 flex-1 items-center gap-2 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background'
         >
           <span className='text-base leading-none'>{lesson.emoji}</span>
 
           <div className='min-w-0 flex-1'>
-            <div className='truncate font-medium text-gray-100'>{lesson.title}</div>
-            <div className='truncate text-[11px] text-gray-400'>{lesson.description}</div>
+            <div className='truncate font-medium text-foreground'>{lesson.title}</div>
+            <div className='truncate text-[11px] text-muted-foreground'>{lesson.description}</div>
           </div>
 
-          <Badge
-            variant='outline'
-            className='h-5 px-1.5 text-[10px] uppercase tracking-wide'
-          >
+          <Badge variant='outline' className={cn(rowStatusBadgeClassName, 'border-border/60 bg-background/70 text-muted-foreground')}>
             {lesson.componentId}
           </Badge>
           <Badge
             variant='outline'
             className={cn(
-              'h-5 px-1.5 text-[10px] uppercase tracking-wide',
+              rowStatusBadgeClassName,
               lesson.contentMode === 'document'
-                ? 'border-sky-400/40 text-sky-300'
-                : 'border-gray-500/40 text-gray-300'
+                ? 'border-sky-400/30 bg-sky-500/10 text-sky-200'
+                : 'border-border/60 bg-background/70 text-muted-foreground'
             )}
           >
             {lesson.contentMode}
@@ -164,7 +163,10 @@ export function LessonTreeRow(props: {
           {status.hasContent ? (
             <Badge
               variant='outline'
-              className='h-5 px-1.5 text-[10px] border-sky-400/40 text-sky-300'
+              className={cn(
+                rowStatusBadgeClassName,
+                'border-sky-400/30 bg-sky-500/10 text-sky-200'
+              )}
             >
               Custom content
             </Badge>
@@ -172,7 +174,7 @@ export function LessonTreeRow(props: {
           {status.hasStructuralWarnings || status.hasBlockingIssues ? (
             <Badge
               variant='outline'
-              className='h-5 px-1.5 text-[10px] border-rose-400/40 text-rose-300'
+              className={cn(rowStatusBadgeClassName, 'border-amber-400/30 bg-amber-500/10 text-amber-200')}
             >
               Needs fixes
             </Badge>
@@ -180,7 +182,7 @@ export function LessonTreeRow(props: {
           {status.isMissingNarration ? (
             <Badge
               variant='outline'
-              className='h-5 px-1.5 text-[10px] border-violet-400/40 text-violet-300'
+              className={cn(rowStatusBadgeClassName, 'border-amber-300/25 bg-amber-500/5 text-amber-100')}
             >
               Missing narration
             </Badge>
@@ -188,7 +190,7 @@ export function LessonTreeRow(props: {
           {status.isHidden ? (
             <Badge
               variant='outline'
-              className='h-5 px-1.5 text-[10px] border-amber-400/40 text-amber-300'
+              className={cn(rowStatusBadgeClassName, 'border-border/60 bg-background/70 text-muted-foreground')}
             >
               Hidden
             </Badge>
@@ -198,7 +200,7 @@ export function LessonTreeRow(props: {
         <div className='inline-flex items-center gap-1 opacity-100'>
           <button
             type='button'
-            className='inline-flex cursor-pointer items-center justify-center rounded p-1 text-gray-400 hover:bg-violet-500/20 hover:text-violet-300'
+            className={cn(actionButtonClassName, 'hover:text-violet-200')}
             onMouseDown={(event): void => event.stopPropagation()}
             onClick={(event): void => {
               event.stopPropagation();
@@ -212,7 +214,7 @@ export function LessonTreeRow(props: {
           </button>
           <button
             type='button'
-            className='inline-flex cursor-pointer items-center justify-center rounded p-1 text-gray-400 hover:bg-sky-500/20 hover:text-sky-200'
+            className={cn(actionButtonClassName, 'hover:text-sky-200')}
             onMouseDown={(event): void => event.stopPropagation()}
             onClick={(event): void => {
               event.stopPropagation();
@@ -226,7 +228,7 @@ export function LessonTreeRow(props: {
           </button>
           <button
             type='button'
-            className='inline-flex cursor-pointer items-center justify-center rounded p-1 text-gray-400 hover:bg-gray-700/60 hover:text-white'
+            className={actionButtonClassName}
             onMouseDown={(event): void => event.stopPropagation()}
             onClick={(event): void => {
               event.stopPropagation();
@@ -240,7 +242,7 @@ export function LessonTreeRow(props: {
           </button>
           <button
             type='button'
-            className='inline-flex cursor-pointer items-center justify-center rounded p-1 text-gray-400 hover:bg-red-500/20 hover:text-red-300'
+            className={cn(actionButtonClassName, 'hover:text-rose-300')}
             onMouseDown={(event): void => event.stopPropagation()}
             onClick={(event): void => {
               event.stopPropagation();

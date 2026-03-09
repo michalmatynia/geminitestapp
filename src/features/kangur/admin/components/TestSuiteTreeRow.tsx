@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  AlertTriangle,
   ChevronDown,
   ChevronRight,
   Folder,
@@ -15,13 +16,16 @@ import { Badge, TreeRow } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import type { KangurTestSuite } from '@/shared/contracts/kangur-tests';
 import { fromKangurTestSuiteNodeId } from '../kangur-test-suites-master-tree';
+import type { KangurTestSuiteHealth } from '../test-suite-health';
 
 export function TestSuiteTreeRow(props: {
   input: FolderTreeViewportRenderNodeInput;
   suiteById: Map<string, KangurTestSuite>;
   questionCountBySuiteId: Map<string, number>;
+  suiteHealthById?: Map<string, KangurTestSuiteHealth>;
   onEdit: (suite: KangurTestSuite) => void;
   onManageQuestions: (suite: KangurTestSuite) => void;
+  onReviewQueue?: (suite: KangurTestSuite) => void;
   onDelete: (suite: KangurTestSuite) => void;
   isUpdating?: boolean;
 }): React.JSX.Element {
@@ -29,8 +33,10 @@ export function TestSuiteTreeRow(props: {
     input,
     suiteById,
     questionCountBySuiteId,
+    suiteHealthById,
     onEdit,
     onManageQuestions,
+    onReviewQueue,
     onDelete,
     isUpdating,
   } = props;
@@ -103,6 +109,7 @@ export function TestSuiteTreeRow(props: {
   }
 
   const questionCount = questionCountBySuiteId.get(suite.id) ?? 0;
+  const suiteHealth = suiteHealthById?.get(suite.id);
 
   return (
     <TreeRow
@@ -144,6 +151,30 @@ export function TestSuiteTreeRow(props: {
           <Badge variant='outline' className='h-5 px-1.5 text-[10px]'>
             {questionCount}Q
           </Badge>
+          {suiteHealth?.needsFixQuestionCount ? (
+            <Badge
+              variant='outline'
+              className='h-5 px-1.5 text-[10px] border-rose-400/40 text-rose-300'
+            >
+              Fix {suiteHealth.needsFixQuestionCount}
+            </Badge>
+          ) : null}
+          {!suiteHealth?.needsFixQuestionCount && suiteHealth?.needsReviewQuestionCount ? (
+            <Badge
+              variant='outline'
+              className='h-5 px-1.5 text-[10px] border-amber-400/40 text-amber-300'
+            >
+              Review {suiteHealth.needsReviewQuestionCount}
+            </Badge>
+          ) : null}
+          {suiteHealth?.status === 'ready' && suiteHealth.questionCount > 0 ? (
+            <Badge
+              variant='outline'
+              className='h-5 px-1.5 text-[10px] border-emerald-400/40 text-emerald-300'
+            >
+              Ready
+            </Badge>
+          ) : null}
 
           {!suite.enabled ? (
             <Badge
@@ -156,6 +187,25 @@ export function TestSuiteTreeRow(props: {
         </button>
 
         <div className='inline-flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100'>
+          {suiteHealth && suiteHealth.status !== 'ready' && suiteHealth.status !== 'empty' ? (
+            <button
+              type='button'
+              className={cn(
+                'inline-flex items-center justify-center rounded p-1 hover:bg-amber-500/20',
+                suiteHealth.status === 'needs-fix' ? 'text-rose-300 hover:text-rose-200' : 'text-amber-300 hover:text-amber-200'
+              )}
+              onMouseDown={(e): void => e.stopPropagation()}
+              onClick={(e): void => {
+                e.stopPropagation();
+                onReviewQueue?.(suite);
+              }}
+              title='Open review queue'
+              aria-label='Open review queue'
+              disabled={isUpdating || !onReviewQueue}
+            >
+              <AlertTriangle className='size-3.5' />
+            </button>
+          ) : null}
           <button
             type='button'
             className='inline-flex items-center justify-center rounded p-1 text-gray-400 hover:bg-sky-500/20 hover:text-sky-200'

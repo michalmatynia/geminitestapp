@@ -1,3 +1,4 @@
+import { copyFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -20,6 +21,17 @@ const csp = [
   "worker-src 'self' blob:",
 ].join('; ');
 const distPackageJsonAsset = '{"type":"commonjs"}';
+
+const ensureFileCopy = async (sourcePath, targetPath) => {
+  try {
+    await copyFile(sourcePath, targetPath);
+  } catch (error) {
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
+      return;
+    }
+    throw error;
+  }
+};
 
 const nextConfig = {
   reactStrictMode: true,
@@ -133,6 +145,23 @@ const nextConfig = {
                   new webpack.sources.RawSource(distPackageJsonAsset)
                 );
               }
+            );
+          });
+        },
+      });
+    } else {
+      config.plugins ??= [];
+      config.plugins.push({
+        apply(compiler) {
+          compiler.hooks.afterEmit.tapPromise('ProxyTraceCompatPlugin', async () => {
+            const outputPath = compiler.outputPath;
+            await ensureFileCopy(
+              path.join(outputPath, 'middleware.js'),
+              path.join(outputPath, 'proxy.js')
+            );
+            await ensureFileCopy(
+              path.join(outputPath, 'middleware.js.nft.json'),
+              path.join(outputPath, 'proxy.js.nft.json')
             );
           });
         },

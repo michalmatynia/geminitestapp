@@ -11,7 +11,7 @@ import { resolveKangurLessonDocumentPages } from '@/features/kangur/lesson-docum
 import { stripHtmlToPlainText } from '@/features/document-editor';
 
 import type { KangurLessonNarrationScript, KangurLessonNarrationSegment } from './contracts';
-import { KANGUR_TTS_DEFAULT_LOCALE } from './contracts';
+import { KANGUR_TTS_DEFAULT_LOCALE, KANGUR_TTS_DEFAULT_VOICE } from './contracts';
 
 const DEFAULT_SEGMENT_MAX_CHARS = 900;
 const DEFAULT_MAX_SEGMENTS = 24;
@@ -328,6 +328,43 @@ export const buildKangurLessonDocumentNarrationScript = (input: {
       input.locale?.trim() || input.document.narration?.locale?.trim() || KANGUR_TTS_DEFAULT_LOCALE,
     segments,
   } as KangurLessonNarrationScript;
+};
+
+const hashNarrationSignature = (value: string): string => {
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash.toString(16).padStart(8, '0');
+};
+
+export const buildKangurLessonDocumentNarrationSignature = (input: {
+  lessonId: string;
+  title: string;
+  description?: string | null;
+  document: KangurLessonDocument;
+  voice?: string | null;
+  locale?: string | null;
+}): string => {
+  const script = buildKangurLessonDocumentNarrationScript({
+    lessonId: input.lessonId,
+    title: input.title,
+    description: input.description,
+    document: input.document,
+    locale: input.locale,
+  });
+  const voice = input.voice?.trim() || input.document.narration?.voice?.trim() || KANGUR_TTS_DEFAULT_VOICE;
+  const payload = JSON.stringify({
+    lessonId: script.lessonId,
+    title: script.title,
+    description: script.description,
+    locale: script.locale,
+    voice,
+    segments: script.segments.map((segment) => segment.text),
+  });
+
+  return `kangur-narration-v1:${hashNarrationSignature(payload)}`;
 };
 
 export const hasKangurLessonNarrationContent = (

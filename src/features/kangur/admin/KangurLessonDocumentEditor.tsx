@@ -54,6 +54,7 @@ import { ActivityEditorCard } from './components/ActivityEditorCard';
 import { CalloutEditorCard } from './components/CalloutEditorCard';
 import { GridItemEditor } from './components/GridItemEditor';
 import { InlineEditorCard } from './components/InlineEditorCard';
+import { KangurAdminWorkspaceSectionCard } from './components/KangurAdminWorkspaceSectionCard';
 import { QuizEditorCard } from './components/QuizEditorCard';
 import {
   DOCUMENT_TEMPLATE_OPTIONS,
@@ -462,6 +463,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
     [pages]
   );
   const activePageReview = activePage ? pageDraftReviews.get(activePage.id) ?? null : null;
+  const activePageNarrationCoverage = activePageReview?.narrationCoverage ?? null;
   const componentLabel =
     lesson?.componentId
       ? (KANGUR_LESSON_COMPONENT_OPTIONS.find((option) => option.value === lesson.componentId)?.label ??
@@ -575,7 +577,11 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
   return (
     <div className='grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]'>
       <div className='space-y-4'>
-        <div className='rounded-2xl border border-border/60 bg-card/40 p-4'>
+        <KangurAdminWorkspaceSectionCard
+          title='Document workspace'
+          description='Structure lesson pages, guide authors with starter recipes, and manage the active page without leaving the main Kangur admin layout.'
+          badge='Authoring surface'
+        >
           <div className='mb-3 flex flex-wrap items-center gap-2'>
             {DOCUMENT_TEMPLATE_OPTIONS.map((template) => (
               <Button
@@ -593,17 +599,17 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
 
           <div className='rounded-2xl border border-border/60 bg-card/30 p-4'>
             {lesson ? (
-              <div className='mb-4 rounded-2xl border border-sky-300/20 bg-sky-500/10 p-4'>
+              <div className='mb-4 rounded-2xl border border-primary/20 bg-primary/10 p-4'>
                 <div className='flex flex-wrap items-center justify-between gap-2'>
                   <div>
-                    <div className='text-sm font-semibold text-white'>
+                    <div className='text-sm font-semibold text-foreground'>
                       Starter recipes for {componentLabel}
                     </div>
-                    <div className='text-xs text-sky-100/75'>
+                    <div className='text-xs text-muted-foreground'>
                       Suggested first moves for this lesson type.
                     </div>
                   </div>
-                  <Badge variant='outline' className='border-sky-300/30 text-sky-200'>
+                  <Badge variant='outline' className='border-primary/20 text-foreground'>
                     guided start
                   </Badge>
                 </div>
@@ -613,14 +619,14 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                       key={recipe.id}
                       type='button'
                       onClick={recipe.onClick}
-                      className='flex cursor-pointer items-start gap-3 rounded-2xl border border-sky-200/20 bg-slate-950/20 px-3 py-3 text-left transition hover:border-sky-200/40 hover:bg-sky-500/10'
+                      className='flex cursor-pointer items-start gap-3 rounded-2xl border border-border/60 bg-background/70 px-3 py-3 text-left transition hover:border-primary/30 hover:bg-primary/5'
                     >
-                      <div className='rounded-xl border border-sky-300/20 bg-sky-500/10 p-2 text-sky-200'>
+                      <div className='rounded-xl border border-primary/20 bg-primary/10 p-2 text-primary'>
                         <Sparkles className='size-4' />
                       </div>
                       <div className='min-w-0'>
-                        <div className='text-sm font-semibold text-white'>{recipe.label}</div>
-                        <div className='mt-1 text-xs leading-relaxed text-sky-100/75'>
+                        <div className='text-sm font-semibold text-foreground'>{recipe.label}</div>
+                        <div className='mt-1 text-xs leading-relaxed text-muted-foreground'>
                           {recipe.description}
                         </div>
                       </div>
@@ -632,7 +638,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
 
             <div className='mb-3 flex items-center justify-between gap-2'>
               <div>
-                <div className='text-sm font-semibold text-white'>Lesson pages</div>
+                <div className='text-sm font-semibold text-foreground'>Lesson pages</div>
                 <div className='text-xs text-muted-foreground'>
                   Build multi-step lessons that can absorb your existing slides and layouts.
                 </div>
@@ -651,6 +657,8 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                   : pageReview && pageReview.issueCount > 0
                     ? `${pageReview.issueCount} issue${pageReview.issueCount === 1 ? '' : 's'}`
                     : 'Ready';
+                const pageNarrationLabel =
+                  pageReview?.narrationCoverage.summaryLabel ?? 'Waiting for content';
 
                 return (
                   <button
@@ -660,8 +668,8 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                     className={cn(
                       'rounded-2xl border px-3 py-2 text-left transition',
                       isActive
-                        ? 'border-indigo-300 bg-indigo-500/15 text-white shadow-sm'
-                        : 'border-border/60 bg-card/20 text-muted-foreground hover:border-indigo-200 hover:text-white'
+                        ? 'border-primary/30 bg-primary/10 text-foreground shadow-sm'
+                        : 'border-border/60 bg-background/60 text-muted-foreground hover:border-primary/20 hover:text-foreground'
                     )}
                   >
                     {sectionLabel ? (
@@ -686,6 +694,19 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                         )}
                       >
                         {pageStatusLabel}
+                      </Badge>
+                      <Badge
+                        variant='outline'
+                        className={cn(
+                          'h-5 px-1.5 text-[10px] uppercase tracking-wide',
+                          pageReview?.narrationCoverage.state === 'ready'
+                            ? 'border-sky-400/40 text-sky-300'
+                            : pageReview?.narrationCoverage.state === 'needs-review'
+                              ? 'border-amber-400/40 text-amber-300'
+                              : 'border-slate-500/40 text-slate-300'
+                        )}
+                      >
+                        {pageNarrationLabel}
                       </Badge>
                     </div>
                   </button>
@@ -741,7 +762,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
             <div className='mt-4 rounded-2xl border border-border/60 bg-card/30 p-4'>
               <div className='mb-3 flex flex-wrap items-center justify-between gap-2'>
                 <div>
-                  <div className='text-sm font-semibold text-white'>Active page</div>
+                  <div className='text-sm font-semibold text-foreground'>Active page</div>
                   <div className='text-xs text-muted-foreground'>
                     Use page metadata to mirror lesson hubs, slides, and summaries.
                   </div>
@@ -814,6 +835,38 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
               {activePageReview && activePageReview.issueCount > 0 ? (
                 <div className='mb-3 rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-100/90'>
                   {activePageReview.warnings[0]}
+                </div>
+              ) : null}
+              {activePageNarrationCoverage ? (
+                <div
+                  className={cn(
+                    'mb-3 rounded-xl border px-3 py-2 text-xs',
+                    activePageNarrationCoverage.state === 'ready'
+                      ? 'border-sky-400/20 bg-sky-500/10 text-sky-100/90'
+                      : activePageNarrationCoverage.state === 'needs-review'
+                        ? 'border-amber-400/20 bg-amber-500/10 text-amber-100/90'
+                        : 'border-border/60 bg-background/70 text-muted-foreground'
+                  )}
+                >
+                  <div className='flex flex-wrap items-center gap-2'>
+                    <span className='font-semibold uppercase tracking-[0.14em]'>
+                      Narration on this page
+                    </span>
+                    <Badge
+                      variant='outline'
+                      className={cn(
+                        'h-5 px-1.5 text-[10px] uppercase tracking-wide',
+                        activePageNarrationCoverage.state === 'ready'
+                          ? 'border-sky-400/40 text-sky-300'
+                          : activePageNarrationCoverage.state === 'needs-review'
+                            ? 'border-amber-400/40 text-amber-300'
+                            : 'border-slate-500/40 text-slate-300'
+                      )}
+                    >
+                      {activePageNarrationCoverage.summaryLabel}
+                    </Badge>
+                  </div>
+                  <div className='mt-2 leading-relaxed'>{activePageNarrationCoverage.detail}</div>
                 </div>
               ) : null}
 
@@ -894,7 +947,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
           <div className='mt-4 rounded-2xl border border-border/60 bg-card/30 p-4'>
             <div className='mb-3 flex flex-wrap items-start justify-between gap-3'>
               <div>
-                <div className='text-sm font-semibold text-white'>Quick insert</div>
+                <div className='text-sm font-semibold text-foreground'>Quick insert</div>
                 <div className='text-xs text-muted-foreground'>
                   Add the next teaching block by intent instead of scanning one long toolbar.
                 </div>
@@ -917,7 +970,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
               ) : (
                 groupedQuickInsertActions.map(([group, actions]) => (
                   <div key={group} className='space-y-2'>
-                    <div className='text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400'>
+                    <div className='text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground'>
                       {group}
                     </div>
                     <div className='grid gap-2 lg:grid-cols-2'>
@@ -927,13 +980,13 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                           type='button'
                           onClick={action.onClick}
                           disabled={!activePage}
-                          className='flex cursor-pointer items-start gap-3 rounded-2xl border border-border/60 bg-card/20 px-3 py-3 text-left transition hover:border-sky-300/40 hover:bg-sky-500/10 disabled:pointer-events-none disabled:opacity-50'
+                          className='flex cursor-pointer items-start gap-3 rounded-2xl border border-border/60 bg-background/60 px-3 py-3 text-left transition hover:border-primary/25 hover:bg-primary/5 disabled:pointer-events-none disabled:opacity-50'
                         >
-                          <div className='rounded-xl border border-sky-400/20 bg-sky-500/10 p-2 text-sky-200'>
+                          <div className='rounded-xl border border-primary/20 bg-primary/10 p-2 text-primary'>
                             <action.Icon className='size-4' />
                           </div>
                           <div className='min-w-0'>
-                            <div className='text-sm font-semibold text-white'>{action.label}</div>
+                            <div className='text-sm font-semibold text-foreground'>{action.label}</div>
                             <div className='mt-1 text-xs leading-relaxed text-muted-foreground'>
                               {action.description}
                             </div>
@@ -950,11 +1003,11 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
             Build lesson pages from typed blocks. Mix explanation, SVG references, interactive
             activities, and responsive layouts without switching tools.
           </div>
-        </div>
+        </KangurAdminWorkspaceSectionCard>
 
         {activePage?.blocks.length === 0 ? (
           <div className='rounded-2xl border border-dashed border-border/70 bg-card/20 p-6'>
-            <div className='text-sm font-semibold text-white'>This page has no content yet.</div>
+            <div className='text-sm font-semibold text-foreground'>This page has no content yet.</div>
             <div className='mt-2 text-sm text-muted-foreground'>
               Start with a teaching explanation, a visual example, or a practice task.
             </div>
@@ -1360,14 +1413,14 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
         })}
       </div>
 
-      <div className='sticky top-4 hidden h-[calc(100vh-2rem)] flex-col gap-4 overflow-hidden rounded-2xl border border-border/60 bg-card/20 xl:flex'>
-        <div className='flex items-center justify-between border-b border-border/60 bg-card/40 px-4 py-3 backdrop-blur-md'>
+      <div className='sticky top-4 hidden h-[calc(100vh-2rem)] flex-col gap-4 overflow-hidden rounded-2xl border border-border/60 bg-card/35 shadow-sm xl:flex'>
+        <div className='flex items-center justify-between border-b border-border/60 bg-background/70 px-4 py-3 backdrop-blur-md'>
           <div>
-            <div className='text-sm font-semibold text-white'>Preview</div>
+            <div className='text-sm font-semibold text-foreground'>Preview</div>
             <div className='text-xs text-muted-foreground'>{previewSummaryLabel}</div>
           </div>
           <div className='flex flex-col items-end gap-2'>
-            <div className='flex items-center gap-1 rounded-xl border border-border/60 bg-card/20 p-1'>
+            <div className='flex items-center gap-1 rounded-xl border border-border/60 bg-background/60 p-1'>
               <Button
                 type='button'
                 size='sm'
@@ -1375,8 +1428,8 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                 className={cn(
                   'h-7 px-2 text-[11px]',
                   previewScope === 'page'
-                    ? 'border-sky-300/70 bg-sky-500/20 text-sky-100'
-                    : 'text-gray-300'
+                    ? 'border-primary/30 bg-primary/10 text-foreground'
+                    : 'text-muted-foreground'
                 )}
                 onClick={(): void => setPreviewScope('page')}
               >
@@ -1389,15 +1442,15 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                 className={cn(
                   'h-7 px-2 text-[11px]',
                   previewScope === 'lesson'
-                    ? 'border-sky-300/70 bg-sky-500/20 text-sky-100'
-                    : 'text-gray-300'
+                    ? 'border-primary/30 bg-primary/10 text-foreground'
+                    : 'text-muted-foreground'
                 )}
                 onClick={(): void => setPreviewScope('lesson')}
               >
                 Full lesson
               </Button>
             </div>
-            <div className='flex items-center gap-1 rounded-xl border border-border/60 bg-card/20 p-1'>
+            <div className='flex items-center gap-1 rounded-xl border border-border/60 bg-background/60 p-1'>
               <Button
                 type='button'
                 size='sm'
@@ -1405,8 +1458,8 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                 className={cn(
                   'h-7 px-2 text-[11px]',
                   previewDevice === 'desktop'
-                    ? 'border-emerald-300/70 bg-emerald-500/20 text-emerald-100'
-                    : 'text-gray-300'
+                    ? 'border-primary/30 bg-primary/10 text-foreground'
+                    : 'text-muted-foreground'
                 )}
                 onClick={(): void => setPreviewDevice('desktop')}
               >
@@ -1419,8 +1472,8 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                 className={cn(
                   'h-7 px-2 text-[11px]',
                   previewDevice === 'mobile'
-                    ? 'border-emerald-300/70 bg-emerald-500/20 text-emerald-100'
-                    : 'text-gray-300'
+                    ? 'border-primary/30 bg-primary/10 text-foreground'
+                    : 'text-muted-foreground'
                 )}
                 onClick={(): void => setPreviewDevice('mobile')}
               >

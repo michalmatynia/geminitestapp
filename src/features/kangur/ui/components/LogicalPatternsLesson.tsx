@@ -228,6 +228,7 @@ export default function LogicalPatternsLesson(): React.JSX.Element {
     return (
       <LessonSlideSection
         slides={SLIDES[activeSection]}
+        sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
         onBack={() => setActiveSection(null)}
         onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
         dotActiveClass='bg-violet-500'

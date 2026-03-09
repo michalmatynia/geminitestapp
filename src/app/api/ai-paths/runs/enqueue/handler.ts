@@ -39,8 +39,7 @@ import {
 } from '@/shared/lib/ai-paths';
 import { sanitizeTriggerPathConfig } from '@/shared/lib/ai-paths/core/normalization/trigger-normalization';
 import {
-  findRemovedLegacyTriggerContextModes,
-  formatRemovedLegacyTriggerContextModesMessage,
+  remediateRemovedLegacyTriggerContextModes,
 } from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
@@ -119,7 +118,14 @@ const loadStoredPathConfig = async (pathId: string): Promise<PathConfig> => {
     throw badRequestError(`Stored AI Path config not found for "${pathId}".`);
   }
 
-  const resolvedConfig = resolvePortablePathInput(raw, {
+  let parsedPayload: unknown = raw;
+  try {
+    parsedPayload = JSON.parse(raw);
+  } catch {
+    parsedPayload = raw;
+  }
+
+  const resolvedConfig = resolvePortablePathInput(parsedPayload, {
     repairIdentities: true,
     includeConnections: false,
     signingPolicyTelemetrySurface: 'api',
@@ -201,17 +207,10 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
   if (!Array.isArray(resolvedNodesInput) || !Array.isArray(resolvedEdgesInput)) {
     throw badRequestError('Nodes and edges are required to enqueue a run.');
   }
-  const removedLegacyTriggerContextModes =
-    findRemovedLegacyTriggerContextModes(resolvedNodesInput);
-  if (removedLegacyTriggerContextModes.length > 0) {
-    throw badRequestError(
-      formatRemovedLegacyTriggerContextModesMessage(removedLegacyTriggerContextModes, {
-        surface: 'run graph',
-      })
-    );
-  }
 
-  const normalizedNodes = normalizeNodes(resolvedNodesInput);
+  const normalizedNodes = normalizeNodes(
+    remediateRemovedLegacyTriggerContextModes(resolvedNodesInput).value as AiNode[]
+  );
   const validationConfig: PathConfig = {
     id: rest.pathId,
     version: 1,

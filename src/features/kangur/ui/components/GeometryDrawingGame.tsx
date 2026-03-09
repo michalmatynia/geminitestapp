@@ -1,13 +1,15 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle, Eraser, PencilRuler, RefreshCw, XCircle } from 'lucide-react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import {
   KangurButton,
   KangurDisplayEmoji,
   KangurGlassPanel,
+  KangurHeadline,
   KangurInfoCard,
   KangurProgressBar,
+  KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_ACCENT_STYLES } from '@/features/kangur/ui/design/tokens';
 import {
@@ -511,10 +513,19 @@ export default function GeometryDrawingGame({
             >
               {score === totalRounds ? '🏆' : score >= 3 ? '🌟' : '💪'}
             </KangurDisplayEmoji>
-            <h3 id='geometry-drawing-heading' className='text-2xl font-extrabold text-slate-800'>
+            <KangurHeadline
+              accent='violet'
+              as='h3'
+              data-testid='geometry-drawing-summary-title'
+              id='geometry-drawing-heading'
+            >
               Wynik: {score}/{totalRounds}
-            </h3>
-            <p className='text-slate-500'>Zdobyte XP: +{xpEarned}</p>
+            </KangurHeadline>
+            {xpEarned > 0 ? (
+              <KangurStatusChip accent='indigo' className='px-4 py-2 text-sm font-bold'>
+                +{xpEarned} XP ✨
+              </KangurStatusChip>
+            ) : null}
             <KangurProgressBar
               accent='emerald'
               animated
@@ -557,9 +568,14 @@ export default function GeometryDrawingGame({
           <KangurGlassPanel
             className='w-full rounded-[26px] !p-3'
             data-testid='geometry-difficulty-shell'
-            surface='tealField'
+            surface='solid'
             variant='soft'
           >
+            <div className='mb-3 flex justify-center'>
+              <KangurStatusChip accent='teal' size='sm'>
+                Poziom figur
+              </KangurStatusChip>
+            </div>
             <div aria-label='Poziom trudnosci figur' className='grid grid-cols-2 gap-2' role='group'>
               {(['starter', 'pro'] as const).map((mode) => (
                 <KangurButton
@@ -589,9 +605,14 @@ export default function GeometryDrawingGame({
               size='sm'
               value={(roundIndex / totalRounds) * 100}
             />
-            <span className='text-xs font-bold text-slate-500'>
+            <KangurStatusChip
+              accent='teal'
+              className='shrink-0'
+              data-testid='geometry-drawing-progress-label'
+              size='sm'
+            >
               {roundIndex + 1}/{totalRounds}
-            </span>
+            </KangurStatusChip>
           </div>
 
           <motion.div
@@ -607,13 +628,24 @@ export default function GeometryDrawingGame({
               surface='solid'
               variant='soft'
             >
-              <KangurDisplayEmoji size='md'>{currentRound?.emoji}</KangurDisplayEmoji>
-              <h3 id='geometry-drawing-heading' className='text-xl font-extrabold text-slate-800'>
-                Narysuj: {currentRound?.label}
-              </h3>
-              <p id='geometry-drawing-hint' className='text-sm text-slate-500 text-center'>
-                {currentRound?.hint}
-              </p>
+              <KangurInfoCard
+                accent='teal'
+                className='flex w-full flex-col items-center gap-3 rounded-[24px] text-center'
+                data-testid='geometry-drawing-prompt-card'
+                padding='md'
+                tone='accent'
+              >
+                <KangurStatusChip accent='teal' size='sm'>
+                  Figury • {DIFFICULTY_LABELS[difficulty]}
+                </KangurStatusChip>
+                <KangurDisplayEmoji size='md'>{currentRound?.emoji}</KangurDisplayEmoji>
+                <KangurHeadline accent='violet' as='h3' id='geometry-drawing-heading' size='sm'>
+                  Narysuj: {currentRound?.label}
+                </KangurHeadline>
+                <p id='geometry-drawing-hint' className='text-sm text-slate-500 text-center'>
+                  {currentRound?.hint}
+                </p>
+              </KangurInfoCard>
 
               <KangurInfoCard
                 accent={boardAccent}

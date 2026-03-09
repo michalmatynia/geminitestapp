@@ -15,7 +15,6 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_SEGMENTED_CONTROL_CLASSNAME,
-  KANGUR_STEP_PILL_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import {
   addXp,
@@ -1231,24 +1230,6 @@ export default function ClockTrainingGame({
           Powtórki adaptacyjne: {retryAddedCount}
         </KangurStatusChip>
       ) : null}
-
-      <div className='flex gap-2 mb-1'>
-        {tasks.map((_, idx) => (
-          <div
-            key={idx}
-            className={cn(
-              KANGUR_STEP_PILL_CLASSNAME,
-              'h-[14px] min-w-[14px]',
-              idx < current
-                ? 'w-6 bg-indigo-200'
-                : idx === current
-                  ? 'w-8 scale-[1.04] bg-indigo-500'
-                  : 'w-[14px] soft-cta opacity-80'
-            )}
-            data-testid={`clock-training-progress-${idx}`}
-          />
-        ))}
-      </div>
 
       <KangurSummaryPanel
         accent='amber'

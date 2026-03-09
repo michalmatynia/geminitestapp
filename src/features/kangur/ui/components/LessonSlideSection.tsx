@@ -1,20 +1,24 @@
-import { useEffect, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
+import {
+  useKangurLessonBackAction,
+  useKangurLessonSecretPill,
+  useKangurRegisterLessonSubsectionNavigation,
+  useKangurSyncLessonSubsectionSummary,
+  type KangurLessonSubsectionSummary,
+} from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 import {
   KangurButton,
   KangurEmptyState,
   KangurGlassPanel,
 } from '@/features/kangur/ui/design/primitives';
 import {
-  useKangurLessonBackAction,
-  useKangurRegisterLessonSubsectionNavigation,
-} from '@/features/kangur/ui/context/KangurLessonNavigationContext';
-import {
   KANGUR_PENDING_STEP_PILL_CLASSNAME,
   KANGUR_STEP_PILL_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import { cn } from '@/shared/utils';
 
 export type LessonSlide = {
@@ -24,6 +28,7 @@ export type LessonSlide = {
 
 type LessonSlideSectionProps = {
   slides: LessonSlide[];
+  sectionHeader?: KangurLessonSubsectionSummary | null;
   onBack?: () => void;
   onComplete?: () => void;
   onProgressChange?: (viewedCount: number, totalCount: number) => void;
@@ -34,19 +39,25 @@ type LessonSlideSectionProps = {
 
 export default function LessonSlideSection({
   slides,
+  sectionHeader = null,
   onBack,
   onComplete,
   onProgressChange,
   dotActiveClass,
   dotDoneClass,
 }: LessonSlideSectionProps): React.JSX.Element {
+  const prefersReducedMotion = useReducedMotion();
+  const slideMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const handleBack = useKangurLessonBackAction(onBack);
+  const secretLessonPill = useKangurLessonSecretPill();
   const registerSubsectionNavigation = useKangurRegisterLessonSubsectionNavigation();
+  useKangurSyncLessonSubsectionSummary(sectionHeader);
   const [slide, setSlide] = useState(0);
   const completionReportedRef = useRef(false);
   const isLast = slide === slides.length - 1;
   const isFirst = slide === 0;
   const activeSlide = slides[slide];
+  const shouldRenderNavigationPills = slides.length > 1 || Boolean(secretLessonPill?.isUnlocked);
 
   if (!activeSlide) {
     return (
@@ -87,7 +98,7 @@ export default function LessonSlideSection({
           Wróć do tematów
         </KangurButton>
 
-        {slides.length > 1 ? (
+        {shouldRenderNavigationPills ? (
           <div className='flex gap-2'>
             {slides.map((_, i) => (
               <button
@@ -108,6 +119,21 @@ export default function LessonSlideSection({
                 data-testid={`lesson-slide-indicator-${i}`}
               />
             ))}
+            {secretLessonPill?.isUnlocked ? (
+              <button
+                type='button'
+                onClick={secretLessonPill.onOpen}
+                aria-label='Otworz sekretny panel'
+                className={cn(
+                  KANGUR_STEP_PILL_CLASSNAME,
+                  'h-[14px] min-w-[40px] cursor-pointer justify-center bg-gradient-to-r from-amber-300 via-yellow-300 to-amber-500 text-[10px] font-black text-amber-950 shadow-sm ring-1 ring-amber-300/90'
+                )}
+                data-testid='lesson-slide-secret-indicator'
+                title='Sekretny panel'
+              >
+                ★
+              </button>
+            ) : null}
           </div>
         ) : null}
       </div>
@@ -115,9 +141,7 @@ export default function LessonSlideSection({
       <AnimatePresence mode='wait'>
         <motion.div
           key={slide}
-          initial={{ opacity: 0, x: 30 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -30 }}
+          {...slideMotionProps}
           className='w-full'
         >
           <KangurGlassPanel
@@ -133,37 +157,39 @@ export default function LessonSlideSection({
       </AnimatePresence>
 
       {slides.length > 1 ? (
-        <div className='flex w-full gap-3'>
+        <div className='flex w-full items-center justify-between gap-3'>
           {isFirst ? (
-            <div className='flex-1' />
+            <div className='min-w-[72px]' />
           ) : (
             <KangurButton
               onClick={() => setSlide((currentSlide) => Math.max(0, currentSlide - 1))}
-              className='flex-1 justify-start'
+              aria-label='Poprzedni panel'
+              className='min-w-[72px] justify-center border-slate-300/80 bg-white/92 px-5 shadow-sm'
               data-testid='lesson-slide-prev-button'
-              size='lg'
+              size='sm'
               type='button'
+              title='Poprzedni panel'
               variant='surface'
             >
               <ChevronLeft className='h-4 w-4 flex-shrink-0' />
-              <span>Poprzedni panel</span>
             </KangurButton>
           )}
 
           {isLast ? (
-            <div className='flex-1' />
+            <div className='min-w-[72px]' />
           ) : (
             <KangurButton
               onClick={() =>
                 setSlide((currentSlide) => Math.min(slides.length - 1, currentSlide + 1))
               }
-              className='flex-1 justify-end'
+              aria-label='Nastepny panel'
+              className='min-w-[72px] justify-center border-slate-300/80 bg-white/92 px-5 shadow-sm'
               data-testid='lesson-slide-next-button'
-              size='lg'
+              size='sm'
               type='button'
+              title='Nastepny panel'
               variant='surface'
             >
-              <span>Nastepny panel</span>
               <ChevronRight className='h-4 w-4 flex-shrink-0' />
             </KangurButton>
           )}

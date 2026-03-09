@@ -73,19 +73,19 @@ describe('KangurFeatureRouteShell', () => {
     });
   });
 
-  it('normalizes trailing slashes for the public tests route', () => {
+  it('keeps removed tests slugs unresolved while normalizing trailing slashes', () => {
     usePathnameMock.mockReturnValue('/kangur/tests/');
 
     render(<KangurFeatureRouteShell />);
 
     expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
-      pageKey: 'Tests',
+      pageKey: null,
       requestedPath: '/kangur/tests',
       basePath: '/kangur',
       embedded: false,
     });
     expect(setKangurClientObservabilityContextMock).toHaveBeenCalledWith({
-      pageKey: 'Tests',
+      pageKey: null,
       requestedPath: '/kangur/tests',
     });
   });

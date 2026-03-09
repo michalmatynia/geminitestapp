@@ -111,8 +111,8 @@ describe('KangurRouteTransitionProvider', () => {
     renderRouteTransitionHarness({
       pageKey: 'Game',
       requestedPath: '/kangur',
-      targetHref: '/kangur/tests',
-      targetPageKey: 'Tests',
+      targetHref: '/kangur/profile',
+      targetPageKey: 'LearnerProfile',
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Start transition' }));

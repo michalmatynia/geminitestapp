@@ -26,6 +26,13 @@ export const agentPersonaMoodSchema = z.object({
   svgContent: z.string().max(100_000).default(''),
   avatarImageUrl: z.string().trim().max(2_048).nullable().optional(),
   avatarImageFileId: z.string().trim().max(256).nullable().optional(),
+  avatarThumbnailRef: z.string().trim().max(256).nullable().optional(),
+  avatarThumbnailDataUrl: z.string().max(20_000).nullable().optional(),
+  avatarThumbnailMimeType: z.string().trim().max(64).nullable().optional(),
+  avatarThumbnailBytes: z.number().int().min(0).nullable().optional(),
+  avatarThumbnailWidth: z.number().int().min(1).max(256).nullable().optional(),
+  avatarThumbnailHeight: z.number().int().min(1).max(256).nullable().optional(),
+  useEmbeddedThumbnail: z.boolean().optional(),
 });
 
 export type AgentPersonaMood = z.infer<typeof agentPersonaMoodSchema>;

@@ -737,7 +737,7 @@ module.exports = tseslint.config(
         {
           patterns: [
             {
-              group: ['@/features/kangur/legacy/components/*', '@/features/kangur/legacy/utils/*'],
+            group: ['@/features/kangur/legacy/components/*', '@/features/kangur/legacy/utils/*'],
               message:
                 'Kangur UI pages should depend on canonical ui/components and ui/services modules.',
             },

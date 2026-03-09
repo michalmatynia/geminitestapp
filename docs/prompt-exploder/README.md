@@ -13,14 +13,14 @@ This directory is the feature-owned home for Prompt Exploder docs and artifacts.
 
 ## Canonical Entry Points
 
-- Feature overview: [`docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md`](../PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md)
-- Operations runbook: [`docs/PROMPT_EXPLODER_OPERATIONS_RUNBOOK.md`](../PROMPT_EXPLODER_OPERATIONS_RUNBOOK.md)
-- Tooltip guide: [`docs/PROMPT_EXPLODER_TOOLTIP_GUIDE.md`](../PROMPT_EXPLODER_TOOLTIP_GUIDE.md)
+- Feature overview: [`./overview.md`](./overview.md)
+- Operations runbook: [`./operations-runbook.md`](./operations-runbook.md)
+- Tooltip guide: [`./tooltip-guide.md`](./tooltip-guide.md)
 - Master plan: [`./master-plan.md`](./master-plan.md)
 - Migration plan: [`./migration-plan-2026-03-04.md`](./migration-plan-2026-03-04.md)
 
 ## Structural Rule
 
 - New Prompt Exploder feature docs should prefer this folder.
-- Root-level Prompt Exploder docs are legacy entrypoints and should be migrated
-  here opportunistically instead of expanding the root surface.
+- Root-level Prompt Exploder docs now act only as compatibility stubs and should
+  not be treated as canonical entrypoints.

@@ -4,6 +4,7 @@ import { spawn, execFile as execFileCallback } from 'node:child_process';
 import { promisify } from 'node:util';
 
 import { collectMetrics } from '../architecture/lib-metrics.mjs';
+import { parseScanOutput } from '../architecture/lib/scan-output.mjs';
 
 const execFile = promisify(execFileCallback);
 
@@ -410,12 +411,7 @@ const parseScannerSummary = async (scriptName) => {
       }
     );
 
-    const parsed = JSON.parse(stdout);
-    const summary = parsed?.summary;
-    if (!summary || typeof summary !== 'object') {
-      throw new Error(`${scriptName} summary is missing.`);
-    }
-
+    const { summary } = parseScanOutput(stdout, scriptName);
     return {
       ok: true,
       summary,

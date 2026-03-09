@@ -4,6 +4,8 @@ import path from 'node:path';
 
 import ts from 'typescript';
 
+import { buildScanOutput } from './lib/scan-output.mjs';
+
 const root = process.cwd();
 const outDir = path.join(root, 'docs', 'metrics');
 const rawArgs = process.argv.slice(2);
@@ -739,17 +741,28 @@ const run = async () => {
 
   if (SUMMARY_JSON_ONLY) {
     process.stdout.write(
-      `${JSON.stringify({
-        summary: report.summary,
-        filters: report.filters,
-        paths: {
-          latestJson: toRelativePosix(output.latestJsonPath),
-          latestMarkdown: toRelativePosix(output.latestMdPath),
-          latestCsv: toRelativePosix(output.latestCsvPath),
-          latestPlanMarkdown: toRelativePosix(output.latestPlanMdPath),
-          historyJson: output.wroteHistory ? toRelativePosix(output.historyJsonPath) : null,
-        },
-      })}\n`
+      `${JSON.stringify(
+        buildScanOutput({
+          scannerName: 'scan-type-clusters',
+          scannerVersion: '1.0.0',
+          summary: report.summary,
+          details: {
+            clusters: report.clusters,
+            status: report.status,
+          },
+          filters: report.filters,
+          paths: {
+            latestJson: toRelativePosix(output.latestJsonPath),
+            latestMarkdown: toRelativePosix(output.latestMdPath),
+            latestCsv: toRelativePosix(output.latestCsvPath),
+            latestPlanMarkdown: toRelativePosix(output.latestPlanMdPath),
+            historyJson: output.wroteHistory ? toRelativePosix(output.historyJsonPath) : null,
+          },
+          notes: ['type-clusters scan result'],
+        }),
+        null,
+        2
+      )}\n`
     );
     return;
   }

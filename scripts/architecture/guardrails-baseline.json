@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-09T05:41:32.932Z",
+  "generatedAt": "2026-03-09T06:20:03.872Z",
   "hardLimits": {
     "sourceLargestFileLines": 4000
   },
@@ -7,8 +7,8 @@
     "source.filesOver1000": 10,
     "source.filesOver1500": 3,
     "source.useClientFiles": 1496,
-    "source.largestFileLines": 3071,
-    "api.totalRoutes": 337,
+    "source.largestFileLines": 3075,
+    "api.totalRoutes": 341,
     "api.delegatedServerRoutes": 13,
     "api.routesWithoutApiHandler": 0,
     "api.routesWithoutExplicitCachePolicy": 0,

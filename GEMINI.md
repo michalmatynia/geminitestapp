@@ -231,7 +231,7 @@ The repo has an explicit app-layer boundary convention:
 
 - app routes should import feature entrypoints via `public.ts` or `server.ts`
 - many features already expose those entrypoints
-- `docs/ARCHITECTURE_GUARDRAILS.md` says this is enforced by ESLint
+- `docs/platform/architecture-guardrails.md` says this is enforced by ESLint
 
 Examples verified in the tree:
 
@@ -524,11 +524,11 @@ npm run restore:base-listing-statuses
 Verified high-value docs:
 
 - `docs/README.md`
-- `docs/DEVELOPER_HANDBOOK.md`
-- `docs/COMPONENT_PATTERNS.md`
-- `docs/ARCHITECTURE_GUARDRAILS.md`
-- `docs/AI_PATHS.md`
-- `docs/AI_PATHS_EXTENDED_REFERENCE.md`
+- `docs/platform/developer-handbook.md`
+- `docs/platform/component-patterns.md`
+- `docs/platform/architecture-guardrails.md`
+- `docs/ai-paths/overview.md`
+- `docs/ai-paths/reference.md`
 - `docs/case-resolver/index.md`
 - `docs/validator/README.md`
 
@@ -617,7 +617,7 @@ SCRAPER_GUARD_API_MAX=
 - Expect Redis absence in local/dev and queue inline fallback behavior.
 - Check docs generation and architecture scripts when touching AI Paths,
   validator docs, or architecture boundaries.
-- Treat `docs/ARCHITECTURE_GUARDRAILS.md` and query-factory metadata checks as
+- Treat `docs/platform/architecture-guardrails.md` and query-factory metadata checks as
   active engineering constraints, not aspirational notes.
 
 ## Last Reviewed

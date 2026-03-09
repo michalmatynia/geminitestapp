@@ -1,14 +1,14 @@
 # Unsafe Patterns Check
 
-Generated at: 2026-03-09T05:26:06.284Z
+Generated at: 2026-03-09T06:12:22.550Z
 
 ## Summary
 
 - Status: PASSED
-- Files scanned: 4461
+- Files scanned: 4473
 - Errors: 0
 - Warnings: 0
-- Info: 0
+- Info: 1
 
 ## Trend Counters
 
@@ -17,7 +17,7 @@ Generated at: 2026-03-09T05:26:06.284Z
 | doubleAssertionCount | 0 |
 | anyCount | 0 |
 | eslintDisableCount | 0 |
-| nonNullAssertionCount | 0 |
+| nonNullAssertionCount | 1 |
 | tsIgnoreCount | 0 |
 | tsExpectErrorCount | 0 |
 
@@ -25,10 +25,13 @@ Generated at: 2026-03-09T05:26:06.284Z
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
+| non-null-assertion | 0 | 0 | 1 |
 
 ## Issues
 
-No unsafe pattern issues detected.
+| Severity | Rule | Location | Message |
+| --- | --- | --- | --- |
+| INFO | non-null-assertion | src/features/cms/context-registry/page-builder.ts:231 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
 
 ## Notes
 

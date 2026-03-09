@@ -1,25 +1,33 @@
 # API Input Validation Check
 
-Generated at: 2026-03-09T05:26:06.903Z
+Generated at: 2026-03-09T06:12:23.285Z
 
 ## Summary
 
-- Status: PASSED
-- Files scanned: 686
-- Total handlers: 660
-- Validated handlers: 660
+- Status: WARN
+- Files scanned: 689
+- Total handlers: 663
+- Validated handlers: 663
 - **Coverage: 100%**
 - Errors: 0
-- Warnings: 0
+- Warnings: 6
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
+| query-param-unvalidated | 0 | 6 | 0 |
 
 ## Issues
 
-All API handlers have proper input validation.
+| Severity | Rule | Location | Message |
+| --- | --- | --- | --- |
+| WARN | query-param-unvalidated | src/app/api/agent/approval-gates/route.ts:11 | searchParams.get() used without Zod schema validation. |
+| WARN | query-param-unvalidated | src/app/api/agent/approval-gates/route.ts:31 | searchParams.get() used without Zod schema validation. |
+| WARN | query-param-unvalidated | src/app/api/agent/resources/route.ts:24 | searchParams.get() used without Zod schema validation. |
+| WARN | query-param-unvalidated | src/app/api/agent/resources/route.ts:45 | searchParams.get() used without Zod schema validation. |
+| WARN | query-param-unvalidated | src/app/api/agent/resources/route.ts:46 | searchParams.get() used without Zod schema validation. |
+| WARN | query-param-unvalidated | src/app/api/agent/resources/route.ts:47 | searchParams.get() used without Zod schema validation. |
 
 ## Notes
 

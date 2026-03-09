@@ -167,6 +167,7 @@
     "quality:weekly-duration-budgets:ci": "node scripts/quality/recalibrate-weekly-duration-budgets.mjs --ci --no-history",
     "auth:user:set-password": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/auth/set-auth-user-password.ts",
     "docs:structure:check": "node scripts/docs/check-docs-structure.mjs",
+    "docs:structure:sync-mirrors": "node scripts/docs/sync-docs-structure-mirrors.mjs",
     "docs:validator:generate": "tsx scripts/docs/generate-validator-docs.ts",
     "docs:validator:check": "tsx scripts/docs/check-validator-doc-coverage.ts",
     "docs:ai-paths:semantic:generate": "tsx scripts/docs/generate-ai-paths-semantic-grammar.ts",

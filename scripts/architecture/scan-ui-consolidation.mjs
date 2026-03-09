@@ -1,6 +1,8 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { buildScanOutput } from './lib/scan-output.mjs';
+
 const args = new Set(process.argv.slice(2));
 const root = process.cwd();
 const outDir = path.join(root, 'docs', 'ui-consolidation');
@@ -813,7 +815,23 @@ const run = async () => {
   }
 
   if (SUMMARY_JSON_ONLY) {
-    console.log(JSON.stringify({ summary: result.summary }));
+    process.stdout.write(
+      `${JSON.stringify(
+        buildScanOutput({
+          scannerName: 'scan-ui-consolidation',
+          scannerVersion: '1.0.0',
+          summary: result.summary,
+          details: {
+            candidates: result.candidates,
+            opportunities: result.opportunities,
+            clusterDiagnostics: result.clusterDiagnostics,
+          },
+          notes: ['ui consolidation scan result'],
+        }),
+        null,
+        2
+      )}\n`
+    );
     return;
   }
 

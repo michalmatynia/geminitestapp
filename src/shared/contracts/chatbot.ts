@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { contextRegistryConsumerEnvelopeSchema } from './ai-context-registry';
 import { dtoBaseSchema } from './base';
 import { agentPersonaMoodIdSchema } from './agents';
 
@@ -201,6 +202,24 @@ export const sendMessageSchema = z.object({
 });
 
 export type SendMessageDto = z.infer<typeof sendMessageSchema>;
+
+export const chatbotChatMessageSchema = z.object({
+  role: chatMessageRoleSchema,
+  content: z.string(),
+  images: z.array(z.string()).optional(),
+});
+
+export type ChatbotChatMessageDto = z.infer<typeof chatbotChatMessageSchema>;
+export type ChatbotChatMessage = ChatbotChatMessageDto;
+
+export const chatbotChatRequestSchema = z.object({
+  messages: z.array(chatbotChatMessageSchema).min(1),
+  sessionId: z.string().nullable().optional(),
+  contextRegistry: contextRegistryConsumerEnvelopeSchema.optional(),
+});
+
+export type ChatbotChatRequestDto = z.infer<typeof chatbotChatRequestSchema>;
+export type ChatbotChatRequest = ChatbotChatRequestDto;
 
 export const chatbotChatResponseSchema = z.object({
   message: z.string().optional(),

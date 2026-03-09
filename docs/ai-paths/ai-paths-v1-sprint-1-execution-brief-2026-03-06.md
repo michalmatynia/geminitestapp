@@ -5,8 +5,8 @@
 1. `docs/ai-paths/ai-paths-improvements-plan-2026-03-06.md`
 2. `docs/ai-paths/ai-paths-improvements-roadmap.json`
 3. `docs/ai-paths/kernel-engine-transition-plan-2026-03-05.md`
-4. `docs/AI_PATHS.md`
-5. `docs/AI_PATHS_EXTENDED_REFERENCE.md`
+4. `docs/ai-paths/overview.md`
+5. `docs/ai-paths/reference.md`
 6. `docs/ai-paths/port-contracts-v3-design-2026-03-06.md`
 7. `docs/ai-paths/trace-record-v1-design-2026-03-06.md`
 8. `docs/ai-paths/port-contract-validation-ownership-2026-03-06.md`

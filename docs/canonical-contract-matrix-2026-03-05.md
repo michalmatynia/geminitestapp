@@ -4,6 +4,7 @@ last_reviewed: '2026-03-09'
 status: 'superseded'
 doc_type: 'decision'
 scope: 'cross-feature'
+canonical: false
 superseded_by: 'docs/decisions/canonical-contract-matrix-2026-03-05.md'
 ---
 

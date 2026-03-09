@@ -76,7 +76,6 @@ export const inferLoginCandidates = async (
 ): Promise<LoginCandidates | null> => {
   if (!page) return null;
   try {
-    /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
     const candidates = await page.evaluate<LoginCandidates>(() => {
       const documentRef = document;
 
@@ -87,7 +86,8 @@ export const inferLoginCandidates = async (
         }
         const parts: string[] = [];
         let node: Element | null = el;
-        while (node && node.nodeType === 1 && node !== documentRef.documentElement) {
+        while (node !== null) {
+          if (node.nodeType !== 1 || node === documentRef.documentElement) break;
           const currentNode: Element = node;
           let part = currentNode.tagName.toLowerCase();
           const name = currentNode.getAttribute('name');
@@ -185,8 +185,6 @@ export const inferLoginCandidates = async (
 
       return { inputs, buttons };
     });
-    /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
-
     if (log) {
       await log('info', 'Inferred login candidates.', {
         stepId: activeStepId ?? null,

@@ -15,6 +15,7 @@ import {
   OnChangeFn,
   Row,
   Column,
+  RowData,
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Loader2 } from 'lucide-react';
@@ -84,7 +85,7 @@ export function DataTableSortableHeader<TData, TValue>({
 }
 
 declare module '@tanstack/table-core' {
-  interface TableMeta<TData = unknown> {
+  interface TableMeta<TData extends RowData> {
     queryClient?: QueryClient;
   }
 }

@@ -65,46 +65,27 @@ stubs until references are cleaned up naturally:
 | `docs/legacy-compatibility-exception-register-2026-03-04.md` | `docs/decisions/legacy-compatibility-exception-register-2026-03-04.md` |
 | `docs/site-wide-canonical-migration-plan-2026-03-05.md` | `docs/plans/site-wide-canonical-migration-plan-2026-03-05.md` |
 | `docs/legacy-compatibility-exception-register-2026-03-05.md` | `docs/decisions/legacy-compatibility-exception-register-2026-03-05.md` |
+| `docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md` | `docs/prompt-exploder/overview.md` |
+| `docs/PROMPT_EXPLODER_OPERATIONS_RUNBOOK.md` | `docs/prompt-exploder/operations-runbook.md` |
+| `docs/PROMPT_EXPLODER_TOOLTIP_GUIDE.md` | `docs/prompt-exploder/tooltip-guide.md` |
+| `docs/AI_PATHS.md` | `docs/ai-paths/overview.md` |
+| `docs/AI_PATHS_EXTENDED_REFERENCE.md` | `docs/ai-paths/reference.md` |
 
 ## Root Legacy Entry Points Still Intentionally Active
 
-These still act as active entrypoints. They can later move behind stubs once the
-feature-folder equivalents are promoted hard enough.
-
-| Root Doc | Likely Long-Term Home |
-| --- | --- |
-| `docs/AI_PATHS.md` | `docs/ai-paths/` overview hub |
-| `docs/AI_PATHS_EXTENDED_REFERENCE.md` | `docs/ai-paths/` reference hub |
-| `docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md` | `docs/prompt-exploder/` overview hub |
-| `docs/PROMPT_EXPLODER_OPERATIONS_RUNBOOK.md` | `docs/prompt-exploder/` runbook hub |
-| `docs/PROMPT_EXPLODER_TOOLTIP_GUIDE.md` | `docs/prompt-exploder/` tooltip/reference hub |
+No root markdown docs remain intentionally active as canonical feature
+entrypoints.
 
 ## Pending Migration Candidates
 
 No root-level markdown docs remain pending migration.
-The remaining root surface is now compatibility-only.
-
-## Non-Markdown Compatibility Copies
-
-This root artifact now has a canonical home elsewhere and remains only as a
-compatibility mirror:
-
-| Root Copy | Canonical Location | Notes |
-| --- | --- | --- |
-| `docs/legacy-compatibility-exception-register-2026-03-04.json` | `docs/decisions/legacy-compatibility-exception-register-2026-03-04.json` | keep byte-identical until root consumers are cleaned up |
-| `docs/legacy-compatibility-exception-register-2026-03-05.json` | `docs/decisions/legacy-compatibility-exception-register-2026-03-05.json` | keep byte-identical until root consumers are cleaned up |
-
-When retaining compatibility copies:
-
-1. update the canonical file first
-2. update the root compatibility copy in the same change
-3. point manifests and scripts at the canonical path
-4. remove the compatibility copy only after downstream references are cleaned up
+No root-level non-markdown compatibility copies remain either.
+The root docs surface is now governance plus compatibility stubs only.
 
 ## Next Suggested Batch
 
 If continuing from this point, the next low-risk moves are:
 
 1. update downstream historical docs only when they are already being touched for other work
-2. decide whether the root JSON compatibility copies still have external consumers
-3. remove those root JSON copies once those consumers are gone
+2. keep reducing references to root compatibility stubs when canonical paths are touched
+3. eventually shrink the root markdown allowlist once some compatibility stubs are no longer needed

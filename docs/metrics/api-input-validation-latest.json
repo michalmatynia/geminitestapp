@@ -1,21 +1,89 @@
 {
-  "generatedAt": "2026-03-09T05:26:06.903Z",
-  "status": "passed",
+  "generatedAt": "2026-03-09T06:12:23.285Z",
+  "status": "warn",
   "summary": {
-    "total": 0,
+    "total": 6,
     "errorCount": 0,
-    "warningCount": 0,
+    "warningCount": 6,
     "infoCount": 0,
-    "status": "passed",
-    "fileCount": 686,
-    "totalHandlers": 660,
-    "validatedHandlers": 660,
+    "status": "warn",
+    "fileCount": 689,
+    "totalHandlers": 663,
+    "validatedHandlers": 663,
     "coveragePercent": 100
   },
   "scope": {
     "root": "src/app/api"
   },
-  "issues": [],
-  "rules": [],
-  "durationMs": 61
+  "issues": [
+    {
+      "severity": "warn",
+      "ruleId": "query-param-unvalidated",
+      "message": "searchParams.get() used without Zod schema validation.",
+      "file": "src/app/api/agent/approval-gates/route.ts",
+      "line": 11,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "query-param-unvalidated",
+      "message": "searchParams.get() used without Zod schema validation.",
+      "file": "src/app/api/agent/approval-gates/route.ts",
+      "line": 31,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "query-param-unvalidated",
+      "message": "searchParams.get() used without Zod schema validation.",
+      "file": "src/app/api/agent/resources/route.ts",
+      "line": 24,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "query-param-unvalidated",
+      "message": "searchParams.get() used without Zod schema validation.",
+      "file": "src/app/api/agent/resources/route.ts",
+      "line": 45,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "query-param-unvalidated",
+      "message": "searchParams.get() used without Zod schema validation.",
+      "file": "src/app/api/agent/resources/route.ts",
+      "line": 46,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "query-param-unvalidated",
+      "message": "searchParams.get() used without Zod schema validation.",
+      "file": "src/app/api/agent/resources/route.ts",
+      "line": 47,
+      "column": null,
+      "snippet": null,
+      "context": null
+    }
+  ],
+  "rules": [
+    {
+      "ruleId": "query-param-unvalidated",
+      "errorCount": 0,
+      "warningCount": 6,
+      "infoCount": 0
+    }
+  ],
+  "durationMs": 84
 }

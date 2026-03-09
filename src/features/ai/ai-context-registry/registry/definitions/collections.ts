@@ -167,6 +167,89 @@ export const collectionNodes: ContextNode[] = [
     source: { type: 'code', ref: SOURCE_REF },
   },
   {
+    id: 'collection:chatbot-sessions',
+    kind: 'collection',
+    name: 'chatbot_sessions',
+    description:
+      'Persisted chatbot conversation sessions including titles, persona assignments, settings snapshots, and message history.',
+    tags: ['chatbot', 'admin', 'sessions', 'database'],
+    relationships: [
+      { type: 'related_to', targetId: 'action:chatbot-chat' },
+      { type: 'related_to', targetId: 'page:admin-chatbot' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'low',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'collection:image-studio-projects',
+    kind: 'collection',
+    name: 'image_studio_projects',
+    description:
+      'Image Studio project records including canvas dimensions, project metadata, and workspace timestamps.',
+    tags: ['image-studio', 'projects', 'database'],
+    relationships: [
+      { type: 'related_to', targetId: 'collection:image-studio-slots' },
+      { type: 'related_to', targetId: 'collection:image-studio-runs' },
+      { type: 'related_to', targetId: 'action:image-studio-run' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'low',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'collection:image-studio-slots',
+    kind: 'collection',
+    name: 'image_studio_slots',
+    description:
+      'Image Studio slot records for imported assets, generated variants, composite layers, and per-slot metadata.',
+    tags: ['image-studio', 'slots', 'assets', 'database'],
+    relationships: [
+      { type: 'related_to', targetId: 'collection:image-studio-projects' },
+      { type: 'related_to', targetId: 'collection:image-studio-runs' },
+      { type: 'related_to', targetId: 'action:image-studio-run' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'low',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'collection:image-studio-runs',
+    kind: 'collection',
+    name: 'image_studio_runs',
+    description:
+      'Queued and completed Image Studio run records including request payloads, output images, history events, and dispatch state.',
+    tags: ['image-studio', 'runs', 'generation', 'database'],
+    relationships: [
+      { type: 'related_to', targetId: 'collection:image-studio-projects' },
+      { type: 'related_to', targetId: 'collection:image-studio-slots' },
+      { type: 'related_to', targetId: 'action:image-studio-run' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'low',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
     id: 'collection:kangur-progress',
     kind: 'collection',
     name: 'kangur_progress',

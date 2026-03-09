@@ -16,6 +16,7 @@ import {
   imageStudioUpscaleSmoothingQualitySchema,
   imageStudioUpscaleStrategySchema,
 } from './image-studio-transform-contracts';
+import { contextRegistryConsumerEnvelopeSchema } from './ai-context-registry';
 import { promptValidationIssueSchema } from './prompt-engine';
 import type {
   ImageStudioCenterDetectionMode,
@@ -938,6 +939,7 @@ export const imageStudioRunRequestSchema = z.object({
   mask: imageStudioRunMaskSchema.nullable().optional(),
   center: imageStudioRunCenterSchema.optional(),
   studioSettings: z.record(z.string(), z.unknown()).optional(),
+  contextRegistry: contextRegistryConsumerEnvelopeSchema.optional(),
 });
 
 export type ImageStudioRunRequest = z.infer<typeof imageStudioRunRequestSchema>;

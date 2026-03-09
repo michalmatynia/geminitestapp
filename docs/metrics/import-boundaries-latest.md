@@ -1,23 +1,23 @@
 # Import Boundaries Check
 
-Generated at: 2026-03-09T05:26:06.707Z
+Generated at: 2026-03-09T06:12:23.045Z
 
 ## Summary
 
 - Status: FAILED
-- Files scanned: 4461
+- Files scanned: 4473
 - Features tracked: 9
 - Circular dependencies: 0
-- Errors: 2
-- Warnings: 0
+- Errors: 7
+- Warnings: 3
 - Info: 0
 
 ## Feature Dependency Graph
 
 | Feature | Dependencies | Count |
 | --- | --- | ---: |
+| cms | admin, ai, foldertree, gsap, products, viewer3d | 6 |
 | case-resolver | ai, case-resolver-capture, document-editor, filemaker, foldertree | 5 |
-| cms | admin, foldertree, gsap, products, viewer3d | 5 |
 | kangur | ai, cms, document-editor, foldertree | 4 |
 | ai | foldertree, products, viewer3d | 3 |
 | notesapp | document-editor, foldertree | 2 |
@@ -30,14 +30,23 @@ Generated at: 2026-03-09T05:26:06.707Z
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| cross-feature-internal-import | 2 | 0 | 0 |
+| cross-feature-internal-import | 7 | 0 | 0 |
+| deep-relative-import | 0 | 3 | 0 |
 
 ## Issues
 
 | Severity | Rule | Location | Message |
 | --- | --- | --- | --- |
+| ERROR | cross-feature-internal-import | src/features/cms/components/page-builder/context/useInspectorAiGeneration.ts:3 | Imports internal path from feature "ai": @/features/ai/ai-context-registry/context/page-context. Use the barrel export instead. |
+| ERROR | cross-feature-internal-import | src/features/cms/components/page-builder/PageBuilderLayout.tsx:7 | Imports internal path from feature "ai": @/features/ai/ai-context-registry/context/page-context. Use the barrel export instead. |
+| ERROR | cross-feature-internal-import | src/features/cms/components/page-builder/settings/page-settings/usePageAiAssistant.ts:4 | Imports internal path from feature "ai": @/features/ai/ai-context-registry/context/page-context. Use the barrel export instead. |
+| ERROR | cross-feature-internal-import | src/features/cms/components/page-builder/theme/ThemeColorsContext.tsx:5 | Imports internal path from feature "ai": @/features/ai/ai-context-registry/context/page-context. Use the barrel export instead. |
+| ERROR | cross-feature-internal-import | src/features/cms/context-registry/page-builder.ts:8 | Imports internal path from feature "ai": @/features/ai/ai-context-registry/context/page-context-shared. Use the barrel export instead. |
 | ERROR | cross-feature-internal-import | src/features/kangur/ui/context/KangurAiTutorRuntime.shared.ts:47 | Imports internal path from feature "ai": @/features/ai/ai-context-registry/context/page-context. Use the barrel export instead. |
 | ERROR | cross-feature-internal-import | src/features/kangur/ui/context/KangurContextRegistryPageBoundary.tsx:5 | Imports internal path from feature "ai": @/features/ai/ai-context-registry/context/page-context. Use the barrel export instead. |
+| WARN | deep-relative-import | src/app/api/agent/approval-gates/route.ts:3 | Deep relative import (4 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/app/api/agent/capabilities/route.ts:3 | Deep relative import (4 levels up). Consider using path aliases. |
+| WARN | deep-relative-import | src/app/api/agent/resources/route.ts:3 | Deep relative import (4 levels up). Consider using path aliases. |
 
 ## Notes
 

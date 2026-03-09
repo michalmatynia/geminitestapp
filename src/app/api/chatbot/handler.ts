@@ -3,18 +3,23 @@ import path from 'path';
 
 import { NextRequest, NextResponse } from 'next/server';
 
+import { mergeContextRegistryResolutionBundles } from '@/features/ai/ai-context-registry/context/page-context-shared';
+import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
 import {
   buildPersonaChatMemoryContext,
   persistAgentPersonaExchangeMemory,
 } from '@/features/ai/agentcreator/server/persona-memory';
+import { buildChatbotContextRegistrySystemPrompt } from '@/features/ai/chatbot/context-registry/system-prompt';
 import { resolveBrainModelExecutionConfig } from '@/shared/lib/ai-brain/server';
 import { listBrainModels } from '@/shared/lib/ai-brain/server-model-catalog';
 import { runChatbotModel } from '@/shared/lib/ai/chatbot/server-model-runtime';
 import { chatbotSessionRepository } from '@/features/ai/chatbot/server';
+import { contextRegistryConsumerEnvelopeSchema } from '@/shared/contracts/ai-context-registry';
 import { logSystemError, logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { AgentPersonaMoodId } from '@/shared/contracts/agents';
 import type {
   ChatMessageDto as ChatMessage,
+  ChatbotChatRequest,
   ChatbotChatResponseDto,
 } from '@/shared/contracts/chatbot';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -32,6 +37,21 @@ const DEFAULT_CHATBOT_SYSTEM_PROMPT = 'You are a helpful assistant.';
 let lastTempCleanupAt = 0;
 
 type IncomingChatMessage = Pick<ChatMessage, 'role' | 'content' | 'images'>;
+
+const parseContextRegistryPayload = (
+  input: unknown
+): ChatbotChatRequest['contextRegistry'] | null => {
+  if (input === undefined || input === null) {
+    return null;
+  }
+
+  const parsed = contextRegistryConsumerEnvelopeSchema.safeParse(input);
+  if (!parsed.success) {
+    throw badRequestError('Invalid context registry payload.');
+  }
+
+  return parsed.data;
+};
 
 const createErrorId = (): string => {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -110,6 +130,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
     const contentType = req.headers.get('content-type') || '';
     let messages: IncomingChatMessage[] = [];
     let sessionId: string | null = null;
+    let contextRegistry: ChatbotChatRequest['contextRegistry'] | null = null;
 
     if (contentType.includes('multipart/form-data')) {
       const formData = await req.formData();
@@ -130,6 +151,20 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
 
       const rawSessionId = formData.get('sessionId');
       sessionId = typeof rawSessionId === 'string' ? rawSessionId : null;
+      const rawContextRegistry = formData.get('contextRegistry');
+      if (rawContextRegistry !== null) {
+        if (typeof rawContextRegistry !== 'string') {
+          throw badRequestError('Invalid context registry payload.');
+        }
+        try {
+          contextRegistry = parseContextRegistryPayload(JSON.parse(rawContextRegistry));
+        } catch (error) {
+          if (error instanceof Error && error.message === 'Invalid context registry payload.') {
+            throw error;
+          }
+          throw badRequestError('Invalid context registry payload.');
+        }
+      }
 
       const files = formData.getAll('files');
       const imageFiles = files.filter(
@@ -225,6 +260,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
       const body = parsed.data as {
         messages?: IncomingChatMessage[];
         sessionId?: string;
+        contextRegistry?: unknown;
         model?: unknown;
       };
       if (Object.prototype.hasOwnProperty.call(body, 'model')) {
@@ -232,6 +268,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
       }
       messages = body.messages ?? [];
       sessionId = body.sessionId ?? null;
+      contextRegistry = parseContextRegistryPayload(body.contextRegistry);
     }
 
     if (!Array.isArray(messages) || messages.length === 0) {
@@ -292,7 +329,22 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
         });
       }
     }
-    const systemPrompt = [brainConfig.systemPrompt, personaPrompt].filter(Boolean).join('\n\n');
+    const registryRefs = contextRegistry?.refs ?? [];
+    const resolvedRegistryBundle = registryRefs.length
+      ? await contextRegistryEngine.resolveRefs({
+        refs: registryRefs,
+        maxNodes: 24,
+        depth: 1,
+      })
+      : null;
+    const contextRegistryBundle = mergeContextRegistryResolutionBundles(
+      resolvedRegistryBundle,
+      contextRegistry?.resolved ?? null
+    );
+    const contextRegistryPrompt = buildChatbotContextRegistrySystemPrompt(contextRegistryBundle);
+    const systemPrompt = [brainConfig.systemPrompt, personaPrompt, contextRegistryPrompt]
+      .filter(Boolean)
+      .join('\n\n');
 
     if (DEBUG_CHATBOT) {
       await logSystemEvent({

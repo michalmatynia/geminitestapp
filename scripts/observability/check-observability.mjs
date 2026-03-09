@@ -16,6 +16,7 @@ const DEFAULTS = {
   maxErrorLogBytes: 4_000_000,
   scanRuntimeLogs: true,
   emitCiAnnotations: true,
+  summaryJson: false,
 };
 
 const LOG_SCHEMA_VERSION = 2;
@@ -55,6 +56,8 @@ const parseArgs = (argv) => {
       options.scanRuntimeLogs = false;
     } else if (arg === '--no-ci-annotations') {
       options.emitCiAnnotations = false;
+    } else if (arg === '--summary-json') {
+      options.summaryJson = true;
     }
   }
   return options;
@@ -853,6 +856,11 @@ const buildSummaryPayload = (report) => ({
   mode: report.mode,
   status: report.status,
   context: report.executionContext,
+  scanner: {
+    name: 'observability-check',
+    version: String(LOG_SCHEMA_VERSION),
+    mode: report.mode,
+  },
   counters: {
     routes: report.routeCoverage,
     loggerViolations: report.logger.totalViolations,
@@ -1184,6 +1192,15 @@ const main = () => {
   const options = parseArgs(process.argv.slice(2));
   const report = runObservabilityCheck(options);
   const summaryLine = buildSummaryLine(report);
+  const summaryPayload = buildSummaryPayload(report);
+
+  if (options.summaryJson) {
+    console.log(JSON.stringify(summaryPayload, null, 2));
+    if (options.mode === 'check' && report.status !== 'passed') {
+      process.exit(1);
+    }
+    return;
+  }
 
   console.log(summaryLine);
   if (report.comment) {

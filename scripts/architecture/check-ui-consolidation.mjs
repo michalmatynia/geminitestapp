@@ -3,24 +3,11 @@ import path from 'node:path';
 import { execFile as execFileCallback } from 'node:child_process';
 import { promisify } from 'node:util';
 
+import { parseScanSummary } from './lib/scan-output.mjs';
+
 const execFile = promisify(execFileCallback);
 const root = process.cwd();
 const baselinePath = path.join(root, 'scripts', 'architecture', 'guardrails-baseline.json');
-
-const parseSummary = (stdout, sourceLabel) => {
-  let parsed;
-  try {
-    parsed = JSON.parse(stdout);
-  } catch (error) {
-    throw new Error(`${sourceLabel} did not return JSON summary output.`);
-  }
-
-  const summary = parsed?.summary;
-  if (!summary || typeof summary !== 'object') {
-    throw new Error(`${sourceLabel} summary is missing.`);
-  }
-  return summary;
-};
 
 const readBaseline = async () => {
   const raw = await fs.readFile(baselinePath, 'utf8');
@@ -53,8 +40,8 @@ const run = async () => {
     ),
   ]);
 
-  const propSummary = parseSummary(propResult.stdout, 'scan-prop-drilling');
-  const uiSummary = parseSummary(uiResult.stdout, 'scan-ui-consolidation');
+  const propSummary = parseScanSummary(propResult.stdout, 'scan-prop-drilling');
+  const uiSummary = parseScanSummary(uiResult.stdout, 'scan-ui-consolidation');
 
   const componentsWithForwarding = Number(propSummary.componentsWithForwarding);
   const highPriorityChainCount = Number(propSummary.highPriorityChainCount);

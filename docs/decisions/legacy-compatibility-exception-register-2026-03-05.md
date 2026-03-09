@@ -12,7 +12,6 @@ canonical: true
 Machine-readable register:
 
 - canonical: `docs/decisions/legacy-compatibility-exception-register-2026-03-05.json`
-- compatibility copy: `docs/legacy-compatibility-exception-register-2026-03-05.json`
 
 Required fields for every exception entry:
 

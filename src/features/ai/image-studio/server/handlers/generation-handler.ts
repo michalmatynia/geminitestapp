@@ -11,6 +11,7 @@ import {
   type ImageStudioGenerationExecutionMeta,
   type ImageFileRecord,
 } from '@/shared/contracts/image-studio';
+import { buildImageStudioGenerationPrompt } from '@/features/ai/image-studio/context-registry/generation-prompt';
 import { getImageModelCapabilities } from '@/features/ai/image-studio/utils/image-models';
 import { parsePersistedImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
 import { resolveBrainProviderCredential } from '@/shared/lib/ai-brain/provider-credentials';
@@ -154,10 +155,11 @@ export async function executeGenerationOperation(params: {
   if (!resolvedModel) {
     throw configurationError('Image Studio model is missing. Configure it in AI Brain.');
   }
+  const prompt = buildImageStudioGenerationPrompt(request.prompt, request.contextRegistry?.resolved);
   const modelName = (resolvedModel ?? '').toLowerCase();
   const modelCapabilities = getImageModelCapabilities(resolvedModel);
   if (modelCapabilities.family === 'dall-e') {
-    assertDallePromptWithinLimit(request.prompt, resolvedModel);
+    assertDallePromptWithinLimit(prompt, resolvedModel);
   }
   if (hasSourceAsset && modelName.includes('dall-e-2') && referencePaths.length > 0) {
     throw badRequestError('Multiple input images are only supported for GPT image models.');
@@ -199,13 +201,13 @@ export async function executeGenerationOperation(params: {
     const imagePayload = imageFiles.length === 1 ? imageFiles[0]! : imageFiles;
     payload = {
       model: resolvedModel,
-      prompt: request.prompt,
+      prompt,
       image: imagePayload,
     };
   } else {
     payload = {
       model: resolvedModel,
-      prompt: request.prompt,
+      prompt,
     };
   }
 
@@ -337,7 +339,7 @@ export async function executeGenerationOperation(params: {
         activeModel !== 'dall-e-2' &&
         MODEL_MUST_BE_DALLE2_REGEX.test(message)
       ) {
-        const fallbackPrompt = String(payloadRecord['prompt'] ?? request.prompt);
+        const fallbackPrompt = String(payloadRecord['prompt'] ?? prompt);
         assertDallePromptWithinLimit(fallbackPrompt, 'dall-e-2');
         payloadRecord['model'] = 'dall-e-2';
         payloadRecord['prompt'] = fallbackPrompt;

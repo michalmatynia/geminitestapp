@@ -3,13 +3,14 @@ import { z } from 'zod';
 import { pathConfigSchema } from '@/shared/contracts/ai-paths';
 import { parseAndDeserializeSemanticCanvas } from '@/shared/lib/ai-paths/core/semantic-grammar';
 import {
-  findRemovedLegacyTriggerContextModesInDocument,
-  formatRemovedLegacyTriggerContextModesMessage,
-} from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
-import {
   findRemovedLegacyAiPathNodesInDocument,
   formatRemovedLegacyAiPathNodesMessage,
 } from '@/shared/lib/ai-paths/core/utils/legacy-node-removal';
+import {
+  findRemovedLegacyTriggerContextModesInDocument,
+  formatRemovedLegacyTriggerContextModesMessage,
+} from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
+import { remediateRemovedLegacyTriggerContextModesInDocument } from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode-remediation';
 
 import { aiPathPortablePackageVersionedSchema } from './portable-engine-contract';
 import {
@@ -37,6 +38,8 @@ export const migratePortablePathInput = (
   input: unknown,
   options?: Pick<ResolvePortablePathInputOptions, 'includeConnections'>
 ): MigratePortablePathInputResult => {
+  const remediatedTriggerContextModes = remediateRemovedLegacyTriggerContextModesInDocument(input);
+  const normalizedInput = remediatedTriggerContextModes.value;
   const removedLegacyNodes = findRemovedLegacyAiPathNodesInDocument(input);
   if (removedLegacyNodes.length > 0) {
     return {
@@ -46,7 +49,9 @@ export const migratePortablePathInput = (
       }),
     };
   }
-  const removedLegacyTriggerContextModes = findRemovedLegacyTriggerContextModesInDocument(input);
+  const removedLegacyTriggerContextModes = findRemovedLegacyTriggerContextModesInDocument(
+    normalizedInput
+  );
   if (removedLegacyTriggerContextModes.length > 0) {
     return {
       ok: false,
@@ -55,7 +60,7 @@ export const migratePortablePathInput = (
       }),
     };
   }
-  const packageParsed = aiPathPortablePackageVersionedSchema.safeParse(input);
+  const packageParsed = aiPathPortablePackageVersionedSchema.safeParse(normalizedInput);
   if (packageParsed.success) {
     beginPortablePathMigratorAttempt(packageParsed.data.specVersion);
     const migratedPackage = applyPortablePathPackageMigrator(packageParsed.data);
@@ -73,6 +78,15 @@ export const migratePortablePathInput = (
 
     const migrationWarnings: PortablePathMigrationWarning[] = [
       ...migratedPackage.value.migrationWarnings,
+      ...(remediatedTriggerContextModes.usages.length > 0
+        ? [
+            {
+              code: 'legacy_trigger_context_mode_upgraded',
+              message:
+                'Legacy Trigger context modes were upgraded to trigger_only while loading this payload.',
+            } satisfies PortablePathMigrationWarning,
+          ]
+        : []),
     ];
     const pathId = migratedPackage.value.portablePackage.pathId?.trim();
     const packageName = migratedPackage.value.portablePackage.name?.trim();
@@ -106,7 +120,7 @@ export const migratePortablePathInput = (
     };
   }
 
-  const semanticParsed = parseAndDeserializeSemanticCanvas(input);
+  const semanticParsed = parseAndDeserializeSemanticCanvas(normalizedInput);
   if (semanticParsed.ok) {
     recordPortablePathMigratorSource('semantic_canvas');
     return {
@@ -124,7 +138,7 @@ export const migratePortablePathInput = (
     };
   }
 
-  const pathConfigParsed = pathConfigSchema.safeParse(input);
+  const pathConfigParsed = pathConfigSchema.safeParse(normalizedInput);
   if (pathConfigParsed.success) {
     const normalizedPathConfig = normalizePathConfigEdges(pathConfigParsed.data);
     recordPortablePathMigratorSource('path_config');
@@ -134,6 +148,15 @@ export const migratePortablePathInput = (
         source: 'path_config',
         portablePackage: buildCanonicalPackageFromPathConfig(normalizedPathConfig, options),
         migrationWarnings: [
+          ...(remediatedTriggerContextModes.usages.length > 0
+            ? [
+                {
+                  code: 'legacy_trigger_context_mode_upgraded',
+                  message:
+                    'Legacy Trigger context modes were upgraded to trigger_only while loading this payload.',
+                } satisfies PortablePathMigrationWarning,
+              ]
+            : []),
           {
             code: 'path_config_upgraded',
             message: 'Path config payload upgraded to portable package v1.',

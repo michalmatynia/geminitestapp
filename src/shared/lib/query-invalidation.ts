@@ -210,12 +210,12 @@ export const invalidateProductMetadata = (queryClient: QueryClient) => {
 };
 
 export const invalidateProducts = (queryClient: QueryClient) => {
-  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.lists() });
 };
 
 export const invalidateProductsAndCounts = async (queryClient: QueryClient): Promise<void> => {
   await Promise.all([
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all }),
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.lists() }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.counts() }),
   ]);
 };
@@ -225,8 +225,9 @@ export const invalidateProductsAndDetail = async (
   productId: string
 ): Promise<void> => {
   await Promise.all([
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all }),
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.lists() }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.detail(productId) }),
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.detailEdit(productId) }),
   ]);
 };
 
@@ -235,9 +236,10 @@ export const invalidateProductsCountsAndDetail = async (
   productId: string
 ): Promise<void> => {
   await Promise.all([
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all }),
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.lists() }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.counts() }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.detail(productId) }),
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.detailEdit(productId) }),
   ]);
 };
 

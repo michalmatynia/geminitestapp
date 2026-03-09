@@ -122,7 +122,6 @@ export type GraphCompileCode =
   | 'cycle_wait_deadlock_risk'
   | 'incompatible_wiring'
   | 'optional_input_incompatible_wiring'
-  | 'trigger_context_resolution_risk'
   | 'model_prompt_deadlock_risk'
   | 'context_cache_scope_risk';
 

@@ -61,6 +61,14 @@ import {
 } from './useProductMetadataQueries';
 import * as api from '../api/settings';
 
+const STABLE_SETTINGS_STALE_MS = 10 * 60 * 1_000;
+const STABLE_SETTINGS_QUERY_OPTIONS = {
+  staleTime: STABLE_SETTINGS_STALE_MS,
+  refetchOnMount: false as const,
+  refetchOnWindowFocus: false as const,
+  refetchOnReconnect: false as const,
+};
+
 export function usePriceGroups(): ListQuery<PriceGroup> {
   return useMetadataPriceGroups();
 }
@@ -75,6 +83,7 @@ export function useCategories(catalogId: string | null): ListQuery<ProductCatego
     queryKey,
     queryFn: () => api.getCategories(catalogId),
     enabled: !!catalogId,
+    ...STABLE_SETTINGS_QUERY_OPTIONS,
     meta: {
       source: 'products.hooks.useCategories',
       operation: 'list',
@@ -104,6 +113,7 @@ export function useValidatorSettings(): SingleQuery<ProductValidatorSettings> {
     id: 'global',
     queryKey,
     queryFn: api.getValidatorSettings,
+    ...STABLE_SETTINGS_QUERY_OPTIONS,
     meta: {
       source: 'products.hooks.useValidatorSettings',
       operation: 'detail',
@@ -127,7 +137,7 @@ export function useValidationPatterns(): ListQuery<ProductValidationPattern> {
     staleTime: 5 * 60 * 1_000,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
-    refetchOnReconnect: true,
+    refetchOnReconnect: false,
     meta: {
       source: 'products.hooks.useValidationPatterns',
       operation: 'list',
@@ -154,7 +164,7 @@ export function useProductValidatorConfig(
     staleTime: 5 * 60 * 1_000,
     refetchOnMount: true,
     refetchOnWindowFocus: false,
-    refetchOnReconnect: true,
+    refetchOnReconnect: false,
     meta: {
       source: 'products.hooks.useProductValidatorConfig',
       operation: 'detail',

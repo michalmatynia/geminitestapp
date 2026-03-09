@@ -4,6 +4,11 @@ import { useCallback, useRef, useState, useEffect } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
+import {
+  mergeProductParameterValue,
+  normalizeParameterValuesByLanguage,
+  resolveStoredParameterValue,
+} from '@/shared/lib/products/utils/parameter-values';
 import type {
   ProductWithImages,
   ProductFormData,
@@ -47,20 +52,10 @@ export interface UseProductFormSubmitResult {
 }
 
 export type NormalizedSubmittedParameterValue = {
-  parameterId: string | undefined;
+  parameterId: string;
   value: string;
   valuesByLanguage?: Record<string, string>;
 };
-
-const resolvePrimarySubmittedParameterValue = (valuesByLanguage: Record<string, string>): string =>
-  valuesByLanguage['default'] ||
-  valuesByLanguage['en'] ||
-  valuesByLanguage['pl'] ||
-  valuesByLanguage['de'] ||
-  Object.values(valuesByLanguage).find(
-    (value: string): boolean => typeof value === 'string' && value.length > 0
-  ) ||
-  '';
 
 export const normalizeProductParametersForSubmission = (
   parameterValues: ProductParameterValue[]
@@ -71,39 +66,32 @@ export const normalizeProductParametersForSubmission = (
         byParameterId: Map<string, NormalizedSubmittedParameterValue>,
         entry: ProductParameterValue
       ): Map<string, NormalizedSubmittedParameterValue> => {
-      const valuesByLanguage =
-        entry.valuesByLanguage &&
-        typeof entry.valuesByLanguage === 'object' &&
-        !Array.isArray(entry.valuesByLanguage)
-          ? Object.entries(entry.valuesByLanguage).reduce(
-            (acc: Record<string, string>, [lang, value]: [string, unknown]) => {
-              const normalizedLang = lang.trim().toLowerCase();
-              const normalizedValue = typeof value === 'string' ? value.trim() : '';
-              if (!normalizedLang || !normalizedValue) return acc;
-              acc[normalizedLang] = normalizedValue;
-              return acc;
-            },
-            {}
-          )
-          : {};
+      const valuesByLanguage = normalizeParameterValuesByLanguage(entry.valuesByLanguage);
 
       const hasLocalizedValues = Object.keys(valuesByLanguage).length > 0;
       const directValue = typeof entry.value === 'string' ? entry.value.trim() : '';
-      const localizedPrimaryValue = resolvePrimarySubmittedParameterValue(valuesByLanguage);
       const normalizedParameterId = decodeSimpleParameterStorageId(
         typeof entry.parameterId === 'string' ? entry.parameterId.trim() : ''
       );
-      const resolvedValue = hasLocalizedValues ? localizedPrimaryValue : directValue;
 
       if (!normalizedParameterId) {
         return byParameterId;
       }
 
-      byParameterId.set(normalizedParameterId, {
-        parameterId: normalizedParameterId,
-        value: resolvedValue,
-        ...(hasLocalizedValues ? { valuesByLanguage } : {}),
-      });
+      const existingEntry = byParameterId.get(normalizedParameterId);
+      byParameterId.set(
+        normalizedParameterId,
+        hasLocalizedValues
+          ? mergeProductParameterValue(existingEntry, {
+            parameterId: normalizedParameterId,
+            value: directValue,
+            valuesByLanguage,
+          })
+          : {
+            parameterId: normalizedParameterId,
+            value: resolveStoredParameterValue({}, directValue),
+          }
+      );
       return byParameterId;
     },
       new Map<string, NormalizedSubmittedParameterValue>()

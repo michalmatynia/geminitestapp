@@ -19,7 +19,7 @@ import {
 } from './ProductFormParameterContext';
 
 describe('resolvePrimaryParameterValue', () => {
-  it('prefers default and then en/pl/de fallbacks', () => {
+  it('prefers the explicit default locale when it exists', () => {
     expect(
       resolvePrimaryParameterValue({
         en: 'English',
@@ -27,22 +27,25 @@ describe('resolvePrimaryParameterValue', () => {
         pl: 'Polski',
       })
     ).toBe('Default');
+  });
+
+  it('keeps a direct value only when it still matches a localized entry', () => {
+    expect(
+      resolvePrimaryParameterValue({
+        en: 'English',
+        pl: 'Polski',
+      }, 'English')
+    ).toBe('English');
 
     expect(
       resolvePrimaryParameterValue({
         en: 'English',
         pl: 'Polski',
       })
-    ).toBe('English');
+    ).toBe('');
   });
 
-  it('falls back to first non-empty localized value, then explicit fallback', () => {
-    expect(
-      resolvePrimaryParameterValue({
-        fr: 'Francais',
-      })
-    ).toBe('Francais');
-
+  it('falls back to the explicit direct value only when there are no localized values', () => {
     expect(resolvePrimaryParameterValue({}, 'Fallback')).toBe('Fallback');
   });
 });
@@ -97,7 +100,7 @@ describe('ProductFormParameterProvider', () => {
         {
           parameterId: 'param-1',
           value: 'Used',
-          valuesByLanguage: { en: 'Used' },
+          valuesByLanguage: { en: 'Used', pl: 'Uzywany' },
         },
       ],
     } as Partial<ProductWithImages> as ProductWithImages;
@@ -122,6 +125,51 @@ describe('ProductFormParameterProvider', () => {
       {
         parameterId: 'param-1',
         value: '',
+        valuesByLanguage: { pl: 'Uzywany' },
+      },
+    ]);
+  });
+
+  it('updates English without removing the sibling Polish value', () => {
+    useParametersMock.mockReturnValue({
+      data: [{ id: 'param-1', name_en: 'Condition' }] satisfies Partial<ProductParameter>[],
+      isLoading: false,
+    });
+
+    const product = {
+      parameters: [
+        {
+          parameterId: 'param-1',
+          value: 'Used',
+          valuesByLanguage: { en: 'Used', pl: 'Uzywany' },
+        },
+      ],
+    } as Partial<ProductWithImages> as ProductWithImages;
+
+    const wrapper = ({ children }: { children: ReactNode }) =>
+      createElement(
+        ProductFormParameterProvider,
+        {
+          product,
+          selectedCatalogIds: ['catalog-1'],
+        },
+        children
+      );
+
+    const { result } = renderHook(() => useProductFormParameters(), { wrapper });
+
+    act(() => {
+      result.current.updateParameterValueByLanguage(0, 'en', 'Refurbished');
+    });
+
+    expect(result.current.parameterValues).toEqual([
+      {
+        parameterId: 'param-1',
+        value: 'Refurbished',
+        valuesByLanguage: {
+          en: 'Refurbished',
+          pl: 'Uzywany',
+        },
       },
     ]);
   });

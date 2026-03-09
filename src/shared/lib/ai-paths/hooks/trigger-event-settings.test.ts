@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
+import type { AiNode } from '@/shared/contracts/ai-paths';
 import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY } from '@/shared/lib/ai-paths/core/constants';
+import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
 
 import {
   coerceSampleStateMap,
@@ -17,7 +19,7 @@ const makeIndex = (entries: Array<{ id: string; name: string }>) =>
   JSON.stringify(entries.map((e) => ({ ...e, createdAt: TS, updatedAt: TS })));
 
 const makeConfig = (id: string, name: string, extra?: Record<string, unknown>) =>
-  JSON.stringify({ id, name, nodes: [], edges: [], ...extra });
+  JSON.stringify({ ...createDefaultPathConfig(id), name, ...extra });
 
 const settingsFor = (
   paths: Array<{ id: string; name: string; extra?: Record<string, unknown> }>
@@ -171,6 +173,39 @@ describe('loadPathConfigsFromSettings', () => {
       { key: `${PATH_CONFIG_PREFIX}path-1`, value: makeConfig('path-WRONG', 'Path One') },
     ];
     await expect(loadPathConfigsFromSettings(data)).rejects.toThrow(/config id does not match/i);
+  });
+
+  it('rejects removed legacy trigger context modes in stored settings payloads', async () => {
+    const config = createDefaultPathConfig('path-legacy-trigger-context');
+    const seedNode = config.nodes[0] as AiNode | undefined;
+    if (!seedNode) {
+      throw new Error('Expected default path fixture to include at least one node.');
+    }
+    config.nodes = [
+      {
+        ...seedNode,
+        type: 'trigger',
+        title: 'Trigger',
+        inputs: ['context'],
+        outputs: ['trigger', 'context', 'entityId', 'entityType'],
+        config: {
+          trigger: {
+            event: 'manual',
+            contextMode: 'simulation_preferred',
+          },
+        },
+      } as AiNode,
+    ];
+    config.edges = [];
+
+    const data: Array<{ key: string; value: string }> = [
+      { key: PATH_INDEX_KEY, value: makeIndex([{ id: config.id, name: config.name }]) },
+      { key: `${PATH_CONFIG_PREFIX}${config.id}`, value: JSON.stringify(config) },
+    ];
+
+    await expect(loadPathConfigsFromSettings(data)).rejects.toThrow(
+      /removed legacy trigger context/i
+    );
   });
 
   it('derives a fallback name from the path id when both config and index names are empty', async () => {

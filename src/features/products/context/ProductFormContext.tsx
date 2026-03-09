@@ -9,6 +9,10 @@ import {
   warnNonHydratedEditProduct,
 } from '@/features/products/hooks/editingProductHydration';
 import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
+import {
+  normalizeParameterValuesByLanguage,
+  resolveStoredParameterValue,
+} from '@/shared/lib/products/utils/parameter-values';
 import { ProductParameterValue } from '@/shared/contracts/products';
 import type { ProductWithImages, ProductDraft } from '@/shared/contracts/products';
 import { internalError } from '@/shared/errors/app-error';
@@ -69,35 +73,14 @@ const normalizeComparableParameterValues = (
 ): ComparableParameterValue[] => {
   return input
     .map((entry: ProductParameterValue): ComparableParameterValue => {
-      const valuesByLanguage =
-        entry.valuesByLanguage &&
-        typeof entry.valuesByLanguage === 'object' &&
-        !Array.isArray(entry.valuesByLanguage)
-          ? Object.entries(entry.valuesByLanguage).reduce(
-            (acc: Record<string, string>, [lang, value]: [string, unknown]) => {
-              const normalizedLang = normalizeComparableString(lang).toLowerCase();
-              const normalizedValue = normalizeComparableString(value);
-              if (!normalizedLang || !normalizedValue) return acc;
-              acc[normalizedLang] = normalizedValue;
-              return acc;
-            },
-              {} as Record<string, string>
-          )
-          : {};
+      const valuesByLanguage = normalizeParameterValuesByLanguage(entry.valuesByLanguage);
       const directValue = normalizeComparableString(entry.value);
-      const fallbackLocalizedValue =
-        valuesByLanguage['default'] ||
-        valuesByLanguage['en'] ||
-        valuesByLanguage['pl'] ||
-        valuesByLanguage['de'] ||
-        Object.values(valuesByLanguage).find((value: string): boolean => value.length > 0) ||
-        '';
       const normalizedParameterId = decodeSimpleParameterStorageId(
         normalizeComparableString(entry.parameterId)
       );
       return {
         parameterId: normalizedParameterId || '',
-        value: directValue || fallbackLocalizedValue,
+        value: resolveStoredParameterValue(valuesByLanguage, directValue),
         ...(Object.keys(valuesByLanguage).length > 0 ? { valuesByLanguage } : {}),
       };
     })

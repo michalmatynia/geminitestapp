@@ -1,13 +1,17 @@
 import {
+  CLOCK_TRAINING_TASKS,
   angleToMinute,
-  buildClockWrongFeedback,
+  buildClockCorrectFeedback,
   buildClockTaskPrompt,
+  buildClockTimeoutFeedback,
+  buildClockWrongFeedback,
   applyHourAngleToCycleMinutes,
   applyMinuteValueToCycleMinutes,
   applyMinuteStepToCycleMinutes,
   cycleMinutesToDisplayHour,
   cycleMinutesToDisplayMinutes,
   cycleMinutesToHourAngle,
+  getClockTrainingSummaryMessage,
   getClockDistanceInMinutes,
   scheduleRetryTask,
   taskToKey,
@@ -73,6 +77,22 @@ describe('ClockTrainingGame clock behavior', () => {
     expect(feedback.details).toContain('Różnica: 4 min');
   });
 
+  it('builds hour-section feedback around full-hour mistakes', () => {
+    const feedback = buildClockWrongFeedback(3, 0, 4, 0, 'hours');
+    expect(feedback.kind).toBe('wrong');
+    expect(feedback.tone).toBe('near');
+    expect(feedback.title).toBe('Prawie! To sąsiednia godzina.');
+    expect(feedback.details).toContain('Pomyłka o 1 godz.');
+    expect(feedback.details).toContain('krótkiej wskazówki');
+  });
+
+  it('builds minute-section feedback around minute-hand adjustments', () => {
+    const feedback = buildClockWrongFeedback(12, 25, 12, 30, 'minutes');
+    expect(feedback.kind).toBe('wrong');
+    expect(feedback.title).toBe('Prawie! Minuty są blisko.');
+    expect(feedback.details).toContain('Przesuń ją jeszcze o jedną kreskę.');
+  });
+
   it('schedules a retry task once by default', () => {
     const tasks = [{ hours: 7, minutes: 30 }];
     const plan = scheduleRetryTask(tasks, {}, tasks[0]!);
@@ -97,5 +117,41 @@ describe('ClockTrainingGame clock behavior', () => {
     expect(buildClockTaskPrompt({ hours: 5, minutes: 15 })).toContain('Kwadrans po 5');
     expect(buildClockTaskPrompt({ hours: 11, minutes: 30 })).toContain('Wpół do 12');
     expect(buildClockTaskPrompt({ hours: 12, minutes: 45 })).toContain('Kwadrans do 1');
+  });
+
+  it('builds section-specific task prompts for focused practice', () => {
+    expect(buildClockTaskPrompt({ hours: 3, minutes: 0 }, 'hours')).toContain(
+      'Ustaw krótką wskazówkę'
+    );
+    expect(buildClockTaskPrompt({ hours: 12, minutes: 30 }, 'minutes')).toContain(
+      'Krótka wskazówka zostaje na 12'
+    );
+  });
+
+  it('builds section-specific correct, timeout, and summary copy', () => {
+    expect(buildClockCorrectFeedback('combined', { hours: 7, minutes: 30 }).title).toBe(
+      'Brawo! Pełny czas ustawiony!'
+    );
+    expect(buildClockCorrectFeedback('minutes', { hours: 12, minutes: 25 }).details).toContain(
+      'poprawne minuty'
+    );
+    expect(buildClockTimeoutFeedback('hours', { hours: 4, minutes: 0 }).details).toContain(
+      'pełnej godziny'
+    );
+    expect(getClockTrainingSummaryMessage('minutes', 5, 5)).toContain(
+      'Długa wskazówka'
+    );
+    expect(getClockTrainingSummaryMessage('combined', 2, 5)).toContain(
+      'wspólne ustawianie godzin i minut'
+    );
+  });
+
+  it('keeps hours training tasks on full hours only', () => {
+    expect(CLOCK_TRAINING_TASKS.hours.every((task) => task.minutes === 0)).toBe(true);
+  });
+
+  it('keeps minutes training tasks anchored to one hour for minute focus', () => {
+    expect(CLOCK_TRAINING_TASKS.minutes.every((task) => task.hours === 12)).toBe(true);
+    expect(CLOCK_TRAINING_TASKS.minutes.every((task) => task.minutes > 0)).toBe(true);
   });
 });

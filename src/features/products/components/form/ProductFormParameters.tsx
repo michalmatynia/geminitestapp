@@ -65,8 +65,10 @@ const getParameterLanguageValue = (
     !Array.isArray(entry.valuesByLanguage)
       ? entry.valuesByLanguage
       : null;
+  const hasLocalizedValues = Boolean(valuesByLanguage && Object.keys(valuesByLanguage).length > 0);
   const localizedValue = valuesByLanguage?.[normalizedLanguageCode];
   if (typeof localizedValue === 'string') return localizedValue;
+  if (hasLocalizedValues) return '';
   if (normalizedLanguageCode !== primaryLanguageCode) return '';
   return typeof entry.value === 'string' ? entry.value : '';
 };
@@ -248,19 +250,22 @@ export default function ProductFormParameters(): React.JSX.Element {
                     .filter((value: string) => value.length > 0)
                 )
               );
-
-              if (entry.value && needsOptions && !normalizedOptionLabels.includes(entry.value)) {
-                normalizedOptionLabels.unshift(entry.value);
-              }
               const getLanguageValue = (languageCode: string): string => {
                 return getParameterLanguageValue(entry, languageCode, primaryLanguageCode);
               };
+              const activeLanguageValue = getLanguageValue(activeParameterLanguage.code);
+
+              if (
+                activeLanguageValue &&
+                needsOptions &&
+                !normalizedOptionLabels.includes(activeLanguageValue)
+              ) {
+                normalizedOptionLabels.unshift(activeLanguageValue);
+              }
               const handleLanguageValueChange = (languageCode: string, nextValue: string): void => {
                 updateParameterValueByLanguage(index, languageCode, nextValue);
               };
-              const currentChecklistValues = parseChecklistValues(
-                getLanguageValue(activeParameterLanguage.code)
-              );
+              const currentChecklistValues = parseChecklistValues(activeLanguageValue);
               const optionLookup = new Map<string, string>();
               normalizedOptionLabels.forEach((label: string) => {
                 optionLookup.set(label.trim().toLowerCase(), label);

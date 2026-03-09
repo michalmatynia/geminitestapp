@@ -1,6 +1,4 @@
 'use client';
-
-import { signOut } from 'next-auth/react';
 import { z } from 'zod';
 
 import {
@@ -52,7 +50,7 @@ import {
 import { sortScores } from '@/features/kangur/services/kangur-score-repository/shared';
 
 const KANGUR_AUTH_ME_ENDPOINT = '/api/kangur/auth/me';
-const KANGUR_LEARNER_SIGNOUT_ENDPOINT = '/api/kangur/auth/learner-signout';
+const KANGUR_LOGOUT_ENDPOINT = '/api/kangur/auth/logout';
 const KANGUR_PROGRESS_ENDPOINT = '/api/kangur/progress';
 const KANGUR_SCORES_ENDPOINT = '/api/kangur/scores';
 const KANGUR_ASSIGNMENTS_ENDPOINT = '/api/kangur/assignments';
@@ -873,16 +871,15 @@ export const createLocalKangurPlatform = (): KangurPlatform => {
         clearScoreQueryCache();
         clearStoredActiveLearnerId();
         resetGuestKangurScoreSession();
-        await fetch(KANGUR_LEARNER_SIGNOUT_ENDPOINT, {
+        await fetch(KANGUR_LOGOUT_ENDPOINT, {
           method: 'POST',
           headers: withCsrfHeaders(),
           credentials: 'same-origin',
         }).catch(() => {});
         if (returnUrl) {
-          await signOut({ callbackUrl: returnUrl, redirect: true });
+          window.location.assign(returnUrl);
           return;
         }
-        await signOut({ redirect: false });
       },
     },
     learners: {

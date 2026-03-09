@@ -1,4 +1,5 @@
 import { type AiNode } from '@/shared/contracts/ai-paths';
+
 import { TRIGGER_EVENTS, TRIGGER_INPUT_PORTS, TRIGGER_OUTPUT_PORTS } from '../../constants';
 
 export const normalizeTriggerNode = (node: AiNode): AiNode => {

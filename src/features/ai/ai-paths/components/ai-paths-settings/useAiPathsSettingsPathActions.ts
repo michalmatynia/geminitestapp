@@ -580,6 +580,7 @@ export function useAiPathsSettingsPathActions({
                 { action: 'switchPathParseConfig', pathId: value },
                 'Failed to parse selected path config:'
               );
+              throw error;
             }
           }
 
@@ -609,6 +610,7 @@ export function useAiPathsSettingsPathActions({
                   { action: 'switchPathFallbackParseConfig', pathId: value },
                   'Failed to parse fallback selected path config:'
                 );
+                throw parseError;
               }
               recoveredConfig = sanitizePathConfigWithRuntimeFallback(recoveredConfig, value);
               setPathConfigs(

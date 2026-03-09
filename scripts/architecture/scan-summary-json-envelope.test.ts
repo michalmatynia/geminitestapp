@@ -23,6 +23,13 @@ const uiConsolidationScriptPath = path.join(
   'scan-ui-consolidation.mjs'
 );
 const collectMetricsScriptPath = path.join(repoRoot, 'scripts', 'architecture', 'collect-metrics.mjs');
+const guardrailsScriptPath = path.join(repoRoot, 'scripts', 'architecture', 'check-guardrails.mjs');
+const uiConsolidationGuardrailScriptPath = path.join(
+  repoRoot,
+  'scripts',
+  'architecture',
+  'check-ui-consolidation.mjs'
+);
 const criticalPathPerformanceScriptPath = path.join(
   repoRoot,
   'scripts',
@@ -259,6 +266,45 @@ const seedRouteHotspotSources = (root: string): void => {
       '}',
       '',
     ].join('\n')
+  );
+};
+
+const seedGuardrailBaseline = (root: string): void => {
+  writeFile(
+    root,
+    'scripts/architecture/guardrails-baseline.json',
+    `${JSON.stringify(
+      {
+        generatedAt: '2026-03-09T09:20:00.000Z',
+        hardLimits: {
+          sourceLargestFileLines: 99_999,
+        },
+        max: {
+          'source.filesOver1000': 9_999,
+          'source.filesOver1500': 9_999,
+          'source.useClientFiles': 9_999,
+          'source.largestFileLines': 99_999,
+          'api.totalRoutes': 9_999,
+          'api.delegatedServerRoutes': 9_999,
+          'api.routesWithoutApiHandler': 9_999,
+          'api.routesWithoutExplicitCachePolicy': 9_999,
+          'imports.appFeatureBarrelImports': 9_999,
+          'imports.appFeatureDeepImports': 9_999,
+          'imports.sharedToFeaturesTotalImports': 9_999,
+          'architecture.crossFeatureEdgePairs': 9_999,
+          'runtime.setIntervalOccurrences': 9_999,
+          'propDrilling.depthGte4Chains': 9_999,
+          'propDrilling.componentsWithForwarding': 9_999,
+          'uiConsolidation.totalOpportunities': 9_999,
+          'uiConsolidation.highPriorityOpportunities': 9_999,
+          'uiConsolidation.duplicateNameClusters': 9_999,
+          'uiConsolidation.propSignatureClusters': 9_999,
+          'uiConsolidation.tokenSimilarityClusters': 9_999,
+        },
+      },
+      null,
+      2
+    )}\n`
   );
 };
 
@@ -661,6 +707,72 @@ describe('scanner summary-json envelope', () => {
     });
     expect(metricsCollection.notes).toContain('architecture baseline metrics collection result');
     expect(fs.existsSync(path.join(root, 'docs', 'metrics', 'baseline-latest.json'))).toBe(false);
+  });
+
+  it('wraps architecture guardrails in the shared scan envelope', () => {
+    const root = createTempRoot();
+    seedArchitectureSources(root);
+    seedQualitySources(root);
+    seedGuardrailBaseline(root);
+
+    const guardrails = runSummaryJson(root, guardrailsScriptPath, ['--summary-json']);
+    const uiConsolidationGuardrail = runSummaryJson(root, uiConsolidationGuardrailScriptPath, [
+      '--summary-json',
+    ]);
+
+    expect(guardrails.scanner).toMatchObject({
+      name: 'architecture-guardrails',
+      version: '1.0.0',
+    });
+    expect(guardrails.status).toBe('ok');
+    expect(guardrails.summary).toMatchObject({
+      totalMetrics: expect.any(Number),
+      okMetrics: expect.any(Number),
+      failedMetrics: 0,
+      hardLimitFailures: 0,
+      updatedBaseline: false,
+    });
+    expect(guardrails.details).toMatchObject({
+      snapshot: expect.any(Object),
+      baselineGeneratedAt: '2026-03-09T09:20:00.000Z',
+      baselinePath: 'scripts/architecture/guardrails-baseline.json',
+      rows: expect.any(Array),
+    });
+    expect(guardrails.paths).toBeNull();
+    expect(guardrails.filters).toMatchObject({
+      historyDisabled: true,
+      noWrite: true,
+      updateBaseline: false,
+      ci: false,
+    });
+    expect(guardrails.notes).toContain('architecture guardrail result');
+
+    expect(uiConsolidationGuardrail.scanner).toMatchObject({
+      name: 'ui-consolidation-guardrail',
+      version: '1.0.0',
+    });
+    expect(uiConsolidationGuardrail.status).toBe('ok');
+    expect(uiConsolidationGuardrail.summary).toMatchObject({
+      totalRules: 7,
+      failedRules: 0,
+      passedRules: 7,
+      propForwardingCount: expect.any(Number),
+      totalOpportunityCount: expect.any(Number),
+    });
+    expect(uiConsolidationGuardrail.details).toMatchObject({
+      snapshot: expect.any(Object),
+      failures: expect.any(Array),
+      baselineGeneratedAt: '2026-03-09T09:20:00.000Z',
+      baselinePath: 'scripts/architecture/guardrails-baseline.json',
+      rules: expect.any(Array),
+    });
+    expect(uiConsolidationGuardrail.paths).toBeNull();
+    expect(uiConsolidationGuardrail.filters).toMatchObject({
+      historyDisabled: true,
+      noWrite: true,
+      ci: false,
+    });
+    expect(uiConsolidationGuardrail.notes).toContain('ui consolidation guardrail result');
   });
 
   it('wraps critical path performance checks in the shared scan envelope', () => {

@@ -17,7 +17,7 @@
     },
     {
       "path": "trigger.contextMode",
-      "description": "Deprecated Trigger context policy: simulation_required, simulation_preferred, or trigger_only. For forward flow, prefer Trigger only + Fetcher node.",
+      "description": "Trigger context policy. Canonical value is trigger_only; resolve entity context downstream with Fetcher or Simulation nodes.",
       "defaultValue": "trigger_only"
     },
     {
@@ -68,5 +68,5 @@
     }
   },
   "nodeHashAlgorithm": "sha256",
-  "nodeHash": "233c29f92acbe95972897af33d008a92c8026fc82bb6a1b721b60e0320116431"
+  "nodeHash": "fb32646a0464e68e236519ec6ceab11b53fe46ae97158cbf699fa515725209cd"
 }

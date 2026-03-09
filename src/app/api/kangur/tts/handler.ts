@@ -6,7 +6,7 @@ import { resolveKangurTtsContextRegistryEnvelope } from '@/features/kangur/tts/c
 import { kangurLessonTtsRequestSchema } from '@/features/kangur/tts/contracts';
 import { ensureKangurLessonNarrationAudio } from '@/features/kangur/tts/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { badRequestError } from '@/shared/errors/app-error';
+import { AppErrorCodes, badRequestError, isAppError } from '@/shared/errors/app-error';
 
 const readBodyJson = async (request: NextRequest): Promise<unknown> => {
   const rawBody = await request.text();
@@ -21,11 +21,22 @@ const readBodyJson = async (request: NextRequest): Promise<unknown> => {
   }
 };
 
+const resolveOptionalKangurActor = async (request: NextRequest) => {
+  try {
+    return await resolveKangurActor(request);
+  } catch (error) {
+    if (isAppError(error) && error.code === AppErrorCodes.unauthorized) {
+      return null;
+    }
+    throw error;
+  }
+};
+
 export async function postKangurTtsHandler(
   req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<Response> {
-  const actor = await resolveKangurActor(req);
+  const actor = await resolveOptionalKangurActor(req);
   const payload = kangurLessonTtsRequestSchema.parse(await readBodyJson(req));
   const contextRegistry = await resolveKangurTtsContextRegistryEnvelope(payload.contextRegistry);
   const response = await ensureKangurLessonNarrationAudio({

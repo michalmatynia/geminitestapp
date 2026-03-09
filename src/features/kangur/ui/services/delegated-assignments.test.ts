@@ -4,6 +4,7 @@ import { buildKangurEmbeddedBasePath } from '@/features/kangur/config/routing';
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 
 import {
+  buildKangurAssignmentCatalog,
   buildKangurAssignmentHref,
   mapKangurPracticeAssignmentsByOperation,
   parseKangurMixedTrainingQuickStartParams,
@@ -44,6 +45,22 @@ const createAssignment = (
 });
 
 describe('delegated assignments helpers', () => {
+  it('keeps the clock practice catalog aligned with the segmented lesson copy', () => {
+    const catalog = buildKangurAssignmentCatalog([]);
+    const practiceClock = catalog.find((item) => item.id === 'practice-clock');
+
+    expect(practiceClock).toMatchObject({
+      title: 'Trening: Zegar',
+      description: 'Sesja cwiczen z godzinami, minutami i pelnym czasem na zegarze.',
+    });
+    expect(practiceClock?.createInput.description).toBe(
+      'Wykonaj zegarowy trening i sprawdz odczytywanie godzin, minut oraz pelnego czasu.'
+    );
+    expect(practiceClock?.keywords).toEqual(
+      expect.arrayContaining(['godziny', 'minuty', 'pelny czas'])
+    );
+  });
+
   it('orders active assignments by priority, progress, and recency', () => {
     const assignments = selectKangurPriorityAssignments([
       createAssignment({

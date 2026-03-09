@@ -1,12 +1,18 @@
 'use client';
 
-import { createContext, useContext, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
 
 type KangurLessonBackAction = () => void;
 
-const KangurLessonNavigationContext = createContext<KangurLessonBackAction | null>(null);
+type KangurLessonNavigationContextValue = {
+  onBack: KangurLessonBackAction;
+  isSubsectionNavigationActive: boolean;
+  registerSubsectionNavigation: () => () => void;
+};
+
+const KangurLessonNavigationContext = createContext<KangurLessonNavigationContextValue | null>(null);
 
 export function KangurLessonNavigationProvider({
   onBack,
@@ -15,8 +21,25 @@ export function KangurLessonNavigationProvider({
   onBack: KangurLessonBackAction;
   children: ReactNode;
 }): React.JSX.Element {
+  const [subsectionNavigationDepth, setSubsectionNavigationDepth] = useState(0);
+  const registerSubsectionNavigation = useCallback(() => {
+    setSubsectionNavigationDepth((currentDepth) => currentDepth + 1);
+
+    return () => {
+      setSubsectionNavigationDepth((currentDepth) => Math.max(0, currentDepth - 1));
+    };
+  }, []);
+  const value = useMemo<KangurLessonNavigationContextValue>(
+    () => ({
+      onBack,
+      isSubsectionNavigationActive: subsectionNavigationDepth > 0,
+      registerSubsectionNavigation,
+    }),
+    [onBack, registerSubsectionNavigation, subsectionNavigationDepth]
+  );
+
   return (
-    <KangurLessonNavigationContext.Provider value={onBack}>
+    <KangurLessonNavigationContext.Provider value={value}>
       {children}
     </KangurLessonNavigationContext.Provider>
   );
@@ -51,5 +74,20 @@ export const useKangurLessonBackAction = (
     );
   }
 
-  return context;
+  return context.onBack;
+};
+
+export const useKangurLessonSubsectionNavigationActive = (): boolean =>
+  useContext(KangurLessonNavigationContext)?.isSubsectionNavigationActive ?? false;
+
+export const useKangurRegisterLessonSubsectionNavigation = (): (() => () => void) => {
+  const context = useContext(KangurLessonNavigationContext);
+
+  return useCallback(() => {
+    if (!context) {
+      return () => undefined;
+    }
+
+    return context.registerSubsectionNavigation();
+  }, [context]);
 };

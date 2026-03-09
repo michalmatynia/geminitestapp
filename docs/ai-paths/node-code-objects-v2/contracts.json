@@ -188,7 +188,7 @@
       "objectId": "node_obj_trigger_portable_v2",
       "title": "Trigger: Image Studio Analysis",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "a075cdb7878d2c9943eca26bb5fd10c607a25483054d4862a8c4d636603d76e8"
+      "objectHash": "91a812c90514b9f6dcfb3cf0f129d3caeea953d0d76326128b2c44d80425a69f"
     },
     "validation_pattern": {
       "objectId": "node_obj_validation_pattern_portable_v2",
@@ -210,5 +210,5 @@
     }
   },
   "contractsHashAlgorithm": "sha256",
-  "contractsHash": "83b9b9d0580394f5979b05248b74cef07f07748b69c47d2e72e1d3a90d13a1ee"
+  "contractsHash": "de22f7061ca5f81296e36e8c45b05c38479a09c65f92fc668c7725de3085388e"
 }

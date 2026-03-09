@@ -186,16 +186,10 @@ export interface ProductListSelectionContextType {
 }
 
 export interface ProductListTableContextType {
-  loadError: string | null;
-  actionError: string | null;
-  onDismissActionError: () => void;
   data: ProductWithImages[];
   rowSelection: RowSelectionState;
   setRowSelection: OnChangeFn<RowSelectionState>;
   handleProductsTableRender: ProfilerOnRenderCallback;
-  isPromptOpen: boolean;
-  setIsPromptOpen: (open: boolean) => void;
-  handleConfirmSku: (sku: string) => Promise<void>;
   tableColumns: ColumnDef<ProductWithImages>[];
   getRowClassName?: ((row: Row<ProductWithImages>) => string | undefined) | undefined;
   getRowId: (row: ProductWithImages) => string;
@@ -203,6 +197,12 @@ export interface ProductListTableContextType {
   skeletonRows: ReactNode;
   maxHeight?: string | number | undefined;
   stickyHeader?: boolean | undefined;
+}
+
+export interface ProductListAlertsContextType {
+  loadError: string | null;
+  actionError: string | null;
+  onDismissActionError: () => void;
 }
 
 export interface ProductListActionsContextType {
@@ -220,6 +220,36 @@ export interface ProductListActionsContextType {
   onDuplicateProduct: (row: ProductWithImages) => void;
   onIntegrationsClick: (row: ProductWithImages) => void;
   onExportSettingsClick: (row: ProductWithImages) => void;
+  integrationBadgeIds: Set<string>;
+  integrationBadgeStatuses: Map<string, string>;
+  traderaBadgeIds: Set<string>;
+  traderaBadgeStatuses: Map<string, string>;
+  queuedProductIds: Set<string>;
+  categoryNameById: ReadonlyMap<string, string>;
+  thumbnailSource: 'file' | 'link' | 'base64';
+  imageExternalBaseUrl: string | null;
+}
+
+export interface ProductListHeaderActionsContextType {
+  onCreateProduct: () => void;
+  onCreateFromDraft: (draftId: string) => void;
+  activeDrafts: ProductDraft[];
+}
+
+export interface ProductListRowActionsContextType {
+  onPrefetchProductDetail: (productId: string) => void;
+  onProductNameClick: (row: ProductWithImages) => void;
+  onProductEditClick: (row: ProductWithImages) => void;
+  onProductDeleteClick: (row: ProductWithImages) => void;
+  onDuplicateProduct: (row: ProductWithImages) => void;
+  onIntegrationsClick: (row: ProductWithImages) => void;
+  onExportSettingsClick: (row: ProductWithImages) => void;
+}
+
+export interface ProductListRowVisualsContextType {
+  productNameKey: 'name_en' | 'name_pl' | 'name_de';
+  priceGroups: PriceGroupWithDetails[];
+  currencyCode: string;
   integrationBadgeIds: Set<string>;
   integrationBadgeStatuses: Map<string, string>;
   traderaBadgeIds: Set<string>;

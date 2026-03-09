@@ -48,14 +48,28 @@ vi.mock('@/features/cms/public', async (importOriginal) => {
 
 import { KangurLessonDocumentEditor } from '@/features/kangur/admin/KangurLessonDocumentEditor';
 import { LessonContentEditorProvider } from '@/features/kangur/admin/context/LessonContentEditorContext';
-import type { KangurLessonDocument } from '@/shared/contracts/kangur';
+import type { KangurLesson, KangurLessonDocument } from '@/shared/contracts/kangur';
+
+const arithmeticLesson: KangurLesson = {
+  id: 'lesson-adding',
+  componentId: 'adding',
+  contentMode: 'document',
+  title: 'Dodawanie',
+  description: 'Ćwicz dodawanie krok po kroku.',
+  emoji: '➕',
+  color: '#fff',
+  activeBg: 'bg-emerald-500',
+  sortOrder: 1000,
+  enabled: true,
+};
 
 function renderEditor(
   value: KangurLessonDocument,
-  onChange: (next: KangurLessonDocument) => void
+  onChange: (next: KangurLessonDocument) => void,
+  lesson: KangurLesson | null = null
 ): ReturnType<typeof render> {
   return render(
-    <LessonContentEditorProvider lesson={null} document={value} onChange={onChange}>
+    <LessonContentEditorProvider lesson={lesson} document={value} onChange={onChange}>
       <KangurLessonDocumentEditor />
     </LessonContentEditorProvider>
   );
@@ -64,9 +78,11 @@ function renderEditor(
 function StatefulEditorHarness({
   value,
   onChange,
+  lesson = null,
 }: {
   value: KangurLessonDocument;
   onChange: (nextValue: KangurLessonDocument) => void;
+  lesson?: KangurLesson | null;
 }): React.JSX.Element {
   const [document, setDocument] = React.useState(value);
 
@@ -79,7 +95,7 @@ function StatefulEditorHarness({
   );
 
   return (
-    <LessonContentEditorProvider lesson={null} document={document} onChange={handleChange}>
+    <LessonContentEditorProvider lesson={lesson} document={document} onChange={handleChange}>
       <KangurLessonDocumentEditor />
     </LessonContentEditorProvider>
   );
@@ -123,6 +139,20 @@ describe('KangurLessonDocumentEditor', () => {
     const nextDocument = handleChange.mock.calls[0]?.[0] as { blocks: Array<{ type: string }> };
     expect(nextDocument.blocks).toHaveLength(1);
     expect(nextDocument.blocks[0]?.type).toBe('svg');
+  });
+
+  it('filters quick insert actions by search query', () => {
+    const handleChange = vi.fn();
+
+    renderEditor({ version: 1, blocks: [] }, handleChange);
+
+    fireEvent.change(screen.getByPlaceholderText(/search insert actions/i), {
+      target: { value: 'quiz' },
+    });
+
+    expect(screen.getByRole('button', { name: /add quiz/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /add svg block/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /add activity block/i })).not.toBeInTheDocument();
   });
 
   it('adds a new modular page from the SVG image gallery template', () => {
@@ -277,6 +307,139 @@ describe('KangurLessonDocumentEditor', () => {
     expect(nextDocument.pages?.[1]?.sectionDescription).toBe('Learn names and examples.');
     expect(nextDocument.pages?.[1]?.blocks[0]?.type).toBe('text');
     expect(nextDocument.pages?.[1]?.blocks[1]?.type).toBe('grid');
+  });
+
+  it('switches preview from the current page to the full lesson', () => {
+    const handleChange = vi.fn();
+
+    render(
+      <StatefulEditorHarness
+        value={{
+          version: 1,
+          pages: [
+            {
+              id: 'page-1',
+              title: 'Intro page',
+              blocks: [
+                {
+                  id: 'text-1',
+                  type: 'text',
+                  html: '<p>Only first page</p>',
+                  align: 'left',
+                },
+              ],
+            },
+            {
+              id: 'page-2',
+              title: 'Second page',
+              blocks: [
+                {
+                  id: 'text-2',
+                  type: 'text',
+                  html: '<p>Second page body</p>',
+                  align: 'left',
+                },
+              ],
+            },
+          ],
+          blocks: [
+            {
+              id: 'text-1',
+              type: 'text',
+              html: '<p>Only first page</p>',
+              align: 'left',
+            },
+            {
+              id: 'text-2',
+              type: 'text',
+              html: '<p>Second page body</p>',
+              align: 'left',
+            },
+          ],
+        }}
+        onChange={handleChange}
+      />
+    );
+
+    expect(screen.getByText('Only first page')).toBeInTheDocument();
+    expect(screen.queryByText('Second page body')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /full lesson/i }));
+
+    expect(screen.getByText('Second page body')).toBeInTheDocument();
+  });
+
+  it('shows page health badges and previews the active page issue summary', () => {
+    const handleChange = vi.fn();
+
+    render(
+      <StatefulEditorHarness
+        value={{
+          version: 1,
+          pages: [
+            {
+              id: 'page-ready',
+              title: 'Ready page',
+              blocks: [
+                {
+                  id: 'text-1',
+                  type: 'text',
+                  html: '<p>Visible explanation</p>',
+                  align: 'left',
+                },
+              ],
+            },
+            {
+              id: 'page-empty',
+              title: 'Needs content',
+              blocks: [],
+            },
+          ],
+          blocks: [
+            {
+              id: 'text-1',
+              type: 'text',
+              html: '<p>Visible explanation</p>',
+              align: 'left',
+            },
+          ],
+        }}
+        onChange={handleChange}
+      />
+    );
+
+    expect(screen.getAllByText('Ready').length).toBeGreaterThan(0);
+    expect(screen.getByText('Needs content')).toBeInTheDocument();
+    expect(screen.getAllByText('Blank page').length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole('button', { name: /needs content/i }));
+
+    expect(screen.getAllByText('This page has no blocks yet.').length).toBeGreaterThan(0);
+  });
+
+  it('shows lesson-type starter recipes and applies the recommended action', () => {
+    const handleChange = vi.fn();
+
+    render(
+      <StatefulEditorHarness
+        lesson={arithmeticLesson}
+        value={{ version: 1, blocks: [] }}
+        onChange={handleChange}
+      />
+    );
+
+    expect(screen.getByText('Starter recipes for Adding Lesson')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /start with worked example/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /add practice activity/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /check with a quiz/i })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /add practice activity/i }));
+
+    const nextDocument = handleChange.mock.calls.at(-1)?.[0] as {
+      blocks?: Array<{ type: string }>;
+    };
+
+    expect(nextDocument.blocks?.[0]?.type).toBe('activity');
   });
 
   it('applies an SVG media-library selection to an image block source', () => {

@@ -5,19 +5,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
-  signOutMock,
   withCsrfHeadersMock,
   logKangurClientErrorMock,
   trackKangurClientEventMock,
 } = vi.hoisted(() => ({
-  signOutMock: vi.fn(),
   withCsrfHeadersMock: vi.fn(),
   logKangurClientErrorMock: vi.fn(),
   trackKangurClientEventMock: vi.fn(),
-}));
-
-vi.mock('next-auth/react', () => ({
-  signOut: signOutMock,
 }));
 
 vi.mock('@/shared/lib/security/csrf-client', () => ({
@@ -177,7 +171,6 @@ describe('createLocalKangurPlatform score storage', () => {
   });
 
   it('does not expose the previous guest session scores after logout resets the anonymous sandbox', async () => {
-    signOutMock.mockResolvedValue(undefined);
     const fetchMock = vi.fn(
       async (input: RequestInfo | URL, init?: RequestInit) => {
         const url =
@@ -191,7 +184,7 @@ describe('createLocalKangurPlatform score storage', () => {
           };
         }
 
-        if (url.endsWith('/api/kangur/auth/learner-signout') && method === 'POST') {
+        if (url.endsWith('/api/kangur/auth/logout') && method === 'POST') {
           return {
             ok: true,
             status: 200,
@@ -242,6 +235,12 @@ describe('createLocalKangurPlatform score storage', () => {
     expect(rows).toEqual([currentGuestScore]);
     expect(rows).not.toContainEqual(previousGuestScore);
     expect(loadGuestKangurScores()).toEqual([currentGuestScore]);
-    expect(signOutMock).toHaveBeenCalledWith({ redirect: false });
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/kangur/auth/logout',
+      expect.objectContaining({
+        method: 'POST',
+        credentials: 'same-origin',
+      })
+    );
   });
 });

@@ -108,6 +108,7 @@ export const runStructuredCommandCheck = async ({
   commandArgs,
   timeoutMs,
   enabled = true,
+  disabledOutput = 'Skipped by configuration.',
   cwd,
   env,
   sourceName,
@@ -120,7 +121,7 @@ export const runStructuredCommandCheck = async ({
       label,
       command: [command, ...commandArgs].join(' '),
       status: 'skipped',
-      output: 'Skipped by configuration.',
+      output: disabledOutput,
     });
   }
 

@@ -86,7 +86,7 @@
       },
       {
         "path": "trigger.contextMode",
-        "description": "Deprecated Trigger context policy: simulation_required, simulation_preferred, or trigger_only. For forward flow, prefer Trigger only + Fetcher node.",
+        "description": "Trigger context policy. Canonical value is trigger_only; resolve entity context downstream with Fetcher or Simulation nodes.",
         "defaultValue": "trigger_only"
       },
       {
@@ -203,8 +203,8 @@
   "source": {
     "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/trigger.json",
     "semanticNodeHashAlgorithm": "sha256",
-    "semanticNodeHash": "233c29f92acbe95972897af33d008a92c8026fc82bb6a1b721b60e0320116431"
+    "semanticNodeHash": "fb32646a0464e68e236519ec6ceab11b53fe46ae97158cbf699fa515725209cd"
   },
   "objectHashAlgorithm": "sha256",
-  "objectHash": "a075cdb7878d2c9943eca26bb5fd10c607a25483054d4862a8c4d636603d76e8"
+  "objectHash": "91a812c90514b9f6dcfb3cf0f129d3caeea953d0d76326128b2c44d80425a69f"
 }

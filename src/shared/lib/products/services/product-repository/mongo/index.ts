@@ -70,6 +70,10 @@ export const mongoProductRepository: ProductRepository = {
     return mongoProductReadImpl.getProducts(filters, getProductCollection);
   },
 
+  async getProductIds(filters: ProductFilters): Promise<string[]> {
+    return mongoProductReadImpl.getProductIds(filters, getProductCollection);
+  },
+
   async countProducts(filters: ProductFilters): Promise<number> {
     return mongoProductReadImpl.countProducts(filters, getProductCollection);
   },

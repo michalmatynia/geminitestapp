@@ -3,22 +3,22 @@ import {
   getKangurPageHref as createPageUrl,
   readKangurUrlParam,
 } from '@/features/kangur/config/routing';
+import type {
+  KangurAssignmentCreateInput,
+  KangurAssignmentSnapshot,
+} from '@/features/kangur/services/ports';
 import { buildKangurAssignments } from '@/features/kangur/ui/services/assignments';
+import type {
+  KangurDifficulty,
+  KangurGameScreen,
+  KangurOperation,
+} from '@/features/kangur/ui/types';
 import type {
   KangurLesson,
   KangurLessonComponentId,
   KangurPracticeAssignmentOperation,
   KangurProgressState,
 } from '@/shared/contracts/kangur';
-import type {
-  KangurAssignmentCreateInput,
-  KangurAssignmentSnapshot,
-} from '@/features/kangur/services/ports';
-import type {
-  KangurDifficulty,
-  KangurGameScreen,
-  KangurOperation,
-} from '@/features/kangur/ui/types';
 
 type KangurAssignmentCatalogGroup = 'time' | 'arithmetic' | 'geometry' | 'logic' | 'practice';
 
@@ -216,13 +216,13 @@ const PRACTICE_ASSIGNMENT_ITEMS: KangurAssignmentCatalogItem[] = [
   {
     id: 'practice-clock',
     title: 'Trening: Zegar',
-    description: 'Sesja cwiczen z odczytywaniem godzin na zegarze.',
+    description: 'Sesja cwiczen z godzinami, minutami i pelnym czasem na zegarze.',
     badge: 'Praktyka',
     group: 'practice',
     priorityLabel: 'Priorytet sredni',
     createInput: {
       title: 'Praktyka: Zegar',
-      description: 'Wykonaj zegarowy trening i sprawdz odczytywanie godzin.',
+      description: 'Wykonaj zegarowy trening i sprawdz odczytywanie godzin, minut oraz pelnego czasu.',
       priority: 'medium',
       target: {
         type: 'practice',
@@ -231,7 +231,7 @@ const PRACTICE_ASSIGNMENT_ITEMS: KangurAssignmentCatalogItem[] = [
         minAccuracyPercent: 75,
       },
     },
-    keywords: ['zegar', 'czas', 'godziny', 'trening'],
+    keywords: ['zegar', 'czas', 'godziny', 'minuty', 'pelny czas', 'trening'],
   },
 ];
 

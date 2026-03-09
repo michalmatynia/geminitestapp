@@ -1,20 +1,33 @@
 'use client';
 
 import { Eye, EyeOff, PlusIcon, Package } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { memo, useEffect, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
-import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import { PRODUCT_PAGE_SIZE_OPTIONS } from '@/shared/lib/products/constants';
 import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
 import { useAdminLayoutActions, useAdminLayoutState } from '@/shared/providers/AdminLayoutProvider';
 import {
-  useProductListActionsContext,
   useProductListFiltersContext,
+  useProductListHeaderActionsContext,
 } from '@/features/products/context/ProductListContext';
 import type { Catalog } from '@/shared/contracts/products';
 import type { ProductDraft } from '@/shared/contracts/products';
 import { Button, SelectSimple, Pagination, Breadcrumbs } from '@/shared/ui';
+
+const TriggerButtonBar = dynamic(
+  () =>
+    import('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar').then(
+      (
+        mod: typeof import('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar')
+      ) => mod.TriggerButtonBar
+    ),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);
 
 interface ProductListHeaderProps {
   showHeader?: boolean;
@@ -37,7 +50,7 @@ export const ProductListHeader = memo(function ProductListHeader({
 }: ProductListHeaderProps) {
   const { isMenuHidden } = useAdminLayoutState();
   const { setIsMenuHidden } = useAdminLayoutActions();
-  const { onCreateProduct, onCreateFromDraft, activeDrafts } = useProductListActionsContext();
+  const { onCreateProduct, onCreateFromDraft, activeDrafts } = useProductListHeaderActionsContext();
   const {
     page,
     totalPages,

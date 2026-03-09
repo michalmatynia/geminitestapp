@@ -182,6 +182,38 @@ describe('portable AI-path engine scaffold', () => {
     }
   );
 
+  it.each(['simulation_required', 'simulation_preferred'] as const)(
+    'rejects removed legacy trigger context mode %s from raw path payloads',
+    (contextMode) => {
+      const pathConfig = createDefaultPathConfig(`path_removed_trigger_context_${contextMode}`);
+      const seedNode = pathConfig.nodes[0];
+      expect(seedNode).toBeDefined();
+      if (!seedNode) return;
+      pathConfig.nodes = [
+        {
+          ...seedNode,
+          type: 'trigger',
+          title: 'Trigger',
+          inputs: ['context'],
+          outputs: ['trigger', 'context', 'entityId', 'entityType'],
+          config: {
+            trigger: {
+              event: 'manual',
+              contextMode,
+            },
+          },
+        },
+      ];
+      pathConfig.edges = [];
+
+      const parsed = resolvePortablePathInput(pathConfig);
+      expect(parsed.ok).toBe(false);
+      if (parsed.ok) return;
+
+      expect(parsed.error).toMatch(/removed legacy trigger context/i);
+    }
+  );
+
   it('embeds node code object manifest metadata when building portable package', () => {
     const pathConfig = createDefaultPathConfig('path_portable_manifest_embed');
     const portablePackage = buildPortablePathPackage(pathConfig);

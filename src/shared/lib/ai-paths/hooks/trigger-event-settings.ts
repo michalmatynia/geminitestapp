@@ -9,6 +9,8 @@ import {
   normalizeLoadedPathMetas,
   sanitizeTriggerPathConfig,
 } from '@/shared/lib/ai-paths/core/normalization/trigger-normalization';
+import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
+import { resolvePortablePathInput } from '@/shared/lib/ai-paths/portable-engine';
 import {
   fetchAiPathsSettingsCached,
   fetchAiPathsSettingsByKeysCached,
@@ -197,16 +199,43 @@ export const loadPathConfigsFromSettings = async (
         cause: error instanceof Error ? error.message : 'unknown_error',
       });
     }
-    if (!parsedConfig || typeof parsedConfig !== 'object' || Array.isArray(parsedConfig)) {
+
+    const resolvedConfig = resolvePortablePathInput(parsedConfig, {
+      repairIdentities: true,
+      includeConnections: false,
+      signingPolicyTelemetrySurface: 'product',
+      nodeCodeObjectHashVerificationMode: 'warn',
+    });
+    const resolvedConfigError = resolvedConfig.ok ? null : resolvedConfig.error;
+    const baseConfig = createDefaultPathConfig(meta.id);
+    const mergedConfig =
+      resolvedConfig.ok
+        ? resolvedConfig.value.pathConfig
+        : parsedConfig && typeof parsedConfig === 'object' && !Array.isArray(parsedConfig)
+          ? ({
+              ...baseConfig,
+              ...(parsedConfig as Partial<PathConfig>),
+              id:
+                typeof (parsedConfig as { id?: unknown }).id === 'string' &&
+                (parsedConfig as { id?: string }).id!.trim().length > 0
+                  ? (parsedConfig as { id: string }).id.trim()
+                  : meta.id,
+              name:
+                typeof (parsedConfig as { name?: unknown }).name === 'string'
+                  ? (parsedConfig as { name: string }).name
+                  : baseConfig.name,
+            } as PathConfig)
+          : null;
+    if (!mergedConfig) {
       throw validationError('Invalid AI Path config payload.', {
         source: 'ai_paths.trigger_payload',
-        reason: 'config_not_object',
+        reason: 'config_invalid_payload',
         pathId: meta.id,
+        cause: resolvedConfigError,
       });
     }
 
-    const config = parsedConfig as PathConfig;
-    const normalizedConfig = sanitizeLoadedPathConfig(config);
+    const normalizedConfig = sanitizeLoadedPathConfig(mergedConfig);
     const normalizedId = typeof normalizedConfig.id === 'string' ? normalizedConfig.id.trim() : '';
     if (!normalizedId || normalizedId !== meta.id) {
       throw validationError('AI Path config id does not match index entry.', {

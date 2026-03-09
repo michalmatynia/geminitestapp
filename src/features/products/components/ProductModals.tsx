@@ -8,16 +8,12 @@ import { useProductFormCore } from '@/features/products/context/ProductFormCoreC
 import { useProductFormImages } from '@/features/products/context/ProductFormImageContext';
 import { useProductListModalsContext } from '@/features/products/context/ProductListContext';
 import { isEditingProductHydrated } from '@/features/products/hooks/editingProductHydration';
-import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
-import {
-  ListProductModal,
-  MassListProductModal,
-  ProductListingsModal,
-} from '@/features/integrations';
 import type { ProductDraft, ProductWithImages } from '@/shared/contracts/products';
 import { FormModal, Skeleton } from '@/shared/ui';
-
-import ProductForm from './ProductForm';
+const ProductForm = dynamic(() => import('./ProductForm'), {
+  ssr: false,
+  loading: () => <EditProductSkeletonContent />,
+});
 
 const FileManager = dynamic(() => import('@/shared/ui/files'), {
   ssr: false,
@@ -28,6 +24,44 @@ const SelectIntegrationModal = dynamic(
   {
     ssr: false,
   }
+);
+
+const TriggerButtonBar = dynamic(
+  () =>
+    import('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar').then(
+      (
+        mod: typeof import('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar')
+      ) => mod.TriggerButtonBar
+    ),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);
+
+const ListProductModal = dynamic(
+  () =>
+    import('@/shared/lib/product-integrations-adapter').then(
+      (mod: typeof import('@/shared/lib/product-integrations-adapter')) => mod.ListProductModal
+    ),
+  { ssr: false }
+);
+
+const MassListProductModal = dynamic(
+  () =>
+    import('@/shared/lib/product-integrations-adapter').then(
+      (mod: typeof import('@/shared/lib/product-integrations-adapter')) => mod.MassListProductModal
+    ),
+  { ssr: false }
+);
+
+const ProductListingsModal = dynamic(
+  () =>
+    import('@/shared/lib/product-integrations-adapter').then(
+      (mod: typeof import('@/shared/lib/product-integrations-adapter')) =>
+        mod.ProductListingsModal
+    ),
+  { ssr: false }
 );
 
 type ProductFormScope = 'draft_template' | 'product_create' | 'product_edit';

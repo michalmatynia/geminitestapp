@@ -100,6 +100,31 @@ const buildPathMeta = (config: Pick<PathConfig, 'id' | 'name'>): PathMeta => ({
   updatedAt: '2026-03-01T00:00:00.000Z',
 });
 
+const buildLegacyTriggerConfig = (pathId: string): PathConfig => {
+  const pathConfig = createDefaultPathConfig(pathId);
+  const seedNode = pathConfig.nodes[0];
+  if (!seedNode) {
+    throw new Error('Expected default path config to include a seed node.');
+  }
+  pathConfig.nodes = [
+    {
+      ...seedNode,
+      type: 'trigger',
+      title: 'Trigger: Opis i Tytul',
+      inputs: ['context'],
+      outputs: ['trigger', 'context', 'entityId', 'entityType'],
+      config: {
+        trigger: {
+          event: 'manual',
+          contextMode: 'simulation_preferred',
+        },
+      },
+    },
+  ];
+  pathConfig.edges = [];
+  return pathConfig;
+};
+
 const buildInput = (): {
   input: PathActionsInput;
   mocks: {
@@ -306,6 +331,34 @@ describe('useAiPathsSettingsPathActions handleSwitchPath', () => {
     } finally {
       warnSpy.mockRestore();
     }
+  });
+
+  it('rejects switching to a stored path config with removed legacy trigger context modes', async () => {
+    const { input, mocks } = buildInput();
+    const nextPathId = 'path_legacy_trigger';
+    const fetchedConfig = buildLegacyTriggerConfig(nextPathId);
+
+    mockedFetchAiPathsSettingsByKeysCached.mockResolvedValueOnce([
+      {
+        key: `ai_paths_config_${nextPathId}`,
+        value: JSON.stringify(fetchedConfig),
+      },
+    ]);
+
+    const { result } = renderHook(() => useAiPathsSettingsPathActions(input));
+
+    act(() => {
+      result.current.handleSwitchPath(nextPathId);
+    });
+
+    await waitFor(() => {
+      expect(mocks.toast).toHaveBeenCalledWith(
+        'Failed to load selected path. Try again in a moment.',
+        { variant: 'error' }
+      );
+    });
+    expect(mocks.setActivePathId).not.toHaveBeenCalledWith(nextPathId);
+    expect(mocks.setPathConfigs).not.toHaveBeenCalled();
   });
 
   it('duplicates paths with fresh canonical node ids and remapped samples', () => {

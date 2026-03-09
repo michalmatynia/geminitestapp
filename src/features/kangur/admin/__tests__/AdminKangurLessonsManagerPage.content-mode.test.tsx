@@ -357,6 +357,9 @@ describe('AdminKangurLessonsManagerPage content mode flow', () => {
     expect(await screen.findByTestId('mock-doc-editor-title')).toHaveTextContent('SVG Playground');
     expect(screen.getByTestId('mock-doc-editor-block-count')).toHaveTextContent('2');
 
+    fireEvent.change(screen.getByLabelText('Title'), {
+      target: { value: 'SVG Playground Updated' },
+    });
     fireEvent.click(screen.getByRole('button', { name: /set sample content/i }));
     fireEvent.click(screen.getByRole('button', { name: /save content/i }));
 
@@ -382,7 +385,7 @@ describe('AdminKangurLessonsManagerPage content mode flow', () => {
     const followupLessonSave = lessonWrites.at(-1);
     expect(followupLessonSave).toBeDefined();
     const followupLessons = JSON.parse(followupLessonSave!.value) as Array<{ title: string }>;
-    expect(followupLessons.some((lesson) => lesson.title === 'SVG Playground')).toBe(true);
+    expect(followupLessons.some((lesson) => lesson.title === 'SVG Playground Updated')).toBe(true);
   });
 
   it('clears custom content and returns the lesson to component mode', async () => {
@@ -544,5 +547,56 @@ describe('AdminKangurLessonsManagerPage content mode flow', () => {
       expect.stringContaining('Imported 2 lessons to modular editor.'),
       expect.objectContaining({ variant: 'success' })
     );
+  });
+
+  it('filters lessons by editorial state', async () => {
+    settingsStoreMock.get.mockImplementation((key: string) => {
+      if (key === KANGUR_LESSONS_SETTING_KEY) {
+        return JSON.stringify([
+          ...baseLessons,
+          {
+            ...baseLessons[0],
+            id: 'kangur-lesson-calendar',
+            componentId: 'calendar',
+            title: 'Kalendarz',
+            description: 'Dni i miesiace',
+            emoji: '📅',
+            sortOrder: 2000,
+            enabled: false,
+          },
+        ]);
+      }
+      if (key === KANGUR_LESSON_DOCUMENTS_SETTING_KEY) {
+        return JSON.stringify({
+          'kangur-lesson-clock': {
+            version: 1,
+            blocks: [
+              {
+                id: 'text-1',
+                type: 'text',
+                html: '<p>Stored custom content</p>',
+                align: 'left',
+              },
+            ],
+          },
+        });
+      }
+      return null;
+    });
+
+    render(<AdminKangurLessonsManagerPage />);
+
+    expect(screen.getByText('Nauka zegara')).toBeInTheDocument();
+    expect(screen.getByText('Kalendarz')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /custom content/i }));
+
+    expect(screen.getByText('Nauka zegara')).toBeInTheDocument();
+    expect(screen.queryByText('Kalendarz')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /hidden/i }));
+
+    expect(screen.queryByText('Nauka zegara')).not.toBeInTheDocument();
+    expect(screen.getByText('Kalendarz')).toBeInTheDocument();
   });
 });

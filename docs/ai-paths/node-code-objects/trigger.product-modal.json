@@ -9,7 +9,7 @@
   "config": {
     "trigger": {
       "event": "product_modal_context_filter",
-      "contextMode": "simulation_preferred"
+      "contextMode": "trigger_only"
     },
     "runtime": {
       "waitForInputs": false

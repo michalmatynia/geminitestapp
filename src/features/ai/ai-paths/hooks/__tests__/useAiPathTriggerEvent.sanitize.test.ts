@@ -99,6 +99,37 @@ describe('sanitizeTriggerPathConfig', () => {
     expect(sanitized).toEqual(snapshotBeforeSanitize);
   });
 
+  it.each(['simulation_required', 'simulation_preferred'] as const)(
+    'rejects removed legacy trigger context mode %s in trigger payloads',
+    (contextMode) => {
+      const config = createDefaultPathConfig(`path_trigger_context_${contextMode}`);
+      const seedNode = config.nodes[0] as AiNode | undefined;
+      if (!seedNode) {
+        throw new Error('Expected default path fixture to include at least one node.');
+      }
+      config.nodes = [
+        {
+          ...seedNode,
+          type: 'trigger',
+          title: 'Trigger',
+          inputs: ['context'],
+          outputs: ['trigger', 'context', 'entityId', 'entityType'],
+          config: {
+            trigger: {
+              event: 'manual',
+              contextMode,
+            },
+          },
+        } as AiNode,
+      ];
+      config.edges = [];
+
+      expect(() => sanitizeTriggerPathConfig(config)).toThrowError(
+        /removed legacy trigger context/i
+      );
+    }
+  );
+
   it('rejects unsupported parameter inference target path aliases in trigger payloads', () => {
     const config = createDefaultPathConfig('path_trigger_param_guard');
     config.nodes = [

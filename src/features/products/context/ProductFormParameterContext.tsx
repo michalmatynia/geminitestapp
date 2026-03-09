@@ -9,6 +9,10 @@ import type {
   ProductDraft,
 } from '@/shared/contracts/products';
 import { internalError } from '@/shared/errors/app-error';
+import {
+  normalizeParameterValuesByLanguage,
+  resolveStoredParameterValue,
+} from '@/shared/lib/products/utils/parameter-values';
 
 import { useParameters } from '../hooks/useProductMetadataQueries';
 import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
@@ -45,15 +49,7 @@ export const ProductFormParameterContext = createContext<ProductFormParameterCon
 export const resolvePrimaryParameterValue = (
   valuesByLanguage: Record<string, string>,
   fallbackValue: string = ''
-): string =>
-  valuesByLanguage['default'] ||
-  valuesByLanguage['en'] ||
-  valuesByLanguage['pl'] ||
-  valuesByLanguage['de'] ||
-  Object.values(valuesByLanguage).find(
-    (value: string): boolean => typeof value === 'string' && value.length > 0
-  ) ||
-  fallbackValue;
+): string => resolveStoredParameterValue(valuesByLanguage, fallbackValue);
 
 export function ProductFormParameterProvider({
   children,
@@ -76,23 +72,9 @@ export function ProductFormParameterProvider({
     if (!Array.isArray(sourceParams)) return [];
 
     return sourceParams.map((entry: ProductParameterValue) => {
-      const valuesByLanguage =
-        entry?.valuesByLanguage &&
-        typeof entry.valuesByLanguage === 'object' &&
-        !Array.isArray(entry.valuesByLanguage)
-          ? Object.entries(entry.valuesByLanguage).reduce(
-            (acc: Record<string, string>, [lang, rawValue]: [string, unknown]) => {
-              const normalizedLang = lang.trim().toLowerCase();
-              if (!normalizedLang) return acc;
-              const normalizedValue = typeof rawValue === 'string' ? rawValue : '';
-              acc[normalizedLang] = normalizedValue;
-              return acc;
-            },
-              {} as Record<string, string>
-          )
-          : {};
+      const valuesByLanguage = normalizeParameterValuesByLanguage(entry?.valuesByLanguage);
       const directValue = typeof entry?.value === 'string' ? entry.value : '';
-      const fallbackValue = resolvePrimaryParameterValue(valuesByLanguage, directValue);
+      const fallbackValue = resolveStoredParameterValue(valuesByLanguage, directValue);
 
       return {
         parameterId: decodeSimpleParameterStorageId(
@@ -145,19 +127,23 @@ export function ProductFormParameterProvider({
         const normalizedLang = languageCode.trim().toLowerCase();
         if (!normalizedLang) return prev;
         const current = next[index];
-        const currentValues =
-          current.valuesByLanguage &&
-          typeof current.valuesByLanguage === 'object' &&
-          !Array.isArray(current.valuesByLanguage)
-            ? { ...current.valuesByLanguage }
-            : {};
+        const currentValues = normalizeParameterValuesByLanguage(current.valuesByLanguage);
+        const hadLocalizedValues = Object.keys(currentValues).length > 0;
+        const previousLocalizedValue = currentValues[normalizedLang] ?? '';
         const normalizedValue = value.trim();
         if (normalizedValue.length > 0) {
           currentValues[normalizedLang] = normalizedValue;
         } else {
           delete currentValues[normalizedLang];
         }
-        const nextPrimaryValue = resolvePrimaryParameterValue(currentValues, '');
+        const currentScalarValue = typeof current.value === 'string' ? current.value.trim() : '';
+        const nextScalarCandidate =
+          currentScalarValue && currentScalarValue === previousLocalizedValue
+            ? normalizedValue
+            : !hadLocalizedValues && currentScalarValue
+              ? normalizedValue
+              : currentScalarValue;
+        const nextPrimaryValue = resolveStoredParameterValue(currentValues, nextScalarCandidate);
         const nextEntry: ProductParameterValue = {
           ...current,
           value: nextPrimaryValue,

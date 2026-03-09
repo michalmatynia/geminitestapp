@@ -1,10 +1,11 @@
 import { AiNode } from '@/shared/contracts/ai-paths';
+
+import { EngineStateManager } from './engine-state-manager';
 import {
   checkContextMatchesSimulation,
   hasValuableSimulationContext,
   isSimulationCapableFetcher,
 } from './engine-utils';
-import { EngineStateManager } from './engine-state-manager';
 
 export type TriggerProvenanceContext = {
   scopedNodeIds: Set<string>;

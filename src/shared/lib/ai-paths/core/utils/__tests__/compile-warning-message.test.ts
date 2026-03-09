@@ -37,12 +37,12 @@ describe('buildCompileWarningMessage', () => {
       findings: [
         {
           severity: 'warning',
-          code: 'trigger_context_resolution_risk',
-          message: 'Trigger requires simulation context. Fix: connect Simulation -> Trigger.',
+          code: 'legacy_warning',
+          message: 'Use the canonical Fetcher flow. Fix: replace the old Trigger path.',
         },
       ],
     });
-    expect(message).toContain('Fix: connect Simulation -> Trigger.');
+    expect(message).toContain('Fix: replace the old Trigger path.');
     expect(message).not.toContain('Compile Inspector for details');
   });
 

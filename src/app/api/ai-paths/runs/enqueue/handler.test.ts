@@ -205,6 +205,40 @@ describe('ai-paths runs enqueue handler', () => {
     expect(enqueueArgs?.meta).not.toHaveProperty('identityRepair');
   });
 
+  it('rejects removed legacy trigger context modes when loading stored path configs by pathId', async () => {
+    const config = createDefaultPathConfig('path-legacy-trigger-mode');
+    const seedNode = config.nodes[0];
+    expect(seedNode).toBeDefined();
+    if (!seedNode) return;
+    config.nodes = [
+      {
+        ...seedNode,
+        type: 'trigger',
+        title: 'Trigger: Opis i Tytul',
+        inputs: ['context'],
+        outputs: ['trigger', 'context', 'entityId', 'entityType'],
+        config: {
+          trigger: {
+            event: 'manual',
+            contextMode: 'simulation_preferred',
+          },
+        },
+      },
+    ];
+    config.edges = [];
+    getAiPathsSettingMock.mockResolvedValue(JSON.stringify(config));
+
+    await expect(
+      POST_handler(
+        makeRequest({
+          pathId: config.id,
+        }),
+        {} as Parameters<typeof POST_handler>[1]
+      )
+    ).rejects.toThrow(/removed legacy trigger context/i);
+    expect(enqueuePathRunMock).not.toHaveBeenCalled();
+  });
+
   it('normalizes context registry payloads into enqueue metadata', async () => {
     const config = createDefaultPathConfig('path-with-context');
 
@@ -291,14 +325,26 @@ describe('ai-paths runs enqueue handler', () => {
 
     expect(response.status).toBe(200);
     expect(getAiPathsSettingMock).toHaveBeenCalledWith(`ai_paths_config_${config.id}`);
-    expect(enqueuePathRunMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        pathId: config.id,
-        pathName: config.name,
-        nodes: config.nodes,
-        edges: config.edges,
-      })
-    );
+    const enqueueArgs = enqueuePathRunMock.mock.calls[0]?.[0] as
+      | {
+          pathId?: string;
+          pathName?: string;
+          nodes?: unknown[];
+          edges?: unknown[];
+          triggerEvent?: string | null;
+        }
+      | undefined;
+    expect(enqueueArgs?.pathId).toBe(config.id);
+    expect(enqueueArgs?.pathName).toBe(config.name);
+    expect(enqueueArgs?.nodes).toHaveLength(config.nodes.length);
+    expect(
+      enqueueArgs?.nodes?.map((node) => (node as { id?: string }).id).sort()
+    ).toEqual(config.nodes.map((node) => node.id).sort());
+    expect(enqueueArgs?.edges).toHaveLength(config.edges.length);
+    expect(
+      enqueueArgs?.edges?.map((edge) => (edge as { id?: string }).id).sort()
+    ).toEqual(config.edges.map((edge) => edge.id).sort());
+    expect(enqueueArgs?.triggerEvent).toBe('manual');
     const logInvocation = logSystemEventMock.mock.calls[0]?.[0] as
       | { source?: string; context?: Record<string, unknown> }
       | undefined;

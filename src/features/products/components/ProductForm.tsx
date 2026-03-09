@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -7,7 +8,6 @@ import {
   ContextRegistryPageProvider,
   useRegisterContextRegistryPageSource,
 } from '@/features/ai/ai-context-registry/context/page-context';
-import ProductFormDebugPanel from '@/features/products/components/ProductFormDebugPanel';
 import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
 import { useProductFormMetadataState } from '@/features/products/context/ProductFormMetadataContext';
 import { ProductValidationSettingsProvider } from '@/features/products/context/ProductValidationSettingsContext';
@@ -25,14 +25,62 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui';
 
 import { ProductFormFooter } from './form/ProductFormFooter';
 import ProductFormGeneral from './form/ProductFormGeneral';
-import ProductFormImages from './form/ProductFormImages';
-import ProductFormImportInfo from './form/ProductFormImportInfo';
-import ProductFormNoteLink from './form/ProductFormNoteLink';
-import ProductFormOther from './form/ProductFormOther';
-import ProductFormParameters from './form/ProductFormParameters';
-import ProductFormStudio from './form/ProductFormStudio';
-import { ProductFormValidationTab } from './form/ProductFormValidationTab';
 import { useProductFormValidator } from '../hooks/useProductFormValidator';
+
+const DeferredTabPlaceholder = (): React.JSX.Element => (
+  <div className='rounded-lg border border-border/60 bg-background/40 px-4 py-6 text-sm text-muted-foreground'>
+    Loading tab...
+  </div>
+);
+
+const ProductFormImages = dynamic(() => import('./form/ProductFormImages'), {
+  ssr: false,
+  loading: DeferredTabPlaceholder,
+});
+
+const ProductFormOther = dynamic(() => import('./form/ProductFormOther'), {
+  ssr: false,
+  loading: DeferredTabPlaceholder,
+});
+
+const ProductFormParameters = dynamic(() => import('./form/ProductFormParameters'), {
+  ssr: false,
+  loading: DeferredTabPlaceholder,
+});
+
+const ProductFormImportInfo = dynamic(() => import('./form/ProductFormImportInfo'), {
+  ssr: false,
+  loading: DeferredTabPlaceholder,
+});
+
+const ProductFormNoteLink = dynamic(() => import('./form/ProductFormNoteLink'), {
+  ssr: false,
+  loading: DeferredTabPlaceholder,
+});
+
+const ProductFormDebugPanel = dynamic(
+  () => import('@/features/products/components/ProductFormDebugPanel'),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);
+
+const ProductFormStudio = dynamic(() => import('./form/ProductFormStudio'), {
+  ssr: false,
+  loading: DeferredTabPlaceholder,
+});
+
+const ProductFormValidationTab = dynamic(
+  () =>
+    import('./form/ProductFormValidationTab').then(
+      (mod: typeof import('./form/ProductFormValidationTab')) => mod.ProductFormValidationTab
+    ),
+  {
+    ssr: false,
+    loading: DeferredTabPlaceholder,
+  }
+);
 
 interface ProductFormProps {
   submitButtonText: string;

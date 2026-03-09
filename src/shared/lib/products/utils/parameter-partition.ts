@@ -3,6 +3,10 @@ import type {
   ProductParameterValue,
   ProductSimpleParameterValue,
 } from '@/shared/contracts/products';
+import {
+  normalizeParameterValuesByLanguage,
+  resolveStoredParameterValue,
+} from '@/shared/lib/products/utils/parameter-values';
 
 const toTrimmedString = (value: unknown): string => {
   if (typeof value !== 'string') return '';
@@ -10,18 +14,7 @@ const toTrimmedString = (value: unknown): string => {
 };
 
 const normalizeValuesByLanguage = (input: unknown): Record<string, string> | undefined => {
-  if (!input || typeof input !== 'object' || Array.isArray(input)) {
-    return undefined;
-  }
-  const normalized = Object.entries(input as Record<string, unknown>).reduce(
-    (acc: Record<string, string>, [languageCode, rawValue]: [string, unknown]) => {
-      const code = toTrimmedString(languageCode).toLowerCase();
-      if (!code) return acc;
-      acc[code] = typeof rawValue === 'string' ? rawValue : '';
-      return acc;
-    },
-    {}
-  );
+  const normalized = normalizeParameterValuesByLanguage(input);
   return Object.keys(normalized).length > 0 ? normalized : undefined;
 };
 
@@ -74,9 +67,10 @@ export const splitProductParameterValues = (
 
       const value = typeof entry?.value === 'string' ? entry.value : '';
       const valuesByLanguage = normalizeValuesByLanguage(entry?.valuesByLanguage);
+      const normalizedValue = resolveStoredParameterValue(valuesByLanguage ?? {}, value);
       acc.customFieldValues.push({
         parameterId,
-        value,
+        value: normalizedValue,
         ...(valuesByLanguage ? { valuesByLanguage } : {}),
       });
       return acc;
@@ -100,9 +94,10 @@ export const mergeProductParameterValues = (input: {
       if (!parameterId || isSimpleParameterStorageId(parameterId)) return acc;
       const value = typeof entry?.value === 'string' ? entry.value : '';
       const valuesByLanguage = normalizeValuesByLanguage(entry?.valuesByLanguage);
+      const normalizedValue = resolveStoredParameterValue(valuesByLanguage ?? {}, value);
       acc.push({
         parameterId,
-        value,
+        value: normalizedValue,
         ...(valuesByLanguage ? { valuesByLanguage } : {}),
       });
       return acc;

@@ -64,7 +64,8 @@ export const KANGUR_LESSON_ACTIVITY_DEFINITIONS: Record<
     id: 'clock-training',
     label: 'Clock training game',
     title: 'Ćwiczenie z zegarem',
-    description: 'Czytaj godziny i minuty na zegarze analogowym w trybie ćwiczeń.',
+    description:
+      'Ćwicz osobno godziny, minuty i pełny czas na zegarze analogowym w sekcjach treningowych.',
   },
 };
 

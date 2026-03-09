@@ -3,6 +3,7 @@ import type { AiPathPortablePackage, PortablePathInputSource } from './portable-
 export type PortablePathMigrationWarningCode =
   | 'path_config_upgraded'
   | 'semantic_canvas_upgraded'
+  | 'legacy_trigger_context_mode_upgraded'
   | 'portable_package_version_upgraded'
   | 'package_envelope_signature_missing'
   | 'package_envelope_signature_mismatch'

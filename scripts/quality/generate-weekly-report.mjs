@@ -13,6 +13,8 @@ import {
   runStructuredCommandCheck,
   truncateWeeklyCheckOutput,
 } from './lib/weekly-report-checks.mjs';
+import { applyWeeklyCheckSelection, parseWeeklyCheckSelectionArgs } from './lib/weekly-report-selection.mjs';
+import { summarizeWeeklyChecks } from './lib/weekly-report-aggregation.mjs';
 import { buildWeeklyReportSummaryJsonDetails } from './lib/weekly-report-summary.mjs';
 
 const execFile = promisify(execFileCallback);
@@ -25,6 +27,7 @@ const outDir = path.join(root, 'docs', 'metrics');
 const includeE2E = args.has('--include-e2e');
 const includeFullLint = args.has('--include-full-lint');
 const includeFullUnit = args.has('--include-full-unit');
+const requestedCheckSelection = parseWeeklyCheckSelectionArgs(argv);
 const { strictMode, shouldWriteHistory, noWrite, summaryJson } = parseCommonCheckArgs(argv);
 
 const MAX_OUTPUT_BYTES = 160_000;
@@ -313,6 +316,7 @@ const runCommandCheck = async ({
   commandArgs,
   timeoutMs,
   enabled = true,
+  disabledOutput = 'Skipped by configuration.',
   confirmFailureRetries = 0,
 }) => {
   if (!enabled) {
@@ -324,7 +328,7 @@ const runCommandCheck = async ({
       exitCode: null,
       signal: null,
       durationMs: 0,
-      output: 'Skipped by configuration.',
+      output: disabledOutput,
     };
   }
 
@@ -414,6 +418,9 @@ const getPassRate = (check) => {
 
 const toMarkdown = (report) => {
   const lines = [];
+  const checkMap = new Map(report.checks.map((check) => [check.id, check]));
+  const omittedCheckSet = new Set(report.checkSelection?.omittedChecks ?? []);
+
   lines.push('# Weekly Quality Report');
   lines.push('');
   lines.push(`Generated at: ${report.generatedAt}`);
@@ -422,10 +429,23 @@ const toMarkdown = (report) => {
   lines.push('## Quality Check Summary');
   lines.push('');
   lines.push(`- Total checks: ${report.summary.totalChecks}`);
+  lines.push(`- Executed checks: ${report.summary.executedChecks}`);
   lines.push(`- Passed: ${report.summary.passed}`);
   lines.push(`- Failed: ${report.summary.failed}`);
   lines.push(`- Timed out: ${report.summary.timedOut}`);
   lines.push(`- Skipped: ${report.summary.skipped}`);
+  if (report.summary.selectionSkipped > 0) {
+    lines.push(`- Skipped by selection: ${report.summary.selectionSkipped}`);
+  }
+  if (report.summary.otherSkipped > 0) {
+    lines.push(`- Other skipped: ${report.summary.otherSkipped}`);
+  }
+  if ((report.checkSelection?.onlyChecks.length ?? 0) > 0) {
+    lines.push(`- Only checks: ${report.checkSelection.onlyChecks.join(', ')}`);
+  }
+  if ((report.checkSelection?.skipChecks.length ?? 0) > 0) {
+    lines.push(`- Skipped by selection: ${report.checkSelection.skipChecks.join(', ')}`);
+  }
   lines.push('');
   lines.push('## Baseline Status');
   lines.push('');
@@ -445,19 +465,27 @@ const toMarkdown = (report) => {
   lines.push(`- E2E test pass rate: ${report.passRates.e2e ?? 'n/a'}%`);
   lines.push(`- Duration budget alerts: ${report.durationAlerts.length}`);
   lines.push('');
-  if (!includeFullLint) {
+  if ((report.checkSelection?.omittedChecks.length ?? 0) > 0) {
+    lines.push(`Checks omitted by selection: ${report.checkSelection.omittedChecks.join(', ')}.`);
+    lines.push('');
+  }
+  if (!includeFullLint && checkMap.get('lint')?.status === 'skipped' && !omittedCheckSet.has('lint')) {
     lines.push(
       'Full repository lint was skipped in this run. Use `--include-full-lint` to include the broad `eslint src` sweep.'
     );
     lines.push('');
   }
-  if (!includeFullUnit) {
+  if (
+    !includeFullUnit &&
+    checkMap.get('fullUnit')?.status === 'skipped' &&
+    !omittedCheckSet.has('fullUnit')
+  ) {
     lines.push(
       'Full unit suite was skipped in this run. Use `--include-full-unit` to include full unit coverage in baseline.'
     );
     lines.push('');
   }
-  if (!includeE2E) {
+  if (!includeE2E && checkMap.get('e2e')?.status === 'skipped' && !omittedCheckSet.has('e2e')) {
     lines.push('E2E tests were skipped in this run. Use `--include-e2e` for full end-to-end baseline.');
     lines.push('');
   }
@@ -603,21 +631,7 @@ const toMarkdown = (report) => {
 };
 
 const run = async () => {
-  let buildPreflight = {
-    action: 'none',
-    message: 'Build preflight not executed.',
-  };
-
-  try {
-    buildPreflight = await preflightBuildLock();
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    buildPreflight = {
-      action: 'error',
-      message: `Build preflight failed: ${message}`,
-    };
-  }
-  const checks = [
+  const configuredChecks = [
     {
       id: 'build',
       label: 'Build',
@@ -735,22 +749,28 @@ const run = async () => {
       id: 'guardrails',
       label: 'Architecture Guardrails',
       command: 'node',
-      commandArgs: ['scripts/architecture/check-guardrails.mjs'],
+      commandArgs: ['scripts/architecture/check-guardrails.mjs', '--summary-json'],
+      sourceName: 'scripts/architecture/check-guardrails.mjs',
       timeoutMs: 10 * 60 * 1000,
+      structured: true,
     },
     {
       id: 'uiConsolidation',
       label: 'UI Consolidation Guardrail',
       command: 'node',
-      commandArgs: ['scripts/architecture/check-ui-consolidation.mjs'],
+      commandArgs: ['scripts/architecture/check-ui-consolidation.mjs', '--summary-json'],
+      sourceName: 'scripts/architecture/check-ui-consolidation.mjs',
       timeoutMs: 10 * 60 * 1000,
+      structured: true,
     },
     {
       id: 'observability',
       label: 'Observability Check',
-      command: 'npm',
-      commandArgs: ['run', 'observability:check'],
+      command: 'node',
+      commandArgs: ['scripts/observability/check-observability.mjs', '--mode=check', '--summary-json'],
+      sourceName: 'scripts/observability/check-observability.mjs',
       timeoutMs: 10 * 60 * 1000,
+      structured: true,
     },
     {
       id: 'unsafePatterns',
@@ -796,6 +816,34 @@ const run = async () => {
     },
   ];
 
+  const { checks, selection: checkSelection } = applyWeeklyCheckSelection(
+    configuredChecks,
+    requestedCheckSelection
+  );
+
+  const buildCheck = checks.find((check) => check.id === 'build') ?? null;
+  let buildPreflight = {
+    action: 'none',
+    message: 'Build preflight not executed.',
+  };
+
+  if (buildCheck?.enabled === false) {
+    buildPreflight = {
+      action: 'skip',
+      message: buildCheck.disabledOutput ?? 'Build check skipped.',
+    };
+  } else {
+    try {
+      buildPreflight = await preflightBuildLock();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      buildPreflight = {
+        action: 'error',
+        message: `Build preflight failed: ${message}`,
+      };
+    }
+  }
+
   const checkResults = [];
   for (const check of checks) {
     if (check.id === 'build' && buildPreflight.action === 'skip') {
@@ -823,6 +871,7 @@ const run = async () => {
           commandArgs: check.commandArgs,
           timeoutMs: check.timeoutMs,
           enabled: check.enabled ?? true,
+          disabledOutput: check.disabledOutput,
           cwd: root,
           env: {
             ...process.env,
@@ -882,13 +931,7 @@ const run = async () => {
     readJsonIfExists('docs/metrics/lint-domain-checks-trend-latest.json'),
   ]);
 
-  const summary = {
-    totalChecks: checkResults.length,
-    passed: checkResults.filter((check) => check.status === 'pass').length,
-    failed: checkResults.filter((check) => check.status === 'fail').length,
-    timedOut: checkResults.filter((check) => check.status === 'timeout').length,
-    skipped: checkResults.filter((check) => check.status === 'skipped').length,
-  };
+  const summary = summarizeWeeklyChecks(checkResults, checkSelection);
 
   const findCheck = (id) => checkResults.find((check) => check.id === id);
   const durationAlerts = checkResults
@@ -913,6 +956,7 @@ const run = async () => {
     nodeVersion: process.version,
     includeE2E,
     strictMode,
+    checkSelection,
     summary,
     passRates: {
       build: getPassRate(findCheck('build')),
@@ -983,10 +1027,13 @@ const run = async () => {
         summary.failed > 0 || summary.timedOut > 0 || durationAlerts.length > 0 ? 'failed' : 'ok',
       summary: {
         totalChecks: summary.totalChecks,
+        executedChecks: summary.executedChecks,
         passed: summary.passed,
         failed: summary.failed,
         timedOut: summary.timedOut,
         skipped: summary.skipped,
+        selectionSkipped: summary.selectionSkipped,
+        otherSkipped: summary.otherSkipped,
         durationAlertCount: durationAlerts.length,
       },
       details: buildWeeklyReportSummaryJsonDetails(report),
@@ -995,6 +1042,8 @@ const run = async () => {
         includeE2E,
         includeFullLint,
         includeFullUnit,
+        onlyChecks: checkSelection.onlyChecks,
+        skipChecks: checkSelection.skipChecks,
         strictMode,
         historyDisabled: !shouldWriteHistory,
         noWrite,

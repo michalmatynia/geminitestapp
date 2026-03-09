@@ -6944,7 +6944,7 @@ export const AI_PATHS_TOOLTIP_CATALOG: AiPathsTooltipDocEntry[] = [
   {
     "id": "node_config_field_trigger_trigger_contextmode",
     "title": "Trigger: Image Studio Analysis: trigger.contextMode",
-    "summary": "Deprecated Trigger context policy: simulation_required, simulation_preferred, or trigger_only. For forward flow, prefer Trigger only + Fetcher node.",
+    "summary": "Trigger context policy. Canonical value is trigger_only; resolve entity context downstream with Fetcher or Simulation nodes.",
     "section": "Node Config - Trigger: Image Studio Analysis",
     "aliases": [
       "trigger",

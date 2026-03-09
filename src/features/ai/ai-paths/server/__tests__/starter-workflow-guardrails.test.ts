@@ -68,7 +68,16 @@ describe('starter workflow guardrails', () => {
     const workspaceRoot = process.cwd();
     const runtimeSanitizerFiles = [
       join(workspaceRoot, 'src', 'shared', 'lib', 'ai-paths', 'hooks', 'useAiPathTriggerEvent.ts'),
-      join(workspaceRoot, 'src', 'features', 'products', 'hooks', 'useAiPathSettings.ts'),
+      join(
+        workspaceRoot,
+        'src',
+        'shared',
+        'lib',
+        'ai-paths',
+        'core',
+        'normalization',
+        'trigger-normalization.ts'
+      ),
       join(
         workspaceRoot,
         'src',

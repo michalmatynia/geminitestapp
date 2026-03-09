@@ -430,9 +430,9 @@
       "nodeFamily": "orchestration",
       "objectFile": "docs/ai-paths/node-code-objects-v2/trigger.json",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "a075cdb7878d2c9943eca26bb5fd10c607a25483054d4862a8c4d636603d76e8",
+      "objectHash": "91a812c90514b9f6dcfb3cf0f129d3caeea953d0d76326128b2c44d80425a69f",
       "semanticNodeHashAlgorithm": "sha256",
-      "semanticNodeHash": "233c29f92acbe95972897af33d008a92c8026fc82bb6a1b721b60e0320116431",
+      "semanticNodeHash": "fb32646a0464e68e236519ec6ceab11b53fe46ae97158cbf699fa515725209cd",
       "inputCount": 0,
       "outputCount": 2,
       "configFieldCount": 5

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-09T03:27:17.232Z",
+  "generatedAt": "2026-03-09T03:42:13.903Z",
   "hardLimits": {
     "sourceLargestFileLines": 4000
   },
@@ -15,7 +15,7 @@
     "imports.appFeatureBarrelImports": 3,
     "imports.appFeatureDeepImports": 146,
     "imports.sharedToFeaturesTotalImports": 75,
-    "architecture.crossFeatureEdgePairs": 40,
+    "architecture.crossFeatureEdgePairs": 35,
     "runtime.setIntervalOccurrences": 22,
     "propDrilling.depthGte4Chains": 0,
     "propDrilling.componentsWithForwarding": 42,

@@ -50084,3 +50084,1409 @@ Ready on http://localhost:56924 { port: 56924, host: '127.0.0.1' }
  GET /api/kangur/ai-tutor/guest-intro 200 in 80ms (compile: 5ms, proxy.ts: 5ms, render: 70ms)
  POST /api/analytics/events 202 in 35ms (compile: 4ms, proxy.ts: 23ms, render: 8ms)
  POST /api/analytics/events 202 in 35ms (compile: 6ms, proxy.ts: 22ms, render: 6ms)
+ GET /kangur/game 200 in 80ms (compile: 7ms, render: 73ms)
+[api/settings] [api/settings] [settings] cache hit {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'hit',
+  category: 'SYSTEM',
+  otelTraceId: '83547f12c2a02784eef5115e990df56a',
+  otelSpanId: 'f360c6b92a1a8b6b',
+  otelTraceFlags: '01'
+}
+ GET /api/settings?scope=heavy 200 in 33ms (compile: 3ms, proxy.ts: 7ms, render: 23ms)
+[kangur.auth.me.GET] Authentication required. {
+  errorId: '0b76280a-7a92-474e-80d5-9cb99769cf0f',
+  code: 'UNAUTHORIZED',
+  category: 'AUTH',
+  durationMs: 6,
+  source: 'kangur.auth.me.GET',
+  route: '/api/kangur/auth/me',
+  method: 'GET',
+  traceId: '1f003098-7f34-4daa-9464-4237e17a5d6e',
+  correlationId: 'a4cfaa28-b1ee-41b4-8108-85726e408227',
+  otelTraceId: 'c5dbbfb9ba42fe652546beb5a74de070',
+  otelSpanId: '4131fec24e228358',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  expected: true,
+  critical: false,
+  retryable: false,
+  error: {
+    message: 'Authentication required.',
+    stack: 'AppError: Authentication required.\n' +
+      '    at authError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:167:53)\n' +
+      '    at resolveKangurActor (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_features_61e92bf6._.js:6522:170)\n' +
+      '    at async getKangurAuthMeHandler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_app_api_kangur_auth_me_629d727f._.js:25:19)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:2352:34\n' +
+      '    at async AppRouteRouteModule.do (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:37866)\n' +
+      '    at async AppRouteRouteModule.handle (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:45156)\n' +
+      '    at async responseGenerator (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17162:38)\n' +
+      '    at async AppRouteRouteModule.handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:1:191938)\n' +
+      '    at async handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17225:32)\n' +
+      '    at async Module.handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17276:13)\n' +
+      '    at async DevServer.renderToResponseWithComponentsImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1442:9)\n' +
+      '    at async DevServer.renderPageComponent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1494:24)\n' +
+      '    at async DevServer.renderToResponseImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1544:32)\n' +
+      '    at async DevServer.pipeImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1038:25)\n' +
+      '    at async NextNodeServer.handleCatchallRenderRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/next-server.js:395:17)\n' +
+      '    at async DevServer.handleRequestImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:929:17)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:387:20\n' +
+      '    at async Span.traceAsyncFn (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/trace/trace.js:157:20)\n' +
+      '    at async DevServer.handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:383:24)\n' +
+      '    at async invokeRender (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:248:21)\n' +
+      '    at async handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:447:24)\n' +
+      '    at async NextCustomServer.requestHandlerImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:496:13)',
+    name: 'AppError',
+    code: 'UNAUTHORIZED',
+    httpStatus: 401,
+    expected: true,
+    critical: false,
+    retryable: false
+  },
+  errorCode: 'UNAUTHORIZED',
+  errorName: 'AppError',
+  fingerprint: '5c061657c3e53d28'
+}
+ GET /api/kangur/auth/me 401 in 37ms (compile: 20ms, proxy.ts: 6ms, render: 10ms)
+ GET /api/settings/lite 200 in 36ms (compile: 22ms, proxy.ts: 4ms, render: 10ms)
+ GET /api/kangur/ai-tutor/guest-intro 200 in 155ms (compile: 3ms, proxy.ts: 3ms, render: 149ms)
+ POST /api/analytics/events 202 in 11ms (compile: 2ms, proxy.ts: 3ms, render: 6ms)
+ POST /api/analytics/events 202 in 13ms (compile: 4ms, proxy.ts: 3ms, render: 6ms)
+ GET /kangur/game 200 in 87ms (compile: 7ms, render: 81ms)
+ GET /api/settings/lite 200 in 32ms (compile: 4ms, proxy.ts: 14ms, render: 14ms)
+[api/settings] [api/settings] [settings] cache hit {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'hit',
+  category: 'SYSTEM',
+  otelTraceId: '6676fc6d25c3ab0daccb25de30910973',
+  otelSpanId: 'a5ef425ccd60ae0f',
+  otelTraceFlags: '01'
+}
+ GET /api/settings?scope=heavy 200 in 44ms (compile: 13ms, proxy.ts: 10ms, render: 21ms)
+ GET /kangur/tests 200 in 104ms (compile: 16ms, render: 88ms)
+[kangur.progress.GET] Authentication required. {
+  errorId: '88b81eaa-2451-4a53-8f13-3a54a728d1c8',
+  code: 'UNAUTHORIZED',
+  category: 'AUTH',
+  durationMs: 4,
+  source: 'kangur.progress.GET',
+  route: '/api/kangur/progress',
+  method: 'GET',
+  traceId: '3dc9d8cc-316d-4c17-8a71-8502a0616155',
+  correlationId: '320841b2-66c6-49ad-8ffd-291cf931ccd0',
+  otelTraceId: 'a3da511f114b68e39fabbc5a22886758',
+  otelSpanId: 'c821d16c4dc619c7',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  expected: true,
+  critical: false,
+  retryable: false,
+  error: {
+    message: 'Authentication required.',
+    stack: 'AppError: Authentication required.\n' +
+      '    at authError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:167:53)\n' +
+      '    at resolveKangurActor (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_features_61e92bf6._.js:6522:170)\n' +
+      '    at async getKangurProgressHandler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_app_api_kangur_progress_982a266c._.js:66:19)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:2352:34\n' +
+      '    at async AppRouteRouteModule.do (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:37866)\n' +
+      '    at async AppRouteRouteModule.handle (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:45156)\n' +
+      '    at async responseGenerator (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_f908517a._.js:17162:38)\n' +
+      '    at async AppRouteRouteModule.handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:1:191938)\n' +
+      '    at async handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_f908517a._.js:17225:32)\n' +
+      '    at async Module.handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_f908517a._.js:17276:13)\n' +
+      '    at async DevServer.renderToResponseWithComponentsImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1442:9)\n' +
+      '    at async DevServer.renderPageComponent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1494:24)\n' +
+      '    at async DevServer.renderToResponseImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1544:32)\n' +
+      '    at async DevServer.pipeImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1038:25)\n' +
+      '    at async NextNodeServer.handleCatchallRenderRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/next-server.js:395:17)\n' +
+      '    at async DevServer.handleRequestImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:929:17)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:387:20\n' +
+      '    at async Span.traceAsyncFn (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/trace/trace.js:157:20)\n' +
+      '    at async DevServer.handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:383:24)\n' +
+      '    at async invokeRender (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:248:21)\n' +
+      '    at async handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:447:24)\n' +
+      '    at async NextCustomServer.requestHandlerImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:496:13)',
+    name: 'AppError',
+    code: 'UNAUTHORIZED',
+    httpStatus: 401,
+    expected: true,
+    critical: false,
+    retryable: false
+  },
+  errorCode: 'UNAUTHORIZED',
+  errorName: 'AppError',
+  fingerprint: 'e0ae368bc1dfdf00'
+}
+ GET /api/kangur/progress 401 in 647ms (compile: 633ms, proxy.ts: 4ms, render: 9ms)
+ GET /kangur/profile 200 in 73ms (compile: 4ms, render: 68ms)
+[api/settings] [api/settings] [settings] cache hit {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'hit',
+  category: 'SYSTEM',
+  otelTraceId: '2c4228a5b9381dec01e061290e43336d',
+  otelSpanId: '3db80eb71aed1f8b',
+  otelTraceFlags: '01'
+}
+ GET /api/settings?scope=heavy 200 in 53ms (compile: 10ms, proxy.ts: 21ms, render: 22ms)
+ GET /api/settings/lite 200 in 98ms (compile: 34ms, proxy.ts: 11ms, render: 53ms)
+[kangur.progress.GET] Authentication required. {
+  errorId: '752b7bda-da2a-4101-b548-bab64789bf9f',
+  code: 'UNAUTHORIZED',
+  category: 'AUTH',
+  durationMs: 20,
+  source: 'kangur.progress.GET',
+  route: '/api/kangur/progress',
+  method: 'GET',
+  traceId: 'b5ad8e4b-fe75-4825-a056-e9645a45683d',
+  correlationId: '37e6c36a-e9eb-46c3-9636-ba5c771214c7',
+  otelTraceId: '38b9169b4cf244e74cda8671ba8e0375',
+  otelSpanId: 'f3a5ef25c3b446e3',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  expected: true,
+  critical: false,
+  retryable: false,
+  error: {
+    message: 'Authentication required.',
+    stack: 'AppError: Authentication required.\n' +
+      '    at authError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:167:53)\n' +
+      '    at resolveKangurActor (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_features_61e92bf6._.js:6522:170)\n' +
+      '    at async getKangurProgressHandler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_app_api_kangur_progress_982a266c._.js:66:19)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:2352:34\n' +
+      '    at async AppRouteRouteModule.do (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:37866)\n' +
+      '    at async AppRouteRouteModule.handle (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:45156)\n' +
+      '    at async responseGenerator (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_f908517a._.js:17162:38)\n' +
+      '    at async AppRouteRouteModule.handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:1:191938)\n' +
+      '    at async handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_f908517a._.js:17225:32)\n' +
+      '    at async Module.handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_f908517a._.js:17276:13)\n' +
+      '    at async DevServer.renderToResponseWithComponentsImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1442:9)\n' +
+      '    at async DevServer.renderPageComponent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1494:24)\n' +
+      '    at async DevServer.renderToResponseImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1544:32)\n' +
+      '    at async DevServer.pipeImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1038:25)\n' +
+      '    at async NextNodeServer.handleCatchallRenderRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/next-server.js:395:17)\n' +
+      '    at async DevServer.handleRequestImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:929:17)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:387:20\n' +
+      '    at async Span.traceAsyncFn (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/trace/trace.js:157:20)\n' +
+      '    at async DevServer.handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:383:24)\n' +
+      '    at async invokeRender (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:248:21)\n' +
+      '    at async handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:447:24)\n' +
+      '    at async NextCustomServer.requestHandlerImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:496:13)',
+    name: 'AppError',
+    code: 'UNAUTHORIZED',
+    httpStatus: 401,
+    expected: true,
+    critical: false,
+    retryable: false
+  },
+  errorCode: 'UNAUTHORIZED',
+  errorName: 'AppError',
+  fingerprint: 'e0ae368bc1dfdf00'
+}
+ GET /api/kangur/progress 401 in 71ms (compile: 23ms, proxy.ts: 10ms, render: 39ms)
+ GET /kangur/parent-dashboard 200 in 105ms (compile: 16ms, render: 89ms)
+ GET /kangur 200 in 73ms (compile: 6ms, render: 67ms)
+ GET /kangur/parent-dashboard 200 in 86ms (compile: 12ms, render: 74ms)
+ GET /kangur/parent-dashboard 200 in 81ms (compile: 5ms, render: 76ms)
+[api/settings] [api/settings] [settings] cache hit {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'hit',
+  category: 'SYSTEM',
+  otelTraceId: '0e70bd56145304c9dfff978bc607ec1b',
+  otelSpanId: 'bf80cbb916f63024',
+  otelTraceFlags: '01'
+}
+ GET /api/settings?scope=heavy 200 in 45ms (compile: 10ms, proxy.ts: 7ms, render: 28ms)
+ GET /api/settings/lite 200 in 43ms (compile: 31ms, proxy.ts: 7ms, render: 5ms)
+[kangur.progress.GET] Authentication required. {
+  errorId: '69c4f121-9b55-4bd9-9898-4fb82b13828e',
+  code: 'UNAUTHORIZED',
+  category: 'AUTH',
+  durationMs: 10,
+  source: 'kangur.progress.GET',
+  route: '/api/kangur/progress',
+  method: 'GET',
+  traceId: '09d53319-29c1-4de4-a0c6-0ba06d4b5193',
+  correlationId: '5bab57e8-7114-4891-8c4b-d0f675c7d25a',
+  otelTraceId: 'b37a057daa6dc5549c30610a0851da7c',
+  otelSpanId: '297493b8eb9e7dac',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  expected: true,
+  critical: false,
+  retryable: false,
+  error: {
+    message: 'Authentication required.',
+    stack: 'AppError: Authentication required.\n' +
+      '    at authError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:167:53)\n' +
+      '    at resolveKangurActor (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_features_61e92bf6._.js:6522:170)\n' +
+      '    at async getKangurProgressHandler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_app_api_kangur_progress_982a266c._.js:66:19)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:2352:34\n' +
+      '    at async AppRouteRouteModule.do (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:37866)\n' +
+      '    at async AppRouteRouteModule.handle (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:45156)\n' +
+      '    at async responseGenerator (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_f908517a._.js:17162:38)\n' +
+      '    at async AppRouteRouteModule.handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:1:191938)\n' +
+      '    at async handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_f908517a._.js:17225:32)\n' +
+      '    at async Module.handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_f908517a._.js:17276:13)\n' +
+      '    at async DevServer.renderToResponseWithComponentsImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1442:9)\n' +
+      '    at async DevServer.renderPageComponent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1494:24)\n' +
+      '    at async DevServer.renderToResponseImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1544:32)\n' +
+      '    at async DevServer.pipeImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1038:25)\n' +
+      '    at async NextNodeServer.handleCatchallRenderRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/next-server.js:395:17)\n' +
+      '    at async DevServer.handleRequestImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:929:17)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:387:20\n' +
+      '    at async Span.traceAsyncFn (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/trace/trace.js:157:20)\n' +
+      '    at async DevServer.handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:383:24)\n' +
+      '    at async invokeRender (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:248:21)\n' +
+      '    at async handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:447:24)\n' +
+      '    at async NextCustomServer.requestHandlerImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:496:13)',
+    name: 'AppError',
+    code: 'UNAUTHORIZED',
+    httpStatus: 401,
+    expected: true,
+    critical: false,
+    retryable: false
+  },
+  errorCode: 'UNAUTHORIZED',
+  errorName: 'AppError',
+  fingerprint: 'e0ae368bc1dfdf00'
+}
+ GET /api/kangur/progress 401 in 27ms (compile: 5ms, proxy.ts: 6ms, render: 16ms)
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 13,
+  reason: 'idle',
+  address: 'cluster0-shard-00-01.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+ GET /kangur/profile 200 in 135ms (compile: 14ms, render: 121ms)
+ GET /kangur/parent-dashboard 200 in 103ms (compile: 7ms, render: 97ms)
+[api/settings] [api/settings] [settings] cache hit {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'hit',
+  category: 'SYSTEM',
+  otelTraceId: '0a8b9f355f808dbaf517b7403c88952c',
+  otelSpanId: '036fc12d94b5b307',
+  otelTraceFlags: '01'
+}
+ GET /api/settings?scope=heavy 200 in 78ms (compile: 34ms, proxy.ts: 17ms, render: 27ms)
+[kangur.progress.GET] Authentication required. {
+  errorId: 'c3bc41ec-f922-4e24-b33a-cff899484912',
+  code: 'UNAUTHORIZED',
+  category: 'AUTH',
+  durationMs: 8,
+  source: 'kangur.progress.GET',
+  route: '/api/kangur/progress',
+  method: 'GET',
+  traceId: '9bb93885-90a9-48a3-b0cb-07e2d8712cfa',
+  correlationId: 'dff4b867-1385-4460-8233-a10e7f206998',
+  otelTraceId: '987c2f5c59e241634eb2fd1ed4199986',
+  otelSpanId: '75f786234f4a1a08',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  expected: true,
+  critical: false,
+  retryable: false,
+  error: {
+    message: 'Authentication required.',
+    stack: 'AppError: Authentication required.\n' +
+      '    at authError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:167:53)\n' +
+      '    at resolveKangurActor (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_features_61e92bf6._.js:6522:170)\n' +
+      '    at async getKangurProgressHandler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_app_api_kangur_progress_982a266c._.js:66:19)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:2352:34\n' +
+      '    at async AppRouteRouteModule.do (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:37866)\n' +
+      '    at async AppRouteRouteModule.handle (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:45156)\n' +
+      '    at async responseGenerator (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_f908517a._.js:17162:38)\n' +
+      '    at async AppRouteRouteModule.handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:1:191938)\n' +
+      '    at async handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_f908517a._.js:17225:32)\n' +
+      '    at async Module.handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_f908517a._.js:17276:13)\n' +
+      '    at async DevServer.renderToResponseWithComponentsImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1442:9)\n' +
+      '    at async DevServer.renderPageComponent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1494:24)\n' +
+      '    at async DevServer.renderToResponseImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1544:32)\n' +
+      '    at async DevServer.pipeImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1038:25)\n' +
+      '    at async NextNodeServer.handleCatchallRenderRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/next-server.js:395:17)\n' +
+      '    at async DevServer.handleRequestImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:929:17)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:387:20\n' +
+      '    at async Span.traceAsyncFn (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/trace/trace.js:157:20)\n' +
+      '    at async DevServer.handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:383:24)\n' +
+      '    at async invokeRender (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:248:21)\n' +
+      '    at async handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:447:24)\n' +
+      '    at async NextCustomServer.requestHandlerImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:496:13)',
+    name: 'AppError',
+    code: 'UNAUTHORIZED',
+    httpStatus: 401,
+    expected: true,
+    critical: false,
+    retryable: false
+  },
+  errorCode: 'UNAUTHORIZED',
+  errorName: 'AppError',
+  fingerprint: 'e0ae368bc1dfdf00'
+}
+ GET /api/kangur/progress 401 in 26ms (compile: 6ms, proxy.ts: 5ms, render: 14ms)
+ GET /api/settings/lite 200 in 393ms (compile: 24ms, proxy.ts: 17ms, render: 352ms)
+ GET /kangur/parent-dashboard 200 in 93ms (compile: 6ms, render: 87ms)
+[api/settings] [api/settings] [settings] cache hit {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'hit',
+  category: 'SYSTEM',
+  otelTraceId: '90d23c2eec2f3e4950ef8e586ca6fba0',
+  otelSpanId: '8afe91f012aba3f5',
+  otelTraceFlags: '01'
+}
+ GET /api/settings/lite 200 in 44ms (compile: 18ms, proxy.ts: 4ms, render: 21ms)
+ GET /api/settings?scope=heavy 200 in 46ms (compile: 2ms, proxy.ts: 5ms, render: 39ms)
+[kangur.progress.GET] Authentication required. {
+  errorId: '7d3864d1-9711-4b01-9e3d-61ad9b68d8a9',
+  code: 'UNAUTHORIZED',
+  category: 'AUTH',
+  durationMs: 12,
+  source: 'kangur.progress.GET',
+  route: '/api/kangur/progress',
+  method: 'GET',
+  traceId: 'fe7564a9-68dd-4512-9b23-aa59a6041fd7',
+  correlationId: '9e8cc986-7698-4423-94ce-b00ca153d12d',
+  otelTraceId: '26cdc2e760dc67f42d22cad67b63f86d',
+  otelSpanId: '468241bc3c2b351a',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  expected: true,
+  critical: false,
+  retryable: false,
+  error: {
+    message: 'Authentication required.',
+    stack: 'AppError: Authentication required.\n' +
+      '    at authError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:167:53)\n' +
+      '    at resolveKangurActor (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_features_61e92bf6._.js:6522:170)\n' +
+      '    at async getKangurProgressHandler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_app_api_kangur_progress_982a266c._.js:66:19)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:2352:34\n' +
+      '    at async AppRouteRouteModule.do (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:37866)\n' +
+      '    at async AppRouteRouteModule.handle (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:45156)\n' +
+      '    at async responseGenerator (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_f908517a._.js:17162:38)\n' +
+      '    at async AppRouteRouteModule.handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:1:191938)\n' +
+      '    at async handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_f908517a._.js:17225:32)\n' +
+      '    at async Module.handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_f908517a._.js:17276:13)\n' +
+      '    at async DevServer.renderToResponseWithComponentsImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1442:9)\n' +
+      '    at async DevServer.renderPageComponent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1494:24)\n' +
+      '    at async DevServer.renderToResponseImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1544:32)\n' +
+      '    at async DevServer.pipeImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1038:25)\n' +
+      '    at async NextNodeServer.handleCatchallRenderRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/next-server.js:395:17)\n' +
+      '    at async DevServer.handleRequestImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:929:17)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:387:20\n' +
+      '    at async Span.traceAsyncFn (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/trace/trace.js:157:20)\n' +
+      '    at async DevServer.handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:383:24)\n' +
+      '    at async invokeRender (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:248:21)\n' +
+      '    at async handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:447:24)\n' +
+      '    at async NextCustomServer.requestHandlerImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:496:13)',
+    name: 'AppError',
+    code: 'UNAUTHORIZED',
+    httpStatus: 401,
+    expected: true,
+    critical: false,
+    retryable: false
+  },
+  errorCode: 'UNAUTHORIZED',
+  errorName: 'AppError',
+  fingerprint: 'e0ae368bc1dfdf00'
+}
+ GET /api/kangur/progress 401 in 28ms (compile: 5ms, proxy.ts: 6ms, render: 17ms)
+ GET /kangur/parent-dashboard 200 in 170ms (compile: 6ms, render: 164ms)
+[api/settings] [api/settings] [settings] cache hit {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'hit',
+  category: 'SYSTEM',
+  otelTraceId: '234266a12c5aee98cccb05870c61dbd9',
+  otelSpanId: 'bdb282f04c307d65',
+  otelTraceFlags: '01'
+}
+ GET /api/settings/lite 200 in 39ms (compile: 10ms, proxy.ts: 11ms, render: 18ms)
+ GET /api/settings?scope=heavy 200 in 73ms (compile: 8ms, proxy.ts: 42ms, render: 23ms)
+[kangur.progress.GET] Authentication required. {
+  errorId: '97937e49-5fdd-4cc3-8ed5-022e3e0a1d32',
+  code: 'UNAUTHORIZED',
+  category: 'AUTH',
+  durationMs: 5,
+  source: 'kangur.progress.GET',
+  route: '/api/kangur/progress',
+  method: 'GET',
+  traceId: '98cfc672-7f4b-4cfb-afeb-93a98bfb9513',
+  correlationId: '2f52dd4f-cf5f-4008-bf54-9fa5b3de6c5e',
+  otelTraceId: 'd4f38a2279211152512dbff9e8daff81',
+  otelSpanId: '7773c872d52cc4dd',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  expected: true,
+  critical: false,
+  retryable: false,
+  error: {
+    message: 'Authentication required.',
+    stack: 'AppError: Authentication required.\n' +
+      '    at authError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:167:53)\n' +
+      '    at resolveKangurActor (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_features_61e92bf6._.js:6522:170)\n' +
+      '    at async getKangurProgressHandler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_app_api_kangur_progress_982a266c._.js:66:19)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:2352:34\n' +
+      '    at async AppRouteRouteModule.do (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:37866)\n' +
+      '    at async AppRouteRouteModule.handle (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:45156)\n' +
+      '    at async responseGenerator (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_f908517a._.js:17162:38)\n' +
+      '    at async AppRouteRouteModule.handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:1:191938)\n' +
+      '    at async handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_f908517a._.js:17225:32)\n' +
+      '    at async Module.handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_f908517a._.js:17276:13)\n' +
+      '    at async DevServer.renderToResponseWithComponentsImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1442:9)\n' +
+      '    at async DevServer.renderPageComponent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1494:24)\n' +
+      '    at async DevServer.renderToResponseImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1544:32)\n' +
+      '    at async DevServer.pipeImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1038:25)\n' +
+      '    at async NextNodeServer.handleCatchallRenderRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/next-server.js:395:17)\n' +
+      '    at async DevServer.handleRequestImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:929:17)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:387:20\n' +
+      '    at async Span.traceAsyncFn (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/trace/trace.js:157:20)\n' +
+      '    at async DevServer.handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:383:24)\n' +
+      '    at async invokeRender (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:248:21)\n' +
+      '    at async handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:447:24)\n' +
+      '    at async NextCustomServer.requestHandlerImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:496:13)',
+    name: 'AppError',
+    code: 'UNAUTHORIZED',
+    httpStatus: 401,
+    expected: true,
+    critical: false,
+    retryable: false
+  },
+  errorCode: 'UNAUTHORIZED',
+  errorName: 'AppError',
+  fingerprint: 'e0ae368bc1dfdf00'
+}
+ GET /api/kangur/progress 401 in 39ms (compile: 22ms, proxy.ts: 9ms, render: 8ms)
+ POST /api/analytics/events 202 in 56ms (compile: 25ms, proxy.ts: 19ms, render: 13ms)
+[kangur.progress.GET] Authentication required. {
+  errorId: '16ed29cd-dc19-4784-96fc-01274fe9915b',
+  code: 'UNAUTHORIZED',
+  category: 'AUTH',
+  durationMs: 4,
+  source: 'kangur.progress.GET',
+  route: '/api/kangur/progress',
+  method: 'GET',
+  traceId: 'c7f95c60-1499-4d6c-8b3c-616ecda8a86e',
+  correlationId: 'c2e1980c-0a06-4d55-bd09-7b35de4763be',
+  otelTraceId: '25533ee0b1aa547e368e374422d9834b',
+  otelSpanId: '47ef77a2f7d3222b',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  expected: true,
+  critical: false,
+  retryable: false,
+  error: {
+    message: 'Authentication required.',
+    stack: 'AppError: Authentication required.\n' +
+      '    at authError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:167:53)\n' +
+      '    at resolveKangurActor (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_features_61e92bf6._.js:6522:170)\n' +
+      '    at async getKangurProgressHandler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_app_api_kangur_progress_982a266c._.js:66:19)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:2352:34\n' +
+      '    at async AppRouteRouteModule.do (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:37866)\n' +
+      '    at async AppRouteRouteModule.handle (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:45156)\n' +
+      '    at async responseGenerator (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_f908517a._.js:17162:38)\n' +
+      '    at async AppRouteRouteModule.handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:1:191938)\n' +
+      '    at async handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_f908517a._.js:17225:32)\n' +
+      '    at async Module.handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_f908517a._.js:17276:13)\n' +
+      '    at async DevServer.renderToResponseWithComponentsImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1442:9)\n' +
+      '    at async DevServer.renderPageComponent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1494:24)\n' +
+      '    at async DevServer.renderToResponseImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1544:32)\n' +
+      '    at async DevServer.pipeImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1038:25)\n' +
+      '    at async NextNodeServer.handleCatchallRenderRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/next-server.js:395:17)\n' +
+      '    at async DevServer.handleRequestImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:929:17)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:387:20\n' +
+      '    at async Span.traceAsyncFn (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/trace/trace.js:157:20)\n' +
+      '    at async DevServer.handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:383:24)\n' +
+      '    at async invokeRender (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:248:21)\n' +
+      '    at async handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:447:24)\n' +
+      '    at async NextCustomServer.requestHandlerImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:496:13)',
+    name: 'AppError',
+    code: 'UNAUTHORIZED',
+    httpStatus: 401,
+    expected: true,
+    critical: false,
+    retryable: false
+  },
+  errorCode: 'UNAUTHORIZED',
+  errorName: 'AppError',
+  fingerprint: 'e0ae368bc1dfdf00'
+}
+ GET /api/kangur/progress 401 in 32ms (compile: 8ms, proxy.ts: 15ms, render: 8ms)
+ GET /kangur/game 200 in 78ms (compile: 5ms, render: 74ms)
+[api/settings] [api/settings] [settings] cache hit {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'hit',
+  category: 'SYSTEM',
+  otelTraceId: '1a2b2f0ad269853ec3c32617d673d78f',
+  otelSpanId: 'c02c61385dea74dc',
+  otelTraceFlags: '01'
+}
+ GET /api/settings?scope=heavy 200 in 43ms (compile: 6ms, proxy.ts: 5ms, render: 33ms)
+ GET /api/settings/lite 200 in 43ms (compile: 17ms, proxy.ts: 5ms, render: 22ms)
+[kangur.auth.me.GET] Authentication required. {
+  errorId: 'a23e4b6f-fad6-43e2-98de-8edd6d4ac0d4',
+  code: 'UNAUTHORIZED',
+  category: 'AUTH',
+  durationMs: 25,
+  source: 'kangur.auth.me.GET',
+  route: '/api/kangur/auth/me',
+  method: 'GET',
+  traceId: '5e23d25b-4659-4f25-847f-b26ad6270dce',
+  correlationId: 'f0c9df56-8c14-4635-953e-c652ee1dc9a7',
+  otelTraceId: 'b907e68401549a74a0c410317c9557ba',
+  otelSpanId: '6e1b0f3388af3bb1',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  expected: true,
+  critical: false,
+  retryable: false,
+  error: {
+    message: 'Authentication required.',
+    stack: 'AppError: Authentication required.\n' +
+      '    at authError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:167:53)\n' +
+      '    at resolveKangurActor (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_features_61e92bf6._.js:6522:170)\n' +
+      '    at async getKangurAuthMeHandler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_app_api_kangur_auth_me_629d727f._.js:25:19)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:2352:34\n' +
+      '    at async AppRouteRouteModule.do (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:37866)\n' +
+      '    at async AppRouteRouteModule.handle (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:45156)\n' +
+      '    at async responseGenerator (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17162:38)\n' +
+      '    at async AppRouteRouteModule.handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:1:191938)\n' +
+      '    at async handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17225:32)\n' +
+      '    at async Module.handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17276:13)\n' +
+      '    at async DevServer.renderToResponseWithComponentsImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1442:9)\n' +
+      '    at async DevServer.renderPageComponent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1494:24)\n' +
+      '    at async DevServer.renderToResponseImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1544:32)\n' +
+      '    at async DevServer.pipeImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1038:25)\n' +
+      '    at async NextNodeServer.handleCatchallRenderRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/next-server.js:395:17)\n' +
+      '    at async DevServer.handleRequestImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:929:17)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:387:20\n' +
+      '    at async Span.traceAsyncFn (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/trace/trace.js:157:20)\n' +
+      '    at async DevServer.handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:383:24)\n' +
+      '    at async invokeRender (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:248:21)\n' +
+      '    at async handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:447:24)\n' +
+      '    at async NextCustomServer.requestHandlerImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:496:13)',
+    name: 'AppError',
+    code: 'UNAUTHORIZED',
+    httpStatus: 401,
+    expected: true,
+    critical: false,
+    retryable: false
+  },
+  errorCode: 'UNAUTHORIZED',
+  errorName: 'AppError',
+  fingerprint: '5c061657c3e53d28'
+}
+ GET /api/kangur/auth/me 401 in 47ms (compile: 13ms, proxy.ts: 4ms, render: 30ms)
+ GET /api/kangur/ai-tutor/guest-intro 200 in 79ms (compile: 6ms, proxy.ts: 3ms, render: 70ms)
+ POST /api/analytics/events 202 in 19ms (compile: 3ms, proxy.ts: 9ms, render: 7ms)
+ POST /api/analytics/events 202 in 23ms (compile: 5ms, proxy.ts: 9ms, render: 9ms)
+○ Compiling /kangur/login ...
+ GET /kangur/login?callbackUrl=%2Fkangur%2Fprofile 307 in 3.6s (compile: 3.1s, render: 436ms)
+ GET /login?callbackUrl=%2Fkangur%2Fprofile 200 in 1403ms (compile: 1301ms, render: 102ms)
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 3,
+  reason: 'idle',
+  address: 'cluster0-shard-00-00.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 3,
+  reason: 'idle',
+  address: 'cluster0-shard-00-02.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+ GET /api/settings/lite 200 in 35ms (compile: 20ms, proxy.ts: 6ms, render: 9ms)
+[kangur.auth.me.GET] Authentication required. {
+  errorId: 'e8b4a81b-1595-4cd2-9fed-a92e44fe7d49',
+  code: 'UNAUTHORIZED',
+  category: 'AUTH',
+  durationMs: 6,
+  source: 'kangur.auth.me.GET',
+  route: '/api/kangur/auth/me',
+  method: 'GET',
+  traceId: 'c9605efb-06d1-4415-bd6c-bd61e686d07a',
+  correlationId: 'a40b7aac-c2b9-48ac-a034-5fc5a9084c4f',
+  otelTraceId: '15eecda8a8a626ec6acf8faffb30d072',
+  otelSpanId: '5b146ef58ea1ccb2',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  expected: true,
+  critical: false,
+  retryable: false,
+  error: {
+    message: 'Authentication required.',
+    stack: 'AppError: Authentication required.\n' +
+      '    at authError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:167:53)\n' +
+      '    at resolveKangurActor (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_features_61e92bf6._.js:6522:170)\n' +
+      '    at async getKangurAuthMeHandler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_app_api_kangur_auth_me_629d727f._.js:25:19)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:2352:34\n' +
+      '    at async AppRouteRouteModule.do (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:37866)\n' +
+      '    at async AppRouteRouteModule.handle (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:45156)\n' +
+      '    at async responseGenerator (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17162:38)\n' +
+      '    at async AppRouteRouteModule.handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:1:191938)\n' +
+      '    at async handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17225:32)\n' +
+      '    at async Module.handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17276:13)\n' +
+      '    at async DevServer.renderToResponseWithComponentsImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1442:9)\n' +
+      '    at async DevServer.renderPageComponent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1494:24)\n' +
+      '    at async DevServer.renderToResponseImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1544:32)\n' +
+      '    at async DevServer.pipeImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1038:25)\n' +
+      '    at async NextNodeServer.handleCatchallRenderRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/next-server.js:395:17)\n' +
+      '    at async DevServer.handleRequestImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:929:17)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:387:20\n' +
+      '    at async Span.traceAsyncFn (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/trace/trace.js:157:20)\n' +
+      '    at async DevServer.handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:383:24)\n' +
+      '    at async invokeRender (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:248:21)\n' +
+      '    at async handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:447:24)\n' +
+      '    at async NextCustomServer.requestHandlerImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:496:13)',
+    name: 'AppError',
+    code: 'UNAUTHORIZED',
+    httpStatus: 401,
+    expected: true,
+    critical: false,
+    retryable: false
+  },
+  errorCode: 'UNAUTHORIZED',
+  errorName: 'AppError',
+  fingerprint: '5c061657c3e53d28'
+}
+ GET /api/kangur/auth/me 401 in 44ms (compile: 27ms, proxy.ts: 8ms, render: 10ms)
+[api/settings] [api/settings] [settings] cache hit {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'hit',
+  category: 'SYSTEM',
+  otelTraceId: 'bd93e4f3f17a2221037a569fa435a4ac',
+  otelSpanId: '7793b9e7ee32586f',
+  otelTraceFlags: '01'
+}
+ GET /api/settings?scope=heavy 200 in 57ms (compile: 30ms, proxy.ts: 9ms, render: 19ms)
+ GET /api/kangur/ai-tutor/guest-intro 200 in 74ms (compile: 3ms, proxy.ts: 1897µs, render: 68ms)
+ POST /api/analytics/events 202 in 15ms (compile: 6ms, proxy.ts: 2ms, render: 6ms)
+ POST /api/analytics/events 202 in 18ms (compile: 9ms, proxy.ts: 2ms, render: 7ms)
+○ Compiling / ...
+[system] [timing] home {
+  frontPageSetting: 128.85249999997905,
+  total: 129.0320420000062,
+  otelTraceId: '306fc10d127965df16ea4e69b7bcf566',
+  otelSpanId: '8013b0429e1d1b53',
+  otelTraceFlags: '01'
+}
+ GET / 200 in 4.0s (compile: 3.7s, render: 303ms)
+ GET /api/kangur/ai-tutor/guest-intro 200 in 76ms (compile: 1620µs, proxy.ts: 1963µs, render: 72ms)
+ POST /api/analytics/events 202 in 19ms (compile: 5ms, proxy.ts: 8ms, render: 6ms)
+ POST /api/analytics/events 202 in 21ms (compile: 7ms, proxy.ts: 9ms, render: 6ms)
+ GET /kangur/login?callbackUrl=%2Fkangur%3Flogin%3Dparent 307 in 120ms (compile: 2ms, render: 118ms)
+ GET /login?callbackUrl=%2Fkangur%3Flogin%3Dparent 200 in 158ms (compile: 4ms, render: 154ms)
+[api/settings] [api/settings] [settings] cache hit {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'hit',
+  category: 'SYSTEM',
+  otelTraceId: 'dd6e0588fa394066ddff73f5d39ac9e8',
+  otelSpanId: 'd40834466085a597',
+  otelTraceFlags: '01'
+}
+ GET /api/settings?scope=heavy 200 in 28ms (compile: 6ms, proxy.ts: 7ms, render: 15ms)
+ GET /api/settings/lite 200 in 25ms (compile: 15ms, proxy.ts: 6ms, render: 3ms)
+[kangur.auth.me.GET] Authentication required. {
+  errorId: '37bef98f-f801-4b30-b1ec-687a5355cc5b',
+  code: 'UNAUTHORIZED',
+  category: 'AUTH',
+  durationMs: 14,
+  source: 'kangur.auth.me.GET',
+  route: '/api/kangur/auth/me',
+  method: 'GET',
+  traceId: '57e72865-526e-4c37-9c27-a1b19bdeafa3',
+  correlationId: 'a1c24ef2-eb93-4d40-a406-e2beea58012e',
+  otelTraceId: 'e3e34f343c3a3bc97c670af6b560f5ea',
+  otelSpanId: '9c0d372abd8ce8fb',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  expected: true,
+  critical: false,
+  retryable: false,
+  error: {
+    message: 'Authentication required.',
+    stack: 'AppError: Authentication required.\n' +
+      '    at authError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:167:53)\n' +
+      '    at resolveKangurActor (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_features_61e92bf6._.js:6522:170)\n' +
+      '    at async getKangurAuthMeHandler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_app_api_kangur_auth_me_629d727f._.js:25:19)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:2352:34\n' +
+      '    at async AppRouteRouteModule.do (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:37866)\n' +
+      '    at async AppRouteRouteModule.handle (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:45156)\n' +
+      '    at async responseGenerator (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17162:38)\n' +
+      '    at async AppRouteRouteModule.handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:1:191938)\n' +
+      '    at async handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17225:32)\n' +
+      '    at async Module.handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17276:13)\n' +
+      '    at async DevServer.renderToResponseWithComponentsImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1442:9)\n' +
+      '    at async DevServer.renderPageComponent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1494:24)\n' +
+      '    at async DevServer.renderToResponseImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1544:32)\n' +
+      '    at async DevServer.pipeImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1038:25)\n' +
+      '    at async NextNodeServer.handleCatchallRenderRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/next-server.js:395:17)\n' +
+      '    at async DevServer.handleRequestImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:929:17)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:387:20\n' +
+      '    at async Span.traceAsyncFn (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/trace/trace.js:157:20)\n' +
+      '    at async DevServer.handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:383:24)\n' +
+      '    at async invokeRender (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:248:21)\n' +
+      '    at async handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:447:24)\n' +
+      '    at async NextCustomServer.requestHandlerImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:496:13)',
+    name: 'AppError',
+    code: 'UNAUTHORIZED',
+    httpStatus: 401,
+    expected: true,
+    critical: false,
+    retryable: false
+  },
+  errorCode: 'UNAUTHORIZED',
+  errorName: 'AppError',
+  fingerprint: '5c061657c3e53d28'
+}
+ GET /api/kangur/auth/me 401 in 28ms (compile: 8ms, proxy.ts: 5ms, render: 16ms)
+ GET /api/kangur/ai-tutor/guest-intro 200 in 69ms (compile: 1507µs, proxy.ts: 1550µs, render: 66ms)
+ POST /api/analytics/events 202 in 11ms (compile: 3ms, proxy.ts: 2ms, render: 5ms)
+ POST /api/analytics/events 202 in 13ms (compile: 4ms, proxy.ts: 3ms, render: 6ms)
+[system] [AUTH-REPO] Finding user parent@example.com using mongodb {
+  email: 'parent@example.com',
+  provider: 'mongodb',
+  otelTraceId: '714a94e0a4cd09155625f507186c6fd5',
+  otelSpanId: '2513e21409fb2fb1',
+  otelTraceFlags: '01'
+}
+[system] [AUTH-REPO] MongoDB user not found {
+  email: 'parent@example.com',
+  otelTraceId: '714a94e0a4cd09155625f507186c6fd5',
+  otelSpanId: '2513e21409fb2fb1',
+  otelTraceFlags: '01'
+}
+ POST /api/auth/verify-credentials 200 in 757ms (compile: 195ms, proxy.ts: 3ms, render: 559ms)
+ POST /api/analytics/events 202 in 7ms (compile: 1356µs, proxy.ts: 2ms, render: 3ms)
+ GET /kangur/login?callbackUrl=%2Fkangur%3Flogin%3Dmagic-parent&magicLinkToken=magic-link-1 307 in 3.9s (compile: 3.4s, render: 452ms)
+ GET /login?callbackUrl=%2Fkangur%3Flogin%3Dmagic-parent&magicLinkToken=magic-link-1 200 in 3.1s (compile: 2.9s, render: 212ms)
+[api/settings] [api/settings] [settings] cache hit {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'hit',
+  category: 'SYSTEM',
+  otelTraceId: '628c798e74ec49dc9d6d3316533b7b75',
+  otelSpanId: '9247c7b4de4f0ee7',
+  otelTraceFlags: '01'
+}
+ GET /api/settings/lite 200 in 1102ms (compile: 1007ms, proxy.ts: 64ms, render: 31ms)
+ GET /api/settings?scope=heavy 200 in 1108ms (compile: 1003ms, proxy.ts: 66ms, render: 39ms)
+ GET /api/kangur/ai-tutor/guest-intro 200 in 973ms (compile: 866ms, proxy.ts: 26ms, render: 81ms)
+ POST /api/analytics/events 202 in 12ms (compile: 2ms, proxy.ts: 3ms, render: 7ms)
+ POST /api/analytics/events 202 in 15ms (compile: 5ms, proxy.ts: 3ms, render: 7ms)
+ GET /kangur/login?callbackUrl=%2Fkangur%3Flogin%3Dstudent 307 in 223ms (compile: 36ms, render: 187ms)
+ GET /login?callbackUrl=%2Fkangur%3Flogin%3Dstudent 200 in 103ms (compile: 7ms, render: 95ms)
+[api/settings] [api/settings] [settings] cache hit {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'hit',
+  category: 'SYSTEM',
+  otelTraceId: 'f0591b41cfe3839360ad1abec68d7ed3',
+  otelSpanId: '9530b1cd821d247f',
+  otelTraceFlags: '01'
+}
+ GET /api/settings/lite 200 in 32ms (compile: 13ms, proxy.ts: 4ms, render: 15ms)
+ GET /api/settings?scope=heavy 200 in 34ms (compile: 4ms, proxy.ts: 5ms, render: 26ms)
+ GET /api/kangur/ai-tutor/guest-intro 200 in 78ms (compile: 3ms, proxy.ts: 3ms, render: 73ms)
+ POST /api/analytics/events 202 in 13ms (compile: 3ms, proxy.ts: 3ms, render: 7ms)
+ POST /api/analytics/events 202 in 16ms (compile: 6ms, proxy.ts: 3ms, render: 8ms)
+ POST /api/analytics/events 202 in 34ms (compile: 3ms, proxy.ts: 3ms, render: 28ms)
+ GET /kangur?login=student 200 in 82ms (compile: 8ms, render: 74ms)
+ GET /api/kangur/ai-tutor/guest-intro 200 in 155ms (compile: 4ms, proxy.ts: 5ms, render: 146ms)
+ POST /api/analytics/events 202 in 20ms (compile: 3ms, proxy.ts: 3ms, render: 14ms)
+ POST /api/analytics/events 202 in 23ms (compile: 6ms, proxy.ts: 3ms, render: 14ms)
+ GET /kangur/profile 200 in 72ms (compile: 4ms, render: 68ms)
+[api/settings] [api/settings] [settings] cache hit {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'hit',
+  category: 'SYSTEM',
+  otelTraceId: 'b2f2720ab635affdeb7561df7981c049',
+  otelSpanId: '3b36164ec413de4c',
+  otelTraceFlags: '01'
+}
+ GET /api/settings?scope=heavy 200 in 50ms (compile: 6ms, proxy.ts: 3ms, render: 40ms)
+[kangur.auth.me.GET] Authentication required. {
+  errorId: '6199ce3c-896c-4f23-b2d3-baf047fbafb9',
+  code: 'UNAUTHORIZED',
+  category: 'AUTH',
+  durationMs: 6,
+  source: 'kangur.auth.me.GET',
+  route: '/api/kangur/auth/me',
+  method: 'GET',
+  traceId: '8e6ea190-ab40-4d90-8f7d-c42ca7a0217b',
+  correlationId: 'a77537c5-9b49-4810-9344-c6d846f76e09',
+  otelTraceId: '7faafc15a35c2b5413ac9d9ed1d348c2',
+  otelSpanId: '17b31472f15c0eff',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  expected: true,
+  critical: false,
+  retryable: false,
+  error: {
+    message: 'Authentication required.',
+    stack: 'AppError: Authentication required.\n' +
+      '    at authError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:167:53)\n' +
+      '    at resolveKangurActor (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_features_61e92bf6._.js:6522:170)\n' +
+      '    at async getKangurAuthMeHandler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_app_api_kangur_auth_me_629d727f._.js:25:19)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:2352:34\n' +
+      '    at async AppRouteRouteModule.do (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:37866)\n' +
+      '    at async AppRouteRouteModule.handle (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:45156)\n' +
+      '    at async responseGenerator (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17162:38)\n' +
+      '    at async AppRouteRouteModule.handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:1:191938)\n' +
+      '    at async handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17225:32)\n' +
+      '    at async Module.handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17276:13)\n' +
+      '    at async DevServer.renderToResponseWithComponentsImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1442:9)\n' +
+      '    at async DevServer.renderPageComponent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1494:24)\n' +
+      '    at async DevServer.renderToResponseImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1544:32)\n' +
+      '    at async DevServer.pipeImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1038:25)\n' +
+      '    at async NextNodeServer.handleCatchallRenderRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/next-server.js:395:17)\n' +
+      '    at async DevServer.handleRequestImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:929:17)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:387:20\n' +
+      '    at async Span.traceAsyncFn (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/trace/trace.js:157:20)\n' +
+      '    at async DevServer.handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:383:24)\n' +
+      '    at async invokeRender (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:248:21)\n' +
+      '    at async handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:447:24)\n' +
+      '    at async NextCustomServer.requestHandlerImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:496:13)',
+    name: 'AppError',
+    code: 'UNAUTHORIZED',
+    httpStatus: 401,
+    expected: true,
+    critical: false,
+    retryable: false
+  },
+  errorCode: 'UNAUTHORIZED',
+  errorName: 'AppError',
+  fingerprint: '5c061657c3e53d28'
+}
+ GET /api/kangur/auth/me 401 in 53ms (compile: 39ms, proxy.ts: 4ms, render: 10ms)
+ GET /api/settings/lite 200 in 55ms (compile: 9ms, proxy.ts: 42ms, render: 4ms)
+ GET /api/auth/session 200 in 67ms (compile: 51ms, proxy.ts: 10ms, render: 6ms)
+ GET /api/kangur/ai-tutor/guest-intro 200 in 83ms (compile: 5ms, proxy.ts: 5ms, render: 73ms)
+ GET /api/auth/session 200 in 31ms (compile: 14ms, proxy.ts: 7ms, render: 9ms)
+ POST /api/analytics/events 202 in 14ms (compile: 4ms, proxy.ts: 6ms, render: 4ms)
+ POST /api/analytics/events 202 in 22ms (compile: 7ms, proxy.ts: 8ms, render: 7ms)
+ GET /kangur/game 200 in 75ms (compile: 4ms, render: 71ms)
+[api/settings] [api/settings] [settings] cache hit {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'hit',
+  category: 'SYSTEM',
+  otelTraceId: 'f64fed1783a4ce2ec45c11633a7148fb',
+  otelSpanId: '326e396861738260',
+  otelTraceFlags: '01'
+}
+ GET /api/settings/lite 200 in 34ms (compile: 14ms, proxy.ts: 3ms, render: 17ms)
+ GET /api/settings?scope=heavy 200 in 48ms (compile: 12ms, proxy.ts: 4ms, render: 32ms)
+ GET /api/auth/session 200 in 48ms (compile: 37ms, proxy.ts: 3ms, render: 9ms)
+[client-error-reporter] [client-error-reporter] Kangur auth payload validation failed. {
+  feature: 'kangur',
+  kangur: { pageKey: 'Game', requestedPath: '/kangur/game' },
+  featureFlags: null,
+  tags: null,
+  app: {
+    version: 'unknown',
+    buildId: null,
+    releaseChannel: null,
+    environment: 'development'
+  },
+  route: '/kangur/game',
+  query: '',
+  referrer: '',
+  locale: 'en-US',
+  timezone: 'Europe/Warsaw',
+  device: { platform: 'MacIntel', deviceMemory: 8, hardwareConcurrency: 10 },
+  network: { online: true, effectiveType: '4g', downlink: 9.7, rtt: 0 },
+  viewport: { width: 1280, height: 720 },
+  user: null,
+  service: 'client-error-reporter',
+  source: 'client.error.reporter',
+  action: 'checkAppState',
+  stage: 'auth.me',
+  category: 'AUTH',
+  url: 'http://127.0.0.1:56924/kangur/game',
+  clientTimestamp: '2026-03-09T03:37:31.489Z',
+  clientUserAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36',
+  jobId: undefined,
+  runId: undefined,
+  productId: undefined,
+  error: {
+    message: 'Kangur auth payload validation failed.',
+    stack: 'Error: Kangur auth payload validation failed.\n' +
+      '    at http://127.0.0.1:56924/_next/static/chunks/src_features_kangur_37fc7e29._.js:1049:19\n' +
+      '    at async Object.resolveSessionUser [as me] (http://127.0.0.1:56924/_next/static/chunks/src_features_kangur_37fc7e29._.js:1063:16)\n' +
+      '    at async KangurAuthProvider.useCallback[checkAppState] (http://127.0.0.1:56924/_next/static/chunks/src_features_kangur_ui_context_11e5efcb._.js:537:37)',
+    name: 'Error'
+  },
+  errorName: 'Error',
+  otelTraceId: '2b86457f94b9a1a17e65bb829777ecfb',
+  otelSpanId: '7d9fc0a216d25cee',
+  otelTraceFlags: '01',
+  fingerprint: '47e35040f321080b'
+}
+ POST /api/client-errors 200 in 39ms (compile: 9ms, proxy.ts: 23ms, render: 7ms)
+[kangur.scores.GET] kangur.scores.GET completed successfully {
+  durationMs: 90,
+  successPolicy: 'all',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: 'e0f81035a1f82293f4a8796b28b0b2fb',
+  otelSpanId: 'bb5024ca030bdec7',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  traceId: '85f83bf4-9ef4-47fa-9d92-a39758addd3d',
+  correlationId: '56ef1838-4505-4c5e-9152-b19335227558'
+}
+ GET /api/kangur/scores?sort=-score&limit=100 200 in 106ms (compile: 6ms, proxy.ts: 3ms, render: 98ms)
+ GET /api/kangur/ai-tutor/guest-intro 200 in 107ms (compile: 2ms, proxy.ts: 2ms, render: 102ms)
+[client-error-reporter] [client-error-reporter] Kangur auth payload validation failed. {
+  feature: 'kangur',
+  kangur: { pageKey: 'Game', requestedPath: '/kangur/game' },
+  featureFlags: null,
+  tags: null,
+  app: {
+    version: 'unknown',
+    buildId: null,
+    releaseChannel: null,
+    environment: 'development'
+  },
+  route: '/kangur/game',
+  query: '',
+  referrer: '',
+  locale: 'en-US',
+  timezone: 'Europe/Warsaw',
+  device: { platform: 'MacIntel', deviceMemory: 8, hardwareConcurrency: 10 },
+  network: { online: true, effectiveType: '4g', downlink: 9.7, rtt: 0 },
+  viewport: { width: 1280, height: 720 },
+  user: null,
+  service: 'client-error-reporter',
+  source: 'client.error.reporter',
+  action: 'loadCurrentUser',
+  category: 'AUTH',
+  url: 'http://127.0.0.1:56924/kangur/game',
+  clientTimestamp: '2026-03-09T03:37:31.663Z',
+  clientUserAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36',
+  jobId: undefined,
+  runId: undefined,
+  productId: undefined,
+  error: {
+    message: 'Kangur auth payload validation failed.',
+    stack: 'Error: Kangur auth payload validation failed.\n' +
+      '    at http://127.0.0.1:56924/_next/static/chunks/src_features_kangur_37fc7e29._.js:1049:19',
+    name: 'Error'
+  },
+  errorName: 'Error',
+  otelTraceId: 'eb11b98af573271ca42ee7749e7bc99e',
+  otelSpanId: '9f91dd4e8562407a',
+  otelTraceFlags: '01',
+  fingerprint: '0831b9eeb30f0a05'
+}
+ POST /api/client-errors 200 in 19ms (compile: 5ms, proxy.ts: 6ms, render: 8ms)
+ GET /api/auth/session 200 in 26ms (compile: 11ms, proxy.ts: 5ms, render: 10ms)
+ POST /api/analytics/events 202 in 23ms (compile: 9ms, proxy.ts: 9ms, render: 5ms)
+ POST /api/analytics/events 202 in 24ms (compile: 7ms, proxy.ts: 11ms, render: 5ms)
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 4,
+  reason: 'idle',
+  address: 'cluster0-shard-00-00.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 4,
+  reason: 'idle',
+  address: 'cluster0-shard-00-02.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+ GET /kangur/profile 200 in 311ms (compile: 107ms, render: 204ms)
+ GET /api/auth/session 200 in 56ms (compile: 15ms, proxy.ts: 11ms, render: 30ms)
+[api/settings] [api/settings] [settings] cache hit {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'hit',
+  category: 'SYSTEM',
+  otelTraceId: '236d90bba21d79ebfd8280f998cd878e',
+  otelSpanId: '21b3472e334808b1',
+  otelTraceFlags: '01'
+}
+[kangur.auth.me.GET] Authentication required. {
+  errorId: '0c59cd5d-2cdc-4582-817f-1421ef3ef49b',
+  code: 'UNAUTHORIZED',
+  category: 'AUTH',
+  durationMs: 37,
+  source: 'kangur.auth.me.GET',
+  route: '/api/kangur/auth/me',
+  method: 'GET',
+  traceId: '2c1c9af5-0cf2-486e-a35c-185fc59986c3',
+  correlationId: '0e16cee0-7f91-4bb3-8fb8-03100b518579',
+  otelTraceId: '6981aebc3aa3cceb488ef0373cda429d',
+  otelSpanId: '6fb71153a6a5e7aa',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  expected: true,
+  critical: false,
+  retryable: false,
+  error: {
+    message: 'Authentication required.',
+    stack: 'AppError: Authentication required.\n' +
+      '    at authError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:167:53)\n' +
+      '    at resolveKangurActor (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_features_61e92bf6._.js:6522:170)\n' +
+      '    at async getKangurAuthMeHandler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_app_api_kangur_auth_me_629d727f._.js:25:19)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/src_shared_adf97e75._.js:2352:34\n' +
+      '    at async AppRouteRouteModule.do (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:37866)\n' +
+      '    at async AppRouteRouteModule.handle (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:45156)\n' +
+      '    at async responseGenerator (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17162:38)\n' +
+      '    at async AppRouteRouteModule.handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:1:191938)\n' +
+      '    at async handleResponse (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17225:32)\n' +
+      '    at async Module.handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-michalmatynia/dev/server/chunks/node_modules_next_cb659c8e._.js:17276:13)\n' +
+      '    at async DevServer.renderToResponseWithComponentsImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1442:9)\n' +
+      '    at async DevServer.renderPageComponent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1494:24)\n' +
+      '    at async DevServer.renderToResponseImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1544:32)\n' +
+      '    at async DevServer.pipeImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1038:25)\n' +
+      '    at async NextNodeServer.handleCatchallRenderRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/next-server.js:395:17)\n' +
+      '    at async DevServer.handleRequestImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:929:17)\n' +
+      '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:387:20\n' +
+      '    at async Span.traceAsyncFn (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/trace/trace.js:157:20)\n' +
+      '    at async DevServer.handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:383:24)\n' +
+      '    at async invokeRender (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:248:21)\n' +
+      '    at async handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:447:24)\n' +
+      '    at async NextCustomServer.requestHandlerImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:496:13)',
+    name: 'AppError',
+    code: 'UNAUTHORIZED',
+    httpStatus: 401,
+    expected: true,
+    critical: false,
+    retryable: false
+  },
+  errorCode: 'UNAUTHORIZED',
+  errorName: 'AppError',
+  fingerprint: '5c061657c3e53d28'
+}
+ GET /api/kangur/auth/me 401 in 87ms (compile: 24ms, proxy.ts: 22ms, render: 41ms)
+ GET /api/settings?scope=heavy 200 in 99ms (compile: 30ms, proxy.ts: 22ms, render: 47ms)
+ GET /api/auth/session 200 in 24ms (compile: 5ms, proxy.ts: 11ms, render: 9ms)
+ GET /api/kangur/ai-tutor/guest-intro 200 in 135ms (compile: 5ms, proxy.ts: 4ms, render: 126ms)
+ POST /api/analytics/events 202 in 48ms (compile: 5ms, proxy.ts: 17ms, render: 26ms)
+ POST /api/analytics/events 202 in 48ms (compile: 12ms, proxy.ts: 13ms, render: 23ms)
+ GET /api/settings/lite 200 in 387ms (compile: 35ms, proxy.ts: 11ms, render: 341ms)
+ GET /kangur 200 in 86ms (compile: 6ms, render: 80ms)
+[kangur.scores.GET] kangur.scores.GET completed successfully {
+  durationMs: 78,
+  successPolicy: 'all',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '6b6c95524f169d1b697b1e9a80c1854d',
+  otelSpanId: '1d251d828801baa9',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  traceId: 'a480ba0b-7f32-4570-8aec-0c73b32df808',
+  correlationId: '7a5c8126-77bf-4ba2-a76f-5fdcb272b3f7'
+}
+ GET /api/kangur/scores?sort=-score&limit=100 200 in 92ms (compile: 4ms, proxy.ts: 5ms, render: 84ms)
+ GET /kangur/profile 200 in 79ms (compile: 5ms, render: 74ms)
+ GET /api/settings/lite 200 in 31ms (compile: 9ms, proxy.ts: 10ms, render: 13ms)
+[api/settings] [api/settings] [settings] cache hit {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'hit',
+  category: 'SYSTEM',
+  otelTraceId: '6ce061ba14651ab74131d67301bd96a9',
+  otelSpanId: 'ef13a7a3a077012d',
+  otelTraceFlags: '01'
+}
+ GET /api/settings?scope=heavy 200 in 55ms (compile: 11ms, proxy.ts: 18ms, render: 26ms)
+[client-error-reporter] [client-error-reporter] Kangur auth payload validation failed. {
+  feature: 'kangur',
+  kangur: { pageKey: 'LearnerProfile', requestedPath: '/kangur/profile' },
+  featureFlags: null,
+  tags: null,
+  app: {
+    version: 'unknown',
+    buildId: null,
+    releaseChannel: null,
+    environment: 'development'
+  },
+  route: '/kangur/profile',
+  query: '',
+  referrer: '',
+  locale: 'en-US',
+  timezone: 'Europe/Warsaw',
+  device: { platform: 'MacIntel', deviceMemory: 8, hardwareConcurrency: 10 },
+  network: { online: true, effectiveType: '4g', downlink: 10, rtt: 0 },
+  viewport: { width: 1280, height: 720 },
+  user: null,
+  service: 'client-error-reporter',
+  source: 'client.error.reporter',
+  action: 'checkAppState',
+  stage: 'auth.me',
+  category: 'AUTH',
+  url: 'http://127.0.0.1:56924/kangur/profile',
+  clientTimestamp: '2026-03-09T03:38:27.754Z',
+  clientUserAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36',
+  jobId: undefined,
+  runId: undefined,
+  productId: undefined,
+  error: {
+    message: 'Kangur auth payload validation failed.',
+    stack: 'Error: Kangur auth payload validation failed.\n' +
+      '    at http://127.0.0.1:56924/_next/static/chunks/src_features_kangur_37fc7e29._.js:1049:19\n' +
+      '    at async Object.resolveSessionUser [as me] (http://127.0.0.1:56924/_next/static/chunks/src_features_kangur_37fc7e29._.js:1063:16)\n' +
+      '    at async KangurAuthProvider.useCallback[checkAppState] (http://127.0.0.1:56924/_next/static/chunks/src_features_kangur_ui_context_11e5efcb._.js:537:37)',
+    name: 'Error'
+  },
+  errorName: 'Error',
+  otelTraceId: '3f197d50d805526f83e9bf683bc7f6c0',
+  otelSpanId: '2c118a8b989e9abb',
+  otelTraceFlags: '01',
+  fingerprint: '47e35040f321080b'
+}
+ POST /api/client-errors 200 in 51ms (compile: 28ms, proxy.ts: 8ms, render: 14ms)
+ GET /api/auth/session 200 in 64ms (compile: 42ms, proxy.ts: 11ms, render: 10ms)
+ GET /api/auth/session 200 in 31ms (compile: 7ms, proxy.ts: 15ms, render: 9ms)
+ GET /api/kangur/ai-tutor/guest-intro 200 in 159ms (compile: 3ms, proxy.ts: 7ms, render: 149ms)
+ POST /api/analytics/events 202 in 35ms (compile: 18ms, proxy.ts: 11ms, render: 7ms)
+ POST /api/analytics/events 202 in 54ms (compile: 13ms, proxy.ts: 26ms, render: 16ms)
+ GET /kangur/profile 200 in 151ms (compile: 11ms, render: 139ms)
+ GET /api/settings/lite 200 in 120ms (compile: 56ms, proxy.ts: 11ms, render: 54ms)
+[api/settings] [api/settings] [settings] cache hit {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'hit',
+  category: 'SYSTEM',
+  otelTraceId: 'b4e4dac98e945d539ece3949b4b9c749',
+  otelSpanId: 'acb3eadf2de034c6',
+  otelTraceFlags: '01'
+}
+ GET /api/settings?scope=heavy 200 in 147ms (compile: 67ms, proxy.ts: 15ms, render: 65ms)
+ GET /api/auth/session 200 in 175ms (compile: 147ms, proxy.ts: 13ms, render: 16ms)
+[client-error-reporter] [client-error-reporter] Kangur auth payload validation failed. {
+  feature: 'kangur',
+  kangur: { pageKey: 'LearnerProfile', requestedPath: '/kangur/profile' },
+  featureFlags: null,
+  tags: null,
+  app: {
+    version: 'unknown',
+    buildId: null,
+    releaseChannel: null,
+    environment: 'development'
+  },
+  route: '/kangur/profile',
+  query: '',
+  referrer: '',
+  locale: 'en-US',
+  timezone: 'Europe/Warsaw',
+  device: { platform: 'MacIntel', deviceMemory: 8, hardwareConcurrency: 10 },
+  network: { online: true, effectiveType: '4g', downlink: 10, rtt: 0 },
+  viewport: { width: 1280, height: 720 },
+  user: null,
+  service: 'client-error-reporter',
+  source: 'client.error.reporter',
+  action: 'checkAppState',
+  stage: 'auth.me',
+  category: 'AUTH',
+  url: 'http://127.0.0.1:56924/kangur/profile',
+  clientTimestamp: '2026-03-09T03:38:36.369Z',
+  clientUserAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36',
+  jobId: undefined,
+  runId: undefined,
+  productId: undefined,
+  error: {
+    message: 'Kangur auth payload validation failed.',
+    stack: 'Error: Kangur auth payload validation failed.\n' +
+      '    at http://127.0.0.1:56924/_next/static/chunks/src_features_kangur_37fc7e29._.js:1049:19\n' +
+      '    at async Object.resolveSessionUser [as me] (http://127.0.0.1:56924/_next/static/chunks/src_features_kangur_37fc7e29._.js:1063:16)\n' +
+      '    at async KangurAuthProvider.useCallback[checkAppState] (http://127.0.0.1:56924/_next/static/chunks/src_features_kangur_ui_context_11e5efcb._.js:537:37)',
+    name: 'Error'
+  },
+  errorName: 'Error',
+  otelTraceId: '33e629ba903c74c3497c6dd5b79bdadd',
+  otelSpanId: 'f5fd9767c6cc08ac',
+  otelTraceFlags: '01',
+  fingerprint: '47e35040f321080b'
+}
+ POST /api/client-errors 200 in 141ms (compile: 27ms, proxy.ts: 101ms, render: 13ms)
+ GET /api/auth/session 200 in 30ms (compile: 15ms, proxy.ts: 12ms, render: 4ms)
+ GET /api/kangur/ai-tutor/guest-intro 200 in 142ms (compile: 11ms, proxy.ts: 34ms, render: 98ms)
+ POST /api/analytics/events 202 in 18ms (compile: 3ms, proxy.ts: 3ms, render: 13ms)
+ POST /api/analytics/events 202 in 19ms (compile: 7ms, proxy.ts: 3ms, render: 9ms)
+ GET /kangur/profile 200 in 85ms (compile: 5ms, render: 80ms)
+[api/settings] [api/settings] [settings] cache hit {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'hit',
+  category: 'SYSTEM',
+  otelTraceId: 'e834b90966653ddc808c801dd9b9827e',
+  otelSpanId: '1ddf69c4aabb974d',
+  otelTraceFlags: '01'
+}
+ GET /api/settings/lite 200 in 27ms (compile: 8ms, proxy.ts: 6ms, render: 13ms)
+ GET /api/settings?scope=heavy 200 in 31ms (compile: 6ms, proxy.ts: 5ms, render: 20ms)
+ GET /api/auth/session 200 in 73ms (compile: 48ms, proxy.ts: 6ms, render: 19ms)
+[client-error-reporter] [client-error-reporter] Kangur auth payload validation failed. {
+  feature: 'kangur',
+  kangur: { pageKey: 'LearnerProfile', requestedPath: '/kangur/profile' },
+  featureFlags: null,
+  tags: null,
+  app: {
+    version: 'unknown',
+    buildId: null,
+    releaseChannel: null,
+    environment: 'development'
+  },
+  route: '/kangur/profile',
+  query: '',
+  referrer: '',
+  locale: 'en-US',
+  timezone: 'Europe/Warsaw',
+  device: { platform: 'MacIntel', deviceMemory: 8, hardwareConcurrency: 10 },
+  network: { online: true, effectiveType: '4g', downlink: 10, rtt: 0 },
+  viewport: { width: 1280, height: 720 },
+  user: null,
+  service: 'client-error-reporter',
+  source: 'client.error.reporter',
+  action: 'checkAppState',
+  stage: 'auth.me',
+  category: 'AUTH',
+  url: 'http://127.0.0.1:56924/kangur/profile',
+  clientTimestamp: '2026-03-09T03:38:44.813Z',
+  clientUserAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36',
+  jobId: undefined,
+  runId: undefined,
+  productId: undefined,
+  error: {
+    message: 'Kangur auth payload validation failed.',
+    stack: 'Error: Kangur auth payload validation failed.\n' +
+      '    at http://127.0.0.1:56924/_next/static/chunks/src_features_kangur_37fc7e29._.js:1049:19\n' +
+      '    at async Object.resolveSessionUser [as me] (http://127.0.0.1:56924/_next/static/chunks/src_features_kangur_37fc7e29._.js:1063:16)\n' +
+      '    at async KangurAuthProvider.useCallback[checkAppState] (http://127.0.0.1:56924/_next/static/chunks/src_features_kangur_ui_context_11e5efcb._.js:537:37)',
+    name: 'Error'
+  },
+  errorName: 'Error',
+  otelTraceId: '64e78e699d587822733017153c9987a5',
+  otelSpanId: '2c04d34a838555f6',
+  otelTraceFlags: '01',
+  fingerprint: '47e35040f321080b'
+}
+ POST /api/client-errors 200 in 66ms (compile: 39ms, proxy.ts: 15ms, render: 11ms)
+ GET /api/auth/session 200 in 12ms (compile: 4ms, proxy.ts: 3ms, render: 5ms)
+ GET /api/kangur/ai-tutor/guest-intro 200 in 147ms (compile: 4ms, proxy.ts: 3ms, render: 141ms)
+ POST /api/analytics/events 202 in 73ms (compile: 51ms, proxy.ts: 15ms, render: 8ms)
+ POST /api/analytics/events 202 in 86ms (compile: 8ms, proxy.ts: 54ms, render: 24ms)
+✓ Compiled in 2.7s
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 5,
+  reason: 'idle',
+  address: 'cluster0-shard-00-00.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 5,
+  reason: 'idle',
+  address: 'cluster0-shard-00-02.zv9e9.azure.mongodb.net:27017',
+  service: 'mongodb'
+}
+ GET /kangur/profile 200 in 4.0s (compile: 403ms, render: 3.6s)
+[api/settings] [api/settings] [settings] cache hit {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'hit',
+  category: 'SYSTEM',
+  otelTraceId: '52bf50b8a10e49deaa7668b3a278f952',
+  otelSpanId: 'd7811cadd869b071',
+  otelTraceFlags: '01'
+}
+ GET /api/settings/lite 200 in 99ms (compile: 47ms, proxy.ts: 7ms, render: 44ms)
+ GET /api/auth/session 200 in 176ms (compile: 105ms, proxy.ts: 7ms, render: 63ms)
+ GET /api/auth/session 200 in 29ms (compile: 17ms, proxy.ts: 5ms, render: 7ms)
+ GET /api/kangur/ai-tutor/guest-intro 200 in 87ms (compile: 6ms, proxy.ts: 10ms, render: 71ms)
+ POST /api/analytics/events 202 in 23ms (compile: 4ms, proxy.ts: 3ms, render: 16ms)
+ POST /api/analytics/events 202 in 27ms (compile: 9ms, proxy.ts: 3ms, render: 14ms)
+ GET /api/settings?scope=heavy 200 in 379ms (compile: 9ms, proxy.ts: 9ms, render: 361ms)
+ GET /kangur/game?quickStart=training 200 in 87ms (compile: 15ms, render: 72ms)
+[kangur.scores.GET] kangur.scores.GET completed successfully {
+  durationMs: 53,
+  successPolicy: 'all',
+  slowSuccessThresholdMs: 750,
+  otelTraceId: '7f4f5bf9bc1f110450c6952775095b33',
+  otelSpanId: '55dedb804cef1275',
+  otelTraceFlags: '01',
+  service: 'kangur.api',
+  traceId: '6f674b70-a04c-4f04-ae11-a81825f4679f',
+  correlationId: 'fc505e04-b952-46a8-a0d2-a12406565768'
+}
+ GET /api/kangur/scores?sort=-score&limit=100 200 in 69ms (compile: 6ms, proxy.ts: 3ms, render: 60ms)
+ GET /kangur/profile 200 in 109ms (compile: 5ms, render: 104ms)
+[api/settings] [api/settings] [settings] cache hit {
+  service: 'api/settings',
+  scope: 'heavy',
+  status: 'hit',
+  category: 'SYSTEM',
+  otelTraceId: 'bbc5e1319e1ebc006dca3490ad888abc',
+  otelSpanId: '04626f3dbe22de83',
+  otelTraceFlags: '01'
+}
+ GET /api/settings?scope=heavy 200 in 35ms (compile: 5ms, proxy.ts: 6ms, render: 24ms)
+ GET /api/settings/lite 200 in 35ms (compile: 8ms, proxy.ts: 5ms, render: 22ms)
+ GET /api/auth/session 200 in 45ms (compile: 35ms, proxy.ts: 4ms, render: 5ms)
+[client-error-reporter] [client-error-reporter] Kangur auth payload validation failed. {
+  feature: 'kangur',
+  kangur: { pageKey: 'LearnerProfile', requestedPath: '/kangur/profile' },
+  featureFlags: null,
+  tags: null,
+  app: {
+    version: 'unknown',
+    buildId: null,
+    releaseChannel: null,
+    environment: 'development'
+  },
+  route: '/kangur/profile',
+  query: '',
+  referrer: '',
+  locale: 'en-US',
+  timezone: 'Europe/Warsaw',
+  device: { platform: 'MacIntel', deviceMemory: 8, hardwareConcurrency: 10 },
+  network: { online: true, effectiveType: '4g', downlink: 9.7, rtt: 0 },
+  viewport: { width: 1280, height: 720 },
+  user: null,
+  service: 'client-error-reporter',
+  source: 'client.error.reporter',
+  action: 'checkAppState',
+  stage: 'auth.me',
+  category: 'AUTH',
+  url: 'http://127.0.0.1:56924/kangur/profile',
+  clientTimestamp: '2026-03-09T03:39:05.041Z',
+  clientUserAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36',
+  jobId: undefined,
+  runId: undefined,
+  productId: undefined,
+  error: {
+    message: 'Kangur auth payload validation failed.',
+    stack: 'Error: Kangur auth payload validation failed.\n' +
+      '    at http://127.0.0.1:56924/_next/static/chunks/src_features_kangur_37fc7e29._.js:1049:19\n' +
+      '    at async Object.resolveSessionUser [as me] (http://127.0.0.1:56924/_next/static/chunks/src_features_kangur_37fc7e29._.js:1063:16)\n' +
+      '    at async KangurAuthProvider.useCallback[checkAppState] (http://127.0.0.1:56924/_next/static/chunks/src_features_kangur_ui_context_11e5efcb._.js:537:37)',
+    name: 'Error'
+  },
+  errorName: 'Error',
+  otelTraceId: 'a028d2659d843fbe41efdcf8ce589224',
+  otelSpanId: 'd4b3586bab4ebf1f',
+  otelTraceFlags: '01',
+  fingerprint: '47e35040f321080b'
+}
+ POST /api/client-errors 200 in 30ms (compile: 5ms, proxy.ts: 10ms, render: 16ms)
+ GET /api/auth/session 200 in 16ms (compile: 7ms, proxy.ts: 5ms, render: 4ms)
+ GET /api/kangur/ai-tutor/guest-intro 200 in 78ms (compile: 3ms, proxy.ts: 4ms, render: 71ms)
+ POST /api/analytics/events 202 in 27ms (compile: 4ms, proxy.ts: 16ms, render: 7ms)
+ POST /api/analytics/events 202 in 30ms (compile: 6ms, proxy.ts: 16ms, render: 8ms)
+Received SIGTERM, shutting down gracefully... { signal: 'SIGTERM' }
+Server closed undefined

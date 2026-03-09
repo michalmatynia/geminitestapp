@@ -26,6 +26,7 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 import { isObjectRecord } from '@/shared/utils/object-utils';
 import type { PlaywrightPersona, PlaywrightSettings } from '@/shared/contracts/playwright';
 import type { ListQuery } from '@/shared/contracts/ui';
+import { buildPlaywrightSettings } from '@/shared/lib/playwright/personas';
 
 export function useIntegrationsActionsImpl(args: {
   integrations: Integration[];
@@ -364,7 +365,6 @@ export function useIntegrationsActionsImpl(args: {
     }
     const persona = args.playwrightPersonas.find((p: PlaywrightPersona) => p.id === personaId);
     if (!persona) return;
-    const { buildPlaywrightSettings } = await import('@/features/playwright');
     args.setPlaywrightPersonaId(persona.id);
     args.setPlaywrightSettings(buildPlaywrightSettings(persona.settings));
     toast(`Applied persona "${persona.name}".`, { variant: 'success' });

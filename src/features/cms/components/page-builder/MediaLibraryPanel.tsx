@@ -11,7 +11,7 @@ import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 import { useUploadCmsMedia } from '../../hooks/useCmsQueries';
 
-const FileManager = dynamic(() => import('@/features/files'), {
+const FileManager = dynamic(() => import('@/shared/ui/files'), {
   ssr: false,
   loading: () => <div>Loading file manager...</div>,
 });

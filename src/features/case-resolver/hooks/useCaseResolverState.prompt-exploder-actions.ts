@@ -17,7 +17,7 @@ import {
 import {
   PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY,
   PROMPT_EXPLODER_BRIDGE_STORAGE_EVENT,
-} from '@/features/prompt-exploder';
+} from '@/shared/lib/prompt-exploder/bridge';
 import { resolveCaseResolverFileById } from './useCaseResolverState.helpers';
 import { logCaseResolverWorkspaceEvent } from '../workspace-persistence';
 import {

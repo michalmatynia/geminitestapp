@@ -13,7 +13,7 @@ import {
 } from '@/features/case-resolver/settings';
 import { parseCaseResolverCaptureSettings } from '@/features/case-resolver-capture';
 import { parseFilemakerDatabase } from '@/features/filemaker';
-import { savePromptExploderApplyPromptForCaseResolver } from '@/features/prompt-exploder';
+import { savePromptExploderApplyPromptForCaseResolver } from '@/shared/lib/prompt-exploder/bridge';
 import type {
   CaseResolverFile,
   CaseResolverFileEditDraft,

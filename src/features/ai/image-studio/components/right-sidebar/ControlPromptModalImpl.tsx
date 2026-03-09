@@ -35,7 +35,7 @@ import {
 import { validateProgrammaticPrompt } from '@/shared/lib/prompt-engine';
 import { formatProgrammaticPrompt } from '@/shared/lib/prompt-engine';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { savePromptExploderDraftPrompt } from '@/features/prompt-exploder';
+import { savePromptExploderDraftPrompt } from '@/shared/lib/prompt-exploder/bridge';
 import { useRouter } from 'next/navigation';
 import { useRightSidebarContext } from '../RightSidebarContext';
 

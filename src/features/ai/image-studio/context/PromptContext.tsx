@@ -17,7 +17,7 @@ import {
 } from '@/shared/utils/prompt-params';
 import type { ExtractParamsResult, ParamIssue, ParamSpec } from '@/shared/contracts/prompt-engine';
 import { validateImageStudioParams } from '@/shared/lib/prompt-engine';
-import { consumePromptExploderApplyPrompt } from '@/features/prompt-exploder';
+import { consumePromptExploderApplyPrompt } from '@/shared/lib/prompt-exploder/bridge';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { useToast } from '@/shared/ui';
 

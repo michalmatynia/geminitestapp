@@ -4,7 +4,7 @@ import {
   useIntegrationsActions,
   useIntegrationsForm,
 } from '@/features/integrations/context/IntegrationsContext';
-import { PlaywrightSettingsProvider } from '@/features/playwright';
+import { PlaywrightSettingsProvider } from '@/shared/ui/playwright/PlaywrightSettingsForm';
 import { LoadingState } from '@/shared/ui';
 
 export function DynamicPlaywrightSettingsForm(): React.JSX.Element {
@@ -16,7 +16,7 @@ export function DynamicPlaywrightSettingsForm(): React.JSX.Element {
 
   useEffect(() => {
     const loadComponent = async (): Promise<void> => {
-      const { PlaywrightSettingsFormContent } = await import('@/features/playwright');
+      const { PlaywrightSettingsFormContent } = await import('@/shared/ui/playwright/PlaywrightSettingsForm');
       setComponent(() => PlaywrightSettingsFormContent);
     };
     void loadComponent();

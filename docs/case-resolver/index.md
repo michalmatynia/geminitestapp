@@ -28,6 +28,7 @@ This section is the centralized source of truth for the Case Resolver feature.
 
 ## Runbooks
 
+- [Runbooks Hub](./runbooks/README.md)
 - [Performance and Stability](./runbooks/performance-stability.md)
 - [OCR Failures and Retry](./runbooks/ocr-failures-and-retry.md)
 - [Workspace Conflict Recovery](./runbooks/workspace-conflict-recovery.md)

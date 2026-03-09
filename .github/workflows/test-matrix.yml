@@ -90,6 +90,27 @@ jobs:
       - name: Run UI consolidation guardrail
         run: node scripts/architecture/check-ui-consolidation.mjs
 
+  scanner-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint scanner contract scripts
+        run: npm run lint:scanner-scripts
+
+      - name: Run scanner envelope regression tests
+        run: npm run test:scanner-envelopes
+
   lint:
     runs-on: ubuntu-latest
     steps:

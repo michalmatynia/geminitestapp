@@ -1,3 +1,12 @@
+---
+owner: 'AI Paths Team'
+last_reviewed: '2026-03-09'
+status: 'active'
+doc_type: 'reference'
+scope: 'feature:ai-paths'
+canonical: true
+---
+
 # AI-Paths Semantic Grammar v1
 
 ## Goal

@@ -1,3 +1,12 @@
+---
+owner: 'Platform Team'
+last_reviewed: '2026-03-09'
+status: 'active'
+doc_type: 'runbook'
+scope: 'cross-feature'
+canonical: true
+---
+
 # Wave 1 Dry-Run Verification (2026-03-04)
 
 ## Goal

@@ -5,6 +5,7 @@ import path from 'node:path';
 import ts from 'typescript';
 
 import { buildScanOutput } from './lib/scan-output.mjs';
+import { writeMetricsMarkdownFile } from '../docs/metrics-frontmatter.mjs';
 
 const root = process.cwd();
 const outDir = path.join(root, 'docs', 'metrics');
@@ -567,9 +568,17 @@ const writeOutputs = async (report) => {
   const historyJsonPath = path.join(outDir, `type-clusters-${stamp}.json`);
 
   await fs.writeFile(latestJsonPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
-  await fs.writeFile(latestMdPath, createMarkdownReport(report), 'utf8');
+  await writeMetricsMarkdownFile({
+    root,
+    targetPath: latestMdPath,
+    content: createMarkdownReport(report),
+  });
   await fs.writeFile(latestCsvPath, createCsvReport(report), 'utf8');
-  await fs.writeFile(latestPlanMdPath, createPlanMarkdown(report), 'utf8');
+  await writeMetricsMarkdownFile({
+    root,
+    targetPath: latestPlanMdPath,
+    content: createPlanMarkdown(report),
+  });
 
   if (!HISTORY_DISABLED && !INIT_ONLY) {
     await fs.writeFile(historyJsonPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');

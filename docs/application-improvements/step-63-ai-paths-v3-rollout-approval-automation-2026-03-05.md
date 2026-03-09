@@ -1,3 +1,11 @@
+---
+owner: "Platform Team"
+last_reviewed: "2026-03-09"
+status: "active"
+doc_type: "plan"
+scope: "cross-feature"
+canonical: true
+---
 # Step 63 Execution: AI-Paths v3 Rollout Approval Automation
 
 Date: 2026-03-05

@@ -1,3 +1,12 @@
+---
+owner: 'AI Paths Team'
+last_reviewed: '2026-03-09'
+status: 'active'
+doc_type: 'plan'
+scope: 'feature:ai-paths'
+canonical: true
+---
+
 # AI-Paths Kernel Engine Transition Plan (2026-03-05)
 
 ## Goal

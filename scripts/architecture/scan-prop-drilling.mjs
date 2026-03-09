@@ -4,6 +4,7 @@ import path from 'node:path';
 import ts from 'typescript';
 
 import { buildScanOutput } from './lib/scan-output.mjs';
+import { writeMetricsMarkdownFile } from '../docs/metrics-frontmatter.mjs';
 
 const root = process.cwd();
 const args = new Set(process.argv.slice(2));
@@ -1370,20 +1371,21 @@ const result = {
   chains,
 };
 
+  const stamp = summary.generatedAt.replace(/[:.]/g, '-');
+  const latestJsonPath = path.join(outDir, 'prop-drilling-latest.json');
+  const latestMdPath = path.join(outDir, 'prop-drilling-latest.md');
+  const latestCsvPath = path.join(outDir, 'prop-drilling-chains-latest.csv');
+  const latestTransitionCsvPath = path.join(outDir, 'prop-drilling-transitions-latest.csv');
+  const historicalJsonPath = path.join(outDir, `prop-drilling-${stamp}.json`);
+
   if (!NO_WRITE) {
     await fs.mkdir(outDir, { recursive: true });
 
-    const stamp = summary.generatedAt.replace(/[:.]/g, '-');
-    const latestJsonPath = path.join(outDir, 'prop-drilling-latest.json');
-    const latestMdPath = path.join(outDir, 'prop-drilling-latest.md');
-    const latestCsvPath = path.join(outDir, 'prop-drilling-chains-latest.csv');
-    const latestTransitionCsvPath = path.join(outDir, 'prop-drilling-transitions-latest.csv');
-    const historicalJsonPath = path.join(outDir, `prop-drilling-${stamp}.json`);
-
     await fs.writeFile(latestJsonPath, `${JSON.stringify(result, null, 2)}\n`, 'utf8');
-    await fs.writeFile(
-      latestMdPath,
-      buildMarkdown({
+    await writeMetricsMarkdownFile({
+      root,
+      targetPath: latestMdPath,
+      content: buildMarkdown({
         summary,
         backlog,
         transitionBacklog,
@@ -1391,8 +1393,7 @@ const result = {
         forwardingComponentBacklog,
         componentById,
       }),
-      'utf8'
-    );
+    });
     await fs.writeFile(latestCsvPath, buildChainCsv({ chains: backlog, componentById }), 'utf8');
     await fs.writeFile(
       latestTransitionCsvPath,
@@ -1431,6 +1432,23 @@ const result = {
             componentBacklog,
             forwardingComponentBacklog,
             chains,
+          },
+          paths: NO_WRITE
+            ? null
+            : {
+              latestJson: toPosix(path.relative(root, latestJsonPath)),
+              latestMarkdown: toPosix(path.relative(root, latestMdPath)),
+              latestChainsCsv: toPosix(path.relative(root, latestCsvPath)),
+              latestTransitionsCsv: toPosix(path.relative(root, latestTransitionCsvPath)),
+              historyJson: HISTORY_DISABLED ? null : toPosix(path.relative(root, historicalJsonPath)),
+            },
+          filters: {
+            historyDisabled: HISTORY_DISABLED,
+            noWrite: NO_WRITE,
+            maxChainDepth: MAX_CHAIN_DEPTH,
+            maxChainCount: MAX_CHAIN_COUNT,
+            topBacklogLimit: TOP_BACKLOG_LIMIT,
+            topComponentBacklogLimit: TOP_COMPONENT_BACKLOG_LIMIT,
           },
           notes: ['prop-drilling scan result'],
         }),

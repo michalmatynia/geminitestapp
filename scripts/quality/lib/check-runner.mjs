@@ -1,6 +1,8 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { writeMetricsMarkdownFile } from '../../docs/metrics-frontmatter.mjs';
+
 const SEVERITY_ORDER = {
   error: 0,
   warn: 1,
@@ -147,11 +149,11 @@ export const writeCheckArtifacts = async ({
   const historicalMdPath = path.join(outDir, `${slug}-${stamp}.md`);
 
   await fs.writeFile(latestJsonPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
-  await fs.writeFile(latestMdPath, markdown, 'utf8');
+  await writeMetricsMarkdownFile({ root, targetPath: latestMdPath, content: markdown });
 
   if (shouldWriteHistory) {
     await fs.writeFile(historicalJsonPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
-    await fs.writeFile(historicalMdPath, markdown, 'utf8');
+    await writeMetricsMarkdownFile({ root, targetPath: historicalMdPath, content: markdown });
   }
 
   return {

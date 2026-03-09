@@ -3,7 +3,7 @@
 import { api } from '@/shared/lib/api-client';
 import { createCreateMutationV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateProductsAndCounts, invalidateImageStudioSlots } from './productCache';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductStudioSendRequest, ProductWithImages } from '@/shared/contracts/products';
 
 export function useSendToStudioMutation() {
   return createCreateMutationV2<
@@ -13,12 +13,18 @@ export function useSendToStudioMutation() {
       runStatus: string;
       expectedOutputs: number;
     },
-    { productId: string; imageSlotIndex: number; projectId: string }
+    {
+      productId: string;
+      imageSlotIndex: number;
+      projectId: string;
+      contextRegistry?: ProductStudioSendRequest['contextRegistry'];
+    }
   >({
-    mutationFn: ({ productId, imageSlotIndex, projectId }) =>
+    mutationFn: ({ productId, imageSlotIndex, projectId, contextRegistry }) =>
       api.post(`/api/v2/products/${encodeURIComponent(productId)}/studio/send`, {
         imageSlotIndex,
         projectId,
+        ...(contextRegistry ? { contextRegistry } : {}),
       }),
     meta: {
       source: 'products.hooks.useSendToStudioMutation',

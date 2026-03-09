@@ -1,3 +1,11 @@
+---
+owner: 'Platform Team'
+last_reviewed: '2026-03-09'
+status: 'generated'
+doc_type: 'generated'
+scope: 'generated'
+canonical: false
+---
 # Unit Domain Timings Trend
 
 Generated at: 2026-03-05T04:40:55.316Z

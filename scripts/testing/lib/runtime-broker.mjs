@@ -156,6 +156,17 @@ const writeLeaseRecord = async (leaseFilePath, lease) => {
   await fsPromises.writeFile(leaseFilePath, `${JSON.stringify(lease, null, 2)}\n`, 'utf8');
 };
 
+const PLAYWRIGHT_AGENT_RESOURCE_ID = 'testing.playwright.runtime-broker';
+
+const withAgentLeaseMetadata = (lease) => ({
+  ...lease,
+  agentLeaseResourceId: PLAYWRIGHT_AGENT_RESOURCE_ID,
+  agentLeaseScopeId:
+    typeof lease?.leaseKey === 'string' && lease.leaseKey.length > 0 ? lease.leaseKey : null,
+  agentLeaseMode: 'partitioned',
+  leaseHeartbeatAt: new Date().toISOString(),
+});
+
 const removeFileIfPresent = async (filePath) => {
   try {
     await fsPromises.unlink(filePath);
@@ -905,7 +916,7 @@ export const acquireRuntimeLease = async ({
         });
 
         if (healthy) {
-          return {
+          const refreshedLease = withAgentLeaseMetadata({
             ...existingLease,
             managed: true,
             source: 'broker',
@@ -914,7 +925,9 @@ export const acquireRuntimeLease = async ({
             logFilePath,
             preferredBrowserNodeBinDir:
               existingLease.preferredBrowserNodeBinDir ?? preferredBrowserNodeBinDir,
-          };
+          });
+          await writeLeaseRecord(leaseFilePath, refreshedLease);
+          return refreshedLease;
         }
 
         await stopBrokerRuntimeLease({ lease: existingLease, leaseFilePath });
@@ -964,7 +977,7 @@ export const acquireRuntimeLease = async ({
     fs.closeSync(logFd);
     child.unref?.();
 
-    const lease = {
+    const lease = withAgentLeaseMetadata({
       source: 'broker',
       managed: true,
       reused: false,
@@ -986,7 +999,7 @@ export const acquireRuntimeLease = async ({
       logFilePath,
       startedAt: new Date().toISOString(),
       preferredBrowserNodeBinDir,
-    };
+    });
 
     await writeLeaseRecord(leaseFilePath, lease);
 

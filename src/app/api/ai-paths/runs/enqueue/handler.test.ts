@@ -10,6 +10,7 @@ const {
   enqueuePathRunMock,
   assertAiPathRunQueueReadyForEnqueueMock,
   logSystemEventMock,
+  contextRegistryResolveRefsMock,
 } = vi.hoisted(() => ({
   requireAiPathsRunAccessMock: vi.fn(),
   enforceAiPathsRunRateLimitMock: vi.fn(),
@@ -17,6 +18,7 @@ const {
   enqueuePathRunMock: vi.fn(),
   assertAiPathRunQueueReadyForEnqueueMock: vi.fn(),
   logSystemEventMock: vi.fn(),
+  contextRegistryResolveRefsMock: vi.fn(),
 }));
 
 vi.mock('@/features/ai/ai-paths/server', () => ({
@@ -32,6 +34,12 @@ vi.mock('@/features/jobs/server', () => ({
 
 vi.mock('@/shared/lib/observability/system-logger', () => ({
   logSystemEvent: logSystemEventMock,
+}));
+
+vi.mock('@/features/ai/ai-context-registry/server', () => ({
+  contextRegistryEngine: {
+    resolveRefs: contextRegistryResolveRefsMock,
+  },
 }));
 
 import { POST_handler } from './handler';
@@ -62,6 +70,29 @@ describe('ai-paths runs enqueue handler', () => {
     enqueuePathRunMock.mockReset().mockResolvedValue({ id: 'run-1', status: 'queued' });
     assertAiPathRunQueueReadyForEnqueueMock.mockReset().mockResolvedValue(undefined);
     logSystemEventMock.mockReset().mockResolvedValue(undefined);
+    contextRegistryResolveRefsMock.mockReset().mockResolvedValue({
+      refs: [{ id: 'page:ai-paths', kind: 'static_node' }],
+      nodes: [
+        {
+          id: 'page:ai-paths',
+          kind: 'page',
+          name: 'AI Paths Canvas',
+          description: 'AI Paths workspace',
+          tags: ['ai-paths'],
+          permissions: {
+            readScopes: ['ctx:read'],
+            riskTier: 'none',
+            classification: 'internal',
+          },
+          version: '1.0.0',
+          updatedAtISO: '2026-03-09T00:00:00.000Z',
+          source: { type: 'code', ref: 'test' },
+        },
+      ],
+      documents: [],
+      truncated: false,
+      engineVersion: 'registry:test',
+    });
   });
 
   it('rejects legacy node identities before enqueueing the run', async () => {
@@ -172,6 +203,72 @@ describe('ai-paths runs enqueue handler', () => {
       })
     );
     expect(enqueueArgs?.meta).not.toHaveProperty('identityRepair');
+  });
+
+  it('normalizes context registry payloads into enqueue metadata', async () => {
+    const config = createDefaultPathConfig('path-with-context');
+
+    const response = await POST_handler(
+      makeRequest({
+        pathId: config.id,
+        pathName: config.name,
+        nodes: config.nodes,
+        edges: config.edges,
+        contextRegistry: {
+          refs: [{ id: 'page:ai-paths', kind: 'static_node' }],
+          engineVersion: 'page-context:v1',
+          resolved: {
+            refs: [{ id: 'runtime:ai-paths:workspace', kind: 'runtime_document' }],
+            nodes: [],
+            documents: [
+              {
+                id: 'runtime:ai-paths:workspace',
+                kind: 'runtime_document',
+                entityType: 'ai_paths_workspace_state',
+                title: 'AI Paths workspace state',
+                summary: 'Live state',
+                status: 'running',
+                tags: ['ai-paths'],
+                relatedNodeIds: ['page:ai-paths'],
+                facts: { activePathId: config.id },
+                sections: [],
+                provenance: { source: 'test' },
+              },
+            ],
+            truncated: false,
+            engineVersion: 'page-context:v1',
+          },
+        },
+        meta: {
+          aiPathsValidation: {
+            enabled: false,
+          },
+        },
+      }),
+      {} as Parameters<typeof POST_handler>[1]
+    );
+
+    expect(response.status).toBe(200);
+    expect(contextRegistryResolveRefsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        refs: [{ id: 'page:ai-paths', kind: 'static_node' }],
+        maxNodes: 24,
+        depth: 1,
+      })
+    );
+    const enqueueArgs = enqueuePathRunMock.mock.calls[0]?.[0] as
+      | { meta?: Record<string, unknown> }
+      | undefined;
+    expect(enqueueArgs?.meta).toEqual(
+      expect.objectContaining({
+        contextRegistry: expect.objectContaining({
+          refs: expect.arrayContaining([
+            { id: 'page:ai-paths', kind: 'static_node' },
+            { id: 'runtime:ai-paths:workspace', kind: 'runtime_document' },
+          ]),
+        }),
+      })
+    );
   });
 
   it('loads stored path config when nodes and edges are omitted', async () => {

@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
+import { buildScanOutput } from '../architecture/lib/scan-output.mjs';
+
 const DEFAULTS = {
   mode: 'scan',
   root: process.cwd(),
@@ -271,7 +273,7 @@ const collectLogSystemEventSourceViolations = (root, srcDir) => {
   const sourcePattern = /\bsource\s*:\s*([`'"])([\s\S]*?)\1/;
   const messagePattern = /\bmessage\s*:\s*([`'"])([\s\S]*?)\1/m;
   const canonicalMessagePrefixPattern = /^\[[A-Za-z0-9_./:-]+\](?:\[[A-Za-z0-9_./:-]+\])*/;
-  const sourceValuePattern = /^[A-Za-z0-9_$\[\]-]+(?:[./:-][A-Za-z0-9_$\[\]-]+)*$/;
+  const sourceValuePattern = /^[A-Za-z0-9_$[\]-]+(?:[./:-][A-Za-z0-9_$[\]-]+)*$/;
 
   for (const file of files) {
     const relative = toRelative(root, file);
@@ -882,6 +884,70 @@ const buildSummaryPayload = (report) => ({
   comment: report.comment,
 });
 
+const buildSummaryJsonEnvelope = (report, options) =>
+  buildScanOutput({
+    scannerName: 'observability-check',
+    scannerVersion: String(LOG_SCHEMA_VERSION),
+    generatedAt: report.generatedAt,
+    status: report.status === 'passed' ? 'ok' : 'failed',
+    summary: {
+      mode: report.mode,
+      totalRoutes: report.routeCoverage.totalRoutes,
+      wrappedRoutes: report.routeCoverage.wrappedRoutes,
+      delegatedRoutes: report.routeCoverage.delegatedRoutes,
+      uncoveredRoutes: report.routeCoverage.uncoveredRoutes,
+      loggerViolations: report.logger.totalViolations,
+      eventSourceViolations: report.eventSource.totalViolations,
+      coreViolations: report.core.totalViolations,
+      consoleLogViolations: report.consoleLogs.totalViolations,
+      emptyCatchBlockViolations: report.emptyCatchBlocks.totalViolations,
+      legacyCompatibilityViolations: report.legacyCompatibility.totalViolations,
+      runtimeFilesScanned: report.runtimeLogs.filesScanned,
+      runtimeErrors: report.runtimeLogs.totalErrors,
+      runtimeErrorsTruncated: report.runtimeLogs.truncated,
+      runtimeFingerprintCount: Array.isArray(report.runtimeLogs.fingerprints)
+        ? report.runtimeLogs.fingerprints.length
+        : 0,
+      logWriteErrors: report.logArtifacts.writeErrors.length,
+    },
+    details: {
+      context: report.executionContext,
+      routeCoverage: report.routeCoverage,
+      violations: {
+        logger: report.logger.violations,
+        eventSource: report.eventSource.violations,
+        core: report.core.violations,
+        consoleLogs: report.consoleLogs.violations,
+        emptyCatchBlocks: report.emptyCatchBlocks.violations,
+        legacyCompatibility: report.legacyCompatibility.violations,
+      },
+      runtime: {
+        logsDir: report.runtimeLogs.logsDir ?? null,
+        disabled: report.runtimeLogs.disabled === true,
+        errors: report.runtimeLogs.errors,
+        fingerprints: report.runtimeLogs.fingerprints ?? [],
+        readFailures: report.runtimeLogs.readFailures ?? [],
+      },
+      comment: report.comment,
+    },
+    paths: {
+      checkLog: report.logArtifacts.checkLogFile,
+      errorLog: report.status === 'failed' ? report.logArtifacts.errorLogFile : null,
+    },
+    filters: {
+      mode: options.mode,
+      allowPartial: options.allowPartial,
+      scanRuntimeLogs: options.scanRuntimeLogs,
+      emitCiAnnotations: options.emitCiAnnotations,
+      maxRuntimeErrorFindings: options.maxRuntimeErrorFindings,
+    },
+    notes: [
+      report.comment,
+      report.runtimeLogs.disabled === true ? 'runtime log scan disabled for this run' : null,
+      'observability check scan envelope',
+    ].filter(Boolean),
+  });
+
 const buildSummaryLine = (report) =>
   `[observability:v${LOG_SCHEMA_VERSION}:${report.status}] routes=${report.routeCoverage.totalRoutes} wrapped=${report.routeCoverage.wrappedRoutes} delegated=${report.routeCoverage.delegatedRoutes} uncovered=${report.routeCoverage.uncoveredRoutes} loggerViolations=${report.logger.totalViolations} eventSourceViolations=${report.eventSource.totalViolations} coreViolations=${report.core.totalViolations} consoleLogs=${report.consoleLogs.totalViolations} emptyCatches=${report.emptyCatchBlocks.totalViolations} legacyCompatViolations=${report.legacyCompatibility.totalViolations} runtimeErrors=${report.runtimeLogs.totalErrors}`;
 
@@ -1192,10 +1258,9 @@ const main = () => {
   const options = parseArgs(process.argv.slice(2));
   const report = runObservabilityCheck(options);
   const summaryLine = buildSummaryLine(report);
-  const summaryPayload = buildSummaryPayload(report);
 
   if (options.summaryJson) {
-    console.log(JSON.stringify(summaryPayload, null, 2));
+    console.log(JSON.stringify(buildSummaryJsonEnvelope(report, options), null, 2));
     if (options.mode === 'check' && report.status !== 'passed') {
       process.exit(1);
     }

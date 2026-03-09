@@ -1,22 +1,30 @@
+---
+owner: 'Platform Team'
+last_reviewed: '2026-03-09'
+status: 'generated'
+doc_type: 'generated'
+scope: 'generated'
+canonical: true
+---
 # API Input Validation Check
 
-Generated at: 2026-03-09T06:12:23.285Z
+Generated at: 2026-03-09T07:50:51.076Z
 
 ## Summary
 
 - Status: WARN
-- Files scanned: 689
-- Total handlers: 663
-- Validated handlers: 663
+- Files scanned: 691
+- Total handlers: 665
+- Validated handlers: 665
 - **Coverage: 100%**
 - Errors: 0
-- Warnings: 6
+- Warnings: 11
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| query-param-unvalidated | 0 | 6 | 0 |
+| query-param-unvalidated | 0 | 11 | 0 |
 
 ## Issues
 
@@ -24,6 +32,11 @@ Generated at: 2026-03-09T06:12:23.285Z
 | --- | --- | --- | --- |
 | WARN | query-param-unvalidated | src/app/api/agent/approval-gates/route.ts:11 | searchParams.get() used without Zod schema validation. |
 | WARN | query-param-unvalidated | src/app/api/agent/approval-gates/route.ts:31 | searchParams.get() used without Zod schema validation. |
+| WARN | query-param-unvalidated | src/app/api/agent/leases/route.ts:31 | searchParams.get() used without Zod schema validation. |
+| WARN | query-param-unvalidated | src/app/api/agent/leases/route.ts:32 | searchParams.get() used without Zod schema validation. |
+| WARN | query-param-unvalidated | src/app/api/agent/leases/route.ts:57 | searchParams.get() used without Zod schema validation. |
+| WARN | query-param-unvalidated | src/app/api/agent/leases/route.ts:65 | searchParams.get() used without Zod schema validation. |
+| WARN | query-param-unvalidated | src/app/api/agent/leases/route.ts:66 | searchParams.get() used without Zod schema validation. |
 | WARN | query-param-unvalidated | src/app/api/agent/resources/route.ts:24 | searchParams.get() used without Zod schema validation. |
 | WARN | query-param-unvalidated | src/app/api/agent/resources/route.ts:45 | searchParams.get() used without Zod schema validation. |
 | WARN | query-param-unvalidated | src/app/api/agent/resources/route.ts:46 | searchParams.get() used without Zod schema validation. |

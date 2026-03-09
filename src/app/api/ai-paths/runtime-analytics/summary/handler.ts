@@ -63,6 +63,8 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
             failed: 0,
             canceled: 0,
             deadLettered: 0,
+            blockedOnLease: 0,
+            handoffReady: 0,
             successRate: 0,
             failureRate: 0,
             deadLetterRate: 0,

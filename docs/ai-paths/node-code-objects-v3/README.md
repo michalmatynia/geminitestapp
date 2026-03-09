@@ -1,3 +1,12 @@
+---
+owner: 'AI Paths Team'
+last_reviewed: '2026-03-09'
+status: 'active'
+doc_type: 'index'
+scope: 'feature:ai-paths'
+canonical: true
+---
+
 # Node Code Objects v3 (Scaffold + Migration Docs)
 
 This folder contains migration scaffolding and generated migration docs for executable node
@@ -51,6 +60,7 @@ Generated migration documentation:
 
 - `migration-index.json` (full node migration matrix, strategy status, doc links)
 - `MIGRATION_GUIDE.md` (workflow + family coverage + node coverage table)
+- `nodes/README.md` (node-sheet hub)
 - `nodes/<nodeType>.md` (per-node migration sheet and checklist)
 
 Scaffold contracts:

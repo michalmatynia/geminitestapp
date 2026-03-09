@@ -1,3 +1,12 @@
+---
+owner: 'AI Paths Team'
+last_reviewed: '2026-03-09'
+status: 'active'
+doc_type: 'runbook'
+scope: 'feature:ai-paths'
+canonical: true
+---
+
 # Description Inference v3 Lite -> Longform Ecommerce (UI-only)
 
 ## Outcome

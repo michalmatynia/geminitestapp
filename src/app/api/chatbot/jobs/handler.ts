@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import {
+  buildContextRegistryConsumerEnvelope,
+  mergeContextRegistryResolutionBundles,
+} from '@/features/ai/ai-context-registry/context/page-context-shared';
+import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
 import { resolveBrainModelExecutionConfig } from '@/shared/lib/ai-brain/server';
 import { chatbotJobRepository } from '@/features/ai/chatbot/services/chatbot-job-repository';
 import { chatbotSessionRepository } from '@/features/ai/chatbot/services/chatbot-session-repository';
@@ -9,6 +14,7 @@ import type {
   ChatbotJobDto as ChatbotJob,
   EnqueueChatbotJobRequestDto as EnqueueJobRequest,
 } from '@/shared/contracts/chatbot';
+import { enqueueChatbotJobRequestSchema } from '@/shared/contracts/chatbot';
 import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
@@ -18,17 +24,6 @@ import { isObjectRecord } from '@/shared/utils/object-utils';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 const DEFAULT_CHATBOT_SYSTEM_PROMPT = 'You are a helpful assistant.';
-
-const chatMessageSchema = z.object({
-  role: z.enum(['user', 'assistant', 'system']),
-  content: z.string(),
-});
-
-const enqueueJobSchema = z.object({
-  sessionId: z.string().trim().min(1),
-  messages: z.array(chatMessageSchema).min(1),
-  userMessage: z.string().trim().optional(),
-}) as z.ZodSchema<EnqueueJobRequest>;
 
 export const deleteQuerySchema = z.object({
   scope: optionalTrimmedQueryString(z.enum(['terminal'])),
@@ -62,7 +57,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
 
   const result: JsonParseResult<EnqueueJobRequest> = await parseJsonBody<EnqueueJobRequest>(
     req,
-    enqueueJobSchema,
+    enqueueChatbotJobRequestSchema,
     {
       logPrefix: 'chatbot.jobs.POST',
     }
@@ -73,6 +68,21 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
   }
 
   const data: EnqueueJobRequest = result.data;
+  const resolvedRegistryBundle =
+    data.contextRegistry?.refs.length
+      ? await contextRegistryEngine.resolveRefs({
+        refs: data.contextRegistry.refs,
+        maxNodes: 24,
+        depth: 1,
+      })
+      : null;
+  const contextRegistry = buildContextRegistryConsumerEnvelope({
+    refs: data.contextRegistry?.refs,
+    resolved: mergeContextRegistryResolutionBundles(
+      resolvedRegistryBundle,
+      data.contextRegistry?.resolved ?? null
+    ),
+  });
   const session = await chatbotSessionRepository.findById(data.sessionId);
 
   if (!session) {
@@ -105,6 +115,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
       sessionId: session.id,
       model: brainConfig.modelId,
       messages: data.messages,
+      ...(contextRegistry ? { contextRegistry } : {}),
       options: {
         brainApplied: brainConfig.brainApplied,
       },

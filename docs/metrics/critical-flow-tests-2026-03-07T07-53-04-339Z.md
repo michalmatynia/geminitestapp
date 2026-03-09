@@ -1,3 +1,11 @@
+---
+owner: 'Platform Team'
+last_reviewed: '2026-03-09'
+status: 'generated'
+doc_type: 'generated'
+scope: 'generated'
+canonical: false
+---
 # Critical Flow Regression Report
 
 Generated at: 2026-03-07T07:53:04.339Z

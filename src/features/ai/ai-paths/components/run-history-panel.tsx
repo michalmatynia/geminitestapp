@@ -45,6 +45,7 @@ export function RunHistoryPanel(): React.JSX.Element {
     refreshRuns,
     openRunDetail,
     resumeRun,
+    handoffRun,
     retryRunNode,
     cancelRun,
     requeueDeadLetter,
@@ -54,6 +55,9 @@ export function RunHistoryPanel(): React.JSX.Element {
   const [secondaryRunId, setSecondaryRunId] = React.useState<string | null>(null);
   const [compareInspectorRowKey, setCompareInspectorRowKey] = React.useState<string | null>(null);
   const [compareResumeChangesOnly, setCompareResumeChangesOnly] = React.useState(false);
+  const [handoffStateByRunId, setHandoffStateByRunId] = React.useState<
+    Record<string, 'pending' | 'success'>
+  >({});
   const handleRefresh = (): void => {
     void refreshRuns().catch(() => {});
   };
@@ -62,6 +66,42 @@ export function RunHistoryPanel(): React.JSX.Element {
   };
   const handleResumeRun = (runId: string, mode: 'resume' | 'replay'): void => {
     void resumeRun(runId, mode).catch(() => {});
+  };
+  const handleHandoffRun = (runId: string): void => {
+    setHandoffStateByRunId((prev) => ({
+      ...prev,
+      [runId]: 'pending',
+    }));
+    void handoffRun(runId)
+      .then((ok: boolean) => {
+        if (!ok) {
+          setHandoffStateByRunId((prev) => {
+            const next = { ...prev };
+            delete next[runId];
+            return next;
+          });
+          return;
+        }
+        setHandoffStateByRunId((prev) => ({
+          ...prev,
+          [runId]: 'success',
+        }));
+        window.setTimeout(() => {
+          setHandoffStateByRunId((prev) => {
+            if (prev[runId] !== 'success') return prev;
+            const next = { ...prev };
+            delete next[runId];
+            return next;
+          });
+        }, 4000);
+      })
+      .catch(() => {
+        setHandoffStateByRunId((prev) => {
+          const next = { ...prev };
+          delete next[runId];
+          return next;
+        });
+      });
   };
   const handleRetryRunNode = (runId: string, nodeId: string): void => {
     void retryRunNode(runId, nodeId).catch(() => {});
@@ -95,12 +135,18 @@ export function RunHistoryPanel(): React.JSX.Element {
     if (runFilter === 'all') return resolvedRuns;
     if (runFilter === 'active') {
       return resolvedRuns.filter(
-        (run: AiPathRunRecord): boolean => run.status === 'queued' || run.status === 'running'
+        (run: AiPathRunRecord): boolean =>
+          run.status === 'queued' ||
+          run.status === 'running' ||
+          run.status === 'blocked_on_lease'
       );
     }
     if (runFilter === 'failed') {
       return resolvedRuns.filter(
-        (run: AiPathRunRecord): boolean => run.status === 'failed' || run.status === 'paused'
+        (run: AiPathRunRecord): boolean =>
+          run.status === 'failed' ||
+          run.status === 'paused' ||
+          run.status === 'handoff_ready'
       );
     }
     return resolvedRuns.filter((run: AiPathRunRecord): boolean => run.status === 'dead_lettered');
@@ -432,7 +478,9 @@ export function RunHistoryPanel(): React.JSX.Element {
                     >
                       {historyOpen ? 'Hide history' : 'History'}
                     </Button>
-                    {(run.status === 'failed' || run.status === 'paused') && (
+                    {(run.status === 'failed' ||
+                      run.status === 'paused' ||
+                      run.status === 'handoff_ready') && (
                       <Button
                         type='button'
                         className='rounded-md border px-2 py-1 text-[10px] text-amber-200 hover:bg-amber-500/10'
@@ -448,7 +496,28 @@ export function RunHistoryPanel(): React.JSX.Element {
                     >
                       Replay
                     </Button>
-                    {(run.status === 'queued' || run.status === 'running') && (
+                    {run.status === 'blocked_on_lease' && (
+                      <>
+                        <Button
+                          type='button'
+                          className='rounded-md border px-2 py-1 text-[10px] text-blue-200 hover:bg-blue-500/10'
+                          onClick={(): void => handleHandoffRun(run.id)}
+                          disabled={handoffStateByRunId[run.id] === 'pending'}
+                        >
+                          {handoffStateByRunId[run.id] === 'pending'
+                            ? 'Marking...'
+                            : 'Mark handoff-ready'}
+                        </Button>
+                        {handoffStateByRunId[run.id] === 'success' ? (
+                          <span className='text-[10px] text-blue-200'>
+                            Handoff requested. Refreshing status...
+                          </span>
+                        ) : null}
+                      </>
+                    )}
+                    {(run.status === 'queued' ||
+                      run.status === 'running' ||
+                      run.status === 'blocked_on_lease') && (
                       <Button
                         type='button'
                         className='rounded-md border px-2 py-1 text-[10px] text-rose-200 hover:bg-rose-500/10'

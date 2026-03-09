@@ -1,3 +1,11 @@
+---
+owner: "Platform Team"
+last_reviewed: "2026-03-09"
+status: "active"
+doc_type: "plan"
+scope: "cross-feature"
+canonical: true
+---
 # Step 30 Execution: Duration Readiness Gap Estimator
 
 Date: 2026-03-05

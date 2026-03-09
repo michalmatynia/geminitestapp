@@ -26,6 +26,8 @@ import prisma from '@/shared/lib/db/prisma';
 const AI_PATH_STATUSES: AiPathRunStatus[] = [
   'queued',
   'running',
+  'blocked_on_lease',
+  'handoff_ready',
   'paused',
   'completed',
   'failed',

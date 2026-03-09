@@ -1,6 +1,12 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import {
+  getMetricsMarkdownMeta,
+  isMetricsCanonicalMarkdownDoc,
+  isMetricsMarkdownDoc,
+} from './metrics-frontmatter.mjs';
+
 const root = process.cwd();
 const manifestPath = path.join(root, 'docs', 'documentation', 'structure-manifest.json');
 
@@ -13,6 +19,23 @@ function hasMarkdownExtension(fileName) {
 function readFrontmatter(content) {
   const match = content.match(frontmatterPattern);
   return match ? match[1] : null;
+}
+
+function getFrontmatterField(frontmatter, field) {
+  const match = frontmatter.match(new RegExp(`^${field}:\\s*(.+)$`, 'm'));
+  if (!match) {
+    return null;
+  }
+
+  const rawValue = match[1].trim();
+  if (
+    (rawValue.startsWith("'") && rawValue.endsWith("'")) ||
+    (rawValue.startsWith('"') && rawValue.endsWith('"'))
+  ) {
+    return rawValue.slice(1, -1);
+  }
+
+  return rawValue;
 }
 
 function countLines(content) {
@@ -37,6 +60,32 @@ async function listRootDocs() {
     .sort((a, b) => a.localeCompare(b));
 }
 
+async function listTopLevelDocDirectories() {
+  const docsRoot = path.join(root, 'docs');
+  const entries = await fs.readdir(docsRoot, { withFileTypes: true });
+  return entries
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort((a, b) => a.localeCompare(b));
+}
+
+async function listDocDirectoriesRecursive(relativePath) {
+  const directories = [];
+  const entries = await fs.readdir(path.join(root, relativePath), { withFileTypes: true });
+
+  for (const entry of entries) {
+    if (!entry.isDirectory()) {
+      continue;
+    }
+
+    const childRelativePath = path.join(relativePath, entry.name);
+    directories.push(childRelativePath);
+    directories.push(...(await listDocDirectoriesRecursive(childRelativePath)));
+  }
+
+  return directories.sort((a, b) => a.localeCompare(b));
+}
+
 async function fileExists(relativePath) {
   try {
     await fs.access(path.join(root, relativePath));
@@ -44,6 +93,72 @@ async function fileExists(relativePath) {
   } catch {
     return false;
   }
+}
+
+async function directoryContainsMarkdown(relativePath) {
+  const entries = await fs.readdir(path.join(root, relativePath), { withFileTypes: true });
+
+  for (const entry of entries) {
+    const childRelativePath = path.join(relativePath, entry.name);
+
+    if (entry.isFile() && hasMarkdownExtension(entry.name)) {
+      return true;
+    }
+
+    if (entry.isDirectory() && (await directoryContainsMarkdown(childRelativePath))) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+async function directoryHasHub(relativePath) {
+  return (
+    (await fileExists(path.join(relativePath, 'README.md'))) ||
+    (await fileExists(path.join(relativePath, 'index.md')))
+  );
+}
+
+async function getDirectoryHubPath(relativePath) {
+  for (const candidate of ['README.md', 'index.md']) {
+    const candidatePath = path.join(relativePath, candidate);
+    if (await fileExists(candidatePath)) {
+      return candidatePath;
+    }
+  }
+
+  return null;
+}
+
+function getDirectoryParent(relativePath) {
+  const parentPath = path.dirname(relativePath).replace(/\\/g, '/');
+  return parentPath === '.' ? null : parentPath;
+}
+
+function buildDirectoryReferenceTokens(relativePath, parentHubPath) {
+  const normalizedRelativePath = relativePath.replace(/\\/g, '/');
+  const normalizedParentHubPath = parentHubPath.replace(/\\/g, '/');
+  const parentDirectory = path.posix.dirname(normalizedParentHubPath);
+  const relativeFromParent = path.posix.relative(parentDirectory, normalizedRelativePath);
+  const absoluteVariants = [
+    normalizedRelativePath,
+    `${normalizedRelativePath}/`,
+    `${normalizedRelativePath}/README.md`,
+    `${normalizedRelativePath}/index.md`,
+  ];
+  const relativeVariants = [
+    relativeFromParent,
+    `${relativeFromParent}/`,
+    `${relativeFromParent}/README.md`,
+    `${relativeFromParent}/index.md`,
+    `./${relativeFromParent}`,
+    `./${relativeFromParent}/`,
+    `./${relativeFromParent}/README.md`,
+    `./${relativeFromParent}/index.md`,
+  ];
+
+  return [...new Set([...absoluteVariants, ...relativeVariants])];
 }
 
 async function listSupersededRootDocs(rootDocs) {
@@ -115,6 +230,64 @@ async function checkCanonicalFrontmatter(relativePath, requiredFields) {
   return issues;
 }
 
+async function checkMetricsMarkdownDoc(relativePath, requiredCanonicalDocSet, requiredFields) {
+  if (!isMetricsMarkdownDoc(relativePath)) {
+    return [];
+  }
+
+  const fullPath = path.join(root, relativePath);
+  const content = await fs.readFile(fullPath, 'utf8');
+  const frontmatter = readFrontmatter(content);
+  const issues = [];
+  const expected = getMetricsMarkdownMeta(relativePath, '1970-01-01');
+
+  if (!frontmatter) {
+    issues.push(`${relativePath}: metrics markdown docs must declare YAML frontmatter`);
+  } else {
+    for (const field of requiredFields) {
+      if (getFrontmatterField(frontmatter, field) === null) {
+        issues.push(`${relativePath}: missing frontmatter field "${field}"`);
+      }
+    }
+
+    const lastReviewed = getFrontmatterField(frontmatter, 'last_reviewed');
+    if (lastReviewed && !/^\d{4}-\d{2}-\d{2}$/.test(lastReviewed)) {
+      issues.push(`${relativePath}: last_reviewed must use YYYY-MM-DD`);
+    }
+
+    const expectedFields = {
+      owner: expected.owner,
+      status: expected.status,
+      doc_type: expected.doc_type,
+      scope: expected.scope,
+      canonical: expected.canonical ? 'true' : 'false',
+    };
+
+    for (const [field, expectedValue] of Object.entries(expectedFields)) {
+      const actualValue = getFrontmatterField(frontmatter, field);
+      if (actualValue !== null && actualValue !== expectedValue) {
+        issues.push(
+          `${relativePath}: metrics doc field "${field}" must be ${expectedValue}`
+        );
+      }
+    }
+  }
+
+  if (isMetricsCanonicalMarkdownDoc(relativePath)) {
+    if (!requiredCanonicalDocSet.has(relativePath)) {
+      issues.push(
+        `${relativePath}: canonical generated metrics doc must be listed in requiredCanonicalDocs`
+      );
+    }
+  } else if (requiredCanonicalDocSet.has(relativePath)) {
+    issues.push(
+      `${relativePath}: historical generated metrics doc must not be listed in requiredCanonicalDocs`
+    );
+  }
+
+  return issues;
+}
+
 async function checkSupersededRootDoc(relativePath, maxLines) {
   const fullPath = path.join(root, relativePath);
   const content = await fs.readFile(fullPath, 'utf8');
@@ -172,6 +345,154 @@ async function checkCompatibilityMirrorPair(pair) {
   return issues;
 }
 
+async function listDirectMarkdownFiles(relativePath) {
+  const entries = await fs.readdir(path.join(root, relativePath), { withFileTypes: true });
+  return entries
+    .filter((entry) => entry.isFile() && hasMarkdownExtension(entry.name))
+    .map((entry) => entry.name)
+    .sort((a, b) => a.localeCompare(b));
+}
+
+async function listDirectNonMarkdownFiles(relativePath) {
+  const entries = await fs.readdir(path.join(root, relativePath), { withFileTypes: true });
+  return entries
+    .filter((entry) => entry.isFile() && !hasMarkdownExtension(entry.name))
+    .map((entry) => entry.name)
+    .sort((a, b) => a.localeCompare(b));
+}
+
+async function checkDirectoryIndexPolicy(policy) {
+  const issues = [];
+  const hubPath = await getDirectoryHubPath(policy.path);
+
+  if (!hubPath) {
+    issues.push(`${policy.path}: directory index policy requires a README.md or index.md hub`);
+    return issues;
+  }
+
+  const hubFileName = path.basename(hubPath);
+  const hubContent = await fs.readFile(path.join(root, hubPath), 'utf8');
+
+  if (policy.mode === 'complete_direct_files') {
+    const directMarkdownFiles = await listDirectMarkdownFiles(policy.path);
+    for (const fileName of directMarkdownFiles) {
+      if (fileName === hubFileName) {
+        continue;
+      }
+
+      if (!hubContent.includes(fileName)) {
+        issues.push(
+          `${hubPath}: complete index policy requires listing direct markdown file ${fileName}`
+        );
+      }
+    }
+
+    return issues;
+  }
+
+  if (policy.mode === 'curated_references') {
+    if (!Array.isArray(policy.requiredReferences) || policy.requiredReferences.length === 0) {
+      issues.push(`${policy.path}: curated index policy requires non-empty requiredReferences`);
+      return issues;
+    }
+
+    for (const reference of policy.requiredReferences) {
+      if (!hubContent.includes(reference)) {
+        issues.push(
+          `${hubPath}: curated index policy requires reference to ${reference}`
+        );
+      }
+    }
+
+    return issues;
+  }
+
+  issues.push(`${policy.path}: unsupported directory index policy mode "${policy.mode}"`);
+  return issues;
+}
+
+async function checkArtifactDirectoryPolicy(policy) {
+  const issues = [];
+
+  if (!(await fileExists(policy.path))) {
+    issues.push(`${policy.path}: artifact directory policy path is missing`);
+    return issues;
+  }
+
+  const directMarkdownFiles = await listDirectMarkdownFiles(policy.path);
+  const directNonMarkdownFiles = await listDirectNonMarkdownFiles(policy.path);
+
+  if (directMarkdownFiles.length > 0) {
+    issues.push(
+      `${policy.path}: artifact directory policy expects a non-markdown bucket; add a hub or remove the artifact policy`
+    );
+  }
+
+  if (directNonMarkdownFiles.length === 0) {
+    issues.push(`${policy.path}: artifact directory policy expects direct non-markdown files`);
+  }
+
+  if (!policy.parentHub) {
+    issues.push(`${policy.path}: artifact directory policy requires parentHub`);
+    return issues;
+  }
+
+  if (!(await fileExists(policy.parentHub))) {
+    issues.push(`${policy.path}: parent hub ${policy.parentHub} is missing`);
+    return issues;
+  }
+
+  if (!Array.isArray(policy.requiredReferences) || policy.requiredReferences.length === 0) {
+    issues.push(`${policy.path}: artifact directory policy requires non-empty requiredReferences`);
+    return issues;
+  }
+
+  const parentHubContent = await fs.readFile(path.join(root, policy.parentHub), 'utf8');
+  for (const reference of policy.requiredReferences) {
+    if (!parentHubContent.includes(reference)) {
+      issues.push(
+        `${policy.parentHub}: artifact directory policy for ${policy.path} requires reference to ${reference}`
+      );
+    }
+  }
+
+  return issues;
+}
+
+async function checkDirectoryDiscoverability(relativePath) {
+  const issues = [];
+  const hubPath = await getDirectoryHubPath(relativePath);
+
+  if (!hubPath) {
+    return issues;
+  }
+
+  const parentDirectory = getDirectoryParent(relativePath);
+  if (!parentDirectory) {
+    return issues;
+  }
+
+  const parentHubPath =
+    parentDirectory === 'docs'
+      ? 'docs/README.md'
+      : await getDirectoryHubPath(parentDirectory);
+
+  if (!parentHubPath) {
+    return issues;
+  }
+
+  const parentHubContent = await fs.readFile(path.join(root, parentHubPath), 'utf8');
+  const referenceTokens = buildDirectoryReferenceTokens(relativePath, parentHubPath);
+
+  if (!referenceTokens.some((token) => parentHubContent.includes(token))) {
+    issues.push(
+      `${parentHubPath}: parent hub must reference child docs directory ${relativePath}`
+    );
+  }
+
+  return issues;
+}
+
 async function checkReferenceTargetForRootStubReferences(relativePath, rootStubPaths) {
   const content = await fs.readFile(path.join(root, relativePath), 'utf8');
   const issues = [];
@@ -195,8 +516,25 @@ async function run() {
   const issues = [];
 
   const rootDocs = await listRootDocs();
+  const docsDirectories = await listDocDirectoriesRecursive('docs');
   const allowlist = new Set(manifest.rootAllowlist);
   const supersededRootDocs = await listSupersededRootDocs(rootDocs);
+  const markdownDirectoryHubExemptions = new Set(
+    manifest.markdownDirectoryHubExemptions ?? []
+  );
+  const requiredCanonicalDocs = manifest.requiredCanonicalDocs ?? [];
+  const requiredCanonicalDocSet = new Set(requiredCanonicalDocs);
+  const parentHubReferenceExemptions = new Set(
+    manifest.parentHubReferenceExemptions ?? []
+  );
+  const artifactDirectoryPolicies = manifest.artifactDirectoryPolicies ?? [];
+  const artifactDirectoryPolicyMap = new Map(
+    artifactDirectoryPolicies.map((policy) => [policy.path, policy])
+  );
+  const directoryIndexPolicies = manifest.directoryIndexPolicies ?? [];
+  const directoryIndexPolicyMap = new Map(
+    directoryIndexPolicies.map((policy) => [policy.path, policy])
+  );
 
   for (const fileName of rootDocs) {
     if (!allowlist.has(fileName)) {
@@ -210,6 +548,108 @@ async function run() {
     }
   }
 
+  const allMarkdownDocs = rootDocs.map((fileName) => path.join('docs', fileName));
+  for (const relativePath of docsDirectories) {
+    const directMarkdownFiles = await listDirectMarkdownFiles(relativePath);
+    allMarkdownDocs.push(
+      ...directMarkdownFiles.map((fileName) => path.join(relativePath, fileName))
+    );
+  }
+
+  for (const relativePath of allMarkdownDocs) {
+    const content = await fs.readFile(path.join(root, relativePath), 'utf8');
+    const frontmatter = readFrontmatter(content);
+
+    if (isMetricsMarkdownDoc(relativePath)) {
+      continue;
+    }
+
+    if (frontmatter && /^canonical:\s*true$/m.test(frontmatter)) {
+      if (!requiredCanonicalDocSet.has(relativePath)) {
+        issues.push(
+          `${relativePath}: canonical doc must be listed in requiredCanonicalDocs`
+        );
+      }
+    }
+  }
+
+  for (const relativePath of docsDirectories) {
+    if (markdownDirectoryHubExemptions.has(relativePath)) {
+      continue;
+    }
+
+    if (!(await directoryContainsMarkdown(relativePath))) {
+      continue;
+    }
+
+    if (!(await directoryHasHub(relativePath))) {
+      issues.push(
+        `${relativePath}: docs directory with markdown content must provide README.md or index.md`
+      );
+    }
+  }
+
+  for (const relativePath of docsDirectories) {
+    const directMarkdownFiles = await listDirectMarkdownFiles(relativePath);
+    const directNonMarkdownFiles = await listDirectNonMarkdownFiles(relativePath);
+
+    if (directMarkdownFiles.length === 0 && directNonMarkdownFiles.length > 0) {
+      if (!artifactDirectoryPolicyMap.has(relativePath)) {
+        issues.push(
+          `${relativePath}: artifact-only docs directory must declare an artifact directory policy or add a README.md/index.md hub`
+        );
+      }
+    }
+  }
+
+  for (const relativePath of docsDirectories) {
+    if (markdownDirectoryHubExemptions.has(relativePath)) {
+      continue;
+    }
+
+    if (!(await directoryContainsMarkdown(relativePath))) {
+      continue;
+    }
+
+    if (!directoryIndexPolicyMap.has(relativePath)) {
+      issues.push(
+        `${relativePath}: docs directory with markdown content must declare a directory index policy in the structure manifest`
+      );
+    }
+  }
+
+  for (const relativePath of docsDirectories) {
+    if (markdownDirectoryHubExemptions.has(relativePath)) {
+      continue;
+    }
+
+    if (parentHubReferenceExemptions.has(relativePath)) {
+      continue;
+    }
+
+    if (!(await directoryContainsMarkdown(relativePath))) {
+      continue;
+    }
+
+    const discoverabilityIssues = await checkDirectoryDiscoverability(relativePath);
+    issues.push(...discoverabilityIssues);
+  }
+
+  for (const policy of directoryIndexPolicies) {
+    if (!(await fileExists(policy.path))) {
+      issues.push(`${policy.path}: directory index policy path is missing`);
+      continue;
+    }
+
+    const policyIssues = await checkDirectoryIndexPolicy(policy);
+    issues.push(...policyIssues);
+  }
+
+  for (const policy of artifactDirectoryPolicies) {
+    const policyIssues = await checkArtifactDirectoryPolicy(policy);
+    issues.push(...policyIssues);
+  }
+
   const maxSupersededRootDocLines = manifest.maxSupersededRootDocLines ?? 25;
   for (const fileName of rootDocs) {
     const docIssues = await checkSupersededRootDoc(
@@ -219,10 +659,23 @@ async function run() {
     issues.push(...docIssues);
   }
 
-  for (const relativePath of manifest.requiredCanonicalDocs) {
+  for (const relativePath of allMarkdownDocs) {
+    const metricsIssues = await checkMetricsMarkdownDoc(
+      relativePath,
+      requiredCanonicalDocSet,
+      manifest.requiredFrontmatterFields
+    );
+    issues.push(...metricsIssues);
+  }
+
+  for (const relativePath of requiredCanonicalDocs) {
     const exists = await fileExists(relativePath);
     if (!exists) {
       issues.push(`${relativePath}: required canonical doc is missing`);
+      continue;
+    }
+
+    if (isMetricsMarkdownDoc(relativePath)) {
       continue;
     }
 
@@ -239,8 +692,8 @@ async function run() {
   }
 
   const referenceTargets = [
-    ...new Set([
-      ...manifest.requiredCanonicalDocs,
+      ...new Set([
+      ...requiredCanonicalDocs,
       ...(manifest.additionalReferenceCheckTargets ?? []),
     ]),
   ];
@@ -273,7 +726,7 @@ async function run() {
   }
 
   console.log(
-    `Docs structure check passed for ${rootDocs.length} root docs and ${manifest.requiredCanonicalDocs.length} canonical docs.`
+    `Docs structure check passed for ${rootDocs.length} root docs and ${requiredCanonicalDocs.length} canonical docs.`
   );
 }
 

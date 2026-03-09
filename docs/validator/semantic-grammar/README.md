@@ -1,3 +1,12 @@
+---
+owner: 'Products / Platform Team'
+last_reviewed: '2026-03-09'
+status: 'active'
+doc_type: 'index'
+scope: 'generated'
+canonical: true
+---
+
 # Validator Semantic Grammar
 
 This folder centralizes machine-readable documentation for validator pattern import and sequencing.

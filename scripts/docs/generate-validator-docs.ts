@@ -6,6 +6,7 @@ import {
   VALIDATOR_UI_DOCS,
 } from '../../src/features/products/components/settings/validator-settings/validator-docs-catalog';
 
+import { writeManagedGeneratedDocSync } from './generated-doc-frontmatter.mjs';
 import { collectValidatorExportedCallables } from './validator-docs-utils';
 
 const workspaceRoot = process.cwd();
@@ -117,11 +118,31 @@ const examplesLines = [
 ];
 
 fs.mkdirSync(docsDir, { recursive: true });
-fs.writeFileSync(path.join(docsDir, 'function-reference.md'), functionReferenceLines.join('\n'));
-fs.writeFileSync(path.join(docsDir, 'tooltips.md'), uiTooltipLines.join('\n'));
-fs.writeFileSync(path.join(docsDir, 'function-inventory.md'), inventoryLines.join('\n'));
-fs.writeFileSync(path.join(docsDir, 'architecture.md'), architectureLines.join('\n'));
-fs.writeFileSync(path.join(docsDir, 'examples.md'), examplesLines.join('\n'));
+writeManagedGeneratedDocSync({
+  root: workspaceRoot,
+  targetPath: path.join(docsDir, 'function-reference.md'),
+  content: functionReferenceLines.join('\n'),
+});
+writeManagedGeneratedDocSync({
+  root: workspaceRoot,
+  targetPath: path.join(docsDir, 'tooltips.md'),
+  content: uiTooltipLines.join('\n'),
+});
+writeManagedGeneratedDocSync({
+  root: workspaceRoot,
+  targetPath: path.join(docsDir, 'function-inventory.md'),
+  content: inventoryLines.join('\n'),
+});
+writeManagedGeneratedDocSync({
+  root: workspaceRoot,
+  targetPath: path.join(docsDir, 'architecture.md'),
+  content: architectureLines.join('\n'),
+});
+writeManagedGeneratedDocSync({
+  root: workspaceRoot,
+  targetPath: path.join(docsDir, 'examples.md'),
+  content: examplesLines.join('\n'),
+});
 
 const readmeLines = [
   '# Validator Docs',
@@ -141,6 +162,10 @@ const readmeLines = [
   '```',
   '',
 ];
-fs.writeFileSync(path.join(docsDir, 'README.md'), readmeLines.join('\n'));
+writeManagedGeneratedDocSync({
+  root: workspaceRoot,
+  targetPath: path.join(docsDir, 'README.md'),
+  content: readmeLines.join('\n'),
+});
 
 console.log('Validator docs generated.');

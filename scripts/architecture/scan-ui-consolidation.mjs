@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { buildScanOutput } from './lib/scan-output.mjs';
+import { writeManagedGeneratedDoc } from '../docs/generated-doc-frontmatter.mjs';
 
 const args = new Set(process.argv.slice(2));
 const root = process.cwd();
@@ -447,7 +448,7 @@ const analyze = async () => {
   }
 
   const duplicateNameClusters = [...byName.entries()]
-    .filter(([_name, group]) => group.length >= 2)
+    .filter(([, group]) => group.length >= 2)
     .map(([name, group]) => ({
       method: 'duplicate_name',
       clusterKey: `name:${name}`,
@@ -466,7 +467,7 @@ const analyze = async () => {
   }
 
   const propSignatureClusters = [...propByKey.entries()]
-    .filter(([_key, group]) => group.length >= 2)
+    .filter(([, group]) => group.length >= 2)
     .map(([key, group]) => {
       const [family] = key.split('|');
       return {
@@ -788,17 +789,22 @@ const buildInventoryCsv = (candidates) => {
 
 const run = async () => {
   const result = await analyze();
+  const stamp = result.summary.generatedAt.replace(/[:.]/g, '-');
+  const jsonPath = path.join(outDir, 'scan-latest.json');
+  const mdPath = path.join(outDir, 'scan-latest.md');
+  const csvPath = path.join(outDir, 'inventory-latest.csv');
+  const historicalJsonPath = path.join(outDir, `scan-${stamp}.json`);
+
   if (!NO_WRITE) {
     await fs.mkdir(outDir, { recursive: true });
 
-    const stamp = result.summary.generatedAt.replace(/[:.]/g, '-');
-    const jsonPath = path.join(outDir, 'scan-latest.json');
-    const mdPath = path.join(outDir, 'scan-latest.md');
-    const csvPath = path.join(outDir, 'inventory-latest.csv');
-    const historicalJsonPath = path.join(outDir, `scan-${stamp}.json`);
-
     await fs.writeFile(jsonPath, `${JSON.stringify(result, null, 2)}\n`, 'utf8');
-    await fs.writeFile(mdPath, buildMarkdown(result), 'utf8');
+    await writeManagedGeneratedDoc({
+      root,
+      targetPath: mdPath,
+      content: buildMarkdown(result),
+      reviewDate: result.summary.generatedAt.slice(0, 10),
+    });
     await fs.writeFile(csvPath, buildInventoryCsv(result.candidates), 'utf8');
     if (!HISTORY_DISABLED) {
       await fs.writeFile(historicalJsonPath, `${JSON.stringify(result, null, 2)}\n`, 'utf8');
@@ -825,6 +831,18 @@ const run = async () => {
             candidates: result.candidates,
             opportunities: result.opportunities,
             clusterDiagnostics: result.clusterDiagnostics,
+          },
+          paths: NO_WRITE
+            ? null
+            : {
+              latestJson: toPosix(path.relative(root, jsonPath)),
+              latestMarkdown: toPosix(path.relative(root, mdPath)),
+              latestInventoryCsv: toPosix(path.relative(root, csvPath)),
+              historyJson: HISTORY_DISABLED ? null : toPosix(path.relative(root, historicalJsonPath)),
+            },
+          filters: {
+            historyDisabled: HISTORY_DISABLED,
+            noWrite: NO_WRITE,
           },
           notes: ['ui consolidation scan result'],
         }),

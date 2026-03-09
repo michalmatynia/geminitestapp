@@ -2,6 +2,7 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
+import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
 import { type VectorShape, type VectorToolMode } from '@/shared/lib/vector-drawing';
 import { api } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
@@ -63,6 +64,7 @@ const MaskingActionsContext = createContext<MaskingActions | null>(null);
 
 export function MaskingProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const { toast } = useToast();
+  const contextRegistry = useOptionalContextRegistryPageEnvelope();
   const { projectId } = useProjectsState();
   const { workingSlot, selectedSlot } = useSlotsState();
 
@@ -323,7 +325,11 @@ export function MaskingProvider({ children }: { children: React.ReactNode }): Re
         .post<{
           polygon?: Array<{ x: number; y: number }>;
           bbox?: { x: number; y: number; w: number; h: number };
-        }>('/api/image-studio/mask/ai', { imagePath: filepath, mode: apiMode })
+        }>('/api/image-studio/mask/ai', {
+          imagePath: filepath,
+          mode: apiMode,
+          ...(contextRegistry ? { contextRegistry } : {}),
+        })
         .then((result) => {
           if (apiMode === 'polygon' && result.polygon && result.polygon.length >= 3) {
             const newShape: VectorShape = {
@@ -362,6 +368,7 @@ export function MaskingProvider({ children }: { children: React.ReactNode }): Re
       setMaskShapes,
       setActiveMaskId,
       toast,
+      contextRegistry,
       maskThresholdSensitivity,
       maskEdgeSensitivity,
     ]

@@ -39,6 +39,7 @@ import {
   type ProductStudioSequenceReadiness,
   type ProductWithImages,
 } from '@/shared/contracts/products';
+import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import { badRequestError, operationFailedError } from '@/shared/errors/app-error';
 
 import {
@@ -231,6 +232,7 @@ export async function sendProductImageToStudio(params: {
   projectId?: string | null | undefined;
   rotateBeforeSendDeg?: 90 | null | undefined;
   sequenceGenerationMode?: ProductStudioSequenceGenerationMode | null | undefined;
+  contextRegistry?: ContextRegistryConsumerEnvelope | null | undefined;
 }): Promise<ProductStudioSendResult> {
   const startedAtMs = Date.now();
   let importMs = 0;
@@ -397,6 +399,7 @@ export async function sendProductImageToStudio(params: {
         referenceSlotIds: [],
         studioSettings,
         steps: stepsForSequenceRun,
+        contextRegistry: params.contextRegistry ?? null,
         metadata: {
           source: 'product-studio',
           productId: resolved.product.id,
@@ -525,6 +528,7 @@ export async function sendProductImageToStudio(params: {
     },
     prompt: effectivePrompt,
     studioSettings,
+    ...(params.contextRegistry ? { contextRegistry: params.contextRegistry } : {}),
   };
 
   const parsedRequest = imageStudioRunRequestSchema.safeParse(runRequestCandidate);

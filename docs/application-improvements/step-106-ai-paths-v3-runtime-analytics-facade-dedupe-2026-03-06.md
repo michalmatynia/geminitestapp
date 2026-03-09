@@ -1,3 +1,11 @@
+---
+owner: "Platform Team"
+last_reviewed: "2026-03-09"
+status: "active"
+doc_type: "plan"
+scope: "cross-feature"
+canonical: true
+---
 # Step 106 Execution: v3 Runtime-Analytics Service Facade De-Dupe
 
 Date: 2026-03-06

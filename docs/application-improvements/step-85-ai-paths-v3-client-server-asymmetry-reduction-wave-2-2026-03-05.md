@@ -1,3 +1,11 @@
+---
+owner: "Platform Team"
+last_reviewed: "2026-03-09"
+status: "active"
+doc_type: "plan"
+scope: "cross-feature"
+canonical: true
+---
 # Step 85 Execution: v3 Client/Server Asymmetry Reduction (Wave 2)
 
 Date: 2026-03-05

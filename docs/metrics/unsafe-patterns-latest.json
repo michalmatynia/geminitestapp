@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-03-09T06:12:22.550Z",
+  "generatedAt": "2026-03-09T07:50:50.415Z",
   "status": "passed",
   "summary": {
-    "total": 1,
+    "total": 2,
     "errorCount": 0,
     "warningCount": 0,
-    "infoCount": 1,
+    "infoCount": 2,
     "status": "passed",
-    "fileCount": 4473
+    "fileCount": 4483
   },
   "scope": {
     "root": "src",
@@ -18,12 +18,22 @@
     "doubleAssertionCount": 0,
     "anyCount": 0,
     "eslintDisableCount": 0,
-    "nonNullAssertionCount": 1,
+    "nonNullAssertionCount": 2,
     "tsIgnoreCount": 0,
     "tsExpectErrorCount": 0
   },
   "eslintDisabledRules": {},
   "issues": [
+    {
+      "severity": "info",
+      "ruleId": "non-null-assertion",
+      "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
+      "file": "src/app/api/ai-paths/runs/enqueue/handler.ts",
+      "line": 166,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
     {
       "severity": "info",
       "ruleId": "non-null-assertion",
@@ -40,8 +50,8 @@
       "ruleId": "non-null-assertion",
       "errorCount": 0,
       "warningCount": 0,
-      "infoCount": 1
+      "infoCount": 2
     }
   ],
-  "durationMs": 1111
+  "durationMs": 828
 }

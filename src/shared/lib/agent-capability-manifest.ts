@@ -25,18 +25,22 @@ export const agentCapabilityManifest = AgentCapabilityManifestSchema.parse({
       resourceId: 'testing.playwright.runtime-broker',
       name: 'Playwright runtime broker',
       summary:
-        'Reusable browser and runtime instances brokered for Playwright suite execution.',
-      mode: 'exclusive',
+        'Broker-managed Playwright runtimes partitioned by leaseKey and exposed through the shared lease discovery API.',
+      mode: 'partitioned',
       requiresLease: true,
+      scopeRequired: true,
+      scopeDescription:
+        'Use the broker leaseKey to identify a specific Playwright runtime partition.',
       status: 'available',
       ownerAgentEnvKeys: ['AI_AGENT_ID', 'CODEX_AGENT_ID', 'AGENT_ID'],
       heartbeatMs: 30000,
       staleAfterMs: 120000,
       recovery:
-        'Brokered runtimes should be reclaimed only after lease expiry or explicit release.',
+        'Brokered runtimes should be reclaimed only after lease expiry, explicit stop, or broker-side cleanup.',
       entrypoints: [
         'scripts/testing/lib/runtime-broker.mjs',
         'scripts/testing/run-playwright-suite.mjs',
+        'src/app/api/agent/leases/route.ts',
       ],
     },
     {
@@ -44,14 +48,17 @@ export const agentCapabilityManifest = AgentCapabilityManifestSchema.parse({
       resourceId: 'integrations.base-import.run',
       name: 'Base import run lease',
       summary:
-        'Feature-level lease protecting import execution, retry ownership, and side-effect sequencing.',
-      mode: 'exclusive',
+        'Base import ownership is partitioned by runId and coordinated through the shared lease mutation path.',
+      mode: 'partitioned',
       requiresLease: true,
+      scopeRequired: true,
+      scopeDescription: 'Use the base import runId as the lease scope.',
       status: 'available',
       ownerAgentEnvKeys: ['AI_AGENT_ID', 'CODEX_AGENT_ID', 'AGENT_ID'],
       recovery:
         'Only the active owner or lease-recovery workflow should take over an import run.',
       entrypoints: [
+        'src/features/integrations/services/imports/base-import-run-repository.ts',
         'src/features/integrations/services/imports/base-import-service.ts',
       ],
     },
@@ -63,13 +70,37 @@ export const agentCapabilityManifest = AgentCapabilityManifestSchema.parse({
         'Run queue and checkpoint surface for AI Paths orchestration, resumability, and agent handoff.',
       mode: 'append-only',
       requiresLease: false,
+      scopeRequired: false,
       status: 'available',
       ownerAgentEnvKeys: ['AI_AGENT_ID', 'CODEX_AGENT_ID', 'AGENT_ID'],
       recovery:
         'Resume from the latest durable checkpoint and event boundary instead of rewriting run history.',
       entrypoints: [
         'src/shared/contracts/ai-paths.ts',
+        'src/shared/contracts/ai-paths-runtime.ts',
         'src/shared/contracts/agent-runtime.ts',
+      ],
+    },
+    {
+      resourceType: 'workflow',
+      resourceId: 'ai-paths.run.execution',
+      name: 'AI Paths run execution lease',
+      summary:
+        'AI Paths execution ownership is partitioned by runId and claimed through the shared lease service before queue workers process a run.',
+      mode: 'partitioned',
+      requiresLease: true,
+      scopeRequired: true,
+      scopeDescription: 'Use the AI Paths runId as the execution lease scope.',
+      status: 'available',
+      ownerAgentEnvKeys: ['AI_AGENT_ID', 'CODEX_AGENT_ID', 'AGENT_ID'],
+      heartbeatMs: 30000,
+      staleAfterMs: 300000,
+      recovery:
+        'If a worker cannot claim execution ownership, transition the run to blocked_on_lease and hand off instead of racing the active owner.',
+      entrypoints: [
+        'src/features/ai/ai-paths/workers/ai-path-run-queue/queue.ts',
+        'src/features/ai/ai-paths/services/path-run-management-service.ts',
+        'src/app/api/agent/leases/route.ts',
       ],
     },
     {
@@ -80,6 +111,7 @@ export const agentCapabilityManifest = AgentCapabilityManifestSchema.parse({
         'Repository mutations should be additive or ownership-scoped so multiple agents can progress concurrently without destructive rewrites.',
       mode: 'partitioned',
       requiresLease: false,
+      scopeRequired: false,
       status: 'available',
       recovery:
         'When a mutation conflicts with active ownership, emit a handoff or wait state rather than forcing the write.',
@@ -154,7 +186,7 @@ export const agentCapabilityManifest = AgentCapabilityManifestSchema.parse({
       id: 'shared-lease-service',
       name: 'Shared lease service',
       summary:
-        'Agents can inspect and mutate lease ownership for lease-aware resources through a common HTTP and library surface.',
+        'Agents can inspect and mutate scoped lease ownership through a common API, with direct base-import integration and broker-backed Playwright discovery.',
       surface: 'api',
       maturity: 'partial',
       effects: ['observe', 'safe_write', 'leased_mutation'],
@@ -163,21 +195,24 @@ export const agentCapabilityManifest = AgentCapabilityManifestSchema.parse({
       entrypoints: [
         'src/app/api/agent/leases/route.ts',
         'src/shared/lib/agent-lease-service.ts',
+        'src/shared/contracts/agent-leases.ts',
       ],
       resources: [
         'testing.playwright.runtime-broker',
         'integrations.base-import.run',
+        'ai-paths.run.execution',
       ],
       concurrencyNotes: [
-        'The current service is process-local until existing lease-aware implementations are migrated onto it.',
-        'Use claim, renew, and release calls instead of inventing feature-local lease mutations in new code.',
+        'Provide scopeId for partitioned resources such as broker leaseKey, base import runId, and AI Paths runId.',
+        'Base import leases are mutated through the shared service; Playwright broker state is currently exposed through a broker-file adapter.',
+        'AI Paths queue workers claim ai-paths.run.execution before processing and expose lease contention through blocked_on_lease.',
       ],
     },
     {
       id: 'playwright-suite-execution',
       name: 'Playwright suite execution',
       summary:
-        'Agents can lease reusable browser runtimes and execute Playwright suites through the brokered testing path.',
+        'Agents can discover active brokered Playwright runtime partitions and execute suites through the brokered testing path.',
       surface: 'script',
       maturity: 'available',
       effects: ['observe', 'leased_mutation'],
@@ -186,36 +221,39 @@ export const agentCapabilityManifest = AgentCapabilityManifestSchema.parse({
       entrypoints: [
         'scripts/testing/lib/runtime-broker.mjs',
         'scripts/testing/run-playwright-suite.mjs',
+        'src/app/api/agent/leases/route.ts',
       ],
       resources: ['testing.playwright.runtime-broker'],
       concurrencyNotes: [
-        'Acquire the brokered runtime instead of spawning uncoordinated browser state.',
-        'Release or let the broker recover stale ownership before a second agent reuses the runtime.',
+        'Inspect active broker scopes through GET /api/agent/leases?resourceId=testing.playwright.runtime-broker.',
+        'Treat each broker leaseKey as its own runtime partition.',
       ],
     },
     {
       id: 'base-import-run-leasing',
       name: 'Base import run leasing',
       summary:
-        'Import execution already uses lease-aware ownership so one active writer controls retries and side effects.',
+        'Base import execution now uses the shared lease service for live ownership while keeping persisted run lock fields synchronized.',
       surface: 'service',
       maturity: 'available',
       effects: ['observe', 'safe_write', 'leased_mutation'],
       forwardOnly: true,
       approvalGateIds: [],
       entrypoints: [
+        'src/features/integrations/services/imports/base-import-run-repository.ts',
         'src/features/integrations/services/imports/base-import-service.ts',
       ],
       resources: ['integrations.base-import.run'],
       concurrencyNotes: [
-        'Treat import retries as ownership transfer, not concurrent writers.',
+        'Use scopeId=runId when claiming, renewing, or releasing a base import run lease.',
+        'Shared lease mutations and persisted run lock fields are kept aligned so existing run views still reflect ownership.',
       ],
     },
     {
       id: 'ai-paths-run-orchestration',
       name: 'AI Paths run orchestration',
       summary:
-        'AI Paths already has queue, runtime, and checkpoint contracts that can anchor resumable concurrent runs.',
+        'AI Paths contracts now include lease-blocked and handoff-ready run states alongside existing queue, runtime, and checkpoint surfaces.',
       surface: 'service',
       maturity: 'partial',
       effects: ['observe', 'propose', 'safe_write'],
@@ -223,12 +261,21 @@ export const agentCapabilityManifest = AgentCapabilityManifestSchema.parse({
       approvalGateIds: ['destructive-mutation', 'production-impact'],
       entrypoints: [
         'src/shared/contracts/ai-paths.ts',
+        'src/shared/contracts/ai-paths-runtime.ts',
         'src/shared/contracts/agent-runtime.ts',
+        'src/features/ai/ai-paths/workers/ai-path-run-queue/queue.ts',
+        'src/app/api/ai-paths/runs/[runId]/handoff/handler.ts',
+        'src/features/ai/ai-paths/components/run-history-panel.tsx',
+        'src/features/ai/ai-paths/components/run-detail-dialog.tsx',
+        'src/features/ai/ai-paths/components/job-queue-run-card.tsx',
+        'src/features/ai/ai-paths/components/canvas-sidebar.tsx',
       ],
-      resources: ['ai-paths.run.queue'],
+      resources: ['ai-paths.run.queue', 'ai-paths.run.execution'],
       concurrencyNotes: [
         'Prefer append-only run events and durable checkpoints to mutable singleton run state.',
-        'Block or hand off when a resource claim cannot be satisfied.',
+        'Use blocked_on_lease and handoff_ready to represent resource contention and agent handoff explicitly.',
+        'Queue workers must claim ai-paths.run.execution with scopeId=runId before processing a run.',
+        'Operators can mark blocked runs handoff-ready from the run history list or run detail dialog, and other UI surfaces expose lease-blocked guidance.',
       ],
     },
     {
@@ -254,6 +301,7 @@ export const agentCapabilityManifest = AgentCapabilityManifestSchema.parse({
   ],
   recommendedWorkflow: [
     'GET /api/agent/capabilities before choosing a tool or mutation path.',
+    'When a resource descriptor marks scopeRequired, provide scopeId on lease queries and mutations.',
     'GET /api/agent/leases before assuming ownership of a lease-aware resource.',
     'Acquire or respect a lease before mutating a shared runtime, import run, or exclusive resource.',
     'Emit append-only events and checkpoints at each durable run boundary.',

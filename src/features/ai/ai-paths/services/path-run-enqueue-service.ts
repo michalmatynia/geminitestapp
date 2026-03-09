@@ -69,7 +69,7 @@ const toSampleStateMap = <T = unknown>(value: unknown): Record<string, T> | unde
 };
 
 export const ACTIVE_RUN_STATUSES = new Set(['queued', 'running']);
-export const ACTIVE_RUN_STATUS_FILTER = ['queued', 'running', 'paused'] as const;
+export const ACTIVE_RUN_STATUS_FILTER = ['queued', 'running', 'blocked_on_lease', 'handoff_ready', 'paused'] as const;
 const enqueueIdempotencyLocks = new Map<string, Promise<void>>();
 const REQUIRE_DURABLE_QUEUE =
   process.env['AI_PATHS_REQUIRE_DURABLE_QUEUE'] === 'true' ||

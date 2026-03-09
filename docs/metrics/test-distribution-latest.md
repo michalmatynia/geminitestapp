@@ -1,6 +1,14 @@
+---
+owner: 'Platform Team'
+last_reviewed: '2026-03-09'
+status: 'generated'
+doc_type: 'generated'
+scope: 'generated'
+canonical: true
+---
 # Test Distribution Check
 
-Generated at: 2026-03-09T06:12:24.536Z
+Generated at: 2026-03-09T07:50:52.211Z
 
 ## Summary
 
@@ -8,7 +16,7 @@ Generated at: 2026-03-09T06:12:24.536Z
 - Total features: 28
 - Features with tests: 28
 - Features without tests: 0
-- Total test files: 1179
+- Total test files: 1195
 - .only() occurrences: 0
 - .skip() occurrences: 19
 
@@ -16,7 +24,7 @@ Generated at: 2026-03-09T06:12:24.536Z
 
 | Feature | Test Files |
 | --- | ---: |
-| ai | 194 |
+| ai | 209 |
 | kangur | 175 |
 | case-resolver | 78 |
 | products | 71 |

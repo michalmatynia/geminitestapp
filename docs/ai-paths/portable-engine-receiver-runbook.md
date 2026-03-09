@@ -1,3 +1,12 @@
+---
+owner: 'AI Paths Team'
+last_reviewed: '2026-03-09'
+status: 'active'
+doc_type: 'runbook'
+scope: 'feature:ai-paths'
+canonical: true
+---
+
 # Portable Engine Receiver Runbook
 
 ## Scope

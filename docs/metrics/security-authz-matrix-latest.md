@@ -1,3 +1,11 @@
+---
+owner: 'Platform Team'
+last_reviewed: '2026-03-09'
+status: 'generated'
+doc_type: 'generated'
+scope: 'generated'
+canonical: true
+---
 # Security Authorization Matrix Report
 
 Generated at: 2026-03-08T14:43:47.649Z

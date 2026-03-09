@@ -1,6 +1,15 @@
+---
+owner: 'Platform Team'
+last_reviewed: '2026-03-09'
+status: 'active'
+doc_type: 'reference'
+scope: 'platform'
+canonical: true
+---
+
 # Shared Lease Service
 
-The shared lease service is the first reusable ownership API for concurrent agent work in this repository.
+The shared lease service is the reusable ownership API for concurrent agent work in this repository.
 
 It gives agents a common way to:
 
@@ -14,26 +23,22 @@ It gives agents a common way to:
 
 ### `GET /api/agent/leases`
 
-Returns the current lease state for all lease-aware resources.
+Returns the current lease state for lease-aware resources.
 
 Supported query parameters:
 
-- `activeOnly=true`: return only resources with an active lease
-- `resourceType`: filter by resource type
+- `resourceId`
+- `scopeId`
+- `activeOnly=true`
+- `resourceType`
 
 Examples:
 
 - `/api/agent/leases`
 - `/api/agent/leases?activeOnly=true`
-- `/api/agent/leases?resourceType=runtime`
-
-### `GET /api/agent/leases?resourceId=...`
-
-Returns the current lease state for one resource.
-
-Example:
-
-- `/api/agent/leases?resourceId=testing.playwright.runtime-broker`
+- `/api/agent/leases?resourceType=job`
+- `/api/agent/leases?resourceId=integrations.base-import.run&scopeId=run-42`
+- `/api/agent/leases?resourceId=testing.playwright.runtime-broker&scopeId=web-dev-agent-a-1234`
 
 ### `POST /api/agent/leases`
 
@@ -45,12 +50,15 @@ Supported actions:
 - `renew`
 - `release`
 
+For partitioned resources, include `scopeId`.
+
 Example bodies:
 
 ```json
 {
   "action": "claim",
-  "resourceId": "testing.playwright.runtime-broker",
+  "resourceId": "integrations.base-import.run",
+  "scopeId": "run-42",
   "ownerAgentId": "codex-agent-1",
   "ownerRunId": "run-42"
 }
@@ -59,7 +67,8 @@ Example bodies:
 ```json
 {
   "action": "renew",
-  "resourceId": "testing.playwright.runtime-broker",
+  "resourceId": "integrations.base-import.run",
+  "scopeId": "run-42",
   "ownerAgentId": "codex-agent-1",
   "ownerRunId": "run-42",
   "leaseId": "lease-uuid"
@@ -69,32 +78,44 @@ Example bodies:
 ```json
 {
   "action": "release",
-  "resourceId": "testing.playwright.runtime-broker",
+  "resourceId": "integrations.base-import.run",
+  "scopeId": "run-42",
   "ownerAgentId": "codex-agent-1",
   "leaseId": "lease-uuid",
-  "reason": "suite finished"
+  "reason": "run finished"
 }
 ```
 
-## Current limitation
+## Current integration state
 
-This service is currently process-local. That means:
+### Base import runs
 
-- it provides a real shared contract and route shape
-- it does not yet control the existing Playwright broker or base import lease paths
-- ownership disappears when the process restarts
+- managed directly by the shared lease service
+- mirrored back into persisted run lock fields
+- scoped by `runId`
 
-This is intentional for the current stage. The next migration step is to move the existing runtime broker and import run ownership logic onto this service instead of keeping them feature-local.
+### Playwright runtime broker
+
+- discovered through the shared lease API from the broker's real lease files
+- scoped by broker `leaseKey`
+- still acquired and released through `runtime-broker.mjs`
+
+This is intentional for the current stage. It gives agents a single discovery and ownership contract now, while preserving the existing broker startup path.
 
 ## Usage rules
 
 1. Discover the resource through `/api/agent/resources` or `/api/agent/capabilities`.
-2. Claim the lease before mutation if the resource requires one.
-3. Renew the lease while long-running work is active.
-4. Release the lease when the run is complete.
-5. Do not force ownership takeover without an approval-backed recovery path.
+2. Provide `scopeId` when the resource descriptor requires it.
+3. Claim the lease before mutation if the resource requires one.
+4. Renew the lease while long-running work is active.
+5. Release the lease when the run is complete.
+6. Do not force ownership takeover without an approval-backed recovery path.
 
 ## Relationship to the manifest
 
-The capability manifest tells an agent which resources require leases.
+The capability manifest tells an agent which resources require leases and whether they require `scopeId`.
 The shared lease service is the live ownership surface for those resources.
+
+## AI Paths integration
+
+The shared lease service now backs AI Paths execution ownership for the partitioned `ai-paths.run.execution` resource. Each run claims its own scope using the run id, which lets agents inspect live ownership with `/api/agent/leases` without reverse-engineering queue state.

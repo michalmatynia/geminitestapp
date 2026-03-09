@@ -1,3 +1,12 @@
+---
+owner: 'AI Paths Team'
+last_reviewed: '2026-03-09'
+status: 'active'
+doc_type: 'runbook'
+scope: 'feature:ai-paths'
+canonical: true
+---
+
 # AI-Paths Kernel Parser Pattern Lists (UI Rollout)
 
 This runbook defines the two UI-managed validation pattern lists introduced for AI-Paths Kernel parser coverage.

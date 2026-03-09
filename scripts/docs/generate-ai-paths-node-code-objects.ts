@@ -6,6 +6,7 @@ import { AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION } from '@/shared/lib/ai-paths/por
 import { AI_PATHS_NODE_DOCS } from '@/shared/lib/ai-paths/core/docs/node-docs';
 import { pruneUnexpectedFilesBySuffix } from './artifact-hygiene';
 import { resolveDocsGeneratedAt } from './docs-generated-at';
+import { writeManagedGeneratedDocSync } from './generated-doc-frontmatter.mjs';
 
 type SemanticNodeDoc = {
   specVersion: string;
@@ -556,6 +557,11 @@ const readmeLines = [
   '`docs:ai-paths:node-docs:ci` runs `verify` and tooltip coverage checks.',
   '',
 ];
-fs.writeFileSync(path.join(outputDir, 'README.md'), `${readmeLines.join('\n')}\n`, 'utf8');
+writeManagedGeneratedDocSync({
+  root: workspaceRoot,
+  targetPath: path.join(outputDir, 'README.md'),
+  content: `${readmeLines.join('\n')}\n`,
+  reviewDate: generatedAt.slice(0, 10),
+});
 
 console.log(`Generated ${sortedRows.length} AI-Paths node code objects (v2).`);

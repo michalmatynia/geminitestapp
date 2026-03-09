@@ -55,7 +55,9 @@ export const statusToVariant = (status: string): StatusVariant => {
   if (s === 'failed' || s === 'canceled' || s === 'timeout' || s === 'error') {
     return 'error';
   }
-  if (s === 'queued' || s === 'pending') return 'warning';
+  if (s === 'queued' || s === 'pending' || s === 'blocked_on_lease' || s === 'handoff_ready') {
+    return 'warning';
+  }
   if (
     s === 'running' ||
     s === 'polling' ||

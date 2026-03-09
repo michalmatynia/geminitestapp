@@ -1,3 +1,12 @@
+---
+owner: 'Kangur Team'
+last_reviewed: '2026-03-09'
+status: 'active'
+doc_type: 'policy'
+scope: 'feature:kangur'
+canonical: true
+---
+
 # Kangur SVG And Media Rules
 
 ## SVG-only rule

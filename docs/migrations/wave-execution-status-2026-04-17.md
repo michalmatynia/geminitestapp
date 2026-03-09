@@ -1,3 +1,12 @@
+---
+owner: 'Platform Team'
+last_reviewed: '2026-03-09'
+status: 'draft'
+doc_type: 'reference'
+scope: 'cross-feature'
+canonical: true
+---
+
 # Wave Execution Status (2026-04-17)
 
 Draft generated on: 2026-03-05  

@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type {
@@ -23,7 +23,7 @@ vi.mock('@/features/ai/ai-paths/components/JobQueueContext', () => ({
 
 import { JobQueueRunCard } from '../job-queue-run-card';
 
-const createRun = (status: string): AiPathRunRecord =>
+const createRun = (status: string, extra?: Partial<AiPathRunRecord>): AiPathRunRecord =>
   ({
     id: 'run-1',
     createdAt: '2026-03-05T00:00:00.000Z',
@@ -32,6 +32,7 @@ const createRun = (status: string): AiPathRunRecord =>
     pathId: 'path-1',
     pathName: 'Test Path',
     triggerEvent: 'manual',
+    ...extra,
   }) as AiPathRunRecord;
 
 const buildContextValue = (): JobQueueContextValue =>
@@ -86,6 +87,7 @@ const buildContextValue = (): JobQueueContextValue =>
     refetchQueueData: vi.fn(),
     handleClearRuns: async () => {},
     handleResumeRun: async () => {},
+    handleHandoffRun: async () => false,
     handleRetryRunNode: async () => {},
     handleCancelRun: async () => {},
     handleDeleteRun: async () => {},
@@ -112,6 +114,7 @@ const toActionsValue = (value: JobQueueContextValue): JobQueueActionsValue => ({
   refetchQueueData: value.refetchQueueData,
   handleClearRuns: value.handleClearRuns,
   handleResumeRun: value.handleResumeRun,
+  handleHandoffRun: value.handleHandoffRun,
   handleRetryRunNode: value.handleRetryRunNode,
   handleCancelRun: value.handleCancelRun,
   handleDeleteRun: value.handleDeleteRun,
@@ -139,6 +142,7 @@ const toStateValue = (value: JobQueueContextValue): JobQueueStateValue => {
     refetchQueueData: _refetchQueueData,
     handleClearRuns: _handleClearRuns,
     handleResumeRun: _handleResumeRun,
+    handleHandoffRun: _handleHandoffRun,
     handleRetryRunNode: _handleRetryRunNode,
     handleCancelRun: _handleCancelRun,
     handleDeleteRun: _handleDeleteRun,
@@ -169,6 +173,79 @@ describe('JobQueueRunCard status pills', () => {
 
     expect(screen.getByText('queued')).toBeTruthy();
     expect(screen.queryByText('Running')).toBeNull();
+  });
+
+  it('renders a lease-blocked operator notice when execution ownership is unavailable', () => {
+    render(
+      <JobQueueRunCard
+        runId='run-1'
+        run={createRun('blocked_on_lease', {
+          meta: {
+            executionLease: {
+              ownerAgentId: 'agent-other',
+              ownerRunId: 'run-1',
+            },
+          },
+        })}
+      />
+    );
+
+    expect(screen.getByText('Execution lease blocked')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'This run cannot continue until its execution lease is released or another operator takes over.'
+      )
+    ).toBeTruthy();
+    expect(screen.getByText('Current owner: agent-other (run-1).')).toBeTruthy();
+  });
+
+  it('renders a handoff-ready operator notice with checkpoint lineage context', () => {
+    render(
+      <JobQueueRunCard
+        runId='run-1'
+        run={createRun('handoff_ready', {
+          meta: {
+            handoff: {
+              reason: 'Execution lease is still owned by another worker.',
+              checkpointLineageId: 'run-1:checkpoint',
+            },
+          },
+        })}
+      />
+    );
+
+    expect(screen.getByText('Ready for delegated continuation')).toBeTruthy();
+    expect(screen.getByText('Execution lease is still owned by another worker.')).toBeTruthy();
+    expect(screen.getByText('Checkpoint lineage: run-1:checkpoint')).toBeTruthy();
+  });
+
+  it('marks blocked runs handoff-ready from the queue card', async () => {
+    const contextValue = buildContextValue();
+    const handleHandoffRun = vi.fn().mockResolvedValue(true);
+    contextValue.handleHandoffRun = handleHandoffRun;
+    useJobQueueStateMock.mockReturnValue(toStateValue(contextValue));
+    useJobQueueActionsMock.mockReturnValue(toActionsValue(contextValue));
+
+    render(
+      <JobQueueRunCard
+        runId='run-1'
+        run={createRun('blocked_on_lease', {
+          meta: {
+            executionLease: {
+              ownerAgentId: 'agent-other',
+              ownerRunId: 'run-1',
+            },
+          },
+        })}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mark handoff-ready' }));
+
+    expect(handleHandoffRun).toHaveBeenCalledWith('run-1');
+    await waitFor(() => {
+      expect(screen.getByText('Handoff requested. Refreshing status...')).toBeTruthy();
+    });
   });
 
   it('retries failed history entries from the run card history panel', () => {

@@ -56,6 +56,18 @@ Hard rules:
 - never create new dated files directly under `docs/`
 - never place generated outputs in hand-written doc folders
 - never add a new doc without updating the nearest index or hub page
+- every `docs/**/` directory with markdown content must expose a `README.md` or
+  `index.md` hub page
+- every child docs hub must be linked from its immediate parent hub unless the
+  structure manifest explicitly exempts it
+- every `canonical: true` docs file must be listed in `requiredCanonicalDocs`
+  within the structure manifest
+- every docs hub must follow its declared indexing policy: either a
+  complete direct-file index or a curated stable-entry-point index
+- hand-written stable entry points surfaced by curated hubs should be canonical
+  docs with metadata, not untyped markdown strays
+- every artifact-only docs directory must either have a local hub or be declared
+  in the structure manifest and linked from an owning markdown doc
 - never silently replace a canonical doc with a second doc covering the same role
 - when migrating legacy root docs, prefer canonical relocation plus a short
   compatibility stub over silent hard cuts
@@ -81,18 +93,55 @@ When a task changes docs:
 3. Place the file in the canonical folder from `docs/documentation/README.md`.
 4. Add or update metadata fields such as `owner`, `last_reviewed`, `status`,
    `doc_type`, and `scope`.
-5. Update the nearest hub page and `docs/README.md` when the doc is
+5. If the doc is canonical, register it in `requiredCanonicalDocs`.
+6. Update the nearest hub page and `docs/README.md` when the doc is
    cross-cutting.
-6. If the change supersedes older material, cross-link it explicitly and mark the
+7. If the change introduces a markdown-bearing docs folder, add a `README.md` or
+   `index.md` hub in the same patch.
+8. If the change adds a child docs hub, link it from the immediate parent hub in
+   the same patch unless the structure manifest documents an exemption.
+9. If the change supersedes older material, cross-link it explicitly and mark the
    old doc for follow-up migration or archival.
-7. Run `npm run docs:structure:check` when the change affects documentation
+10. Run `npm run docs:structure:check` when the change affects documentation
    placement, metadata, or hub pages.
-8. If the change keeps a root compatibility stub or mirror, keep it minimal and
+11. If the change keeps a root compatibility stub or mirror, keep it minimal and
    structurally aligned with the canonical source in the same patch.
-9. If the docs structure manifest declares a compatibility mirror pair, sync it
+12. If the docs structure manifest declares a compatibility mirror pair, sync it
    with `npm run docs:structure:sync-mirrors`.
-10. When linking to documentation, use the canonical destination rather than a
+13. When linking to documentation, use the canonical destination rather than a
     root compatibility stub unless the doc is explicitly tracking migration.
+14. If the folder uses a curated hub model, update the stable entry-point list
+    when the active documentation surface changes.
+15. If the change introduces a non-markdown artifact bucket, add its manifest
+    policy and owning markdown reference in the same patch.
+16. If the task is frontmatter normalization rather than a targeted doc edit,
+    run `npm run docs:structure:audit:frontmatter` first and work one folder or
+    policy slice at a time.
+17. If the task touches generated markdown under `docs/metrics/`, run
+    `npm run docs:metrics:normalize-frontmatter` instead of manually editing the
+    generated snapshots one by one.
+18. Stable generated metrics entry points are the `README.md` hubs,
+    `route-hotspots.md`, and `*-latest.md` aliases; timestamped metrics history
+    files should remain generated, non-canonical artifacts.
+19. If a docs generator writes markdown into a managed canonical surface, keep
+    frontmatter in the generator itself through the shared helpers under
+    `scripts/docs/` instead of relying on a later cleanup pass.
+
+## Scanner JSON Contract
+
+When a repository scanner or check runs with `--summary-json`, treat stdout as a
+fixed envelope rather than ad hoc JSON.
+
+- `summary`: scalar headline metrics only
+- `details`: arrays/maps of findings and supporting structured data
+- `paths`: emitted artifact locations
+- `filters`: run flags and scan filters
+- `notes`: annotations or operator hints
+
+Use `buildScanOutput`, `parseScanOutput`, and `parseScanSummary` from
+`scripts/architecture/lib/scan-output.mjs` for code consumers. If you are an AI
+agent summarizing scanner output, keep findings in their matching fields instead
+of collapsing everything into one mixed block.
 
 ## Current Source Layout
 

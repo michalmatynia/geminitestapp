@@ -22,7 +22,7 @@ import {
   resolveRunStartedAt,
 } from './path-run-enqueue-service';
 
-const CANCELLABLE_RUN_STATUS_FILTER = ['queued', 'running', 'paused'] as const;
+const CANCELLABLE_RUN_STATUS_FILTER = ['queued', 'running', 'blocked_on_lease', 'handoff_ready', 'paused'] as const;
 
 export const cleanupRunQueueEntries = async (runId: string): Promise<void> => {
   try {
@@ -494,3 +494,102 @@ export const cancelPathRunWithRepository = async (
     throw error;
   }
 };
+
+export async function markPathRunHandoffReady({
+  runId,
+  reason,
+  checkpointLineageId,
+  requestedBy,
+}: {
+  runId: string;
+  reason?: string | null;
+  checkpointLineageId?: string | null;
+  requestedBy?: string | null;
+}) {
+  const repo = await getPathRunRepository();
+  const run = await repo.findRunById(runId);
+
+  if (!run) {
+    return null;
+  }
+
+  if (
+    run.status !== 'blocked_on_lease' &&
+    run.status !== 'paused' &&
+    run.status !== 'failed'
+  ) {
+    return run;
+  }
+
+  const readyAt = new Date().toISOString();
+  let normalizedReason = 'Run requires delegated continuation.';
+  if (typeof reason === 'string' && reason.trim().length > 0) {
+    normalizedReason = reason.trim();
+  } else if (run.status === 'blocked_on_lease') {
+    normalizedReason = 'Execution lease is still owned by another worker.';
+  }
+  const lineageId =
+    typeof checkpointLineageId === 'string' && checkpointLineageId.trim().length > 0
+      ? checkpointLineageId.trim()
+      : `${run.id}:${Date.now()}`;
+  const nextMeta =
+    run.meta && typeof run.meta === 'object'
+      ? { ...run.meta }
+      : {};
+
+  nextMeta['handoff'] = {
+    readyAt,
+    reason: normalizedReason,
+    previousStatus: run.status,
+    checkpointLineageId: lineageId,
+    requestedBy: requestedBy ?? null,
+  };
+
+  const updated = await repo.updateRunIfStatus(run.id, [run.status], {
+    status: 'handoff_ready',
+    meta: nextMeta,
+  });
+
+  const current = updated ?? (await repo.findRunById(run.id));
+  if (!updated || !current) {
+    return current;
+  }
+
+  try {
+    const { recordRuntimeRunHandoffReady } = await import(
+      '@/features/ai/ai-paths/services/runtime-analytics-service'
+    );
+    await Promise.all([
+      repo.createRunEvent({
+        runId: run.id,
+        level: 'warn',
+        message: 'Run marked handoff-ready for delegated continuation.',
+        metadata: {
+          reason: normalizedReason,
+          previousStatus: run.status,
+          checkpointLineageId: lineageId,
+          requestedBy: requestedBy ?? null,
+          runtimeFingerprint: getAiPathsRuntimeFingerprint(),
+          traceId: run.id,
+        },
+      }),
+      recordRuntimeRunHandoffReady({ runId: run.id }),
+    ]);
+  } catch (auxError) {
+    void ErrorSystem.logWarning(`Non-critical handoff logging failure for run ${run.id}`, {
+      service: 'ai-paths-service',
+      error: auxError,
+      runId: run.id,
+    });
+  }
+
+  publishRunUpdate(run.id, 'run', {
+    status: 'handoff_ready',
+    reason: normalizedReason,
+    checkpointLineageId: lineageId,
+    traceId: run.id,
+  });
+  await cleanupRunQueueEntries(run.id);
+
+  return current;
+}

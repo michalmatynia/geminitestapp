@@ -6,6 +6,7 @@ import type { ProductImageManagerController } from '@/features/products';
 import type { ManagedImageSlot } from '@/shared/contracts/image-slots';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
+import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
 
 import {
   INLINE_CARD_IMAGE_SLOT_INDEX,
@@ -50,6 +51,7 @@ export function StudioInlineEditProvider({
   triggerLocalUpload: (mode: LocalUploadMode, targetId: string | null) => void;
 }) {
   const { toast } = useToast();
+  const contextRegistry = useOptionalContextRegistryPageEnvelope();
   const { projectId } = useProjectsState();
   const settingsStore = useSettingsStore();
   const {
@@ -217,6 +219,7 @@ export function StudioInlineEditProvider({
     setSelectedExtractHistoryId: runtime.setSelectedExtractHistoryId,
     studioSettings,
     toast,
+    contextRegistry,
   });
 
   const inlineHandlers = createInlineSlotHandlers({

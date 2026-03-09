@@ -1,3 +1,12 @@
+---
+owner: 'Kangur Team'
+last_reviewed: '2026-03-09'
+status: 'active'
+doc_type: 'reference'
+scope: 'feature:kangur'
+canonical: true
+---
+
 # Kangur Learner Navigation
 
 ## Top navigation

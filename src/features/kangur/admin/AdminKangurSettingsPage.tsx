@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 
 import { KangurDocsTooltipEnhancer } from '@/features/kangur/docs/tooltips';
 import {
@@ -11,12 +11,12 @@ import {
   type KangurHelpSettings,
 } from '@/features/kangur/help-settings';
 import {
-  KANGUR_AI_TUTOR_MOTION_PRESET_OPTIONS,
   KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
+  KANGUR_AI_TUTOR_MOTION_PRESET_OPTIONS,
   KANGUR_AI_TUTOR_SETTINGS_KEY,
   parseKangurAiTutorSettings,
-  resolveKangurAiTutorMotionPresetKind,
   resolveKangurAiTutorAppSettings,
+  resolveKangurAiTutorMotionPresetKind,
   type KangurAiTutorAppSettings,
 } from '@/features/kangur/settings-ai-tutor';
 import {
@@ -35,7 +35,19 @@ import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { api } from '@/shared/lib/api-client';
 import { resolveAgentPersonaMood } from '@/shared/lib/agent-personas';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { AgentPersonaMoodAvatar, Button, FormSection, Switch, useToast } from '@/shared/ui';
+import {
+  AgentPersonaMoodAvatar,
+  Alert,
+  Badge,
+  Button,
+  Card,
+  FormField,
+  FormSection,
+  Input,
+  SelectSimple,
+  Switch,
+  useToast,
+} from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
@@ -89,6 +101,12 @@ const DOCS_TOOLTIP_SURFACES: Array<{
   },
 ] as const;
 
+const DEFAULT_AGENT_PERSONA_OPTION = '__default_agent_persona__';
+const DEFAULT_MOTION_PRESET_OPTION = '__default_motion_preset__';
+const SETTINGS_SECTION_CLASS_NAME = 'border-border/60 bg-card/35 shadow-sm';
+const SETTINGS_CARD_CLASS_NAME = 'rounded-2xl border-border/60 bg-card/40 shadow-sm';
+const SETTINGS_INSET_CARD_CLASS_NAME = 'rounded-2xl border-border/60 bg-background/60 shadow-sm';
+
 const areHelpSettingsEqual = (left: KangurHelpSettings, right: KangurHelpSettings): boolean =>
   left.docsTooltips.enabled === right.docsTooltips.enabled &&
   left.docsTooltips.homeEnabled === right.docsTooltips.homeEnabled &&
@@ -97,11 +115,6 @@ const areHelpSettingsEqual = (left: KangurHelpSettings, right: KangurHelpSetting
   left.docsTooltips.profileEnabled === right.docsTooltips.profileEnabled &&
   left.docsTooltips.parentDashboardEnabled === right.docsTooltips.parentDashboardEnabled &&
   left.docsTooltips.adminEnabled === right.docsTooltips.adminEnabled;
-
-const ADMIN_FORM_CONTROL_CLASS_NAME =
-  'w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm transition focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 disabled:cursor-not-allowed disabled:opacity-60';
-
-const SETTINGS_SECTION_CLASS_NAME = 'border-border/60 bg-card/55 shadow-sm';
 
 const areAiTutorAppSettingsEqual = (
   left: KangurAiTutorAppSettings,
@@ -130,6 +143,56 @@ const formatProbeTimestamp = (value: string): string => {
     return value;
   }
 };
+
+type SettingsChoiceCardProps = {
+  htmlFor: string;
+  checked: boolean;
+  title: string;
+  description: string;
+  children: ReactNode;
+  hint?: string;
+  className?: string;
+};
+
+function SettingsChoiceCard({
+  htmlFor,
+  checked,
+  title,
+  description,
+  children,
+  hint,
+  className,
+}: SettingsChoiceCardProps): React.JSX.Element {
+  return (
+    <label htmlFor={htmlFor} className='block cursor-pointer'>
+      <Card
+        variant='subtle'
+        padding='md'
+        className={cn(
+          'h-full rounded-2xl border-border/60 bg-card/40 transition-all',
+          checked
+            ? 'border-primary/30 bg-card shadow-sm ring-1 ring-primary/15'
+            : 'hover:border-border hover:bg-card/60',
+          className
+        )}
+      >
+        <div className='flex items-start justify-between gap-4'>
+          <div className='flex min-w-0 items-start gap-3'>
+            <div className='mt-0.5 shrink-0'>{children}</div>
+            <div className='min-w-0'>
+              <div className='text-sm font-semibold text-foreground'>{title}</div>
+              <p className='mt-1 text-sm text-muted-foreground'>{description}</p>
+            </div>
+          </div>
+          <Badge variant={checked ? 'secondary' : 'outline'}>
+            {checked ? 'Selected' : 'Option'}
+          </Badge>
+        </div>
+        {hint ? <p className='mt-3 text-xs leading-relaxed text-muted-foreground'>{hint}</p> : null}
+      </Card>
+    </label>
+  );
+}
 
 export function AdminKangurSettingsPage(): React.JSX.Element {
   const settingsStore = useSettingsStore();
@@ -177,9 +240,6 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
   const copyTimeoutRef = useRef<number | null>(null);
   const narratorProbeRequestIdRef = useRef(0);
   const lastAutoProbeVoiceRef = useRef<KangurLessonTtsVoice | null>(null);
-  const agentPersonaFieldId = useId();
-  const motionPresetFieldId = useId();
-  const dailyMessageLimitFieldId = useId();
 
   const { data: agentPersonas = [] } = useAgentPersonas();
 
@@ -301,6 +361,38 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
     () => resolveAgentPersonaMood(selectedAgentPersona),
     [selectedAgentPersona]
   );
+  const agentPersonaOptions = useMemo(
+    () => [
+      {
+        value: DEFAULT_AGENT_PERSONA_OPTION,
+        label: 'Domyslna persona',
+        description: 'Use the default Kangur tutor voice and identity.',
+      },
+      ...agentPersonas.map((persona) => ({
+        value: persona.id,
+        label: persona.name,
+        description: persona.role
+          ? `${persona.role} - Custom tutor identity`
+          : 'Custom tutor identity',
+      })),
+    ],
+    [agentPersonas]
+  );
+  const motionPresetOptions = useMemo(
+    () => [
+      {
+        value: DEFAULT_MOTION_PRESET_OPTION,
+        label: 'Brak',
+        description: 'Use the default Kangur tutor motion behavior.',
+      },
+      ...KANGUR_AI_TUTOR_MOTION_PRESET_OPTIONS.map((preset) => ({
+        value: preset.id,
+        label: preset.label,
+        description: preset.description,
+      })),
+    ],
+    []
+  );
   const aiTutorSettingsDirty = !areAiTutorAppSettingsEqual(
     draftAiTutorSettings,
     persistedAiTutorSettings
@@ -395,37 +487,27 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
             {KANGUR_NARRATOR_ENGINE_OPTIONS.map((option) => {
               const checked = engine === option.value;
               const optionId = `kangur-narrator-engine-${option.value}`;
+
               return (
-                <label
+                <SettingsChoiceCard
                   key={option.value}
                   htmlFor={optionId}
-                  aria-label={option.label}
-                  className={cn(
-                    'flex cursor-pointer flex-col gap-3 rounded-2xl border px-4 py-4 transition',
-                    checked
-                      ? 'border-indigo-400 bg-indigo-50/80 shadow-sm'
-                      : 'border-border bg-card hover:border-indigo-300/60 hover:bg-card/80'
-                  )}
+                  checked={checked}
+                  title={option.label}
+                  description={option.description}
                 >
-                  <div className='flex items-start gap-3'>
-                    <input
-                      id={optionId}
-                      type='radio'
-                      name='kangur-narrator-engine'
-                      value={option.value}
-                      checked={checked}
-                      onChange={() => {
-                        setEngine(option.value);
-                      }}
-                      className='mt-1 h-4 w-4 accent-indigo-600'
-                      data-doc-id='settings_narrator_engine'
-                    />
-                    <div>
-                      <div className='font-semibold text-foreground'>{option.label}</div>
-                      <div className='mt-1 text-sm text-muted-foreground'>{option.description}</div>
-                    </div>
-                  </div>
-                </label>
+                  <input
+                    id={optionId}
+                    type='radio'
+                    name='kangur-narrator-engine'
+                    value={option.value}
+                    checked={checked}
+                    onChange={() => setEngine(option.value)}
+                    className='h-4 w-4'
+                    data-doc-id='settings_narrator_engine'
+                    aria-label={option.label}
+                  />
+                </SettingsChoiceCard>
               );
             })}
           </div>
@@ -441,44 +523,42 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
             <div className='grid gap-3 md:grid-cols-4'>
               {KANGUR_TTS_VOICE_OPTIONS.map((option) => {
                 const checked = voice === option.value;
+                const optionId = `kangur-narrator-voice-${option.value}`;
+
                 return (
-                  <label
+                  <SettingsChoiceCard
                     key={option.value}
-                    className={cn(
-                      'flex cursor-pointer flex-col gap-3 rounded-2xl border px-3 py-3 transition',
-                      checked
-                        ? 'border-indigo-400 bg-indigo-50/80 shadow-sm'
-                        : 'border-border bg-card hover:border-indigo-300/60 hover:bg-card/80'
-                    )}
+                    htmlFor={optionId}
+                    checked={checked}
+                    title={option.label}
+                    description='Used when the Server narrator engine is active.'
+                    hint='Switch to Client narrator to use browser speech instead.'
+                    className='p-3'
                   >
-                    <div className='flex items-center gap-3'>
-                      <input
-                        type='radio'
-                        name='kangur-narrator-voice'
-                        value={option.value}
-                        checked={checked}
-                        onChange={() => setVoice(option.value)}
-                        className='mt-1 h-4 w-4 accent-indigo-600'
-                        data-doc-id='settings_narrator_voice'
-                      />
-                      <div>
-                        <div className='font-semibold text-foreground'>{option.label}</div>
-                      </div>
-                    </div>
-                    <p className='text-[10px] text-muted-foreground'>
-                      Used when the Server narrator engine is set; switch engines to Client narrator
-                      to use browser speech.
-                    </p>
-                  </label>
+                    <input
+                      id={optionId}
+                      type='radio'
+                      name='kangur-narrator-voice'
+                      value={option.value}
+                      checked={checked}
+                      onChange={() => setVoice(option.value)}
+                      className='h-4 w-4'
+                      data-doc-id='settings_narrator_voice'
+                      aria-label={option.label}
+                    />
+                  </SettingsChoiceCard>
                 );
               })}
             </div>
           </div>
 
-          <div className='mt-6 rounded-2xl border border-border/70 bg-muted/20 px-4 py-4 text-sm text-muted-foreground'>
+          <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
             <div className='flex items-start justify-between gap-3'>
               <div>
-                <div className='text-sm font-semibold text-foreground'>Short narrator template</div>
+                <div className='flex items-center gap-2'>
+                  <div className='text-sm font-semibold text-foreground'>Short narrator template</div>
+                  <Badge variant='outline'>Shared surface</Badge>
+                </div>
                 <p className='text-xs text-muted-foreground'>
                   Paste this sample into a lesson or narration override to quickly hear the selected
                   voice.
@@ -511,22 +591,22 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
                 </Button>
               </div>
             </div>
-            <div className='mt-3 rounded-xl border border-border/60 bg-white/80 px-3 py-2 text-sm text-slate-700'>
+
+            <Card
+              variant='subtle'
+              padding='sm'
+              className={cn('mt-3 border-border/60 bg-background/70', 'text-sm text-foreground')}
+            >
               {TEST_NARRATOR_TEMPLATE_TEXT}
-            </div>
+            </Card>
+
             {narratorProbe ? (
-              <div
-                className={cn(
-                  'mt-4 rounded-xl border px-3 py-3',
-                  narratorProbe.ok
-                    ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
-                    : 'border-amber-200 bg-amber-50 text-amber-900'
-                )}
+              <Alert
+                variant={narratorProbe.ok ? 'success' : 'warning'}
+                title={narratorProbe.ok ? 'Server narrator ready' : 'Server narrator unavailable'}
+                className='mt-4'
               >
-                <div className='text-sm font-semibold'>
-                  {narratorProbe.ok ? 'Server narrator ready' : 'Server narrator unavailable'}
-                </div>
-                <p className='mt-1 text-sm'>{narratorProbe.message}</p>
+                <p>{narratorProbe.message}</p>
                 <div className='mt-2 text-xs opacity-80'>
                   Voice: {narratorProbe.voice} · Model: {narratorProbe.model} · Checked:{' '}
                   {formatProbeTimestamp(narratorProbe.checkedAt)}
@@ -543,14 +623,14 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
                     narrator enabled until billing is restored.
                   </div>
                 ) : null}
-              </div>
+              </Alert>
             ) : null}
-          </div>
+          </Card>
 
-          <div className='mt-6 rounded-2xl border border-border/70 bg-muted/20 px-4 py-4 text-sm text-muted-foreground'>
+          <Alert variant='default' title='Global behavior' className='mt-6'>
             Lessons and exercises keep the play and pause controls, but the engine choice is no
             longer shown there. Change it here once and the whole Kangur app follows it.
-          </div>
+          </Alert>
         </FormSection>
 
         <FormSection
@@ -559,16 +639,14 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
           className={SETTINGS_SECTION_CLASS_NAME}
         >
           <div className='grid gap-4 lg:grid-cols-2'>
-            <div className='space-y-3 rounded-2xl border border-indigo-100 bg-indigo-50/80 px-4 py-4 shadow-sm'>
-              <div className='text-xs font-semibold uppercase tracking-wide text-indigo-700'>
-                AI Brain Routing
+            <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
+              <div className='flex items-center gap-2'>
+                <Badge variant='secondary'>AI Brain Routing</Badge>
               </div>
-              <div className='space-y-2 text-sm text-indigo-950'>
+              <div className='mt-3 space-y-2 text-sm text-muted-foreground'>
                 <p>
-                  Kangur AI Tutor runs through Brain with the dedicated
-                  {' '}
-                  <span className='font-semibold'>Kangur AI Tutor Chat</span>
-                  {' '}
+                  Kangur AI Tutor runs through Brain with the dedicated{' '}
+                  <span className='font-semibold text-foreground'>Kangur AI Tutor Chat</span>{' '}
                   capability.
                 </p>
                 <p>
@@ -576,118 +654,99 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
                   of the separate Agent Teaching feature and are not used by Kangur AI Tutor.
                 </p>
               </div>
-              <div>
-                <Link
-                  href='/admin/brain?tab=routing'
-                  className='text-sm font-medium text-indigo-700 underline decoration-indigo-300 underline-offset-4 hover:text-indigo-900'
-                >
-                  Open AI Brain routing
-                </Link>
+              <div className='mt-4'>
+                <Button asChild variant='outline' size='sm'>
+                  <Link href='/admin/brain?tab=routing'>Open AI Brain routing</Link>
+                </Button>
               </div>
-            </div>
+            </Card>
 
-            <div className='space-y-2 rounded-2xl border border-border/70 bg-background/90 px-4 py-4 shadow-sm'>
-              <label
-                htmlFor={dailyMessageLimitFieldId}
-                className='text-xs font-semibold uppercase tracking-wide text-slate-600'
+            <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
+              <FormField
+                label='Dzienny limit wiadomości'
+                description='Kazda wyslana wiadomosc do tutora zuzywa 1 punkt limitu. Puste pole oznacza brak limitu.'
               >
-                Dzienny limit wiadomości
-              </label>
-              <input
-                id={dailyMessageLimitFieldId}
-                type='number'
-                min={1}
-                max={200}
-                inputMode='numeric'
-                value={dailyMessageLimitInput}
-                onChange={(event) => setDailyMessageLimitInput(event.target.value)}
-                placeholder='Puste = bez limitu'
-                className={ADMIN_FORM_CONTROL_CLASS_NAME}
-              />
-              <p className='text-xs leading-relaxed text-muted-foreground'>
-                Każda wysłana wiadomość do tutora zużywa 1 punkt limitu. Puste pole oznacza brak
-                limitu.
-              </p>
-            </div>
+                <Input
+                  type='number'
+                  min={1}
+                  max={200}
+                  inputMode='numeric'
+                  value={dailyMessageLimitInput}
+                  onChange={(event) => setDailyMessageLimitInput(event.target.value)}
+                  placeholder='Puste = bez limitu'
+                  aria-label='Dzienny limit wiadomości'
+                />
+              </FormField>
+            </Card>
 
-            <div className='space-y-3 rounded-2xl border border-border/70 bg-background/90 px-4 py-4 shadow-sm'>
-              <div className='space-y-2'>
-                <label
-                  htmlFor={agentPersonaFieldId}
-                  className='text-xs font-semibold uppercase tracking-wide text-slate-600'
-                >
-                  Persona (charakter tutora)
-                </label>
-                <select
-                  id={agentPersonaFieldId}
-                  value={agentPersonaId}
-                  onChange={(event) => setAgentPersonaId(event.target.value)}
-                  className={ADMIN_FORM_CONTROL_CLASS_NAME}
-                >
-                  <option value=''>— Domyślna persona —</option>
-                  {agentPersonas.map((persona) => (
-                    <option key={persona.id} value={persona.id}>
-                      {persona.name}
-                      {persona.role ? ` · ${persona.role}` : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
+              <FormField
+                label='Persona (charakter tutora)'
+                description='Choose the default tutor identity and voice used across Kangur.'
+              >
+                <SelectSimple
+                  value={agentPersonaId || DEFAULT_AGENT_PERSONA_OPTION}
+                  onValueChange={(value) =>
+                    setAgentPersonaId(value === DEFAULT_AGENT_PERSONA_OPTION ? '' : value)
+                  }
+                  options={agentPersonaOptions}
+                  ariaLabel='Persona (charakter tutora)'
+                  variant='subtle'
+                />
+              </FormField>
 
-              <div className='rounded-2xl border border-slate-200 bg-white/80 px-3 py-3'>
-                <div className='flex items-center gap-3'>
+              <Card
+                variant='subtle'
+                padding='sm'
+                className={cn('mt-4', SETTINGS_INSET_CARD_CLASS_NAME)}
+              >
+                <div className='flex items-center gap-2'>
+                  <Badge variant='outline'>Current persona</Badge>
+                </div>
+                <div className='mt-3 flex items-center gap-3'>
                   <AgentPersonaMoodAvatar
                     svgContent={selectedAgentPersonaMood.svgContent}
                     avatarImageUrl={selectedAgentPersonaMood.avatarImageUrl}
                     label={`AI Tutor persona preview for ${selectedAgentPersona?.name ?? 'the default persona'}`}
-                    className='h-12 w-12 border border-slate-200 bg-[linear-gradient(135deg,#eef2ff_0%,#fdf2f8_55%,#fef3c7_100%)]'
-                    svgClassName='[&_svg]:drop-shadow-[0_1px_1px_rgba(15,23,42,0.08)]'
-                    fallbackIconClassName='text-indigo-500'
+                    className='h-12 w-12 border border-border/60 bg-muted/40'
+                    fallbackIconClassName='text-muted-foreground'
                   />
                   <div className='min-w-0'>
-                    <div className='text-sm font-semibold text-slate-800'>
-                      {selectedAgentPersona?.name ?? 'Domyślna persona'}
+                    <div className='text-sm font-semibold text-foreground'>
+                      {selectedAgentPersona?.name ?? 'Domyslna persona'}
                     </div>
-                    <div className='mt-0.5 text-xs leading-relaxed text-slate-500'>
+                    <div className='mt-0.5 text-xs leading-relaxed text-muted-foreground'>
                       {selectedAgentPersona
-                        ? `${selectedAgentPersona.role ? `${selectedAgentPersona.role} · ` : ''}This persona defines the tutor voice and avatar while Brain handles the model route.`
+                        ? `${selectedAgentPersona.role ? `${selectedAgentPersona.role} - ` : ''}This persona defines the tutor voice and avatar while Brain handles the model route.`
                         : 'Tutor uses the default helper persona when no custom persona is selected.'}
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
+              </Card>
+            </Card>
 
-            <div className='space-y-2 rounded-2xl border border-border/70 bg-background/90 px-4 py-4 shadow-sm'>
-              <label
-                htmlFor={motionPresetFieldId}
-                className='text-xs font-semibold uppercase tracking-wide text-slate-600'
+            <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
+              <FormField
+                label='Preset ruchu tutora'
+                description='Select a local motion profile for the tutor avatar and bubble.'
               >
-                Preset ruchu tutora
-              </label>
-              <select
-                id={motionPresetFieldId}
-                value={motionPresetId}
-                onChange={(event) => setMotionPresetId(event.target.value)}
-                className={ADMIN_FORM_CONTROL_CLASS_NAME}
-              >
-                <option value=''>— Brak —</option>
-                {KANGUR_AI_TUTOR_MOTION_PRESET_OPTIONS.map((preset) => (
-                  <option key={preset.id} value={preset.id}>
-                    {preset.label}
-                  </option>
-                ))}
-              </select>
-              <p className='text-xs leading-relaxed text-muted-foreground'>
-                Select a local motion profile for the tutor avatar and bubble.
-              </p>
-            </div>
+                <SelectSimple
+                  value={motionPresetId || DEFAULT_MOTION_PRESET_OPTION}
+                  onValueChange={(value) =>
+                    setMotionPresetId(value === DEFAULT_MOTION_PRESET_OPTION ? '' : value)
+                  }
+                  options={motionPresetOptions}
+                  ariaLabel='Preset ruchu tutora'
+                  variant='subtle'
+                />
+              </FormField>
+            </Card>
           </div>
 
-          <div className='rounded-2xl border border-indigo-100 bg-indigo-50/80 px-4 py-4 text-sm text-indigo-900'>
+          <Alert variant='default' title='Scope' className='mt-4'>
             Parents no longer change these fields per learner. Configure them here once, then use
             the parent dashboard only for access and guardrails.
-          </div>
+          </Alert>
         </FormSection>
 
         <FormSection
@@ -695,11 +754,16 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
           description='These toggles control documentation-driven tooltips. Tooltip text is sourced only from the central Kangur documentation files.'
           className={SETTINGS_SECTION_CLASS_NAME}
         >
-          <div className='rounded-2xl border border-border/70 bg-muted/20 px-4 py-4'>
+          <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
             <div className='flex items-center justify-between gap-4'>
               <div>
-                <div className='text-sm font-semibold text-foreground'>
-                  Enable Kangur docs tooltips
+                <div className='flex items-center gap-2'>
+                  <div className='text-sm font-semibold text-foreground'>
+                    Enable Kangur docs tooltips
+                  </div>
+                  <Badge variant={helpSettings.docsTooltips.enabled ? 'secondary' : 'outline'}>
+                    {helpSettings.docsTooltips.enabled ? 'Enabled' : 'Disabled'}
+                  </Badge>
                 </div>
                 <p className='mt-1 text-sm text-muted-foreground'>
                   Master switch for learner and admin tooltip help generated from the Kangur
@@ -721,17 +785,26 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
                 aria-label='Enable Kangur docs tooltips'
               />
             </div>
-          </div>
+          </Card>
 
           <div className='grid gap-4 lg:grid-cols-2'>
             {DOCS_TOOLTIP_SURFACES.map((surface) => (
-              <div
+              <Card
                 key={surface.key}
-                className='rounded-2xl border border-border/70 bg-background/90 px-4 py-4 shadow-sm'
+                variant='subtle'
+                padding='md'
+                className={SETTINGS_CARD_CLASS_NAME}
               >
                 <div className='flex items-start justify-between gap-4'>
                   <div>
-                    <div className='text-sm font-semibold text-foreground'>{surface.label}</div>
+                    <div className='flex items-center gap-2'>
+                      <div className='text-sm font-semibold text-foreground'>{surface.label}</div>
+                      <Badge
+                        variant={helpSettings.docsTooltips[surface.key] ? 'secondary' : 'outline'}
+                      >
+                        {helpSettings.docsTooltips[surface.key] ? 'On' : 'Off'}
+                      </Badge>
+                    </div>
                     <p className='mt-1 text-sm text-muted-foreground'>{surface.description}</p>
                   </div>
                   <Switch
@@ -749,31 +822,36 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
                     aria-label={`${surface.label} docs tooltips`}
                   />
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
 
-          <div className='rounded-2xl border border-indigo-100 bg-indigo-50/80 px-4 py-4 text-sm text-indigo-900'>
-            <div className='font-semibold'>Current admin preview</div>
-            <p className='mt-1 text-indigo-700'>
-              Tooltips on this page are currently{' '}
-              <span className='font-semibold'>{adminDocsEnabled ? 'enabled' : 'disabled'}</span>{' '}
-              based on the in-progress settings state.
-            </p>
-          </div>
-
-          <div className='flex flex-col gap-3 rounded-2xl border border-border/70 bg-background/90 px-4 py-4 shadow-sm md:flex-row md:items-center md:justify-between'>
-            <div>
-              <div className='text-sm font-semibold text-foreground'>Documentation center</div>
-              <p className='mt-1 text-sm text-muted-foreground'>
-                Browse the Kangur guide index and tooltip catalog on a dedicated subpage instead of
-                inside the settings form.
-              </p>
+          <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
+            <div className='flex items-center gap-2'>
+              <div className='text-sm font-semibold text-foreground'>Current admin preview</div>
+              <Badge variant={adminDocsEnabled ? 'secondary' : 'outline'}>
+                {adminDocsEnabled ? 'Enabled' : 'Disabled'}
+              </Badge>
             </div>
-            <Button asChild variant='outline' size='sm'>
-              <Link href='/admin/kangur/documentation'>Open documentation center</Link>
-            </Button>
-          </div>
+            <p className='mt-1 text-sm text-muted-foreground'>
+              Tooltips on this page follow the in-progress settings state before you save.
+            </p>
+          </Card>
+
+          <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
+            <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
+              <div>
+                <div className='text-sm font-semibold text-foreground'>Documentation center</div>
+                <p className='mt-1 text-sm text-muted-foreground'>
+                  Browse the Kangur guide index and tooltip catalog on a dedicated subpage instead
+                  of inside the settings form.
+                </p>
+              </div>
+              <Button asChild variant='outline' size='sm'>
+                <Link href='/admin/kangur/documentation'>Open documentation center</Link>
+              </Button>
+            </div>
+          </Card>
         </FormSection>
 
         <FormSection
@@ -782,7 +860,7 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
           className={SETTINGS_SECTION_CLASS_NAME}
         >
           <div className='grid gap-4 lg:grid-cols-3'>
-            <div className='rounded-2xl border border-border/70 bg-background/90 px-4 py-4 shadow-sm'>
+            <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
               <div className='text-sm font-semibold text-foreground'>Observability dashboard</div>
               <p className='mt-1 text-sm text-muted-foreground'>
                 Open the dedicated Kangur dashboard with alerts, route health, client telemetry,
@@ -791,9 +869,9 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
               <Button asChild variant='outline' size='sm' className='mt-4'>
                 <Link href='/admin/kangur/observability'>Open observability dashboard</Link>
               </Button>
-            </div>
+            </Card>
 
-            <div className='rounded-2xl border border-border/70 bg-background/90 px-4 py-4 shadow-sm'>
+            <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
               <div className='text-sm font-semibold text-foreground'>Kangur system logs</div>
               <p className='mt-1 text-sm text-muted-foreground'>
                 Jump into System Logs scoped to Kangur events. Saved presets available there:
@@ -807,14 +885,13 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
                   <Link href='/admin/system/logs?source=kangur.tts.fallback'>TTS fallbacks</Link>
                 </Button>
               </div>
-            </div>
+            </Card>
 
-            <div className='rounded-2xl border border-border/70 bg-background/90 px-4 py-4 shadow-sm'>
+            <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
               <div className='text-sm font-semibold text-foreground'>Raw summary and runbook</div>
               <p className='mt-1 text-sm text-muted-foreground'>
-                Use the summary API for direct payload inspection. Operational steps live in
+                Use the summary API for direct payload inspection. Operational steps live in{' '}
                 <span className='font-mono text-xs text-foreground'>
-                  {' '}
                   docs/kangur/observability-and-operations.md
                 </span>
                 .
@@ -829,26 +906,28 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
                   <Link href='/api/kangur/observability/summary?range=7d'>Open 7d summary JSON</Link>
                 </Button>
               </div>
-            </div>
+            </Card>
           </div>
         </FormSection>
 
-        <div className='flex flex-col gap-3 border-t border-border/60 pt-6 md:flex-row md:items-center md:justify-between'>
-          <p className='text-xs text-muted-foreground'>
-            Saved narrator mode:{' '}
-            <span className='font-semibold text-foreground'>
-              {persistedNarratorSettings.engine}
-            </span>
-            {' · '}
-            Docs tooltips:{' '}
-            <span className='font-semibold text-foreground'>
-              {persistedHelpSettings.docsTooltips.enabled ? 'On' : 'Off'}
-            </span>
-          </p>
-          <div className='text-xs text-muted-foreground'>
-            {isDirty ? 'You have unsaved changes.' : 'All settings are in sync.'}
+        <Card
+          variant='subtle-compact'
+          padding='sm'
+          className='border-border/60 bg-card/30 shadow-sm'
+        >
+          <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
+            <div className='flex flex-wrap items-center gap-2 text-xs text-muted-foreground'>
+              <span>Saved state</span>
+              <Badge variant='outline'>{persistedNarratorSettings.engine}</Badge>
+              <Badge variant='outline'>
+                Docs tooltips {persistedHelpSettings.docsTooltips.enabled ? 'On' : 'Off'}
+              </Badge>
+            </div>
+            <Badge variant={isDirty ? 'warning' : 'secondary'}>
+              {isDirty ? 'Unsaved changes' : 'All settings in sync'}
+            </Badge>
           </div>
-        </div>
+        </Card>
       </div>
     </KangurAdminContentShell>
   );

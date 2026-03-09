@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import {
+  buildContextRegistryConsumerEnvelope,
+  mergeContextRegistryResolutionBundles,
+} from '@/features/ai/ai-context-registry/context/page-context-shared';
+import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
+import {
   compileGraph,
   evaluateAiPathsValidationPreflight,
   normalizeNodes,
@@ -29,6 +34,7 @@ import {
   type Edge,
   type PathConfig,
 } from '@/shared/contracts/ai-paths';
+import { contextRegistryConsumerEnvelopeSchema } from '@/shared/contracts/ai-context-registry';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, internalError, serviceUnavailableError } from '@/shared/errors/app-error';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
@@ -54,6 +60,7 @@ const enqueueSchema = z.object({
     .optional(),
   requestId: z.string().trim().min(1).max(200).optional(),
   meta: z.record(z.string(), z.unknown()).optional().nullable(),
+  contextRegistry: contextRegistryConsumerEnvelopeSchema.optional(),
 });
 
 const QUEUE_PREFLIGHT_TIMEOUT_MS = Number.parseInt(
@@ -153,6 +160,22 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
       ? rest.triggerContext
       : null;
   const requestContentLength = Number.parseInt(req.headers.get('content-length') ?? '', 10);
+  const resolvedContextRegistryBundle = data.contextRegistry?.refs.length
+    ? await withTiming('contextRegistryMs', async () => {
+      return await contextRegistryEngine.resolveRefs({
+        refs: data.contextRegistry!.refs,
+        maxNodes: 24,
+        depth: 1,
+      });
+    })
+    : null;
+  const contextRegistry = buildContextRegistryConsumerEnvelope({
+    refs: data.contextRegistry?.refs,
+    resolved: mergeContextRegistryResolutionBundles(
+      resolvedContextRegistryBundle,
+      data.contextRegistry?.resolved ?? null
+    ),
+  });
   let resolvedPathName = rest.pathName?.trim() || rest.pathId;
   let resolvedNodesInput: AiNode[] | undefined = nodes;
   let resolvedEdgesInput: Edge[] | undefined = edges;
@@ -218,6 +241,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
   }
   normalizedMeta = {
     ...metaRecord,
+    ...(contextRegistry ? { contextRegistry } : {}),
     aiPathsValidation: validationState,
     validationPreflight: validationReport,
   };
@@ -306,9 +330,12 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
       parseBodyMs: Math.round(timings['parseBodyMs'] ?? 0),
       loadStoredPathMs: Math.round(timings['loadStoredPathMs'] ?? 0),
       compileMs: Math.round(timings['compileMs'] ?? 0),
+      contextRegistryMs: Math.round(timings['contextRegistryMs'] ?? 0),
       queueReadyMs: Math.round(timings['queueReadyMs'] ?? 0),
       enqueueServiceMs: Math.round(timings['enqueueServiceMs'] ?? 0),
       graphSource,
+      contextRegistryRefCount: contextRegistry?.refs.length ?? 0,
+      contextRegistryDocumentCount: contextRegistry?.resolved?.documents.length ?? 0,
       ...(Number.isFinite(requestContentLength) ? { requestContentLength } : {}),
       triggerContextHasEntityJson:
         triggerContextRecord !== null && hasOwn(triggerContextRecord, 'entityJson'),

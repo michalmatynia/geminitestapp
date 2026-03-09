@@ -27,8 +27,10 @@ import {
   toTimestampMs,
 } from '@/shared/lib/ai-paths/services/runtime-analytics/utils';
 import {
+  recordRuntimeRunBlockedOnLease as recordRuntimeRunBlockedOnLeaseShared,
   recordRuntimeNodeStatus as recordRuntimeNodeStatusShared,
   recordRuntimeRunFinished as recordRuntimeRunFinishedShared,
+  recordRuntimeRunHandoffReady as recordRuntimeRunHandoffReadyShared,
   recordRuntimeRunQueued as recordRuntimeRunQueuedShared,
   recordRuntimeRunStarted as recordRuntimeRunStartedShared,
 } from '@/shared/lib/ai-paths/services/runtime-analytics/recording';
@@ -133,6 +135,8 @@ const buildPortableEngineAnalytics = (): AiPathRuntimePortableEngineAnalytics =>
 
 export const recordRuntimeRunQueued = recordRuntimeRunQueuedShared;
 export const recordRuntimeRunStarted = recordRuntimeRunStartedShared;
+export const recordRuntimeRunBlockedOnLease = recordRuntimeRunBlockedOnLeaseShared;
+export const recordRuntimeRunHandoffReady = recordRuntimeRunHandoffReadyShared;
 export const recordRuntimeRunFinished = recordRuntimeRunFinishedShared;
 export const recordRuntimeNodeStatus = recordRuntimeNodeStatusShared;
 

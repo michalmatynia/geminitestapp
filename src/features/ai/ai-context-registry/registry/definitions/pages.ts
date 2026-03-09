@@ -106,11 +106,17 @@ export const pageNodes: ContextNode[] = [
       { type: 'reads', targetId: 'collection:image-studio-projects' },
       { type: 'reads', targetId: 'collection:image-studio-slots' },
       { type: 'reads', targetId: 'collection:image-studio-runs' },
+      { type: 'reads', targetId: 'collection:image-studio-sequence-runs' },
       { type: 'uses', targetId: 'component:image-studio-slot-tree' },
       { type: 'uses', targetId: 'component:image-studio-center-preview' },
       { type: 'uses', targetId: 'component:image-studio-right-sidebar' },
       { type: 'uses', targetId: 'component:image-studio-generation-toolbar' },
       { type: 'uses', targetId: 'action:image-studio-run' },
+      { type: 'uses', targetId: 'action:image-studio-sequence-run' },
+      { type: 'uses', targetId: 'action:image-studio-ai-path-object-analysis' },
+      { type: 'uses', targetId: 'action:image-studio-prompt-extract' },
+      { type: 'uses', targetId: 'action:image-studio-ui-extractor' },
+      { type: 'uses', targetId: 'action:image-studio-mask-ai' },
     ],
     permissions: {
       readScopes: ['ctx:read'],
@@ -144,6 +150,29 @@ export const pageNodes: ContextNode[] = [
     source: { type: 'code', ref: SOURCE_REF },
   },
   {
+    id: 'page:product-editor',
+    kind: 'page',
+    name: 'Product Editor',
+    description:
+      'Admin product editing workspace with form tabs, image management, and Product Studio ' +
+      'actions that can launch Image Studio generations using the current page context registry envelope.',
+    tags: ['products', 'editor', 'studio', 'admin', 'ai'],
+    relationships: [
+      { type: 'reads', targetId: 'collection:products' },
+      { type: 'uses', targetId: 'component:product-form' },
+      { type: 'uses', targetId: 'component:product-form-studio' },
+      { type: 'uses', targetId: 'action:product-studio-send' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
     id: 'page:database-engine',
     kind: 'page',
     name: 'Database Engine Page',
@@ -171,10 +200,15 @@ export const pageNodes: ContextNode[] = [
     name: 'AI Paths Canvas',
     description:
       'Visual drag-and-drop canvas for composing AI automation graphs. ' +
-      'Supports node/edge management, run history, and path configuration.',
+      'Supports node authoring, direct model previews, run history, and page-scoped context for AI-assisted path work.',
     tags: ['ai', 'automation', 'canvas', 'paths', 'admin'],
     relationships: [
       { type: 'uses', targetId: 'action:run-ai-path' },
+      { type: 'uses', targetId: 'action:ai-paths-preview-model' },
+      { type: 'uses', targetId: 'component:ai-paths-canvas-board' },
+      { type: 'uses', targetId: 'component:ai-paths-paths-panel' },
+      { type: 'uses', targetId: 'component:ai-paths-docs-panel' },
+      { type: 'uses', targetId: 'component:ai-paths-node-config-dialog' },
       { type: 'reads', targetId: 'collection:ai-path-runs' },
     ],
     permissions: {

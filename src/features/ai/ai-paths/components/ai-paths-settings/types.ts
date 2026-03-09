@@ -204,7 +204,15 @@ export interface UseAiPathsSettingsStateReturn {
   handleResumeActiveRun: () => void;
   handleStepActiveRun: (triggerNode?: AiNode) => void;
   handleCancelActiveRun: () => void;
-  runtimeRunStatus: 'idle' | 'running' | 'paused' | 'stepping' | 'completed' | 'failed';
+  runtimeRunStatus:
+    | 'idle'
+    | 'running'
+    | 'blocked_on_lease'
+    | 'handoff_ready'
+    | 'paused'
+    | 'stepping'
+    | 'completed'
+    | 'failed';
   runtimeNodeStatuses: AiPathRuntimeNodeStatusMap;
   runtimeEvents: AiPathRuntimeEvent[];
   nodeDurations: Record<string, number>;

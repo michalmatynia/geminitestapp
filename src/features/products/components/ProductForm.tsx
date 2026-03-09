@@ -3,8 +3,10 @@
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import { ContextRegistryPageProvider } from '@/features/ai/ai-context-registry/context/page-context';
 import ProductFormDebugPanel from '@/features/products/components/ProductFormDebugPanel';
 import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
+import { PRODUCT_EDITOR_CONTEXT_ROOT_IDS } from '@/features/products/context-registry/workspace';
 import { ProductValidationSettingsProvider } from '@/features/products/context/ProductValidationSettingsContext';
 import {
   PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS,
@@ -83,94 +85,100 @@ export default function ProductForm({
   }, [draft?.id, draft?.openProductFormTab, searchParams]);
 
   return (
-    <form
-      onSubmit={(e: React.FormEvent) => {
-        void handleSubmit(e);
-      }}
-      className='relative min-h-[400px] pb-10'
+    <ContextRegistryPageProvider
+      pageId='admin:product-editor'
+      title='Product Editor'
+      rootNodeIds={[...PRODUCT_EDITOR_CONTEXT_ROOT_IDS]}
     >
-      {isDebugOpen && <ProductFormDebugPanel />}
-      <ProductValidationSettingsProvider
-        value={{
-          validationInstanceScope: validator.validationInstanceScope,
-          validatorEnabled: validator.validatorEnabled,
-          formatterEnabled: validator.formatterEnabled,
-          setValidatorEnabled: validator.setValidatorEnabled,
-          setFormatterEnabled: validator.setFormatterEnabled,
-          validationDenyBehavior: validator.validationDenyBehavior,
-          setValidationDenyBehavior: (
-            behavior: React.SetStateAction<ProductValidationDenyBehavior>
-          ): void => {
-            if (typeof behavior === 'string') {
-              validator.setValidationDenyBehavior(behavior);
-            }
-          },
-          denyActionLabel: validator.denyActionLabel,
-          getDenyActionLabel: validator.getDenyActionLabel,
-          isIssueDenied: validator.isIssueDenied,
-          denyIssue: validator.denyIssue,
-          isIssueAccepted: validator.isIssueAccepted,
-          acceptIssue: validator.acceptIssue,
-          validatorPatterns: validator.validatorPatterns,
-          latestProductValues: validator.latestProductValues,
-          visibleFieldIssues: validator.visibleFieldIssues,
+      <form
+        onSubmit={(e: React.FormEvent) => {
+          void handleSubmit(e);
         }}
+        className='relative min-h-[400px] pb-10'
       >
-        <Tabs
-          value={activeTab}
-          onValueChange={(value: string): void => {
-            const tab = normalizeProductFormTab(value);
-            setActiveTab(tab);
-            setMountedTabs((prev) => {
-              if (prev.has(tab)) return prev;
-              const next = new Set(prev);
-              next.add(tab);
-              return next;
-            });
+        {isDebugOpen && <ProductFormDebugPanel />}
+        <ProductValidationSettingsProvider
+          value={{
+            validationInstanceScope: validator.validationInstanceScope,
+            validatorEnabled: validator.validatorEnabled,
+            formatterEnabled: validator.formatterEnabled,
+            setValidatorEnabled: validator.setValidatorEnabled,
+            setFormatterEnabled: validator.setFormatterEnabled,
+            validationDenyBehavior: validator.validationDenyBehavior,
+            setValidationDenyBehavior: (
+              behavior: React.SetStateAction<ProductValidationDenyBehavior>
+            ): void => {
+              if (typeof behavior === 'string') {
+                validator.setValidationDenyBehavior(behavior);
+              }
+            },
+            denyActionLabel: validator.denyActionLabel,
+            getDenyActionLabel: validator.getDenyActionLabel,
+            isIssueDenied: validator.isIssueDenied,
+            denyIssue: validator.denyIssue,
+            isIssueAccepted: validator.isIssueAccepted,
+            acceptIssue: validator.acceptIssue,
+            validatorPatterns: validator.validatorPatterns,
+            latestProductValues: validator.latestProductValues,
+            visibleFieldIssues: validator.visibleFieldIssues,
           }}
-          className='w-full'
         >
-          <TabsList className='grid w-full grid-cols-4 md:grid-cols-8' aria-label='Product form tabs'>
-            <TabsTrigger value='general'>General</TabsTrigger>
-            <TabsTrigger value='other'>Other</TabsTrigger>
-            <TabsTrigger value='parameters'>Parameters</TabsTrigger>
-            <TabsTrigger value='images'>Images</TabsTrigger>
-            <TabsTrigger value='studio'>Studio</TabsTrigger>
-            <TabsTrigger value='import-info'>Import Info</TabsTrigger>
-            <TabsTrigger value='note-link'>Note Link</TabsTrigger>
-            <TabsTrigger value='validation'>Validation</TabsTrigger>
-          </TabsList>
-          {/* General tab is always mounted — the formatter effect reads its fields from mount */}
-          <TabsContent value='general' className='mt-4 data-[state=inactive]:hidden' forceMount>
-            <ProductFormGeneral />
-          </TabsContent>
-          {/* Remaining tabs use deferred mounting: content renders on first visit and */}
-          {/* remains hidden via CSS when inactive, avoiding repeated mount/unmount cost. */}
-          <TabsContent value='other' className='mt-4 data-[state=inactive]:hidden' forceMount>
-            <ProductFormOther />
-          </TabsContent>
-          <TabsContent value='parameters' className='mt-4 data-[state=inactive]:hidden'>
-            {mountedTabs.has('parameters') && <ProductFormParameters />}
-          </TabsContent>
-          <TabsContent value='images' className='mt-4 data-[state=inactive]:hidden'>
-            {mountedTabs.has('images') && <ProductFormImages />}
-          </TabsContent>
-          <TabsContent value='studio' className='mt-4 data-[state=inactive]:hidden'>
-            {mountedTabs.has('studio') && <ProductFormStudio />}
-          </TabsContent>
-          <TabsContent value='import-info' className='mt-4 data-[state=inactive]:hidden'>
-            {mountedTabs.has('import-info') && <ProductFormImportInfo />}
-          </TabsContent>
-          <TabsContent value='note-link' className='mt-4 data-[state=inactive]:hidden'>
-            {mountedTabs.has('note-link') && <ProductFormNoteLink />}
-          </TabsContent>
-          <TabsContent value='validation' className='mt-4 space-y-4'>
-            <ProductFormValidationTab />
-          </TabsContent>
-        </Tabs>
-      </ProductValidationSettingsProvider>
-      <ProductFormFooter entityId={footerEntityId} />
-      <ConfirmationModal />
-    </form>
+          <Tabs
+            value={activeTab}
+            onValueChange={(value: string): void => {
+              const tab = normalizeProductFormTab(value);
+              setActiveTab(tab);
+              setMountedTabs((prev) => {
+                if (prev.has(tab)) return prev;
+                const next = new Set(prev);
+                next.add(tab);
+                return next;
+              });
+            }}
+            className='w-full'
+          >
+            <TabsList className='grid w-full grid-cols-4 md:grid-cols-8' aria-label='Product form tabs'>
+              <TabsTrigger value='general'>General</TabsTrigger>
+              <TabsTrigger value='other'>Other</TabsTrigger>
+              <TabsTrigger value='parameters'>Parameters</TabsTrigger>
+              <TabsTrigger value='images'>Images</TabsTrigger>
+              <TabsTrigger value='studio'>Studio</TabsTrigger>
+              <TabsTrigger value='import-info'>Import Info</TabsTrigger>
+              <TabsTrigger value='note-link'>Note Link</TabsTrigger>
+              <TabsTrigger value='validation'>Validation</TabsTrigger>
+            </TabsList>
+            {/* General tab is always mounted — the formatter effect reads its fields from mount */}
+            <TabsContent value='general' className='mt-4 data-[state=inactive]:hidden' forceMount>
+              <ProductFormGeneral />
+            </TabsContent>
+            {/* Remaining tabs use deferred mounting: content renders on first visit and */}
+            {/* remains hidden via CSS when inactive, avoiding repeated mount/unmount cost. */}
+            <TabsContent value='other' className='mt-4 data-[state=inactive]:hidden' forceMount>
+              <ProductFormOther />
+            </TabsContent>
+            <TabsContent value='parameters' className='mt-4 data-[state=inactive]:hidden'>
+              {mountedTabs.has('parameters') && <ProductFormParameters />}
+            </TabsContent>
+            <TabsContent value='images' className='mt-4 data-[state=inactive]:hidden'>
+              {mountedTabs.has('images') && <ProductFormImages />}
+            </TabsContent>
+            <TabsContent value='studio' className='mt-4 data-[state=inactive]:hidden'>
+              {mountedTabs.has('studio') && <ProductFormStudio />}
+            </TabsContent>
+            <TabsContent value='import-info' className='mt-4 data-[state=inactive]:hidden'>
+              {mountedTabs.has('import-info') && <ProductFormImportInfo />}
+            </TabsContent>
+            <TabsContent value='note-link' className='mt-4 data-[state=inactive]:hidden'>
+              {mountedTabs.has('note-link') && <ProductFormNoteLink />}
+            </TabsContent>
+            <TabsContent value='validation' className='mt-4 space-y-4'>
+              <ProductFormValidationTab />
+            </TabsContent>
+          </Tabs>
+        </ProductValidationSettingsProvider>
+        <ProductFormFooter entityId={footerEntityId} />
+        <ConfirmationModal />
+      </form>
+    </ContextRegistryPageProvider>
   );
 }

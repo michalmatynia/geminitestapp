@@ -1,3 +1,11 @@
+---
+owner: 'AI Paths Team'
+last_reviewed: '2026-03-09'
+status: 'active'
+doc_type: 'index'
+scope: 'generated'
+canonical: true
+---
 # Semantic Grammar Node JSON
 
 Generated JSON scaffolds for every AI-Paths node type with deterministic per-node hashes.

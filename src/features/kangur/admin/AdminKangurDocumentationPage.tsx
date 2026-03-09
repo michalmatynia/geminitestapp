@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 import { KangurAdminContentShell } from '@/features/kangur/admin/components/KangurAdminContentShell';
 import { KangurDocumentationCenter } from '@/features/kangur/admin/components/KangurDocumentationCenter';
-import { Button, SkipToContentLink } from '@/shared/ui';
+import { Badge, Button, Card, SkipToContentLink } from '@/shared/ui';
 
 const DOCUMENTATION_CONTENT_ID = 'kangur-documentation-content';
 const DOCUMENTATION_WORKSPACE_TITLE_ID = 'kangur-documentation-workspace-title';
@@ -37,22 +37,30 @@ export function AdminKangurDocumentationPage(): React.JSX.Element {
           aria-describedby={DOCUMENTATION_WORKSPACE_DESCRIPTION_ID}
           className='space-y-6 outline-none'
         >
-          <section
+          <Card
             aria-labelledby={DOCUMENTATION_WORKSPACE_TITLE_ID}
             aria-describedby={DOCUMENTATION_WORKSPACE_DESCRIPTION_ID}
-            className='rounded-2xl border border-border/60 bg-card/55 px-5 py-5 text-sm text-muted-foreground shadow-sm'
+            variant='subtle'
+            padding='md'
+            className='rounded-2xl border-border/60 bg-card/40 text-sm text-muted-foreground shadow-sm'
           >
-            <h2
-              id={DOCUMENTATION_WORKSPACE_TITLE_ID}
-              className='text-base font-semibold text-foreground'
+            <div className='flex items-center gap-2'>
+              <h2
+                id={DOCUMENTATION_WORKSPACE_TITLE_ID}
+                className='text-base font-semibold text-foreground'
+              >
+                Documentation workspace
+              </h2>
+              <Badge variant='outline'>Shared surface</Badge>
+            </div>
+            <p
+              id={DOCUMENTATION_WORKSPACE_DESCRIPTION_ID}
+              className='mt-2 max-w-3xl text-sm font-normal text-muted-foreground'
             >
-              Documentation workspace
-            </h2>
-            <p id={DOCUMENTATION_WORKSPACE_DESCRIPTION_ID} className='mt-1 max-w-3xl'>
               Use this page to review the source guides behind Kangur tooltip content without
               mixing the documentation browser into the settings form.
             </p>
-          </section>
+          </Card>
           <KangurDocumentationCenter />
         </main>
       </KangurAdminContentShell>

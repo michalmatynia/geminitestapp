@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 import {
   runBrainChatCompletion,
   supportsBrainJsonMode,
 } from '@/shared/lib/ai-brain/server-runtime-client';
+import {
+  imageStudioUiExtractorRequestSchema,
+  imageStudioUiExtractorResponseSchema,
+} from '@/shared/contracts/image-studio';
 import {
   IMAGE_STUDIO_SETTINGS_KEY,
   parsePersistedImageStudioSettings,
@@ -15,52 +18,8 @@ import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, internalError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-
-const uiControlEnum = z.enum([
-  'auto',
-  'checkbox',
-  'buttons',
-  'select',
-  'slider',
-  'number',
-  'text',
-  'textarea',
-  'json',
-  'rgb',
-  'tuple2',
-]);
-
-const paramSpecSchema = z
-  .object({
-    kind: z.string().optional(),
-    min: z.number().optional(),
-    max: z.number().optional(),
-    enumOptions: z.array(z.string()).optional(),
-  })
-  .partial();
-
-const payloadSchema = z.object({
-  prompt: z.string().trim().min(1),
-  params: z.array(
-    z.object({
-      path: z.string().trim().min(1),
-      value: z.unknown(),
-      spec: paramSpecSchema.nullable().optional(),
-    })
-  ),
-  mode: z.enum(['heuristic', 'ai', 'both']).optional().default('ai'),
-});
-
-const responseSchema = z.object({
-  suggestions: z.array(
-    z.object({
-      path: z.string().trim().min(1),
-      control: uiControlEnum,
-      reason: z.string().trim().min(1).nullable().optional(),
-      confidence: z.number().min(0).max(1).optional(),
-    })
-  ),
-});
+import { resolveImageStudioContextRegistryEnvelope } from '@/features/ai/image-studio/context-registry/server';
+import { buildImageStudioWorkspaceSystemPrompt } from '@/features/ai/image-studio/context-registry/workspace-prompt';
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();
@@ -68,7 +27,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     session?.user?.isElevated || session?.user?.permissions?.includes('ai_paths.manage');
   if (!hasAccess) throw authError('Unauthorized.');
 
-  const parsed = await parseJsonBody(req, payloadSchema, {
+  const parsed = await parseJsonBody(req, imageStudioUiExtractorRequestSchema, {
     logPrefix: 'image-studio.ui-extractor.POST',
   });
   if (!parsed.ok) return parsed.response;
@@ -81,6 +40,15 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   const temperature = settings.uiExtractor.temperature ?? 0.2;
   const maxOutputTokens = settings.uiExtractor.max_output_tokens ?? 800;
 
+  const contextRegistry = await resolveImageStudioContextRegistryEnvelope(
+    parsed.data.contextRegistry ?? null
+  );
+  const contextRegistryPrompt = buildImageStudioWorkspaceSystemPrompt({
+    registryBundle: contextRegistry?.resolved,
+    taskLabel: 'prompt parameter UI control selection',
+    extraInstructions:
+      'Prefer controls that match the current prompt draft, selected slot workflow, and operator-facing generation settings.',
+  });
   const systemPrompt = [
     'You map prompt parameters to UI controls.',
     'Return ONLY JSON matching: { "suggestions": [{ path, control, reason?, confidence? }] }.',
@@ -88,7 +56,10 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     'Prefer: booleans->checkbox, enums->buttons/select, 0..1 or bounded numbers->slider,',
     'short strings->text, long/multiline strings->textarea, arrays/objects->json, RGB arrays->rgb, 2-number arrays->tuple2.',
     'Use confidence 0..1 (optional).',
-  ].join('\n');
+    contextRegistryPrompt,
+  ]
+    .filter(Boolean)
+    .join('\n');
 
   const userPrompt = [
     'Prompt:',
@@ -124,7 +95,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     throw internalError('Model did not return valid JSON.', { raw });
   }
 
-  const validated = responseSchema.safeParse(json);
+  const validated = imageStudioUiExtractorResponseSchema.safeParse(json);
   if (!validated.success) {
     throw internalError('Invalid UI extractor response shape.', {
       issues: validated.error.flatten(),

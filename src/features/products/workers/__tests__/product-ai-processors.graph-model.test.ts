@@ -205,6 +205,79 @@ describe('processGraphModel AI Paths model selection', () => {
     );
   });
 
+  it('appends AI Paths context registry workspace state to the system prompt when present', async () => {
+    vi.mocked(resolveAiPathsNodeExecutionConfig).mockResolvedValue({
+      assignment: {
+        enabled: true,
+        provider: 'model',
+        modelId: 'ollama:brain-default',
+        agentId: '',
+        temperature: 0.3,
+        maxTokens: 400,
+        systemPrompt: 'Brain system',
+      },
+      capability: 'ai_paths.model',
+      feature: 'ai_paths',
+      provider: 'model',
+      agentId: '',
+      modelId: 'ollama:brain-default',
+      temperature: 0.3,
+      maxTokens: 400,
+      systemPrompt: 'Brain system',
+      brainApplied: {
+        capability: 'ai_paths.model',
+        feature: 'ai_paths',
+        modelFamily: 'chat',
+        runtimeKind: 'chat',
+        provider: 'model',
+        modelId: 'ollama:brain-default',
+        temperature: 0.3,
+        maxTokens: 400,
+        systemPromptApplied: true,
+        modelSelectionSource: 'brain_default',
+        enforced: true,
+      },
+    });
+
+    await processGraphModel(
+      buildJob({
+        contextRegistry: {
+          refs: [{ id: 'page:ai-paths', kind: 'static_node' }],
+          engineVersion: 'page-context:v1',
+          resolved: {
+            refs: [{ id: 'runtime:ai-paths:workspace', kind: 'runtime_document' }],
+            nodes: [],
+            documents: [
+              {
+                id: 'runtime:ai-paths:workspace',
+                kind: 'runtime_document',
+                entityType: 'ai_paths_workspace_state',
+                title: 'AI Paths workspace state',
+                summary: 'Live state',
+                status: 'running',
+                tags: ['ai-paths'],
+                relatedNodeIds: ['page:ai-paths'],
+                facts: { activePathId: 'path_local_test', selectedNodeId: 'node-1' },
+                sections: [],
+                provenance: { source: 'test' },
+              },
+            ],
+            truncated: false,
+            engineVersion: 'page-context:v1',
+          },
+        },
+      })
+    );
+
+    const call = vi.mocked(runBrainChatCompletion).mock.calls[0]?.[0];
+    const systemMessage = Array.isArray(call?.messages) ? call.messages[0]?.content : null;
+
+    expect(typeof systemMessage).toBe('string');
+    expect(systemMessage).toContain('Brain system');
+    expect(systemMessage).toContain('Context Registry bundle for the current AI Paths workspace.');
+    expect(systemMessage).toContain('"activePathId": "path_local_test"');
+  });
+
   it('retries once for JSON-looking truncated completions', async () => {
     vi.mocked(resolveAiPathsNodeExecutionConfig).mockResolvedValue({
       assignment: {

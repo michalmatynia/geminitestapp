@@ -1,4 +1,6 @@
+import { buildChatbotContextRegistrySystemPrompt } from '@/features/ai/chatbot/context-registry/system-prompt';
 import type { ChatMessageRoleDto } from '@/shared/contracts/chatbot';
+import { contextRegistryConsumerEnvelopeSchema } from '@/shared/contracts/ai-context-registry';
 import { resolveBrainModelExecutionConfig } from '@/shared/lib/ai-brain/server';
 import { runChatbotModel } from '@/shared/lib/ai/chatbot/server-model-runtime';
 import { chatbotJobRepository } from '@/features/ai/chatbot/services/chatbot-job-repository';
@@ -14,6 +16,7 @@ type ChatPayload = {
   model?: string;
   messages?: ChatPayloadMessage[];
   options?: Record<string, unknown>;
+  contextRegistry?: unknown;
 };
 
 const DEFAULT_CHATBOT_SYSTEM_PROMPT = 'You are a helpful assistant.';
@@ -39,6 +42,13 @@ export const processJob = async (jobId: string): Promise<void> => {
     defaultMaxTokens: 800,
     defaultSystemPrompt: DEFAULT_CHATBOT_SYSTEM_PROMPT,
   });
+  const parsedContextRegistry = contextRegistryConsumerEnvelopeSchema.safeParse(
+    payload.contextRegistry
+  );
+  const contextRegistryPrompt = parsedContextRegistry.success
+    ? buildChatbotContextRegistrySystemPrompt(parsedContextRegistry.data.resolved)
+    : '';
+  const systemPrompt = [brainConfig.systemPrompt, contextRegistryPrompt].filter(Boolean).join('\n\n');
 
   const result = await runChatbotModel({
     messages: messages.map((m) => ({
@@ -48,7 +58,7 @@ export const processJob = async (jobId: string): Promise<void> => {
     modelId: brainConfig.modelId,
     temperature: brainConfig.temperature,
     maxTokens: brainConfig.maxTokens,
-    systemPrompt: brainConfig.systemPrompt,
+    systemPrompt,
   });
 
   await chatbotSessionRepository.addMessage(job.sessionId, {

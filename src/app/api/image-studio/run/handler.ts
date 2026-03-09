@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import {
-  buildContextRegistryConsumerEnvelope,
-  mergeContextRegistryResolutionBundles,
-} from '@/features/ai/ai-context-registry/context/page-context-shared';
-import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
+import { resolveImageStudioContextRegistryEnvelope } from '@/features/ai/image-studio/context-registry/server';
 import {
   imageStudioRunRequestSchema,
   resolveExpectedOutputCount,
@@ -34,21 +30,9 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     throw badRequestError('Project id is required.');
   }
 
-  const resolvedRegistryBundle =
-    parsed.data.contextRegistry?.refs.length
-      ? await contextRegistryEngine.resolveRefs({
-        refs: parsed.data.contextRegistry.refs,
-        maxNodes: 24,
-        depth: 1,
-      })
-      : null;
-  const contextRegistry = buildContextRegistryConsumerEnvelope({
-    refs: parsed.data.contextRegistry?.refs,
-    resolved: mergeContextRegistryResolutionBundles(
-      resolvedRegistryBundle,
-      parsed.data.contextRegistry?.resolved ?? null
-    ),
-  });
+  const contextRegistry = await resolveImageStudioContextRegistryEnvelope(
+    parsed.data.contextRegistry ?? null
+  );
   const request = {
     ...parsed.data,
     projectId,

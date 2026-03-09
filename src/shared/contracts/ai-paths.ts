@@ -450,6 +450,8 @@ export const aiPathRuntimeAnalyticsSummarySchema = z.object({
     failed: z.number(),
     canceled: z.number(),
     deadLettered: z.number(),
+    blockedOnLease: z.number().optional(),
+    handoffReady: z.number().optional(),
     successRate: z.number(),
     failureRate: z.number(),
     deadLetterRate: z.number(),
@@ -530,7 +532,15 @@ export interface LastErrorInfo {
   pathId?: string | null;
 }
 
-export type RuntimeRunStatus = 'idle' | 'running' | 'paused' | 'stepping' | 'completed' | 'failed';
+export type RuntimeRunStatus =
+  | 'idle'
+  | 'running'
+  | 'blocked_on_lease'
+  | 'handoff_ready'
+  | 'paused'
+  | 'stepping'
+  | 'completed'
+  | 'failed';
 
 export interface RuntimeControlHandlers {
   fireTrigger?: (node: AiNode, event?: React.MouseEvent<Element>) => void | Promise<void>;

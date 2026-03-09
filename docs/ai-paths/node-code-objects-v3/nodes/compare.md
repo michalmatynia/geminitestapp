@@ -1,3 +1,11 @@
+---
+owner: 'AI Paths Team'
+last_reviewed: '2026-03-05'
+status: 'generated'
+doc_type: 'generated'
+scope: 'feature:ai-paths'
+canonical: true
+---
 # Compare Migration Sheet (`compare`)
 
 Generated at: 2026-03-05T00:00:00.000Z

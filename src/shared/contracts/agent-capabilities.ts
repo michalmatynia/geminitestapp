@@ -56,6 +56,8 @@ export const AgentRuntimeLeaseDescriptorSchema = z.object({
   summary: z.string().min(1),
   mode: AgentLeaseModeSchema,
   requiresLease: z.boolean(),
+  scopeRequired: z.boolean().default(false),
+  scopeDescription: z.string().min(1).optional(),
   status: AgentLeaseStatusSchema.optional(),
   ownerAgentEnvKeys: z.array(z.string().min(1)).default([]),
   leaseMs: z.number().int().positive().nullable().default(null),

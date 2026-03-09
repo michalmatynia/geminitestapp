@@ -11,7 +11,10 @@ export const collectionNodes: ContextNode[] = [
       'MongoDB collection storing product records. Each product has a SKU, ' +
       'name, description, price, status, images, and taxonomy tags.',
     tags: ['products', 'mongo', 'database', 'catalog'],
-    relationships: [{ type: 'related_to', targetId: 'collection:orders' }],
+    relationships: [
+      { type: 'related_to', targetId: 'collection:orders' },
+      { type: 'related_to', targetId: 'action:product-studio-send' },
+    ],
     jsonSchema2020: {
       $schema: 'https://json-schema.org/draft/2020-12/schema',
       type: 'object',
@@ -76,7 +79,10 @@ export const collectionNodes: ContextNode[] = [
       'Stores historical AI path execution records including status, node-level outputs, ' +
       'events, and runtime state snapshots.',
     tags: ['ai', 'paths', 'runs', 'database', 'automation'],
-    relationships: [{ type: 'related_to', targetId: 'action:run-ai-path' }],
+    relationships: [
+      { type: 'related_to', targetId: 'action:run-ai-path' },
+      { type: 'related_to', targetId: 'action:image-studio-ai-path-object-analysis' },
+    ],
     permissions: {
       readScopes: ['ctx:read'],
       riskTier: 'low',
@@ -196,7 +202,10 @@ export const collectionNodes: ContextNode[] = [
     relationships: [
       { type: 'related_to', targetId: 'collection:image-studio-slots' },
       { type: 'related_to', targetId: 'collection:image-studio-runs' },
+      { type: 'related_to', targetId: 'collection:image-studio-sequence-runs' },
       { type: 'related_to', targetId: 'action:image-studio-run' },
+      { type: 'related_to', targetId: 'action:image-studio-sequence-run' },
+      { type: 'related_to', targetId: 'action:product-studio-send' },
     ],
     permissions: {
       readScopes: ['ctx:read'],
@@ -217,7 +226,10 @@ export const collectionNodes: ContextNode[] = [
     relationships: [
       { type: 'related_to', targetId: 'collection:image-studio-projects' },
       { type: 'related_to', targetId: 'collection:image-studio-runs' },
+      { type: 'related_to', targetId: 'collection:image-studio-sequence-runs' },
       { type: 'related_to', targetId: 'action:image-studio-run' },
+      { type: 'related_to', targetId: 'action:image-studio-sequence-run' },
+      { type: 'related_to', targetId: 'action:product-studio-send' },
     ],
     permissions: {
       readScopes: ['ctx:read'],
@@ -238,7 +250,33 @@ export const collectionNodes: ContextNode[] = [
     relationships: [
       { type: 'related_to', targetId: 'collection:image-studio-projects' },
       { type: 'related_to', targetId: 'collection:image-studio-slots' },
+      { type: 'related_to', targetId: 'collection:image-studio-sequence-runs' },
       { type: 'related_to', targetId: 'action:image-studio-run' },
+      { type: 'related_to', targetId: 'action:image-studio-sequence-run' },
+      { type: 'related_to', targetId: 'action:product-studio-send' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'low',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'collection:image-studio-sequence-runs',
+    kind: 'collection',
+    name: 'image_studio_sequence_runs',
+    description:
+      'Image Studio sequence run records including step plans, current slot lineage, nested generation state, and streaming history events.',
+    tags: ['image-studio', 'sequence', 'runs', 'workflow', 'database'],
+    relationships: [
+      { type: 'related_to', targetId: 'collection:image-studio-projects' },
+      { type: 'related_to', targetId: 'collection:image-studio-slots' },
+      { type: 'related_to', targetId: 'collection:image-studio-runs' },
+      { type: 'related_to', targetId: 'action:image-studio-sequence-run' },
+      { type: 'related_to', targetId: 'action:product-studio-send' },
     ],
     permissions: {
       readScopes: ['ctx:read'],

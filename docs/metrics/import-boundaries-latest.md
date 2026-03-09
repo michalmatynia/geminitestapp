@@ -1,16 +1,28 @@
+---
+owner: 'Platform Team'
+last_reviewed: '2026-03-09'
+status: 'generated'
+doc_type: 'generated'
+scope: 'generated'
+canonical: true
+---
 # Import Boundaries Check
 
-Generated at: 2026-03-09T06:12:23.045Z
+Generated at: 2026-03-09T07:50:50.862Z
 
 ## Summary
 
 - Status: FAILED
-- Files scanned: 4473
+- Files scanned: 4483
 - Features tracked: 9
-- Circular dependencies: 0
-- Errors: 7
-- Warnings: 3
+- Circular dependencies: 1
+- Errors: 9
+- Warnings: 0
 - Info: 0
+
+## Circular Dependencies
+
+- ai -> products -> ai
 
 ## Feature Dependency Graph
 
@@ -20,8 +32,8 @@ Generated at: 2026-03-09T06:12:23.045Z
 | case-resolver | ai, case-resolver-capture, document-editor, filemaker, foldertree | 5 |
 | kangur | ai, cms, document-editor, foldertree | 4 |
 | ai | foldertree, products, viewer3d | 3 |
+| products | ai, foldertree, internationalization | 3 |
 | notesapp | document-editor, foldertree | 2 |
-| products | foldertree, internationalization | 2 |
 | admin | foldertree | 1 |
 | drafter | products | 1 |
 | prompt-exploder | foldertree | 1 |
@@ -30,13 +42,14 @@ Generated at: 2026-03-09T06:12:23.045Z
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| cross-feature-internal-import | 7 | 0 | 0 |
-| deep-relative-import | 0 | 3 | 0 |
+| cross-feature-internal-import | 8 | 0 | 0 |
+| circular-feature-dep | 1 | 0 | 0 |
 
 ## Issues
 
 | Severity | Rule | Location | Message |
 | --- | --- | --- | --- |
+| ERROR | circular-feature-dep | - | Circular dependency between features: ai -> products -> ai |
 | ERROR | cross-feature-internal-import | src/features/cms/components/page-builder/context/useInspectorAiGeneration.ts:3 | Imports internal path from feature "ai": @/features/ai/ai-context-registry/context/page-context. Use the barrel export instead. |
 | ERROR | cross-feature-internal-import | src/features/cms/components/page-builder/PageBuilderLayout.tsx:7 | Imports internal path from feature "ai": @/features/ai/ai-context-registry/context/page-context. Use the barrel export instead. |
 | ERROR | cross-feature-internal-import | src/features/cms/components/page-builder/settings/page-settings/usePageAiAssistant.ts:4 | Imports internal path from feature "ai": @/features/ai/ai-context-registry/context/page-context. Use the barrel export instead. |
@@ -44,9 +57,7 @@ Generated at: 2026-03-09T06:12:23.045Z
 | ERROR | cross-feature-internal-import | src/features/cms/context-registry/page-builder.ts:8 | Imports internal path from feature "ai": @/features/ai/ai-context-registry/context/page-context-shared. Use the barrel export instead. |
 | ERROR | cross-feature-internal-import | src/features/kangur/ui/context/KangurAiTutorRuntime.shared.ts:47 | Imports internal path from feature "ai": @/features/ai/ai-context-registry/context/page-context. Use the barrel export instead. |
 | ERROR | cross-feature-internal-import | src/features/kangur/ui/context/KangurContextRegistryPageBoundary.tsx:5 | Imports internal path from feature "ai": @/features/ai/ai-context-registry/context/page-context. Use the barrel export instead. |
-| WARN | deep-relative-import | src/app/api/agent/approval-gates/route.ts:3 | Deep relative import (4 levels up). Consider using path aliases. |
-| WARN | deep-relative-import | src/app/api/agent/capabilities/route.ts:3 | Deep relative import (4 levels up). Consider using path aliases. |
-| WARN | deep-relative-import | src/app/api/agent/resources/route.ts:3 | Deep relative import (4 levels up). Consider using path aliases. |
+| ERROR | cross-feature-internal-import | src/features/products/workers/product-ai-processors.ts:9 | Imports internal path from feature "ai": @/features/ai/ai-paths/context-registry/system-prompt. Use the barrel export instead. |
 
 ## Notes
 

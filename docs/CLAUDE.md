@@ -1,3 +1,12 @@
+---
+owner: 'Platform Team'
+last_reviewed: '2026-03-09'
+status: 'active'
+doc_type: 'agent-guide'
+scope: 'repo'
+canonical: true
+---
+
 # CLAUDE.md - Claude Overlay
 
 This is a lightweight Claude-specific overlay. It should stay short and defer
@@ -61,6 +70,9 @@ to the canonical repo references.
   fallback behavior when Redis is absent.
 - Treat generated docs and guardrail scripts as active maintenance surfaces when
   touching AI Paths, validator docs, or architecture boundaries.
+- When consuming scanner/check `--summary-json` output, preserve the envelope
+  sections instead of flattening them: `summary`, `details`, `paths`,
+  `filters`, and `notes` each have a distinct role.
 
 ## Sensitive / Avoid-By-Default Areas
 

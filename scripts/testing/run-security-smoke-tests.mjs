@@ -2,6 +2,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 
+import { writeMetricsMarkdownFile } from '../docs/metrics-frontmatter.mjs';
+
 const args = new Set(process.argv.slice(2));
 const strictMode = args.has('--strict');
 const shouldWriteHistory = !args.has('--ci') && !args.has('--no-history');
@@ -159,6 +161,7 @@ const run = async () => {
     summary,
     results,
   };
+  const reviewDate = payload.generatedAt.slice(0, 10);
 
   await fs.mkdir(outDir, { recursive: true });
   const stamp = payload.generatedAt.replace(/[:.]/g, '-');
@@ -169,11 +172,21 @@ const run = async () => {
   const historicalMdPath = path.join(outDir, `security-smoke-${stamp}.md`);
 
   await fs.writeFile(latestJsonPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
-  await fs.writeFile(latestMdPath, toMarkdown(payload), 'utf8');
+  await writeMetricsMarkdownFile({
+    root,
+    targetPath: latestMdPath,
+    content: toMarkdown(payload),
+    reviewDate,
+  });
 
   if (shouldWriteHistory) {
     await fs.writeFile(historicalJsonPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
-    await fs.writeFile(historicalMdPath, toMarkdown(payload), 'utf8');
+    await writeMetricsMarkdownFile({
+      root,
+      targetPath: historicalMdPath,
+      content: toMarkdown(payload),
+      reviewDate,
+    });
   }
 
   console.log(

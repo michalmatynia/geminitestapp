@@ -205,8 +205,8 @@ describe('AdminKangurSettingsPage', () => {
     await expectInitialNarratorProbe();
 
     expect(screen.queryByLabelText(/agent nauczający/i)).not.toBeInTheDocument();
-    expect(screen.getByLabelText(/persona \(charakter tutora\)/i)).toHaveValue('persona-1');
-    expect(screen.getByLabelText(/preset ruchu tutora/i)).toHaveValue('tablet');
+    expect(screen.getByLabelText(/persona \(charakter tutora\)/i)).toHaveTextContent('Mila');
+    expect(screen.getByLabelText(/preset ruchu tutora/i)).toHaveTextContent('Tablet');
     expect(screen.getByLabelText(/dzienny limit wiadomości/i)).toHaveValue(12);
 
     fireEvent.change(screen.getByLabelText(/dzienny limit wiadomości/i), {

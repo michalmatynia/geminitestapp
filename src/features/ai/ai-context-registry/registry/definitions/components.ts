@@ -223,6 +223,9 @@ export const componentNodes: ContextNode[] = [
       { type: 'uses', targetId: 'page:admin-image-studio' },
       { type: 'reads', targetId: 'collection:image-studio-slots' },
       { type: 'uses', targetId: 'action:image-studio-run' },
+      { type: 'uses', targetId: 'action:image-studio-sequence-run' },
+      { type: 'uses', targetId: 'action:image-studio-ai-path-object-analysis' },
+      { type: 'uses', targetId: 'action:image-studio-mask-ai' },
     ],
     permissions: {
       readScopes: ['ctx:read'],
@@ -244,6 +247,10 @@ export const componentNodes: ContextNode[] = [
       { type: 'uses', targetId: 'page:admin-image-studio' },
       { type: 'reads', targetId: 'collection:image-studio-runs' },
       { type: 'uses', targetId: 'action:image-studio-run' },
+      { type: 'uses', targetId: 'action:image-studio-sequence-run' },
+      { type: 'uses', targetId: 'action:image-studio-ai-path-object-analysis' },
+      { type: 'uses', targetId: 'action:image-studio-prompt-extract' },
+      { type: 'uses', targetId: 'action:image-studio-ui-extractor' },
     ],
     permissions: {
       readScopes: ['ctx:read'],
@@ -264,6 +271,81 @@ export const componentNodes: ContextNode[] = [
     relationships: [
       { type: 'uses', targetId: 'page:admin-image-studio' },
       { type: 'uses', targetId: 'action:image-studio-run' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'component:ai-paths-canvas-board',
+    kind: 'component',
+    name: 'AiPathsCanvasBoard',
+    description:
+      'Primary AI Paths canvas for node layout, wiring, selection, and run visualization.',
+    tags: ['ai-paths', 'canvas', 'graph', 'editor'],
+    relationships: [
+      { type: 'uses', targetId: 'page:ai-paths' },
+      { type: 'uses', targetId: 'action:run-ai-path' },
+      { type: 'reads', targetId: 'collection:ai-path-runs' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'component:ai-paths-paths-panel',
+    kind: 'component',
+    name: 'AiPathsPathsPanel',
+    description:
+      'Path list and metadata panel for switching active workflows, managing names, and toggling path status.',
+    tags: ['ai-paths', 'paths', 'sidebar', 'metadata'],
+    relationships: [{ type: 'uses', targetId: 'page:ai-paths' }],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'component:ai-paths-docs-panel',
+    kind: 'component',
+    name: 'AiPathsDocsPanel',
+    description:
+      'Docs and validation view for AI Paths, including runtime guidance, validation rules, and reference snippets.',
+    tags: ['ai-paths', 'docs', 'validation', 'reference'],
+    relationships: [{ type: 'uses', targetId: 'page:ai-paths' }],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'component:ai-paths-node-config-dialog',
+    kind: 'component',
+    name: 'AiPathsNodeConfigDialog',
+    description:
+      'Node configuration dialog in AI Paths for editing node settings, previewing prompts, and sending prompt drafts to a model.',
+    tags: ['ai-paths', 'node-config', 'dialog', 'ai'],
+    relationships: [
+      { type: 'uses', targetId: 'page:ai-paths' },
+      { type: 'uses', targetId: 'action:ai-paths-preview-model' },
     ],
     permissions: {
       readScopes: ['ctx:read'],
@@ -297,6 +379,51 @@ export const componentNodes: ContextNode[] = [
     },
     version: '1.0.0',
     updatedAtISO: '2026-01-01T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'component:product-form',
+    kind: 'component',
+    name: 'ProductForm',
+    description:
+      'Tabbed product editor form for managing catalog fields, images, note links, validation, ' +
+      'and studio integrations for a single product.',
+    tags: ['products', 'editor', 'form', 'admin'],
+    relationships: [
+      { type: 'uses', targetId: 'page:product-editor' },
+      { type: 'reads', targetId: 'collection:products' },
+      { type: 'uses', targetId: 'component:product-form-studio' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'component:product-form-studio',
+    kind: 'component',
+    name: 'ProductFormStudio',
+    description:
+      'Product editor Studio tab for selecting an image slot, linking an Image Studio project, ' +
+      'reviewing generated variants, and dispatching AI-backed studio runs.',
+    tags: ['products', 'studio', 'image-studio', 'ai', 'admin'],
+    relationships: [
+      { type: 'uses', targetId: 'page:product-editor' },
+      { type: 'reads', targetId: 'collection:image-studio-projects' },
+      { type: 'reads', targetId: 'collection:image-studio-slots' },
+      { type: 'uses', targetId: 'action:product-studio-send' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
     source: { type: 'code', ref: SOURCE_REF },
   },
   {

@@ -1,6 +1,14 @@
+---
+owner: 'Platform Team'
+last_reviewed: '2026-03-09'
+status: 'generated'
+doc_type: 'generated'
+scope: 'generated'
+canonical: true
+---
 # Trend Index
 
-Generated at: 2026-03-08T19:33:00.171Z
+Generated at: 2026-03-09T07:53:03.046Z
 
 | Trend | Status | Latest Run | Runs Analyzed | Delta vs Prev | JSON | Markdown |
 | --- | --- | --- | ---: | --- | --- | --- |

@@ -9,6 +9,7 @@ import type {
   AgentTeachingAgentRecord,
   AgentTeachingChatSource,
 } from '@/shared/contracts/agent-teaching';
+import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import type { ChatMessage } from '@/shared/contracts/chatbot';
 
 import {
@@ -139,6 +140,7 @@ export async function enqueueAiPathRun(
     backoffMs?: number | null;
     backoffMaxMs?: number | null;
     meta?: Record<string, unknown> | null;
+    contextRegistry?: ContextRegistryConsumerEnvelope | null;
   },
   options?: { timeoutMs?: number; signal?: AbortSignal }
 ): Promise<ApiResponse<AiPathRunEnqueueResponse>> {
@@ -502,6 +504,16 @@ export async function cancelAiPathRun(runId: string): Promise<ApiResponse<{ run:
   return apiPost<{ run: unknown }>(`/api/ai-paths/runs/${encodeURIComponent(runId)}/cancel`, {});
 }
 
+export async function handoffAiPathRun(
+  runId: string,
+  payload?: { reason?: string; checkpointLineageId?: string }
+): Promise<ApiResponse<{ run: unknown; handoffReady?: boolean; runId?: string }>> {
+  return apiPost<{ run: unknown; handoffReady?: boolean; runId?: string }>(
+    `/api/ai-paths/runs/${encodeURIComponent(runId)}/handoff`,
+    payload ?? {}
+  );
+}
+
 export async function requeueAiPathDeadLetterRuns(payload: {
   runIds?: string[];
   pathId?: string | null;
@@ -537,6 +549,7 @@ export const runsApi = {
   resume: resumeAiPathRun,
   retryNode: retryAiPathRunNode,
   cancel: cancelAiPathRun,
+  handoff: handoffAiPathRun,
   requeueDeadLetter: requeueAiPathDeadLetterRuns,
 };
 

@@ -100,19 +100,19 @@ export const initializeQueues = (): void => {
 
     // Import all queue modules to trigger registration via createManagedQueue
     const queueModules = await Promise.all([
-      import('@/features/products/server'),
+      import('@/server/queues/product-ai'),
       import('@/features/ai/server'),
       import('@/features/ai/server'),
       import('@/features/ai/server'),
       import('@/shared/lib/db/workers/databaseBackupSchedulerQueue'),
       import('@/features/ai/server'),
       import('@/features/ai/server'),
-      import('@/features/integrations/server'),
-      import('@/features/integrations/server'),
-      import('@/features/integrations/server'),
-      import('@/features/product-sync/server'),
-      import('@/features/product-sync/server'),
-      import('@/features/product-sync/server'),
+      import('@/server/queues/integrations'),
+      import('@/server/queues/integrations'),
+      import('@/server/queues/integrations'),
+      import('@/server/queues/product-sync'),
+      import('@/server/queues/product-sync'),
+      import('@/server/queues/product-sync'),
       import('@/server/queues/case-resolver-ocr'),
       import('@/shared/lib/observability/workers/systemLogAlertsQueue'),
     ]);

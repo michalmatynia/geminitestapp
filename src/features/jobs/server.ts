@@ -33,8 +33,8 @@ export {
 export {
   startTraderaListingQueue,
   enqueueTraderaListingJob,
-} from '@/features/integrations/server';
-export { startTraderaRelistSchedulerQueue } from '@/features/integrations/server';
+} from '@/server/queues/integrations';
+export { startTraderaRelistSchedulerQueue } from '@/server/queues/integrations';
 
 export {
   getQueueHealth as getGenericQueueStatus,
@@ -46,11 +46,11 @@ export {
   enqueueProductAiJobToQueue,
   processProductAiJob,
   getQueueStatus,
-} from '@/features/products/server';
+} from '@/server/queues/product-ai';
 
-export { startProductSyncSchedulerQueue } from '@/features/product-sync/server';
+export { startProductSyncSchedulerQueue } from '@/server/queues/product-sync';
 export {
   startProductSyncBackfillQueue,
   stopProductSyncBackfillQueue,
   enqueueProductSyncBackfillJob,
-} from '@/features/product-sync/server';
+} from '@/server/queues/product-sync';

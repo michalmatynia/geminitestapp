@@ -1,11 +1,11 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-09T03:35:07.626Z
+Generated at: 2026-03-09T03:41:59.339Z
 
 ## Snapshot
 
-- Source files: 5155
-- Source lines: 839233
+- Source files: 5159
+- Source lines: 839324
 - use client files: 1494
 - Files >= 1000 LOC: 10
 - Files >= 1500 LOC: 3
@@ -14,7 +14,7 @@ Generated at: 2026-03-09T03:35:07.626Z
 - API delegated server routes: 0
 - API routes without apiHandler/delegation: 15
 - API explicit cache policy coverage: 336/336 (100.0%)
-- Cross-feature dependency pairs: 39
+- Cross-feature dependency pairs: 35
 - Shared -> features imports: 75
 - setInterval occurrences: 22
 - Prop-drilling chains (depth >= 3): 24

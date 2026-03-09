@@ -4,6 +4,8 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+import { expectNoAxeViolations } from '@/testing/accessibility/axe';
+
 vi.mock('@/features/auth/', () => ({
   AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
@@ -13,7 +15,7 @@ import FrontendLayout from '@/app/(frontend)/layout';
 
 describe('app shell accessibility', () => {
   it('renders a focusable main landmark in the frontend shell', () => {
-    render(
+    const { container } = render(
       <FrontendLayout>
         <div>Frontend content</div>
       </FrontendLayout>
@@ -22,10 +24,12 @@ describe('app shell accessibility', () => {
     const main = screen.getByRole('main');
     expect(main).toHaveAttribute('id', 'app-content');
     expect(main).toHaveAttribute('tabindex', '-1');
+
+    return expectNoAxeViolations(container);
   });
 
   it('renders a focusable main landmark in the auth shell', () => {
-    render(
+    const { container } = render(
       <AuthPublicLayout>
         <div>Auth content</div>
       </AuthPublicLayout>
@@ -34,5 +38,7 @@ describe('app shell accessibility', () => {
     const main = screen.getByRole('main');
     expect(main).toHaveAttribute('id', 'app-content');
     expect(main).toHaveAttribute('tabindex', '-1');
+
+    return expectNoAxeViolations(container);
   });
 });

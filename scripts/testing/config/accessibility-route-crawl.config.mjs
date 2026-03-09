@@ -18,6 +18,12 @@ export const accessibilityRouteCrawlRoutes = [
     audience: 'public',
   },
   {
+    id: 'kangur-login',
+    name: 'Kangur Login',
+    route: '/kangur/login',
+    audience: 'public',
+  },
+  {
     id: 'admin-dashboard',
     name: 'Admin Dashboard',
     route: '/admin',

@@ -69,6 +69,21 @@ describe('normalizeAccessibilityRouteEntries', () => {
       ])
     ).toThrow(/duplicate id/i);
   });
+
+  it('keeps Kangur login in the public accessibility crawl config', async () => {
+    const { accessibilityRouteCrawlRoutes } = await import('./config/accessibility-route-crawl.config.mjs');
+    const routes = normalizeAccessibilityRouteEntries(accessibilityRouteCrawlRoutes);
+
+    expect(routes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'kangur-login',
+          route: '/kangur/login',
+          audience: 'public',
+        }),
+      ])
+    );
+  });
 });
 
 describe('resolveAccessibilityRouteCrawlAgentId', () => {
